@@ -46,36 +46,36 @@
 }
 
 :root {
-  /* Forcing dark mode variables as the default for this specific space theme */
-  --background: 240 60% 4%; /* Deep dark navy */
-  --foreground: 210 40% 98%;
-  
-  --card: 240 50% 8%;
-  --card-foreground: 210 40% 98%;
-  --card-border: 240 40% 16%;
+  /* Deep blue SaaS theme */
+  --background: 222 47% 5%;       /* Very dark navy blue */
+  --foreground: 213 31% 95%;
 
-  --popover: 240 50% 8%;
-  --popover-foreground: 210 40% 98%;
-  --popover-border: 240 40% 16%;
+  --card: 222 40% 8%;
+  --card-foreground: 213 31% 95%;
+  --card-border: 222 35% 14%;
 
-  --primary: 190 100% 50%; /* Neon Cyan */
-  --primary-foreground: 240 60% 4%;
-  
-  --secondary: 270 100% 65%; /* Neon Purple */
-  --secondary-foreground: 210 40% 98%;
-  
-  --muted: 240 30% 15%;
-  --muted-foreground: 240 20% 70%;
-  
-  --accent: 140 100% 50%; /* Neon Green */
-  --accent-foreground: 240 60% 4%;
-  
-  --destructive: 0 100% 60%;
-  --destructive-foreground: 210 40% 98%;
+  --popover: 222 40% 8%;
+  --popover-foreground: 213 31% 95%;
+  --popover-border: 222 35% 14%;
 
-  --border: 240 40% 16%;
-  --input: 240 40% 16%;
-  --ring: 190 100% 50%;
+  --primary: 217 91% 60%;         /* Bright blue #3b82f6 */
+  --primary-foreground: 222 47% 5%;
+  
+  --secondary: 239 84% 67%;       /* Indigo #818cf8 */
+  --secondary-foreground: 213 31% 95%;
+  
+  --muted: 222 30% 14%;
+  --muted-foreground: 220 15% 60%;
+  
+  --accent: 142 76% 46%;          /* Green #22c55e */
+  --accent-foreground: 222 47% 5%;
+  
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 213 31% 95%;
+
+  --border: 222 35% 14%;
+  --input: 222 35% 14%;
+  --ring: 217 91% 60%;
   
   --radius: 1rem;
 }
@@ -87,9 +87,10 @@
 
   body {
     @apply font-sans antialiased bg-background text-foreground;
-    background-image: 
-      radial-gradient(circle at 15% 50%, rgba(100, 50, 255, 0.08), transparent 25%),
-      radial-gradient(circle at 85% 30%, rgba(0, 240, 255, 0.08), transparent 25%);
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% -20%, rgba(59, 130, 246, 0.12), transparent),
+      radial-gradient(ellipse 60% 40% at 80% 80%, rgba(99, 102, 241, 0.08), transparent),
+      radial-gradient(ellipse 50% 30% at 10% 60%, rgba(59, 130, 246, 0.06), transparent);
     background-attachment: fixed;
   }
 
@@ -101,19 +102,19 @@
 
 @layer utilities {
   .glass-panel {
-    @apply bg-white/5 backdrop-blur-lg border border-white/10 shadow-xl;
+    @apply bg-white/[0.04] backdrop-blur-lg border border-white/[0.08] shadow-xl;
   }
   
   .glass-panel-heavy {
-    @apply bg-black/40 backdrop-blur-xl border border-white/15 shadow-2xl;
+    @apply bg-[hsl(222,47%,7%,0.85)] backdrop-blur-xl border border-white/[0.1] shadow-2xl;
   }
 
   .text-glow {
-    text-shadow: 0 0 20px currentColor;
+    text-shadow: 0 0 30px currentColor;
   }
   
   .box-glow-primary {
-    box-shadow: 0 0 30px -5px hsl(var(--primary) / 0.3);
+    box-shadow: 0 0 30px -5px hsl(var(--primary) / 0.4);
   }
   
   .box-glow-secondary {
@@ -124,5 +125,9 @@
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
+  }
+
+  .saas-card {
+    @apply bg-[hsl(222,40%,9%)] border border-[hsl(222,35%,16%)] rounded-2xl;
   }
 }
