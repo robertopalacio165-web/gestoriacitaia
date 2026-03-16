@@ -1,0 +1,25 @@
+packages:
+  "framer-motion": "For smooth page transitions and micro-interactions"
+  "clsx": "Utility for constructing className strings conditionally"
+  "tailwind-merge": "Utility for merging tailwind classes without style conflicts"
+
+images:
+  - path: "artifacts/gestoria-cital-a/public/images/logo.png"
+    description: "Minimalist high-tech logo for an AI immigration agency, a stylized geometric letter G with a neon blue and purple outline, on a transparent background"
+    aspect_ratio: "1:1"
+  - path: "artifacts/gestoria-cital-a/public/images/avatar-mohamed.png"
+    description: "Professional corporate headshot of a friendly arab man in his 30s, futuristic dark background with subtle neon blue rim lighting, highly detailed, looking at camera"
+    aspect_ratio: "1:1"
+  - path: "artifacts/gestoria-cital-a/public/images/avatar-sara.png"
+    description: "Professional corporate headshot of a friendly spanish woman in her 20s, futuristic dark background with subtle neon purple rim lighting, highly detailed, looking at camera"
+    aspect_ratio: "1:1"
+  - path: "artifacts/gestoria-cital-a/public/images/avatar-khalid.png"
+    description: "Professional corporate headshot of a mature arab man in a suit, futuristic dark background with subtle neon green rim lighting, highly detailed, looking at camera"
+    aspect_ratio: "1:1"
+  - path: "artifacts/gestoria-cital-a/public/images/bg-galaxy.png"
+    description: "Deep space galaxy background with dark navy and deep purple nebula clouds, subtle glowing stars, faint abstract high-tech grid overlay, immersive and cinematic"
+    aspect_ratio: "16:9"
+
+notes:
+  - The app uses a dark space theme with neon accents
+  - API endpoints are mocked via TanStack Query for UI demonstration purposes

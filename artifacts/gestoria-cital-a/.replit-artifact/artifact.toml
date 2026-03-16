@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "GestoriaCitalA"
+version = "1.0.0"
+id = "artifacts/gestoria-cital-a"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+localPort = 24985
+name = "web"
+paths = ["/"]
+
+[services.development]
+run = "pnpm --filter @workspace/gestoria-cital-a run dev"
+
+[services.env]
+PORT = "24985"
+BASE_PATH = "/"
+
+[services.production]
+build = ["pnpm", "--filter", "@workspace/gestoria-cital-a", "run", "build"]
+publicDir = "artifacts/gestoria-cital-a/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
