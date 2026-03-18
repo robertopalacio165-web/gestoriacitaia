@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Navbar } from "@/components/Navbar";
 import { PaymentModal } from "@/components/PaymentModal";
+import { useLang } from "@/contexts/LanguageContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { FileText, Settings, Mic, MicOff, RefreshCw, Shield, Bell, CheckCircle2, MessageSquare, Send, X, Upload, AlertTriangle, Star } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -69,6 +70,7 @@ export default function Regularizacion2026() {
   const [planActivo, setPlanActivo] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const { t } = useLang();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -139,12 +141,12 @@ export default function Regularizacion2026() {
         <div className="px-4 sm:px-6 py-3 max-w-7xl mx-auto w-full flex items-center justify-between">
           <div>
             <h1 className="text-xl font-display font-bold text-white flex items-center gap-2">
-              Regularización 2026
+              {t("reg_title")}
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 border border-amber-500/40 text-amber-400">
-                <Star className="w-2.5 h-2.5" /> NUEVO
+                <Star className="w-2.5 h-2.5" /> {t("reg_new")}
               </span>
             </h1>
-            <p className="text-xs text-muted-foreground">Tramita tu regularización en España con ayuda del agente IA</p>
+            <p className="text-xs text-muted-foreground">{t("reg_sub")}</p>
           </div>
           {planActivo ? (
             <span className="text-xs px-3 py-1 rounded-full bg-primary/10 border border-primary/30 text-primary font-medium">
@@ -152,7 +154,7 @@ export default function Regularizacion2026() {
             </span>
           ) : (
             <button onClick={() => setShowPayment(true)} className="text-xs px-3 py-1.5 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold transition-colors">
-              Activar plan
+              {t("reg_activar")}
             </button>
           )}
         </div>

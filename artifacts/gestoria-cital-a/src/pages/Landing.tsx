@@ -4,6 +4,7 @@ import { Navbar } from "@/components/Navbar";
 import { AgentCard } from "@/components/AgentCard";
 import { Button } from "@/components/ui/button";
 import { PaymentModal } from "@/components/PaymentModal";
+import { useLang } from "@/contexts/LanguageContext";
 import { CheckCircle2, Play, FileText, Globe, MapPin, Users, Shield, Home, Briefcase, GraduationCap, Heart, Car, Building2, Star, ArrowRight, Zap } from "lucide-react";
 import { useLocation } from "wouter";
 
@@ -96,6 +97,7 @@ const TRAMITES = [
 export default function Landing() {
   const [, setLocation] = useLocation();
   const [showPayment, setShowPayment] = useState(false);
+  const { t } = useLang();
 
   const handlePlanClick = (plan: { name: string; free?: boolean }) => {
     if (plan.free) {
@@ -121,26 +123,26 @@ export default function Landing() {
         >
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full glass-panel border border-primary/20 text-primary mb-5">
             <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
-            <span className="text-xs font-medium">Agente IA de Extranjería v2.0 Activo</span>
+            <span className="text-xs font-medium">{t("hero_badge")}</span>
           </div>
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold font-display leading-tight mb-4">
-            Tu Gestoría de Extranjería{" "}
+            {t("hero_title_1")}{" "}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-blue-400 to-secondary">
-              con Inteligencia Artificial
+              {t("hero_title_2")}
             </span>
           </h1>
           <p className="text-sm sm:text-base text-muted-foreground max-w-xl mx-auto mb-6">
-            Nuestros agentes IA te guían paso a paso en tiempo real para conseguir tu cita y tramitar tus documentos de extranjería desde el móvil.
+            {t("hero_sub")}
           </p>
           <div className="flex flex-wrap justify-center gap-3">
             <Button
               className="rounded-full px-6 shadow-lg shadow-primary/25 bg-primary hover:bg-primary/90"
               onClick={() => setLocation("/buscar-citas")}
             >
-              Buscar mi cita <ArrowRight className="w-4 h-4 ml-1" />
+              {t("hero_btn1")} <ArrowRight className="w-4 h-4 ml-1" />
             </Button>
             <Button variant="outline" className="rounded-full px-6 border-white/15 hover:bg-white/5" onClick={() => setLocation("/panel")}>
-              Ver mi panel
+              {t("hero_btn2")}
             </Button>
           </div>
         </motion.div>
@@ -202,8 +204,8 @@ export default function Landing() {
           className="mb-16"
         >
           <div className="text-center mb-10">
-            <h2 className="text-2xl sm:text-3xl font-display font-bold text-white mb-2">Planes de servicio</h2>
-            <p className="text-sm text-muted-foreground">Elige el plan que mejor se adapta a tu situación</p>
+            <h2 className="text-2xl sm:text-3xl font-display font-bold text-white mb-2">{t("plans_title")}</h2>
+            <p className="text-sm text-muted-foreground">{t("plans_sub")}</p>
           </div>
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-5xl mx-auto items-stretch">
@@ -243,7 +245,7 @@ export default function Landing() {
                   onClick={() => handlePlanClick(plan)}
                   className={`w-full py-2.5 rounded-xl text-sm font-bold uppercase tracking-wider transition-all ${plan.btnClass}`}
                 >
-                  {(plan as any).free ? "Empezar gratis" : "Seleccionar"}
+                  {(plan as any).free ? t("plan_free_btn") : t("plan_btn")}
                 </button>
               </div>
             ))}
@@ -258,12 +260,12 @@ export default function Landing() {
           className="mb-16"
         >
           <div className="text-center mb-8">
-            <h2 className="text-2xl sm:text-3xl font-display font-bold text-white mb-2">Trámites de Extranjería</h2>
-            <p className="text-sm text-muted-foreground">Gestionamos todos los trámites del proceso de extranjería en España</p>
+            <h2 className="text-2xl sm:text-3xl font-display font-bold text-white mb-2">{t("tramites_title")}</h2>
+            <p className="text-sm text-muted-foreground">{t("tramites_sub")}</p>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 max-w-4xl mx-auto">
-            {TRAMITES.map((t, i) => (
+            {TRAMITES.map((tr, i) => (
               <motion.button
                 key={i}
                 initial={{ opacity: 0, y: 10 }}
@@ -274,9 +276,9 @@ export default function Landing() {
                 className="glass-panel border border-white/[0.07] rounded-xl p-4 flex flex-col items-center gap-3 text-center hover:border-primary/30 hover:bg-white/[0.07] transition-all group"
               >
                 <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <t.icon className={`w-5 h-5 ${t.color}`} />
+                  <tr.icon className={`w-5 h-5 ${tr.color}`} />
                 </div>
-                <span className="text-xs font-medium text-white/80 leading-tight">{t.label}</span>
+                <span className="text-xs font-medium text-white/80 leading-tight">{tr.label}</span>
               </motion.button>
             ))}
           </div>

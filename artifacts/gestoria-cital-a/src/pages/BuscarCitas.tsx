@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Navbar } from "@/components/Navbar";
 import { PaymentModal } from "@/components/PaymentModal";
+import { useLang } from "@/contexts/LanguageContext";
 import { useToast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
 import { FileText, Settings, Mic, MicOff, RefreshCw, Shield, Bell, CheckCircle2, MessageSquare, Send } from "lucide-react";
@@ -55,6 +56,7 @@ export default function BuscarCitas() {
   const [showPayment, setShowPayment] = useState(false);
   const [planActivo, setPlanActivo] = useState<string | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const { t } = useLang();
   const { toast } = useToast();
   const scheduleMutation = useScheduleAppointment();
 
@@ -155,7 +157,7 @@ export default function BuscarCitas() {
       <main className="flex-1 relative z-10 flex flex-col pt-16 pb-0">
 
         {/* Title */}
-        <h1 className="text-xl font-display font-bold px-4 sm:px-6 py-3 max-w-7xl mx-auto w-full">Buscar Citas</h1>
+        <h1 className="text-xl font-display font-bold px-4 sm:px-6 py-3 max-w-7xl mx-auto w-full">{t("buscar_title")}</h1>
 
         {/* ── DESKTOP: side-by-side | MOBILE: stacked ── */}
         <div className="flex-1 flex flex-col lg:flex-row gap-4 px-4 sm:px-6 max-w-7xl mx-auto w-full pb-4">
@@ -227,7 +229,7 @@ export default function BuscarCitas() {
               className={`flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-semibold border transition-all ${showChat ? "bg-secondary/20 border-secondary/40 text-secondary" : "glass-panel border-white/10 text-white/70 hover:text-white hover:border-white/20"}`}
             >
               <MessageSquare className="w-4 h-4" />
-              {showChat ? "Cerrar chat" : "Prefiero escribir · Abrir chat"}
+              {showChat ? t("buscar_chat_close") : t("buscar_chat_open")}
             </button>
 
             {/* CHAT PANEL */}
@@ -258,7 +260,7 @@ export default function BuscarCitas() {
                       value={chatInput}
                       onChange={(e) => setChatInput(e.target.value)}
                       onKeyDown={(e) => e.key === "Enter" && handleSendChat()}
-                      placeholder="Escribe tu pregunta..."
+                      placeholder={t("buscar_chat_placeholder")}
                       className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white placeholder-white/30 focus:outline-none focus:border-primary/50"
                     />
                     <button onClick={handleSendChat} className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center hover:bg-primary/90 transition-colors shrink-0">
@@ -319,7 +321,7 @@ export default function BuscarCitas() {
                   className="w-full bg-primary hover:bg-primary/90 text-white font-bold py-3 rounded-xl text-sm transition-colors shadow-lg shadow-primary/30 flex items-center justify-center gap-2"
                 >
                   <CheckCircle2 className="w-5 h-5" />
-                  Confirmar cita y recibir PDF por WhatsApp
+                  {t("buscar_confirmar")}
                 </motion.button>
               )}
             </AnimatePresence>

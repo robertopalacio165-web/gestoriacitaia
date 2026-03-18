@@ -1,11 +1,11 @@
 import { Link, useLocation } from "wouter";
 import { User, Bell, Menu } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
+import { useLang } from "@/contexts/LanguageContext";
 
 export function Navbar() {
   const [location] = useLocation();
-  const [lang, setLang] = useState<"es" | "darija">("es");
+  const { lang, setLang, t } = useLang();
 
   return (
     <header className="fixed top-0 w-full z-50 glass-panel-heavy border-b border-white/[0.07] transition-all duration-300">
@@ -13,7 +13,6 @@ export function Navbar() {
 
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2.5 group hover:opacity-85 transition-opacity shrink-0">
-          {/* Icon mark */}
           <div className="relative w-8 h-8 flex items-center justify-center">
             <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
               <rect width="32" height="32" rx="8" fill="url(#grad)" />
@@ -27,7 +26,6 @@ export function Navbar() {
               </defs>
             </svg>
           </div>
-          {/* Name */}
           <span className="font-display font-bold text-base tracking-tight text-white flex items-center gap-0.5">
             Gestoría
             <span className="text-primary">Cita</span>
@@ -37,12 +35,12 @@ export function Navbar() {
 
         {/* Nav links */}
         <div className="hidden sm:flex items-center gap-5 text-sm">
-          <Link href="/" className={cn("font-medium transition-colors hover:text-primary", location === "/" ? "text-primary" : "text-muted-foreground")}>Inicio</Link>
-          <Link href="/panel" className={cn("font-medium transition-colors hover:text-primary", location === "/panel" ? "text-primary" : "text-muted-foreground")}>Panel</Link>
-          <Link href="/buscar-citas" className={cn("font-medium transition-colors hover:text-primary", location === "/buscar-citas" ? "text-primary" : "text-muted-foreground")}>Citas</Link>
+          <Link href="/" className={cn("font-medium transition-colors hover:text-primary", location === "/" ? "text-primary" : "text-muted-foreground")}>{t("nav_inicio")}</Link>
+          <Link href="/panel" className={cn("font-medium transition-colors hover:text-primary", location === "/panel" ? "text-primary" : "text-muted-foreground")}>{t("nav_panel")}</Link>
+          <Link href="/buscar-citas" className={cn("font-medium transition-colors hover:text-primary", location === "/buscar-citas" ? "text-primary" : "text-muted-foreground")}>{t("nav_citas")}</Link>
           <Link href="/regularizacion-2026" className={cn("font-medium transition-colors hover:text-amber-400 flex items-center gap-1", location === "/regularizacion-2026" ? "text-amber-400" : "text-muted-foreground")}>
             <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
-            Regularización 2026
+            {t("nav_reg")}
           </Link>
         </div>
 
@@ -73,7 +71,7 @@ export function Navbar() {
               onClick={() => {}}
             >
               <User className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Iniciar sesión</span>
+              <span className="hidden sm:inline">{t("nav_login")}</span>
               <span className="sm:hidden">Login</span>
             </button>
           ) : (
