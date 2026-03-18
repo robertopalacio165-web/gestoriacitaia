@@ -1,9 +1,19 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Navbar } from "@/components/Navbar";
+import { PaymentModal } from "@/components/PaymentModal";
 import { useToast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
-import { FileText, Settings, Mic, MicOff, RefreshCw, Shield, Bell, CheckCircle2 } from "lucide-react";
+import { FileText, Settings, Mic, MicOff, RefreshCw, Shield, Bell, CheckCircle2, MessageSquare, Send } from "lucide-react";
 import { useScheduleAppointment } from "@/hooks/use-appointments";
+
+interface ChatMsg { from: "agent" | "user"; text: string; }
+const CHAT_REPLIES: Record<string, string> = {
+  default: "Entendido. ¿Tienes más preguntas sobre tu trámite?",
+  hola: "¡Hola! Soy Sara. ¿En qué trámite te puedo ayudar hoy?",
+  documentos: "Para la mayoría de trámites necesitas: NIE/pasaporte, empadronamiento y fotografías. ¿Cuál es tu trámite?",
+  cita: "Te busco una cita automáticamente. Solo selecciona el trámite arriba y te guío paso a paso.",
+  precio: "Nuestros planes empiezan desde $12.99/mes. Incluye guía paso a paso y confirmación por WhatsApp.",
+};
 
 const AGENT_STEPS = [
   {
@@ -37,6 +47,14 @@ export default function BuscarCitas() {
   const [muted, setMuted] = useState(false);
   const [showWhatsapp, setShowWhatsapp] = useState(true);
   const [confirmed, setConfirmed] = useState(false);
+  const [showChat, setShowChat] = useState(false);
+  const [chatInput, setChatInput] = useState("");
+  const [chatMessages, setChatMessages] = useState<ChatMsg[]>([
+    { from: "agent", text: "Hola, soy Sara. ¿Prefieres escribir? Aquí puedo responderte cualquier duda sobre tu trámite." }
+  ]);
+  const [showPayment, setShowPayment] = useState(false);
+  const [planActivo, setPlanActivo] = useState<string | null>(null);
+  const chatEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const scheduleMutation = useScheduleAppointment();
 
@@ -45,9 +63,37 @@ export default function BuscarCitas() {
     return () => clearTimeout(timer);
   }, []);
 
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [chatMessages]);
+
   const handleTramiteClick = (value: string) => {
     setSelectedTramite(value);
-    if (step === 0) setStep(1);
+    if (step === 0) {
+      if (!planActivo) {
+        setTimeout(() => setShowPayment(true), 1000);
+      } else {
+        setStep(1);
+      }
+    }
+  };
+
+  const handleSendChat = () => {
+    if (!chatInput.trim()) return;
+    const userMsg = chatInput.trim().toLowerCase();
+    setChatMessages(prev => [...prev, { from: "user", text: chatInput.trim() }]);
+    setChatInput("");
+    setTimeout(() => {
+      const key = Object.keys(CHAT_REPLIES).find(k => userMsg.includes(k)) || "default";
+      setChatMessages(prev => [...prev, { from: "agent", text: CHAT_REPLIES[key] }]);
+    }, 700);
+  };
+
+  const handleSelectPlan = (plan: string) => {
+    setPlanActivo(plan);
+    setShowPayment(false);
+    setStep(1);
+    toast({ title: `Plan ${plan} activado ✓`, description: "¡Continuemos con tu cita!" });
   };
 
   const handleAceptar = () => {
@@ -98,6 +144,13 @@ export default function BuscarCitas() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <PaymentModal
+        open={showPayment}
+        onClose={() => setShowPayment(false)}
+        onSelectPlan={handleSelectPlan}
+        agentMessage="Para reservar tu cita y continuar con el proceso, activa tu plan. ¡Yo me encargo de todo paso a paso!"
+      />
 
       <main className="flex-1 relative z-10 flex flex-col pt-16 pb-0">
 
@@ -167,6 +220,54 @@ export default function BuscarCitas() {
                 <p className="text-white/70 text-xs drop-shadow-lg">Asesora de Citas</p>
               </div>
             </div>
+
+            {/* Chat toggle button */}
+            <button
+              onClick={() => setShowChat(!showChat)}
+              className={`flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-semibold border transition-all ${showChat ? "bg-secondary/20 border-secondary/40 text-secondary" : "glass-panel border-white/10 text-white/70 hover:text-white hover:border-white/20"}`}
+            >
+              <MessageSquare className="w-4 h-4" />
+              {showChat ? "Cerrar chat" : "Prefiero escribir · Abrir chat"}
+            </button>
+
+            {/* CHAT PANEL */}
+            <AnimatePresence>
+              {showChat && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="glass-panel-heavy border border-white/10 rounded-2xl overflow-hidden flex flex-col"
+                  style={{ maxHeight: "200px" }}
+                >
+                  <div className="flex-1 overflow-y-auto p-3 space-y-2">
+                    {chatMessages.map((msg, i) => (
+                      <div key={i} className={`flex gap-2 ${msg.from === "user" ? "justify-end" : "justify-start"}`}>
+                        {msg.from === "agent" && (
+                          <img src={`${import.meta.env.BASE_URL}images/avatar-sara.png`} className="w-6 h-6 rounded-full object-cover object-top shrink-0" alt="" />
+                        )}
+                        <div className={`px-3 py-1.5 rounded-xl text-xs max-w-[85%] leading-relaxed ${msg.from === "agent" ? "bg-white/8 text-white/90 border border-white/10" : "bg-primary text-primary-foreground"}`}>
+                          {msg.text}
+                        </div>
+                      </div>
+                    ))}
+                    <div ref={chatEndRef} />
+                  </div>
+                  <div className="border-t border-white/10 p-2 flex gap-2">
+                    <input
+                      value={chatInput}
+                      onChange={(e) => setChatInput(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && handleSendChat()}
+                      placeholder="Escribe tu pregunta..."
+                      className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white placeholder-white/30 focus:outline-none focus:border-primary/50"
+                    />
+                    <button onClick={handleSendChat} className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center hover:bg-primary/90 transition-colors shrink-0">
+                      <Send className="w-3.5 h-3.5 text-primary-foreground" />
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             {/* Agent voice bubble */}
             <AnimatePresence mode="wait">

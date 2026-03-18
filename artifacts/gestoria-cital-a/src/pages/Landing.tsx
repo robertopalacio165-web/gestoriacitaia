@@ -1,11 +1,29 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { Navbar } from "@/components/Navbar";
 import { AgentCard } from "@/components/AgentCard";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, Play, FileText, Globe, MapPin, Users, Shield, Home, Briefcase, GraduationCap, Heart, Car, Building2, Star, ArrowRight } from "lucide-react";
+import { PaymentModal } from "@/components/PaymentModal";
+import { CheckCircle2, Play, FileText, Globe, MapPin, Users, Shield, Home, Briefcase, GraduationCap, Heart, Car, Building2, Star, ArrowRight, Zap } from "lucide-react";
 import { useLocation } from "wouter";
 
 const PLANS = [
+  {
+    name: "GRATIS",
+    price: "$0",
+    period: "",
+    color: "from-white/5 to-white/[0.02]",
+    border: "border-white/10",
+    btnClass: "bg-white/8 hover:bg-white/15 text-white border border-white/15",
+    badge: null,
+    free: true,
+    features: [
+      "Consulta inicial con agente IA",
+      "1 sesión de demostración",
+      "Ver cómo funciona el proceso",
+      "Sin tarjeta de crédito",
+    ],
+  },
   {
     name: "BÁSICO",
     price: "$12.99",
@@ -77,9 +95,19 @@ const TRAMITES = [
 
 export default function Landing() {
   const [, setLocation] = useLocation();
+  const [showPayment, setShowPayment] = useState(false);
+
+  const handlePlanClick = (plan: { name: string; free?: boolean }) => {
+    if (plan.free) {
+      setLocation("/buscar-citas");
+    } else {
+      setShowPayment(true);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background text-foreground relative overflow-x-hidden">
+      <PaymentModal open={showPayment} onClose={() => setShowPayment(false)} onSelectPlan={(p) => { setShowPayment(false); setLocation("/panel"); }} />
       <Navbar />
 
       <main className="relative z-10 pt-24 pb-20 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto">
@@ -178,12 +206,12 @@ export default function Landing() {
             <p className="text-sm text-muted-foreground">Elige el plan que mejor se adapta a tu situación</p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-5 max-w-4xl mx-auto items-stretch">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-5xl mx-auto items-stretch">
             {PLANS.map((plan) => (
               <div
                 key={plan.name}
-                className={`relative rounded-2xl border ${plan.border} bg-gradient-to-b ${plan.color} backdrop-blur-sm p-6 flex flex-col`}
-                style={{ boxShadow: plan.badge ? "0 0 40px -10px hsl(217,91%,60%,0.3)" : undefined }}
+                className={`relative rounded-2xl border ${plan.border} bg-gradient-to-b ${plan.color} backdrop-blur-sm p-5 flex flex-col`}
+                style={{ boxShadow: plan.badge ? "0 0 40px -10px hsl(142,71%,45%,0.25)" : undefined }}
               >
                 {/* Popular badge - corner ribbon */}
                 {plan.badge && (
@@ -212,10 +240,10 @@ export default function Landing() {
                 </ul>
 
                 <button
-                  onClick={() => setLocation("/panel")}
+                  onClick={() => handlePlanClick(plan)}
                   className={`w-full py-2.5 rounded-xl text-sm font-bold uppercase tracking-wider transition-all ${plan.btnClass}`}
                 >
-                  Seleccionar
+                  {(plan as any).free ? "Empezar gratis" : "Seleccionar"}
                 </button>
               </div>
             ))}
