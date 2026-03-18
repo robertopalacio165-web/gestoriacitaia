@@ -8,44 +8,45 @@ import { useLocation } from "wouter";
 const PLANS = [
   {
     name: "BÁSICO",
-    price: "$9.99",
+    price: "$12.99",
     period: "/mes",
-    color: "from-blue-600/20 to-blue-800/10",
-    border: "border-blue-600/20",
-    btnClass: "bg-white/10 hover:bg-white/15 text-white border border-white/15",
+    color: "from-green-900/30 to-green-950/10",
+    border: "border-green-600/20",
+    btnClass: "bg-white/8 hover:bg-white/15 text-white border border-white/15",
     badge: null,
     features: [
-      "1 trámite activo",
-      "Citas limitadas (2/mes)",
-      "Chat con agente IA",
-      "Soporte básico",
-      "Verificación de documentos",
+      "Buscar cita 1 vez al mes",
+      "Agente IA disponible 24/7",
+      "Guía paso a paso hasta confirmar",
+      "Confirmación por WhatsApp",
+      "PDF de la cita incluido",
     ],
   },
   {
     name: "ESTÁNDAR",
-    price: "$14.99",
+    price: "$19.99",
     period: "/mes",
-    color: "from-indigo-600/20 to-indigo-800/10",
-    border: "border-indigo-500/30",
-    btnClass: "bg-white/10 hover:bg-white/15 text-white border border-white/15",
+    color: "from-blue-900/30 to-blue-950/10",
+    border: "border-blue-500/25",
+    btnClass: "bg-white/8 hover:bg-white/15 text-white border border-white/15",
     badge: null,
     features: [
       "3 trámites activos",
-      "Citas ilimitadas",
+      "3 citas al mes",
       "Videollamada con agente",
       "Soporte prioritario",
-      "Aviso WhatsApp automático",
-      "Historial de trámites",
+      "Aviso automático por WhatsApp",
+      "Historial del trámite",
+      "Descargar PDF de documentos",
     ],
   },
   {
     name: "PRO",
     price: "$27.99",
     period: "/mes",
-    color: "from-blue-500/25 to-indigo-600/20",
-    border: "border-blue-400/40",
-    btnClass: "bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/30",
+    color: "from-green-800/30 to-blue-900/20",
+    border: "border-green-400/35",
+    btnClass: "bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/30",
     badge: "POPULAR",
     features: [
       "Trámites ilimitados",
@@ -124,7 +125,7 @@ export default function Landing() {
           transition={{ duration: 0.6, delay: 0.2 }}
         >
           <AgentCard name="Mohamed" role="Especialista en Extranjería" imagePath={`${import.meta.env.BASE_URL}images/avatar-mohamed.png`} delay={0.1} />
-          <AgentCard name="Sara" role="Asesora Legal" imagePath={`${import.meta.env.BASE_URL}images/avatar-sara.png`} delay={0.2} />
+          <AgentCard name="Sara" role="Buscar Citas · 24/7" imagePath={`${import.meta.env.BASE_URL}images/avatar-sara.png`} delay={0.2} />
         </motion.div>
 
         {/* FEATURES ROW */}
