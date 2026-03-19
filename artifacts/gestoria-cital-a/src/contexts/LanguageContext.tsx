@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, ReactNode } from "react";
 
-export type Lang = "es" | "darija";
+export type Lang = "es" | "darija" | "en";
 
 const translations = {
   es: {
@@ -80,6 +80,85 @@ const translations = {
     payment_select: "Elegir plan",
     payment_rec: "Recomendado",
   },
+
+  en: {
+    nav_inicio: "Home",
+    nav_panel: "Panel",
+    nav_citas: "Appointments",
+    nav_reg: "Regularisation 2026",
+    nav_login: "Sign in",
+
+    hero_badge: "Immigration AI Agent v2.0 Active",
+    hero_title_1: "Your Immigration Office",
+    hero_title_2: "powered by AI",
+    hero_sub: "Our AI agents guide you step by step in real time to get your appointment and process your immigration documents from your phone.",
+    hero_btn1: "Find my appointment",
+    hero_btn2: "My dashboard",
+
+    agents_title: "Your AI Agents available 24/7",
+    agents_sub: "Digital specialists who assist you through every procedure",
+    agent_mo_role: "Immigration Specialist",
+    agent_mo_desc: "Process your NIE, TIE, visas and residency permit with AI in real time.",
+    agent_mo_btn: "Talk to Mohamed",
+    agent_sara_role: "Appointment Advisor 24/7",
+    agent_sara_desc: "Find and book your appointment at the immigration office instantly.",
+    agent_sara_btn: "Find my appointment",
+
+    plans_title: "Service plans",
+    plans_sub: "Choose the plan that best fits your situation",
+    plan_free_btn: "Start for free",
+    plan_btn: "Select",
+    plan_popular: "POPULAR",
+
+    tramites_title: "Procedures we handle",
+    tramites_sub: "All immigration procedures, managed by AI in real time",
+
+    buscar_title: "Find Appointments",
+    buscar_tramite: "PROCEDURE",
+    buscar_fecha: "DATE",
+    buscar_hora: "TIME",
+    buscar_confirmada: "APPOINTMENT CONFIRMED",
+    buscar_confirmada_msg: "Your appointment has been booked. You will receive details via WhatsApp.",
+    buscar_confirmar: "Confirm appointment and receive PDF via WhatsApp",
+    buscar_pasos: "STEPS",
+    buscar_chat_open: "I prefer to write · Open chat",
+    buscar_chat_close: "Close chat",
+    buscar_chat_placeholder: "Type your question...",
+    buscar_mute: "Mute",
+    buscar_sin_audio: "No audio",
+    buscar_docs: "Documents",
+    buscar_forms: "Forms",
+
+    reg_title: "Regularisation 2026",
+    reg_sub: "Process your regularisation in Spain with AI agent assistance",
+    reg_new: "NEW",
+    reg_activar: "Activate plan",
+    reg_sit: "CURRENT SITUATION",
+    reg_docs: "DOCUMENT VERIFICATION",
+    reg_docs_btn: "Verify all documents with AI",
+    reg_datos: "APPLICATION DATA",
+    reg_enviar: "Submit application",
+    reg_success_title: "APPLICATION SUBMITTED!",
+    reg_success_sub: "Regularisation 2026 · Labour Rootedness",
+    reg_pdf: "Download PDF",
+    reg_whatsapp_sent: "Receipt sent via WhatsApp",
+    reg_chat_open: "I prefer to write · Open chat",
+    reg_chat_close: "Close chat",
+
+    panel_title: "Personal Dashboard",
+    panel_nie: "NIE / Identity Number",
+    panel_name: "Full name",
+    panel_nationality: "Nationality",
+    panel_address: "Address",
+    panel_phone: "Phone",
+    panel_email: "Email address",
+
+    payment_title: "Secure payment with Stripe",
+    payment_secure: "100% secure payment · SSL encrypted · Powered by Stripe",
+    payment_select: "Choose plan",
+    payment_rec: "Recommended",
+  },
+
   darija: {
     nav_inicio: "البداية",
     nav_panel: "لوحتي",
@@ -182,7 +261,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 
   return (
     <LanguageContext.Provider value={{ lang, setLang, t }}>
-      <div dir={lang === "darija" ? "rtl" : "ltr"} lang={lang === "darija" ? "ar" : "es"}>
+      <div dir={lang === "darija" ? "rtl" : "ltr"} lang={lang === "darija" ? "ar" : lang === "en" ? "en" : "es"}>
         {children}
       </div>
     </LanguageContext.Provider>

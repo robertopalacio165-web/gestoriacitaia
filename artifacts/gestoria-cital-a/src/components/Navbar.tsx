@@ -102,14 +102,19 @@ export function Navbar() {
             {/* Language toggle */}
             <div className="flex items-center rounded-full border border-white/[0.12] bg-white/[0.04] overflow-hidden">
               <button onClick={() => setLang("es")}
-                className={cn("px-3 py-1.5 text-xs font-semibold transition-all flex items-center gap-1.5",
+                className={cn("px-2.5 py-1.5 text-xs font-semibold transition-all flex items-center gap-1",
                   lang === "es" ? "bg-primary text-white" : "text-muted-foreground hover:text-white")}>
-                🇪🇸 <span className="hidden sm:inline">Castellano</span>
+                🇪🇸 <span className="hidden sm:inline">ES</span>
+              </button>
+              <button onClick={() => setLang("en")}
+                className={cn("px-2.5 py-1.5 text-xs font-semibold transition-all flex items-center gap-1 border-x border-white/[0.08]",
+                  lang === "en" ? "bg-primary text-white" : "text-muted-foreground hover:text-white")}>
+                🇬🇧 <span className="hidden sm:inline">EN</span>
               </button>
               <button onClick={() => setLang("darija")}
-                className={cn("px-3 py-1.5 text-xs font-semibold transition-all flex items-center gap-1.5",
+                className={cn("px-2.5 py-1.5 text-xs font-semibold transition-all flex items-center gap-1",
                   lang === "darija" ? "bg-primary text-white" : "text-muted-foreground hover:text-white")}>
-                🇲🇦 <span className="hidden sm:inline">Darija</span>
+                🇲🇦 <span className="hidden sm:inline">MA</span>
               </button>
             </div>
 
