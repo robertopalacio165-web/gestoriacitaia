@@ -117,7 +117,7 @@ export default function Panel() {
                 <div className="flex items-center justify-between mb-3">
                   <div>
                     <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Plan activo</p>
-                    <p className="text-base font-black text-white">Estándar · $19.99<span className="text-xs font-normal text-muted-foreground">/mes</span></p>
+                    <p className="text-base font-black text-white">Estándar · 19.99€<span className="text-xs font-normal text-muted-foreground">/mes</span></p>
                   </div>
                   <span className="px-3 py-1 rounded-full bg-primary/20 border border-primary/30 text-primary text-[10px] font-bold">ACTIVO</span>
                 </div>

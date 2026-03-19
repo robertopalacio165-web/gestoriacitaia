@@ -13,20 +13,20 @@ interface Plan {
 const MODAL_PLANS: Plan[] = [
   {
     name: "BÁSICO",
-    price: "$12.99/mes",
+    price: "12.99€/mes",
     priceNum: "12.99",
     features: ["1 cita al mes", "Agente IA 24/7", "PDF + WhatsApp"],
   },
   {
     name: "ESTÁNDAR",
-    price: "$19.99/mes",
+    price: "19.99€/mes",
     priceNum: "19.99",
     features: ["3 citas al mes", "3 trámites", "Videollamada", "Aviso WhatsApp"],
     highlighted: true,
   },
   {
     name: "PRO",
-    price: "$27.99/mes",
+    price: "27.99€/mes",
     priceNum: "27.99",
     features: ["Citas ilimitadas", "Agente dedicado", "Soporte urgente", "20% dto."],
   },
@@ -121,7 +121,7 @@ export function PaymentModal({ open, onClose, onSelectPlan, agentMessage }: Paym
                       )}
                       <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-0.5">{plan.name}</p>
                       <p className={`text-base font-black mb-2 leading-tight ${plan.highlighted ? "text-primary" : "text-white"}`}>
-                        ${plan.priceNum}<span className="text-[10px] font-normal text-muted-foreground">/mes</span>
+                        {plan.priceNum}€<span className="text-[10px] font-normal text-muted-foreground">/mes</span>
                       </p>
                       <ul className="space-y-1 flex-1">
                         {plan.features.map((f, i) => (

@@ -12,7 +12,7 @@ import { Link, useLocation } from "wouter";
 const PLANS = [
   {
     name: "GRATIS",
-    price: "$0",
+    price: "0€",
     period: "",
     color: "from-white/5 to-white/[0.02]",
     border: "border-white/10",
@@ -28,7 +28,7 @@ const PLANS = [
   },
   {
     name: "BÁSICO",
-    price: "$12.99",
+    price: "12.99€",
     period: "/mes",
     color: "from-green-900/30 to-green-950/10",
     border: "border-green-600/20",
@@ -44,7 +44,7 @@ const PLANS = [
   },
   {
     name: "ESTÁNDAR",
-    price: "$19.99",
+    price: "19.99€",
     period: "/mes",
     color: "from-blue-900/30 to-blue-950/10",
     border: "border-blue-500/25",
@@ -62,7 +62,7 @@ const PLANS = [
   },
   {
     name: "PRO",
-    price: "$27.99",
+    price: "27.99€",
     period: "/mes",
     color: "from-green-800/30 to-blue-900/20",
     border: "border-green-400/35",
