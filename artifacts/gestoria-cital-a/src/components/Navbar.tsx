@@ -77,7 +77,7 @@ export function Navbar() {
               </svg>
             </div>
             <span className="font-display font-bold text-base tracking-tight text-white flex items-center gap-0.5">
-              Gestoría<span className="text-primary">Cita</span><span className="text-yellow-400 font-black">IA</span>
+              Gestoría<span className="text-primary">Cita</span><span className="text-white font-black">IA</span>
             </span>
           </Link>
 
