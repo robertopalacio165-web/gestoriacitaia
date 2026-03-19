@@ -4,9 +4,10 @@ import { Navbar } from "@/components/Navbar";
 import { AgentCard } from "@/components/AgentCard";
 import { Button } from "@/components/ui/button";
 import { PaymentModal } from "@/components/PaymentModal";
+import { LegalDisclaimer } from "@/components/LegalDisclaimer";
 import { useLang } from "@/contexts/LanguageContext";
-import { CheckCircle2, Play, FileText, Globe, MapPin, Users, Shield, Home, Briefcase, GraduationCap, Heart, Car, Building2, Star, ArrowRight, Zap } from "lucide-react";
-import { useLocation } from "wouter";
+import { CheckCircle2, Play, FileText, Globe, MapPin, Users, Shield, Home, Briefcase, GraduationCap, Heart, Car, Building2, Star, ArrowRight } from "lucide-react";
+import { Link, useLocation } from "wouter";
 
 const PLANS = [
   {
@@ -121,10 +122,6 @@ export default function Landing() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
         >
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full glass-panel border border-primary/20 text-primary mb-5">
-            <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
-            <span className="text-xs font-medium">{t("hero_badge")}</span>
-          </div>
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold font-display leading-tight mb-4">
             {t("hero_title_1")}{" "}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-blue-400 to-secondary">
@@ -140,6 +137,9 @@ export default function Landing() {
               onClick={() => setLocation("/buscar-citas")}
             >
               {t("hero_btn1")} <ArrowRight className="w-4 h-4 ml-1" />
+            </Button>
+            <Button variant="outline" className="rounded-full px-6 border-white/15 hover:bg-white/5" onClick={() => setLocation("/regularizacion-2026")}>
+              Regularización 2026
             </Button>
             <Button variant="outline" className="rounded-full px-6 border-white/15 hover:bg-white/5" onClick={() => setLocation("/panel")}>
               {t("hero_btn2")}
@@ -266,41 +266,36 @@ export default function Landing() {
 
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 max-w-4xl mx-auto">
             {TRAMITES.map((tr, i) => (
-              <motion.button
+              <motion.div
                 key={i}
                 initial={{ opacity: 0, y: 10 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.04 }}
-                onClick={() => setLocation("/buscar-citas")}
-                className="glass-panel border border-white/[0.07] rounded-xl p-4 flex flex-col items-center gap-3 text-center hover:border-primary/30 hover:bg-white/[0.07] transition-all group"
+                className="glass-panel border border-white/[0.07] rounded-xl p-4 flex flex-col items-center gap-3 text-center"
               >
-                <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center">
                   <tr.icon className={`w-5 h-5 ${tr.color}`} />
                 </div>
                 <span className="text-xs font-medium text-white/80 leading-tight">{tr.label}</span>
-              </motion.button>
+              </motion.div>
             ))}
-          </div>
-
-          <div className="text-center mt-6">
-            <Button variant="outline" className="rounded-full border-white/15 hover:bg-white/5 text-sm" onClick={() => setLocation("/buscar-citas")}>
-              Ver todos los trámites <ArrowRight className="w-4 h-4 ml-1" />
-            </Button>
           </div>
         </motion.div>
 
       </main>
 
+      <LegalDisclaimer />
+
       {/* FOOTER */}
       <footer className="relative z-10 border-t border-white/[0.07] bg-[hsl(222,47%,4%,0.8)] backdrop-blur-lg">
         <div className="max-w-6xl mx-auto px-4 py-6 flex flex-col md:flex-row items-center justify-between gap-3">
           <div className="text-xs text-muted-foreground flex gap-3">
-            <a href="#" className="hover:text-white transition-colors">Aviso legal</a>
+            <Link href="/aviso-legal" className="hover:text-white transition-colors">Aviso legal</Link>
             <span>·</span>
-            <a href="#" className="hover:text-white transition-colors">Privacidad</a>
+            <Link href="/privacidad" className="hover:text-white transition-colors">Privacidad</Link>
             <span>·</span>
-            <a href="#" className="hover:text-white transition-colors">Cookies</a>
+            <Link href="/cookies" className="hover:text-white transition-colors">Cookies</Link>
           </div>
           <div className="flex gap-3 text-muted-foreground">
             <a href="#" className="w-7 h-7 rounded-lg bg-blue-600/20 hover:bg-blue-600 border border-blue-600/30 cursor-pointer flex items-center justify-center text-white text-xs font-bold transition-colors">f</a>

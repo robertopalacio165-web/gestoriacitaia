@@ -281,11 +281,7 @@ export default function BuscarCitas() {
                 transition={{ type: "spring", stiffness: 300, damping: 25 }}
                 className="glass-panel-heavy border border-primary/25 rounded-2xl rounded-tl-sm p-3 flex gap-3 shadow-lg relative overflow-hidden"
               >
-                {!muted && (
-                  <div className="absolute inset-x-0 bottom-0 h-0.5 bg-gradient-to-r from-transparent via-primary to-transparent opacity-60">
-                    <motion.div className="h-full bg-primary" animate={{ x: ["-100%", "100%"] }} transition={{ duration: 2, repeat: Infinity, ease: "linear" }} />
-                  </div>
-                )}
+                {/* scanning line removed */}
                 <div className="relative shrink-0">
                   <img src={`${import.meta.env.BASE_URL}images/avatar-sara.png`} className="w-9 h-9 rounded-full object-cover object-top border border-primary/40" alt="Sara" />
                   {!muted && (

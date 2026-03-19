@@ -7,6 +7,9 @@ import Landing from "@/pages/Landing";
 import Panel from "@/pages/Panel";
 import BuscarCitas from "@/pages/BuscarCitas";
 import Regularizacion2026 from "@/pages/Regularizacion2026";
+import AvisoLegal from "@/pages/AvisoLegal";
+import Privacidad from "@/pages/Privacidad";
+import CookiesPage from "@/pages/Cookies";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -24,6 +27,9 @@ function Router() {
       <Route path="/panel" component={Panel} />
       <Route path="/buscar-citas" component={BuscarCitas} />
       <Route path="/regularizacion-2026" component={Regularizacion2026} />
+      <Route path="/aviso-legal" component={AvisoLegal} />
+      <Route path="/privacidad" component={Privacidad} />
+      <Route path="/cookies" component={CookiesPage} />
       <Route component={NotFound} />
     </Switch>
   );
