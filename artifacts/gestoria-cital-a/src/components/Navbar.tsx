@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useLocation } from "wouter";
-import { User, Bell, Menu, X, Home, LayoutDashboard, CalendarSearch, FileText, CheckCircle2, AlertCircle, LogOut, Settings, CreditCard, ChevronRight } from "lucide-react";
+import { User, Bell, Menu, X, Home, LayoutDashboard, CalendarSearch, FileText, CheckCircle2, AlertCircle, LogOut, CreditCard, ChevronRight, Globe } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLang } from "@/contexts/LanguageContext";
 import { motion, AnimatePresence } from "framer-motion";
@@ -17,9 +17,11 @@ export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [langOpen, setLangOpen] = useState(false);
   const [notifs, setNotifs] = useState(NOTIFS);
   const notifRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
+  const langRef = useRef<HTMLDivElement>(null);
 
   const unread = notifs.filter(n => !n.read).length;
 
@@ -27,6 +29,7 @@ export function Navbar() {
     function handler(e: MouseEvent) {
       if (notifRef.current && !notifRef.current.contains(e.target as Node)) setNotifOpen(false);
       if (profileRef.current && !profileRef.current.contains(e.target as Node)) setProfileOpen(false);
+      if (langRef.current && !langRef.current.contains(e.target as Node)) setLangOpen(false);
     }
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
@@ -99,23 +102,53 @@ export function Navbar() {
 
           {/* Right side */}
           <div className="flex items-center gap-2">
-            {/* Language toggle */}
-            <div className="flex items-center rounded-full border border-white/[0.12] bg-white/[0.04] overflow-hidden">
-              <button onClick={() => setLang("es")}
-                className={cn("px-2.5 py-1.5 text-xs font-semibold transition-all flex items-center gap-1",
-                  lang === "es" ? "bg-primary text-white" : "text-muted-foreground hover:text-white")}>
-                🇪🇸 <span className="hidden sm:inline">ES</span>
+            {/* Language dropdown */}
+            <div className="relative" ref={langRef}>
+              <button
+                onClick={() => { setLangOpen(o => !o); setNotifOpen(false); setProfileOpen(false); }}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-white/[0.12] bg-white/[0.04] hover:bg-white/[0.08] transition-all text-xs font-semibold text-white"
+              >
+                <span className="text-base leading-none">
+                  {lang === "es" ? "🇪🇸" : lang === "en" ? "🇬🇧" : "🇲🇦"}
+                </span>
+                <span className="hidden sm:inline">
+                  {lang === "es" ? "ES" : lang === "en" ? "EN" : "MA"}
+                </span>
+                <ChevronRight className={cn("w-3 h-3 transition-transform", langOpen && "rotate-90")} />
               </button>
-              <button onClick={() => setLang("en")}
-                className={cn("px-2.5 py-1.5 text-xs font-semibold transition-all flex items-center gap-1 border-x border-white/[0.08]",
-                  lang === "en" ? "bg-primary text-white" : "text-muted-foreground hover:text-white")}>
-                🇬🇧 <span className="hidden sm:inline">EN</span>
-              </button>
-              <button onClick={() => setLang("darija")}
-                className={cn("px-2.5 py-1.5 text-xs font-semibold transition-all flex items-center gap-1",
-                  lang === "darija" ? "bg-primary text-white" : "text-muted-foreground hover:text-white")}>
-                🇲🇦 <span className="hidden sm:inline">MA</span>
-              </button>
+
+              <AnimatePresence>
+                {langOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -8, scale: 0.97 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -8, scale: 0.97 }}
+                    transition={{ type: "spring", stiffness: 350, damping: 30 }}
+                    className="absolute top-full right-0 mt-2 w-44 glass-panel-heavy border border-white/[0.12] rounded-2xl shadow-2xl overflow-hidden z-50"
+                  >
+                    {[
+                      { code: "es" as const, flag: "🇪🇸", label: "Castellano" },
+                      { code: "en" as const, flag: "🇬🇧", label: "English" },
+                      { code: "darija" as const, flag: "🇲🇦", label: "Darija" },
+                    ].map(({ code, flag, label }) => (
+                      <button
+                        key={code}
+                        onClick={() => { setLang(code); setLangOpen(false); }}
+                        className={cn(
+                          "w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold transition-colors",
+                          lang === code
+                            ? "bg-primary/15 text-primary"
+                            : "text-white/70 hover:text-white hover:bg-white/5"
+                        )}
+                      >
+                        <span className="text-xl leading-none">{flag}</span>
+                        <span>{label}</span>
+                        {lang === code && <CheckCircle2 className="w-3.5 h-3.5 text-primary ml-auto" />}
+                      </button>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
 
             {/* On landing → login button; elsewhere → bell + avatar */}
