@@ -107,18 +107,19 @@ export function Navbar() {
               {/* Trigger button */}
               {(() => {
                 const LANGS = [
-                  { code: "es" as const, flag: "🇪🇸", label: "Castellano", short: "ES" },
-                  { code: "en" as const, flag: "🇬🇧", label: "English",    short: "EN" },
-                  { code: "darija" as const, flag: "🇲🇦", label: "Darija",  short: "MA" },
+                  { code: "es" as const, iso: "es", label: "Castellano", short: "ES" },
+                  { code: "en" as const, iso: "gb", label: "English",    short: "EN" },
+                  { code: "darija" as const, iso: "ma", label: "Darija",  short: "MA" },
                 ];
                 const current = LANGS.find(l => l.code === lang)!;
+                const flagUrl = (iso: string) => `https://flagcdn.com/w40/${iso}.png`;
                 return (
                   <>
                     <button
                       onClick={() => { setLangOpen(o => !o); setNotifOpen(false); setProfileOpen(false); }}
                       className="flex items-center gap-2 h-9 pl-2 pr-3 rounded-lg bg-slate-700 hover:bg-slate-600 border border-slate-500 transition-colors shadow"
                     >
-                      <span className="text-xl leading-none">{current.flag}</span>
+                      <img src={flagUrl(current.iso)} alt={current.label} className="w-6 h-4 object-cover rounded-sm" />
                       <span className="text-sm font-semibold text-white tracking-wide">{current.short}</span>
                       <ChevronDown className={cn("w-3.5 h-3.5 text-slate-300 transition-transform duration-200", langOpen && "rotate-180")} />
                     </button>
@@ -134,7 +135,7 @@ export function Navbar() {
                           style={{ background: "#1e2535", border: "1px solid rgba(255,255,255,0.12)", boxShadow: "0 20px 60px rgba(0,0,0,0.6)" }}
                         >
                           <p className="px-4 pt-3 pb-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400">Idioma / Language</p>
-                          {LANGS.map(({ code, flag, label }) => (
+                          {LANGS.map(({ code, iso, label }) => (
                             <button
                               key={code}
                               onClick={() => { setLang(code); setLangOpen(false); }}
@@ -145,7 +146,7 @@ export function Navbar() {
                                   : "hover:bg-white/8 border-l-2 border-transparent"
                               )}
                             >
-                              <span className="text-2xl leading-none shrink-0">{flag}</span>
+                              <img src={flagUrl(iso)} alt={label} className="w-7 h-5 object-cover rounded-sm shrink-0 shadow-sm" />
                               <span className={cn("text-sm font-semibold flex-1", lang === code ? "text-primary" : "text-white")}>{label}</span>
                               {lang === code && <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />}
                             </button>
