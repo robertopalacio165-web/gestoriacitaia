@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Navbar } from "@/components/Navbar";
 import { LegalDisclaimer } from "@/components/LegalDisclaimer";
+import { PaymentModal } from "@/components/PaymentModal";
 import { motion } from "framer-motion";
 import { useLocation } from "wouter";
 import {
@@ -39,6 +40,8 @@ const DOC_STATUS = {
 export default function Panel() {
   const [, setLocation] = useLocation();
   const [activeTab, setActiveTab] = useState<"resumen" | "tramites" | "citas" | "documentos">("resumen");
+  const [showPayment, setShowPayment] = useState(false);
+  const [planActivo, setPlanActivo] = useState("Estándar");
 
   const docsOk = DOCS.filter(d => d.status === "ok").length;
   const docsPct = Math.round((docsOk / DOCS.length) * 100);
@@ -127,7 +130,7 @@ export default function Panel() {
                   ))}
                 </div>
                 <div className="flex gap-2">
-                  <button className="flex-1 py-1.5 rounded-lg bg-primary/20 hover:bg-primary/30 text-primary text-xs font-semibold transition-colors flex items-center justify-center gap-1">
+                  <button onClick={() => setShowPayment(true)} className="flex-1 py-1.5 rounded-lg bg-primary/20 hover:bg-primary/30 text-primary text-xs font-semibold transition-colors flex items-center justify-center gap-1">
                     <CreditCard className="w-3 h-3" /> Gestionar plan
                   </button>
                   <button onClick={() => setLocation("/buscar-citas")} className="flex-1 py-1.5 rounded-lg bg-secondary/20 hover:bg-secondary/30 text-secondary text-xs font-semibold transition-colors flex items-center justify-center gap-1">
@@ -336,6 +339,13 @@ export default function Panel() {
       </main>
 
       <LegalDisclaimer />
+
+      <PaymentModal
+        open={showPayment}
+        onClose={() => setShowPayment(false)}
+        onSelectPlan={(p) => { setPlanActivo(p); setShowPayment(false); }}
+        agentMessage="Elige o cambia tu plan en cualquier momento. Cancela cuando quieras, sin permanencia."
+      />
 
       {/* MOBILE NAV */}
       <nav className="fixed bottom-0 w-full z-50 glass-panel-heavy border-t border-white/[0.07] sm:hidden">
