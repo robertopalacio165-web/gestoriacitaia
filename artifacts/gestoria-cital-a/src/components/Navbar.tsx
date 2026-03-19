@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useLocation } from "wouter";
-import { User, Bell, Menu, X, Home, LayoutDashboard, CalendarSearch, FileText, CheckCircle2, AlertCircle, LogOut, CreditCard, ChevronRight, Globe } from "lucide-react";
+import { User, Bell, Menu, X, Home, LayoutDashboard, CalendarSearch, FileText, CheckCircle2, AlertCircle, LogOut, CreditCard, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLang } from "@/contexts/LanguageContext";
 import { motion, AnimatePresence } from "framer-motion";
@@ -104,50 +104,59 @@ export function Navbar() {
           <div className="flex items-center gap-2">
             {/* Language dropdown */}
             <div className="relative" ref={langRef}>
-              <button
-                onClick={() => { setLangOpen(o => !o); setNotifOpen(false); setProfileOpen(false); }}
-                className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/15 hover:bg-white/20 border border-white/20 transition-all text-xs font-bold text-white shadow-sm"
-              >
-                <span className="text-base leading-none">
-                  {lang === "es" ? "🇪🇸" : lang === "en" ? "🇬🇧" : "🇲🇦"}
-                </span>
-                <span>{lang === "es" ? "ES" : lang === "en" ? "EN" : "MA"}</span>
-                <ChevronRight className={cn("w-3 h-3 transition-transform duration-200", langOpen && "rotate-90")} />
-              </button>
+              {/* Trigger button */}
+              {(() => {
+                const LANGS = [
+                  { code: "es" as const, flag: "🇪🇸", label: "Castellano", short: "ES" },
+                  { code: "en" as const, flag: "🇬🇧", label: "English",    short: "EN" },
+                  { code: "darija" as const, flag: "🇲🇦", label: "Darija",  short: "MA" },
+                ];
+                const current = LANGS.find(l => l.code === lang)!;
+                return (
+                  <>
+                    <button
+                      onClick={() => { setLangOpen(o => !o); setNotifOpen(false); setProfileOpen(false); }}
+                      className="flex items-center gap-2 h-9 pl-2 pr-3 rounded-lg bg-slate-700 hover:bg-slate-600 border border-slate-500 transition-colors shadow"
+                    >
+                      <span className="text-xl leading-none">{current.flag}</span>
+                      <span className="text-sm font-semibold text-white tracking-wide">{current.short}</span>
+                      <ChevronDown className={cn("w-3.5 h-3.5 text-slate-300 transition-transform duration-200", langOpen && "rotate-180")} />
+                    </button>
 
-              <AnimatePresence>
-                {langOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -8, scale: 0.97 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: -8, scale: 0.97 }}
-                    transition={{ type: "spring", stiffness: 350, damping: 30 }}
-                    className="absolute top-full right-0 mt-2 w-48 rounded-2xl shadow-2xl overflow-hidden z-50 border border-white/15"
-                    style={{ background: "hsl(222 47% 8%)" }}
-                  >
-                    {[
-                      { code: "es" as const, flag: "🇪🇸", label: "Castellano" },
-                      { code: "en" as const, flag: "🇬🇧", label: "English" },
-                      { code: "darija" as const, flag: "🇲🇦", label: "Darija" },
-                    ].map(({ code, flag, label }) => (
-                      <button
-                        key={code}
-                        onClick={() => { setLang(code); setLangOpen(false); }}
-                        className={cn(
-                          "w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold transition-colors",
-                          lang === code
-                            ? "bg-primary/20 text-primary"
-                            : "text-white hover:bg-white/10"
-                        )}
-                      >
-                        <span className="text-2xl leading-none">{flag}</span>
-                        <span className="flex-1 text-left">{label}</span>
-                        {lang === code && <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />}
-                      </button>
-                    ))}
-                  </motion.div>
-                )}
-              </AnimatePresence>
+                    <AnimatePresence>
+                      {langOpen && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 6, scale: 0.97 }}
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          exit={{ opacity: 0, y: 6, scale: 0.97 }}
+                          transition={{ type: "spring", stiffness: 380, damping: 32 }}
+                          className="absolute top-full right-0 mt-2 w-52 rounded-xl overflow-hidden z-50"
+                          style={{ background: "#1e2535", border: "1px solid rgba(255,255,255,0.12)", boxShadow: "0 20px 60px rgba(0,0,0,0.6)" }}
+                        >
+                          <p className="px-4 pt-3 pb-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400">Idioma / Language</p>
+                          {LANGS.map(({ code, flag, label }) => (
+                            <button
+                              key={code}
+                              onClick={() => { setLang(code); setLangOpen(false); }}
+                              className={cn(
+                                "w-full flex items-center gap-3 px-4 py-3 transition-colors text-left",
+                                lang === code
+                                  ? "bg-primary/20 border-l-2 border-primary"
+                                  : "hover:bg-white/8 border-l-2 border-transparent"
+                              )}
+                            >
+                              <span className="text-2xl leading-none shrink-0">{flag}</span>
+                              <span className={cn("text-sm font-semibold flex-1", lang === code ? "text-primary" : "text-white")}>{label}</span>
+                              {lang === code && <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />}
+                            </button>
+                          ))}
+                          <div className="h-2" />
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </>
+                );
+              })()}
             </div>
 
             {/* On landing → login button; elsewhere → bell + avatar */}
