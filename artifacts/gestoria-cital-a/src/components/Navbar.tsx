@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useLocation } from "wouter";
-import { User, Bell, Menu, X, Home, LayoutDashboard, CalendarSearch, FileText, CheckCircle2, AlertCircle, LogOut, CreditCard, ChevronDown } from "lucide-react";
+import { User, Bell, Menu, X, Home, LayoutDashboard, CalendarSearch, FileText, CheckCircle2, AlertCircle, LogOut, CreditCard, ChevronDown, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLang } from "@/contexts/LanguageContext";
 import { motion, AnimatePresence } from "framer-motion";
