@@ -106,15 +106,13 @@ export function Navbar() {
             <div className="relative" ref={langRef}>
               <button
                 onClick={() => { setLangOpen(o => !o); setNotifOpen(false); setProfileOpen(false); }}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-white/[0.12] bg-white/[0.04] hover:bg-white/[0.08] transition-all text-xs font-semibold text-white"
+                className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/15 hover:bg-white/20 border border-white/20 transition-all text-xs font-bold text-white shadow-sm"
               >
                 <span className="text-base leading-none">
                   {lang === "es" ? "🇪🇸" : lang === "en" ? "🇬🇧" : "🇲🇦"}
                 </span>
-                <span className="hidden sm:inline">
-                  {lang === "es" ? "ES" : lang === "en" ? "EN" : "MA"}
-                </span>
-                <ChevronRight className={cn("w-3 h-3 transition-transform", langOpen && "rotate-90")} />
+                <span>{lang === "es" ? "ES" : lang === "en" ? "EN" : "MA"}</span>
+                <ChevronRight className={cn("w-3 h-3 transition-transform duration-200", langOpen && "rotate-90")} />
               </button>
 
               <AnimatePresence>
@@ -124,7 +122,8 @@ export function Navbar() {
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: -8, scale: 0.97 }}
                     transition={{ type: "spring", stiffness: 350, damping: 30 }}
-                    className="absolute top-full right-0 mt-2 w-44 glass-panel-heavy border border-white/[0.12] rounded-2xl shadow-2xl overflow-hidden z-50"
+                    className="absolute top-full right-0 mt-2 w-48 rounded-2xl shadow-2xl overflow-hidden z-50 border border-white/15"
+                    style={{ background: "hsl(222 47% 8%)" }}
                   >
                     {[
                       { code: "es" as const, flag: "🇪🇸", label: "Castellano" },
@@ -137,13 +136,13 @@ export function Navbar() {
                         className={cn(
                           "w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold transition-colors",
                           lang === code
-                            ? "bg-primary/15 text-primary"
-                            : "text-white/70 hover:text-white hover:bg-white/5"
+                            ? "bg-primary/20 text-primary"
+                            : "text-white hover:bg-white/10"
                         )}
                       >
-                        <span className="text-xl leading-none">{flag}</span>
-                        <span>{label}</span>
-                        {lang === code && <CheckCircle2 className="w-3.5 h-3.5 text-primary ml-auto" />}
+                        <span className="text-2xl leading-none">{flag}</span>
+                        <span className="flex-1 text-left">{label}</span>
+                        {lang === code && <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />}
                       </button>
                     ))}
                   </motion.div>
