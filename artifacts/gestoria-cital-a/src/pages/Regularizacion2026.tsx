@@ -69,6 +69,8 @@ export default function Regularizacion2026() {
   const [showPayment, setShowPayment] = useState(false);
   const [planActivo, setPlanActivo] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
+  const [showDocs, setShowDocs] = useState(false);
+  const [showForms, setShowForms] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const { t } = useLang();
   const { toast } = useToast();
@@ -458,10 +460,10 @@ export default function Regularizacion2026() {
               {muted ? "Sin audio" : "Mute"}
             </button>
             <div className="flex gap-3">
-              <button className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold bg-white/5 border border-white/10 text-white/80 hover:bg-white/10">
+              <button onClick={() => { setShowDocs(true); setShowForms(false); }} className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold border transition-colors ${showDocs ? "bg-primary/20 border-primary/40 text-primary" : "bg-white/5 border-white/10 text-white/80 hover:bg-white/10"}`}>
                 <FileText className="w-4 h-4 text-primary" /> Documentos
               </button>
-              <button className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold bg-white/5 border border-white/10 text-white/80 hover:bg-white/10">
+              <button onClick={() => { setShowForms(true); setShowDocs(false); }} className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold border transition-colors ${showForms ? "bg-secondary/20 border-secondary/40 text-secondary" : "bg-white/5 border-white/10 text-white/80 hover:bg-white/10"}`}>
                 <Settings className="w-4 h-4 text-secondary" /> Formularios
               </button>
               <button
@@ -477,6 +479,75 @@ export default function Regularizacion2026() {
           </div>
           <p className="text-center text-[9px] text-muted-foreground mt-1">© 2026 GestoriaCitaIA</p>
         </div>
+
+        {/* ── DOCUMENTOS PANEL ── */}
+        <AnimatePresence>
+          {showDocs && (
+            <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 40 }}
+              className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 w-full max-w-md px-4">
+              <div className="rounded-2xl border border-white/15 shadow-2xl overflow-hidden" style={{ background: "#1a2236" }}>
+                <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
+                  <div className="flex items-center gap-2">
+                    <FileText className="w-4 h-4 text-primary" />
+                    <span className="font-bold text-sm text-white">Documentos requeridos</span>
+                  </div>
+                  <button onClick={() => setShowDocs(false)} className="w-6 h-6 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/60 text-xs">✕</button>
+                </div>
+                <div className="px-5 py-4 space-y-2.5 max-h-72 overflow-y-auto">
+                  {DOCS_REQUERIDOS.map((doc, i) => (
+                    <div key={i} className="flex items-center gap-3">
+                      <span className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 text-xs font-bold ${doc.estado === "ok" ? "bg-green-500/20 text-green-400" : doc.estado === "warn" ? "bg-yellow-500/20 text-yellow-400" : "bg-red-500/20 text-red-400"}`}>
+                        {doc.estado === "ok" ? "✓" : doc.estado === "warn" ? "!" : "✗"}
+                      </span>
+                      <span className="text-sm text-white/90">{doc.nombre}</span>
+                      <span className={`ml-auto text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0 ${doc.estado === "ok" ? "bg-green-500/15 text-green-400" : doc.estado === "warn" ? "bg-yellow-500/15 text-yellow-400" : "bg-red-500/15 text-red-400"}`}>
+                        {doc.estado === "ok" ? "Listo" : doc.estado === "warn" ? "Revisar" : "Pendiente"}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* ── FORMULARIOS PANEL ── */}
+        <AnimatePresence>
+          {showForms && (
+            <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 40 }}
+              className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 w-full max-w-md px-4">
+              <div className="rounded-2xl border border-white/15 shadow-2xl overflow-hidden" style={{ background: "#1a2236" }}>
+                <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
+                  <div className="flex items-center gap-2">
+                    <Settings className="w-4 h-4 text-secondary" />
+                    <span className="font-bold text-sm text-white">Formularios oficiales</span>
+                  </div>
+                  <button onClick={() => setShowForms(false)} className="w-6 h-6 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/60 text-xs">✕</button>
+                </div>
+                <div className="px-5 py-4 space-y-3">
+                  {[
+                    { nombre: "Arraigo Laboral / Social", codigo: "EX-10", url: "https://extranjeros.inclusion.gob.es/ficheros/Modelos_solicitudes/mod_solicitudes2/10-Arraigo_social_laboral.pdf" },
+                    { nombre: "Arraigo Familiar", codigo: "EX-11", url: "https://extranjeros.inclusion.gob.es/ficheros/Modelos_solicitudes/mod_solicitudes2/11-Arraigo_familiar.pdf" },
+                    { nombre: "Autorización Residencia", codigo: "EX-01", url: "https://extranjeros.inclusion.gob.es/ficheros/Modelos_solicitudes/mod_solicitudes2/01-Autorizacion_residencia.pdf" },
+                  ].map((form, i) => (
+                    <a key={i} href={form.url} target="_blank" rel="noopener noreferrer"
+                      className="flex items-center gap-3 p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-colors group">
+                      <div className="w-9 h-9 rounded-lg bg-primary/15 border border-primary/30 flex items-center justify-center shrink-0">
+                        <FileText className="w-4 h-4 text-primary" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-bold text-primary">{form.codigo}</p>
+                        <p className="text-sm text-white/80 truncate">{form.nombre}</p>
+                      </div>
+                      <span className="text-[10px] font-semibold text-white/40 group-hover:text-primary transition-colors shrink-0">PDF ↓</span>
+                    </a>
+                  ))}
+                  <p className="text-[10px] text-white/30 text-center pt-1">Fuente: extranjeros.inclusion.gob.es</p>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </main>
     </div>
   );
