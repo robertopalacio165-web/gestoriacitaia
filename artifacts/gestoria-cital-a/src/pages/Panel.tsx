@@ -8,8 +8,10 @@ import {
   FileText, CheckCircle2, XCircle, AlertCircle, Bell, Shield,
   Upload, Download, ChevronRight, Globe, Home, Briefcase, Users,
   GraduationCap, Heart, Car, Building2, Clock, Calendar,
-  CreditCard, Star, Search, MessageSquare, ArrowRight, User, TrendingUp
+  CreditCard, Star, Search, MessageSquare, ArrowRight, User, TrendingUp,
+  Gift, Copy, Share2
 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 const CITAS = [
   { date: "24 Mar 2026", time: "10:30", label: "Renovación TIE", ref: "ESP-2026-034821", status: "proxima", lugar: "Comisaría Madrid Centro" },
@@ -37,11 +39,25 @@ const DOC_STATUS = {
   missing: { icon: XCircle, color: "text-destructive", bg: "bg-destructive/10", label: "Falta" },
 };
 
+const CLIENT_NAME = "Ahmed Benali";
+const REFERRAL_CODE = "AHMED-GCX26";
+const REFERRALS_USED = 1;
+const REFERRALS_NEEDED = 3;
+
 export default function Panel() {
   const [, setLocation] = useLocation();
   const [activeTab, setActiveTab] = useState<"resumen" | "tramites" | "citas" | "documentos">("resumen");
   const [showPayment, setShowPayment] = useState(false);
   const [planActivo, setPlanActivo] = useState("Estándar");
+  const [codeCopied, setCodeCopied] = useState(false);
+  const { toast } = useToast();
+
+  const copyCode = () => {
+    navigator.clipboard.writeText(REFERRAL_CODE).catch(() => {});
+    setCodeCopied(true);
+    toast({ title: "¡Código copiado!", description: `${REFERRAL_CODE} copiado al portapapeles.` });
+    setTimeout(() => setCodeCopied(false), 2500);
+  };
 
   const docsOk = DOCS.filter(d => d.status === "ok").length;
   const docsPct = Math.round((docsOk / DOCS.length) * 100);
@@ -183,6 +199,58 @@ export default function Panel() {
                       </div>
                     </button>
                   ))}
+                </div>
+              </div>
+
+              {/* Referral code card */}
+              <div className="rounded-xl border border-primary/30 overflow-hidden" style={{ background: "linear-gradient(135deg, rgba(34,197,94,0.08), rgba(59,130,246,0.06))" }}>
+                <div className="px-4 pt-4 pb-3">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Gift className="w-4 h-4 text-primary" />
+                    <span className="text-xs font-bold text-white">Tu código de referido</span>
+                    <span className="ml-auto text-[10px] bg-primary/20 text-primary px-2 py-0.5 rounded-full font-semibold">1 mes GRATIS</span>
+                  </div>
+                  <p className="text-[10px] text-muted-foreground mb-3">Invita a 3 amigos que compren un plan con tu código y <strong className="text-white">ganas 1 mes gratis</strong>.</p>
+
+                  {/* Code display */}
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="flex-1 bg-white/5 border border-white/15 rounded-lg px-3 py-2 flex items-center justify-between">
+                      <span className="text-sm font-black text-primary tracking-widest">{REFERRAL_CODE}</span>
+                      <button onClick={copyCode} className="flex items-center gap-1 text-[10px] font-semibold text-muted-foreground hover:text-white transition-colors">
+                        {codeCopied ? <CheckCircle2 className="w-3.5 h-3.5 text-primary" /> : <Copy className="w-3.5 h-3.5" />}
+                        {codeCopied ? "Copiado" : "Copiar"}
+                      </button>
+                    </div>
+                    <button onClick={() => { if(navigator.share) navigator.share({ title: "GestoriaCitaIA", text: `Usa mi código ${REFERRAL_CODE} y consigue tu primer mes con descuento`, url: "https://gestoriacitaia.com" }); }}
+                      className="w-9 h-9 rounded-lg bg-white/5 border border-white/15 hover:bg-white/10 flex items-center justify-center transition-colors shrink-0">
+                      <Share2 className="w-3.5 h-3.5 text-white/70" />
+                    </button>
+                  </div>
+
+                  {/* Progress */}
+                  <div className="space-y-1.5">
+                    <div className="flex justify-between items-center">
+                      <span className="text-[10px] text-muted-foreground">Referidos que compraron</span>
+                      <span className="text-[10px] font-bold text-white">{REFERRALS_USED}/{REFERRALS_NEEDED}</span>
+                    </div>
+                    <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
+                      <motion.div className="h-full bg-gradient-to-r from-primary to-green-400 rounded-full"
+                        initial={{ width: 0 }} animate={{ width: `${(REFERRALS_USED / REFERRALS_NEEDED) * 100}%` }} transition={{ duration: 0.8, delay: 0.3 }} />
+                    </div>
+                    <div className="flex justify-between">
+                      {Array.from({ length: REFERRALS_NEEDED }).map((_, i) => (
+                        <div key={i} className={`flex items-center gap-1 text-[9px] font-semibold ${i < REFERRALS_USED ? "text-primary" : "text-white/30"}`}>
+                          <span className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center text-[8px] ${i < REFERRALS_USED ? "bg-primary/20 border-primary text-primary" : "bg-white/5 border-white/20"}`}>
+                            {i < REFERRALS_USED ? "✓" : i + 1}
+                          </span>
+                          {i === 0 ? "Ahmed M." : i === 1 ? "Karim B." : "Pendiente"}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                <div className="bg-primary/10 border-t border-primary/20 px-4 py-2">
+                  <p className="text-[10px] text-primary/80">🎯 Te falta <strong className="text-primary">{REFERRALS_NEEDED - REFERRALS_USED} referido más</strong> para ganar tu mes gratis</p>
                 </div>
               </div>
 

@@ -285,6 +285,56 @@ export default function Landing() {
 
       </main>
 
+      {/* PAYMENT TRUST SECTION */}
+      <section className="relative z-10 border-t border-white/[0.06] py-5 px-4">
+        <div className="max-w-4xl mx-auto flex flex-col items-center gap-4">
+          <p className="text-[11px] text-muted-foreground font-medium tracking-wide uppercase">Pago seguro · Métodos aceptados</p>
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            {/* Visa */}
+            <div className="h-9 px-3 rounded-lg bg-white flex items-center justify-center shadow-sm">
+              <svg height="20" viewBox="0 0 750 471" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect width="750" height="471" rx="40" fill="white"/>
+                <path d="M278.198 334.228L311.423 138.897H364.007L330.767 334.228H278.198Z" fill="#00579F"/>
+                <path d="M524.307 144.162C513.849 140.093 497.461 135.712 477.194 135.712C425.254 135.712 388.796 163.398 388.528 203.229C388.261 232.787 415.267 248.752 435.734 258.26C456.736 268.002 463.828 274.282 463.693 283.122C463.559 296.683 447.973 302.83 433.456 302.83C413.323 302.83 402.53 299.762 385.474 292.348L378.516 289.146L371.022 333.162C383.217 338.678 405.485 343.46 428.566 343.728C483.884 343.728 519.804 316.309 520.204 273.88C520.404 250.354 506.421 232.253 476.126 217.355C457.258 208.183 445.73 202.096 445.863 192.588C445.863 184.145 455.669 175.034 477.461 175.034C495.797 174.766 509.18 178.968 519.537 183.25L524.574 185.781L532.002 143.626L524.307 144.162Z" fill="#00579F"/>
+                <path d="M618.23 138.897H577.388C564.927 138.897 555.656 142.432 550.352 155.324L470.967 334.228H526.218L537.212 305.564H604.481C606.083 312.978 611.121 334.228 611.121 334.228H660L618.23 138.897ZM552.221 267.622C556.324 256.93 571.843 214.553 571.843 214.553C571.576 215.089 575.947 203.629 578.32 196.482L581.36 213.081C581.36 213.081 589.655 253.729 591.391 267.622H552.221Z" fill="#00579F"/>
+                <path d="M232.38 138.897L181.108 273.347L175.536 245.528C166.532 215.624 139.526 183.116 109.097 167.152L156.671 334.094H212.322L289.099 138.897H232.38Z" fill="#00579F"/>
+                <path d="M141.268 138.897H57.5352L56.8672 142.7C120.891 159.097 163.328 196.348 179.916 241.927L162.994 156.124C160.154 143.5 151.55 139.297 141.268 138.897Z" fill="#FAA61A"/>
+              </svg>
+            </div>
+            {/* Mastercard */}
+            <div className="h-9 px-3 rounded-lg bg-white flex items-center justify-center gap-1 shadow-sm">
+              <div className="w-6 h-6 rounded-full bg-[#EB001B]" />
+              <div className="w-6 h-6 rounded-full bg-[#F79E1B] -ml-3 opacity-90" />
+            </div>
+            {/* PayPal */}
+            <div className="h-9 px-4 rounded-lg bg-[#003087] flex items-center justify-center shadow-sm">
+              <span className="text-white font-black text-sm tracking-tight">Pay<span className="text-[#009cde]">Pal</span></span>
+            </div>
+            {/* Stripe */}
+            <div className="h-9 px-4 rounded-lg bg-[#635bff] flex items-center justify-center shadow-sm">
+              <span className="text-white font-black text-sm">stripe</span>
+            </div>
+            {/* Bizum */}
+            <div className="h-9 px-4 rounded-lg bg-white flex items-center justify-center shadow-sm">
+              <span className="font-black text-sm" style={{ color: "#00CFFF" }}>bi<span style={{ color: "#282828" }}>zum</span></span>
+            </div>
+            {/* Apple Pay */}
+            <div className="h-9 px-4 rounded-lg bg-black border border-white/20 flex items-center justify-center gap-1.5 shadow-sm">
+              <svg width="14" height="14" viewBox="0 0 814 1000" fill="white"><path d="M788.1 340.9c-5.8 4.5-108.2 62.2-108.2 190.5 0 148.4 130.3 200.9 134.2 202.2-.6 3.2-20.7 71.9-68.7 141.9-42.8 61.6-87.5 123.1-155.5 123.1s-85.5-39.5-164-39.5c-76 0-103.7 40.8-165.9 40.8s-105-42.8-155.5-108.5C46 679.5 0 563.1 0 531.3c0-128.9 41.5-205.6 99.6-268.4 51.1-55.9 135.5-93.1 219.2-93.1 84.1 0 148.8 39.5 200.6 39.5 50.1 0 126.4-42.8 224.5-42.8 32.5.1 103.1 6.8 162.2 74.4zm-178.6-73.4c-31.3-39.5-80.3-67.7-134.9-67.7-4.5 0-9 .6-13.5.6 2.6-9.7 7.1-19.4 13.5-28.5 31.3-42.2 83.2-73.4 135.5-73.4 4.5 0 9 .6 13.5.6-1.3 10.3-5.2 20-10.3 29.1-29.1 42.8-80.3 67.7-3.8 139.3z"/></svg>
+              <span className="text-white text-xs font-bold">Pay</span>
+            </div>
+            {/* Google Pay */}
+            <div className="h-9 px-4 rounded-lg bg-white flex items-center justify-center shadow-sm">
+              <span className="font-bold text-sm"><span style={{color:"#4285F4"}}>G</span><span style={{color:"#EA4335"}}>o</span><span style={{color:"#FBBC05"}}>o</span><span style={{color:"#4285F4"}}>g</span><span style={{color:"#34A853"}}>l</span><span style={{color:"#EA4335"}}>e</span> <span className="text-gray-700">Pay</span></span>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            Pagos procesados con cifrado SSL 256-bit · PCI DSS Compliant
+          </div>
+        </div>
+      </section>
+
       <LegalDisclaimer />
 
       {/* FOOTER */}
