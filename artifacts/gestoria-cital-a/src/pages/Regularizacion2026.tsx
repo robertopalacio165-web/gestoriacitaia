@@ -3,7 +3,7 @@ import { Navbar } from "@/components/Navbar";
 import { PaymentModal } from "@/components/PaymentModal";
 import { useLang } from "@/contexts/LanguageContext";
 import { motion, AnimatePresence } from "framer-motion";
-import { FileText, Settings, Mic, MicOff, RefreshCw, Shield, Bell, CheckCircle2, MessageSquare, Send, X, Upload, AlertTriangle, Star } from "lucide-react";
+import { FileText, Settings, Mic, MicOff, RefreshCw, Shield, Bell, CheckCircle2, MessageSquare, Send, X, Upload, AlertTriangle, Star, ExternalLink, Download, FileUp, Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const AGENT_STEPS = [
@@ -48,6 +48,21 @@ interface ChatMsg {
   text: string;
 }
 
+type DocStatus = "ok" | "warn" | "missing";
+const DOCS_PDF = [
+  { id: "nie", nombre: "Pasaporte / NIE vigente", archivo: "NIE_X1234567Z.pdf", estado: "ok" as DocStatus, kb: "248 KB" },
+  { id: "empadron", nombre: "Certificado de empadronamiento", archivo: "Empadronamiento_2024.pdf", estado: "ok" as DocStatus, kb: "156 KB" },
+  { id: "contrato", nombre: "Contrato de trabajo firmado", archivo: "Contrato_Benali_2026.pdf", estado: "ok" as DocStatus, kb: "312 KB" },
+  { id: "penales", nombre: "Certificado antecedentes penales", archivo: "Antecedentes_tramitando.pdf", estado: "warn" as DocStatus, kb: "En trámite" },
+  { id: "ex10", nombre: "Formulario EX-10 / EX-11", archivo: "", estado: "missing" as DocStatus, kb: "" },
+  { id: "fotos", nombre: "Fotografías recientes (2 uds.)", archivo: "Fotos_Benali.jpg", estado: "ok" as DocStatus, kb: "84 KB" },
+];
+
+const WHATSAPP_MSG = encodeURIComponent(
+  "¡Hola Ahmed! 🎉 La Regularización Extraordinaria 2026 ya está ABIERTA. Tus documentos han sido verificados por el agente IA Mohamed. Entra en el siguiente enlace para completar y enviar tu solicitud antes de que cierre el plazo:\n\nhttps://sede.administracionespublicas.gob.es/procedimientoini/\n\n— Equipo GestoriaCitaIA"
+);
+const CLIENT_PHONE = "34612345678";
+
 const CHAT_RESPONSES: Record<string, string> = {
   default: "Entendido. ¿Tienes alguna pregunta sobre los documentos necesarios?",
   hola: "¡Hola! Soy Mohamed, tu especialista en Regularización 2026. ¿En qué te puedo ayudar?",
@@ -71,6 +86,9 @@ export default function Regularizacion2026() {
   const [submitted, setSubmitted] = useState(false);
   const [showDocs, setShowDocs] = useState(false);
   const [showForms, setShowForms] = useState(false);
+  const [docs, setDocs] = useState(DOCS_PDF);
+  const [uploadingId, setUploadingId] = useState<string | null>(null);
+  const [waSent, setWaSent] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const { t } = useLang();
   const { toast } = useToast();
@@ -107,6 +125,32 @@ export default function Regularizacion2026() {
     setShowPayment(false);
     setStep(1);
     toast({ title: `Plan ${plan} activado`, description: "¡Bienvenido! Continuemos con tu regularización." });
+  };
+
+  const docsOk = docs.filter(d => d.estado === "ok").length;
+  const docsTotal = docs.length;
+  const allReady = docsOk >= docsTotal - 1;
+
+  const handleUploadDoc = (id: string) => {
+    if (!planActivo) { setShowPayment(true); return; }
+    setUploadingId(id);
+    setTimeout(() => {
+      setDocs(prev => prev.map(d => d.id === id ? { ...d, estado: "ok" as DocStatus, archivo: "Formulario_EX10_Benali.pdf", kb: "201 KB" } : d));
+      setUploadingId(null);
+      toast({ title: "✅ Documento subido", description: "Formulario EX-10 verificado por IA." });
+    }, 1800);
+  };
+
+  const handleSendWhatsApp = () => {
+    window.open(`https://wa.me/${CLIENT_PHONE}?text=${WHATSAPP_MSG}`, "_blank");
+    setWaSent(true);
+    toast({ title: "WhatsApp enviado", description: "Aviso de Regularización 2026 enviado al cliente." });
+  };
+
+  const handleIrSede = () => {
+    if (!planActivo) { setShowPayment(true); return; }
+    window.open("https://sede.administracionespublicas.gob.es/procedimientoini/", "_blank");
+    if (step < 1) setStep(1);
   };
 
   const handleSendChat = () => {
@@ -295,6 +339,129 @@ export default function Regularizacion2026() {
                 </p>
               </motion.div>
             </AnimatePresence>
+
+            {/* ── DOCUMENT STATUS PANEL ── */}
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.25 }}
+              className="glass-panel border border-white/[0.08] rounded-2xl overflow-hidden"
+            >
+              {/* Header */}
+              <div className="px-4 py-3 border-b border-white/[0.07] flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <FileUp className="w-4 h-4 text-primary" />
+                  <span className="text-xs font-bold text-white">Documentos Regularización 2026</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className={`w-2 h-2 rounded-full ${docsOk === docsTotal ? "bg-primary" : "bg-amber-400"}`} />
+                  <span className="text-[10px] font-semibold text-white/70">{docsOk}/{docsTotal} listos</span>
+                </div>
+              </div>
+
+              {/* Progress bar */}
+              <div className="px-4 pt-2.5 pb-1">
+                <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
+                  <motion.div className="h-full bg-gradient-to-r from-primary to-green-400 rounded-full"
+                    initial={{ width: 0 }} animate={{ width: `${(docsOk / docsTotal) * 100}%` }} transition={{ duration: 0.7, delay: 0.3 }} />
+                </div>
+              </div>
+
+              {/* Doc list */}
+              <div className="px-3 py-2 space-y-1.5">
+                {docs.map((doc) => (
+                  <div key={doc.id} className={`flex items-center gap-2.5 rounded-lg px-2.5 py-2 border transition-colors ${
+                    doc.estado === "ok" ? "bg-primary/5 border-primary/15" :
+                    doc.estado === "warn" ? "bg-amber-500/5 border-amber-500/20" :
+                    "bg-destructive/5 border-destructive/20"
+                  }`}>
+                    <div className={`w-6 h-6 rounded flex items-center justify-center shrink-0 ${
+                      doc.estado === "ok" ? "bg-primary/15" : doc.estado === "warn" ? "bg-amber-500/15" : "bg-destructive/15"
+                    }`}>
+                      {doc.estado === "ok" && <CheckCircle2 className="w-3.5 h-3.5 text-primary" />}
+                      {doc.estado === "warn" && <Clock className="w-3.5 h-3.5 text-amber-400" />}
+                      {doc.estado === "missing" && <AlertTriangle className="w-3.5 h-3.5 text-destructive" />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[10px] font-semibold text-white truncate">{doc.nombre}</p>
+                      <p className={`text-[9px] truncate ${
+                        doc.estado === "ok" ? "text-primary/70" : doc.estado === "warn" ? "text-amber-400/70" : "text-destructive/60"
+                      }`}>
+                        {doc.estado === "ok" ? doc.archivo : doc.estado === "warn" ? "⏳ En tramitación..." : "Sin subir · obligatorio"}
+                      </p>
+                    </div>
+                    <div className="shrink-0">
+                      {doc.estado === "ok" && (
+                        <button className="p-1 rounded hover:bg-primary/10 transition-colors" title="Descargar">
+                          <Download className="w-3 h-3 text-primary/70" />
+                        </button>
+                      )}
+                      {doc.estado === "warn" && (
+                        <span className="text-[9px] text-amber-400 font-medium whitespace-nowrap">{doc.kb}</span>
+                      )}
+                      {doc.estado === "missing" && (
+                        uploadingId === doc.id ? (
+                          <span className="text-[9px] text-primary flex items-center gap-1">
+                            <motion.div className="w-2.5 h-2.5 border border-primary border-t-transparent rounded-full"
+                              animate={{ rotate: 360 }} transition={{ duration: 0.7, repeat: Infinity, ease: "linear" }} />
+                            Subiendo...
+                          </span>
+                        ) : (
+                          <button onClick={() => handleUploadDoc(doc.id)}
+                            className="flex items-center gap-1 text-[9px] font-bold text-white bg-primary/80 hover:bg-primary px-2 py-0.5 rounded transition-colors whitespace-nowrap">
+                            <Upload className="w-2.5 h-2.5" /> Subir PDF
+                          </button>
+                        )
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Stats row */}
+              <div className="px-3 py-2 border-t border-white/[0.07] grid grid-cols-3 gap-1.5 text-center">
+                <div className="bg-primary/8 rounded-lg py-1.5">
+                  <p className="text-[10px] font-black text-primary">{docs.filter(d => d.estado === "ok").length}</p>
+                  <p className="text-[9px] text-muted-foreground">PDF subidos</p>
+                </div>
+                <div className="bg-primary/8 rounded-lg py-1.5">
+                  <p className="text-[10px] font-black text-primary">{docs.filter(d => d.estado === "ok").length}</p>
+                  <p className="text-[9px] text-muted-foreground">Verificados IA</p>
+                </div>
+                <div className={`rounded-lg py-1.5 ${allReady ? "bg-primary/15" : "bg-amber-500/10"}`}>
+                  <p className={`text-[10px] font-black ${allReady ? "text-primary" : "text-amber-400"}`}>{allReady ? "✓ Listo" : "Pendiente"}</p>
+                  <p className="text-[9px] text-muted-foreground">Para enviar</p>
+                </div>
+              </div>
+
+              {/* WhatsApp notification button */}
+              <div className="px-3 pb-2">
+                <button
+                  onClick={handleSendWhatsApp}
+                  className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold transition-all ${
+                    waSent
+                      ? "bg-[#25d366]/25 border border-[#25d366]/50 text-[#25d366]"
+                      : "bg-[#25d366] hover:bg-[#1fb855] text-white shadow-[0_2px_14px_rgba(37,211,102,0.30)]"
+                  }`}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                  {waSent ? "¡Aviso enviado! ✓ Cliente notificado" : "Avisar al cliente por WhatsApp"}
+                </button>
+              </div>
+
+              {/* Submit on official site button */}
+              <div className="px-3 pb-3">
+                <button
+                  onClick={handleIrSede}
+                  className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold bg-[#003366] hover:bg-[#002244] text-white border border-[#003366] transition-all shadow-md"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  Completar solicitud en sede.gob.es
+                </button>
+                <p className="text-center text-[9px] text-muted-foreground mt-1.5">El agente IA rellena y envía los datos automáticamente</p>
+              </div>
+            </motion.div>
+
           </motion.div>
 
           {/* RIGHT: BROWSER WINDOW */}
