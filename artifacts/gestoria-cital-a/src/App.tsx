@@ -10,6 +10,8 @@ import Regularizacion2026 from "@/pages/Regularizacion2026";
 import AvisoLegal from "@/pages/AvisoLegal";
 import Privacidad from "@/pages/Privacidad";
 import CookiesPage from "@/pages/Cookies";
+import CheckoutSuccess from "@/pages/CheckoutSuccess";
+import CheckoutCancel from "@/pages/CheckoutCancel";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -30,6 +32,8 @@ function Router() {
       <Route path="/aviso-legal" component={AvisoLegal} />
       <Route path="/privacidad" component={Privacidad} />
       <Route path="/cookies" component={CookiesPage} />
+      <Route path="/checkout/success" component={CheckoutSuccess} />
+      <Route path="/checkout/cancelado" component={CheckoutCancel} />
       <Route component={NotFound} />
     </Switch>
   );

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { CheckCircle2, X, CreditCard, Shield, Lock, ChevronRight } from "lucide-react";
+import { CheckCircle2, X, CreditCard, Shield, Lock, ChevronRight, ExternalLink } from "lucide-react";
 import { useLang } from "@/contexts/LanguageContext";
 
 interface PaymentModalProps {
@@ -12,7 +12,10 @@ interface PaymentModalProps {
 
 export function PaymentModal({ open, onClose, onSelectPlan, agentMessage }: PaymentModalProps) {
   const [selected, setSelected] = useState<"cita" | "reg" | "std">("std");
-  const [paying, setPaying] = useState(false);
+  const [email, setEmail] = useState("");
+  const [name, setName] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const { t } = useLang();
 
   const MODAL_PLANS = [
@@ -47,13 +50,42 @@ export function PaymentModal({ open, onClose, onSelectPlan, agentMessage }: Paym
 
   const selectedPlan = MODAL_PLANS.find(p => p.id === selected)!;
 
-  const handlePay = () => {
-    setPaying(true);
-    setTimeout(() => {
-      setPaying(false);
+  const handlePay = async () => {
+    if (!email.trim()) {
+      setError(t("payment_email_required") || "Por favor introduce tu email.");
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const apiBase = import.meta.env.VITE_API_URL ?? "";
+      const response = await fetch(`${apiBase}/api/stripe/create-checkout-session`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          planId: selected,
+          email: email.trim(),
+          name: name.trim() || undefined,
+        }),
+      });
+
+      const data = await response.json() as { url?: string; error?: string };
+
+      if (!response.ok || !data.url) {
+        throw new Error(data.error ?? "Error al crear la sesión de pago.");
+      }
+
       onSelectPlan(selectedPlan.name);
-      onClose();
-    }, 1800);
+      window.location.href = data.url;
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Error desconocido.";
+      setError(msg.includes("STRIPE_SECRET_KEY") || msg.includes("not configured")
+        ? "El sistema de pago está en configuración. Vuelve pronto."
+        : msg);
+      setLoading(false);
+    }
   };
 
   return (
@@ -139,35 +171,30 @@ export function PaymentModal({ open, onClose, onSelectPlan, agentMessage }: Paym
                 </div>
               </div>
 
-              {/* Payment form */}
+              {/* Contact info for Stripe */}
               <div className="bg-white/5 border border-white/10 rounded-xl p-4 space-y-3">
                 <p className="text-xs font-bold text-white flex items-center gap-2">
-                  <CreditCard className="w-4 h-4 text-primary" /> {t("payment_title")}
+                  <CreditCard className="w-4 h-4 text-primary" /> {t("payment_contact") || "Tus datos de contacto"}
                 </p>
                 <div className="space-y-2">
                   <div className="grid grid-cols-2 gap-2">
                     <input
+                      value={name}
+                      onChange={e => setName(e.target.value)}
                       className="bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-xs text-white placeholder-white/30 focus:outline-none focus:border-primary/50 transition-colors"
-                      placeholder={t("panel_name")}
+                      placeholder={t("panel_name") || "Nombre (opcional)"}
                     />
                     <input
-                      className="bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-xs text-white placeholder-white/30 focus:outline-none focus:border-primary/50 transition-colors"
-                      placeholder="Email"
+                      value={email}
+                      onChange={e => { setEmail(e.target.value); setError(null); }}
+                      type="email"
+                      className={`bg-white/5 border rounded-lg px-3 py-2.5 text-xs text-white placeholder-white/30 focus:outline-none transition-colors ${error && !email ? "border-red-500/60" : "border-white/10 focus:border-primary/50"}`}
+                      placeholder="Email *"
                     />
                   </div>
-                  <input
-                    className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-xs text-white placeholder-white/30 focus:outline-none focus:border-primary/50 transition-colors"
-                    placeholder="•••• •••• •••• ••••"
-                  />
-                  <div className="grid grid-cols-2 gap-2">
-                    <input
-                      className="bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-xs text-white placeholder-white/30 focus:outline-none focus:border-primary/50 transition-colors"
-                      placeholder="MM/AA"
-                    />
-                    <input
-                      className="bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-xs text-white placeholder-white/30 focus:outline-none focus:border-primary/50 transition-colors"
-                      placeholder="CVV"
-                    />
+                  <div className="flex items-center gap-2 text-[10px] text-white/50 bg-white/5 rounded-lg px-3 py-2 border border-white/10">
+                    <ExternalLink className="w-3 h-3 text-primary shrink-0" />
+                    {t("payment_stripe_redirect") || "Serás redirigido a Stripe para pagar de forma segura con tarjeta, PayPal o Bizum."}
                   </div>
                 </div>
                 <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
@@ -176,13 +203,20 @@ export function PaymentModal({ open, onClose, onSelectPlan, agentMessage }: Paym
                 </div>
               </div>
 
+              {/* Error */}
+              {error && (
+                <div className="bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-2.5 text-xs text-red-300">
+                  {error}
+                </div>
+              )}
+
               {/* PAY BUTTON */}
               <button
                 onClick={handlePay}
-                disabled={paying}
+                disabled={loading}
                 className="w-full py-3.5 rounded-xl bg-primary hover:bg-primary/90 disabled:opacity-70 text-white font-bold text-sm flex items-center justify-center gap-2 transition-all shadow-lg shadow-primary/30 active:scale-[0.98]"
               >
-                {paying ? (
+                {loading ? (
                   <>
                     <motion.div
                       className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full"
