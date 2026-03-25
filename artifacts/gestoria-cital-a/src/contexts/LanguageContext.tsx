@@ -157,6 +157,27 @@ const translations = {
     payment_selected: "Seleccionado",
     payment_pay: "Pagar",
     payment_activate: "Activar",
+
+    legal_label: "Aviso importante:",
+    legal_body: "GestoriaCitaIA es un asistente de inteligencia artificial. No somos gestoría, ni abogados, ni despacho jurídico. No realizamos trámites en tu nombre ni te representamos ante ningún organismo oficial. Únicamente te ayudamos a organizar tus documentos, explicarte los requisitos de los trámites de extranjería y buscar disponibilidad de citas. Para trámites oficiales, consulta con un gestor administrativo colegiado o un abogado especialista en extranjería.",
+
+    feat1: "100% online",
+    feat2: "Soporte en español y darija",
+    feat3: "Verificación IA de documentos",
+    feat4: "Aviso WhatsApp de citas disponibles",
+
+    tr_tie: "Renovación TIE",
+    tr_visado_nac: "Visado Nacional",
+    tr_nie: "Asignación NIE",
+    tr_empadron: "Empadronamiento",
+    tr_trabajo: "Autorización Trabajo",
+    tr_familiar: "Reagrupación Familiar",
+    tr_estudiante: "Visado Estudiante",
+    tr_arraigo: "Residencia por Arraigo",
+    tr_conducir: "Canje Permiso Conducir",
+    tr_larga: "Residencia Larga Duración",
+    tr_regreso: "Autorización de Regreso",
+    tr_ue: "Certificado UE",
   },
 
   en: {
@@ -313,6 +334,27 @@ const translations = {
     payment_selected: "Selected",
     payment_pay: "Pay",
     payment_activate: "Activate",
+
+    legal_label: "Important notice:",
+    legal_body: "GestoriaCitaIA is an artificial intelligence assistant. We are not a gestoría, lawyers, or a legal firm. We do not process procedures on your behalf or represent you before any official body. We only help you organise your documents, explain the requirements for immigration procedures and find available appointments. For official procedures, consult a registered administrative agent or a lawyer specialising in immigration.",
+
+    feat1: "100% online",
+    feat2: "Support in Spanish and Darija",
+    feat3: "AI document verification",
+    feat4: "WhatsApp appointment alerts",
+
+    tr_tie: "TIE Card Renewal",
+    tr_visado_nac: "National Visa",
+    tr_nie: "NIE Assignment",
+    tr_empadron: "Registration (Empadronamiento)",
+    tr_trabajo: "Work Authorisation",
+    tr_familiar: "Family Reunification",
+    tr_estudiante: "Student Visa",
+    tr_arraigo: "Residence by Rootedness",
+    tr_conducir: "Driving Licence Exchange",
+    tr_larga: "Long-term Residence",
+    tr_regreso: "Return Authorisation",
+    tr_ue: "EU Certificate",
   },
 
   darija: {
@@ -469,6 +511,27 @@ const translations = {
     payment_selected: "مختار",
     payment_pay: "ادفع",
     payment_activate: "فعّل",
+
+    legal_label: "تنبيه مهم:",
+    legal_body: "GestoriaCitaIA هو مساعد ذكاء اصطناعي. ما حنا ش مكتب محامين ولا مستشارين قانونيين. ما كنديروش الإجراءات بالنيابة عليك ولا كنمثلوكش قدام أي جهة رسمية. غير كنساعدوك تنظم وثائقك، تفهم متطلبات الإجراءات، وتقلب على مواعيد. للإجراءات الرسمية، استشر مستشاراً إدارياً أو محامياً متخصصاً في الهجرة.",
+
+    feat1: "100% عبر الإنترنت",
+    feat2: "دعم بالإسبانية والدارجة",
+    feat3: "تحقق ذكاء اصطناعي من الوثائق",
+    feat4: "إشعار واتساب بالمواعيد المتاحة",
+
+    tr_tie: "تجديد بطاقة الإقامة TIE",
+    tr_visado_nac: "التأشيرة الوطنية",
+    tr_nie: "تعيين رقم NIE",
+    tr_empadron: "التسجيل البلدي",
+    tr_trabajo: "إذن العمل",
+    tr_familiar: "لمّ شمل الأسرة",
+    tr_estudiante: "تأشيرة الطلبة",
+    tr_arraigo: "الإقامة بالاندماج",
+    tr_conducir: "تبادل رخصة القيادة",
+    tr_larga: "الإقامة طويلة الأمد",
+    tr_regreso: "إذن العودة",
+    tr_ue: "شهادة الاتحاد الأوروبي",
   },
 };
 

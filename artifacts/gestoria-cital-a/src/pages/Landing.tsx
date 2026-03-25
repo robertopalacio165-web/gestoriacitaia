@@ -62,20 +62,22 @@ function getPlans(t: (k: string) => string) {
   ];
 }
 
-const TRAMITES = [
-  { icon: FileText, label: "Renovación TIE", color: "text-blue-400" },
-  { icon: Globe, label: "Visado Nacional", color: "text-indigo-400" },
-  { icon: Shield, label: "Asignación NIE", color: "text-green-400" },
-  { icon: Home, label: "Empadronamiento", color: "text-yellow-400" },
-  { icon: Briefcase, label: "Autorización Trabajo", color: "text-orange-400" },
-  { icon: Users, label: "Reagrupación Familiar", color: "text-pink-400" },
-  { icon: GraduationCap, label: "Visado Estudiante", color: "text-cyan-400" },
-  { icon: Heart, label: "Residencia por Arraigo", color: "text-red-400" },
-  { icon: Car, label: "Canje Permiso Conducir", color: "text-purple-400" },
-  { icon: Building2, label: "Residencia Larga Duración", color: "text-teal-400" },
-  { icon: Globe, label: "Autorización de Regreso", color: "text-blue-300" },
-  { icon: MapPin, label: "Certificado UE", color: "text-emerald-400" },
-];
+function getTramites(t: (k: string) => string) {
+  return [
+    { icon: FileText, label: t("tr_tie"), color: "text-blue-400" },
+    { icon: Globe, label: t("tr_visado_nac"), color: "text-indigo-400" },
+    { icon: Shield, label: t("tr_nie"), color: "text-green-400" },
+    { icon: Home, label: t("tr_empadron"), color: "text-yellow-400" },
+    { icon: Briefcase, label: t("tr_trabajo"), color: "text-orange-400" },
+    { icon: Users, label: t("tr_familiar"), color: "text-pink-400" },
+    { icon: GraduationCap, label: t("tr_estudiante"), color: "text-cyan-400" },
+    { icon: Heart, label: t("tr_arraigo"), color: "text-red-400" },
+    { icon: Car, label: t("tr_conducir"), color: "text-purple-400" },
+    { icon: Building2, label: t("tr_larga"), color: "text-teal-400" },
+    { icon: Globe, label: t("tr_regreso"), color: "text-blue-300" },
+    { icon: MapPin, label: t("tr_ue"), color: "text-emerald-400" },
+  ];
+}
 
 export default function Landing() {
   const [, setLocation] = useLocation();
@@ -83,6 +85,7 @@ export default function Landing() {
   const { t } = useLang();
 
   const PLANS = getPlans(t);
+  const TRAMITES = getTramites(t);
 
   const handlePlanClick = (plan: { id: string; free?: boolean }) => {
     if (plan.free) {
@@ -172,7 +175,7 @@ export default function Landing() {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.4 }}
         >
-          {["100% online", "Soporte en español y darija", "Verificación IA de documentos", "Aviso WhatsApp de citas disponibles"].map((f, i) => (
+          {[t("feat1"), t("feat2"), t("feat3"), t("feat4")].map((f, i) => (
             <div key={i} className="flex items-center gap-2 text-white/75 text-sm">
               <CheckCircle2 className="w-4 h-4 text-accent shrink-0" />
               <span>{f}</span>
