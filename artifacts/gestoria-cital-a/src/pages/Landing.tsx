@@ -9,76 +9,46 @@ import { useLang } from "@/contexts/LanguageContext";
 import { CheckCircle2, Play, FileText, Globe, MapPin, Users, Shield, Home, Briefcase, GraduationCap, Heart, Car, Building2, Star, ArrowRight } from "lucide-react";
 import { Link, useLocation } from "wouter";
 
-const PLANS = [
-  {
-    name: "GRATIS",
-    price: "0€",
-    period: "",
-    color: "from-white/5 to-white/[0.02]",
-    border: "border-white/10",
-    btnClass: "bg-white/8 hover:bg-white/15 text-white border border-white/15",
-    badge: null,
-    free: true,
-    features: [
-      "Consulta inicial con agente IA",
-      "1 sesión de demostración",
-      "Ver cómo funciona el proceso",
-      "Sin tarjeta de crédito",
-    ],
-  },
-  {
-    name: "BÁSICO",
-    price: "12.99€",
-    period: "/mes",
-    color: "from-green-900/30 to-green-950/10",
-    border: "border-green-600/20",
-    btnClass: "bg-white/8 hover:bg-white/15 text-white border border-white/15",
-    badge: null,
-    features: [
-      "Buscar cita 1 vez al mes",
-      "Agente IA disponible 24/7",
-      "Guía paso a paso hasta confirmar",
-      "Confirmación por WhatsApp",
-      "PDF de la cita incluido",
-    ],
-  },
-  {
-    name: "ESTÁNDAR",
-    price: "19.99€",
-    period: "/mes",
-    color: "from-blue-900/30 to-blue-950/10",
-    border: "border-blue-500/25",
-    btnClass: "bg-white/8 hover:bg-white/15 text-white border border-white/15",
-    badge: null,
-    features: [
-      "3 trámites activos",
-      "3 citas al mes",
-      "Videollamada con agente",
-      "Soporte prioritario",
-      "Aviso automático por WhatsApp",
-      "Historial del trámite",
-      "Descargar PDF de documentos",
-    ],
-  },
-  {
-    name: "PRO",
-    price: "27.99€",
-    period: "/mes",
-    color: "from-green-800/30 to-blue-900/20",
-    border: "border-green-400/35",
-    btnClass: "bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/30",
-    badge: "POPULAR",
-    features: [
-      "Trámites ilimitados",
-      "Citas ilimitadas",
-      "Agente IA dedicado 24/7",
-      "Soporte urgente prioritario",
-      "Aviso WhatsApp + Email",
-      "Gestión completa de documentos",
-      "20% descuento incluido",
-    ],
-  },
-];
+function getPlans(t: (k: string) => string) {
+  return [
+    {
+      id: "free",
+      price: "0€",
+      period: "",
+      color: "from-white/5 to-white/[0.02]",
+      border: "border-white/10",
+      btnClass: "bg-white/8 hover:bg-white/15 text-white border border-white/15",
+      badge: null,
+      free: true,
+      shadow: false,
+      features: [t("plan_free_f1"), t("plan_free_f2"), t("plan_free_f3"), t("plan_free_f4")],
+    },
+    {
+      id: "cita",
+      price: "9.99€",
+      period: "/mes",
+      color: "from-green-900/30 to-green-950/10",
+      border: "border-green-600/20",
+      btnClass: "bg-white/8 hover:bg-white/15 text-white border border-white/15",
+      badge: null,
+      free: false,
+      shadow: false,
+      features: [t("plan_cita_f1"), t("plan_cita_f2"), t("plan_cita_f3"), t("plan_cita_f4"), t("plan_cita_f5"), t("plan_cita_f6")],
+    },
+    {
+      id: "std",
+      price: "19.99€",
+      period: "/mes",
+      color: "from-blue-900/40 to-blue-950/20",
+      border: "border-blue-400/35",
+      btnClass: "bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/30",
+      badge: "POPULAR",
+      free: false,
+      shadow: true,
+      features: [t("plan_std_f1"), t("plan_std_f2"), t("plan_std_f3"), t("plan_std_f4"), t("plan_std_f5"), t("plan_std_f6"), t("plan_std_f7")],
+    },
+  ];
+}
 
 const TRAMITES = [
   { icon: FileText, label: "Renovación TIE", color: "text-blue-400" },
@@ -100,7 +70,9 @@ export default function Landing() {
   const [showPayment, setShowPayment] = useState(false);
   const { t } = useLang();
 
-  const handlePlanClick = (plan: { name: string; free?: boolean }) => {
+  const PLANS = getPlans(t);
+
+  const handlePlanClick = (plan: { id: string; free?: boolean }) => {
     if (plan.free) {
       setLocation("/buscar-citas");
     } else {
@@ -122,28 +94,48 @@ export default function Landing() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
         >
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold font-display leading-tight mb-4">
-            {t("hero_title_1")}{" "}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-blue-400 to-secondary">
+          {/* Trust badge */}
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/25 text-primary text-xs font-semibold mb-5">
+            <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+            {t("hero_badge")}
+          </div>
+
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold font-display leading-tight mb-4 max-w-3xl mx-auto">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-white to-white/80">
+              {t("hero_title_1")}{" "}
+            </span>
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-green-400 to-blue-400">
               {t("hero_title_2")}
             </span>
           </h1>
-          <p className="text-sm sm:text-base text-muted-foreground max-w-xl mx-auto mb-6">
+
+          <p className="text-sm sm:text-base text-muted-foreground max-w-2xl mx-auto mb-6 leading-relaxed">
             {t("hero_sub")}
           </p>
-          <div className="flex flex-wrap justify-center gap-3">
+
+          <div className="flex flex-wrap justify-center gap-3 mb-5">
             <Button
-              className="rounded-full px-6 shadow-lg shadow-primary/25 bg-primary hover:bg-primary/90"
+              className="rounded-full px-7 py-3 shadow-lg shadow-primary/30 bg-primary hover:bg-primary/90 text-base font-bold"
               onClick={() => setLocation("/buscar-citas")}
             >
               {t("hero_btn1")} <ArrowRight className="w-4 h-4 ml-1" />
             </Button>
             <Button variant="outline" className="rounded-full px-6 border-white/15 hover:bg-white/5" onClick={() => setLocation("/regularizacion-2026")}>
-              Regularización 2026
+              {t("nav_reg")}
             </Button>
             <Button variant="outline" className="rounded-full px-6 border-white/15 hover:bg-white/5" onClick={() => setLocation("/panel")}>
               {t("hero_btn2")}
             </Button>
+          </div>
+
+          {/* Social proof */}
+          <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
+            <div className="flex -space-x-2">
+              {["🇲🇦","🇸🇳","🇩🇿","🇨🇴","🇵🇰"].map((flag, i) => (
+                <span key={i} className="w-6 h-6 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-[10px]">{flag}</span>
+              ))}
+            </div>
+            <span>{t("hero_trust")}</span>
           </div>
         </motion.div>
 
@@ -208,47 +200,49 @@ export default function Landing() {
             <p className="text-sm text-muted-foreground">{t("plans_sub")}</p>
           </div>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-5xl mx-auto items-stretch">
-            {PLANS.map((plan) => (
-              <div
-                key={plan.name}
-                className={`relative rounded-2xl border ${plan.border} bg-gradient-to-b ${plan.color} backdrop-blur-sm p-5 flex flex-col`}
-                style={{ boxShadow: plan.badge ? "0 0 40px -10px hsl(142,71%,45%,0.25)" : undefined }}
-              >
-                {/* Popular badge - corner ribbon */}
-                {plan.badge && (
-                  <div className="absolute top-0 right-0 overflow-hidden w-20 h-20">
-                    <div className="absolute top-3 right-[-20px] w-24 text-center bg-primary text-white text-[10px] font-bold py-1 rotate-45 shadow-sm">
-                      POPULAR
+          <div className="grid sm:grid-cols-3 gap-5 max-w-4xl mx-auto items-stretch">
+            {PLANS.map((plan) => {
+              const nameKey = plan.id === "free" ? "plan_free_name" : plan.id === "cita" ? "plan_cita_name" : "plan_std_name";
+              return (
+                <div
+                  key={plan.id}
+                  className={`relative rounded-2xl border ${plan.border} bg-gradient-to-b ${plan.color} backdrop-blur-sm p-5 flex flex-col`}
+                  style={{ boxShadow: plan.shadow ? "0 0 50px -10px hsl(142,71%,45%,0.30)" : undefined }}
+                >
+                  {plan.badge && (
+                    <div className="absolute top-0 right-0 overflow-hidden w-20 h-20">
+                      <div className="absolute top-3 right-[-20px] w-24 text-center bg-primary text-white text-[10px] font-bold py-1 rotate-45 shadow-sm">
+                        {t("plan_popular")}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="mb-5">
+                    <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-3">{t(nameKey as any)}</p>
+                    <div className="flex items-end gap-1 mb-1">
+                      <span className="text-4xl font-display font-black text-white">{plan.price}</span>
+                      <span className="text-sm text-muted-foreground mb-1">{plan.period}</span>
                     </div>
                   </div>
-                )}
 
-                <div className="mb-5">
-                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-3">{plan.name}</p>
-                  <div className="flex items-end gap-1 mb-1">
-                    <span className="text-4xl font-display font-black text-white">{plan.price}</span>
-                    <span className="text-sm text-muted-foreground mb-1">{plan.period}</span>
-                  </div>
+                  <ul className="flex-1 space-y-2.5 mb-6">
+                    {plan.features.map((f, i) => (
+                      <li key={i} className="flex items-start gap-2.5 text-sm text-white/80">
+                        <CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                        {f}
+                      </li>
+                    ))}
+                  </ul>
+
+                  <button
+                    onClick={() => handlePlanClick(plan)}
+                    className={`w-full py-2.5 rounded-xl text-sm font-bold uppercase tracking-wider transition-all ${plan.btnClass}`}
+                  >
+                    {plan.free ? t("plan_free_btn") : t("plan_btn")}
+                  </button>
                 </div>
-
-                <ul className="flex-1 space-y-2.5 mb-6">
-                  {plan.features.map((f, i) => (
-                    <li key={i} className="flex items-start gap-2.5 text-sm text-white/80">
-                      <CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-
-                <button
-                  onClick={() => handlePlanClick(plan)}
-                  className={`w-full py-2.5 rounded-xl text-sm font-bold uppercase tracking-wider transition-all ${plan.btnClass}`}
-                >
-                  {(plan as any).free ? t("plan_free_btn") : t("plan_btn")}
-                </button>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </motion.div>
 

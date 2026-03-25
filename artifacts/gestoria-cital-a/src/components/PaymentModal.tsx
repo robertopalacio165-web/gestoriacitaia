@@ -1,36 +1,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle2, X, CreditCard, Shield, Lock, ChevronRight } from "lucide-react";
-
-interface Plan {
-  name: string;
-  price: string;
-  priceNum: string;
-  features: string[];
-  highlighted?: boolean;
-}
-
-const MODAL_PLANS: Plan[] = [
-  {
-    name: "BÁSICO",
-    price: "12.99€/mes",
-    priceNum: "12.99",
-    features: ["1 cita al mes", "Agente IA 24/7", "PDF + WhatsApp"],
-  },
-  {
-    name: "ESTÁNDAR",
-    price: "19.99€/mes",
-    priceNum: "19.99",
-    features: ["3 citas al mes", "3 trámites", "Videollamada", "Aviso WhatsApp"],
-    highlighted: true,
-  },
-  {
-    name: "PRO",
-    price: "27.99€/mes",
-    priceNum: "27.99",
-    features: ["Citas ilimitadas", "Agente dedicado", "Soporte urgente", "20% dto."],
-  },
-];
+import { useLang } from "@/contexts/LanguageContext";
 
 interface PaymentModalProps {
   open: boolean;
@@ -40,16 +11,36 @@ interface PaymentModalProps {
 }
 
 export function PaymentModal({ open, onClose, onSelectPlan, agentMessage }: PaymentModalProps) {
-  const [selected, setSelected] = useState<string>("ESTÁNDAR");
+  const [selected, setSelected] = useState<"cita" | "std">("std");
   const [paying, setPaying] = useState(false);
+  const { t } = useLang();
 
-  const selectedPlan = MODAL_PLANS.find(p => p.name === selected)!;
+  const MODAL_PLANS = [
+    {
+      id: "cita",
+      name: t("plan_cita_name"),
+      price: "9.99€/mes",
+      priceNum: "9.99",
+      highlighted: false,
+      features: [t("plan_cita_f1"), t("plan_cita_f2"), t("plan_cita_f3"), t("plan_cita_f4"), t("plan_cita_f5")],
+    },
+    {
+      id: "std",
+      name: t("plan_std_name"),
+      price: "19.99€/mes",
+      priceNum: "19.99",
+      highlighted: true,
+      features: [t("plan_std_f1"), t("plan_std_f2"), t("plan_std_f3"), t("plan_std_f4"), t("plan_std_f5"), t("plan_std_f6"), t("plan_std_f7")],
+    },
+  ];
+
+  const selectedPlan = MODAL_PLANS.find(p => p.id === selected)!;
 
   const handlePay = () => {
     setPaying(true);
     setTimeout(() => {
       setPaying(false);
-      onSelectPlan(selected);
+      onSelectPlan(selectedPlan.name);
       onClose();
     }, 1800);
   };
@@ -63,10 +54,8 @@ export function PaymentModal({ open, onClose, onSelectPlan, agentMessage }: Paym
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
         >
-          {/* Backdrop */}
           <motion.div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
 
-          {/* Modal — full-width bottom sheet on mobile, centered card on desktop */}
           <motion.div
             className="relative z-10 w-full sm:max-w-lg glass-panel-heavy border border-white/10 sm:rounded-2xl rounded-t-2xl overflow-hidden shadow-2xl max-h-[92dvh] overflow-y-auto"
             initial={{ y: 60, opacity: 0 }}
@@ -74,7 +63,7 @@ export function PaymentModal({ open, onClose, onSelectPlan, agentMessage }: Paym
             exit={{ y: 60, opacity: 0 }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
           >
-            {/* Header with agent bubble */}
+            {/* Header */}
             <div className="bg-gradient-to-r from-green-900/40 to-blue-900/30 px-4 pt-5 pb-4 border-b border-white/10 sticky top-0 z-10 glass-panel-heavy">
               <button onClick={onClose} className="absolute top-4 right-4 text-muted-foreground hover:text-white transition-colors">
                 <X className="w-5 h-5" />
@@ -88,10 +77,10 @@ export function PaymentModal({ open, onClose, onSelectPlan, agentMessage }: Paym
                   />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-bold text-primary mb-0.5">Sara · Asistente de Citas</p>
+                  <p className="text-xs font-bold text-primary mb-0.5">Sara · {t("agent_sara_role")}</p>
                   <div className="bg-white/5 border border-white/10 rounded-xl rounded-tl-sm p-2.5">
                     <p className="text-xs text-white/90 leading-relaxed">
-                      {agentMessage || "Para continuar con tu trámite y reservar tu cita, activa un plan. ¡Elige el que mejor se adapta a ti!"}
+                      {agentMessage || t("payment_title")}
                     </p>
                   </div>
                 </div>
@@ -100,27 +89,27 @@ export function PaymentModal({ open, onClose, onSelectPlan, agentMessage }: Paym
 
             <div className="p-4 space-y-4">
 
-              {/* Plans — horizontal scroll on mobile */}
+              {/* Plans */}
               <div>
-                <p className="text-xs font-bold text-white/60 uppercase tracking-wider mb-3">Elige tu plan</p>
-                <div className="flex gap-2 overflow-x-auto pb-1 snap-x snap-mandatory -mx-1 px-1">
+                <p className="text-xs font-bold text-white/60 uppercase tracking-wider mb-3">{t("payment_choose")}</p>
+                <div className="grid grid-cols-2 gap-3">
                   {MODAL_PLANS.map((plan) => (
                     <button
-                      key={plan.name}
-                      onClick={() => setSelected(plan.name)}
-                      className={`snap-center shrink-0 w-[140px] rounded-xl p-3 flex flex-col border transition-all text-left ${
-                        selected === plan.name
+                      key={plan.id}
+                      onClick={() => setSelected(plan.id as "cita" | "std")}
+                      className={`rounded-xl p-3 flex flex-col border transition-all text-left ${
+                        selected === plan.id
                           ? plan.highlighted
                             ? "bg-primary/15 border-primary/50 shadow-lg shadow-primary/20"
-                            : "bg-secondary/10 border-secondary/40"
+                            : "bg-blue-900/20 border-blue-500/40"
                           : "bg-white/5 border-white/10 hover:border-white/20"
                       }`}
                     >
                       {plan.highlighted && (
-                        <span className="text-[9px] font-black text-primary uppercase tracking-widest mb-1">⭐ Recomendado</span>
+                        <span className="text-[9px] font-black text-primary uppercase tracking-widest mb-1">⭐ {t("payment_rec")}</span>
                       )}
                       <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-0.5">{plan.name}</p>
-                      <p className={`text-base font-black mb-2 leading-tight ${plan.highlighted ? "text-primary" : "text-white"}`}>
+                      <p className={`text-xl font-black mb-2 leading-tight ${plan.highlighted ? "text-primary" : "text-white"}`}>
                         {plan.priceNum}€<span className="text-[10px] font-normal text-muted-foreground">/mes</span>
                       </p>
                       <ul className="space-y-1 flex-1">
@@ -131,9 +120,9 @@ export function PaymentModal({ open, onClose, onSelectPlan, agentMessage }: Paym
                           </li>
                         ))}
                       </ul>
-                      {selected === plan.name && (
+                      {selected === plan.id && (
                         <div className="mt-2 flex items-center gap-1 text-[10px] font-bold text-primary">
-                          <CheckCircle2 className="w-3 h-3" /> Seleccionado
+                          <CheckCircle2 className="w-3 h-3" /> {t("payment_selected")}
                         </div>
                       )}
                     </button>
@@ -144,14 +133,13 @@ export function PaymentModal({ open, onClose, onSelectPlan, agentMessage }: Paym
               {/* Payment form */}
               <div className="bg-white/5 border border-white/10 rounded-xl p-4 space-y-3">
                 <p className="text-xs font-bold text-white flex items-center gap-2">
-                  <CreditCard className="w-4 h-4 text-primary" /> Pago seguro con Stripe
+                  <CreditCard className="w-4 h-4 text-primary" /> {t("payment_title")}
                 </p>
-
                 <div className="space-y-2">
                   <div className="grid grid-cols-2 gap-2">
                     <input
                       className="bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-xs text-white placeholder-white/30 focus:outline-none focus:border-primary/50 transition-colors"
-                      placeholder="Nombre completo"
+                      placeholder={t("panel_name")}
                     />
                     <input
                       className="bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-xs text-white placeholder-white/30 focus:outline-none focus:border-primary/50 transition-colors"
@@ -160,7 +148,7 @@ export function PaymentModal({ open, onClose, onSelectPlan, agentMessage }: Paym
                   </div>
                   <input
                     className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-xs text-white placeholder-white/30 focus:outline-none focus:border-primary/50 transition-colors"
-                    placeholder="Número de tarjeta · · · ·"
+                    placeholder="•••• •••• •••• ••••"
                   />
                   <div className="grid grid-cols-2 gap-2">
                     <input
@@ -173,10 +161,9 @@ export function PaymentModal({ open, onClose, onSelectPlan, agentMessage }: Paym
                     />
                   </div>
                 </div>
-
                 <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
                   <Shield className="w-3 h-3 text-primary shrink-0" />
-                  Pago 100% seguro · SSL cifrado · Powered by Stripe
+                  {t("payment_secure")}
                 </div>
               </div>
 
@@ -193,19 +180,19 @@ export function PaymentModal({ open, onClose, onSelectPlan, agentMessage }: Paym
                       animate={{ rotate: 360 }}
                       transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }}
                     />
-                    Procesando pago...
+                    {t("payment_processing")}
                   </>
                 ) : (
                   <>
                     <Lock className="w-4 h-4" />
-                    Pagar {selectedPlan?.price} — Activar {selected}
+                    {t("payment_pay")} {selectedPlan?.price} — {t("payment_activate")} {selectedPlan?.name}
                     <ChevronRight className="w-4 h-4" />
                   </>
                 )}
               </button>
 
               <p className="text-center text-[10px] text-muted-foreground">
-                Puedes cancelar en cualquier momento · Sin permanencia
+                {t("payment_cancel")}
               </p>
             </div>
           </motion.div>

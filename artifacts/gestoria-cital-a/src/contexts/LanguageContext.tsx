@@ -10,12 +10,15 @@ const translations = {
     nav_reg: "Regularización 2026",
     nav_login: "Iniciar sesión",
 
-    hero_badge: "Agente IA de Extranjería v2.0 Activo",
-    hero_title_1: "Tu Gestoría de Extranjería",
-    hero_title_2: "con Inteligencia Artificial",
-    hero_sub: "Nuestros agentes IA te guían paso a paso en tiempo real para conseguir tu cita y tramitar tus documentos de extranjería desde el móvil.",
-    hero_btn1: "Buscar mi cita",
+    hero_badge: "Agente IA de Extranjería — 100% legal y seguro",
+    hero_title_main: "Descubre si puedes regularizarte en España en 5 minutos",
+    hero_sub: "Nuestro agente IA analiza tus documentos y te dice si estás listo para conseguir papeles, citas y residencia. Sin esperas, sin gestorías caras.",
+    hero_btn1: "Analizar mi caso ahora",
     hero_btn2: "Ver mi panel",
+    hero_trust: "Más de 3.800 inmigrantes ya han usado GestoriaCitaIA",
+
+    hero_title_1: "Descubre si puedes regularizarte",
+    hero_title_2: "en España en 5 minutos",
 
     agents_title: "Tus Agentes IA disponibles 24/7",
     agents_sub: "Especialistas digitales que te acompañan en cada trámite",
@@ -31,6 +34,30 @@ const translations = {
     plan_free_btn: "Empezar gratis",
     plan_btn: "Seleccionar",
     plan_popular: "POPULAR",
+
+    plan_free_name: "GRATIS",
+    plan_cita_name: "BUSCAR CITA",
+    plan_std_name: "ESTÁNDAR",
+
+    plan_free_f1: "Consulta inicial con agente IA",
+    plan_free_f2: "Descubre si puedes regularizarte",
+    plan_free_f3: "Ver cómo funciona el proceso",
+    plan_free_f4: "Sin tarjeta de crédito",
+
+    plan_cita_f1: "Búsqueda avanzada de citas (más rápida)",
+    plan_cita_f2: "Aviso prioritario por WhatsApp",
+    plan_cita_f3: "Guía paso a paso hasta confirmar la cita",
+    plan_cita_f4: "Asistente IA 24/7 (prioridad)",
+    plan_cita_f5: "Hasta 3 oportunidades de cita al mes",
+    plan_cita_f6: "Mayor probabilidad de conseguir cita",
+
+    plan_std_f1: "3 trámites activos",
+    plan_std_f2: "Citas ilimitadas al mes",
+    plan_std_f3: "Videollamada con agente IA",
+    plan_std_f4: "Soporte prioritario",
+    plan_std_f5: "Aviso automático por WhatsApp",
+    plan_std_f6: "Historial completo del trámite",
+    plan_std_f7: "Descargar PDF de documentos",
 
     tramites_title: "Trámites que gestionamos",
     tramites_sub: "Todos los trámites de extranjería, gestionados por IA en tiempo real",
@@ -79,6 +106,13 @@ const translations = {
     payment_secure: "Pago 100% seguro · SSL cifrado · Powered by Stripe",
     payment_select: "Elegir plan",
     payment_rec: "Recomendado",
+
+    payment_processing: "Procesando pago...",
+    payment_cancel: "Puedes cancelar en cualquier momento · Sin permanencia",
+    payment_choose: "Elige tu plan",
+    payment_selected: "Seleccionado",
+    payment_pay: "Pagar",
+    payment_activate: "Activar",
   },
 
   en: {
@@ -88,12 +122,15 @@ const translations = {
     nav_reg: "Regularisation 2026",
     nav_login: "Sign in",
 
-    hero_badge: "Immigration AI Agent v2.0 Active",
-    hero_title_1: "Your Immigration Office",
-    hero_title_2: "powered by AI",
-    hero_sub: "Our AI agents guide you step by step in real time to get your appointment and process your immigration documents from your phone.",
-    hero_btn1: "Find my appointment",
+    hero_badge: "Immigration AI Agent — 100% legal & safe",
+    hero_title_main: "Find out in 5 minutes if you can regularise your status in Spain",
+    hero_sub: "Our AI agent analyses your documents and tells you if you're ready to get your papers, appointments and residency. No waiting, no expensive agencies.",
+    hero_btn1: "Analyse my case now",
     hero_btn2: "My dashboard",
+    hero_trust: "Over 3,800 immigrants have already used GestoriaCitaIA",
+
+    hero_title_1: "Find out if you can regularise",
+    hero_title_2: "your status in Spain in 5 minutes",
 
     agents_title: "Your AI Agents available 24/7",
     agents_sub: "Digital specialists who assist you through every procedure",
@@ -109,6 +146,30 @@ const translations = {
     plan_free_btn: "Start for free",
     plan_btn: "Select",
     plan_popular: "POPULAR",
+
+    plan_free_name: "FREE",
+    plan_cita_name: "APPOINTMENT",
+    plan_std_name: "STANDARD",
+
+    plan_free_f1: "Initial consultation with AI agent",
+    plan_free_f2: "Discover if you can regularise",
+    plan_free_f3: "See how the process works",
+    plan_free_f4: "No credit card required",
+
+    plan_cita_f1: "Advanced appointment search (faster)",
+    plan_cita_f2: "Priority WhatsApp notifications",
+    plan_cita_f3: "Step-by-step guide to confirm appointment",
+    plan_cita_f4: "AI assistant 24/7 (priority)",
+    plan_cita_f5: "Up to 3 appointment slots per month",
+    plan_cita_f6: "Higher chance of getting an appointment",
+
+    plan_std_f1: "3 active procedures",
+    plan_std_f2: "Unlimited appointments per month",
+    plan_std_f3: "Video call with AI agent",
+    plan_std_f4: "Priority support",
+    plan_std_f5: "Automatic WhatsApp notifications",
+    plan_std_f6: "Full procedure history",
+    plan_std_f7: "Download PDF documents",
 
     tramites_title: "Procedures we handle",
     tramites_sub: "All immigration procedures, managed by AI in real time",
@@ -157,6 +218,13 @@ const translations = {
     payment_secure: "100% secure payment · SSL encrypted · Powered by Stripe",
     payment_select: "Choose plan",
     payment_rec: "Recommended",
+
+    payment_processing: "Processing payment...",
+    payment_cancel: "Cancel anytime · No commitment",
+    payment_choose: "Choose your plan",
+    payment_selected: "Selected",
+    payment_pay: "Pay",
+    payment_activate: "Activate",
   },
 
   darija: {
@@ -166,12 +234,15 @@ const translations = {
     nav_reg: "التسوية 2026",
     nav_login: "دخول",
 
-    hero_badge: "وكيل ذكاء اصطناعي نشط للهجرة v2.0",
-    hero_title_1: "مكتبك للهجرة",
-    hero_title_2: "بالذكاء الاصطناعي",
-    hero_sub: "وكلاؤنا بالذكاء الاصطناعي كيرشدوك خطوة بخطوة في الوقت الحقيقي باش تجيب موعدك وتصلح وراقك ديال الهجرة من التيليفون.",
-    hero_btn1: "قلب على موعد",
+    hero_badge: "وكيل ذكاء اصطناعي للهجرة — قانوني 100%",
+    hero_title_main: "اعرف في 5 دقائق واش يمكنك تصلح وضعيتك في إسبانيا",
+    hero_sub: "وكيلنا بالذكاء الاصطناعي كيحلل وراقك ويقولك واش أنت مستعد تجيب الإقامة والمواعيد والأوراق. بلا انتظار، بلا مكاتب غالية.",
+    hero_btn1: "حلل حالتي دابا",
     hero_btn2: "شوف لوحتي",
+    hero_trust: "أكثر من 3.800 مهاجر استخدموا GestoriaCitaIA",
+
+    hero_title_1: "اعرف واش يمكنك تصلح وضعيتك",
+    hero_title_2: "في إسبانيا في 5 دقائق",
 
     agents_title: "وكلاؤك بالذكاء الاصطناعي 24/7",
     agents_sub: "متخصصون رقميون كيرافقوك في كل خطوة",
@@ -187,6 +258,30 @@ const translations = {
     plan_free_btn: "ابدا بالمجان",
     plan_btn: "اختار",
     plan_popular: "الأكثر طلباً",
+
+    plan_free_name: "مجاني",
+    plan_cita_name: "الموعد",
+    plan_std_name: "القياسي",
+
+    plan_free_f1: "استشارة أولية مع وكيل الذكاء الاصطناعي",
+    plan_free_f2: "اكتشف واش يمكنك تصلح وضعيتك",
+    plan_free_f3: "شوف كيفاش كيخدم الذكاء الاصطناعي",
+    plan_free_f4: "بلا كارط بنكية",
+
+    plan_cita_f1: "بحث متقدم عن المواعيد (أسرع)",
+    plan_cita_f2: "إشعارات واتساب ذات أولوية",
+    plan_cita_f3: "دليل خطوة بخطوة لتأكيد الموعد",
+    plan_cita_f4: "وكيل ذكاء اصطناعي 24/7 (أولوية)",
+    plan_cita_f5: "حتى 3 فرص للموعد في الشهر",
+    plan_cita_f6: "احتمال أكبر للحصول على موعد",
+
+    plan_std_f1: "3 خدمات نشطة",
+    plan_std_f2: "مواعيد غير محدودة في الشهر",
+    plan_std_f3: "مكالمة فيديو مع الوكيل الذكاء الاصطناعي",
+    plan_std_f4: "دعم ذو أولوية",
+    plan_std_f5: "إشعار تلقائي عبر واتساب",
+    plan_std_f6: "سجل كامل للخدمة",
+    plan_std_f7: "تحميل وثائق PDF",
 
     tramites_title: "الخدمات اللي كنديروها",
     tramites_sub: "جميع خدمات الهجرة، مُدارة بالذكاء الاصطناعي في الوقت الحقيقي",
@@ -235,6 +330,13 @@ const translations = {
     payment_secure: "دفع آمن 100% · SSL مشفر · Powered by Stripe",
     payment_select: "اختار الباقة",
     payment_rec: "الأنسب",
+
+    payment_processing: "جاري معالجة الدفع...",
+    payment_cancel: "يمكنك الإلغاء في أي وقت · بلا التزام",
+    payment_choose: "اختار باقتك",
+    payment_selected: "مختار",
+    payment_pay: "ادفع",
+    payment_activate: "فعّل",
   },
 };
 
