@@ -11,7 +11,7 @@ interface PaymentModalProps {
 }
 
 export function PaymentModal({ open, onClose, onSelectPlan, agentMessage }: PaymentModalProps) {
-  const [selected, setSelected] = useState<"cita" | "std">("std");
+  const [selected, setSelected] = useState<"cita" | "reg" | "std">("std");
   const [paying, setPaying] = useState(false);
   const { t } = useLang();
 
@@ -22,7 +22,17 @@ export function PaymentModal({ open, onClose, onSelectPlan, agentMessage }: Paym
       price: "9.99€/mes",
       priceNum: "9.99",
       highlighted: false,
+      accentClass: "border-green-500/40 bg-green-900/10",
       features: [t("plan_cita_f1"), t("plan_cita_f2"), t("plan_cita_f3"), t("plan_cita_f4"), t("plan_cita_f5")],
+    },
+    {
+      id: "reg",
+      name: t("plan_reg_name"),
+      price: "9.99€/mes",
+      priceNum: "9.99",
+      highlighted: false,
+      accentClass: "border-orange-500/40 bg-orange-900/10",
+      features: [t("plan_reg_f1"), t("plan_reg_f2"), t("plan_reg_f3"), t("plan_reg_f4"), t("plan_reg_f5")],
     },
     {
       id: "std",
@@ -30,6 +40,7 @@ export function PaymentModal({ open, onClose, onSelectPlan, agentMessage }: Paym
       price: "19.99€/mes",
       priceNum: "19.99",
       highlighted: true,
+      accentClass: "border-primary/50 bg-primary/15",
       features: [t("plan_std_f1"), t("plan_std_f2"), t("plan_std_f3"), t("plan_std_f4"), t("plan_std_f5"), t("plan_std_f6"), t("plan_std_f7")],
     },
   ];
@@ -92,16 +103,14 @@ export function PaymentModal({ open, onClose, onSelectPlan, agentMessage }: Paym
               {/* Plans */}
               <div>
                 <p className="text-xs font-bold text-white/60 uppercase tracking-wider mb-3">{t("payment_choose")}</p>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-3 gap-2">
                   {MODAL_PLANS.map((plan) => (
                     <button
                       key={plan.id}
-                      onClick={() => setSelected(plan.id as "cita" | "std")}
-                      className={`rounded-xl p-3 flex flex-col border transition-all text-left ${
+                      onClick={() => setSelected(plan.id as "cita" | "reg" | "std")}
+                      className={`rounded-xl p-2.5 flex flex-col border transition-all text-left ${
                         selected === plan.id
-                          ? plan.highlighted
-                            ? "bg-primary/15 border-primary/50 shadow-lg shadow-primary/20"
-                            : "bg-blue-900/20 border-blue-500/40"
+                          ? `${plan.accentClass} shadow-lg`
                           : "bg-white/5 border-white/10 hover:border-white/20"
                       }`}
                     >

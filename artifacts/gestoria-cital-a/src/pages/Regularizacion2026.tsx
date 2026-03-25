@@ -511,13 +511,13 @@ export default function Regularizacion2026() {
                   <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-4 flex gap-2 items-start">
                     <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
                     <p className="text-xs text-amber-800 leading-relaxed">
-                      <strong>Regularización Extraordinaria 2026.</strong> El agente IA verificará tus documentos y rellenará la solicitud automáticamente. Solo tendrás que confirmar.
+                      {t("reg_alert_text")}
                     </p>
                   </div>
 
                   {/* SITUACIÓN */}
                   <div className="mb-4">
-                    <p className="text-xs font-bold text-gray-700 uppercase tracking-wide mb-2">SITUACIÓN ACTUAL</p>
+                    <p className="text-xs font-bold text-gray-700 uppercase tracking-wide mb-2">{t("reg_sit")}</p>
                     <select
                       className="w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                       value={selectedSituacion}
@@ -544,7 +544,7 @@ export default function Regularizacion2026() {
                   <AnimatePresence>
                     {step >= 1 && (
                       <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="mb-5">
-                        <p className="text-xs font-bold text-gray-700 uppercase tracking-wide mb-3">VERIFICACIÓN DE DOCUMENTOS</p>
+                        <p className="text-xs font-bold text-gray-700 uppercase tracking-wide mb-3">{t("reg_docs")}</p>
                         <div className="space-y-2">
                           {DOCS_REQUERIDOS.map((doc, i) => (
                             <div key={i} className="flex items-center justify-between p-2.5 rounded-lg border border-gray-100 hover:bg-gray-50">
@@ -553,14 +553,14 @@ export default function Regularizacion2026() {
                               {doc.estado === "warn" && <AlertTriangle className="w-4 h-4 text-amber-500" />}
                               {doc.estado === "missing" && (
                                 <button className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 font-medium">
-                                  <Upload className="w-3 h-3" /> Subir
+                                  <Upload className="w-3 h-3" /> {t("reg_upload")}
                                 </button>
                               )}
                             </div>
                           ))}
                         </div>
                         <button onClick={handleVerificarDocs} className="mt-3 w-full bg-[#003366] text-white text-sm font-bold py-2.5 rounded hover:bg-[#002244] transition-colors">
-                          Verificar todos los documentos con IA
+                          {t("reg_docs_btn")}
                         </button>
                       </motion.div>
                     )}

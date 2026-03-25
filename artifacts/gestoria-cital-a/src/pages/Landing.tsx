@@ -36,6 +36,18 @@ function getPlans(t: (k: string) => string) {
       features: [t("plan_cita_f1"), t("plan_cita_f2"), t("plan_cita_f3"), t("plan_cita_f4"), t("plan_cita_f5"), t("plan_cita_f6")],
     },
     {
+      id: "reg",
+      price: "9.99€",
+      period: "/mes",
+      color: "from-orange-900/25 to-orange-950/10",
+      border: "border-orange-500/25",
+      btnClass: "bg-white/8 hover:bg-white/15 text-white border border-white/15",
+      badge: null,
+      free: false,
+      shadow: false,
+      features: [t("plan_reg_f1"), t("plan_reg_f2"), t("plan_reg_f3"), t("plan_reg_f4"), t("plan_reg_f5")],
+    },
+    {
       id: "std",
       price: "19.99€",
       period: "/mes",
@@ -116,12 +128,15 @@ export default function Landing() {
           <div className="flex flex-wrap justify-center gap-3 mb-5">
             <Button
               className="rounded-full px-7 py-3 shadow-lg shadow-primary/30 bg-primary hover:bg-primary/90 text-base font-bold"
-              onClick={() => setLocation("/buscar-citas")}
+              onClick={() => setLocation("/regularizacion-2026")}
             >
               {t("hero_btn1")} <ArrowRight className="w-4 h-4 ml-1" />
             </Button>
-            <Button variant="outline" className="rounded-full px-6 border-white/15 hover:bg-white/5" onClick={() => setLocation("/regularizacion-2026")}>
-              {t("nav_reg")}
+            <Button
+              className="rounded-full px-7 py-3 shadow-lg shadow-blue-500/30 bg-blue-600 hover:bg-blue-500 text-white text-base font-bold border-0"
+              onClick={() => setLocation("/buscar-citas")}
+            >
+              {t("hero_btn_citas")} <ArrowRight className="w-4 h-4 ml-1" />
             </Button>
             <Button variant="outline" className="rounded-full px-6 border-white/15 hover:bg-white/5" onClick={() => setLocation("/panel")}>
               {t("hero_btn2")}
@@ -200,9 +215,9 @@ export default function Landing() {
             <p className="text-sm text-muted-foreground">{t("plans_sub")}</p>
           </div>
 
-          <div className="grid sm:grid-cols-3 gap-5 max-w-4xl mx-auto items-stretch">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-6xl mx-auto items-stretch">
             {PLANS.map((plan) => {
-              const nameKey = plan.id === "free" ? "plan_free_name" : plan.id === "cita" ? "plan_cita_name" : "plan_std_name";
+              const nameKey = plan.id === "free" ? "plan_free_name" : plan.id === "cita" ? "plan_cita_name" : plan.id === "reg" ? "plan_reg_name" : "plan_std_name";
               return (
                 <div
                   key={plan.id}
