@@ -94,3 +94,34 @@ Generated React Query hooks and fetch client from the OpenAPI spec (e.g. `useHea
 ### `scripts` (`@workspace/scripts`)
 
 Utility scripts package. Each script is a `.ts` file in `src/` with a corresponding npm script in `package.json`. Run scripts via `pnpm --filter @workspace/scripts run <script>`. Scripts can import any workspace package (e.g., `@workspace/db`) by adding it as a dependency in `scripts/package.json`.
+
+- `seed-stripe-products` — creates the 3 GestoriaCitaIA Stripe products/prices in sandbox (uses Replit connector)
+
+## GestoriaCitaIA App (`artifacts/gestoria-cital-a`)
+
+Spanish immigration consultancy SaaS. Dark navy blue theme, green `#22c55e` primary. Three AI agents (Mohamed=Extranjería, Sara=Buscar Citas, Khalid=Panel).
+
+### Pages
+- `/` — Landing (hero, agents, plans, pricing, legal links)
+- `/panel` — Panel Personal (user dashboard with tramites, docs, citas)
+- `/buscar-citas` — Buscar Citas 24/7 (Sara AI searches for appointments)
+- `/regularizacion-2026` — Regularización 2026 page
+- `/checkout/success` — Post-payment success page
+- `/checkout/cancelado` — Payment cancelled page
+- `/aviso-legal`, `/privacidad`, `/cookies` — Legal pages
+
+### Languages
+`useLang()` hook from `LanguageContext`. Supports ES/EN/Darija. Darija uses RTL.
+
+### Stripe Integration (Sandbox)
+- Replit connector: `stripe` (not `STRIPE_SECRET_KEY` env var — uses Replit connector API)
+- `artifacts/api-server/src/stripeClient.ts` — connector-based async client (`getUncachableStripeClient()`)
+- `artifacts/api-server/src/routes/stripe.ts` — POST `/api/stripe/create-checkout-session`, GET `/api/stripe/subscription-status`, POST `/api/stripe/webhook`
+- `artifacts/api-server/src/storage.ts` — DB operations for users/subscriptions
+- Stripe products: Buscar Cita (9.99€/mes), Regularización (9.99€/mes), Estándar (19.99€/mes)
+- Price IDs in env vars: `STRIPE_PRICE_CITA`, `STRIPE_PRICE_REG`, `STRIPE_PRICE_STD`
+- Vite proxy: `/api` → `http://localhost:8080` (API server port)
+- To re-create Stripe products: `pnpm --filter @workspace/scripts run seed-stripe`
+
+### Database Schema
+- `lib/db/src/schema/users.ts` — users table with stripe customer/subscription/plan fields
