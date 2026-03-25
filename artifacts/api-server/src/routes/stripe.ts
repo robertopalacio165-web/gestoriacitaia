@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import type { Request, Response } from "express";
-import { getUncachableStripeClient } from "../stripeClient";
+import { getStripeClient } from "../stripeClient";
 import { getUserByEmail, getUserByStripeCustomerId, getUserByStripeSubscriptionId, upsertUser, updateUserSubscription } from "../storage";
 
 const stripeRouter: IRouter = Router();
@@ -32,7 +32,7 @@ stripeRouter.post("/create-checkout-session", async (req: Request, res: Response
       return;
     }
 
-    const stripe = await getUncachableStripeClient();
+    const stripe = getStripeClient();
 
     let user = await getUserByEmail(email);
     let customerId = user?.stripeCustomerId;
@@ -113,7 +113,7 @@ stripeRouter.post("/webhook", async (req: Request, res: Response) => {
 
   let event;
   try {
-    const stripe = await getUncachableStripeClient();
+    const stripe = getStripeClient();
     event = stripe.webhooks.constructEvent(req.body as Buffer, sig, webhookSecret);
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Webhook error";
@@ -132,7 +132,7 @@ stripeRouter.post("/webhook", async (req: Request, res: Response) => {
         const planId = session.metadata?.planId ?? "";
 
         if (email) {
-          const stripe = await getUncachableStripeClient();
+          const stripe = getStripeClient();
           const subscription = subscriptionId ? await stripe.subscriptions.retrieve(subscriptionId) : null;
           await updateUserSubscription(email, {
             stripeCustomerId: customerId,
