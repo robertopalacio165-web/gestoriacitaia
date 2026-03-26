@@ -140,26 +140,28 @@ export default function Landing() {
           </p>
 
           <div className="flex flex-wrap justify-center gap-3 mb-5">
-            <Button
-              className="rounded-full px-7 py-3 shadow-lg shadow-primary/30 bg-primary hover:bg-primary/90 text-base font-bold"
-              onClick={() => loginWithGoogle("/regularizacion-2026")}
-            >
-              {t("hero_btn1")} <ArrowRight className="w-4 h-4 ml-1" />
-            </Button>
-            <Button
-              className="rounded-full px-7 py-3 shadow-lg shadow-blue-500/30 bg-blue-600 hover:bg-blue-500 text-white text-base font-bold border-0"
-              onClick={() => loginWithGoogle("/buscar-citas")}
-            >
-              {t("hero_btn_citas")} <ArrowRight className="w-4 h-4 ml-1" />
-            </Button>
-<Button
-  variant="outline"
-  className="rounded-full px-6 border-white/15 hover:bg-white/5"
-  onClick={() => loginWithGoogle("/panel")}
->
-  {t("hero_btn2")}
-</Button>
-          </div>
+  <Button
+    className="rounded-full px-7 py-3 shadow-lg shadow-primary/30 bg-primary hover:bg-primary/90 text-base font-bold"
+    onClick={() => loginWithGoogle("/regularizacion-2026")}
+  >
+    {t("hero_btn1")} <ArrowRight className="w-4 h-4 ml-1" />
+  </Button>
+
+  <Button
+    className="rounded-full px-7 py-3 shadow-lg shadow-blue-500/30 bg-blue-600 hover:bg-blue-500 text-white text-base font-bold border-0"
+    onClick={() => loginWithGoogle("/buscar-citas")}
+  >
+    {t("hero_btn_citas")} <ArrowRight className="w-4 h-4 ml-1" />
+  </Button>
+
+  <Button
+    variant="outline"
+    className="rounded-full px-6 border-white/15 hover:bg-white/5"
+    onClick={() => loginWithGoogle("/panel")}
+  >
+    {t("hero_btn2")}
+  </Button>
+</div>
 
           {/* Social proof */}
           <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
