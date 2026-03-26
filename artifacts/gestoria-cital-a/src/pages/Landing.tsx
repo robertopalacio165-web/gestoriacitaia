@@ -108,7 +108,7 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen bg-background text-foreground relative overflow-x-hidden">
-      <PaymentModal open={showPayment} onClose={() => setShowPayment(false)} onSelectPlan={(p) => { setShowPayment(false); setLocation("/panel"); }} />
+    <PaymentModal open={showPayment} onClose={() => setShowPayment(false)} onSelectPlan={(p) => { setShowPayment(false); loginWithGoogle("/panel"); }} />
       <Navbar />
 
       <main className="relative z-10 pt-24 pb-20 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto">
