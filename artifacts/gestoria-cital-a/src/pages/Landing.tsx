@@ -139,7 +139,7 @@ export default function Landing() {
             {t("hero_sub")}
           </p>
 
-          <div className="flex flex-wrap justify-center gap-3 mb-5">
+         <div className="flex flex-wrap justify-center gap-3 mb-5">
   <Button
     className="rounded-full px-7 py-3 shadow-lg shadow-primary/30 bg-primary hover:bg-primary/90 text-base font-bold"
     onClick={() => loginWithGoogle("/regularizacion-2026")}
@@ -162,6 +162,8 @@ export default function Landing() {
     {t("hero_btn2")}
   </Button>
 </div>
+
+{/* Social proof */}
 
           {/* Social proof */}
           <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
