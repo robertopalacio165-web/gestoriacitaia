@@ -8,6 +8,7 @@ import { LegalDisclaimer } from "@/components/LegalDisclaimer";
 import { useLang } from "@/contexts/LanguageContext";
 import { CheckCircle2, Play, FileText, Globe, MapPin, Users, Shield, Home, Briefcase, GraduationCap, Heart, Car, Building2, Star, ArrowRight } from "lucide-react";
 import { Link, useLocation } from "wouter";
+import { supabase } from "@/lib/supabaseClient";
 
 function getPlans(t: (k: string) => string) {
   return [
@@ -80,6 +81,16 @@ function getTramites(t: (k: string) => string) {
 }
 
 export default function Landing() {
+  const loginWithGoogle = async (redirect: string) => {
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo: `https://gestoriacitaia.com${redirect}`
+    }
+  });
+
+  if (error) console.error(error);
+};
   const [, setLocation] = useLocation();
   const [showPayment, setShowPayment] = useState(false);
   const { t } = useLang();
@@ -131,17 +142,17 @@ export default function Landing() {
           <div className="flex flex-wrap justify-center gap-3 mb-5">
             <Button
               className="rounded-full px-7 py-3 shadow-lg shadow-primary/30 bg-primary hover:bg-primary/90 text-base font-bold"
-              onClick={() => setLocation("/regularizacion-2026")}
+              onClick={() => loginWithGoogle("/regularizacion-2026")}
             >
               {t("hero_btn1")} <ArrowRight className="w-4 h-4 ml-1" />
             </Button>
             <Button
               className="rounded-full px-7 py-3 shadow-lg shadow-blue-500/30 bg-blue-600 hover:bg-blue-500 text-white text-base font-bold border-0"
-              onClick={() => setLocation("/buscar-citas")}
+              onClick={() => loginWithGoogle("/buscar-citas")}
             >
               {t("hero_btn_citas")} <ArrowRight className="w-4 h-4 ml-1" />
             </Button>
-            <Button variant="outline" className="rounded-full px-6 border-white/15 hover:bg-white/5" onClick={() => setLocation("/panel")}>
+            <Button variant="outline" className="rounded-full px-6 border-white/15 hover:bg-white/5" onClick={() => loginWithGoogle("/panel")}
               {t("hero_btn2")}
             </Button>
           </div>
