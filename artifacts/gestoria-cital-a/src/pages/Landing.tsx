@@ -139,7 +139,7 @@ export default function Landing() {
             {t("hero_sub")}
           </p>
 
-         <div className="flex flex-wrap justify-center gap-3 mb-5">
+        <div className="flex flex-wrap justify-center gap-3 mb-5">
   <Button
     className="rounded-full px-7 py-3 shadow-lg shadow-primary/30 bg-primary hover:bg-primary/90 text-base font-bold"
     onClick={() => loginWithGoogle("/regularizacion-2026")}
@@ -154,7 +154,7 @@ export default function Landing() {
     {t("hero_btn_citas")} <ArrowRight className="w-4 h-4 ml-1" />
   </Button>
 
-  <Button variant="outline" className="rounded-full px-6 border-white/15 hover:bg-white/5" onClick={() => loginWithGoogle("/panel")}>{t("hero_btn2")}</Button>
+ <Button variant="outline" className="rounded-full px-6 border-white/15 hover:bg-white/5" onClick={() => loginWithGoogle("/panel")}>{t("hero_btn2")}</Button>
 </div>
 
           {/* Social proof */}
