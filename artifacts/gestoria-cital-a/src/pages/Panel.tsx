@@ -57,7 +57,9 @@ export default function Panel() {
 
   const docsOk = DOCS.filter(d => d.status === "ok").length;
   const docsPct = Math.round((docsOk / DOCS.length) * 100);
-
+const crearCita = () => {
+  alert("CITA CREADA 🔥");
+};
   const copyCode = () => {
     navigator.clipboard.writeText(REFERRAL_CODE).catch(() => {});
     setCodeCopied(true);
@@ -223,7 +225,7 @@ export default function Panel() {
                   <button onClick={() => setShowPayment(true)} className="flex-1 py-1.5 rounded-lg bg-primary/20 hover:bg-primary/30 text-primary text-xs font-semibold transition-colors flex items-center justify-center gap-1">
                     <CreditCard className="w-3 h-3" /> {t("panel_manage_plan")}
                   </button>
-                  <button onClick={() => setLocation("/buscar-citas")} className="flex-1 py-1.5 rounded-lg bg-secondary/20 hover:bg-secondary/30 text-secondary text-xs font-semibold transition-colors flex items-center justify-center gap-1">
+                  <button onClick={crearCita} className="flex-1 py-1.5 rounded-lg bg-secondary/20 hover:bg-secondary/30 text-secondary text-xs font-semibold transition-colors flex items-center justify-center gap-1">
                     <Search className="w-3 h-3" /> {t("panel_new_appt")}
                   </button>
                 </div>
