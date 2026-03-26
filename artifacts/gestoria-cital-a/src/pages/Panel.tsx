@@ -29,25 +29,24 @@ const REFERRALS_NEEDED = 3;
 export default function Panel() {
   const [_, setLocation] = useLocation();
   const [loading, setLoading] = useState(true);
- useEffect(() => {
+useEffect(() => {
   const checkUser = async () => {
-    const { data } = await supabase.auth.getSession();
+    const { data: { session } } = await supabase.auth.getSession();
 
-    if (!data.session) {
-  setLocation("/");
-  setLoading(false);
-  return;
-}
-    setLoading(false);
+    if (!session) {
+      setLocation("/");
+    } else {
+      setLoading(false);
+    }
   };
 
   checkUser();
 }, [setLocation]);
 if (loading) return null;
   const handleAction = async (action) => {
-  const { data } = await supabase.auth.getSession();
+  const { data: { session } } = await supabase.auth.getSession();
 
-  if (!data.session) {
+  if (!session) {
     alert("Debes iniciar sesión con Google");
     setLocation("/");
     return;
