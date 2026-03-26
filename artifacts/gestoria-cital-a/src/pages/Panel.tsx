@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Navbar } from "@/components/Navbar";
 import { LegalDisclaimer } from "@/components/LegalDisclaimer";
@@ -26,7 +27,19 @@ const REFERRALS_USED = 1;
 const REFERRALS_NEEDED = 3;
 
 export default function Panel() {
-  const [, setLocation] = useLocation();
+  const [_, setLocation] = useLocation();
+
+  const handleAction = (action) => {
+    const user = localStorage.getItem("user");
+
+    if (!user) {
+      alert("Debes iniciar sesión con Google");
+      setLocation("/login");
+      return;
+    }
+
+    action();
+  };
   const [activeTab, setActiveTab] = useState<"resumen" | "tramites" | "citas" | "documentos">("resumen");
   const [showPayment, setShowPayment] = useState(false);
   const [planActivo, setPlanActivo] = useState("Estándar");
