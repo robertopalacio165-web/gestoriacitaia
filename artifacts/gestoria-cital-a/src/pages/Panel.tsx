@@ -28,18 +28,33 @@ const REFERRALS_NEEDED = 3;
 
 export default function Panel() {
   const [_, setLocation] = useLocation();
+  const [loading, setLoading] = useState(true);
+ useEffect(() => {
+  const checkUser = async () => {
+    const { data } = await supabase.auth.getSession();
 
-  const handleAction = (action) => {
-    const user = localStorage.getItem("user");
-
-    if (!user) {
-      alert("Debes iniciar sesión con Google");
-      setLocation("/login");
-      return;
-    }
-
-    action();
+    if (!data.session) {
+  setLocation("/");
+  setLoading(false);
+  return;
+}
+    setLoading(false);
   };
+
+  checkUser();
+}, [setLocation]);
+if (loading) return null;
+  const handleAction = async (action) => {
+  const { data } = await supabase.auth.getSession();
+
+  if (!data.session) {
+    alert("Debes iniciar sesión con Google");
+    setLocation("/");
+    return;
+  }
+
+  action();
+};
   const [activeTab, setActiveTab] = useState<"resumen" | "tramites" | "citas" | "documentos">("resumen");
   const [showPayment, setShowPayment] = useState(false);
   const [planActivo, setPlanActivo] = useState("Estándar");
