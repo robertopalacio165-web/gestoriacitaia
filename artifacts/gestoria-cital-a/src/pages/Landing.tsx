@@ -81,15 +81,25 @@ function getTramites(t: (k: string) => string) {
 }
 
 export default function Landing() {
-  const loginWithGoogle = async (redirect: string) => {
-  const { error } = await supabase.auth.signInWithOAuth({
-    provider: "google",
+  const loginWithEmail = async (redirect: string) => {
+  const email = window.prompt("Escribe tu correo Gmail");
+
+  if (!email) return;
+
+  const { error } = await supabase.auth.signInWithOtp({
+    email,
     options: {
-      redirectTo: `https://gestoriacitaia.com${redirect}`
+      emailRedirectTo: `https://gestoriacitaia.com${redirect}`
     }
   });
 
-  if (error) console.error(error);
+  if (error) {
+    alert("Error al enviar el enlace");
+    console.error(error);
+    return;
+  }
+
+  alert("Te enviamos un enlace a tu Gmail. Ábrelo para entrar.");
 };
   const [, setLocation] = useLocation();
   const [showPayment, setShowPayment] = useState(false);
@@ -108,7 +118,7 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen bg-background text-foreground relative overflow-x-hidden">
-    <PaymentModal open={showPayment} onClose={() => setShowPayment(false)} onSelectPlan={(p) => { setShowPayment(false); loginWithGoogle("/panel"); }} />
+   <PaymentModal open={showPayment} onClose={() => setShowPayment(false)} onSelectPlan={(p) => { setShowPayment(false); loginWithEmail("/panel"); }} />
       <Navbar />
 
       <main className="relative z-10 pt-24 pb-20 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto">
@@ -142,19 +152,19 @@ export default function Landing() {
         <div className="flex flex-wrap justify-center gap-3 mb-5">
   <Button
     className="rounded-full px-7 py-3 shadow-lg shadow-primary/30 bg-primary hover:bg-primary/90 text-base font-bold"
-    onClick={() => loginWithGoogle("/regularizacion-2026")}
+   onClick={() => loginWithEmail("/regularizacion-2026")}
   >
     {t("hero_btn1")} <ArrowRight className="w-4 h-4 ml-1" />
   </Button>
 
   <Button
     className="rounded-full px-7 py-3 shadow-lg shadow-blue-500/30 bg-blue-600 hover:bg-blue-500 text-white text-base font-bold border-0"
-    onClick={() => loginWithGoogle("/buscar-citas")}
+    onClick={() => loginWithEmail("/buscar-citas")}
   >
     {t("hero_btn_citas")} <ArrowRight className="w-4 h-4 ml-1" />
   </Button>
 
- <Button variant="outline" className="rounded-full px-6 border-white/15 hover:bg-white/5" onClick={() => loginWithGoogle("/panel")}>{t("hero_btn2")}</Button>
+ <Button variant="outline" className="rounded-full px-6 border-white/15 hover:bg-white/5" onClick={() => loginWithEmail("/panel")}s>{t("hero_btn2")}</Button>
 </div>
 
           {/* Social proof */}
