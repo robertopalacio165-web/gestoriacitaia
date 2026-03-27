@@ -12,6 +12,7 @@ import Privacidad from "@/pages/Privacidad";
 import CookiesPage from "@/pages/Cookies";
 import CheckoutSuccess from "@/pages/CheckoutSuccess";
 import CheckoutCancel from "@/pages/CheckoutCancel";
+import AuthCallback from "@/pages/AuthCallback";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -26,6 +27,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={Landing} />
+      <Route path="/auth/callback" component={AuthCallback} />
       <Route path="/panel" component={Panel} />
       <Route path="/buscar-citas" component={BuscarCitas} />
       <Route path="/regularizacion-2026" component={Regularizacion2026} />
