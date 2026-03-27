@@ -98,9 +98,20 @@ export default function Landing() {
     console.error(error);
     return;
   }
+const loginWithGoogle = async () => {
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo: `${window.location.origin}/auth/callback`,
+    },
+  });
 
-  alert("Te enviamos un enlace a tu Gmail. Ábrelo para entrar.");
+  if (error) {
+    alert("Error al iniciar sesión con Google");
+    console.error(error);
+  }
 };
+  
   const [, setLocation] = useLocation();
   const [showPayment, setShowPayment] = useState(false);
   const { t } = useLang();
@@ -164,7 +175,13 @@ export default function Landing() {
     {t("hero_btn_citas")} <ArrowRight className="w-4 h-4 ml-1" />
   </Button>
 
- <Button variant="outline" className="rounded-full px-6 border-white/15 hover:bg-white/5" onClick={() => loginWithEmail("/panel")}s>{t("hero_btn2")}</Button>
+ <Button
+  variant="outline"
+  className="rounded-full px-6 border-white/15 hover:bg-white/5"
+  onClick={loginWithGoogle}
+>
+  {t("hero_btn2")}
+</Button>
 </div>
 
           {/* Social proof */}
