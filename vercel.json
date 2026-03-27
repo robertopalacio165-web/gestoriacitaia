@@ -1,5 +1,5 @@
 {
   "installCommand": "pnpm install --no-frozen-lockfile",
-  "buildCommand": "cd artifacts/gestoria-cital-a && pnpm run build",
-  "outputDirectory": "artifacts/gestoria-cital-a/dist"
+  "buildCommand": "pnpm run build",
+  "outputDirectory": "dist"
 }
