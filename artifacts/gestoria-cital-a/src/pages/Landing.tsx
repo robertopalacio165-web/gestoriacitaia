@@ -79,40 +79,44 @@ function getTramites(t: (k: string) => string) {
     { icon: MapPin, label: t("tr_ue"), color: "text-emerald-400" },
   ];
 }
-
 export default function Landing() {
   const loginWithEmail = async (redirect: string) => {
-  const email = window.prompt("Escribe tu correo Gmail");
+    const email = window.prompt("Escribe tu correo Gmail");
 
-  if (!email) return;
+    if (!email) return;
 
-  const { error } = await supabase.auth.signInWithOtp({
-    email,
-    options: {
-      emailRedirectTo: `https://gestoriacitaia.com${redirect}`
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        emailRedirectTo: `https://gestoriacitaia.com${redirect}`,
+      },
+    });
+
+    if (error) {
+      alert("Error al enviar el enlace");
+      console.error(error);
+      return;
     }
-  });
 
-  if (error) {
-    alert("Error al enviar el enlace");
-    console.error(error);
-    return;
-  }
-const loginWithGoogle = async () => {
-  const { error } = await supabase.auth.signInWithOAuth({
-    provider: "google",
-    options: {
-      redirectTo: `${window.location.origin}/auth/callback`,
-    },
-  });
+    alert("Te enviamos un enlace a tu Gmail. Ábrelo para entrar.");
+  };
 
-  if (error) {
-    alert("Error al iniciar sesión con Google");
-    console.error(error);
-  }
-};
-  
+  const loginWithGoogle = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
+    });
+
+    if (error) {
+      alert("Error al iniciar sesión con Google");
+      console.error(error);
+    }
+  };
+
   const [, setLocation] = useLocation();
+
   const [showPayment, setShowPayment] = useState(false);
   const { t } = useLang();
 
