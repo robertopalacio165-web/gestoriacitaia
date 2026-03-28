@@ -1,40 +1,12 @@
-import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
-import { supabase } from "@/lib/supabaseClient";
 
 export default function Panel() {
   const [, setLocation] = useLocation();
-  const [loading, setLoading] = useState(true);
-  const [email, setEmail] = useState("");
+  const email = "usuario@ejemplo.com";
 
-  useEffect(() => {
-    const checkSession = async () => {
-      const { data, error } = await supabase.auth.getSession();
-
-      if (error || !data.session) {
-        setLocation("/");
-        return;
-      }
-
-      setEmail(data.session.user.email || "");
-      setLoading(false);
-    };
-
-    checkSession();
-  }, [setLocation]);
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
+  const handleLogout = () => {
     setLocation("/");
   };
-
-  if (loading) {
-    return (
-      <div style={{ minHeight: "100vh", background: "#08122b", color: "white", padding: "40px" }}>
-        Cargando panel...
-      </div>
-    );
-  }
 
   return (
     <div

@@ -4,7 +4,6 @@ import { User, Bell, Menu, X, Home, LayoutDashboard, CalendarSearch, FileText, C
 import { cn } from "@/lib/utils";
 import { useLang } from "@/contexts/LanguageContext";
 import { motion, AnimatePresence } from "framer-motion";
-import { supabase } from "@/lib/supabaseClient";
 const NOTIFS = [
   { id: 1, type: "cita", icon: CheckCircle2, color: "text-primary", bg: "bg-primary/10", title: "Cita confirmada", body: "Renovación TIE · 24 Mar 2026 · 10:30 — Comisaría Madrid", time: "hace 2h", read: false },
   { id: 2, type: "doc", icon: AlertCircle, color: "text-amber-400", bg: "bg-amber-400/10", title: "Documento por renovar", body: "Tu Cert. de antecedentes penales caduca pronto", time: "hace 1d", read: false },
@@ -24,16 +23,6 @@ export function Navbar() {
   const langRef = useRef<HTMLDivElement>(null);
 
   const unread = notifs.filter(n => !n.read).length;
-const loginWithGoogle = async () => {
-  const { error } = await supabase.auth.signInWithOAuth({
-    provider: "google",
-    options: {
-      redirectTo: "https://gestoriacitaia.com/panel"
-    }
-  });
-
-  if (error) console.error(error);
-};
   useEffect(() => {
     function handler(e: MouseEvent) {
       if (notifRef.current && !notifRef.current.contains(e.target as Node)) setNotifOpen(false);
@@ -173,7 +162,7 @@ const loginWithGoogle = async () => {
             {location === "/" ? (
               <button
                 className="flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-secondary text-white text-xs font-semibold hover:bg-secondary/90 transition-colors shadow-sm"
-                onClick={loginWithGoogle}
+                onClick={() => setLocation("/panel")}
               >
                 <User className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline">{t("nav_login")}</span>
