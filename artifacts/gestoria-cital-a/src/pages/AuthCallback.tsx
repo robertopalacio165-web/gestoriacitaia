@@ -1,6 +1,6 @@
 import { useEffect } from "react";
-import { supabase } from "@/lib/supabaseClient";
 import { useLocation } from "wouter";
+import { supabase } from "@/lib/supabaseClient";
 
 export default function AuthCallback() {
   const [, setLocation] = useLocation();
@@ -10,7 +10,7 @@ export default function AuthCallback() {
       const { data, error } = await supabase.auth.getSession();
 
       if (error) {
-        console.error("Error obteniendo sesión:", error);
+        console.error("Error en sesión:", error);
         setLocation("/");
         return;
       }
@@ -25,5 +25,5 @@ export default function AuthCallback() {
     handleAuth();
   }, [setLocation]);
 
-  return <p>Cargando...</p>;
+  return <p>Entrando...</p>;
 }
