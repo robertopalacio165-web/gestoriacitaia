@@ -10,7 +10,10 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.49.0"
+    "@replit/vite-plugin-cartographer": "catalog:",
+    "@replit/vite-plugin-dev-banner": "catalog:",
+    "@replit/vite-plugin-runtime-error-modal": "catalog:",
+    "@supabase/supabase-js": "^2.100.1"
   },
   "devDependencies": {
     "@hookform/resolvers": "^3.10.0",

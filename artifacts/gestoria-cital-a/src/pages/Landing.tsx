@@ -8,6 +8,7 @@ import { LegalDisclaimer } from "@/components/LegalDisclaimer";
 import { useLang } from "@/contexts/LanguageContext";
 import { CheckCircle2, Play, FileText, Globe, MapPin, Users, Shield, Home, Briefcase, GraduationCap, Heart, Car, Building2, Star, ArrowRight } from "lucide-react";
 import { Link, useLocation } from "wouter";
+import { supabase } from "@/lib/supabaseClient";
 function getPlans(t: (k: string) => string) {
   return [
     {
@@ -80,12 +81,23 @@ function getTramites(t: (k: string) => string) {
 export default function Landing() {
   const [, setLocation] = useLocation();
 
-  const loginWithEmail = (redirect: string) => {
-    setLocation(redirect);
+  const loginWithEmail = async (redirect: string) => {
+    const email = window.prompt("Escribe tu correo Gmail para recibir el enlace de acceso");
+    if (!email) return;
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: { emailRedirectTo: `${window.location.origin}/auth/callback?next=${redirect}` },
+    });
+    if (error) { alert("Error al enviar el enlace"); console.error(error); return; }
+    alert("✅ Te enviamos un enlace a tu Gmail. Ábrelo para entrar.");
   };
 
-  const loginWithGoogle = () => {
-    setLocation("/panel");
+  const loginWithGoogle = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: `${window.location.origin}/auth/callback` },
+    });
+    if (error) { alert("Error al iniciar sesión con Google"); console.error(error); }
   };
 
   const [showPayment, setShowPayment] = useState(false);
