@@ -11,20 +11,19 @@ export default function AuthCallback() {
 
       if (error) {
         console.error("Error obteniendo sesión:", error);
+        setLocation("/");
         return;
       }
 
       if (data.session) {
-        // ✅ Usuario logueado
         setLocation("/panel");
       } else {
-        // ❌ Fallo
         setLocation("/");
       }
     };
 
     handleAuth();
-  }, []);
+  }, [setLocation]);
 
   return <p>Cargando...</p>;
 }
