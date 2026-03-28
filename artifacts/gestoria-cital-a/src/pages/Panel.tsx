@@ -1,10 +1,11 @@
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Navbar } from "@/components/Navbar";
 import { LegalDisclaimer } from "@/components/LegalDisclaimer";
 import { PaymentModal } from "@/components/PaymentModal";
 import { motion } from "framer-motion";
 import { useLocation } from "wouter";
+import { supabase } from "@/lib/supabaseClient";
 import {
   FileText, CheckCircle2, XCircle, AlertCircle, Bell, Shield,
   Upload, Download, ChevronRight, Globe, Home, Briefcase, Users,
@@ -42,7 +43,13 @@ useEffect(() => {
 
   checkUser();
 }, [setLocation]);
-if (loading) return null;
+if (loading) {
+  return (
+    <div style={{ color: "white", padding: "40px" }}>
+      Cargando panel...
+    </div>
+  );
+}
   const handleAction = async (action) => {
   const { data: { session } } = await supabase.auth.getSession();
 
