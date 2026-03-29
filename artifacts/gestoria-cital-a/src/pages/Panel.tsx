@@ -460,74 +460,57 @@ export default function Panel() {
             </div>
           )}
 
-              {/* TAB: Documentos */}
-          {activeTab === "documentos" && (
-            <div className="p-4 space-y-2">
+           {/* TAB: Documentos */}
+{activeTab === "documentos" && (
+  <div className="p-4 space-y-3">
 
-              <div className="flex items-center justify-between mb-3">
-                <p className="text-xs font-bold text-white">{t("panel_docs_header")}</p>
-                <span className="text-xs text-primary font-medium">
-                  {docsOk}/{DOCS.length} {t("panel_docs_completed")}
-                </span>
-              </div>
+    {DOCS.map((doc, i) => (
+      <div key={i} className="flex items-center justify-between p-3 bg-white/5 rounded-xl">
 
-              {DOCS.map((doc, i) => {
-                const s = DOC_STATUS[doc.status as keyof typeof DOC_STATUS];
+        <div>
+          <p className="text-white text-sm">{doc.name}</p>
+          <p className="text-xs text-muted-foreground">{doc.date}</p>
+        </div>
 
-                return (
-                  <div key={i} className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-white/5">
+        <label className="cursor-pointer text-xs text-primary flex items-center gap-1">
+          <Upload className="w-3 h-3" />
+          Subir
+          <input
+            type="file"
+            className="hidden"
+            onChange={async (e) => {
+              const file = e.target.files?.[0];
+              if (!file) return;
 
-                    <div className={`w-8 h-8 rounded-lg ${s.bg} flex items-center justify-center`}>
-                      <s.icon className={`w-4 h-4 ${s.color}`} />
-                    </div>
+              await handleDocumentUpload(file, doc.type, doc.name);
+            }}
+          />
+        </label>
 
-                    <div className="flex-1">
-                      <p className="text-xs text-white">{doc.name}</p>
-                      <p className="text-[10px] text-muted-foreground">
-                        {doc.date}
-                      </p>
-                    </div>
+      </div>
+    ))}
 
-                    <label className="cursor-pointer text-xs text-primary flex items-center gap-1">
-                      <Upload className="w-3 h-3" />
-                      Subir
-                      <input
-                        type="file"
-                        className="hidden"
-                        onChange={async (e) => {
-                          const file = e.target.files?.[0];
-                          if (!file) return;
+    <input
+      type="file"
+      className="hidden"
+      id="upload-general"
+      onChange={async (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
 
-                          await handleDocumentUpload(file, doc.type, doc.name);
-                        }}
-                      />
-                    </label>
+        await handleDocumentUpload(file, "general", "Documento general");
+      }}
+    />
 
-                  </div>
-                );
-              })}
+    <label
+      htmlFor="upload-general"
+      className="w-full py-3 border border-dashed border-primary/30 rounded-xl text-xs text-primary flex justify-center cursor-pointer"
+    >
+      Subir nuevo documento
+    </label>
 
-              <input
-                type="file"
-                className="hidden"
-                id="upload-new-document"
-                onChange={async (e) => {
-                  const file = e.target.files?.[0];
-                  if (!file) return;
-
-                  await handleDocumentUpload(file, "general", "Documento general");
-                }}
-              />
-
-              <label
-                htmlFor="upload-new-document"
-                className="w-full py-2 mt-3 border border-dashed border-primary/30 rounded-xl text-xs text-primary flex justify-center cursor-pointer"
-              >
-                Subir nuevo documento
-              </label>
-
-            </div>
-          )}
+  </div>
+)}
 
         {/* Client data card */}
         <div className="glass-panel border border-white/[0.07] rounded-2xl p-4 mb-4">
@@ -544,14 +527,17 @@ export default function Panel() {
           </div>
         </div>
 
-      </main>
+           </main>
 
       <LegalDisclaimer />
 
       <PaymentModal
         open={showPayment}
         onClose={() => setShowPayment(false)}
-        onSelectPlan={(p) => { setPlanActivo(p); setShowPayment(false); }}
+        onSelectPlan={(p) => {
+          setPlanActivo(p);
+          setShowPayment(false);
+        }}
         agentMessage={t("panel_plan_active")}
       />
 
@@ -564,8 +550,15 @@ export default function Panel() {
             { icon: Clock, label: t("panel_nav_citas"), tab: "citas" },
             { icon: Shield, label: t("panel_nav_docs"), tab: "documentos" },
           ].map((item, i) => (
-            <button key={i} onClick={() => setActiveTab(item.tab as any)}
-              className={`flex flex-col items-center gap-0.5 p-2 transition-colors ${activeTab === item.tab ? "text-primary" : "text-muted-foreground hover:text-white"}`}>
+            <button
+              key={i}
+              onClick={() => setActiveTab(item.tab as any)}
+              className={`flex flex-col items-center gap-0.5 p-2 transition-colors ${
+                activeTab === item.tab
+                  ? "text-primary"
+                  : "text-muted-foreground hover:text-white"
+              }`}
+            >
               <item.icon className="w-5 h-5" />
               <span className="text-[9px] font-medium">{item.label}</span>
             </button>
