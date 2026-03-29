@@ -435,9 +435,33 @@ export default function Panel() {
                   </div>
                 );
               })}
-              <button className="w-full mt-2 py-2.5 text-xs text-primary hover:text-primary/80 flex items-center justify-center gap-1.5 border border-dashed border-primary/25 rounded-xl hover:border-primary/40 transition-colors">
-                <Upload className="w-3.5 h-3.5" /> {t("panel_upload_new")}
-              </button>
+              <>
+  <input
+    type="file"
+    className="hidden"
+    id="upload-new-document"
+    onChange={async (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+
+      const res = await uploadDocument(file, "Documento general");
+
+      if (res.success) {
+        alert("Documento subido correctamente");
+        window.location.reload();
+      } else {
+        alert("Error al subir documento");
+      }
+    }}
+  />
+
+  <label
+    htmlFor="upload-new-document"
+    className="w-full mt-2 py-2.5 text-xs text-primary hover:text-primary/80 flex items-center justify-center gap-1.5 border border-dashed border-primary/25 rounded-xl hover:border-primary/40 transition-colors cursor-pointer"
+  >
+    <Upload className="w-3.5 h-3.5" /> {t("panel_upload_new")}
+  </label>
+</>
               <div className="flex items-center gap-2 text-[10px] text-muted-foreground mt-2 pt-2 border-t border-white/[0.06]">
                 <Shield className="w-3 h-3 shrink-0 text-primary" />
                 {t("panel_docs_encrypted")}
