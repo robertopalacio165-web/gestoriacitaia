@@ -486,7 +486,7 @@ export default function Panel() {
   </div>
 )}
 
-               {/* Client data card */}
+         {/* Client data card */}
         <div className="glass-panel border border-white/[0.07] rounded-2xl p-4 mb-4">
           <p className="text-xs font-bold text-white mb-3 flex items-center gap-2">
             <User className="w-3.5 h-3.5 text-primary" /> {t("panel_client_data")}
@@ -537,4 +537,4 @@ export default function Panel() {
       </nav>
     </div>
   );
-}
+}           
