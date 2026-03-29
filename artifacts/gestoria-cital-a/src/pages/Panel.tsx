@@ -34,20 +34,46 @@ export default function Panel() {
   const [showNotif, setShowNotif] = useState(false);
   const { toast } = useToast();
   const { t } = useLang();
+  const handleDocumentUpload = async (
+  file: File,
+  documentType: string,
+  title: string
+) => {
+  try {
+    await uploadDocument({
+      file,
+      documentType,
+      title,
+    });
+
+    toast({
+      title: "Documento subido",
+      description: `${title} subido correctamente.`,
+    });
+
+    window.location.reload();
+  } catch (error: any) {
+    toast({
+      title: "Error al subir",
+      description: error?.message || "No se pudo subir el documento",
+      variant: "destructive",
+    });
+  }
+};
 
   const TRAMITES_ACTIVOS = [
     { icon: FileText, label: "Renovación TIE", color: "text-blue-400", pct: 35, status: t("panel_tramite_curso"), pasos: [t("panel_tramite_s1"), t("panel_tramite_s2"), t("panel_tramite_s3"), t("panel_tramite_s4")], paso: 2 },
     { icon: Heart, label: "Arraigo Social", color: "text-red-400", pct: 10, status: t("panel_tramite_pending"), pasos: [t("panel_tramite_s1"), t("panel_tramite_s2"), t("panel_tramite_s3"), t("panel_tramite_s4")], paso: 1 },
   ];
 
-  const DOCS = [
-    { name: "Pasaporte (vigente)", status: "ok", date: "Ene 2026", size: "2.4 MB" },
-    { name: "Contrato de trabajo", status: "ok", date: "Feb 2026", size: "1.1 MB" },
-    { name: "Empadronamiento", status: "ok", date: "Mar 2026", size: "0.8 MB" },
-    { name: "Cert. antecedentes penales", status: "warn", date: "Por renovar", size: "—" },
-    { name: "Fotografías carnet (4u)", status: "missing", date: "Falta", size: "—" },
-    { name: "Formulario EX17", status: "ok", date: "Ene 2026", size: "0.5 MB" },
-  ];
+ const DOCS = [
+  { name: "Pasaporte (vigente)", status: "ok", date: "Ene 2026", size: "2.4 MB", type: "passport" },
+  { name: "Contrato de trabajo", status: "ok", date: "Feb 2026", size: "1.1 MB", type: "contrato_trabajo" },
+  { name: "Empadronamiento", status: "ok", date: "Mar 2026", size: "0.8 MB", type: "empadronamiento" },
+  { name: "Cert. antecedentes penales", status: "warn", date: "Por renovar", size: "—", type: "antecedentes_penales" },
+  { name: "Fotografías carnet (4u)", status: "missing", date: "Falta", size: "—", type: "fotografias" },
+  { name: "Formulario EX17", status: "ok", date: "Ene 2026", size: "0.5 MB", type: "formulario_ex17" },
+];
 
   const DOC_STATUS = {
     ok: { icon: CheckCircle2, color: "text-primary", bg: "bg-primary/10", label: t("panel_doc_ok") },
