@@ -61,33 +61,7 @@ export default function Panel() {
       });
     }
   };
-  const handleDocumentUpload = async (
-  file: File,
-  documentType: string,
-  title: string
-) => {
-  try {
-    await uploadDocument({
-      file,
-      documentType,
-      title,
-    });
-
-    toast({
-      title: "Documento subido",
-      description: `${title} subido correctamente.`,
-    });
-
-    window.location.reload();
-  } catch (error: any) {
-    toast({
-      title: "Error al subir",
-      description: error?.message || "No se pudo subir el documento",
-      variant: "destructive",
-    });
-  }
-};
-
+ 
   const TRAMITES_ACTIVOS = [
     { icon: FileText, label: "Renovación TIE", color: "text-blue-400", pct: 35, status: t("panel_tramite_curso"), pasos: [t("panel_tramite_s1"), t("panel_tramite_s2"), t("panel_tramite_s3"), t("panel_tramite_s4")], paso: 2 },
     { icon: Heart, label: "Arraigo Social", color: "text-red-400", pct: 10, status: t("panel_tramite_pending"), pasos: [t("panel_tramite_s1"), t("panel_tramite_s2"), t("panel_tramite_s3"), t("panel_tramite_s4")], paso: 1 },
