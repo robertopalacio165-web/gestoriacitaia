@@ -512,7 +512,7 @@ export default function Panel() {
   </div>
 )}
 
-        {/* Client data card */}
+               {/* Client data card */}
         <div className="glass-panel border border-white/[0.07] rounded-2xl p-4 mb-4">
           <p className="text-xs font-bold text-white mb-3 flex items-center gap-2">
             <User className="w-3.5 h-3.5 text-primary" /> {t("panel_client_data")}
@@ -526,8 +526,7 @@ export default function Panel() {
             ))}
           </div>
         </div>
-
-           </main>
+      </main>
 
       <LegalDisclaimer />
 
@@ -541,7 +540,6 @@ export default function Panel() {
         agentMessage={t("panel_plan_active")}
       />
 
-      {/* MOBILE NAV */}
       <nav className="fixed bottom-0 w-full z-50 glass-panel-heavy border-t border-white/[0.07] sm:hidden">
         <div className="flex justify-around items-center h-14 px-2">
           {[
@@ -554,9 +552,7 @@ export default function Panel() {
               key={i}
               onClick={() => setActiveTab(item.tab as any)}
               className={`flex flex-col items-center gap-0.5 p-2 transition-colors ${
-                activeTab === item.tab
-                  ? "text-primary"
-                  : "text-muted-foreground hover:text-white"
+                activeTab === item.tab ? "text-primary" : "text-muted-foreground hover:text-white"
               }`}
             >
               <item.icon className="w-5 h-5" />
