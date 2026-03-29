@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useLang } from "@/contexts/LanguageContext";
+import { uploadDocument } from "@/lib/uploadDocument";
 
 const CITAS = [
   { date: "24 Mar 2026", time: "10:30", label: "Renovación TIE", ref: "ESP-2026-034821", status: "proxima", lugar: "Comisaría Madrid Centro" },
@@ -34,6 +35,32 @@ export default function Panel() {
   const [showNotif, setShowNotif] = useState(false);
   const { toast } = useToast();
   const { t } = useLang();
+    const handleDocumentUpload = async (
+    file: File,
+    documentType: string,
+    title: string
+  ) => {
+    try {
+      await uploadDocument({
+        file,
+        documentType,
+        title,
+      });
+
+      toast({
+        title: "Documento subido",
+        description: `${title} subido correctamente.`,
+      });
+
+      window.location.reload();
+    } catch (error: any) {
+      toast({
+        title: "Error al subir",
+        description: error?.message || "No se pudo subir el documento",
+        variant: "destructive",
+      });
+    }
+  };
   const handleDocumentUpload = async (
   file: File,
   documentType: string,
