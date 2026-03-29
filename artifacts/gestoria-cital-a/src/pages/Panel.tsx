@@ -456,28 +456,43 @@ export default function Panel() {
                       <p className="text-[10px] text-muted-foreground">{doc.date} {doc.size !== "—" && `· ${doc.size}`}</p>
                     </div>
                     <span className={`text-[10px] font-medium shrink-0 ${s.color}`}>{s.label}</span>
-                    {doc.status === "ok" && <button className="text-muted-foreground hover:text-white transition-colors shrink-0"><Download className="w-3.5 h-3.5" /></button>}
-                    {doc.status === "missing" && <button className="text-[10px] text-secondary hover:text-secondary/80 font-semibold flex items-center gap-1 shrink-0"><Upload className="w-3 h-3" /> {t("panel_doc_upload")}</button>}
-                  </div>
-                );
-              })}
-              <>
+
+<label className="text-[10px] text-secondary hover:text-secondary/80 font-semibold flex items-center gap-1 shrink-0 cursor-pointer">
+  <Upload className="w-3 h-3" />
+  {doc.status === "missing" ? t("panel_doc_upload") : "Reemplazar"}
   <input
     type="file"
     className="hidden"
-    id="upload-new-document"
+    accept=".pdf,.jpg,.jpeg,.png,.webp"
     onChange={async (e) => {
       const file = e.target.files?.[0];
       if (!file) return;
 
-      const res = await uploadDocument(file, "Documento general");
+      await handleDocumentUpload(file, doc.type, doc.name);
+    }}
+  />
+</label>
 
-      if (res.success) {
-        alert("Documento subido correctamente");
-        window.location.reload();
-      } else {
-        alert("Error al subir documento");
-      }
+{doc.status === "ok" && (
+  <button className="text-muted-foreground hover:text-white transition-colors shrink-0">
+    <Download className="w-3.5 h-3.5" />
+  </button>
+)}
+                  </div>
+                );
+              })}
+              <>
+ <>
+  <input
+    type="file"
+    className="hidden"
+    id="upload-new-document"
+    accept=".pdf,.jpg,.jpeg,.png,.webp"
+    onChange={async (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+
+      await handleDocumentUpload(file, "documento_general", "Documento general");
     }}
   />
 
