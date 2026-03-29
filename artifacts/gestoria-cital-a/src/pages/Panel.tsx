@@ -101,7 +101,6 @@ export default function Panel() {
   { name: "Fotografías carnet (4u)", status: "missing", date: "Falta", size: "—", type: "fotografias" },
   { name: "Formulario EX17", status: "ok", date: "Ene 2026", size: "0.5 MB", type: "formulario_ex17" },
 ];
-
   const DOC_STATUS = {
     ok: { icon: CheckCircle2, color: "text-primary", bg: "bg-primary/10", label: t("panel_doc_ok") },
     warn: { icon: AlertCircle, color: "text-amber-400", bg: "bg-amber-400/10", label: t("panel_doc_warn") },
