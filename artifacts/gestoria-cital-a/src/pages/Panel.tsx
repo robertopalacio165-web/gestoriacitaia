@@ -465,23 +465,23 @@ export default function Panel() {
     ))}
 
     <input
-      type="file"
-      className="hidden"
-      id="upload-general"
-      onChange={async (e) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
+  type="file"
+  className="hidden"
+  id="upload-new-document"
+  onChange={async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-        await handleDocumentUpload(file, "general", "Documento general");
-      }}
-    />
+    await handleDocumentUpload(file, "general", file.name);
+  }}
+/>
 
-    <label
-      htmlFor="upload-general"
-      className="w-full py-3 border border-dashed border-primary/30 rounded-xl text-xs text-primary flex justify-center cursor-pointer"
-    >
-      Subir nuevo documento
-    </label>
+<label
+  htmlFor="upload-new-document"
+  className="w-full mt-2 py-2.5 text-xs text-primary hover:text-primary/80 flex items-center justify-center gap-1.5 border border-dashed border-primary/25 rounded-xl hover:border-primary/40 transition-colors cursor-pointer"
+>
+  <Upload className="w-3.5 h-3.5" /> {t("panel_upload_new")}
+</label>
 
   </div>
 )}
