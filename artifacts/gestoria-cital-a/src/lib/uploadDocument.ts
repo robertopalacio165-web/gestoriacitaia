@@ -23,10 +23,8 @@ export async function uploadDocument({
 
   const ext = file.name.split(".").pop();
   const fileName = Date.now() + "." + ext;
-
   const path = `${user.id}/${documentType}/${fileName}`;
 
-  // subir archivo
   const { error: uploadError } = await supabase.storage
     .from("user-files")
     .upload(path, file);
@@ -35,7 +33,6 @@ export async function uploadDocument({
     throw uploadError;
   }
 
-  // guardar en base de datos
   const { error: dbError } = await supabase
     .from("user_documents")
     .insert({
