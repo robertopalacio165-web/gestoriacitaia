@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Navbar } from "@/components/Navbar";
 import { LegalDisclaimer } from "@/components/LegalDisclaimer";
 import { PaymentModal } from "@/components/PaymentModal";
@@ -32,6 +32,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useLang } from "@/contexts/LanguageContext";
 import { uploadDocument } from "@/lib/uploadDocument";
+import { supabase } from "@/lib/supabaseClient";
 
 const CITAS = [
   {
@@ -67,6 +68,16 @@ const REFERRALS_NEEDED = 3;
 
 type TabKey = "resumen" | "tramites" | "citas" | "documentos";
 
+type UserDocumentRow = {
+  id: string;
+  title: string | null;
+  original_name: string | null;
+  document_type: string;
+  file_path: string;
+  verification_status: string | null;
+  created_at?: string;
+};
+
 export default function Panel() {
   const [, setLocation] = useLocation();
   const [activeTab, setActiveTab] = useState<TabKey>("resumen");
@@ -74,6 +85,9 @@ export default function Panel() {
   const [planActivo, setPlanActivo] = useState("Estándar");
   const [codeCopied, setCodeCopied] = useState(false);
   const [showNotif, setShowNotif] = useState(false);
+  const [userDocuments, setUserDocuments] = useState<UserDocumentRow[]>([]);
+  const [docsLoading, setDocsLoading] = useState(false);
+  const [uploadMessage, setUploadMessage] = useState("");
   const { toast } = useToast();
   const { t } = useLang();
 
@@ -89,12 +103,18 @@ export default function Panel() {
         title,
       });
 
+      setUploadMessage(`✅ ${title} subido correctamente`);
+
       toast({
         title: "Documento subido",
         description: `${title} subido correctamente.`,
       });
 
-      window.location.reload();
+      await loadUserDocuments();
+
+      setTimeout(() => {
+        setUploadMessage("");
+      }, 3000);
     } catch (error: any) {
       toast({
         title: "Error al subir",
@@ -103,6 +123,59 @@ export default function Panel() {
       });
     }
   };
+
+  const loadUserDocuments = async () => {
+    try {
+      setDocsLoading(true);
+
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        setUserDocuments([]);
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("user_documents")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+
+      setUserDocuments((data || []) as UserDocumentRow[]);
+    } catch (error) {
+      console.error("Error cargando documentos:", error);
+    } finally {
+      setDocsLoading(false);
+    }
+  };
+
+  const handleDownloadDocument = async (filePath: string) => {
+    try {
+      const { data, error } = await supabase.storage
+        .from("user-files")
+        .createSignedUrl(filePath, 60);
+
+      if (error) throw error;
+
+      window.open(data.signedUrl, "_blank");
+    } catch (error: any) {
+      toast({
+        title: "Error al descargar",
+        description: error?.message || "No se pudo descargar el documento",
+        variant: "destructive",
+      });
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === "documentos") {
+      loadUserDocuments();
+    }
+  }, [activeTab]);
 
   const TRAMITES_ACTIVOS = [
     {
@@ -422,9 +495,7 @@ export default function Panel() {
                 </div>
 
                 <button
-                  onClick={() => {
-                    setShowNotif(false);
-                  }}
+                  onClick={() => setShowNotif(false)}
                   className="w-full py-3 text-xs text-primary hover:text-primary/80 font-semibold transition-colors border-t border-white/[0.06] flex items-center justify-center gap-1"
                 >
                   {t("panel_notif_view")}
@@ -887,31 +958,45 @@ export default function Panel() {
 
           {activeTab === "documentos" && (
             <div className="p-4 space-y-3">
-              {DOCS.map((doc, i) => (
-                <div
-                  key={i}
-                  className="flex items-center justify-between p-3 bg-white/5 rounded-xl"
-                >
-                  <div>
-                    <p className="text-white text-sm">{doc.name}</p>
-                    <p className="text-xs text-muted-foreground">{doc.date}</p>
-                  </div>
-
-                  <label className="cursor-pointer text-xs text-primary flex items-center gap-1">
-                    <Upload className="w-3 h-3" />
-                    Subir
-                    <input
-                      type="file"
-                      className="hidden"
-                      onChange={async (e) => {
-                        const file = e.target.files?.[0];
-                        if (!file) return;
-                        await handleDocumentUpload(file, doc.type, doc.name);
-                      }}
-                    />
-                  </label>
+              {uploadMessage && (
+                <div className="rounded-xl border border-green-500/30 bg-green-500/10 px-3 py-2 text-sm text-green-300">
+                  {uploadMessage}
                 </div>
-              ))}
+              )}
+
+              <div className="rounded-xl border border-white/10 p-3">
+                <p className="text-xs font-bold text-white mb-3">
+                  Documentos requeridos
+                </p>
+
+                <div className="space-y-2">
+                  {DOCS.map((doc, i) => (
+                    <div
+                      key={i}
+                      className="flex items-center justify-between p-3 bg-white/5 rounded-xl"
+                    >
+                      <div>
+                        <p className="text-white text-sm">{doc.name}</p>
+                        <p className="text-xs text-muted-foreground">{doc.date}</p>
+                      </div>
+
+                      <label className="cursor-pointer text-xs text-primary flex items-center gap-1">
+                        <Upload className="w-3 h-3" />
+                        Subir
+                        <input
+                          type="file"
+                          className="hidden"
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            await handleDocumentUpload(file, doc.type, doc.name);
+                          }}
+                        />
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              </div>
 
               <input
                 type="file"
@@ -931,6 +1016,56 @@ export default function Panel() {
                 <Upload className="w-3.5 h-3.5" />
                 {t("panel_upload_new")}
               </label>
+
+              <div className="rounded-xl border border-white/10 p-3">
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-xs font-bold text-white">
+                    Mis documentos subidos
+                  </p>
+                  <span className="text-xs text-muted-foreground">
+                    {docsLoading
+                      ? "Cargando..."
+                      : `${userDocuments.length} documentos`}
+                  </span>
+                </div>
+
+                {docsLoading ? (
+                  <p className="text-sm text-muted-foreground">
+                    Cargando documentos...
+                  </p>
+                ) : userDocuments.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">
+                    Aún no has subido documentos.
+                  </p>
+                ) : (
+                  <div className="space-y-2">
+                    {userDocuments.map((doc) => (
+                      <div
+                        key={doc.id}
+                        className="flex items-center justify-between p-3 bg-white/5 rounded-xl"
+                      >
+                        <div className="min-w-0">
+                          <p className="text-sm text-white truncate">
+                            {doc.title || doc.original_name || doc.document_type}
+                          </p>
+                          <p className="text-xs text-muted-foreground truncate">
+                            {doc.document_type} · {doc.verification_status}
+                          </p>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => handleDownloadDocument(doc.file_path)}
+                          className="text-xs text-primary hover:text-primary/80 flex items-center gap-1 shrink-0"
+                        >
+                          <Download className="w-3.5 h-3.5" />
+                          Descargar
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>
