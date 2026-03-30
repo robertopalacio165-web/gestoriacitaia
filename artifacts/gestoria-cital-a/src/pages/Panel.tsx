@@ -215,15 +215,36 @@ export default function Panel() {
     [userDocuments]
   );
 
-  const requiredDocsWithStatus = useMemo(() => {
-    return REQUIRED_DOCS.map((doc) => {
-      const isUploaded = uploadedTypeSet.has(doc.type);
+ const requiredDocsWithStatus = useMemo(() => {
+  return REQUIRED_DOCS.map((doc) => {
+    // 🔥 CASO ESPECIAL: PRUEBAS ESPAÑA
+    if (doc.type === "pruebas_espana") {
+      const pruebas = userDocuments.filter(
+        (d) => d.document_type === "pruebas_espana"
+      );
+
+      const total = pruebas.length;
+      const minimo = 5;
+
       return {
         ...doc,
-        status: isUploaded ? "subido" : "pendiente",
+        status: total >= minimo ? "subido" : "pendiente",
+    extra: total >= minimo 
+? `✔ ${total}/${minimo} pruebas completas`
+  : `${total}/${minimo} pruebas`,
       };
-    });
-  }, [REQUIRED_DOCS, uploadedTypeSet]);
+    }
+
+    // 🔥 RESTO NORMAL
+    const isUploaded = uploadedTypeSet.has(doc.type);
+
+    return {
+      ...doc,
+      status: isUploaded ? "subido" : "pendiente",
+      extra: "",
+    };
+  });
+}, [REQUIRED_DOCS, uploadedTypeSet, userDocuments]);
 
   const docsOk = requiredDocsWithStatus.filter((d) => d.status === "subido").length;
   const docsPct = Math.round((docsOk / requiredDocsWithStatus.length) * 100);
@@ -971,7 +992,14 @@ export default function Panel() {
                     >
                       <div>
                         <p className="text-white text-sm">{doc.name}</p>
-                        <p className="text-xs text-muted-foreground">{doc.date}</p>
+                    <p className="text-xs text-muted-foreground">
+  {doc.date}
+  {"extra" in doc && doc.extra && (
+    <span className="ml-2 text-primary font-semibold">
+      · {doc.extra}
+    </span>
+  )}
+</p>
                       </div>
 
                       <div className="flex items-center gap-3">
