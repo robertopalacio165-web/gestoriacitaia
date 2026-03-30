@@ -99,13 +99,12 @@ export default function Panel() {
 
  const REQUIRED_DOCS: RequiredDoc[] = [
   { name: "Pasaporte o documento de viaje", type: "passport", date: "Obligatorio" },
-  { name: "DNI / NIE (si disponible)", type: "dni_nie", date: "Opcional" },
+  { name: "DNI / NIE", type: "dni_nie", date: "Si disponible" },
   { name: "Empadronamiento", type: "empadronamiento", date: "Importante" },
+  { name: "Acreditación de permanencia en España (pruebas)", type: "pruebas_espana", date: "Muy importante" },
   { name: "Fotografías carnet", type: "fotografias", date: "Obligatorio" },
   { name: "Formulario oficial", type: "formulario_oficial", date: "Pendiente de rellenar" },
   { name: "Tasa pagada / justificante", type: "tasa_pagada", date: "Pendiente" },
-  { name: "Resolución / carta de extranjería", type: "resolucion_extranjeria", date: "Si aplica" },
-  { name: "Cita / resguardo / justificante", type: "justificante_cita", date: "Si aplica" },
 ];
 
   const loadUserDocuments = async () => {
