@@ -97,14 +97,16 @@ export default function Panel() {
   const { toast } = useToast();
   const { t } = useLang();
 
-  const REQUIRED_DOCS: RequiredDoc[] = [
-    { name: "Pasaporte (vigente)", type: "passport", date: "Ene 2026" },
-    { name: "Contrato de trabajo", type: "contrato_trabajo", date: "Feb 2026" },
-    { name: "Empadronamiento", type: "empadronamiento", date: "Mar 2026" },
-    { name: "Cert. antecedentes penales", type: "antecedentes_penales", date: "Por renovar" },
-    { name: "Fotografías carnet (4u)", type: "fotografias", date: "Falta" },
-    { name: "Formulario EX17", type: "formulario_ex17", date: "Ene 2026" },
-  ];
+ const REQUIRED_DOCS: RequiredDoc[] = [
+  { name: "Pasaporte o documento de viaje", type: "passport", date: "Obligatorio" },
+  { name: "DNI / NIE (si disponible)", type: "dni_nie", date: "Opcional" },
+  { name: "Empadronamiento", type: "empadronamiento", date: "Importante" },
+  { name: "Fotografías carnet", type: "fotografias", date: "Obligatorio" },
+  { name: "Formulario oficial", type: "formulario_oficial", date: "Pendiente de rellenar" },
+  { name: "Tasa pagada / justificante", type: "tasa_pagada", date: "Pendiente" },
+  { name: "Resolución / carta de extranjería", type: "resolucion_extranjeria", date: "Si aplica" },
+  { name: "Cita / resguardo / justificante", type: "justificante_cita", date: "Si aplica" },
+];
 
   const loadUserDocuments = async () => {
     try {
