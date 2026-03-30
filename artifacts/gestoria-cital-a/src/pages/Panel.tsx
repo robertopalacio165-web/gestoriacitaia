@@ -33,6 +33,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useLang } from "@/contexts/LanguageContext";
 import { uploadDocument } from "@/lib/uploadDocument";
 import { supabase } from "@/lib/supabaseClient";
+import { verifyDocument } from "@/lib/verifyDocument";
 
 const CITAS = [
   {
@@ -155,12 +156,15 @@ export default function Panel() {
     title: string
   ) => {
     try {
-      await uploadDocument({
-        file,
-        documentType,
-        title,
-      });
+     const result = await verifyDocument(file, documentType);
 
+await uploadDocument({
+  file,
+  documentType,
+  title,
+  verification_status: result.status,
+  verification_notes: result.notes,
+});
       setUploadMessage(`✅ ${title} subido correctamente`);
 
       toast({
