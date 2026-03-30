@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Navbar } from "@/components/Navbar";
 import { LegalDisclaimer } from "@/components/LegalDisclaimer";
 import { PaymentModal } from "@/components/PaymentModal";
@@ -78,6 +78,12 @@ type UserDocumentRow = {
   created_at?: string;
 };
 
+type RequiredDoc = {
+  name: string;
+  type: string;
+  date: string;
+};
+
 export default function Panel() {
   const [, setLocation] = useLocation();
   const [activeTab, setActiveTab] = useState<TabKey>("resumen");
@@ -90,6 +96,57 @@ export default function Panel() {
   const [uploadMessage, setUploadMessage] = useState("");
   const { toast } = useToast();
   const { t } = useLang();
+
+  const REQUIRED_DOCS: RequiredDoc[] = [
+    { name: "Pasaporte (vigente)", type: "passport", date: "Ene 2026" },
+    { name: "Contrato de trabajo", type: "contrato_trabajo", date: "Feb 2026" },
+    { name: "Empadronamiento", type: "empadronamiento", date: "Mar 2026" },
+    { name: "Cert. antecedentes penales", type: "antecedentes_penales", date: "Por renovar" },
+    { name: "Fotografías carnet (4u)", type: "fotografias", date: "Falta" },
+    { name: "Formulario EX17", type: "formulario_ex17", date: "Ene 2026" },
+  ];
+
+  const loadUserDocuments = async () => {
+    try {
+      setDocsLoading(true);
+
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+
+      if (userError) {
+        console.error("auth.getUser error:", userError);
+        throw userError;
+      }
+
+      if (!user) {
+        setUserDocuments([]);
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("user_documents")
+        .select("id,title,original_name,document_type,file_path,verification_status,created_at")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error("load user_documents error:", error);
+        throw error;
+      }
+
+      setUserDocuments((data || []) as UserDocumentRow[]);
+    } catch (error: any) {
+      toast({
+        title: "Error al cargar documentos",
+        description: error?.message || "No se pudieron cargar los documentos",
+        variant: "destructive",
+      });
+    } finally {
+      setDocsLoading(false);
+    }
+  };
 
   const handleDocumentUpload = async (
     file: File,
@@ -116,40 +173,12 @@ export default function Panel() {
         setUploadMessage("");
       }, 3000);
     } catch (error: any) {
+      console.error("handleDocumentUpload error:", error);
       toast({
         title: "Error al subir",
         description: error?.message || "No se pudo subir el documento",
         variant: "destructive",
       });
-    }
-  };
-
-  const loadUserDocuments = async () => {
-    try {
-      setDocsLoading(true);
-
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (!user) {
-        setUserDocuments([]);
-        return;
-      }
-
-      const { data, error } = await supabase
-        .from("user_documents")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-
-      setUserDocuments((data || []) as UserDocumentRow[]);
-    } catch (error) {
-      console.error("Error cargando documentos:", error);
-    } finally {
-      setDocsLoading(false);
     }
   };
 
@@ -159,7 +188,10 @@ export default function Panel() {
         .from("user-files")
         .createSignedUrl(filePath, 60);
 
-      if (error) throw error;
+      if (error) {
+        console.error("createSignedUrl error:", error);
+        throw error;
+      }
 
       window.open(data.signedUrl, "_blank");
     } catch (error: any) {
@@ -176,6 +208,24 @@ export default function Panel() {
       loadUserDocuments();
     }
   }, [activeTab]);
+
+  const uploadedTypeSet = useMemo(
+    () => new Set(userDocuments.map((d) => d.document_type)),
+    [userDocuments]
+  );
+
+  const requiredDocsWithStatus = useMemo(() => {
+    return REQUIRED_DOCS.map((doc) => {
+      const isUploaded = uploadedTypeSet.has(doc.type);
+      return {
+        ...doc,
+        status: isUploaded ? "subido" : "pendiente",
+      };
+    });
+  }, [REQUIRED_DOCS, uploadedTypeSet]);
+
+  const docsOk = requiredDocsWithStatus.filter((d) => d.status === "subido").length;
+  const docsPct = Math.round((docsOk / requiredDocsWithStatus.length) * 100);
 
   const TRAMITES_ACTIVOS = [
     {
@@ -207,75 +257,6 @@ export default function Panel() {
       paso: 1,
     },
   ];
-
-  const DOCS = [
-    {
-      name: "Pasaporte (vigente)",
-      status: "ok",
-      date: "Ene 2026",
-      size: "2.4 MB",
-      type: "passport",
-    },
-    {
-      name: "Contrato de trabajo",
-      status: "ok",
-      date: "Feb 2026",
-      size: "1.1 MB",
-      type: "contrato_trabajo",
-    },
-    {
-      name: "Empadronamiento",
-      status: "ok",
-      date: "Mar 2026",
-      size: "0.8 MB",
-      type: "empadronamiento",
-    },
-    {
-      name: "Cert. antecedentes penales",
-      status: "warn",
-      date: "Por renovar",
-      size: "—",
-      type: "antecedentes_penales",
-    },
-    {
-      name: "Fotografías carnet (4u)",
-      status: "missing",
-      date: "Falta",
-      size: "—",
-      type: "fotografias",
-    },
-    {
-      name: "Formulario EX17",
-      status: "ok",
-      date: "Ene 2026",
-      size: "0.5 MB",
-      type: "formulario_ex17",
-    },
-  ] as const;
-
-  const DOC_STATUS = {
-    ok: {
-      icon: CheckCircle2,
-      color: "text-primary",
-      bg: "bg-primary/10",
-      label: t("panel_doc_ok"),
-    },
-    warn: {
-      icon: AlertCircle,
-      color: "text-amber-400",
-      bg: "bg-amber-400/10",
-      label: t("panel_doc_warn"),
-    },
-    missing: {
-      icon: XCircle,
-      color: "text-destructive",
-      bg: "bg-destructive/10",
-      label: t("panel_doc_missing"),
-    },
-  };
-
-  const docsOk = DOCS.filter((d) => d.status === "ok").length;
-  const docsPct = Math.round((docsOk / DOCS.length) * 100);
 
   const copyCode = () => {
     navigator.clipboard.writeText(REFERRAL_CODE).catch(() => {});
@@ -355,7 +336,7 @@ export default function Panel() {
     },
     {
       label: t("panel_stat_docs"),
-      value: `${docsOk}/${DOCS.length}`,
+      value: `${docsOk}/${requiredDocsWithStatus.length}`,
       sub: `${docsPct}% ${t("panel_completed_pct")}`,
       icon: Shield,
       color: "text-green-400",
@@ -508,12 +489,19 @@ export default function Panel() {
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
           {STAT_CARDS.map((card, i) => (
-            <motion.div
+            <motion.button
+              type="button"
               key={i}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.07 }}
-              className={`glass-panel border ${card.border} rounded-2xl p-4 flex flex-col gap-2`}
+              onClick={() => {
+                if (i === 0) setShowPayment(true);
+                if (i === 1) setActiveTab("tramites");
+                if (i === 2) setActiveTab("citas");
+                if (i === 3) setActiveTab("documentos");
+              }}
+              className={`glass-panel border ${card.border} rounded-2xl p-4 flex flex-col gap-2 text-left hover:border-white/20 transition-all`}
             >
               <div
                 className={`w-8 h-8 rounded-lg ${card.bg} flex items-center justify-center`}
@@ -529,7 +517,7 @@ export default function Panel() {
                 </p>
                 <p className="text-[10px] text-white/50 mt-0.5">{card.sub}</p>
               </div>
-            </motion.div>
+            </motion.button>
           ))}
         </div>
 
@@ -965,12 +953,17 @@ export default function Panel() {
               )}
 
               <div className="rounded-xl border border-white/10 p-3">
-                <p className="text-xs font-bold text-white mb-3">
-                  Documentos requeridos
-                </p>
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-xs font-bold text-white">
+                    Documentos requeridos
+                  </p>
+                  <span className="text-xs text-muted-foreground">
+                    {docsOk}/{requiredDocsWithStatus.length}
+                  </span>
+                </div>
 
                 <div className="space-y-2">
-                  {DOCS.map((doc, i) => (
+                  {requiredDocsWithStatus.map((doc, i) => (
                     <div
                       key={i}
                       className="flex items-center justify-between p-3 bg-white/5 rounded-xl"
@@ -980,19 +973,31 @@ export default function Panel() {
                         <p className="text-xs text-muted-foreground">{doc.date}</p>
                       </div>
 
-                      <label className="cursor-pointer text-xs text-primary flex items-center gap-1">
-                        <Upload className="w-3 h-3" />
-                        Subir
-                        <input
-                          type="file"
-                          className="hidden"
-                          onChange={async (e) => {
-                            const file = e.target.files?.[0];
-                            if (!file) return;
-                            await handleDocumentUpload(file, doc.type, doc.name);
-                          }}
-                        />
-                      </label>
+                      <div className="flex items-center gap-3">
+                        <span
+                          className={`text-xs font-semibold ${
+                            doc.status === "subido"
+                              ? "text-green-400"
+                              : "text-amber-400"
+                          }`}
+                        >
+                          {doc.status === "subido" ? "Subido" : "Pendiente"}
+                        </span>
+
+                        <label className="cursor-pointer text-xs text-primary flex items-center gap-1">
+                          <Upload className="w-3 h-3" />
+                          {doc.status === "subido" ? "Reemplazar" : "Subir"}
+                          <input
+                            type="file"
+                            className="hidden"
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0];
+                              if (!file) return;
+                              await handleDocumentUpload(file, doc.type, doc.name);
+                            }}
+                          />
+                        </label>
+                      </div>
                     </div>
                   ))}
                 </div>
