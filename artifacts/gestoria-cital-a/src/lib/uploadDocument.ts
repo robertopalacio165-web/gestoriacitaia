@@ -11,6 +11,17 @@ type UploadDocumentParams = {
   is_required?: boolean;
 };
 
+const MAX_FILE_SIZE_BYTES = 15 * 1024 * 1024;
+
+function sanitizeFileName(name: string) {
+  return name
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-zA-Z0-9._-]/g, "-")
+    .replace(/-+/g, "-")
+    .toLowerCase();
+}
+
 export async function uploadDocument({
   file,
   documentType,
@@ -28,7 +39,7 @@ export async function uploadDocument({
 
   if (userError) {
     console.error("auth.getUser error:", userError);
-    throw userError;
+    throw new Error(`No se pudo obtener el usuario: ${userError.message}`);
   }
 
   if (!user) {
@@ -36,13 +47,21 @@ export async function uploadDocument({
   }
 
   if (!file) {
-    throw new Error("No hay archivo");
+    throw new Error("No hay archivo para subir");
+  }
+
+  if (file.size <= 0) {
+    throw new Error("El archivo está vacío");
+  }
+
+  if (file.size > MAX_FILE_SIZE_BYTES) {
+    throw new Error("El archivo supera el límite de 15 MB");
   }
 
   const ext = file.name.split(".").pop()?.toLowerCase() || "bin";
-  const safeName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-
-  const folder = documentType || "general";
+  const baseName = sanitizeFileName(file.name.replace(/\.[^/.]+$/, "")) || "documento";
+  const safeName = `${Date.now()}-${baseName}.${ext}`;
+  const folder = (documentType || "general").trim().toLowerCase();
   const filePath = `${user.id}/${folder}/${safeName}`;
 
   const { error: uploadError } = await supabase.storage
@@ -55,18 +74,18 @@ export async function uploadDocument({
 
   if (uploadError) {
     console.error("storage upload error:", uploadError);
-    throw uploadError;
+    throw new Error(`Error al subir al storage: ${uploadError.message}`);
   }
 
   const payload = {
     user_id: user.id,
     case_id,
-    document_type: documentType,
-    title,
+    document_type: folder,
+    title: title?.trim() || baseName,
     storage_bucket: bucket,
     file_path: filePath,
     original_name: file.name,
-    mime_type: file.type,
+    mime_type: file.type || "application/octet-stream",
     file_size: file.size,
     verification_status,
     verification_notes,
@@ -84,7 +103,7 @@ export async function uploadDocument({
 
     await supabase.storage.from(bucket).remove([filePath]);
 
-    throw dbError;
+    throw new Error(`Error al guardar en la base de datos: ${dbError.message}`);
   }
 
   return insertedDoc;
