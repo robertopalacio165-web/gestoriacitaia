@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, ReactNode } from "react";
+import { createContext, useContext, useEffect, useMemo, useState, ReactNode } from "react";
 
 export type Lang = "es" | "darija" | "en";
 
@@ -12,7 +12,8 @@ const translations = {
 
     hero_badge: "Agente IA de Extranjería — 100% legal y seguro",
     hero_title_main: "Descubre si puedes regularizarte en España en 5 minutos",
-    hero_sub: "Nuestro agente IA analiza tus documentos y te dice si estás listo para conseguir papeles, citas y residencia. Sin esperas, sin gestorías caras.",
+    hero_sub:
+      "Nuestro agente IA analiza tus documentos y te dice si estás listo para conseguir papeles, citas y residencia. Sin esperas, sin gestorías caras.",
     hero_btn1: "Analizar mi caso ahora",
     hero_btn2: "Ver mi panel",
     hero_trust: "Más de 3.800 inmigrantes ya han usado GestoriaCitaIA",
@@ -80,7 +81,8 @@ const translations = {
     buscar_all_online: "100% online",
     buscar_support: "Soporte en español y darija",
 
-    reg_alert_text: "Regularización Extraordinaria 2026. El agente IA verificará tus documentos y rellenará la solicitud automáticamente. Solo tendrás que confirmar.",
+    reg_alert_text:
+      "Regularización Extraordinaria 2026. El agente IA verificará tus documentos y rellenará la solicitud automáticamente. Solo tendrás que confirmar.",
     reg_proc: "Procedimiento:",
     reg_upload: "Subir",
     reg_wa_sent: "Resguardo enviado por WhatsApp",
@@ -93,10 +95,12 @@ const translations = {
     panel_tramites_curso: "Trámites en curso",
     panel_quick_actions: "Acciones rápidas",
     panel_legal_notice: "Aviso",
-    panel_legal_text: "GestoriaCitaIA es un asistente IA. No somos gestoría ni abogados. Solo organizamos tus documentos y te ayudamos a buscar citas. No realizamos trámites en tu nombre.",
+    panel_legal_text:
+      "GestoriaCitaIA es un asistente IA. No somos gestoría ni abogados. Solo organizamos tus documentos y te ayudamos a buscar citas. No realizamos trámites en tu nombre.",
     panel_referral_title: "Tu código de referido",
     panel_referral_reward: "1 mes GRATIS",
-    panel_referral_desc: "Invita a 3 amigos que compren un plan con tu código y ganas 1 mes gratis.",
+    panel_referral_desc:
+      "Invita a 3 amigos que compren un plan con tu código y ganas 1 mes gratis.",
     panel_copy: "Copiar",
     panel_copied: "Copiado",
     panel_referrals_bought: "Referidos que compraron",
@@ -111,7 +115,8 @@ const translations = {
     buscar_fecha: "FECHA",
     buscar_hora: "HORA",
     buscar_confirmada: "CITA CONFIRMADA",
-    buscar_confirmada_msg: "Tu cita ha sido reservada. Recibirás los datos por WhatsApp.",
+    buscar_confirmada_msg:
+      "Tu cita ha sido reservada. Recibirás los datos por WhatsApp.",
     buscar_confirmar: "Confirmar cita y recibir PDF por WhatsApp",
     buscar_pasos: "PASOS",
     buscar_chat_open: "Prefiero escribir · Abrir chat",
@@ -158,9 +163,11 @@ const translations = {
     payment_pay: "Pagar",
     payment_activate: "Activar",
     payment_soon_title: "Pagos disponibles próximamente",
-    payment_soon_desc: "Déjanos tu email y serás el primero en activar tu plan",
+    payment_soon_desc:
+      "Déjanos tu email y serás el primero en activar tu plan",
     payment_soon_btn: "Avisamé cuando estén activos los pagos",
-    payment_soon_done: "¡Apuntado! Te avisaremos en cuanto los pagos estén activos.",
+    payment_soon_done:
+      "¡Apuntado! Te avisaremos en cuanto los pagos estén activos.",
     payment_soon_email: "Tu email",
 
     panel_header: "Panel Personal",
@@ -189,7 +196,8 @@ const translations = {
     panel_docs_header: "Documentos de extranjería",
     panel_docs_completed: "completados",
     panel_upload_new: "Subir nuevo documento",
-    panel_docs_encrypted: "Documentos cifrados según RGPD · Solo tú tienes acceso",
+    panel_docs_encrypted:
+      "Documentos cifrados según RGPD · Solo tú tienes acceso",
     panel_client_data: "Datos del cliente",
     panel_full_name: "Nombre completo",
     panel_procedures: "Trámites",
@@ -205,7 +213,8 @@ const translations = {
     panel_doc_missing: "Falta",
     panel_doc_upload: "Subir",
     panel_legal_aviso: "Aviso:",
-    panel_legal_panel: "GestoriaCitaIA es un asistente IA. No somos gestoría ni abogados. Solo organizamos tus documentos y te ayudamos a buscar citas. No realizamos trámites en tu nombre.",
+    panel_legal_panel:
+      "GestoriaCitaIA es un asistente IA. No somos gestoría ni abogados. Solo organizamos tus documentos y te ayudamos a buscar citas. No realizamos trámites en tu nombre.",
     panel_action_cita: "Buscar cita",
     panel_action_cita_sub: "Con agente Sara",
     panel_action_reg: "Regularización",
@@ -222,7 +231,8 @@ const translations = {
     panel_tramite_s4: "Completado",
 
     legal_label: "Aviso importante:",
-    legal_body: "GestoriaCitaIA es un asistente de inteligencia artificial. No somos gestoría, ni abogados, ni despacho jurídico. No realizamos trámites en tu nombre ni te representamos ante ningún organismo oficial. Únicamente te ayudamos a organizar tus documentos, explicarte los requisitos de los trámites de extranjería y buscar disponibilidad de citas. Para trámites oficiales, consulta con un gestor administrativo colegiado o un abogado especialista en extranjería.",
+    legal_body:
+      "GestoriaCitaIA es un asistente de inteligencia artificial. No somos gestoría, ni abogados, ni despacho jurídico. No realizamos trámites en tu nombre ni te representamos ante ningún organismo oficial. Únicamente te ayudamos a organizar tus documentos, explicarte los requisitos de los trámites de extranjería y buscar disponibilidad de citas. Para trámites oficiales, consulta con un gestor administrativo colegiado o un abogado especialista en extranjería.",
 
     feat1: "100% online",
     feat2: "Soporte en español y darija",
@@ -241,6 +251,85 @@ const translations = {
     tr_larga: "Residencia Larga Duración",
     tr_regreso: "Autorización de Regreso",
     tr_ue: "Certificado UE",
+
+    appointment_tie_renewal: "Renovación TIE",
+    appointment_empadronamiento: "Empadronamiento",
+    appointment_nie_assignment: "Asignación NIE",
+    appointment_place_madrid_center: "Comisaría Madrid Centro",
+    appointment_place_madrid_townhall: "Ayuntamiento Madrid",
+    appointment_place_madrid_north: "Comisaría Madrid Norte",
+
+    procedure_tie_renewal: "Renovación TIE",
+    procedure_arraigo_social: "Arraigo social",
+
+    nationality_moroccan: "Marroquí",
+    temporary_residence: "Residencia temporal",
+
+    notif_appointment_confirmed: "Cita confirmada",
+    notif_appointment_confirmed_body:
+      "Renovación TIE · 24 Mar 2026 · 10:30 — Comisaría Madrid",
+    notif_document_expiring: "Documento por renovar",
+    notif_document_expiring_body:
+      "Tu certificado de antecedentes penales caduca pronto",
+    notif_regularizacion_title: "Regularización 2026",
+    notif_regularizacion_body:
+      "Nueva convocatoria disponible. Consulta tu elegibilidad.",
+
+    time_2h_ago: "hace 2 h",
+    time_1d_ago: "hace 1 día",
+    time_3d_ago: "hace 3 días",
+
+    panel_stat_tramites_sub: "1 en curso · 1 pendiente",
+    panel_stat_next_appt_sub: "Renovación TIE · 10:30",
+
+    per_month: "mes",
+    pending: "Pendiente",
+    share_referral_text:
+      "Usa mi código {code} y consigue tu primer mes con descuento",
+
+    plan_standard: "Estándar",
+    plan_premium: "Premium",
+    plan_pro: "Pro",
+
+    docs_required_title: "Documentos requeridos",
+    my_uploaded_docs: "Mis documentos subidos",
+    loading: "Cargando...",
+    documents_count: "documentos",
+    loading_documents: "Cargando documentos...",
+    no_documents_uploaded: "Aún no has subido documentos.",
+    download: "Descargar",
+
+    doc_passport: "Pasaporte",
+    doc_dni_nie: "DNI / NIE",
+    doc_empadronamiento: "Empadronamiento",
+    doc_pruebas_espana: "Pruebas de estancia en España",
+    doc_fotografias: "Fotografías",
+    doc_formulario_oficial: "Formulario oficial",
+    doc_tasa_pagada: "Tasa pagada",
+
+    doc_required: "Obligatorio",
+    doc_if_available: "Si disponible",
+    doc_important: "Importante",
+    doc_very_important: "Muy importante",
+    doc_pending_fill: "Pendiente de rellenar",
+    doc_pending: "Pendiente",
+    doc_uploaded: "Subido",
+    doc_replace: "Reemplazar",
+    doc_upload: "Subir",
+
+    proofs_complete_counter: "✔ {total}/{min} pruebas completas",
+    proofs_counter: "{total}/{min} pruebas",
+
+    error_loading_documents_title: "Error al cargar documentos",
+    error_loading_documents_desc: "No se pudieron cargar los documentos",
+    document_uploaded_title: "Documento subido",
+    document_uploaded_success_named: "✅ {title} subido correctamente",
+    document_uploaded_desc_named: "{title} subido correctamente.",
+    error_upload_title: "Error al subir",
+    error_upload_desc: "No se pudo subir el documento",
+    error_download_title: "Error al descargar",
+    error_download_desc: "No se pudo descargar el documento",
+    referral_code_copied_desc: "{code} copiado al portapapeles.",
   },
 
   en: {
@@ -251,8 +340,10 @@ const translations = {
     nav_login: "Sign in",
 
     hero_badge: "Immigration AI Agent — 100% legal & safe",
-    hero_title_main: "Find out in 5 minutes if you can regularise your status in Spain",
-    hero_sub: "Our AI agent analyses your documents and tells you if you're ready to get your papers, appointments and residency. No waiting, no expensive agencies.",
+    hero_title_main:
+      "Find out in 5 minutes if you can regularise your status in Spain",
+    hero_sub:
+      "Our AI agent analyses your documents and tells you if you're ready to get your papers, appointments and residency. No waiting, no expensive agencies.",
     hero_btn1: "Analyse my case now",
     hero_btn2: "My dashboard",
     hero_trust: "Over 3,800 immigrants have already used GestoriaCitaIA",
@@ -263,10 +354,12 @@ const translations = {
     agents_title: "Your AI Agents available 24/7",
     agents_sub: "Digital specialists who assist you through every procedure",
     agent_mo_role: "Immigration Specialist",
-    agent_mo_desc: "Process your NIE, TIE, visas and residency permit with AI in real time.",
+    agent_mo_desc:
+      "Process your NIE, TIE, visas and residency permit with AI in real time.",
     agent_mo_btn: "Talk to Mohamed",
     agent_sara_role: "Appointment Advisor 24/7",
-    agent_sara_desc: "Find and book your appointment at the immigration office instantly.",
+    agent_sara_desc:
+      "Find and book your appointment at the immigration office instantly.",
     agent_sara_btn: "Find my appointment",
 
     plans_title: "Service plans",
@@ -320,7 +413,8 @@ const translations = {
     buscar_all_online: "100% online",
     buscar_support: "Support in Spanish and Darija",
 
-    reg_alert_text: "Extraordinary Regularisation 2026. The AI agent will verify your documents and fill in the application automatically. You just need to confirm.",
+    reg_alert_text:
+      "Extraordinary Regularisation 2026. The AI agent will verify your documents and fill in the application automatically. You just need to confirm.",
     reg_proc: "Procedure:",
     reg_upload: "Upload",
     reg_wa_sent: "Receipt sent via WhatsApp",
@@ -333,10 +427,12 @@ const translations = {
     panel_tramites_curso: "Ongoing procedures",
     panel_quick_actions: "Quick actions",
     panel_legal_notice: "Notice",
-    panel_legal_text: "GestoriaCitaIA is an AI assistant. We are not a gestoría or lawyers. We only organise your documents and help you find appointments. We do not process procedures on your behalf.",
+    panel_legal_text:
+      "GestoriaCitaIA is an AI assistant. We are not a gestoría or lawyers. We only organise your documents and help you find appointments. We do not process procedures on your behalf.",
     panel_referral_title: "Your referral code",
     panel_referral_reward: "1 month FREE",
-    panel_referral_desc: "Invite 3 friends who buy a plan with your code and get 1 month free.",
+    panel_referral_desc:
+      "Invite 3 friends who buy a plan with your code and get 1 month free.",
     panel_copy: "Copy",
     panel_copied: "Copied",
     panel_referrals_bought: "Referrals who purchased",
@@ -351,7 +447,8 @@ const translations = {
     buscar_fecha: "DATE",
     buscar_hora: "TIME",
     buscar_confirmada: "APPOINTMENT CONFIRMED",
-    buscar_confirmada_msg: "Your appointment has been booked. You will receive details via WhatsApp.",
+    buscar_confirmada_msg:
+      "Your appointment has been booked. You will receive details via WhatsApp.",
     buscar_confirmar: "Confirm appointment and receive PDF via WhatsApp",
     buscar_pasos: "STEPS",
     buscar_chat_open: "I prefer to write · Open chat",
@@ -398,9 +495,11 @@ const translations = {
     payment_pay: "Pay",
     payment_activate: "Activate",
     payment_soon_title: "Payments available soon",
-    payment_soon_desc: "Leave your email and be the first to activate your plan",
+    payment_soon_desc:
+      "Leave your email and be the first to activate your plan",
     payment_soon_btn: "Notify me when payments are active",
-    payment_soon_done: "Done! We'll notify you as soon as payments are active.",
+    payment_soon_done:
+      "Done! We'll notify you as soon as payments are active.",
     payment_soon_email: "Your email",
 
     panel_header: "Personal Dashboard",
@@ -429,7 +528,8 @@ const translations = {
     panel_docs_header: "Immigration documents",
     panel_docs_completed: "completed",
     panel_upload_new: "Upload new document",
-    panel_docs_encrypted: "Documents encrypted per GDPR · Only you have access",
+    panel_docs_encrypted:
+      "Documents encrypted per GDPR · Only you have access",
     panel_client_data: "Client data",
     panel_full_name: "Full name",
     panel_procedures: "Procedures",
@@ -445,7 +545,8 @@ const translations = {
     panel_doc_missing: "Missing",
     panel_doc_upload: "Upload",
     panel_legal_aviso: "Notice:",
-    panel_legal_panel: "GestoriaCitaIA is an AI assistant. We are not a gestoría or lawyers. We only organise your documents and help you find appointments. We do not process procedures on your behalf.",
+    panel_legal_panel:
+      "GestoriaCitaIA is an AI assistant. We are not a gestoría or lawyers. We only organise your documents and help you find appointments. We do not process procedures on your behalf.",
     panel_action_cita: "Find appointment",
     panel_action_cita_sub: "With agent Sara",
     panel_action_reg: "Regularisation",
@@ -462,7 +563,8 @@ const translations = {
     panel_tramite_s4: "Completed",
 
     legal_label: "Important notice:",
-    legal_body: "GestoriaCitaIA is an artificial intelligence assistant. We are not a gestoría, lawyers, or a legal firm. We do not process procedures on your behalf or represent you before any official body. We only help you organise your documents, explain the requirements for immigration procedures and find available appointments. For official procedures, consult a registered administrative agent or a lawyer specialising in immigration.",
+    legal_body:
+      "GestoriaCitaIA is an artificial intelligence assistant. We are not a gestoría, lawyers, or a legal firm. We do not process procedures on your behalf or represent you before any official body. We only help you organise your documents, explain the requirements for immigration procedures and find available appointments. For official procedures, consult a registered administrative agent or a lawyer specialising in immigration.",
 
     feat1: "100% online",
     feat2: "Support in Spanish and Darija",
@@ -481,6 +583,84 @@ const translations = {
     tr_larga: "Long-term Residence",
     tr_regreso: "Return Authorisation",
     tr_ue: "EU Certificate",
+
+    appointment_tie_renewal: "TIE Renewal",
+    appointment_empadronamiento: "Registration certificate",
+    appointment_nie_assignment: "NIE Assignment",
+    appointment_place_madrid_center: "Madrid Central Police Station",
+    appointment_place_madrid_townhall: "Madrid City Hall",
+    appointment_place_madrid_north: "Madrid North Police Station",
+
+    procedure_tie_renewal: "TIE Renewal",
+    procedure_arraigo_social: "Social Rooting",
+
+    nationality_moroccan: "Moroccan",
+    temporary_residence: "Temporary residence",
+
+    notif_appointment_confirmed: "Appointment confirmed",
+    notif_appointment_confirmed_body:
+      "TIE Renewal · 24 Mar 2026 · 10:30 — Madrid Police Station",
+    notif_document_expiring: "Document expiring soon",
+    notif_document_expiring_body:
+      "Your criminal record certificate will expire soon",
+    notif_regularizacion_title: "Regularisation 2026",
+    notif_regularizacion_body: "New call available. Check your eligibility.",
+
+    time_2h_ago: "2h ago",
+    time_1d_ago: "1 day ago",
+    time_3d_ago: "3 days ago",
+
+    panel_stat_tramites_sub: "1 in progress · 1 pending",
+    panel_stat_next_appt_sub: "TIE Renewal · 10:30",
+
+    per_month: "month",
+    pending: "Pending",
+    share_referral_text:
+      "Use my code {code} and get your first month discounted",
+
+    plan_standard: "Standard",
+    plan_premium: "Premium",
+    plan_pro: "Pro",
+
+    docs_required_title: "Required documents",
+    my_uploaded_docs: "My uploaded documents",
+    loading: "Loading...",
+    documents_count: "documents",
+    loading_documents: "Loading documents...",
+    no_documents_uploaded: "You have not uploaded any documents yet.",
+    download: "Download",
+
+    doc_passport: "Passport",
+    doc_dni_nie: "DNI / NIE",
+    doc_empadronamiento: "Registration certificate",
+    doc_pruebas_espana: "Proof of stay in Spain",
+    doc_fotografias: "Photographs",
+    doc_formulario_oficial: "Official form",
+    doc_tasa_pagada: "Paid fee",
+
+    doc_required: "Required",
+    doc_if_available: "If available",
+    doc_important: "Important",
+    doc_very_important: "Very important",
+    doc_pending_fill: "Pending completion",
+    doc_pending: "Pending",
+    doc_uploaded: "Uploaded",
+    doc_replace: "Replace",
+    doc_upload: "Upload",
+
+    proofs_complete_counter: "✔ {total}/{min} proofs complete",
+    proofs_counter: "{total}/{min} proofs",
+
+    error_loading_documents_title: "Error loading documents",
+    error_loading_documents_desc: "Documents could not be loaded",
+    document_uploaded_title: "Document uploaded",
+    document_uploaded_success_named: "✅ {title} uploaded successfully",
+    document_uploaded_desc_named: "{title} uploaded successfully.",
+    error_upload_title: "Upload error",
+    error_upload_desc: "The document could not be uploaded",
+    error_download_title: "Download error",
+    error_download_desc: "The document could not be downloaded",
+    referral_code_copied_desc: "{code} copied to clipboard.",
   },
 
   darija: {
@@ -492,7 +672,8 @@ const translations = {
 
     hero_badge: "وكيل ذكاء اصطناعي للهجرة — قانوني 100%",
     hero_title_main: "اعرف في 5 دقائق واش يمكنك تصلح وضعيتك في إسبانيا",
-    hero_sub: "وكيلنا بالذكاء الاصطناعي كيحلل وراقك ويقولك واش أنت مستعد تجيب الإقامة والمواعيد والأوراق. بلا انتظار، بلا مكاتب غالية.",
+    hero_sub:
+      "وكيلنا بالذكاء الاصطناعي كيحلل وراقك ويقولك واش أنت مستعد تجيب الإقامة والمواعيد والأوراق. بلا انتظار، بلا مكاتب غالية.",
     hero_btn1: "حلل حالتي دابا",
     hero_btn2: "شوف لوحتي",
     hero_trust: "أكثر من 3.800 مهاجر استخدموا GestoriaCitaIA",
@@ -503,7 +684,8 @@ const translations = {
     agents_title: "وكلاؤك بالذكاء الاصطناعي 24/7",
     agents_sub: "متخصصون رقميون كيرافقوك في كل خطوة",
     agent_mo_role: "متخصص في الهجرة",
-    agent_mo_desc: "صلح NIE و TIE والتأشيرة والإقامة بالذكاء الاصطناعي في الوقت الحقيقي.",
+    agent_mo_desc:
+      "صلح NIE و TIE والتأشيرة والإقامة بالذكاء الاصطناعي في الوقت الحقيقي.",
     agent_mo_btn: "هضر مع محمد",
     agent_sara_role: "مستشارة المواعيد 24/7",
     agent_sara_desc: "قلب وحجز موعدك في مفوضية الهجرة على الفور.",
@@ -560,12 +742,13 @@ const translations = {
     buscar_all_online: "100% عبر الإنترنت",
     buscar_support: "دعم بالعربي الدارجة والإسبانية",
 
-    reg_alert_text: "التسوية الاستثنائية 2026. وكيل الذكاء الاصطناعي غادي يتحقق من وثائقك ويملأ الطلب تلقائياً. غير خاصك تأكد.",
+    reg_alert_text:
+      "التسوية الاستثنائية 2026. وكيل الذكاء الاصطناعي غادي يتحقق من وثائقك ويملأ الطلب تلقائياً. غير خاصك تأكد.",
     reg_proc: "الإجراء:",
     reg_upload: "رفع",
     reg_wa_sent: "تم إرسال الإيصال عبر واتساب",
     reg_pdf_btn: "تحميل PDF",
-    reg_auto_label: "(ملاء تلقائياً)",
+    reg_auto_label: "(مملوء تلقائياً)",
     reg_chat_label: "شات",
 
     panel_active: "نشط",
@@ -573,10 +756,12 @@ const translations = {
     panel_tramites_curso: "الخدمات الجارية",
     panel_quick_actions: "إجراءات سريعة",
     panel_legal_notice: "تنبيه",
-    panel_legal_text: "GestoriaCitaIA هو مساعد ذكاء اصطناعي. ما حنا ش مكتب محامين. غير كنساعدوك تنظم وثائقك وتقلب على مواعيد.",
+    panel_legal_text:
+      "GestoriaCitaIA هو مساعد ذكاء اصطناعي. ما حناش مكتب محامين. غير كنساعدوك تنظم وثائقك وتقلب على مواعيد.",
     panel_referral_title: "كود الإحالة ديالك",
     panel_referral_reward: "شهر مجاني",
-    panel_referral_desc: "دعو 3 دياف يشرو باقة بكودك وغادي تربح شهر مجاني.",
+    panel_referral_desc:
+      "دعو 3 دياف يشرو باقة بكودك وغادي تربح شهر مجاني.",
     panel_copy: "نسخ",
     panel_copied: "تم النسخ",
     panel_referrals_bought: "الإحالات اللي شرو",
@@ -645,35 +830,35 @@ const translations = {
 
     panel_header: "لوحتي الشخصية",
     panel_notif_btn: "الإشعارات",
-    panel_notif_mark_read: "وضع علامة مقروء",
-    panel_notif_view: "عرض اللوحة الكاملة",
+    panel_notif_mark_read: "تعليم الكل كمقروء",
+    panel_notif_view: "عرض اللوحة كاملة",
     panel_stat_tramites: "إجراءات نشطة",
     panel_stat_cita_next: "الموعد القادم",
     panel_stat_docs: "الوثائق",
-    panel_stat_up_to: "حتى 3 مواعيد/شهر",
+    panel_stat_up_to: "حتى 3 مواعيد/الشهر",
     panel_tab_resumen: "ملخص",
     panel_tab_tramites: "الإجراءات",
     panel_tab_citas: "مواعيدي",
     panel_tab_docs: "الوثائق",
-    panel_plan_used: "المواعيد المستخدمة",
-    panel_next_invoice: "الفاتورة القادمة",
-    panel_manage_plan: "إدارة الباقة",
+    panel_plan_used: "المواعيد المستعملة",
+    panel_next_invoice: "الفاتورة الجاية",
+    panel_manage_plan: "تسيير الباقة",
     panel_new_appt: "موعد جديد",
-    panel_cita_proxima: "القادم",
+    panel_cita_proxima: "قريب",
     panel_cita_done: "مكتمل ✓",
-    panel_wa_confirmed: "مؤكد · تم إرسال تنبيه واتساب",
+    panel_wa_confirmed: "مؤكد · تصيفط تنبيه واتساب",
     panel_search_agent: "قلب على موعد جديد مع وكيل الذكاء الاصطناعي",
     panel_new_appt_agent: "موعد جديد مع وكيل الذكاء الاصطناعي",
-    panel_continue: "متابعة",
+    panel_continue: "كمل",
     panel_completed_pct: "مكتمل",
     panel_docs_header: "وثائق الهجرة",
     panel_docs_completed: "مكتملة",
     panel_upload_new: "رفع وثيقة جديدة",
-    panel_docs_encrypted: "وثائق مشفرة وفق RGPD · أنت وحدك من يمكنه الوصول",
-    panel_client_data: "بيانات العميل",
+    panel_docs_encrypted: "وثائق مشفرة حسب RGPD · غير نتا لي عندك الولوج",
+    panel_client_data: "بيانات الزبون",
     panel_full_name: "الاسم الكامل",
     panel_procedures: "الإجراءات",
-    panel_birthdate: "تاريخ الميلاد",
+    panel_birthdate: "تاريخ الازدياد",
     panel_situation: "الوضعية",
     panel_tie_expiry: "انتهاء صلاحية TIE",
     panel_nav_resumen: "ملخص",
@@ -682,49 +867,129 @@ const translations = {
     panel_nav_docs: "الوثائق",
     panel_doc_ok: "جاهز",
     panel_doc_warn: "مراجعة",
-    panel_doc_missing: "مفقود",
+    panel_doc_missing: "ناقص",
     panel_doc_upload: "رفع",
     panel_legal_aviso: "تنبيه:",
-    panel_legal_panel: "GestoriaCitaIA هو مساعد ذكاء اصطناعي. ما حنا ش مكتب محامين. غير كنساعدوك تنظم وثائقك وتقلب على مواعيد. ما كنديروش الإجراءات بالنيابة عليك.",
+    panel_legal_panel:
+      "GestoriaCitaIA هو مساعد ذكاء اصطناعي. ما حناش مكتب محامين. غير كنساعدوك تنظم وثائقك وتقلب على مواعيد. ما كنديروش الإجراءات بالنيابة عليك.",
     panel_action_cita: "قلب على موعد",
-    panel_action_cita_sub: "مع وكيلة سارة",
+    panel_action_cita_sub: "مع الوكيلة سارة",
     panel_action_reg: "التسوية",
     panel_action_reg_sub: "2026 · جديد",
     panel_action_upload: "رفع وثيقة",
     panel_action_upload_sub: "PDF, JPG, PNG",
-    panel_action_ia: "تحدث مع الذكاء الاصطناعي",
+    panel_action_ia: "هضر مع الذكاء الاصطناعي",
     panel_action_ia_sub: "مساعد 24/7",
     panel_tramite_curso: "قيد التنفيذ",
     panel_tramite_pending: "في انتظار الوثائق",
-    panel_tramite_s1: "بدأ",
-    panel_tramite_s2: "الوثائق جاهزة",
+    panel_tramite_s1: "بدا",
+    panel_tramite_s2: "الوثائق واجدة",
     panel_tramite_s3: "الموعد",
     panel_tramite_s4: "مكتمل",
 
     legal_label: "تنبيه مهم:",
-    legal_body: "GestoriaCitaIA هو مساعد ذكاء اصطناعي. ما حنا ش مكتب محامين ولا مستشارين قانونيين. ما كنديروش الإجراءات بالنيابة عليك ولا كنمثلوكش قدام أي جهة رسمية. غير كنساعدوك تنظم وثائقك، تفهم متطلبات الإجراءات، وتقلب على مواعيد. للإجراءات الرسمية، استشر مستشاراً إدارياً أو محامياً متخصصاً في الهجرة.",
+    legal_body:
+      "GestoriaCitaIA هو مساعد ذكاء اصطناعي. ما حناش مكتب محامين ولا مستشارين قانونيين. ما كنديروش الإجراءات بالنيابة عليك ولا كنمثلوكش قدام أي جهة رسمية. غير كنساعدوك تنظم وثائقك، تفهم متطلبات الإجراءات، وتقلب على مواعيد. للإجراءات الرسمية، استاشر مع مستشار إداري أو محامي متخصص فالهجرة.",
 
     feat1: "100% عبر الإنترنت",
     feat2: "دعم بالإسبانية والدارجة",
-    feat3: "تحقق ذكاء اصطناعي من الوثائق",
-    feat4: "إشعار واتساب بالمواعيد المتاحة",
+    feat3: "التحقق بالذكاء الاصطناعي من الوثائق",
+    feat4: "تنبيه واتساب بالمواعيد المتاحة",
 
     tr_tie: "تجديد بطاقة الإقامة TIE",
     tr_visado_nac: "التأشيرة الوطنية",
     tr_nie: "تعيين رقم NIE",
     tr_empadron: "التسجيل البلدي",
     tr_trabajo: "إذن العمل",
-    tr_familiar: "لمّ شمل الأسرة",
-    tr_estudiante: "تأشيرة الطلبة",
+    tr_familiar: "لمّ الشمل العائلي",
+    tr_estudiante: "تأشيرة الطالب",
     tr_arraigo: "الإقامة بالاندماج",
-    tr_conducir: "تبادل رخصة القيادة",
+    tr_conducir: "تبديل رخصة السياقة",
     tr_larga: "الإقامة طويلة الأمد",
-    tr_regreso: "إذن العودة",
+    tr_regreso: "رخصة الرجوع",
     tr_ue: "شهادة الاتحاد الأوروبي",
+
+    appointment_tie_renewal: "تجديد بطاقة TIE",
+    appointment_empadronamiento: "شهادة السكن",
+    appointment_nie_assignment: "تعيين NIE",
+    appointment_place_madrid_center: "كوميسارية مدريد سنطر",
+    appointment_place_madrid_townhall: "بلدية مدريد",
+    appointment_place_madrid_north: "كوميسارية مدريد الشمالية",
+
+    procedure_tie_renewal: "تجديد بطاقة TIE",
+    procedure_arraigo_social: "أرايغو سوسيال",
+
+    nationality_moroccan: "مغربي",
+    temporary_residence: "إقامة مؤقتة",
+
+    notif_appointment_confirmed: "تم تأكيد الموعد",
+    notif_appointment_confirmed_body:
+      "تجديد TIE · 24 مارس 2026 · 10:30 — كوميسارية مدريد",
+    notif_document_expiring: "وثيقة قربات تسالي",
+    notif_document_expiring_body: "شهادة السوابق العدلية ديالك قربات تسالي",
+    notif_regularizacion_title: "التسوية 2026",
+    notif_regularizacion_body: "كاين إعلان جديد. شوف واش نتا مؤهل.",
+
+    time_2h_ago: "منذ ساعتين",
+    time_1d_ago: "منذ نهار",
+    time_3d_ago: "منذ 3 أيام",
+
+    panel_stat_tramites_sub: "1 جاري · 1 باقي",
+    panel_stat_next_appt_sub: "تجديد TIE · 10:30",
+
+    per_month: "الشهر",
+    pending: "معلق",
+    share_referral_text:
+      "استعمل الكود ديالي {code} وخذ تخفيض فالشهر الأول",
+
+    plan_standard: "القياسي",
+    plan_premium: "بريميوم",
+    plan_pro: "برو",
+
+    docs_required_title: "الوثائق المطلوبة",
+    my_uploaded_docs: "الوثائق اللي رفعت",
+    loading: "جاري التحميل...",
+    documents_count: "وثائق",
+    loading_documents: "جاري تحميل الوثائق...",
+    no_documents_uploaded: "مازال ما رفعتي حتى وثيقة.",
+    download: "تحميل",
+
+    doc_passport: "الباسبور",
+    doc_dni_nie: "DNI / NIE",
+    doc_empadronamiento: "شهادة السكن",
+    doc_pruebas_espana: "إثباتات التواجد فإسبانيا",
+    doc_fotografias: "تصاور",
+    doc_formulario_oficial: "الاستمارة الرسمية",
+    doc_tasa_pagada: "الرسوم مخلصة",
+
+    doc_required: "إجباري",
+    doc_if_available: "إلى كان",
+    doc_important: "مهم",
+    doc_very_important: "مهم بزاف",
+    doc_pending_fill: "باقي خاصو يتعمر",
+    doc_pending: "معلق",
+    doc_uploaded: "مرفوع",
+    doc_replace: "بدل",
+    doc_upload: "رفع",
+
+    proofs_complete_counter: "✔ {total}/{min} إثباتات كاملة",
+    proofs_counter: "{total}/{min} إثباتات",
+
+    error_loading_documents_title: "خطأ فتحميل الوثائق",
+    error_loading_documents_desc: "ما قدرناش نحملو الوثائق",
+    document_uploaded_title: "ترفعات الوثيقة",
+    document_uploaded_success_named: "✅ {title} ترفعات بنجاح",
+    document_uploaded_desc_named: "{title} ترفعات بنجاح.",
+    error_upload_title: "خطأ فالرفع",
+    error_upload_desc: "ما قدرناش نرفعو الوثيقة",
+    error_download_title: "خطأ فالتحميل",
+    error_download_desc: "ما قدرناش نحملو الوثيقة",
+    referral_code_copied_desc: "{code} تنسخ فالحافظة.",
   },
 };
 
-type TranslationKey = keyof typeof translations.es;
+type TranslationDict = typeof translations.es;
+export type TranslationKey = keyof TranslationDict;
 
 interface LanguageContextType {
   lang: Lang;
@@ -738,16 +1003,46 @@ const LanguageContext = createContext<LanguageContextType>({
   t: (key) => key,
 });
 
-export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [lang, setLang] = useState<Lang>("es");
+const STORAGE_KEY = "gestoriacitaia_lang";
 
-  const t = (key: TranslationKey): string => {
-    return (translations[lang] as Record<string, string>)[key] ?? (translations.es as Record<string, string>)[key] ?? key;
+export function LanguageProvider({ children }: { children: ReactNode }) {
+  const [lang, setLangState] = useState<Lang>("es");
+
+  useEffect(() => {
+    const saved = localStorage.getItem(STORAGE_KEY) as Lang | null;
+    if (saved === "es" || saved === "en" || saved === "darija") {
+      setLangState(saved);
+    }
+  }, []);
+
+  const setLang = (l: Lang) => {
+    setLangState(l);
+    localStorage.setItem(STORAGE_KEY, l);
   };
 
+  const t = (key: TranslationKey): string => {
+    return (
+      (translations[lang] as Record<string, string>)[key] ??
+      (translations.es as Record<string, string>)[key] ??
+      key
+    );
+  };
+
+  const value = useMemo(
+    () => ({
+      lang,
+      setLang,
+      t,
+    }),
+    [lang]
+  );
+
   return (
-    <LanguageContext.Provider value={{ lang, setLang, t }}>
-      <div dir={lang === "darija" ? "rtl" : "ltr"} lang={lang === "darija" ? "ar" : lang === "en" ? "en" : "es"}>
+    <LanguageContext.Provider value={value}>
+      <div
+        dir={lang === "darija" ? "rtl" : "ltr"}
+        lang={lang === "darija" ? "ar" : lang === "en" ? "en" : "es"}
+      >
         {children}
       </div>
     </LanguageContext.Provider>
