@@ -99,15 +99,14 @@ export default function Panel() {
   const { t } = useLang();
 
  const REQUIRED_DOCS: RequiredDoc[] = [
-  { name: "Pasaporte o documento de viaje", type: "passport", date: "Obligatorio" },
-  { name: "DNI / NIE", type: "dni_nie", date: "Si disponible" },
-  { name: "Empadronamiento", type: "empadronamiento", date: "Importante" },
-  { name: "Acreditación de permanencia en España (pruebas)", type: "pruebas_espana", date: "Muy importante" },
-  { name: "Fotografías carnet", type: "fotografias", date: "Obligatorio" },
-  { name: "Formulario oficial", type: "formulario_oficial", date: "Pendiente de rellenar" },
-  { name: "Tasa pagada / justificante", type: "tasa_pagada", date: "Pendiente" },
+  { name: t("doc_passport"), type: "passport", date: t("doc_required") },
+  { name: t("doc_dni_nie"), type: "dni_nie", date: t("doc_if_available") },
+  { name: t("doc_empadronamiento"), type: "empadronamiento", date: t("doc_important") },
+  { name: t("doc_pruebas_espana"), type: "pruebas_espana", date: t("doc_very_important") },
+  { name: t("doc_fotografias"), type: "fotografias", date: t("doc_required") },
+  { name: t("doc_formulario_oficial"), type: "formulario_oficial", date: t("doc_pending_fill") },
+  { name: t("doc_tasa_pagada"), type: "tasa_pagada", date: t("doc_pending") },
 ];
-
   const loadUserDocuments = async () => {
     try {
       setDocsLoading(true);
@@ -978,63 +977,63 @@ await uploadDocument({
                 </div>
               )}
 
-              <div className="rounded-xl border border-white/10 p-3">
-                <div className="flex items-center justify-between mb-3">
-                  <p className="text-xs font-bold text-white">
-                    Documentos requeridos
-                  </p>
-                  <span className="text-xs text-muted-foreground">
-                    {docsOk}/{requiredDocsWithStatus.length}
-                  </span>
-                </div>
-
-                <div className="space-y-2">
-                  {requiredDocsWithStatus.map((doc, i) => (
-                    <div
-                      key={i}
-                      className="flex items-center justify-between p-3 bg-white/5 rounded-xl"
-                    >
-                      <div>
-                        <p className="text-white text-sm">{doc.name}</p>
-                    <p className="text-xs text-muted-foreground">
-  {doc.date}
-  {"extra" in doc && doc.extra && (
-    <span className="ml-2 text-primary font-semibold">
-      · {doc.extra}
+         <div className="rounded-xl border border-white/10 p-3">
+  <div className="flex items-center justify-between mb-3">
+    <p className="text-xs font-bold text-white">
+      {t("docs_required_title")}
+    </p>
+    <span className="text-xs text-muted-foreground">
+      {docsOk}/{requiredDocsWithStatus.length}
     </span>
-  )}
-</p>
-                      </div>
+  </div>
 
-                      <div className="flex items-center gap-3">
-                        <span
-                          className={`text-xs font-semibold ${
-                            doc.status === "subido"
-                              ? "text-green-400"
-                              : "text-amber-400"
-                          }`}
-                        >
-                          {doc.status === "subido" ? "Subido" : "Pendiente"}
-                        </span>
+  <div className="space-y-2">
+    {requiredDocsWithStatus.map((doc, i) => (
+      <div
+        key={i}
+        className="flex items-center justify-between p-3 bg-white/5 rounded-xl"
+      >
+        <div>
+          <p className="text-white text-sm">{doc.name}</p>
+          <p className="text-xs text-muted-foreground">
+            {doc.date}
+            {"extra" in doc && doc.extra && (
+              <span className="ml-2 text-primary font-semibold">
+                · {doc.extra}
+              </span>
+            )}
+          </p>
+        </div>
 
-                        <label className="cursor-pointer text-xs text-primary flex items-center gap-1">
-                          <Upload className="w-3 h-3" />
-                          {doc.status === "subido" ? "Reemplazar" : "Subir"}
-                          <input
-                            type="file"
-                            className="hidden"
-                            onChange={async (e) => {
-                              const file = e.target.files?.[0];
-                              if (!file) return;
-                              await handleDocumentUpload(file, doc.type, doc.name);
-                            }}
-                          />
-                        </label>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
+        <div className="flex items-center gap-3">
+          <span
+            className={`text-xs font-semibold ${
+              doc.status === "subido"
+                ? "text-green-400"
+                : "text-amber-400"
+            }`}
+          >
+            {doc.status === "subido" ? t("doc_uploaded") : t("doc_pending")}
+          </span>
+
+          <label className="cursor-pointer text-xs text-primary flex items-center gap-1">
+            <Upload className="w-3 h-3" />
+            {doc.status === "subido" ? t("doc_replace") : t("doc_upload")}
+            <input
+              type="file"
+              className="hidden"
+              onChange={async (e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                await handleDocumentUpload(file, doc.type, doc.name);
+              }}
+            />
+          </label>
+        </div>
+      </div>
+    ))}
+  </div>
+</div>
 
               <input
                 type="file"
@@ -1057,24 +1056,23 @@ await uploadDocument({
 
               <div className="rounded-xl border border-white/10 p-3">
                 <div className="flex items-center justify-between mb-3">
-                  <p className="text-xs font-bold text-white">
-                    Mis documentos subidos
-                  </p>
-                  <span className="text-xs text-muted-foreground">
-                    {docsLoading
-                      ? "Cargando..."
-                      : `${userDocuments.length} documentos`}
-                  </span>
+                 <p className="text-xs font-bold text-white">
+  {t("my_uploaded_docs")}
+</p>
+<span className="text-xs text-muted-foreground">
+  {docsLoading
+    ? t("loading")
+    : `${userDocuments.length} ${t("documents_count")}`}
+</span>
                 </div>
 
-                {docsLoading ? (
-                  <p className="text-sm text-muted-foreground">
-                    Cargando documentos...
-                  </p>
+                <p className="text-sm text-muted-foreground">
+  {t("loading_documents")}
+</p>
                 ) : userDocuments.length === 0 ? (
                   <p className="text-sm text-muted-foreground">
-                    Aún no has subido documentos.
-                  </p>
+  {t("no_documents_uploaded")}
+</p>
                 ) : (
                   <div className="space-y-2">
                     {userDocuments.map((doc) => (
@@ -1096,8 +1094,8 @@ await uploadDocument({
                           onClick={() => handleDownloadDocument(doc.file_path)}
                           className="text-xs text-primary hover:text-primary/80 flex items-center gap-1 shrink-0"
                         >
-                          <Download className="w-3.5 h-3.5" />
-                          Descargar
+                         <Download className="w-3.5 h-3.5" />
+{t("download")}
                         </button>
                       </div>
                     ))}
