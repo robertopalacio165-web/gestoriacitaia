@@ -61,7 +61,6 @@ const CITAS = [
   },
 ];
 
-const CLIENT_NAME = "Ahmed Benali";
 const REFERRAL_CODE = "AHMED-GCX26";
 const REFERRALS_USED = 1;
 const REFERRALS_NEEDED = 3;
@@ -74,6 +73,7 @@ type UserDocumentRow = {
   original_name: string | null;
   document_type: string;
   file_path: string;
+  storage_bucket?: string | null;
   verification_status: string | null;
   created_at?: string;
 };
@@ -89,6 +89,28 @@ type RequiredDocWithStatus = RequiredDoc & {
   extra: string;
 };
 
+type ProfileRow = {
+  id: string;
+  email: string | null;
+  full_name: string | null;
+  phone: string | null;
+  nie: string | null;
+  dni: string | null;
+  passport_number: string | null;
+  nationality: string | null;
+  birth_date: string | null;
+  preferred_language: string | null;
+};
+
+type NotificationRow = {
+  id: string;
+  type: string;
+  title: string;
+  body: string;
+  status: string;
+  created_at: string;
+};
+
 export default function Panel() {
   const [, setLocation] = useLocation();
   const [activeTab, setActiveTab] = useState<TabKey>("resumen");
@@ -99,6 +121,10 @@ export default function Panel() {
   const [userDocuments, setUserDocuments] = useState<UserDocumentRow[]>([]);
   const [docsLoading, setDocsLoading] = useState(false);
   const [uploadMessage, setUploadMessage] = useState("");
+  const [profile, setProfile] = useState<ProfileRow | null>(null);
+  const [notifications, setNotifications] = useState<NotificationRow[]>([]);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+
   const { toast } = useToast();
   const { t } = useLang();
 
@@ -207,19 +233,82 @@ export default function Panel() {
     { name: t("doc_tasa_pagada"), type: "tasa_pagada", date: t("doc_pending") },
   ];
 
+  const loadCurrentUser = async () => {
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser();
+
+    if (error) {
+      console.error("loadCurrentUser error:", error);
+      throw error;
+    }
+
+    setCurrentUserId(user?.id ?? null);
+    return user;
+  };
+
+  const loadProfile = async () => {
+    try {
+      const user = await loadCurrentUser();
+
+      if (!user) {
+        setProfile(null);
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("profiles")
+        .select(
+          "id,email,full_name,phone,nie,dni,passport_number,nationality,birth_date,preferred_language"
+        )
+        .eq("id", user.id)
+        .maybeSingle();
+
+      if (error) {
+        console.error("loadProfile error:", error);
+        throw error;
+      }
+
+      setProfile((data as ProfileRow | null) ?? null);
+    } catch (error) {
+      console.error("loadProfile fatal error:", error);
+    }
+  };
+
+  const loadNotifications = async () => {
+    try {
+      const user = await loadCurrentUser();
+
+      if (!user) {
+        setNotifications([]);
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("notifications")
+        .select("id,type,title,body,status,created_at")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(10);
+
+      if (error) {
+        console.error("loadNotifications error:", error);
+        throw error;
+      }
+
+      setNotifications((data as NotificationRow[]) || []);
+    } catch (error) {
+      console.error("loadNotifications fatal error:", error);
+      setNotifications([]);
+    }
+  };
+
   const loadUserDocuments = async () => {
     try {
       setDocsLoading(true);
 
-      const {
-        data: { user },
-        error: userError,
-      } = await supabase.auth.getUser();
-
-      if (userError) {
-        console.error("auth.getUser error:", userError);
-        throw userError;
-      }
+      const user = await loadCurrentUser();
 
       if (!user) {
         setUserDocuments([]);
@@ -229,7 +318,7 @@ export default function Panel() {
       const { data, error } = await supabase
         .from("user_documents")
         .select(
-          "id,title,original_name,document_type,file_path,verification_status,created_at"
+          "id,title,original_name,document_type,file_path,storage_bucket,verification_status,created_at"
         )
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
@@ -286,7 +375,7 @@ export default function Panel() {
         ),
       });
 
-      await loadUserDocuments();
+      await Promise.all([loadUserDocuments(), loadNotifications()]);
 
       setTimeout(() => {
         setUploadMessage("");
@@ -302,18 +391,20 @@ export default function Panel() {
     }
   };
 
-  const handleDownloadDocument = async (filePath: string) => {
+  const handleDownloadDocument = async (doc: UserDocumentRow) => {
     try {
+      const bucket = doc.storage_bucket || "user-documents";
+
       const { data, error } = await supabase.storage
-        .from("user-files")
-        .createSignedUrl(filePath, 60);
+        .from(bucket)
+        .createSignedUrl(doc.file_path, 60);
 
       if (error) {
         console.error("createSignedUrl error:", error);
         throw error;
       }
 
-      window.open(data.signedUrl, "_blank");
+      window.open(data.signedUrl, "_blank", "noopener,noreferrer");
     } catch (error: any) {
       toast({
         title: tr("error_download_title", "Error al descargar"),
@@ -326,10 +417,32 @@ export default function Panel() {
   };
 
   useEffect(() => {
+    const boot = async () => {
+      await Promise.all([loadProfile(), loadNotifications(), loadUserDocuments()]);
+    };
+
+    boot();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(() => {
+      boot();
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  useEffect(() => {
     if (activeTab === "documentos") {
       loadUserDocuments();
     }
-  }, [activeTab]);
+
+    if (showNotif) {
+      loadNotifications();
+    }
+  }, [activeTab, showNotif]);
 
   const uploadedTypeSet = useMemo(
     () => new Set(userDocuments.map((d) => d.document_type)),
@@ -374,7 +487,7 @@ export default function Panel() {
         extra: "",
       };
     });
-  }, [REQUIRED_DOCS, uploadedTypeSet, userDocuments, t]);
+  }, [uploadedTypeSet, userDocuments]);
 
   const docsOk = requiredDocsWithStatus.filter((d) => d.status === "subido").length;
   const docsPct = Math.round((docsOk / requiredDocsWithStatus.length) * 100);
@@ -503,55 +616,57 @@ export default function Panel() {
     },
   ];
 
+  const clientName =
+    profile?.full_name?.trim() ||
+    profile?.email?.split("@")[0] ||
+    "Cliente";
+
+  const clientEmail = profile?.email?.trim() || "—";
+  const clientNie = profile?.nie?.trim() || "—";
+  const clientNationality = profile?.nationality?.trim() || "—";
+  const clientBirthDate = profile?.birth_date || "—";
+  const clientPhone = profile?.phone?.trim() || "—";
+  const clientDni = profile?.dni?.trim() || "—";
+  const clientPassport = profile?.passport_number?.trim() || "—";
+
   const CLIENT_FIELDS = [
-    [t("panel_full_name"), "Ahmed Benali"],
-    ["NIE", "X-1234567-Z"],
-    [t("panel_nationality"), `${tr("nationality_moroccan", "Marroquí")} 🇲🇦`],
-    [t("panel_birthdate"), "15/03/1990"],
-    [tr("panel_phone", "Tel."), "+34 612 345 678"],
-    [tr("panel_email", "Email"), "ahmed@email.com"],
-    [t("panel_situation"), tr("temporary_residence", "Residencia temporal")],
-    [t("panel_tie_expiry"), "30/06/2026 ⚠️"],
+    [t("panel_full_name"), clientName],
+    ["NIE", clientNie],
+    [t("panel_nationality"), clientNationality],
+    [t("panel_birthdate"), clientBirthDate],
+    [tr("panel_phone", "Tel."), clientPhone],
+    [tr("panel_email", "Email"), clientEmail],
+    ["DNI", clientDni],
+    [tr("passport", "Pasaporte"), clientPassport],
   ];
 
-  const notifications = [
-    {
-      icon: CheckCircle2,
-      color: "text-primary",
-      bg: "bg-primary/10",
-      title: tr("notif_appointment_confirmed", "Cita confirmada"),
-      body: tr(
-        "notif_appointment_confirmed_body",
-        "Renovación TIE · 24 Mar 2026 · 10:30 — Comisaría Madrid"
-      ),
-      time: tr("time_2h_ago", "hace 2 h"),
-      dot: true,
-    },
-    {
-      icon: AlertCircle,
-      color: "text-amber-400",
-      bg: "bg-amber-400/10",
-      title: tr("notif_document_expiring", "Documento por renovar"),
-      body: tr(
-        "notif_document_expiring_body",
-        "Tu certificado de antecedentes penales caduca pronto"
-      ),
-      time: tr("time_1d_ago", "hace 1 día"),
-      dot: true,
-    },
-    {
-      icon: FileText,
-      color: "text-secondary",
-      bg: "bg-secondary/10",
-      title: tr("notif_regularizacion_title", "Regularización 2026"),
-      body: tr(
-        "notif_regularizacion_body",
-        "Nueva convocatoria disponible. Consulta tu elegibilidad."
-      ),
-      time: tr("time_3d_ago", "hace 3 días"),
-      dot: false,
-    },
-  ];
+  const mappedNotifications = notifications.map((n) => {
+    let icon = Bell;
+    let color = "text-primary";
+    let bg = "bg-primary/10";
+
+    if (n.type === "document_uploaded") {
+      icon = CheckCircle2;
+      color = "text-green-400";
+      bg = "bg-green-400/10";
+    } else if (n.type === "warning" || n.type === "document_warning") {
+      icon = AlertCircle;
+      color = "text-amber-400";
+      bg = "bg-amber-400/10";
+    } else if (n.type === "message" || n.type === "info") {
+      icon = MessageSquare;
+      color = "text-secondary";
+      bg = "bg-secondary/10";
+    }
+
+    return {
+      ...n,
+      icon,
+      color,
+      bg,
+      dot: n.status !== "read",
+    };
+  });
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
@@ -579,11 +694,11 @@ export default function Panel() {
                 {t("panel_header")}
               </h1>
               <p className="text-xs text-muted-foreground">
-                {CLIENT_NAME} ·{" "}
+                {clientName} ·{" "}
                 <span className="text-primary font-semibold">
                   {t("panel_plan_active")} {getPlanLabel(planActivo)}
                 </span>{" "}
-                · NIE: X-1234567-Z
+                · NIE: {clientNie}
               </p>
             </div>
           </div>
@@ -596,7 +711,7 @@ export default function Panel() {
               <Bell className="w-3.5 h-3.5 text-amber-400" />
               {t("panel_notif_btn")}
               <span className="w-4 h-4 rounded-full bg-destructive text-white text-[9px] flex items-center justify-center font-bold">
-                2
+                {mappedNotifications.filter((n) => n.dot).length}
               </span>
             </button>
 
@@ -610,43 +725,47 @@ export default function Panel() {
                   <span className="text-sm font-bold text-white">
                     {t("panel_notif_btn")}
                   </span>
-                  <button className="text-[10px] text-primary hover:text-primary/80 font-semibold transition-colors">
-                    {t("panel_notif_mark_read")}
+                  <button
+                    type="button"
+                    onClick={() => setShowNotif(false)}
+                    className="text-[10px] text-primary hover:text-primary/80 font-semibold transition-colors"
+                  >
+                    {t("panel_notif_close") || "Cerrar"}
                   </button>
                 </div>
 
                 <div className="divide-y divide-white/[0.05]">
-                  {notifications.map((n, i) => (
-                    <div
-                      key={i}
-                      className="px-4 py-3 flex items-start gap-3 hover:bg-white/5 transition-colors"
-                    >
-                      <div
-                        className={`w-8 h-8 rounded-lg ${n.bg} flex items-center justify-center shrink-0 mt-0.5`}
-                      >
-                        <n.icon className={`w-4 h-4 ${n.color}`} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-semibold text-white">{n.title}</p>
-                        <p className="text-[10px] text-muted-foreground leading-snug mt-0.5">
-                          {n.body}
-                        </p>
-                        <p className="text-[10px] text-white/30 mt-1">{n.time}</p>
-                      </div>
-                      {n.dot && (
-                        <span className="w-2 h-2 rounded-full bg-primary shrink-0 mt-1.5" />
-                      )}
+                  {mappedNotifications.length === 0 ? (
+                    <div className="px-4 py-4 text-xs text-muted-foreground">
+                      {tr("no_notifications", "No hay notificaciones todavía")}
                     </div>
-                  ))}
+                  ) : (
+                    mappedNotifications.map((n) => (
+                      <div
+                        key={n.id}
+                        className="px-4 py-3 flex items-start gap-3 hover:bg-white/5 transition-colors"
+                      >
+                        <div
+                          className={`w-8 h-8 rounded-lg ${n.bg} flex items-center justify-center shrink-0 mt-0.5`}
+                        >
+                          <n.icon className={`w-4 h-4 ${n.color}`} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-semibold text-white">{n.title}</p>
+                          <p className="text-[10px] text-muted-foreground leading-snug mt-0.5">
+                            {n.body}
+                          </p>
+                          <p className="text-[10px] text-white/30 mt-1">
+                            {new Date(n.created_at).toLocaleString()}
+                          </p>
+                        </div>
+                        {n.dot && (
+                          <span className="w-2 h-2 rounded-full bg-primary shrink-0 mt-1.5" />
+                        )}
+                      </div>
+                    ))
+                  )}
                 </div>
-
-                <button
-                  onClick={() => setShowNotif(false)}
-                  className="w-full py-3 text-xs text-primary hover:text-primary/80 font-semibold transition-colors border-t border-white/[0.06] flex items-center justify-center gap-1"
-                >
-                  {t("panel_notif_view")}
-                  <ChevronRight className="w-3.5 h-3.5" />
-                </button>
               </motion.div>
             )}
           </div>
@@ -1158,6 +1277,7 @@ export default function Panel() {
                               const file = e.target.files?.[0];
                               if (!file) return;
                               await handleDocumentUpload(file, doc.type, doc.name);
+                              e.currentTarget.value = "";
                             }}
                           />
                         </label>
@@ -1175,6 +1295,7 @@ export default function Panel() {
                   const file = e.target.files?.[0];
                   if (!file) return;
                   await handleDocumentUpload(file, "general", file.name);
+                  e.currentTarget.value = "";
                 }}
               />
 
@@ -1214,13 +1335,13 @@ export default function Panel() {
                             {doc.title || doc.original_name || doc.document_type}
                           </p>
                           <p className="text-xs text-muted-foreground truncate">
-                            {doc.document_type} · {doc.verification_status}
+                            {doc.document_type} · {doc.verification_status || "pending"}
                           </p>
                         </div>
 
                         <button
                           type="button"
-                          onClick={() => handleDownloadDocument(doc.file_path)}
+                          onClick={() => handleDownloadDocument(doc)}
                           className="text-xs text-primary hover:text-primary/80 flex items-center gap-1 shrink-0"
                         >
                           <Download className="w-3.5 h-3.5" />
