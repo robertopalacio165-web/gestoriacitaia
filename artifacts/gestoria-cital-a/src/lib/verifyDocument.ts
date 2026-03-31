@@ -1,33 +1,116 @@
-export async function verifyDocument(file: File, type: string) {
-  const text = await file.text().catch(() => "");
+type VerificationStatus = "valid" | "warning" | "invalid";
 
-  let status: "valid" | "warning" | "invalid" = "valid";
-  let notes: string[] = [];
+type VerifyDocumentResult = {
+  status: VerificationStatus;
+  notes: string;
+};
 
-  if (file.size < 5000) {
+const MAX_FILE_SIZE_BYTES = 15 * 1024 * 1024;
+const MIN_FILE_SIZE_BYTES = 1024;
+
+const ALLOWED_MIME_TYPES = [
+  "application/pdf",
+  "image/jpeg",
+  "image/jpg",
+  "image/png",
+  "image/webp",
+];
+
+const ALLOWED_EXTENSIONS = ["pdf", "jpg", "jpeg", "png", "webp"];
+
+function getExtension(fileName: string) {
+  return fileName.split(".").pop()?.toLowerCase() || "";
+}
+
+function looksLikeImage(mime: string, ext: string) {
+  return (
+    mime.startsWith("image/") ||
+    ["jpg", "jpeg", "png", "webp"].includes(ext)
+  );
+}
+
+function looksLikePdf(mime: string, ext: string) {
+  return mime === "application/pdf" || ext === "pdf";
+}
+
+export async function verifyDocument(
+  file: File,
+  type: string
+): Promise<VerifyDocumentResult> {
+  const notes: string[] = [];
+  let status: VerificationStatus = "valid";
+
+  if (!file) {
+    return {
+      status: "invalid",
+      notes: "No se ha seleccionado ningún archivo",
+    };
+  }
+
+  const ext = getExtension(file.name);
+  const mime = (file.type || "").toLowerCase();
+  const normalizedType = (type || "general").toLowerCase();
+
+  if (file.size <= 0) {
+    return {
+      status: "invalid",
+      notes: "El archivo está vacío",
+    };
+  }
+
+  if (file.size > MAX_FILE_SIZE_BYTES) {
+    return {
+      status: "invalid",
+      notes: "El archivo supera el límite de 15 MB",
+    };
+  }
+
+  if (!ALLOWED_EXTENSIONS.includes(ext) && !ALLOWED_MIME_TYPES.includes(mime)) {
+    return {
+      status: "invalid",
+      notes: "Formato no permitido. Usa PDF, JPG, PNG o WEBP",
+    };
+  }
+
+  if (file.size < MIN_FILE_SIZE_BYTES) {
     status = "warning";
     notes.push("Archivo muy pequeño");
   }
 
-  if (type === "dni_nie") {
-    if (!/[XYZ]?\d{7,8}[A-Z]/.test(text)) {
-      status = "invalid";
-      notes.push("Formato DNI/NIE inválido");
+  if (
+    normalizedType === "passport" ||
+    normalizedType === "dni_nie" ||
+    normalizedType === "empadronamiento" ||
+    normalizedType === "fotografias" ||
+    normalizedType === "pruebas_espana" ||
+    normalizedType === "tasa_pagada" ||
+    normalizedType === "formulario_oficial" ||
+    normalizedType === "general"
+  ) {
+    if (!looksLikePdf(mime, ext) && !looksLikeImage(mime, ext)) {
+      status = "warning";
+      notes.push("El archivo no parece PDF ni imagen estándar");
     }
   }
 
-  if (type === "passport") {
-    if (!text.toLowerCase().includes("passport")) {
-      status = "warning";
-      notes.push("No parece pasaporte");
-    }
+  if (normalizedType === "fotografias" && !looksLikeImage(mime, ext)) {
+    status = "warning";
+    notes.push("Para fotografías se recomienda JPG o PNG");
   }
 
-  if (type === "empadronamiento") {
-    if (!text.toLowerCase().includes("ayuntamiento")) {
-      status = "warning";
-      notes.push("No parece documento oficial");
-    }
+  if (
+    (normalizedType === "formulario_oficial" ||
+      normalizedType === "tasa_pagada" ||
+      normalizedType === "empadronamiento") &&
+    !looksLikePdf(mime, ext)
+  ) {
+    status = "warning";
+    notes.push("Para este documento se recomienda PDF");
+  }
+
+  if (!file.name || file.name.trim().length < 3) {
+    status = "warning";
+    notes.push("Nombre de archivo poco claro");
   }
 
   return {
