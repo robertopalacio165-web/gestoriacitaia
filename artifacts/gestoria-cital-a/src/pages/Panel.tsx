@@ -7,7 +7,6 @@ import { useLocation } from "wouter";
 import {
   FileText,
   CheckCircle2,
-  XCircle,
   AlertCircle,
   Bell,
   Shield,
@@ -39,26 +38,26 @@ const CITAS = [
   {
     date: "24 Mar 2026",
     time: "10:30",
-    label: "Renovación TIE",
+    labelKey: "appointment_tie_renewal",
     ref: "ESP-2026-034821",
     status: "proxima",
-    lugar: "Comisaría Madrid Centro",
+    lugarKey: "appointment_place_madrid_center",
   },
   {
     date: "15 Ene 2026",
     time: "09:15",
-    label: "Empadronamiento",
+    labelKey: "appointment_empadronamiento",
     ref: "MAD-2026-001234",
     status: "completada",
-    lugar: "Ayuntamiento Madrid",
+    lugarKey: "appointment_place_madrid_townhall",
   },
   {
     date: "03 Nov 2025",
     time: "11:00",
-    label: "Asignación NIE",
+    labelKey: "appointment_nie_assignment",
     ref: "ESP-2025-099812",
     status: "completada",
-    lugar: "Comisaría Madrid Norte",
+    lugarKey: "appointment_place_madrid_north",
   },
 ];
 
@@ -85,11 +84,16 @@ type RequiredDoc = {
   date: string;
 };
 
+type RequiredDocWithStatus = RequiredDoc & {
+  status: "subido" | "pendiente";
+  extra: string;
+};
+
 export default function Panel() {
   const [, setLocation] = useLocation();
   const [activeTab, setActiveTab] = useState<TabKey>("resumen");
   const [showPayment, setShowPayment] = useState(false);
-  const [planActivo, setPlanActivo] = useState("Estándar");
+  const [planActivo, setPlanActivo] = useState("plan_standard");
   const [codeCopied, setCodeCopied] = useState(false);
   const [showNotif, setShowNotif] = useState(false);
   const [userDocuments, setUserDocuments] = useState<UserDocumentRow[]>([]);
@@ -98,15 +102,60 @@ export default function Panel() {
   const { toast } = useToast();
   const { t } = useLang();
 
- const REQUIRED_DOCS: RequiredDoc[] = [
-  { name: t("doc_passport"), type: "passport", date: t("doc_required") },
-  { name: t("doc_dni_nie"), type: "dni_nie", date: t("doc_if_available") },
-  { name: t("doc_empadronamiento"), type: "empadronamiento", date: t("doc_important") },
-  { name: t("doc_pruebas_espana"), type: "pruebas_espana", date: t("doc_very_important") },
-  { name: t("doc_fotografias"), type: "fotografias", date: t("doc_required") },
-  { name: t("doc_formulario_oficial"), type: "formulario_oficial", date: t("doc_pending_fill") },
-  { name: t("doc_tasa_pagada"), type: "tasa_pagada", date: t("doc_pending") },
-];
+  const tr = (key: string, fallback: string) => {
+    const value = t(key);
+    return value && value !== key ? value : fallback;
+  };
+
+  const trf = (key: string, fallback: string, vars?: Record<string, string | number>) => {
+    let value = tr(key, fallback);
+    if (vars) {
+      Object.entries(vars).forEach(([k, v]) => {
+        value = value.replace(new RegExp(`\\{${k}\\}`, "g"), String(v));
+      });
+    }
+    return value;
+  };
+
+  const getPlanLabel = (plan: string) => {
+    const normalized = plan.trim().toLowerCase();
+
+    if (
+      normalized === "estándar" ||
+      normalized === "estandar" ||
+      normalized === "standard" ||
+      normalized === "plan_standard"
+    ) {
+      return tr("plan_standard", "Estándar");
+    }
+
+    if (
+      normalized === "premium" ||
+      normalized === "plan_premium"
+    ) {
+      return tr("plan_premium", "Premium");
+    }
+
+    if (
+      normalized === "pro" ||
+      normalized === "plan_pro"
+    ) {
+      return tr("plan_pro", "Pro");
+    }
+
+    return plan;
+  };
+
+  const REQUIRED_DOCS: RequiredDoc[] = [
+    { name: t("doc_passport"), type: "passport", date: t("doc_required") },
+    { name: t("doc_dni_nie"), type: "dni_nie", date: t("doc_if_available") },
+    { name: t("doc_empadronamiento"), type: "empadronamiento", date: t("doc_important") },
+    { name: t("doc_pruebas_espana"), type: "pruebas_espana", date: t("doc_very_important") },
+    { name: t("doc_fotografias"), type: "fotografias", date: t("doc_required") },
+    { name: t("doc_formulario_oficial"), type: "formulario_oficial", date: t("doc_pending_fill") },
+    { name: t("doc_tasa_pagada"), type: "tasa_pagada", date: t("doc_pending") },
+  ];
+
   const loadUserDocuments = async () => {
     try {
       setDocsLoading(true);
@@ -140,8 +189,9 @@ export default function Panel() {
       setUserDocuments((data || []) as UserDocumentRow[]);
     } catch (error: any) {
       toast({
-        title: "Error al cargar documentos",
-        description: error?.message || "No se pudieron cargar los documentos",
+        title: tr("error_loading_documents_title", "Error al cargar documentos"),
+        description:
+          error?.message || tr("error_loading_documents_desc", "No se pudieron cargar los documentos"),
         variant: "destructive",
       });
     } finally {
@@ -155,20 +205,27 @@ export default function Panel() {
     title: string
   ) => {
     try {
-     const result = await verifyDocument(file, documentType);
+      const result = await verifyDocument(file, documentType);
 
-await uploadDocument({
-  file,
-  documentType,
-  title,
-  verification_status: result.status,
-  verification_notes: result.notes,
-});
-      setUploadMessage(`✅ ${title} subido correctamente`);
+      await uploadDocument({
+        file,
+        documentType,
+        title,
+        verification_status: result.status,
+        verification_notes: result.notes,
+      });
+
+      const successText = trf("document_uploaded_success_named", "✅ {title} subido correctamente", {
+        title,
+      });
+
+      setUploadMessage(successText);
 
       toast({
-        title: "Documento subido",
-        description: `${title} subido correctamente.`,
+        title: tr("document_uploaded_title", "Documento subido"),
+        description: trf("document_uploaded_desc_named", "{title} subido correctamente.", {
+          title,
+        }),
       });
 
       await loadUserDocuments();
@@ -179,8 +236,8 @@ await uploadDocument({
     } catch (error: any) {
       console.error("handleDocumentUpload error:", error);
       toast({
-        title: "Error al subir",
-        description: error?.message || "No se pudo subir el documento",
+        title: tr("error_upload_title", "Error al subir"),
+        description: error?.message || tr("error_upload_desc", "No se pudo subir el documento"),
         variant: "destructive",
       });
     }
@@ -200,8 +257,8 @@ await uploadDocument({
       window.open(data.signedUrl, "_blank");
     } catch (error: any) {
       toast({
-        title: "Error al descargar",
-        description: error?.message || "No se pudo descargar el documento",
+        title: tr("error_download_title", "Error al descargar"),
+        description: error?.message || tr("error_download_desc", "No se pudo descargar el documento"),
         variant: "destructive",
       });
     }
@@ -218,36 +275,41 @@ await uploadDocument({
     [userDocuments]
   );
 
- const requiredDocsWithStatus = useMemo(() => {
-  return REQUIRED_DOCS.map((doc) => {
-    // 🔥 CASO ESPECIAL: PRUEBAS ESPAÑA
-    if (doc.type === "pruebas_espana") {
-      const pruebas = userDocuments.filter(
-        (d) => d.document_type === "pruebas_espana"
-      );
+  const requiredDocsWithStatus = useMemo<RequiredDocWithStatus[]>(() => {
+    return REQUIRED_DOCS.map((doc) => {
+      if (doc.type === "pruebas_espana") {
+        const pruebas = userDocuments.filter(
+          (d) => d.document_type === "pruebas_espana"
+        );
 
-      const total = pruebas.length;
-      const minimo = 5;
+        const total = pruebas.length;
+        const minimo = 5;
+
+        return {
+          ...doc,
+          status: total >= minimo ? "subido" : "pendiente",
+          extra:
+            total >= minimo
+              ? trf("proofs_complete_counter", "✔ {total}/{min} pruebas completas", {
+                  total,
+                  min: minimo,
+                })
+              : trf("proofs_counter", "{total}/{min} pruebas", {
+                  total,
+                  min: minimo,
+                }),
+        };
+      }
+
+      const isUploaded = uploadedTypeSet.has(doc.type);
 
       return {
         ...doc,
-        status: total >= minimo ? "subido" : "pendiente",
-    extra: total >= minimo 
-? `✔ ${total}/${minimo} pruebas completas`
-  : `${total}/${minimo} pruebas`,
+        status: isUploaded ? "subido" : "pendiente",
+        extra: "",
       };
-    }
-
-    // 🔥 RESTO NORMAL
-    const isUploaded = uploadedTypeSet.has(doc.type);
-
-    return {
-      ...doc,
-      status: isUploaded ? "subido" : "pendiente",
-      extra: "",
-    };
-  });
-}, [REQUIRED_DOCS, uploadedTypeSet, userDocuments]);
+    });
+  }, [REQUIRED_DOCS, uploadedTypeSet, userDocuments, t]);
 
   const docsOk = requiredDocsWithStatus.filter((d) => d.status === "subido").length;
   const docsPct = Math.round((docsOk / requiredDocsWithStatus.length) * 100);
@@ -255,7 +317,7 @@ await uploadDocument({
   const TRAMITES_ACTIVOS = [
     {
       icon: FileText,
-      label: "Renovación TIE",
+      label: tr("procedure_tie_renewal", "Renovación TIE"),
       color: "text-blue-400",
       pct: 35,
       status: t("panel_tramite_curso"),
@@ -269,7 +331,7 @@ await uploadDocument({
     },
     {
       icon: Heart,
-      label: "Arraigo Social",
+      label: tr("procedure_arraigo_social", "Arraigo Social"),
       color: "text-red-400",
       pct: 10,
       status: t("panel_tramite_pending"),
@@ -288,7 +350,9 @@ await uploadDocument({
     setCodeCopied(true);
     toast({
       title: t("panel_copied"),
-      description: `${REFERRAL_CODE} copiado al portapapeles.`,
+      description: trf("referral_code_copied_desc", "{code} copiado al portapapeles.", {
+        code: REFERRAL_CODE,
+      }),
     });
     setTimeout(() => setCodeCopied(false), 2500);
   };
@@ -334,7 +398,7 @@ await uploadDocument({
   const STAT_CARDS = [
     {
       label: t("panel_plan_active"),
-      value: planActivo,
+      value: getPlanLabel(planActivo),
       sub: t("panel_stat_up_to"),
       icon: Star,
       color: "text-primary",
@@ -344,7 +408,7 @@ await uploadDocument({
     {
       label: t("panel_stat_tramites"),
       value: "2",
-      sub: "1 en curso · 1 pendiente",
+      sub: tr("panel_stat_tramites_sub", "1 en curso · 1 pendiente"),
       icon: FileText,
       color: "text-blue-400",
       bg: "bg-blue-400/10",
@@ -353,7 +417,7 @@ await uploadDocument({
     {
       label: t("panel_stat_cita_next"),
       value: "24 Mar",
-      sub: "Renovación TIE · 10:30",
+      sub: tr("panel_stat_next_appt_sub", "Renovación TIE · 10:30"),
       icon: Calendar,
       color: "text-amber-400",
       bg: "bg-amber-400/10",
@@ -373,12 +437,51 @@ await uploadDocument({
   const CLIENT_FIELDS = [
     [t("panel_full_name"), "Ahmed Benali"],
     ["NIE", "X-1234567-Z"],
-    [t("panel_nationality"), "Marroquí 🇲🇦"],
+    [t("panel_nationality"), `${tr("nationality_moroccan", "Marroquí")} 🇲🇦`],
     [t("panel_birthdate"), "15/03/1990"],
-    ["Tel.", "+34 612 345 678"],
-    ["Email", "ahmed@email.com"],
-    [t("panel_situation"), "Residencia temporal"],
+    [tr("panel_phone", "Tel."), "+34 612 345 678"],
+    [tr("panel_email", "Email"), "ahmed@email.com"],
+    [t("panel_situation"), tr("temporary_residence", "Residencia temporal")],
     [t("panel_tie_expiry"), "30/06/2026 ⚠️"],
+  ];
+
+  const notifications = [
+    {
+      icon: CheckCircle2,
+      color: "text-primary",
+      bg: "bg-primary/10",
+      title: tr("notif_appointment_confirmed", "Cita confirmada"),
+      body: tr(
+        "notif_appointment_confirmed_body",
+        "Renovación TIE · 24 Mar 2026 · 10:30 — Comisaría Madrid"
+      ),
+      time: tr("time_2h_ago", "hace 2 h"),
+      dot: true,
+    },
+    {
+      icon: AlertCircle,
+      color: "text-amber-400",
+      bg: "bg-amber-400/10",
+      title: tr("notif_document_expiring", "Documento por renovar"),
+      body: tr(
+        "notif_document_expiring_body",
+        "Tu certificado de antecedentes penales caduca pronto"
+      ),
+      time: tr("time_1d_ago", "hace 1 día"),
+      dot: true,
+    },
+    {
+      icon: FileText,
+      color: "text-secondary",
+      bg: "bg-secondary/10",
+      title: tr("notif_regularizacion_title", "Regularización 2026"),
+      body: tr(
+        "notif_regularizacion_body",
+        "Nueva convocatoria disponible. Consulta tu elegibilidad."
+      ),
+      time: tr("time_3d_ago", "hace 3 días"),
+      dot: false,
+    },
   ];
 
   return (
@@ -409,7 +512,7 @@ await uploadDocument({
               <p className="text-xs text-muted-foreground">
                 {CLIENT_NAME} ·{" "}
                 <span className="text-primary font-semibold">
-                  {t("panel_plan_active")} {planActivo}
+                  {t("panel_plan_active")} {getPlanLabel(planActivo)}
                 </span>{" "}
                 · NIE: X-1234567-Z
               </p>
@@ -444,35 +547,7 @@ await uploadDocument({
                 </div>
 
                 <div className="divide-y divide-white/[0.05]">
-                  {[
-                    {
-                      icon: CheckCircle2,
-                      color: "text-primary",
-                      bg: "bg-primary/10",
-                      title: "Cita confirmada",
-                      body: "Renovación TIE · 24 Mar 2026 · 10:30 — Comisaría Madrid",
-                      time: "hace 2h",
-                      dot: true,
-                    },
-                    {
-                      icon: AlertCircle,
-                      color: "text-amber-400",
-                      bg: "bg-amber-400/10",
-                      title: "Documento por renovar",
-                      body: "Tu Cert. de antecedentes penales caduca pronto",
-                      time: "hace 1d",
-                      dot: true,
-                    },
-                    {
-                      icon: FileText,
-                      color: "text-secondary",
-                      bg: "bg-secondary/10",
-                      title: "Regularización 2026",
-                      body: "Nueva convocatoria disponible. Consulta tu elegibilidad.",
-                      time: "hace 3d",
-                      dot: false,
-                    },
-                  ].map((n, i) => (
+                  {notifications.map((n, i) => (
                     <div
                       key={i}
                       className="px-4 py-3 flex items-start gap-3 hover:bg-white/5 transition-colors"
@@ -483,15 +558,11 @@ await uploadDocument({
                         <n.icon className={`w-4 h-4 ${n.color}`} />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs font-semibold text-white">
-                          {n.title}
-                        </p>
+                        <p className="text-xs font-semibold text-white">{n.title}</p>
                         <p className="text-[10px] text-muted-foreground leading-snug mt-0.5">
                           {n.body}
                         </p>
-                        <p className="text-[10px] text-white/30 mt-1">
-                          {n.time}
-                        </p>
+                        <p className="text-[10px] text-white/30 mt-1">{n.time}</p>
                       </div>
                       {n.dot && (
                         <span className="w-2 h-2 rounded-full bg-primary shrink-0 mt-1.5" />
@@ -528,18 +599,12 @@ await uploadDocument({
               }}
               className={`glass-panel border ${card.border} rounded-2xl p-4 flex flex-col gap-2 text-left hover:border-white/20 transition-all`}
             >
-              <div
-                className={`w-8 h-8 rounded-lg ${card.bg} flex items-center justify-center`}
-              >
+              <div className={`w-8 h-8 rounded-lg ${card.bg} flex items-center justify-center`}>
                 <card.icon className={`w-4 h-4 ${card.color}`} />
               </div>
               <div>
-                <p className="text-lg font-bold text-white leading-none">
-                  {card.value}
-                </p>
-                <p className="text-[10px] text-muted-foreground mt-0.5">
-                  {card.label}
-                </p>
+                <p className="text-lg font-bold text-white leading-none">{card.value}</p>
+                <p className="text-[10px] text-muted-foreground mt-0.5">{card.label}</p>
                 <p className="text-[10px] text-white/50 mt-0.5">{card.sub}</p>
               </div>
             </motion.button>
@@ -572,9 +637,9 @@ await uploadDocument({
                       {t("panel_plan_active")}
                     </p>
                     <p className="text-base font-black text-white">
-                      {planActivo} · 19.99€
+                      {getPlanLabel(planActivo)} · 19.99€
                       <span className="text-xs font-normal text-muted-foreground">
-                        /mes
+                        /{tr("per_month", "mes")}
                       </span>
                     </p>
                   </div>
@@ -619,32 +684,30 @@ await uploadDocument({
                   {t("panel_tramites_curso")}
                 </p>
                 <div className="space-y-2">
-                  {TRAMITES_ACTIVOS.map((tr, i) => (
+                  {TRAMITES_ACTIVOS.map((trm, i) => (
                     <div
                       key={i}
                       className="glass-panel border border-white/[0.07] rounded-xl p-3"
                     >
                       <div className="flex items-center gap-3 mb-2">
                         <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center shrink-0">
-                          <tr.icon className={`w-4 h-4 ${tr.color}`} />
+                          <trm.icon className={`w-4 h-4 ${trm.color}`} />
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-xs font-semibold text-white">
-                            {tr.label}
+                            {trm.label}
                           </p>
                           <p className="text-[10px] text-muted-foreground">
-                            {tr.status}
+                            {trm.status}
                           </p>
                         </div>
-                        <span className="text-xs font-bold text-primary">
-                          {tr.pct}%
-                        </span>
+                        <span className="text-xs font-bold text-primary">{trm.pct}%</span>
                       </div>
                       <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
                         <motion.div
                           className="h-full bg-primary rounded-full"
                           initial={{ width: 0 }}
-                          animate={{ width: `${tr.pct}%` }}
+                          animate={{ width: `${trm.pct}%` }}
                           transition={{ duration: 0.8, delay: 0.2 + i * 0.1 }}
                         />
                       </div>
@@ -668,12 +731,8 @@ await uploadDocument({
                         <a.icon className={`w-4 h-4 ${a.color}`} />
                       </div>
                       <div className="min-w-0">
-                        <p className="text-xs font-semibold text-white">
-                          {a.label}
-                        </p>
-                        <p className="text-[10px] text-muted-foreground truncate">
-                          {a.sub}
-                        </p>
+                        <p className="text-xs font-semibold text-white">{a.label}</p>
+                        <p className="text-[10px] text-muted-foreground truncate">{a.sub}</p>
                       </div>
                     </button>
                   ))}
@@ -724,7 +783,11 @@ await uploadDocument({
                         if (navigator.share) {
                           navigator.share({
                             title: "GestoriaCitaIA",
-                            text: `Usa mi código ${REFERRAL_CODE} y consigue tu primer mes con descuento`,
+                            text: trf(
+                              "share_referral_text",
+                              "Usa mi código {code} y consigue tu primer mes con descuento",
+                              { code: REFERRAL_CODE }
+                            ),
                             url: "https://gestoriacitaia.com",
                           });
                         }
@@ -773,7 +836,7 @@ await uploadDocument({
                           >
                             {i < REFERRALS_USED ? "✓" : i + 1}
                           </span>
-                          {i === 0 ? "Ahmed M." : i === 1 ? "Karim B." : "Pendiente"}
+                          {i === 0 ? "Ahmed M." : i === 1 ? "Karim B." : tr("pending", "Pendiente")}
                         </div>
                       ))}
                     </div>
@@ -794,9 +857,7 @@ await uploadDocument({
               <div className="flex items-start gap-2 bg-amber-950/30 border border-amber-600/20 rounded-xl p-3">
                 <AlertCircle className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
                 <p className="text-[10px] text-amber-200/70 leading-relaxed">
-                  <strong className="text-amber-400">
-                    {t("panel_legal_aviso")}
-                  </strong>{" "}
+                  <strong className="text-amber-400">{t("panel_legal_aviso")}</strong>{" "}
                   {t("panel_legal_panel")}
                 </p>
               </div>
@@ -805,21 +866,19 @@ await uploadDocument({
 
           {activeTab === "tramites" && (
             <div className="p-4 space-y-4">
-              {TRAMITES_ACTIVOS.map((tr, i) => (
+              {TRAMITES_ACTIVOS.map((trm, i) => (
                 <div
                   key={i}
                   className="glass-panel border border-white/[0.07] rounded-xl p-4"
                 >
                   <div className="flex items-center gap-3 mb-3">
                     <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center shrink-0">
-                      <tr.icon className={`w-5 h-5 ${tr.color}`} />
+                      <trm.icon className={`w-5 h-5 ${trm.color}`} />
                     </div>
                     <div className="flex-1">
-                      <p className="text-sm font-semibold text-white">
-                        {tr.label}
-                      </p>
+                      <p className="text-sm font-semibold text-white">{trm.label}</p>
                       <p className="text-xs text-muted-foreground">
-                        {tr.status} · {tr.pct}% {t("panel_completed_pct")}
+                        {trm.status} · {trm.pct}% {t("panel_completed_pct")}
                       </p>
                     </div>
                     <button
@@ -835,7 +894,7 @@ await uploadDocument({
                     <motion.div
                       className="h-full bg-primary rounded-full"
                       initial={{ width: 0 }}
-                      animate={{ width: `${tr.pct}%` }}
+                      animate={{ width: `${trm.pct}%` }}
                       transition={{ duration: 0.8, delay: i * 0.1 }}
                     />
                   </div>
@@ -845,22 +904,22 @@ await uploadDocument({
                     <div
                       className="absolute top-3.5 left-4 h-0.5 bg-primary"
                       style={{
-                        width: `${(tr.paso / (tr.pasos.length - 1)) * 90}%`,
+                        width: `${(trm.paso / (trm.pasos.length - 1)) * 90}%`,
                       }}
                     />
-                    {tr.pasos.map((p, pi) => (
+                    {trm.pasos.map((p, pi) => (
                       <div
                         key={pi}
                         className="flex flex-col items-center gap-1 relative z-10"
                       >
                         <div
                           className={`w-7 h-7 rounded-full flex items-center justify-center border-2 ${
-                            pi < tr.paso
+                            pi < trm.paso
                               ? "bg-primary border-primary"
                               : "bg-background border-white/20"
                           }`}
                         >
-                          {pi < tr.paso ? (
+                          {pi < trm.paso ? (
                             <CheckCircle2 className="w-3.5 h-3.5 text-white" />
                           ) : (
                             <span className="text-[10px] text-muted-foreground">
@@ -870,7 +929,7 @@ await uploadDocument({
                         </div>
                         <p
                           className={`text-[9px] leading-tight text-center max-w-[50px] ${
-                            pi < tr.paso
+                            pi < trm.paso
                               ? "text-primary font-bold"
                               : "text-muted-foreground"
                           }`}
@@ -923,12 +982,14 @@ await uploadDocument({
                       </div>
                       <div>
                         <p className="text-xs font-bold text-white">
-                          {cita.label}
+                          {tr(cita.labelKey, cita.labelKey)}
                         </p>
                         <p className="text-[11px] text-muted-foreground">
                           {cita.date} · {cita.time}
                         </p>
-                        <p className="text-[10px] text-white/50">{cita.lugar}</p>
+                        <p className="text-[10px] text-white/50">
+                          {tr(cita.lugarKey, cita.lugarKey)}
+                        </p>
                         <p className="text-[10px] font-mono text-white/40 mt-0.5">
                           Ref: {cita.ref}
                         </p>
@@ -977,63 +1038,59 @@ await uploadDocument({
                 </div>
               )}
 
-         <div className="rounded-xl border border-white/10 p-3">
-  <div className="flex items-center justify-between mb-3">
-    <p className="text-xs font-bold text-white">
-      {t("docs_required_title")}
-    </p>
-    <span className="text-xs text-muted-foreground">
-      {docsOk}/{requiredDocsWithStatus.length}
-    </span>
-  </div>
+              <div className="rounded-xl border border-white/10 p-3">
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-xs font-bold text-white">{t("docs_required_title")}</p>
+                  <span className="text-xs text-muted-foreground">
+                    {docsOk}/{requiredDocsWithStatus.length}
+                  </span>
+                </div>
 
-  <div className="space-y-2">
-    {requiredDocsWithStatus.map((doc, i) => (
-      <div
-        key={i}
-        className="flex items-center justify-between p-3 bg-white/5 rounded-xl"
-      >
-        <div>
-          <p className="text-white text-sm">{doc.name}</p>
-          <p className="text-xs text-muted-foreground">
-            {doc.date}
-            {"extra" in doc && doc.extra && (
-              <span className="ml-2 text-primary font-semibold">
-                · {doc.extra}
-              </span>
-            )}
-          </p>
-        </div>
+                <div className="space-y-2">
+                  {requiredDocsWithStatus.map((doc, i) => (
+                    <div
+                      key={i}
+                      className="flex items-center justify-between p-3 bg-white/5 rounded-xl"
+                    >
+                      <div>
+                        <p className="text-white text-sm">{doc.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {doc.date}
+                          {!!doc.extra && (
+                            <span className="ml-2 text-primary font-semibold">
+                              · {doc.extra}
+                            </span>
+                          )}
+                        </p>
+                      </div>
 
-        <div className="flex items-center gap-3">
-          <span
-            className={`text-xs font-semibold ${
-              doc.status === "subido"
-                ? "text-green-400"
-                : "text-amber-400"
-            }`}
-          >
-            {doc.status === "subido" ? t("doc_uploaded") : t("doc_pending")}
-          </span>
+                      <div className="flex items-center gap-3">
+                        <span
+                          className={`text-xs font-semibold ${
+                            doc.status === "subido" ? "text-green-400" : "text-amber-400"
+                          }`}
+                        >
+                          {doc.status === "subido" ? t("doc_uploaded") : t("doc_pending")}
+                        </span>
 
-          <label className="cursor-pointer text-xs text-primary flex items-center gap-1">
-            <Upload className="w-3 h-3" />
-            {doc.status === "subido" ? t("doc_replace") : t("doc_upload")}
-            <input
-              type="file"
-              className="hidden"
-              onChange={async (e) => {
-                const file = e.target.files?.[0];
-                if (!file) return;
-                await handleDocumentUpload(file, doc.type, doc.name);
-              }}
-            />
-          </label>
-        </div>
-      </div>
-    ))}
-  </div>
-</div>
+                        <label className="cursor-pointer text-xs text-primary flex items-center gap-1">
+                          <Upload className="w-3 h-3" />
+                          {doc.status === "subido" ? t("doc_replace") : t("doc_upload")}
+                          <input
+                            type="file"
+                            className="hidden"
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0];
+                              if (!file) return;
+                              await handleDocumentUpload(file, doc.type, doc.name);
+                            }}
+                          />
+                        </label>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
 
               <input
                 type="file"
@@ -1056,24 +1113,21 @@ await uploadDocument({
 
               <div className="rounded-xl border border-white/10 p-3">
                 <div className="flex items-center justify-between mb-3">
-                 <p className="text-xs font-bold text-white">
-  {t("my_uploaded_docs")}
-</p>
-<span className="text-xs text-muted-foreground">
-  {docsLoading
-    ? t("loading")
-    : `${userDocuments.length} ${t("documents_count")}`}
-</span>
+                  <p className="text-xs font-bold text-white">{t("my_uploaded_docs")}</p>
+                  <span className="text-xs text-muted-foreground">
+                    {docsLoading ? t("loading") : `${userDocuments.length} ${t("documents_count")}`}
+                  </span>
                 </div>
-  {docsLoading ? (
-  <p className="text-sm text-muted-foreground">
-    {t("loading_documents")}
-  </p>
-) : userDocuments.length === 0 ? (
-  <p className="text-sm text-muted-foreground">
-    {t("no_documents_uploaded")}
-  </p>
-) : (
+
+                {docsLoading ? (
+                  <p className="text-sm text-muted-foreground">
+                    {t("loading_documents")}
+                  </p>
+                ) : userDocuments.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">
+                    {t("no_documents_uploaded")}
+                  </p>
+                ) : (
                   <div className="space-y-2">
                     {userDocuments.map((doc) => (
                       <div
@@ -1094,8 +1148,8 @@ await uploadDocument({
                           onClick={() => handleDownloadDocument(doc.file_path)}
                           className="text-xs text-primary hover:text-primary/80 flex items-center gap-1 shrink-0"
                         >
-                         <Download className="w-3.5 h-3.5" />
-{t("download")}
+                          <Download className="w-3.5 h-3.5" />
+                          {t("download")}
                         </button>
                       </div>
                     ))}
@@ -1115,9 +1169,7 @@ await uploadDocument({
             {CLIENT_FIELDS.map(([k, v]) => (
               <div key={String(k)} className="flex flex-col gap-0.5">
                 <span className="text-[10px] text-muted-foreground">{k}</span>
-                <span className="text-xs text-white font-medium truncate">
-                  {v}
-                </span>
+                <span className="text-xs text-white font-medium truncate">{v}</span>
               </div>
             ))}
           </div>
