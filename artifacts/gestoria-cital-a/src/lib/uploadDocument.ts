@@ -4,14 +4,23 @@ type UploadDocumentParams = {
   file: File;
   documentType: string;
   title: string;
+  verification_status?: string;
+  verification_notes?: string;
+  case_id?: string | null;
+  bucket?: string;
+  is_required?: boolean;
 };
 
 export async function uploadDocument({
   file,
   documentType,
   title,
+  verification_status = "pending",
+  verification_notes = "",
+  case_id = null,
+  bucket = "user-documents",
+  is_required = true,
 }: UploadDocumentParams) {
-  // 1) Usuario actual
   const {
     data: { user },
     error: userError,
@@ -30,18 +39,18 @@ export async function uploadDocument({
     throw new Error("No hay archivo");
   }
 
-  // 2) Nombre y ruta
   const ext = file.name.split(".").pop()?.toLowerCase() || "bin";
   const safeName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-  const filePath = `${user.id}/${documentType}/${safeName}`;
 
-  // 3) Subir a storage
+  const folder = documentType || "general";
+  const filePath = `${user.id}/${folder}/${safeName}`;
+
   const { error: uploadError } = await supabase.storage
-    .from("user-files")
+    .from(bucket)
     .upload(filePath, file, {
       cacheControl: "3600",
       upsert: false,
-      contentType: file.type,
+      contentType: file.type || "application/octet-stream",
     });
 
   if (uploadError) {
@@ -49,28 +58,32 @@ export async function uploadDocument({
     throw uploadError;
   }
 
-  // 4) Guardar en base de datos
+  const payload = {
+    user_id: user.id,
+    case_id,
+    document_type: documentType,
+    title,
+    storage_bucket: bucket,
+    file_path: filePath,
+    original_name: file.name,
+    mime_type: file.type,
+    file_size: file.size,
+    verification_status,
+    verification_notes,
+    is_required,
+  };
+
   const { data: insertedDoc, error: dbError } = await supabase
     .from("user_documents")
-    .insert([
-      {
-        user_id: user.id,
-        document_type: documentType,
-        title: title,
-        storage_bucket: "user-files",
-        file_path: filePath,
-        original_name: file.name,
-        mime_type: file.type,
-        file_size: file.size,
-        verification_status: "pending",
-        is_required: true,
-      },
-    ])
+    .insert([payload])
     .select()
     .single();
 
   if (dbError) {
     console.error("user_documents insert error:", dbError);
+
+    await supabase.storage.from(bucket).remove([filePath]);
+
     throw dbError;
   }
 
