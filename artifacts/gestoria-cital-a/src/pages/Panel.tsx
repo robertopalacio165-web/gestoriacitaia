@@ -102,12 +102,57 @@ export default function Panel() {
   const { toast } = useToast();
   const { t } = useLang();
 
+  const goWithGoogleAuth = async (targetPath: string) => {
+    try {
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+
+      if (userError) {
+        console.error("auth.getUser error:", userError);
+      }
+
+      if (user) {
+        setLocation(targetPath);
+        return;
+      }
+
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}${targetPath}`,
+        },
+      });
+
+      if (error) {
+        console.error("Google login error:", error);
+        toast({
+          title: "Error de acceso",
+          description: "No se pudo iniciar sesión con Google",
+          variant: "destructive",
+        });
+      }
+    } catch (error: any) {
+      console.error("goWithGoogleAuth error:", error);
+      toast({
+        title: "Error de acceso",
+        description: error?.message || "No se pudo iniciar sesión con Google",
+        variant: "destructive",
+      });
+    }
+  };
+
   const tr = (key: string, fallback: string) => {
-    const value = t(key);
+    const value = t(key as any);
     return value && value !== key ? value : fallback;
   };
 
-  const trf = (key: string, fallback: string, vars?: Record<string, string | number>) => {
+  const trf = (
+    key: string,
+    fallback: string,
+    vars?: Record<string, string | number>
+  ) => {
     let value = tr(key, fallback);
     if (vars) {
       Object.entries(vars).forEach(([k, v]) => {
@@ -129,17 +174,11 @@ export default function Panel() {
       return tr("plan_standard", "Estándar");
     }
 
-    if (
-      normalized === "premium" ||
-      normalized === "plan_premium"
-    ) {
+    if (normalized === "premium" || normalized === "plan_premium") {
       return tr("plan_premium", "Premium");
     }
 
-    if (
-      normalized === "pro" ||
-      normalized === "plan_pro"
-    ) {
+    if (normalized === "pro" || normalized === "plan_pro") {
       return tr("plan_pro", "Pro");
     }
 
@@ -149,10 +188,22 @@ export default function Panel() {
   const REQUIRED_DOCS: RequiredDoc[] = [
     { name: t("doc_passport"), type: "passport", date: t("doc_required") },
     { name: t("doc_dni_nie"), type: "dni_nie", date: t("doc_if_available") },
-    { name: t("doc_empadronamiento"), type: "empadronamiento", date: t("doc_important") },
-    { name: t("doc_pruebas_espana"), type: "pruebas_espana", date: t("doc_very_important") },
+    {
+      name: t("doc_empadronamiento"),
+      type: "empadronamiento",
+      date: t("doc_important"),
+    },
+    {
+      name: t("doc_pruebas_espana"),
+      type: "pruebas_espana",
+      date: t("doc_very_important"),
+    },
     { name: t("doc_fotografias"), type: "fotografias", date: t("doc_required") },
-    { name: t("doc_formulario_oficial"), type: "formulario_oficial", date: t("doc_pending_fill") },
+    {
+      name: t("doc_formulario_oficial"),
+      type: "formulario_oficial",
+      date: t("doc_pending_fill"),
+    },
     { name: t("doc_tasa_pagada"), type: "tasa_pagada", date: t("doc_pending") },
   ];
 
@@ -177,7 +228,9 @@ export default function Panel() {
 
       const { data, error } = await supabase
         .from("user_documents")
-        .select("id,title,original_name,document_type,file_path,verification_status,created_at")
+        .select(
+          "id,title,original_name,document_type,file_path,verification_status,created_at"
+        )
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
 
@@ -191,7 +244,8 @@ export default function Panel() {
       toast({
         title: tr("error_loading_documents_title", "Error al cargar documentos"),
         description:
-          error?.message || tr("error_loading_documents_desc", "No se pudieron cargar los documentos"),
+          error?.message ||
+          tr("error_loading_documents_desc", "No se pudieron cargar los documentos"),
         variant: "destructive",
       });
     } finally {
@@ -215,17 +269,21 @@ export default function Panel() {
         verification_notes: result.notes,
       });
 
-      const successText = trf("document_uploaded_success_named", "✅ {title} subido correctamente", {
-        title,
-      });
+      const successText = trf(
+        "document_uploaded_success_named",
+        "✅ {title} subido correctamente",
+        { title }
+      );
 
       setUploadMessage(successText);
 
       toast({
         title: tr("document_uploaded_title", "Documento subido"),
-        description: trf("document_uploaded_desc_named", "{title} subido correctamente.", {
-          title,
-        }),
+        description: trf(
+          "document_uploaded_desc_named",
+          "{title} subido correctamente.",
+          { title }
+        ),
       });
 
       await loadUserDocuments();
@@ -237,7 +295,8 @@ export default function Panel() {
       console.error("handleDocumentUpload error:", error);
       toast({
         title: tr("error_upload_title", "Error al subir"),
-        description: error?.message || tr("error_upload_desc", "No se pudo subir el documento"),
+        description:
+          error?.message || tr("error_upload_desc", "No se pudo subir el documento"),
         variant: "destructive",
       });
     }
@@ -258,7 +317,9 @@ export default function Panel() {
     } catch (error: any) {
       toast({
         title: tr("error_download_title", "Error al descargar"),
-        description: error?.message || tr("error_download_desc", "No se pudo descargar el documento"),
+        description:
+          error?.message ||
+          tr("error_download_desc", "No se pudo descargar el documento"),
         variant: "destructive",
       });
     }
@@ -290,10 +351,14 @@ export default function Panel() {
           status: total >= minimo ? "subido" : "pendiente",
           extra:
             total >= minimo
-              ? trf("proofs_complete_counter", "✔ {total}/{min} pruebas completas", {
-                  total,
-                  min: minimo,
-                })
+              ? trf(
+                  "proofs_complete_counter",
+                  "✔ {total}/{min} pruebas completas",
+                  {
+                    total,
+                    min: minimo,
+                  }
+                )
               : trf("proofs_counter", "{total}/{min} pruebas", {
                   total,
                   min: minimo,
@@ -350,9 +415,13 @@ export default function Panel() {
     setCodeCopied(true);
     toast({
       title: t("panel_copied"),
-      description: trf("referral_code_copied_desc", "{code} copiado al portapapeles.", {
-        code: REFERRAL_CODE,
-      }),
+      description: trf(
+        "referral_code_copied_desc",
+        "{code} copiado al portapapeles.",
+        {
+          code: REFERRAL_CODE,
+        }
+      ),
     });
     setTimeout(() => setCodeCopied(false), 2500);
   };
@@ -370,14 +439,14 @@ export default function Panel() {
       label: t("panel_action_cita"),
       sub: t("panel_action_cita_sub"),
       color: "text-primary",
-      onClick: () => setLocation("/buscar-citas"),
+      onClick: () => goWithGoogleAuth("/buscar-citas"),
     },
     {
       icon: Globe,
       label: t("panel_action_reg"),
       sub: t("panel_action_reg_sub"),
       color: "text-amber-400",
-      onClick: () => setLocation("/regularizacion-2026"),
+      onClick: () => goWithGoogleAuth("/regularizacion-2026"),
     },
     {
       icon: Upload,
@@ -599,7 +668,9 @@ export default function Panel() {
               }}
               className={`glass-panel border ${card.border} rounded-2xl p-4 flex flex-col gap-2 text-left hover:border-white/20 transition-all`}
             >
-              <div className={`w-8 h-8 rounded-lg ${card.bg} flex items-center justify-center`}>
+              <div
+                className={`w-8 h-8 rounded-lg ${card.bg} flex items-center justify-center`}
+              >
                 <card.icon className={`w-4 h-4 ${card.color}`} />
               </div>
               <div>
@@ -670,7 +741,7 @@ export default function Panel() {
                     {t("panel_manage_plan")}
                   </button>
                   <button
-                    onClick={() => setLocation("/buscar-citas")}
+                    onClick={() => goWithGoogleAuth("/buscar-citas")}
                     className="flex-1 py-1.5 rounded-lg bg-secondary/20 hover:bg-secondary/30 text-secondary text-xs font-semibold transition-colors flex items-center justify-center gap-1"
                   >
                     <Search className="w-3 h-3" />
@@ -836,7 +907,11 @@ export default function Panel() {
                           >
                             {i < REFERRALS_USED ? "✓" : i + 1}
                           </span>
-                          {i === 0 ? "Ahmed M." : i === 1 ? "Karim B." : tr("pending", "Pendiente")}
+                          {i === 0
+                            ? "Ahmed M."
+                            : i === 1
+                            ? "Karim B."
+                            : tr("pending", "Pendiente")}
                         </div>
                       ))}
                     </div>
@@ -882,7 +957,7 @@ export default function Panel() {
                       </p>
                     </div>
                     <button
-                      onClick={() => setLocation("/buscar-citas")}
+                      onClick={() => goWithGoogleAuth("/buscar-citas")}
                       className="text-xs text-primary hover:underline flex items-center gap-1"
                     >
                       {t("panel_continue")}
@@ -944,7 +1019,7 @@ export default function Panel() {
 
               <div className="text-center">
                 <button
-                  onClick={() => setLocation("/buscar-citas")}
+                  onClick={() => goWithGoogleAuth("/buscar-citas")}
                   className="inline-flex items-center gap-2 text-xs text-primary hover:text-primary/80 font-semibold transition-colors"
                 >
                   <Search className="w-3.5 h-3.5" />
@@ -1021,7 +1096,7 @@ export default function Panel() {
               ))}
 
               <button
-                onClick={() => setLocation("/buscar-citas")}
+                onClick={() => goWithGoogleAuth("/buscar-citas")}
                 className="w-full py-3 rounded-xl bg-primary hover:bg-primary/90 text-white text-xs font-bold transition-colors flex items-center justify-center gap-2 mt-2"
               >
                 <Search className="w-4 h-4" />
