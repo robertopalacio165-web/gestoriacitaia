@@ -1065,15 +1065,15 @@ await uploadDocument({
     : `${userDocuments.length} ${t("documents_count")}`}
 </span>
                 </div>
-
-                <p className="text-sm text-muted-foreground">
-  {t("loading_documents")}
-</p>
-                ) : userDocuments.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">
-  {t("no_documents_uploaded")}
-</p>
-                ) : (
+  {docsLoading ? (
+  <p className="text-sm text-muted-foreground">
+    {t("loading_documents")}
+  </p>
+) : userDocuments.length === 0 ? (
+  <p className="text-sm text-muted-foreground">
+    {t("no_documents_uploaded")}
+  </p>
+) : (
                   <div className="space-y-2">
                     {userDocuments.map((doc) => (
                       <div
