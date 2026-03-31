@@ -1,4 +1,9 @@
-type VerificationStatus = "valid" | "warning" | "invalid";
+type VerificationStatus =
+  | "pending"
+  | "verified"
+  | "rejected"
+  | "expired"
+  | "needs_review";
 
 type VerifyDocumentResult = {
   status: VerificationStatus;
@@ -23,10 +28,7 @@ function getExtension(fileName: string) {
 }
 
 function looksLikeImage(mime: string, ext: string) {
-  return (
-    mime.startsWith("image/") ||
-    ["jpg", "jpeg", "png", "webp"].includes(ext)
-  );
+  return mime.startsWith("image/") || ["jpg", "jpeg", "png", "webp"].includes(ext);
 }
 
 function looksLikePdf(mime: string, ext: string) {
@@ -38,11 +40,11 @@ export async function verifyDocument(
   type: string
 ): Promise<VerifyDocumentResult> {
   const notes: string[] = [];
-  let status: VerificationStatus = "valid";
+  let status: VerificationStatus = "verified";
 
   if (!file) {
     return {
-      status: "invalid",
+      status: "rejected",
       notes: "No se ha seleccionado ningún archivo",
     };
   }
@@ -53,27 +55,27 @@ export async function verifyDocument(
 
   if (file.size <= 0) {
     return {
-      status: "invalid",
+      status: "rejected",
       notes: "El archivo está vacío",
     };
   }
 
   if (file.size > MAX_FILE_SIZE_BYTES) {
     return {
-      status: "invalid",
+      status: "rejected",
       notes: "El archivo supera el límite de 15 MB",
     };
   }
 
   if (!ALLOWED_EXTENSIONS.includes(ext) && !ALLOWED_MIME_TYPES.includes(mime)) {
     return {
-      status: "invalid",
+      status: "rejected",
       notes: "Formato no permitido. Usa PDF, JPG, PNG o WEBP",
     };
   }
 
   if (file.size < MIN_FILE_SIZE_BYTES) {
-    status = "warning";
+    status = "needs_review";
     notes.push("Archivo muy pequeño");
   }
 
@@ -88,13 +90,13 @@ export async function verifyDocument(
     normalizedType === "general"
   ) {
     if (!looksLikePdf(mime, ext) && !looksLikeImage(mime, ext)) {
-      status = "warning";
+      status = "needs_review";
       notes.push("El archivo no parece PDF ni imagen estándar");
     }
   }
 
   if (normalizedType === "fotografias" && !looksLikeImage(mime, ext)) {
-    status = "warning";
+    status = "needs_review";
     notes.push("Para fotografías se recomienda JPG o PNG");
   }
 
@@ -104,12 +106,12 @@ export async function verifyDocument(
       normalizedType === "empadronamiento") &&
     !looksLikePdf(mime, ext)
   ) {
-    status = "warning";
+    status = "needs_review";
     notes.push("Para este documento se recomienda PDF");
   }
 
   if (!file.name || file.name.trim().length < 3) {
-    status = "warning";
+    status = "needs_review";
     notes.push("Nombre de archivo poco claro");
   }
 
