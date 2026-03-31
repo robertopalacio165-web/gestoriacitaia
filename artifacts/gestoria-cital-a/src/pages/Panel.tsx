@@ -378,8 +378,8 @@ export default function Panel() {
       await Promise.all([loadUserDocuments(), loadNotifications()]);
 
       setTimeout(() => {
-        setUploadMessage("");
-      }, 3000);
+  setUploadMessage("");
+}, 8000);
     } catch (error: any) {
       console.error("handleDocumentUpload error:", error);
       toast({
@@ -1294,7 +1294,8 @@ export default function Panel() {
                 onChange={async (e) => {
                   const file = e.target.files?.[0];
                   if (!file) return;
-                  await handleDocumentUpload(file, "general", file.name);
+                  const cleanTitle = file.name.replace(/\.[^/.]+$/, "");
+await handleDocumentUpload(file, "general", cleanTitle);
                   e.currentTarget.value = "";
                 }}
               />
