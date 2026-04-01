@@ -16,6 +16,13 @@ type VerifyDocumentResult = {
     | "unknown";
   match_quality: "good" | "review" | "bad";
   match_reason: string;
+  detected_from_name:
+    | "passport"
+    | "dni_nie"
+    | "empadronamiento"
+    | "tasa_pagada"
+    | "fotografias"
+    | "unknown";
 };
 
 const MAX_FILE_SIZE_BYTES = 15 * 1024 * 1024;
@@ -76,6 +83,40 @@ function detectDocumentKind(
   return "unknown";
 }
 
+function detectFromName(
+  fileName: string
+):
+  | "passport"
+  | "dni_nie"
+  | "empadronamiento"
+  | "tasa_pagada"
+  | "fotografias"
+  | "unknown" {
+  const lower = fileName.toLowerCase();
+
+  if (lower.includes("nie") || lower.includes("dni")) {
+    return "dni_nie";
+  }
+
+  if (lower.includes("pasaporte") || lower.includes("passport")) {
+    return "passport";
+  }
+
+  if (lower.includes("empadronamiento")) {
+    return "empadronamiento";
+  }
+
+  if (lower.includes("tasa") || lower.includes("790")) {
+    return "tasa_pagada";
+  }
+
+  if (lower.includes("foto") || lower.includes("selfie")) {
+    return "fotografias";
+  }
+
+  return "unknown";
+}
+
 export async function verifyDocument(
   file: File,
   type: string
@@ -91,6 +132,7 @@ export async function verifyDocument(
       detected_document_kind: "unknown",
       match_quality: "bad",
       match_reason: "No hay archivo",
+      detected_from_name: "unknown",
     };
   }
 
@@ -100,6 +142,7 @@ export async function verifyDocument(
 
   const detected_file_kind = detectFileKind(mime, ext);
   const detected_document_kind = detectDocumentKind(normalizedType);
+  const detected_from_name = detectFromName(file.name);
 
   if (file.size <= 0) {
     return {
@@ -109,6 +152,7 @@ export async function verifyDocument(
       detected_document_kind,
       match_quality: "bad",
       match_reason: "Archivo vacío",
+      detected_from_name,
     };
   }
 
@@ -120,6 +164,7 @@ export async function verifyDocument(
       detected_document_kind,
       match_quality: "bad",
       match_reason: "Archivo demasiado grande",
+      detected_from_name,
     };
   }
 
@@ -131,6 +176,7 @@ export async function verifyDocument(
       detected_document_kind,
       match_quality: "bad",
       match_reason: "Formato no permitido",
+      detected_from_name,
     };
   }
 
@@ -208,5 +254,6 @@ export async function verifyDocument(
     detected_document_kind,
     match_quality,
     match_reason,
+    detected_from_name,
   };
 }
