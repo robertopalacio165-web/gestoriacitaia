@@ -1,126 +1,212 @@
-import { supabase } from "@/lib/supabaseClient";
+type VerificationStatus =
+  | "pending"
+  | "verified"
+  | "rejected"
+  | "expired"
+  | "needs_review";
 
-type UploadDocumentParams = {
-  file: File;
-  documentType: string;
-  title: string;
-  verification_status?: string;
-  verification_notes?: string;
-  extracted_data?: Record<string, any>;
-  case_id?: string | null;
-  bucket?: string;
-  is_required?: boolean;
+type VerifyDocumentResult = {
+  status: VerificationStatus;
+  notes: string;
+  detected_file_kind: "pdf" | "image" | "unknown";
+  detected_document_kind:
+    | "official_document"
+    | "photo"
+    | "supporting_document"
+    | "unknown";
+  match_quality: "good" | "review" | "bad";
+  match_reason: string;
 };
 
 const MAX_FILE_SIZE_BYTES = 15 * 1024 * 1024;
+const MIN_FILE_SIZE_BYTES = 1024;
 
-function sanitizeFileName(name: string) {
-  return name
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-zA-Z0-9._-]/g, "-")
-    .replace(/-+/g, "-")
-    .toLowerCase();
+const ALLOWED_MIME_TYPES = [
+  "application/pdf",
+  "image/jpeg",
+  "image/jpg",
+  "image/png",
+  "image/webp",
+];
+
+const ALLOWED_EXTENSIONS = ["pdf", "jpg", "jpeg", "png", "webp"];
+
+function getExtension(fileName: string) {
+  return fileName.split(".").pop()?.toLowerCase() || "";
 }
 
-export async function uploadDocument({
-  file,
-  documentType,
-  title,
-  verification_status = "pending",
-  verification_notes = "",
-  extracted_data = {},
-  case_id = null,
-  bucket = "user-documents",
-  is_required = true,
-}: UploadDocumentParams) {
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser();
+function looksLikeImage(mime: string, ext: string) {
+  return mime.startsWith("image/") || ["jpg", "jpeg", "png", "webp"].includes(ext);
+}
 
-  if (userError) {
-    console.error("auth.getUser error:", userError);
-    throw new Error(`No se pudo obtener el usuario: ${userError.message}`);
+function looksLikePdf(mime: string, ext: string) {
+  return mime === "application/pdf" || ext === "pdf";
+}
+
+function detectFileKind(
+  mime: string,
+  ext: string
+): "pdf" | "image" | "unknown" {
+  if (looksLikePdf(mime, ext)) return "pdf";
+  if (looksLikeImage(mime, ext)) return "image";
+  return "unknown";
+}
+
+function detectDocumentKind(
+  normalizedType: string
+): "official_document" | "photo" | "supporting_document" | "unknown" {
+  if (
+    normalizedType === "passport" ||
+    normalizedType === "dni_nie" ||
+    normalizedType === "empadronamiento" ||
+    normalizedType === "formulario_oficial" ||
+    normalizedType === "tasa_pagada"
+  ) {
+    return "official_document";
   }
 
-  if (!user) {
-    throw new Error("Usuario no autenticado");
+  if (normalizedType === "fotografias") {
+    return "photo";
   }
+
+  if (normalizedType === "pruebas_espana" || normalizedType === "general") {
+    return "supporting_document";
+  }
+
+  return "unknown";
+}
+
+export async function verifyDocument(
+  file: File,
+  type: string
+): Promise<VerifyDocumentResult> {
+  const notes: string[] = [];
+  let status: VerificationStatus = "verified";
 
   if (!file) {
-    throw new Error("No hay archivo para subir");
+    return {
+      status: "rejected",
+      notes: "No se ha seleccionado ningún archivo",
+      detected_file_kind: "unknown",
+      detected_document_kind: "unknown",
+      match_quality: "bad",
+      match_reason: "No hay archivo",
+    };
   }
 
+  const ext = getExtension(file.name);
+  const mime = (file.type || "").toLowerCase();
+  const normalizedType = (type || "general").toLowerCase();
+
+  const detected_file_kind = detectFileKind(mime, ext);
+  const detected_document_kind = detectDocumentKind(normalizedType);
+
   if (file.size <= 0) {
-    throw new Error("El archivo está vacío");
+    return {
+      status: "rejected",
+      notes: "El archivo está vacío",
+      detected_file_kind,
+      detected_document_kind,
+      match_quality: "bad",
+      match_reason: "Archivo vacío",
+    };
   }
 
   if (file.size > MAX_FILE_SIZE_BYTES) {
-    throw new Error("El archivo supera el límite de 15 MB");
+    return {
+      status: "rejected",
+      notes: "El archivo supera el límite de 15 MB",
+      detected_file_kind,
+      detected_document_kind,
+      match_quality: "bad",
+      match_reason: "Archivo demasiado grande",
+    };
   }
 
-  const ext = file.name.split(".").pop()?.toLowerCase() || "bin";
-  const baseName =
-    sanitizeFileName(file.name.replace(/\.[^/.]+$/, "")) || "documento";
-  const safeName = `${Date.now()}-${baseName}.${ext}`;
-  const folder = (documentType || "general").trim().toLowerCase();
-  const filePath = `${user.id}/${folder}/${safeName}`;
-
-  const { error: uploadError } = await supabase.storage
-    .from(bucket)
-    .upload(filePath, file, {
-      cacheControl: "3600",
-      upsert: false,
-      contentType: file.type || "application/octet-stream",
-    });
-
-  if (uploadError) {
-    console.error("storage upload error:", uploadError);
-    throw new Error(`Error al subir al storage: ${uploadError.message}`);
+  if (!ALLOWED_EXTENSIONS.includes(ext) && !ALLOWED_MIME_TYPES.includes(mime)) {
+    return {
+      status: "rejected",
+      notes: "Formato no permitido. Usa PDF, JPG, PNG o WEBP",
+      detected_file_kind,
+      detected_document_kind,
+      match_quality: "bad",
+      match_reason: "Formato no permitido",
+    };
   }
 
-  const payload = {
-    user_id: user.id,
-    case_id,
-    document_type: folder,
-    title: title?.trim() || baseName,
-    storage_bucket: bucket,
-    file_path: filePath,
-    original_name: file.name,
-    mime_type: file.type || "application/octet-stream",
-    file_size: file.size,
-    verification_status,
-    verification_notes,
-    extracted_data: {
-      original_name: file.name,
-      extension: ext,
-      mime_type: file.type || "application/octet-stream",
-      size_bytes: file.size,
-      document_type: folder,
-      bucket,
-      path: filePath,
-      uploaded_at: new Date().toISOString(),
-      ...extracted_data,
-    },
-    reviewed_at: new Date().toISOString(),
-    reviewed_by: "IA",
-    is_required,
+  if (file.size < MIN_FILE_SIZE_BYTES) {
+    status = "needs_review";
+    notes.push("Archivo muy pequeño");
+  }
+
+  let match_quality: "good" | "review" | "bad" = "good";
+  let match_reason = "Formato correcto para este tipo de documento";
+
+  if (normalizedType === "fotografias") {
+    if (detected_file_kind !== "image") {
+      status = "needs_review";
+      notes.push("Para fotografías se recomienda JPG o PNG");
+      match_quality = "review";
+      match_reason = "La fotografía debería subirse como imagen";
+    } else {
+      match_quality = "good";
+      match_reason = "Fotografía subida como imagen";
+    }
+  }
+
+  if (
+    normalizedType === "formulario_oficial" ||
+    normalizedType === "tasa_pagada" ||
+    normalizedType === "empadronamiento"
+  ) {
+    if (detected_file_kind !== "pdf") {
+      status = "needs_review";
+      notes.push("Para este documento se recomienda PDF");
+      match_quality = "review";
+      match_reason = "Para este documento se recomienda PDF";
+    } else {
+      match_quality = "good";
+      match_reason = "Documento oficial subido en PDF";
+    }
+  }
+
+  if (normalizedType === "passport" || normalizedType === "dni_nie") {
+    if (detected_file_kind === "pdf" || detected_file_kind === "image") {
+      match_quality = "good";
+      match_reason = "Documento válido como PDF o imagen";
+    } else {
+      status = "needs_review";
+      match_quality = "review";
+      match_reason = "Formato poco habitual para este documento";
+    }
+  }
+
+  if (normalizedType === "general" || normalizedType === "pruebas_espana") {
+    if (detected_file_kind === "pdf" || detected_file_kind === "image") {
+      match_quality = "good";
+      match_reason = "Documento de apoyo con formato correcto";
+    } else {
+      status = "needs_review";
+      match_quality = "review";
+      match_reason = "Documento de apoyo con formato dudoso";
+    }
+  }
+
+  if (!file.name || file.name.trim().length < 3) {
+    status = "needs_review";
+    notes.push("Nombre de archivo poco claro");
+    if (match_quality === "good") {
+      match_quality = "review";
+      match_reason = "Nombre de archivo poco claro";
+    }
+  }
+
+  return {
+    status,
+    notes: notes.join(", "),
+    detected_file_kind,
+    detected_document_kind,
+    match_quality,
+    match_reason,
   };
-
-  const { data: insertedDoc, error: dbError } = await supabase
-    .from("user_documents")
-    .insert([payload])
-    .select()
-    .single();
-
-  if (dbError) {
-    console.error("user_documents insert error:", dbError);
-
-    await supabase.storage.from(bucket).remove([filePath]);
-
-    throw new Error(`Error al guardar en la base de datos: ${dbError.message}`);
-  }
-
-  return insertedDoc;
 }
