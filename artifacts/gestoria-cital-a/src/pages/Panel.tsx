@@ -129,6 +129,7 @@ export default function Panel() {
   const [profile, setProfile] = useState<ProfileRow | null>(null);
   const [notifications, setNotifications] = useState<NotificationRow[]>([]);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [userForms, setUserForms] = useState<any[]>([]);
 
   const { toast } = useToast();
   const { t } = useLang();
@@ -320,13 +321,13 @@ export default function Panel() {
         return;
       }
 
-     const { data, error } = await supabase
-  .from("user_documents")
-  .select(
-    "id,title,original_name,document_type,file_path,storage_bucket,verification_status,verification_notes,expires_at,reviewed_at,reviewed_by,extracted_data,created_at"
-  )
-  .eq("user_id", user.id)
-  .order("created_at", { ascending: false });
+      const { data, error } = await supabase
+        .from("user_documents")
+        .select(
+          "id,title,original_name,document_type,file_path,storage_bucket,verification_status,verification_notes,expires_at,reviewed_at,reviewed_by,extracted_data,created_at"
+        )
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
 
       if (error) {
         console.error("load user_documents error:", error);
@@ -347,61 +348,61 @@ export default function Panel() {
     }
   };
 
-const handleDocumentUpload = async (
-  file: File,
-  documentType: string,
-  title: string
-) => {
-  try {
-    const result = await verifyDocument(file, documentType);
+  const handleDocumentUpload = async (
+    file: File,
+    documentType: string,
+    title: string
+  ) => {
+    try {
+      const result = await verifyDocument(file, documentType);
 
-    await uploadDocument({
-      file,
-      documentType,
-      title,
-      verification_status: result.status,
-      verification_notes: result.notes,
-      extracted_data: {
-        detected_file_kind: result.detected_file_kind,
-        detected_document_kind: result.detected_document_kind,
-        match_quality: result.match_quality,
-        match_reason: result.match_reason,
-        detected_from_name: result.detected_from_name,
-      },
-    });
+      await uploadDocument({
+        file,
+        documentType,
+        title,
+        verification_status: result.status,
+        verification_notes: result.notes,
+        extracted_data: {
+          detected_file_kind: result.detected_file_kind,
+          detected_document_kind: result.detected_document_kind,
+          match_quality: result.match_quality,
+          match_reason: result.match_reason,
+          detected_from_name: result.detected_from_name,
+        },
+      });
 
-    const successText = trf(
-      "document_uploaded_success_named",
-      "✅ {title} subido correctamente",
-      { title }
-    );
-
-    setUploadMessage(successText);
-
-    toast({
-      title: tr("document_uploaded_title", "Documento subido"),
-      description: trf(
-        "document_uploaded_desc_named",
-        "{title} subido correctamente.",
+      const successText = trf(
+        "document_uploaded_success_named",
+        "✅ {title} subido correctamente",
         { title }
-      ),
-    });
+      );
 
-    await Promise.all([loadUserDocuments(), loadNotifications()]);
+      setUploadMessage(successText);
 
-    setTimeout(() => {
-      setUploadMessage("");
-    }, 8000);
-  } catch (error: any) {
-    console.error("handleDocumentUpload error:", error);
-    toast({
-      title: tr("error_upload_title", "Error al subir"),
-      description:
-        error?.message || tr("error_upload_desc", "No se pudo subir el documento"),
-      variant: "destructive",
-    });
-  }
-};
+      toast({
+        title: tr("document_uploaded_title", "Documento subido"),
+        description: trf(
+          "document_uploaded_desc_named",
+          "{title} subido correctamente.",
+          { title }
+        ),
+      });
+
+      await Promise.all([loadUserDocuments(), loadNotifications()]);
+
+      setTimeout(() => {
+        setUploadMessage("");
+      }, 8000);
+    } catch (error: any) {
+      console.error("handleDocumentUpload error:", error);
+      toast({
+        title: tr("error_upload_title", "Error al subir"),
+        description:
+          error?.message || tr("error_upload_desc", "No se pudo subir el documento"),
+        variant: "destructive",
+      });
+    }
+  };
 
   const handleDownloadDocument = async (doc: UserDocumentRow) => {
     try {
@@ -427,6 +428,7 @@ const handleDocumentUpload = async (
       });
     }
   };
+
   const getVerificationLabel = (status?: string | null) => {
     switch (status) {
       case "verified":
@@ -481,7 +483,11 @@ const handleDocumentUpload = async (
     if (Number.isNaN(date.getTime())) return null;
     return date.toLocaleDateString();
   };
-    const createBaseFormFromProfile = async (formType: string, formTitle: string) => {
+
+  const createBaseFormFromProfile = async (
+    formType: string,
+    formTitle: string
+  ) => {
     try {
       const {
         data: { user },
@@ -535,7 +541,8 @@ const handleDocumentUpload = async (
           form_data: formData,
           extracted_profile_data: extractedProfileData,
           auto_fill_status: "ready",
-          auto_fill_notes: "Formulario base creado automáticamente desde el perfil del cliente",
+          auto_fill_notes:
+            "Formulario base creado automáticamente desde el perfil del cliente",
           source_document_ids: [],
           status: "draft",
         },
@@ -545,6 +552,8 @@ const handleDocumentUpload = async (
         throw insertError;
       }
 
+      await loadUserForms();
+
       toast({
         title: "Formulario creado",
         description: `${formTitle} preparado automáticamente con los datos del perfil.`,
@@ -553,14 +562,52 @@ const handleDocumentUpload = async (
       console.error("createBaseFormFromProfile error:", error);
       toast({
         title: "Error al crear formulario",
-        description: error?.message || "No se pudo crear el formulario automático",
+        description:
+          error?.message || "No se pudo crear el formulario automático",
         variant: "destructive",
       });
     }
   };
+
+  const loadUserForms = async () => {
+    try {
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+
+      if (userError) throw userError;
+
+      if (!user) {
+        setUserForms([]);
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("user_forms")
+        .select(
+          "id,form_type,title,auto_fill_status,auto_fill_notes,created_at,extracted_profile_data"
+        )
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+
+      setUserForms(data || []);
+    } catch (error) {
+      console.error("loadUserForms error:", error);
+      setUserForms([]);
+    }
+  };
+
   useEffect(() => {
     const boot = async () => {
-      await Promise.all([loadProfile(), loadNotifications(), loadUserDocuments()]);
+      await Promise.all([
+        loadProfile(),
+        loadNotifications(),
+        loadUserDocuments(),
+        loadUserForms(),
+      ]);
     };
 
     boot();
@@ -994,33 +1041,31 @@ const handleDocumentUpload = async (
                 </div>
 
                 <div className="flex flex-col gap-2">
-  <div className="flex gap-2">
-    <button
-      onClick={() => setShowPayment(true)}
-      className="flex-1 py-1.5 rounded-lg bg-primary/20 hover:bg-primary/30 text-primary text-xs font-semibold transition-colors flex items-center justify-center gap-1"
-    >
-      <CreditCard className="w-3 h-3" />
-      {t("panel_manage_plan")}
-    </button>
-    <button
-      onClick={() => goWithGoogleAuth("/buscar-citas")}
-      className="flex-1 py-1.5 rounded-lg bg-secondary/20 hover:bg-secondary/30 text-secondary text-xs font-semibold transition-colors flex items-center justify-center gap-1"
-    >
-      <Search className="w-3 h-3" />
-      {t("panel_new_appt")}
-    </button>
-  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setShowPayment(true)}
+                      className="flex-1 py-1.5 rounded-lg bg-primary/20 hover:bg-primary/30 text-primary text-xs font-semibold transition-colors flex items-center justify-center gap-1"
+                    >
+                      <CreditCard className="w-3 h-3" />
+                      {t("panel_manage_plan")}
+                    </button>
+                    <button
+                      onClick={() => goWithGoogleAuth("/buscar-citas")}
+                      className="flex-1 py-1.5 rounded-lg bg-secondary/20 hover:bg-secondary/30 text-secondary text-xs font-semibold transition-colors flex items-center justify-center gap-1"
+                    >
+                      <Search className="w-3 h-3" />
+                      {t("panel_new_appt")}
+                    </button>
+                  </div>
 
-  <button
-    onClick={() =>
-      createBaseFormFromProfile("ex17", "Formulario EX-17")
-    }
-    className="w-full py-2 rounded-lg bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 text-xs font-semibold transition-colors flex items-center justify-center gap-2"
-  >
-    <FileText className="w-3.5 h-3.5" />
-    Crear formulario automático
-  </button>
-</div>
+                  <button
+                    onClick={() => createBaseFormFromProfile("ex17", "Formulario EX-17")}
+                    className="w-full py-2 rounded-lg bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 text-xs font-semibold transition-colors flex items-center justify-center gap-2"
+                  >
+                    <FileText className="w-3.5 h-3.5" />
+                    Crear formulario automático
+                  </button>
+                </div>
               </div>
 
               <div>
@@ -1058,6 +1103,57 @@ const handleDocumentUpload = async (
                     </div>
                   ))}
                 </div>
+              </div>
+
+              <div className="glass-panel border border-white/[0.07] rounded-xl p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-xs font-bold text-white">
+                    Formularios automáticos
+                  </p>
+                  <span className="text-[10px] text-muted-foreground">
+                    {userForms.length} creados
+                  </span>
+                </div>
+
+                {userForms.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">
+                    Aún no has creado formularios automáticos.
+                  </p>
+                ) : (
+                  <div className="space-y-2">
+                    {userForms.slice(0, 3).map((form) => (
+                      <div
+                        key={form.id}
+                        className="rounded-lg bg-white/5 border border-white/10 px-3 py-2"
+                      >
+                        <p className="text-sm font-semibold text-white">
+                          {form.title}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Tipo: {form.form_type}
+                        </p>
+                        <p
+                          className={`text-xs font-semibold ${
+                            form.auto_fill_status === "ready"
+                              ? "text-green-400"
+                              : form.auto_fill_status === "review"
+                              ? "text-amber-400"
+                              : form.auto_fill_status === "failed"
+                              ? "text-red-400"
+                              : "text-yellow-400"
+                          }`}
+                        >
+                          Estado: {form.auto_fill_status}
+                        </p>
+                        {form.auto_fill_notes && (
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {form.auto_fill_notes}
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div>
@@ -1449,7 +1545,7 @@ const handleDocumentUpload = async (
                   const file = e.target.files?.[0];
                   if (!file) return;
                   const cleanTitle = file.name.replace(/\.[^/.]+$/, "");
-await handleDocumentUpload(file, "general", cleanTitle);
+                  await handleDocumentUpload(file, "general", cleanTitle);
                   e.currentTarget.value = "";
                 }}
               />
@@ -1483,51 +1579,66 @@ await handleDocumentUpload(file, "general", cleanTitle);
                     {userDocuments.map((doc) => (
                       <div
                         key={doc.id}
-                        className="flex items-center justify-between p-3 bg-white/5 rounded-xl"
+                        className="p-3 bg-white/5 rounded-xl flex items-start justify-between gap-3"
                       >
-                        <div className="min-w-0">
-                          <p className="text-sm text-white truncate">
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm text-white truncate font-semibold">
                             {doc.title || doc.original_name || doc.document_type}
                           </p>
+
                           <div className="mt-1 space-y-1">
+                            <p className="text-xs text-muted-foreground">
+                              Tipo: {doc.document_type}
+                            </p>
 
-  <p className="text-xs text-muted-foreground">
-    Tipo: {doc.document_type}
-  </p>
+                            <p
+                              className={`text-xs font-semibold ${getVerificationClass(doc.verification_status)}`}
+                            >
+                              Estado: {getVerificationLabel(doc.verification_status)}
+                            </p>
 
-  <p className={`text-xs font-semibold ${getVerificationClass(doc.verification_status)}`}>
-    Estado: {getVerificationLabel(doc.verification_status)}
-  </p>
+                            <p className={`text-xs font-semibold ${getAptoClass(doc)}`}>
+                              Resultado: {getAptoLabel(doc)}
+                            </p>
 
-  <p className={`text-xs font-semibold ${getAptoClass(doc)}`}>
-    Resultado: {getAptoLabel(doc)}
-  </p>
+                            {doc.reviewed_by && (
+                              <p className="text-xs text-muted-foreground">
+                                Revisado por: {doc.reviewed_by}
+                              </p>
+                            )}
 
-  {doc.reviewed_by && (
-    <p className="text-xs text-muted-foreground">
-      Revisado por: {doc.reviewed_by}
-    </p>
-  )}
+                            {doc.reviewed_at && (
+                              <p className="text-xs text-muted-foreground">
+                                Revisado el: {formatDate(doc.reviewed_at)}
+                              </p>
+                            )}
 
-  {doc.reviewed_at && (
-    <p className="text-xs text-muted-foreground">
-      Revisado el: {formatDate(doc.reviewed_at)}
-    </p>
-  )}
+                            {doc.expires_at && (
+                              <p className="text-xs text-muted-foreground">
+                                Caduca el: {formatDate(doc.expires_at)}
+                              </p>
+                            )}
 
-  {doc.expires_at && (
-    <p className="text-xs text-muted-foreground">
-      Caduca el: {formatDate(doc.expires_at)}
-    </p>
-  )}
+                            {doc.verification_notes &&
+                              doc.verification_notes !== "EMPTY" && (
+                                <p className="text-xs text-amber-300 break-words">
+                                  Nota: {doc.verification_notes}
+                                </p>
+                              )}
 
-  {doc.verification_notes && doc.verification_notes !== "EMPTY" && (
-    <p className="text-xs text-amber-300">
-      Nota: {doc.verification_notes}
-    </p>
-  )}
+                            {doc.extracted_data?.match_reason && (
+                              <p className="text-xs text-muted-foreground break-words">
+                                IA: {doc.extracted_data.match_reason}
+                              </p>
+                            )}
 
-</div>
+                            {doc.extracted_data?.detected_from_name &&
+                              doc.extracted_data.detected_from_name !== "unknown" && (
+                                <p className="text-xs text-muted-foreground">
+                                  Detectado como: {doc.extracted_data.detected_from_name}
+                                </p>
+                              )}
+                          </div>
                         </div>
 
                         <button
