@@ -170,10 +170,7 @@ export async function verifyDocument(
     }
   }
 
-  if (
-    normalizedType === "passport" ||
-    normalizedType === "dni_nie"
-  ) {
+  if (normalizedType === "passport" || normalizedType === "dni_nie") {
     if (detected_file_kind === "pdf" || detected_file_kind === "image") {
       match_quality = "good";
       match_reason = "Documento válido como PDF o imagen";
