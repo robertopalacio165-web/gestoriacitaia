@@ -77,7 +77,7 @@ export async function uploadDocument({
     throw new Error(`Error al subir al storage: ${uploadError.message}`);
   }
 
-  const payload = {
+   const payload = {
     user_id: user.id,
     case_id,
     document_type: folder,
@@ -89,6 +89,9 @@ export async function uploadDocument({
     file_size: file.size,
     verification_status,
     verification_notes,
+    extracted_data: {},
+    reviewed_at: new Date().toISOString(),
+    reviewed_by: "IA",
     is_required,
   };
 
