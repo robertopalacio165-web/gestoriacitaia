@@ -35,7 +35,7 @@ import { useLang } from "@/contexts/LanguageContext";
 import { uploadDocument } from "@/lib/uploadDocument";
 import { supabase } from "@/lib/supabaseClient";
 import { verifyDocument } from "@/lib/verifyDocument";
-const MAKE_WEBHOOK_URL = "https://hook.eu1.make.com/lo0anat3voj2mg6kp3hexdemb2q8dkfw";
+
 const CITAS = [
   {
     date: "24 Mar 2026",
@@ -350,69 +350,61 @@ export default function Panel() {
     }
   };
 
-  const handleDocumentUpload = async (
-    file: File,
-    documentType: string,
-    title: string
-  ) => {
-    try {
-      const result = await verifyDocument(file, documentType);
+const handleDocumentUpload = async (
+  file: File,
+  documentType: string,
+  title: string
+) => {
+  try {
+    const result = await verifyDocument(file, documentType);
 
-      await uploadDocument({
-        file,
-        documentType,
-        title,
-        verification_status: result.status,
-        verification_notes: result.notes,
-        extracted_data: {
-          detected_file_kind: result.detected_file_kind,
-          detected_document_kind: result.detected_document_kind,
-          match_quality: result.match_quality,
-          match_reason: result.match_reason,
-          detected_from_name: result.detected_from_name,
-        },
-      });
-await enviarAMake({
-  user_id: user?.id || "unknown",
-  email: user?.email || "unknown",
-  file_name: file.name,
-  file_type: file.type,
-  document_type: documentType,
-  status: result.status,
-  created_at: new Date().toISOString(),
-});
-      const successText = trf(
-        "document_uploaded_success_named",
-        "✅ {title} subido correctamente",
+    await uploadDocument({
+      file,
+      documentType,
+      title,
+      verification_status: result.status,
+      verification_notes: result.notes,
+      extracted_data: {
+        detected_file_kind: result.detected_file_kind,
+        detected_document_kind: result.detected_document_kind,
+        match_quality: result.match_quality,
+        match_reason: result.match_reason,
+        detected_from_name: result.detected_from_name,
+      },
+    });
+
+    const successText = trf(
+      "document_uploaded_success_named",
+      "✅ {title} subido correctamente",
+      { title }
+    );
+
+    setUploadMessage(successText);
+
+    toast({
+      title: tr("document_uploaded_title", "Documento subido"),
+      description: trf(
+        "document_uploaded_desc_named",
+        "{title} subido correctamente.",
         { title }
-      );
+      ),
+    });
 
-      setUploadMessage(successText);
+    await Promise.all([loadUserDocuments(), loadNotifications()]);
 
-      toast({
-        title: tr("document_uploaded_title", "Documento subido"),
-        description: trf(
-          "document_uploaded_desc_named",
-          "{title} subido correctamente.",
-          { title }
-        ),
-      });
-
-      await Promise.all([loadUserDocuments(), loadNotifications()]);
-
-      setTimeout(() => {
-        setUploadMessage("");
-      }, 8000);
-    } catch (error: any) {
-      console.error("handleDocumentUpload error:", error);
-      toast({
-        title: tr("error_upload_title", "Error al subir"),
-        description:
-          error?.message || tr("error_upload_desc", "No se pudo subir el documento"),
-        variant: "destructive",
-      });
-    }
-  };
+    setTimeout(() => {
+      setUploadMessage("");
+    }, 8000);
+  } catch (error: any) {
+    console.error("handleDocumentUpload error:", error);
+    toast({
+      title: tr("error_upload_title", "Error al subir"),
+      description:
+        error?.message || tr("error_upload_desc", "No se pudo subir el documento"),
+      variant: "destructive",
+    });
+  }
+};
 
   const handleDownloadDocument = async (doc: UserDocumentRow) => {
     try {
