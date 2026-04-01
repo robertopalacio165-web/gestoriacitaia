@@ -1,3 +1,4 @@
+
 import { useEffect, useMemo, useState } from "react";
 import { Navbar } from "@/components/Navbar";
 import { LegalDisclaimer } from "@/components/LegalDisclaimer";
@@ -5,6 +6,7 @@ import { PaymentModal } from "@/components/PaymentModal";
 import { motion } from "framer-motion";
 import { useLocation } from "wouter";
 import {
+
   FileText,
   CheckCircle2,
   AlertCircle,
@@ -33,7 +35,7 @@ import { useLang } from "@/contexts/LanguageContext";
 import { uploadDocument } from "@/lib/uploadDocument";
 import { supabase } from "@/lib/supabaseClient";
 import { verifyDocument } from "@/lib/verifyDocument";
-
+const MAKE_WEBHOOK_URL = "https://hook.eu1.make.com/lo0anat3voj2mg6kp3hexdemb2q8dkfw";
 const CITAS = [
   {
     date: "24 Mar 2026",
@@ -370,7 +372,15 @@ export default function Panel() {
           detected_from_name: result.detected_from_name,
         },
       });
-
+await enviarAMake({
+  user_id: user?.id || "unknown",
+  email: user?.email || "unknown",
+  file_name: file.name,
+  file_type: file.type,
+  document_type: documentType,
+  status: result.status,
+  created_at: new Date().toISOString(),
+});
       const successText = trf(
         "document_uploaded_success_named",
         "✅ {title} subido correctamente",
