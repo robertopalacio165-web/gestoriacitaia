@@ -481,6 +481,83 @@ const handleDocumentUpload = async (
     if (Number.isNaN(date.getTime())) return null;
     return date.toLocaleDateString();
   };
+    const createBaseFormFromProfile = async (formType: string, formTitle: string) => {
+    try {
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+
+      if (userError) {
+        throw userError;
+      }
+
+      if (!user) {
+        throw new Error("Usuario no autenticado");
+      }
+
+      const { data: profileData, error: profileError } = await supabase
+        .from("profiles")
+        .select(
+          "id,email,full_name,phone,nie,dni,passport_number,nationality,birth_date,preferred_language"
+        )
+        .eq("id", user.id)
+        .single();
+
+      if (profileError) {
+        throw profileError;
+      }
+
+      const extractedProfileData = {
+        full_name: profileData.full_name || "",
+        email: profileData.email || "",
+        phone: profileData.phone || "",
+        nie: profileData.nie || "",
+        dni: profileData.dni || "",
+        passport_number: profileData.passport_number || "",
+        nationality: profileData.nationality || "",
+        birth_date: profileData.birth_date || "",
+        preferred_language: profileData.preferred_language || "es",
+      };
+
+      const formData = {
+        form_type: formType,
+        applicant: extractedProfileData,
+        created_from: "profile",
+        created_at: new Date().toISOString(),
+      };
+
+      const { error: insertError } = await supabase.from("user_forms").insert([
+        {
+          user_id: user.id,
+          form_type: formType,
+          title: formTitle,
+          form_data: formData,
+          extracted_profile_data: extractedProfileData,
+          auto_fill_status: "ready",
+          auto_fill_notes: "Formulario base creado automáticamente desde el perfil del cliente",
+          source_document_ids: [],
+          status: "draft",
+        },
+      ]);
+
+      if (insertError) {
+        throw insertError;
+      }
+
+      toast({
+        title: "Formulario creado",
+        description: `${formTitle} preparado automáticamente con los datos del perfil.`,
+      });
+    } catch (error: any) {
+      console.error("createBaseFormFromProfile error:", error);
+      toast({
+        title: "Error al crear formulario",
+        description: error?.message || "No se pudo crear el formulario automático",
+        variant: "destructive",
+      });
+    }
+  };
   useEffect(() => {
     const boot = async () => {
       await Promise.all([loadProfile(), loadNotifications(), loadUserDocuments()]);
@@ -916,22 +993,34 @@ const handleDocumentUpload = async (
                   ))}
                 </div>
 
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setShowPayment(true)}
-                    className="flex-1 py-1.5 rounded-lg bg-primary/20 hover:bg-primary/30 text-primary text-xs font-semibold transition-colors flex items-center justify-center gap-1"
-                  >
-                    <CreditCard className="w-3 h-3" />
-                    {t("panel_manage_plan")}
-                  </button>
-                  <button
-                    onClick={() => goWithGoogleAuth("/buscar-citas")}
-                    className="flex-1 py-1.5 rounded-lg bg-secondary/20 hover:bg-secondary/30 text-secondary text-xs font-semibold transition-colors flex items-center justify-center gap-1"
-                  >
-                    <Search className="w-3 h-3" />
-                    {t("panel_new_appt")}
-                  </button>
-                </div>
+                <div className="flex flex-col gap-2">
+  <div className="flex gap-2">
+    <button
+      onClick={() => setShowPayment(true)}
+      className="flex-1 py-1.5 rounded-lg bg-primary/20 hover:bg-primary/30 text-primary text-xs font-semibold transition-colors flex items-center justify-center gap-1"
+    >
+      <CreditCard className="w-3 h-3" />
+      {t("panel_manage_plan")}
+    </button>
+    <button
+      onClick={() => goWithGoogleAuth("/buscar-citas")}
+      className="flex-1 py-1.5 rounded-lg bg-secondary/20 hover:bg-secondary/30 text-secondary text-xs font-semibold transition-colors flex items-center justify-center gap-1"
+    >
+      <Search className="w-3 h-3" />
+      {t("panel_new_appt")}
+    </button>
+  </div>
+
+  <button
+    onClick={() =>
+      createBaseFormFromProfile("ex17", "Formulario EX-17")
+    }
+    className="w-full py-2 rounded-lg bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 text-xs font-semibold transition-colors flex items-center justify-center gap-2"
+  >
+    <FileText className="w-3.5 h-3.5" />
+    Crear formulario automático
+  </button>
+</div>
               </div>
 
               <div>
