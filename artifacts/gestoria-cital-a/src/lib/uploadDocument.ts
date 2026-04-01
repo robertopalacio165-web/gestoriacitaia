@@ -92,7 +92,7 @@ export async function uploadDocument({
     file_size: file.size,
     verification_status,
     verification_notes,
-     extracted_data: {
+    extracted_data: {
       original_name: file.name,
       display_name: title?.trim() || baseName,
       normalized_title: baseName,
@@ -125,7 +125,9 @@ export async function uploadDocument({
 
     await supabase.storage.from(bucket).remove([filePath]);
 
-    throw new Error(`Error al guardar en la base de datos: ${dbError.message}`);
+    throw new Error(
+      `Error al guardar en la base de datos: ${dbError.message}`
+    );
   }
 
   return insertedDoc;
