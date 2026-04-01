@@ -350,13 +350,17 @@ export default function Panel() {
     try {
       const result = await verifyDocument(file, documentType);
 
-      await uploadDocument({
-        file,
-        documentType,
-        title,
-        verification_status: result.status,
-        verification_notes: result.notes,
-      });
+await uploadDocument({
+  file,
+  documentType,
+  title,
+  verification_status: result.status,
+  verification_notes: result.notes,
+  extracted_data: {
+    detected_file_kind: result.detected_file_kind,
+    detected_document_kind: result.detected_document_kind,
+  },
+});
 
       const successText = trf(
         "document_uploaded_success_named",
