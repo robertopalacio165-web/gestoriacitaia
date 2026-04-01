@@ -8,6 +8,12 @@ type VerificationStatus =
 type VerifyDocumentResult = {
   status: VerificationStatus;
   notes: string;
+  detected_file_kind: "pdf" | "image" | "unknown";
+  detected_document_kind:
+    | "official_document"
+    | "photo"
+    | "supporting_document"
+    | "unknown";
 };
 
 const MAX_FILE_SIZE_BYTES = 15 * 1024 * 1024;
@@ -35,6 +41,39 @@ function looksLikePdf(mime: string, ext: string) {
   return mime === "application/pdf" || ext === "pdf";
 }
 
+function detectFileKind(
+  mime: string,
+  ext: string
+): "pdf" | "image" | "unknown" {
+  if (looksLikePdf(mime, ext)) return "pdf";
+  if (looksLikeImage(mime, ext)) return "image";
+  return "unknown";
+}
+
+function detectDocumentKind(
+  normalizedType: string
+): "official_document" | "photo" | "supporting_document" | "unknown" {
+  if (
+    normalizedType === "passport" ||
+    normalizedType === "dni_nie" ||
+    normalizedType === "empadronamiento" ||
+    normalizedType === "formulario_oficial" ||
+    normalizedType === "tasa_pagada"
+  ) {
+    return "official_document";
+  }
+
+  if (normalizedType === "fotografias") {
+    return "photo";
+  }
+
+  if (normalizedType === "pruebas_espana" || normalizedType === "general") {
+    return "supporting_document";
+  }
+
+  return "unknown";
+}
+
 export async function verifyDocument(
   file: File,
   type: string
@@ -46,6 +85,8 @@ export async function verifyDocument(
     return {
       status: "rejected",
       notes: "No se ha seleccionado ningún archivo",
+      detected_file_kind: "unknown",
+      detected_document_kind: "unknown",
     };
   }
 
@@ -53,10 +94,15 @@ export async function verifyDocument(
   const mime = (file.type || "").toLowerCase();
   const normalizedType = (type || "general").toLowerCase();
 
+  const detected_file_kind = detectFileKind(mime, ext);
+  const detected_document_kind = detectDocumentKind(normalizedType);
+
   if (file.size <= 0) {
     return {
       status: "rejected",
       notes: "El archivo está vacío",
+      detected_file_kind,
+      detected_document_kind,
     };
   }
 
@@ -64,6 +110,8 @@ export async function verifyDocument(
     return {
       status: "rejected",
       notes: "El archivo supera el límite de 15 MB",
+      detected_file_kind,
+      detected_document_kind,
     };
   }
 
@@ -71,6 +119,8 @@ export async function verifyDocument(
     return {
       status: "rejected",
       notes: "Formato no permitido. Usa PDF, JPG, PNG o WEBP",
+      detected_file_kind,
+      detected_document_kind,
     };
   }
 
@@ -79,23 +129,7 @@ export async function verifyDocument(
     notes.push("Archivo muy pequeño");
   }
 
-  if (
-    normalizedType === "passport" ||
-    normalizedType === "dni_nie" ||
-    normalizedType === "empadronamiento" ||
-    normalizedType === "fotografias" ||
-    normalizedType === "pruebas_espana" ||
-    normalizedType === "tasa_pagada" ||
-    normalizedType === "formulario_oficial" ||
-    normalizedType === "general"
-  ) {
-    if (!looksLikePdf(mime, ext) && !looksLikeImage(mime, ext)) {
-      status = "needs_review";
-      notes.push("El archivo no parece PDF ni imagen estándar");
-    }
-  }
-
-  if (normalizedType === "fotografias" && !looksLikeImage(mime, ext)) {
+  if (normalizedType === "fotografias" && detected_file_kind !== "image") {
     status = "needs_review";
     notes.push("Para fotografías se recomienda JPG o PNG");
   }
@@ -104,7 +138,7 @@ export async function verifyDocument(
     (normalizedType === "formulario_oficial" ||
       normalizedType === "tasa_pagada" ||
       normalizedType === "empadronamiento") &&
-    !looksLikePdf(mime, ext)
+    detected_file_kind !== "pdf"
   ) {
     status = "needs_review";
     notes.push("Para este documento se recomienda PDF");
@@ -118,5 +152,7 @@ export async function verifyDocument(
   return {
     status,
     notes: notes.join(", "),
+    detected_file_kind,
+    detected_document_kind,
   };
 }
