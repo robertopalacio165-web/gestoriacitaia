@@ -6,6 +6,7 @@ type UploadDocumentParams = {
   title: string;
   verification_status?: string;
   verification_notes?: string;
+  extracted_data?: Record<string, any>;
   case_id?: string | null;
   bucket?: string;
   is_required?: boolean;
@@ -28,6 +29,7 @@ export async function uploadDocument({
   title,
   verification_status = "pending",
   verification_notes = "",
+  extracted_data = {},
   case_id = null,
   bucket = "user-documents",
   is_required = true,
@@ -59,7 +61,8 @@ export async function uploadDocument({
   }
 
   const ext = file.name.split(".").pop()?.toLowerCase() || "bin";
-  const baseName = sanitizeFileName(file.name.replace(/\.[^/.]+$/, "")) || "documento";
+  const baseName =
+    sanitizeFileName(file.name.replace(/\.[^/.]+$/, "")) || "documento";
   const safeName = `${Date.now()}-${baseName}.${ext}`;
   const folder = (documentType || "general").trim().toLowerCase();
   const filePath = `${user.id}/${folder}/${safeName}`;
@@ -87,7 +90,7 @@ export async function uploadDocument({
     original_name: file.name,
     mime_type: file.type || "application/octet-stream",
     file_size: file.size,
-        verification_status,
+    verification_status,
     verification_notes,
     extracted_data: {
       original_name: file.name,
@@ -98,6 +101,7 @@ export async function uploadDocument({
       bucket,
       path: filePath,
       uploaded_at: new Date().toISOString(),
+      ...extracted_data,
     },
     reviewed_at: new Date().toISOString(),
     reviewed_by: "IA",
