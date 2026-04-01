@@ -92,8 +92,10 @@ export async function uploadDocument({
     file_size: file.size,
     verification_status,
     verification_notes,
-    extracted_data: {
+     extracted_data: {
       original_name: file.name,
+      display_name: title?.trim() || baseName,
+      normalized_title: baseName,
       extension: ext,
       mime_type: file.type || "application/octet-stream",
       size_bytes: file.size,
@@ -101,6 +103,10 @@ export async function uploadDocument({
       bucket,
       path: filePath,
       uploaded_at: new Date().toISOString(),
+      is_pdf: ext === "pdf" || file.type === "application/pdf",
+      is_image:
+        (file.type || "").startsWith("image/") ||
+        ["jpg", "jpeg", "png", "webp"].includes(ext),
       ...extracted_data,
     },
     reviewed_at: new Date().toISOString(),
