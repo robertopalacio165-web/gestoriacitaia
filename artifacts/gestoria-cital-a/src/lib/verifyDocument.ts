@@ -14,6 +14,8 @@ type VerifyDocumentResult = {
     | "photo"
     | "supporting_document"
     | "unknown";
+  match_quality: "good" | "review" | "bad";
+  match_reason: string;
 };
 
 const MAX_FILE_SIZE_BYTES = 15 * 1024 * 1024;
@@ -87,6 +89,8 @@ export async function verifyDocument(
       notes: "No se ha seleccionado ningún archivo",
       detected_file_kind: "unknown",
       detected_document_kind: "unknown",
+      match_quality: "bad",
+      match_reason: "No hay archivo",
     };
   }
 
@@ -103,6 +107,8 @@ export async function verifyDocument(
       notes: "El archivo está vacío",
       detected_file_kind,
       detected_document_kind,
+      match_quality: "bad",
+      match_reason: "Archivo vacío",
     };
   }
 
@@ -112,6 +118,8 @@ export async function verifyDocument(
       notes: "El archivo supera el límite de 15 MB",
       detected_file_kind,
       detected_document_kind,
+      match_quality: "bad",
+      match_reason: "Archivo demasiado grande",
     };
   }
 
@@ -121,6 +129,8 @@ export async function verifyDocument(
       notes: "Formato no permitido. Usa PDF, JPG, PNG o WEBP",
       detected_file_kind,
       detected_document_kind,
+      match_quality: "bad",
+      match_reason: "Formato no permitido",
     };
   }
 
@@ -129,24 +139,69 @@ export async function verifyDocument(
     notes.push("Archivo muy pequeño");
   }
 
-  if (normalizedType === "fotografias" && detected_file_kind !== "image") {
-    status = "needs_review";
-    notes.push("Para fotografías se recomienda JPG o PNG");
+  let match_quality: "good" | "review" | "bad" = "good";
+  let match_reason = "Formato correcto para este tipo de documento";
+
+  if (normalizedType === "fotografias") {
+    if (detected_file_kind !== "image") {
+      status = "needs_review";
+      notes.push("Para fotografías se recomienda JPG o PNG");
+      match_quality = "review";
+      match_reason = "La fotografía debería subirse como imagen";
+    } else {
+      match_quality = "good";
+      match_reason = "Fotografía subida como imagen";
+    }
   }
 
   if (
-    (normalizedType === "formulario_oficial" ||
-      normalizedType === "tasa_pagada" ||
-      normalizedType === "empadronamiento") &&
-    detected_file_kind !== "pdf"
+    normalizedType === "formulario_oficial" ||
+    normalizedType === "tasa_pagada" ||
+    normalizedType === "empadronamiento"
   ) {
-    status = "needs_review";
-    notes.push("Para este documento se recomienda PDF");
+    if (detected_file_kind !== "pdf") {
+      status = "needs_review";
+      notes.push("Para este documento se recomienda PDF");
+      match_quality = "review";
+      match_reason = "Para este documento se recomienda PDF";
+    } else {
+      match_quality = "good";
+      match_reason = "Documento oficial subido en PDF";
+    }
+  }
+
+  if (
+    normalizedType === "passport" ||
+    normalizedType === "dni_nie"
+  ) {
+    if (detected_file_kind === "pdf" || detected_file_kind === "image") {
+      match_quality = "good";
+      match_reason = "Documento válido como PDF o imagen";
+    } else {
+      status = "needs_review";
+      match_quality = "review";
+      match_reason = "Formato poco habitual para este documento";
+    }
+  }
+
+  if (normalizedType === "general" || normalizedType === "pruebas_espana") {
+    if (detected_file_kind === "pdf" || detected_file_kind === "image") {
+      match_quality = "good";
+      match_reason = "Documento de apoyo con formato correcto";
+    } else {
+      status = "needs_review";
+      match_quality = "review";
+      match_reason = "Documento de apoyo con formato dudoso";
+    }
   }
 
   if (!file.name || file.name.trim().length < 3) {
     status = "needs_review";
     notes.push("Nombre de archivo poco claro");
+    if (match_quality === "good") {
+      match_quality = "review";
+      match_reason = "Nombre de archivo poco claro";
+    }
   }
 
   return {
@@ -154,5 +209,7 @@ export async function verifyDocument(
     notes: notes.join(", "),
     detected_file_kind,
     detected_document_kind,
+    match_quality,
+    match_reason,
   };
 }
