@@ -75,6 +75,11 @@ type UserDocumentRow = {
   file_path: string;
   storage_bucket?: string | null;
   verification_status: string | null;
+  verification_notes?: string | null;
+  expires_at?: string | null;
+  reviewed_at?: string | null;
+  reviewed_by?: string | null;
+  extracted_data?: Record<string, any> | null;
   created_at?: string;
 };
 
@@ -315,13 +320,13 @@ export default function Panel() {
         return;
       }
 
-      const { data, error } = await supabase
-        .from("user_documents")
-        .select(
-          "id,title,original_name,document_type,file_path,storage_bucket,verification_status,created_at"
-        )
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false });
+     const { data, error } = await supabase
+  .from("user_documents")
+  .select(
+    "id,title,original_name,document_type,file_path,storage_bucket,verification_status,verification_notes,expires_at,reviewed_at,reviewed_by,extracted_data,created_at"
+  )
+  .eq("user_id", user.id)
+  .order("created_at", { ascending: false });
 
       if (error) {
         console.error("load user_documents error:", error);
@@ -422,7 +427,60 @@ const handleDocumentUpload = async (
       });
     }
   };
+  const getVerificationLabel = (status?: string | null) => {
+    switch (status) {
+      case "verified":
+        return "Verificado";
+      case "needs_review":
+        return "Revisar";
+      case "rejected":
+        return "Rechazado";
+      case "expired":
+        return "Caducado";
+      case "pending":
+      default:
+        return "Pendiente";
+    }
+  };
 
+  const getVerificationClass = (status?: string | null) => {
+    switch (status) {
+      case "verified":
+        return "text-green-400";
+      case "needs_review":
+        return "text-amber-400";
+      case "rejected":
+        return "text-red-400";
+      case "expired":
+        return "text-orange-400";
+      case "pending":
+      default:
+        return "text-yellow-400";
+    }
+  };
+
+  const getAptoLabel = (doc: UserDocumentRow) => {
+    if (doc.verification_status === "verified") return "Apto";
+    if (doc.verification_status === "needs_review") return "Revisión manual";
+    if (doc.verification_status === "rejected") return "No apto";
+    if (doc.verification_status === "expired") return "Caducado";
+    return "Pendiente";
+  };
+
+  const getAptoClass = (doc: UserDocumentRow) => {
+    if (doc.verification_status === "verified") return "text-green-400";
+    if (doc.verification_status === "needs_review") return "text-amber-400";
+    if (doc.verification_status === "rejected") return "text-red-400";
+    if (doc.verification_status === "expired") return "text-orange-400";
+    return "text-yellow-400";
+  };
+
+  const formatDate = (value?: string | null) => {
+    if (!value) return null;
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return null;
+    return date.toLocaleDateString();
+  };
   useEffect(() => {
     const boot = async () => {
       await Promise.all([loadProfile(), loadNotifications(), loadUserDocuments()]);
@@ -1342,9 +1400,45 @@ await handleDocumentUpload(file, "general", cleanTitle);
                           <p className="text-sm text-white truncate">
                             {doc.title || doc.original_name || doc.document_type}
                           </p>
-                          <p className="text-xs text-muted-foreground truncate">
-                            {doc.document_type} · {doc.verification_status || "pending"}
-                          </p>
+                          <div className="mt-1 space-y-1">
+
+  <p className="text-xs text-muted-foreground">
+    Tipo: {doc.document_type}
+  </p>
+
+  <p className={`text-xs font-semibold ${getVerificationClass(doc.verification_status)}`}>
+    Estado: {getVerificationLabel(doc.verification_status)}
+  </p>
+
+  <p className={`text-xs font-semibold ${getAptoClass(doc)}`}>
+    Resultado: {getAptoLabel(doc)}
+  </p>
+
+  {doc.reviewed_by && (
+    <p className="text-xs text-muted-foreground">
+      Revisado por: {doc.reviewed_by}
+    </p>
+  )}
+
+  {doc.reviewed_at && (
+    <p className="text-xs text-muted-foreground">
+      Revisado el: {formatDate(doc.reviewed_at)}
+    </p>
+  )}
+
+  {doc.expires_at && (
+    <p className="text-xs text-muted-foreground">
+      Caduca el: {formatDate(doc.expires_at)}
+    </p>
+  )}
+
+  {doc.verification_notes && doc.verification_notes !== "EMPTY" && (
+    <p className="text-xs text-amber-300">
+      Nota: {doc.verification_notes}
+    </p>
+  )}
+
+</div>
                         </div>
 
                         <button
