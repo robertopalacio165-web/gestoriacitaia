@@ -93,7 +93,7 @@ export async function uploadDocument({
     verification_status,
     verification_notes,
     extracted_data: {
-      user_email: user.email || "",
+    user_email: "test@email.com",
       original_name: file.name,
       display_name: title?.trim() || baseName,
       normalized_title: baseName,
