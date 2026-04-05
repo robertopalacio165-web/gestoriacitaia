@@ -84,7 +84,7 @@ export async function uploadDocument({
     user_id: user.id,
     case_id,
     document_type: folder,
-    title: title?.trim() || baseName,
+    title: "CAMBIO_TEST",
     storage_bucket: bucket,
     file_path: filePath,
     original_name: file.name,
