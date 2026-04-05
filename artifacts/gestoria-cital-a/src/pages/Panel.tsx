@@ -358,6 +358,11 @@ const handleDocumentUpload = async (
   try {
     const result = await verifyDocument(file, documentType);
 
+    const emailFromProfile = profile?.email?.trim() || "";
+    const fullNameFromProfile = profile?.full_name?.trim() || "";
+    const phoneFromProfile = profile?.phone?.trim() || "";
+    const nieFromProfile = profile?.nie?.trim() || "";
+
     await uploadDocument({
       file,
       documentType,
@@ -365,6 +370,10 @@ const handleDocumentUpload = async (
       verification_status: result.status,
       verification_notes: result.notes,
       extracted_data: {
+        user_email: emailFromProfile,
+        user_full_name: fullNameFromProfile,
+        user_phone: phoneFromProfile,
+        user_nie: nieFromProfile,
         detected_file_kind: result.detected_file_kind,
         detected_document_kind: result.detected_document_kind,
         match_quality: result.match_quality,
@@ -405,7 +414,6 @@ const handleDocumentUpload = async (
     });
   }
 };
-
   const handleDownloadDocument = async (doc: UserDocumentRow) => {
     try {
       const bucket = doc.storage_bucket || "user-documents";
