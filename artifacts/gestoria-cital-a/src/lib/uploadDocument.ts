@@ -118,7 +118,7 @@ export async function uploadDocument({
     user_id: user.id,
     case_id,
     document_type: folder,
-    title: title?.trim() || baseName,
+    title: "PRUEBA-UNICA-777",
     description,
     storage_bucket: bucket,
     file_path: filePath,
