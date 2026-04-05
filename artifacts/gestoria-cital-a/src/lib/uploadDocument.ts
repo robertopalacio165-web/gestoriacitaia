@@ -10,6 +10,7 @@ type UploadDocumentParams = {
   case_id?: string | null;
   bucket?: string;
   is_required?: boolean;
+  description?: string | null;
 };
 
 const MAX_FILE_SIZE_BYTES = 15 * 1024 * 1024;
@@ -23,6 +24,26 @@ function sanitizeFileName(name: string) {
     .toLowerCase();
 }
 
+async function getProfileData(userId: string) {
+  try {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("email, full_name, phone, nie, dni, passport_number, nationality")
+      .eq("id", userId)
+      .maybeSingle();
+
+    if (error) {
+      console.error("load profile for uploadDocument error:", error);
+      return null;
+    }
+
+    return data;
+  } catch (error) {
+    console.error("load profile for uploadDocument fatal error:", error);
+    return null;
+  }
+}
+
 export async function uploadDocument({
   file,
   documentType,
@@ -33,6 +54,7 @@ export async function uploadDocument({
   case_id = null,
   bucket = "user-documents",
   is_required = true,
+  description = null,
 }: UploadDocumentParams) {
   const {
     data: { user },
@@ -80,11 +102,17 @@ export async function uploadDocument({
     throw new Error(`Error al subir al storage: ${uploadError.message}`);
   }
 
+  const profile = await getProfileData(user.id);
+
+  const finalUserEmail =
+    profile?.email?.trim() || user.email?.trim() || "";
+
   const payload = {
     user_id: user.id,
     case_id,
     document_type: folder,
-    title: "CAMBIO_TEST",
+    title: title?.trim() || baseName,
+    description,
     storage_bucket: bucket,
     file_path: filePath,
     original_name: file.name,
@@ -93,8 +121,14 @@ export async function uploadDocument({
     verification_status,
     verification_notes,
     extracted_data: {
-      user_email: user.email || "fallback@test.com",
+      user_email: finalUserEmail,
       user_id: user.id,
+      user_full_name: profile?.full_name || "",
+      user_phone: profile?.phone || "",
+      user_nie: profile?.nie || "",
+      user_dni: profile?.dni || "",
+      user_passport_number: profile?.passport_number || "",
+      user_nationality: profile?.nationality || "",
       original_name: file.name,
       display_name: title?.trim() || baseName,
       normalized_title: baseName,
@@ -115,9 +149,7 @@ export async function uploadDocument({
     reviewed_by: "IA",
     is_required,
   };
-  
-console.log("PAYLOAD FINAL:", payload);
-  
+
   const { data: insertedDoc, error: dbError } = await supabase
     .from("user_documents")
     .insert([payload])
