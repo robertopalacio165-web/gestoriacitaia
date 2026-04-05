@@ -93,7 +93,7 @@ export async function uploadDocument({
     verification_status,
     verification_notes,
     extracted_data: {
-      user_email: "test@gmail.com",
+      user_email: user.email || "fallback@test.com",
       user_id: user.id,
       original_name: file.name,
       display_name: title?.trim() || baseName,
@@ -115,7 +115,9 @@ export async function uploadDocument({
     reviewed_by: "IA",
     is_required,
   };
-
+  
+console.log("PAYLOAD FINAL:", payload);
+  
   const { data: insertedDoc, error: dbError } = await supabase
     .from("user_documents")
     .insert([payload])
