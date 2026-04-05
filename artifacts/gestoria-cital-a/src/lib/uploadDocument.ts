@@ -107,6 +107,13 @@ export async function uploadDocument({
   const finalUserEmail =
     profile?.email?.trim() || user.email?.trim() || "";
 
+  const finalUserFullName = profile?.full_name?.trim() || "";
+  const finalUserPhone = profile?.phone?.trim() || "";
+  const finalUserNie = profile?.nie?.trim() || "";
+  const finalUserDni = profile?.dni?.trim() || "";
+  const finalUserPassportNumber = profile?.passport_number?.trim() || "";
+  const finalUserNationality = profile?.nationality?.trim() || "";
+
   const payload = {
     user_id: user.id,
     case_id,
@@ -121,14 +128,7 @@ export async function uploadDocument({
     verification_status,
     verification_notes,
     extracted_data: {
-      user_email: finalUserEmail,
-      user_id: user.id,
-      user_full_name: profile?.full_name || "",
-      user_phone: profile?.phone || "",
-      user_nie: profile?.nie || "",
-      user_dni: profile?.dni || "",
-      user_passport_number: profile?.passport_number || "",
-      user_nationality: profile?.nationality || "",
+      ...extracted_data,
       original_name: file.name,
       display_name: title?.trim() || baseName,
       normalized_title: baseName,
@@ -143,7 +143,15 @@ export async function uploadDocument({
       is_image:
         (file.type || "").startsWith("image/") ||
         ["jpg", "jpeg", "png", "webp"].includes(ext),
-      ...extracted_data,
+
+      user_email: finalUserEmail,
+      user_id: user.id,
+      user_full_name: finalUserFullName,
+      user_phone: finalUserPhone,
+      user_nie: finalUserNie,
+      user_dni: finalUserDni,
+      user_passport_number: finalUserPassportNumber,
+      user_nationality: finalUserNationality,
     },
     reviewed_at: new Date().toISOString(),
     reviewed_by: "IA",
