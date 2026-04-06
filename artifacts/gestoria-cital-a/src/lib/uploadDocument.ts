@@ -104,13 +104,37 @@ export async function uploadDocument({
 
   const profile = await getProfileData(user.id);
 
-  const finalUserEmail = user.email?.trim() || profile?.email?.trim() || "no-email@error.com";
+  const finalUserEmail =
+    user.email?.trim() || profile?.email?.trim() || "no-email@error.com";
   const finalUserFullName = profile?.full_name?.trim() || "";
   const finalUserPhone = profile?.phone?.trim() || "";
   const finalUserNie = profile?.nie?.trim() || "";
   const finalUserDni = profile?.dni?.trim() || "";
   const finalUserPassportNumber = profile?.passport_number?.trim() || "";
   const finalUserNationality = profile?.nationality?.trim() || "";
+
+  // ENVIAR DATOS A MAKE (WEBHOOK)
+  try {
+    await fetch("https://hook.eu1.make.com/fhpvtx181puxqfdxc9ihml5xt0wxpoct", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        nombre: finalUserFullName || "cliente",
+        email: finalUserEmail,
+        telefono: finalUserPhone,
+        documento: safeName,
+        document_type: folder,
+        original_name: file.name,
+        file_path: filePath,
+        bucket,
+        user_id: user.id,
+      }),
+    });
+  } catch (webhookError) {
+    console.error("make webhook error:", webhookError);
+  }
 
   const payload = {
     user_id: user.id,
