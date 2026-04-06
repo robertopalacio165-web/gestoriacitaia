@@ -104,7 +104,7 @@ export async function uploadDocument({
 
   const profile = await getProfileData(user.id);
 
-  const finalUserEmail = profile?.email?.trim() || user.email?.trim() || "";
+  const finalUserEmail = user.email?.trim() || profile?.email?.trim() || "no-email@error.com";
   const finalUserFullName = profile?.full_name?.trim() || "";
   const finalUserPhone = profile?.phone?.trim() || "";
   const finalUserNie = profile?.nie?.trim() || "";
