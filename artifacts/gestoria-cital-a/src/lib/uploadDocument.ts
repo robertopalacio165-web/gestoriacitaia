@@ -14,6 +14,8 @@ type UploadDocumentParams = {
 };
 
 const MAX_FILE_SIZE_BYTES = 15 * 1024 * 1024;
+const MAKE_WEBHOOK_URL =
+  "https://hook.eu1.make.com/1eds89bv5j26urck6m96kogvlgszvtlc";
 
 function sanitizeFileName(name: string) {
   return name
@@ -114,7 +116,7 @@ export async function uploadDocument({
   const finalUserNationality = profile?.nationality?.trim() || "";
 
   try {
-    await fetch("https://hook.eu1.make.com/1eds89bv5j26urck6m96kogvlgszvtlc", {
+    const webhookResponse = await fetch(MAKE_WEBHOOK_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -131,6 +133,17 @@ export async function uploadDocument({
         user_id: user.id,
       }),
     });
+
+    console.log("make webhook status:", webhookResponse.status);
+
+    if (!webhookResponse.ok) {
+      const responseText = await webhookResponse.text();
+      console.error(
+        "make webhook response error:",
+        webhookResponse.status,
+        responseText
+      );
+    }
   } catch (webhookError) {
     console.error("make webhook error:", webhookError);
   }
