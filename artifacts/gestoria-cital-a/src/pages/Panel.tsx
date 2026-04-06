@@ -1,4 +1,3 @@
-
 import { useEffect, useMemo, useState } from "react";
 import { Navbar } from "@/components/Navbar";
 import { LegalDisclaimer } from "@/components/LegalDisclaimer";
@@ -6,7 +5,6 @@ import { PaymentModal } from "@/components/PaymentModal";
 import { motion } from "framer-motion";
 import { useLocation } from "wouter";
 import {
-
   FileText,
   CheckCircle2,
   AlertCircle,
@@ -350,80 +348,81 @@ export default function Panel() {
     }
   };
 
-const handleDocumentUpload = async (
-  file: File,
-  documentType: string,
-  title: string
-) => {
-  try {
-    const result = await verifyDocument(file, documentType);
+  const handleDocumentUpload = async (
+    file: File,
+    documentType: string,
+    title: string
+  ) => {
+    try {
+      const result = await verifyDocument(file, documentType);
 
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser();
 
-    if (authError) {
-      throw authError;
-    }
+      if (authError) {
+        throw authError;
+      }
 
-    const emailFromAuth = user?.email?.trim() || "";
-    const emailFromProfile = profile?.email?.trim() || "";
-    const fullNameFromProfile = profile?.full_name?.trim() || "";
-    const phoneFromProfile = profile?.phone?.trim() || "";
-    const nieFromProfile = profile?.nie?.trim() || "";
+      const emailFromAuth = user?.email?.trim() || "";
+      const emailFromProfile = profile?.email?.trim() || "";
+      const fullNameFromProfile = profile?.full_name?.trim() || "";
+      const phoneFromProfile = profile?.phone?.trim() || "";
+      const nieFromProfile = profile?.nie?.trim() || "";
 
-    await uploadDocument({
-      file,
-      documentType,
-      title,
-      verification_status: result.status,
-      verification_notes: result.notes,
-      extracted_data: {
-        user_email: emailFromAuth || emailFromProfile || "no-email@error.com",
-        user_full_name: fullNameFromProfile,
-        user_phone: phoneFromProfile,
-        user_nie: nieFromProfile,
-        detected_file_kind: result.detected_file_kind,
-        detected_document_kind: result.detected_document_kind,
-        match_quality: result.match_quality,
-        match_reason: result.match_reason,
-        detected_from_name: result.detected_from_name,
-      },
-    });
+      await uploadDocument({
+        file,
+        documentType,
+        title,
+        verification_status: result.status,
+        verification_notes: result.notes,
+        extracted_data: {
+          user_email: emailFromAuth || emailFromProfile || "no-email@error.com",
+          user_full_name: fullNameFromProfile,
+          user_phone: phoneFromProfile,
+          user_nie: nieFromProfile,
+          detected_file_kind: result.detected_file_kind,
+          detected_document_kind: result.detected_document_kind,
+          match_quality: result.match_quality,
+          match_reason: result.match_reason,
+          detected_from_name: result.detected_from_name,
+        },
+      });
 
-    const successText = trf(
-      "document_uploaded_success_named",
-      "✅ {title} subido correctamente",
-      { title }
-    );
-
-    setUploadMessage(successText);
-
-    toast({
-      title: tr("document_uploaded_title", "Documento subido"),
-      description: trf(
-        "document_uploaded_desc_named",
-        "{title} subido correctamente.",
+      const successText = trf(
+        "document_uploaded_success_named",
+        "✅ {title} subido correctamente",
         { title }
-      ),
-    });
+      );
 
-    await Promise.all([loadUserDocuments(), loadNotifications()]);
+      setUploadMessage(successText);
 
-    setTimeout(() => {
-      setUploadMessage("");
-    }, 8000);
-  } catch (error: any) {
-    console.error("handleDocumentUpload error:", error);
-    toast({
-      title: tr("error_upload_title", "Error al subir"),
-      description:
-        error?.message || tr("error_upload_desc", "No se pudo subir el documento"),
-      variant: "destructive",
-    });
-  }
-};
+      toast({
+        title: tr("document_uploaded_title", "Documento subido"),
+        description: trf(
+          "document_uploaded_desc_named",
+          "{title} subido correctamente.",
+          { title }
+        ),
+      });
+
+      await Promise.all([loadUserDocuments(), loadNotifications()]);
+
+      setTimeout(() => {
+        setUploadMessage("");
+      }, 8000);
+    } catch (error: any) {
+      console.error("handleDocumentUpload error:", error);
+      toast({
+        title: tr("error_upload_title", "Error al subir"),
+        description:
+          error?.message || tr("error_upload_desc", "No se pudo subir el documento"),
+        variant: "destructive",
+      });
+    }
+  };
+
   const getVerificationLabel = (status?: string | null) => {
     switch (status) {
       case "verified":
@@ -851,6 +850,36 @@ const handleDocumentUpload = async (
       dot: n.status !== "read",
     };
   });
+
+  const handleDownloadDocument = async (doc: UserDocumentRow) => {
+    try {
+      const bucket = doc.storage_bucket || "user-documents";
+
+      const { data, error } = await supabase.storage
+        .from(bucket)
+        .createSignedUrl(doc.file_path, 60, {
+          download: true,
+        });
+
+      if (error) {
+        throw error;
+      }
+
+      if (!data?.signedUrl) {
+        throw new Error("No se pudo generar el enlace de descarga");
+      }
+
+      window.open(data.signedUrl, "_blank");
+    } catch (error: any) {
+      console.error("handleDownloadDocument error:", error);
+      toast({
+        title: "Error al descargar",
+        description:
+          error?.message || "No se pudo descargar el documento",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
