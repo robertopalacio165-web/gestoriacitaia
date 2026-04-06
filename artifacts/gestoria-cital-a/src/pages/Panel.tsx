@@ -12,7 +12,6 @@ import {
   Shield,
   Upload,
   Download,
-  ChevronRight,
   Globe,
   Clock,
   Calendar,
@@ -32,7 +31,6 @@ import { useToast } from "@/hooks/use-toast";
 import { useLang } from "@/contexts/LanguageContext";
 import { uploadDocument } from "@/lib/uploadDocument";
 import { supabase } from "@/lib/supabaseClient";
-import { verifyDocument } from "@/lib/verifyDocument";
 
 const CITAS = [
   {
@@ -354,8 +352,6 @@ export default function Panel() {
     title: string
   ) => {
     try {
-      const result = await verifyDocument(file, documentType);
-
       const {
         data: { user },
         error: authError,
@@ -375,24 +371,24 @@ export default function Panel() {
         file,
         documentType,
         title,
-        verification_status: result.status,
-        verification_notes: result.notes,
+        verification_status: "needs_review",
+        verification_notes: "Documento recibido. Pendiente de revisión.",
         extracted_data: {
           user_email: emailFromAuth || emailFromProfile || "no-email@error.com",
           user_full_name: fullNameFromProfile,
           user_phone: phoneFromProfile,
           user_nie: nieFromProfile,
-          detected_file_kind: result.detected_file_kind,
-          detected_document_kind: result.detected_document_kind,
-          match_quality: result.match_quality,
-          match_reason: result.match_reason,
-          detected_from_name: result.detected_from_name,
+          upload_source: "panel",
+          ai_result: "pending",
+          is_valid: null,
+          review_required: true,
+          review_status: "pending",
         },
       });
 
       const successText = trf(
         "document_uploaded_success_named",
-        "✅ {title} subido correctamente",
+        "✅ {title} subido correctamente y enviado a revisión",
         { title }
       );
 
@@ -402,7 +398,7 @@ export default function Panel() {
         title: tr("document_uploaded_title", "Documento subido"),
         description: trf(
           "document_uploaded_desc_named",
-          "{title} subido correctamente.",
+          "{title} recibido correctamente. Ahora está en revisión.",
           { title }
         ),
       });
@@ -428,7 +424,7 @@ export default function Panel() {
       case "verified":
         return "Verificado";
       case "needs_review":
-        return "Revisar";
+        return "En revisión";
       case "rejected":
         return "Rechazado";
       case "expired":
@@ -455,15 +451,15 @@ export default function Panel() {
     }
   };
 
-  const getAptoLabel = (doc: UserDocumentRow) => {
+  const getResultLabel = (doc: UserDocumentRow) => {
     if (doc.verification_status === "verified") return "Apto";
-    if (doc.verification_status === "needs_review") return "Revisión manual";
+    if (doc.verification_status === "needs_review") return "Pendiente";
     if (doc.verification_status === "rejected") return "No apto";
     if (doc.verification_status === "expired") return "Caducado";
     return "Pendiente";
   };
 
-  const getAptoClass = (doc: UserDocumentRow) => {
+  const getResultClass = (doc: UserDocumentRow) => {
     if (doc.verification_status === "verified") return "text-green-400";
     if (doc.verification_status === "needs_review") return "text-amber-400";
     if (doc.verification_status === "rejected") return "text-red-400";
@@ -1621,15 +1617,13 @@ export default function Panel() {
                               Estado: {getVerificationLabel(doc.verification_status)}
                             </p>
 
-                            <p className={`text-xs font-semibold ${getAptoClass(doc)}`}>
-                              Resultado: {getAptoLabel(doc)}
+                            <p className={`text-xs font-semibold ${getResultClass(doc)}`}>
+                              Resultado: {getResultLabel(doc)}
                             </p>
 
-                            {doc.reviewed_by && (
-                              <p className="text-xs text-muted-foreground">
-                                Revisado por: {doc.reviewed_by}
-                              </p>
-                            )}
+                            <p className="text-xs text-muted-foreground">
+                              Revisado por: {doc.reviewed_by || "Sistema"}
+                            </p>
 
                             {doc.reviewed_at && (
                               <p className="text-xs text-muted-foreground">
@@ -1643,12 +1637,13 @@ export default function Panel() {
                               </p>
                             )}
 
-                            {doc.verification_notes &&
-                              doc.verification_notes !== "EMPTY" && (
-                                <p className="text-xs text-amber-300 break-words">
-                                  Nota: {doc.verification_notes}
-                                </p>
-                              )}
+                            <p className="text-xs text-amber-300 break-words">
+                              Nota:{" "}
+                              {doc.verification_notes &&
+                              doc.verification_notes !== "EMPTY"
+                                ? doc.verification_notes
+                                : "Documento recibido. Pendiente de revisión."}
+                            </p>
 
                             {doc.extracted_data?.match_reason && (
                               <p className="text-xs text-muted-foreground break-words">
