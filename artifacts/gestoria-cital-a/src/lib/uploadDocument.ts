@@ -104,9 +104,7 @@ export async function uploadDocument({
 
   const profile = await getProfileData(user.id);
 
-  const finalUserEmail =
-    profile?.email?.trim() || user.email?.trim() || "";
-
+  const finalUserEmail = profile?.email?.trim() || user.email?.trim() || "";
   const finalUserFullName = profile?.full_name?.trim() || "";
   const finalUserPhone = profile?.phone?.trim() || "";
   const finalUserNie = profile?.nie?.trim() || "";
@@ -118,7 +116,7 @@ export async function uploadDocument({
     user_id: user.id,
     case_id,
     document_type: folder,
-    title: "PRUEBA-GITHUB-DIRECTO",
+    title: title?.trim() || baseName,
     description,
     storage_bucket: bucket,
     file_path: filePath,
@@ -127,8 +125,10 @@ export async function uploadDocument({
     file_size: file.size,
     verification_status,
     verification_notes,
+
     extracted_data: {
       ...extracted_data,
+
       original_name: file.name,
       display_name: title?.trim() || baseName,
       normalized_title: baseName,
@@ -153,6 +153,7 @@ export async function uploadDocument({
       user_passport_number: finalUserPassportNumber,
       user_nationality: finalUserNationality,
     },
+
     reviewed_at: new Date().toISOString(),
     reviewed_by: "IA",
     is_required,
