@@ -4,7 +4,7 @@ type UploadDocumentParams = {
   file: File;
   documentType: string;
   title: string;
-  verification_status?: string;
+  verification_status?: "needs_review" | "verified" | "rejected";
   verification_notes?: string;
   extracted_data?: Record<string, any>;
   case_id?: string | null;
@@ -23,7 +23,72 @@ function sanitizeFileName(name: string) {
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/[^a-zA-Z0-9._-]/g, "-")
     .replace(/-+/g, "-")
+    .replace(/^-+|-+$/g, "")
     .toLowerCase();
+}
+
+function sanitizeFolderName(name: string) {
+  return sanitizeFileName(name || "general") || "general";
+}
+
+function getFileExtension(fileName: string) {
+  return fileName.split(".").pop()?.toLowerCase() || "bin";
+}
+
+function getDocumentCategory(documentType: string) {
+  const value = (documentType || "").toLowerCase().trim();
+
+  if (
+    value.includes("pasaporte") ||
+    value.includes("passport")
+  ) {
+    return "identity_document";
+  }
+
+  if (
+    value.includes("dni") ||
+    value.includes("nie") ||
+    value.includes("id_card") ||
+    value.includes("documento_identidad")
+  ) {
+    return "identity_document";
+  }
+
+  if (
+    value.includes("foto") ||
+    value.includes("photo") ||
+    value.includes("fotografia") ||
+    value.includes("selfie")
+  ) {
+    return "photo";
+  }
+
+  if (
+    value.includes("empadronamiento") ||
+    value.includes("padron") ||
+    value.includes("certificado")
+  ) {
+    return "certificate";
+  }
+
+  if (
+    value.includes("tasa") ||
+    value.includes("fee") ||
+    value.includes("payment") ||
+    value.includes("pago")
+  ) {
+    return "payment_document";
+  }
+
+  if (
+    value.includes("formulario") ||
+    value.includes("solicitud") ||
+    value.includes("application_form")
+  ) {
+    return "form";
+  }
+
+  return "general_document";
 }
 
 async function getProfileData(userId: string) {
@@ -50,8 +115,8 @@ export async function uploadDocument({
   file,
   documentType,
   title,
-  verification_status = "pending",
-  verification_notes = "",
+  verification_status = "needs_review",
+  verification_notes = "Documento recibido. Pendiente de revisión.",
   extracted_data = {},
   case_id = null,
   bucket = "user-documents",
@@ -84,19 +149,26 @@ export async function uploadDocument({
     throw new Error("El archivo supera el límite de 15 MB");
   }
 
-  const ext = file.name.split(".").pop()?.toLowerCase() || "bin";
-  const baseName =
-    sanitizeFileName(file.name.replace(/\.[^/.]+$/, "")) || "documento";
-  const safeName = `${Date.now()}-${baseName}.${ext}`;
-  const folder = (documentType || "general").trim().toLowerCase();
+  const ext = getFileExtension(file.name);
+  const originalBaseName = file.name.replace(/\.[^/.]+$/, "");
+  const normalizedBaseName = sanitizeFileName(originalBaseName) || "documento";
+  const safeName = `${Date.now()}-${normalizedBaseName}.${ext}`;
+
+  const folder = sanitizeFolderName(documentType);
   const filePath = `${user.id}/${folder}/${safeName}`;
+
+  const mimeType = file.type || "application/octet-stream";
+  const isPdf = ext === "pdf" || mimeType === "application/pdf";
+  const isImage =
+    mimeType.startsWith("image/") ||
+    ["jpg", "jpeg", "png", "webp"].includes(ext);
 
   const { error: uploadError } = await supabase.storage
     .from(bucket)
     .upload(filePath, file, {
       cacheControl: "3600",
       upsert: false,
-      contentType: file.type || "application/octet-stream",
+      contentType: mimeType,
     });
 
   if (uploadError) {
@@ -115,6 +187,10 @@ export async function uploadDocument({
   const finalUserPassportNumber = profile?.passport_number?.trim() || "";
   const finalUserNationality = profile?.nationality?.trim() || "";
 
+  const displayTitle = title?.trim() || originalBaseName || normalizedBaseName;
+  const documentCategory = getDocumentCategory(folder);
+  const uploadedAt = new Date().toISOString();
+
   try {
     const webhookResponse = await fetch(MAKE_WEBHOOK_URL, {
       method: "POST",
@@ -122,16 +198,47 @@ export async function uploadDocument({
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
+        event_name: "document_uploaded",
+        source: "gestoriacitaia",
+        uploaded_at: uploadedAt,
+
+        user_id: user.id,
+        case_id,
+
         nombre: finalUserFullName || "cliente",
         email: finalUserEmail,
         telefono: finalUserPhone,
+        nie: finalUserNie,
+        dni: finalUserDni,
+        passport_number: finalUserPassportNumber,
+        nationality: finalUserNationality,
+
         documento: safeName,
+        title: displayTitle,
+        description: description || "",
         document_type: folder,
+        document_category: documentCategory,
         original_name: file.name,
+
         file_path: filePath,
         bucket,
-        user_id: user.id,
+        mime_type: mimeType,
+        extension: ext,
+        file_size: file.size,
+        is_pdf: isPdf,
+        is_image: isImage,
+
         verification_status,
+        verification_notes,
+        ai_result: "pending",
+        is_valid: null,
+
+        panel_url: "https://gestoriacitaia.com/panel",
+
+        whatsapp_ready: true,
+        email_ready: true,
+        review_required: true,
+        twilio_channel: "make",
       }),
     });
 
@@ -153,45 +260,69 @@ export async function uploadDocument({
     user_id: user.id,
     case_id,
     document_type: folder,
-    title: title?.trim() || baseName,
+    title: displayTitle,
     description,
     storage_bucket: bucket,
     file_path: filePath,
     original_name: file.name,
-    mime_type: file.type || "application/octet-stream",
+    mime_type: mimeType,
     file_size: file.size,
+
     verification_status,
     verification_notes,
+    reviewed_by: "system",
+    reviewed_at: null,
+    is_required,
 
     extracted_data: {
       ...extracted_data,
+
       original_name: file.name,
-      display_name: title?.trim() || baseName,
-      normalized_title: baseName,
+      safe_name: safeName,
+      display_name: displayTitle,
+      normalized_title: normalizedBaseName,
+
       extension: ext,
-      mime_type: file.type || "application/octet-stream",
+      mime_type: mimeType,
       size_bytes: file.size,
+
       document_type: folder,
+      document_category: documentCategory,
       bucket,
       path: filePath,
-      uploaded_at: new Date().toISOString(),
-      is_pdf: ext === "pdf" || file.type === "application/pdf",
-      is_image:
-        (file.type || "").startsWith("image/") ||
-        ["jpg", "jpeg", "png", "webp"].includes(ext),
-      user_email: finalUserEmail,
+
+      uploaded_at: uploadedAt,
+      is_pdf: isPdf,
+      is_image: isImage,
+
       user_id: user.id,
+      user_email: finalUserEmail,
       user_full_name: finalUserFullName,
       user_phone: finalUserPhone,
       user_nie: finalUserNie,
       user_dni: finalUserDni,
       user_passport_number: finalUserPassportNumber,
       user_nationality: finalUserNationality,
-    },
 
-    reviewed_at: new Date().toISOString(),
-    reviewed_by: "IA",
-    is_required,
+      ai_result: "pending",
+      is_valid: null,
+      review_required: true,
+      review_status: "pending",
+
+      form_fill_ready: true,
+      ocr_ready: true,
+      whatsapp_ready: true,
+      email_ready: true,
+      make_ready: true,
+      twilio_ready: true,
+
+      form_template_id: null,
+      form_template_name: null,
+      auto_fill_status: "pending",
+      auto_fill_fields: {},
+      auto_fill_missing_fields: [],
+      generated_pdf_url: null,
+    },
   };
 
   const { data: insertedDoc, error: dbError } = await supabase
