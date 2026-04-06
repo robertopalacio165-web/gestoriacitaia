@@ -113,9 +113,8 @@ export async function uploadDocument({
   const finalUserPassportNumber = profile?.passport_number?.trim() || "";
   const finalUserNationality = profile?.nationality?.trim() || "";
 
-  // ENVIAR DATOS A MAKE (WEBHOOK)
   try {
-    await fetch("https://hook.eu1.make.com/fhpvtx181puxqfdxc9ihml5xt0wxpoct", {
+    await fetch("https://hook.eu1.make.com/9o74m5simctf1ehwg42eia3e50jchi", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -152,7 +151,6 @@ export async function uploadDocument({
 
     extracted_data: {
       ...extracted_data,
-
       original_name: file.name,
       display_name: title?.trim() || baseName,
       normalized_title: baseName,
@@ -167,7 +165,6 @@ export async function uploadDocument({
       is_image:
         (file.type || "").startsWith("image/") ||
         ["jpg", "jpeg", "png", "webp"].includes(ext),
-
       user_email: finalUserEmail,
       user_id: user.id,
       user_full_name: finalUserFullName,
