@@ -114,7 +114,7 @@ export async function uploadDocument({
   const finalUserNationality = profile?.nationality?.trim() || "";
 
   try {
-    await fetch("https://hook.eu1.make.com/9o74m5simctf1ehwg42eia3e50jchi", {
+    await fetch("https://hook.eu1.make.com/1eds89bv5j26urck6m96kogvlgszvtlc", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
