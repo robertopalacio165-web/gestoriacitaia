@@ -130,6 +130,7 @@ export async function uploadDocument({
         original_name: file.name,
         file_path: filePath,
         bucket,
+          user_id: user.id,
         user_id: user.id,
       }),
     });
