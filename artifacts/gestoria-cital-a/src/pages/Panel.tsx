@@ -358,6 +358,16 @@ const handleDocumentUpload = async (
   try {
     const result = await verifyDocument(file, documentType);
 
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError) {
+      throw authError;
+    }
+
+    const emailFromAuth = user?.email?.trim() || "";
     const emailFromProfile = profile?.email?.trim() || "";
     const fullNameFromProfile = profile?.full_name?.trim() || "";
     const phoneFromProfile = profile?.phone?.trim() || "";
@@ -370,7 +380,7 @@ const handleDocumentUpload = async (
       verification_status: result.status,
       verification_notes: result.notes,
       extracted_data: {
-        user_email: emailFromProfile,
+        user_email: emailFromAuth || emailFromProfile || "no-email@error.com",
         user_full_name: fullNameFromProfile,
         user_phone: phoneFromProfile,
         user_nie: nieFromProfile,
@@ -414,31 +424,6 @@ const handleDocumentUpload = async (
     });
   }
 };
-  const handleDownloadDocument = async (doc: UserDocumentRow) => {
-    try {
-      const bucket = doc.storage_bucket || "user-documents";
-
-      const { data, error } = await supabase.storage
-        .from(bucket)
-        .createSignedUrl(doc.file_path, 60);
-
-      if (error) {
-        console.error("createSignedUrl error:", error);
-        throw error;
-      }
-
-      window.open(data.signedUrl, "_blank", "noopener,noreferrer");
-    } catch (error: any) {
-      toast({
-        title: tr("error_download_title", "Error al descargar"),
-        description:
-          error?.message ||
-          tr("error_download_desc", "No se pudo descargar el documento"),
-        variant: "destructive",
-      });
-    }
-  };
-
   const getVerificationLabel = (status?: string | null) => {
     switch (status) {
       case "verified":
