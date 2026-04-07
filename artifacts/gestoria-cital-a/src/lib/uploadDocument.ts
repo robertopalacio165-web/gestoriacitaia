@@ -13,9 +13,26 @@ type UploadDocumentParams = {
   description?: string | null;
 };
 
+type ExistingUserDocument = {
+  id: string;
+  document_type: string | null;
+};
+
 const MAX_FILE_SIZE_BYTES = 15 * 1024 * 1024;
 const MAKE_WEBHOOK_URL =
   "https://hook.eu1.make.com/1eds89bv5j26urck6m96kogvlgszvtlc";
+
+const REQUIRED_DOC_TYPES = [
+  "passport",
+  "empadronamiento",
+  "fotografias",
+  "formulario_oficial",
+  "tasa_pagada",
+] as const;
+
+const OPTIONAL_DOC_TYPES = ["dni_nie"] as const;
+const PROOFS_DOC_TYPE = "pruebas_espana";
+const MIN_PROOFS_REQUIRED = 5;
 
 function sanitizeFileName(name: string) {
   return name
@@ -38,10 +55,7 @@ function getFileExtension(fileName: string) {
 function getDocumentCategory(documentType: string) {
   const value = (documentType || "").toLowerCase().trim();
 
-  if (
-    value.includes("pasaporte") ||
-    value.includes("passport")
-  ) {
+  if (value.includes("pasaporte") || value.includes("passport")) {
     return "identity_document";
   }
 
@@ -111,6 +125,80 @@ async function getProfileData(userId: string) {
   }
 }
 
+async function sendMakeWebhook(payload: Record<string, any>) {
+  try {
+    const webhookResponse = await fetch(MAKE_WEBHOOK_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    console.log("make webhook status:", webhookResponse.status);
+
+    if (!webhookResponse.ok) {
+      const responseText = await webhookResponse.text();
+      console.error(
+        "make webhook response error:",
+        webhookResponse.status,
+        responseText
+      );
+    }
+  } catch (webhookError) {
+    console.error("make webhook error:", webhookError);
+  }
+}
+
+async function loadUserDocumentTypes(userId: string) {
+  const { data, error } = await supabase
+    .from("user_documents")
+    .select("id, document_type")
+    .eq("user_id", userId);
+
+  if (error) {
+    console.error("loadUserDocumentTypes error:", error);
+    return [];
+  }
+
+  return (data || []) as ExistingUserDocument[];
+}
+
+function getCaseCompletionSnapshot(docs: ExistingUserDocument[]) {
+  const normalizedTypes = docs
+    .map((doc) => (doc.document_type || "").trim().toLowerCase())
+    .filter(Boolean);
+
+  const uniqueTypes = new Set(normalizedTypes);
+  const proofsCount = normalizedTypes.filter(
+    (type) => type === PROOFS_DOC_TYPE
+  ).length;
+
+  const requiredPresent = REQUIRED_DOC_TYPES.every((type) =>
+    uniqueTypes.has(type)
+  );
+
+  const optionalPresent = OPTIONAL_DOC_TYPES.filter((type) =>
+    uniqueTypes.has(type)
+  );
+
+  const missingRequired = REQUIRED_DOC_TYPES.filter(
+    (type) => !uniqueTypes.has(type)
+  );
+
+  const isComplete = requiredPresent && proofsCount >= MIN_PROOFS_REQUIRED;
+
+  return {
+    isComplete,
+    proofsCount,
+    requiredPresent,
+    optionalPresent,
+    missingRequired,
+    hasDniNie: uniqueTypes.has("dni_nie"),
+    uploadedTypes: Array.from(uniqueTypes),
+  };
+}
+
 export async function uploadDocument({
   file,
   documentType,
@@ -148,6 +236,9 @@ export async function uploadDocument({
   if (file.size > MAX_FILE_SIZE_BYTES) {
     throw new Error("El archivo supera el límite de 15 MB");
   }
+
+  const docsBeforeInsert = await loadUserDocumentTypes(user.id);
+  const beforeSnapshot = getCaseCompletionSnapshot(docsBeforeInsert);
 
   const ext = getFileExtension(file.name);
   const originalBaseName = file.name.replace(/\.[^/.]+$/, "");
@@ -191,70 +282,48 @@ export async function uploadDocument({
   const documentCategory = getDocumentCategory(folder);
   const uploadedAt = new Date().toISOString();
 
-  try {
-    const webhookResponse = await fetch(MAKE_WEBHOOK_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        event: "document_uploaded",
-        source: "gestoriacitaia",
-        uploaded_at: uploadedAt,
+  await sendMakeWebhook({
+    event: "document_uploaded",
+    source: "gestoriacitaia",
+    uploaded_at: uploadedAt,
 
-        user_id: user.id,
-        case_id,
+    user_id: user.id,
+    case_id,
 
-        nombre: finalUserFullName || "cliente",
-        email: finalUserEmail,
-        telefono: finalUserPhone,
-        nie: finalUserNie,
-        dni: finalUserDni,
-        passport_number: finalUserPassportNumber,
-        nationality: finalUserNationality,
+    nombre: finalUserFullName || "cliente",
+    email: finalUserEmail,
+    telefono: finalUserPhone,
+    nie: finalUserNie,
+    dni: finalUserDni,
+    passport_number: finalUserPassportNumber,
+    nationality: finalUserNationality,
 
-        documento: safeName,
-        title: displayTitle,
-        description: description || "",
-        document_type: folder,
-        document_category: documentCategory,
-        original_name: file.name,
+    documento: safeName,
+    title: displayTitle,
+    description: description || "",
+    document_type: folder,
+    document_category: documentCategory,
+    original_name: file.name,
 
-        file_path: filePath,
-        bucket,
-        mime_type: mimeType,
-        extension: ext,
-        file_size: file.size,
-        is_pdf: isPdf,
-        is_image: isImage,
+    file_path: filePath,
+    bucket,
+    mime_type: mimeType,
+    extension: ext,
+    file_size: file.size,
+    is_pdf: isPdf,
+    is_image: isImage,
 
-        verification_status,
-        verification_notes,
-        ai_result: "pending",
-        is_valid: null,
+    verification_status,
+    verification_notes,
+    ai_result: "pending",
+    is_valid: null,
 
-        panel_url: "https://gestoriacitaia.com/panel",
+    panel_url: "https://gestoriacitaia.com/panel",
 
-        whatsapp_ready: true,
-        email_ready: true,
-        review_required: true,
-        twilio_channel: "make",
-      }),
-    });
-
-    console.log("make webhook status:", webhookResponse.status);
-
-    if (!webhookResponse.ok) {
-      const responseText = await webhookResponse.text();
-      console.error(
-        "make webhook response error:",
-        webhookResponse.status,
-        responseText
-      );
-    }
-  } catch (webhookError) {
-    console.error("make webhook error:", webhookError);
-  }
+    email_ready: true,
+    whatsapp_ready: false,
+    review_required: true,
+  });
 
   const payload = {
     user_id: user.id,
@@ -311,7 +380,7 @@ export async function uploadDocument({
 
       form_fill_ready: true,
       ocr_ready: true,
-      whatsapp_ready: true,
+      whatsapp_ready: false,
       email_ready: true,
       make_ready: true,
       twilio_ready: true,
@@ -339,6 +408,52 @@ export async function uploadDocument({
     throw new Error(
       `Error al guardar en la base de datos: ${dbError.message}`
     );
+  }
+
+  const docsAfterInsert = await loadUserDocumentTypes(user.id);
+  const afterSnapshot = getCaseCompletionSnapshot(docsAfterInsert);
+
+  const justCompletedCase =
+    !beforeSnapshot.isComplete && afterSnapshot.isComplete;
+
+  if (justCompletedCase) {
+    await sendMakeWebhook({
+      event: "case_ready",
+      source: "gestoriacitaia",
+      created_at: new Date().toISOString(),
+
+      user_id: user.id,
+      case_id,
+
+      nombre: finalUserFullName || "cliente",
+      email: finalUserEmail,
+      telefono: finalUserPhone,
+      nie: finalUserNie,
+      dni: finalUserDni,
+      passport_number: finalUserPassportNumber,
+      nationality: finalUserNationality,
+
+      tramite: "Expediente completo",
+      panel_url: "https://gestoriacitaia.com/panel",
+
+      case_status: "ready",
+      verification_status: "needs_review",
+      review_required: true,
+
+      dossier_ready: true,
+      dossier_pdf_url: null,
+      generated_pdf_url: null,
+
+      required_documents_complete: true,
+      optional_documents_present: afterSnapshot.optionalPresent,
+      uploaded_types: afterSnapshot.uploadedTypes,
+      missing_required: afterSnapshot.missingRequired,
+      proofs_uploaded: afterSnapshot.proofsCount,
+      minimum_proofs_required: MIN_PROOFS_REQUIRED,
+
+      whatsapp_ready: true,
+      email_ready: true,
+    });
   }
 
   return insertedDoc;
