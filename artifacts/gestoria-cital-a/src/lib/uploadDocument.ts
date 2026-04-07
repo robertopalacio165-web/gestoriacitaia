@@ -13,26 +13,46 @@ type UploadDocumentParams = {
   description?: string | null;
 };
 
-type ExistingUserDocument = {
-  id: string;
-  document_type: string | null;
+type ServiceCompletedParams = {
+  userId: string;
+  case_id?: string | null;
+  service_type: string;
+  service_label: string;
+  summary_pdf_url?: string | null;
+  summary_text?: string | null;
+  verified_documents?: string[];
+  filled_forms?: string[];
+  notes?: string | null;
+};
+
+type AppointmentFoundParams = {
+  userId: string;
+  case_id?: string | null;
+  tramite: string;
+  city?: string | null;
+  office?: string | null;
+  appointment_date?: string | null;
+  appointment_time?: string | null;
+  booking_url?: string | null;
+  notes?: string | null;
+};
+
+type AppointmentConfirmedParams = {
+  userId: string;
+  case_id?: string | null;
+  tramite: string;
+  city?: string | null;
+  office?: string | null;
+  appointment_date?: string | null;
+  appointment_time?: string | null;
+  confirmation_pdf_url?: string | null;
+  locator?: string | null;
+  notes?: string | null;
 };
 
 const MAX_FILE_SIZE_BYTES = 15 * 1024 * 1024;
 const MAKE_WEBHOOK_URL =
   "https://hook.eu1.make.com/1eds89bv5j26urck6m96kogvlgszvtlc";
-
-const REQUIRED_DOC_TYPES = [
-  "passport",
-  "empadronamiento",
-  "fotografias",
-  "formulario_oficial",
-  "tasa_pagada",
-] as const;
-
-const OPTIONAL_DOC_TYPES = ["dni_nie"] as const;
-const PROOFS_DOC_TYPE = "pruebas_espana";
-const MIN_PROOFS_REQUIRED = 5;
 
 function sanitizeFileName(name: string) {
   return name
@@ -125,6 +145,24 @@ async function getProfileData(userId: string) {
   }
 }
 
+async function getProfileDataRequired(userId: string) {
+  const profile = await getProfileData(userId);
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  return {
+    email: user?.id === userId ? user.email?.trim() || profile?.email?.trim() || "no-email@error.com" : profile?.email?.trim() || "no-email@error.com",
+    full_name: profile?.full_name?.trim() || "",
+    phone: profile?.phone?.trim() || "",
+    nie: profile?.nie?.trim() || "",
+    dni: profile?.dni?.trim() || "",
+    passport_number: profile?.passport_number?.trim() || "",
+    nationality: profile?.nationality?.trim() || "",
+  };
+}
+
 async function sendMakeWebhook(payload: Record<string, any>) {
   try {
     const webhookResponse = await fetch(MAKE_WEBHOOK_URL, {
@@ -148,55 +186,6 @@ async function sendMakeWebhook(payload: Record<string, any>) {
   } catch (webhookError) {
     console.error("make webhook error:", webhookError);
   }
-}
-
-async function loadUserDocumentTypes(userId: string) {
-  const { data, error } = await supabase
-    .from("user_documents")
-    .select("id, document_type")
-    .eq("user_id", userId);
-
-  if (error) {
-    console.error("loadUserDocumentTypes error:", error);
-    return [];
-  }
-
-  return (data || []) as ExistingUserDocument[];
-}
-
-function getCaseCompletionSnapshot(docs: ExistingUserDocument[]) {
-  const normalizedTypes = docs
-    .map((doc) => (doc.document_type || "").trim().toLowerCase())
-    .filter(Boolean);
-
-  const uniqueTypes = new Set(normalizedTypes);
-  const proofsCount = normalizedTypes.filter(
-    (type) => type === PROOFS_DOC_TYPE
-  ).length;
-
-  const requiredPresent = REQUIRED_DOC_TYPES.every((type) =>
-    uniqueTypes.has(type)
-  );
-
-  const optionalPresent = OPTIONAL_DOC_TYPES.filter((type) =>
-    uniqueTypes.has(type)
-  );
-
-  const missingRequired = REQUIRED_DOC_TYPES.filter(
-    (type) => !uniqueTypes.has(type)
-  );
-
-  const isComplete = requiredPresent && proofsCount >= MIN_PROOFS_REQUIRED;
-
-  return {
-    isComplete,
-    proofsCount,
-    requiredPresent,
-    optionalPresent,
-    missingRequired,
-    hasDniNie: uniqueTypes.has("dni_nie"),
-    uploadedTypes: Array.from(uniqueTypes),
-  };
 }
 
 export async function uploadDocument({
@@ -236,9 +225,6 @@ export async function uploadDocument({
   if (file.size > MAX_FILE_SIZE_BYTES) {
     throw new Error("El archivo supera el límite de 15 MB");
   }
-
-  const docsBeforeInsert = await loadUserDocumentTypes(user.id);
-  const beforeSnapshot = getCaseCompletionSnapshot(docsBeforeInsert);
 
   const ext = getFileExtension(file.name);
   const originalBaseName = file.name.replace(/\.[^/.]+$/, "");
@@ -410,51 +396,143 @@ export async function uploadDocument({
     );
   }
 
-  const docsAfterInsert = await loadUserDocumentTypes(user.id);
-  const afterSnapshot = getCaseCompletionSnapshot(docsAfterInsert);
-
-  const justCompletedCase =
-    !beforeSnapshot.isComplete && afterSnapshot.isComplete;
-
-  if (justCompletedCase) {
-    await sendMakeWebhook({
-      event: "case_ready",
-      source: "gestoriacitaia",
-      created_at: new Date().toISOString(),
-
-      user_id: user.id,
-      case_id,
-
-      nombre: finalUserFullName || "cliente",
-      email: finalUserEmail,
-      telefono: finalUserPhone,
-      nie: finalUserNie,
-      dni: finalUserDni,
-      passport_number: finalUserPassportNumber,
-      nationality: finalUserNationality,
-
-      tramite: "Expediente completo",
-      panel_url: "https://gestoriacitaia.com/panel",
-
-      case_status: "ready",
-      verification_status: "needs_review",
-      review_required: true,
-
-      dossier_ready: true,
-      dossier_pdf_url: null,
-      generated_pdf_url: null,
-
-      required_documents_complete: true,
-      optional_documents_present: afterSnapshot.optionalPresent,
-      uploaded_types: afterSnapshot.uploadedTypes,
-      missing_required: afterSnapshot.missingRequired,
-      proofs_uploaded: afterSnapshot.proofsCount,
-      minimum_proofs_required: MIN_PROOFS_REQUIRED,
-
-      whatsapp_ready: true,
-      email_ready: true,
-    });
-  }
-
   return insertedDoc;
+}
+
+export async function sendServiceCompletedEvent({
+  userId,
+  case_id = null,
+  service_type,
+  service_label,
+  summary_pdf_url = null,
+  summary_text = null,
+  verified_documents = [],
+  filled_forms = [],
+  notes = null,
+}: ServiceCompletedParams) {
+  const profile = await getProfileDataRequired(userId);
+
+  await sendMakeWebhook({
+    event: "service_completed",
+    source: "gestoriacitaia",
+    created_at: new Date().toISOString(),
+
+    user_id: userId,
+    case_id,
+
+    nombre: profile.full_name || "cliente",
+    email: profile.email,
+    telefono: profile.phone,
+    nie: profile.nie,
+    dni: profile.dni,
+    passport_number: profile.passport_number,
+    nationality: profile.nationality,
+
+    service_type,
+    service_label,
+    summary_text,
+    notes,
+    verified_documents,
+    filled_forms,
+
+    summary_pdf_url,
+    generated_pdf_url: summary_pdf_url,
+
+    panel_url: "https://gestoriacitaia.com/panel",
+
+    whatsapp_ready: true,
+    email_ready: true,
+  });
+}
+
+export async function sendAppointmentFoundEvent({
+  userId,
+  case_id = null,
+  tramite,
+  city = null,
+  office = null,
+  appointment_date = null,
+  appointment_time = null,
+  booking_url = null,
+  notes = null,
+}: AppointmentFoundParams) {
+  const profile = await getProfileDataRequired(userId);
+
+  await sendMakeWebhook({
+    event: "appointment_found",
+    source: "gestoriacitaia",
+    created_at: new Date().toISOString(),
+
+    user_id: userId,
+    case_id,
+
+    nombre: profile.full_name || "cliente",
+    email: profile.email,
+    telefono: profile.phone,
+    nie: profile.nie,
+    dni: profile.dni,
+    passport_number: profile.passport_number,
+    nationality: profile.nationality,
+
+    tramite,
+    city,
+    office,
+    appointment_date,
+    appointment_time,
+    booking_url,
+    notes,
+
+    panel_url: "https://gestoriacitaia.com/panel",
+
+    whatsapp_ready: true,
+    email_ready: false,
+  });
+}
+
+export async function sendAppointmentConfirmedEvent({
+  userId,
+  case_id = null,
+  tramite,
+  city = null,
+  office = null,
+  appointment_date = null,
+  appointment_time = null,
+  confirmation_pdf_url = null,
+  locator = null,
+  notes = null,
+}: AppointmentConfirmedParams) {
+  const profile = await getProfileDataRequired(userId);
+
+  await sendMakeWebhook({
+    event: "appointment_confirmed",
+    source: "gestoriacitaia",
+    created_at: new Date().toISOString(),
+
+    user_id: userId,
+    case_id,
+
+    nombre: profile.full_name || "cliente",
+    email: profile.email,
+    telefono: profile.phone,
+    nie: profile.nie,
+    dni: profile.dni,
+    passport_number: profile.passport_number,
+    nationality: profile.nationality,
+
+    tramite,
+    city,
+    office,
+    appointment_date,
+    appointment_time,
+    locator,
+    notes,
+
+    confirmation_pdf_url,
+    generated_pdf_url: confirmation_pdf_url,
+
+    panel_url: "https://gestoriacitaia.com/panel",
+
+    whatsapp_ready: true,
+    email_ready: true,
+  });
 }
