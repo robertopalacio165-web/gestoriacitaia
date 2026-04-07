@@ -198,7 +198,7 @@ export async function uploadDocument({
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        event_name: "document_uploaded",
+        event: "document_uploaded",
         source: "gestoriacitaia",
         uploaded_at: uploadedAt,
 
