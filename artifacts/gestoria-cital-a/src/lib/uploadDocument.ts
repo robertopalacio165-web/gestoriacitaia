@@ -72,6 +72,30 @@ function getFileExtension(fileName: string) {
   return fileName.split(".").pop()?.toLowerCase() || "bin";
 }
 
+function normalizePhone(phone: string | null | undefined): string {
+  if (!phone) return "";
+
+  let cleaned = phone.trim().replace(/\s+/g, "").replace(/-/g, "");
+
+  if (!cleaned) return "";
+
+  if (cleaned.startsWith("+")) return cleaned;
+
+  if (cleaned.startsWith("00")) {
+    return `+${cleaned.slice(2)}`;
+  }
+
+  if (cleaned.startsWith("34") && cleaned.length >= 11) {
+    return `+${cleaned}`;
+  }
+
+  if (cleaned.length === 9) {
+    return `+34${cleaned}`;
+  }
+
+  return cleaned;
+}
+
 function getDocumentCategory(documentType: string) {
   const value = (documentType || "").toLowerCase().trim();
 
@@ -152,10 +176,15 @@ async function getProfileDataRequired(userId: string) {
     data: { user },
   } = await supabase.auth.getUser();
 
+  const normalizedPhone = normalizePhone(profile?.phone);
+
   return {
-    email: user?.id === userId ? user.email?.trim() || profile?.email?.trim() || "no-email@error.com" : profile?.email?.trim() || "no-email@error.com",
+    email:
+      user?.id === userId
+        ? user.email?.trim() || profile?.email?.trim() || "no-email@error.com"
+        : profile?.email?.trim() || "no-email@error.com",
     full_name: profile?.full_name?.trim() || "",
-    phone: profile?.phone?.trim() || "",
+    phone: normalizedPhone,
     nie: profile?.nie?.trim() || "",
     dni: profile?.dni?.trim() || "",
     passport_number: profile?.passport_number?.trim() || "",
@@ -258,7 +287,7 @@ export async function uploadDocument({
   const finalUserEmail =
     user.email?.trim() || profile?.email?.trim() || "no-email@error.com";
   const finalUserFullName = profile?.full_name?.trim() || "";
-  const finalUserPhone = profile?.phone?.trim() || "";
+  const finalUserPhone = normalizePhone(profile?.phone);
   const finalUserNie = profile?.nie?.trim() || "";
   const finalUserDni = profile?.dni?.trim() || "";
   const finalUserPassportNumber = profile?.passport_number?.trim() || "";
@@ -395,14 +424,7 @@ export async function uploadDocument({
       `Error al guardar en la base de datos: ${dbError.message}`
     );
   }
-await sendMakeWebhook({
-  event: "service_completed",
-  nombre: finalUserFullName || "cliente",
-  email: finalUserEmail,
-  telefono: finalUserPhone,
-  service_label: "Prueba WhatsApp",
-  summary_pdf_url: "https://gestoriacitaia.com/panel",
-});
+
   return insertedDoc;
 }
 
