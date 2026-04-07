@@ -134,7 +134,36 @@ export default function Panel() {
 
   const { toast } = useToast();
   const { t } = useLang();
+const handleTestServiceCompleted = async () => {
+  try {
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser();
 
+    console.log("USER:", user);
+
+    if (error) throw error;
+    if (!user?.id) throw new Error("No hay usuario");
+
+    await sendServiceCompletedEvent({
+      userId: user.id,
+      service_type: "test_pdf",
+      service_label: "Prueba PDF",
+      summary_pdf_url:
+        "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
+      summary_text: "PDF generado correctamente",
+      verified_documents: ["passport"],
+      filled_forms: ["EX-17"],
+      notes: "Test desde botón",
+    });
+
+    alert("✅ ENVIADO A MAKE");
+  } catch (err: any) {
+    console.error(err);
+    alert("❌ ERROR: " + err.message);
+  }
+};
   const goWithGoogleAuth = async (targetPath: string) => {
     try {
       const {
