@@ -29,7 +29,10 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useLang } from "@/contexts/LanguageContext";
-import { uploadDocument } from "@/lib/uploadDocument";
+import {
+  uploadDocument,
+  sendServiceCompletedEvent,
+} from "@/lib/uploadDocument";
 import { supabase } from "@/lib/supabaseClient";
 
 const CITAS = [
@@ -228,13 +231,21 @@ export default function Panel() {
       type: "pruebas_espana",
       date: t("doc_very_important"),
     },
-    { name: t("doc_fotografias"), type: "fotografias", date: t("doc_required") },
+    {
+      name: t("doc_fotografias"),
+      type: "fotografias",
+      date: t("doc_required"),
+    },
     {
       name: t("doc_formulario_oficial"),
       type: "formulario_oficial",
       date: t("doc_pending_fill"),
     },
-    { name: t("doc_tasa_pagada"), type: "tasa_pagada", date: t("doc_pending") },
+    {
+      name: t("doc_tasa_pagada"),
+      type: "tasa_pagada",
+      date: t("doc_pending"),
+    },
   ];
 
   const loadCurrentUser = async () => {
@@ -338,7 +349,10 @@ export default function Panel() {
         title: tr("error_loading_documents_title", "Error al cargar documentos"),
         description:
           error?.message ||
-          tr("error_loading_documents_desc", "No se pudieron cargar los documentos"),
+          tr(
+            "error_loading_documents_desc",
+            "No se pudieron cargar los documentos"
+          ),
         variant: "destructive",
       });
     } finally {
@@ -413,7 +427,44 @@ export default function Panel() {
       toast({
         title: tr("error_upload_title", "Error al subir"),
         description:
-          error?.message || tr("error_upload_desc", "No se pudo subir el documento"),
+          error?.message ||
+          tr("error_upload_desc", "No se pudo subir el documento"),
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleTestServiceCompleted = async () => {
+    try {
+      const {
+        data: { user },
+        error,
+      } = await supabase.auth.getUser();
+
+      if (error) throw error;
+      if (!user) throw new Error("Usuario no autenticado");
+
+      await sendServiceCompletedEvent({
+        userId: user.id,
+        service_type: "expediente",
+        service_label: "Expediente completo",
+        summary_pdf_url:
+          "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
+        summary_text: "Resumen final listo",
+        verified_documents: ["passport", "empadronamiento"],
+        filled_forms: ["EX-17"],
+        notes: "Prueba PDF WhatsApp",
+      });
+
+      toast({
+        title: "Prueba enviada",
+        description: "Se envió el evento service_completed a Make.",
+      });
+    } catch (error: any) {
+      console.error("handleTestServiceCompleted error:", error);
+      toast({
+        title: "Error en prueba",
+        description: error?.message || "No se pudo enviar la prueba",
         variant: "destructive",
       });
     }
@@ -668,8 +719,12 @@ export default function Panel() {
     });
   }, [uploadedTypeSet, userDocuments]);
 
-  const docsOk = requiredDocsWithStatus.filter((d) => d.status === "subido").length;
-  const docsPct = Math.round((docsOk / requiredDocsWithStatus.length) * 100);
+  const docsOk = requiredDocsWithStatus.filter(
+    (d) => d.status === "subido"
+  ).length;
+  const docsPct = Math.round(
+    (docsOk / requiredDocsWithStatus.length) * 100
+  );
 
   const TRAMITES_ACTIVOS = [
     {
@@ -960,7 +1015,9 @@ export default function Panel() {
                           <n.icon className={`w-4 h-4 ${n.color}`} />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-xs font-semibold text-white">{n.title}</p>
+                          <p className="text-xs font-semibold text-white">
+                            {n.title}
+                          </p>
                           <p className="text-[10px] text-muted-foreground leading-snug mt-0.5">
                             {n.body}
                           </p>
@@ -1002,8 +1059,12 @@ export default function Panel() {
                 <card.icon className={`w-4 h-4 ${card.color}`} />
               </div>
               <div>
-                <p className="text-lg font-bold text-white leading-none">{card.value}</p>
-                <p className="text-[10px] text-muted-foreground mt-0.5">{card.label}</p>
+                <p className="text-lg font-bold text-white leading-none">
+                  {card.value}
+                </p>
+                <p className="text-[10px] text-muted-foreground mt-0.5">
+                  {card.label}
+                </p>
                 <p className="text-[10px] text-white/50 mt-0.5">{card.sub}</p>
               </div>
             </motion.button>
@@ -1079,11 +1140,21 @@ export default function Panel() {
                   </div>
 
                   <button
-                    onClick={() => createBaseFormFromProfile("ex17", "Formulario EX-17")}
+                    onClick={() =>
+                      createBaseFormFromProfile("ex17", "Formulario EX-17")
+                    }
                     className="w-full py-2 rounded-lg bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 text-xs font-semibold transition-colors flex items-center justify-center gap-2"
                   >
                     <FileText className="w-3.5 h-3.5" />
                     Crear formulario automático
+                  </button>
+
+                  <button
+                    onClick={handleTestServiceCompleted}
+                    className="w-full py-2 rounded-lg bg-green-500/20 hover:bg-green-500/30 text-green-300 text-xs font-semibold transition-colors flex items-center justify-center gap-2"
+                  >
+                    <MessageSquare className="w-3.5 h-3.5" />
+                    PROBAR PDF WHATSAPP
                   </button>
                 </div>
               </div>
@@ -1110,7 +1181,9 @@ export default function Panel() {
                             {trm.status}
                           </p>
                         </div>
-                        <span className="text-xs font-bold text-primary">{trm.pct}%</span>
+                        <span className="text-xs font-bold text-primary">
+                          {trm.pct}%
+                        </span>
                       </div>
                       <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
                         <motion.div
@@ -1191,8 +1264,12 @@ export default function Panel() {
                         <a.icon className={`w-4 h-4 ${a.color}`} />
                       </div>
                       <div className="min-w-0">
-                        <p className="text-xs font-semibold text-white">{a.label}</p>
-                        <p className="text-[10px] text-muted-foreground truncate">{a.sub}</p>
+                        <p className="text-xs font-semibold text-white">
+                          {a.label}
+                        </p>
+                        <p className="text-[10px] text-muted-foreground truncate">
+                          {a.sub}
+                        </p>
                       </div>
                     </button>
                   ))}
@@ -1273,7 +1350,9 @@ export default function Panel() {
                         className="h-full bg-gradient-to-r from-primary to-green-400 rounded-full"
                         initial={{ width: 0 }}
                         animate={{
-                          width: `${(REFERRALS_USED / REFERRALS_NEEDED) * 100}%`,
+                          width: `${
+                            (REFERRALS_USED / REFERRALS_NEEDED) * 100
+                          }%`,
                         }}
                         transition={{ duration: 0.8, delay: 0.3 }}
                       />
@@ -1284,7 +1363,9 @@ export default function Panel() {
                         <div
                           key={i}
                           className={`flex items-center gap-1 text-[9px] font-semibold ${
-                            i < REFERRALS_USED ? "text-primary" : "text-white/30"
+                            i < REFERRALS_USED
+                              ? "text-primary"
+                              : "text-white/30"
                           }`}
                         >
                           <span
@@ -1321,7 +1402,9 @@ export default function Panel() {
               <div className="flex items-start gap-2 bg-amber-950/30 border border-amber-600/20 rounded-xl p-3">
                 <AlertCircle className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
                 <p className="text-[10px] text-amber-200/70 leading-relaxed">
-                  <strong className="text-amber-400">{t("panel_legal_aviso")}</strong>{" "}
+                  <strong className="text-amber-400">
+                    {t("panel_legal_aviso")}
+                  </strong>{" "}
                   {t("panel_legal_panel")}
                 </p>
               </div>
@@ -1340,7 +1423,9 @@ export default function Panel() {
                       <trm.icon className={`w-5 h-5 ${trm.color}`} />
                     </div>
                     <div className="flex-1">
-                      <p className="text-sm font-semibold text-white">{trm.label}</p>
+                      <p className="text-sm font-semibold text-white">
+                        {trm.label}
+                      </p>
                       <p className="text-xs text-muted-foreground">
                         {trm.status} · {trm.pct}% {t("panel_completed_pct")}
                       </p>
@@ -1368,7 +1453,9 @@ export default function Panel() {
                     <div
                       className="absolute top-3.5 left-4 h-0.5 bg-primary"
                       style={{
-                        width: `${(trm.paso / (trm.pasos.length - 1)) * 90}%`,
+                        width: `${
+                          (trm.paso / (trm.pasos.length - 1)) * 90
+                        }%`,
                       }}
                     />
                     {trm.pasos.map((p, pi) => (
@@ -1433,7 +1520,9 @@ export default function Panel() {
                     <div className="flex items-start gap-3">
                       <div
                         className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
-                          cita.status === "proxima" ? "bg-primary/20" : "bg-white/5"
+                          cita.status === "proxima"
+                            ? "bg-primary/20"
+                            : "bg-white/5"
                         }`}
                       >
                         <Calendar
@@ -1504,7 +1593,9 @@ export default function Panel() {
 
               <div className="rounded-xl border border-white/10 p-3">
                 <div className="flex items-center justify-between mb-3">
-                  <p className="text-xs font-bold text-white">{t("docs_required_title")}</p>
+                  <p className="text-xs font-bold text-white">
+                    {t("docs_required_title")}
+                  </p>
                   <span className="text-xs text-muted-foreground">
                     {docsOk}/{requiredDocsWithStatus.length}
                   </span>
@@ -1531,15 +1622,21 @@ export default function Panel() {
                       <div className="flex items-center gap-3">
                         <span
                           className={`text-xs font-semibold ${
-                            doc.status === "subido" ? "text-green-400" : "text-amber-400"
+                            doc.status === "subido"
+                              ? "text-green-400"
+                              : "text-amber-400"
                           }`}
                         >
-                          {doc.status === "subido" ? t("doc_uploaded") : t("doc_pending")}
+                          {doc.status === "subido"
+                            ? t("doc_uploaded")
+                            : t("doc_pending")}
                         </span>
 
                         <label className="cursor-pointer text-xs text-primary flex items-center gap-1">
                           <Upload className="w-3 h-3" />
-                          {doc.status === "subido" ? t("doc_replace") : t("doc_upload")}
+                          {doc.status === "subido"
+                            ? t("doc_replace")
+                            : t("doc_upload")}
                           <input
                             type="file"
                             className="hidden"
@@ -1580,9 +1677,13 @@ export default function Panel() {
 
               <div className="rounded-xl border border-white/10 p-3">
                 <div className="flex items-center justify-between mb-3">
-                  <p className="text-xs font-bold text-white">{t("my_uploaded_docs")}</p>
+                  <p className="text-xs font-bold text-white">
+                    {t("my_uploaded_docs")}
+                  </p>
                   <span className="text-xs text-muted-foreground">
-                    {docsLoading ? t("loading") : `${userDocuments.length} ${t("documents_count")}`}
+                    {docsLoading
+                      ? t("loading")
+                      : `${userDocuments.length} ${t("documents_count")}`}
                   </span>
                 </div>
 
@@ -1612,12 +1713,16 @@ export default function Panel() {
                             </p>
 
                             <p
-                              className={`text-xs font-semibold ${getVerificationClass(doc.verification_status)}`}
+                              className={`text-xs font-semibold ${getVerificationClass(
+                                doc.verification_status
+                              )}`}
                             >
                               Estado: {getVerificationLabel(doc.verification_status)}
                             </p>
 
-                            <p className={`text-xs font-semibold ${getResultClass(doc)}`}>
+                            <p
+                              className={`text-xs font-semibold ${getResultClass(doc)}`}
+                            >
                               Resultado: {getResultLabel(doc)}
                             </p>
 
@@ -1652,9 +1757,11 @@ export default function Panel() {
                             )}
 
                             {doc.extracted_data?.detected_from_name &&
-                              doc.extracted_data.detected_from_name !== "unknown" && (
+                              doc.extracted_data.detected_from_name !==
+                                "unknown" && (
                                 <p className="text-xs text-muted-foreground">
-                                  Detectado como: {doc.extracted_data.detected_from_name}
+                                  Detectado como:{" "}
+                                  {doc.extracted_data.detected_from_name}
                                 </p>
                               )}
                           </div>
@@ -1708,8 +1815,16 @@ export default function Panel() {
       <nav className="fixed bottom-0 w-full z-50 glass-panel-heavy border-t border-white/[0.07] sm:hidden">
         <div className="flex justify-around items-center h-14 px-2">
           {[
-            { icon: TrendingUp, label: t("panel_nav_resumen"), tab: "resumen" },
-            { icon: FileText, label: t("panel_nav_tramites"), tab: "tramites" },
+            {
+              icon: TrendingUp,
+              label: t("panel_nav_resumen"),
+              tab: "resumen",
+            },
+            {
+              icon: FileText,
+              label: t("panel_nav_tramites"),
+              tab: "tramites",
+            },
             { icon: Clock, label: t("panel_nav_citas"), tab: "citas" },
             { icon: Shield, label: t("panel_nav_docs"), tab: "documentos" },
           ].map((item, i) => (
