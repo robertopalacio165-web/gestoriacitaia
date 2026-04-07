@@ -395,7 +395,14 @@ export async function uploadDocument({
       `Error al guardar en la base de datos: ${dbError.message}`
     );
   }
-
+await sendMakeWebhook({
+  event: "service_completed",
+  nombre: finalUserFullName || "cliente",
+  email: finalUserEmail,
+  telefono: finalUserPhone,
+  service_label: "Prueba WhatsApp",
+  summary_pdf_url: "https://gestoriacitaia.com/panel",
+});
   return insertedDoc;
 }
 
