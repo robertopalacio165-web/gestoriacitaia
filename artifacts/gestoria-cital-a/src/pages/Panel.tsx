@@ -29,10 +29,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useLang } from "@/contexts/LanguageContext";
-import {
-  uploadDocument,
-  sendServiceCompletedEvent,
-} from "@/lib/uploadDocument";
+import { uploadDocument } from "@/lib/uploadDocument";
 import { supabase } from "@/lib/supabaseClient";
 
 const CITAS = [
@@ -117,6 +114,16 @@ type NotificationRow = {
   created_at: string;
 };
 
+type UserFormRow = {
+  id: string;
+  form_type: string;
+  title: string;
+  auto_fill_status: string | null;
+  auto_fill_notes: string | null;
+  created_at: string;
+  extracted_profile_data?: Record<string, any> | null;
+};
+
 export default function Panel() {
   const [, setLocation] = useLocation();
   const [activeTab, setActiveTab] = useState<TabKey>("resumen");
@@ -130,41 +137,10 @@ export default function Panel() {
   const [profile, setProfile] = useState<ProfileRow | null>(null);
   const [notifications, setNotifications] = useState<NotificationRow[]>([]);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-  const [userForms, setUserForms] = useState<any[]>([]);
+  const [userForms, setUserForms] = useState<UserFormRow[]>([]);
 
   const { toast } = useToast();
   const { t } = useLang();
-
-  const handleTestServiceCompleted = async () => {
-    try {
-      const {
-        data: { user },
-        error,
-      } = await supabase.auth.getUser();
-
-      console.log("USER:", user);
-
-      if (error) throw error;
-      if (!user?.id) throw new Error("No hay usuario");
-
-      await sendServiceCompletedEvent({
-        userId: user.id,
-        service_type: "test_pdf",
-        service_label: "Prueba PDF",
-        summary_pdf_url:
-          "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
-        summary_text: "PDF generado correctamente",
-        verified_documents: ["passport"],
-        filled_forms: ["EX-17"],
-        notes: "Test desde botón",
-      });
-
-      alert("✅ ENVIADO A MAKE");
-    } catch (err: any) {
-      console.error(err);
-      alert("❌ ERROR: " + err.message);
-    }
-  };
 
   const goWithGoogleAuth = async (targetPath: string) => {
     try {
@@ -621,7 +597,7 @@ export default function Panel() {
 
       if (error) throw error;
 
-      setUserForms(data || []);
+      setUserForms((data as UserFormRow[]) || []);
     } catch (error) {
       console.error("loadUserForms error:", error);
       setUserForms([]);
@@ -1122,14 +1098,6 @@ export default function Panel() {
                   >
                     <FileText className="w-3.5 h-3.5" />
                     Crear formulario automático
-                  </button>
-
-                  <button
-                    onClick={handleTestServiceCompleted}
-                    className="w-full py-2 rounded-lg bg-green-500/20 hover:bg-green-500/30 text-green-300 text-xs font-semibold transition-colors flex items-center justify-center gap-2"
-                  >
-                    <MessageSquare className="w-3.5 h-3.5" />
-                    PROBAR PDF WHATSAPP
                   </button>
                 </div>
               </div>
