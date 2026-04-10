@@ -1,5 +1,4 @@
-
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { Link, useLocation } from "wouter";
 import {
   User,
@@ -18,45 +17,9 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useLang } from "@/contexts/LanguageContext";
+import { useLanguage } from "@/context/LanguageContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/lib/supabaseClient";
-
-const NOTIFS = [
-  {
-    id: 1,
-    type: "cita",
-    icon: CheckCircle2,
-    color: "text-primary",
-    bg: "bg-primary/10",
-    title: "Cita confirmada",
-    body: "Renovación TIE · 24 Mar 2026 · 10:30 — Comisaría Madrid",
-    time: "hace 2h",
-    read: false,
-  },
-  {
-    id: 2,
-    type: "doc",
-    icon: AlertCircle,
-    color: "text-amber-400",
-    bg: "bg-amber-400/10",
-    title: "Documento por renovar",
-    body: "Tu Cert. de antecedentes penales caduca pronto",
-    time: "hace 1d",
-    read: false,
-  },
-  {
-    id: 3,
-    type: "info",
-    icon: FileText,
-    color: "text-blue-400",
-    bg: "bg-blue-400/10",
-    title: "Regularización 2026",
-    body: "Nueva convocatoria disponible. Consulta tu elegibilidad.",
-    time: "hace 3d",
-    read: true,
-  },
-];
 
 type AuthUser = {
   email?: string;
@@ -68,20 +31,151 @@ type AuthUser = {
   };
 } | null;
 
+type NotifItem = {
+  id: number;
+  type: "cita" | "doc" | "info";
+  icon: typeof CheckCircle2;
+  color: string;
+  bg: string;
+  title: string;
+  body: string;
+  time: string;
+  read: boolean;
+};
+
 export function Navbar() {
   const [location, setLocation] = useLocation();
-  const { lang, setLang, t } = useLang();
+  const { lang, setLang, t } = useLanguage();
 
   const [mobileOpen, setMobileOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
-  const [notifs, setNotifs] = useState(NOTIFS);
   const [user, setUser] = useState<AuthUser>(null);
 
   const notifRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
   const langRef = useRef<HTMLDivElement>(null);
+
+  const notifications = useMemo<NotifItem[]>(() => {
+    if (lang === "darija") {
+      return [
+        {
+          id: 1,
+          type: "cita",
+          icon: CheckCircle2,
+          color: "text-primary",
+          bg: "bg-primary/10",
+          title: "تم تأكيد الموعد",
+          body: "تجديد TIE · 24 Mar 2026 · 10:30 — مفوضية مدريد",
+          time: "منذ ساعتين",
+          read: false,
+        },
+        {
+          id: 2,
+          type: "doc",
+          icon: AlertCircle,
+          color: "text-amber-400",
+          bg: "bg-amber-400/10",
+          title: "وثيقة خاصها التجديد",
+          body: "شهادة السوابق العدلية ديالك غادي تسالي قريب",
+          time: "منذ يوم",
+          read: false,
+        },
+        {
+          id: 3,
+          type: "info",
+          icon: FileText,
+          color: "text-blue-400",
+          bg: "bg-blue-400/10",
+          title: "التسوية 2026",
+          body: "كاينة دعوة جديدة. شوف واش كتوفر فيك الشروط.",
+          time: "منذ 3 أيام",
+          read: true,
+        },
+      ];
+    }
+
+    if (lang === "en") {
+      return [
+        {
+          id: 1,
+          type: "cita",
+          icon: CheckCircle2,
+          color: "text-primary",
+          bg: "bg-primary/10",
+          title: "Appointment confirmed",
+          body: "TIE renewal · 24 Mar 2026 · 10:30 — Madrid Police Office",
+          time: "2h ago",
+          read: false,
+        },
+        {
+          id: 2,
+          type: "doc",
+          icon: AlertCircle,
+          color: "text-amber-400",
+          bg: "bg-amber-400/10",
+          title: "Document expiring soon",
+          body: "Your criminal record certificate will expire soon",
+          time: "1d ago",
+          read: false,
+        },
+        {
+          id: 3,
+          type: "info",
+          icon: FileText,
+          color: "text-blue-400",
+          bg: "bg-blue-400/10",
+          title: "Regularization 2026",
+          body: "New call is available. Check your eligibility.",
+          time: "3d ago",
+          read: true,
+        },
+      ];
+    }
+
+    return [
+      {
+        id: 1,
+        type: "cita",
+        icon: CheckCircle2,
+        color: "text-primary",
+        bg: "bg-primary/10",
+        title: "Cita confirmada",
+        body: "Renovación TIE · 24 Mar 2026 · 10:30 — Comisaría Madrid",
+        time: "hace 2h",
+        read: false,
+      },
+      {
+        id: 2,
+        type: "doc",
+        icon: AlertCircle,
+        color: "text-amber-400",
+        bg: "bg-amber-400/10",
+        title: "Documento por renovar",
+        body: "Tu certificado de antecedentes penales caduca pronto",
+        time: "hace 1d",
+        read: false,
+      },
+      {
+        id: 3,
+        type: "info",
+        icon: FileText,
+        color: "text-blue-400",
+        bg: "bg-blue-400/10",
+        title: "Regularización 2026",
+        body: "Nueva convocatoria disponible. Consulta tu elegibilidad.",
+        time: "hace 3d",
+        read: true,
+      },
+    ];
+  }, [lang]);
+
+  const [notifs, setNotifs] = useState<NotifItem[]>(notifications);
+
+  useEffect(() => {
+    setNotifs(notifications);
+  }, [notifications]);
 
   const unread = notifs.filter((n) => !n.read).length;
 
@@ -90,6 +184,7 @@ export function Navbar() {
       const {
         data: { user },
       } = await supabase.auth.getUser();
+
       setUser(user as AuthUser);
     };
 
@@ -121,10 +216,12 @@ export function Navbar() {
 
   const logout = async () => {
     const { error } = await supabase.auth.signOut();
+
     if (error) {
       console.error(error);
       return;
     }
+
     setProfileOpen(false);
     setNotifOpen(false);
     setMobileOpen(false);
@@ -136,9 +233,11 @@ export function Navbar() {
       if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
         setNotifOpen(false);
       }
+
       if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
         setProfileOpen(false);
       }
+
       if (langRef.current && !langRef.current.contains(e.target as Node)) {
         setLangOpen(false);
       }
@@ -176,18 +275,72 @@ export function Navbar() {
     },
   ];
 
-  const markAllRead = () => setNotifs((n) => n.map((x) => ({ ...x, read: true })));
+  const markAllRead = () => {
+    setNotifs((prev) => prev.map((item) => ({ ...item, read: true })));
+  };
 
   const displayName =
     user?.user_metadata?.full_name ||
     user?.user_metadata?.name ||
     user?.email?.split("@")[0] ||
-    "Usuario";
+    (lang === "darija" ? "مستخدم" : lang === "en" ? "User" : "Usuario");
 
   const avatarUrl =
     user?.user_metadata?.avatar_url || user?.user_metadata?.picture || "";
 
-  const planLabel = t("plan_standard");
+  const planLabel =
+    lang === "darija"
+      ? "الخطة الأساسية"
+      : lang === "en"
+      ? "Standard Plan"
+      : "Plan Estándar";
+
+  const legalLabel =
+    lang === "darija" ? "تنبيه قانوني" : lang === "en" ? "Legal notice" : "Aviso legal";
+
+  const privacyLabel =
+    lang === "darija" ? "الخصوصية" : lang === "en" ? "Privacy" : "Privacidad";
+
+  const cookiesLabel =
+    lang === "darija" ? "الكوكيز" : lang === "en" ? "Cookies" : "Cookies";
+
+  const notificationsLabel =
+    lang === "darija" ? "الإشعارات" : lang === "en" ? "Notifications" : "Notificaciones";
+
+  const markAllReadLabel =
+    lang === "darija"
+      ? "علّم الكل كمقروء"
+      : lang === "en"
+      ? "Mark all as read"
+      : "Marcar todo leído";
+
+  const fullPanelLabel =
+    lang === "darija" ? "شوف البانيل كامل" : lang === "en" ? "View full dashboard" : "Ver panel completo";
+
+  const noEmailLabel =
+    lang === "darija" ? "بلا إيميل" : lang === "en" ? "No email" : "Sin email";
+
+  const activePlanLabel =
+    lang === "darija"
+      ? "الخطة النشيطة:"
+      : lang === "en"
+      ? "Active plan:"
+      : "Plan activo:";
+
+  const myPanelLabel =
+    lang === "darija" ? "البانيل ديالي" : lang === "en" ? "My Dashboard" : "Mi Panel";
+
+  const searchAppointmentLabel =
+    lang === "darija" ? "بحث عن موعد" : lang === "en" ? "Find appointment" : "Buscar cita";
+
+  const managePlanLabel =
+    lang === "darija" ? "تدبير الخطة" : lang === "en" ? "Manage plan" : "Gestionar plan";
+
+  const signOutLabel =
+    lang === "darija" ? "تسجيل الخروج" : lang === "en" ? "Sign out" : "Cerrar sesión";
+
+  const languageMenuTitle =
+    lang === "darija" ? "اللغة" : lang === "en" ? "Language" : "Idioma";
 
   const Dropdown = ({
     children,
@@ -252,6 +405,7 @@ export function Navbar() {
                 </defs>
               </svg>
             </div>
+
             <span className="font-display font-bold text-base tracking-tight text-white flex items-center gap-0.5">
               Gestoría<span className="text-primary">Cita</span>
               <span className="text-white font-black">IA</span>
@@ -299,7 +453,7 @@ export function Navbar() {
                   <>
                     <button
                       onClick={() => {
-                        setLangOpen((o) => !o);
+                        setLangOpen((prev) => !prev);
                         setNotifOpen(false);
                         setProfileOpen(false);
                       }}
@@ -336,7 +490,7 @@ export function Navbar() {
                           }}
                         >
                           <p className="px-4 pt-3 pb-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                            Idioma / Language
+                            {languageMenuTitle}
                           </p>
 
                           {LANGS.map(({ code, iso, label }) => (
@@ -371,6 +525,7 @@ export function Navbar() {
                               )}
                             </button>
                           ))}
+
                           <div className="h-2" />
                         </motion.div>
                       )}
@@ -402,7 +557,7 @@ export function Navbar() {
                   <button
                     onClick={logout}
                     className="p-2 rounded-xl hover:bg-red-500/20 text-red-400 transition-colors"
-                    title="Cerrar sesión"
+                    title={signOutLabel}
                   >
                     <LogOut className="w-4 h-4" />
                   </button>
@@ -413,7 +568,7 @@ export function Navbar() {
                 <div className="relative" ref={notifRef}>
                   <button
                     onClick={() => {
-                      setNotifOpen((o) => !o);
+                      setNotifOpen((prev) => !prev);
                       setProfileOpen(false);
                     }}
                     className="relative p-1.5 rounded-full hover:bg-white/5 transition-colors text-muted-foreground hover:text-white"
@@ -428,13 +583,13 @@ export function Navbar() {
 
                   <Dropdown open={notifOpen}>
                     <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.07]">
-                      <p className="text-sm font-bold text-white">Notificaciones</p>
+                      <p className="text-sm font-bold text-white">{notificationsLabel}</p>
                       {unread > 0 && (
                         <button
                           onClick={markAllRead}
                           className="text-[10px] text-primary hover:underline"
                         >
-                          Marcar todo leído
+                          {markAllReadLabel}
                         </button>
                       )}
                     </div>
@@ -453,6 +608,7 @@ export function Navbar() {
                           >
                             <n.icon className={`w-4 h-4 ${n.color}`} />
                           </div>
+
                           <div className="flex-1 min-w-0">
                             <div className="flex items-start justify-between gap-2">
                               <p className="text-xs font-semibold text-white">{n.title}</p>
@@ -460,9 +616,11 @@ export function Navbar() {
                                 <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0 mt-1" />
                               )}
                             </div>
+
                             <p className="text-[11px] text-muted-foreground leading-tight mt-0.5">
                               {n.body}
                             </p>
+
                             <p className="text-[10px] text-white/30 mt-1">{n.time}</p>
                           </div>
                         </div>
@@ -476,7 +634,7 @@ export function Navbar() {
                       }}
                       className="w-full py-2.5 text-xs text-primary hover:bg-primary/5 transition-colors flex items-center justify-center gap-1 font-semibold"
                     >
-                      Ver panel completo <ChevronRight className="w-3.5 h-3.5" />
+                      {fullPanelLabel} <ChevronRight className="w-3.5 h-3.5" />
                     </button>
                   </Dropdown>
                 </div>
@@ -484,7 +642,7 @@ export function Navbar() {
                 <div className="relative" ref={profileRef}>
                   <button
                     onClick={() => {
-                      setProfileOpen((o) => !o);
+                      setProfileOpen((prev) => !prev);
                       setNotifOpen(false);
                     }}
                     className="w-8 h-8 rounded-full bg-gradient-to-tr from-secondary to-primary p-[2px] hover:scale-105 transition-transform"
@@ -519,10 +677,11 @@ export function Navbar() {
                           />
                         )}
                       </div>
+
                       <div>
                         <p className="text-sm font-bold text-white">{displayName}</p>
                         <p className="text-[10px] text-muted-foreground">
-                          {user?.email || "Sin email"} · {t("panel_plan_active")} {planLabel}
+                          {user?.email || noEmailLabel} · {activePlanLabel} {planLabel}
                         </p>
                       </div>
                     </div>
@@ -531,25 +690,25 @@ export function Navbar() {
                       {[
                         {
                           icon: LayoutDashboard,
-                          label: "Mi Panel",
+                          label: myPanelLabel,
                           href: "/panel",
                           color: "text-primary",
                         },
                         {
                           icon: CalendarSearch,
-                          label: "Buscar cita",
+                          label: searchAppointmentLabel,
                           href: "/buscar-citas",
                           color: "text-secondary",
                         },
                         {
                           icon: FileText,
-                          label: "Regularización 2026",
+                          label: t("nav_reg"),
                           href: "/regularizacion-2026",
                           color: "text-amber-400",
                         },
                         {
                           icon: CreditCard,
-                          label: "Gestionar plan",
+                          label: managePlanLabel,
                           href: "/panel",
                           color: "text-blue-400",
                         },
@@ -577,7 +736,7 @@ export function Navbar() {
                       >
                         <LogOut className="w-4 h-4 text-destructive/80" />
                         <span className="text-sm text-destructive/80 font-medium">
-                          Cerrar sesión
+                          {signOutLabel}
                         </span>
                       </button>
                     </div>
@@ -588,7 +747,7 @@ export function Navbar() {
 
             <button
               className="sm:hidden p-1.5 text-muted-foreground hover:text-white transition-colors"
-              onClick={() => setMobileOpen((o) => !o)}
+              onClick={() => setMobileOpen((prev) => !prev)}
             >
               {mobileOpen ? (
                 <X className="w-5 h-5 text-white" />
@@ -644,10 +803,13 @@ export function Navbar() {
                         )}
                       />
                     </div>
+
                     <span className="flex-1">{link.label}</span>
+
                     {link.badge && (
                       <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
                     )}
+
                     {location === link.href && (
                       <span className="w-1.5 h-1.5 rounded-full bg-primary" />
                     )}
@@ -665,7 +827,7 @@ export function Navbar() {
                     <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center shrink-0">
                       <LogOut className="w-4 h-4 text-red-400" />
                     </div>
-                    <span className="flex-1 text-left">Cerrar sesión</span>
+                    <span className="flex-1 text-left">{signOutLabel}</span>
                   </button>
                 ) : (
                   <button
@@ -689,21 +851,23 @@ export function Navbar() {
                   onClick={() => setMobileOpen(false)}
                   className="hover:text-white transition-colors"
                 >
-                  Aviso legal
+                  {legalLabel}
                 </Link>
+
                 <Link
                   href="/privacidad"
                   onClick={() => setMobileOpen(false)}
                   className="hover:text-white transition-colors"
                 >
-                  Privacidad
+                  {privacyLabel}
                 </Link>
+
                 <Link
                   href="/cookies"
                   onClick={() => setMobileOpen(false)}
                   className="hover:text-white transition-colors"
                 >
-                  Cookies
+                  {cookiesLabel}
                 </Link>
               </div>
             </motion.nav>
