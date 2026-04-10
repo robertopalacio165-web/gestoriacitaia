@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { Navbar } from "@/components/Navbar";
 import { PaymentModal } from "@/components/PaymentModal";
 import { useLang } from "@/contexts/LanguageContext";
@@ -24,61 +24,6 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
-const AGENT_STEPS = [
-  {
-    text: "Hola, soy Mohamed. Te voy a ayudar con la Regularización 2026. Primero, selecciona tu situación actual para encontrar el trámite correcto.",
-    highlight: "Regularización 2026",
-  },
-  {
-    text: "Perfecto. He encontrado tu trámite. Ahora voy a verificar tus documentos. Necesito: NIE o pasaporte, empadronamiento de 2 años y contrato de trabajo.",
-    highlight: "verificar tus documentos",
-  },
-  {
-    text: "¡Documentos verificados! Todo está correcto. Ahora vamos a rellenar la solicitud en la sede oficial. Yo me encargo de los datos.",
-    highlight: "¡Documentos verificados!",
-  },
-  {
-    text: "¡Solicitud enviada con éxito! El sistema ha generado tu resguardo y el proceso ha quedado registrado correctamente.",
-    highlight: "¡Solicitud enviada con éxito!",
-  },
-];
-
-const SITUACIONES = [
-  {
-    value: "laboral",
-    label: "Arraigo Laboral (2+ años en España, contrato de trabajo)",
-  },
-  {
-    value: "social",
-    label: "Arraigo Social (3+ años en España, vínculos familiares/sociales)",
-  },
-  {
-    value: "familiar",
-    label: "Arraigo Familiar (familiar de ciudadano español/UE)",
-  },
-  {
-    value: "ampliado",
-    label: "Arraigo Social Ampliado (formación laboral homologada)",
-  },
-  {
-    value: "retorno",
-    label: "Retorno de Personas Emigrantes",
-  },
-  {
-    value: "excep_trabajo",
-    label: "Autorización por Circunstancias Excepcionales (trabajo)",
-  },
-];
-
-const DOCS_REQUERIDOS = [
-  { nombre: "Pasaporte o NIE vigente", estado: "ok" },
-  { nombre: "Empadronamiento (2 años mínimo)", estado: "ok" },
-  { nombre: "Contrato de trabajo firmado", estado: "ok" },
-  { nombre: "Certificado de antecedentes penales", estado: "warn" },
-  { nombre: "Formulario EX-10 / EX-11", estado: "missing" },
-  { nombre: "Fotografías recientes (2 unidades)", estado: "ok" },
-];
-
 interface ChatMsg {
   from: "agent" | "user";
   text: string;
@@ -86,62 +31,28 @@ interface ChatMsg {
 
 type DocStatus = "ok" | "warn" | "missing";
 
-const DOCS_PDF = [
-  {
-    id: "nie",
-    nombre: "Pasaporte / NIE vigente",
-    archivo: "NIE_X1234567Z.pdf",
-    estado: "ok" as DocStatus,
-    kb: "248 KB",
-  },
-  {
-    id: "empadron",
-    nombre: "Certificado de empadronamiento",
-    archivo: "Empadronamiento_2024.pdf",
-    estado: "ok" as DocStatus,
-    kb: "156 KB",
-  },
-  {
-    id: "contrato",
-    nombre: "Contrato de trabajo firmado",
-    archivo: "Contrato_Benali_2026.pdf",
-    estado: "ok" as DocStatus,
-    kb: "312 KB",
-  },
-  {
-    id: "penales",
-    nombre: "Certificado antecedentes penales",
-    archivo: "Antecedentes_tramitando.pdf",
-    estado: "warn" as DocStatus,
-    kb: "En trámite",
-  },
-  {
-    id: "ex10",
-    nombre: "Formulario EX-10 / EX-11",
-    archivo: "",
-    estado: "missing" as DocStatus,
-    kb: "",
-  },
-  {
-    id: "fotos",
-    nombre: "Fotografías recientes (2 uds.)",
-    archivo: "Fotos_Benali.jpg",
-    estado: "ok" as DocStatus,
-    kb: "84 KB",
-  },
-];
+type SituationItem = {
+  value: string;
+  label: string;
+};
 
-const CHAT_RESPONSES: Record<string, string> = {
-  default: "Entendido. ¿Tienes alguna pregunta sobre los documentos necesarios?",
-  hola: "¡Hola! Soy Mohamed, tu especialista en Regularización 2026. ¿En qué te puedo ayudar?",
-  documentos:
-    "Para la Regularización 2026 necesitas: pasaporte o NIE, empadronamiento de 2 años, contrato de trabajo y certificado de antecedentes penales.",
-  precio:
-    "El proceso oficial se presenta en la sede correspondiente. Nuestro servicio te acompaña y automatiza la preparación del expediente.",
-  tiempo:
-    "El plazo de resolución puede variar. Normalmente el seguimiento del expediente tarda varios meses.",
-  cita:
-    "En algunos casos no hace falta cita previa. Yo te ayudo a revisar el flujo correcto según tu situación.",
+type RequiredDocItem = {
+  nombre: string;
+  estado: DocStatus;
+};
+
+type StoredDocItem = {
+  id: string;
+  nombre: string;
+  archivo: string;
+  estado: DocStatus;
+  kb: string;
+};
+
+type FormItem = {
+  nombre: string;
+  codigo: string;
+  url: string;
 };
 
 export default function Regularizacion2026() {
@@ -150,32 +61,611 @@ export default function Regularizacion2026() {
   const [muted, setMuted] = useState(false);
   const [showChat, setShowChat] = useState(false);
   const [chatInput, setChatInput] = useState("");
-  const [chatMessages, setChatMessages] = useState<ChatMsg[]>([
-    {
-      from: "agent",
-      text: "Hola, soy Mohamed. Escríbeme cualquier pregunta sobre la Regularización 2026. Estoy aquí para ayudarte.",
-    },
-  ]);
   const [showPayment, setShowPayment] = useState(false);
   const [planActivo, setPlanActivo] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const [showDocs, setShowDocs] = useState(false);
   const [showForms, setShowForms] = useState(false);
-  const [docs, setDocs] = useState(DOCS_PDF);
   const [uploadingId, setUploadingId] = useState<string | null>(null);
 
-  const chatEndRef = useRef<HTMLDivElement>(null);
-  const { t } = useLang();
+  const { t, lang } = useLang();
   const { toast } = useToast();
+  const chatEndRef = useRef<HTMLDivElement>(null);
 
   const tr = (key: string, fallback: string) => {
     const value = t(key as never);
     return value && value !== key ? value : fallback;
   };
 
+  const ui = useMemo(() => {
+    if (lang === "darija") {
+      return {
+        initialChat:
+          "سلام، أنا محمد. كتب ليا أي سؤال على التسوية 2026 وأنا هنا باش نعاونك.",
+        chatResponses: {
+          default: "فهمت. واش عندك شي سؤال على الوثائق المطلوبة؟",
+          hola: "سلام، أنا محمد، المختص ديالك فالتسوية 2026. فاش نقدر نعاونك؟",
+          documentos:
+            "باش تدير التسوية 2026 غالباً كتحتاج: الباسبور أو NIE، شهادة السكن ديال عامين، عقد العمل، وشهادة السوابق العدلية.",
+          precio:
+            "المسطرة الرسمية كتدار فالموقع الرسمي. الخدمة ديالنا كتعاونك فالتجهيز والتنظيم والأتمتة ديال الملف.",
+          tiempo:
+            "المدة كتبدل حسب الحالة. غالباً تتبع الملف كياخذ عدة شهور.",
+          cita:
+            "فبعض الحالات ما كايناش حاجة لموعد مسبق. أنا نعاونك تعرف المسار الصحيح حسب الحالة ديالك.",
+        },
+        agentSteps: (selectedLabel: string) => [
+          {
+            text: `سلام، أنا محمد. غادي نعاونك فالتسوية 2026. أولاً اختار الوضعية الحالية ديالك باش نلقاو الإجراء المناسب. الوضعية الحالية المختارة هي «${selectedLabel}».`,
+            highlight: "التسوية 2026",
+          },
+          {
+            text: "مزيان. لقينا الإجراء المناسب. دابا غادي نتحقق من الوثائق ديالك. كنحتاج: الباسبور أو NIE، شهادة السكن لعامين، وعقد العمل.",
+            highlight: "نتحقق من الوثائق ديالك",
+          },
+          {
+            text: "الوثائق تراجعات بنجاح. دابا غادي نعمرو الطلب فالموقع الرسمي. أنا نهتم بالبيانات.",
+            highlight: "الوثائق تراجعات بنجاح",
+          },
+          {
+            text: "ترسل الطلب بنجاح. النظام خرج ليك الوصل وتْسجل الملف بشكل صحيح.",
+            highlight: "ترسل الطلب بنجاح",
+          },
+        ],
+        situations: [
+          {
+            value: "laboral",
+            label: "أرايغو مهني (2 سنين فإسبانيا، عقد عمل)",
+          },
+          {
+            value: "social",
+            label: "أرايغو اجتماعي (3 سنين فإسبانيا، روابط عائلية/اجتماعية)",
+          },
+          {
+            value: "familiar",
+            label: "أرايغو عائلي (قريب لمواطن إسباني/أوروبي)",
+          },
+          {
+            value: "ampliado",
+            label: "أرايغو اجتماعي موسع (تكوين مهني معترف به)",
+          },
+          {
+            value: "retorno",
+            label: "رجوع الأشخاص المهاجرين",
+          },
+          {
+            value: "excep_trabajo",
+            label: "ترخيص لظروف استثنائية (العمل)",
+          },
+        ] as SituationItem[],
+        requiredDocs: [
+          { nombre: "الباسبور أو NIE صالح", estado: "ok" as DocStatus },
+          { nombre: "شهادة السكن (على الأقل عامين)", estado: "ok" as DocStatus },
+          { nombre: "عقد العمل موقع", estado: "ok" as DocStatus },
+          { nombre: "شهادة السوابق العدلية", estado: "warn" as DocStatus },
+          { nombre: "استمارة EX-10 / EX-11", estado: "missing" as DocStatus },
+          { nombre: "تصاور حديثة (2)", estado: "ok" as DocStatus },
+        ] as RequiredDocItem[],
+        initialStoredDocs: [
+          {
+            id: "nie",
+            nombre: "الباسبور / NIE صالح",
+            archivo: "NIE_X1234567Z.pdf",
+            estado: "ok" as DocStatus,
+            kb: "248 KB",
+          },
+          {
+            id: "empadron",
+            nombre: "شهادة السكن",
+            archivo: "Empadronamiento_2024.pdf",
+            estado: "ok" as DocStatus,
+            kb: "156 KB",
+          },
+          {
+            id: "contrato",
+            nombre: "عقد العمل موقع",
+            archivo: "Contrato_Benali_2026.pdf",
+            estado: "ok" as DocStatus,
+            kb: "312 KB",
+          },
+          {
+            id: "penales",
+            nombre: "شهادة السوابق العدلية",
+            archivo: "Antecedentes_tramitando.pdf",
+            estado: "warn" as DocStatus,
+            kb: "قيد الإنجاز",
+          },
+          {
+            id: "ex10",
+            nombre: "استمارة EX-10 / EX-11",
+            archivo: "",
+            estado: "missing" as DocStatus,
+            kb: "",
+          },
+          {
+            id: "fotos",
+            nombre: "تصاور حديثة (2)",
+            archivo: "Fotos_Benali.jpg",
+            estado: "ok" as DocStatus,
+            kb: "84 KB",
+          },
+        ] as StoredDocItem[],
+        forms: [
+          {
+            nombre: "أرايغو مهني / اجتماعي",
+            codigo: "EX-10",
+            url: "https://extranjeros.inclusion.gob.es/ficheros/Modelos_solicitudes/mod_solicitudes2/10-Arraigo_social_laboral.pdf",
+          },
+          {
+            nombre: "أرايغو عائلي",
+            codigo: "EX-11",
+            url: "https://extranjeros.inclusion.gob.es/ficheros/Modelos_solicitudes/mod_solicitudes2/11-Arraigo_familiar.pdf",
+          },
+          {
+            nombre: "ترخيص الإقامة",
+            codigo: "EX-01",
+            url: "https://extranjeros.inclusion.gob.es/ficheros/Modelos_solicitudes/mod_solicitudes2/01-Autorizacion_residencia.pdf",
+          },
+        ] as FormItem[],
+        online: "متصل الآن",
+        role: "مختص فالهجرة",
+        paymentMessage:
+          "باش تكمل فالتسوية 2026 وتقدم الطلب فالموقع الرسمي، فعل الخطة ديالك. أنا نرشدك خطوة بخطوة.",
+        planActivated: "تفعلات الخطة",
+        planContinue: "مزيان. نكملو دابا عملية التسوية ديالك.",
+        docsVerifiedTitle: "تراجعات الوثائق",
+        docsVerifiedDesc: "الوثائق الرئيسية تراجعات بشكل صحيح.",
+        submitSuccessTitle: "ترسل الطلب!",
+        submitSuccessDesc: "الملف تسجل بشكل صحيح.",
+        documentUploadedTitle: "ترفعات الوثيقة",
+        documentUploadedDesc: "تزاد الفورمولير بنجاح.",
+        openChat: "نفضل نكتب · فتح الشات",
+        closeChat: "سد الشات",
+        writeQuestion: "كتب سؤالك...",
+        docsPanelTitle: "وثائق التسوية 2026",
+        readyPlural: "واجدين",
+        uploading: "كيترفع...",
+        uploadPdf: "رفع PDF",
+        uploadedPdfs: "PDF مرفوعين",
+        aiVerified: "مراجعين بالذكاء",
+        pending: "معلق",
+        toSend: "باش يتصيفط",
+        completeOnOfficialSite: "كمّل الطلب فـ sede.gob.es",
+        aiFillsOfficialSite: "الوكيل الذكي كيحضر ويعمر البيانات أوتوماتيكياً",
+        procedureSmall: "الإجراء:",
+        govHeader: "التسوية 2026",
+        govLine1: "وزارة الداخلية",
+        govLine2: "كتابة الدولة",
+        govLine3: "ديال الهجرة",
+        situationTitle: "الوضعية الحالية",
+        applicationData: "بيانات الطلب",
+        filledAutomatically: "تعمر أوتوماتيكياً",
+        sendApplication: "صيفط الطلب",
+        requestSent: "ترسل الطلب!",
+        fullName: "الاسم",
+        reference: "المرجع",
+        sendDate: "تاريخ الإرسال",
+        status: "الحالة",
+        inProcess: "قيد المعالجة",
+        resolution: "الجواب",
+        receiptGenerated: "تولد الوصل بنجاح",
+        downloadPdf: "تحميل PDF",
+        documents: "الوثائق",
+        formsLabel: "الاستمارات",
+        requiredDocuments: "الوثائق المطلوبة",
+        officialForms: "الاستمارات الرسمية",
+        ready: "واجد",
+        review: "راجع",
+        withoutAudio: "بلا صوت",
+        mute: "كتم",
+        activePlanLabel: "الخطة",
+        active: "نشطة",
+        source: "المصدر: extranjeros.inclusion.gob.es",
+      };
+    }
+
+    if (lang === "en") {
+      return {
+        initialChat:
+          "Hi, I’m Mohamed. Ask me anything about Regularization 2026. I’m here to help you.",
+        chatResponses: {
+          default: "Understood. Do you have any questions about the required documents?",
+          hola: "Hi! I’m Mohamed, your Regularization 2026 specialist. How can I help you?",
+          documentos:
+            "For Regularization 2026 you generally need: passport or NIE, 2-year registration certificate, employment contract, and criminal record certificate.",
+          precio:
+            "The official process is submitted through the corresponding government site. Our service helps you prepare and automate your file.",
+          tiempo:
+            "Processing time may vary. Usually case tracking takes several months.",
+          cita:
+            "In some cases an appointment is not required. I can help you review the correct flow based on your situation.",
+        },
+        agentSteps: (selectedLabel: string) => [
+          {
+            text: `Hi, I’m Mohamed. I’ll help you with Regularization 2026. First, select your current situation to find the correct process. The selected situation is “${selectedLabel}”.`,
+            highlight: "Regularization 2026",
+          },
+          {
+            text: "Perfect. I found the correct process. Now I’m going to verify your documents. I need: NIE or passport, 2 years of registration certificate, and employment contract.",
+            highlight: "verify your documents",
+          },
+          {
+            text: "Documents verified! Everything looks correct. Now we’ll fill out the application on the official site. I’ll handle the data.",
+            highlight: "Documents verified!",
+          },
+          {
+            text: "Application submitted successfully! The system generated your receipt and the case was recorded correctly.",
+            highlight: "Application submitted successfully!",
+          },
+        ],
+        situations: [
+          {
+            value: "laboral",
+            label: "Work Rootedness (2+ years in Spain, employment contract)",
+          },
+          {
+            value: "social",
+            label: "Social Rootedness (3+ years in Spain, family/social ties)",
+          },
+          {
+            value: "familiar",
+            label: "Family Rootedness (family member of Spanish/EU citizen)",
+          },
+          {
+            value: "ampliado",
+            label: "Extended Social Rootedness (approved job training)",
+          },
+          {
+            value: "retorno",
+            label: "Return of Emigrant Persons",
+          },
+          {
+            value: "excep_trabajo",
+            label: "Authorization for Exceptional Circumstances (work)",
+          },
+        ] as SituationItem[],
+        requiredDocs: [
+          { nombre: "Valid passport or NIE", estado: "ok" as DocStatus },
+          { nombre: "Registration certificate (minimum 2 years)", estado: "ok" as DocStatus },
+          { nombre: "Signed employment contract", estado: "ok" as DocStatus },
+          { nombre: "Criminal record certificate", estado: "warn" as DocStatus },
+          { nombre: "EX-10 / EX-11 form", estado: "missing" as DocStatus },
+          { nombre: "Recent photographs (2)", estado: "ok" as DocStatus },
+        ] as RequiredDocItem[],
+        initialStoredDocs: [
+          {
+            id: "nie",
+            nombre: "Valid passport / NIE",
+            archivo: "NIE_X1234567Z.pdf",
+            estado: "ok" as DocStatus,
+            kb: "248 KB",
+          },
+          {
+            id: "empadron",
+            nombre: "Registration certificate",
+            archivo: "Empadronamiento_2024.pdf",
+            estado: "ok" as DocStatus,
+            kb: "156 KB",
+          },
+          {
+            id: "contrato",
+            nombre: "Signed employment contract",
+            archivo: "Contrato_Benali_2026.pdf",
+            estado: "ok" as DocStatus,
+            kb: "312 KB",
+          },
+          {
+            id: "penales",
+            nombre: "Criminal record certificate",
+            archivo: "Antecedentes_tramitando.pdf",
+            estado: "warn" as DocStatus,
+            kb: "In progress",
+          },
+          {
+            id: "ex10",
+            nombre: "EX-10 / EX-11 form",
+            archivo: "",
+            estado: "missing" as DocStatus,
+            kb: "",
+          },
+          {
+            id: "fotos",
+            nombre: "Recent photographs (2)",
+            archivo: "Fotos_Benali.jpg",
+            estado: "ok" as DocStatus,
+            kb: "84 KB",
+          },
+        ] as StoredDocItem[],
+        forms: [
+          {
+            nombre: "Work / Social Rootedness",
+            codigo: "EX-10",
+            url: "https://extranjeros.inclusion.gob.es/ficheros/Modelos_solicitudes/mod_solicitudes2/10-Arraigo_social_laboral.pdf",
+          },
+          {
+            nombre: "Family Rootedness",
+            codigo: "EX-11",
+            url: "https://extranjeros.inclusion.gob.es/ficheros/Modelos_solicitudes/mod_solicitudes2/11-Arraigo_familiar.pdf",
+          },
+          {
+            nombre: "Residence Authorization",
+            codigo: "EX-01",
+            url: "https://extranjeros.inclusion.gob.es/ficheros/Modelos_solicitudes/mod_solicitudes2/01-Autorizacion_residencia.pdf",
+          },
+        ] as FormItem[],
+        online: "Online",
+        role: "Immigration Specialist",
+        paymentMessage:
+          "To continue with your Regularization 2026 and submit your application on the official site, activate your plan. I’ll guide you step by step.",
+        planActivated: "Plan activated",
+        planContinue: "Perfect. Let’s continue with your regularization.",
+        docsVerifiedTitle: "Documents verified",
+        docsVerifiedDesc: "The main documentation was reviewed successfully.",
+        submitSuccessTitle: "Application submitted!",
+        submitSuccessDesc: "The case has been recorded successfully.",
+        documentUploadedTitle: "Document uploaded",
+        documentUploadedDesc: "The form has been added successfully.",
+        openChat: "I prefer to write · Open chat",
+        closeChat: "Close chat",
+        writeQuestion: "Type your question...",
+        docsPanelTitle: "Regularization 2026 Documents",
+        readyPlural: "ready",
+        uploading: "Uploading...",
+        uploadPdf: "Upload PDF",
+        uploadedPdfs: "PDF uploaded",
+        aiVerified: "AI verified",
+        pending: "Pending",
+        toSend: "To submit",
+        completeOnOfficialSite: "Complete application on sede.gob.es",
+        aiFillsOfficialSite: "The AI agent prepares and fills the data automatically",
+        procedureSmall: "Procedure:",
+        govHeader: "REGULARIZATION 2026",
+        govLine1: "MINISTRY OF INTERIOR",
+        govLine2: "STATE SECRETARIAT",
+        govLine3: "OF IMMIGRATION",
+        situationTitle: "CURRENT SITUATION",
+        applicationData: "APPLICATION DATA",
+        filledAutomatically: "filled automatically",
+        sendApplication: "Submit application",
+        requestSent: "APPLICATION SUBMITTED!",
+        fullName: "Name",
+        reference: "Reference",
+        sendDate: "Submission date",
+        status: "Status",
+        inProcess: "In process",
+        resolution: "Resolution",
+        receiptGenerated: "Receipt generated successfully",
+        downloadPdf: "Download PDF",
+        documents: "Documents",
+        formsLabel: "Forms",
+        requiredDocuments: "Required documents",
+        officialForms: "Official forms",
+        ready: "Ready",
+        review: "Review",
+        withoutAudio: "No audio",
+        mute: "Mute",
+        activePlanLabel: "Plan",
+        active: "active",
+        source: "Source: extranjeros.inclusion.gob.es",
+      };
+    }
+
+    return {
+      initialChat:
+        "Hola, soy Mohamed. Escríbeme cualquier pregunta sobre la Regularización 2026. Estoy aquí para ayudarte.",
+      chatResponses: {
+        default: "Entendido. ¿Tienes alguna pregunta sobre los documentos necesarios?",
+        hola: "¡Hola! Soy Mohamed, tu especialista en Regularización 2026. ¿En qué te puedo ayudar?",
+        documentos:
+          "Para la Regularización 2026 necesitas: pasaporte o NIE, empadronamiento de 2 años, contrato de trabajo y certificado de antecedentes penales.",
+        precio:
+          "El proceso oficial se presenta en la sede correspondiente. Nuestro servicio te acompaña y automatiza la preparación del expediente.",
+        tiempo:
+          "El plazo de resolución puede variar. Normalmente el seguimiento del expediente tarda varios meses.",
+        cita:
+          "En algunos casos no hace falta cita previa. Yo te ayudo a revisar el flujo correcto según tu situación.",
+      },
+      agentSteps: (selectedLabel: string) => [
+        {
+          text: `Hola, soy Mohamed. Te voy a ayudar con la Regularización 2026. Primero, selecciona tu situación actual para encontrar el trámite correcto. La situación elegida es «${selectedLabel}».`,
+          highlight: "Regularización 2026",
+        },
+        {
+          text: "Perfecto. He encontrado tu trámite. Ahora voy a verificar tus documentos. Necesito: NIE o pasaporte, empadronamiento de 2 años y contrato de trabajo.",
+          highlight: "verificar tus documentos",
+        },
+        {
+          text: "¡Documentos verificados! Todo está correcto. Ahora vamos a rellenar la solicitud en la sede oficial. Yo me encargo de los datos.",
+          highlight: "¡Documentos verificados!",
+        },
+        {
+          text: "¡Solicitud enviada con éxito! El sistema ha generado tu resguardo y el proceso ha quedado registrado correctamente.",
+          highlight: "¡Solicitud enviada con éxito!",
+        },
+      ],
+      situations: [
+        {
+          value: "laboral",
+          label: "Arraigo Laboral (2+ años en España, contrato de trabajo)",
+        },
+        {
+          value: "social",
+          label: "Arraigo Social (3+ años en España, vínculos familiares/sociales)",
+        },
+        {
+          value: "familiar",
+          label: "Arraigo Familiar (familiar de ciudadano español/UE)",
+        },
+        {
+          value: "ampliado",
+          label: "Arraigo Social Ampliado (formación laboral homologada)",
+        },
+        {
+          value: "retorno",
+          label: "Retorno de Personas Emigrantes",
+        },
+        {
+          value: "excep_trabajo",
+          label: "Autorización por Circunstancias Excepcionales (trabajo)",
+        },
+      ] as SituationItem[],
+      requiredDocs: [
+        { nombre: "Pasaporte o NIE vigente", estado: "ok" as DocStatus },
+        { nombre: "Empadronamiento (2 años mínimo)", estado: "ok" as DocStatus },
+        { nombre: "Contrato de trabajo firmado", estado: "ok" as DocStatus },
+        { nombre: "Certificado de antecedentes penales", estado: "warn" as DocStatus },
+        { nombre: "Formulario EX-10 / EX-11", estado: "missing" as DocStatus },
+        { nombre: "Fotografías recientes (2 unidades)", estado: "ok" as DocStatus },
+      ] as RequiredDocItem[],
+      initialStoredDocs: [
+        {
+          id: "nie",
+          nombre: "Pasaporte / NIE vigente",
+          archivo: "NIE_X1234567Z.pdf",
+          estado: "ok" as DocStatus,
+          kb: "248 KB",
+        },
+        {
+          id: "empadron",
+          nombre: "Certificado de empadronamiento",
+          archivo: "Empadronamiento_2024.pdf",
+          estado: "ok" as DocStatus,
+          kb: "156 KB",
+        },
+        {
+          id: "contrato",
+          nombre: "Contrato de trabajo firmado",
+          archivo: "Contrato_Benali_2026.pdf",
+          estado: "ok" as DocStatus,
+          kb: "312 KB",
+        },
+        {
+          id: "penales",
+          nombre: "Certificado antecedentes penales",
+          archivo: "Antecedentes_tramitando.pdf",
+          estado: "warn" as DocStatus,
+          kb: "En trámite",
+        },
+        {
+          id: "ex10",
+          nombre: "Formulario EX-10 / EX-11",
+          archivo: "",
+          estado: "missing" as DocStatus,
+          kb: "",
+        },
+        {
+          id: "fotos",
+          nombre: "Fotografías recientes (2 uds.)",
+          archivo: "Fotos_Benali.jpg",
+          estado: "ok" as DocStatus,
+          kb: "84 KB",
+        },
+      ] as StoredDocItem[],
+      forms: [
+        {
+          nombre: "Arraigo Laboral / Social",
+          codigo: "EX-10",
+          url: "https://extranjeros.inclusion.gob.es/ficheros/Modelos_solicitudes/mod_solicitudes2/10-Arraigo_social_laboral.pdf",
+        },
+        {
+          nombre: "Arraigo Familiar",
+          codigo: "EX-11",
+          url: "https://extranjeros.inclusion.gob.es/ficheros/Modelos_solicitudes/mod_solicitudes2/11-Arraigo_familiar.pdf",
+        },
+        {
+          nombre: "Autorización Residencia",
+          codigo: "EX-01",
+          url: "https://extranjeros.inclusion.gob.es/ficheros/Modelos_solicitudes/mod_solicitudes2/01-Autorizacion_residencia.pdf",
+        },
+      ] as FormItem[],
+      online: "En línea",
+      role: "Especialista en Extranjería",
+      paymentMessage:
+        "Para continuar con tu Regularización 2026 y presentar tu solicitud en la sede oficial, activa tu plan. Yo me encargo de guiarte paso a paso.",
+      planActivated: "Plan activado",
+      planContinue: "Perfecto. Continuamos con tu regularización.",
+      docsVerifiedTitle: "Documentos verificados",
+      docsVerifiedDesc: "La documentación principal ha sido revisada correctamente.",
+      submitSuccessTitle: "¡Solicitud enviada!",
+      submitSuccessDesc: "El expediente ha quedado registrado correctamente.",
+      documentUploadedTitle: "Documento subido",
+      documentUploadedDesc: "El formulario ha sido añadido correctamente.",
+      openChat: "Prefiero escribir · Abrir chat",
+      closeChat: "Cerrar chat",
+      writeQuestion: "Escribe tu pregunta...",
+      docsPanelTitle: "Documentos Regularización 2026",
+      readyPlural: "listos",
+      uploading: "Subiendo...",
+      uploadPdf: "Subir PDF",
+      uploadedPdfs: "PDF subidos",
+      aiVerified: "Verificados IA",
+      pending: "Pendiente",
+      toSend: "Para enviar",
+      completeOnOfficialSite: "Completar solicitud en sede.gob.es",
+      aiFillsOfficialSite: "El agente IA rellena y prepara los datos automáticamente",
+      procedureSmall: "Procedimiento:",
+      govHeader: "REGULARIZACIÓN 2026",
+      govLine1: "MINISTERIO DEL INTERIOR",
+      govLine2: "SECRETARÍA DE ESTADO",
+      govLine3: "DE INMIGRACIÓN",
+      situationTitle: "SITUACIÓN ACTUAL",
+      applicationData: "DATOS DE LA SOLICITUD",
+      filledAutomatically: "rellenado automáticamente",
+      sendApplication: "Enviar solicitud",
+      requestSent: "¡SOLICITUD ENVIADA!",
+      fullName: "Nombre",
+      reference: "Referencia",
+      sendDate: "Fecha envío",
+      status: "Estado",
+      inProcess: "En tramitación",
+      resolution: "Resolución",
+      receiptGenerated: "Resguardo generado correctamente",
+      downloadPdf: "Descargar PDF",
+      documents: "Documentos",
+      formsLabel: "Formularios",
+      requiredDocuments: "Documentos requeridos",
+      officialForms: "Formularios oficiales",
+      ready: "Listo",
+      review: "Revisar",
+      withoutAudio: "Sin audio",
+      mute: "Mute",
+      activePlanLabel: "Plan",
+      active: "activo",
+      source: "Fuente: extranjeros.inclusion.gob.es",
+    };
+  }, [lang]);
+
+  const [chatMessages, setChatMessages] = useState<ChatMsg[]>([
+    {
+      from: "agent",
+      text: ui.initialChat,
+    },
+  ]);
+
+  const [docs, setDocs] = useState<StoredDocItem[]>(ui.initialStoredDocs);
+
+  useEffect(() => {
+    setChatMessages([
+      {
+        from: "agent",
+        text: ui.initialChat,
+      },
+    ]);
+    setDocs(ui.initialStoredDocs);
+  }, [ui.initialChat, ui.initialStoredDocs]);
+
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chatMessages]);
+
+  const selectedSituationLabel =
+    ui.situations.find((s) => s.value === selectedSituacion)?.label ||
+    ui.situations[0].label;
+
+  const AGENT_STEPS = ui.agentSteps(selectedSituationLabel);
+  const SITUACIONES = ui.situations;
+  const DOCS_REQUERIDOS = ui.requiredDocs;
+  const FORMULARIOS = ui.forms;
 
   const handleSituacionClick = (value: string) => {
     setSelectedSituacion(value);
@@ -198,11 +688,8 @@ export default function Regularizacion2026() {
     setStep(2);
 
     toast({
-      title: tr("reg_docs_verified_title", "Documentos verificados"),
-      description: tr(
-        "reg_docs_verified_desc",
-        "La documentación principal ha sido revisada correctamente."
-      ),
+      title: ui.docsVerifiedTitle,
+      description: ui.docsVerifiedDesc,
     });
   };
 
@@ -219,11 +706,8 @@ export default function Regularizacion2026() {
     }, 800);
 
     toast({
-      title: tr("reg_submit_success_title", "¡Solicitud enviada!"),
-      description: tr(
-        "reg_submit_success_desc",
-        "El expediente ha quedado registrado correctamente."
-      ),
+      title: ui.submitSuccessTitle,
+      description: ui.submitSuccessDesc,
     });
   };
 
@@ -233,11 +717,8 @@ export default function Regularizacion2026() {
     setStep(1);
 
     toast({
-      title: tr("plan_activated", "Plan activado"),
-      description: tr(
-        "reg_plan_continue_desc",
-        "Perfecto. Continuamos con tu regularización."
-      ),
+      title: ui.planActivated,
+      description: ui.planContinue,
     });
   };
 
@@ -270,11 +751,8 @@ export default function Regularizacion2026() {
       setUploadingId(null);
 
       toast({
-        title: tr("document_uploaded_title", "Documento subido"),
-        description: tr(
-          "document_uploaded_desc",
-          "El formulario ha sido añadido correctamente."
-        ),
+        title: ui.documentUploadedTitle,
+        description: ui.documentUploadedDesc,
       });
     }, 1800);
   };
@@ -296,22 +774,23 @@ export default function Regularizacion2026() {
   const handleSendChat = () => {
     if (!chatInput.trim()) return;
 
-    const userMsg = chatInput.trim().toLowerCase();
+    const userMsgRaw = chatInput.trim();
+    const userMsg = userMsgRaw.toLowerCase();
 
     setChatMessages((prev) => [
       ...prev,
-      { from: "user", text: chatInput.trim() },
+      { from: "user", text: userMsgRaw },
     ]);
     setChatInput("");
 
     setTimeout(() => {
       const key =
-        Object.keys(CHAT_RESPONSES).find((k) => userMsg.includes(k)) ||
+        Object.keys(ui.chatResponses).find((k) => userMsg.includes(k)) ||
         "default";
 
       setChatMessages((prev) => [
         ...prev,
-        { from: "agent", text: CHAT_RESPONSES[key] },
+        { from: "agent", text: ui.chatResponses[key] },
       ]);
     }, 800);
   };
@@ -332,10 +811,7 @@ export default function Regularizacion2026() {
         open={showPayment}
         onClose={() => setShowPayment(false)}
         onSelectPlan={handleSelectPlan}
-        agentMessage={tr(
-          "reg_payment_agent_message",
-          "Para continuar con tu Regularización 2026 y presentar tu solicitud en la sede oficial, activa tu plan. Yo me encargo de guiarte paso a paso."
-        )}
+        agentMessage={ui.paymentMessage}
       />
 
       <main className="flex-1 relative z-10 flex flex-col pt-16 pb-0">
@@ -353,7 +829,7 @@ export default function Regularizacion2026() {
 
           {planActivo ? (
             <span className="text-xs px-3 py-1 rounded-full bg-primary/10 border border-primary/30 text-primary font-medium">
-              {tr("active_plan_label", "Plan")} {planActivo} {tr("active", "activo")} ✓
+              {ui.activePlanLabel} {planActivo} {ui.active} ✓
             </span>
           ) : (
             <button
@@ -384,9 +860,7 @@ export default function Regularizacion2026() {
 
               <div className="absolute top-3 left-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/60 border border-white/10 backdrop-blur-md">
                 <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                <span className="text-xs font-medium text-white">
-                  {tr("online", "En línea")}
-                </span>
+                <span className="text-xs font-medium text-white">{ui.online}</span>
               </div>
 
               <div className="absolute top-3 right-3">
@@ -420,7 +894,7 @@ export default function Regularizacion2026() {
                   Mohamed
                 </p>
                 <p className="text-white/70 text-[11px] drop-shadow-lg">
-                  {tr("reg_agent_role", "Especialista en Extranjería")}
+                  {ui.role}
                 </p>
               </div>
 
@@ -451,9 +925,7 @@ export default function Regularizacion2026() {
               }`}
             >
               <MessageSquare className="w-4 h-4" />
-              {showChat
-                ? tr("close_chat", "Cerrar chat")
-                : tr("open_chat_prefer_write", "Prefiero escribir · Abrir chat")}
+              {showChat ? ui.closeChat : ui.openChat}
             </button>
 
             <AnimatePresence>
@@ -499,7 +971,7 @@ export default function Regularizacion2026() {
                       value={chatInput}
                       onChange={(e) => setChatInput(e.target.value)}
                       onKeyDown={(e) => e.key === "Enter" && handleSendChat()}
-                      placeholder={tr("write_question", "Escribe tu pregunta...")}
+                      placeholder={ui.writeQuestion}
                       className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white placeholder-white/30 focus:outline-none focus:border-primary/50"
                     />
                     <button
@@ -515,7 +987,7 @@ export default function Regularizacion2026() {
 
             <AnimatePresence mode="wait">
               <motion.div
-                key={step}
+                key={`${step}-${selectedSituacion}`}
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -8 }}
@@ -569,7 +1041,7 @@ export default function Regularizacion2026() {
                 <div className="flex items-center gap-2">
                   <FileUp className="w-4 h-4 text-primary" />
                   <span className="text-xs font-bold text-white">
-                    {tr("reg_docs_panel_title", "Documentos Regularización 2026")}
+                    {ui.docsPanelTitle}
                   </span>
                 </div>
                 <div className="flex items-center gap-1.5">
@@ -579,7 +1051,7 @@ export default function Regularizacion2026() {
                     }`}
                   />
                   <span className="text-[10px] font-semibold text-white/70">
-                    {docsOk}/{docsTotal} {tr("ready_plural", "listos")}
+                    {docsOk}/{docsTotal} {ui.readyPlural}
                   </span>
                 </div>
               </div>
@@ -643,7 +1115,11 @@ export default function Regularizacion2026() {
                         {doc.estado === "ok"
                           ? doc.archivo
                           : doc.estado === "warn"
-                          ? "⏳ En tramitación..."
+                          ? `⏳ ${doc.kb}`
+                          : lang === "en"
+                          ? "Not uploaded · required"
+                          : lang === "darija"
+                          ? "ما ترفعش · إجباري"
                           : "Sin subir · obligatorio"}
                       </p>
                     </div>
@@ -652,7 +1128,7 @@ export default function Regularizacion2026() {
                       {doc.estado === "ok" && (
                         <button
                           className="p-1 rounded hover:bg-primary/10 transition-colors"
-                          title={tr("download", "Descargar")}
+                          title={ui.downloadPdf}
                           type="button"
                         >
                           <Download className="w-3 h-3 text-primary/70" />
@@ -677,7 +1153,7 @@ export default function Regularizacion2026() {
                                 ease: "linear",
                               }}
                             />
-                            {tr("uploading", "Subiendo...")}
+                            {ui.uploading}
                           </span>
                         ) : (
                           <button
@@ -686,7 +1162,7 @@ export default function Regularizacion2026() {
                             type="button"
                           >
                             <Upload className="w-2.5 h-2.5" />
-                            {tr("upload_pdf", "Subir PDF")}
+                            {ui.uploadPdf}
                           </button>
                         ))}
                     </div>
@@ -700,7 +1176,7 @@ export default function Regularizacion2026() {
                     {docs.filter((d) => d.estado === "ok").length}
                   </p>
                   <p className="text-[9px] text-muted-foreground">
-                    {tr("uploaded_pdfs", "PDF subidos")}
+                    {ui.uploadedPdfs}
                   </p>
                 </div>
 
@@ -709,7 +1185,7 @@ export default function Regularizacion2026() {
                     {docs.filter((d) => d.estado === "ok").length}
                   </p>
                   <p className="text-[9px] text-muted-foreground">
-                    {tr("ai_verified", "Verificados IA")}
+                    {ui.aiVerified}
                   </p>
                 </div>
 
@@ -723,10 +1199,10 @@ export default function Regularizacion2026() {
                       allReady ? "text-primary" : "text-amber-400"
                     }`}
                   >
-                    {allReady ? "✓ Listo" : tr("pending", "Pendiente")}
+                    {allReady ? "✓ Listo" : ui.pending}
                   </p>
                   <p className="text-[9px] text-muted-foreground">
-                    {tr("to_send", "Para enviar")}
+                    {ui.toSend}
                   </p>
                 </div>
               </div>
@@ -738,13 +1214,10 @@ export default function Regularizacion2026() {
                   type="button"
                 >
                   <ExternalLink className="w-3.5 h-3.5" />
-                  {tr("complete_on_official_site", "Completar solicitud en sede.gob.es")}
+                  {ui.completeOnOfficialSite}
                 </button>
                 <p className="text-center text-[9px] text-muted-foreground mt-1.5">
-                  {tr(
-                    "ai_fills_official_site",
-                    "El agente IA rellena y prepara los datos automáticamente"
-                  )}
+                  {ui.aiFillsOfficialSite}
                 </p>
               </div>
             </motion.div>
@@ -788,17 +1261,17 @@ export default function Regularizacion2026() {
                     </div>
 
                     <div className="text-[9px] leading-tight text-gray-600 font-medium uppercase shrink-0">
-                      <div>MINISTERIO DEL INTERIOR</div>
-                      <div>SECRETARÍA DE ESTADO</div>
-                      <div>DE INMIGRACIÓN</div>
+                      <div>{ui.govLine1}</div>
+                      <div>{ui.govLine2}</div>
+                      <div>{ui.govLine3}</div>
                     </div>
 
                     <div className="ml-auto text-right shrink-0">
                       <div className="text-[10px] text-gray-500">
-                        {tr("procedure_label_small", "Procedimiento")}:
+                        {ui.procedureSmall}
                       </div>
                       <div className="text-sm font-black text-[#003366]">
-                        REGULARIZACIÓN 2026
+                        {ui.govHeader}
                       </div>
                     </div>
                   </div>
@@ -812,7 +1285,7 @@ export default function Regularizacion2026() {
 
                   <div className="mb-4">
                     <p className="text-xs font-bold text-gray-700 uppercase tracking-wide mb-2">
-                      {t("reg_sit")}
+                      {ui.situationTitle}
                     </p>
                     <select
                       className="w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -904,9 +1377,9 @@ export default function Regularizacion2026() {
                         className="mb-5 space-y-3"
                       >
                         <p className="text-xs font-bold text-gray-700 uppercase tracking-wide">
-                          {tr("application_data", "DATOS DE LA SOLICITUD")}{" "}
+                          {ui.applicationData}{" "}
                           <span className="text-green-600 font-normal normal-case">
-                            ({tr("filled_automatically", "rellenado automáticamente")})
+                            ({ui.filledAutomatically})
                           </span>
                         </p>
 
@@ -923,7 +1396,13 @@ export default function Regularizacion2026() {
                           />
                           <input
                             className="border border-gray-200 rounded px-3 py-2 text-sm text-gray-500 bg-gray-50"
-                            value="Marroquí"
+                            value={
+                              lang === "en"
+                                ? "Moroccan"
+                                : lang === "darija"
+                                ? "مغربي"
+                                : "Marroquí"
+                            }
                             readOnly
                           />
                           <input
@@ -944,7 +1423,7 @@ export default function Regularizacion2026() {
                             className="bg-green-600 text-white text-sm font-bold px-6 py-2.5 rounded hover:bg-green-700 transition-colors"
                             type="button"
                           >
-                            {tr("send_application", "Enviar solicitud")}
+                            {ui.sendApplication}
                           </button>
                         </div>
                       </motion.div>
@@ -963,22 +1442,26 @@ export default function Regularizacion2026() {
 
                   <div>
                     <h2 className="text-xl font-black text-[#003366] mb-1">
-                      {tr("request_sent", "¡SOLICITUD ENVIADA!")}
+                      {ui.requestSent}
                     </h2>
                     <p className="text-sm text-gray-600 mb-4">
-                      Regularización 2026 · Arraigo Laboral
+                      {lang === "en"
+                        ? "Regularization 2026 · Work Rootedness"
+                        : lang === "darija"
+                        ? "التسوية 2026 · أرايغو مهني"
+                        : "Regularización 2026 · Arraigo Laboral"}
                     </p>
 
                     <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 text-left space-y-2 max-w-sm mx-auto">
                       <p className="text-sm">
                         <span className="font-bold text-gray-500">
-                          {tr("full_name", "Nombre")}:
+                          {ui.fullName}:
                         </span>{" "}
                         Ahmed Benali
                       </p>
                       <p className="text-sm">
                         <span className="font-bold text-gray-500">
-                          {tr("reference", "Referencia")}:
+                          {ui.reference}:
                         </span>{" "}
                         <span className="font-mono text-green-700">
                           REG2026-ES-087341
@@ -986,21 +1469,23 @@ export default function Regularizacion2026() {
                       </p>
                       <p className="text-sm">
                         <span className="font-bold text-gray-500">
-                          {tr("send_date", "Fecha envío")}:
+                          {ui.sendDate}:
                         </span>{" "}
-                        {new Date().toLocaleDateString("es-ES")}
+                        {new Date().toLocaleDateString(
+                          lang === "en" ? "en-GB" : "es-ES"
+                        )}
                       </p>
                       <p className="text-sm">
                         <span className="font-bold text-gray-500">
-                          {tr("status", "Estado")}:
+                          {ui.status}:
                         </span>{" "}
                         <span className="text-amber-600 font-semibold">
-                          {tr("in_process", "En tramitación")}
+                          {ui.inProcess}
                         </span>
                       </p>
                       <p className="text-sm">
                         <span className="font-bold text-gray-500">
-                          {tr("resolution", "Resolución")}:
+                          {ui.resolution}:
                         </span>{" "}
                         3-6 meses
                       </p>
@@ -1010,7 +1495,7 @@ export default function Regularizacion2026() {
                   <div className="flex flex-col sm:flex-row gap-3">
                     <div className="flex items-center gap-2 bg-primary/10 border border-primary/30 rounded-xl px-4 py-2 text-sm text-primary font-medium">
                       <CheckCircle2 className="w-4 h-4" />
-                      {tr("receipt_generated", "Resguardo generado correctamente")}
+                      {ui.receiptGenerated}
                     </div>
 
                     <button
@@ -1018,7 +1503,7 @@ export default function Regularizacion2026() {
                       className="flex items-center gap-2 bg-[#003366] text-white rounded-xl px-4 py-2 text-sm font-bold hover:bg-[#002244]"
                     >
                       <FileText className="w-4 h-4" />
-                      {tr("download_pdf", "Descargar PDF")}
+                      {ui.downloadPdf}
                     </button>
                   </div>
                 </motion.div>
@@ -1042,7 +1527,7 @@ export default function Regularizacion2026() {
               ) : (
                 <Mic className="w-4 h-4" />
               )}
-              {muted ? tr("without_audio", "Sin audio") : tr("mute", "Mute")}
+              {muted ? ui.withoutAudio : ui.mute}
             </button>
 
             <div className="flex gap-3">
@@ -1058,7 +1543,7 @@ export default function Regularizacion2026() {
                 }`}
               >
                 <FileText className="w-4 h-4 text-primary" />
-                {tr("documents", "Documentos")}
+                {ui.documents}
               </button>
 
               <button
@@ -1073,7 +1558,7 @@ export default function Regularizacion2026() {
                 }`}
               >
                 <Settings className="w-4 h-4 text-secondary" />
-                {tr("forms", "Formularios")}
+                {ui.formsLabel}
               </button>
 
               <button
@@ -1111,7 +1596,7 @@ export default function Regularizacion2026() {
                   <div className="flex items-center gap-2">
                     <FileText className="w-4 h-4 text-primary" />
                     <span className="font-bold text-sm text-white">
-                      {tr("required_documents", "Documentos requeridos")}
+                      {ui.requiredDocuments}
                     </span>
                   </div>
 
@@ -1155,10 +1640,10 @@ export default function Regularizacion2026() {
                         }`}
                       >
                         {doc.estado === "ok"
-                          ? tr("ready", "Listo")
+                          ? ui.ready
                           : doc.estado === "warn"
-                          ? tr("review", "Revisar")
-                          : tr("pending", "Pendiente")}
+                          ? ui.review
+                          : ui.pending}
                       </span>
                     </div>
                   ))}
@@ -1184,7 +1669,7 @@ export default function Regularizacion2026() {
                   <div className="flex items-center gap-2">
                     <Settings className="w-4 h-4 text-secondary" />
                     <span className="font-bold text-sm text-white">
-                      {tr("official_forms", "Formularios oficiales")}
+                      {ui.officialForms}
                     </span>
                   </div>
 
@@ -1198,23 +1683,7 @@ export default function Regularizacion2026() {
                 </div>
 
                 <div className="px-5 py-4 space-y-3">
-                  {[
-                    {
-                      nombre: "Arraigo Laboral / Social",
-                      codigo: "EX-10",
-                      url: "https://extranjeros.inclusion.gob.es/ficheros/Modelos_solicitudes/mod_solicitudes2/10-Arraigo_social_laboral.pdf",
-                    },
-                    {
-                      nombre: "Arraigo Familiar",
-                      codigo: "EX-11",
-                      url: "https://extranjeros.inclusion.gob.es/ficheros/Modelos_solicitudes/mod_solicitudes2/11-Arraigo_familiar.pdf",
-                    },
-                    {
-                      nombre: "Autorización Residencia",
-                      codigo: "EX-01",
-                      url: "https://extranjeros.inclusion.gob.es/ficheros/Modelos_solicitudes/mod_solicitudes2/01-Autorizacion_residencia.pdf",
-                    },
-                  ].map((form, i) => (
+                  {FORMULARIOS.map((form, i) => (
                     <a
                       key={i}
                       href={form.url}
@@ -1242,7 +1711,7 @@ export default function Regularizacion2026() {
                   ))}
 
                   <p className="text-[10px] text-white/30 text-center pt-1">
-                    Fuente: extranjeros.inclusion.gob.es
+                    {ui.source}
                   </p>
                 </div>
               </div>
