@@ -1,18 +1,60 @@
 const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
 const SARA_ASSISTANT_ID = "asst_3G5bN4wX6BmtWjk9uiA6eVUa";
+const OPENAI_BETA_HEADER = "assistants=v2";
+const SARA_THREAD_KEY = "sara_thread_id";
 
-export async function enviarMensajeSara(mensaje: string): Promise<string> {
-  if (!OPENAI_API_KEY) {
-    throw new Error("Falta VITE_OPENAI_API_KEY en las variables de entorno");
+type OpenAIThreadResponse = {
+  id: string;
+};
+
+type OpenAIRunResponse = {
+  id: string;
+  status: string;
+};
+
+type OpenAIMessagesResponse = {
+  data?: Array<{
+    role?: string;
+    content?: Array<{
+      type?: string;
+      text?: {
+        value?: string;
+      };
+    }>;
+  }>;
+};
+
+function getSaraThreadId(): string | null {
+  try {
+    return localStorage.getItem(SARA_THREAD_KEY);
+  } catch {
+    return null;
   }
+}
 
-  // 1) Crear thread
+function saveSaraThreadId(threadId: string) {
+  try {
+    localStorage.setItem(SARA_THREAD_KEY, threadId);
+  } catch {
+    // ignore
+  }
+}
+
+export function resetSaraThread() {
+  try {
+    localStorage.removeItem(SARA_THREAD_KEY);
+  } catch {
+    // ignore
+  }
+}
+
+async function createSaraThread(): Promise<string> {
   const threadRes = await fetch("https://api.openai.com/v1/threads", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${OPENAI_API_KEY}`,
       "Content-Type": "application/json",
-      "OpenAI-Beta": "assistants=v2",
+      "OpenAI-Beta": OPENAI_BETA_HEADER,
     },
     body: JSON.stringify({}),
   });
@@ -22,17 +64,35 @@ export async function enviarMensajeSara(mensaje: string): Promise<string> {
     throw new Error(`Error creando thread: ${errorText}`);
   }
 
-  const thread = await threadRes.json();
+  const thread = (await threadRes.json()) as OpenAIThreadResponse;
 
-  // 2) Enviar mensaje del usuario
+  if (!thread?.id) {
+    throw new Error("No se pudo obtener el id del thread");
+  }
+
+  saveSaraThreadId(thread.id);
+  return thread.id;
+}
+
+async function getOrCreateSaraThread(): Promise<string> {
+  const savedThreadId = getSaraThreadId();
+
+  if (savedThreadId) {
+    return savedThreadId;
+  }
+
+  return createSaraThread();
+}
+
+async function addUserMessage(threadId: string, mensaje: string): Promise<void> {
   const messageRes = await fetch(
-    `https://api.openai.com/v1/threads/${thread.id}/messages`,
+    `https://api.openai.com/v1/threads/${threadId}/messages`,
     {
       method: "POST",
       headers: {
         Authorization: `Bearer ${OPENAI_API_KEY}`,
         "Content-Type": "application/json",
-        "OpenAI-Beta": "assistants=v2",
+        "OpenAI-Beta": OPENAI_BETA_HEADER,
       },
       body: JSON.stringify({
         role: "user",
@@ -45,16 +105,17 @@ export async function enviarMensajeSara(mensaje: string): Promise<string> {
     const errorText = await messageRes.text();
     throw new Error(`Error enviando mensaje: ${errorText}`);
   }
+}
 
-  // 3) Ejecutar Sara
+async function createRun(threadId: string): Promise<OpenAIRunResponse> {
   const runRes = await fetch(
-    `https://api.openai.com/v1/threads/${thread.id}/runs`,
+    `https://api.openai.com/v1/threads/${threadId}/runs`,
     {
       method: "POST",
       headers: {
         Authorization: `Bearer ${OPENAI_API_KEY}`,
         "Content-Type": "application/json",
-        "OpenAI-Beta": "assistants=v2",
+        "OpenAI-Beta": OPENAI_BETA_HEADER,
       },
       body: JSON.stringify({
         assistant_id: SARA_ASSISTANT_ID,
@@ -67,12 +128,16 @@ export async function enviarMensajeSara(mensaje: string): Promise<string> {
     throw new Error(`Error creando run: ${errorText}`);
   }
 
-  const run = await runRes.json();
+  return (await runRes.json()) as OpenAIRunResponse;
+}
 
-  // 4) Esperar respuesta
-  let status = run.status;
+async function waitForRunCompletion(
+  threadId: string,
+  runId: string
+): Promise<void> {
+  let status = "queued";
   let attempts = 0;
-  const maxAttempts = 45;
+  const maxAttempts = 120;
 
   while (
     status !== "completed" &&
@@ -84,16 +149,16 @@ export async function enviarMensajeSara(mensaje: string): Promise<string> {
       throw new Error("Tiempo de espera agotado para la respuesta de Sara");
     }
 
-   await new Promise((r) => setTimeout(r, 350));
+    await new Promise((resolve) => setTimeout(resolve, 700));
 
     const checkRes = await fetch(
-      `https://api.openai.com/v1/threads/${thread.id}/runs/${run.id}`,
+      `https://api.openai.com/v1/threads/${threadId}/runs/${runId}`,
       {
         method: "GET",
         headers: {
           Authorization: `Bearer ${OPENAI_API_KEY}`,
           "Content-Type": "application/json",
-          "OpenAI-Beta": "assistants=v2",
+          "OpenAI-Beta": OPENAI_BETA_HEADER,
         },
       }
     );
@@ -103,7 +168,7 @@ export async function enviarMensajeSara(mensaje: string): Promise<string> {
       throw new Error(`Error consultando run: ${errorText}`);
     }
 
-    const checkData = await checkRes.json();
+    const checkData = (await checkRes.json()) as OpenAIRunResponse;
     status = checkData.status;
     attempts += 1;
   }
@@ -111,16 +176,17 @@ export async function enviarMensajeSara(mensaje: string): Promise<string> {
   if (status !== "completed") {
     throw new Error(`La ejecución terminó con estado: ${status}`);
   }
+}
 
-  // 5) Obtener respuesta final
+async function getLastAssistantMessage(threadId: string): Promise<string> {
   const messagesRes = await fetch(
-    `https://api.openai.com/v1/threads/${thread.id}/messages`,
+    `https://api.openai.com/v1/threads/${threadId}/messages`,
     {
       method: "GET",
       headers: {
         Authorization: `Bearer ${OPENAI_API_KEY}`,
         "Content-Type": "application/json",
-        "OpenAI-Beta": "assistants=v2",
+        "OpenAI-Beta": OPENAI_BETA_HEADER,
       },
     }
   );
@@ -130,11 +196,40 @@ export async function enviarMensajeSara(mensaje: string): Promise<string> {
     throw new Error(`Error obteniendo mensajes: ${errorText}`);
   }
 
-  const messages = await messagesRes.json();
+  const messages = (await messagesRes.json()) as OpenAIMessagesResponse;
 
-  const respuesta =
-    messages?.data?.find((msg: any) => msg.role === "assistant")?.content?.[0]
-      ?.text?.value || "Sara no devolvió respuesta.";
+  const assistantMessage = messages?.data?.find(
+    (msg) => msg.role === "assistant"
+  );
 
-  return respuesta;
+  const textValue = assistantMessage?.content?.find(
+    (item) => item.type === "text"
+  )?.text?.value;
+
+  return textValue?.trim() || "Sara no devolvió respuesta.";
+}
+
+export async function enviarMensajeSara(mensaje: string): Promise<string> {
+  if (!OPENAI_API_KEY) {
+    throw new Error("Falta VITE_OPENAI_API_KEY en las variables de entorno");
+  }
+
+  if (!mensaje.trim()) {
+    throw new Error("El mensaje está vacío");
+  }
+
+  let threadId = await getOrCreateSaraThread();
+
+  try {
+    await addUserMessage(threadId, mensaje);
+  } catch (error) {
+    // Si el thread guardado se rompió o caducó, crea uno nuevo y reintenta una vez
+    resetSaraThread();
+    threadId = await createSaraThread();
+    await addUserMessage(threadId, mensaje);
+  }
+
+  const run = await createRun(threadId);
+  await waitForRunCompletion(threadId, run.id);
+  return await getLastAssistantMessage(threadId);
 }
