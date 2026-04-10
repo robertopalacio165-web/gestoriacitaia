@@ -22,7 +22,7 @@ import {
   Building2,
   ArrowRight,
 } from "lucide-react";
-import { Link, useLocation } from "wouter";
+import { Link } from "wouter";
 import { supabase } from "@/lib/supabaseClient";
 
 function getPlans(t: (k: string) => string) {
@@ -126,9 +126,13 @@ function getTramites(t: (k: string) => string) {
 }
 
 export default function Landing() {
-  const [, setLocation] = useLocation();
   const [showPayment, setShowPayment] = useState(false);
   const { t } = useLang();
+
+  const tr = (key: string, fallback: string) => {
+    const value = t(key as never);
+    return value && value !== key ? value : fallback;
+  };
 
   const goWithGoogleAuth = async (targetPath: string) => {
     try {
@@ -154,12 +158,12 @@ export default function Landing() {
       });
 
       if (error) {
-        alert("Error al iniciar sesión con Google");
+        alert(tr("google_login_error", "Error al iniciar sesión con Google"));
         console.error(error);
       }
     } catch (error) {
       console.error("goWithGoogleAuth error:", error);
-      alert("No se pudo iniciar sesión con Google");
+      alert(tr("google_login_failed", "No se pudo iniciar sesión con Google"));
     }
   };
 
@@ -200,20 +204,20 @@ export default function Landing() {
         >
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/25 text-primary text-xs font-semibold mb-5">
             <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-            {t("hero_badge")}
+            {t("hero_badge" as never)}
           </div>
 
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold font-display leading-tight mb-4 max-w-3xl mx-auto">
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-white to-white/80">
-              {t("hero_title_1")}{" "}
+              {t("hero_title_1" as never)}{" "}
             </span>
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-green-400 to-blue-400">
-              {t("hero_title_2")}
+              {t("hero_title_2" as never)}
             </span>
           </h1>
 
           <p className="text-sm sm:text-base text-muted-foreground max-w-2xl mx-auto mb-6 leading-relaxed">
-            {t("hero_sub")}
+            {t("hero_sub" as never)}
           </p>
 
           <div className="flex flex-wrap justify-center gap-3 mb-5">
@@ -221,14 +225,14 @@ export default function Landing() {
               className="rounded-full px-7 py-3 shadow-lg shadow-primary/30 bg-primary hover:bg-primary/90 text-base font-bold"
               onClick={() => goWithGoogleAuth("/regularizacion-2026")}
             >
-              {t("hero_btn1")} <ArrowRight className="w-4 h-4 ml-1" />
+              {t("hero_btn1" as never)} <ArrowRight className="w-4 h-4 ml-1" />
             </Button>
 
             <Button
               className="rounded-full px-7 py-3 shadow-lg shadow-blue-500/30 bg-blue-600 hover:bg-blue-500 text-white text-base font-bold border-0"
               onClick={() => goWithGoogleAuth("/buscar-citas")}
             >
-              {t("hero_btn_citas")} <ArrowRight className="w-4 h-4 ml-1" />
+              {t("hero_btn_citas" as never)} <ArrowRight className="w-4 h-4 ml-1" />
             </Button>
 
             <Button
@@ -236,7 +240,7 @@ export default function Landing() {
               className="rounded-full px-6 border-white/15 hover:bg-white/5"
               onClick={() => goWithGoogleAuth("/panel")}
             >
-              {t("hero_btn2")}
+              {t("hero_btn2" as never)}
             </Button>
           </div>
 
@@ -251,7 +255,7 @@ export default function Landing() {
                 </span>
               ))}
             </div>
-            <span>{t("hero_trust")}</span>
+            <span>{t("hero_trust" as never)}</span>
           </div>
         </motion.div>
 
@@ -263,13 +267,13 @@ export default function Landing() {
         >
           <AgentCard
             name="Mohamed"
-            role="Especialista en Extranjería"
+            role={tr("agent_mo_role", "Especialista en Extranjería")}
             imagePath={`${import.meta.env.BASE_URL}images/avatar-mohamed.png`}
             delay={0.1}
           />
           <AgentCard
             name="Sara"
-            role="Buscar Citas · 24/7"
+            role={tr("agent_sara_role", "Buscar Citas · 24/7")}
             imagePath={`${import.meta.env.BASE_URL}images/avatar-sara.png`}
             delay={0.2}
           />
@@ -281,7 +285,7 @@ export default function Landing() {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.4 }}
         >
-          {[t("feat1"), t("feat2"), t("feat3"), t("feat4")].map((f, i) => (
+          {[t("feat1" as never), t("feat2" as never), t("feat3" as never), t("feat4" as never)].map((f, i) => (
             <div key={i} className="flex items-center gap-2 text-white/75 text-sm">
               <CheckCircle2 className="w-4 h-4 text-accent shrink-0" />
               <span>{f}</span>
@@ -297,8 +301,8 @@ export default function Landing() {
           className="mb-16"
         >
           <div className="relative rounded-2xl overflow-hidden glass-panel aspect-video max-w-3xl mx-auto border border-white/10 group cursor-pointer shadow-2xl shadow-primary/10">
-            <div className="absolute inset-0 bg-gradient-to-tr from-primary/10 to-secondary/10"></div>
-            <div className="absolute inset-0 bg-[hsl(222,47%,5%,0.5)]"></div>
+            <div className="absolute inset-0 bg-gradient-to-tr from-primary/10 to-secondary/10" />
+            <div className="absolute inset-0 bg-[hsl(222,47%,5%,0.5)]" />
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-4">
               <div className="flex items-center gap-2 mb-1">
                 <span className="font-display font-bold text-xl text-white">
@@ -309,7 +313,7 @@ export default function Landing() {
                 <Play className="w-7 h-7 text-white ml-1 fill-white" />
               </div>
               <p className="font-medium text-sm text-white/80">
-                Cómo funciona GestoriaCitaIA en 2 minutos
+                {tr("landing_video_text", "Cómo funciona GestoriaCitaIA en 2 minutos")}
               </p>
             </div>
           </div>
@@ -323,9 +327,9 @@ export default function Landing() {
         >
           <div className="text-center mb-10">
             <h2 className="text-2xl sm:text-3xl font-display font-bold text-white mb-2">
-              {t("plans_title")}
+              {t("plans_title" as never)}
             </h2>
-            <p className="text-sm text-muted-foreground">{t("plans_sub")}</p>
+            <p className="text-sm text-muted-foreground">{t("plans_sub" as never)}</p>
           </div>
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-6xl mx-auto items-stretch">
@@ -352,14 +356,14 @@ export default function Landing() {
                   {plan.badge && (
                     <div className="absolute top-0 right-0 overflow-hidden w-20 h-20">
                       <div className="absolute top-3 right-[-20px] w-24 text-center bg-primary text-white text-[10px] font-bold py-1 rotate-45 shadow-sm">
-                        {t("plan_popular")}
+                        {t("plan_popular" as never)}
                       </div>
                     </div>
                   )}
 
                   <div className="mb-5">
                     <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-3">
-                      {t(nameKey as any)}
+                      {t(nameKey as never)}
                     </p>
                     <div className="flex items-end gap-1 mb-1">
                       <span className="text-4xl font-display font-black text-white">
@@ -384,7 +388,7 @@ export default function Landing() {
                     onClick={() => handlePlanClick(plan)}
                     className={`w-full py-2.5 rounded-xl text-sm font-bold uppercase tracking-wider transition-all ${plan.btnClass}`}
                   >
-                    {plan.free ? t("plan_free_btn") : t("plan_btn")}
+                    {plan.free ? t("plan_free_btn" as never) : t("plan_btn" as never)}
                   </button>
                 </div>
               );
@@ -400,13 +404,13 @@ export default function Landing() {
         >
           <div className="text-center mb-8">
             <h2 className="text-2xl sm:text-3xl font-display font-bold text-white mb-2">
-              {t("tramites_title")}
+              {t("tramites_title" as never)}
             </h2>
-            <p className="text-sm text-muted-foreground">{t("tramites_sub")}</p>
+            <p className="text-sm text-muted-foreground">{t("tramites_sub" as never)}</p>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 max-w-4xl mx-auto">
-            {TRAMITES.map((tr, i) => (
+            {TRAMITES.map((trm, i) => (
               <motion.div
                 key={i}
                 initial={{ opacity: 0, y: 10 }}
@@ -416,10 +420,10 @@ export default function Landing() {
                 className="glass-panel border border-white/[0.07] rounded-xl p-4 flex flex-col items-center gap-3 text-center"
               >
                 <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center">
-                  <tr.icon className={`w-5 h-5 ${tr.color}`} />
+                  <trm.icon className={`w-5 h-5 ${trm.color}`} />
                 </div>
                 <span className="text-xs font-medium text-white/80 leading-tight">
-                  {tr.label}
+                  {trm.label}
                 </span>
               </motion.div>
             ))}
@@ -430,8 +434,9 @@ export default function Landing() {
       <section className="relative z-10 border-t border-white/[0.06] py-5 px-4">
         <div className="max-w-4xl mx-auto flex flex-col items-center gap-4">
           <p className="text-[11px] text-muted-foreground font-medium tracking-wide uppercase">
-            Pago seguro · Métodos aceptados
+            {tr("secure_payment_methods", "Pago seguro · Métodos aceptados")}
           </p>
+
           <div className="flex flex-wrap items-center justify-center gap-3">
             <div className="h-9 px-3 rounded-lg bg-white flex items-center justify-center shadow-sm">
               <svg
@@ -441,26 +446,11 @@ export default function Landing() {
                 xmlns="http://www.w3.org/2000/svg"
               >
                 <rect width="750" height="471" rx="40" fill="white" />
-                <path
-                  d="M278.198 334.228L311.423 138.897H364.007L330.767 334.228H278.198Z"
-                  fill="#00579F"
-                />
-                <path
-                  d="M524.307 144.162C513.849 140.093 497.461 135.712 477.194 135.712C425.254 135.712 388.796 163.398 388.528 203.229C388.261 232.787 415.267 248.752 435.734 258.26C456.736 268.002 463.828 274.282 463.693 283.122C463.559 296.683 447.973 302.83 433.456 302.83C413.323 302.83 402.53 299.762 385.474 292.348L378.516 289.146L371.022 333.162C383.217 338.678 405.485 343.46 428.566 343.728C483.884 343.728 519.804 316.309 520.204 273.88C520.404 250.354 506.421 232.253 476.126 217.355C457.258 208.183 445.73 202.096 445.863 192.588C445.863 184.145 455.669 175.034 477.461 175.034C495.797 174.766 509.18 178.968 519.537 183.25L524.574 185.781L532.002 143.626L524.307 144.162Z"
-                  fill="#00579F"
-                />
-                <path
-                  d="M618.23 138.897H577.388C564.927 138.897 555.656 142.432 550.352 155.324L470.967 334.228H526.218L537.212 305.564H604.481C606.083 312.978 611.121 334.228 611.121 334.228H660L618.23 138.897ZM552.221 267.622C556.324 256.93 571.843 214.553 571.843 214.553C571.576 215.089 575.947 203.629 578.32 196.482L581.36 213.081C581.36 213.081 589.655 253.729 591.391 267.622H552.221Z"
-                  fill="#00579F"
-                />
-                <path
-                  d="M232.38 138.897L181.108 273.347L175.536 245.528C166.532 215.624 139.526 183.116 109.097 167.152L156.671 334.094H212.322L289.099 138.897H232.38Z"
-                  fill="#00579F"
-                />
-                <path
-                  d="M141.268 138.897H57.5352L56.8672 142.7C120.891 159.097 163.328 196.348 179.916 241.927L162.994 156.124C160.154 143.5 151.55 139.297 141.268 138.897Z"
-                  fill="#FAA61A"
-                />
+                <path d="M278.198 334.228L311.423 138.897H364.007L330.767 334.228H278.198Z" fill="#00579F" />
+                <path d="M524.307 144.162C513.849 140.093 497.461 135.712 477.194 135.712C425.254 135.712 388.796 163.398 388.528 203.229C388.261 232.787 415.267 248.752 435.734 258.26C456.736 268.002 463.828 274.282 463.693 283.122C463.559 296.683 447.973 302.83 433.456 302.83C413.323 302.83 402.53 299.762 385.474 292.348L378.516 289.146L371.022 333.162C383.217 338.678 405.485 343.46 428.566 343.728C483.884 343.728 519.804 316.309 520.204 273.88C520.404 250.354 506.421 232.253 476.126 217.355C457.258 208.183 445.73 202.096 445.863 192.588C445.863 184.145 455.669 175.034 477.461 175.034C495.797 174.766 509.18 178.968 519.537 183.25L524.574 185.781L532.002 143.626L524.307 144.162Z" fill="#00579F" />
+                <path d="M618.23 138.897H577.388C564.927 138.897 555.656 142.432 550.352 155.324L470.967 334.228H526.218L537.212 305.564H604.481C606.083 312.978 611.121 334.228 611.121 334.228H660L618.23 138.897ZM552.221 267.622C556.324 256.93 571.843 214.553 571.843 214.553C571.576 215.089 575.947 203.629 578.32 196.482L581.36 213.081C581.36 213.081 589.655 253.729 591.391 267.622H552.221Z" fill="#00579F" />
+                <path d="M232.38 138.897L181.108 273.347L175.536 245.528C166.532 215.624 139.526 183.116 109.097 167.152L156.671 334.094H212.322L289.099 138.897H232.38Z" fill="#00579F" />
+                <path d="M141.268 138.897H57.5352L56.8672 142.7C120.891 159.097 163.328 196.348 179.916 241.927L162.994 156.124C160.154 143.5 151.55 139.297 141.268 138.897Z" fill="#FAA61A" />
               </svg>
             </div>
 
@@ -517,7 +507,10 @@ export default function Landing() {
               <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
               <path d="M7 11V7a5 5 0 0 1 10 0v4" />
             </svg>
-            Pagos procesados con cifrado SSL 256-bit · PCI DSS Compliant
+            {tr(
+              "ssl_payment_text",
+              "Pagos procesados con cifrado SSL 256-bit · PCI DSS Compliant"
+            )}
           </div>
         </div>
       </section>
@@ -528,15 +521,15 @@ export default function Landing() {
         <div className="max-w-6xl mx-auto px-4 py-6 flex flex-col md:flex-row items-center justify-between gap-3">
           <div className="text-xs text-muted-foreground flex gap-3">
             <Link href="/aviso-legal" className="hover:text-white transition-colors">
-              Aviso legal
+              {tr("footer_legal", "Aviso legal")}
             </Link>
             <span>·</span>
             <Link href="/privacidad" className="hover:text-white transition-colors">
-              Privacidad
+              {tr("footer_privacy", "Privacidad")}
             </Link>
             <span>·</span>
             <Link href="/cookies" className="hover:text-white transition-colors">
-              Cookies
+              {tr("footer_cookies", "Cookies")}
             </Link>
           </div>
 
@@ -573,7 +566,7 @@ export default function Landing() {
             </a>
           </div>
 
-          <div className="text-xs text-muted-foreground">© 2026 GestoriaCitalA</div>
+          <div className="text-xs text-muted-foreground">© 2026 GestoriaCitaIA</div>
         </div>
       </footer>
     </div>
