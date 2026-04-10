@@ -136,11 +136,30 @@ export default function Panel() {
   const [uploadMessage, setUploadMessage] = useState("");
   const [profile, setProfile] = useState<ProfileRow | null>(null);
   const [notifications, setNotifications] = useState<NotificationRow[]>([]);
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [, setCurrentUserId] = useState<string | null>(null);
   const [userForms, setUserForms] = useState<UserFormRow[]>([]);
 
   const { toast } = useToast();
   const { t } = useLang();
+
+  const tr = (key: string, fallback: string) => {
+    const value = t(key as never);
+    return value && value !== key ? value : fallback;
+  };
+
+  const trf = (
+    key: string,
+    fallback: string,
+    vars?: Record<string, string | number>
+  ) => {
+    let value = tr(key, fallback);
+    if (vars) {
+      Object.entries(vars).forEach(([k, v]) => {
+        value = value.replace(new RegExp(`\\{${k}\\}`, "g"), String(v));
+      });
+    }
+    return value;
+  };
 
   const goWithGoogleAuth = async (targetPath: string) => {
     try {
@@ -168,38 +187,24 @@ export default function Panel() {
       if (error) {
         console.error("Google login error:", error);
         toast({
-          title: "Error de acceso",
-          description: "No se pudo iniciar sesión con Google",
+          title: tr("access_error_title", "Error de acceso"),
+          description: tr(
+            "access_error_desc",
+            "No se pudo iniciar sesión con Google"
+          ),
           variant: "destructive",
         });
       }
     } catch (error: any) {
       console.error("goWithGoogleAuth error:", error);
       toast({
-        title: "Error de acceso",
-        description: error?.message || "No se pudo iniciar sesión con Google",
+        title: tr("access_error_title", "Error de acceso"),
+        description:
+          error?.message ||
+          tr("access_error_desc", "No se pudo iniciar sesión con Google"),
         variant: "destructive",
       });
     }
-  };
-
-  const tr = (key: string, fallback: string) => {
-    const value = t(key as any);
-    return value && value !== key ? value : fallback;
-  };
-
-  const trf = (
-    key: string,
-    fallback: string,
-    vars?: Record<string, string | number>
-  ) => {
-    let value = tr(key, fallback);
-    if (vars) {
-      Object.entries(vars).forEach(([k, v]) => {
-        value = value.replace(new RegExp(`\\{${k}\\}`, "g"), String(v));
-      });
-    }
-    return value;
   };
 
   const getPlanLabel = (plan: string) => {
@@ -226,25 +231,25 @@ export default function Panel() {
   };
 
   const REQUIRED_DOCS: RequiredDoc[] = [
-    { name: t("doc_passport"), type: "passport", date: t("doc_required") },
-    { name: t("doc_dni_nie"), type: "dni_nie", date: t("doc_if_available") },
+    { name: t("doc_passport" as never), type: "passport", date: t("doc_required" as never) },
+    { name: t("doc_dni_nie" as never), type: "dni_nie", date: t("doc_if_available" as never) },
     {
-      name: t("doc_empadronamiento"),
+      name: t("doc_empadronamiento" as never),
       type: "empadronamiento",
-      date: t("doc_important"),
+      date: t("doc_important" as never),
     },
     {
-      name: t("doc_pruebas_espana"),
+      name: t("doc_pruebas_espana" as never),
       type: "pruebas_espana",
-      date: t("doc_very_important"),
+      date: t("doc_very_important" as never),
     },
-    { name: t("doc_fotografias"), type: "fotografias", date: t("doc_required") },
+    { name: t("doc_fotografias" as never), type: "fotografias", date: t("doc_required" as never) },
     {
-      name: t("doc_formulario_oficial"),
+      name: t("doc_formulario_oficial" as never),
       type: "formulario_oficial",
-      date: t("doc_pending_fill"),
+      date: t("doc_pending_fill" as never),
     },
-    { name: t("doc_tasa_pagada"), type: "tasa_pagada", date: t("doc_pending") },
+    { name: t("doc_tasa_pagada" as never), type: "tasa_pagada", date: t("doc_pending" as never) },
   ];
 
   const loadCurrentUser = async () => {
@@ -359,6 +364,37 @@ export default function Panel() {
     }
   };
 
+  const loadUserForms = async () => {
+    try {
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+
+      if (userError) throw userError;
+
+      if (!user) {
+        setUserForms([]);
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("user_forms")
+        .select(
+          "id,form_type,title,auto_fill_status,auto_fill_notes,created_at,extracted_profile_data"
+        )
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+
+      setUserForms((data as UserFormRow[]) || []);
+    } catch (error) {
+      console.error("loadUserForms error:", error);
+      setUserForms([]);
+    }
+  };
+
   const handleDocumentUpload = async (
     file: File,
     documentType: string,
@@ -370,9 +406,7 @@ export default function Panel() {
         error: authError,
       } = await supabase.auth.getUser();
 
-      if (authError) {
-        throw authError;
-      }
+      if (authError) throw authError;
 
       const emailFromAuth = user?.email?.trim() || "";
       const emailFromProfile = profile?.email?.trim() || "";
@@ -433,61 +467,6 @@ export default function Panel() {
     }
   };
 
-  const getVerificationLabel = (status?: string | null) => {
-    switch (status) {
-      case "verified":
-        return "Verificado";
-      case "needs_review":
-        return "En revisión";
-      case "rejected":
-        return "Rechazado";
-      case "expired":
-        return "Caducado";
-      case "pending":
-      default:
-        return "Pendiente";
-    }
-  };
-
-  const getVerificationClass = (status?: string | null) => {
-    switch (status) {
-      case "verified":
-        return "text-green-400";
-      case "needs_review":
-        return "text-amber-400";
-      case "rejected":
-        return "text-red-400";
-      case "expired":
-        return "text-orange-400";
-      case "pending":
-      default:
-        return "text-yellow-400";
-    }
-  };
-
-  const getResultLabel = (doc: UserDocumentRow) => {
-    if (doc.verification_status === "verified") return "Apto";
-    if (doc.verification_status === "needs_review") return "Pendiente";
-    if (doc.verification_status === "rejected") return "No apto";
-    if (doc.verification_status === "expired") return "Caducado";
-    return "Pendiente";
-  };
-
-  const getResultClass = (doc: UserDocumentRow) => {
-    if (doc.verification_status === "verified") return "text-green-400";
-    if (doc.verification_status === "needs_review") return "text-amber-400";
-    if (doc.verification_status === "rejected") return "text-red-400";
-    if (doc.verification_status === "expired") return "text-orange-400";
-    return "text-yellow-400";
-  };
-
-  const formatDate = (value?: string | null) => {
-    if (!value) return null;
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return null;
-    return date.toLocaleDateString();
-  };
-
   const createBaseFormFromProfile = async (
     formType: string,
     formTitle: string
@@ -498,13 +477,8 @@ export default function Panel() {
         error: userError,
       } = await supabase.auth.getUser();
 
-      if (userError) {
-        throw userError;
-      }
-
-      if (!user) {
-        throw new Error("Usuario no autenticado");
-      }
+      if (userError) throw userError;
+      if (!user) throw new Error("Usuario no autenticado");
 
       const { data: profileData, error: profileError } = await supabase
         .from("profiles")
@@ -514,9 +488,7 @@ export default function Panel() {
         .eq("id", user.id)
         .single();
 
-      if (profileError) {
-        throw profileError;
-      }
+      if (profileError) throw profileError;
 
       const extractedProfileData = {
         full_name: profileData.full_name || "",
@@ -552,55 +524,26 @@ export default function Panel() {
         },
       ]);
 
-      if (insertError) {
-        throw insertError;
-      }
+      if (insertError) throw insertError;
 
       await loadUserForms();
 
       toast({
-        title: "Formulario creado",
-        description: `${formTitle} preparado automáticamente con los datos del perfil.`,
+        title: tr("form_created_title", "Formulario creado"),
+        description: tr(
+          "form_created_desc",
+          `${formTitle} preparado automáticamente con los datos del perfil.`
+        ),
       });
     } catch (error: any) {
       console.error("createBaseFormFromProfile error:", error);
       toast({
-        title: "Error al crear formulario",
+        title: tr("form_create_error_title", "Error al crear formulario"),
         description:
-          error?.message || "No se pudo crear el formulario automático",
+          error?.message ||
+          tr("form_create_error_desc", "No se pudo crear el formulario automático"),
         variant: "destructive",
       });
-    }
-  };
-
-  const loadUserForms = async () => {
-    try {
-      const {
-        data: { user },
-        error: userError,
-      } = await supabase.auth.getUser();
-
-      if (userError) throw userError;
-
-      if (!user) {
-        setUserForms([]);
-        return;
-      }
-
-      const { data, error } = await supabase
-        .from("user_forms")
-        .select(
-          "id,form_type,title,auto_fill_status,auto_fill_notes,created_at,extracted_profile_data"
-        )
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-
-      setUserForms((data as UserFormRow[]) || []);
-    } catch (error) {
-      console.error("loadUserForms error:", error);
-      setUserForms([]);
     }
   };
 
@@ -660,10 +603,7 @@ export default function Panel() {
               ? trf(
                   "proofs_complete_counter",
                   "✔ {total}/{min} pruebas completas",
-                  {
-                    total,
-                    min: minimo,
-                  }
+                  { total, min: minimo }
                 )
               : trf("proofs_counter", "{total}/{min} pruebas", {
                   total,
@@ -691,12 +631,12 @@ export default function Panel() {
       label: tr("procedure_tie_renewal", "Renovación TIE"),
       color: "text-blue-400",
       pct: 35,
-      status: t("panel_tramite_curso"),
+      status: t("panel_tramite_curso" as never),
       pasos: [
-        t("panel_tramite_s1"),
-        t("panel_tramite_s2"),
-        t("panel_tramite_s3"),
-        t("panel_tramite_s4"),
+        t("panel_tramite_s1" as never),
+        t("panel_tramite_s2" as never),
+        t("panel_tramite_s3" as never),
+        t("panel_tramite_s4" as never),
       ],
       paso: 2,
     },
@@ -705,66 +645,50 @@ export default function Panel() {
       label: tr("procedure_arraigo_social", "Arraigo Social"),
       color: "text-red-400",
       pct: 10,
-      status: t("panel_tramite_pending"),
+      status: t("panel_tramite_pending" as never),
       pasos: [
-        t("panel_tramite_s1"),
-        t("panel_tramite_s2"),
-        t("panel_tramite_s3"),
-        t("panel_tramite_s4"),
+        t("panel_tramite_s1" as never),
+        t("panel_tramite_s2" as never),
+        t("panel_tramite_s3" as never),
+        t("panel_tramite_s4" as never),
       ],
       paso: 1,
     },
   ];
 
-  const copyCode = () => {
-    navigator.clipboard.writeText(REFERRAL_CODE).catch(() => {});
-    setCodeCopied(true);
-    toast({
-      title: t("panel_copied"),
-      description: trf(
-        "referral_code_copied_desc",
-        "{code} copiado al portapapeles.",
-        {
-          code: REFERRAL_CODE,
-        }
-      ),
-    });
-    setTimeout(() => setCodeCopied(false), 2500);
-  };
-
   const TABS: { key: TabKey; label: string }[] = [
-    { key: "resumen", label: t("panel_tab_resumen") },
-    { key: "tramites", label: t("panel_tab_tramites") },
-    { key: "citas", label: t("panel_tab_citas") },
-    { key: "documentos", label: t("panel_tab_docs") },
+    { key: "resumen", label: t("panel_tab_resumen" as never) },
+    { key: "tramites", label: t("panel_tab_tramites" as never) },
+    { key: "citas", label: t("panel_tab_citas" as never) },
+    { key: "documentos", label: t("panel_tab_docs" as never) },
   ];
 
   const QUICK_ACTIONS = [
     {
       icon: Search,
-      label: t("panel_action_cita"),
-      sub: t("panel_action_cita_sub"),
+      label: t("panel_action_cita" as never),
+      sub: t("panel_action_cita_sub" as never),
       color: "text-primary",
       onClick: () => goWithGoogleAuth("/buscar-citas"),
     },
     {
       icon: Globe,
-      label: t("panel_action_reg"),
-      sub: t("panel_action_reg_sub"),
+      label: t("panel_action_reg" as never),
+      sub: t("panel_action_reg_sub" as never),
       color: "text-amber-400",
       onClick: () => goWithGoogleAuth("/regularizacion-2026"),
     },
     {
       icon: Upload,
-      label: t("panel_action_upload"),
-      sub: t("panel_action_upload_sub"),
+      label: t("panel_action_upload" as never),
+      sub: t("panel_action_upload_sub" as never),
       color: "text-blue-400",
       onClick: () => setActiveTab("documentos"),
     },
     {
       icon: MessageSquare,
-      label: t("panel_action_ia"),
-      sub: t("panel_action_ia_sub"),
+      label: t("panel_action_ia" as never),
+      sub: t("panel_action_ia_sub" as never),
       color: "text-secondary",
       onClick: () => {},
     },
@@ -772,16 +696,16 @@ export default function Panel() {
 
   const STAT_CARDS = [
     {
-      label: t("panel_plan_active"),
+      label: t("panel_plan_active" as never),
       value: getPlanLabel(planActivo),
-      sub: t("panel_stat_up_to"),
+      sub: t("panel_stat_up_to" as never),
       icon: Star,
       color: "text-primary",
       bg: "bg-primary/10",
       border: "border-primary/20",
     },
     {
-      label: t("panel_stat_tramites"),
+      label: t("panel_stat_tramites" as never),
       value: "2",
       sub: tr("panel_stat_tramites_sub", "1 en curso · 1 pendiente"),
       icon: FileText,
@@ -790,7 +714,7 @@ export default function Panel() {
       border: "border-blue-400/20",
     },
     {
-      label: t("panel_stat_cita_next"),
+      label: t("panel_stat_cita_next" as never),
       value: "24 Mar",
       sub: tr("panel_stat_next_appt_sub", "Renovación TIE · 10:30"),
       icon: Calendar,
@@ -799,9 +723,9 @@ export default function Panel() {
       border: "border-amber-400/20",
     },
     {
-      label: t("panel_stat_docs"),
+      label: t("panel_stat_docs" as never),
       value: `${docsOk}/${requiredDocsWithStatus.length}`,
-      sub: `${docsPct}% ${t("panel_completed_pct")}`,
+      sub: `${docsPct}% ${t("panel_completed_pct" as never)}`,
       icon: Shield,
       color: "text-green-400",
       bg: "bg-green-400/10",
@@ -809,11 +733,24 @@ export default function Panel() {
     },
   ];
 
-  const clientName =
-    profile?.full_name?.trim() ||
-    profile?.email?.split("@")[0] ||
-    "Cliente";
+  const copyCode = () => {
+    navigator.clipboard.writeText(REFERRAL_CODE).catch(() => {});
+    setCodeCopied(true);
 
+    toast({
+      title: t("panel_copied" as never),
+      description: trf(
+        "referral_code_copied_desc",
+        "{code} copiado al portapapeles.",
+        { code: REFERRAL_CODE }
+      ),
+    });
+
+    setTimeout(() => setCodeCopied(false), 2500);
+  };
+
+  const clientName =
+    profile?.full_name?.trim() || profile?.email?.split("@")[0] || "Cliente";
   const clientEmail = profile?.email?.trim() || "—";
   const clientNie = profile?.nie?.trim() || "—";
   const clientNationality = profile?.nationality?.trim() || "—";
@@ -823,10 +760,10 @@ export default function Panel() {
   const clientPassport = profile?.passport_number?.trim() || "—";
 
   const CLIENT_FIELDS = [
-    [t("panel_full_name"), clientName],
+    [t("panel_full_name" as never), clientName],
     ["NIE", clientNie],
-    [t("panel_nationality"), clientNationality],
-    [t("panel_birthdate"), clientBirthDate],
+    [t("panel_nationality" as never), clientNationality],
+    [t("panel_birthdate" as never), clientBirthDate],
     [tr("panel_phone", "Tel."), clientPhone],
     [tr("panel_email", "Email"), clientEmail],
     ["DNI", clientDni],
@@ -861,31 +798,77 @@ export default function Panel() {
     };
   });
 
+  const getVerificationLabel = (status?: string | null) => {
+    switch (status) {
+      case "verified":
+        return tr("verified", "Verificado");
+      case "needs_review":
+        return tr("in_review", "En revisión");
+      case "rejected":
+        return tr("rejected", "Rechazado");
+      case "expired":
+        return tr("expired", "Caducado");
+      default:
+        return tr("pending", "Pendiente");
+    }
+  };
+
+  const getVerificationClass = (status?: string | null) => {
+    switch (status) {
+      case "verified":
+        return "text-green-400";
+      case "needs_review":
+        return "text-amber-400";
+      case "rejected":
+        return "text-red-400";
+      case "expired":
+        return "text-orange-400";
+      default:
+        return "text-yellow-400";
+    }
+  };
+
+  const getResultLabel = (doc: UserDocumentRow) => {
+    if (doc.verification_status === "verified") return tr("apt", "Apto");
+    if (doc.verification_status === "needs_review") return tr("pending", "Pendiente");
+    if (doc.verification_status === "rejected") return tr("not_apt", "No apto");
+    if (doc.verification_status === "expired") return tr("expired", "Caducado");
+    return tr("pending", "Pendiente");
+  };
+
+  const getResultClass = (doc: UserDocumentRow) => {
+    if (doc.verification_status === "verified") return "text-green-400";
+    if (doc.verification_status === "needs_review") return "text-amber-400";
+    if (doc.verification_status === "rejected") return "text-red-400";
+    if (doc.verification_status === "expired") return "text-orange-400";
+    return "text-yellow-400";
+  };
+
+  const formatDate = (value?: string | null) => {
+    if (!value) return null;
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return null;
+    return date.toLocaleDateString();
+  };
+
   const handleDownloadDocument = async (doc: UserDocumentRow) => {
     try {
       const bucket = doc.storage_bucket || "user-documents";
 
       const { data, error } = await supabase.storage
         .from(bucket)
-        .createSignedUrl(doc.file_path, 60, {
-          download: true,
-        });
+        .createSignedUrl(doc.file_path, 60, { download: true });
 
-      if (error) {
-        throw error;
-      }
-
-      if (!data?.signedUrl) {
-        throw new Error("No se pudo generar el enlace de descarga");
-      }
+      if (error) throw error;
+      if (!data?.signedUrl) throw new Error("No se pudo generar el enlace de descarga");
 
       window.open(data.signedUrl, "_blank");
     } catch (error: any) {
       console.error("handleDownloadDocument error:", error);
       toast({
-        title: "Error al descargar",
+        title: tr("error_download_title", "Error al descargar"),
         description:
-          error?.message || "No se pudo descargar el documento",
+          error?.message || tr("error_download_desc", "No se pudo descargar el documento"),
         variant: "destructive",
       });
     }
@@ -914,12 +897,12 @@ export default function Panel() {
             </div>
             <div>
               <h1 className="text-lg font-display font-bold text-white">
-                {t("panel_header")}
+                {t("panel_header" as never)}
               </h1>
               <p className="text-xs text-muted-foreground">
                 {clientName} ·{" "}
                 <span className="text-primary font-semibold">
-                  {t("panel_plan_active")} {getPlanLabel(planActivo)}
+                  {t("panel_plan_active" as never)} {getPlanLabel(planActivo)}
                 </span>{" "}
                 · NIE: {clientNie}
               </p>
@@ -932,7 +915,7 @@ export default function Panel() {
               className="relative bg-amber-500/20 border border-amber-500/40 hover:bg-amber-500/30 rounded-xl px-3 py-1.5 flex items-center gap-2 text-xs text-amber-200 hover:text-amber-100 transition-colors"
             >
               <Bell className="w-3.5 h-3.5 text-amber-400" />
-              {t("panel_notif_btn")}
+              {t("panel_notif_btn" as never)}
               <span className="w-4 h-4 rounded-full bg-destructive text-white text-[9px] flex items-center justify-center font-bold">
                 {mappedNotifications.filter((n) => n.dot).length}
               </span>
@@ -946,14 +929,14 @@ export default function Panel() {
               >
                 <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.07]">
                   <span className="text-sm font-bold text-white">
-                    {t("panel_notif_btn")}
+                    {t("panel_notif_btn" as never)}
                   </span>
                   <button
                     type="button"
                     onClick={() => setShowNotif(false)}
                     className="text-[10px] text-primary hover:text-primary/80 font-semibold transition-colors"
                   >
-                    {t("panel_notif_close") || "Cerrar"}
+                    {tr("close", "Cerrar")}
                   </button>
                 </div>
 
@@ -1010,9 +993,7 @@ export default function Panel() {
               }}
               className={`glass-panel border ${card.border} rounded-2xl p-4 flex flex-col gap-2 text-left hover:border-white/20 transition-all`}
             >
-              <div
-                className={`w-8 h-8 rounded-lg ${card.bg} flex items-center justify-center`}
-              >
+              <div className={`w-8 h-8 rounded-lg ${card.bg} flex items-center justify-center`}>
                 <card.icon className={`w-4 h-4 ${card.color}`} />
               </div>
               <div>
@@ -1047,7 +1028,7 @@ export default function Panel() {
                 <div className="flex items-center justify-between mb-3">
                   <div>
                     <p className="text-[10px] text-muted-foreground uppercase tracking-wider">
-                      {t("panel_plan_active")}
+                      {t("panel_plan_active" as never)}
                     </p>
                     <p className="text-base font-black text-white">
                       {getPlanLabel(planActivo)} · 19.99€
@@ -1057,15 +1038,15 @@ export default function Panel() {
                     </p>
                   </div>
                   <span className="px-3 py-1 rounded-full bg-primary/20 border border-primary/30 text-primary text-[10px] font-bold">
-                    {t("panel_active")}
+                    {t("panel_active" as never)}
                   </span>
                 </div>
 
                 <div className="grid grid-cols-3 gap-2 text-center mb-3">
                   {[
-                    [t("panel_plan_used"), "1 / 3"],
-                    [t("panel_procedures"), "2 / 3"],
-                    [t("panel_next_invoice"), "01 Abr 2026"],
+                    [t("panel_plan_used" as never), "1 / 3"],
+                    [t("panel_procedures" as never), "2 / 3"],
+                    [t("panel_next_invoice" as never), "01 Abr 2026"],
                   ].map(([l, v]) => (
                     <div key={String(l)} className="bg-white/5 rounded-lg p-2">
                       <p className="text-[10px] text-muted-foreground">{l}</p>
@@ -1081,30 +1062,32 @@ export default function Panel() {
                       className="flex-1 py-1.5 rounded-lg bg-primary/20 hover:bg-primary/30 text-primary text-xs font-semibold transition-colors flex items-center justify-center gap-1"
                     >
                       <CreditCard className="w-3 h-3" />
-                      {t("panel_manage_plan")}
+                      {t("panel_manage_plan" as never)}
                     </button>
                     <button
                       onClick={() => goWithGoogleAuth("/buscar-citas")}
                       className="flex-1 py-1.5 rounded-lg bg-secondary/20 hover:bg-secondary/30 text-secondary text-xs font-semibold transition-colors flex items-center justify-center gap-1"
                     >
                       <Search className="w-3 h-3" />
-                      {t("panel_new_appt")}
+                      {t("panel_new_appt" as never)}
                     </button>
                   </div>
 
                   <button
-                    onClick={() => createBaseFormFromProfile("ex17", "Formulario EX-17")}
+                    onClick={() =>
+                      createBaseFormFromProfile("ex17", "Formulario EX-17")
+                    }
                     className="w-full py-2 rounded-lg bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 text-xs font-semibold transition-colors flex items-center justify-center gap-2"
                   >
                     <FileText className="w-3.5 h-3.5" />
-                    Crear formulario automático
+                    {tr("create_auto_form", "Crear formulario automático")}
                   </button>
                 </div>
               </div>
 
               <div>
                 <p className="text-xs font-bold text-white mb-2">
-                  {t("panel_tramites_curso")}
+                  {t("panel_tramites_curso" as never)}
                 </p>
                 <div className="space-y-2">
                   {TRAMITES_ACTIVOS.map((trm, i) => (
@@ -1117,12 +1100,8 @@ export default function Panel() {
                           <trm.icon className={`w-4 h-4 ${trm.color}`} />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-xs font-semibold text-white">
-                            {trm.label}
-                          </p>
-                          <p className="text-[10px] text-muted-foreground">
-                            {trm.status}
-                          </p>
+                          <p className="text-xs font-semibold text-white">{trm.label}</p>
+                          <p className="text-[10px] text-muted-foreground">{trm.status}</p>
                         </div>
                         <span className="text-xs font-bold text-primary">{trm.pct}%</span>
                       </div>
@@ -1141,15 +1120,17 @@ export default function Panel() {
 
               <div className="glass-panel border border-white/[0.07] rounded-xl p-4">
                 <div className="flex items-center justify-between mb-2">
-                  <p className="text-xs font-bold text-white">Formularios automáticos</p>
+                  <p className="text-xs font-bold text-white">
+                    {tr("automatic_forms", "Formularios automáticos")}
+                  </p>
                   <span className="text-[10px] text-muted-foreground">
-                    {userForms.length} creados
+                    {userForms.length} {tr("created", "creados")}
                   </span>
                 </div>
 
                 {userForms.length === 0 ? (
                   <p className="text-xs text-muted-foreground">
-                    Aún no has creado formularios automáticos.
+                    {tr("no_automatic_forms", "Aún no has creado formularios automáticos.")}
                   </p>
                 ) : (
                   <div className="space-y-2">
@@ -1160,7 +1141,7 @@ export default function Panel() {
                       >
                         <p className="text-sm font-semibold text-white">{form.title}</p>
                         <p className="text-xs text-muted-foreground">
-                          Tipo: {form.form_type}
+                          {tr("type", "Tipo")}: {form.form_type}
                         </p>
                         <p
                           className={`text-xs font-semibold ${
@@ -1173,7 +1154,7 @@ export default function Panel() {
                               : "text-yellow-400"
                           }`}
                         >
-                          Estado: {form.auto_fill_status}
+                          {tr("status", "Estado")}: {form.auto_fill_status}
                         </p>
                         {form.auto_fill_notes && (
                           <p className="text-xs text-muted-foreground mt-1">
@@ -1188,7 +1169,7 @@ export default function Panel() {
 
               <div>
                 <p className="text-xs font-bold text-white mb-2">
-                  {t("panel_quick_actions")}
+                  {t("panel_quick_actions" as never)}
                 </p>
                 <div className="grid grid-cols-2 gap-2">
                   {QUICK_ACTIONS.map((a, i) => (
@@ -1220,14 +1201,14 @@ export default function Panel() {
                   <div className="flex items-center gap-2 mb-1">
                     <Gift className="w-4 h-4 text-primary" />
                     <span className="text-xs font-bold text-white">
-                      {t("panel_referral_title")}
+                      {t("panel_referral_title" as never)}
                     </span>
                     <span className="ml-auto text-[10px] bg-primary/20 text-primary px-2 py-0.5 rounded-full font-semibold">
-                      {t("panel_referral_reward")}
+                      {t("panel_referral_reward" as never)}
                     </span>
                   </div>
                   <p className="text-[10px] text-muted-foreground mb-3">
-                    {t("panel_referral_desc")}
+                    {t("panel_referral_desc" as never)}
                   </p>
 
                   <div className="flex items-center gap-2 mb-3">
@@ -1244,7 +1225,7 @@ export default function Panel() {
                         ) : (
                           <Copy className="w-3.5 h-3.5" />
                         )}
-                        {codeCopied ? t("panel_copied") : t("panel_copy")}
+                        {codeCopied ? t("panel_copied" as never) : t("panel_copy" as never)}
                       </button>
                     </div>
 
@@ -1271,7 +1252,7 @@ export default function Panel() {
                   <div className="space-y-1.5">
                     <div className="flex justify-between items-center">
                       <span className="text-[10px] text-muted-foreground">
-                        {t("panel_referrals_bought")}
+                        {t("panel_referrals_bought" as never)}
                       </span>
                       <span className="text-[10px] font-bold text-white">
                         {REFERRALS_USED}/{REFERRALS_NEEDED}
@@ -1319,11 +1300,11 @@ export default function Panel() {
 
                 <div className="bg-primary/10 border-t border-primary/20 px-4 py-2">
                   <p className="text-[10px] text-primary/80">
-                    🎯 {t("panel_referral_left")}{" "}
+                    🎯 {t("panel_referral_left" as never)}{" "}
                     <strong className="text-primary">
                       {REFERRALS_NEEDED - REFERRALS_USED}
                     </strong>{" "}
-                    {t("panel_referral_more")}
+                    {t("panel_referral_more" as never)}
                   </p>
                 </div>
               </div>
@@ -1331,8 +1312,8 @@ export default function Panel() {
               <div className="flex items-start gap-2 bg-amber-950/30 border border-amber-600/20 rounded-xl p-3">
                 <AlertCircle className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
                 <p className="text-[10px] text-amber-200/70 leading-relaxed">
-                  <strong className="text-amber-400">{t("panel_legal_aviso")}</strong>{" "}
-                  {t("panel_legal_panel")}
+                  <strong className="text-amber-400">{t("panel_legal_aviso" as never)}</strong>{" "}
+                  {t("panel_legal_panel" as never)}
                 </p>
               </div>
             </div>
@@ -1352,14 +1333,14 @@ export default function Panel() {
                     <div className="flex-1">
                       <p className="text-sm font-semibold text-white">{trm.label}</p>
                       <p className="text-xs text-muted-foreground">
-                        {trm.status} · {trm.pct}% {t("panel_completed_pct")}
+                        {trm.status} · {trm.pct}% {t("panel_completed_pct" as never)}
                       </p>
                     </div>
                     <button
                       onClick={() => goWithGoogleAuth("/buscar-citas")}
                       className="text-xs text-primary hover:underline flex items-center gap-1"
                     >
-                      {t("panel_continue")}
+                      {t("panel_continue" as never)}
                       <ArrowRight className="w-3 h-3" />
                     </button>
                   </div>
@@ -1403,9 +1384,7 @@ export default function Panel() {
                         </div>
                         <p
                           className={`text-[9px] leading-tight text-center max-w-[50px] ${
-                            pi < trm.paso
-                              ? "text-primary font-bold"
-                              : "text-muted-foreground"
+                            pi < trm.paso ? "text-primary font-bold" : "text-muted-foreground"
                           }`}
                         >
                           {p}
@@ -1422,7 +1401,7 @@ export default function Panel() {
                   className="inline-flex items-center gap-2 text-xs text-primary hover:text-primary/80 font-semibold transition-colors"
                 >
                   <Search className="w-3.5 h-3.5" />
-                  {t("panel_search_agent")}
+                  {t("panel_search_agent" as never)}
                 </button>
               </div>
             </div>
@@ -1478,8 +1457,8 @@ export default function Panel() {
                       }`}
                     >
                       {cita.status === "proxima"
-                        ? t("panel_cita_proxima")
-                        : t("panel_cita_done")}
+                        ? t("panel_cita_proxima" as never)
+                        : t("panel_cita_done" as never)}
                     </span>
                   </div>
 
@@ -1487,7 +1466,7 @@ export default function Panel() {
                     <div className="mt-2 pt-2 border-t border-primary/15 flex items-center gap-2">
                       <CheckCircle2 className="w-3 h-3 text-primary" />
                       <p className="text-[10px] text-primary/80">
-                        {t("panel_wa_confirmed")}
+                        {t("panel_wa_confirmed" as never)}
                       </p>
                     </div>
                   )}
@@ -1499,7 +1478,7 @@ export default function Panel() {
                 className="w-full py-3 rounded-xl bg-primary hover:bg-primary/90 text-white text-xs font-bold transition-colors flex items-center justify-center gap-2 mt-2"
               >
                 <Search className="w-4 h-4" />
-                {t("panel_new_appt_agent")}
+                {t("panel_new_appt_agent" as never)}
               </button>
             </div>
           )}
@@ -1514,7 +1493,9 @@ export default function Panel() {
 
               <div className="rounded-xl border border-white/10 p-3">
                 <div className="flex items-center justify-between mb-3">
-                  <p className="text-xs font-bold text-white">{t("docs_required_title")}</p>
+                  <p className="text-xs font-bold text-white">
+                    {t("docs_required_title" as never)}
+                  </p>
                   <span className="text-xs text-muted-foreground">
                     {docsOk}/{requiredDocsWithStatus.length}
                   </span>
@@ -1544,12 +1525,16 @@ export default function Panel() {
                             doc.status === "subido" ? "text-green-400" : "text-amber-400"
                           }`}
                         >
-                          {doc.status === "subido" ? t("doc_uploaded") : t("doc_pending")}
+                          {doc.status === "subido"
+                            ? t("doc_uploaded" as never)
+                            : t("doc_pending" as never)}
                         </span>
 
                         <label className="cursor-pointer text-xs text-primary flex items-center gap-1">
                           <Upload className="w-3 h-3" />
-                          {doc.status === "subido" ? t("doc_replace") : t("doc_upload")}
+                          {doc.status === "subido"
+                            ? t("doc_replace" as never)
+                            : t("doc_upload" as never)}
                           <input
                             type="file"
                             className="hidden"
@@ -1585,24 +1570,28 @@ export default function Panel() {
                 className="w-full mt-2 py-2.5 text-xs text-primary hover:text-primary/80 flex items-center justify-center gap-1.5 border border-dashed border-primary/25 rounded-xl hover:border-primary/40 transition-colors cursor-pointer"
               >
                 <Upload className="w-3.5 h-3.5" />
-                {t("panel_upload_new")}
+                {t("panel_upload_new" as never)}
               </label>
 
               <div className="rounded-xl border border-white/10 p-3">
                 <div className="flex items-center justify-between mb-3">
-                  <p className="text-xs font-bold text-white">{t("my_uploaded_docs")}</p>
+                  <p className="text-xs font-bold text-white">
+                    {t("my_uploaded_docs" as never)}
+                  </p>
                   <span className="text-xs text-muted-foreground">
-                    {docsLoading ? t("loading") : `${userDocuments.length} ${t("documents_count")}`}
+                    {docsLoading
+                      ? t("loading" as never)
+                      : `${userDocuments.length} ${t("documents_count" as never)}`}
                   </span>
                 </div>
 
                 {docsLoading ? (
                   <p className="text-sm text-muted-foreground">
-                    {t("loading_documents")}
+                    {t("loading_documents" as never)}
                   </p>
                 ) : userDocuments.length === 0 ? (
                   <p className="text-sm text-muted-foreground">
-                    {t("no_documents_uploaded")}
+                    {t("no_documents_uploaded" as never)}
                   </p>
                 ) : (
                   <div className="space-y-2">
@@ -1618,41 +1607,48 @@ export default function Panel() {
 
                           <div className="mt-1 space-y-1">
                             <p className="text-xs text-muted-foreground">
-                              Tipo: {doc.document_type}
+                              {tr("type", "Tipo")}: {doc.document_type}
                             </p>
 
                             <p
-                              className={`text-xs font-semibold ${getVerificationClass(doc.verification_status)}`}
+                              className={`text-xs font-semibold ${getVerificationClass(
+                                doc.verification_status
+                              )}`}
                             >
-                              Estado: {getVerificationLabel(doc.verification_status)}
+                              {tr("status", "Estado")}:{" "}
+                              {getVerificationLabel(doc.verification_status)}
                             </p>
 
                             <p className={`text-xs font-semibold ${getResultClass(doc)}`}>
-                              Resultado: {getResultLabel(doc)}
+                              {tr("result", "Resultado")}: {getResultLabel(doc)}
                             </p>
 
                             <p className="text-xs text-muted-foreground">
-                              Revisado por: {doc.reviewed_by || "Sistema"}
+                              {tr("reviewed_by", "Revisado por")}:{" "}
+                              {doc.reviewed_by || tr("system", "Sistema")}
                             </p>
 
                             {doc.reviewed_at && (
                               <p className="text-xs text-muted-foreground">
-                                Revisado el: {formatDate(doc.reviewed_at)}
+                                {tr("reviewed_on", "Revisado el")}: {formatDate(doc.reviewed_at)}
                               </p>
                             )}
 
                             {doc.expires_at && (
                               <p className="text-xs text-muted-foreground">
-                                Caduca el: {formatDate(doc.expires_at)}
+                                {tr("expires_on", "Caduca el")}: {formatDate(doc.expires_at)}
                               </p>
                             )}
 
                             <p className="text-xs text-amber-300 break-words">
-                              Nota:{" "}
+                              {tr("note", "Nota")}:{" "}
                               {doc.verification_notes &&
                               doc.verification_notes !== "EMPTY"
                                 ? doc.verification_notes
-                                : "Documento recibido. Pendiente de revisión."}
+                                : tr(
+                                    "document_pending_review",
+                                    "Documento recibido. Pendiente de revisión."
+                                  )}
                             </p>
 
                             {doc.extracted_data?.match_reason && (
@@ -1664,7 +1660,8 @@ export default function Panel() {
                             {doc.extracted_data?.detected_from_name &&
                               doc.extracted_data.detected_from_name !== "unknown" && (
                                 <p className="text-xs text-muted-foreground">
-                                  Detectado como: {doc.extracted_data.detected_from_name}
+                                  {tr("detected_as", "Detectado como")}:{" "}
+                                  {doc.extracted_data.detected_from_name}
                                 </p>
                               )}
                           </div>
@@ -1676,7 +1673,7 @@ export default function Panel() {
                           className="text-xs text-primary hover:text-primary/80 flex items-center gap-1 shrink-0"
                         >
                           <Download className="w-3.5 h-3.5" />
-                          {t("download")}
+                          {t("download" as never)}
                         </button>
                       </div>
                     ))}
@@ -1690,7 +1687,7 @@ export default function Panel() {
         <div className="glass-panel border border-white/[0.07] rounded-2xl p-4 mb-4">
           <p className="text-xs font-bold text-white mb-3 flex items-center gap-2">
             <User className="w-3.5 h-3.5 text-primary" />
-            {t("panel_client_data")}
+            {t("panel_client_data" as never)}
           </p>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-2">
             {CLIENT_FIELDS.map(([k, v]) => (
@@ -1712,16 +1709,16 @@ export default function Panel() {
           setPlanActivo(p);
           setShowPayment(false);
         }}
-        agentMessage={t("panel_plan_active")}
+        agentMessage={t("panel_plan_active" as never)}
       />
 
       <nav className="fixed bottom-0 w-full z-50 glass-panel-heavy border-t border-white/[0.07] sm:hidden">
         <div className="flex justify-around items-center h-14 px-2">
           {[
-            { icon: TrendingUp, label: t("panel_nav_resumen"), tab: "resumen" },
-            { icon: FileText, label: t("panel_nav_tramites"), tab: "tramites" },
-            { icon: Clock, label: t("panel_nav_citas"), tab: "citas" },
-            { icon: Shield, label: t("panel_nav_docs"), tab: "documentos" },
+            { icon: TrendingUp, label: t("panel_nav_resumen" as never), tab: "resumen" },
+            { icon: FileText, label: t("panel_nav_tramites" as never), tab: "tramites" },
+            { icon: Clock, label: t("panel_nav_citas" as never), tab: "citas" },
+            { icon: Shield, label: t("panel_nav_docs" as never), tab: "documentos" },
           ].map((item, i) => (
             <button
               key={i}
