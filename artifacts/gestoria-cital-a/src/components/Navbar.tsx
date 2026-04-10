@@ -870,4 +870,4 @@ export function Navbar() {
       </AnimatePresence>
     </>
   );
-} y ahora language esta bien o aun no 
+}
