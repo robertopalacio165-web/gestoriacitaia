@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import { useScheduleAppointment } from "@/hooks/use-appointments";
 import { supabase } from "@/lib/supabaseClient";
-
+import { enviarMensajeSara } from "@/lib/openai";
 interface ChatMsg {
   from: "agent" | "user";
   text: string;
@@ -742,26 +742,36 @@ export default function BuscarCitas() {
     }
   };
 
-  const handleSendChat = () => {
-    if (!chatInput.trim()) return;
+const handleSendChat = async () => {
+  if (!chatInput.trim()) return;
 
-    const rawText = chatInput.trim();
-    const lowerText = rawText.toLowerCase();
+  const rawText = chatInput.trim();
 
-    setChatMessages((prev) => [...prev, { from: "user", text: rawText }]);
-    setChatInput("");
+  // Mensaje del usuario
+  setChatMessages((prev) => [...prev, { from: "user", text: rawText }]);
+  setChatInput("");
 
-    setTimeout(() => {
-      const foundKey =
-        Object.keys(ui.chatReplies).find((key) => lowerText.includes(key)) ||
-        "default";
+  try {
+    // Respuesta REAL de Sara (OpenAI)
+    const respuesta = await enviarMensajeSara(rawText);
 
-      setChatMessages((prev) => [
-        ...prev,
-        { from: "agent", text: ui.chatReplies[foundKey] },
-      ]);
-    }, 500);
-  };
+    setChatMessages((prev) => [
+      ...prev,
+      { from: "agent", text: respuesta }
+    ]);
+
+  } catch (error) {
+    console.error(error);
+
+    setChatMessages((prev) => [
+      ...prev,
+      {
+        from: "agent",
+        text: "Error conectando con Sara, intenta otra vez"
+      }
+    ]);
+  }
+};
 
   const handleSelectPlan = (plan: string) => {
     setPlanActivo(plan);
