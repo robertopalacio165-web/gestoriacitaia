@@ -34,7 +34,7 @@ type AuthUser = {
 type NotifItem = {
   id: number;
   type: "cita" | "doc" | "info";
-  icon: typeof CheckCircle2;
+  icon: typeof CheckCircle2 | typeof AlertCircle | typeof FileText;
   color: string;
   bg: string;
   title: string;
@@ -288,59 +288,53 @@ export function Navbar() {
   const avatarUrl =
     user?.user_metadata?.avatar_url || user?.user_metadata?.picture || "";
 
-  const planLabel =
-    lang === "darija"
-      ? "الخطة الأساسية"
-      : lang === "en"
-      ? "Standard Plan"
-      : "Plan Estándar";
-
-  const legalLabel =
-    lang === "darija" ? "تنبيه قانوني" : lang === "en" ? "Legal notice" : "Aviso legal";
-
-  const privacyLabel =
-    lang === "darija" ? "الخصوصية" : lang === "en" ? "Privacy" : "Privacidad";
-
-  const cookiesLabel =
-    lang === "darija" ? "الكوكيز" : lang === "en" ? "Cookies" : "Cookies";
-
-  const notificationsLabel =
-    lang === "darija" ? "الإشعارات" : lang === "en" ? "Notifications" : "Notificaciones";
-
+  const legalLabel = t("legal_title");
+  const privacyLabel = t("footer_privacy");
+  const cookiesLabel = lang === "darija" ? "الكوكيز" : lang === "en" ? "Cookies" : "Cookies";
+  const notificationsLabel = t("panel_notifications");
   const markAllReadLabel =
     lang === "darija"
       ? "علّم الكل كمقروء"
       : lang === "en"
       ? "Mark all as read"
       : "Marcar todo leído";
-
   const fullPanelLabel =
-    lang === "darija" ? "شوف البانيل كامل" : lang === "en" ? "View full dashboard" : "Ver panel completo";
-
+    lang === "darija"
+      ? "شوف البانيل كامل"
+      : lang === "en"
+      ? "View full dashboard"
+      : "Ver panel completo";
   const noEmailLabel =
     lang === "darija" ? "بلا إيميل" : lang === "en" ? "No email" : "Sin email";
-
   const activePlanLabel =
     lang === "darija"
       ? "الخطة النشيطة:"
       : lang === "en"
       ? "Active plan:"
       : "Plan activo:";
-
   const myPanelLabel =
     lang === "darija" ? "البانيل ديالي" : lang === "en" ? "My Dashboard" : "Mi Panel";
-
   const searchAppointmentLabel =
-    lang === "darija" ? "بحث عن موعد" : lang === "en" ? "Find appointment" : "Buscar cita";
-
+    lang === "darija"
+      ? "بحث عن موعد"
+      : lang === "en"
+      ? "Find appointment"
+      : "Buscar cita";
   const managePlanLabel =
-    lang === "darija" ? "تدبير الخطة" : lang === "en" ? "Manage plan" : "Gestionar plan";
+    lang === "darija"
+      ? "تدبير الخطة"
+      : lang === "en"
+      ? "Manage plan"
+      : "Gestionar plan";
+  const signOutLabel = t("nav_logout");
+  const languageMenuTitle = t("nav_idioma");
 
-  const signOutLabel =
-    lang === "darija" ? "تسجيل الخروج" : lang === "en" ? "Sign out" : "Cerrar sesión";
-
-  const languageMenuTitle =
-    lang === "darija" ? "اللغة" : lang === "en" ? "Language" : "Idioma";
+  const planLabel =
+    lang === "darija"
+      ? "الخطة الأساسية"
+      : lang === "en"
+      ? "Standard Plan"
+      : "Plan Estándar";
 
   const Dropdown = ({
     children,
@@ -876,4 +870,4 @@ export function Navbar() {
       </AnimatePresence>
     </>
   );
-}
+} y ahora language esta bien o aun no 
