@@ -9,174 +9,21 @@ import {
 
 export type Lang = "es" | "en" | "darija";
 
-type TranslationKeys = {
-  // NAV
-  nav_inicio: string;
-  nav_panel: string;
-  nav_citas: string;
-  nav_reg: string;
-  nav_login: string;
-  nav_logout: string;
-  nav_documentos: string;
-  nav_contacto: string;
-  nav_idioma: string;
+type TranslationMap = Record<string, string>;
 
-  // HERO
-  hero_badge: string;
-  hero_title_main: string;
-  hero_title_highlight: string;
-  hero_sub: string;
-  hero_cta_primary: string;
-  hero_cta_secondary: string;
-  hero_trust_1: string;
-  hero_trust_2: string;
-  hero_trust_3: string;
+type AllTranslations = Record<Lang, TranslationMap>;
 
-  // COMMON
-  common_loading: string;
-  common_error: string;
-  common_success: string;
-  common_cancel: string;
-  common_save: string;
-  common_close: string;
-  common_continue: string;
-  common_back: string;
-  common_next: string;
-  common_send: string;
-  common_yes: string;
-  common_no: string;
-  common_required: string;
-  common_optional: string;
-  common_select: string;
-  common_search: string;
-  common_download: string;
-  common_upload: string;
-  common_delete: string;
-  common_edit: string;
-  common_view: string;
-  common_free: string;
-  common_paid: string;
-
-  // AUTH
-  login_title: string;
-  login_subtitle: string;
-  login_email: string;
-  login_password: string;
-  login_button: string;
-  login_google: string;
-  login_no_account: string;
-  login_create_account: string;
-  login_forgot_password: string;
-  register_title: string;
-  register_subtitle: string;
-  register_name: string;
-  register_button: string;
-  register_have_account: string;
-
-  // PANEL
-  panel_title: string;
-  panel_subtitle: string;
-  panel_welcome: string;
-  panel_cases: string;
-  panel_documents: string;
-  panel_notifications: string;
-  panel_profile: string;
-  panel_no_data: string;
-
-  // CITAS
-  citas_title: string;
-  citas_subtitle: string;
-  citas_book: string;
-  citas_upcoming: string;
-  citas_empty: string;
-  citas_date: string;
-  citas_time: string;
-  citas_type: string;
-  citas_status: string;
-
-  // DOCUMENTOS
-  docs_title: string;
-  docs_subtitle: string;
-  docs_upload: string;
-  docs_drag_drop: string;
-  docs_supported: string;
-  docs_verification: string;
-  docs_verified: string;
-  docs_pending: string;
-  docs_rejected: string;
-  docs_no_docs: string;
-
-  // REGULARIZACION
-  reg_title: string;
-  reg_subtitle: string;
-  reg_badge: string;
-  reg_cta: string;
-  reg_step_1: string;
-  reg_step_2: string;
-  reg_step_3: string;
-  reg_step_4: string;
-  reg_eligibility_title: string;
-  reg_eligibility_sub: string;
-
-  // FEATURES
-  feature_ai_title: string;
-  feature_ai_text: string;
-  feature_docs_title: string;
-  feature_docs_text: string;
-  feature_pdf_title: string;
-  feature_pdf_text: string;
-  feature_whatsapp_title: string;
-  feature_whatsapp_text: string;
-  feature_secure_title: string;
-  feature_secure_text: string;
-  feature_human_title: string;
-  feature_human_text: string;
-
-  // LEGAL
-  legal_title: string;
-  legal_text: string;
-  legal_accept: string;
-
-  // PAYMENT
-  payment_title: string;
-  payment_subtitle: string;
-  payment_plan_basic: string;
-  payment_plan_pro: string;
-  payment_plan_premium: string;
-  payment_buy_now: string;
-  payment_secure: string;
-
-  // FOOTER
-  footer_rights: string;
-  footer_privacy: string;
-  footer_terms: string;
-  footer_contact: string;
-
-  // CONTACT
-  contact_title: string;
-  contact_subtitle: string;
-  contact_name: string;
-  contact_message: string;
-  contact_send: string;
-
-  // STATUS / CASES
-  case_status_open: string;
-  case_status_pending: string;
-  case_status_completed: string;
-  case_status_review: string;
-  case_status_rejected: string;
-
-  // EXTRA UI
-  badge_legal_safe: string;
-  badge_fast: string;
-  badge_online: string;
-  empty_title: string;
-  empty_text: string;
+type LanguageContextType = {
+  lang: Lang;
+  setLang: (lang: Lang) => void;
+  t: (key: string) => string;
+  isRTL: boolean;
+  translations: TranslationMap;
 };
 
-type Translations = Record<Lang, TranslationKeys>;
+const STORAGE_KEY = "gestoriacitaia_lang";
 
-const translations: Translations = {
+const translations: AllTranslations = {
   es: {
     // NAV
     nav_inicio: "Inicio",
@@ -251,6 +98,12 @@ const translations: Translations = {
     panel_notifications: "Notificaciones",
     panel_profile: "Perfil",
     panel_no_data: "Aún no hay datos disponibles",
+    panel_header: "Panel",
+    panel_tab_docs: "Documentos",
+    panel_tab_profile: "Perfil",
+    panel_tab_notifications: "Notificaciones",
+    panel_plan_active: "Plan activo",
+    plan_standard: "Plan estándar",
 
     // CITAS
     citas_title: "Tus citas",
@@ -262,6 +115,10 @@ const translations: Translations = {
     citas_time: "Hora",
     citas_type: "Tipo",
     citas_status: "Estado",
+    buscar_chat_open: "Abrir chat",
+    buscar_chat_close: "Cerrar chat",
+    buscar_title: "Buscar citas",
+    buscar_subtitle: "Busca citas disponibles de forma rápida",
 
     // DOCUMENTOS
     docs_title: "Tus documentos",
@@ -288,6 +145,7 @@ const translations: Translations = {
     reg_eligibility_title: "Comprobación de elegibilidad",
     reg_eligibility_sub:
       "Evaluamos tu situación con preguntas simples y directas",
+    reg_alert_text: "Consulta la información y revisa si cumples los requisitos.",
 
     // FEATURES
     feature_ai_title: "Análisis con IA",
@@ -337,14 +195,14 @@ const translations: Translations = {
     contact_message: "Mensaje",
     contact_send: "Enviar mensaje",
 
-    // STATUS / CASES
+    // STATUS
     case_status_open: "Abierto",
     case_status_pending: "Pendiente",
     case_status_completed: "Completado",
     case_status_review: "En revisión",
     case_status_rejected: "Rechazado",
 
-    // EXTRA UI
+    // EXTRA
     badge_legal_safe: "Legal y seguro",
     badge_fast: "Rápido",
     badge_online: "100% online",
@@ -353,7 +211,6 @@ const translations: Translations = {
   },
 
   en: {
-    // NAV
     nav_inicio: "Home",
     nav_panel: "Dashboard",
     nav_citas: "Appointments",
@@ -364,7 +221,6 @@ const translations: Translations = {
     nav_contacto: "Contact",
     nav_idioma: "Language",
 
-    // HERO
     hero_badge: "Immigration AI Agent — 100% legal and secure",
     hero_title_main: "Find out if you can",
     hero_title_highlight: "regularize your status in Spain",
@@ -376,7 +232,6 @@ const translations: Translations = {
     hero_trust_2: "Document upload",
     hero_trust_3: "PDF preparation",
 
-    // COMMON
     common_loading: "Loading...",
     common_error: "An error occurred",
     common_success: "Operation completed successfully",
@@ -401,7 +256,6 @@ const translations: Translations = {
     common_free: "Free",
     common_paid: "Paid",
 
-    // AUTH
     login_title: "Access your account",
     login_subtitle: "Log in to continue with your case",
     login_email: "Email",
@@ -417,7 +271,6 @@ const translations: Translations = {
     register_button: "Sign up",
     register_have_account: "I already have an account",
 
-    // PANEL
     panel_title: "Your dashboard",
     panel_subtitle: "Manage your process from one place",
     panel_welcome: "Welcome",
@@ -426,8 +279,13 @@ const translations: Translations = {
     panel_notifications: "Notifications",
     panel_profile: "Profile",
     panel_no_data: "No data available yet",
+    panel_header: "Dashboard",
+    panel_tab_docs: "Documents",
+    panel_tab_profile: "Profile",
+    panel_tab_notifications: "Notifications",
+    panel_plan_active: "Active plan",
+    plan_standard: "Standard plan",
 
-    // CITAS
     citas_title: "Your appointments",
     citas_subtitle: "Check and manage your upcoming appointments",
     citas_book: "Book appointment",
@@ -437,8 +295,11 @@ const translations: Translations = {
     citas_time: "Time",
     citas_type: "Type",
     citas_status: "Status",
+    buscar_chat_open: "Open chat",
+    buscar_chat_close: "Close chat",
+    buscar_title: "Find appointments",
+    buscar_subtitle: "Find available appointments quickly",
 
-    // DOCUMENTOS
     docs_title: "Your documents",
     docs_subtitle: "Upload, review, and verify your documents",
     docs_upload: "Upload document",
@@ -450,7 +311,6 @@ const translations: Translations = {
     docs_rejected: "Rejected",
     docs_no_docs: "You have not uploaded documents yet",
 
-    // REGULARIZACION
     reg_title: "Regularization 2026",
     reg_subtitle:
       "Find out whether you meet the requirements and prepare your case with AI support",
@@ -463,11 +323,10 @@ const translations: Translations = {
     reg_eligibility_title: "Eligibility check",
     reg_eligibility_sub:
       "We evaluate your situation with simple and direct questions",
+    reg_alert_text: "Review the information and check whether you meet the requirements.",
 
-    // FEATURES
     feature_ai_title: "AI analysis",
-    feature_ai_text:
-      "Our system analyzes your situation quickly and clearly.",
+    feature_ai_text: "Our system analyzes your situation quickly and clearly.",
     feature_docs_title: "Document review",
     feature_docs_text:
       "Upload your files and we review whether they are valid or if something is missing.",
@@ -484,13 +343,11 @@ const translations: Translations = {
     feature_human_text:
       "Whenever needed, you can complement the process with human assistance.",
 
-    // LEGAL
     legal_title: "Legal notice",
     legal_text:
       "The information provided by this platform is for guidance purposes only and does not replace individualized professional legal advice.",
     legal_accept: "I have read and accept",
 
-    // PAYMENT
     payment_title: "Choose your plan",
     payment_subtitle: "Select the option that best suits you",
     payment_plan_basic: "Basic Plan",
@@ -499,27 +356,23 @@ const translations: Translations = {
     payment_buy_now: "Buy now",
     payment_secure: "Secure payment",
 
-    // FOOTER
     footer_rights: "All rights reserved",
     footer_privacy: "Privacy",
     footer_terms: "Terms",
     footer_contact: "Contact",
 
-    // CONTACT
     contact_title: "Contact",
     contact_subtitle: "We are here to help you",
     contact_name: "Name",
     contact_message: "Message",
     contact_send: "Send message",
 
-    // STATUS / CASES
     case_status_open: "Open",
     case_status_pending: "Pending",
     case_status_completed: "Completed",
     case_status_review: "Under review",
     case_status_rejected: "Rejected",
 
-    // EXTRA UI
     badge_legal_safe: "Legal and secure",
     badge_fast: "Fast",
     badge_online: "100% online",
@@ -528,7 +381,6 @@ const translations: Translations = {
   },
 
   darija: {
-    // NAV
     nav_inicio: "الرئيسية",
     nav_panel: "البانيل",
     nav_citas: "المواعيد",
@@ -539,7 +391,6 @@ const translations: Translations = {
     nav_contacto: "تواصل",
     nav_idioma: "اللغة",
 
-    // HERO
     hero_badge: "مساعد الذكاء الاصطناعي ديال الهجرة — قانوني وآمن 100%",
     hero_title_main: "عرف واش تقدر",
     hero_title_highlight: "تسوي الوضعية ديالك فإسبانيا",
@@ -551,7 +402,6 @@ const translations: Translations = {
     hero_trust_2: "رفع الوثائق",
     hero_trust_3: "تحضير PDF",
 
-    // COMMON
     common_loading: "جاري التحميل...",
     common_error: "وقع خطأ",
     common_success: "تمت العملية بنجاح",
@@ -576,7 +426,6 @@ const translations: Translations = {
     common_free: "مجاني",
     common_paid: "بالمقابل",
 
-    // AUTH
     login_title: "دخل للحساب ديالك",
     login_subtitle: "دخل باش تكمل الملف ديالك",
     login_email: "البريد الإلكتروني",
@@ -592,7 +441,6 @@ const translations: Translations = {
     register_button: "سجل",
     register_have_account: "عندي حساب من قبل",
 
-    // PANEL
     panel_title: "البانيل ديالك",
     panel_subtitle: "سير المسار ديالك من بلاصة وحدة",
     panel_welcome: "مرحبا",
@@ -601,8 +449,13 @@ const translations: Translations = {
     panel_notifications: "الإشعارات",
     panel_profile: "البروفايل",
     panel_no_data: "ما كاين حتى معطيات دابا",
+    panel_header: "البانيل",
+    panel_tab_docs: "الوثائق",
+    panel_tab_profile: "البروفايل",
+    panel_tab_notifications: "الإشعارات",
+    panel_plan_active: "الخطة النشيطة",
+    plan_standard: "الخطة الأساسية",
 
-    // CITAS
     citas_title: "المواعيد ديالك",
     citas_subtitle: "شوف وسير المواعيد الجاية ديالك",
     citas_book: "حجز موعد",
@@ -612,8 +465,11 @@ const translations: Translations = {
     citas_time: "الوقت",
     citas_type: "النوع",
     citas_status: "الحالة",
+    buscar_chat_open: "حل الشات",
+    buscar_chat_close: "سد الشات",
+    buscar_title: "بحث عن المواعيد",
+    buscar_subtitle: "قلب على المواعيد المتاحة بسرعة",
 
-    // DOCUMENTOS
     docs_title: "الوثائق ديالك",
     docs_subtitle: "رفع، راجع، وتأكد من الوثائق ديالك",
     docs_upload: "رفع وثيقة",
@@ -625,7 +481,6 @@ const translations: Translations = {
     docs_rejected: "مرفوض",
     docs_no_docs: "مازال ما رفعتي حتى وثيقة",
 
-    // REGULARIZACION
     reg_title: "التسوية 2026",
     reg_subtitle:
       "عرف واش كتوفر فيك الشروط وجهز الملف ديالك بمساعدة الذكاء الاصطناعي",
@@ -637,16 +492,15 @@ const translations: Translations = {
     reg_step_4: "حمل الوثائق ديالك واجدة",
     reg_eligibility_title: "التحقق من الأهلية",
     reg_eligibility_sub: "كنقيمو الحالة ديالك بأسئلة بسيطة وواضحة",
+    reg_alert_text: "شوف المعلومات وتحقق واش كتوفر فيك الشروط.",
 
-    // FEATURES
     feature_ai_title: "تحليل بالذكاء الاصطناعي",
     feature_ai_text: "النظام ديالنا كايحلل الحالة ديالك بسرعة وبوضوح.",
     feature_docs_title: "مراجعة الوثائق",
     feature_docs_text:
       "رفع الملفات ديالك وغادي نشوفو واش صالحين ولا خاص شي حاجة أخرى.",
     feature_pdf_title: "PDF واجد",
-    feature_pdf_text:
-      "كنوجدو الوثائق ديالك فـ PDF باش يكون كلشي منظم.",
+    feature_pdf_text: "كنوجدو الوثائق ديالك فـ PDF باش يكون كلشي منظم.",
     feature_whatsapp_title: "إشعارات واتساب",
     feature_whatsapp_text:
       "توصل بالتحديثات المهمة والتذكير مباشرة فالتلفون ديالك.",
@@ -657,13 +511,11 @@ const translations: Translations = {
     feature_human_text:
       "إلى احتجتي، تقدر تكمل المسار ديالك حتى بمساعدة بشرية.",
 
-    // LEGAL
     legal_title: "تنبيه قانوني",
     legal_text:
       "المعلومات اللي كتقدمها هاد المنصة غير للتوجيه وما كتعوضش الاستشارة القانونية المهنية الخاصة بكل حالة.",
     legal_accept: "قريت ووافقت",
 
-    // PAYMENT
     payment_title: "اختار الخطة ديالك",
     payment_subtitle: "اختار العرض اللي كيناسبك",
     payment_plan_basic: "الخطة الأساسية",
@@ -672,27 +524,23 @@ const translations: Translations = {
     payment_buy_now: "شري دابا",
     payment_secure: "أداء آمن",
 
-    // FOOTER
     footer_rights: "جميع الحقوق محفوظة",
     footer_privacy: "الخصوصية",
     footer_terms: "الشروط",
     footer_contact: "تواصل",
 
-    // CONTACT
     contact_title: "تواصل",
     contact_subtitle: "حنا هنا باش نساعدوك",
     contact_name: "الاسم",
     contact_message: "الرسالة",
     contact_send: "رسل الرسالة",
 
-    // STATUS / CASES
     case_status_open: "مفتوح",
     case_status_pending: "معلق",
     case_status_completed: "مكمل",
     case_status_review: "قيد المراجعة",
     case_status_rejected: "مرفوض",
 
-    // EXTRA UI
     badge_legal_safe: "قانوني وآمن",
     badge_fast: "سريع",
     badge_online: "أونلاين 100%",
@@ -701,24 +549,14 @@ const translations: Translations = {
   },
 };
 
-type LanguageContextType = {
-  lang: Lang;
-  setLang: (lang: Lang) => void;
-  t: (key: keyof TranslationKeys) => string;
-  isRTL: boolean;
-  translations: TranslationKeys;
-};
-
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
-
-const STORAGE_KEY = "gestoriacitaia_lang";
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const [lang, setLangState] = useState<Lang>("es");
 
   useEffect(() => {
     const savedLang = localStorage.getItem(STORAGE_KEY) as Lang | null;
-    if (savedLang && ["es", "en", "darija"].includes(savedLang)) {
+    if (savedLang === "es" || savedLang === "en" || savedLang === "darija") {
       setLangState(savedLang);
     }
   }, []);
@@ -736,8 +574,8 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     setLangState(newLang);
   };
 
-  const t = (key: keyof TranslationKeys): string => {
-    return translations[lang]?.[key] ?? translations.es[key] ?? String(key);
+  const t = (key: string): string => {
+    return translations[lang]?.[key] ?? translations.es?.[key] ?? key;
   };
 
   const value = useMemo(
@@ -746,16 +584,22 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
       setLang,
       t,
       isRTL: lang === "darija",
-      translations: translations[lang],
+      translations: translations[lang] || {},
     }),
     [lang]
   );
 
-  return (
-    <LanguageContext.Provider value={value}>
-      {children}
-    </LanguageContext.Provider>
-  );
+  return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>;
+}
+
+export function useLang() {
+  const context = useContext(LanguageContext);
+
+  if (!context) {
+    throw new Error("useLang must be used within a LanguageProvider");
+  }
+
+  return context;
 }
 
 export function useLanguage() {
