@@ -19,6 +19,7 @@ import {
 import { useScheduleAppointment } from "@/hooks/use-appointments";
 import { supabase } from "@/lib/supabaseClient";
 import { enviarMensajeSara } from "@/lib/openai";
+
 interface ChatMsg {
   from: "agent" | "user";
   text: string;
@@ -76,6 +77,7 @@ export default function BuscarCitas() {
     null
   );
   const [profileLoading, setProfileLoading] = useState(true);
+  const [sendingChat, setSendingChat] = useState(false);
 
   const { t, lang } = useLang();
   const { toast } = useToast();
@@ -90,22 +92,8 @@ export default function BuscarCitas() {
   const ui = useMemo(() => {
     if (lang === "darija") {
       return {
-        chatReplies: {
-          default: "فهمت. واش عندك شي سؤال آخر على الإجراء ديالك؟",
-          hola: "سلام، أنا سارة. فاش نقدر نعاونك اليوم؟",
-          documentos:
-            "فالغالب كتحتاج: NIE ولا الباسبور، شهادة السكن، وتصاور. قول ليا شنو الإجراء ديالك ونمشي معاك خطوة بخطوة.",
-          cita: "غادي نعاونك نقلبو على الموعد. اختار الإجراء ونكملو مع بعضنا خطوة بخطوة.",
-          precio:
-            "خاصك أولاً تفعل الخطة باش تكمل الحجز الموجه ومساعدة الوكيل الذكي.",
-          formulario:
-            "لتحت تقدر تفتح الاستمارات الرسمية ديال الإجراء اللي اخترتي.",
-        },
         tramites: [
-          {
-            value: "tie",
-            label: "تجديد بطاقة هوية الأجنبي (TIE)",
-          },
+          { value: "tie", label: "تجديد بطاقة هوية الأجنبي (TIE)" },
           { value: "regreso", label: "رخصة الرجوع" },
           { value: "nie", label: "شواهد وتعيين NIE" },
           { value: "ue", label: "شواهد الاتحاد الأوروبي" },
@@ -262,22 +250,8 @@ export default function BuscarCitas() {
 
     if (lang === "en") {
       return {
-        chatReplies: {
-          default: "Understood. Do you have any other questions about your procedure?",
-          hola: "Hi, I’m Sara. How can I help you today?",
-          documentos:
-            "For most procedures you need: NIE or passport, registration certificate, and photos. Tell me your procedure and I’ll guide you step by step.",
-          cita: "I’ll help you find the appointment. Select the procedure and we’ll continue together step by step.",
-          precio:
-            "You need to activate your plan first to continue with guided booking and agent assistance.",
-          formulario:
-            "Below you can open the official forms for the selected procedure.",
-        },
         tramites: [
-          {
-            value: "tie",
-            label: "TIE Card Renewal",
-          },
+          { value: "tie", label: "TIE Card Renewal" },
           { value: "regreso", label: "Return Authorization" },
           { value: "nie", label: "NIE Certificates and Assignment" },
           { value: "ue", label: "EU Certificates" },
@@ -433,17 +407,6 @@ export default function BuscarCitas() {
     }
 
     return {
-      chatReplies: {
-        default: "Entendido. ¿Tienes más preguntas sobre tu trámite?",
-        hola: "¡Hola! Soy Sara. ¿En qué trámite te puedo ayudar hoy?",
-        documentos:
-          "Para la mayoría de trámites necesitas: NIE o pasaporte, empadronamiento y fotografías. Dime tu trámite y te guío paso a paso.",
-        cita: "Te ayudo a buscar la cita. Selecciona el trámite y seguimos juntas paso a paso.",
-        precio:
-          "Primero debes activar tu plan para continuar con la reserva guiada y la asistencia del agente.",
-        formulario:
-          "Abajo puedes abrir los formularios oficiales del trámite seleccionado.",
-      },
       tramites: [
         {
           value: "tie",
@@ -604,6 +567,7 @@ export default function BuscarCitas() {
   }, [lang]);
 
   const TRAMITES = ui.tramites;
+
   const selectedTramiteLabel =
     TRAMITES.find((item) => item.value === selectedTramite)?.label ||
     TRAMITES[0].label;
@@ -742,36 +706,50 @@ export default function BuscarCitas() {
     }
   };
 
-const handleSendChat = async () => {
-  if (!chatInput.trim()) return;
+  const handleSendChat = async () => {
+    if (!chatInput.trim() || sendingChat) return;
 
-  const rawText = chatInput.trim();
+    const rawText = chatInput.trim();
 
-  // Mensaje del usuario
-  setChatMessages((prev) => [...prev, { from: "user", text: rawText }]);
-  setChatInput("");
+    setChatMessages((prev) => [...prev, { from: "user", text: rawText }]);
+    setChatInput("");
+    setSendingChat(true);
 
-  try {
-    // Respuesta REAL de Sara (OpenAI)
-    const respuesta = await enviarMensajeSara(rawText);
+    try {
+      const respuesta = await enviarMensajeSara(rawText);
 
-    setChatMessages((prev) => [
-      ...prev,
-      { from: "agent", text: respuesta }
-    ]);
+      setChatMessages((prev) => [
+        ...prev,
+        {
+          from: "agent",
+          text:
+            respuesta ||
+            (lang === "darija"
+              ? "سمح ليا، ما قدرتش نجاوب دابا."
+              : lang === "en"
+              ? "Sorry, I could not answer right now."
+              : "Lo siento, no pude responder ahora mismo."),
+        },
+      ]);
+    } catch (error) {
+      console.error("Error conectando con Sara:", error);
 
-  } catch (error) {
-    console.error(error);
-
-    setChatMessages((prev) => [
-      ...prev,
-      {
-        from: "agent",
-        text: "Error conectando con Sara, intenta otra vez"
-      }
-    ]);
-  }
-};
+      setChatMessages((prev) => [
+        ...prev,
+        {
+          from: "agent",
+          text:
+            lang === "darija"
+              ? "وقع مشكل فالاتصال مع سارة، عاود حاول."
+              : lang === "en"
+              ? "There was a connection error with Sara. Please try again."
+              : "Error conectando con Sara, intenta otra vez.",
+        },
+      ]);
+    } finally {
+      setSendingChat(false);
+    }
+  };
 
   const handleSelectPlan = (plan: string) => {
     setPlanActivo(plan);
@@ -990,6 +968,19 @@ const handleSendChat = async () => {
                       </div>
                     ))}
 
+                    {sendingChat && (
+                      <div className="flex gap-2 justify-start">
+                        <img
+                          src={`${import.meta.env.BASE_URL}images/avatar-sara.png`}
+                          className="w-6 h-6 rounded-full object-cover object-top shrink-0"
+                          alt=""
+                        />
+                        <div className="px-3 py-1.5 rounded-xl text-xs max-w-[85%] leading-relaxed bg-white/8 text-white/90 border border-white/10">
+                          ...
+                        </div>
+                      </div>
+                    )}
+
                     <div ref={chatEndRef} />
                   </div>
 
@@ -1003,7 +994,8 @@ const handleSendChat = async () => {
                     />
                     <button
                       onClick={handleSendChat}
-                      className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center hover:bg-primary/90 transition-colors shrink-0"
+                      disabled={sendingChat}
+                      className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center hover:bg-primary/90 transition-colors shrink-0 disabled:opacity-60"
                     >
                       <Send className="w-3.5 h-3.5 text-primary-foreground" />
                     </button>
