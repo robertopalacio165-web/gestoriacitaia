@@ -60,141 +60,6 @@ type AppointmentResult = {
   confirmation_pdf_url?: string | null;
 };
 
-const CHAT_REPLIES: Record<string, string> = {
-  default: "Entendido. ¿Tienes más preguntas sobre tu trámite?",
-  hola: "¡Hola! Soy Sara. ¿En qué trámite te puedo ayudar hoy?",
-  documentos:
-    "Para la mayoría de trámites necesitas: NIE o pasaporte, empadronamiento y fotografías. Dime tu trámite y te guío paso a paso.",
-  cita: "Te ayudo a buscar la cita. Selecciona el trámite y seguimos juntas paso a paso.",
-  precio:
-    "Primero debes activar tu plan para continuar con la reserva guiada y la asistencia del agente.",
-  formulario:
-    "Abajo puedes abrir los formularios oficiales del trámite seleccionado.",
-};
-
-const TRAMITES: TramiteItem[] = [
-  {
-    value: "tie",
-    label: "Renovación de Tarjeta de Identidad de Extranjero (TIE')",
-  },
-  { value: "regreso", label: "Autorización de Regreso" },
-  { value: "nie", label: "Certificados y Asignación NIE" },
-  { value: "ue", label: "Certificados UE" },
-  { value: "estudiantes", label: "Estudiantes" },
-  { value: "trabajo", label: "Autorización de Trabajo" },
-  { value: "arraigo", label: "Arraigo Social / Laboral / Familiar" },
-  { value: "familiar", label: "Reagrupación Familiar" },
-];
-
-const DOCS_BY_TRAMITE: Record<string, DocItem[]> = {
-  tie: [
-    { nombre: "Pasaporte o NIE vigente", estado: "ok" },
-    { nombre: "Empadronamiento actual", estado: "ok" },
-    { nombre: "Tarjeta TIE caducada o próxima a caducar", estado: "ok" },
-    { nombre: "Fotografías recientes (2)", estado: "ok" },
-    { nombre: "Formulario EX-17", estado: "warn" },
-  ],
-  regreso: [
-    { nombre: "Pasaporte vigente", estado: "ok" },
-    { nombre: "TIE vigente", estado: "ok" },
-    { nombre: "Justificación del viaje", estado: "warn" },
-  ],
-  nie: [
-    { nombre: "Pasaporte vigente", estado: "ok" },
-    { nombre: "Justificación solicitud NIE", estado: "warn" },
-    { nombre: "Formulario EX-15", estado: "missing" },
-    { nombre: "Fotografías recientes (2)", estado: "ok" },
-  ],
-  ue: [
-    { nombre: "Pasaporte UE vigente", estado: "ok" },
-    { nombre: "Empadronamiento", estado: "ok" },
-    { nombre: "Formulario EU", estado: "warn" },
-  ],
-  estudiantes: [
-    { nombre: "Pasaporte vigente", estado: "ok" },
-    { nombre: "Carta de admisión universitaria", estado: "warn" },
-    { nombre: "Seguro médico", estado: "ok" },
-    { nombre: "Justificante económico", estado: "missing" },
-  ],
-  trabajo: [
-    { nombre: "Pasaporte vigente", estado: "ok" },
-    { nombre: "Contrato de trabajo", estado: "warn" },
-    { nombre: "Alta en Seguridad Social", estado: "missing" },
-    { nombre: "Formulario EX-07", estado: "missing" },
-  ],
-  arraigo: [
-    { nombre: "Pasaporte vigente", estado: "ok" },
-    { nombre: "Empadronamiento (3 años)", estado: "ok" },
-    { nombre: "Certificado antecedentes penales", estado: "warn" },
-    { nombre: "Formulario EX-10", estado: "missing" },
-  ],
-  familiar: [
-    { nombre: "Pasaporte vigente", estado: "ok" },
-    { nombre: "Certificado familiar UE/español", estado: "ok" },
-    { nombre: "Libro de familia / acta matrimonial", estado: "warn" },
-    { nombre: "Formulario EX-19", estado: "missing" },
-  ],
-};
-
-const FORMS_BY_TRAMITE: Record<string, FormItem[]> = {
-  tie: [
-    {
-      nombre: "Renovación de Tarjeta de Identidad (TIE)",
-      codigo: "EX-17",
-      url: "https://extranjeros.inclusion.gob.es/ficheros/Modelos_solicitudes/mod_solicitudes2/17-Formulario_TIE.pdf",
-    },
-  ],
-  regreso: [
-    {
-      nombre: "Autorización de Regreso",
-      codigo: "EX-13",
-      url: "https://extranjeros.inclusion.gob.es/ficheros/Modelos_solicitudes/mod_solicitudes2/13-Autorizacion_de_regreso.pdf",
-    },
-  ],
-  nie: [
-    {
-      nombre: "Asignación número de identidad extranjero",
-      codigo: "EX-15",
-      url: "https://extranjeros.inclusion.gob.es/ficheros/Modelos_solicitudes/mod_solicitudes2/15-Solicitud_NIE.pdf",
-    },
-  ],
-  ue: [
-    {
-      nombre: "Registro de ciudadano UE",
-      codigo: "EU",
-      url: "https://extranjeros.inclusion.gob.es/ficheros/Modelos_solicitudes/mod_solicitudes2/EU-Cert_registro_ciudadano_UE.pdf",
-    },
-  ],
-  estudiantes: [
-    {
-      nombre: "Estancia por estudios",
-      codigo: "EX-01",
-      url: "https://extranjeros.inclusion.gob.es/ficheros/Modelos_solicitudes/mod_solicitudes2/01-Formulario_estancia_estudios.pdf",
-    },
-  ],
-  trabajo: [
-    {
-      nombre: "Autorización de trabajo",
-      codigo: "EX-07",
-      url: "https://extranjeros.inclusion.gob.es/ficheros/Modelos_solicitudes/mod_solicitudes2/07-Autorizacion_residencia_trabajo.pdf",
-    },
-  ],
-  arraigo: [
-    {
-      nombre: "Arraigo Social / Laboral",
-      codigo: "EX-10",
-      url: "https://extranjeros.inclusion.gob.es/ficheros/Modelos_solicitudes/mod_solicitudes2/10-Arraigo_social_laboral.pdf",
-    },
-  ],
-  familiar: [
-    {
-      nombre: "Reagrupación Familiar",
-      codigo: "EX-02",
-      url: "https://extranjeros.inclusion.gob.es/ficheros/Modelos_solicitudes/mod_solicitudes2/02-Reagrupacion_familiar.pdf",
-    },
-  ],
-};
-
 export default function BuscarCitas() {
   const [selectedTramite, setSelectedTramite] = useState("tie");
   const [step, setStep] = useState(0);
@@ -212,34 +77,594 @@ export default function BuscarCitas() {
   );
   const [profileLoading, setProfileLoading] = useState(true);
 
-  const [chatMessages, setChatMessages] = useState<ChatMsg[]>([
-    {
-      from: "agent",
-      text: "Hola, soy Sara. ¿Prefieres escribir? Aquí puedo responderte cualquier duda sobre tu trámite.",
-    },
-  ]);
-
-  const chatEndRef = useRef<HTMLDivElement>(null);
-  const { t } = useLang();
+  const { t, lang } = useLang();
   const { toast } = useToast();
   const scheduleMutation = useScheduleAppointment();
+  const chatEndRef = useRef<HTMLDivElement>(null);
 
   const tr = (key: string, fallback: string) => {
     const value = t(key as never);
     return value && value !== key ? value : fallback;
   };
 
+  const ui = useMemo(() => {
+    if (lang === "darija") {
+      return {
+        chatReplies: {
+          default: "فهمت. واش عندك شي سؤال آخر على الإجراء ديالك؟",
+          hola: "سلام، أنا سارة. فاش نقدر نعاونك اليوم؟",
+          documentos:
+            "فالغالب كتحتاج: NIE ولا الباسبور، شهادة السكن، وتصاور. قول ليا شنو الإجراء ديالك ونمشي معاك خطوة بخطوة.",
+          cita: "غادي نعاونك نقلبو على الموعد. اختار الإجراء ونكملو مع بعضنا خطوة بخطوة.",
+          precio:
+            "خاصك أولاً تفعل الخطة باش تكمل الحجز الموجه ومساعدة الوكيل الذكي.",
+          formulario:
+            "لتحت تقدر تفتح الاستمارات الرسمية ديال الإجراء اللي اخترتي.",
+        },
+        tramites: [
+          {
+            value: "tie",
+            label: "تجديد بطاقة هوية الأجنبي (TIE)",
+          },
+          { value: "regreso", label: "رخصة الرجوع" },
+          { value: "nie", label: "شواهد وتعيين NIE" },
+          { value: "ue", label: "شواهد الاتحاد الأوروبي" },
+          { value: "estudiantes", label: "الطلبة" },
+          { value: "trabajo", label: "رخصة العمل" },
+          { value: "arraigo", label: "أرايغو اجتماعي / مهني / عائلي" },
+          { value: "familiar", label: "التجمع العائلي" },
+        ] as TramiteItem[],
+        docsByTramite: {
+          tie: [
+            { nombre: "الباسبور أو NIE صالح", estado: "ok" },
+            { nombre: "شهادة السكن الحالية", estado: "ok" },
+            { nombre: "بطاقة TIE منتهية أو قربات تسالي", estado: "ok" },
+            { nombre: "تصاور حديثة (2)", estado: "ok" },
+            { nombre: "استمارة EX-17", estado: "warn" },
+          ],
+          regreso: [
+            { nombre: "الباسبور صالح", estado: "ok" },
+            { nombre: "TIE صالح", estado: "ok" },
+            { nombre: "مبرر السفر", estado: "warn" },
+          ],
+          nie: [
+            { nombre: "الباسبور صالح", estado: "ok" },
+            { nombre: "مبرر طلب NIE", estado: "warn" },
+            { nombre: "استمارة EX-15", estado: "missing" },
+            { nombre: "تصاور حديثة (2)", estado: "ok" },
+          ],
+          ue: [
+            { nombre: "باسبور الاتحاد الأوروبي صالح", estado: "ok" },
+            { nombre: "شهادة السكن", estado: "ok" },
+            { nombre: "استمارة EU", estado: "warn" },
+          ],
+          estudiantes: [
+            { nombre: "الباسبور صالح", estado: "ok" },
+            { nombre: "رسالة القبول الجامعي", estado: "warn" },
+            { nombre: "التأمين الصحي", estado: "ok" },
+            { nombre: "إثبات الموارد المالية", estado: "missing" },
+          ],
+          trabajo: [
+            { nombre: "الباسبور صالح", estado: "ok" },
+            { nombre: "عقد العمل", estado: "warn" },
+            { nombre: "التسجيل فالضمان الاجتماعي", estado: "missing" },
+            { nombre: "استمارة EX-07", estado: "missing" },
+          ],
+          arraigo: [
+            { nombre: "الباسبور صالح", estado: "ok" },
+            { nombre: "شهادة السكن (3 سنين)", estado: "ok" },
+            { nombre: "شهادة السوابق العدلية", estado: "warn" },
+            { nombre: "استمارة EX-10", estado: "missing" },
+          ],
+          familiar: [
+            { nombre: "الباسبور صالح", estado: "ok" },
+            { nombre: "شهادة العائلة UE/إسباني", estado: "ok" },
+            { nombre: "دفتر العائلة / عقد الزواج", estado: "warn" },
+            { nombre: "استمارة EX-19", estado: "missing" },
+          ],
+        } as Record<string, DocItem[]>,
+        formsByTramite: {
+          tie: [
+            {
+              nombre: "تجديد بطاقة الهوية TIE",
+              codigo: "EX-17",
+              url: "https://extranjeros.inclusion.gob.es/ficheros/Modelos_solicitudes/mod_solicitudes2/17-Formulario_TIE.pdf",
+            },
+          ],
+          regreso: [
+            {
+              nombre: "رخصة الرجوع",
+              codigo: "EX-13",
+              url: "https://extranjeros.inclusion.gob.es/ficheros/Modelos_solicitudes/mod_solicitudes2/13-Autorizacion_de_regreso.pdf",
+            },
+          ],
+          nie: [
+            {
+              nombre: "طلب رقم هوية الأجنبي",
+              codigo: "EX-15",
+              url: "https://extranjeros.inclusion.gob.es/ficheros/Modelos_solicitudes/mod_solicitudes2/15-Solicitud_NIE.pdf",
+            },
+          ],
+          ue: [
+            {
+              nombre: "تسجيل مواطن الاتحاد الأوروبي",
+              codigo: "EU",
+              url: "https://extranjeros.inclusion.gob.es/ficheros/Modelos_solicitudes/mod_solicitudes2/EU-Cert_registro_ciudadano_UE.pdf",
+            },
+          ],
+          estudiantes: [
+            {
+              nombre: "الإقامة للدراسة",
+              codigo: "EX-01",
+              url: "https://extranjeros.inclusion.gob.es/ficheros/Modelos_solicitudes/mod_solicitudes2/01-Formulario_estancia_estudios.pdf",
+            },
+          ],
+          trabajo: [
+            {
+              nombre: "رخصة العمل",
+              codigo: "EX-07",
+              url: "https://extranjeros.inclusion.gob.es/ficheros/Modelos_solicitudes/mod_solicitudes2/07-Autorizacion_residencia_trabajo.pdf",
+            },
+          ],
+          arraigo: [
+            {
+              nombre: "أرايغو اجتماعي / مهني",
+              codigo: "EX-10",
+              url: "https://extranjeros.inclusion.gob.es/ficheros/Modelos_solicitudes/mod_solicitudes2/10-Arraigo_social_laboral.pdf",
+            },
+          ],
+          familiar: [
+            {
+              nombre: "التجمع العائلي",
+              codigo: "EX-02",
+              url: "https://extranjeros.inclusion.gob.es/ficheros/Modelos_solicitudes/mod_solicitudes2/02-Reagrupacion_familiar.pdf",
+            },
+          ],
+        } as Record<string, FormItem[]>,
+        initialChat:
+          "سلام، أنا سارة. إلا بغيتي تكتب، هنا نقدر نجاوبك على أي سؤال على الإجراء ديالك.",
+        online: "متصلة الآن",
+        agentRole: "مستشارة المواعيد",
+        procedureLabel: "الإجراء",
+        procedurePlaceholder: "اختار الإجراء من اللائحة",
+        personalData: "المعطيات الشخصية",
+        fullName: "الاسم",
+        phone: "الهاتف",
+        loadingUserData: "جاري تحميل معطيات المستخدم...",
+        aiFilledData: "المعطيات تعمرات أوتوماتيكياً من طرف الوكيل الذكي",
+        accept: "موافق",
+        govSmall: "الهجرة:",
+        govTitle: "الموعد المسبق",
+        govLine1: "المديرية العامة",
+        govLine2: "للهجرة",
+        govLine3: "والأجانب",
+        confirmTitle: "تم تأكيد الموعد!",
+        date: "التاريخ",
+        time: "الوقت",
+        office: "المكتب",
+        appointmentNumber: "رقم الموعد",
+        reservationSaved: "تم حفظ الحجز بنجاح",
+        sourceLabel: "المصدر: extranjeros.inclusion.gob.es",
+        muteSimple: "كتم",
+        foundSuccessTitle: "لقينا الموعد!",
+        foundSuccessDesc: "دابا أكد باش تكمل.",
+        foundErrorTitle: "خطأ فالبحث عن الموعد",
+        foundErrorDesc: "ما قدرناش نقلبو على الموعد دابا.",
+        confirmSuccessTitle: "تم تأكيد الموعد!",
+        confirmSuccessDesc: "الحجز تسجل بنجاح.",
+        planActivated: "تفعلات الخطة",
+        planContinue: "مزيان. نكملو دابا الموعد خطوة بخطوة.",
+        paymentMessage:
+          "باش تحجز الموعد وتكمل العملية، فعل الخطة ديالك. أنا نرشدك خطوة بخطوة.",
+        procedureShort: "الإجراء",
+      };
+    }
+
+    if (lang === "en") {
+      return {
+        chatReplies: {
+          default: "Understood. Do you have any other questions about your procedure?",
+          hola: "Hi, I’m Sara. How can I help you today?",
+          documentos:
+            "For most procedures you need: NIE or passport, registration certificate, and photos. Tell me your procedure and I’ll guide you step by step.",
+          cita: "I’ll help you find the appointment. Select the procedure and we’ll continue together step by step.",
+          precio:
+            "You need to activate your plan first to continue with guided booking and agent assistance.",
+          formulario:
+            "Below you can open the official forms for the selected procedure.",
+        },
+        tramites: [
+          {
+            value: "tie",
+            label: "TIE Card Renewal",
+          },
+          { value: "regreso", label: "Return Authorization" },
+          { value: "nie", label: "NIE Certificates and Assignment" },
+          { value: "ue", label: "EU Certificates" },
+          { value: "estudiantes", label: "Students" },
+          { value: "trabajo", label: "Work Authorization" },
+          { value: "arraigo", label: "Social / Work / Family Rootedness" },
+          { value: "familiar", label: "Family Reunification" },
+        ] as TramiteItem[],
+        docsByTramite: {
+          tie: [
+            { nombre: "Valid passport or NIE", estado: "ok" },
+            { nombre: "Current registration certificate", estado: "ok" },
+            { nombre: "Expired or soon-to-expire TIE card", estado: "ok" },
+            { nombre: "Recent photos (2)", estado: "ok" },
+            { nombre: "EX-17 form", estado: "warn" },
+          ],
+          regreso: [
+            { nombre: "Valid passport", estado: "ok" },
+            { nombre: "Valid TIE", estado: "ok" },
+            { nombre: "Travel justification", estado: "warn" },
+          ],
+          nie: [
+            { nombre: "Valid passport", estado: "ok" },
+            { nombre: "NIE request justification", estado: "warn" },
+            { nombre: "EX-15 form", estado: "missing" },
+            { nombre: "Recent photos (2)", estado: "ok" },
+          ],
+          ue: [
+            { nombre: "Valid EU passport", estado: "ok" },
+            { nombre: "Registration certificate", estado: "ok" },
+            { nombre: "EU form", estado: "warn" },
+          ],
+          estudiantes: [
+            { nombre: "Valid passport", estado: "ok" },
+            { nombre: "University admission letter", estado: "warn" },
+            { nombre: "Health insurance", estado: "ok" },
+            { nombre: "Financial proof", estado: "missing" },
+          ],
+          trabajo: [
+            { nombre: "Valid passport", estado: "ok" },
+            { nombre: "Employment contract", estado: "warn" },
+            { nombre: "Social Security registration", estado: "missing" },
+            { nombre: "EX-07 form", estado: "missing" },
+          ],
+          arraigo: [
+            { nombre: "Valid passport", estado: "ok" },
+            { nombre: "Registration certificate (3 years)", estado: "ok" },
+            { nombre: "Criminal record certificate", estado: "warn" },
+            { nombre: "EX-10 form", estado: "missing" },
+          ],
+          familiar: [
+            { nombre: "Valid passport", estado: "ok" },
+            { nombre: "EU/Spanish family certificate", estado: "ok" },
+            { nombre: "Family book / marriage certificate", estado: "warn" },
+            { nombre: "EX-19 form", estado: "missing" },
+          ],
+        } as Record<string, DocItem[]>,
+        formsByTramite: {
+          tie: [
+            {
+              nombre: "TIE Card Renewal",
+              codigo: "EX-17",
+              url: "https://extranjeros.inclusion.gob.es/ficheros/Modelos_solicitudes/mod_solicitudes2/17-Formulario_TIE.pdf",
+            },
+          ],
+          regreso: [
+            {
+              nombre: "Return Authorization",
+              codigo: "EX-13",
+              url: "https://extranjeros.inclusion.gob.es/ficheros/Modelos_solicitudes/mod_solicitudes2/13-Autorizacion_de_regreso.pdf",
+            },
+          ],
+          nie: [
+            {
+              nombre: "Foreigner identity number request",
+              codigo: "EX-15",
+              url: "https://extranjeros.inclusion.gob.es/ficheros/Modelos_solicitudes/mod_solicitudes2/15-Solicitud_NIE.pdf",
+            },
+          ],
+          ue: [
+            {
+              nombre: "EU citizen registration",
+              codigo: "EU",
+              url: "https://extranjeros.inclusion.gob.es/ficheros/Modelos_solicitudes/mod_solicitudes2/EU-Cert_registro_ciudadano_UE.pdf",
+            },
+          ],
+          estudiantes: [
+            {
+              nombre: "Study stay",
+              codigo: "EX-01",
+              url: "https://extranjeros.inclusion.gob.es/ficheros/Modelos_solicitudes/mod_solicitudes2/01-Formulario_estancia_estudios.pdf",
+            },
+          ],
+          trabajo: [
+            {
+              nombre: "Work authorization",
+              codigo: "EX-07",
+              url: "https://extranjeros.inclusion.gob.es/ficheros/Modelos_solicitudes/mod_solicitudes2/07-Autorizacion_residencia_trabajo.pdf",
+            },
+          ],
+          arraigo: [
+            {
+              nombre: "Social / Work Rootedness",
+              codigo: "EX-10",
+              url: "https://extranjeros.inclusion.gob.es/ficheros/Modelos_solicitudes/mod_solicitudes2/10-Arraigo_social_laboral.pdf",
+            },
+          ],
+          familiar: [
+            {
+              nombre: "Family Reunification",
+              codigo: "EX-02",
+              url: "https://extranjeros.inclusion.gob.es/ficheros/Modelos_solicitudes/mod_solicitudes2/02-Reagrupacion_familiar.pdf",
+            },
+          ],
+        } as Record<string, FormItem[]>,
+        initialChat:
+          "Hi, I’m Sara. If you prefer to write, I can answer any question about your procedure here.",
+        online: "Online",
+        agentRole: "Appointments Advisor",
+        procedureLabel: "PROCEDURE",
+        procedurePlaceholder: "Select the procedure from the list",
+        personalData: "PERSONAL DATA",
+        fullName: "Name",
+        phone: "Phone",
+        loadingUserData: "Loading user data...",
+        aiFilledData: "Data automatically filled by the AI agent",
+        accept: "Accept",
+        govSmall: "immigration:",
+        govTitle: "APPOINTMENT",
+        govLine1: "GENERAL OFFICE",
+        govLine2: "OF IMMIGRATION",
+        govLine3: "AND FOREIGNERS",
+        confirmTitle: "APPOINTMENT CONFIRMED!",
+        date: "Date",
+        time: "Time",
+        office: "Office",
+        appointmentNumber: "Appointment No.",
+        reservationSaved: "Reservation saved successfully",
+        sourceLabel: "Source: extranjeros.inclusion.gob.es",
+        muteSimple: "Mute",
+        foundSuccessTitle: "Appointment found!",
+        foundSuccessDesc: "Now confirm to continue.",
+        foundErrorTitle: "Error finding appointment",
+        foundErrorDesc: "Could not search for an appointment right now.",
+        confirmSuccessTitle: "Appointment confirmed!",
+        confirmSuccessDesc: "The booking was saved successfully.",
+        planActivated: "Plan activated",
+        planContinue: "Perfect. Let's continue with your appointment step by step.",
+        paymentMessage:
+          "To book your appointment and continue the process, activate your plan. I’ll guide you step by step.",
+        procedureShort: "Procedure",
+      };
+    }
+
+    return {
+      chatReplies: {
+        default: "Entendido. ¿Tienes más preguntas sobre tu trámite?",
+        hola: "¡Hola! Soy Sara. ¿En qué trámite te puedo ayudar hoy?",
+        documentos:
+          "Para la mayoría de trámites necesitas: NIE o pasaporte, empadronamiento y fotografías. Dime tu trámite y te guío paso a paso.",
+        cita: "Te ayudo a buscar la cita. Selecciona el trámite y seguimos juntas paso a paso.",
+        precio:
+          "Primero debes activar tu plan para continuar con la reserva guiada y la asistencia del agente.",
+        formulario:
+          "Abajo puedes abrir los formularios oficiales del trámite seleccionado.",
+      },
+      tramites: [
+        {
+          value: "tie",
+          label: "Renovación de Tarjeta de Identidad de Extranjero (TIE)",
+        },
+        { value: "regreso", label: "Autorización de Regreso" },
+        { value: "nie", label: "Certificados y Asignación NIE" },
+        { value: "ue", label: "Certificados UE" },
+        { value: "estudiantes", label: "Estudiantes" },
+        { value: "trabajo", label: "Autorización de Trabajo" },
+        { value: "arraigo", label: "Arraigo Social / Laboral / Familiar" },
+        { value: "familiar", label: "Reagrupación Familiar" },
+      ] as TramiteItem[],
+      docsByTramite: {
+        tie: [
+          { nombre: "Pasaporte o NIE vigente", estado: "ok" },
+          { nombre: "Empadronamiento actual", estado: "ok" },
+          { nombre: "Tarjeta TIE caducada o próxima a caducar", estado: "ok" },
+          { nombre: "Fotografías recientes (2)", estado: "ok" },
+          { nombre: "Formulario EX-17", estado: "warn" },
+        ],
+        regreso: [
+          { nombre: "Pasaporte vigente", estado: "ok" },
+          { nombre: "TIE vigente", estado: "ok" },
+          { nombre: "Justificación del viaje", estado: "warn" },
+        ],
+        nie: [
+          { nombre: "Pasaporte vigente", estado: "ok" },
+          { nombre: "Justificación solicitud NIE", estado: "warn" },
+          { nombre: "Formulario EX-15", estado: "missing" },
+          { nombre: "Fotografías recientes (2)", estado: "ok" },
+        ],
+        ue: [
+          { nombre: "Pasaporte UE vigente", estado: "ok" },
+          { nombre: "Empadronamiento", estado: "ok" },
+          { nombre: "Formulario EU", estado: "warn" },
+        ],
+        estudiantes: [
+          { nombre: "Pasaporte vigente", estado: "ok" },
+          { nombre: "Carta de admisión universitaria", estado: "warn" },
+          { nombre: "Seguro médico", estado: "ok" },
+          { nombre: "Justificante económico", estado: "missing" },
+        ],
+        trabajo: [
+          { nombre: "Pasaporte vigente", estado: "ok" },
+          { nombre: "Contrato de trabajo", estado: "warn" },
+          { nombre: "Alta en Seguridad Social", estado: "missing" },
+          { nombre: "Formulario EX-07", estado: "missing" },
+        ],
+        arraigo: [
+          { nombre: "Pasaporte vigente", estado: "ok" },
+          { nombre: "Empadronamiento (3 años)", estado: "ok" },
+          { nombre: "Certificado antecedentes penales", estado: "warn" },
+          { nombre: "Formulario EX-10", estado: "missing" },
+        ],
+        familiar: [
+          { nombre: "Pasaporte vigente", estado: "ok" },
+          { nombre: "Certificado familiar UE/español", estado: "ok" },
+          { nombre: "Libro de familia / acta matrimonial", estado: "warn" },
+          { nombre: "Formulario EX-19", estado: "missing" },
+        ],
+      } as Record<string, DocItem[]>,
+      formsByTramite: {
+        tie: [
+          {
+            nombre: "Renovación de Tarjeta de Identidad (TIE)",
+            codigo: "EX-17",
+            url: "https://extranjeros.inclusion.gob.es/ficheros/Modelos_solicitudes/mod_solicitudes2/17-Formulario_TIE.pdf",
+          },
+        ],
+        regreso: [
+          {
+            nombre: "Autorización de Regreso",
+            codigo: "EX-13",
+            url: "https://extranjeros.inclusion.gob.es/ficheros/Modelos_solicitudes/mod_solicitudes2/13-Autorizacion_de_regreso.pdf",
+          },
+        ],
+        nie: [
+          {
+            nombre: "Asignación número de identidad extranjero",
+            codigo: "EX-15",
+            url: "https://extranjeros.inclusion.gob.es/ficheros/Modelos_solicitudes/mod_solicitudes2/15-Solicitud_NIE.pdf",
+          },
+        ],
+        ue: [
+          {
+            nombre: "Registro de ciudadano UE",
+            codigo: "EU",
+            url: "https://extranjeros.inclusion.gob.es/ficheros/Modelos_solicitudes/mod_solicitudes2/EU-Cert_registro_ciudadano_UE.pdf",
+          },
+        ],
+        estudiantes: [
+          {
+            nombre: "Estancia por estudios",
+            codigo: "EX-01",
+            url: "https://extranjeros.inclusion.gob.es/ficheros/Modelos_solicitudes/mod_solicitudes2/01-Formulario_estancia_estudios.pdf",
+          },
+        ],
+        trabajo: [
+          {
+            nombre: "Autorización de trabajo",
+            codigo: "EX-07",
+            url: "https://extranjeros.inclusion.gob.es/ficheros/Modelos_solicitudes/mod_solicitudes2/07-Autorizacion_residencia_trabajo.pdf",
+          },
+        ],
+        arraigo: [
+          {
+            nombre: "Arraigo Social / Laboral",
+            codigo: "EX-10",
+            url: "https://extranjeros.inclusion.gob.es/ficheros/Modelos_solicitudes/mod_solicitudes2/10-Arraigo_social_laboral.pdf",
+          },
+        ],
+        familiar: [
+          {
+            nombre: "Reagrupación Familiar",
+            codigo: "EX-02",
+            url: "https://extranjeros.inclusion.gob.es/ficheros/Modelos_solicitudes/mod_solicitudes2/02-Reagrupacion_familiar.pdf",
+          },
+        ],
+      } as Record<string, FormItem[]>,
+      initialChat:
+        "Hola, soy Sara. ¿Prefieres escribir? Aquí puedo responderte cualquier duda sobre tu trámite.",
+      online: "En línea",
+      agentRole: "Asesora de Citas",
+      procedureLabel: "TRÁMITE",
+      procedurePlaceholder: "Seleccione el trámite entre los relacionados",
+      personalData: "DATOS PERSONALES",
+      fullName: "Nombre",
+      phone: "Teléfono",
+      loadingUserData: "Cargando datos del usuario...",
+      aiFilledData: "Datos rellenados automáticamente por el agente IA",
+      accept: "Aceptar",
+      govSmall: "extranjería:",
+      govTitle: "CITA PREVIA",
+      govLine1: "COMISARÍA GENERAL",
+      govLine2: "DE EXTRANJERÍA",
+      govLine3: "E INMIGRACIÓN",
+      confirmTitle: "¡CITA CONFIRMADA!",
+      date: "Fecha",
+      time: "Hora",
+      office: "Oficina",
+      appointmentNumber: "Nº Cita",
+      reservationSaved: "Reserva guardada correctamente",
+      sourceLabel: "Fuente: extranjeros.inclusion.gob.es",
+      muteSimple: "Mute",
+      foundSuccessTitle: "¡Cita encontrada!",
+      foundSuccessDesc: "Ahora confirma para continuar.",
+      foundErrorTitle: "Error al buscar cita",
+      foundErrorDesc: "No se pudo buscar la cita en este momento.",
+      confirmSuccessTitle: "¡Cita confirmada!",
+      confirmSuccessDesc: "La reserva ha quedado registrada correctamente.",
+      planActivated: "Plan activado",
+      planContinue: "Perfecto. Continuamos con tu cita paso a paso.",
+      paymentMessage:
+        "Para reservar tu cita y continuar con el proceso, activa tu plan. Yo te guío paso a paso.",
+      procedureShort: "Trámite",
+    };
+  }, [lang]);
+
+  const TRAMITES = ui.tramites;
   const selectedTramiteLabel =
     TRAMITES.find((item) => item.value === selectedTramite)?.label ||
-    "Renovación de Tarjeta de Identidad de Extranjero (TIE')";
+    TRAMITES[0].label;
 
   const docsForSelectedTramite =
-    DOCS_BY_TRAMITE[selectedTramite] ?? DOCS_BY_TRAMITE.tie;
+    ui.docsByTramite[selectedTramite] ?? ui.docsByTramite.tie;
 
   const formsForSelectedTramite =
-    FORMS_BY_TRAMITE[selectedTramite] ?? FORMS_BY_TRAMITE.tie;
+    ui.formsByTramite[selectedTramite] ?? ui.formsByTramite.tie;
+
+  const [chatMessages, setChatMessages] = useState<ChatMsg[]>([
+    {
+      from: "agent",
+      text: ui.initialChat,
+    },
+  ]);
+
+  useEffect(() => {
+    setChatMessages([
+      {
+        from: "agent",
+        text: ui.initialChat,
+      },
+    ]);
+  }, [ui.initialChat]);
 
   const agentSteps = useMemo(() => {
+    if (lang === "darija") {
+      return [
+        {
+          text: `سلام، أنا سارة. اختار الإجراء ديالك وأنا نرشدك خطوة بخطوة. غادي نضغطو على «${selectedTramiteLabel}»`,
+          highlight: selectedTramiteLabel,
+        },
+        {
+          text: "مزيان. عمرت البيانات ديالك أوتوماتيكياً. دابا ضغط على «موافق» باش نقلبو على الموعد المتاح.",
+          highlight: "موافق",
+        },
+        {
+          text: "ها هو الموعد تلقيناه. دابا ضغط على «تأكيد» باش نساليو العملية.",
+          highlight: "تأكيد",
+        },
+      ];
+    }
+
+    if (lang === "en") {
+      return [
+        {
+          text: `Hi, I’m Sara. Select your procedure and I’ll guide you step by step. Let’s click on “${selectedTramiteLabel}”`,
+          highlight: selectedTramiteLabel,
+        },
+        {
+          text: "Perfect. I’ve filled in your data automatically. Now click “Accept” to search for the available appointment.",
+          highlight: "Accept",
+        },
+        {
+          text: "Great. I found an available appointment. Now click “Confirm” to complete the process.",
+          highlight: "Confirm",
+        },
+      ];
+    }
+
     return [
       {
         text: `Hola, soy Sara. Selecciona tu trámite y yo me encargo de guiarte paso a paso. Vamos a pulsar «${selectedTramiteLabel}»`,
@@ -254,7 +679,7 @@ export default function BuscarCitas() {
         highlight: "Confirmar",
       },
     ];
-  }, [selectedTramiteLabel]);
+  }, [lang, selectedTramiteLabel]);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -328,12 +753,12 @@ export default function BuscarCitas() {
 
     setTimeout(() => {
       const foundKey =
-        Object.keys(CHAT_REPLIES).find((key) => lowerText.includes(key)) ||
+        Object.keys(ui.chatReplies).find((key) => lowerText.includes(key)) ||
         "default";
 
       setChatMessages((prev) => [
         ...prev,
-        { from: "agent", text: CHAT_REPLIES[foundKey] },
+        { from: "agent", text: ui.chatReplies[foundKey] },
       ]);
     }, 500);
   };
@@ -344,11 +769,8 @@ export default function BuscarCitas() {
     setStep(1);
 
     toast({
-      title: tr("plan_activated", "Plan activado"),
-      description: tr(
-        "plan_continue_process",
-        "Perfecto. Continuamos con tu cita paso a paso."
-      ),
+      title: ui.planActivated,
+      description: ui.planContinue,
     });
   };
 
@@ -364,24 +786,16 @@ export default function BuscarCitas() {
           setStep(2);
 
           toast({
-            title: tr("buscar_found_success_title", "¡Cita encontrada!"),
-            description: tr(
-              "buscar_found_success_desc",
-              "Ahora confirma para continuar."
-            ),
+            title: ui.foundSuccessTitle,
+            description: ui.foundSuccessDesc,
           });
         },
         onError: (error: unknown) => {
           const message =
-            error instanceof Error
-              ? error.message
-              : tr(
-                  "buscar_found_error_desc",
-                  "No se pudo buscar la cita en este momento."
-                );
+            error instanceof Error ? error.message : ui.foundErrorDesc;
 
           toast({
-            title: tr("buscar_found_error_title", "Error al buscar cita"),
+            title: ui.foundErrorTitle,
             description: message,
             variant: "destructive",
           });
@@ -394,11 +808,8 @@ export default function BuscarCitas() {
     setConfirmed(true);
 
     toast({
-      title: tr("buscar_confirm_success_title", "¡Cita confirmada!"),
-      description: tr(
-        "buscar_confirm_success_desc",
-        "La reserva ha quedado registrada correctamente."
-      ),
+      title: ui.confirmSuccessTitle,
+      description: ui.confirmSuccessDesc,
     });
   };
 
@@ -408,10 +819,21 @@ export default function BuscarCitas() {
   const profileEmail = profile?.email?.trim() || "";
 
   const finalLocator = appointmentData?.locator || "ESP-2026-034821";
-  const finalDate = appointmentData?.date || "Martes, 24 de Marzo 2026";
+  const finalDate =
+    appointmentData?.date ||
+    (lang === "en"
+      ? "Tuesday, March 24, 2026"
+      : lang === "darija"
+      ? "الثلاثاء 24 مارس 2026"
+      : "Martes, 24 de Marzo 2026");
   const finalTime = appointmentData?.time || "10:30";
   const finalOffice =
-    appointmentData?.office || "Comisaría de Extranjería - Madrid";
+    appointmentData?.office ||
+    (lang === "en"
+      ? "Immigration Office - Madrid"
+      : lang === "darija"
+      ? "مكتب الهجرة - مدريد"
+      : "Comisaría de Extranjería - Madrid");
   const finalPdfUrl =
     appointmentData?.confirmation_pdf_url || appointmentData?.pdf_url || null;
 
@@ -431,10 +853,7 @@ export default function BuscarCitas() {
         open={showPayment}
         onClose={() => setShowPayment(false)}
         onSelectPlan={handleSelectPlan}
-        agentMessage={tr(
-          "buscar_payment_agent_message",
-          "Para reservar tu cita y continuar con el proceso, activa tu plan. Yo te guío paso a paso."
-        )}
+        agentMessage={ui.paymentMessage}
       />
 
       <main className="flex-1 relative z-10 flex flex-col pt-16 pb-0">
@@ -461,9 +880,7 @@ export default function BuscarCitas() {
 
               <div className="absolute top-3 left-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/60 border border-white/10 backdrop-blur-md">
                 <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                <span className="text-xs font-medium text-white">
-                  {tr("online", "En línea")}
-                </span>
+                <span className="text-xs font-medium text-white">{ui.online}</span>
               </div>
 
               <div className="absolute top-3 right-3 relative">
@@ -509,7 +926,7 @@ export default function BuscarCitas() {
               <div className="absolute bottom-14 right-3 text-right">
                 <p className="text-white font-bold text-sm drop-shadow-lg">Sara</p>
                 <p className="text-white/70 text-xs drop-shadow-lg">
-                  {tr("buscar_agent_role", "Asesora de Citas")}
+                  {ui.agentRole}
                 </p>
               </div>
             </div>
@@ -523,9 +940,7 @@ export default function BuscarCitas() {
               }`}
             >
               <MessageSquare className="w-4 h-4" />
-              {showChat
-                ? t("buscar_chat_close")
-                : t("buscar_chat_open")}
+              {showChat ? t("buscar_chat_close") : t("buscar_chat_open")}
             </button>
 
             <AnimatePresence>
@@ -666,7 +1081,7 @@ export default function BuscarCitas() {
                 ) : (
                   <Mic className="w-4 h-4" />
                 )}
-                {tr("buscar_mute_simple", "Mute")}
+                {ui.muteSimple}
               </button>
 
               <button
@@ -681,7 +1096,7 @@ export default function BuscarCitas() {
                 }`}
               >
                 <FileText className="w-4 h-4 text-primary" />
-                {tr("buscar_docs", "Documentos")}
+                {t("buscar_docs")}
               </button>
 
               <button
@@ -696,7 +1111,7 @@ export default function BuscarCitas() {
                 }`}
               >
                 <Settings className="w-4 h-4 text-secondary" />
-                {tr("buscar_forms", "Formularios")}
+                {t("buscar_forms")}
               </button>
             </div>
           </motion.div>
@@ -739,22 +1154,22 @@ export default function BuscarCitas() {
                     </div>
 
                     <div className="text-[9px] leading-tight text-gray-600 font-medium uppercase shrink-0">
-                      <div>COMISARÍA GENERAL</div>
-                      <div>DE EXTRANJERÍA</div>
-                      <div>E INMIGRACIÓN</div>
+                      <div>{ui.govLine1}</div>
+                      <div>{ui.govLine2}</div>
+                      <div>{ui.govLine3}</div>
                     </div>
 
                     <div className="ml-auto text-right shrink-0">
-                      <div className="text-[10px] text-gray-500">extranjería:</div>
+                      <div className="text-[10px] text-gray-500">{ui.govSmall}</div>
                       <div className="text-sm sm:text-base font-black text-[#003366]">
-                        CITA PREVIA
+                        {ui.govTitle}
                       </div>
                     </div>
                   </div>
 
                   <div className="mb-4">
                     <p className="text-xs font-bold text-gray-700 uppercase tracking-wide mb-2">
-                      {tr("procedure", "TRÁMITE")}
+                      {ui.procedureLabel}
                     </p>
 
                     <select
@@ -762,12 +1177,7 @@ export default function BuscarCitas() {
                       value={selectedTramite}
                       onChange={(e) => handleTramiteClick(e.target.value)}
                     >
-                      <option value="">
-                        {tr(
-                          "select_procedure_placeholder",
-                          "Seleccione el trámite entre los relacionados"
-                        )}
-                      </option>
+                      <option value="">{ui.procedurePlaceholder}</option>
                       {TRAMITES.map((item) => (
                         <option key={item.value} value={item.value}>
                           {item.label}
@@ -800,7 +1210,7 @@ export default function BuscarCitas() {
                         className="mb-5 space-y-3"
                       >
                         <p className="text-xs font-bold text-gray-700 uppercase tracking-wide">
-                          {tr("personal_data", "DATOS PERSONALES")}
+                          {ui.personalData}
                         </p>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -814,13 +1224,13 @@ export default function BuscarCitas() {
                             className="border border-gray-300 rounded px-3 py-2 text-sm text-gray-500 bg-gray-50"
                             value={profileName}
                             readOnly
-                            placeholder={tr("full_name", "Nombre")}
+                            placeholder={ui.fullName}
                           />
                           <input
                             className="border border-gray-300 rounded px-3 py-2 text-sm text-gray-500 bg-gray-50"
                             value={profilePhone}
                             readOnly
-                            placeholder={tr("phone", "Teléfono")}
+                            placeholder={ui.phone}
                           />
                           <input
                             className="border border-gray-300 rounded px-3 py-2 text-sm text-gray-500 bg-gray-50"
@@ -832,15 +1242,7 @@ export default function BuscarCitas() {
 
                         <p className="text-[10px] text-gray-400 flex items-center gap-1">
                           <Shield className="w-3 h-3 text-green-500" />
-                          {profileLoading
-                            ? tr(
-                                "loading_user_data",
-                                "Cargando datos del usuario..."
-                              )
-                            : tr(
-                                "ai_filled_data",
-                                "Datos rellenados automáticamente por el agente IA"
-                              )}
+                          {profileLoading ? ui.loadingUserData : ui.aiFilledData}
                         </p>
                       </motion.div>
                     )}
@@ -855,7 +1257,7 @@ export default function BuscarCitas() {
                       {scheduleMutation.isPending && (
                         <RefreshCw className="w-4 h-4 animate-spin" />
                       )}
-                      {tr("accept", "Aceptar")}
+                      {ui.accept}
                     </button>
                   </div>
                 </>
@@ -871,13 +1273,13 @@ export default function BuscarCitas() {
 
                   <div>
                     <h2 className="text-xl font-black text-[#003366] mb-1">
-                      {tr("appointment_confirmed_title", "¡CITA CONFIRMADA!")}
+                      {ui.confirmTitle}
                     </h2>
 
                     <div className="mt-4 bg-gray-50 border border-gray-200 rounded-xl p-4 text-left space-y-2">
                       <p className="text-sm">
                         <span className="font-bold text-gray-500">
-                          {tr("procedure_label", "Trámite")}:
+                          {ui.procedureShort}:
                         </span>{" "}
                         <span className="text-gray-800">
                           {appointmentData?.tramite || selectedTramiteLabel}
@@ -886,28 +1288,28 @@ export default function BuscarCitas() {
 
                       <p className="text-sm">
                         <span className="font-bold text-gray-500">
-                          {tr("date", "Fecha")}:
+                          {ui.date}:
                         </span>{" "}
                         <span className="text-gray-800">{finalDate}</span>
                       </p>
 
                       <p className="text-sm">
                         <span className="font-bold text-gray-500">
-                          {tr("time", "Hora")}:
+                          {ui.time}:
                         </span>{" "}
                         <span className="text-gray-800">{finalTime}</span>
                       </p>
 
                       <p className="text-sm">
                         <span className="font-bold text-gray-500">
-                          {tr("office", "Oficina")}:
+                          {ui.office}:
                         </span>{" "}
                         <span className="text-gray-800">{finalOffice}</span>
                       </p>
 
                       <p className="text-sm">
                         <span className="font-bold text-gray-500">
-                          {tr("appointment_number", "Nº Cita")}:
+                          {ui.appointmentNumber}:
                         </span>{" "}
                         <span className="font-mono text-green-700">
                           {finalLocator}
@@ -919,10 +1321,7 @@ export default function BuscarCitas() {
                   <div className="flex flex-wrap gap-3 justify-center">
                     <div className="flex items-center gap-2 bg-primary/10 border border-primary/30 rounded-xl px-4 py-2 text-sm text-primary font-medium">
                       <CheckCircle2 className="w-4 h-4" />
-                      {tr(
-                        "reservation_saved",
-                        "Reserva guardada correctamente"
-                      )}
+                      {ui.reservationSaved}
                     </div>
 
                     {finalPdfUrl ? (
@@ -1136,7 +1535,7 @@ export default function BuscarCitas() {
                   ))}
 
                   <p className="text-[10px] text-white/30 text-center pt-1">
-                    Fuente: extranjeros.inclusion.gob.es
+                    {ui.sourceLabel}
                   </p>
                 </div>
               </div>
