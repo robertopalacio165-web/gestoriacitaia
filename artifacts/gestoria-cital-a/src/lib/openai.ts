@@ -84,7 +84,7 @@ export async function enviarMensajeSara(mensaje: string): Promise<string> {
       throw new Error("Tiempo de espera agotado para la respuesta de Sara");
     }
 
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+   await new Promise((r) => setTimeout(r, 350));
 
     const checkRes = await fetch(
       `https://api.openai.com/v1/threads/${thread.id}/runs/${run.id}`,
