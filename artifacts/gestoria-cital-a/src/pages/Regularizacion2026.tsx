@@ -68,15 +68,11 @@ export default function Regularizacion2026() {
   const [showDocs, setShowDocs] = useState(false);
   const [showForms, setShowForms] = useState(false);
   const [uploadingId, setUploadingId] = useState<string | null>(null);
+  const [sendingChat, setSendingChat] = useState(false);
 
   const { t, lang } = useLang();
   const { toast } = useToast();
   const chatEndRef = useRef<HTMLDivElement>(null);
-
-  const tr = (key: string, fallback: string) => {
-    const value = t(key as never);
-    return value && value !== key ? value : fallback;
-  };
 
   const ui = useMemo(() => {
     if (lang === "darija") {
@@ -772,50 +768,53 @@ export default function Regularizacion2026() {
     if (step < 1) setStep(1);
   };
 
- const handleSendChat = async () => {
-  if (!chatInput.trim()) return;
+  const handleSendChat = async () => {
+    if (!chatInput.trim() || sendingChat) return;
 
-  const userMsgRaw = chatInput.trim();
-
-  setChatMessages((prev) => [
-    ...prev,
-    { from: "user", text: userMsgRaw },
-  ]);
-
-  setChatInput("");
-
-  try {
-    const res = await fetch("/api/chat", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        message: userMsgRaw,
-        context: "regularizacion_2026",
-        lang,
-      }),
-    });
-
-    const data = await res.json();
+    const userMsgRaw = chatInput.trim();
 
     setChatMessages((prev) => [
       ...prev,
-      {
-        from: "agent",
-        text: data.reply || "Error IA",
-      },
+      { from: "user", text: userMsgRaw },
     ]);
-  } catch (err) {
-    setChatMessages((prev) => [
-      ...prev,
-      {
-        from: "agent",
-        text: "Error conectando con la IA",
-      },
-    ]);
-  }
-};
+    setChatInput("");
+    setSendingChat(true);
+
+    try {
+      const respuesta = await enviarMensajeMohamed(userMsgRaw);
+
+      setChatMessages((prev) => [
+        ...prev,
+        {
+          from: "agent",
+          text:
+            respuesta ||
+            (lang === "darija"
+              ? "سمح ليا، ما قدرتش نجاوب دابا."
+              : lang === "en"
+              ? "Sorry, I could not answer right now."
+              : "Lo siento, no pude responder ahora mismo."),
+        },
+      ]);
+    } catch (error) {
+      console.error("Error conectando con Mohamed:", error);
+
+      setChatMessages((prev) => [
+        ...prev,
+        {
+          from: "agent",
+          text:
+            lang === "darija"
+              ? "وقع مشكل فالاتصال مع محمد، عاود حاول."
+              : lang === "en"
+              ? "There was a connection error with Mohamed. Please try again."
+              : "Error conectando con Mohamed, intenta otra vez.",
+        },
+      ]);
+    } finally {
+      setSendingChat(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background text-foreground relative flex flex-col">
@@ -985,6 +984,20 @@ export default function Regularizacion2026() {
                         </div>
                       </div>
                     ))}
+
+                    {sendingChat && (
+                      <div className="flex gap-2 justify-start">
+                        <img
+                          src={`${import.meta.env.BASE_URL}images/avatar-mohamed.png`}
+                          className="w-6 h-6 rounded-full object-cover object-top shrink-0"
+                          alt=""
+                        />
+                        <div className="px-3 py-1.5 rounded-xl text-xs max-w-[85%] leading-relaxed bg-white/8 text-white/90 border border-white/10">
+                          ...
+                        </div>
+                      </div>
+                    )}
+
                     <div ref={chatEndRef} />
                   </div>
 
@@ -998,7 +1011,8 @@ export default function Regularizacion2026() {
                     />
                     <button
                       onClick={handleSendChat}
-                      className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center hover:bg-primary/90 transition-colors shrink-0"
+                      disabled={sendingChat}
+                      className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center hover:bg-primary/90 transition-colors shrink-0 disabled:opacity-60"
                     >
                       <Send className="w-3.5 h-3.5 text-primary-foreground" />
                     </button>
