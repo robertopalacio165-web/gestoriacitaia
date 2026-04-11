@@ -771,29 +771,50 @@ export default function Regularizacion2026() {
     if (step < 1) setStep(1);
   };
 
-  const handleSendChat = () => {
-    if (!chatInput.trim()) return;
+ const handleSendChat = async () => {
+  if (!chatInput.trim()) return;
 
-    const userMsgRaw = chatInput.trim();
-    const userMsg = userMsgRaw.toLowerCase();
+  const userMsgRaw = chatInput.trim();
+
+  setChatMessages((prev) => [
+    ...prev,
+    { from: "user", text: userMsgRaw },
+  ]);
+
+  setChatInput("");
+
+  try {
+    const res = await fetch("/api/chat", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        message: userMsgRaw,
+        context: "regularizacion_2026",
+        lang,
+      }),
+    });
+
+    const data = await res.json();
 
     setChatMessages((prev) => [
       ...prev,
-      { from: "user", text: userMsgRaw },
+      {
+        from: "agent",
+        text: data.reply || "Error IA",
+      },
     ]);
-    setChatInput("");
-
-    setTimeout(() => {
-      const key =
-        Object.keys(ui.chatResponses).find((k) => userMsg.includes(k)) ||
-        "default";
-
-      setChatMessages((prev) => [
-        ...prev,
-        { from: "agent", text: ui.chatResponses[key] },
-      ]);
-    }, 800);
-  };
+  } catch (err) {
+    setChatMessages((prev) => [
+      ...prev,
+      {
+        from: "agent",
+        text: "Error conectando con la IA",
+      },
+    ]);
+  }
+};
 
   return (
     <div className="min-h-screen bg-background text-foreground relative flex flex-col">
