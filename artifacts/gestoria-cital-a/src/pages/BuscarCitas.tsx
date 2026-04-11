@@ -72,6 +72,7 @@ export default function BuscarCitas() {
   const [chatInput, setChatInput] = useState("");
   const [showPayment, setShowPayment] = useState(false);
   const [planActivo, setPlanActivo] = useState<string | null>(null);
+  const [userMessageCount, setUserMessageCount] = useState(0);
   const [profile, setProfile] = useState<ProfileRow | null>(null);
   const [appointmentData, setAppointmentData] = useState<AppointmentResult | null>(
     null
@@ -238,8 +239,10 @@ export default function BuscarCitas() {
         planActivated: "تفعلات الخطة",
         planContinue: "مزيان. نكملو دابا الموعد خطوة بخطوة.",
         paymentMessage:
-          "باش تحجز الموعد وتكمل العملية، فعل الخطة ديالك. أنا نرشدك خطوة بخطوة.",
-        procedureShort: "الإجراء",
+  "باش تحجز الموعد وتكمل العملية، فعل الخطة ديالك. أنا نرشدك خطوة بخطوة.",
+paymentTriggerMessage:
+  "مزيان. إلى بغيتي نكمل معاك حتى نساليو الموعد، فعل الخطة ودابا نكملو إن شاء الله.",
+procedureShort: "الإجراء",
       };
     }
 
@@ -396,8 +399,10 @@ export default function BuscarCitas() {
         planActivated: "Plan activated",
         planContinue: "Perfect. Let's continue with your appointment step by step.",
         paymentMessage:
-          "To book your appointment and continue the process, activate your plan. I’ll guide you step by step.",
-        procedureShort: "Procedure",
+  "To book your appointment and continue the process, activate your plan. I’ll guide you step by step.",
+paymentTriggerMessage:
+  "Perfect. If you want me to continue with you until the appointment is completed, activate your plan and we continue now.",
+procedureShort: "Procedure",
       };
     }
 
@@ -556,8 +561,10 @@ export default function BuscarCitas() {
       planActivated: "Plan activado",
       planContinue: "Perfecto. Continuamos con tu cita paso a paso.",
       paymentMessage:
-        "Para reservar tu cita y continuar con el proceso, activa tu plan. Yo te guío paso a paso.",
-      procedureShort: "Trámite",
+  "Para reservar tu cita y continuar con el proceso, activa tu plan. Yo te guío paso a paso.",
+paymentTriggerMessage:
+  "Perfecto. Si quieres que siga contigo hasta terminar la cita, activa tu plan y seguimos ahora mismo.",
+procedureShort: "Trámite",
     };
   }, [lang]);
 
@@ -689,61 +696,70 @@ export default function BuscarCitas() {
   }, []);
 
   const handleTramiteClick = (value: string) => {
-    setSelectedTramite(value);
+  setSelectedTramite(value);
 
-    if (step === 0) {
-      if (!planActivo) {
-        setTimeout(() => setShowPayment(true), 500);
-      } else {
-        setStep(1);
-      }
-    }
-  };
+  if (step === 0 && planActivo) {
+    setStep(1);
+  }
+};
 
-  const handleSendChat = async () => {
-    if (!chatInput.trim() || sendingChat) return;
+const handleSendChat = async () => {
+  if (!chatInput.trim() || sendingChat) return;
 
-    const rawText = chatInput.trim();
+  const rawText = chatInput.trim();
+  const nextUserCount = userMessageCount + 1;
 
-    setChatMessages((prev) => [...prev, { from: "user", text: rawText }]);
-    setChatInput("");
-    setSendingChat(true);
+  setChatMessages((prev) => [...prev, { from: "user", text: rawText }]);
+  setChatInput("");
+  setSendingChat(true);
+  setUserMessageCount(nextUserCount);
 
-    try {
-      const respuesta = await enviarMensajeSara(rawText);
+  try {
+    const respuesta = await enviarMensajeSara(rawText);
 
+    const finalReply =
+      respuesta ||
+      (lang === "darija"
+        ? "سمح ليا، ما قدرتش نجاوب دابا."
+        : lang === "en"
+        ? "Sorry, I could not answer right now."
+        : "Lo siento, no pude responder ahora mismo.");
+
+    if (!planActivo && nextUserCount >= 2) {
       setChatMessages((prev) => [
         ...prev,
-        {
-          from: "agent",
-          text:
-            respuesta ||
-            (lang === "darija"
-              ? "سمح ليا، ما قدرتش نجاوب دابا."
-              : lang === "en"
-              ? "Sorry, I could not answer right now."
-              : "Lo siento, no pude responder ahora mismo."),
-        },
+        { from: "agent", text: finalReply },
+        { from: "agent", text: ui.paymentTriggerMessage },
       ]);
-    } catch (error) {
-      console.error("Error conectando con Sara:", error);
 
+      setTimeout(() => {
+        setShowPayment(true);
+      }, 900);
+    } else {
       setChatMessages((prev) => [
         ...prev,
-        {
-          from: "agent",
-          text:
-            lang === "darija"
-              ? "وقع مشكل فالاتصال مع سارة، عاود حاول."
-              : lang === "en"
-              ? "There was a connection error with Sara. Please try again."
-              : "Error conectando con Sara, intenta otra vez.",
-        },
+        { from: "agent", text: finalReply },
       ]);
-    } finally {
-      setSendingChat(false);
     }
-  };
+  } catch (error) {
+    console.error("Error conectando con Sara:", error);
+
+    setChatMessages((prev) => [
+      ...prev,
+      {
+        from: "agent",
+        text:
+          lang === "darija"
+            ? "وقع مشكل فالاتصال مع سارة، عاود حاول."
+            : lang === "en"
+            ? "There was a connection error with Sara. Please try again."
+            : "Error conectando con Sara, intenta otra vez.",
+      },
+    ]);
+  } finally {
+    setSendingChat(false);
+  }
+};
 
   const handleSelectPlan = (plan: string) => {
     setPlanActivo(plan);
