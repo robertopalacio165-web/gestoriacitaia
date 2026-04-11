@@ -19,7 +19,6 @@ import {
 import { useScheduleAppointment } from "@/hooks/use-appointments";
 import { supabase } from "@/lib/supabaseClient";
 import { enviarMensajeSara } from "@/lib/openai";
-import { enviarMensajeMohamed } from "@/lib/openai-mohamed";
 
 interface ChatMsg {
   from: "agent" | "user";
@@ -65,7 +64,6 @@ type AppointmentResult = {
 export default function BuscarCitas() {
   const [selectedTramite, setSelectedTramite] = useState("tie");
   const [step, setStep] = useState(0);
-  const [agent, setAgent] = useState<"mohamed" | "sara">("mohamed");
   const [muted, setMuted] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
   const [showChat, setShowChat] = useState(false);
@@ -85,11 +83,6 @@ export default function BuscarCitas() {
   const { toast } = useToast();
   const scheduleMutation = useScheduleAppointment();
   const chatEndRef = useRef<HTMLDivElement>(null);
-
-  const tr = (key: string, fallback: string) => {
-    const value = t(key as never);
-    return value && value !== key ? value : fallback;
-  };
 
   const ui = useMemo(() => {
     if (lang === "darija") {
@@ -212,10 +205,9 @@ export default function BuscarCitas() {
           ],
         } as Record<string, FormItem[]>,
         initialChat:
-          "سلام، أنا محمد. غادي نعاونك فالتراݣي ديالك خطوة بخطوة. إلا سالينا الملف وبغيتي الموعد، سارة غادي تكمل معاك.",
+          "سلام، أنا سارة. إلا بغيتي تكتب، هنا نقدر نجاوبك على أي سؤال على الإجراء ديالك.",
         online: "متصلة الآن",
-        agentRole:
-          agent === "mohamed" ? "مستشار التراݣي" : "مستشارة المواعيد",
+        agentRole: "مستشارة المواعيد",
         procedureLabel: "الإجراء",
         procedurePlaceholder: "اختار الإجراء من اللائحة",
         personalData: "المعطيات الشخصية",
@@ -244,13 +236,10 @@ export default function BuscarCitas() {
         confirmSuccessTitle: "تم تأكيد الموعد!",
         confirmSuccessDesc: "الحجز تسجل بنجاح.",
         planActivated: "تفعلات الخطة",
-        planContinue: "مزيان. نكملو دابا خطوة بخطوة.",
+        planContinue: "مزيان. نكملو دابا الموعد خطوة بخطوة.",
         paymentMessage:
-          "باش تكمل العملية، فعل الخطة ديالك. أنا نرشدك خطوة بخطوة.",
+          "باش تحجز الموعد وتكمل العملية، فعل الخطة ديالك. أنا نرشدك خطوة بخطوة.",
         procedureShort: "الإجراء",
-        handoffToSara: "مزيان، سارة غادي تكمل معاك دابا باش نحجزو الموعد.",
-        finalWhatsapp:
-          "مزيان، غادي توصلك رسالة فـ WhatsApp فيها dossier ديالك PDF.",
       };
     }
 
@@ -374,9 +363,9 @@ export default function BuscarCitas() {
           ],
         } as Record<string, FormItem[]>,
         initialChat:
-          "Hi, I’m Mohamed. I’ll help you with your procedure step by step. If you want an appointment after the file is ready, Sara will continue with you.",
+          "Hi, I’m Sara. If you prefer to write, I can answer any question about your procedure here.",
         online: "Online",
-        agentRole: agent === "mohamed" ? "Procedure Advisor" : "Appointments Advisor",
+        agentRole: "Appointments Advisor",
         procedureLabel: "PROCEDURE",
         procedurePlaceholder: "Select the procedure from the list",
         personalData: "PERSONAL DATA",
@@ -405,13 +394,10 @@ export default function BuscarCitas() {
         confirmSuccessTitle: "Appointment confirmed!",
         confirmSuccessDesc: "The booking was saved successfully.",
         planActivated: "Plan activated",
-        planContinue: "Perfect. Let's continue step by step.",
+        planContinue: "Perfect. Let's continue with your appointment step by step.",
         paymentMessage:
-          "To continue, activate your plan. I’ll guide you step by step.",
+          "To book your appointment and continue the process, activate your plan. I’ll guide you step by step.",
         procedureShort: "Procedure",
-        handoffToSara: "Perfect, Sara will continue with you now to book the appointment.",
-        finalWhatsapp:
-          "Perfect, you will receive a WhatsApp message with your PDF dossier.",
       };
     }
 
@@ -537,9 +523,9 @@ export default function BuscarCitas() {
         ],
       } as Record<string, FormItem[]>,
       initialChat:
-        "Hola, soy Mohamed. Voy a ayudarte con tu trámite paso a paso. Si después quieres cita, Sara seguirá contigo.",
+        "Hola, soy Sara. ¿Prefieres escribir? Aquí puedo responderte cualquier duda sobre tu trámite.",
       online: "En línea",
-      agentRole: agent === "mohamed" ? "Asesor de Trámites" : "Asesora de Citas",
+      agentRole: "Asesora de Citas",
       procedureLabel: "TRÁMITE",
       procedurePlaceholder: "Seleccione el trámite entre los relacionados",
       personalData: "DATOS PERSONALES",
@@ -568,19 +554,14 @@ export default function BuscarCitas() {
       confirmSuccessTitle: "¡Cita confirmada!",
       confirmSuccessDesc: "La reserva ha quedado registrada correctamente.",
       planActivated: "Plan activado",
-      planContinue: "Perfecto. Continuamos paso a paso.",
+      planContinue: "Perfecto. Continuamos con tu cita paso a paso.",
       paymentMessage:
-        "Para continuar con el proceso, activa tu plan. Yo te guío paso a paso.",
+        "Para reservar tu cita y continuar con el proceso, activa tu plan. Yo te guío paso a paso.",
       procedureShort: "Trámite",
-      handoffToSara:
-        "Perfecto, Sara va a continuar contigo ahora para reservar la cita.",
-      finalWhatsapp:
-        "Perfecto, recibirás un WhatsApp con tu dossier en PDF.",
     };
-  }, [lang, agent]);
+  }, [lang]);
 
   const TRAMITES = ui.tramites;
-
   const selectedTramiteLabel =
     TRAMITES.find((item) => item.value === selectedTramite)?.label ||
     TRAMITES[0].label;
@@ -608,57 +589,6 @@ export default function BuscarCitas() {
   }, [ui.initialChat]);
 
   const agentSteps = useMemo(() => {
-    if (agent === "mohamed") {
-      if (lang === "darija") {
-        return [
-          {
-            text: `سلام، أنا محمد. غادي نعاونك فالتراݣي ديالك خطوة بخطوة. اختار «${selectedTramiteLabel}»`,
-            highlight: selectedTramiteLabel,
-          },
-          {
-            text: "مزيان. دابا نرتبو المعلومات والوثائق ديالك وحدة بوحدة.",
-            highlight: "الوثائق",
-          },
-          {
-            text: "إلا بغيتي من بعد نكملو للموعد، سارة غادي تكمل معاك مباشرة.",
-            highlight: "سارة",
-          },
-        ];
-      }
-
-      if (lang === "en") {
-        return [
-          {
-            text: `Hi, I’m Mohamed. I’ll help you with your procedure step by step. Select “${selectedTramiteLabel}”`,
-            highlight: selectedTramiteLabel,
-          },
-          {
-            text: "Perfect. Now we organize your documents and information one by one.",
-            highlight: "documents",
-          },
-          {
-            text: "If you want the appointment after this, Sara will continue with you directly.",
-            highlight: "Sara",
-          },
-        ];
-      }
-
-      return [
-        {
-          text: `Hola, soy Mohamed. Voy a ayudarte con tu trámite paso a paso. Selecciona «${selectedTramiteLabel}»`,
-          highlight: selectedTramiteLabel,
-        },
-        {
-          text: "Perfecto. Ahora vamos a organizar tus datos y documentos uno por uno.",
-          highlight: "documentos",
-        },
-        {
-          text: "Si después quieres cita, Sara continuará contigo directamente.",
-          highlight: "Sara",
-        },
-      ];
-    }
-
     if (lang === "darija") {
       return [
         {
@@ -707,7 +637,7 @@ export default function BuscarCitas() {
         highlight: "Confirmar",
       },
     ];
-  }, [lang, selectedTramiteLabel, agent]);
+  }, [lang, selectedTramiteLabel]);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -774,80 +704,20 @@ export default function BuscarCitas() {
     if (!chatInput.trim() || sendingChat) return;
 
     const rawText = chatInput.trim();
-    const lowerText = rawText.toLowerCase();
 
     setChatMessages((prev) => [...prev, { from: "user", text: rawText }]);
     setChatInput("");
     setSendingChat(true);
 
     try {
-      if (agent === "mohamed") {
-        const wantsAppointment =
-          lowerText.includes("cita") ||
-          lowerText.includes("موعد") ||
-          lowerText.includes("rendez") ||
-          lowerText.includes("renovación") ||
-          lowerText.includes("reservation") ||
-          lowerText.includes("reservar") ||
-          lowerText.includes("حجز");
-
-        const noAppointment =
-          lowerText === "no" ||
-          lowerText.includes("لا") ||
-          lowerText.includes("mahbitch") ||
-          lowerText.includes("ما بغيتش") ||
-          lowerText.includes("ما بغيتموش");
-
-        if (wantsAppointment) {
-          setAgent("sara");
-          setChatMessages((prev) => [
-            ...prev,
-            {
-              from: "agent",
-              text: ui.handoffToSara,
-            },
-          ]);
-          return;
-        }
-
-        if (noAppointment) {
-          setChatMessages((prev) => [
-            ...prev,
-            {
-              from: "agent",
-              text: ui.finalWhatsapp,
-            },
-          ]);
-          return;
-        }
-
-        const respuestaMohamed = await enviarMensajeMohamed(rawText);
-
-        setChatMessages((prev) => [
-          ...prev,
-          {
-            from: "agent",
-            text:
-              respuestaMohamed ||
-              (lang === "darija"
-                ? "سمح ليا، ما قدرتش نجاوب دابا."
-                : lang === "en"
-                ? "Sorry, I could not answer right now."
-                : "Lo siento, no pude responder ahora mismo."),
-          },
-        ]);
-
-        return;
-      }
-
-      const respuestaSara = await enviarMensajeSara(rawText);
+      const respuesta = await enviarMensajeSara(rawText);
 
       setChatMessages((prev) => [
         ...prev,
         {
           from: "agent",
           text:
-            respuestaSara ||
+            respuesta ||
             (lang === "darija"
               ? "سمح ليا، ما قدرتش نجاوب دابا."
               : lang === "en"
@@ -856,7 +726,7 @@ export default function BuscarCitas() {
         },
       ]);
     } catch (error) {
-      console.error("Error de conexión con el asistente:", error);
+      console.error("Error conectando con Sara:", error);
 
       setChatMessages((prev) => [
         ...prev,
@@ -864,10 +734,10 @@ export default function BuscarCitas() {
           from: "agent",
           text:
             lang === "darija"
-              ? "وقع مشكل فالربط، عاود حاول."
+              ? "وقع مشكل فالاتصال مع سارة، عاود حاول."
               : lang === "en"
-              ? "There was a connection problem. Please try again."
-              : "Hubo un problema de conexión. Inténtalo otra vez.",
+              ? "There was a connection error with Sara. Please try again."
+              : "Error conectando con Sara, intenta otra vez.",
         },
       ]);
     } finally {
@@ -949,13 +819,6 @@ export default function BuscarCitas() {
   const finalPdfUrl =
     appointmentData?.confirmation_pdf_url || appointmentData?.pdf_url || null;
 
-  const currentAvatar =
-    agent === "mohamed"
-      ? `${import.meta.env.BASE_URL}images/avatar-mohamed.png`
-      : `${import.meta.env.BASE_URL}images/avatar-sara.png`;
-
-  const currentAgentName = agent === "mohamed" ? "Mohamed" : "Sara";
-
   return (
     <div className="min-h-screen bg-background text-foreground relative flex flex-col">
       <div
@@ -991,8 +854,8 @@ export default function BuscarCitas() {
               style={{ height: "280px" }}
             >
               <img
-                src={currentAvatar}
-                alt={currentAgentName}
+                src={`${import.meta.env.BASE_URL}images/avatar-sara.png`}
+                alt="Sara"
                 className="w-full h-full object-cover object-top"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
@@ -1043,9 +906,7 @@ export default function BuscarCitas() {
               </div>
 
               <div className="absolute bottom-14 right-3 text-right">
-                <p className="text-white font-bold text-sm drop-shadow-lg">
-                  {currentAgentName}
-                </p>
+                <p className="text-white font-bold text-sm drop-shadow-lg">Sara</p>
                 <p className="text-white/70 text-xs drop-shadow-lg">
                   {ui.agentRole}
                 </p>
@@ -1083,7 +944,7 @@ export default function BuscarCitas() {
                       >
                         {msg.from === "agent" && (
                           <img
-                            src={currentAvatar}
+                            src={`${import.meta.env.BASE_URL}images/avatar-sara.png`}
                             className="w-6 h-6 rounded-full object-cover object-top shrink-0"
                             alt=""
                           />
@@ -1104,7 +965,7 @@ export default function BuscarCitas() {
                     {sendingChat && (
                       <div className="flex gap-2 justify-start">
                         <img
-                          src={currentAvatar}
+                          src={`${import.meta.env.BASE_URL}images/avatar-sara.png`}
                           className="w-6 h-6 rounded-full object-cover object-top shrink-0"
                           alt=""
                         />
@@ -1139,7 +1000,7 @@ export default function BuscarCitas() {
 
             <AnimatePresence mode="wait">
               <motion.div
-                key={`${agent}-${step}-${selectedTramite}`}
+                key={`${step}-${selectedTramite}`}
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -8 }}
@@ -1148,9 +1009,9 @@ export default function BuscarCitas() {
               >
                 <div className="relative shrink-0">
                   <img
-                    src={currentAvatar}
+                    src={`${import.meta.env.BASE_URL}images/avatar-sara.png`}
                     className="w-9 h-9 rounded-full object-cover object-top border border-primary/40"
-                    alt={currentAgentName}
+                    alt="Sara"
                   />
                   {!muted && (
                     <motion.div
@@ -1189,7 +1050,7 @@ export default function BuscarCitas() {
             </AnimatePresence>
 
             <AnimatePresence>
-              {agent === "sara" && step === 2 && !confirmed && (
+              {step === 2 && !confirmed && (
                 <motion.button
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -1271,8 +1132,8 @@ export default function BuscarCitas() {
 
               <div className="w-6 h-6 rounded-full overflow-hidden border-2 border-primary shrink-0">
                 <img
-                  src={currentAvatar}
-                  alt={currentAgentName}
+                  src={`${import.meta.env.BASE_URL}images/avatar-sara.png`}
+                  alt="Sara"
                   className="w-full h-full object-cover object-top"
                 />
               </div>
@@ -1386,11 +1247,7 @@ export default function BuscarCitas() {
                   <div className="flex justify-end">
                     <button
                       onClick={handleAceptar}
-                      disabled={
-                        agent !== "sara" ||
-                        scheduleMutation.isPending ||
-                        !selectedTramite
-                      }
+                      disabled={scheduleMutation.isPending || !selectedTramite}
                       className="bg-[#003366] text-white text-sm font-bold px-6 py-2.5 rounded hover:bg-[#002244] transition-colors disabled:opacity-50 flex items-center gap-2"
                     >
                       {scheduleMutation.isPending && (
@@ -1426,17 +1283,23 @@ export default function BuscarCitas() {
                       </p>
 
                       <p className="text-sm">
-                        <span className="font-bold text-gray-500">{ui.date}:</span>{" "}
+                        <span className="font-bold text-gray-500">
+                          {ui.date}:
+                        </span>{" "}
                         <span className="text-gray-800">{finalDate}</span>
                       </p>
 
                       <p className="text-sm">
-                        <span className="font-bold text-gray-500">{ui.time}:</span>{" "}
+                        <span className="font-bold text-gray-500">
+                          {ui.time}:
+                        </span>{" "}
                         <span className="text-gray-800">{finalTime}</span>
                       </p>
 
                       <p className="text-sm">
-                        <span className="font-bold text-gray-500">{ui.office}:</span>{" "}
+                        <span className="font-bold text-gray-500">
+                          {ui.office}:
+                        </span>{" "}
                         <span className="text-gray-800">{finalOffice}</span>
                       </p>
 
