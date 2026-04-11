@@ -6,7 +6,6 @@ export async function enviarMensajeMohamed(mensaje: string): Promise<string> {
     throw new Error("Falta VITE_OPENAI_API_KEY en las variables de entorno");
   }
 
-  // 1) Crear thread
   const threadRes = await fetch("https://api.openai.com/v1/threads", {
     method: "POST",
     headers: {
@@ -19,12 +18,11 @@ export async function enviarMensajeMohamed(mensaje: string): Promise<string> {
 
   if (!threadRes.ok) {
     const errorText = await threadRes.text();
-    throw new Error(`Error creando thread de Mohamed: ${errorText}`);
+    throw new Error(`Error creando thread Mohamed: ${errorText}`);
   }
 
   const thread = await threadRes.json();
 
-  // 2) Enviar mensaje del usuario
   const messageRes = await fetch(
     `https://api.openai.com/v1/threads/${thread.id}/messages`,
     {
@@ -43,10 +41,9 @@ export async function enviarMensajeMohamed(mensaje: string): Promise<string> {
 
   if (!messageRes.ok) {
     const errorText = await messageRes.text();
-    throw new Error(`Error enviando mensaje a Mohamed: ${errorText}`);
+    throw new Error(`Error enviando mensaje Mohamed: ${errorText}`);
   }
 
-  // 3) Ejecutar Mohamed
   const runRes = await fetch(
     `https://api.openai.com/v1/threads/${thread.id}/runs`,
     {
@@ -64,15 +61,14 @@ export async function enviarMensajeMohamed(mensaje: string): Promise<string> {
 
   if (!runRes.ok) {
     const errorText = await runRes.text();
-    throw new Error(`Error creando run de Mohamed: ${errorText}`);
+    throw new Error(`Error creando run Mohamed: ${errorText}`);
   }
 
   const run = await runRes.json();
 
-  // 4) Esperar respuesta
   let status = run.status;
   let attempts = 0;
-  const maxAttempts = 45;
+  const maxAttempts = 50;
 
   while (
     status !== "completed" &&
@@ -81,10 +77,10 @@ export async function enviarMensajeMohamed(mensaje: string): Promise<string> {
     status !== "expired"
   ) {
     if (attempts >= maxAttempts) {
-      throw new Error("Tiempo de espera agotado para la respuesta de Mohamed");
+      throw new Error("Tiempo agotado esperando respuesta de Mohamed");
     }
 
-    await new Promise((r) => setTimeout(r, 350));
+    await new Promise((r) => setTimeout(r, 500));
 
     const checkRes = await fetch(
       `https://api.openai.com/v1/threads/${thread.id}/runs/${run.id}`,
@@ -100,7 +96,7 @@ export async function enviarMensajeMohamed(mensaje: string): Promise<string> {
 
     if (!checkRes.ok) {
       const errorText = await checkRes.text();
-      throw new Error(`Error consultando run de Mohamed: ${errorText}`);
+      throw new Error(`Error consultando run Mohamed: ${errorText}`);
     }
 
     const checkData = await checkRes.json();
@@ -112,7 +108,6 @@ export async function enviarMensajeMohamed(mensaje: string): Promise<string> {
     throw new Error(`La ejecución de Mohamed terminó con estado: ${status}`);
   }
 
-  // 5) Obtener respuesta final
   const messagesRes = await fetch(
     `https://api.openai.com/v1/threads/${thread.id}/messages`,
     {
@@ -127,7 +122,7 @@ export async function enviarMensajeMohamed(mensaje: string): Promise<string> {
 
   if (!messagesRes.ok) {
     const errorText = await messagesRes.text();
-    throw new Error(`Error obteniendo mensajes de Mohamed: ${errorText}`);
+    throw new Error(`Error obteniendo mensajes Mohamed: ${errorText}`);
   }
 
   const messages = await messagesRes.json();
