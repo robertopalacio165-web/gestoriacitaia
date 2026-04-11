@@ -18,7 +18,6 @@ import {
 } from "lucide-react";
 import { useScheduleAppointment } from "@/hooks/use-appointments";
 import { supabase } from "@/lib/supabaseClient";
-import { enviarMensajeSara } from "@/lib/openai";
 
 interface ChatMsg {
   from: "agent" | "user";
@@ -72,13 +71,12 @@ export default function BuscarCitas() {
   const [chatInput, setChatInput] = useState("");
   const [showPayment, setShowPayment] = useState(false);
   const [planActivo, setPlanActivo] = useState<string | null>(null);
-  const [userMessageCount, setUserMessageCount] = useState(0);
   const [profile, setProfile] = useState<ProfileRow | null>(null);
-  const [appointmentData, setAppointmentData] = useState<AppointmentResult | null>(
-    null
-  );
+  const [appointmentData, setAppointmentData] =
+    useState<AppointmentResult | null>(null);
   const [profileLoading, setProfileLoading] = useState(true);
   const [sendingChat, setSendingChat] = useState(false);
+  const [userMessageCount, setUserMessageCount] = useState(0);
 
   const { t, lang } = useLang();
   const { toast } = useToast();
@@ -89,7 +87,10 @@ export default function BuscarCitas() {
     if (lang === "darija") {
       return {
         tramites: [
-          { value: "tie", label: "تجديد بطاقة هوية الأجنبي (TIE)" },
+          {
+            value: "tie",
+            label: "تجديد بطاقة هوية الأجنبي (TIE)",
+          },
           { value: "regreso", label: "رخصة الرجوع" },
           { value: "nie", label: "شواهد وتعيين NIE" },
           { value: "ue", label: "شواهد الاتحاد الأوروبي" },
@@ -206,7 +207,7 @@ export default function BuscarCitas() {
           ],
         } as Record<string, FormItem[]>,
         initialChat:
-          "سلام، أنا سارة. إلا بغيتي تكتب، هنا نقدر نجاوبك على أي سؤال على الإجراء ديالك.",
+          "سلام، أنا سارة. مرحبا بيك فـ GestoriaCitaIA. قولي ليا شنو بغيتي وأنا معاك خطوة بخطوة.",
         online: "متصلة الآن",
         agentRole: "مستشارة المواعيد",
         procedureLabel: "الإجراء",
@@ -239,10 +240,10 @@ export default function BuscarCitas() {
         planActivated: "تفعلات الخطة",
         planContinue: "مزيان. نكملو دابا الموعد خطوة بخطوة.",
         paymentMessage:
-  "باش تحجز الموعد وتكمل العملية، فعل الخطة ديالك. أنا نرشدك خطوة بخطوة.",
-paymentTriggerMessage:
-  "مزيان. إلى بغيتي نكمل معاك حتى نساليو الموعد، فعل الخطة ودابا نكملو إن شاء الله.",
-procedureShort: "الإجراء",
+          "باش تحجز الموعد وتكمل العملية، فعل الخطة ديالك. أنا نرشدك خطوة بخطوة.",
+        paymentTriggerMessage:
+          "مزيان. إلى بغيتي نكمل معاك حتى نساليو الموعد، فعل الخطة ودابا نكملو إن شاء الله.",
+        procedureShort: "الإجراء",
       };
     }
 
@@ -366,7 +367,7 @@ procedureShort: "الإجراء",
           ],
         } as Record<string, FormItem[]>,
         initialChat:
-          "Hi, I’m Sara. If you prefer to write, I can answer any question about your procedure here.",
+          "Hi, I’m Sara. Welcome to GestoriaCitaIA. Tell me what you need and I’ll help you step by step.",
         online: "Online",
         agentRole: "Appointments Advisor",
         procedureLabel: "PROCEDURE",
@@ -399,10 +400,10 @@ procedureShort: "الإجراء",
         planActivated: "Plan activated",
         planContinue: "Perfect. Let's continue with your appointment step by step.",
         paymentMessage:
-  "To book your appointment and continue the process, activate your plan. I’ll guide you step by step.",
-paymentTriggerMessage:
-  "Perfect. If you want me to continue with you until the appointment is completed, activate your plan and we continue now.",
-procedureShort: "Procedure",
+          "To book your appointment and continue the process, activate your plan. I’ll guide you step by step.",
+        paymentTriggerMessage:
+          "Perfect. If you want me to continue with you until the appointment is completed, activate your plan and we continue now.",
+        procedureShort: "Procedure",
       };
     }
 
@@ -528,7 +529,7 @@ procedureShort: "Procedure",
         ],
       } as Record<string, FormItem[]>,
       initialChat:
-        "Hola, soy Sara. ¿Prefieres escribir? Aquí puedo responderte cualquier duda sobre tu trámite.",
+        "Hola, soy Sara. Bienvenido a GestoriaCitaIA. Dime qué necesitas y te ayudo paso a paso.",
       online: "En línea",
       agentRole: "Asesora de Citas",
       procedureLabel: "TRÁMITE",
@@ -561,10 +562,10 @@ procedureShort: "Procedure",
       planActivated: "Plan activado",
       planContinue: "Perfecto. Continuamos con tu cita paso a paso.",
       paymentMessage:
-  "Para reservar tu cita y continuar con el proceso, activa tu plan. Yo te guío paso a paso.",
-paymentTriggerMessage:
-  "Perfecto. Si quieres que siga contigo hasta terminar la cita, activa tu plan y seguimos ahora mismo.",
-procedureShort: "Trámite",
+        "Para reservar tu cita y continuar con el proceso, activa tu plan. Yo te guío paso a paso.",
+      paymentTriggerMessage:
+        "Perfecto. Si quieres que siga contigo hasta terminar la cita, activa tu plan y seguimos ahora mismo.",
+      procedureShort: "Trámite",
     };
   }, [lang]);
 
@@ -593,6 +594,7 @@ procedureShort: "Trámite",
         text: ui.initialChat,
       },
     ]);
+    setUserMessageCount(0);
   }, [ui.initialChat]);
 
   const agentSteps = useMemo(() => {
@@ -648,7 +650,7 @@ procedureShort: "Trámite",
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [chatMessages]);
+  }, [chatMessages, sendingChat]);
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -696,70 +698,85 @@ procedureShort: "Trámite",
   }, []);
 
   const handleTramiteClick = (value: string) => {
-  setSelectedTramite(value);
+    setSelectedTramite(value);
 
-  if (step === 0 && planActivo) {
-    setStep(1);
-  }
-};
-
-const handleSendChat = async () => {
-  if (!chatInput.trim() || sendingChat) return;
-
-  const rawText = chatInput.trim();
-  const nextUserCount = userMessageCount + 1;
-
-  setChatMessages((prev) => [...prev, { from: "user", text: rawText }]);
-  setChatInput("");
-  setSendingChat(true);
-  setUserMessageCount(nextUserCount);
-
-  try {
-    const respuesta = await enviarMensajeSara(rawText);
-
-    const finalReply =
-      respuesta ||
-      (lang === "darija"
-        ? "سمح ليا، ما قدرتش نجاوب دابا."
-        : lang === "en"
-        ? "Sorry, I could not answer right now."
-        : "Lo siento, no pude responder ahora mismo.");
-
-    if (!planActivo && nextUserCount >= 2) {
-      setChatMessages((prev) => [
-        ...prev,
-        { from: "agent", text: finalReply },
-        { from: "agent", text: ui.paymentTriggerMessage },
-      ]);
-
-      setTimeout(() => {
-        setShowPayment(true);
-      }, 900);
-    } else {
-      setChatMessages((prev) => [
-        ...prev,
-        { from: "agent", text: finalReply },
-      ]);
+    if (step === 0 && planActivo) {
+      setStep(1);
     }
-  } catch (error) {
-    console.error("Error conectando con Sara:", error);
+  };
 
-    setChatMessages((prev) => [
-      ...prev,
-      {
-        from: "agent",
-        text:
-          lang === "darija"
-            ? "وقع مشكل فالاتصال مع سارة، عاود حاول."
-            : lang === "en"
-            ? "There was a connection error with Sara. Please try again."
-            : "Error conectando con Sara, intenta otra vez.",
-      },
-    ]);
-  } finally {
-    setSendingChat(false);
-  }
-};
+  const handleSendChat = async () => {
+    if (!chatInput.trim() || sendingChat) return;
+
+    const rawText = chatInput.trim();
+    const nextUserCount = userMessageCount + 1;
+
+    setChatMessages((prev) => [...prev, { from: "user", text: rawText }]);
+    setChatInput("");
+    setSendingChat(true);
+    setUserMessageCount(nextUserCount);
+
+    try {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          assistant: "sara",
+          message: rawText,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data?.error || "Error en Sara");
+      }
+
+      const finalReply =
+        data?.reply ||
+        (lang === "darija"
+          ? "سمح ليا، ما قدرتش نجاوب دابا."
+          : lang === "en"
+          ? "Sorry, I could not answer right now."
+          : "Lo siento, no pude responder ahora mismo.");
+
+      if (!planActivo && nextUserCount >= 2) {
+        setChatMessages((prev) => [
+          ...prev,
+          { from: "agent", text: finalReply },
+          { from: "agent", text: ui.paymentTriggerMessage },
+        ]);
+
+        setTimeout(() => {
+          setShowPayment(true);
+        }, 900);
+      } else {
+        setChatMessages((prev) => [
+          ...prev,
+          { from: "agent", text: finalReply },
+        ]);
+      }
+    } catch (error) {
+      console.error("Error conectando con Sara:", error);
+
+      setChatMessages((prev) => [
+        ...prev,
+        {
+          from: "agent",
+          text:
+            lang === "darija"
+              ? "وقع مشكل فالاتصال مع سارة، عاود حاول."
+              : lang === "en"
+              ? "There was a connection error with Sara. Please try again."
+              : "Error conectando con Sara, intenta otra vez.",
+        },
+      ]);
+    } finally {
+      setSendingChat(false);
+    }
+  };
 
   const handleSelectPlan = (plan: string) => {
     setPlanActivo(plan);
@@ -878,7 +895,9 @@ const handleSendChat = async () => {
 
               <div className="absolute top-3 left-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/60 border border-white/10 backdrop-blur-md">
                 <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                <span className="text-xs font-medium text-white">{ui.online}</span>
+                <span className="text-xs font-medium text-white">
+                  {ui.online}
+                </span>
               </div>
 
               <div className="absolute top-3 right-3 relative">
@@ -912,6 +931,7 @@ const handleSendChat = async () => {
                       ? "bg-destructive/80 border-destructive"
                       : "bg-black/50 border-white/20 hover:bg-black/70"
                   }`}
+                  type="button"
                 >
                   {muted ? (
                     <MicOff className="w-4 h-4 text-white" />
@@ -922,7 +942,9 @@ const handleSendChat = async () => {
               </div>
 
               <div className="absolute bottom-14 right-3 text-right">
-                <p className="text-white font-bold text-sm drop-shadow-lg">Sara</p>
+                <p className="text-white font-bold text-sm drop-shadow-lg">
+                  Sara
+                </p>
                 <p className="text-white/70 text-xs drop-shadow-lg">
                   {ui.agentRole}
                 </p>
@@ -936,6 +958,7 @@ const handleSendChat = async () => {
                   ? "bg-secondary/20 border-secondary/40 text-secondary"
                   : "glass-panel border-white/10 text-white/70 hover:text-white hover:border-white/20"
               }`}
+              type="button"
             >
               <MessageSquare className="w-4 h-4" />
               {showChat ? t("buscar_chat_close") : t("buscar_chat_open")}
@@ -1006,6 +1029,7 @@ const handleSendChat = async () => {
                       onClick={handleSendChat}
                       disabled={sendingChat}
                       className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center hover:bg-primary/90 transition-colors shrink-0 disabled:opacity-60"
+                      type="button"
                     >
                       <Send className="w-3.5 h-3.5 text-primary-foreground" />
                     </button>
@@ -1043,7 +1067,9 @@ const handleSendChat = async () => {
                     {(() => {
                       const currentStep =
                         agentSteps[Math.min(step, agentSteps.length - 1)];
-                      const parts = currentStep.text.split(currentStep.highlight);
+                      const parts = currentStep.text.split(
+                        currentStep.highlight
+                      );
 
                       if (!currentStep.highlight) return currentStep.text;
 
@@ -1072,6 +1098,7 @@ const handleSendChat = async () => {
                   animate={{ opacity: 1, y: 0 }}
                   onClick={handleConfirm}
                   className="w-full bg-primary hover:bg-primary/90 text-white font-bold py-3 rounded-xl text-sm transition-colors shadow-lg shadow-primary/30 flex items-center justify-center gap-2"
+                  type="button"
                 >
                   <CheckCircle2 className="w-5 h-5" />
                   {t("buscar_confirmar")}
@@ -1087,6 +1114,7 @@ const handleSendChat = async () => {
                     ? "bg-destructive/20 border-destructive/40 text-destructive"
                     : "bg-white/5 border-white/10 text-white/80"
                 }`}
+                type="button"
               >
                 {muted ? (
                   <MicOff className="w-4 h-4" />
@@ -1106,6 +1134,7 @@ const handleSendChat = async () => {
                     ? "bg-primary/20 border-primary/40 text-primary"
                     : "bg-white/5 border-white/10 text-white/80"
                 }`}
+                type="button"
               >
                 <FileText className="w-4 h-4 text-primary" />
                 {t("buscar_docs")}
@@ -1121,6 +1150,7 @@ const handleSendChat = async () => {
                     ? "bg-secondary/20 border-secondary/40 text-secondary"
                     : "bg-white/5 border-white/10 text-white/80"
                 }`}
+                type="button"
               >
                 <Settings className="w-4 h-4 text-secondary" />
                 {t("buscar_forms")}
@@ -1142,7 +1172,10 @@ const handleSendChat = async () => {
                 </span>
               </div>
 
-              <button className="w-7 h-7 flex items-center justify-center text-gray-500 hover:bg-gray-200 rounded shrink-0">
+              <button
+                className="w-7 h-7 flex items-center justify-center text-gray-500 hover:bg-gray-200 rounded shrink-0"
+                type="button"
+              >
                 <RefreshCw className="w-3.5 h-3.5" />
               </button>
 
@@ -1172,7 +1205,9 @@ const handleSendChat = async () => {
                     </div>
 
                     <div className="ml-auto text-right shrink-0">
-                      <div className="text-[10px] text-gray-500">{ui.govSmall}</div>
+                      <div className="text-[10px] text-gray-500">
+                        {ui.govSmall}
+                      </div>
                       <div className="text-sm sm:text-base font-black text-[#003366]">
                         {ui.govTitle}
                       </div>
@@ -1254,7 +1289,9 @@ const handleSendChat = async () => {
 
                         <p className="text-[10px] text-gray-400 flex items-center gap-1">
                           <Shield className="w-3 h-3 text-green-500" />
-                          {profileLoading ? ui.loadingUserData : ui.aiFilledData}
+                          {profileLoading
+                            ? ui.loadingUserData
+                            : ui.aiFilledData}
                         </p>
                       </motion.div>
                     )}
@@ -1265,6 +1302,7 @@ const handleSendChat = async () => {
                       onClick={handleAceptar}
                       disabled={scheduleMutation.isPending || !selectedTramite}
                       className="bg-[#003366] text-white text-sm font-bold px-6 py-2.5 rounded hover:bg-[#002244] transition-colors disabled:opacity-50 flex items-center gap-2"
+                      type="button"
                     >
                       {scheduleMutation.isPending && (
                         <RefreshCw className="w-4 h-4 animate-spin" />
@@ -1371,6 +1409,7 @@ const handleSendChat = async () => {
                   ? "bg-destructive/20 border-destructive/40 text-destructive"
                   : "bg-white/5 border-white/10 text-white/80 hover:bg-white/10"
               }`}
+              type="button"
             >
               {muted ? (
                 <MicOff className="w-4 h-4" />
@@ -1391,6 +1430,7 @@ const handleSendChat = async () => {
                     ? "bg-primary/20 border-primary/40 text-primary"
                     : "bg-white/5 border-white/10 text-white/80 hover:bg-white/10"
                 }`}
+                type="button"
               >
                 <FileText className="w-4 h-4 text-primary" />
                 {t("buscar_docs")}
@@ -1406,6 +1446,7 @@ const handleSendChat = async () => {
                     ? "bg-secondary/20 border-secondary/40 text-secondary"
                     : "bg-white/5 border-white/10 text-white/80 hover:bg-white/10"
                 }`}
+                type="button"
               >
                 <Settings className="w-4 h-4 text-secondary" />
                 {t("buscar_forms")}
@@ -1441,6 +1482,7 @@ const handleSendChat = async () => {
                   <button
                     onClick={() => setShowDocs(false)}
                     className="w-6 h-6 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/60 text-xs"
+                    type="button"
                   >
                     ✕
                   </button>
@@ -1513,6 +1555,7 @@ const handleSendChat = async () => {
                   <button
                     onClick={() => setShowForms(false)}
                     className="w-6 h-6 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/60 text-xs"
+                    type="button"
                   >
                     ✕
                   </button>
