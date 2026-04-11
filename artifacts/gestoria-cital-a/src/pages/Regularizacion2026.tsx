@@ -23,6 +23,7 @@ import {
   Clock,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { enviarMensajeMohamed } from "@/lib/openai-mohamed";
 
 interface ChatMsg {
   from: "agent" | "user";
