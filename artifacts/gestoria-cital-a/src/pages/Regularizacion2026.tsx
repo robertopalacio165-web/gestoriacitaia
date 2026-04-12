@@ -23,11 +23,11 @@ import {
   Clock,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { enviarMensajeMohamed } from "@/lib/openai-mohamed";
 
 interface ChatMsg {
   from: "agent" | "user";
   text: string;
+  ts?: number;
 }
 
 type DocStatus = "ok" | "warn" | "missing";
@@ -69,6 +69,10 @@ export default function Regularizacion2026() {
   const [showForms, setShowForms] = useState(false);
   const [uploadingId, setUploadingId] = useState<string | null>(null);
   const [sendingChat, setSendingChat] = useState(false);
+  const [userMessageCount, setUserMessageCount] = useState(0);
+  const [paymentTriggered, setPaymentTriggered] = useState(false);
+  const [chatMessages, setChatMessages] = useState<ChatMsg[]>([]);
+  const [chatBootstrapped, setChatBootstrapped] = useState(false);
 
   const { t, lang } = useLang();
   const { toast } = useToast();
@@ -78,19 +82,7 @@ export default function Regularizacion2026() {
     if (lang === "darija") {
       return {
         initialChat:
-          "سلام، أنا محمد. كتب ليا أي سؤال على التسوية 2026 وأنا هنا باش نعاونك.",
-        chatResponses: {
-          default: "فهمت. واش عندك شي سؤال على الوثائق المطلوبة؟",
-          hola: "سلام، أنا محمد، المختص ديالك فالتسوية 2026. فاش نقدر نعاونك؟",
-          documentos:
-            "باش تدير التسوية 2026 غالباً كتحتاج: الباسبور أو NIE، شهادة السكن ديال عامين، عقد العمل، وشهادة السوابق العدلية.",
-          precio:
-            "المسطرة الرسمية كتدار فالموقع الرسمي. الخدمة ديالنا كتعاونك فالتجهيز والتنظيم والأتمتة ديال الملف.",
-          tiempo:
-            "المدة كتبدل حسب الحالة. غالباً تتبع الملف كياخذ عدة شهور.",
-          cita:
-            "فبعض الحالات ما كايناش حاجة لموعد مسبق. أنا نعاونك تعرف المسار الصحيح حسب الحالة ديالك.",
-        },
+          "وعليكم السلام، مرحبا بيك. أنا محمد، وغادي نعاونك فـ التسوية 2026 خطوة بخطوة.",
         agentSteps: (selectedLabel: string) => [
           {
             text: `سلام، أنا محمد. غادي نعاونك فالتسوية 2026. أولاً اختار الوضعية الحالية ديالك باش نلقاو الإجراء المناسب. الوضعية الحالية المختارة هي «${selectedLabel}».`,
@@ -208,6 +200,8 @@ export default function Regularizacion2026() {
         role: "مختص فالهجرة",
         paymentMessage:
           "باش تكمل فالتسوية 2026 وتقدم الطلب فالموقع الرسمي، فعل الخطة ديالك. أنا نرشدك خطوة بخطوة.",
+        paymentTriggerMessage:
+          "باش نكملو ونخدمو على الملف ديالك، خاصك تفعل الخدمة. منين تخلص نكملو معاك مباشرة.",
         planActivated: "تفعلات الخطة",
         planContinue: "مزيان. نكملو دابا عملية التسوية ديالك.",
         docsVerifiedTitle: "تراجعات الوثائق",
@@ -264,19 +258,7 @@ export default function Regularizacion2026() {
     if (lang === "en") {
       return {
         initialChat:
-          "Hi, I’m Mohamed. Ask me anything about Regularization 2026. I’m here to help you.",
-        chatResponses: {
-          default: "Understood. Do you have any questions about the required documents?",
-          hola: "Hi! I’m Mohamed, your Regularization 2026 specialist. How can I help you?",
-          documentos:
-            "For Regularization 2026 you generally need: passport or NIE, 2-year registration certificate, employment contract, and criminal record certificate.",
-          precio:
-            "The official process is submitted through the corresponding government site. Our service helps you prepare and automate your file.",
-          tiempo:
-            "Processing time may vary. Usually case tracking takes several months.",
-          cita:
-            "In some cases an appointment is not required. I can help you review the correct flow based on your situation.",
-        },
+          "Hello, I’m Mohamed. I’m here to help you with Regularization 2026 step by step.",
         agentSteps: (selectedLabel: string) => [
           {
             text: `Hi, I’m Mohamed. I’ll help you with Regularization 2026. First, select your current situation to find the correct process. The selected situation is “${selectedLabel}”.`,
@@ -323,7 +305,10 @@ export default function Regularizacion2026() {
         ] as SituationItem[],
         requiredDocs: [
           { nombre: "Valid passport or NIE", estado: "ok" as DocStatus },
-          { nombre: "Registration certificate (minimum 2 years)", estado: "ok" as DocStatus },
+          {
+            nombre: "Registration certificate (minimum 2 years)",
+            estado: "ok" as DocStatus,
+          },
           { nombre: "Signed employment contract", estado: "ok" as DocStatus },
           { nombre: "Criminal record certificate", estado: "warn" as DocStatus },
           { nombre: "EX-10 / EX-11 form", estado: "missing" as DocStatus },
@@ -394,6 +379,8 @@ export default function Regularizacion2026() {
         role: "Immigration Specialist",
         paymentMessage:
           "To continue with your Regularization 2026 and submit your application on the official site, activate your plan. I’ll guide you step by step.",
+        paymentTriggerMessage:
+          "To continue with your case, activate the service and we continue with you step by step.",
         planActivated: "Plan activated",
         planContinue: "Perfect. Let’s continue with your regularization.",
         docsVerifiedTitle: "Documents verified",
@@ -414,7 +401,8 @@ export default function Regularizacion2026() {
         pending: "Pending",
         toSend: "To submit",
         completeOnOfficialSite: "Complete application on sede.gob.es",
-        aiFillsOfficialSite: "The AI agent prepares and fills the data automatically",
+        aiFillsOfficialSite:
+          "The AI agent prepares and fills the data automatically",
         procedureSmall: "Procedure:",
         govHeader: "REGULARIZATION 2026",
         govLine1: "MINISTRY OF INTERIOR",
@@ -449,19 +437,7 @@ export default function Regularizacion2026() {
 
     return {
       initialChat:
-        "Hola, soy Mohamed. Escríbeme cualquier pregunta sobre la Regularización 2026. Estoy aquí para ayudarte.",
-      chatResponses: {
-        default: "Entendido. ¿Tienes alguna pregunta sobre los documentos necesarios?",
-        hola: "¡Hola! Soy Mohamed, tu especialista en Regularización 2026. ¿En qué te puedo ayudar?",
-        documentos:
-          "Para la Regularización 2026 necesitas: pasaporte o NIE, empadronamiento de 2 años, contrato de trabajo y certificado de antecedentes penales.",
-        precio:
-          "El proceso oficial se presenta en la sede correspondiente. Nuestro servicio te acompaña y automatiza la preparación del expediente.",
-        tiempo:
-          "El plazo de resolución puede variar. Normalmente el seguimiento del expediente tarda varios meses.",
-        cita:
-          "En algunos casos no hace falta cita previa. Yo te ayudo a revisar el flujo correcto según tu situación.",
-      },
+        "Hola, soy Mohamed. Estoy aquí para ayudarte con la Regularización 2026 paso a paso.",
       agentSteps: (selectedLabel: string) => [
         {
           text: `Hola, soy Mohamed. Te voy a ayudar con la Regularización 2026. Primero, selecciona tu situación actual para encontrar el trámite correcto. La situación elegida es «${selectedLabel}».`,
@@ -487,7 +463,8 @@ export default function Regularizacion2026() {
         },
         {
           value: "social",
-          label: "Arraigo Social (3+ años en España, vínculos familiares/sociales)",
+          label:
+            "Arraigo Social (3+ años en España, vínculos familiares/sociales)",
         },
         {
           value: "familiar",
@@ -508,9 +485,15 @@ export default function Regularizacion2026() {
       ] as SituationItem[],
       requiredDocs: [
         { nombre: "Pasaporte o NIE vigente", estado: "ok" as DocStatus },
-        { nombre: "Empadronamiento (2 años mínimo)", estado: "ok" as DocStatus },
+        {
+          nombre: "Empadronamiento (2 años mínimo)",
+          estado: "ok" as DocStatus,
+        },
         { nombre: "Contrato de trabajo firmado", estado: "ok" as DocStatus },
-        { nombre: "Certificado de antecedentes penales", estado: "warn" as DocStatus },
+        {
+          nombre: "Certificado de antecedentes penales",
+          estado: "warn" as DocStatus,
+        },
         { nombre: "Formulario EX-10 / EX-11", estado: "missing" as DocStatus },
         { nombre: "Fotografías recientes (2 unidades)", estado: "ok" as DocStatus },
       ] as RequiredDocItem[],
@@ -579,10 +562,13 @@ export default function Regularizacion2026() {
       role: "Especialista en Extranjería",
       paymentMessage:
         "Para continuar con tu Regularización 2026 y presentar tu solicitud en la sede oficial, activa tu plan. Yo me encargo de guiarte paso a paso.",
+      paymentTriggerMessage:
+        "Para continuar con tu trámite, activa el servicio y seguimos contigo paso a paso.",
       planActivated: "Plan activado",
       planContinue: "Perfecto. Continuamos con tu regularización.",
       docsVerifiedTitle: "Documentos verificados",
-      docsVerifiedDesc: "La documentación principal ha sido revisada correctamente.",
+      docsVerifiedDesc:
+        "La documentación principal ha sido revisada correctamente.",
       submitSuccessTitle: "¡Solicitud enviada!",
       submitSuccessDesc: "El expediente ha quedado registrado correctamente.",
       documentUploadedTitle: "Documento subido",
@@ -599,7 +585,8 @@ export default function Regularizacion2026() {
       pending: "Pendiente",
       toSend: "Para enviar",
       completeOnOfficialSite: "Completar solicitud en sede.gob.es",
-      aiFillsOfficialSite: "El agente IA rellena y prepara los datos automáticamente",
+      aiFillsOfficialSite:
+        "El agente IA rellena y prepara los datos automáticamente",
       procedureSmall: "Procedimiento:",
       govHeader: "REGULARIZACIÓN 2026",
       govLine1: "MINISTERIO DEL INTERIOR",
@@ -632,28 +619,86 @@ export default function Regularizacion2026() {
     };
   }, [lang]);
 
-  const [chatMessages, setChatMessages] = useState<ChatMsg[]>([
-    {
-      from: "agent",
-      text: ui.initialChat,
-    },
-  ]);
-
   const [docs, setDocs] = useState<StoredDocItem[]>(ui.initialStoredDocs);
 
+  const chatStorageKey = useMemo(() => {
+    return `gestoriacitaia_mohamed_chat_regularizacion_${lang}`;
+  }, [lang]);
+
   useEffect(() => {
-    setChatMessages([
-      {
-        from: "agent",
-        text: ui.initialChat,
-      },
-    ]);
     setDocs(ui.initialStoredDocs);
-  }, [ui.initialChat, ui.initialStoredDocs]);
+  }, [ui.initialStoredDocs]);
+
+  useEffect(() => {
+    if (!chatStorageKey) return;
+
+    try {
+      const raw = localStorage.getItem(chatStorageKey);
+
+      if (raw) {
+        const parsed = JSON.parse(raw) as ChatMsg[];
+
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setChatMessages(parsed);
+
+          const userMsgs = parsed.filter((m) => m.from === "user").length;
+          setUserMessageCount(userMsgs);
+
+          const paymentAlreadyTriggered = parsed.some(
+            (m) => m.from === "agent" && m.text === ui.paymentTriggerMessage
+          );
+
+          setPaymentTriggered(paymentAlreadyTriggered);
+          setChatBootstrapped(true);
+          return;
+        }
+      }
+
+      const freshChat: ChatMsg[] = [
+        {
+          from: "agent",
+          text: ui.initialChat,
+          ts: Date.now(),
+        },
+      ];
+
+      setChatMessages(freshChat);
+      setUserMessageCount(0);
+      setPaymentTriggered(false);
+      setChatBootstrapped(true);
+    } catch (error) {
+      console.error("Error cargando historial de Mohamed:", error);
+
+      const freshChat: ChatMsg[] = [
+        {
+          from: "agent",
+          text: ui.initialChat,
+          ts: Date.now(),
+        },
+      ];
+
+      setChatMessages(freshChat);
+      setUserMessageCount(0);
+      setPaymentTriggered(false);
+      setChatBootstrapped(true);
+    }
+  }, [chatStorageKey, ui.initialChat, ui.paymentTriggerMessage]);
+
+  useEffect(() => {
+    if (!chatBootstrapped || !chatStorageKey || chatMessages.length === 0) {
+      return;
+    }
+
+    try {
+      localStorage.setItem(chatStorageKey, JSON.stringify(chatMessages));
+    } catch (error) {
+      console.error("Error guardando historial de Mohamed:", error);
+    }
+  }, [chatMessages, chatBootstrapped, chatStorageKey]);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [chatMessages]);
+  }, [chatMessages, sendingChat]);
 
   const selectedSituationLabel =
     ui.situations.find((s) => s.value === selectedSituacion)?.label ||
@@ -667,12 +712,8 @@ export default function Regularizacion2026() {
   const handleSituacionClick = (value: string) => {
     setSelectedSituacion(value);
 
-    if (step === 0) {
-      if (!planActivo) {
-        setTimeout(() => setShowPayment(true), 1200);
-      } else {
-        setStep(1);
-      }
+    if (step === 0 && planActivo) {
+      setStep(1);
     }
   };
 
@@ -769,48 +810,95 @@ export default function Regularizacion2026() {
   };
 
   const handleSendChat = async () => {
-    if (!chatInput.trim() || sendingChat) return;
+    if (!chatInput.trim() || sendingChat || !chatBootstrapped) return;
 
-    const userMsgRaw = chatInput.trim();
+    const rawText = chatInput.trim();
+    const nextUserCount = userMessageCount + 1;
+    const shouldTriggerPayment =
+      !planActivo && !paymentTriggered && nextUserCount >= 2;
 
-    setChatMessages((prev) => [
-      ...prev,
-      { from: "user", text: userMsgRaw },
-    ]);
+    const userMessage: ChatMsg = {
+      from: "user",
+      text: rawText,
+      ts: Date.now(),
+    };
+
+    const historyToSend = chatMessages.slice(-8).map((msg) => ({
+      from: msg.from,
+      text: msg.text,
+    }));
+
+    setChatMessages((prev) => [...prev, userMessage]);
     setChatInput("");
     setSendingChat(true);
+    setUserMessageCount(nextUserCount);
 
     try {
-      const respuesta = await enviarMensajeMohamed(userMsgRaw);
-
-      setChatMessages((prev) => [
-        ...prev,
-        {
-          from: "agent",
-          text:
-            respuesta ||
-            (lang === "darija"
-              ? "سمح ليا، ما قدرتش نجاوب دابا."
-              : lang === "en"
-              ? "Sorry, I could not answer right now."
-              : "Lo siento, no pude responder ahora mismo."),
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
-      ]);
+        body: JSON.stringify({
+          assistant: "mohamed",
+          message: rawText,
+          context: "regularizacion_2026",
+          lang,
+          history: historyToSend,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data?.error || "Error en Mohamed");
+      }
+
+      const finalReply =
+        data?.reply ||
+        (lang === "darija"
+          ? "سمح ليا، ما قدرتش نجاوب دابا."
+          : lang === "en"
+          ? "Sorry, I could not answer right now."
+          : "Lo siento, no pude responder ahora mismo.");
+
+      const agentReply: ChatMsg = {
+        from: "agent",
+        text: finalReply,
+        ts: Date.now(),
+      };
+
+      if (shouldTriggerPayment) {
+        const paymentMsg: ChatMsg = {
+          from: "agent",
+          text: ui.paymentTriggerMessage,
+          ts: Date.now() + 1,
+        };
+
+        setChatMessages((prev) => [...prev, agentReply, paymentMsg]);
+        setPaymentTriggered(true);
+
+        setTimeout(() => {
+          setShowPayment(true);
+        }, 900);
+      } else {
+        setChatMessages((prev) => [...prev, agentReply]);
+      }
     } catch (error) {
       console.error("Error conectando con Mohamed:", error);
 
-      setChatMessages((prev) => [
-        ...prev,
-        {
-          from: "agent",
-          text:
-            lang === "darija"
-              ? "وقع مشكل فالاتصال مع محمد، عاود حاول."
-              : lang === "en"
-              ? "There was a connection error with Mohamed. Please try again."
-              : "Error conectando con Mohamed, intenta otra vez.",
-        },
-      ]);
+      const errorReply: ChatMsg = {
+        from: "agent",
+        text:
+          lang === "darija"
+            ? "وقع مشكل فالاتصال مع محمد، عاود حاول."
+            : lang === "en"
+            ? "There was a connection error with Mohamed. Please try again."
+            : "Error conectando con Mohamed, intenta otra vez.",
+        ts: Date.now(),
+      };
+
+      setChatMessages((prev) => [...prev, errorReply]);
     } finally {
       setSendingChat(false);
     }
@@ -856,6 +944,7 @@ export default function Regularizacion2026() {
             <button
               onClick={() => setShowPayment(true)}
               className="text-xs px-3 py-1.5 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold transition-colors"
+              type="button"
             >
               {t("reg_activar")}
             </button>
@@ -927,6 +1016,7 @@ export default function Regularizacion2026() {
                       ? "bg-destructive/80 border-destructive"
                       : "bg-black/50 border-white/20 hover:bg-black/70"
                   }`}
+                  type="button"
                 >
                   {muted ? (
                     <MicOff className="w-4 h-4 text-white" />
@@ -944,6 +1034,7 @@ export default function Regularizacion2026() {
                   ? "bg-secondary/20 border-secondary/40 text-secondary"
                   : "glass-panel border-white/10 text-white/70 hover:text-white hover:border-white/20"
               }`}
+              type="button"
             >
               <MessageSquare className="w-4 h-4" />
               {showChat ? ui.closeChat : ui.openChat}
@@ -961,7 +1052,7 @@ export default function Regularizacion2026() {
                   <div className="flex-1 overflow-y-auto p-3 space-y-2">
                     {chatMessages.map((msg, i) => (
                       <div
-                        key={i}
+                        key={`${msg.ts || i}-${i}`}
                         className={`flex gap-2 ${
                           msg.from === "user" ? "justify-end" : "justify-start"
                         }`}
@@ -1013,6 +1104,7 @@ export default function Regularizacion2026() {
                       onClick={handleSendChat}
                       disabled={sendingChat}
                       className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center hover:bg-primary/90 transition-colors shrink-0 disabled:opacity-60"
+                      type="button"
                     >
                       <Send className="w-3.5 h-3.5 text-primary-foreground" />
                     </button>
@@ -1273,7 +1365,10 @@ export default function Regularizacion2026() {
                 </span>
               </div>
 
-              <button className="w-7 h-7 flex items-center justify-center text-gray-500 hover:bg-gray-200 rounded">
+              <button
+                className="w-7 h-7 flex items-center justify-center text-gray-500 hover:bg-gray-200 rounded"
+                type="button"
+              >
                 <RefreshCw className="w-3.5 h-3.5" />
               </button>
 
@@ -1557,6 +1652,7 @@ export default function Regularizacion2026() {
                   ? "bg-destructive/20 border-destructive/40 text-destructive"
                   : "bg-white/5 border-white/10 text-white/80 hover:bg-white/10"
               }`}
+              type="button"
             >
               {muted ? (
                 <MicOff className="w-4 h-4" />
@@ -1577,6 +1673,7 @@ export default function Regularizacion2026() {
                     ? "bg-primary/20 border-primary/40 text-primary"
                     : "bg-white/5 border-white/10 text-white/80 hover:bg-white/10"
                 }`}
+                type="button"
               >
                 <FileText className="w-4 h-4 text-primary" />
                 {ui.documents}
@@ -1592,6 +1689,7 @@ export default function Regularizacion2026() {
                     ? "bg-secondary/20 border-secondary/40 text-secondary"
                     : "bg-white/5 border-white/10 text-white/80 hover:bg-white/10"
                 }`}
+                type="button"
               >
                 <Settings className="w-4 h-4 text-secondary" />
                 {ui.formsLabel}
@@ -1604,6 +1702,7 @@ export default function Regularizacion2026() {
                     ? "bg-secondary/20 border-secondary/40 text-secondary"
                     : "bg-white/5 border-white/10 text-white/80 hover:bg-white/10"
                 }`}
+                type="button"
               >
                 <MessageSquare className="w-4 h-4" />
                 Chat
