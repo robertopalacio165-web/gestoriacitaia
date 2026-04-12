@@ -22,6 +22,7 @@ import { supabase } from "@/lib/supabaseClient";
 interface ChatMsg {
   from: "agent" | "user";
   text: string;
+  ts?: number;
 }
 
 type TramiteItem = {
@@ -78,6 +79,8 @@ export default function BuscarCitas() {
   const [sendingChat, setSendingChat] = useState(false);
   const [userMessageCount, setUserMessageCount] = useState(0);
   const [paymentTriggered, setPaymentTriggered] = useState(false);
+  const [chatMessages, setChatMessages] = useState<ChatMsg[]>([]);
+  const [chatBootstrapped, setChatBootstrapped] = useState(false);
 
   const { t, lang } = useLang();
   const { toast } = useToast();
@@ -365,8 +368,7 @@ export default function BuscarCitas() {
             },
           ],
         } as Record<string, FormItem[]>,
-        initialChat:
-          "Hello, welcome to GestoriaCitaIA. How can I help you?",
+        initialChat: "Hello, welcome to GestoriaCitaIA. How can I help you?",
         online: "Online",
         agentRole: "Appointments Advisor",
         procedureLabel: "PROCEDURE",
@@ -571,32 +573,21 @@ export default function BuscarCitas() {
   }, [lang]);
 
   const TRAMITES = ui.tramites;
+
   const selectedTramiteLabel =
     TRAMITES.find((item) => item.value === selectedTramite)?.label ||
     TRAMITES[0].label;
 
+  const chatStorageKey = useMemo(() => {
+    const userId = profile?.id || "guest";
+    return `gestoriacitaia_sara_chat_${userId}`;
+  }, [profile?.id]);
+
   const docsForSelectedTramite =
     ui.docsByTramite[selectedTramite] ?? ui.docsByTramite.tie;
+
   const formsForSelectedTramite =
     ui.formsByTramite[selectedTramite] ?? ui.formsByTramite.tie;
-
-  const [chatMessages, setChatMessages] = useState<ChatMsg[]>([
-    {
-      from: "agent",
-      text: ui.initialChat,
-    },
-  ]);
-
-  useEffect(() => {
-    setChatMessages([
-      {
-        from: "agent",
-        text: ui.initialChat,
-      },
-    ]);
-    setUserMessageCount(0);
-    setPaymentTriggered(false);
-  }, [ui.initialChat]);
 
   const agentSteps = useMemo(() => {
     if (lang === "darija") {
@@ -698,6 +689,73 @@ export default function BuscarCitas() {
     loadProfile();
   }, []);
 
+  useEffect(() => {
+    if (!chatStorageKey) return;
+
+    try {
+      const raw = localStorage.getItem(chatStorageKey);
+
+      if (raw) {
+        const parsed = JSON.parse(raw) as ChatMsg[];
+
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setChatMessages(parsed);
+
+          const userMsgs = parsed.filter((m) => m.from === "user").length;
+          setUserMessageCount(userMsgs);
+
+          const paymentAlreadyTriggered = parsed.some(
+            (m) => m.from === "agent" && m.text === ui.paymentTriggerMessage
+          );
+
+          setPaymentTriggered(paymentAlreadyTriggered);
+          setChatBootstrapped(true);
+          return;
+        }
+      }
+
+      const freshChat: ChatMsg[] = [
+        {
+          from: "agent",
+          text: ui.initialChat,
+          ts: Date.now(),
+        },
+      ];
+
+      setChatMessages(freshChat);
+      setUserMessageCount(0);
+      setPaymentTriggered(false);
+      setChatBootstrapped(true);
+    } catch (error) {
+      console.error("Error cargando historial de Sara:", error);
+
+      const freshChat: ChatMsg[] = [
+        {
+          from: "agent",
+          text: ui.initialChat,
+          ts: Date.now(),
+        },
+      ];
+
+      setChatMessages(freshChat);
+      setUserMessageCount(0);
+      setPaymentTriggered(false);
+      setChatBootstrapped(true);
+    }
+  }, [chatStorageKey, ui.initialChat, ui.paymentTriggerMessage]);
+
+  useEffect(() => {
+    if (!chatBootstrapped || !chatStorageKey || chatMessages.length === 0) {
+      return;
+    }
+
+    try {
+      localStorage.setItem(chatStorageKey, JSON.stringify(chatMessages));
+    } catch (error) {
+      console.error("Error guardando historial de Sara:", error);
+    }
+  }, [chatMessages, chatBootstrapped, chatStorageKey]);
+
   const handleTramiteClick = (value: string) => {
     setSelectedTramite(value);
 
@@ -707,14 +765,25 @@ export default function BuscarCitas() {
   };
 
   const handleSendChat = async () => {
-    if (!chatInput.trim() || sendingChat) return;
+    if (!chatInput.trim() || sendingChat || !chatBootstrapped) return;
 
     const rawText = chatInput.trim();
     const nextUserCount = userMessageCount + 1;
     const shouldTriggerPayment =
       !planActivo && !paymentTriggered && nextUserCount >= 2;
 
-    setChatMessages((prev) => [...prev, { from: "user", text: rawText }]);
+    const userMessage: ChatMsg = {
+      from: "user",
+      text: rawText,
+      ts: Date.now(),
+    };
+
+    const historyToSend = chatMessages.slice(-8).map((msg) => ({
+      from: msg.from,
+      text: msg.text,
+    }));
+
+    setChatMessages((prev) => [...prev, userMessage]);
     setChatInput("");
     setSendingChat(true);
     setUserMessageCount(nextUserCount);
@@ -730,6 +799,7 @@ export default function BuscarCitas() {
           message: rawText,
           context: "buscar_citas",
           lang,
+          history: historyToSend,
         }),
       });
 
@@ -747,38 +817,43 @@ export default function BuscarCitas() {
           ? "Sorry, I could not answer right now."
           : "Lo siento, no pude responder ahora mismo.");
 
+      const agentReply: ChatMsg = {
+        from: "agent",
+        text: finalReply,
+        ts: Date.now(),
+      };
+
       if (shouldTriggerPayment) {
-        setChatMessages((prev) => [
-          ...prev,
-          { from: "agent", text: finalReply },
-          { from: "agent", text: ui.paymentTriggerMessage },
-        ]);
+        const paymentMsg: ChatMsg = {
+          from: "agent",
+          text: ui.paymentTriggerMessage,
+          ts: Date.now() + 1,
+        };
+
+        setChatMessages((prev) => [...prev, agentReply, paymentMsg]);
         setPaymentTriggered(true);
 
         setTimeout(() => {
           setShowPayment(true);
         }, 900);
       } else {
-        setChatMessages((prev) => [
-          ...prev,
-          { from: "agent", text: finalReply },
-        ]);
+        setChatMessages((prev) => [...prev, agentReply]);
       }
     } catch (error) {
       console.error("Error conectando con Sara:", error);
 
-      setChatMessages((prev) => [
-        ...prev,
-        {
-          from: "agent",
-          text:
-            lang === "darija"
-              ? "وقع مشكل فالاتصال مع سارة، عاود حاول."
-              : lang === "en"
-              ? "There was a connection error with Sara. Please try again."
-              : "Error conectando con Sara, intenta otra vez.",
-        },
-      ]);
+      const errorReply: ChatMsg = {
+        from: "agent",
+        text:
+          lang === "darija"
+            ? "وقع مشكل فالاتصال مع سارة، عاود حاول."
+            : lang === "en"
+            ? "There was a connection error with Sara. Please try again."
+            : "Error conectando con Sara, intenta otra vez.",
+        ts: Date.now(),
+      };
+
+      setChatMessages((prev) => [...prev, errorReply]);
     } finally {
       setSendingChat(false);
     }
@@ -978,7 +1053,7 @@ export default function BuscarCitas() {
                   <div className="flex-1 overflow-y-auto p-3 space-y-2">
                     {chatMessages.map((msg, i) => (
                       <div
-                        key={i}
+                        key={`${msg.ts || i}-${i}`}
                         className={`flex gap-2 ${
                           msg.from === "user" ? "justify-end" : "justify-start"
                         }`}
