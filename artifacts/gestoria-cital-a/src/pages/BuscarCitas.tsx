@@ -77,6 +77,7 @@ export default function BuscarCitas() {
   const [profileLoading, setProfileLoading] = useState(true);
   const [sendingChat, setSendingChat] = useState(false);
   const [userMessageCount, setUserMessageCount] = useState(0);
+  const [paymentTriggered, setPaymentTriggered] = useState(false);
 
   const { t, lang } = useLang();
   const { toast } = useToast();
@@ -87,10 +88,7 @@ export default function BuscarCitas() {
     if (lang === "darija") {
       return {
         tramites: [
-          {
-            value: "tie",
-            label: "تجديد بطاقة هوية الأجنبي (TIE)",
-          },
+          { value: "tie", label: "تجديد بطاقة هوية الأجنبي (TIE)" },
           { value: "regreso", label: "رخصة الرجوع" },
           { value: "nie", label: "شواهد وتعيين NIE" },
           { value: "ue", label: "شواهد الاتحاد الأوروبي" },
@@ -207,7 +205,7 @@ export default function BuscarCitas() {
           ],
         } as Record<string, FormItem[]>,
         initialChat:
-          "سلام، أنا سارة. مرحبا بيك فـ GestoriaCitaIA. قولي ليا شنو بغيتي وأنا معاك خطوة بخطوة.",
+          "وعليكم السلام، مرحبا بيك فـ GestoriaCitaIA. باش بغيتي نعاونك؟",
         online: "متصلة الآن",
         agentRole: "مستشارة المواعيد",
         procedureLabel: "الإجراء",
@@ -242,8 +240,9 @@ export default function BuscarCitas() {
         paymentMessage:
           "باش تحجز الموعد وتكمل العملية، فعل الخطة ديالك. أنا نرشدك خطوة بخطوة.",
         paymentTriggerMessage:
-          "مزيان. إلى بغيتي نكمل معاك حتى نساليو الموعد، فعل الخطة ودابا نكملو إن شاء الله.",
+          "باش نكملو ونخدمو على الملف ديالك، خاصك تفعل الخدمة. منين تخلص نكملو معاك مباشرة.",
         procedureShort: "الإجراء",
+        chatPlaceholder: "كتب سؤالك...",
       };
     }
 
@@ -367,7 +366,7 @@ export default function BuscarCitas() {
           ],
         } as Record<string, FormItem[]>,
         initialChat:
-          "Hi, I’m Sara. Welcome to GestoriaCitaIA. Tell me what you need and I’ll help you step by step.",
+          "Hello, welcome to GestoriaCitaIA. How can I help you?",
         online: "Online",
         agentRole: "Appointments Advisor",
         procedureLabel: "PROCEDURE",
@@ -402,8 +401,9 @@ export default function BuscarCitas() {
         paymentMessage:
           "To book your appointment and continue the process, activate your plan. I’ll guide you step by step.",
         paymentTriggerMessage:
-          "Perfect. If you want me to continue with you until the appointment is completed, activate your plan and we continue now.",
+          "To continue with your case, activate the service and we continue with you step by step.",
         procedureShort: "Procedure",
+        chatPlaceholder: "Type your question...",
       };
     }
 
@@ -529,7 +529,7 @@ export default function BuscarCitas() {
         ],
       } as Record<string, FormItem[]>,
       initialChat:
-        "Hola, soy Sara. Bienvenido a GestoriaCitaIA. Dime qué necesitas y te ayudo paso a paso.",
+        "Hola, bienvenido a GestoriaCitaIA. ¿Cómo puedo ayudarte?",
       online: "En línea",
       agentRole: "Asesora de Citas",
       procedureLabel: "TRÁMITE",
@@ -564,8 +564,9 @@ export default function BuscarCitas() {
       paymentMessage:
         "Para reservar tu cita y continuar con el proceso, activa tu plan. Yo te guío paso a paso.",
       paymentTriggerMessage:
-        "Perfecto. Si quieres que siga contigo hasta terminar la cita, activa tu plan y seguimos ahora mismo.",
+        "Para continuar con tu trámite, activa el servicio y seguimos contigo paso a paso.",
       procedureShort: "Trámite",
+      chatPlaceholder: "Escribe tu pregunta...",
     };
   }, [lang]);
 
@@ -576,7 +577,6 @@ export default function BuscarCitas() {
 
   const docsForSelectedTramite =
     ui.docsByTramite[selectedTramite] ?? ui.docsByTramite.tie;
-
   const formsForSelectedTramite =
     ui.formsByTramite[selectedTramite] ?? ui.formsByTramite.tie;
 
@@ -595,6 +595,7 @@ export default function BuscarCitas() {
       },
     ]);
     setUserMessageCount(0);
+    setPaymentTriggered(false);
   }, [ui.initialChat]);
 
   const agentSteps = useMemo(() => {
@@ -710,6 +711,8 @@ export default function BuscarCitas() {
 
     const rawText = chatInput.trim();
     const nextUserCount = userMessageCount + 1;
+    const shouldTriggerPayment =
+      !planActivo && !paymentTriggered && nextUserCount >= 2;
 
     setChatMessages((prev) => [...prev, { from: "user", text: rawText }]);
     setChatInput("");
@@ -725,6 +728,8 @@ export default function BuscarCitas() {
         body: JSON.stringify({
           assistant: "sara",
           message: rawText,
+          context: "buscar_citas",
+          lang,
         }),
       });
 
@@ -742,12 +747,13 @@ export default function BuscarCitas() {
           ? "Sorry, I could not answer right now."
           : "Lo siento, no pude responder ahora mismo.");
 
-      if (!planActivo && nextUserCount >= 2) {
+      if (shouldTriggerPayment) {
         setChatMessages((prev) => [
           ...prev,
           { from: "agent", text: finalReply },
           { from: "agent", text: ui.paymentTriggerMessage },
         ]);
+        setPaymentTriggered(true);
 
         setTimeout(() => {
           setShowPayment(true);
@@ -895,9 +901,7 @@ export default function BuscarCitas() {
 
               <div className="absolute top-3 left-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/60 border border-white/10 backdrop-blur-md">
                 <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                <span className="text-xs font-medium text-white">
-                  {ui.online}
-                </span>
+                <span className="text-xs font-medium text-white">{ui.online}</span>
               </div>
 
               <div className="absolute top-3 right-3 relative">
@@ -942,9 +946,7 @@ export default function BuscarCitas() {
               </div>
 
               <div className="absolute bottom-14 right-3 text-right">
-                <p className="text-white font-bold text-sm drop-shadow-lg">
-                  Sara
-                </p>
+                <p className="text-white font-bold text-sm drop-shadow-lg">Sara</p>
                 <p className="text-white/70 text-xs drop-shadow-lg">
                   {ui.agentRole}
                 </p>
@@ -1022,7 +1024,7 @@ export default function BuscarCitas() {
                       value={chatInput}
                       onChange={(e) => setChatInput(e.target.value)}
                       onKeyDown={(e) => e.key === "Enter" && handleSendChat()}
-                      placeholder={t("buscar_chat_placeholder")}
+                      placeholder={ui.chatPlaceholder}
                       className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white placeholder-white/30 focus:outline-none focus:border-primary/50"
                     />
                     <button
@@ -1067,9 +1069,7 @@ export default function BuscarCitas() {
                     {(() => {
                       const currentStep =
                         agentSteps[Math.min(step, agentSteps.length - 1)];
-                      const parts = currentStep.text.split(
-                        currentStep.highlight
-                      );
+                      const parts = currentStep.text.split(currentStep.highlight);
 
                       if (!currentStep.highlight) return currentStep.text;
 
@@ -1205,9 +1205,7 @@ export default function BuscarCitas() {
                     </div>
 
                     <div className="ml-auto text-right shrink-0">
-                      <div className="text-[10px] text-gray-500">
-                        {ui.govSmall}
-                      </div>
+                      <div className="text-[10px] text-gray-500">{ui.govSmall}</div>
                       <div className="text-sm sm:text-base font-black text-[#003366]">
                         {ui.govTitle}
                       </div>
@@ -1289,9 +1287,7 @@ export default function BuscarCitas() {
 
                         <p className="text-[10px] text-gray-400 flex items-center gap-1">
                           <Shield className="w-3 h-3 text-green-500" />
-                          {profileLoading
-                            ? ui.loadingUserData
-                            : ui.aiFilledData}
+                          {profileLoading ? ui.loadingUserData : ui.aiFilledData}
                         </p>
                       </motion.div>
                     )}
