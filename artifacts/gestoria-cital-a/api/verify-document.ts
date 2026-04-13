@@ -120,6 +120,33 @@ Tipo esperado del documento: ${expectedDocumentType || "no especificado"}
 `;
 }
 
+function detectMimeTypeFromUrl(url: string): string {
+  const lower = url.toLowerCase();
+
+  if (lower.includes(".png")) return "image/png";
+  if (lower.includes(".webp")) return "image/webp";
+  if (lower.includes(".gif")) return "image/gif";
+  return "image/jpeg";
+}
+
+async function downloadImageAsDataUrl(imageUrl: string): Promise<string> {
+  const response = await fetch(imageUrl);
+
+  if (!response.ok) {
+    throw new Error(`No se pudo descargar la imagen: ${response.status}`);
+  }
+
+  const arrayBuffer = await response.arrayBuffer();
+  const base64 = Buffer.from(arrayBuffer).toString("base64");
+
+  const contentType =
+    response.headers.get("content-type") ||
+    detectMimeTypeFromUrl(imageUrl) ||
+    "image/jpeg";
+
+  return `data:${contentType};base64,${base64}`;
+}
+
 export default async function handler(req: any, res: any) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Método no permitido" });
@@ -150,11 +177,23 @@ export default async function handler(req: any, res: any) {
       });
     }
 
-    const imageUrl = hasBase64
-      ? body.imageBase64!.startsWith("data:image/")
+    let finalImageUrl = "";
+
+    if (hasBase64) {
+      finalImageUrl = body.imageBase64!.startsWith("data:image/")
         ? body.imageBase64!
-        : `data:image/jpeg;base64,${body.imageBase64}`
-      : body.imageUrl!;
+        : `data:image/jpeg;base64,${body.imageBase64}`;
+    } else if (hasImageUrl) {
+      try {
+        finalImageUrl = await downloadImageAsDataUrl(body.imageUrl!);
+      } catch (downloadError: any) {
+        return res.status(500).json({
+          error: `No se pudo descargar la imagen externa: ${
+            downloadError?.message || "error desconocido"
+          }`,
+        });
+      }
+    }
 
     const messages = [
       {
@@ -171,7 +210,7 @@ export default async function handler(req: any, res: any) {
           {
             type: "image_url",
             image_url: {
-              url: imageUrl,
+              url: finalImageUrl,
             },
           },
         ] as OpenAIMessageContent[],
