@@ -31,6 +31,12 @@ import { useToast } from "@/hooks/use-toast";
 import { useLang } from "@/contexts/LanguageContext";
 import { uploadDocument } from "@/lib/uploadDocument";
 import { supabase } from "@/lib/supabaseClient";
+import {
+  fileToDataUrl,
+  getDocumentLabel,
+  verifyDocument,
+  type VerifyDocumentLang,
+} from "@/lib/verifyDocument";
 
 const CITAS = [
   {
@@ -124,6 +130,11 @@ type UserFormRow = {
   extracted_profile_data?: Record<string, any> | null;
 };
 
+type UploadingDocState = {
+  type: string;
+  title: string;
+} | null;
+
 export default function Panel() {
   const [, setLocation] = useLocation();
   const [activeTab, setActiveTab] = useState<TabKey>("resumen");
@@ -138,6 +149,7 @@ export default function Panel() {
   const [notifications, setNotifications] = useState<NotificationRow[]>([]);
   const [, setCurrentUserId] = useState<string | null>(null);
   const [userForms, setUserForms] = useState<UserFormRow[]>([]);
+  const [uploadingDoc, setUploadingDoc] = useState<UploadingDocState>(null);
 
   const { toast } = useToast();
   const { t } = useLang();
@@ -231,8 +243,16 @@ export default function Panel() {
   };
 
   const REQUIRED_DOCS: RequiredDoc[] = [
-    { name: t("doc_passport" as never), type: "passport", date: t("doc_required" as never) },
-    { name: t("doc_dni_nie" as never), type: "dni_nie", date: t("doc_if_available" as never) },
+    {
+      name: t("doc_passport" as never),
+      type: "passport",
+      date: t("doc_required" as never),
+    },
+    {
+      name: t("doc_dni_nie" as never),
+      type: "nie",
+      date: t("doc_if_available" as never),
+    },
     {
       name: t("doc_empadronamiento" as never),
       type: "empadronamiento",
@@ -243,13 +263,21 @@ export default function Panel() {
       type: "pruebas_espana",
       date: t("doc_very_important" as never),
     },
-    { name: t("doc_fotografias" as never), type: "fotografias", date: t("doc_required" as never) },
+    {
+      name: t("doc_fotografias" as never),
+      type: "photo",
+      date: t("doc_required" as never),
+    },
     {
       name: t("doc_formulario_oficial" as never),
-      type: "formulario_oficial",
+      type: "official_form",
       date: t("doc_pending_fill" as never),
     },
-    { name: t("doc_tasa_pagada" as never), type: "tasa_pagada", date: t("doc_pending" as never) },
+    {
+      name: t("doc_tasa_pagada" as never),
+      type: "tasa_pagada",
+      date: t("doc_pending" as never),
+    },
   ];
 
   const loadCurrentUser = async () => {
@@ -395,59 +423,287 @@ export default function Panel() {
     }
   };
 
+  const getVerifyLang = (): VerifyDocumentLang => {
+    const lang = (profile?.preferred_language || "").toLowerCase();
+
+    if (lang === "darija" || lang === "ar") return "darija";
+    if (lang === "en" || lang === "english") return "en";
+    return "es";
+  };
+
+  const mapExpectedTypeForIA = (documentType: string): string {
+    const normalized = documentType.trim().toLowerCase();
+
+    if (normalized === "passport") return "passport";
+    if (normalized === "nie") return "nie";
+    if (normalized === "tie") return "tie";
+    if (normalized === "empadronamiento") return "empadronamiento";
+    if (normalized === "photo" || normalized === "fotografias" || normalized === "foto") {
+      return "photo";
+    }
+    if (normalized === "official_form" || normalized === "formulario_oficial") {
+      return "official_form";
+    }
+    if (normalized === "criminal_record" || normalized === "antecedentes") {
+      return "criminal_record";
+    }
+
+    return "auto";
+  };
+
+  const mapStoredDocumentType = (
+    originalType: string,
+    detectedType?: string | null
+  ): string => {
+    const original = originalType.trim().toLowerCase();
+    const detected = (detectedType || "").trim().toLowerCase();
+
+    if (original === "general" || original === "auto") {
+      return detected || "general";
+    }
+
+    if (original === "formulario_oficial") return "official_form";
+    if (original === "fotografias") return "photo";
+    if (original === "dni_nie") return detected === "tie" ? "tie" : "nie";
+
+    return original;
+  };
+
+  const buildVerificationStatus = (result: {
+    status: "valid" | "review" | "invalid";
+    match_expected_type: boolean | null;
+  }): "verified" | "needs_review" | "rejected" => {
+    if (result.status === "invalid") return "rejected";
+    if (result.match_expected_type === false) return "rejected";
+    if (result.status === "valid") return "verified";
+    return "needs_review";
+  };
+
+  const buildVerificationNote = (
+    title: string,
+    expectedType: string,
+    result: {
+      status: "valid" | "review" | "invalid";
+      document_type: string;
+      match_expected_type: boolean | null;
+      summary: string;
+      warnings: string[];
+    }
+  ) => {
+    const detectedLabel = getDocumentLabel(result.document_type);
+    const expectedLabel =
+      expectedType && expectedType !== "auto"
+        ? getDocumentLabel(expectedType)
+        : tr("document", "Documento");
+
+    const parts: string[] = [];
+
+    if (result.match_expected_type === false) {
+      parts.push(
+        trf(
+          "verification_wrong_type",
+          "El archivo no coincide con el tipo esperado ({expected}). Detectado: {detected}.",
+          {
+            expected: expectedLabel,
+            detected: detectedLabel,
+          }
+        )
+      );
+    } else if (result.status === "valid") {
+      parts.push(
+        trf(
+          "verification_valid_named",
+          "{title} verificado correctamente como {detected}.",
+          {
+            title,
+            detected: detectedLabel,
+          }
+        )
+      );
+    } else if (result.status === "review") {
+      parts.push(
+        trf(
+          "verification_review_named",
+          "{title} necesita revisión manual. Detectado: {detected}.",
+          {
+            title,
+            detected: detectedLabel,
+          }
+        )
+      );
+    } else {
+      parts.push(
+        trf(
+          "verification_invalid_named",
+          "{title} no es válido o no se puede leer bien. Detectado: {detected}.",
+          {
+            title,
+            detected: detectedLabel,
+          }
+        )
+      );
+    }
+
+    if (result.summary) {
+      parts.push(result.summary);
+    }
+
+    if (Array.isArray(result.warnings) && result.warnings.length > 0) {
+      parts.push(result.warnings.join(" · "));
+    }
+
+    return parts.join(" ");
+  };
+
+  const buildUploadSuccessText = (
+    title: string,
+    verificationStatus: "verified" | "needs_review" | "rejected",
+    resultSummary?: string
+  ) => {
+    if (verificationStatus === "verified") {
+      return trf(
+        "document_uploaded_verified_named",
+        "✅ {title} subido y verificado correctamente",
+        { title }
+      );
+    }
+
+    if (verificationStatus === "rejected") {
+      return (
+        trf(
+          "document_uploaded_rejected_named",
+          "⚠️ {title} subido pero no válido o no coincide con lo esperado",
+          { title }
+        ) + (resultSummary ? ` · ${resultSummary}` : "")
+      );
+    }
+
+    return (
+      trf(
+        "document_uploaded_review_named",
+        "🟡 {title} subido. Necesita revisión",
+        { title }
+      ) + (resultSummary ? ` · ${resultSummary}` : "")
+    );
+  };
+
   const handleDocumentUpload = async (
     file: File,
     documentType: string,
     title: string
   ) => {
     try {
+      setUploadingDoc({ type: documentType, title });
+
       const {
         data: { user },
         error: authError,
       } = await supabase.auth.getUser();
 
       if (authError) throw authError;
+      if (!user) throw new Error("Usuario no autenticado");
 
-      const emailFromAuth = user?.email?.trim() || "";
+      const emailFromAuth = user.email?.trim() || "";
       const emailFromProfile = profile?.email?.trim() || "";
       const fullNameFromProfile = profile?.full_name?.trim() || "";
       const phoneFromProfile = profile?.phone?.trim() || "";
       const nieFromProfile = profile?.nie?.trim() || "";
 
+      const expectedType = mapExpectedTypeForIA(documentType);
+
+      const imageBase64 = await fileToDataUrl(file);
+
+      const verificationResult = await verifyDocument({
+        imageBase64,
+        expectedDocumentType: expectedType,
+        lang: getVerifyLang(),
+      });
+
+      const verificationStatus = buildVerificationStatus(verificationResult);
+      const finalDocumentType = mapStoredDocumentType(
+        documentType,
+        verificationResult.document_type
+      );
+
+      const verificationNotes = buildVerificationNote(
+        title,
+        expectedType,
+        verificationResult
+      );
+
       await uploadDocument({
         file,
-        documentType,
+        documentType: finalDocumentType,
         title,
-        verification_status: "needs_review",
-        verification_notes: "Documento recibido. Pendiente de revisión.",
+        verification_status: verificationStatus,
+        verification_notes: verificationNotes,
         extracted_data: {
           user_email: emailFromAuth || emailFromProfile || "no-email@error.com",
           user_full_name: fullNameFromProfile,
           user_phone: phoneFromProfile,
           user_nie: nieFromProfile,
           upload_source: "panel",
-          ai_result: "pending",
-          is_valid: null,
-          review_required: true,
-          review_status: "pending",
+          ai_result: verificationResult.status,
+          ai_document_type: verificationResult.document_type,
+          ai_expected_document_type: verificationResult.expected_document_type,
+          ai_match_expected_type: verificationResult.match_expected_type,
+          ai_summary: verificationResult.summary,
+          ai_warnings: verificationResult.warnings,
+          ai_visible_fields: verificationResult.visible_fields,
+          ai_missing_or_unclear_fields: verificationResult.missing_or_unclear_fields,
+          ai_image_quality: verificationResult.image_quality,
+          extracted_full_name: verificationResult.full_name,
+          extracted_document_number: verificationResult.document_number,
+          extracted_nie: verificationResult.nie,
+          extracted_passport_number: verificationResult.passport_number,
+          extracted_birth_date: verificationResult.birth_date,
+          extracted_expiry_date: verificationResult.expiry_date,
+          extracted_issue_date: verificationResult.issue_date,
+          extracted_nationality: verificationResult.nationality,
+          extracted_sex: verificationResult.sex,
+          extracted_country: verificationResult.country,
+          is_valid: verificationStatus === "verified",
+          review_required: verificationStatus !== "verified",
+          review_status:
+            verificationStatus === "verified"
+              ? "auto_verified"
+              : verificationStatus === "rejected"
+              ? "auto_rejected"
+              : "pending_manual_review",
+          detected_from_name: verificationResult.document_type,
+          match_reason: verificationResult.summary,
         },
       });
 
-      const successText = trf(
-        "document_uploaded_success_named",
-        "✅ {title} subido correctamente y enviado a revisión",
-        { title }
+      const successText = buildUploadSuccessText(
+        title,
+        verificationStatus,
+        verificationResult.summary
       );
 
       setUploadMessage(successText);
 
       toast({
         title: tr("document_uploaded_title", "Documento subido"),
-        description: trf(
-          "document_uploaded_desc_named",
-          "{title} recibido correctamente. Ahora está en revisión.",
-          { title }
-        ),
+        description:
+          verificationStatus === "verified"
+            ? trf(
+                "document_uploaded_verified_desc_named",
+                "{title} se ha verificado automáticamente.",
+                { title }
+              )
+            : verificationStatus === "rejected"
+            ? trf(
+                "document_uploaded_rejected_desc_named",
+                "{title} no parece válido o no coincide con el documento esperado.",
+                { title }
+              )
+            : trf(
+                "document_uploaded_review_desc_named",
+                "{title} fue recibido y necesita revisión.",
+                { title }
+              ),
+        variant: verificationStatus === "rejected" ? "destructive" : "default",
       });
 
       await Promise.all([loadUserDocuments(), loadNotifications()]);
@@ -464,6 +720,8 @@ export default function Panel() {
           tr("error_upload_desc", "No se pudo subir el documento"),
         variant: "destructive",
       });
+    } finally {
+      setUploadingDoc(null);
     }
   };
 
@@ -609,6 +867,17 @@ export default function Panel() {
                   total,
                   min: minimo,
                 }),
+        };
+      }
+
+      if (doc.type === "nie") {
+        const isUploaded =
+          uploadedTypeSet.has("nie") || uploadedTypeSet.has("tie");
+
+        return {
+          ...doc,
+          status: isUploaded ? "subido" : "pendiente",
+          extra: "",
         };
       }
 
@@ -860,7 +1129,9 @@ export default function Panel() {
         .createSignedUrl(doc.file_path, 60, { download: true });
 
       if (error) throw error;
-      if (!data?.signedUrl) throw new Error("No se pudo generar el enlace de descarga");
+      if (!data?.signedUrl) {
+        throw new Error("No se pudo generar el enlace de descarga");
+      }
 
       window.open(data.signedUrl, "_blank");
     } catch (error: any) {
@@ -868,7 +1139,8 @@ export default function Panel() {
       toast({
         title: tr("error_download_title", "Error al descargar"),
         description:
-          error?.message || tr("error_download_desc", "No se pudo descargar el documento"),
+          error?.message ||
+          tr("error_download_desc", "No se pudo descargar el documento"),
         variant: "destructive",
       });
     }
@@ -1491,6 +1763,16 @@ export default function Panel() {
                 </div>
               )}
 
+              {uploadingDoc && (
+                <div className="rounded-xl border border-blue-500/30 bg-blue-500/10 px-3 py-2 text-sm text-blue-200">
+                  {trf(
+                    "uploading_document_named",
+                    "Procesando {title}...",
+                    { title: uploadingDoc.title }
+                  )}
+                </div>
+              )}
+
               <div className="rounded-xl border border-white/10 p-3">
                 <div className="flex items-center justify-between mb-3">
                   <p className="text-xs font-bold text-white">
@@ -1502,53 +1784,67 @@ export default function Panel() {
                 </div>
 
                 <div className="space-y-2">
-                  {requiredDocsWithStatus.map((doc, i) => (
-                    <div
-                      key={i}
-                      className="flex items-center justify-between p-3 bg-white/5 rounded-xl"
-                    >
-                      <div>
-                        <p className="text-white text-sm">{doc.name}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {doc.date}
-                          {!!doc.extra && (
-                            <span className="ml-2 text-primary font-semibold">
-                              · {doc.extra}
-                            </span>
-                          )}
-                        </p>
-                      </div>
+                  {requiredDocsWithStatus.map((doc, i) => {
+                    const isUploading = uploadingDoc?.type === doc.type;
 
-                      <div className="flex items-center gap-3">
-                        <span
-                          className={`text-xs font-semibold ${
-                            doc.status === "subido" ? "text-green-400" : "text-amber-400"
-                          }`}
-                        >
-                          {doc.status === "subido"
-                            ? t("doc_uploaded" as never)
-                            : t("doc_pending" as never)}
-                        </span>
+                    return (
+                      <div
+                        key={i}
+                        className="flex items-center justify-between p-3 bg-white/5 rounded-xl"
+                      >
+                        <div>
+                          <p className="text-white text-sm">{doc.name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {doc.date}
+                            {!!doc.extra && (
+                              <span className="ml-2 text-primary font-semibold">
+                                · {doc.extra}
+                              </span>
+                            )}
+                          </p>
+                        </div>
 
-                        <label className="cursor-pointer text-xs text-primary flex items-center gap-1">
-                          <Upload className="w-3 h-3" />
-                          {doc.status === "subido"
-                            ? t("doc_replace" as never)
-                            : t("doc_upload" as never)}
-                          <input
-                            type="file"
-                            className="hidden"
-                            onChange={async (e) => {
-                              const file = e.target.files?.[0];
-                              if (!file) return;
-                              await handleDocumentUpload(file, doc.type, doc.name);
-                              e.currentTarget.value = "";
-                            }}
-                          />
-                        </label>
+                        <div className="flex items-center gap-3">
+                          <span
+                            className={`text-xs font-semibold ${
+                              doc.status === "subido" ? "text-green-400" : "text-amber-400"
+                            }`}
+                          >
+                            {doc.status === "subido"
+                              ? t("doc_uploaded" as never)
+                              : t("doc_pending" as never)}
+                          </span>
+
+                          <label
+                            className={`cursor-pointer text-xs flex items-center gap-1 ${
+                              isUploading
+                                ? "text-muted-foreground pointer-events-none opacity-60"
+                                : "text-primary"
+                            }`}
+                          >
+                            <Upload className="w-3 h-3" />
+                            {isUploading
+                              ? tr("processing", "Procesando")
+                              : doc.status === "subido"
+                              ? t("doc_replace" as never)
+                              : t("doc_upload" as never)}
+                            <input
+                              type="file"
+                              className="hidden"
+                              disabled={isUploading}
+                              accept="image/*,.pdf"
+                              onChange={async (e) => {
+                                const file = e.target.files?.[0];
+                                if (!file) return;
+                                await handleDocumentUpload(file, doc.type, doc.name);
+                                e.currentTarget.value = "";
+                              }}
+                            />
+                          </label>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
 
@@ -1556,6 +1852,7 @@ export default function Panel() {
                 type="file"
                 className="hidden"
                 id="upload-new-document"
+                accept="image/*,.pdf"
                 onChange={async (e) => {
                   const file = e.target.files?.[0];
                   if (!file) return;
@@ -1651,17 +1948,52 @@ export default function Panel() {
                                   )}
                             </p>
 
-                            {doc.extracted_data?.match_reason && (
+                            {doc.extracted_data?.ai_summary && (
                               <p className="text-xs text-muted-foreground break-words">
-                                IA: {doc.extracted_data.match_reason}
+                                IA: {String(doc.extracted_data.ai_summary)}
                               </p>
                             )}
 
-                            {doc.extracted_data?.detected_from_name &&
-                              doc.extracted_data.detected_from_name !== "unknown" && (
+                            {doc.extracted_data?.ai_document_type &&
+                              doc.extracted_data.ai_document_type !== "unknown" && (
                                 <p className="text-xs text-muted-foreground">
                                   {tr("detected_as", "Detectado como")}:{" "}
-                                  {doc.extracted_data.detected_from_name}
+                                  {String(doc.extracted_data.ai_document_type)}
+                                </p>
+                              )}
+
+                            {doc.extracted_data?.extracted_full_name && (
+                              <p className="text-xs text-muted-foreground">
+                                {tr("name", "Nombre")}:{" "}
+                                {String(doc.extracted_data.extracted_full_name)}
+                              </p>
+                            )}
+
+                            {doc.extracted_data?.extracted_nie && (
+                              <p className="text-xs text-muted-foreground">
+                                NIE: {String(doc.extracted_data.extracted_nie)}
+                              </p>
+                            )}
+
+                            {doc.extracted_data?.extracted_passport_number && (
+                              <p className="text-xs text-muted-foreground">
+                                {tr("passport", "Pasaporte")}:{" "}
+                                {String(doc.extracted_data.extracted_passport_number)}
+                              </p>
+                            )}
+
+                            {doc.extracted_data?.extracted_expiry_date && (
+                              <p className="text-xs text-muted-foreground">
+                                {tr("expires_on", "Caduca el")}:{" "}
+                                {String(doc.extracted_data.extracted_expiry_date)}
+                              </p>
+                            )}
+
+                            {Array.isArray(doc.extracted_data?.ai_warnings) &&
+                              doc.extracted_data.ai_warnings.length > 0 && (
+                                <p className="text-xs text-amber-300 break-words">
+                                  {tr("warnings", "Avisos")}:{" "}
+                                  {doc.extracted_data.ai_warnings.join(" · ")}
                                 </p>
                               )}
                           </div>
