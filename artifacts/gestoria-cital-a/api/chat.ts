@@ -171,9 +171,6 @@ REGLAS IMPORTANTES
 - No vuelves a preguntar el trámite si ya lo dijo
 - Si el tema ya no es de cita y es de expediente o documentos, lo pasas a Mohamed de forma natural
 - Si ya tienes el trámite y el teléfono, debes empujar la conversación a completar los datos que falten
-
-TRANSFERENCIA A MOHAMED
-- Si el cliente pasa a documentos, expediente, formularios o regularización, respondes de forma natural diciendo que Mohamed le sigue con ese paso
 `;
 }
 
@@ -425,18 +422,34 @@ async function postToMakeWebhook(
   url: string | undefined,
   payload: Record<string, any>
 ) {
-  if (!url) return;
+  if (!url) {
+    console.error("MAKE WEBHOOK URL VACÍA");
+    return { ok: false, status: 0 };
+  }
 
   try {
-    await fetch(url, {
+    const response = await fetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify(payload),
     });
+
+    const text = await response.text().catch(() => "");
+    console.log("MAKE WEBHOOK STATUS:", response.status);
+    if (!response.ok) {
+      console.error("MAKE WEBHOOK RESPONSE ERROR:", text);
+    }
+
+    return {
+      ok: response.ok,
+      status: response.status,
+      body: text,
+    };
   } catch (error) {
     console.error("MAKE WEBHOOK ERROR:", error);
+    return { ok: false, status: 0 };
   }
 }
 
@@ -475,8 +488,13 @@ export default async function handler(req: any, res: any) {
     }
 
     const detectedLanguage = detectUserLanguage(message);
-
     const isSara = assistant === "sara" || context === "buscar_citas";
+
+    console.log("CHAT API ASSISTANT:", assistant);
+    console.log("CHAT API CONTEXT:", context);
+    console.log("CHAT API IS_SARA:", isSara);
+    console.log("CHAT API SARA WEBHOOK CONFIG:", Boolean(process.env.MAKE_WEBHOOK_SARA));
+    console.log("CHAT API MOHAMED WEBHOOK CONFIG:", Boolean(process.env.MAKE_WEBHOOK_MOHAMED));
 
     const systemPrompt = isSara
       ? getSaraPrompt(detectedLanguage, procedureLabel)
@@ -493,7 +511,7 @@ export default async function handler(req: any, res: any) {
       message,
     });
 
-    const response = await fetch("https://api.openai.com/v1/responses", {
+    const openaiResponse = await fetch("https://api.openai.com/v1/responses", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${apiKey}`,
@@ -507,9 +525,9 @@ export default async function handler(req: any, res: any) {
       }),
     });
 
-    const data = await response.json();
+    const data = await openaiResponse.json();
 
-    if (!response.ok) {
+    if (!openaiResponse.ok) {
       console.error("OPENAI ERROR:", JSON.stringify(data, null, 2));
       return res.status(500).json({
         error: data?.error?.message || "Error OpenAI",
@@ -533,8 +551,13 @@ export default async function handler(req: any, res: any) {
       procedureLabel,
     });
 
+    let makeResult: { ok: boolean; status: number; body?: string } = {
+      ok: false,
+      status: 0,
+    };
+
     if (isSara) {
-      await postToMakeWebhook(process.env.MAKE_WEBHOOK_SARA, {
+      makeResult = await postToMakeWebhook(process.env.MAKE_WEBHOOK_SARA, {
         source: "gestoriacitaia",
         assistant: "sara",
         session_id: sessionId || null,
@@ -553,7 +576,7 @@ export default async function handler(req: any, res: any) {
         created_at: new Date().toISOString(),
       });
     } else {
-      await postToMakeWebhook(process.env.MAKE_WEBHOOK_MOHAMED, {
+      makeResult = await postToMakeWebhook(process.env.MAKE_WEBHOOK_MOHAMED, {
         source: "gestoriacitaia",
         assistant: "mohamed",
         session_id: sessionId || null,
@@ -579,6 +602,10 @@ export default async function handler(req: any, res: any) {
         leadReadyForAutomation: isSara
           ? hasEnoughLeadDataForSara(extractedLead)
           : false,
+        saraWebhookConfigured: Boolean(process.env.MAKE_WEBHOOK_SARA),
+        mohamedWebhookConfigured: Boolean(process.env.MAKE_WEBHOOK_MOHAMED),
+        makeStatus: makeResult.status,
+        makeOk: makeResult.ok,
       },
     });
   } catch (error: any) {
