@@ -399,7 +399,8 @@ export default function BuscarCitas() {
         confirmSuccessTitle: "Appointment confirmed!",
         confirmSuccessDesc: "The booking was saved successfully.",
         planActivated: "Plan activated",
-        planContinue: "Perfect. Let's continue with your appointment step by step.",
+        planContinue:
+          "Perfect. Let's continue with your appointment step by step.",
         paymentMessage:
           "To book your appointment and continue the process, activate your plan. I’ll guide you step by step.",
         paymentTriggerMessage:
@@ -580,8 +581,8 @@ export default function BuscarCitas() {
 
   const chatStorageKey = useMemo(() => {
     const userId = profile?.id || "guest";
-    return `gestoriacitaia_sara_chat_${userId}`;
-  }, [profile?.id]);
+    return `gestoriacitaia_sara_chat_${userId}_${lang}`;
+  }, [profile?.id, lang]);
 
   const docsForSelectedTramite =
     ui.docsByTramite[selectedTramite] ?? ui.docsByTramite.tie;
@@ -873,6 +874,11 @@ export default function BuscarCitas() {
   const handleAceptar = () => {
     if (!selectedTramite) return;
 
+    if (!planActivo) {
+      setShowPayment(true);
+      return;
+    }
+
     scheduleMutation.mutate(
       { type: selectedTramite },
       {
@@ -901,6 +907,11 @@ export default function BuscarCitas() {
   };
 
   const handleConfirm = () => {
+    if (!planActivo) {
+      setShowPayment(true);
+      return;
+    }
+
     setConfirmed(true);
 
     toast({
@@ -976,7 +987,9 @@ export default function BuscarCitas() {
 
               <div className="absolute top-3 left-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/60 border border-white/10 backdrop-blur-md">
                 <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                <span className="text-xs font-medium text-white">{ui.online}</span>
+                <span className="text-xs font-medium text-white">
+                  {ui.online}
+                </span>
               </div>
 
               <div className="absolute top-3 right-3 relative">
@@ -1021,7 +1034,9 @@ export default function BuscarCitas() {
               </div>
 
               <div className="absolute bottom-14 right-3 text-right">
-                <p className="text-white font-bold text-sm drop-shadow-lg">Sara</p>
+                <p className="text-white font-bold text-sm drop-shadow-lg">
+                  Sara
+                </p>
                 <p className="text-white/70 text-xs drop-shadow-lg">
                   {ui.agentRole}
                 </p>
@@ -1280,7 +1295,9 @@ export default function BuscarCitas() {
                     </div>
 
                     <div className="ml-auto text-right shrink-0">
-                      <div className="text-[10px] text-gray-500">{ui.govSmall}</div>
+                      <div className="text-[10px] text-gray-500">
+                        {ui.govSmall}
+                      </div>
                       <div className="text-sm sm:text-base font-black text-[#003366]">
                         {ui.govTitle}
                       </div>
@@ -1362,7 +1379,9 @@ export default function BuscarCitas() {
 
                         <p className="text-[10px] text-gray-400 flex items-center gap-1">
                           <Shield className="w-3 h-3 text-green-500" />
-                          {profileLoading ? ui.loadingUserData : ui.aiFilledData}
+                          {profileLoading
+                            ? ui.loadingUserData
+                            : ui.aiFilledData}
                         </p>
                       </motion.div>
                     )}
@@ -1578,7 +1597,9 @@ export default function BuscarCitas() {
                           : "✗"}
                       </span>
 
-                      <span className="text-sm text-white/90">{doc.nombre}</span>
+                      <span className="text-sm text-white/90">
+                        {doc.nombre}
+                      </span>
 
                       <span
                         className={`ml-auto text-[10px] font-semibold px-2 py-0.5 rounded-full ${
