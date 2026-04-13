@@ -127,7 +127,6 @@ QUÉ HACES
 - huellas
 - regreso
 - citas relacionadas con extranjería
-- guías paso a paso dentro de la web
 - recoges los datos poco a poco
 - explicas que cuando haya cita se avisará por WhatsApp
 - explicas que cuando aparezca la cita se dejará todo preparado para que el cliente solo confirme
@@ -140,20 +139,7 @@ REGLAS IMPORTANTES
 - No inventas confirmaciones
 - No vuelves a preguntar el trámite si ya lo dijo
 - No pides todos los datos de golpe
-
-PAGO
-Si el cliente todavía no ha pagado pero ya entró de verdad en el trámite, puedes decir de forma natural:
-"باش نكملو ونخدمو على الملف ديالك، خاصك تفعل الخدمة. منين تخلص نكملو معاك مباشرة."
-
-SI EL TEMA YA NO ES DE CITA Y ES DE DOCUMENTOS O EXPEDIENTE
-Lo pasas a Mohamed de forma natural.
-
-PROHIBIDO
-- Mezclar idiomas
-- Repetir saludo
-- Reiniciar conversación
-- Sonar como soporte automático
-- Escribir darija con letras latinas
+- Si el tema ya no es de cita y es de expediente o documentos, lo pasas a Mohamed de forma natural
 `;
 }
 
@@ -195,30 +181,15 @@ QUÉ HACES
 - Lo acompañas paso a paso
 
 REGULARIZACIÓN 2026
-Cuando el cliente pregunte por regularización 2026, nueva regularización, nueva oportunidad o cómo prepararse:
 - No inventas información oficial no confirmada
 - Ayudas a preparar datos y documentos desde ahora
 - Dices que cuando las instrucciones oficiales estén disponibles en el sistema se avisará por WhatsApp
 - Si ya existen detalles oficiales en el sistema, ayudas a preparar la presentación online o en oficina según corresponda
 
-DOCUMENTOS
-Cuando el cliente mande documentos:
-- comentas de forma natural
-- pides el siguiente paso
-
-EXPEDIENTE FINAL
-Si ya queda preparado:
-- dices que el expediente está listo
-- indicas lo siguiente: formulario, tasa, cita o presentación
-
-TRANSFERENCIA A SARA
-Si ya toca pasar a cita:
-- lo indicas de forma natural
-
 PROHIBIDO
 - Inventar leyes
 - Inventar fechas oficiales
-- Inventar plataformas o oficinas
+- Inventar plataformas u oficinas
 - Reiniciar la conversación
 - Repetir saludos
 - Hablar como bot
@@ -228,63 +199,57 @@ PROHIBIDO
 `;
 }
 
-function buildInput(params: {
+function sanitizeHistory(history: unknown): HistoryItem[] {
+  if (!Array.isArray(history)) return [];
+
+  return history
+    .filter(
+      (item) =>
+        item &&
+        typeof item === "object" &&
+        (((item as any).from === "user") || ((item as any).from === "agent")) &&
+        typeof (item as any).text === "string" &&
+        (item as any).text.trim().length > 0
+    )
+    .slice(-8) as HistoryItem[];
+}
+
+function buildTextInput(params: {
   systemPrompt: string;
   history: HistoryItem[];
   message: string;
 }) {
   const { systemPrompt, history, message } = params;
 
-  const sanitizedHistory = (Array.isArray(history) ? history : [])
-    .filter(
-      (item) =>
-        item &&
-        (item.from === "user" || item.from === "agent") &&
-        typeof item.text === "string" &&
-        item.text.trim().length > 0
-    )
-    .slice(-8);
+  const historyBlock = history
+    .map((item) => `${item.from === "user" ? "CLIENTE" : "AGENTE"}: ${item.text}`)
+    .join("\n");
 
-  return [
-    {
-      role: "system",
-      content: [{ type: "input_text", text: systemPrompt }],
-    },
-    ...sanitizedHistory.map((item) => ({
-      role: item.from === "user" ? "user" : "assistant",
-      content: [{ type: "input_text", text: item.text }],
-    })),
-    {
-      role: "user",
-      content: [{ type: "input_text", text: message }],
-    },
-  ];
+  return `
+${systemPrompt}
+
+HISTORIAL RECIENTE
+${historyBlock || "Sin historial previo"}
+
+MENSAJE ACTUAL DEL CLIENTE
+${message}
+
+Responde ahora siguiendo exactamente las reglas.
+`.trim();
 }
 
 function extractResponseText(data: any): string {
-  if (!data) return "";
-
-  if (typeof data.output_text === "string" && data.output_text.trim()) {
+  if (typeof data?.output_text === "string" && data.output_text.trim()) {
     return data.output_text.trim();
   }
 
-  if (Array.isArray(data.output)) {
+  if (Array.isArray(data?.output)) {
     for (const item of data.output) {
-      if (!item || !Array.isArray(item.content)) continue;
+      if (!Array.isArray(item?.content)) continue;
 
-      for (const contentItem of item.content) {
-        if (!contentItem) continue;
-
-        if (
-          contentItem.type === "output_text" &&
-          typeof contentItem.text === "string" &&
-          contentItem.text.trim()
-        ) {
-          return contentItem.text.trim();
-        }
-
-        if (typeof contentItem.text === "string" && contentItem.text.trim()) {
-          return contentItem.text.trim();
+      for (const part of item.content) {
+        if (typeof part?.text === "string" && part.text.trim()) {
+          return part.text.trim();
         }
       }
     }
@@ -309,7 +274,7 @@ export default async function handler(req: any, res: any) {
       typeof body.procedureKey === "string" ? body.procedureKey.trim() : "";
     const procedureLabel =
       typeof body.procedureLabel === "string" ? body.procedureLabel.trim() : "";
-    const history: HistoryItem[] = Array.isArray(body.history) ? body.history : [];
+    const history = sanitizeHistory(body.history);
 
     if (!message) {
       return res.status(400).json({ error: "Mensaje vacío" });
@@ -333,7 +298,7 @@ export default async function handler(req: any, res: any) {
             procedureLabel
           );
 
-    const input = buildInput({
+    const input = buildTextInput({
       systemPrompt,
       history,
       message,
@@ -359,14 +324,17 @@ export default async function handler(req: any, res: any) {
       console.error("OPENAI ERROR:", JSON.stringify(data, null, 2));
       return res.status(500).json({
         error: data?.error?.message || "Error OpenAI",
+        details: data || null,
       });
     }
 
     const reply = extractResponseText(data);
 
     if (!reply) {
+      console.error("EMPTY RESPONSE DATA:", JSON.stringify(data, null, 2));
       return res.status(500).json({
         error: "La IA no devolvió respuesta",
+        details: data || null,
       });
     }
 
