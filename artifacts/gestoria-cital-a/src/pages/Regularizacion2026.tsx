@@ -21,6 +21,8 @@ import {
   Download,
   FileUp,
   Clock,
+  CreditCard,
+  CalendarDays,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -70,6 +72,14 @@ type FormItem = {
   url: string;
 };
 
+type FeeItem = {
+  codigo: string;
+  nombre: string;
+  importe: string;
+  obligatoria: boolean;
+  notes?: string;
+};
+
 function buildInitialDocs(procedureKey: string): StoredDocItem[] {
   const procedure = getProcedureByKey(procedureKey) || EXTRANJERIA_PROCEDURES[0];
 
@@ -98,6 +108,7 @@ export default function Regularizacion2026() {
   const [submitted, setSubmitted] = useState(false);
   const [showDocs, setShowDocs] = useState(false);
   const [showForms, setShowForms] = useState(false);
+  const [showFees, setShowFees] = useState(false);
   const [uploadingId, setUploadingId] = useState<string | null>(null);
   const [sendingChat, setSendingChat] = useState(false);
   const [userMessageCount, setUserMessageCount] = useState(0);
@@ -161,6 +172,7 @@ export default function Regularizacion2026() {
         pending: "معلق",
         toSend: "للإرسال",
         completeOnOfficialSite: "فتح الموقع الرسمي",
+        openAppointmentSite: "فتح موقع المواعيد",
         aiFillsOfficialSite:
           "الوكيل الذكي يجهز البيانات والاستمارات حسب المسطرة",
         procedureSmall: "المسطرة:",
@@ -183,8 +195,11 @@ export default function Regularizacion2026() {
         downloadPdf: "تحميل PDF",
         documents: "الوثائق",
         formsLabel: "الاستمارات",
+        feesLabel: "الرسوم",
         requiredDocuments: "الوثائق المطلوبة",
         officialForms: "الاستمارات الرسمية",
+        officialFees: "الرسوم الرسمية",
+        nextStep: "الخطوة التالية",
         ready: "واجد",
         review: "راجع",
         withoutAudio: "بلا صوت",
@@ -195,6 +210,11 @@ export default function Regularizacion2026() {
         reviewDocuments: "راجع الوثائق",
         notUploadedRequired: "ما ترفعش · إجباري",
         detected: "مكتشف",
+        mandatory: "إجباري",
+        optional: "اختياري",
+        noForms: "ما كايناش استمارات لهاد المسطرة دابا.",
+        noFees: "ما كايناش رسوم مضافة دابا.",
+        channel: "طريقة المسطرة",
       };
     }
 
@@ -240,6 +260,7 @@ export default function Regularizacion2026() {
         pending: "Pending",
         toSend: "To submit",
         completeOnOfficialSite: "Open official site",
+        openAppointmentSite: "Open appointment site",
         aiFillsOfficialSite:
           "The AI agent prepares the data and forms according to the procedure",
         procedureSmall: "Procedure:",
@@ -262,8 +283,11 @@ export default function Regularizacion2026() {
         downloadPdf: "Download PDF",
         documents: "Documents",
         formsLabel: "Forms",
+        feesLabel: "Fees",
         requiredDocuments: "Required documents",
         officialForms: "Official forms",
+        officialFees: "Official fees",
+        nextStep: "Next step",
         ready: "Ready",
         review: "Review",
         withoutAudio: "No audio",
@@ -274,6 +298,11 @@ export default function Regularizacion2026() {
         reviewDocuments: "Review documents",
         notUploadedRequired: "Not uploaded · required",
         detected: "Detected",
+        mandatory: "Required",
+        optional: "Optional",
+        noForms: "There are no forms configured for this procedure yet.",
+        noFees: "There are no fees configured for this procedure yet.",
+        channel: "Procedure channel",
       };
     }
 
@@ -318,6 +347,7 @@ export default function Regularizacion2026() {
       pending: "Pendiente",
       toSend: "Para enviar",
       completeOnOfficialSite: "Abrir sede oficial",
+      openAppointmentSite: "Abrir web de cita",
       aiFillsOfficialSite:
         "El agente IA prepara los datos y formularios según el trámite",
       procedureSmall: "Procedimiento:",
@@ -340,8 +370,11 @@ export default function Regularizacion2026() {
       downloadPdf: "Descargar PDF",
       documents: "Documentos",
       formsLabel: "Formularios",
+      feesLabel: "Tasas",
       requiredDocuments: "Documentos requeridos",
       officialForms: "Formularios oficiales",
+      officialFees: "Tasas oficiales",
+      nextStep: "Siguiente paso",
       ready: "Listo",
       review: "Revisar",
       withoutAudio: "Sin audio",
@@ -352,6 +385,11 @@ export default function Regularizacion2026() {
       reviewDocuments: "Revisar documentos",
       notUploadedRequired: "Sin subir · obligatorio",
       detected: "Detectado",
+      mandatory: "Obligatoria",
+      optional: "Opcional",
+      noForms: "No hay formularios configurados todavía para este trámite.",
+      noFees: "No hay tasas configuradas todavía para este trámite.",
+      channel: "Canal del trámite",
     };
   }, [safeLang]);
 
@@ -470,6 +508,38 @@ export default function Regularizacion2026() {
     codigo: f.code,
     url: f.url,
   }));
+
+  const TASAS: FeeItem[] = currentProcedure.fees.map((f) => ({
+    codigo: f.code,
+    nombre: f.name,
+    importe: f.amount,
+    obligatoria: f.required,
+    notes: f.notes,
+  }));
+
+  const getChannelLabel = () => {
+    if (safeLang === "darija") {
+      if (currentProcedure.channel === "online") return "أونلاين";
+      if (currentProcedure.channel === "appointment") return "بموعد";
+      if (currentProcedure.channel === "office") return "فالمكتب";
+      if (currentProcedure.channel === "mixed") return "مختلط";
+      return "قواعد رسمية قيد التحديث";
+    }
+
+    if (safeLang === "en") {
+      if (currentProcedure.channel === "online") return "Online";
+      if (currentProcedure.channel === "appointment") return "Appointment";
+      if (currentProcedure.channel === "office") return "Office";
+      if (currentProcedure.channel === "mixed") return "Mixed";
+      return "Official rules pending";
+    }
+
+    if (currentProcedure.channel === "online") return "Online";
+    if (currentProcedure.channel === "appointment") return "Con cita";
+    if (currentProcedure.channel === "office") return "En oficina";
+    if (currentProcedure.channel === "mixed") return "Mixto";
+    return "Reglas oficiales pendientes";
+  };
 
   const handleSituacionClick = (value: string) => {
     setSelectedSituacion(value);
@@ -651,6 +721,17 @@ export default function Regularizacion2026() {
     window.open(currentProcedure.officialSiteUrl || "#", "_blank");
 
     if (step < 1) setStep(1);
+  };
+
+  const handleOpenAppointment = () => {
+    if (!planActivo) {
+      setShowPayment(true);
+      return;
+    }
+
+    if (!currentProcedure.appointmentUrl) return;
+
+    window.open(currentProcedure.appointmentUrl, "_blank");
   };
 
   const handleSendChat = async () => {
@@ -1153,7 +1234,7 @@ export default function Regularizacion2026() {
                 </div>
               </div>
 
-              <div className="px-3 pb-3 pt-2">
+              <div className="px-3 pb-3 pt-2 space-y-2">
                 <button
                   onClick={handleIrSede}
                   className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold bg-[#003366] hover:bg-[#002244] text-white border border-[#003366] transition-all shadow-md"
@@ -1162,6 +1243,18 @@ export default function Regularizacion2026() {
                   <ExternalLink className="w-3.5 h-3.5" />
                   {ui.completeOnOfficialSite}
                 </button>
+
+                {currentProcedure.appointmentUrl && (
+                  <button
+                    onClick={handleOpenAppointment}
+                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold bg-white/10 hover:bg-white/15 text-white border border-white/15 transition-all"
+                    type="button"
+                  >
+                    <CalendarDays className="w-3.5 h-3.5" />
+                    {ui.openAppointmentSite}
+                  </button>
+                )}
+
                 <p className="text-center text-[9px] text-muted-foreground mt-1.5">
                   {ui.aiFillsOfficialSite}
                 </p>
@@ -1230,6 +1323,29 @@ export default function Regularizacion2026() {
                     </p>
                   </div>
 
+                  <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 mb-5">
+                    <div className="border border-gray-200 rounded-xl p-4">
+                      <p className="text-xs font-bold text-gray-700 uppercase tracking-wide mb-2">
+                        {ui.channel}
+                      </p>
+                      <p className="text-sm font-semibold text-[#003366]">
+                        {getChannelLabel()}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-2">
+                        {currentProcedure.description}
+                      </p>
+                    </div>
+
+                    <div className="border border-gray-200 rounded-xl p-4">
+                      <p className="text-xs font-bold text-gray-700 uppercase tracking-wide mb-2">
+                        {ui.nextStep}
+                      </p>
+                      <p className="text-sm text-gray-700 leading-relaxed">
+                        {currentProcedure.nextStepText}
+                      </p>
+                    </div>
+                  </div>
+
                   <div className="mb-4">
                     <p className="text-xs font-bold text-gray-700 uppercase tracking-wide mb-2">
                       {ui.situationTitle}
@@ -1261,6 +1377,78 @@ export default function Regularizacion2026() {
                         {s.label}
                       </div>
                     ))}
+                  </div>
+
+                  <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 mb-5">
+                    <div className="border border-gray-200 rounded-xl p-4">
+                      <div className="flex items-center gap-2 mb-3">
+                        <FileText className="w-4 h-4 text-blue-700" />
+                        <p className="text-xs font-bold text-gray-700 uppercase tracking-wide">
+                          {ui.officialForms}
+                        </p>
+                      </div>
+
+                      {FORMULARIOS.length === 0 ? (
+                        <p className="text-sm text-gray-500">{ui.noForms}</p>
+                      ) : (
+                        <div className="space-y-2">
+                          {FORMULARIOS.map((form) => (
+                            <a
+                              key={form.codigo}
+                              href={form.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="block rounded-lg border border-gray-200 px-3 py-2 hover:bg-gray-50"
+                            >
+                              <p className="text-sm font-bold text-[#003366]">
+                                {form.codigo}
+                              </p>
+                              <p className="text-sm text-gray-700">{form.nombre}</p>
+                            </a>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="border border-gray-200 rounded-xl p-4">
+                      <div className="flex items-center gap-2 mb-3">
+                        <CreditCard className="w-4 h-4 text-green-700" />
+                        <p className="text-xs font-bold text-gray-700 uppercase tracking-wide">
+                          {ui.officialFees}
+                        </p>
+                      </div>
+
+                      {TASAS.length === 0 ? (
+                        <p className="text-sm text-gray-500">{ui.noFees}</p>
+                      ) : (
+                        <div className="space-y-2">
+                          {TASAS.map((fee) => (
+                            <div
+                              key={`${fee.codigo}-${fee.nombre}`}
+                              className="rounded-lg border border-gray-200 px-3 py-2"
+                            >
+                              <div className="flex items-center justify-between gap-2">
+                                <p className="text-sm font-bold text-[#003366]">
+                                  {fee.codigo}
+                                </p>
+                                <span className="text-[10px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 font-semibold">
+                                  {fee.obligatoria ? ui.mandatory : ui.optional}
+                                </span>
+                              </div>
+                              <p className="text-sm text-gray-700">{fee.nombre}</p>
+                              <p className="text-xs text-gray-500 mt-1">
+                                {fee.importe}
+                              </p>
+                              {fee.notes && (
+                                <p className="text-xs text-gray-500 mt-1">
+                                  {fee.notes}
+                                </p>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   <AnimatePresence>
@@ -1462,6 +1650,7 @@ export default function Regularizacion2026() {
                 onClick={() => {
                   setShowDocs(true);
                   setShowForms(false);
+                  setShowFees(false);
                 }}
                 className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold border transition-colors ${
                   showDocs
@@ -1478,6 +1667,7 @@ export default function Regularizacion2026() {
                 onClick={() => {
                   setShowForms(true);
                   setShowDocs(false);
+                  setShowFees(false);
                 }}
                 className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold border transition-colors ${
                   showForms
@@ -1488,6 +1678,23 @@ export default function Regularizacion2026() {
               >
                 <Settings className="w-4 h-4 text-secondary" />
                 {ui.formsLabel}
+              </button>
+
+              <button
+                onClick={() => {
+                  setShowFees(true);
+                  setShowDocs(false);
+                  setShowForms(false);
+                }}
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold border transition-colors ${
+                  showFees
+                    ? "bg-green-500/20 border-green-500/40 text-green-300"
+                    : "bg-white/5 border-white/10 text-white/80 hover:bg-white/10"
+                }`}
+                type="button"
+              >
+                <CreditCard className="w-4 h-4" />
+                {ui.feesLabel}
               </button>
 
               <button
@@ -1613,28 +1820,98 @@ export default function Regularizacion2026() {
                 </div>
 
                 <div className="px-5 py-4 space-y-3">
-                  {FORMULARIOS.map((form, i) => (
-                    <a
-                      key={i}
-                      href={form.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-3 p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-colors group"
-                    >
-                      <div className="w-9 h-9 rounded-lg bg-primary/15 border border-primary/30 flex items-center justify-center shrink-0">
-                        <FileText className="w-4 h-4 text-primary" />
-                      </div>
+                  {FORMULARIOS.length === 0 ? (
+                    <p className="text-sm text-white/70">{ui.noForms}</p>
+                  ) : (
+                    FORMULARIOS.map((form, i) => (
+                      <a
+                        key={i}
+                        href={form.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-3 p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-colors group"
+                      >
+                        <div className="w-9 h-9 rounded-lg bg-primary/15 border border-primary/30 flex items-center justify-center shrink-0">
+                          <FileText className="w-4 h-4 text-primary" />
+                        </div>
 
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-bold text-primary">{form.codigo}</p>
-                        <p className="text-sm text-white/80 truncate">{form.nombre}</p>
-                      </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-bold text-primary">{form.codigo}</p>
+                          <p className="text-sm text-white/80 truncate">{form.nombre}</p>
+                        </div>
 
-                      <span className="text-[10px] font-semibold text-white/40 group-hover:text-primary transition-colors shrink-0">
-                        PDF ↓
-                      </span>
-                    </a>
-                  ))}
+                        <span className="text-[10px] font-semibold text-white/40 group-hover:text-primary transition-colors shrink-0">
+                          PDF ↓
+                        </span>
+                      </a>
+                    ))
+                  )}
+
+                  <p className="text-[10px] text-white/30 text-center pt-1">
+                    {ui.source}
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <AnimatePresence>
+          {showFees && (
+            <motion.div
+              initial={{ opacity: 0, y: 40 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 40 }}
+              className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 w-full max-w-md px-4"
+            >
+              <div
+                className="rounded-2xl border border-white/15 shadow-2xl overflow-hidden"
+                style={{ background: "#1a2236" }}
+              >
+                <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
+                  <div className="flex items-center gap-2">
+                    <CreditCard className="w-4 h-4 text-green-400" />
+                    <span className="font-bold text-sm text-white">
+                      {ui.officialFees}
+                    </span>
+                  </div>
+
+                  <button
+                    onClick={() => setShowFees(false)}
+                    className="w-6 h-6 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/60 text-xs"
+                    type="button"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                <div className="px-5 py-4 space-y-3">
+                  {TASAS.length === 0 ? (
+                    <p className="text-sm text-white/70">{ui.noFees}</p>
+                  ) : (
+                    TASAS.map((fee, i) => (
+                      <div
+                        key={i}
+                        className="p-3 rounded-xl bg-white/5 border border-white/10"
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-xs font-bold text-green-300">
+                            {fee.codigo}
+                          </p>
+                          <span className="text-[10px] text-white/60">
+                            {fee.obligatoria ? ui.mandatory : ui.optional}
+                          </span>
+                        </div>
+                        <p className="text-sm text-white mt-1">{fee.nombre}</p>
+                        <p className="text-xs text-white/70 mt-1">{fee.importe}</p>
+                        {fee.notes && (
+                          <p className="text-[10px] text-white/50 mt-1">
+                            {fee.notes}
+                          </p>
+                        )}
+                      </div>
+                    ))
+                  )}
 
                   <p className="text-[10px] text-white/30 text-center pt-1">
                     {ui.source}
