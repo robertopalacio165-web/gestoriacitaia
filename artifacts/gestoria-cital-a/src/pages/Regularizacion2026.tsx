@@ -764,145 +764,109 @@ export default function Regularizacion2026() {
   const docsOk = docs.filter((d) => d.estado === "ok").length;
   const docsTotal = docs.length;
   const allReady = docsOk >= docsTotal - 1;
+const handleUploadDoc = async (id: string) => {
+  if (!planActivo) {
+    setShowPayment(true);
+    return;
+  }
 
-  const handleUploadDoc = async (id: string) => {
-    if (!planActivo) {
-      setShowPayment(true);
-      return;
-    }
+  try {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "image/*,application/pdf";
 
-    try {
-      const input = document.createElement("input");
-      input.type = "file";
-      input.accept = "image/*,application/pdf";
+    input.onchange = async () => {
+      const file = input.files?.[0];
+      if (!file) return;
 
-      input.onchange = async () => {
-        const file = input.files?.[0];
-        if (!file) return;
+      setUploadingId(id);
 
-        setUploadingId(id);
+      try {
+        const base64 = await fileToDataUrl(file);
 
-        try {
-          const reader = new FileReader();
+        const result = await verifyDocument({
+          imageBase64: base64,
+          expectedDocumentType: "auto",
+          lang: lang as "darija" | "es" | "en",
+        });
 
-          reader.onload = async () => {
-            try {
-              const base64 = reader.result;
+        console.log("RESULTADO IA:", result);
 
-              const res = await fetch("/api/verify-document", {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                  imageBase64: base64,
-                  expectedDocumentType: "auto",
-                  lang,
-                }),
-              });
+        setDocs((prev) =>
+          prev.map((d) =>
+            d.id === id
+              ? {
+                  ...d,
+                  estado: "ok" as DocStatus,
+                  archivo: file.name,
+                  kb: `${Math.round(file.size / 1024)} KB`,
+                }
+              : d
+          )
+        );
 
-              const data = await res.json();
+        toast({
+          title:
+            lang === "darija"
+              ? "تراجع الوثيقة"
+              : lang === "en"
+              ? "Document verified"
+              : "Documento verificado",
+          description:
+            result?.summary ||
+            (lang === "darija"
+              ? "الذكاء الاصطناعي حلل الوثيقة بنجاح."
+              : lang === "en"
+              ? "The AI analyzed the document successfully."
+              : "La IA analizó el documento correctamente."),
+        });
+      } catch (err: any) {
+        console.error("Error IA documento:", err);
 
-              console.log("RESULTADO IA:", data);
+        toast({
+          title:
+            lang === "darija"
+              ? "خطأ فالتحليل"
+              : lang === "en"
+              ? "Verification error"
+              : "Error de verificación",
+          description:
+            err?.message ||
+            (lang === "darija"
+              ? "ما قدرناش نحللو الوثيقة."
+              : lang === "en"
+              ? "Could not analyze the document."
+              : "No se pudo analizar el documento."),
+          variant: "destructive",
+        });
+      } finally {
+        setUploadingId(null);
+      }
+    };
 
-              if (!res.ok || !data?.ok) {
-                throw new Error(data?.error || "No se pudo analizar el documento");
-              }
+    input.click();
+  } catch (error: any) {
+    console.error("Error general handleUploadDoc:", error);
 
-              setDocs((prev) =>
-                prev.map((d) =>
-                  d.id === id
-                    ? {
-                        ...d,
-                        estado: "ok" as DocStatus,
-                        archivo: file.name,
-                        kb: `${Math.round(file.size / 1024)} KB`,
-                      }
-                    : d
-                )
-              );
+    toast({
+      title:
+        lang === "darija"
+          ? "خطأ"
+          : lang === "en"
+          ? "Error"
+          : "Error",
+      description:
+        error?.message ||
+        (lang === "darija"
+          ? "وقع مشكل غير متوقع."
+          : lang === "en"
+          ? "An unexpected error occurred."
+          : "Ocurrió un error inesperado."),
+      variant: "destructive",
+    });
+  }
+};
 
-              toast({
-                title:
-                  lang === "darija"
-                    ? "تراجع الوثيقة"
-                    : lang === "en"
-                    ? "Document verified"
-                    : "Documento verificado",
-                description:
-                  lang === "darija"
-                    ? "الذكاء الاصطناعي حلل الوثيقة بنجاح."
-                    : lang === "en"
-                    ? "The AI analyzed the document successfully."
-                    : "La IA analizó el documento correctamente.",
-              });
-            } catch (err: any) {
-              console.error("Error IA documento:", err);
-
-              toast({
-                title:
-                  lang === "darija"
-                    ? "خطأ فالتحليل"
-                    : lang === "en"
-                    ? "Verification error"
-                    : "Error de verificación",
-                description:
-                  err?.message ||
-                  (lang === "darija"
-                    ? "ما قدرناش نحللو الوثيقة."
-                    : lang === "en"
-                    ? "Could not analyze the document."
-                    : "No se pudo analizar el documento."),
-                variant: "destructive",
-              });
-            } finally {
-              setUploadingId(null);
-            }
-          };
-
-          reader.onerror = () => {
-            setUploadingId(null);
-
-            toast({
-              title:
-                lang === "darija"
-                  ? "خطأ فقراية الملف"
-                  : lang === "en"
-                  ? "File read error"
-                  : "Error leyendo archivo",
-              description:
-                lang === "darija"
-                  ? "وقع مشكل فقراية الوثيقة."
-                  : lang === "en"
-                  ? "There was a problem reading the file."
-                  : "Hubo un problema al leer el archivo.",
-              variant: "destructive",
-            });
-          };
-
-          reader.readAsDataURL(file);
-        } catch (error: any) {
-          setUploadingId(null);
-          console.error("Error subiendo documento:", error);
-
-          toast({
-            title:
-              lang === "darija"
-                ? "خطأ فالرفع"
-                : lang === "en"
-                ? "Upload error"
-                : "Error de subida",
-            description:
-              error?.message ||
-              (lang === "darija"
-                ? "وقع مشكل فالوثيقة."
-                : lang === "en"
-                ? "There was a problem with the document."
-                : "Hubo un problema con el documento."),
-            variant: "destructive",
-          });
-        }
-      };
 
       input.click();
     } catch (error: any) {
