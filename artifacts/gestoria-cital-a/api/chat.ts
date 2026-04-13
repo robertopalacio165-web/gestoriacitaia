@@ -1,8 +1,18 @@
 type Lang = "darija" | "es" | "en";
+type AssistantType = "sara" | "mohamed";
 
 type HistoryItem = {
   from: "user" | "agent";
   text: string;
+};
+
+type ExtractedLead = {
+  full_name?: string | null;
+  phone?: string | null;
+  nie?: string | null;
+  passport_number?: string | null;
+  tramite?: string | null;
+  city?: string | null;
 };
 
 function detectUserLanguage(message: string): Lang {
@@ -20,8 +30,6 @@ function detectUserLanguage(message: string): Lang {
     "bghit",
     "brit",
     "nched",
-    "rendez",
-    "redevou",
     "rdv",
     "dyal",
     "wach",
@@ -34,9 +42,7 @@ function detectUserLanguage(message: string): Lang {
     "n9lbo",
     "n3amro",
     "watssap",
-    "visa",
     "wara9",
-    "iqama",
     "sakan",
     "papeles",
   ];
@@ -76,6 +82,21 @@ function detectUserLanguage(message: string): Lang {
   if (englishSignals.some((w) => text.includes(w))) return "en";
 
   return "es";
+}
+
+function sanitizeHistory(history: unknown): HistoryItem[] {
+  if (!Array.isArray(history)) return [];
+
+  return history
+    .filter(
+      (item) =>
+        item &&
+        typeof item === "object" &&
+        (((item as any).from === "user") || (item as any).from === "agent") &&
+        typeof (item as any).text === "string" &&
+        (item as any).text.trim().length > 0
+    )
+    .slice(-8) as HistoryItem[];
 }
 
 function getSharedRules(lang: Lang) {
@@ -131,6 +152,16 @@ QUÉ HACES
 - explicas que cuando haya cita se avisará por WhatsApp
 - explicas que cuando aparezca la cita se dejará todo preparado para que el cliente solo confirme
 
+FLUJO OBLIGATORIO
+- Si todavía no sabes el trámite, pides primero el tipo de cita
+- Después pides nombre completo
+- Después NIE o pasaporte
+- Después número de WhatsApp
+- Después ciudad o provincia
+- No pidas todo junto
+- Una sola cosa por mensaje
+- Cuando ya tengas datos suficientes, confirmas que el sistema seguirá buscando y avisará por WhatsApp
+
 REGLAS IMPORTANTES
 - Si el cliente solo saluda, saludas de forma humana y preguntas qué necesita
 - Si el cliente pide una cita, entras en acción directamente
@@ -138,8 +169,11 @@ REGLAS IMPORTANTES
 - No inventas fechas
 - No inventas confirmaciones
 - No vuelves a preguntar el trámite si ya lo dijo
-- No pides todos los datos de golpe
 - Si el tema ya no es de cita y es de expediente o documentos, lo pasas a Mohamed de forma natural
+- Si ya tienes el trámite y el teléfono, debes empujar la conversación a completar los datos que falten
+
+TRANSFERENCIA A MOHAMED
+- Si el cliente pasa a documentos, expediente, formularios o regularización, respondes de forma natural diciendo que Mohamed le sigue con ese paso
 `;
 }
 
@@ -186,6 +220,12 @@ REGULARIZACIÓN 2026
 - Dices que cuando las instrucciones oficiales estén disponibles en el sistema se avisará por WhatsApp
 - Si ya existen detalles oficiales en el sistema, ayudas a preparar la presentación online o en oficina según corresponda
 
+REGLAS DOCUMENTALES
+- Si el cliente dice que ha subido un documento, reconoces ese documento y pides el siguiente paso
+- Si falta un documento, dices exactamente cuál falta
+- Si pregunta por formularios o tasas, respondes con claridad y sin inventar
+- Si ya toca cita, puedes pasar a Sara de forma natural
+
 PROHIBIDO
 - Inventar leyes
 - Inventar fechas oficiales
@@ -197,21 +237,6 @@ PROHIBIDO
 - Escribir darija con letras latinas
 - Dar respuestas vacías o generales
 `;
-}
-
-function sanitizeHistory(history: unknown): HistoryItem[] {
-  if (!Array.isArray(history)) return [];
-
-  return history
-    .filter(
-      (item) =>
-        item &&
-        typeof item === "object" &&
-        (((item as any).from === "user") || ((item as any).from === "agent")) &&
-        typeof (item as any).text === "string" &&
-        (item as any).text.trim().length > 0
-    )
-    .slice(-8) as HistoryItem[];
 }
 
 function buildTextInput(params: {
@@ -258,6 +283,159 @@ function extractResponseText(data: any): string {
   return "";
 }
 
+function normalizeTramite(text: string): string | null {
+  const t = text.toLowerCase();
+
+  if (t.includes("tie") || t.includes("huellas") || t.includes("tarjeta")) {
+    return "tie";
+  }
+  if (t.includes("nie")) {
+    return "nie";
+  }
+  if (t.includes("regreso")) {
+    return "regreso";
+  }
+  if (t.includes("arraigo")) {
+    return "arraigo";
+  }
+  if (t.includes("familiar") || t.includes("reagrup")) {
+    return "familiar";
+  }
+  if (t.includes("trabajo")) {
+    return "trabajo";
+  }
+  if (t.includes("estudiante")) {
+    return "estudiantes";
+  }
+  if (t.includes("ue") || t.includes("europe")) {
+    return "ue";
+  }
+
+  return null;
+}
+
+function extractPhone(message: string): string | null {
+  const raw = message.replace(/[^\d+]/g, " ").replace(/\s+/g, " ").trim();
+  const candidates = raw.match(/(?:\+?\d[\d ]{7,}\d)/g);
+
+  if (!candidates || candidates.length === 0) return null;
+
+  return candidates[0].replace(/\s+/g, "");
+}
+
+function extractNie(message: string): string | null {
+  const normalized = message.toUpperCase().replace(/\s+/g, "");
+  const match =
+    normalized.match(/\b[XYZ]\d{7}[A-Z]\b/) ||
+    normalized.match(/\b\d{8}[A-Z]\b/);
+
+  return match?.[0] || null;
+}
+
+function extractPassport(message: string): string | null {
+  const match = message.toUpperCase().match(/\b[A-Z0-9]{6,12}\b/g);
+  if (!match) return null;
+
+  const filtered = match.find(
+    (item) => item !== extractNie(message) && !/^\d+$/.test(item)
+  );
+
+  return filtered || null;
+}
+
+function extractCity(message: string): string | null {
+  const cities = [
+    "madrid",
+    "barcelona",
+    "valencia",
+    "sevilla",
+    "málaga",
+    "malaga",
+    "alicante",
+    "murcia",
+    "zaragoza",
+    "bilbao",
+    "palma",
+    "granada",
+    "tarragona",
+    "girona",
+    "castellón",
+    "castellon",
+  ];
+
+  const lower = message.toLowerCase();
+
+  const found = cities.find((city) => lower.includes(city));
+  return found || null;
+}
+
+function extractLeadFromConversation(params: {
+  message: string;
+  history: HistoryItem[];
+  procedureLabel?: string;
+}): ExtractedLead {
+  const { message, history, procedureLabel } = params;
+  const allText = [...history.map((h) => h.text), message].join(" \n ");
+
+  const lead: ExtractedLead = {};
+
+  lead.phone = extractPhone(allText);
+  lead.nie = extractNie(allText);
+  lead.passport_number = extractPassport(allText);
+  lead.city = extractCity(allText);
+  lead.tramite = normalizeTramite(allText) || normalizeTramite(procedureLabel || "");
+
+  const lines = allText
+    .split("\n")
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  const possibleNameLine = lines.find((line) => {
+    const l = line.toLowerCase();
+    return (
+      !l.includes("cita") &&
+      !l.includes("nie") &&
+      !l.includes("tel") &&
+      !l.includes("phone") &&
+      !l.includes("whatsapp") &&
+      line.split(" ").length >= 2 &&
+      line.length >= 6
+    );
+  });
+
+  if (possibleNameLine) {
+    lead.full_name = possibleNameLine.slice(0, 80);
+  }
+
+  return lead;
+}
+
+function hasEnoughLeadDataForSara(lead: ExtractedLead): boolean {
+  return Boolean(
+    (lead.phone && lead.phone.length >= 8) &&
+      (lead.tramite || lead.nie || lead.passport_number)
+  );
+}
+
+async function postToMakeWebhook(
+  url: string | undefined,
+  payload: Record<string, any>
+) {
+  if (!url) return;
+
+  try {
+    await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+  } catch (error) {
+    console.error("MAKE WEBHOOK ERROR:", error);
+  }
+}
+
 export default async function handler(req: any, res: any) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Método no permitido" });
@@ -267,13 +445,19 @@ export default async function handler(req: any, res: any) {
     const body = req.body || {};
     const message = typeof body.message === "string" ? body.message.trim() : "";
     const assistant =
-      typeof body.assistant === "string" ? body.assistant.trim().toLowerCase() : "";
+      typeof body.assistant === "string"
+        ? (body.assistant.trim().toLowerCase() as AssistantType)
+        : "mohamed";
     const context =
       typeof body.context === "string" ? body.context.trim().toLowerCase() : "";
     const procedureKey =
       typeof body.procedureKey === "string" ? body.procedureKey.trim() : "";
     const procedureLabel =
       typeof body.procedureLabel === "string" ? body.procedureLabel.trim() : "";
+    const sessionId =
+      typeof body.sessionId === "string" ? body.sessionId.trim() : "";
+    const userId =
+      typeof body.userId === "string" ? body.userId.trim() : "";
     const history = sanitizeHistory(body.history);
 
     if (!message) {
@@ -338,7 +522,60 @@ export default async function handler(req: any, res: any) {
       });
     }
 
-    return res.status(200).json({ reply });
+    const extractedLead = extractLeadFromConversation({
+      message,
+      history,
+      procedureLabel,
+    });
+
+    if (assistant === "sara" || context === "buscar_citas") {
+      const leadReady = hasEnoughLeadDataForSara(extractedLead);
+
+      if (leadReady) {
+        await postToMakeWebhook(process.env.MAKE_WEBHOOK_SARA, {
+          source: "gestoriacitaia",
+          assistant: "sara",
+          session_id: sessionId || null,
+          user_id: userId || null,
+          lang: detectedLanguage,
+          procedure_key: procedureKey || null,
+          procedure_label: procedureLabel || extractedLead.tramite || null,
+          lead: extractedLead,
+          status: "ready_for_appointment_search",
+          last_user_message: message,
+          ai_reply: reply,
+          created_at: new Date().toISOString(),
+        });
+      }
+    }
+
+    if (assistant === "mohamed" || context !== "buscar_citas") {
+      await postToMakeWebhook(process.env.MAKE_WEBHOOK_MOHAMED, {
+        source: "gestoriacitaia",
+        assistant: "mohamed",
+        session_id: sessionId || null,
+        user_id: userId || null,
+        lang: detectedLanguage,
+        context: context || "general",
+        procedure_key: procedureKey || null,
+        procedure_label: procedureLabel || null,
+        lead: extractedLead,
+        last_user_message: message,
+        ai_reply: reply,
+        created_at: new Date().toISOString(),
+      });
+    }
+
+    return res.status(200).json({
+      reply,
+      meta: {
+        assistant,
+        lang: detectedLanguage,
+        extractedLead,
+        leadReadyForAutomation:
+          assistant === "sara" ? hasEnoughLeadDataForSara(extractedLead) : false,
+      },
+    });
   } catch (error: any) {
     console.error("SERVER ERROR:", error);
     return res.status(500).json({
