@@ -761,9 +761,10 @@ export default function Regularizacion2026() {
     });
   };
 
-  const docsOk = docs.filter((d) => d.estado === "ok").length;
-  const docsTotal = docs.length;
-  const allReady = docsOk >= docsTotal - 1;
+const docsOk = docs.filter((d) => d.estado === "ok").length;
+const docsTotal = docs.length;
+const allReady = docsOk >= docsTotal - 1;
+
 const handleUploadDoc = async (id: string) => {
   if (!planActivo) {
     setShowPayment(true);
@@ -866,30 +867,6 @@ const handleUploadDoc = async (id: string) => {
     });
   }
 };
-
-
-      input.click();
-    } catch (error: any) {
-      console.error("Error general handleUploadDoc:", error);
-
-      toast({
-        title:
-          lang === "darija"
-            ? "خطأ"
-            : lang === "en"
-            ? "Error"
-            : "Error",
-        description:
-          error?.message ||
-          (lang === "darija"
-            ? "وقع مشكل غير متوقع."
-            : lang === "en"
-            ? "An unexpected error occurred."
-            : "Ocurrió un error inesperado."),
-        variant: "destructive",
-      });
-    }
-  };
 
   const handleIrSede = () => {
     if (!planActivo) {
