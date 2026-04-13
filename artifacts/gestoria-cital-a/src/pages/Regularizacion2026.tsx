@@ -23,7 +23,6 @@ import {
   Clock,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { getProcedureByKey } from "@/lib/extranjeriaProcedures";
 import {
   fileToDataUrl,
   verifyDocument,
@@ -115,8 +114,8 @@ export default function Regularizacion2026() {
     | "es"
     | "en";
 
- const currentProcedure =
-  getProcedureByKey(selectedSituacion) || null;
+  const currentProcedure = getProcedureByKey(selectedSituacion) || null;
+
   if (!currentProcedure) return null;
 
   const ui = useMemo(() => {
@@ -454,12 +453,17 @@ export default function Regularizacion2026() {
     label: p.name,
   }));
 
-  const DOCS_REQUERIDOS: RequiredDocItem[] = docs.map((d) => ({
-    id: d.id,
-    nombre: d.nombre,
-    estado: d.estado,
-    expectedType: d.expectedType,
-  }));
+  const DOCS_REQUERIDOS: RequiredDocItem[] =
+    currentProcedure.requiredDocuments.map((doc) => {
+      const localDoc = docs.find((d) => d.id === doc.id);
+
+      return {
+        id: doc.id,
+        nombre: doc.name,
+        estado: localDoc?.estado || "missing",
+        expectedType: doc.expectedType,
+      };
+    });
 
   const FORMULARIOS: FormItem[] = currentProcedure.forms.map((f) => ({
     nombre: f.name,
