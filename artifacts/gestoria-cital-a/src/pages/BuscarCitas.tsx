@@ -1105,14 +1105,14 @@ export default function BuscarCitas() {
         },
         body: JSON.stringify({
           assistant: "sara",
-          message: rawText,
           context: "buscar_citas",
+          message: rawText,
           lang,
-          history: historyToSend,
-          procedureLabel: selectedTramiteLabel,
           procedureKey: selectedTramite,
-          sessionId: `sara_${selectedTramite}`,
+          procedureLabel: selectedTramiteLabel,
+          sessionId: `sara-${profile?.id || "guest"}-${lang}`,
           userId: profile?.id || "",
+          history: historyToSend,
         }),
       });
 
@@ -1139,12 +1139,7 @@ export default function BuscarCitas() {
       if (shouldTriggerPayment) {
         const paymentMsg: ChatMsg = {
           from: "agent",
-          text:
-            lang === "darija"
-              ? "باش نكملو معاك ونخدمو على الموعد، خاصك تفعل الخدمة."
-              : lang === "en"
-              ? "To continue working on your appointment, you need to activate the service."
-              : "Para seguir trabajando en tu cita, necesitas activar el servicio.",
+          text: ui.paymentTriggerMessage,
           ts: Date.now() + 1,
         };
 
