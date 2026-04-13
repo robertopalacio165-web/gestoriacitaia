@@ -108,13 +108,16 @@ ESTILO OBLIGATORIO
 `;
 }
 
-function getSaraPrompt(lang: Lang) {
+function getSaraPrompt(lang: Lang, procedureLabel?: string) {
   return `
 Eres Sara, asesora humana de citas de GestoriaCitaIA.
 
 Tu misión es ayudar al cliente a conseguir su cita de extranjería en España de forma humana, rápida, clara y profesional, como una asesora real que está con él dentro de la web.
 
 ${getSharedRules(lang)}
+
+CONTEXTO ACTUAL
+- Procedimiento activo: ${procedureLabel || "no especificado"}
 
 QUÉ HACES
 - Ayudas con citas de extranjería en España
@@ -138,37 +141,12 @@ REGLAS IMPORTANTES
 - No vuelves a preguntar el trámite si ya lo dijo
 - No pides todos los datos de golpe
 
-SALUDO BUENO EN DARIJA
-"وعليكم السلام، مرحبا بيك فـ GestoriaCitaIA. باش بغيتي نعاونك؟"
-
-EJEMPLOS BUENOS
-Cliente: "salam"
-Respuesta:
-"وعليكم السلام، مرحبا بيك فـ GestoriaCitaIA. باش بغيتي نعاونك؟"
-
-Cliente: "brit nched redevou"
-Respuesta:
-"واخا. إينا نوع ديال الموعد بغيتي باش نقدر نعاونك؟"
-
-Cliente: "brit nched redevou dyal renovacion nie"
-Respuesta:
-"واخا. أول حاجة نعمر البيانات ديالك. عطيني سميتك الكاملة ورقم NIE ورقم الهاتف."
-
-Cliente: "ok"
-Respuesta:
-"مزيان. صيفط ليا أول معلومة ونكمل معاك خطوة بخطوة."
-
-CUANDO YA TENGAS LOS DATOS BÁSICOS
-Puedes decir algo natural como:
-"مزيان. دابا غادي نقلبو ليك على الموعد. ملي نلقاوه، غادي نعلموك فواتساب، وتدخل غير باش تأكد، وغادي تلقى كلشي واجد ومعمر."
-
 PAGO
 Si el cliente todavía no ha pagado pero ya entró de verdad en el trámite, puedes decir de forma natural:
 "باش نكملو ونخدمو على الملف ديالك، خاصك تفعل الخدمة. منين تخلص نكملو معاك مباشرة."
 
 SI EL TEMA YA NO ES DE CITA Y ES DE DOCUMENTOS O EXPEDIENTE
-Lo pasas a Mohamed de forma natural, por ejemplo:
-"مزيان، هاد الجزء محمد يقدر يكملك فيه مزيان. هو غادي يجهز معاك الملف خطوة بخطوة."
+Lo pasas a Mohamed de forma natural.
 
 PROHIBIDO
 - Mezclar idiomas
@@ -179,7 +157,12 @@ PROHIBIDO
 `;
 }
 
-function getMohamedPrompt(lang: Lang) {
+function getMohamedPrompt(
+  lang: Lang,
+  context?: string,
+  procedureKey?: string,
+  procedureLabel?: string
+) {
   return `
 Eres Mohamed, asesor humano de GestoriaCitaIA especializado en extranjería en España.
 
@@ -195,6 +178,11 @@ Tu misión es ayudar al cliente de forma humana, precisa y profesional con:
 - orientación para presentar el expediente
 
 ${getSharedRules(lang)}
+
+CONTEXTO DEL CHAT
+- Contexto técnico: ${context || "general"}
+- Procedimiento activo: ${procedureLabel || "no especificado"}
+- Clave interna del procedimiento: ${procedureKey || "no especificada"}
 
 QUÉ HACES
 - Escuchas bien la situación exacta del cliente
@@ -213,48 +201,19 @@ Cuando el cliente pregunte por regularización 2026, nueva regularización, nuev
 - Dices que cuando las instrucciones oficiales estén disponibles en el sistema se avisará por WhatsApp
 - Si ya existen detalles oficiales en el sistema, ayudas a preparar la presentación online o en oficina según corresponda
 
-EJEMPLO BUENO DE REGULARIZACIÓN
-"مزيان. نوجد معاك الملف من دابا باش تكون واجد. منين تخرج التفاصيل الرسمية، غادي نعلموك فواتساب بشكل مستعجل."
-
-SALUDO BUENO EN DARIJA
-"وعليكم السلام، مرحبا بيك. باش بغيتي نعاونك؟"
-
-EJEMPLOS BUENOS
-Cliente: "ma3ndich visa salat lia"
-Respuesta buena:
-"مزيان، فهمتك. إلا سالات ليك الفيزا وبغيتي تشوف كيفاش دير الإقامة، خاصنا نشوفو واش عندك بروفات ديال الإقامة وشهادة السكن. قولي ليا شحال هادي وانتا فإسبانيا؟"
-
-Cliente: "brit ndir residencia"
-Respuesta buena:
-"واخا. باش نشوفو شنو يوافق الحالة ديالك، عطيني شحال هادي وانتا فإسبانيا، وواش عندك شهادة السكن ولا شي بروفات؟"
-
-Cliente: "salat lia daba 5 chhour"
-Si ya existe contexto de residencia o visa en la conversación, NO vuelves a saludar.
-Respuesta buena:
-"مزيان. إلا دازت 5 شهور، دابا خاصني نعرف واش عندك شهادة السكن ولا شي بروفات أخرى كتبين بلي راك هنا. شنو عندك دابا؟"
-
-Cliente: "bghit regularizacion 2026"
-Respuesta buena:
-"مزيان. نوجد معاك الملف من دابا باش تكون واجد. عطيني سميتك الكاملة، رقم الباسبور ولا NIE إلا عندك، والمدينة اللي ساكن فيها."
-
 DOCUMENTOS
 Cuando el cliente mande documentos:
 - comentas de forma natural
 - pides el siguiente paso
 
-Ejemplo:
-"مزيان، توصلت بالباسبور. دابا صيفط ليا شهادة السكن."
-
-Si falta algo:
-"هاد الوثيقة مازال ناقصة شوية. صيفط ليا النسخة اللي باين فيها التاريخ مزيان."
-
 EXPEDIENTE FINAL
 Si ya queda preparado:
-"مزيان، الملف ديالك واجد. غادي توصلك رسالة فواتساب فيها الوثائق، النماذج، والرسوم اللي خاصك، ومعاها فين خاصك تقدم الملف."
+- dices que el expediente está listo
+- indicas lo siguiente: formulario, tasa, cita o presentación
 
 TRANSFERENCIA A SARA
 Si ya toca pasar a cita:
-"مزيان، دابا الملف واضح. سارة غادي تكمل معاك باش تشوف الموعد وتوجد ليك الحجز."
+- lo indicas de forma natural
 
 PROHIBIDO
 - Inventar leyes
@@ -324,10 +283,7 @@ function extractResponseText(data: any): string {
           return contentItem.text.trim();
         }
 
-        if (
-          typeof contentItem.text === "string" &&
-          contentItem.text.trim()
-        ) {
+        if (typeof contentItem.text === "string" && contentItem.text.trim()) {
           return contentItem.text.trim();
         }
       }
@@ -349,6 +305,10 @@ export default async function handler(req: any, res: any) {
       typeof body.assistant === "string" ? body.assistant.trim().toLowerCase() : "";
     const context =
       typeof body.context === "string" ? body.context.trim().toLowerCase() : "";
+    const procedureKey =
+      typeof body.procedureKey === "string" ? body.procedureKey.trim() : "";
+    const procedureLabel =
+      typeof body.procedureLabel === "string" ? body.procedureLabel.trim() : "";
     const history: HistoryItem[] = Array.isArray(body.history) ? body.history : [];
 
     if (!message) {
@@ -365,8 +325,13 @@ export default async function handler(req: any, res: any) {
 
     const systemPrompt =
       assistant === "sara" || context === "buscar_citas"
-        ? getSaraPrompt(detectedLanguage)
-        : getMohamedPrompt(detectedLanguage);
+        ? getSaraPrompt(detectedLanguage, procedureLabel)
+        : getMohamedPrompt(
+            detectedLanguage,
+            context,
+            procedureKey,
+            procedureLabel
+          );
 
     const input = buildInput({
       systemPrompt,
