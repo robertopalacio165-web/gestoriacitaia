@@ -23,7 +23,11 @@ import {
   Clock,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { fileToDataUrl, verifyDocument } from "@/lib/verifyDocument";
+import {
+  fileToDataUrl,
+  verifyDocument,
+  getDocumentLabel,
+} from "@/lib/verifyDocument";
 
 interface ChatMsg {
   from: "agent" | "user";
@@ -39,8 +43,10 @@ type SituationItem = {
 };
 
 type RequiredDocItem = {
+  id: string;
   nombre: string;
   estado: DocStatus;
+  expectedType?: string;
 };
 
 type StoredDocItem = {
@@ -49,6 +55,9 @@ type StoredDocItem = {
   archivo: string;
   estado: DocStatus;
   kb: string;
+  expectedType?: string;
+  detectedType?: string;
+  note?: string;
 };
 
 type FormItem = {
@@ -57,8 +66,381 @@ type FormItem = {
   url: string;
 };
 
+type ProcedureConfig = {
+  key: string;
+  label: {
+    es: string;
+    en: string;
+    darija: string;
+  };
+  intro: {
+    es: string;
+    en: string;
+    darija: string;
+  };
+  docs: {
+    id: string;
+    nombre: {
+      es: string;
+      en: string;
+      darija: string;
+    };
+    expectedType?: string;
+    initialStatus?: DocStatus;
+    archivo?: string;
+    kb?: string;
+  }[];
+  forms: {
+    nombre: {
+      es: string;
+      en: string;
+      darija: string;
+    };
+    codigo: string;
+    url: string;
+  }[];
+};
+
+const PROCEDURES: ProcedureConfig[] = [
+  {
+    key: "regularizacion2026_laboral",
+    label: {
+      es: "Regularización 2026 · Arraigo laboral",
+      en: "Regularization 2026 · Work rootedness",
+      darija: "التسوية 2026 · أرايغو مهني",
+    },
+    intro: {
+      es: "Voy a ayudarte con la Regularización 2026 por vía laboral.",
+      en: "I will help you with Regularization 2026 through the work route.",
+      darija: "غادي نعاونك فالتسوية 2026 عن طريق المسار المهني.",
+    },
+    docs: [
+      {
+        id: "passport_nie",
+        nombre: {
+          es: "Pasaporte o NIE vigente",
+          en: "Valid passport or NIE",
+          darija: "الباسبور أو NIE صالح",
+        },
+        expectedType: "auto",
+        initialStatus: "missing",
+      },
+      {
+        id: "empadronamiento",
+        nombre: {
+          es: "Empadronamiento / prueba de permanencia",
+          en: "Registration certificate / proof of residence",
+          darija: "شهادة السكن / دليل الإقامة",
+        },
+        expectedType: "empadronamiento",
+        initialStatus: "missing",
+      },
+      {
+        id: "contrato",
+        nombre: {
+          es: "Contrato de trabajo firmado",
+          en: "Signed employment contract",
+          darija: "عقد العمل موقع",
+        },
+        expectedType: "auto",
+        initialStatus: "missing",
+      },
+      {
+        id: "penales",
+        nombre: {
+          es: "Certificado de antecedentes penales",
+          en: "Criminal record certificate",
+          darija: "شهادة السوابق العدلية",
+        },
+        expectedType: "criminal_record",
+        initialStatus: "missing",
+      },
+      {
+        id: "foto",
+        nombre: {
+          es: "Fotografía reciente",
+          en: "Recent photograph",
+          darija: "تصويرة حديثة",
+        },
+        expectedType: "photo",
+        initialStatus: "missing",
+      },
+      {
+        id: "formulario",
+        nombre: {
+          es: "Formulario oficial",
+          en: "Official form",
+          darija: "الاستمارة الرسمية",
+        },
+        expectedType: "official_form",
+        initialStatus: "missing",
+      },
+    ],
+    forms: [
+      {
+        nombre: {
+          es: "Arraigo laboral / social",
+          en: "Work / social rootedness",
+          darija: "أرايغو مهني / اجتماعي",
+        },
+        codigo: "EX-10",
+        url: "https://extranjeros.inclusion.gob.es/ficheros/Modelos_solicitudes/mod_solicitudes2/10-Arraigo_social_laboral.pdf",
+      },
+      {
+        nombre: {
+          es: "Autorización de residencia",
+          en: "Residence authorization",
+          darija: "ترخيص الإقامة",
+        },
+        codigo: "EX-01",
+        url: "https://extranjeros.inclusion.gob.es/ficheros/Modelos_solicitudes/mod_solicitudes2/01-Autorizacion_residencia.pdf",
+      },
+    ],
+  },
+  {
+    key: "arraigo_social",
+    label: {
+      es: "Arraigo social",
+      en: "Social rootedness",
+      darija: "أرايغو اجتماعي",
+    },
+    intro: {
+      es: "Voy a ayudarte con tu trámite de arraigo social.",
+      en: "I will help you with your social rootedness procedure.",
+      darija: "غادي نعاونك فمسطرة الأرايغو الاجتماعي ديالك.",
+    },
+    docs: [
+      {
+        id: "passport_nie",
+        nombre: {
+          es: "Pasaporte o NIE vigente",
+          en: "Valid passport or NIE",
+          darija: "الباسبور أو NIE صالح",
+        },
+        expectedType: "auto",
+      },
+      {
+        id: "empadronamiento",
+        nombre: {
+          es: "Empadronamiento",
+          en: "Registration certificate",
+          darija: "شهادة السكن",
+        },
+        expectedType: "empadronamiento",
+      },
+      {
+        id: "medios",
+        nombre: {
+          es: "Contrato o medios económicos",
+          en: "Contract or economic means",
+          darija: "عقد العمل أو وسائل العيش",
+        },
+        expectedType: "auto",
+      },
+      {
+        id: "penales",
+        nombre: {
+          es: "Antecedentes penales",
+          en: "Criminal record certificate",
+          darija: "شهادة السوابق العدلية",
+        },
+        expectedType: "criminal_record",
+      },
+      {
+        id: "vinculos",
+        nombre: {
+          es: "Informe de arraigo / vínculos",
+          en: "Integration report / family ties",
+          darija: "تقرير الاندماج / الروابط",
+        },
+        expectedType: "auto",
+      },
+      {
+        id: "foto",
+        nombre: {
+          es: "Fotografía reciente",
+          en: "Recent photograph",
+          darija: "تصويرة حديثة",
+        },
+        expectedType: "photo",
+      },
+    ],
+    forms: [
+      {
+        nombre: {
+          es: "Arraigo social",
+          en: "Social rootedness",
+          darija: "أرايغو اجتماعي",
+        },
+        codigo: "EX-10",
+        url: "https://extranjeros.inclusion.gob.es/ficheros/Modelos_solicitudes/mod_solicitudes2/10-Arraigo_social_laboral.pdf",
+      },
+    ],
+  },
+  {
+    key: "arraigo_familiar",
+    label: {
+      es: "Arraigo familiar",
+      en: "Family rootedness",
+      darija: "أرايغو عائلي",
+    },
+    intro: {
+      es: "Voy a ayudarte con tu trámite de arraigo familiar.",
+      en: "I will help you with your family rootedness procedure.",
+      darija: "غادي نعاونك فمسطرة الأرايغو العائلي ديالك.",
+    },
+    docs: [
+      {
+        id: "passport_nie",
+        nombre: {
+          es: "Pasaporte o NIE vigente",
+          en: "Valid passport or NIE",
+          darija: "الباسبور أو NIE صالح",
+        },
+        expectedType: "auto",
+      },
+      {
+        id: "vinculo_familiar",
+        nombre: {
+          es: "Documento de vínculo familiar",
+          en: "Family relationship document",
+          darija: "وثيقة العلاقة العائلية",
+        },
+        expectedType: "auto",
+      },
+      {
+        id: "empadronamiento",
+        nombre: {
+          es: "Empadronamiento",
+          en: "Registration certificate",
+          darija: "شهادة السكن",
+        },
+        expectedType: "empadronamiento",
+      },
+      {
+        id: "penales",
+        nombre: {
+          es: "Antecedentes penales",
+          en: "Criminal record certificate",
+          darija: "شهادة السوابق العدلية",
+        },
+        expectedType: "criminal_record",
+      },
+      {
+        id: "foto",
+        nombre: {
+          es: "Fotografía reciente",
+          en: "Recent photograph",
+          darija: "تصويرة حديثة",
+        },
+        expectedType: "photo",
+      },
+    ],
+    forms: [
+      {
+        nombre: {
+          es: "Arraigo familiar",
+          en: "Family rootedness",
+          darija: "أرايغو عائلي",
+        },
+        codigo: "EX-11",
+        url: "https://extranjeros.inclusion.gob.es/ficheros/Modelos_solicitudes/mod_solicitudes2/11-Arraigo_familiar.pdf",
+      },
+    ],
+  },
+  {
+    key: "autorizacion_excepcional_trabajo",
+    label: {
+      es: "Autorización por circunstancias excepcionales",
+      en: "Authorization for exceptional circumstances",
+      darija: "ترخيص لظروف استثنائية",
+    },
+    intro: {
+      es: "Voy a ayudarte con la autorización por circunstancias excepcionales.",
+      en: "I will help you with the exceptional circumstances authorization.",
+      darija: "غادي نعاونك فترخيص الظروف الاستثنائية.",
+    },
+    docs: [
+      {
+        id: "passport_nie",
+        nombre: {
+          es: "Pasaporte o NIE vigente",
+          en: "Valid passport or NIE",
+          darija: "الباسبور أو NIE صالح",
+        },
+        expectedType: "auto",
+      },
+      {
+        id: "pruebas",
+        nombre: {
+          es: "Pruebas justificativas",
+          en: "Supporting evidence",
+          darija: "أدلة الإثبات",
+        },
+        expectedType: "auto",
+      },
+      {
+        id: "penales",
+        nombre: {
+          es: "Antecedentes penales",
+          en: "Criminal record certificate",
+          darija: "شهادة السوابق العدلية",
+        },
+        expectedType: "criminal_record",
+      },
+      {
+        id: "formulario",
+        nombre: {
+          es: "Formulario oficial",
+          en: "Official form",
+          darija: "الاستمارة الرسمية",
+        },
+        expectedType: "official_form",
+      },
+    ],
+    forms: [
+      {
+        nombre: {
+          es: "Autorización de residencia",
+          en: "Residence authorization",
+          darija: "ترخيص الإقامة",
+        },
+        codigo: "EX-01",
+        url: "https://extranjeros.inclusion.gob.es/ficheros/Modelos_solicitudes/mod_solicitudes2/01-Autorizacion_residencia.pdf",
+      },
+    ],
+  },
+];
+
+function getTextByLang(
+  lang: "darija" | "es" | "en",
+  value: { es: string; en: string; darija: string }
+) {
+  if (lang === "darija") return value.darija;
+  if (lang === "en") return value.en;
+  return value.es;
+}
+
+function buildInitialDocs(
+  lang: "darija" | "es" | "en",
+  procedureKey: string
+): StoredDocItem[] {
+  const procedure = PROCEDURES.find((p) => p.key === procedureKey) || PROCEDURES[0];
+
+  return procedure.docs.map((doc) => ({
+    id: doc.id,
+    nombre: getTextByLang(lang, doc.nombre),
+    archivo: doc.archivo || "",
+    estado: doc.initialStatus || "missing",
+    kb: doc.kb || "",
+    expectedType: doc.expectedType || "auto",
+    detectedType: "",
+    note: "",
+  }));
+}
+
 export default function Regularizacion2026() {
-  const [selectedSituacion, setSelectedSituacion] = useState("laboral");
+  const [selectedSituacion, setSelectedSituacion] = useState("regularizacion2026_laboral");
   const [step, setStep] = useState(0);
   const [muted, setMuted] = useState(false);
   const [showChat, setShowChat] = useState(false);
@@ -79,161 +461,75 @@ export default function Regularizacion2026() {
   const { toast } = useToast();
   const chatEndRef = useRef<HTMLDivElement>(null);
 
+  const safeLang = (lang === "darija" || lang === "en" ? lang : "es") as
+    | "darija"
+    | "es"
+    | "en";
+
+  const currentProcedure =
+    PROCEDURES.find((p) => p.key === selectedSituacion) || PROCEDURES[0];
+
   const ui = useMemo(() => {
-    if (lang === "darija") {
+    if (safeLang === "darija") {
       return {
         initialChat:
-          "وعليكم السلام، مرحبا بيك. أنا محمد، وغادي نعاونك فـ التسوية 2026 خطوة بخطوة.",
+          "وعليكم السلام، مرحبا بيك. أنا محمد، وغادي نعاونك فـ ملف ديال الهجرة خطوة بخطوة.",
         agentSteps: (selectedLabel: string) => [
           {
-            text: `سلام، أنا محمد. غادي نعاونك فالتسوية 2026. أولاً اختار الوضعية الحالية ديالك باش نلقاو الإجراء المناسب. الوضعية الحالية المختارة هي «${selectedLabel}».`,
-            highlight: "التسوية 2026",
+            text: `سلام، أنا محمد. غادي نعاونك فالمسطرة ديالك. اخترنا دابا «${selectedLabel}».`,
+            highlight: "محمد",
           },
           {
-            text: "مزيان. لقينا الإجراء المناسب. دابا غادي نتحقق من الوثائق ديالك. كنحتاج: الباسبور أو NIE، شهادة السكن لعامين، وعقد العمل.",
-            highlight: "نتحقق من الوثائق ديالك",
+            text: "دابا غادي نتحقق من الوثائق ديالك ونربط كل وثيقة مع الإجراء المناسب.",
+            highlight: "نتحقق من الوثائق",
           },
           {
-            text: "الوثائق تراجعات بنجاح. دابا غادي نعمرو الطلب فالموقع الرسمي. أنا نهتم بالبيانات.",
-            highlight: "الوثائق تراجعات بنجاح",
+            text: "من بعد غادي نعمرو الاستمارات الرسمية ونوجد الملف ديالك للإرسال أو الحجز.",
+            highlight: "الاستمارات الرسمية",
           },
           {
-            text: "ترسل الطلب بنجاح. النظام خرج ليك الوصل وتْسجل الملف بشكل صحيح.",
-            highlight: "ترسل الطلب بنجاح",
+            text: "الملف واجد. من بعد نقدر نكملو للحجز أو الإرسال أو تحميل الوصل.",
+            highlight: "الملف واجد",
           },
         ],
-        situations: [
-          {
-            value: "laboral",
-            label: "أرايغو مهني (2 سنين فإسبانيا، عقد عمل)",
-          },
-          {
-            value: "social",
-            label: "أرايغو اجتماعي (3 سنين فإسبانيا، روابط عائلية/اجتماعية)",
-          },
-          {
-            value: "familiar",
-            label: "أرايغو عائلي (قريب لمواطن إسباني/أوروبي)",
-          },
-          {
-            value: "ampliado",
-            label: "أرايغو اجتماعي موسع (تكوين مهني معترف به)",
-          },
-          {
-            value: "retorno",
-            label: "رجوع الأشخاص المهاجرين",
-          },
-          {
-            value: "excep_trabajo",
-            label: "ترخيص لظروف استثنائية (العمل)",
-          },
-        ] as SituationItem[],
-        requiredDocs: [
-          { nombre: "الباسبور أو NIE صالح", estado: "ok" as DocStatus },
-          { nombre: "شهادة السكن (على الأقل عامين)", estado: "ok" as DocStatus },
-          { nombre: "عقد العمل موقع", estado: "ok" as DocStatus },
-          { nombre: "شهادة السوابق العدلية", estado: "warn" as DocStatus },
-          { nombre: "استمارة EX-10 / EX-11", estado: "missing" as DocStatus },
-          { nombre: "تصاور حديثة (2)", estado: "ok" as DocStatus },
-        ] as RequiredDocItem[],
-        initialStoredDocs: [
-          {
-            id: "nie",
-            nombre: "الباسبور / NIE صالح",
-            archivo: "NIE_X1234567Z.pdf",
-            estado: "ok" as DocStatus,
-            kb: "248 KB",
-          },
-          {
-            id: "empadron",
-            nombre: "شهادة السكن",
-            archivo: "Empadronamiento_2024.pdf",
-            estado: "ok" as DocStatus,
-            kb: "156 KB",
-          },
-          {
-            id: "contrato",
-            nombre: "عقد العمل موقع",
-            archivo: "Contrato_Benali_2026.pdf",
-            estado: "ok" as DocStatus,
-            kb: "312 KB",
-          },
-          {
-            id: "penales",
-            nombre: "شهادة السوابق العدلية",
-            archivo: "Antecedentes_tramitando.pdf",
-            estado: "warn" as DocStatus,
-            kb: "قيد الإنجاز",
-          },
-          {
-            id: "ex10",
-            nombre: "استمارة EX-10 / EX-11",
-            archivo: "",
-            estado: "missing" as DocStatus,
-            kb: "",
-          },
-          {
-            id: "fotos",
-            nombre: "تصاور حديثة (2)",
-            archivo: "Fotos_Benali.jpg",
-            estado: "ok" as DocStatus,
-            kb: "84 KB",
-          },
-        ] as StoredDocItem[],
-        forms: [
-          {
-            nombre: "أرايغو مهني / اجتماعي",
-            codigo: "EX-10",
-            url: "https://extranjeros.inclusion.gob.es/ficheros/Modelos_solicitudes/mod_solicitudes2/10-Arraigo_social_laboral.pdf",
-          },
-          {
-            nombre: "أرايغو عائلي",
-            codigo: "EX-11",
-            url: "https://extranjeros.inclusion.gob.es/ficheros/Modelos_solicitudes/mod_solicitudes2/11-Arraigo_familiar.pdf",
-          },
-          {
-            nombre: "ترخيص الإقامة",
-            codigo: "EX-01",
-            url: "https://extranjeros.inclusion.gob.es/ficheros/Modelos_solicitudes/mod_solicitudes2/01-Autorizacion_residencia.pdf",
-          },
-        ] as FormItem[],
         online: "متصل الآن",
         role: "مختص فالهجرة",
         paymentMessage:
-          "باش تكمل فالتسوية 2026 وتقدم الطلب فالموقع الرسمي، فعل الخطة ديالك. أنا نرشدك خطوة بخطوة.",
+          "باش نكملو فالملف ديالك ونخدمو على الوثائق والاستمارات، فعل الخطة ديالك.",
         paymentTriggerMessage:
-          "باش نكملو ونخدمو على الملف ديالك، خاصك تفعل الخدمة. منين تخلص نكملو معاك مباشرة.",
+          "باش نكملو معاك بشكل كامل، خاصك تفعّل الخدمة.",
         planActivated: "تفعلات الخطة",
-        planContinue: "مزيان. نكملو دابا عملية التسوية ديالك.",
+        planContinue: "مزيان. نكملو فالملف ديالك.",
         docsVerifiedTitle: "تراجعات الوثائق",
-        docsVerifiedDesc: "الوثائق الرئيسية تراجعات بشكل صحيح.",
+        docsVerifiedDesc: "الوثائق الرئيسية تراجعات بنجاح.",
         submitSuccessTitle: "ترسل الطلب!",
-        submitSuccessDesc: "الملف تسجل بشكل صحيح.",
+        submitSuccessDesc: "الملف تسجل بنجاح.",
         documentUploadedTitle: "ترفعات الوثيقة",
-        documentUploadedDesc: "تزاد الفورمولير بنجاح.",
+        documentUploadedDesc: "تزادت الوثيقة وتراجعات.",
         openChat: "نفضل نكتب · فتح الشات",
         closeChat: "سد الشات",
         writeQuestion: "كتب سؤالك...",
-        docsPanelTitle: "وثائق التسوية 2026",
+        docsPanelTitle: "وثائق الملف",
         readyPlural: "واجدين",
         uploading: "كيترفع...",
-        uploadPdf: "رفع PDF",
-        uploadedPdfs: "PDF مرفوعين",
-        aiVerified: "مراجعين بالذكاء",
+        uploadPdf: "رفع ملف",
+        uploadedPdfs: "ملفات مرفوعة",
+        aiVerified: "تحقق الذكاء",
         pending: "معلق",
-        toSend: "باش يتصيفط",
-        completeOnOfficialSite: "كمّل الطلب فـ sede.gob.es",
-        aiFillsOfficialSite: "الوكيل الذكي كيحضر ويعمر البيانات أوتوماتيكياً",
-        procedureSmall: "الإجراء:",
-        govHeader: "التسوية 2026",
-        govLine1: "وزارة الداخلية",
-        govLine2: "كتابة الدولة",
-        govLine3: "ديال الهجرة",
-        situationTitle: "الوضعية الحالية",
+        toSend: "للإرسال",
+        completeOnOfficialSite: "فتح الموقع الرسمي",
+        aiFillsOfficialSite:
+          "الوكيل الذكي يجهز البيانات والاستمارات حسب المسطرة",
+        procedureSmall: "المسطرة:",
+        govHeader: "GESTORIACITAIA",
+        govLine1: "مساعد ذكي",
+        govLine2: "للملفات",
+        govLine3: "والهجرة",
+        situationTitle: "اختر المسطرة",
         applicationData: "بيانات الطلب",
-        filledAutomatically: "تعمر أوتوماتيكياً",
-        sendApplication: "صيفط الطلب",
-        requestSent: "ترسل الطلب!",
+        filledAutomatically: "تعمرت أوتوماتيكياً",
+        sendApplication: "إرسال الملف",
+        requestSent: "تم إرسال الملف!",
         fullName: "الاسم",
         reference: "المرجع",
         sendDate: "تاريخ الإرسال",
@@ -252,168 +548,70 @@ export default function Regularizacion2026() {
         mute: "كتم",
         activePlanLabel: "الخطة",
         active: "نشطة",
-        source: "المصدر: extranjeros.inclusion.gob.es",
+        source: "المصدر الرسمي",
       };
     }
 
-    if (lang === "en") {
+    if (safeLang === "en") {
       return {
         initialChat:
-          "Hello, I’m Mohamed. I’m here to help you with Regularization 2026 step by step.",
+          "Hello, I’m Mohamed. I’ll help you with your immigration case step by step.",
         agentSteps: (selectedLabel: string) => [
           {
-            text: `Hi, I’m Mohamed. I’ll help you with Regularization 2026. First, select your current situation to find the correct process. The selected situation is “${selectedLabel}”.`,
-            highlight: "Regularization 2026",
+            text: `Hello, I’m Mohamed. We are now working on “${selectedLabel}”.`,
+            highlight: "Mohamed",
           },
           {
-            text: "Perfect. I found the correct process. Now I’m going to verify your documents. I need: NIE or passport, 2 years of registration certificate, and employment contract.",
+            text: "Now I will verify your documents and match each file to the correct procedure.",
             highlight: "verify your documents",
           },
           {
-            text: "Documents verified! Everything looks correct. Now we’ll fill out the application on the official site. I’ll handle the data.",
-            highlight: "Documents verified!",
+            text: "Next I will prepare the official forms and organize your case for submission or appointment booking.",
+            highlight: "official forms",
           },
           {
-            text: "Application submitted successfully! The system generated your receipt and the case was recorded correctly.",
-            highlight: "Application submitted successfully!",
+            text: "Your case is ready. Then we can continue with booking, filing, or receipt download.",
+            highlight: "case is ready",
           },
         ],
-        situations: [
-          {
-            value: "laboral",
-            label: "Work Rootedness (2+ years in Spain, employment contract)",
-          },
-          {
-            value: "social",
-            label: "Social Rootedness (3+ years in Spain, family/social ties)",
-          },
-          {
-            value: "familiar",
-            label: "Family Rootedness (family member of Spanish/EU citizen)",
-          },
-          {
-            value: "ampliado",
-            label: "Extended Social Rootedness (approved job training)",
-          },
-          {
-            value: "retorno",
-            label: "Return of Emigrant Persons",
-          },
-          {
-            value: "excep_trabajo",
-            label: "Authorization for Exceptional Circumstances (work)",
-          },
-        ] as SituationItem[],
-        requiredDocs: [
-          { nombre: "Valid passport or NIE", estado: "ok" as DocStatus },
-          {
-            nombre: "Registration certificate (minimum 2 years)",
-            estado: "ok" as DocStatus,
-          },
-          { nombre: "Signed employment contract", estado: "ok" as DocStatus },
-          { nombre: "Criminal record certificate", estado: "warn" as DocStatus },
-          { nombre: "EX-10 / EX-11 form", estado: "missing" as DocStatus },
-          { nombre: "Recent photographs (2)", estado: "ok" as DocStatus },
-        ] as RequiredDocItem[],
-        initialStoredDocs: [
-          {
-            id: "nie",
-            nombre: "Valid passport / NIE",
-            archivo: "NIE_X1234567Z.pdf",
-            estado: "ok" as DocStatus,
-            kb: "248 KB",
-          },
-          {
-            id: "empadron",
-            nombre: "Registration certificate",
-            archivo: "Empadronamiento_2024.pdf",
-            estado: "ok" as DocStatus,
-            kb: "156 KB",
-          },
-          {
-            id: "contrato",
-            nombre: "Signed employment contract",
-            archivo: "Contrato_Benali_2026.pdf",
-            estado: "ok" as DocStatus,
-            kb: "312 KB",
-          },
-          {
-            id: "penales",
-            nombre: "Criminal record certificate",
-            archivo: "Antecedentes_tramitando.pdf",
-            estado: "warn" as DocStatus,
-            kb: "In progress",
-          },
-          {
-            id: "ex10",
-            nombre: "EX-10 / EX-11 form",
-            archivo: "",
-            estado: "missing" as DocStatus,
-            kb: "",
-          },
-          {
-            id: "fotos",
-            nombre: "Recent photographs (2)",
-            archivo: "Fotos_Benali.jpg",
-            estado: "ok" as DocStatus,
-            kb: "84 KB",
-          },
-        ] as StoredDocItem[],
-        forms: [
-          {
-            nombre: "Work / Social Rootedness",
-            codigo: "EX-10",
-            url: "https://extranjeros.inclusion.gob.es/ficheros/Modelos_solicitudes/mod_solicitudes2/10-Arraigo_social_laboral.pdf",
-          },
-          {
-            nombre: "Family Rootedness",
-            codigo: "EX-11",
-            url: "https://extranjeros.inclusion.gob.es/ficheros/Modelos_solicitudes/mod_solicitudes2/11-Arraigo_familiar.pdf",
-          },
-          {
-            nombre: "Residence Authorization",
-            codigo: "EX-01",
-            url: "https://extranjeros.inclusion.gob.es/ficheros/Modelos_solicitudes/mod_solicitudes2/01-Autorizacion_residencia.pdf",
-          },
-        ] as FormItem[],
         online: "Online",
         role: "Immigration Specialist",
         paymentMessage:
-          "To continue with your Regularization 2026 and submit your application on the official site, activate your plan. I’ll guide you step by step.",
+          "To continue with your case, documents, and official forms, activate your plan.",
         paymentTriggerMessage:
-          "To continue with your case, activate the service and we continue with you step by step.",
+          "To continue fully with your case, activate the service.",
         planActivated: "Plan activated",
-        planContinue: "Perfect. Let’s continue with your regularization.",
+        planContinue: "Perfect. Let’s continue with your case.",
         docsVerifiedTitle: "Documents verified",
-        docsVerifiedDesc: "The main documentation was reviewed successfully.",
+        docsVerifiedDesc: "Main documentation reviewed successfully.",
         submitSuccessTitle: "Application submitted!",
         submitSuccessDesc: "The case has been recorded successfully.",
         documentUploadedTitle: "Document uploaded",
-        documentUploadedDesc: "The form has been added successfully.",
-        openChat: "I prefer to write · Open chat",
+        documentUploadedDesc: "The file was added and reviewed.",
+        openChat: "Open chat",
         closeChat: "Close chat",
         writeQuestion: "Type your question...",
-        docsPanelTitle: "Regularization 2026 Documents",
+        docsPanelTitle: "Case documents",
         readyPlural: "ready",
         uploading: "Uploading...",
-        uploadPdf: "Upload PDF",
-        uploadedPdfs: "PDF uploaded",
+        uploadPdf: "Upload file",
+        uploadedPdfs: "Uploaded files",
         aiVerified: "AI verified",
         pending: "Pending",
         toSend: "To submit",
-        completeOnOfficialSite: "Complete application on sede.gob.es",
+        completeOnOfficialSite: "Open official site",
         aiFillsOfficialSite:
-          "The AI agent prepares and fills the data automatically",
+          "The AI agent prepares the data and forms according to the procedure",
         procedureSmall: "Procedure:",
-        govHeader: "REGULARIZATION 2026",
-        govLine1: "MINISTRY OF INTERIOR",
-        govLine2: "STATE SECRETARIAT",
-        govLine3: "OF IMMIGRATION",
-        situationTitle: "CURRENT SITUATION",
+        govHeader: "GESTORIACITAIA",
+        govLine1: "SMART ASSISTANT",
+        govLine2: "FOR CASES",
+        govLine3: "AND IMMIGRATION",
+        situationTitle: "SELECT PROCEDURE",
         applicationData: "APPLICATION DATA",
         filledAutomatically: "filled automatically",
-        sendApplication: "Submit application",
-        requestSent: "APPLICATION SUBMITTED!",
+        sendApplication: "Submit case",
+        requestSent: "CASE SUBMITTED!",
         fullName: "Name",
         reference: "Reference",
         sendDate: "Submission date",
@@ -432,172 +630,69 @@ export default function Regularizacion2026() {
         mute: "Mute",
         activePlanLabel: "Plan",
         active: "active",
-        source: "Source: extranjeros.inclusion.gob.es",
+        source: "Official source",
       };
     }
 
     return {
       initialChat:
-        "Hola, soy Mohamed. Estoy aquí para ayudarte con la Regularización 2026 paso a paso.",
+        "Hola, soy Mohamed. Voy a ayudarte con tu trámite de extranjería paso a paso.",
       agentSteps: (selectedLabel: string) => [
         {
-          text: `Hola, soy Mohamed. Te voy a ayudar con la Regularización 2026. Primero, selecciona tu situación actual para encontrar el trámite correcto. La situación elegida es «${selectedLabel}».`,
-          highlight: "Regularización 2026",
+          text: `Hola, soy Mohamed. Ahora estamos trabajando el trámite «${selectedLabel}».`,
+          highlight: "Mohamed",
         },
         {
-          text: "Perfecto. He encontrado tu trámite. Ahora voy a verificar tus documentos. Necesito: NIE o pasaporte, empadronamiento de 2 años y contrato de trabajo.",
+          text: "Voy a verificar tus documentos y relacionarlos con el trámite correcto.",
           highlight: "verificar tus documentos",
         },
         {
-          text: "¡Documentos verificados! Todo está correcto. Ahora vamos a rellenar la solicitud en la sede oficial. Yo me encargo de los datos.",
-          highlight: "¡Documentos verificados!",
+          text: "Después prepararé los formularios oficiales y dejaré tu expediente listo para enviar o reservar cita.",
+          highlight: "formularios oficiales",
         },
         {
-          text: "¡Solicitud enviada con éxito! El sistema ha generado tu resguardo y el proceso ha quedado registrado correctamente.",
-          highlight: "¡Solicitud enviada con éxito!",
+          text: "Tu expediente quedará preparado para continuar con cita, presentación o descarga de resguardo.",
+          highlight: "expediente",
         },
       ],
-      situations: [
-        {
-          value: "laboral",
-          label: "Arraigo Laboral (2+ años en España, contrato de trabajo)",
-        },
-        {
-          value: "social",
-          label:
-            "Arraigo Social (3+ años en España, vínculos familiares/sociales)",
-        },
-        {
-          value: "familiar",
-          label: "Arraigo Familiar (familiar de ciudadano español/UE)",
-        },
-        {
-          value: "ampliado",
-          label: "Arraigo Social Ampliado (formación laboral homologada)",
-        },
-        {
-          value: "retorno",
-          label: "Retorno de Personas Emigrantes",
-        },
-        {
-          value: "excep_trabajo",
-          label: "Autorización por Circunstancias Excepcionales (trabajo)",
-        },
-      ] as SituationItem[],
-      requiredDocs: [
-        { nombre: "Pasaporte o NIE vigente", estado: "ok" as DocStatus },
-        {
-          nombre: "Empadronamiento (2 años mínimo)",
-          estado: "ok" as DocStatus,
-        },
-        { nombre: "Contrato de trabajo firmado", estado: "ok" as DocStatus },
-        {
-          nombre: "Certificado de antecedentes penales",
-          estado: "warn" as DocStatus,
-        },
-        { nombre: "Formulario EX-10 / EX-11", estado: "missing" as DocStatus },
-        { nombre: "Fotografías recientes (2 unidades)", estado: "ok" as DocStatus },
-      ] as RequiredDocItem[],
-      initialStoredDocs: [
-        {
-          id: "nie",
-          nombre: "Pasaporte / NIE vigente",
-          archivo: "NIE_X1234567Z.pdf",
-          estado: "ok" as DocStatus,
-          kb: "248 KB",
-        },
-        {
-          id: "empadron",
-          nombre: "Certificado de empadronamiento",
-          archivo: "Empadronamiento_2024.pdf",
-          estado: "ok" as DocStatus,
-          kb: "156 KB",
-        },
-        {
-          id: "contrato",
-          nombre: "Contrato de trabajo firmado",
-          archivo: "Contrato_Benali_2026.pdf",
-          estado: "ok" as DocStatus,
-          kb: "312 KB",
-        },
-        {
-          id: "penales",
-          nombre: "Certificado antecedentes penales",
-          archivo: "Antecedentes_tramitando.pdf",
-          estado: "warn" as DocStatus,
-          kb: "En trámite",
-        },
-        {
-          id: "ex10",
-          nombre: "Formulario EX-10 / EX-11",
-          archivo: "",
-          estado: "missing" as DocStatus,
-          kb: "",
-        },
-        {
-          id: "fotos",
-          nombre: "Fotografías recientes (2 uds.)",
-          archivo: "Fotos_Benali.jpg",
-          estado: "ok" as DocStatus,
-          kb: "84 KB",
-        },
-      ] as StoredDocItem[],
-      forms: [
-        {
-          nombre: "Arraigo Laboral / Social",
-          codigo: "EX-10",
-          url: "https://extranjeros.inclusion.gob.es/ficheros/Modelos_solicitudes/mod_solicitudes2/10-Arraigo_social_laboral.pdf",
-        },
-        {
-          nombre: "Arraigo Familiar",
-          codigo: "EX-11",
-          url: "https://extranjeros.inclusion.gob.es/ficheros/Modelos_solicitudes/mod_solicitudes2/11-Arraigo_familiar.pdf",
-        },
-        {
-          nombre: "Autorización Residencia",
-          codigo: "EX-01",
-          url: "https://extranjeros.inclusion.gob.es/ficheros/Modelos_solicitudes/mod_solicitudes2/01-Autorizacion_residencia.pdf",
-        },
-      ] as FormItem[],
       online: "En línea",
       role: "Especialista en Extranjería",
       paymentMessage:
-        "Para continuar con tu Regularización 2026 y presentar tu solicitud en la sede oficial, activa tu plan. Yo me encargo de guiarte paso a paso.",
+        "Para continuar con tu trámite, tus documentos y los formularios oficiales, activa tu plan.",
       paymentTriggerMessage:
-        "Para continuar con tu trámite, activa el servicio y seguimos contigo paso a paso.",
+        "Para seguir contigo de forma completa, activa el servicio.",
       planActivated: "Plan activado",
-      planContinue: "Perfecto. Continuamos con tu regularización.",
-      docsVerifiedTitle: "Documentos verificados",
-      docsVerifiedDesc:
-        "La documentación principal ha sido revisada correctamente.",
+      planContinue: "Perfecto. Continuamos con tu trámite.",
+      docsVerifiedTitle: "Documentos revisados",
+      docsVerifiedDesc: "La documentación principal ha sido revisada.",
       submitSuccessTitle: "¡Solicitud enviada!",
       submitSuccessDesc: "El expediente ha quedado registrado correctamente.",
       documentUploadedTitle: "Documento subido",
-      documentUploadedDesc: "El formulario ha sido añadido correctamente.",
+      documentUploadedDesc: "El archivo ha sido añadido y revisado.",
       openChat: "Prefiero escribir · Abrir chat",
       closeChat: "Cerrar chat",
       writeQuestion: "Escribe tu pregunta...",
-      docsPanelTitle: "Documentos Regularización 2026",
+      docsPanelTitle: "Documentos del expediente",
       readyPlural: "listos",
       uploading: "Subiendo...",
-      uploadPdf: "Subir PDF",
-      uploadedPdfs: "PDF subidos",
+      uploadPdf: "Subir archivo",
+      uploadedPdfs: "Archivos subidos",
       aiVerified: "Verificados IA",
       pending: "Pendiente",
       toSend: "Para enviar",
-      completeOnOfficialSite: "Completar solicitud en sede.gob.es",
+      completeOnOfficialSite: "Abrir sede oficial",
       aiFillsOfficialSite:
-        "El agente IA rellena y prepara los datos automáticamente",
+        "El agente IA prepara los datos y formularios según el trámite",
       procedureSmall: "Procedimiento:",
-      govHeader: "REGULARIZACIÓN 2026",
-      govLine1: "MINISTERIO DEL INTERIOR",
-      govLine2: "SECRETARÍA DE ESTADO",
-      govLine3: "DE INMIGRACIÓN",
-      situationTitle: "SITUACIÓN ACTUAL",
-      applicationData: "DATOS DE LA SOLICITUD",
+      govHeader: "GESTORIACITAIA",
+      govLine1: "ASISTENTE INTELIGENTE",
+      govLine2: "PARA TRÁMITES",
+      govLine3: "Y EXTRANJERÍA",
+      situationTitle: "SELECCIONA EL TRÁMITE",
+      applicationData: "DATOS DEL EXPEDIENTE",
       filledAutomatically: "rellenado automáticamente",
-      sendApplication: "Enviar solicitud",
-      requestSent: "¡SOLICITUD ENVIADA!",
+      sendApplication: "Enviar expediente",
+      requestSent: "¡EXPEDIENTE ENVIADO!",
       fullName: "Nombre",
       reference: "Referencia",
       sendDate: "Fecha envío",
@@ -616,19 +711,23 @@ export default function Regularizacion2026() {
       mute: "Mute",
       activePlanLabel: "Plan",
       active: "activo",
-      source: "Fuente: extranjeros.inclusion.gob.es",
+      source: "Fuente oficial",
     };
-  }, [lang]);
+  }, [safeLang]);
 
-  const [docs, setDocs] = useState<StoredDocItem[]>(ui.initialStoredDocs);
+  const [docs, setDocs] = useState<StoredDocItem[]>(
+    buildInitialDocs(safeLang, selectedSituacion)
+  );
 
   const chatStorageKey = useMemo(() => {
-    return `gestoriacitaia_mohamed_chat_regularizacion_${lang}`;
-  }, [lang]);
+    return `gestoriacitaia_mohamed_chat_procedure_${safeLang}_${selectedSituacion}`;
+  }, [safeLang, selectedSituacion]);
 
   useEffect(() => {
-    setDocs(ui.initialStoredDocs);
-  }, [ui.initialStoredDocs]);
+    setDocs(buildInitialDocs(safeLang, selectedSituacion));
+    setStep(0);
+    setSubmitted(false);
+  }, [safeLang, selectedSituacion]);
 
   useEffect(() => {
     if (!chatStorageKey) return;
@@ -686,9 +785,7 @@ export default function Regularizacion2026() {
   }, [chatStorageKey, ui.initialChat, ui.paymentTriggerMessage]);
 
   useEffect(() => {
-    if (!chatBootstrapped || !chatStorageKey || chatMessages.length === 0) {
-      return;
-    }
+    if (!chatBootstrapped || !chatStorageKey || chatMessages.length === 0) return;
 
     try {
       localStorage.setItem(chatStorageKey, JSON.stringify(chatMessages));
@@ -701,21 +798,31 @@ export default function Regularizacion2026() {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chatMessages, sendingChat]);
 
-  const selectedSituationLabel =
-    ui.situations.find((s) => s.value === selectedSituacion)?.label ||
-    ui.situations[0].label;
+  const selectedSituationLabel = getTextByLang(safeLang, currentProcedure.label);
+  const selectedIntro = getTextByLang(safeLang, currentProcedure.intro);
 
   const AGENT_STEPS = ui.agentSteps(selectedSituationLabel);
-  const SITUACIONES = ui.situations;
-  const DOCS_REQUERIDOS = ui.requiredDocs;
-  const FORMULARIOS = ui.forms;
+
+  const SITUACIONES: SituationItem[] = PROCEDURES.map((p) => ({
+    value: p.key,
+    label: getTextByLang(safeLang, p.label),
+  }));
+
+  const DOCS_REQUERIDOS: RequiredDocItem[] = docs.map((d) => ({
+    id: d.id,
+    nombre: d.nombre,
+    estado: d.estado,
+    expectedType: d.expectedType,
+  }));
+
+  const FORMULARIOS: FormItem[] = currentProcedure.forms.map((f) => ({
+    nombre: getTextByLang(safeLang, f.nombre),
+    codigo: f.codigo,
+    url: f.url,
+  }));
 
   const handleSituacionClick = (value: string) => {
     setSelectedSituacion(value);
-
-    if (step === 0 && planActivo) {
-      setStep(1);
-    }
   };
 
   const handleVerificarDocs = () => {
@@ -761,112 +868,129 @@ export default function Regularizacion2026() {
     });
   };
 
-const docsOk = docs.filter((d) => d.estado === "ok").length;
-const docsTotal = docs.length;
-const allReady = docsOk >= docsTotal - 1;
+  const docsOk = docs.filter((d) => d.estado === "ok").length;
+  const docsTotal = docs.length;
+  const allReady = docsOk >= Math.max(1, docsTotal - 1);
 
-const handleUploadDoc = async (id: string) => {
-  if (!planActivo) {
-    setShowPayment(true);
-    return;
-  }
+  const buildExpectedType = (doc?: StoredDocItem) => {
+    if (!doc?.expectedType) return "auto";
+    return doc.expectedType;
+  };
 
-  try {
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = "image/*,application/pdf";
+  const handleUploadDoc = async (id: string) => {
+    if (!planActivo) {
+      setShowPayment(true);
+      return;
+    }
 
-    input.onchange = async () => {
-      const file = input.files?.[0];
-      if (!file) return;
+    const currentDoc = docs.find((d) => d.id === id);
 
-      setUploadingId(id);
+    if (!currentDoc) return;
 
-      try {
-        const base64 = await fileToDataUrl(file);
+    try {
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = "image/*,application/pdf";
 
-        const result = await verifyDocument({
-          imageBase64: base64,
-          expectedDocumentType: "auto",
-          lang: lang as "darija" | "es" | "en",
-        });
+      input.onchange = async () => {
+        const file = input.files?.[0];
+        if (!file) return;
 
-        console.log("RESULTADO IA:", result);
+        setUploadingId(id);
 
-        setDocs((prev) =>
-          prev.map((d) =>
-            d.id === id
-              ? {
-                  ...d,
-                  estado: "ok" as DocStatus,
-                  archivo: file.name,
-                  kb: `${Math.round(file.size / 1024)} KB`,
-                }
-              : d
-          )
-        );
+        try {
+          const base64 = await fileToDataUrl(file);
+          const expectedType = buildExpectedType(currentDoc);
 
-        toast({
-          title:
-            lang === "darija"
-              ? "تراجع الوثيقة"
-              : lang === "en"
-              ? "Document verified"
-              : "Documento verificado",
-          description:
-            result?.summary ||
-            (lang === "darija"
-              ? "الذكاء الاصطناعي حلل الوثيقة بنجاح."
-              : lang === "en"
-              ? "The AI analyzed the document successfully."
-              : "La IA analizó el documento correctamente."),
-        });
-      } catch (err: any) {
-        console.error("Error IA documento:", err);
+          const result = await verifyDocument({
+            imageBase64: base64,
+            expectedDocumentType: expectedType,
+            lang: safeLang,
+          });
 
-        toast({
-          title:
-            lang === "darija"
-              ? "خطأ فالتحليل"
-              : lang === "en"
-              ? "Verification error"
-              : "Error de verificación",
-          description:
-            err?.message ||
-            (lang === "darija"
-              ? "ما قدرناش نحللو الوثيقة."
-              : lang === "en"
-              ? "Could not analyze the document."
-              : "No se pudo analizar el documento."),
-          variant: "destructive",
-        });
-      } finally {
-        setUploadingId(null);
-      }
-    };
+          const nextStatus: DocStatus =
+            result.status === "invalid" || result.match_expected_type === false
+              ? "warn"
+              : "ok";
 
-    input.click();
-  } catch (error: any) {
-    console.error("Error general handleUploadDoc:", error);
+          setDocs((prev) =>
+            prev.map((d) =>
+              d.id === id
+                ? {
+                    ...d,
+                    estado: nextStatus,
+                    archivo: file.name,
+                    kb: `${Math.round(file.size / 1024)} KB`,
+                    detectedType: result.document_type || "",
+                    note: result.summary || "",
+                  }
+                : d
+            )
+          );
 
-    toast({
-      title:
-        lang === "darija"
-          ? "خطأ"
-          : lang === "en"
-          ? "Error"
-          : "Error",
-      description:
-        error?.message ||
-        (lang === "darija"
-          ? "وقع مشكل غير متوقع."
-          : lang === "en"
-          ? "An unexpected error occurred."
-          : "Ocurrió un error inesperado."),
-      variant: "destructive",
-    });
-  }
-};
+          toast({
+            title:
+              safeLang === "darija"
+                ? "تراجع الوثيقة"
+                : safeLang === "en"
+                ? "Document verified"
+                : "Documento verificado",
+            description:
+              result?.summary ||
+              (safeLang === "darija"
+                ? "الذكاء الاصطناعي حلل الوثيقة بنجاح."
+                : safeLang === "en"
+                ? "The AI analyzed the document successfully."
+                : "La IA analizó el documento correctamente."),
+          });
+
+          if (step < 1) setStep(1);
+        } catch (err: any) {
+          console.error("Error IA documento:", err);
+
+          toast({
+            title:
+              safeLang === "darija"
+                ? "خطأ فالتحليل"
+                : safeLang === "en"
+                ? "Verification error"
+                : "Error de verificación",
+            description:
+              err?.message ||
+              (safeLang === "darija"
+                ? "ما قدرناش نحللو الوثيقة."
+                : safeLang === "en"
+                ? "Could not analyze the document."
+                : "No se pudo analizar el documento."),
+            variant: "destructive",
+          });
+        } finally {
+          setUploadingId(null);
+        }
+      };
+
+      input.click();
+    } catch (error: any) {
+      console.error("Error general handleUploadDoc:", error);
+
+      toast({
+        title:
+          safeLang === "darija"
+            ? "خطأ"
+            : safeLang === "en"
+            ? "Error"
+            : "Error",
+        description:
+          error?.message ||
+          (safeLang === "darija"
+            ? "وقع مشكل غير متوقع."
+            : safeLang === "en"
+            ? "An unexpected error occurred."
+            : "Ocurrió un error inesperado."),
+        variant: "destructive",
+      });
+    }
+  };
 
   const handleIrSede = () => {
     if (!planActivo) {
@@ -915,8 +1039,10 @@ const handleUploadDoc = async (id: string) => {
         body: JSON.stringify({
           assistant: "mohamed",
           message: rawText,
-          context: "regularizacion_2026",
-          lang,
+          context: "multi_extranjeria_procedure",
+          procedureKey: selectedSituacion,
+          procedureLabel: selectedSituationLabel,
+          lang: safeLang,
           history: historyToSend,
         }),
       });
@@ -929,9 +1055,9 @@ const handleUploadDoc = async (id: string) => {
 
       const finalReply =
         data?.reply ||
-        (lang === "darija"
+        (safeLang === "darija"
           ? "سمح ليا، ما قدرتش نجاوب دابا."
-          : lang === "en"
+          : safeLang === "en"
           ? "Sorry, I could not answer right now."
           : "Lo siento, no pude responder ahora mismo.");
 
@@ -963,9 +1089,9 @@ const handleUploadDoc = async (id: string) => {
       const errorReply: ChatMsg = {
         from: "agent",
         text:
-          lang === "darija"
+          safeLang === "darija"
             ? "وقع مشكل فالاتصال مع محمد، عاود حاول."
-            : lang === "en"
+            : safeLang === "en"
             ? "There was a connection error with Mohamed. Please try again."
             : "Error conectando con Mohamed, intenta otra vez.",
         ts: Date.now(),
@@ -1006,7 +1132,7 @@ const handleUploadDoc = async (id: string) => {
                 {t("reg_new")}
               </span>
             </h1>
-            <p className="text-xs text-muted-foreground">{t("reg_sub")}</p>
+            <p className="text-xs text-muted-foreground">{selectedSituationLabel}</p>
           </div>
 
           {planActivo ? (
@@ -1211,23 +1337,7 @@ const handleUploadDoc = async (id: string) => {
                 </div>
 
                 <p className="text-[11px] text-white/90 leading-relaxed flex-1">
-                  {(() => {
-                    const s = AGENT_STEPS[Math.min(step, AGENT_STEPS.length - 1)];
-                    const parts = s.text.split(s.highlight);
-
-                    return parts.map((part, i, arr) =>
-                      i < arr.length - 1 ? (
-                        <span key={i}>
-                          {part}
-                          <span className="font-bold text-primary">
-                            {s.highlight}
-                          </span>
-                        </span>
-                      ) : (
-                        part
-                      )
-                    );
-                  })()}
+                  {step === 0 ? selectedIntro : AGENT_STEPS[Math.min(step, AGENT_STEPS.length - 1)].text}
                 </p>
               </motion.div>
             </AnimatePresence>
@@ -1262,7 +1372,7 @@ const handleUploadDoc = async (id: string) => {
                   <motion.div
                     className="h-full bg-gradient-to-r from-primary to-green-400 rounded-full"
                     initial={{ width: 0 }}
-                    animate={{ width: `${(docsOk / docsTotal) * 100}%` }}
+                    animate={{ width: `${(docsOk / Math.max(1, docsTotal)) * 100}%` }}
                     transition={{ duration: 0.7, delay: 0.3 }}
                   />
                 </div>
@@ -1313,16 +1423,28 @@ const handleUploadDoc = async (id: string) => {
                             : "text-destructive/60"
                         }`}
                       >
-                        {doc.estado === "ok"
+                        {doc.archivo
                           ? doc.archivo
-                          : doc.estado === "warn"
-                          ? `⏳ ${doc.kb}`
-                          : lang === "en"
+                          : safeLang === "en"
                           ? "Not uploaded · required"
-                          : lang === "darija"
+                          : safeLang === "darija"
                           ? "ما ترفعش · إجباري"
                           : "Sin subir · obligatorio"}
                       </p>
+
+                      {!!doc.detectedType && (
+                        <p className="text-[9px] text-white/40 truncate">
+                          {safeLang === "en"
+                            ? "Detected"
+                            : safeLang === "darija"
+                            ? "مكتشف"
+                            : "Detectado"}: {getDocumentLabel(doc.detectedType)}
+                        </p>
+                      )}
+
+                      {!!doc.note && (
+                        <p className="text-[9px] text-white/40 truncate">{doc.note}</p>
+                      )}
                     </div>
 
                     <div className="shrink-0">
@@ -1336,13 +1458,7 @@ const handleUploadDoc = async (id: string) => {
                         </button>
                       )}
 
-                      {doc.estado === "warn" && (
-                        <span className="text-[9px] text-amber-400 font-medium whitespace-nowrap">
-                          {doc.kb}
-                        </span>
-                      )}
-
-                      {doc.estado === "missing" &&
+                      {(doc.estado === "missing" || doc.estado === "warn") &&
                         (uploadingId === doc.id ? (
                           <span className="text-[9px] text-primary flex items-center gap-1">
                             <motion.div
@@ -1373,21 +1489,13 @@ const handleUploadDoc = async (id: string) => {
 
               <div className="px-3 py-2 border-t border-white/[0.07] grid grid-cols-3 gap-1.5 text-center">
                 <div className="bg-primary/8 rounded-lg py-1.5">
-                  <p className="text-[10px] font-black text-primary">
-                    {docs.filter((d) => d.estado === "ok").length}
-                  </p>
-                  <p className="text-[9px] text-muted-foreground">
-                    {ui.uploadedPdfs}
-                  </p>
+                  <p className="text-[10px] font-black text-primary">{docsOk}</p>
+                  <p className="text-[9px] text-muted-foreground">{ui.uploadedPdfs}</p>
                 </div>
 
                 <div className="bg-primary/8 rounded-lg py-1.5">
-                  <p className="text-[10px] font-black text-primary">
-                    {docs.filter((d) => d.estado === "ok").length}
-                  </p>
-                  <p className="text-[9px] text-muted-foreground">
-                    {ui.aiVerified}
-                  </p>
+                  <p className="text-[10px] font-black text-primary">{docsOk}</p>
+                  <p className="text-[9px] text-muted-foreground">{ui.aiVerified}</p>
                 </div>
 
                 <div
@@ -1402,9 +1510,7 @@ const handleUploadDoc = async (id: string) => {
                   >
                     {allReady ? "✓ Listo" : ui.pending}
                   </p>
-                  <p className="text-[9px] text-muted-foreground">
-                    {ui.toSend}
-                  </p>
+                  <p className="text-[9px] text-muted-foreground">{ui.toSend}</p>
                 </div>
               </div>
 
@@ -1471,11 +1577,9 @@ const handleUploadDoc = async (id: string) => {
                     </div>
 
                     <div className="ml-auto text-right shrink-0">
-                      <div className="text-[10px] text-gray-500">
-                        {ui.procedureSmall}
-                      </div>
+                      <div className="text-[10px] text-gray-500">{ui.procedureSmall}</div>
                       <div className="text-sm font-black text-[#003366]">
-                        {ui.govHeader}
+                        {selectedSituationLabel}
                       </div>
                     </div>
                   </div>
@@ -1483,7 +1587,7 @@ const handleUploadDoc = async (id: string) => {
                   <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-4 flex gap-2 items-start">
                     <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
                     <p className="text-xs text-amber-800 leading-relaxed">
-                      {t("reg_alert_text")}
+                      {selectedIntro}
                     </p>
                   </div>
 
@@ -1521,25 +1625,23 @@ const handleUploadDoc = async (id: string) => {
                   </div>
 
                   <AnimatePresence>
-                    {step >= 1 && (
+                    {step >= 0 && (
                       <motion.div
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: "auto" }}
                         className="mb-5"
                       >
                         <p className="text-xs font-bold text-gray-700 uppercase tracking-wide mb-3">
-                          {t("reg_docs")}
+                          {ui.requiredDocuments}
                         </p>
 
                         <div className="space-y-2">
-                          {DOCS_REQUERIDOS.map((doc, i) => (
+                          {DOCS_REQUERIDOS.map((doc) => (
                             <div
-                              key={i}
+                              key={doc.id}
                               className="flex items-center justify-between p-2.5 rounded-lg border border-gray-100 hover:bg-gray-50"
                             >
-                              <span className="text-sm text-gray-700">
-                                {doc.nombre}
-                              </span>
+                              <span className="text-sm text-gray-700">{doc.nombre}</span>
 
                               {doc.estado === "ok" && (
                                 <CheckCircle2 className="w-4 h-4 text-green-600" />
@@ -1551,11 +1653,12 @@ const handleUploadDoc = async (id: string) => {
 
                               {doc.estado === "missing" && (
                                 <button
+                                  onClick={() => handleUploadDoc(doc.id)}
                                   type="button"
                                   className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 font-medium"
                                 >
                                   <Upload className="w-3 h-3" />
-                                  {t("reg_upload")}
+                                  {ui.uploadPdf}
                                 </button>
                               )}
                             </div>
@@ -1567,7 +1670,11 @@ const handleUploadDoc = async (id: string) => {
                           className="mt-3 w-full bg-[#003366] text-white text-sm font-bold py-2.5 rounded hover:bg-[#002244] transition-colors"
                           type="button"
                         >
-                          {t("reg_docs_btn")}
+                          {safeLang === "en"
+                            ? "Review documents"
+                            : safeLang === "darija"
+                            ? "راجع الوثائق"
+                            : "Revisar documentos"}
                         </button>
                       </motion.div>
                     )}
@@ -1601,9 +1708,9 @@ const handleUploadDoc = async (id: string) => {
                           <input
                             className="border border-gray-200 rounded px-3 py-2 text-sm text-gray-500 bg-gray-50"
                             value={
-                              lang === "en"
+                              safeLang === "en"
                                 ? "Moroccan"
-                                : lang === "darija"
+                                : safeLang === "darija"
                                 ? "مغربي"
                                 : "Marroquí"
                             }
@@ -1648,49 +1755,33 @@ const handleUploadDoc = async (id: string) => {
                     <h2 className="text-xl font-black text-[#003366] mb-1">
                       {ui.requestSent}
                     </h2>
-                    <p className="text-sm text-gray-600 mb-4">
-                      {lang === "en"
-                        ? "Regularization 2026 · Work Rootedness"
-                        : lang === "darija"
-                        ? "التسوية 2026 · أرايغو مهني"
-                        : "Regularización 2026 · Arraigo Laboral"}
-                    </p>
+                    <p className="text-sm text-gray-600 mb-4">{selectedSituationLabel}</p>
 
                     <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 text-left space-y-2 max-w-sm mx-auto">
                       <p className="text-sm">
-                        <span className="font-bold text-gray-500">
-                          {ui.fullName}:
-                        </span>{" "}
+                        <span className="font-bold text-gray-500">{ui.fullName}:</span>{" "}
                         Ahmed Benali
                       </p>
                       <p className="text-sm">
-                        <span className="font-bold text-gray-500">
-                          {ui.reference}:
-                        </span>{" "}
+                        <span className="font-bold text-gray-500">{ui.reference}:</span>{" "}
                         <span className="font-mono text-green-700">
                           REG2026-ES-087341
                         </span>
                       </p>
                       <p className="text-sm">
-                        <span className="font-bold text-gray-500">
-                          {ui.sendDate}:
-                        </span>{" "}
+                        <span className="font-bold text-gray-500">{ui.sendDate}:</span>{" "}
                         {new Date().toLocaleDateString(
-                          lang === "en" ? "en-GB" : "es-ES"
+                          safeLang === "en" ? "en-GB" : "es-ES"
                         )}
                       </p>
                       <p className="text-sm">
-                        <span className="font-bold text-gray-500">
-                          {ui.status}:
-                        </span>{" "}
+                        <span className="font-bold text-gray-500">{ui.status}:</span>{" "}
                         <span className="text-amber-600 font-semibold">
                           {ui.inProcess}
                         </span>
                       </p>
                       <p className="text-sm">
-                        <span className="font-bold text-gray-500">
-                          {ui.resolution}:
-                        </span>{" "}
+                        <span className="font-bold text-gray-500">{ui.resolution}:</span>{" "}
                         3-6 meses
                       </p>
                     </div>
@@ -1727,11 +1818,7 @@ const handleUploadDoc = async (id: string) => {
               }`}
               type="button"
             >
-              {muted ? (
-                <MicOff className="w-4 h-4" />
-              ) : (
-                <Mic className="w-4 h-4" />
-              )}
+              {muted ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
               {muted ? ui.withoutAudio : ui.mute}
             </button>
 
@@ -1818,8 +1905,8 @@ const handleUploadDoc = async (id: string) => {
                 </div>
 
                 <div className="px-5 py-4 space-y-2.5 max-h-72 overflow-y-auto">
-                  {DOCS_REQUERIDOS.map((doc, i) => (
-                    <div key={i} className="flex items-center gap-3">
+                  {DOCS_REQUERIDOS.map((doc) => (
+                    <div key={doc.id} className="flex items-center gap-3">
                       <span
                         className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 text-xs font-bold ${
                           doc.estado === "ok"
@@ -1904,12 +1991,8 @@ const handleUploadDoc = async (id: string) => {
                       </div>
 
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs font-bold text-primary">
-                          {form.codigo}
-                        </p>
-                        <p className="text-sm text-white/80 truncate">
-                          {form.nombre}
-                        </p>
+                        <p className="text-xs font-bold text-primary">{form.codigo}</p>
+                        <p className="text-sm text-white/80 truncate">{form.nombre}</p>
                       </div>
 
                       <span className="text-[10px] font-semibold text-white/40 group-hover:text-primary transition-colors shrink-0">
