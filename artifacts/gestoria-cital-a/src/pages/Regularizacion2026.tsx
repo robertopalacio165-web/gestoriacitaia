@@ -23,6 +23,7 @@ import {
   Clock,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { fileToDataUrl, verifyDocument } from "@/lib/verifyDocument";
 
 interface ChatMsg {
   from: "agent" | "user";
