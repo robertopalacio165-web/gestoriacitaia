@@ -23,6 +23,7 @@ import {
   Clock,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { getProcedureByKey } from "@/lib/extranjeriaProcedures";
 import {
   fileToDataUrl,
   verifyDocument,
@@ -114,8 +115,9 @@ export default function Regularizacion2026() {
     | "es"
     | "en";
 
-  const currentProcedure =
-    getProcedureByKey(selectedSituacion) || EXTRANJERIA_PROCEDURES[0];
+ const currentProcedure =
+  getProcedureByKey(selectedSituacion) || null;
+  if (!currentProcedure) return null;
 
   const ui = useMemo(() => {
     if (safeLang === "darija") {
