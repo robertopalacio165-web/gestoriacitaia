@@ -431,25 +431,25 @@ export default function Panel() {
     return "es";
   };
 
-  const mapExpectedTypeForIA = (documentType: string): string {
-    const normalized = documentType.trim().toLowerCase();
+ const mapExpectedTypeForIA = (documentType: string): string => {
+  const normalized = documentType.trim().toLowerCase();
 
-    if (normalized === "passport") return "passport";
-    if (normalized === "nie") return "nie";
-    if (normalized === "tie") return "tie";
-    if (normalized === "empadronamiento") return "empadronamiento";
-    if (normalized === "photo" || normalized === "fotografias" || normalized === "foto") {
-      return "photo";
-    }
-    if (normalized === "official_form" || normalized === "formulario_oficial") {
-      return "official_form";
-    }
-    if (normalized === "criminal_record" || normalized === "antecedentes") {
-      return "criminal_record";
-    }
+  if (normalized === "passport") return "passport";
+  if (normalized === "nie") return "nie";
+  if (normalized === "tie") return "tie";
+  if (normalized === "empadronamiento") return "empadronamiento";
+  if (normalized === "photo" || normalized === "fotografias" || normalized === "foto") {
+    return "photo";
+  }
+  if (normalized === "official_form" || normalized === "formulario_oficial") {
+    return "official_form";
+  }
+  if (normalized === "criminal_record" || normalized === "antecedentes") {
+    return "criminal_record";
+  }
 
-    return "auto";
-  };
+  return "auto";
+};
 
   const mapStoredDocumentType = (
     originalType: string,
