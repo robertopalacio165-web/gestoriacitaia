@@ -269,7 +269,7 @@ PROHIBIDO
 `;
 }
 
-function buildMessages(params: {
+function buildInput(params: {
   systemPrompt: string;
   history: HistoryItem[];
   message: string;
@@ -289,17 +289,52 @@ function buildMessages(params: {
   return [
     {
       role: "system",
-      content: systemPrompt,
+      content: [{ type: "input_text", text: systemPrompt }],
     },
     ...sanitizedHistory.map((item) => ({
       role: item.from === "user" ? "user" : "assistant",
-      content: item.text,
+      content: [{ type: "input_text", text: item.text }],
     })),
     {
       role: "user",
-      content: message,
+      content: [{ type: "input_text", text: message }],
     },
   ];
+}
+
+function extractResponseText(data: any): string {
+  if (!data) return "";
+
+  if (typeof data.output_text === "string" && data.output_text.trim()) {
+    return data.output_text.trim();
+  }
+
+  if (Array.isArray(data.output)) {
+    for (const item of data.output) {
+      if (!item || !Array.isArray(item.content)) continue;
+
+      for (const contentItem of item.content) {
+        if (!contentItem) continue;
+
+        if (
+          contentItem.type === "output_text" &&
+          typeof contentItem.text === "string" &&
+          contentItem.text.trim()
+        ) {
+          return contentItem.text.trim();
+        }
+
+        if (
+          typeof contentItem.text === "string" &&
+          contentItem.text.trim()
+        ) {
+          return contentItem.text.trim();
+        }
+      }
+    }
+  }
+
+  return "";
 }
 
 export default async function handler(req: any, res: any) {
@@ -333,23 +368,23 @@ export default async function handler(req: any, res: any) {
         ? getSaraPrompt(detectedLanguage)
         : getMohamedPrompt(detectedLanguage);
 
-    const messages = buildMessages({
+    const input = buildInput({
       systemPrompt,
       history,
       message,
     });
 
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+    const response = await fetch("https://api.openai.com/v1/responses", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "gpt-4o-mini",
+        model: "gpt-4.1-mini",
+        input,
         temperature: 0.2,
-        max_tokens: 220,
-        messages,
+        max_output_tokens: 220,
       }),
     });
 
@@ -362,7 +397,7 @@ export default async function handler(req: any, res: any) {
       });
     }
 
-    const reply = data?.choices?.[0]?.message?.content?.trim();
+    const reply = extractResponseText(data);
 
     if (!reply) {
       return res.status(500).json({
