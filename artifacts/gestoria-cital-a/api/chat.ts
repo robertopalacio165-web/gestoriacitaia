@@ -336,8 +336,9 @@ function extractPassport(message: string): string | null {
   const match = message.toUpperCase().match(/\b[A-Z0-9]{6,12}\b/g);
   if (!match) return null;
 
+  const extractedNie = extractNie(message);
   const filtered = match.find(
-    (item) => item !== extractNie(message) && !/^\d+$/.test(item)
+    (item) => item !== extractedNie && !/^\d+$/.test(item)
   );
 
   return filtered || null;
@@ -364,8 +365,8 @@ function extractCity(message: string): string | null {
   ];
 
   const lower = message.toLowerCase();
-
   const found = cities.find((city) => lower.includes(city));
+
   return found || null;
 }
 
@@ -398,6 +399,8 @@ function extractLeadFromConversation(params: {
       !l.includes("tel") &&
       !l.includes("phone") &&
       !l.includes("whatsapp") &&
+      !l.includes("passport") &&
+      !l.includes("pasaporte") &&
       line.split(" ").length >= 2 &&
       line.length >= 6
     );
@@ -412,7 +415,8 @@ function extractLeadFromConversation(params: {
 
 function hasEnoughLeadDataForSara(lead: ExtractedLead): boolean {
   return Boolean(
-    (lead.phone && lead.phone.length >= 8) &&
+    lead.phone &&
+      lead.phone.length >= 8 &&
       (lead.tramite || lead.nie || lead.passport_number)
   );
 }
@@ -472,15 +476,16 @@ export default async function handler(req: any, res: any) {
 
     const detectedLanguage = detectUserLanguage(message);
 
-    const systemPrompt =
-      assistant === "sara" || context === "buscar_citas"
-        ? getSaraPrompt(detectedLanguage, procedureLabel)
-        : getMohamedPrompt(
-            detectedLanguage,
-            context,
-            procedureKey,
-            procedureLabel
-          );
+    const isSara = assistant === "sara" || context === "buscar_citas";
+
+    const systemPrompt = isSara
+      ? getSaraPrompt(detectedLanguage, procedureLabel)
+      : getMohamedPrompt(
+          detectedLanguage,
+          context,
+          procedureKey,
+          procedureLabel
+        );
 
     const input = buildTextInput({
       systemPrompt,
@@ -503,51 +508,6 @@ export default async function handler(req: any, res: any) {
     });
 
     const data = await response.json();
-    // ENVIAR DATOS A MAKE (SARA)
-if (assistant === "sara") {
-  try {
-    await fetch(process.env.MAKE_WEBHOOK_SARA!, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        message,
-        lang: detectedLanguage,
-        history,
-        procedureLabel,
-        procedureKey,
-        context,
-        timestamp: Date.now(),
-      }),
-    });
-  } catch (err) {
-    console.error("Error enviando a Make (Sara):", err);
-  }
-}
-
-// ENVIAR DATOS A MAKE (MOHAMED)
-if (assistant === "mohamed") {
-  try {
-    await fetch(process.env.MAKE_WEBHOOK_MOHAMED!, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        message,
-        lang: detectedLanguage,
-        history,
-        procedureLabel,
-        procedureKey,
-        context,
-        timestamp: Date.now(),
-      }),
-    });
-  } catch (err) {
-    console.error("Error enviando a Make (Mohamed):", err);
-  }
-}
 
     if (!response.ok) {
       console.error("OPENAI ERROR:", JSON.stringify(data, null, 2));
@@ -573,28 +533,26 @@ if (assistant === "mohamed") {
       procedureLabel,
     });
 
-    if (assistant === "sara" || context === "buscar_citas") {
-      const leadReady = hasEnoughLeadDataForSara(extractedLead);
-
-      if (leadReady) {
-        await postToMakeWebhook(process.env.MAKE_WEBHOOK_SARA, {
-          source: "gestoriacitaia",
-          assistant: "sara",
-          session_id: sessionId || null,
-          user_id: userId || null,
-          lang: detectedLanguage,
-          procedure_key: procedureKey || null,
-          procedure_label: procedureLabel || extractedLead.tramite || null,
-          lead: extractedLead,
-          status: "ready_for_appointment_search",
-          last_user_message: message,
-          ai_reply: reply,
-          created_at: new Date().toISOString(),
-        });
-      }
-    }
-
-    if (assistant === "mohamed" || context !== "buscar_citas") {
+    if (isSara) {
+      await postToMakeWebhook(process.env.MAKE_WEBHOOK_SARA, {
+        source: "gestoriacitaia",
+        assistant: "sara",
+        session_id: sessionId || null,
+        user_id: userId || null,
+        lang: detectedLanguage,
+        procedure_key: procedureKey || null,
+        procedure_label: procedureLabel || extractedLead.tramite || null,
+        lead: extractedLead,
+        lead_ready_for_search: hasEnoughLeadDataForSara(extractedLead),
+        status: hasEnoughLeadDataForSara(extractedLead)
+          ? "ready_for_appointment_search"
+          : "collecting_customer_data",
+        last_user_message: message,
+        ai_reply: reply,
+        history,
+        created_at: new Date().toISOString(),
+      });
+    } else {
       await postToMakeWebhook(process.env.MAKE_WEBHOOK_MOHAMED, {
         source: "gestoriacitaia",
         assistant: "mohamed",
@@ -607,6 +565,7 @@ if (assistant === "mohamed") {
         lead: extractedLead,
         last_user_message: message,
         ai_reply: reply,
+        history,
         created_at: new Date().toISOString(),
       });
     }
@@ -614,11 +573,12 @@ if (assistant === "mohamed") {
     return res.status(200).json({
       reply,
       meta: {
-        assistant,
+        assistant: isSara ? "sara" : "mohamed",
         lang: detectedLanguage,
         extractedLead,
-        leadReadyForAutomation:
-          assistant === "sara" ? hasEnoughLeadDataForSara(extractedLead) : false,
+        leadReadyForAutomation: isSara
+          ? hasEnoughLeadDataForSara(extractedLead)
+          : false,
       },
     });
   } catch (error: any) {
