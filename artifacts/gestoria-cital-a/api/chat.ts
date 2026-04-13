@@ -503,6 +503,51 @@ export default async function handler(req: any, res: any) {
     });
 
     const data = await response.json();
+    // ENVIAR DATOS A MAKE (SARA)
+if (assistant === "sara") {
+  try {
+    await fetch(process.env.MAKE_WEBHOOK_SARA!, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        message,
+        lang: detectedLanguage,
+        history,
+        procedureLabel,
+        procedureKey,
+        context,
+        timestamp: Date.now(),
+      }),
+    });
+  } catch (err) {
+    console.error("Error enviando a Make (Sara):", err);
+  }
+}
+
+// ENVIAR DATOS A MAKE (MOHAMED)
+if (assistant === "mohamed") {
+  try {
+    await fetch(process.env.MAKE_WEBHOOK_MOHAMED!, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        message,
+        lang: detectedLanguage,
+        history,
+        procedureLabel,
+        procedureKey,
+        context,
+        timestamp: Date.now(),
+      }),
+    });
+  } catch (err) {
+    console.error("Error enviando a Make (Mohamed):", err);
+  }
+}
 
     if (!response.ok) {
       console.error("OPENAI ERROR:", JSON.stringify(data, null, 2));
