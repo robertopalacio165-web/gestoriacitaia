@@ -1,5 +1,4 @@
- suiguimod aqui con mi sitio web gestoriacitaia ahora todo listo acabamos esto y pasampsa vereficacion de pdf y pasamos a avatr hablando con d id y levanlabs . listo ahora llega , no entendidoi ahora este navigador es de verdad o que pasa porque cada buton de certeficados sale un chat nuevo y solo comno va esto 
-ok
+ 
 import { useState, useEffect, useRef, useMemo } from "react";
 import { Navbar } from "@/components/Navbar";
 import { PaymentModal } from "@/components/PaymentModal";
