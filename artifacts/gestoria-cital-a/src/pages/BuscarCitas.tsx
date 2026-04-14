@@ -192,19 +192,19 @@ function OfficialBrowserBox({
             </div>
 
             <div className="border border-gray-200 rounded overflow-hidden divide-y divide-gray-100 mb-5">
-              {tramites.map((item) => (
-                <div
-                  key={item.value}
-                  onClick={() => onSelectTramite(item.value)}
-                  className={px-3 py-2.5 text-sm cursor-pointer transition-colors ${
-                    selectedTramite === item.value
-                      ? "bg-yellow-300 font-semibold text-gray-900"
-                      : "text-gray-700 hover:bg-blue-50"
-                  }}
-                >
-                  {item.label}
-                </div>
-              ))}
+             {tramites.map((item) => (
+  <div
+    key={item.value}
+    onClick={() => onSelectTramite(item.value)}
+    className={`px-3 py-2.5 text-sm cursor-pointer transition-colors ${
+      selectedTramite === item.value
+        ? "bg-yellow-300 font-semibold text-gray-900"
+        : "text-gray-700 hover:bg-blue-50"
+    }`}
+  >
+    {item.label}
+  </div>
+))}
             </div>
 
             <AnimatePresence>
