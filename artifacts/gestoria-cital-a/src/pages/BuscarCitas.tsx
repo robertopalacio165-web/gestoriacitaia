@@ -1,4 +1,3 @@
- 
 import { useState, useEffect, useRef, useMemo } from "react";
 import { Navbar } from "@/components/Navbar";
 import { PaymentModal } from "@/components/PaymentModal";
@@ -89,6 +88,7 @@ function OfficialBrowserBox({
   selectedTramite,
   onAceptar,
   isPending,
+  lang,
 }: {
   avatarImage: string;
   title: string;
@@ -115,7 +115,15 @@ function OfficialBrowserBox({
   selectedTramite: string;
   onAceptar: () => void;
   isPending: boolean;
+  lang: string;
 }) {
+  const integratedPanelText =
+    lang === "darija"
+      ? "السيد الرسمية ما كتقبلش تتحل داخل iframe بسبب الحماية. سارة كتوجد ليك كلشي هنا وكتفتح ليك الموقع الرسمي فتبويب حقيقي باش تكمل."
+      : lang === "en"
+      ? "The official site cannot be loaded inside an iframe for security reasons. Sara prepares everything here and opens the official website in a real tab so you can continue."
+      : "La sede oficial no permite cargarse dentro de un iframe por seguridad. Sara te deja todo preparado aquí y abre la web oficial en una pestaña real para continuar.";
+
   return (
     <motion.div
       initial={{ opacity: 0, x: 20 }}
@@ -192,19 +200,19 @@ function OfficialBrowserBox({
             </div>
 
             <div className="border border-gray-200 rounded overflow-hidden divide-y divide-gray-100 mb-5">
-             {tramites.map((item) => (
-  <div
-    key={item.value}
-    onClick={() => onSelectTramite(item.value)}
-    className={`px-3 py-2.5 text-sm cursor-pointer transition-colors ${
-      selectedTramite === item.value
-        ? "bg-yellow-300 font-semibold text-gray-900"
-        : "text-gray-700 hover:bg-blue-50"
-    }`}
-  >
-    {item.label}
-  </div>
-))}
+              {tramites.map((item) => (
+                <div
+                  key={item.value}
+                  onClick={() => onSelectTramite(item.value)}
+                  className={`px-3 py-2.5 text-sm cursor-pointer transition-colors ${
+                    selectedTramite === item.value
+                      ? "bg-yellow-300 font-semibold text-gray-900"
+                      : "text-gray-700 hover:bg-blue-50"
+                  }`}
+                >
+                  {item.label}
+                </div>
+              ))}
             </div>
 
             <AnimatePresence>
@@ -258,9 +266,7 @@ function OfficialBrowserBox({
                 {title}
               </p>
               <p className="text-xs text-gray-700 leading-relaxed">
-                La sede oficial no permite cargarse dentro de un iframe por
-                seguridad. Sara te deja todo preparado aquí y abre la web
-                oficial en una pestaña real para continuar.
+                {integratedPanelText}
               </p>
 
               <div className="mt-3 flex flex-wrap gap-2">
@@ -911,11 +917,11 @@ export default function BuscarCitas() {
     if (lang === "darija") {
       return [
         {
-          text: `سلام، أنا سارة. اختار الإجراء ديالك وأنا نرشدك خطوة بخطوة. غادي نخدمو على «${selectedTramiteLabel}».`,
+          text: `سلام، أنا سارة. غادي نعاونك فـ «${selectedTramiteLabel}» خطوة بخطوة.`,
           highlight: selectedTramiteLabel,
         },
         {
-          text: "مزيان. عمرت البيانات ديالك أوتوماتيكياً. دابا نقدر نكملو البحث على الموعد.",
+          text: "مزيان. عمرنا البيانات الأساسية. دابا نقدر نكملو البحث على الموعد.",
           highlight: "البحث على الموعد",
         },
         {
@@ -928,11 +934,11 @@ export default function BuscarCitas() {
     if (lang === "en") {
       return [
         {
-          text: `Hi, I’m Sara. We are now working on “${selectedTramiteLabel}”.`,
+          text: `Hi, I’m Sara. I’ll help you with “${selectedTramiteLabel}” step by step.`,
           highlight: selectedTramiteLabel,
         },
         {
-          text: "Perfect. Your data is already filled in automatically. Now we can continue searching for the appointment.",
+          text: "Perfect. We already filled the basic data. Now we can continue searching for the appointment.",
           highlight: "searching for the appointment",
         },
         {
@@ -944,11 +950,11 @@ export default function BuscarCitas() {
 
     return [
       {
-        text: `Hola, soy Sara. Vamos a trabajar ahora el trámite «${selectedTramiteLabel}».`,
+        text: `Hola, soy Sara. Voy a ayudarte con «${selectedTramiteLabel}» paso a paso.`,
         highlight: selectedTramiteLabel,
       },
       {
-        text: "Perfecto. Tus datos ya están rellenados automáticamente. Ahora podemos continuar con la búsqueda de la cita.",
+        text: "Perfecto. Ya tenemos los datos básicos. Ahora podemos continuar con la búsqueda de la cita.",
         highlight: "búsqueda de la cita",
       },
       {
@@ -1111,7 +1117,7 @@ export default function BuscarCitas() {
           lang,
           procedureKey: selectedTramite,
           procedureLabel: selectedTramiteLabel,
-         sessionId: `sara-${profile?.id || "guest"}-${lang}`,
+          sessionId: `sara-${profile?.id || "guest"}-${lang}`,
           userId: profile?.id || "",
           history: historyToSend,
         }),
@@ -1294,7 +1300,7 @@ export default function BuscarCitas() {
               style={{ height: "280px" }}
             >
               <img
-               src={`${import.meta.env.BASE_URL}images/avatar-sara.png`}
+                src={`${import.meta.env.BASE_URL}images/avatar-sara.png`}
                 alt="Sara"
                 className="w-full h-full object-cover object-top"
               />
@@ -1319,7 +1325,7 @@ export default function BuscarCitas() {
                     <motion.div
                       key={i}
                       className="w-1 bg-primary rounded-full"
-                     animate={{ height: [`${h}px`, `${h * 2}px`, `${h}px`] }}
+                      animate={{ height: [`${h}px`, `${h * 2}px`, `${h}px`] }}
                       transition={{
                         duration: 0.5,
                         repeat: Infinity,
@@ -1333,11 +1339,11 @@ export default function BuscarCitas() {
               <div className="absolute bottom-3 left-0 right-0 flex items-center justify-center">
                 <button
                   onClick={() => setMuted(!muted)}
-                  className={w-10 h-10 rounded-full border flex items-center justify-center backdrop-blur-md transition-colors ${
+                  className={`w-10 h-10 rounded-full border flex items-center justify-center backdrop-blur-md transition-colors ${
                     muted
                       ? "bg-destructive/80 border-destructive"
                       : "bg-black/50 border-white/20 hover:bg-black/70"
-                  }}
+                  }`}
                   type="button"
                 >
                   {muted ? (
@@ -1360,11 +1366,11 @@ export default function BuscarCitas() {
 
             <button
               onClick={() => setShowChat(!showChat)}
-              className={flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-semibold border transition-all ${
+              className={`flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-semibold border transition-all ${
                 showChat
                   ? "bg-secondary/20 border-secondary/40 text-secondary"
                   : "glass-panel border-white/10 text-white/70 hover:text-white hover:border-white/20"
-              }}
+              }`}
               type="button"
             >
               <MessageSquare className="w-4 h-4" />
@@ -1383,25 +1389,25 @@ export default function BuscarCitas() {
                   <div className="flex-1 overflow-y-auto p-3 space-y-2">
                     {chatMessages.map((msg, i) => (
                       <div
-                        key={${msg.ts || i}-${i}}
-                        className={flex gap-2 ${
+                        key={`${msg.ts || i}-${i}`}
+                        className={`flex gap-2 ${
                           msg.from === "user" ? "justify-end" : "justify-start"
-                        }}
+                        }`}
                       >
                         {msg.from === "agent" && (
                           <img
-                            src={${import.meta.env.BASE_URL}images/avatar-sara.png}
+                            src={`${import.meta.env.BASE_URL}images/avatar-sara.png`}
                             className="w-6 h-6 rounded-full object-cover object-top shrink-0"
                             alt=""
                           />
                         )}
 
                         <div
-                          className={px-3 py-1.5 rounded-xl text-xs max-w-[85%] leading-relaxed ${
+                          className={`px-3 py-1.5 rounded-xl text-xs max-w-[85%] leading-relaxed ${
                             msg.from === "agent"
                               ? "bg-white/8 text-white/90 border border-white/10"
                               : "bg-primary text-primary-foreground"
-                          }}
+                          }`}
                         >
                           {msg.text}
                         </div>
@@ -1411,7 +1417,7 @@ export default function BuscarCitas() {
                     {sendingChat && (
                       <div className="flex gap-2 justify-start">
                         <img
-                          src={${import.meta.env.BASE_URL}images/avatar-sara.png}
+                          src={`${import.meta.env.BASE_URL}images/avatar-sara.png`}
                           className="w-6 h-6 rounded-full object-cover object-top shrink-0"
                           alt=""
                         />
@@ -1447,7 +1453,7 @@ export default function BuscarCitas() {
 
             <AnimatePresence mode="wait">
               <motion.div
-                key={${step}-${selectedTramite}}
+                key={`${step}-${selectedTramite}`}
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -8 }}
@@ -1456,7 +1462,7 @@ export default function BuscarCitas() {
               >
                 <div className="relative shrink-0">
                   <img
-                    src={${import.meta.env.BASE_URL}images/avatar-sara.png}
+                    src={`${import.meta.env.BASE_URL}images/avatar-sara.png`}
                     className="w-9 h-9 rounded-full object-cover object-top border border-primary/40"
                     alt="Sara"
                   />
@@ -1514,11 +1520,11 @@ export default function BuscarCitas() {
             <div className="lg:hidden glass-panel-heavy border border-white/10 rounded-2xl py-2.5 px-4 flex items-center justify-between">
               <button
                 onClick={() => setMuted(!muted)}
-                className={flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-colors ${
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-colors ${
                   muted
                     ? "bg-destructive/20 border-destructive/40 text-destructive"
                     : "bg-white/5 border-white/10 text-white/80"
-                }}
+                }`}
                 type="button"
               >
                 {muted ? (
@@ -1534,11 +1540,11 @@ export default function BuscarCitas() {
                   setShowDocs(true);
                   setShowForms(false);
                 }}
-                className={flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-colors ${
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-colors ${
                   showDocs
                     ? "bg-primary/20 border-primary/40 text-primary"
                     : "bg-white/5 border-white/10 text-white/80"
-                }}
+                }`}
                 type="button"
               >
                 <FileText className="w-4 h-4 text-primary" />
@@ -1550,11 +1556,11 @@ export default function BuscarCitas() {
                   setShowForms(true);
                   setShowDocs(false);
                 }}
-                className={flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-colors ${
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-colors ${
                   showForms
                     ? "bg-secondary/20 border-secondary/40 text-secondary"
                     : "bg-white/5 border-white/10 text-white/80"
-                }}
+                }`}
                 type="button"
               >
                 <Settings className="w-4 h-4 text-secondary" />
@@ -1564,8 +1570,14 @@ export default function BuscarCitas() {
           </motion.div>
 
           <OfficialBrowserBox
-            avatarImage={${import.meta.env.BASE_URL}images/avatar-sara.png}
-            title="Panel oficial integrado"
+            avatarImage={`${import.meta.env.BASE_URL}images/avatar-sara.png`}
+            title={
+              lang === "darija"
+                ? "لوحة رسمية مدمجة"
+                : lang === "en"
+                ? "Integrated official panel"
+                : "Panel oficial integrado"
+            }
             url={officialUrl}
             selectedTramiteLabel={selectedTramiteLabel}
             profileLoading={profileLoading}
@@ -1604,6 +1616,7 @@ export default function BuscarCitas() {
             selectedTramite={selectedTramite}
             onAceptar={handleAceptar}
             isPending={scheduleMutation.isPending}
+            lang={lang}
           />
         </div>
 
@@ -1611,11 +1624,11 @@ export default function BuscarCitas() {
           <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
             <button
               onClick={() => setMuted(!muted)}
-              className={flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold border transition-colors ${
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold border transition-colors ${
                 muted
                   ? "bg-destructive/20 border-destructive/40 text-destructive"
                   : "bg-white/5 border-white/10 text-white/80 hover:bg-white/10"
-              }}
+              }`}
               type="button"
             >
               {muted ? (
@@ -1632,11 +1645,11 @@ export default function BuscarCitas() {
                   setShowDocs(true);
                   setShowForms(false);
                 }}
-                className={flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold border transition-colors ${
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold border transition-colors ${
                   showDocs
                     ? "bg-primary/20 border-primary/40 text-primary"
                     : "bg-white/5 border-white/10 text-white/80 hover:bg-white/10"
-                }}
+                }`}
                 type="button"
               >
                 <FileText className="w-4 h-4 text-primary" />
@@ -1648,11 +1661,11 @@ export default function BuscarCitas() {
                   setShowForms(true);
                   setShowDocs(false);
                 }}
-                className={flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold border transition-colors ${
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold border transition-colors ${
                   showForms
                     ? "bg-secondary/20 border-secondary/40 text-secondary"
                     : "bg-white/5 border-white/10 text-white/80 hover:bg-white/10"
-                }}
+                }`}
                 type="button"
               >
                 <Settings className="w-4 h-4 text-secondary" />
@@ -1699,13 +1712,13 @@ export default function BuscarCitas() {
                   {docsForSelectedTramite.map((doc, i) => (
                     <div key={i} className="flex items-center gap-3">
                       <span
-                        className={w-5 h-5 rounded-full flex items-center justify-center shrink-0 text-xs font-bold ${
+                        className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 text-xs font-bold ${
                           doc.estado === "ok"
                             ? "bg-green-500/20 text-green-400"
                             : doc.estado === "warn"
                             ? "bg-yellow-500/20 text-yellow-400"
                             : "bg-red-500/20 text-red-400"
-                        }}
+                        }`}
                       >
                         {doc.estado === "ok"
                           ? "✓"
@@ -1719,13 +1732,13 @@ export default function BuscarCitas() {
                       </span>
 
                       <span
-                        className={ml-auto text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                        className={`ml-auto text-[10px] font-semibold px-2 py-0.5 rounded-full ${
                           doc.estado === "ok"
                             ? "bg-green-500/15 text-green-400"
                             : doc.estado === "warn"
                             ? "bg-yellow-500/15 text-yellow-400"
                             : "bg-red-500/15 text-red-400"
-                        }}
+                        }`}
                       >
                         {doc.estado === "ok"
                           ? t("buscar_doc_ready")
