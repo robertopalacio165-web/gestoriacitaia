@@ -13,6 +13,7 @@ import CookiesPage from "@/pages/Cookies";
 import CheckoutSuccess from "@/pages/CheckoutSuccess";
 import CheckoutCancel from "@/pages/CheckoutCancel";
 import AuthCallback from "@/pages/AuthCallback";
+import Confirmar from "@/pages/Confirmar";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -36,6 +37,7 @@ function Router() {
       <Route path="/cookies" component={CookiesPage} />
       <Route path="/checkout/success" component={CheckoutSuccess} />
       <Route path="/checkout/cancelado" component={CheckoutCancel} />
+      <Route path="/confirmar" component={Confirmar} />
       <Route component={NotFound} />
     </Switch>
   );
