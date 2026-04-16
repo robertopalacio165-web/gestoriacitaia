@@ -15,12 +15,21 @@ type ExtractedLead = {
   city?: string | null;
 };
 
-function detectUserLanguage(message: string): Lang {
+function normalizeLooseText(value: string): string {
+  return (value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+}
+
+function detectLanguageFromSingleText(message: string): Lang | null {
   const text = (message || "").trim();
   const lower = text.toLowerCase();
 
-  if (!lower) return "es";
+  if (!lower) return null;
 
+  // Árabe / darija con letras árabes
   if (/[\u0600-\u06FF]/.test(text)) {
     return "darija";
   }
@@ -67,6 +76,7 @@ function detectUserLanguage(message: string): Lang {
     /\bmaroc\b/,
     /\brdv\b/,
     /\bwatssap\b/,
+    /\bpapeles\b/,
   ];
 
   if (darijaPatterns.some((pattern) => pattern.test(lower))) {
@@ -90,6 +100,47 @@ function detectUserLanguage(message: string): Lang {
     return "en";
   }
 
+  const spanishPatterns = [
+    /\bhola\b/,
+    /\bquiero\b/,
+    /\bnecesito\b/,
+    /\bcita\b/,
+    /\brenovacion\b/,
+    /\brenovación\b/,
+    /\bdocumentos\b/,
+    /\bpasaporte\b/,
+    /\btramite\b/,
+    /\btrámite\b/,
+    /\bextranjeria\b/,
+    /\bextranjería\b/,
+    /\bresidencia\b/,
+    /\bregularizacion\b/,
+    /\bregularización\b/,
+    /\bnombre\b/,
+    /\bciudad\b/,
+    /\bwhatsapp\b/,
+  ];
+
+  if (spanishPatterns.some((pattern) => pattern.test(lower))) {
+    return "es";
+  }
+
+  return null;
+}
+
+function detectConversationLanguage(message: string, history: HistoryItem[]): Lang {
+  const current = detectLanguageFromSingleText(message);
+  if (current) return current;
+
+  const userHistory = [...history]
+    .reverse()
+    .filter((item) => item.from === "user");
+
+  for (const item of userHistory) {
+    const detected = detectLanguageFromSingleText(item.text);
+    if (detected) return detected;
+  }
+
   return "es";
 }
 
@@ -106,14 +157,6 @@ function sanitizeHistory(history: unknown): HistoryItem[] {
         (item as any).text.trim().length > 0
     )
     .slice(-14) as HistoryItem[];
-}
-
-function normalizeLooseText(value: string): string {
-  return (value || "")
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .trim();
 }
 
 function getFirstName(fullName?: string | null): string | null {
@@ -267,6 +310,7 @@ REGLA ESPECIAL DARIJA
 - Está prohibido responder en español.
 - Está prohibido responder en inglés.
 - Está prohibido escribir darija con letras latinas.
+- Si el cliente manda solo números, fechas, NIE, pasaporte o teléfono, debes mantener el idioma anterior de la conversación si era darija.
 - Aunque el cliente mezcle palabras en español, tu respuesta debe seguir siendo solo en darija marroquí escrita con letras árabes.
 `
       : lang === "en"
@@ -276,12 +320,14 @@ REGLA ESPECIAL INGLÉS
 - Debes responder SIEMPRE en inglés.
 - Está prohibido responder en español.
 - Está prohibido responder en árabe o darija.
+- Si el cliente manda solo números, fechas, NIE, pasaporte o teléfono, debes mantener el idioma anterior de la conversación si era inglés.
 `
       : `
 REGLA ESPECIAL ESPAÑOL
 - El cliente está hablando en español.
 - Debes responder SIEMPRE en español.
 - Está prohibido responder en árabe, darija o inglés.
+- Si el cliente manda solo números, fechas, NIE, pasaporte o teléfono, debes mantener el idioma anterior de la conversación si era español.
 `;
 
   const namingRule = firstName
@@ -290,7 +336,7 @@ NOMBRE DEL CLIENTE
 - El nombre detectado del cliente es: ${firstName}
 - Cuando sea natural, llámale por su nombre.
 - No repitas su nombre en cada frase.
-- Úsalo de forma cálida y humana, como un gestor real.
+- Úsalo de forma cálida y humana.
 `
     : "";
 
@@ -298,9 +344,9 @@ NOMBRE DEL CLIENTE
     ? `
 PREGUNTA REPETIDA
 - El cliente ha repetido una pregunta ya respondida.
-- Debes responder con calma y sin sonar borde.
+- Debes responder con calma y educación.
 - Puedes decir brevemente que eso ya se explicó.
-- Después rediriges con orden al siguiente dato o siguiente paso.
+- Después rediriges al siguiente dato o al siguiente paso.
 - No repitas una respuesta larga otra vez.
 `
     : "";
@@ -333,7 +379,7 @@ ESTILO OBLIGATORIO
 - Responde directamente a lo que el cliente acaba de decir
 - No repitas saludos si ya saludaste antes en la conversación
 - No reinicies la conversación
-- No hagas respuestas genéricas tipo "Entendido", "¿Tienes otra pregunta?" o similares
+- No hagas respuestas genéricas
 - Si el cliente da una información, la tomas y avanzas a la siguiente
 - Si no entiendes algo, pide una sola aclaración de forma natural
 - No repitas preguntas ya contestadas por el cliente
@@ -385,7 +431,6 @@ FLUJO OBLIGATORIO
 WHATSAPP
 - Si ya tienes o te dan el número, puedes decir de forma natural que por ese número se avisará por WhatsApp
 - No digas que el WhatsApp ya fue enviado si no se ha enviado de verdad
-- Puedes decir: "Te avisaremos por WhatsApp en ese número cuando aparezca la cita."
 
 REGLAS IMPORTANTES
 - Si el cliente solo saluda, saludas de forma humana y preguntas qué necesita
@@ -544,7 +589,6 @@ También ayudas con:
 WHATSAPP
 - Si el cliente da su número, puedes decir con naturalidad que se usará ese número para avisarle por WhatsApp
 - No digas que el WhatsApp ya fue enviado si no se ha enviado de verdad
-- Puedes decir que cuando el expediente quede preparado o cuando haya novedades, se le avisará por WhatsApp
 
 RELACIÓN CON SARA
 IMPORTANTE:
@@ -603,6 +647,7 @@ IDIOMA FINAL DE RESPUESTA OBLIGATORIO
 ${forcedOutputLanguage}
 
 RECUERDA
+- Si el cliente manda solo números o códigos, mantén el idioma correcto de la conversación.
 - No repitas preguntas ya contestadas.
 - Mantén orden real de gestor humano.
 - Si ya conoces el nombre del cliente, úsalo de forma natural.
@@ -854,7 +899,7 @@ export default async function handler(req: any, res: any) {
 
     const firstName = getFirstName(extractedLead.full_name || null);
     const repeatedQuestion = questionAlreadyAnswered(message, history);
-    const detectedLanguage = detectUserLanguage(message);
+    const detectedLanguage = detectConversationLanguage(message, history);
     const isSara = assistant === "sara" || context === "buscar_citas";
 
     console.log("CHAT API ASSISTANT:", assistant);
