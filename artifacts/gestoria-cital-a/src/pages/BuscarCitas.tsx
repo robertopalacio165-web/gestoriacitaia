@@ -647,7 +647,8 @@ export default function BuscarCitas() {
           ],
         } as Record<string, FormItem[]>,
         initialChat:
-          "السلام، أنا سارة. إلا بغيتي موعد، عمر المعطيات ديالك واختار نوع الموعد فالفورمولير، ومن بعد نكمل معاك خطوة بخطوة فالحين.",
+         initialChat:
+  "السلام، أنا سارة. باش تشد موعد، عمّر ليا المعطيات ديالك فـ 5 ثواني واختار نوع الموعد، وغادي نكملو إن شاء الله الإجراءات خطوة بخطوة.",
         online: "متصلة الآن",
         agentRole: "مستشارة المواعيد",
         procedureLabel: "الإجراء",
@@ -810,7 +811,8 @@ export default function BuscarCitas() {
           ],
         } as Record<string, FormItem[]>,
         initialChat:
-          "Hello, I’m Sara. If you need an appointment, fill in your details and choose the appointment type in the form. After that, we will continue with you step by step in real time.",
+          initialChat:
+  "Hello, I’m Sara. To get an appointment, fill in your details in 5 seconds and choose the appointment type. After that, we will continue step by step.",
         online: "Online",
         agentRole: "Appointments Advisor",
         procedureLabel: "PROCEDURE",
@@ -976,7 +978,8 @@ export default function BuscarCitas() {
         ],
       } as Record<string, FormItem[]>,
       initialChat:
-        "Hola, soy Sara. Si necesitas una cita, rellena tus datos y elige el tipo de cita en el formulario. Después continuamos contigo paso a paso en tiempo real.",
+        initialChat:
+  "Hola, soy Sara. Para coger una cita, relléname tus datos en 5 segundos y elige el tipo de cita. Después seguimos contigo paso a paso.",
       online: "En línea",
       agentRole: "Asesora de Citas",
       procedureLabel: "TRÁMITE",
