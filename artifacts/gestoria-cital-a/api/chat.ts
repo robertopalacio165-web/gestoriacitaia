@@ -90,11 +90,11 @@ export default async function handler(
       ok: true,
       reply,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("api/chat error:", error);
 
     return res.status(500).json({
-      error: "Internal server error",
+      error: error?.message || "Internal server error",
     });
   }
 }
