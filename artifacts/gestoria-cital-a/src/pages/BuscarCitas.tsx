@@ -62,17 +62,19 @@ type AppointmentResult = {
   pdf_url?: string | null;
   confirmation_pdf_url?: string | null;
 };
-
+type ClientFormData = {
+  fullName: string;
+  phone: string;
+  email: string;
+  nie: string;
+  city: string;
+};
 function OfficialBrowserBox({
   avatarImage,
   title,
   url,
   selectedTramiteLabel,
   profileLoading,
-  profileNie,
-  profileName,
-  profilePhone,
-  profileEmail,
   ui,
   step,
   confirmed,
@@ -91,16 +93,16 @@ function OfficialBrowserBox({
   isPending,
   lang,
   cameFromConfirmationLink,
+  formData,
+  onFormChange,
+  onFormSubmit,
+  formReady,
 }: {
   avatarImage: string;
   title: string;
   url: string;
   selectedTramiteLabel: string;
   profileLoading: boolean;
-  profileNie: string;
-  profileName: string;
-  profilePhone: string;
-  profileEmail: string;
   ui: any;
   step: number;
   confirmed: boolean;
@@ -119,20 +121,45 @@ function OfficialBrowserBox({
   isPending: boolean;
   lang: string;
   cameFromConfirmationLink: boolean;
+  formData: ClientFormData;
+  onFormChange: (field: keyof ClientFormData, value: string) => void;
+  onFormSubmit: () => void;
+  formReady: boolean;
 }) {
-  const integratedPanelText =
+  const formIntro =
     lang === "darija"
-      ? "السيد الرسمية ما كتقبلش تتحل داخل iframe بسبب الحماية. سارة كتوجد ليك كلشي هنا وكتفتح ليك الموقع الرسمي فتبويب حقيقي باش تكمل."
+      ? "عمر المعطيات الأساسية واختار نوع الموعد. من بعد سارة غادي تكمل معاك البحث والتأكيد."
       : lang === "en"
-      ? "The official site cannot be loaded inside an iframe for security reasons. Sara prepares everything here and opens the official website in a real tab so you can continue."
-      : "La sede oficial no permite cargarse dentro de un iframe por seguridad. Sara te deja todo preparado aquí y abre la web oficial en una pestaña real para continuar.";
+      ? "Fill in the basic details and choose the appointment type. Then Sara will continue with the search and confirmation."
+      : "Rellena los datos básicos y elige el tipo de cita. Después Sara continuará con la búsqueda y la confirmación.";
 
-  const confirmReadyText =
+  const confirmationIntro =
     lang === "darija"
       ? "جاك رابط التأكيد. سارة وجدات الملف باش تكمل غير التأكيد النهائي."
       : lang === "en"
-      ? "You arrived from the confirmation link. Sara has prepared the case so you only need the final confirmation."
+      ? "You arrived from the confirmation link. Sara has prepared the file so only the final confirmation is left."
       : "Has llegado desde el enlace de confirmación. Sara ha dejado el expediente preparado para que solo falte la confirmación final.";
+
+  const savedText =
+    lang === "darija"
+      ? "مزيان. المعطيات ديالك تسجلات. دابا سارة تقدر تكمل البحث على الموعد."
+      : lang === "en"
+      ? "Perfect. Your details have been saved. Sara can now continue searching for the appointment."
+      : "Perfecto. Tus datos han quedado preparados. Ahora Sara puede continuar con la búsqueda de la cita.";
+
+  const searchButtonText =
+    lang === "darija"
+      ? "ابدأ البحث عن الموعد"
+      : lang === "en"
+      ? "Start appointment search"
+      : "Empezar búsqueda de cita";
+
+  const saveButtonText =
+    lang === "darija"
+      ? "حفظ البيانات والمتابعة مع سارة"
+      : lang === "en"
+      ? "Save details and continue with Sara"
+      : "Guardar datos y continuar con Sara";
 
   return (
     <motion.div
@@ -190,129 +217,142 @@ function OfficialBrowserBox({
               </div>
             </div>
 
-            {cameFromConfirmationLink && (
-              <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 mb-4">
-                <p className="text-sm font-semibold text-emerald-800">
-                  {confirmReadyText}
-                </p>
-              </div>
-            )}
-
-            <div className="mb-4">
-              <p className="text-xs font-bold text-gray-700 uppercase tracking-wide mb-2">
-                {ui.procedureLabel}
-              </p>
-
-              <select
-                className="w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                value={selectedTramite}
-                onChange={(e) => onSelectTramite(e.target.value)}
-              >
-                <option value="">{ui.procedurePlaceholder}</option>
-                {tramites.map((item) => (
-                  <option key={item.value} value={item.value}>
-                    {item.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="border border-gray-200 rounded overflow-hidden divide-y divide-gray-100 mb-5">
-              {tramites.map((item) => (
-                <div
-                  key={item.value}
-                  onClick={() => onSelectTramite(item.value)}
-                  className={`px-3 py-2.5 text-sm cursor-pointer transition-colors ${
-                    selectedTramite === item.value
-                      ? "bg-yellow-300 font-semibold text-gray-900"
-                      : "text-gray-700 hover:bg-blue-50"
-                  }`}
-                >
-                  {item.label}
-                </div>
-              ))}
-            </div>
-
-            <AnimatePresence>
-              {step >= 1 && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  className="mb-5 space-y-3"
-                >
-                  <p className="text-xs font-bold text-gray-700 uppercase tracking-wide">
-                    {ui.personalData}
-                  </p>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    <input
-                      className="border border-gray-300 rounded px-3 py-2 text-sm text-gray-500 bg-gray-50"
-                      value={profileNie}
-                      readOnly
-                      placeholder="NIE"
-                    />
-                    <input
-                      className="border border-gray-300 rounded px-3 py-2 text-sm text-gray-500 bg-gray-50"
-                      value={profileName}
-                      readOnly
-                      placeholder={ui.fullName}
-                    />
-                    <input
-                      className="border border-gray-300 rounded px-3 py-2 text-sm text-gray-500 bg-gray-50"
-                      value={profilePhone}
-                      readOnly
-                      placeholder={ui.phone}
-                    />
-                    <input
-                      className="border border-gray-300 rounded px-3 py-2 text-sm text-gray-500 bg-gray-50"
-                      value={profileEmail}
-                      readOnly
-                      placeholder="Email"
-                    />
-                  </div>
-
-                  <p className="text-[10px] text-gray-400 flex items-center gap-1">
-                    <Shield className="w-3 h-3 text-green-500" />
-                    {profileLoading ? ui.loadingUserData : ui.aiFilledData}
-                  </p>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
             <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 mb-4">
-              <p className="text-sm font-semibold text-[#003366] mb-2">
-                {title}
-              </p>
+              <p className="text-sm font-semibold text-[#003366] mb-2">{title}</p>
               <p className="text-xs text-gray-700 leading-relaxed">
-                {integratedPanelText}
+                {cameFromConfirmationLink ? confirmationIntro : formIntro}
               </p>
+            </div>
 
-              <div className="mt-3 flex flex-wrap gap-2">
+            <div className="rounded-2xl border border-gray-200 bg-white p-4 sm:p-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">
+                    Nombre completo
+                  </label>
+                  <input
+                    className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-primary/40"
+                    value={formData.fullName}
+                    onChange={(e) => onFormChange("fullName", e.target.value)}
+                    placeholder="Ejemplo: Mourad Mouna"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">
+                    Teléfono
+                  </label>
+                  <input
+                    className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-primary/40"
+                    value={formData.phone}
+                    onChange={(e) => onFormChange("phone", e.target.value)}
+                    placeholder="+34644403748"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">
+                    Email
+                  </label>
+                  <input
+                    className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-primary/40"
+                    value={formData.email}
+                    onChange={(e) => onFormChange("email", e.target.value)}
+                    placeholder="correo@ejemplo.com"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">
+                    NIE / Pasaporte
+                  </label>
+                  <input
+                    className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-primary/40"
+                    value={formData.nie}
+                    onChange={(e) => onFormChange("nie", e.target.value)}
+                    placeholder="X1234567A"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">
+                    Ciudad
+                  </label>
+                  <input
+                    className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-primary/40"
+                    value={formData.city}
+                    onChange={(e) => onFormChange("city", e.target.value)}
+                    placeholder="Madrid"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">
+                    Tipo de cita
+                  </label>
+                  <select
+                    className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-primary/40"
+                    value={selectedTramite}
+                    onChange={(e) => onSelectTramite(e.target.value)}
+                  >
+                    <option value="">{ui.procedurePlaceholder}</option>
+                    {tramites.map((item) => (
+                      <option key={item.value} value={item.value}>
+                        {item.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="mt-4 flex flex-col sm:flex-row gap-3">
+                <button
+                  type="button"
+                  onClick={onFormSubmit}
+                  className="inline-flex items-center justify-center rounded-xl bg-[#003366] text-white px-5 py-3 text-sm font-bold hover:bg-[#002244] transition-colors"
+                >
+                  {saveButtonText}
+                </button>
+
                 <button
                   type="button"
                   onClick={onOpenOfficial}
-                  className="inline-flex items-center gap-2 bg-[#003366] text-white rounded-xl px-4 py-2 text-sm font-bold hover:bg-[#002244] transition-colors"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-300 bg-white px-5 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
                 >
                   <ExternalLink className="w-4 h-4" />
                   {ui.openOfficialSite}
                 </button>
-
-                <div className="inline-flex items-center rounded-xl border border-gray-300 px-3 py-2 text-xs text-gray-600 bg-white">
-                  {selectedTramiteLabel}
-                </div>
               </div>
-            </div>
 
-            <div className="flex justify-end">
-              <button
-                onClick={onAceptar}
-                disabled={isPending || !selectedTramite}
-                className="bg-[#003366] text-white text-sm font-bold px-6 py-2.5 rounded hover:bg-[#002244] transition-colors disabled:opacity-50 flex items-center gap-2"
-                type="button"
-              >
-                {isPending && <RefreshCw className="w-4 h-4 animate-spin" />}
-                {ui.accept}
-              </button>
+              {profileLoading && (
+                <p className="mt-3 text-[11px] text-gray-400">
+                  {ui.loadingUserData}
+                </p>
+              )}
+
+              {formReady && (
+                <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4">
+                  <p className="text-sm font-semibold text-emerald-800">
+                    {savedText}
+                  </p>
+
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <div className="inline-flex items-center rounded-xl border border-emerald-300 bg-white px-3 py-2 text-xs text-gray-700">
+                      {selectedTramiteLabel}
+                    </div>
+
+                    <button
+                      onClick={onAceptar}
+                      disabled={isPending || !selectedTramite}
+                      className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 text-white text-sm font-bold px-5 py-2.5 hover:bg-emerald-700 transition-colors disabled:opacity-50"
+                      type="button"
+                    >
+                      {isPending && <RefreshCw className="w-4 h-4 animate-spin" />}
+                      {searchButtonText}
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </>
         ) : (
@@ -399,6 +439,15 @@ function OfficialBrowserBox({
 
 export default function BuscarCitas() {
   const [location] = useLocation();
+    const [formData, setFormData] = useState<ClientFormData>({
+    fullName: "",
+    phone: "",
+    email: "",
+    nie: "",
+    city: "",
+  });
+
+  const [formReady, setFormReady] = useState(false);
   const [selectedTramite, setSelectedTramite] = useState("tie");
   const [step, setStep] = useState(0);
   const [muted, setMuted] = useState(false);
@@ -1039,7 +1088,100 @@ export default function BuscarCitas() {
 
     loadProfile();
   }, []);
+  useEffect(() => {
+    setFormData((prev) => ({
+      ...prev,
+      fullName: profile?.full_name?.trim() || prev.fullName,
+      phone: profile?.phone?.trim() || prev.phone,
+      email: profile?.email?.trim() || prev.email,
+      nie: profile?.nie?.trim() || prev.nie,
+    }));
+  }, [profile?.full_name, profile?.phone, profile?.email, profile?.nie]);
 
+  useEffect(() => {
+    if (!urlParams.appointmentId && !urlParams.token) return;
+    setFormReady(true);
+  }, [urlParams.appointmentId, urlParams.token]);
+
+  const handleFormChange = (field: keyof ClientFormData, value: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
+  const handleFormSubmit = () => {
+    if (!formData.fullName.trim() || !formData.phone.trim() || !formData.city.trim()) {
+      toast({
+        title: lang === "en" ? "Missing data" : lang === "darija" ? "كاينين بيانات ناقصين" : "Faltan datos",
+        description:
+          lang === "en"
+            ? "Please fill in name, phone and city before continuing."
+            : lang === "darija"
+            ? "عمر الاسم والهاتف والمدينة قبل ما تكمل."
+            : "Rellena nombre, teléfono y ciudad antes de continuar.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!selectedTramite) {
+      toast({
+        title: lang === "en" ? "Select procedure" : lang === "darija" ? "اختار الإجراء" : "Selecciona trámite",
+        description:
+          lang === "en"
+            ? "Choose the appointment type before continuing."
+            : lang === "darija"
+            ? "اختار نوع الموعد قبل ما تكمل."
+            : "Elige el tipo de cita antes de continuar.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setFormReady(true);
+    setShowChat(true);
+    setStep(1);
+
+    setChatMessages((prev) => {
+      const alreadyExists = prev.some((msg) =>
+        msg.text.includes("Tus datos ya han sido preparados") ||
+        msg.text.includes("Your details have been prepared") ||
+        msg.text.includes("المعطيات ديالك وجدات")
+      );
+
+      if (alreadyExists) return prev;
+
+      return [
+        ...prev,
+        {
+          from: "agent",
+          text:
+            lang === "darija"
+              ? "ممتاز. المعطيات ديالك وجدات واختاريتي نوع الموعد. دابا سارة غادي تكمل البحث وتعلمك ملي تلقى الموعد."
+              : lang === "en"
+              ? "Perfect. Your details are ready and you selected the appointment type. Sara will now continue the search and notify you when an appointment appears."
+              : "Perfecto. Tus datos ya han sido preparados y has elegido el tipo de cita. Sara continuará ahora con la búsqueda y te avisará en cuanto aparezca una cita.",
+          ts: Date.now(),
+        },
+      ];
+    });
+
+    toast({
+      title:
+        lang === "en"
+          ? "Data saved"
+          : lang === "darija"
+          ? "تم حفظ البيانات"
+          : "Datos guardados",
+      description:
+        lang === "en"
+          ? "Sara can now continue with the appointment search."
+          : lang === "darija"
+          ? "سارة دابا تقدر تكمل البحث على الموعد."
+          : "Sara ya puede continuar con la búsqueda de la cita.",
+    });
+  };
   useEffect(() => {
     if (!urlParams.appointmentId && !urlParams.token) return;
 
@@ -1697,6 +1839,10 @@ export default function BuscarCitas() {
             isPending={scheduleMutation.isPending}
             lang={lang}
             cameFromConfirmationLink={cameFromConfirmationLink}
+             formData={formData}
+            onFormChange={handleFormChange}
+            onFormSubmit={handleFormSubmit}
+            formReady={formReady}
           />
         </div>
 
