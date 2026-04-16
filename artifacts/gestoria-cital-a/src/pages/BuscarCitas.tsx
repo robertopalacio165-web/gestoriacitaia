@@ -810,7 +810,6 @@ export default function BuscarCitas() {
           ],
         } as Record<string, FormItem[]>,
         initialChat:
-          initialChat:
   "Hello, I’m Sara. To get an appointment, fill in your details in 5 seconds and choose the appointment type. After that, we will continue step by step.",
         online: "Online",
         agentRole: "Appointments Advisor",
