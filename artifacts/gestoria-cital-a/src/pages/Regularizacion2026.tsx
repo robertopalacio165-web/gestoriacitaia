@@ -122,7 +122,7 @@ export default function Regularizacion2026() {
     if (safeLang === "darija") {
       return {
         initialChat:
-          "وعليكم السلام، مرحبا بيك. أنا محمد، وغادي نعاونك فـ ملف ديالك خطوة بخطوة.",
+          "السلام، مرحبا بيك فـ GestoriaCitaIA. إلا بغيتي نوجدولك الملف، ونراجعولك وثائق 5 شهور والبروفات، ونعمرو ليك الفورموليرات اللي غادي تحتاج، أول حاجة عمر لينا هاد المعطيات ومن بعد غادي نكملو معاك خطوة بخطوة إن شاء الله.",
         online: "متصل الآن",
         role: "مختص فالهجرة",
         paymentMessage:
@@ -131,8 +131,8 @@ export default function Regularizacion2026() {
           "باش نكملو معاك بشكل كامل، خاصك تفعّل الخدمة.",
         planActivated: "تفعلات الخطة",
         planContinue: "مزيان. نكملو فالملف ديالك.",
-        openChat: "فتح الشات",
-        closeChat: "سد الشات",
+        openChat: "سد الشات",
+        closeChat: "فتح الشات",
         writeQuestion: "كتب سؤالك...",
         uploadGeneral: "رفع الوثائق",
         uploadGeneralDesc:
@@ -184,7 +184,7 @@ export default function Regularizacion2026() {
     if (safeLang === "en") {
       return {
         initialChat:
-          "Hello, I’m Mohamed. I’ll help you with your case step by step.",
+          "Hello, welcome to GestoriaCitaIA. If you want us to prepare your file, review your 5-month proof documents, and fill in the forms you may need, first complete these details and then we will continue with you step by step.",
         online: "Online",
         role: "Immigration Specialist",
         paymentMessage:
@@ -193,8 +193,8 @@ export default function Regularizacion2026() {
           "To continue fully with your case, activate the service.",
         planActivated: "Plan activated",
         planContinue: "Perfect. Let’s continue with your case.",
-        openChat: "Open chat",
-        closeChat: "Close chat",
+        openChat: "Close chat",
+        closeChat: "Open chat",
         writeQuestion: "Type your question...",
         uploadGeneral: "Upload documents",
         uploadGeneralDesc:
@@ -217,7 +217,8 @@ export default function Regularizacion2026() {
         mohamedFinal:
           "Perfect. We have reviewed your documents and prepared your case. If you want to continue with the appointment, Sara will help you.",
         goSara: "Go to Sara",
-        goSaraDesc: "If you want to continue with the appointment, Sara will help you.",
+        goSaraDesc:
+          "If you want to continue with the appointment, Sara will help you.",
         formTitle: "Integrated official panel",
         formDesc:
           "Fill in the basic details so Mohamed can start checking the 5 months and your documents.",
@@ -245,7 +246,7 @@ export default function Regularizacion2026() {
 
     return {
       initialChat:
-        "Hola, soy Mohamed. Voy a ayudarte con tu trámite paso a paso.",
+        "Hola, bienvenido a GestoriaCitaIA. Si quieres que te preparemos el expediente, revisemos tus pruebas de 5 meses y te rellenemos los formularios que vas a necesitar, primero rellena estos datos y después seguimos contigo paso a paso.",
       online: "En línea",
       role: "Especialista en Extranjería",
       paymentMessage:
@@ -254,8 +255,8 @@ export default function Regularizacion2026() {
         "Para seguir contigo de forma completa, activa el servicio.",
       planActivated: "Plan activado",
       planContinue: "Perfecto. Continuamos con tu trámite.",
-      openChat: "Abrir chat",
-      closeChat: "Cerrar chat",
+      openChat: "Cerrar chat",
+      closeChat: "Abrir chat",
       writeQuestion: "Escribe tu pregunta...",
       uploadGeneral: "Subir documentos",
       uploadGeneralDesc:
@@ -888,7 +889,7 @@ export default function Regularizacion2026() {
               type="button"
             >
               <MessageSquare className="w-4 h-4" />
-              {showChat ? ui.closeChat : ui.openChat}
+              {showChat ? ui.openChat : ui.closeChat}
             </button>
 
             <AnimatePresence>
@@ -1005,7 +1006,9 @@ export default function Regularizacion2026() {
                     <span className="text-blue-700 text-sm">✓</span>
                   </div>
                   <div>
-                    <p className="text-sm font-bold text-slate-800">{ui.formTitle}</p>
+                    <p className="text-sm font-bold text-slate-800">
+                      {ui.formTitle}
+                    </p>
                     <p className="text-[11px] text-slate-500">{ui.formDesc}</p>
                   </div>
                 </div>
