@@ -44,6 +44,19 @@ type StoredDocItem = {
   note?: string;
 };
 
+type LeadFormState = {
+  nombre: string;
+  telefono: string;
+  email: string;
+  niePasaporte: string;
+  ciudad: string;
+  nacionalidad: string;
+  fechaLlegada: string;
+  cumple5Meses: string;
+  asilo: string;
+  penales: string;
+};
+
 function buildInitialDocs(procedureKey: string): StoredDocItem[] {
   const procedure = getProcedureByKey(procedureKey) || EXTRANJERIA_PROCEDURES[0];
 
@@ -80,6 +93,19 @@ export default function Regularizacion2026() {
   const [generalUploading, setGeneralUploading] = useState(false);
   const [completionMessageSent, setCompletionMessageSent] = useState(false);
 
+  const [leadForm, setLeadForm] = useState<LeadFormState>({
+    nombre: "",
+    telefono: "",
+    email: "",
+    niePasaporte: "",
+    ciudad: "",
+    nacionalidad: "",
+    fechaLlegada: "",
+    cumple5Meses: "",
+    asilo: "",
+    penales: "",
+  });
+
   const { t, lang } = useLang();
   const { toast } = useToast();
   const chatEndRef = useRef<HTMLDivElement>(null);
@@ -90,7 +116,6 @@ export default function Regularizacion2026() {
     | "en";
 
   const currentProcedure = getProcedureByKey(selectedSituacion) || null;
-
   if (!currentProcedure) return null;
 
   const ui = useMemo(() => {
@@ -116,7 +141,6 @@ export default function Regularizacion2026() {
         mute: "كتم",
         activePlanLabel: "الخطة",
         active: "نشطة",
-        situationTitle: "اختر المسطرة",
         uploading: "كيترفع...",
         uploadSuccessTitle: "تقبلات الوثيقة",
         uploadSuccessDesc: "راجعنا الوثيقة وربطناها مع الملف.",
@@ -129,9 +153,31 @@ export default function Regularizacion2026() {
         mohamedDocUnknown: (fileName: string) =>
           `توصلت بــ ${fileName}، ولكن ما قدرناش نربطو أوتوماتيكياً مع وثيقة معينة. زيد رفع الوثائق الباقية وأنا نكمل المراجعة.`,
         mohamedFinal:
-          "مزيان. راجعنا الوثائق ديالك ووجدنا الملف ديالك، وحتى وثيقة الهشاشة، باش يكون واجد للتقديم. إلا بغيتي دابا نكملو بالموعد، تقدر تدخل لهاد الرابط وسارة غادي تعاونك.",
+          "مزيان. راجعنا الوثائق ديالك ووجدنا الملف ديالك. إلى بغيتي دابا نكملو بالموعد، تقدر تدخل لسارة وغادي تعاونك.",
         goSara: "المرور إلى سارة",
         goSaraDesc: "إلى بغيتي تكمل بالموعد، سارة غادي تعاونك.",
+        formTitle: "لوحة رسمية مدمجة",
+        formDesc:
+          "عمر المعطيات الأساسية باش محمد يبدا معاك التحقق من 5 شهور والوثائق.",
+        saveLeadButton: "حفظ المعطيات والمتابعة مع محمد",
+        savedLeadReply:
+          "مزيان. خديت المعطيات ديالك. دابا صيفط ليا الوثائق ديالك ونبدا نراجعهم خطوة بخطوة.",
+        labels: {
+          nombre: "الاسم الكامل",
+          telefono: "الهاتف",
+          email: "الإيميل",
+          niePasaporte: "NIE / الباسبور",
+          ciudad: "المدينة",
+          nacionalidad: "الجنسية",
+          fechaLlegada: "تاريخ الدخول لإسبانيا",
+          cumple5Meses: "واش عندك 5 شهور متواصلة؟",
+          asilo: "واش عندك طلب لجوء؟",
+          penales: "سوابق عدلية",
+          select: "اختر",
+          yes: "نعم",
+          no: "لا",
+          dontKnow: "ما عرفت",
+        },
       };
     }
 
@@ -157,7 +203,6 @@ export default function Regularizacion2026() {
         mute: "Mute",
         activePlanLabel: "Plan",
         active: "active",
-        situationTitle: "Select procedure",
         uploading: "Uploading...",
         uploadSuccessTitle: "Document received",
         uploadSuccessDesc: "The document was reviewed and linked to the case.",
@@ -170,9 +215,31 @@ export default function Regularizacion2026() {
         mohamedDocUnknown: (fileName: string) =>
           `I received ${fileName}, but I could not match it automatically to a required document yet.`,
         mohamedFinal:
-          "Perfect. We have reviewed your documents and prepared your case, including the vulnerability document. If you want to continue with the appointment, enter this link and Sara will help you.",
+          "Perfect. We have reviewed your documents and prepared your case. If you want to continue with the appointment, Sara will help you.",
         goSara: "Go to Sara",
         goSaraDesc: "If you want to continue with the appointment, Sara will help you.",
+        formTitle: "Integrated official panel",
+        formDesc:
+          "Fill in the basic details so Mohamed can start checking the 5 months and your documents.",
+        saveLeadButton: "Save details and continue with Mohamed",
+        savedLeadReply:
+          "Perfect. I already have your details. Now send me your documents and I will review them step by step.",
+        labels: {
+          nombre: "Full name",
+          telefono: "Phone",
+          email: "Email",
+          niePasaporte: "NIE / Passport",
+          ciudad: "City",
+          nacionalidad: "Nationality",
+          fechaLlegada: "Arrival date in Spain",
+          cumple5Meses: "Do you have 5 continuous months?",
+          asilo: "Do you have an asylum application?",
+          penales: "Criminal record",
+          select: "Select",
+          yes: "Yes",
+          no: "No",
+          dontKnow: "I don't know",
+        },
       };
     }
 
@@ -197,7 +264,6 @@ export default function Regularizacion2026() {
       mute: "Mute",
       activePlanLabel: "Plan",
       active: "activo",
-      situationTitle: "Selecciona el trámite",
       uploading: "Subiendo...",
       uploadSuccessTitle: "Documento recibido",
       uploadSuccessDesc: "El documento se ha revisado y vinculado al expediente.",
@@ -210,9 +276,31 @@ export default function Regularizacion2026() {
       mohamedDocUnknown: (fileName: string) =>
         `He recibido ${fileName}, pero no he podido relacionarlo automáticamente con un documento concreto del expediente.`,
       mohamedFinal:
-        "Perfecto. Ya hemos revisado tu documentación y hemos dejado preparado tu expediente, incluido el documento de vulnerabilidad. Si ahora quieres continuar con la cita, entra en este enlace y Sara te ayudará.",
+        "Perfecto. Ya hemos revisado tu documentación y hemos dejado preparado tu expediente. Si ahora quieres continuar con la cita, Sara te ayudará.",
       goSara: "Ir con Sara",
       goSaraDesc: "Si quieres seguir con la cita, Sara te ayuda.",
+      formTitle: "Panel oficial integrado",
+      formDesc:
+        "Rellena los datos básicos para que Mohamed empiece a comprobar los 5 meses y tus documentos.",
+      saveLeadButton: "Guardar datos y continuar con Mohamed",
+      savedLeadReply:
+        "Perfecto. Ya tengo tus datos. Ahora súbeme tus documentos y empezaré a revisarlos paso a paso.",
+      labels: {
+        nombre: "Nombre completo",
+        telefono: "Teléfono",
+        email: "Email",
+        niePasaporte: "NIE / Pasaporte",
+        ciudad: "Ciudad",
+        nacionalidad: "Nacionalidad",
+        fechaLlegada: "Fecha llegada a España",
+        cumple5Meses: "¿Cumples 5 meses continuos?",
+        asilo: "¿Tienes solicitud de asilo?",
+        penales: "Antecedentes penales",
+        select: "Selecciona",
+        yes: "Sí",
+        no: "No",
+        dontKnow: "No sé",
+      },
     };
   }, [safeLang]);
 
@@ -310,14 +398,14 @@ export default function Regularizacion2026() {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chatMessages, sendingChat, generalUploading]);
 
+  const docsOk = docs.filter((d) => d.estado === "ok").length;
+  const docsTotal = docs.length;
+  const allReady = docsOk >= Math.max(1, docsTotal - 1);
+
   const SITUACIONES: SituationItem[] = EXTRANJERIA_PROCEDURES.map((p) => ({
     value: p.key,
     label: p.name,
   }));
-
-  const docsOk = docs.filter((d) => d.estado === "ok").length;
-  const docsTotal = docs.length;
-  const allReady = docsOk >= Math.max(1, docsTotal - 1);
 
   const handleSelectPlan = (plan: string) => {
     setPlanActivo(plan);
@@ -326,6 +414,41 @@ export default function Regularizacion2026() {
     toast({
       title: ui.planActivated,
       description: ui.planContinue,
+    });
+  };
+
+  const updateLeadForm = (field: keyof LeadFormState, value: string) => {
+    setLeadForm((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
+  const handleSaveLeadForm = () => {
+    const message = ui.savedLeadReply;
+
+    setChatMessages((prev) => [
+      ...prev,
+      {
+        from: "agent",
+        text: message,
+        ts: Date.now(),
+      },
+    ]);
+
+    toast({
+      title:
+        safeLang === "darija"
+          ? "تحفظات المعطيات"
+          : safeLang === "en"
+          ? "Details saved"
+          : "Datos guardados",
+      description:
+        safeLang === "darija"
+          ? "محمد قدر يبدا يراجع معاك الوثائق."
+          : safeLang === "en"
+          ? "Mohamed can now start reviewing your documents."
+          : "Mohamed ya puede empezar a revisar tus documentos.",
     });
   };
 
@@ -572,6 +695,7 @@ export default function Regularizacion2026() {
           procedureLabel: currentProcedure.name,
           lang: safeLang,
           history: historyToSend,
+          leadForm,
         }),
       });
 
@@ -874,14 +998,112 @@ export default function Regularizacion2026() {
           </div>
 
           <div className="flex flex-col gap-4">
-            <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm p-5">
-              <p className="text-sm text-white font-semibold mb-2">
-                {currentProcedure.name}
-              </p>
+            <div className="rounded-[28px] border border-white/10 bg-white shadow-xl overflow-hidden">
+              <div className="bg-[#f8fafc] border-b border-gray-200 px-4 py-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+                    <span className="text-blue-700 text-sm">✓</span>
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-slate-800">{ui.formTitle}</p>
+                    <p className="text-[11px] text-slate-500">{ui.formDesc}</p>
+                  </div>
+                </div>
+              </div>
 
-              <p className="text-xs text-white/70 leading-relaxed">
-                {ui.uploadGeneralDesc}
-              </p>
+              <div className="px-4 py-4 space-y-3 bg-white">
+                <FieldLabel label={ui.labels.nombre} />
+                <FieldInput
+                  value={leadForm.nombre}
+                  onChange={(v) => updateLeadForm("nombre", v)}
+                  placeholder={ui.labels.nombre}
+                />
+
+                <FieldLabel label={ui.labels.telefono} />
+                <FieldInput
+                  value={leadForm.telefono}
+                  onChange={(v) => updateLeadForm("telefono", v)}
+                  placeholder={ui.labels.telefono}
+                />
+
+                <FieldLabel label={ui.labels.email} />
+                <FieldInput
+                  value={leadForm.email}
+                  onChange={(v) => updateLeadForm("email", v)}
+                  placeholder="email@example.com"
+                />
+
+                <FieldLabel label={ui.labels.niePasaporte} />
+                <FieldInput
+                  value={leadForm.niePasaporte}
+                  onChange={(v) => updateLeadForm("niePasaporte", v)}
+                  placeholder={ui.labels.niePasaporte}
+                />
+
+                <FieldLabel label={ui.labels.ciudad} />
+                <FieldInput
+                  value={leadForm.ciudad}
+                  onChange={(v) => updateLeadForm("ciudad", v)}
+                  placeholder={ui.labels.ciudad}
+                />
+
+                <FieldLabel label={ui.labels.nacionalidad} />
+                <FieldInput
+                  value={leadForm.nacionalidad}
+                  onChange={(v) => updateLeadForm("nacionalidad", v)}
+                  placeholder={ui.labels.nacionalidad}
+                />
+
+                <FieldLabel label={ui.labels.fechaLlegada} />
+                <FieldInput
+                  value={leadForm.fechaLlegada}
+                  onChange={(v) => updateLeadForm("fechaLlegada", v)}
+                  placeholder="DD/MM/AAAA"
+                />
+
+                <FieldLabel label={ui.labels.cumple5Meses} />
+                <FieldSelect
+                  value={leadForm.cumple5Meses}
+                  onChange={(v) => updateLeadForm("cumple5Meses", v)}
+                  options={[
+                    { value: "", label: ui.labels.select },
+                    { value: "si", label: ui.labels.yes },
+                    { value: "no", label: ui.labels.no },
+                    { value: "nose", label: ui.labels.dontKnow },
+                  ]}
+                />
+
+                <FieldLabel label={ui.labels.asilo} />
+                <FieldSelect
+                  value={leadForm.asilo}
+                  onChange={(v) => updateLeadForm("asilo", v)}
+                  options={[
+                    { value: "", label: ui.labels.select },
+                    { value: "no", label: ui.labels.no },
+                    { value: "si", label: ui.labels.yes },
+                    { value: "nose", label: ui.labels.dontKnow },
+                  ]}
+                />
+
+                <FieldLabel label={ui.labels.penales} />
+                <FieldSelect
+                  value={leadForm.penales}
+                  onChange={(v) => updateLeadForm("penales", v)}
+                  options={[
+                    { value: "", label: ui.labels.select },
+                    { value: "no", label: ui.labels.no },
+                    { value: "si", label: ui.labels.yes },
+                  ]}
+                />
+
+                <button
+                  onClick={handleSaveLeadForm}
+                  className="w-full rounded-[18px] bg-[#003b82] hover:bg-[#002f69] text-white font-bold text-sm py-3 transition-colors"
+                  type="button"
+                >
+                  {ui.saveLeadButton}
+                </button>
+              </div>
             </div>
 
             {allReady && (
@@ -903,5 +1125,56 @@ export default function Regularizacion2026() {
         </div>
       </main>
     </div>
+  );
+}
+
+function FieldLabel({ label }: { label: string }) {
+  return (
+    <label className="block text-[12px] font-semibold text-slate-600 mb-1">
+      {label}
+    </label>
+  );
+}
+
+function FieldInput({
+  value,
+  onChange,
+  placeholder,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  placeholder: string;
+}) {
+  return (
+    <input
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className="w-full rounded-[18px] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none focus:border-blue-400"
+      placeholder={placeholder}
+    />
+  );
+}
+
+function FieldSelect({
+  value,
+  onChange,
+  options,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  options: { value: string; label: string }[];
+}) {
+  return (
+    <select
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className="w-full rounded-[18px] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none focus:border-blue-400"
+    >
+      {options.map((opt) => (
+        <option key={`${opt.value}-${opt.label}`} value={opt.value}>
+          {opt.label}
+        </option>
+      ))}
+    </select>
   );
 }
