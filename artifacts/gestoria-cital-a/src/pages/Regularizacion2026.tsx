@@ -4,12 +4,8 @@ import { PaymentModal } from "@/components/PaymentModal";
 import { useLang } from "@/contexts/LanguageContext";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  FileText,
-  Settings,
   Mic,
   MicOff,
-  RefreshCw,
-  Shield,
   Bell,
   CheckCircle2,
   MessageSquare,
@@ -17,12 +13,9 @@ import {
   Upload,
   AlertTriangle,
   Star,
-  ExternalLink,
-  Download,
   FileUp,
   Clock,
-  CreditCard,
-  CalendarDays,
+  ArrowRight,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -48,13 +41,6 @@ type SituationItem = {
   label: string;
 };
 
-type RequiredDocItem = {
-  id: string;
-  nombre: string;
-  estado: DocStatus;
-  expectedType?: string;
-};
-
 type StoredDocItem = {
   id: string;
   nombre: string;
@@ -64,20 +50,6 @@ type StoredDocItem = {
   expectedType?: string;
   detectedType?: string;
   note?: string;
-};
-
-type FormItem = {
-  nombre: string;
-  codigo: string;
-  url: string;
-};
-
-type FeeItem = {
-  codigo: string;
-  nombre: string;
-  importe: string;
-  obligatoria: boolean;
-  notes?: string;
 };
 
 function buildInitialDocs(procedureKey: string): StoredDocItem[] {
@@ -103,16 +75,11 @@ export default function Regularizacion2026() {
   const [selectedSituacion, setSelectedSituacion] = useState(
     "regularizacion_2026_laboral"
   );
-  const [step, setStep] = useState(0);
   const [muted, setMuted] = useState(false);
-  const [showChat, setShowChat] = useState(false);
+  const [showChat, setShowChat] = useState(true);
   const [chatInput, setChatInput] = useState("");
   const [showPayment, setShowPayment] = useState(false);
   const [planActivo, setPlanActivo] = useState<string | null>(null);
-  const [submitted, setSubmitted] = useState(false);
-  const [showDocs, setShowDocs] = useState(false);
-  const [showForms, setShowForms] = useState(false);
-  const [showFees, setShowFees] = useState(false);
   const [uploadingId, setUploadingId] = useState<string | null>(null);
   const [sendingChat, setSendingChat] = useState(false);
   const [userMessageCount, setUserMessageCount] = useState(0);
@@ -139,91 +106,35 @@ export default function Regularizacion2026() {
     if (safeLang === "darija") {
       return {
         initialChat:
-          "وعليكم السلام، مرحبا بيك. أنا محمد، وغادي نعاونك فـ ملف ديال الهجرة خطوة بخطوة.",
-        agentSteps: (selectedLabel: string) => [
-          {
-            text: `سلام، أنا محمد. غادي نعاونك فالمسطرة ديالك. اخترنا دابا «${selectedLabel}».`,
-          },
-          {
-            text: "دابا غادي نتحقق من الوثائق ديالك ونربط كل وثيقة مع الإجراء المناسب.",
-          },
-          {
-            text: "من بعد غادي نعمرو الاستمارات الرسمية ونوجد الملف ديالك للإرسال أو الحجز.",
-          },
-          {
-            text: "الملف واجد. من بعد نقدر نكملو للحجز أو الإرسال أو تحميل الوصل.",
-          },
-        ],
+          "وعليكم السلام، مرحبا بيك. أنا محمد، وغادي نعاونك فـ ملف ديالك خطوة بخطوة.",
         online: "متصل الآن",
         role: "مختص فالهجرة",
         paymentMessage:
-          "باش نكملو فالملف ديالك ونخدمو على الوثائق والاستمارات، فعل الخطة ديالك.",
+          "باش نكملو فالملف ديالك ونخدمو على الوثائق، فعل الخطة ديالك.",
         paymentTriggerMessage:
           "باش نكملو معاك بشكل كامل، خاصك تفعّل الخدمة.",
         planActivated: "تفعلات الخطة",
         planContinue: "مزيان. نكملو فالملف ديالك.",
-        docsVerifiedTitle: "تراجعات الوثائق",
-        docsVerifiedDesc: "الوثائق الرئيسية تراجعات بنجاح.",
-        submitSuccessTitle: "ترسل الطلب!",
-        submitSuccessDesc: "الملف تسجل بنجاح.",
-        openChat: "نفضل نكتب · فتح الشات",
+        openChat: "فتح الشات",
         closeChat: "سد الشات",
         writeQuestion: "كتب سؤالك...",
         docsPanelTitle: "وثائق الملف",
-        readyPlural: "واجدين",
-        uploading: "كيترفع...",
-        uploadPdf: "رفع ملف",
         uploadGeneral: "رفع الوثائق",
         uploadGeneralDesc:
           "من هنا تقدر ترفع جميع الوثائق اللي طلب منك محمد.",
         uploadedPdfs: "ملفات مرفوعة",
-        aiVerified: "تحقق الذكاء",
+        aiVerified: "موثقين",
         pending: "معلق",
-        toSend: "للإرسال",
-        completeOnOfficialSite: "فتح الموقع الرسمي",
-        openAppointmentSite: "فتح موقع المواعيد",
-        aiFillsOfficialSite:
-          "الوكيل الذكي يجهز البيانات والاستمارات حسب المسطرة",
-        procedureSmall: "المسطرة:",
-        govHeader: "GESTORIACITAIA",
-        govLine1: "مساعد ذكي",
-        govLine2: "للملفات",
-        govLine3: "والهجرة",
-        situationTitle: "اختر المسطرة",
-        applicationData: "بيانات الطلب",
-        filledAutomatically: "تعمرت أوتوماتيكياً",
-        sendApplication: "إرسال الملف",
-        requestSent: "تم إرسال الملف!",
-        fullName: "الاسم",
-        reference: "المرجع",
-        sendDate: "تاريخ الإرسال",
-        status: "الحالة",
-        inProcess: "قيد المعالجة",
-        resolution: "الجواب",
-        receiptGenerated: "تولد الوصل بنجاح",
-        downloadPdf: "تحميل PDF",
-        documents: "الوثائق",
-        formsLabel: "الاستمارات",
-        feesLabel: "الرسوم",
-        requiredDocuments: "الوثائق المطلوبة",
-        officialForms: "الاستمارات الرسمية",
-        officialFees: "الرسوم الرسمية",
-        nextStep: "الخطوة التالية",
         ready: "واجد",
         review: "راجع",
         withoutAudio: "بلا صوت",
         mute: "كتم",
         activePlanLabel: "الخطة",
         active: "نشطة",
-        source: "المصدر الرسمي",
-        reviewDocuments: "راجع الوثائق",
-        notUploadedRequired: "ما ترفعش · إجباري",
         detected: "مكتشف",
-        mandatory: "إجباري",
-        optional: "اختياري",
-        noForms: "ما كايناش استمارات لهاد المسطرة دابا.",
-        noFees: "ما كايناش رسوم مضافة دابا.",
-        channel: "طريقة المسطرة",
+        situationTitle: "اختر المسطرة",
+        uploading: "كيترفع...",
+        notUploadedRequired: "ما ترفعش · إجباري",
         uploadSuccessTitle: "تقبلات الوثيقة",
         uploadSuccessDesc: "راجعنا الوثيقة وربطناها مع الملف.",
         uploadErrorTitle: "خطأ فالوثيقة",
@@ -233,214 +144,117 @@ export default function Regularizacion2026() {
         mohamedDocWarn: (fileName: string) =>
           `توصلت بــ ${fileName} ولكن مازال خاصني نسخة أوضح ولا الوثيقة المناسبة باش نكمل المراجعة.`,
         mohamedDocUnknown: (fileName: string) =>
-          `توصلت بــ ${fileName}، ولكن ما قدرناش نربطو أوتوماتيكياً مع وثيقة معينة. إلا بغيتي، زيد رفع الوثائق الباقية وأنا نكمل المراجعة.`,
+          `توصلت بــ ${fileName}، ولكن ما قدرناش نربطو أوتوماتيكياً مع وثيقة معينة. زيد رفع الوثائق الباقية وأنا نكمل المراجعة.`,
         mohamedFinal:
-          "مزيان. راجعنا الوثائق ديالك ووجدنا الملف ديالك، وحتى وثيقة الهشاشة، باش يكون واجد للتقديم فالضمان الاجتماعي. إلا بغيتي دابا نكملو بالموعد، غادي ندوزك لسارة باش تعاونك فيه.",
+          "مزيان. راجعنا الوثائق ديالك ووجدنا الملف ديالك، وحتى وثيقة الهشاشة، باش يكون واجد للتقديم. إلا بغيتي دابا نكملو بالموعد، تقدر تدخل لهاد الرابط وسارة غادي تعاونك.",
+        goSara: "المرور إلى سارة",
+        goSaraDesc: "إلى بغيتي تكمل بالموعد، سارة غادي تعاونك.",
+        noDocsYet: "مازال ما ترفع حتى وثيقة.",
+        simpleInfo:
+          "هنا غادي تهضر مع محمد، ترفع الوثائق، ويتحققو مباشرة ويدخلو لملفك.",
       };
     }
 
     if (safeLang === "en") {
       return {
         initialChat:
-          "Hello, I’m Mohamed. I’ll help you with your immigration case step by step.",
-        agentSteps: (selectedLabel: string) => [
-          {
-            text: `Hello, I’m Mohamed. We are now working on “${selectedLabel}”.`,
-          },
-          {
-            text: "Now I will verify your documents and match each file to the correct procedure.",
-          },
-          {
-            text: "Next I will prepare the official forms and organize your case for submission or appointment booking.",
-          },
-          {
-            text: "Your case is ready. Then we can continue with booking, filing, or receipt download.",
-          },
-        ],
+          "Hello, I’m Mohamed. I’ll help you with your case step by step.",
         online: "Online",
         role: "Immigration Specialist",
         paymentMessage:
-          "To continue with your case, documents, and official forms, activate your plan.",
+          "To continue with your case and document review, activate your plan.",
         paymentTriggerMessage:
           "To continue fully with your case, activate the service.",
         planActivated: "Plan activated",
         planContinue: "Perfect. Let’s continue with your case.",
-        docsVerifiedTitle: "Documents verified",
-        docsVerifiedDesc: "Main documentation reviewed successfully.",
-        submitSuccessTitle: "Application submitted!",
-        submitSuccessDesc: "The case has been recorded successfully.",
         openChat: "Open chat",
         closeChat: "Close chat",
         writeQuestion: "Type your question...",
         docsPanelTitle: "Case documents",
-        readyPlural: "ready",
-        uploading: "Uploading...",
-        uploadPdf: "Upload file",
         uploadGeneral: "Upload documents",
         uploadGeneralDesc:
           "Use this single button to upload all documents Mohamed requests.",
-        uploadedPdfs: "Uploaded files",
-        aiVerified: "AI verified",
+        uploadedPdfs: "Uploaded",
+        aiVerified: "Verified",
         pending: "Pending",
-        toSend: "To submit",
-        completeOnOfficialSite: "Open official site",
-        openAppointmentSite: "Open appointment site",
-        aiFillsOfficialSite:
-          "The AI agent prepares the data and forms according to the procedure",
-        procedureSmall: "Procedure:",
-        govHeader: "GESTORIACITAIA",
-        govLine1: "SMART ASSISTANT",
-        govLine2: "FOR CASES",
-        govLine3: "AND IMMIGRATION",
-        situationTitle: "SELECT PROCEDURE",
-        applicationData: "APPLICATION DATA",
-        filledAutomatically: "filled automatically",
-        sendApplication: "Submit case",
-        requestSent: "CASE SUBMITTED!",
-        fullName: "Name",
-        reference: "Reference",
-        sendDate: "Submission date",
-        status: "Status",
-        inProcess: "In process",
-        resolution: "Resolution",
-        receiptGenerated: "Receipt generated successfully",
-        downloadPdf: "Download PDF",
-        documents: "Documents",
-        formsLabel: "Forms",
-        feesLabel: "Fees",
-        requiredDocuments: "Required documents",
-        officialForms: "Official forms",
-        officialFees: "Official fees",
-        nextStep: "Next step",
         ready: "Ready",
         review: "Review",
         withoutAudio: "No audio",
         mute: "Mute",
         activePlanLabel: "Plan",
         active: "active",
-        source: "Official source",
-        reviewDocuments: "Review documents",
-        notUploadedRequired: "Not uploaded · required",
         detected: "Detected",
-        mandatory: "Required",
-        optional: "Optional",
-        noForms: "There are no forms configured for this procedure yet.",
-        noFees: "There are no fees configured for this procedure yet.",
-        channel: "Procedure channel",
+        situationTitle: "Select procedure",
+        uploading: "Uploading...",
+        notUploadedRequired: "Not uploaded · required",
         uploadSuccessTitle: "Document received",
         uploadSuccessDesc: "The document was reviewed and linked to the case.",
         uploadErrorTitle: "Document error",
         uploadErrorDesc: "We could not link that document to the case.",
         mohamedDocOk: (fileName: string, docName: string) =>
-          `Perfect. I received ${fileName} and reviewed it. I linked it to “${docName}”.`,
+          `Perfect. I received ${fileName} and linked it to “${docName}”.`,
         mohamedDocWarn: (fileName: string) =>
-          `I received ${fileName}, but I still need a clearer version or the correct document to continue the review.`,
+          `I received ${fileName}, but I still need a clearer version or the correct document to continue.`,
         mohamedDocUnknown: (fileName: string) =>
-          `I received ${fileName}, but I could not match it automatically to a specific required document. Upload the remaining files and I’ll continue reviewing them.`,
+          `I received ${fileName}, but I could not match it automatically to a required document yet.`,
         mohamedFinal:
-          "Perfect. We have reviewed your documents and prepared your case, including the vulnerability document, so it is ready for Social Security submission. If you now want an appointment, I will pass you to Sara to help with that.",
+          "Perfect. We have reviewed your documents and prepared your case, including the vulnerability document. If you want to continue with the appointment, enter this link and Sara will help you.",
+        goSara: "Go to Sara",
+        goSaraDesc: "If you want to continue with the appointment, Sara will help you.",
+        noDocsYet: "No documents uploaded yet.",
+        simpleInfo:
+          "Here you talk to Mohamed, upload documents, and they go directly into your case panel.",
       };
     }
 
     return {
       initialChat:
-        "Hola, soy Mohamed. Voy a ayudarte con tu trámite de extranjería paso a paso.",
-      agentSteps: (selectedLabel: string) => [
-        {
-          text: `Hola, soy Mohamed. Ahora estamos trabajando el trámite «${selectedLabel}».`,
-        },
-        {
-          text: "Voy a verificar tus documentos y relacionarlos con el trámite correcto.",
-        },
-        {
-          text: "Después prepararé los formularios oficiales y dejaré tu expediente listo para enviar o reservar cita.",
-        },
-        {
-          text: "Tu expediente quedará preparado para continuar con cita, presentación o descarga de resguardo.",
-        },
-      ],
+        "Hola, soy Mohamed. Voy a ayudarte con tu trámite paso a paso.",
       online: "En línea",
       role: "Especialista en Extranjería",
       paymentMessage:
-        "Para continuar con tu trámite, tus documentos y los formularios oficiales, activa tu plan.",
+        "Para continuar con tu trámite y la revisión de documentos, activa tu plan.",
       paymentTriggerMessage:
         "Para seguir contigo de forma completa, activa el servicio.",
       planActivated: "Plan activado",
       planContinue: "Perfecto. Continuamos con tu trámite.",
-      docsVerifiedTitle: "Documentos revisados",
-      docsVerifiedDesc: "La documentación principal ha sido revisada.",
-      submitSuccessTitle: "¡Solicitud enviada!",
-      submitSuccessDesc: "El expediente ha quedado registrado correctamente.",
-      openChat: "Prefiero escribir · Abrir chat",
+      openChat: "Abrir chat",
       closeChat: "Cerrar chat",
       writeQuestion: "Escribe tu pregunta...",
       docsPanelTitle: "Documentos del expediente",
-      readyPlural: "listos",
-      uploading: "Subiendo...",
-      uploadPdf: "Subir archivo",
       uploadGeneral: "Subir documentos",
       uploadGeneralDesc:
         "Usa este único botón para subir todos los documentos que te pida Mohamed.",
-      uploadedPdfs: "Archivos subidos",
-      aiVerified: "Verificados IA",
+      uploadedPdfs: "Subidos",
+      aiVerified: "Verificados",
       pending: "Pendiente",
-      toSend: "Para enviar",
-      completeOnOfficialSite: "Abrir sede oficial",
-      openAppointmentSite: "Abrir web de cita",
-      aiFillsOfficialSite:
-        "El agente IA prepara los datos y formularios según el trámite",
-      procedureSmall: "Procedimiento:",
-      govHeader: "GESTORIACITAIA",
-      govLine1: "ASISTENTE INTELIGENTE",
-      govLine2: "PARA TRÁMITES",
-      govLine3: "Y EXTRANJERÍA",
-      situationTitle: "SELECCIONA EL TRÁMITE",
-      applicationData: "DATOS DEL EXPEDIENTE",
-      filledAutomatically: "rellenado automáticamente",
-      sendApplication: "Enviar expediente",
-      requestSent: "¡EXPEDIENTE ENVIADO!",
-      fullName: "Nombre",
-      reference: "Referencia",
-      sendDate: "Fecha envío",
-      status: "Estado",
-      inProcess: "En tramitación",
-      resolution: "Resolución",
-      receiptGenerated: "Resguardo generado correctamente",
-      downloadPdf: "Descargar PDF",
-      documents: "Documentos",
-      formsLabel: "Formularios",
-      feesLabel: "Tasas",
-      requiredDocuments: "Documentos requeridos",
-      officialForms: "Formularios oficiales",
-      officialFees: "Tasas oficiales",
-      nextStep: "Siguiente paso",
       ready: "Listo",
       review: "Revisar",
       withoutAudio: "Sin audio",
       mute: "Mute",
       activePlanLabel: "Plan",
       active: "activo",
-      source: "Fuente oficial",
-      reviewDocuments: "Revisar documentos",
-      notUploadedRequired: "Sin subir · obligatorio",
       detected: "Detectado",
-      mandatory: "Obligatoria",
-      optional: "Opcional",
-      noForms: "No hay formularios configurados todavía para este trámite.",
-      noFees: "No hay tasas configuradas todavía para este trámite.",
-      channel: "Canal del trámite",
+      situationTitle: "Selecciona el trámite",
+      uploading: "Subiendo...",
+      notUploadedRequired: "Sin subir · obligatorio",
       uploadSuccessTitle: "Documento recibido",
       uploadSuccessDesc: "El documento se ha revisado y vinculado al expediente.",
       uploadErrorTitle: "Error en documento",
       uploadErrorDesc: "No se pudo vincular ese documento al expediente.",
       mohamedDocOk: (fileName: string, docName: string) =>
-        `Perfecto. Ya he recibido ${fileName} y lo he revisado. Lo he colocado en «${docName}».`,
+        `Perfecto. Ya he recibido ${fileName} y lo he colocado en «${docName}».`,
       mohamedDocWarn: (fileName: string) =>
-        `He recibido ${fileName}, pero todavía necesito una versión más clara o el documento correcto para seguir con la revisión.`,
+        `He recibido ${fileName}, pero todavía necesito una versión más clara o el documento correcto para seguir.`,
       mohamedDocUnknown: (fileName: string) =>
-        `He recibido ${fileName}, pero no he podido relacionarlo automáticamente con un documento concreto del expediente. Sube los demás y sigo revisando.`,
+        `He recibido ${fileName}, pero no he podido relacionarlo automáticamente con un documento concreto del expediente.`,
       mohamedFinal:
-        "Perfecto. Ya hemos revisado tu documentación y hemos dejado preparado tu expediente, incluido el documento de vulnerabilidad, para presentar en la Seguridad Social. Si ahora quieres continuar con la cita, te paso con Sara para gestionarla.",
+        "Perfecto. Ya hemos revisado tu documentación y hemos dejado preparado tu expediente, incluido el documento de vulnerabilidad. Si ahora quieres continuar con la cita, entra en este enlace y Sara te ayudará.",
+      goSara: "Ir con Sara",
+      goSaraDesc: "Si quieres seguir con la cita, Sara te ayuda.",
+      noDocsYet: "Todavía no has subido ningún documento.",
+      simpleInfo:
+        "Aquí hablas con Mohamed, subes documentos, y se verifican directamente dentro de tu expediente.",
     };
   }, [safeLang]);
 
@@ -454,8 +268,6 @@ export default function Regularizacion2026() {
 
   useEffect(() => {
     setDocs(buildInitialDocs(selectedSituacion));
-    setStep(0);
-    setSubmitted(false);
     setCompletionMessageSent(false);
   }, [selectedSituacion]);
 
@@ -540,125 +352,24 @@ export default function Regularizacion2026() {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chatMessages, sendingChat, generalUploading]);
 
-  const selectedSituationLabel = currentProcedure.name;
-  const selectedIntro =
-    safeLang === "en"
-      ? `I will help you with ${currentProcedure.shortName}.`
-      : safeLang === "darija"
-      ? `غادي نعاونك فـ ${currentProcedure.shortName}.`
-      : `Voy a ayudarte con ${currentProcedure.shortName}.`;
-
-  const AGENT_STEPS = ui.agentSteps(selectedSituationLabel);
-
   const SITUACIONES: SituationItem[] = EXTRANJERIA_PROCEDURES.map((p) => ({
     value: p.key,
     label: p.name,
   }));
 
-  const DOCS_REQUERIDOS: RequiredDocItem[] =
-    currentProcedure.requiredDocuments.map((doc) => {
-      const localDoc = docs.find((d) => d.id === doc.id);
-
-      return {
-        id: doc.id,
-        nombre: doc.name,
-        estado: localDoc?.estado || "missing",
-        expectedType: doc.expectedType,
-      };
-    });
-
-  const FORMULARIOS: FormItem[] = currentProcedure.forms.map((f) => ({
-    nombre: f.name,
-    codigo: f.code,
-    url: f.url,
-  }));
-
-  const TASAS: FeeItem[] = currentProcedure.fees.map((f) => ({
-    codigo: f.code,
-    nombre: f.name,
-    importe: f.amount,
-    obligatoria: f.required,
-    notes: f.notes,
-  }));
-
-  const getChannelLabel = () => {
-    if (safeLang === "darija") {
-      if (currentProcedure.channel === "online") return "أونلاين";
-      if (currentProcedure.channel === "appointment") return "بموعد";
-      if (currentProcedure.channel === "office") return "فالمكتب";
-      if (currentProcedure.channel === "mixed") return "مختلط";
-      return "قواعد رسمية قيد التحديث";
-    }
-
-    if (safeLang === "en") {
-      if (currentProcedure.channel === "online") return "Online";
-      if (currentProcedure.channel === "appointment") return "Appointment";
-      if (currentProcedure.channel === "office") return "Office";
-      if (currentProcedure.channel === "mixed") return "Mixed";
-      return "Official rules pending";
-    }
-
-    if (currentProcedure.channel === "online") return "Online";
-    if (currentProcedure.channel === "appointment") return "Con cita";
-    if (currentProcedure.channel === "office") return "En oficina";
-    if (currentProcedure.channel === "mixed") return "Mixto";
-    return "Reglas oficiales pendientes";
-  };
-
-  const handleSituacionClick = (value: string) => {
-    setSelectedSituacion(value);
-  };
-
-  const handleVerificarDocs = () => {
-    if (!planActivo) {
-      setShowPayment(true);
-      return;
-    }
-
-    setStep(2);
-
-    toast({
-      title: ui.docsVerifiedTitle,
-      description: ui.docsVerifiedDesc,
-    });
-  };
-
-  const handleEnviarSolicitud = () => {
-    if (!planActivo) {
-      setShowPayment(true);
-      return;
-    }
-
-    setStep(3);
-
-    setTimeout(() => {
-      setSubmitted(true);
-    }, 800);
-
-    toast({
-      title: ui.submitSuccessTitle,
-      description: ui.submitSuccessDesc,
-    });
-  };
+  const docsOk = docs.filter((d) => d.estado === "ok").length;
+  const docsWarn = docs.filter((d) => d.estado === "warn").length;
+  const docsTotal = docs.length;
+  const allReady = docsOk >= Math.max(1, docsTotal - 1);
 
   const handleSelectPlan = (plan: string) => {
     setPlanActivo(plan);
     setShowPayment(false);
-    setStep(1);
 
     toast({
       title: ui.planActivated,
       description: ui.planContinue,
     });
-  };
-
-  const docsOk = docs.filter((d) => d.estado === "ok").length;
-  const docsTotal = docs.length;
-  const allReady = docsOk >= Math.max(1, docsTotal - 1);
-
-  const buildExpectedType = (doc?: StoredDocItem) => {
-    if (!doc?.expectedType) return "auto";
-    return doc.expectedType;
   };
 
   const getBestDocMatch = (
@@ -713,7 +424,6 @@ export default function Regularizacion2026() {
     if (readyNow && !completionMessageSent) {
       pushAgentMessage(ui.mohamedFinal);
       setCompletionMessageSent(true);
-      setStep((prev) => (prev < 2 ? 2 : prev));
     }
   };
 
@@ -805,11 +515,8 @@ export default function Regularizacion2026() {
 
             toast({
               title: ui.uploadSuccessTitle,
-              description:
-                result?.summary || ui.uploadSuccessDesc,
+              description: result?.summary || ui.uploadSuccessDesc,
             });
-
-            if (step < 1) setStep(1);
 
             if (nextDocsSnapshot.length > 0) {
               maybeSendCompletionMessage(nextDocsSnapshot);
@@ -873,28 +580,6 @@ export default function Regularizacion2026() {
     }
   };
 
-  const handleIrSede = () => {
-    if (!planActivo) {
-      setShowPayment(true);
-      return;
-    }
-
-    window.open(currentProcedure.officialSiteUrl || "#", "_blank");
-
-    if (step < 1) setStep(1);
-  };
-
-  const handleOpenAppointment = () => {
-    if (!planActivo) {
-      setShowPayment(true);
-      return;
-    }
-
-    if (!currentProcedure.appointmentUrl) return;
-
-    window.open(currentProcedure.appointmentUrl, "_blank");
-  };
-
   const handleSendChat = async () => {
     if (!chatInput.trim() || sendingChat || !chatBootstrapped) return;
 
@@ -930,7 +615,7 @@ export default function Regularizacion2026() {
           message: rawText,
           context: "multi_extranjeria_procedure",
           procedureKey: selectedSituacion,
-          procedureLabel: selectedSituationLabel,
+          procedureLabel: currentProcedure.name,
           lang: safeLang,
           history: historyToSend,
         }),
@@ -992,6 +677,10 @@ export default function Regularizacion2026() {
     }
   };
 
+  const goToSara = () => {
+    window.location.href = "/citas";
+  };
+
   return (
     <div className="min-h-screen bg-background text-foreground relative flex flex-col">
       <div
@@ -1011,7 +700,7 @@ export default function Regularizacion2026() {
         agentMessage={ui.paymentMessage}
       />
 
-      <main className="flex-1 relative z-10 flex flex-col pt-16 pb-0">
+      <main className="flex-1 relative z-10 pt-16 pb-8">
         <div className="px-4 sm:px-6 py-3 max-w-7xl mx-auto w-full flex items-center justify-between">
           <div>
             <h1 className="text-xl font-display font-bold text-white flex items-center gap-2">
@@ -1021,7 +710,7 @@ export default function Regularizacion2026() {
                 {t("reg_new")}
               </span>
             </h1>
-            <p className="text-xs text-muted-foreground">{selectedSituationLabel}</p>
+            <p className="text-xs text-muted-foreground">{currentProcedure.name}</p>
           </div>
 
           {planActivo ? (
@@ -1039,12 +728,8 @@ export default function Regularizacion2026() {
           )}
         </div>
 
-        <div className="flex-1 flex flex-col lg:flex-row gap-4 px-4 sm:px-6 max-w-7xl mx-auto w-full pb-4">
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="lg:w-[340px] xl:w-[380px] shrink-0 flex flex-col gap-3"
-          >
+        <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 grid grid-cols-1 lg:grid-cols-[380px_minmax(0,1fr)] gap-4">
+          <div className="flex flex-col gap-3">
             <div
               className="relative rounded-2xl overflow-hidden border border-primary/20 shadow-[0_0_30px_-5px_hsl(var(--primary)/0.25)] bg-black"
               style={{ height: "260px" }}
@@ -1135,9 +820,8 @@ export default function Regularizacion2026() {
                   animate={{ opacity: 1, height: "auto" }}
                   exit={{ opacity: 0, height: 0 }}
                   className="glass-panel-heavy border border-white/10 rounded-2xl overflow-hidden flex flex-col"
-                  style={{ maxHeight: "320px" }}
                 >
-                  <div className="flex-1 overflow-y-auto p-3 space-y-2">
+                  <div className="flex-1 overflow-y-auto p-3 space-y-2 max-h-[320px]">
                     {chatMessages.map((msg, i) => (
                       <div
                         key={`${msg.ts || i}-${i}`}
@@ -1233,897 +917,166 @@ export default function Regularizacion2026() {
                 </motion.div>
               )}
             </AnimatePresence>
-
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={`${step}-${selectedSituacion}`}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={{ type: "spring", stiffness: 300, damping: 25 }}
-                className="glass-panel-heavy border border-primary/25 rounded-2xl rounded-tl-sm p-3 flex gap-3 shadow-lg relative overflow-hidden"
-              >
-                <div className="relative shrink-0">
-                  <img
-                    src={`${import.meta.env.BASE_URL}images/avatar-mohamed.png`}
-                    className="w-9 h-9 rounded-full object-cover object-top border border-primary/40"
-                    alt="Mohamed"
-                  />
-                  {!muted && (
-                    <motion.div
-                      className="absolute -inset-1 rounded-full border border-primary/40"
-                      animate={{ scale: [1, 1.3, 1], opacity: [0.6, 0, 0.6] }}
-                      transition={{ duration: 1.5, repeat: Infinity }}
-                    />
-                  )}
-                </div>
-
-                <p className="text-[11px] text-white/90 leading-relaxed flex-1">
-                  {step === 0
-                    ? selectedIntro
-                    : AGENT_STEPS[Math.min(step, AGENT_STEPS.length - 1)].text}
-                </p>
-              </motion.div>
-            </AnimatePresence>
-
-            <motion.div
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.25 }}
-              className="glass-panel border border-white/[0.08] rounded-2xl overflow-hidden"
-            >
-              <div className="px-4 py-3 border-b border-white/[0.07] flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <FileUp className="w-4 h-4 text-primary" />
-                  <span className="text-xs font-bold text-white">
-                    {ui.docsPanelTitle}
-                  </span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <span
-                    className={`w-2 h-2 rounded-full ${
-                      docsOk === docsTotal ? "bg-primary" : "bg-amber-400"
-                    }`}
-                  />
-                  <span className="text-[10px] font-semibold text-white/70">
-                    {docsOk}/{docsTotal} {ui.readyPlural}
-                  </span>
-                </div>
-              </div>
-
-              <div className="px-4 pt-2.5 pb-1">
-                <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
-                  <motion.div
-                    className="h-full bg-gradient-to-r from-primary to-green-400 rounded-full"
-                    initial={{ width: 0 }}
-                    animate={{ width: `${(docsOk / Math.max(1, docsTotal)) * 100}%` }}
-                    transition={{ duration: 0.7, delay: 0.3 }}
-                  />
-                </div>
-              </div>
-
-              <div className="px-3 py-2 space-y-1.5">
-                {docs.map((doc) => (
-                  <div
-                    key={doc.id}
-                    className={`flex items-center gap-2.5 rounded-lg px-2.5 py-2 border transition-colors ${
-                      doc.estado === "ok"
-                        ? "bg-primary/5 border-primary/15"
-                        : doc.estado === "warn"
-                        ? "bg-amber-500/5 border-amber-500/20"
-                        : "bg-destructive/5 border-destructive/20"
-                    }`}
-                  >
-                    <div
-                      className={`w-6 h-6 rounded flex items-center justify-center shrink-0 ${
-                        doc.estado === "ok"
-                          ? "bg-primary/15"
-                          : doc.estado === "warn"
-                          ? "bg-amber-500/15"
-                          : "bg-destructive/15"
-                      }`}
-                    >
-                      {doc.estado === "ok" && (
-                        <CheckCircle2 className="w-3.5 h-3.5 text-primary" />
-                      )}
-                      {doc.estado === "warn" && (
-                        <Clock className="w-3.5 h-3.5 text-amber-400" />
-                      )}
-                      {doc.estado === "missing" && (
-                        <AlertTriangle className="w-3.5 h-3.5 text-destructive" />
-                      )}
-                    </div>
-
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[10px] font-semibold text-white truncate">
-                        {doc.nombre}
-                      </p>
-                      <p
-                        className={`text-[9px] truncate ${
-                          doc.estado === "ok"
-                            ? "text-primary/70"
-                            : doc.estado === "warn"
-                            ? "text-amber-400/70"
-                            : "text-destructive/60"
-                        }`}
-                      >
-                        {doc.archivo ? doc.archivo : ui.notUploadedRequired}
-                      </p>
-
-                      {!!doc.detectedType && (
-                        <p className="text-[9px] text-white/40 truncate">
-                          {ui.detected}: {getDocumentLabel(doc.detectedType)}
-                        </p>
-                      )}
-
-                      {!!doc.note && (
-                        <p className="text-[9px] text-white/40 truncate">{doc.note}</p>
-                      )}
-                    </div>
-
-                    <div className="shrink-0">
-                      {doc.estado === "ok" && (
-                        <button
-                          className="p-1 rounded hover:bg-primary/10 transition-colors"
-                          title={ui.downloadPdf}
-                          type="button"
-                        >
-                          <Download className="w-3 h-3 text-primary/70" />
-                        </button>
-                      )}
-
-                      {doc.estado === "warn" && (
-                        <span className="text-[9px] text-amber-400 font-semibold">
-                          {ui.review}
-                        </span>
-                      )}
-
-                      {doc.estado === "missing" && (
-                        <span className="text-[9px] text-white/40 font-semibold">
-                          {ui.pending}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="px-3 py-2 border-t border-white/[0.07] grid grid-cols-3 gap-1.5 text-center">
-                <div className="bg-primary/8 rounded-lg py-1.5">
-                  <p className="text-[10px] font-black text-primary">{docsOk}</p>
-                  <p className="text-[9px] text-muted-foreground">{ui.uploadedPdfs}</p>
-                </div>
-
-                <div className="bg-primary/8 rounded-lg py-1.5">
-                  <p className="text-[10px] font-black text-primary">{docsOk}</p>
-                  <p className="text-[9px] text-muted-foreground">{ui.aiVerified}</p>
-                </div>
-
-                <div
-                  className={`rounded-lg py-1.5 ${
-                    allReady ? "bg-primary/15" : "bg-amber-500/10"
-                  }`}
-                >
-                  <p
-                    className={`text-[10px] font-black ${
-                      allReady ? "text-primary" : "text-amber-400"
-                    }`}
-                  >
-                    {allReady ? "✓ Listo" : ui.pending}
-                  </p>
-                  <p className="text-[9px] text-muted-foreground">{ui.toSend}</p>
-                </div>
-              </div>
-
-              <div className="px-3 pb-3 pt-2 space-y-2">
-                <button
-                  onClick={handleIrSede}
-                  className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold bg-[#003366] hover:bg-[#002244] text-white border border-[#003366] transition-all shadow-md"
-                  type="button"
-                >
-                  <ExternalLink className="w-3.5 h-3.5" />
-                  {ui.completeOnOfficialSite}
-                </button>
-
-                {currentProcedure.appointmentUrl && (
-                  <button
-                    onClick={handleOpenAppointment}
-                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold bg-white/10 hover:bg-white/15 text-white border border-white/15 transition-all"
-                    type="button"
-                  >
-                    <CalendarDays className="w-3.5 h-3.5" />
-                    {ui.openAppointmentSite}
-                  </button>
-                )}
-
-                <p className="text-center text-[9px] text-muted-foreground mt-1.5">
-                  {ui.aiFillsOfficialSite}
-                </p>
-              </div>
-            </motion.div>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.15 }}
-            className="flex-1 flex flex-col rounded-2xl overflow-hidden border border-gray-300 shadow-2xl bg-white min-h-[400px]"
-          >
-            <div className="bg-[#f1f3f4] border-b border-gray-200 px-3 py-2 flex items-center gap-2 shrink-0">
-              <div className="flex items-center gap-1.5 bg-white rounded-full px-3 py-1.5 flex-1 border border-gray-200 shadow-sm min-w-0">
-                <Shield className="w-3 h-3 text-green-600 shrink-0" />
-                <span className="text-xs text-gray-600 font-medium truncate">
-                  {currentProcedure.officialSiteUrl}
-                </span>
-              </div>
-
-              <button
-                className="w-7 h-7 flex items-center justify-center text-gray-500 hover:bg-gray-200 rounded"
-                type="button"
-              >
-                <RefreshCw className="w-3.5 h-3.5" />
-              </button>
-
-              <div className="w-6 h-6 rounded-full overflow-hidden border-2 border-primary shrink-0">
-                <img
-                  src={`${import.meta.env.BASE_URL}images/avatar-mohamed.png`}
-                  className="w-full h-full object-cover object-top"
-                  alt=""
-                />
-              </div>
-            </div>
-
-            <div className="flex-1 overflow-y-auto bg-white p-4 sm:p-6 text-black">
-              {!submitted ? (
-                <>
-                  <div className="flex items-center gap-3 mb-5 pb-4 border-b-2 border-gray-200">
-                    <div className="flex items-center border border-gray-200 rounded overflow-hidden shrink-0">
-                      <div className="w-7 h-12 bg-red-600" />
-                      <div className="w-7 h-12 bg-yellow-400" />
-                      <div className="w-7 h-12 bg-red-600" />
-                    </div>
-
-                    <div className="text-[9px] leading-tight text-gray-600 font-medium uppercase shrink-0">
-                      <div>{ui.govLine1}</div>
-                      <div>{ui.govLine2}</div>
-                      <div>{ui.govLine3}</div>
-                    </div>
-
-                    <div className="ml-auto text-right shrink-0">
-                      <div className="text-[10px] text-gray-500">{ui.procedureSmall}</div>
-                      <div className="text-sm font-black text-[#003366]">
-                        {selectedSituationLabel}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-4 flex gap-2 items-start">
-                    <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-                    <p className="text-xs text-amber-800 leading-relaxed">
-                      {selectedIntro}
-                    </p>
-                  </div>
-
-                  <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 mb-5">
-                    <div className="border border-gray-200 rounded-xl p-4">
-                      <p className="text-xs font-bold text-gray-700 uppercase tracking-wide mb-2">
-                        {ui.channel}
-                      </p>
-                      <p className="text-sm font-semibold text-[#003366]">
-                        {getChannelLabel()}
-                      </p>
-                      <p className="text-xs text-gray-500 mt-2">
-                        {currentProcedure.description}
-                      </p>
-                    </div>
-
-                    <div className="border border-gray-200 rounded-xl p-4">
-                      <p className="text-xs font-bold text-gray-700 uppercase tracking-wide mb-2">
-                        {ui.nextStep}
-                      </p>
-                      <p className="text-sm text-gray-700 leading-relaxed">
-                        {currentProcedure.nextStepText}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="mb-4">
-                    <p className="text-xs font-bold text-gray-700 uppercase tracking-wide mb-2">
-                      {ui.situationTitle}
-                    </p>
-                    <select
-                      className="w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      value={selectedSituacion}
-                      onChange={(e) => handleSituacionClick(e.target.value)}
-                    >
-                      {SITUACIONES.map((s) => (
-                        <option key={s.value} value={s.value}>
-                          {s.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="border border-gray-200 rounded overflow-hidden divide-y divide-gray-100 mb-5">
-                    {SITUACIONES.map((s) => (
-                      <div
-                        key={s.value}
-                        onClick={() => handleSituacionClick(s.value)}
-                        className={`px-3 py-2.5 text-sm cursor-pointer transition-colors ${
-                          selectedSituacion === s.value
-                            ? "bg-yellow-300 font-semibold text-gray-900"
-                            : "text-gray-700 hover:bg-blue-50"
-                        }`}
-                      >
-                        {s.label}
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 mb-5">
-                    <div className="border border-gray-200 rounded-xl p-4">
-                      <div className="flex items-center gap-2 mb-3">
-                        <FileText className="w-4 h-4 text-blue-700" />
-                        <p className="text-xs font-bold text-gray-700 uppercase tracking-wide">
-                          {ui.officialForms}
-                        </p>
-                      </div>
-
-                      {FORMULARIOS.length === 0 ? (
-                        <p className="text-sm text-gray-500">{ui.noForms}</p>
-                      ) : (
-                        <div className="space-y-2">
-                          {FORMULARIOS.map((form) => (
-                            <a
-                              key={form.codigo}
-                              href={form.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="block rounded-lg border border-gray-200 px-3 py-2 hover:bg-gray-50"
-                            >
-                              <p className="text-sm font-bold text-[#003366]">
-                                {form.codigo}
-                              </p>
-                              <p className="text-sm text-gray-700">{form.nombre}</p>
-                            </a>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="border border-gray-200 rounded-xl p-4">
-                      <div className="flex items-center gap-2 mb-3">
-                        <CreditCard className="w-4 h-4 text-green-700" />
-                        <p className="text-xs font-bold text-gray-700 uppercase tracking-wide">
-                          {ui.officialFees}
-                        </p>
-                      </div>
-
-                      {TASAS.length === 0 ? (
-                        <p className="text-sm text-gray-500">{ui.noFees}</p>
-                      ) : (
-                        <div className="space-y-2">
-                          {TASAS.map((fee) => (
-                            <div
-                              key={`${fee.codigo}-${fee.nombre}`}
-                              className="rounded-lg border border-gray-200 px-3 py-2"
-                            >
-                              <div className="flex items-center justify-between gap-2">
-                                <p className="text-sm font-bold text-[#003366]">
-                                  {fee.codigo}
-                                </p>
-                                <span className="text-[10px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 font-semibold">
-                                  {fee.obligatoria ? ui.mandatory : ui.optional}
-                                </span>
-                              </div>
-                              <p className="text-sm text-gray-700">{fee.nombre}</p>
-                              <p className="text-xs text-gray-500 mt-1">
-                                {fee.importe}
-                              </p>
-                              {fee.notes && (
-                                <p className="text-xs text-gray-500 mt-1">
-                                  {fee.notes}
-                                </p>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <AnimatePresence>
-                    {step >= 0 && (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: "auto" }}
-                        className="mb-5"
-                      >
-                        <div className="flex items-center justify-between gap-3 mb-3">
-                          <p className="text-xs font-bold text-gray-700 uppercase tracking-wide">
-                            {ui.requiredDocuments}
-                          </p>
-
-                          <button
-                            onClick={handleGeneralUpload}
-                            disabled={generalUploading}
-                            type="button"
-                            className="flex items-center gap-2 rounded-lg bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white text-xs font-bold px-3 py-2 transition-colors"
-                          >
-                            {generalUploading ? (
-                              <>
-                                <motion.div
-                                  className="w-3.5 h-3.5 border border-white border-t-transparent rounded-full"
-                                  animate={{ rotate: 360 }}
-                                  transition={{
-                                    duration: 0.7,
-                                    repeat: Infinity,
-                                    ease: "linear",
-                                  }}
-                                />
-                                {ui.uploading}
-                              </>
-                            ) : (
-                              <>
-                                <Upload className="w-3 h-3" />
-                                {ui.uploadGeneral}
-                              </>
-                            )}
-                          </button>
-                        </div>
-
-                        <div className="space-y-2">
-                          {DOCS_REQUERIDOS.map((doc) => (
-                            <div
-                              key={doc.id}
-                              className="flex items-center justify-between p-2.5 rounded-lg border border-gray-100 hover:bg-gray-50"
-                            >
-                              <span className="text-sm text-gray-700">{doc.nombre}</span>
-
-                              {doc.estado === "ok" && (
-                                <CheckCircle2 className="w-4 h-4 text-green-600" />
-                              )}
-
-                              {doc.estado === "warn" && (
-                                <AlertTriangle className="w-4 h-4 text-amber-500" />
-                              )}
-
-                              {doc.estado === "missing" && (
-                                <Clock className="w-4 h-4 text-gray-400" />
-                              )}
-                            </div>
-                          ))}
-                        </div>
-
-                        <button
-                          onClick={handleVerificarDocs}
-                          className="mt-3 w-full bg-[#003366] text-white text-sm font-bold py-2.5 rounded hover:bg-[#002244] transition-colors"
-                          type="button"
-                        >
-                          {ui.reviewDocuments}
-                        </button>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-
-                  <AnimatePresence>
-                    {step >= 2 && (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: "auto" }}
-                        className="mb-5 space-y-3"
-                      >
-                        <p className="text-xs font-bold text-gray-700 uppercase tracking-wide">
-                          {ui.applicationData}{" "}
-                          <span className="text-green-600 font-normal normal-case">
-                            ({ui.filledAutomatically})
-                          </span>
-                        </p>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                          <input
-                            className="border border-gray-200 rounded px-3 py-2 text-sm text-gray-500 bg-gray-50"
-                            value="Ahmed Benali"
-                            readOnly
-                          />
-                          <input
-                            className="border border-gray-200 rounded px-3 py-2 text-sm text-gray-500 bg-gray-50"
-                            value="X-1234567-Z"
-                            readOnly
-                          />
-                          <input
-                            className="border border-gray-200 rounded px-3 py-2 text-sm text-gray-500 bg-gray-50"
-                            value={
-                              safeLang === "en"
-                                ? "Moroccan"
-                                : safeLang === "darija"
-                                ? "مغربي"
-                                : "Marroquí"
-                            }
-                            readOnly
-                          />
-                          <input
-                            className="border border-gray-200 rounded px-3 py-2 text-sm text-gray-500 bg-gray-50"
-                            value="Madrid"
-                            readOnly
-                          />
-                          <input
-                            className="border border-gray-200 rounded px-3 py-2 text-sm text-gray-500 bg-gray-50 col-span-2"
-                            value="C/ Gran Vía 12, 28013 Madrid"
-                            readOnly
-                          />
-                        </div>
-
-                        <div className="flex justify-end">
-                          <button
-                            onClick={handleEnviarSolicitud}
-                            className="bg-green-600 text-white text-sm font-bold px-6 py-2.5 rounded hover:bg-green-700 transition-colors"
-                            type="button"
-                          >
-                            {ui.sendApplication}
-                          </button>
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </>
-              ) : (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="flex flex-col items-center text-center py-10 gap-5"
-                >
-                  <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center">
-                    <CheckCircle2 className="w-12 h-12 text-green-600" />
-                  </div>
-
-                  <div>
-                    <h2 className="text-xl font-black text-[#003366] mb-1">
-                      {ui.requestSent}
-                    </h2>
-                    <p className="text-sm text-gray-600 mb-4">{selectedSituationLabel}</p>
-
-                    <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 text-left space-y-2 max-w-sm mx-auto">
-                      <p className="text-sm">
-                        <span className="font-bold text-gray-500">{ui.fullName}:</span>{" "}
-                        Ahmed Benali
-                      </p>
-                      <p className="text-sm">
-                        <span className="font-bold text-gray-500">{ui.reference}:</span>{" "}
-                        <span className="font-mono text-green-700">
-                          REG2026-ES-087341
-                        </span>
-                      </p>
-                      <p className="text-sm">
-                        <span className="font-bold text-gray-500">{ui.sendDate}:</span>{" "}
-                        {new Date().toLocaleDateString(
-                          safeLang === "en" ? "en-GB" : "es-ES"
-                        )}
-                      </p>
-                      <p className="text-sm">
-                        <span className="font-bold text-gray-500">{ui.status}:</span>{" "}
-                        <span className="text-amber-600 font-semibold">
-                          {ui.inProcess}
-                        </span>
-                      </p>
-                      <p className="text-sm">
-                        <span className="font-bold text-gray-500">{ui.resolution}:</span>{" "}
-                        3-6 meses
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col sm:flex-row gap-3">
-                    <div className="flex items-center gap-2 bg-primary/10 border border-primary/30 rounded-xl px-4 py-2 text-sm text-primary font-medium">
-                      <CheckCircle2 className="w-4 h-4" />
-                      {ui.receiptGenerated}
-                    </div>
-
-                    <button
-                      type="button"
-                      className="flex items-center gap-2 bg-[#003366] text-white rounded-xl px-4 py-2 text-sm font-bold hover:bg-[#002244]"
-                    >
-                      <FileText className="w-4 h-4" />
-                      {ui.downloadPdf}
-                    </button>
-                  </div>
-                </motion.div>
-              )}
-            </div>
-          </motion.div>
-        </div>
-
-        <div className="sticky bottom-0 z-30 glass-panel-heavy border-t border-white/10 py-3">
-          <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
-            <button
-              onClick={() => setMuted(!muted)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold border transition-colors ${
-                muted
-                  ? "bg-destructive/20 border-destructive/40 text-destructive"
-                  : "bg-white/5 border-white/10 text-white/80 hover:bg-white/10"
-              }`}
-              type="button"
-            >
-              {muted ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
-              {muted ? ui.withoutAudio : ui.mute}
-            </button>
-
-            <div className="flex gap-3">
-              <button
-                onClick={() => {
-                  setShowDocs(true);
-                  setShowForms(false);
-                  setShowFees(false);
-                }}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold border transition-colors ${
-                  showDocs
-                    ? "bg-primary/20 border-primary/40 text-primary"
-                    : "bg-white/5 border-white/10 text-white/80 hover:bg-white/10"
-                }`}
-                type="button"
-              >
-                <FileText className="w-4 h-4 text-primary" />
-                {ui.documents}
-              </button>
-
-              <button
-                onClick={() => {
-                  setShowForms(true);
-                  setShowDocs(false);
-                  setShowFees(false);
-                }}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold border transition-colors ${
-                  showForms
-                    ? "bg-secondary/20 border-secondary/40 text-secondary"
-                    : "bg-white/5 border-white/10 text-white/80 hover:bg-white/10"
-                }`}
-                type="button"
-              >
-                <Settings className="w-4 h-4 text-secondary" />
-                {ui.formsLabel}
-              </button>
-
-              <button
-                onClick={() => {
-                  setShowFees(true);
-                  setShowDocs(false);
-                  setShowForms(false);
-                }}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold border transition-colors ${
-                  showFees
-                    ? "bg-green-500/20 border-green-500/40 text-green-300"
-                    : "bg-white/5 border-white/10 text-white/80 hover:bg-white/10"
-                }`}
-                type="button"
-              >
-                <CreditCard className="w-4 h-4" />
-                {ui.feesLabel}
-              </button>
-
-              <button
-                onClick={() => setShowChat(!showChat)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold border transition-colors ${
-                  showChat
-                    ? "bg-secondary/20 border-secondary/40 text-secondary"
-                    : "bg-white/5 border-white/10 text-white/80 hover:bg-white/10"
-                }`}
-                type="button"
-              >
-                <MessageSquare className="w-4 h-4" />
-                Chat
-              </button>
-            </div>
-
-            <div className="px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-[10px] text-white/60">
-              © 2026 GestoriaCitaIA
-            </div>
           </div>
-        </div>
 
-        <AnimatePresence>
-          {showDocs && (
-            <motion.div
-              initial={{ opacity: 0, y: 40 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 40 }}
-              className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 w-full max-w-md px-4"
-            >
-              <div
-                className="rounded-2xl border border-white/15 shadow-2xl overflow-hidden"
-                style={{ background: "#1a2236" }}
-              >
-                <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
+          <div className="flex flex-col gap-4">
+            <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm p-4">
+              <p className="text-sm text-white/90">{ui.simpleInfo}</p>
+            </div>
+
+            <div className="rounded-2xl border border-white/10 bg-white shadow-xl overflow-hidden">
+              <div className="px-5 py-4 border-b border-gray-200">
+                <p className="text-xs font-bold text-gray-700 uppercase tracking-wide mb-2">
+                  {ui.situationTitle}
+                </p>
+                <select
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  value={selectedSituacion}
+                  onChange={(e) => setSelectedSituacion(e.target.value)}
+                >
+                  {SITUACIONES.map((s) => (
+                    <option key={s.value} value={s.value}>
+                      {s.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="px-5 py-4 border-b border-gray-200">
+                <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-2">
-                    <FileText className="w-4 h-4 text-primary" />
-                    <span className="font-bold text-sm text-white">
-                      {ui.requiredDocuments}
+                    <FileUp className="w-4 h-4 text-primary" />
+                    <span className="text-sm font-bold text-gray-800">
+                      {ui.docsPanelTitle}
                     </span>
                   </div>
 
-                  <button
-                    onClick={() => setShowDocs(false)}
-                    className="w-6 h-6 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/60 text-xs"
-                    type="button"
-                  >
-                    ✕
-                  </button>
+                  <div className="text-xs text-gray-500">
+                    {docsOk}/{docsTotal}
+                  </div>
                 </div>
 
-                <div className="px-5 py-4 space-y-2.5 max-h-72 overflow-y-auto">
-                  {DOCS_REQUERIDOS.map((doc) => (
-                    <div key={doc.id} className="flex items-center gap-3">
-                      <span
-                        className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 text-xs font-bold ${
+                <div className="mt-3 w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-green-500 to-emerald-400 rounded-full transition-all duration-500"
+                    style={{
+                      width: `${(docsOk / Math.max(1, docsTotal)) * 100}%`,
+                    }}
+                  />
+                </div>
+
+                <div className="mt-4 grid grid-cols-3 gap-2 text-center">
+                  <div className="rounded-xl bg-green-50 border border-green-100 py-2">
+                    <p className="text-sm font-black text-green-700">{docsOk}</p>
+                    <p className="text-[11px] text-green-700/70">{ui.uploadedPdfs}</p>
+                  </div>
+                  <div className="rounded-xl bg-blue-50 border border-blue-100 py-2">
+                    <p className="text-sm font-black text-blue-700">{docsOk}</p>
+                    <p className="text-[11px] text-blue-700/70">{ui.aiVerified}</p>
+                  </div>
+                  <div className="rounded-xl bg-amber-50 border border-amber-100 py-2">
+                    <p className="text-sm font-black text-amber-700">
+                      {docsWarn > 0 ? docsWarn : allReady ? "✓" : docsTotal - docsOk}
+                    </p>
+                    <p className="text-[11px] text-amber-700/70">
+                      {allReady ? ui.ready : ui.pending}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="px-5 py-4">
+                <div className="space-y-2">
+                  {docs.map((doc) => (
+                    <div
+                      key={doc.id}
+                      className="flex items-center gap-3 rounded-xl border border-gray-200 px-3 py-3"
+                    >
+                      <div
+                        className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
                           doc.estado === "ok"
-                            ? "bg-green-500/20 text-green-400"
+                            ? "bg-green-100"
                             : doc.estado === "warn"
-                            ? "bg-yellow-500/20 text-yellow-400"
-                            : "bg-red-500/20 text-red-400"
+                            ? "bg-amber-100"
+                            : "bg-red-100"
                         }`}
                       >
-                        {doc.estado === "ok"
-                          ? "✓"
-                          : doc.estado === "warn"
-                          ? "!"
-                          : "✗"}
-                      </span>
+                        {doc.estado === "ok" && (
+                          <CheckCircle2 className="w-4 h-4 text-green-600" />
+                        )}
+                        {doc.estado === "warn" && (
+                          <AlertTriangle className="w-4 h-4 text-amber-600" />
+                        )}
+                        {doc.estado === "missing" && (
+                          <Clock className="w-4 h-4 text-red-500" />
+                        )}
+                      </div>
 
-                      <span className="text-sm text-white/90">{doc.nombre}</span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-gray-800">
+                          {doc.nombre}
+                        </p>
+                        <p className="text-xs text-gray-500 truncate">
+                          {doc.archivo ? doc.archivo : ui.notUploadedRequired}
+                        </p>
 
-                      <span
-                        className={`ml-auto text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0 ${
-                          doc.estado === "ok"
-                            ? "bg-green-500/15 text-green-400"
-                            : doc.estado === "warn"
-                            ? "bg-yellow-500/15 text-yellow-400"
-                            : "bg-red-500/15 text-red-400"
-                        }`}
-                      >
-                        {doc.estado === "ok"
-                          ? ui.ready
-                          : doc.estado === "warn"
-                          ? ui.review
-                          : ui.pending}
-                      </span>
+                        {!!doc.detectedType && (
+                          <p className="text-[11px] text-gray-400 truncate">
+                            {ui.detected}: {getDocumentLabel(doc.detectedType)}
+                          </p>
+                        )}
+
+                        {!!doc.note && (
+                          <p className="text-[11px] text-gray-400 truncate">
+                            {doc.note}
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="shrink-0">
+                        {doc.estado === "ok" && (
+                          <span className="text-xs font-bold text-green-600">
+                            {ui.ready}
+                          </span>
+                        )}
+                        {doc.estado === "warn" && (
+                          <span className="text-xs font-bold text-amber-600">
+                            {ui.review}
+                          </span>
+                        )}
+                        {doc.estado === "missing" && (
+                          <span className="text-xs font-bold text-red-500">
+                            {ui.pending}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>
+
+                {docs.every((d) => !d.archivo) && (
+                  <p className="mt-4 text-sm text-gray-500">{ui.noDocsYet}</p>
+                )}
               </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+            </div>
 
-        <AnimatePresence>
-          {showForms && (
-            <motion.div
-              initial={{ opacity: 0, y: 40 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 40 }}
-              className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 w-full max-w-md px-4"
-            >
-              <div
-                className="rounded-2xl border border-white/15 shadow-2xl overflow-hidden"
-                style={{ background: "#1a2236" }}
-              >
-                <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
-                  <div className="flex items-center gap-2">
-                    <Settings className="w-4 h-4 text-secondary" />
-                    <span className="font-bold text-sm text-white">
-                      {ui.officialForms}
-                    </span>
-                  </div>
+            {allReady && (
+              <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4">
+                <p className="text-sm font-bold text-white">{ui.goSara}</p>
+                <p className="mt-1 text-xs text-white/70">{ui.goSaraDesc}</p>
 
-                  <button
-                    onClick={() => setShowForms(false)}
-                    className="w-6 h-6 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/60 text-xs"
-                    type="button"
-                  >
-                    ✕
-                  </button>
-                </div>
-
-                <div className="px-5 py-4 space-y-3">
-                  {FORMULARIOS.length === 0 ? (
-                    <p className="text-sm text-white/70">{ui.noForms}</p>
-                  ) : (
-                    FORMULARIOS.map((form, i) => (
-                      <a
-                        key={i}
-                        href={form.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-3 p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-colors group"
-                      >
-                        <div className="w-9 h-9 rounded-lg bg-primary/15 border border-primary/30 flex items-center justify-center shrink-0">
-                          <FileText className="w-4 h-4 text-primary" />
-                        </div>
-
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs font-bold text-primary">{form.codigo}</p>
-                          <p className="text-sm text-white/80 truncate">{form.nombre}</p>
-                        </div>
-
-                        <span className="text-[10px] font-semibold text-white/40 group-hover:text-primary transition-colors shrink-0">
-                          PDF ↓
-                        </span>
-                      </a>
-                    ))
-                  )}
-
-                  <p className="text-[10px] text-white/30 text-center pt-1">
-                    {ui.source}
-                  </p>
-                </div>
+                <button
+                  onClick={goToSara}
+                  className="mt-4 inline-flex items-center gap-2 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2.5 text-sm font-bold transition-colors"
+                  type="button"
+                >
+                  {ui.goSara}
+                  <ArrowRight className="w-4 h-4" />
+                </button>
               </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        <AnimatePresence>
-          {showFees && (
-            <motion.div
-              initial={{ opacity: 0, y: 40 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 40 }}
-              className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 w-full max-w-md px-4"
-            >
-              <div
-                className="rounded-2xl border border-white/15 shadow-2xl overflow-hidden"
-                style={{ background: "#1a2236" }}
-              >
-                <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
-                  <div className="flex items-center gap-2">
-                    <CreditCard className="w-4 h-4 text-green-400" />
-                    <span className="font-bold text-sm text-white">
-                      {ui.officialFees}
-                    </span>
-                  </div>
-
-                  <button
-                    onClick={() => setShowFees(false)}
-                    className="w-6 h-6 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/60 text-xs"
-                    type="button"
-                  >
-                    ✕
-                  </button>
-                </div>
-
-                <div className="px-5 py-4 space-y-3">
-                  {TASAS.length === 0 ? (
-                    <p className="text-sm text-white/70">{ui.noFees}</p>
-                  ) : (
-                    TASAS.map((fee, i) => (
-                      <div
-                        key={i}
-                        className="p-3 rounded-xl bg-white/5 border border-white/10"
-                      >
-                        <div className="flex items-center justify-between gap-2">
-                          <p className="text-xs font-bold text-green-300">
-                            {fee.codigo}
-                          </p>
-                          <span className="text-[10px] text-white/60">
-                            {fee.obligatoria ? ui.mandatory : ui.optional}
-                          </span>
-                        </div>
-                        <p className="text-sm text-white mt-1">{fee.nombre}</p>
-                        <p className="text-xs text-white/70 mt-1">{fee.importe}</p>
-                        {fee.notes && (
-                          <p className="text-[10px] text-white/50 mt-1">
-                            {fee.notes}
-                          </p>
-                        )}
-                      </div>
-                    ))
-                  )}
-
-                  <p className="text-[10px] text-white/30 text-center pt-1">
-                    {ui.source}
-                  </p>
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+            )}
+          </div>
+        </div>
       </main>
     </div>
   );
