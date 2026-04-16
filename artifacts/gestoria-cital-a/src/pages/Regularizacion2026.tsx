@@ -7,19 +7,14 @@ import {
   Mic,
   MicOff,
   Bell,
-  CheckCircle2,
   MessageSquare,
   Send,
   Upload,
-  AlertTriangle,
   Star,
   ArrowRight,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import {
-  fileToDataUrl,
-  verifyDocument,
-} from "@/lib/verifyDocument";
+import { fileToDataUrl, verifyDocument } from "@/lib/verifyDocument";
 import {
   EXTRANJERIA_PROCEDURES,
   getProcedureByKey,
@@ -137,11 +132,6 @@ export default function Regularizacion2026() {
           "مزيان. راجعنا الوثائق ديالك ووجدنا الملف ديالك، وحتى وثيقة الهشاشة، باش يكون واجد للتقديم. إلا بغيتي دابا نكملو بالموعد، تقدر تدخل لهاد الرابط وسارة غادي تعاونك.",
         goSara: "المرور إلى سارة",
         goSaraDesc: "إلى بغيتي تكمل بالموعد، سارة غادي تعاونك.",
-        simpleInfo:
-          "هنا غادي تهضر مع محمد، ترفع الوثائق، ويتحققو مباشرة ويدخلو لملفك.",
-        cleanCardTitle: "محمد كيهز الملف ديالك",
-        cleanCardText:
-          "هضر مع محمد، ومنين يطلب منك الوثائق رفعهم من الزر اللي تحت. من بعد هو كيراجعهم ويكمل معاك حتى تكون واجد.",
       };
     }
 
@@ -183,11 +173,6 @@ export default function Regularizacion2026() {
           "Perfect. We have reviewed your documents and prepared your case, including the vulnerability document. If you want to continue with the appointment, enter this link and Sara will help you.",
         goSara: "Go to Sara",
         goSaraDesc: "If you want to continue with the appointment, Sara will help you.",
-        simpleInfo:
-          "Here you talk to Mohamed, upload documents, and they go directly into your case panel.",
-        cleanCardTitle: "Mohamed is managing your case",
-        cleanCardText:
-          "Talk to Mohamed, and when he asks for documents, upload them with the button below. He will review them and keep guiding you.",
       };
     }
 
@@ -228,11 +213,6 @@ export default function Regularizacion2026() {
         "Perfecto. Ya hemos revisado tu documentación y hemos dejado preparado tu expediente, incluido el documento de vulnerabilidad. Si ahora quieres continuar con la cita, entra en este enlace y Sara te ayudará.",
       goSara: "Ir con Sara",
       goSaraDesc: "Si quieres seguir con la cita, Sara te ayuda.",
-      simpleInfo:
-        "Aquí hablas con Mohamed, subes documentos, y se verifican directamente dentro de tu expediente.",
-      cleanCardTitle: "Mohamed está gestionando tu expediente",
-      cleanCardText:
-        "Habla con Mohamed y, cuando te pida documentos, súbelos desde el botón de abajo. Él los revisa y sigue contigo paso a paso.",
     };
   }, [safeLang]);
 
@@ -894,32 +874,14 @@ export default function Regularizacion2026() {
           </div>
 
           <div className="flex flex-col gap-4">
-            <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm p-4">
-              <p className="text-sm text-white/90">{ui.simpleInfo}</p>
-            </div>
-
             <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm p-5">
               <p className="text-sm text-white font-semibold mb-2">
-                {ui.cleanCardTitle}
+                {currentProcedure.name}
               </p>
 
               <p className="text-xs text-white/70 leading-relaxed">
-                {ui.cleanCardText}
+                {ui.uploadGeneralDesc}
               </p>
-
-              <div className="mt-4">
-                <p className="text-xs text-white/60 mb-2">{currentProcedure.name}</p>
-
-                <button
-                  onClick={handleGeneralUpload}
-                  disabled={generalUploading}
-                  className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary hover:bg-primary/90 disabled:opacity-60 text-primary-foreground font-bold text-sm px-4 py-3 transition-colors"
-                  type="button"
-                >
-                  <Upload className="w-4 h-4" />
-                  {generalUploading ? ui.uploading : ui.uploadGeneral}
-                </button>
-              </div>
             </div>
 
             {allReady && (
