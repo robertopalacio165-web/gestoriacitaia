@@ -62,6 +62,7 @@ type AppointmentResult = {
   pdf_url?: string | null;
   confirmation_pdf_url?: string | null;
 };
+
 type ClientFormData = {
   fullName: string;
   phone: string;
@@ -69,6 +70,7 @@ type ClientFormData = {
   nie: string;
   city: string;
 };
+
 function OfficialBrowserBox({
   avatarImage,
   title,
@@ -126,14 +128,13 @@ function OfficialBrowserBox({
   onFormSubmit: () => void;
   formReady: boolean;
 }) {
-  
-      const formIntro =
-  lang === "darija"
-    ? "إلا بغيتي موعد، عمر المعطيات ديالك واختار نوع الموعد، ومن بعد سارة غادي تكمل معاك وتعلمك عبر واتساب منين تلقى الموعد."
-    : lang === "en"
-    ? "If you need an appointment, fill in your details and choose the appointment type. Then Sara will continue and notify you on WhatsApp as soon as an appointment is found."
-    : "Si necesitas una cita, rellena tus datos y elige el tipo de cita. Después Sara continuará y te avisará por WhatsApp en cuanto encuentre una cita.";
-  
+  const formIntro =
+    lang === "darija"
+      ? "إلا بغيتي موعد، عمر المعطيات ديالك واختار نوع الموعد، ومن بعد سارة غادي تكمل معاك وتعلمك عبر واتساب منين تلقى الموعد."
+      : lang === "en"
+      ? "If you need an appointment, fill in your details and choose the appointment type. Then Sara will continue and notify you on WhatsApp as soon as an appointment is found."
+      : "Si necesitas una cita, rellena tus datos y elige el tipo de cita. Después Sara continuará y te avisará por WhatsApp en cuanto encuentre una cita.";
+
   const confirmationIntro =
     lang === "darija"
       ? "جاك رابط التأكيد. سارة وجدات الملف باش تكمل غير التأكيد النهائي."
@@ -143,10 +144,10 @@ function OfficialBrowserBox({
 
   const savedText =
     lang === "darija"
-      ? "مزيان. المعطيات ديالك تسجلات. دابا سارة تقدر تكمل البحث على الموعد."
+      ? "ممتاز. دابا غادي نبداو نقلبو ليك على موعد بأسرع وقت ممكن. منين نلقاو الموعد غادي نعلموك عبر واتساب."
       : lang === "en"
-      ? "Perfect. Your details have been saved. Sara can now continue searching for the appointment."
-      : "Perfecto. Tus datos han quedado preparados. Ahora Sara puede continuar con la búsqueda de la cita.";
+      ? "Perfect. We will now start searching for your appointment as fast as possible. As soon as we find one, we will notify you on WhatsApp."
+      : "Perfecto. Ahora vamos a buscarte una cita lo más rápido posible. En cuanto la encontremos, te avisaremos por WhatsApp.";
 
   const searchButtonText =
     lang === "darija"
@@ -219,7 +220,9 @@ function OfficialBrowserBox({
             </div>
 
             <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 mb-4">
-              <p className="text-sm font-semibold text-[#003366] mb-2">{title}</p>
+              <p className="text-sm font-semibold text-[#003366] mb-2">
+                {title}
+              </p>
               <p className="text-xs text-gray-700 leading-relaxed">
                 {cameFromConfirmationLink ? confirmationIntro : formIntro}
               </p>
@@ -227,126 +230,126 @@ function OfficialBrowserBox({
 
             <div className="rounded-2xl border border-gray-200 bg-white p-4 sm:p-5">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-  <div>
-    <label className="block text-xs font-bold text-gray-700 mb-1">
-      {lang === "darija"
-        ? "الاسم الكامل"
-        : lang === "en"
-        ? "Full name"
-        : "Nombre completo"}
-    </label>
-    <input
-      className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-primary/40"
-      value={formData.fullName}
-      onChange={(e) => onFormChange("fullName", e.target.value)}
-      placeholder={
-        lang === "darija"
-          ? "مثال: Mourad Mouna"
-          : lang === "en"
-          ? "Example: Mourad Mouna"
-          : "Ejemplo: Mourad Mouna"
-      }
-    />
-  </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">
+                    {lang === "darija"
+                      ? "الاسم الكامل"
+                      : lang === "en"
+                      ? "Full name"
+                      : "Nombre completo"}
+                  </label>
+                  <input
+                    className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-primary/40"
+                    value={formData.fullName}
+                    onChange={(e) => onFormChange("fullName", e.target.value)}
+                    placeholder={
+                      lang === "darija"
+                        ? "مثال: Mourad Mouna"
+                        : lang === "en"
+                        ? "Example: Mourad Mouna"
+                        : "Ejemplo: Mourad Mouna"
+                    }
+                  />
+                </div>
 
-  <div>
-    <label className="block text-xs font-bold text-gray-700 mb-1">
-      {lang === "darija"
-        ? "الهاتف"
-        : lang === "en"
-        ? "Phone"
-        : "Teléfono"}
-    </label>
-    <input
-      className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-primary/40"
-      value={formData.phone}
-      onChange={(e) => onFormChange("phone", e.target.value)}
-      placeholder="+34644403748"
-    />
-  </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">
+                    {lang === "darija"
+                      ? "الهاتف"
+                      : lang === "en"
+                      ? "Phone"
+                      : "Teléfono"}
+                  </label>
+                  <input
+                    className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-primary/40"
+                    value={formData.phone}
+                    onChange={(e) => onFormChange("phone", e.target.value)}
+                    placeholder="+34644403748"
+                  />
+                </div>
 
-  <div>
-    <label className="block text-xs font-bold text-gray-700 mb-1">
-      {lang === "darija"
-        ? "البريد الإلكتروني"
-        : lang === "en"
-        ? "Email"
-        : "Email"}
-    </label>
-    <input
-      className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-primary/40"
-      value={formData.email}
-      onChange={(e) => onFormChange("email", e.target.value)}
-      placeholder={
-        lang === "darija"
-          ? "بريدك الإلكتروني"
-          : lang === "en"
-          ? "your@email.com"
-          : "correo@ejemplo.com"
-      }
-    />
-  </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">
+                    {lang === "darija"
+                      ? "البريد الإلكتروني"
+                      : lang === "en"
+                      ? "Email"
+                      : "Email"}
+                  </label>
+                  <input
+                    className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-primary/40"
+                    value={formData.email}
+                    onChange={(e) => onFormChange("email", e.target.value)}
+                    placeholder={
+                      lang === "darija"
+                        ? "بريدك الإلكتروني"
+                        : lang === "en"
+                        ? "your@email.com"
+                        : "correo@ejemplo.com"
+                    }
+                  />
+                </div>
 
-  <div>
-    <label className="block text-xs font-bold text-gray-700 mb-1">
-      {lang === "darija"
-        ? "NIE / الباسبور"
-        : lang === "en"
-        ? "NIE / Passport"
-        : "NIE / Pasaporte"}
-    </label>
-    <input
-      className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-primary/40"
-      value={formData.nie}
-      onChange={(e) => onFormChange("nie", e.target.value)}
-      placeholder="X1234567A"
-    />
-  </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">
+                    {lang === "darija"
+                      ? "NIE / الباسبور"
+                      : lang === "en"
+                      ? "NIE / Passport"
+                      : "NIE / Pasaporte"}
+                  </label>
+                  <input
+                    className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-primary/40"
+                    value={formData.nie}
+                    onChange={(e) => onFormChange("nie", e.target.value)}
+                    placeholder="X1234567A"
+                  />
+                </div>
 
-  <div>
-    <label className="block text-xs font-bold text-gray-700 mb-1">
-      {lang === "darija"
-        ? "المدينة"
-        : lang === "en"
-        ? "City"
-        : "Ciudad"}
-    </label>
-    <input
-      className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-primary/40"
-      value={formData.city}
-      onChange={(e) => onFormChange("city", e.target.value)}
-      placeholder={
-        lang === "darija"
-          ? "مثال: Madrid"
-          : lang === "en"
-          ? "Example: Madrid"
-          : "Madrid"
-      }
-    />
-  </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">
+                    {lang === "darija"
+                      ? "المدينة"
+                      : lang === "en"
+                      ? "City"
+                      : "Ciudad"}
+                  </label>
+                  <input
+                    className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-primary/40"
+                    value={formData.city}
+                    onChange={(e) => onFormChange("city", e.target.value)}
+                    placeholder={
+                      lang === "darija"
+                        ? "مثال: Madrid"
+                        : lang === "en"
+                        ? "Example: Madrid"
+                        : "Madrid"
+                    }
+                  />
+                </div>
 
-  <div>
-    <label className="block text-xs font-bold text-gray-700 mb-1">
-      {lang === "darija"
-        ? "نوع الموعد"
-        : lang === "en"
-        ? "Appointment type"
-        : "Tipo de cita"}
-    </label>
-    <select
-      className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-primary/40"
-      value={selectedTramite}
-      onChange={(e) => onSelectTramite(e.target.value)}
-    >
-      <option value="">{ui.procedurePlaceholder}</option>
-      {tramites.map((item) => (
-        <option key={item.value} value={item.value}>
-          {item.label}
-        </option>
-      ))}
-    </select>
-  </div>
-</div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">
+                    {lang === "darija"
+                      ? "نوع الموعد"
+                      : lang === "en"
+                      ? "Appointment type"
+                      : "Tipo de cita"}
+                  </label>
+                  <select
+                    className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-primary/40"
+                    value={selectedTramite}
+                    onChange={(e) => onSelectTramite(e.target.value)}
+                  >
+                    <option value="">{ui.procedurePlaceholder}</option>
+                    {tramites.map((item) => (
+                      <option key={item.value} value={item.value}>
+                        {item.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
 
               <div className="mt-4 flex flex-col sm:flex-row gap-3">
                 <button
@@ -482,15 +485,6 @@ function OfficialBrowserBox({
 
 export default function BuscarCitas() {
   const [location] = useLocation();
-    const [formData, setFormData] = useState<ClientFormData>({
-    fullName: "",
-    phone: "",
-    email: "",
-    nie: "",
-    city: "",
-  });
-
-  const [formReady, setFormReady] = useState(false);
   const [selectedTramite, setSelectedTramite] = useState("tie");
   const [step, setStep] = useState(0);
   const [muted, setMuted] = useState(false);
@@ -510,6 +504,14 @@ export default function BuscarCitas() {
   const [paymentTriggered, setPaymentTriggered] = useState(false);
   const [chatMessages, setChatMessages] = useState<ChatMsg[]>([]);
   const [chatBootstrapped, setChatBootstrapped] = useState(false);
+  const [formData, setFormData] = useState<ClientFormData>({
+    fullName: "",
+    phone: "",
+    email: "",
+    nie: "",
+    city: "",
+  });
+  const [formReady, setFormReady] = useState(false);
 
   const urlParams = useMemo(() => {
     const url = new URL(window.location.href);
@@ -645,8 +647,7 @@ export default function BuscarCitas() {
           ],
         } as Record<string, FormItem[]>,
         initialChat:
-          initialChat:
-  "السلام، أنا سارة. إلا بغيتي موعد، عمر المعطيات ديالك واختار نوع الموعد فالفورمولير، ومن بعد نكمل معاك خطوة بخطوة فالحين.",
+          "السلام، أنا سارة. إلا بغيتي موعد، عمر المعطيات ديالك واختار نوع الموعد فالفورمولير، ومن بعد نكمل معاك خطوة بخطوة فالحين.",
         online: "متصلة الآن",
         agentRole: "مستشارة المواعيد",
         procedureLabel: "الإجراء",
@@ -809,7 +810,7 @@ export default function BuscarCitas() {
           ],
         } as Record<string, FormItem[]>,
         initialChat:
-  "Hello, I’m Sara. If you need an appointment, fill in your details and choose the appointment type in the form. After that, we will continue with you step by step in real time.",
+          "Hello, I’m Sara. If you need an appointment, fill in your details and choose the appointment type in the form. After that, we will continue with you step by step in real time.",
         online: "Online",
         agentRole: "Appointments Advisor",
         procedureLabel: "PROCEDURE",
@@ -975,7 +976,7 @@ export default function BuscarCitas() {
         ],
       } as Record<string, FormItem[]>,
       initialChat:
-  "Hola, soy Sara. Si necesitas una cita, rellena tus datos y elige el tipo de cita en el formulario. Después continuamos contigo paso a paso en tiempo real.",
+        "Hola, soy Sara. Si necesitas una cita, rellena tus datos y elige el tipo de cita en el formulario. Después continuamos contigo paso a paso en tiempo real.",
       online: "En línea",
       agentRole: "Asesora de Citas",
       procedureLabel: "TRÁMITE",
@@ -1043,11 +1044,11 @@ export default function BuscarCitas() {
           highlight: selectedTramiteLabel,
         },
         {
-          text: "مزيان. عمرنا البيانات الأساسية. دابا نقدر نكملو البحث على الموعد.",
+          text: "مزيان. دابا نقدر نكملو البحث على الموعد ديالك ونشعروك فواتساب منين يبان.",
           highlight: "البحث على الموعد",
         },
         {
-          text: "إلى لقا النظام موعد، غادي نكملو التأكيد ونصيفطو ليك الإشعار.",
+          text: "إلى لقا النظام موعد، غادي نكملو التأكيد ونصيفطو ليك الإشعار النهائي.",
           highlight: "التأكيد",
         },
       ];
@@ -1060,11 +1061,11 @@ export default function BuscarCitas() {
           highlight: selectedTramiteLabel,
         },
         {
-          text: "Perfect. We already filled the basic data. Now we can continue searching for the appointment.",
-          highlight: "searching for the appointment",
+          text: "Perfect. We can now continue searching for your appointment and notify you on WhatsApp when it appears.",
+          highlight: "searching for your appointment",
         },
         {
-          text: "If the system finds an appointment, we will continue with confirmation and notification.",
+          text: "If the system finds an appointment, we will continue with confirmation and send you the final notification.",
           highlight: "confirmation",
         },
       ];
@@ -1076,11 +1077,11 @@ export default function BuscarCitas() {
         highlight: selectedTramiteLabel,
       },
       {
-        text: "Perfecto. Ya tenemos los datos básicos. Ahora podemos continuar con la búsqueda de la cita.",
-        highlight: "búsqueda de la cita",
+        text: "Perfecto. Ahora ya podemos continuar con la búsqueda de tu cita y avisarte por WhatsApp cuando aparezca.",
+        highlight: "búsqueda de tu cita",
       },
       {
-        text: "Si el sistema encuentra una cita, continuaremos con la confirmación y el aviso.",
+        text: "Si el sistema encuentra una cita, continuaremos con la confirmación y te enviaremos el aviso final.",
         highlight: "confirmación",
       },
     ];
@@ -1134,6 +1135,7 @@ export default function BuscarCitas() {
 
     loadProfile();
   }, []);
+
   useEffect(() => {
     setFormData((prev) => ({
       ...prev,
@@ -1146,99 +1148,17 @@ export default function BuscarCitas() {
 
   useEffect(() => {
     if (!urlParams.appointmentId && !urlParams.token) return;
-    setFormReady(true);
-  }, [urlParams.appointmentId, urlParams.token]);
-
-  const handleFormChange = (field: keyof ClientFormData, value: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
-  };
-
-  const handleFormSubmit = () => {
-    if (!formData.fullName.trim() || !formData.phone.trim() || !formData.city.trim()) {
-      toast({
-        title: lang === "en" ? "Missing data" : lang === "darija" ? "كاينين بيانات ناقصين" : "Faltan datos",
-        description:
-          lang === "en"
-            ? "Please fill in name, phone and city before continuing."
-            : lang === "darija"
-            ? "عمر الاسم والهاتف والمدينة قبل ما تكمل."
-            : "Rellena nombre, teléfono y ciudad antes de continuar.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!selectedTramite) {
-      toast({
-        title: lang === "en" ? "Select procedure" : lang === "darija" ? "اختار الإجراء" : "Selecciona trámite",
-        description:
-          lang === "en"
-            ? "Choose the appointment type before continuing."
-            : lang === "darija"
-            ? "اختار نوع الموعد قبل ما تكمل."
-            : "Elige el tipo de cita antes de continuar.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setFormReady(true);
-    setShowChat(true);
-    setStep(1);
-
-    setChatMessages((prev) => {
-      const alreadyExists = prev.some((msg) =>
-        msg.text.includes("Tus datos ya han sido preparados") ||
-        msg.text.includes("Your details have been prepared") ||
-        msg.text.includes("المعطيات ديالك وجدات")
-      );
-
-      if (alreadyExists) return prev;
-
-      return [
-        ...prev,
-        {
-          from: "agent",
-          text:
-            lang === "darija"
-              text:
-  lang === "darija"
-    ? "ممتاز. دابا غادي نبداو نقلبو ليك على موعد بأسرع وقت ممكن. منين نلقاو الموعد غادي نعلموك عبر واتساب."
-    : lang === "en"
-    ? "Perfect. We will now start searching for your appointment as fast as possible. As soon as we find one, we will notify you on WhatsApp."
-    : "Perfecto. Ahora vamos a buscarte una cita lo más rápido posible. En cuanto la encontremos, te avisaremos por WhatsApp.",
-          ts: Date.now(),
-        },
-      ];
-    });
-
-    toast({
-      title:
-        lang === "en"
-          ? "Data saved"
-          : lang === "darija"
-          ? "تم حفظ البيانات"
-          : "Datos guardados",
-      description:
-        lang === "en"
-          ? "Sara can now continue with the appointment search."
-          : lang === "darija"
-          ? "سارة دابا تقدر تكمل البحث على الموعد."
-          : "Sara ya puede continuar con la búsqueda de la cita.",
-    });
-  };
-  useEffect(() => {
-    if (!urlParams.appointmentId && !urlParams.token) return;
 
     setShowChat(true);
     setStep(1);
+    setFormReady(true);
 
     setChatMessages((prev) => {
-      const alreadyExists = prev.some((msg) =>
-        msg.text.includes("He cargado tu enlace de confirmación")
+      const alreadyExists = prev.some(
+        (msg) =>
+          msg.text.includes("enlace de confirmación") ||
+          msg.text.includes("confirmation link") ||
+          msg.text.includes("رابط التأكيد")
       );
 
       if (alreadyExists) return prev;
@@ -1270,7 +1190,7 @@ export default function BuscarCitas() {
 
         if (Array.isArray(parsed) && parsed.length > 0) {
           setChatMessages((prev) => {
-            if (prev.length > 0 && (urlParams.appointmentId || urlParams.token)) {
+            if (prev.length > 0) {
               return prev;
             }
             return parsed;
@@ -1302,11 +1222,12 @@ export default function BuscarCitas() {
       ];
 
       setChatMessages((prev) => {
-        if (prev.length > 0 && (urlParams.appointmentId || urlParams.token)) {
+        if (prev.length > 0) {
           return prev;
         }
         return freshChat;
       });
+
       setUserMessageCount(0);
       setPaymentTriggered(false);
       setChatBootstrapped(true);
@@ -1314,7 +1235,7 @@ export default function BuscarCitas() {
       console.error("Error cargando historial de Sara:", error);
       setChatBootstrapped(true);
     }
-  }, [chatStorageKey, ui.initialChat, urlParams.appointmentId, urlParams.token]);
+  }, [chatStorageKey, ui.initialChat]);
 
   useEffect(() => {
     if (!chatBootstrapped || !chatStorageKey || chatMessages.length === 0) {
@@ -1328,12 +1249,99 @@ export default function BuscarCitas() {
     }
   }, [chatMessages, chatBootstrapped, chatStorageKey]);
 
+  const handleFormChange = (field: keyof ClientFormData, value: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
   const handleTramiteClick = (value: string) => {
     setSelectedTramite(value);
+  };
 
-    if (step === 0 && planActivo) {
-      setStep(1);
+  const handleFormSubmit = () => {
+    if (!formData.fullName.trim() || !formData.phone.trim() || !formData.city.trim()) {
+      toast({
+        title:
+          lang === "en"
+            ? "Missing data"
+            : lang === "darija"
+            ? "كاينين بيانات ناقصين"
+            : "Faltan datos",
+        description:
+          lang === "en"
+            ? "Please fill in name, phone and city before continuing."
+            : lang === "darija"
+            ? "عمر الاسم والهاتف والمدينة قبل ما تكمل."
+            : "Rellena nombre, teléfono y ciudad antes de continuar.",
+        variant: "destructive",
+      });
+      return;
     }
+
+    if (!selectedTramite) {
+      toast({
+        title:
+          lang === "en"
+            ? "Select procedure"
+            : lang === "darija"
+            ? "اختار الإجراء"
+            : "Selecciona trámite",
+        description:
+          lang === "en"
+            ? "Choose the appointment type before continuing."
+            : lang === "darija"
+            ? "اختار نوع الموعد قبل ما تكمل."
+            : "Elige el tipo de cita antes de continuar.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setFormReady(true);
+    setShowChat(true);
+    setStep(1);
+
+    setChatMessages((prev) => {
+      const alreadyExists = prev.some(
+        (msg) =>
+          msg.text.includes("Ahora vamos a buscarte una cita") ||
+          msg.text.includes("We will now start searching") ||
+          msg.text.includes("دابا غادي نبداو نقلبو ليك")
+      );
+
+      if (alreadyExists) return prev;
+
+      return [
+        ...prev,
+        {
+          from: "agent",
+          text:
+            lang === "darija"
+              ? "ممتاز. دابا غادي نبداو نقلبو ليك على موعد بأسرع وقت ممكن. منين نلقاو الموعد غادي نعلموك عبر واتساب."
+              : lang === "en"
+              ? "Perfect. We will now start searching for your appointment as fast as possible. As soon as we find one, we will notify you on WhatsApp."
+              : "Perfecto. Ahora vamos a buscarte una cita lo más rápido posible. En cuanto la encontremos, te avisaremos por WhatsApp.",
+          ts: Date.now(),
+        },
+      ];
+    });
+
+    toast({
+      title:
+        lang === "en"
+          ? "Data saved"
+          : lang === "darija"
+          ? "تم حفظ البيانات"
+          : "Datos guardados",
+      description:
+        lang === "en"
+          ? "Sara can now continue with the appointment search."
+          : lang === "darija"
+          ? "سارة دابا تقدر تكمل البحث على الموعد."
+          : "Sara ya puede continuar con la búsqueda de la cita.",
+    });
   };
 
   const handleSendChat = async () => {
@@ -1495,11 +1503,6 @@ export default function BuscarCitas() {
     });
   };
 
-  const profileNie = profile?.nie?.trim() || "";
-  const profileName = profile?.full_name?.trim() || "";
-  const profilePhone = profile?.phone?.trim() || "";
-  const profileEmail = profile?.email?.trim() || "";
-
   const finalLocator = appointmentData?.locator || "ESP-2026-034821";
   const finalDate =
     appointmentData?.date ||
@@ -1520,7 +1523,8 @@ export default function BuscarCitas() {
     appointmentData?.confirmation_pdf_url || appointmentData?.pdf_url || null;
 
   const officialUrl = "icp.administracionelectronica.gob.es";
-  const cameFromConfirmationLink = !!urlParams.appointmentId || !!urlParams.token;
+  const cameFromConfirmationLink =
+    !!urlParams.appointmentId || !!urlParams.token;
 
   return (
     <div className="min-h-screen bg-background text-foreground relative flex flex-col">
@@ -1850,10 +1854,6 @@ export default function BuscarCitas() {
             url={officialUrl}
             selectedTramiteLabel={selectedTramiteLabel}
             profileLoading={profileLoading}
-            profileNie={profileNie}
-            profileName={profileName}
-            profilePhone={profilePhone}
-            profileEmail={profileEmail}
             ui={ui}
             step={step}
             confirmed={confirmed}
@@ -1887,7 +1887,7 @@ export default function BuscarCitas() {
             isPending={scheduleMutation.isPending}
             lang={lang}
             cameFromConfirmationLink={cameFromConfirmationLink}
-             formData={formData}
+            formData={formData}
             onFormChange={handleFormChange}
             onFormSubmit={handleFormSubmit}
             formReady={formReady}
