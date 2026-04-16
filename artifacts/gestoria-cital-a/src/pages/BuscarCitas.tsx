@@ -647,7 +647,6 @@ export default function BuscarCitas() {
           ],
         } as Record<string, FormItem[]>,
         initialChat:
-         initialChat:
   "السلام، أنا سارة. باش تشد موعد، عمّر ليا المعطيات ديالك فـ 5 ثواني واختار نوع الموعد، وغادي نكملو إن شاء الله الإجراءات خطوة بخطوة.",
         online: "متصلة الآن",
         agentRole: "مستشارة المواعيد",
