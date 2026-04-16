@@ -12,6 +12,20 @@ export default function Confirmar() {
     };
   }, []);
 
+  const handleConfirm = () => {
+    const qs = new URLSearchParams();
+
+    if (params.token) {
+      qs.set("token", params.token);
+    }
+
+    if (params.appointmentId) {
+      qs.set("appointment_id", params.appointmentId);
+    }
+
+    setLocation(`/buscar-citas${qs.toString() ? `?${qs.toString()}` : ""}`);
+  };
+
   return (
     <div className="min-h-screen bg-[#f6f7fb] px-4 py-8">
       <div className="mx-auto max-w-3xl">
@@ -86,7 +100,7 @@ export default function Confirmar() {
             <button
               type="button"
               className="inline-flex items-center justify-center rounded-xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700"
-              onClick={() => alert("Siguiente paso: conectar confirmación real")}
+              onClick={handleConfirm}
             >
               Confirmar cita ahora
             </button>
