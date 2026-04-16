@@ -1,7 +1,3 @@
-import OpenAI from "openai";
-
-type ChatRole = "system" | "user" | "assistant";
-
 type ChatHistoryItem = {
   from: "agent" | "user";
   text: string;
@@ -18,9 +14,8 @@ type EnviarMensajeSaraInput = {
   context?: string;
 };
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+const OPENAI_API_KEY =
+  process.env.OPENAI_API_KEY || process.env.VITE_OPENAI_API_KEY || "";
 
 const SARA_KNOWLEDGE = {
   citas: {
@@ -65,42 +60,6 @@ const SARA_KNOWLEDGE = {
       en: "Family reunification or family-related procedure.",
     },
   },
-
-  regularizacion: {
-    es: [
-      "La regularización extraordinaria solo debe explicarse con prudencia y basándose en fuentes oficiales integradas por GestoriaCitaIA.",
-      "No prometer aprobación ni inventar requisitos.",
-      "Si el cliente pregunta por padrón, vulnerabilidad, informe social o ayuntamiento, explicar que puede depender de la ciudad y del documento concreto que le falte.",
-      "Si el cliente necesita revisión documental o preparación de expediente, derivar a Mohamed.",
-    ],
-    ar: [
-      "خاص شرح التسوية الاستثنائية يكون بحذر وبالاعتماد فقط على المعلومات الرسمية المدمجة فـ GestoriaCitaIA.",
-      "ممنوع الوعد بالقبول أو اختراع الشروط.",
-      "إلا سولا على السكن أو الهشاشة أو التقرير الاجتماعي أو البلدية، خاصك توضحي أن الأمر يقدر يختلف حسب المدينة والوثيقة الناقصة.",
-      "إلا كان محتاج مراجعة الوثائق أو تحضير الملف، حوليه لمحمد.",
-    ],
-    en: [
-      "Extraordinary regularization must be explained carefully and only using official information integrated by GestoriaCitaIA.",
-      "Do not promise approval or invent requirements.",
-      "If the client asks about registration, vulnerability, social report or city hall, explain that it can depend on the city and on the missing document.",
-      "If the client needs document review or file preparation, transfer to Mohamed.",
-    ],
-  },
-
-  ayuntamiento: {
-    es: [
-      "Para padrón, histórico de empadronamiento, convivencia o algunos informes sociales, puede intervenir el ayuntamiento o servicios sociales.",
-      "No afirmar una regla única para toda España: depende de la ciudad.",
-    ],
-    ar: [
-      "بالنسبة للسكن أو التاريخ ديال السكن أو السكن الجماعي أو بعض التقارير الاجتماعية، ممكن يتدخل المجلس البلدي أو الخدمات الاجتماعية.",
-      "ممنوع تقولي قاعدة وحدة على جميع المدن فإسبانيا: الأمر يختلف حسب المدينة.",
-    ],
-    en: [
-      "For registration, historical registration, cohabitation or some social reports, city hall or social services may be involved.",
-      "Do not state one single rule for all Spain: it depends on the city.",
-    ],
-  },
 };
 
 function buildKnowledgeSnippet(
@@ -110,37 +69,11 @@ function buildKnowledgeSnippet(
   const key = (procedureKey || "").trim() as keyof typeof SARA_KNOWLEDGE.citas;
   const cita = key && SARA_KNOWLEDGE.citas[key];
 
-  const regularizacion =
-    lang === "darija"
-      ? SARA_KNOWLEDGE.regularizacion.ar
-      : lang === "en"
-      ? SARA_KNOWLEDGE.regularizacion.en
-      : SARA_KNOWLEDGE.regularizacion.es;
+  if (!cita) return "";
 
-  const ayuntamiento =
-    lang === "darija"
-      ? SARA_KNOWLEDGE.ayuntamiento.ar
-      : lang === "en"
-      ? SARA_KNOWLEDGE.ayuntamiento.en
-      : SARA_KNOWLEDGE.ayuntamiento.es;
-
-  const citaText = cita
-    ? lang === "darija"
-      ? cita.ar
-      : lang === "en"
-      ? cita.en
-      : cita.es
-    : "";
-
-  return [
-    citaText ? `TRÁMITE SELECCIONADO:\n- ${citaText}` : "",
-    "REGULARIZACIÓN EXTRAORDINARIA:",
-    ...regularizacion.map((x) => `- ${x}`),
-    "AYUNTAMIENTO / SERVICIOS SOCIALES:",
-    ...ayuntamiento.map((x) => `- ${x}`),
-  ]
-    .filter(Boolean)
-    .join("\n");
+  if (lang === "darija") return cita.ar;
+  if (lang === "en") return cita.en;
+  return cita.es;
 }
 
 function buildSaraSystemPrompt(params: {
@@ -163,73 +96,33 @@ Tu estilo:
 - profesional
 - tranquila
 - cero robótica
-- cero burocrática
 - frases cortas
 - una sola instrucción o una sola pregunta útil por respuesta
 
-REGLA MUY IMPORTANTE:
-Si el cliente ya tiene un formulario visible en pantalla para rellenar:
-- NO le pidas primero el nombre por chat
-- NO le pidas primero el teléfono por chat
-- NO le preguntes cosas que ya puede completar en el formulario
-- en ese caso invítale a rellenar los datos y elegir el tipo de cita, y luego continúa
-
-REGLA DE IDIOMA:
-- Si el cliente escribe en darija, responde en darija marroquí con letras árabes
-- Si el cliente escribe en español, responde en español
-- Si el cliente escribe en inglés, responde en inglés
+REGLAS:
+- Si el cliente ya tiene un formulario visible, NO le pidas primero nombre o teléfono por chat
+- Si escribe en darija, responde en darija marroquí con letras árabes
+- Si escribe en español, responde en español
+- Si escribe en inglés, responde en inglés
 - Si escribe "salam", "slm" o "سلام", responde: "وعليكم السلام، مرحبا بيك. باش بغيتي نعاونك؟"
-- Nunca uses darija con letras latinas
-
-FORMA DE TRABAJAR:
-- No charles por charlar
-- Lleva al cliente al siguiente paso práctico
-- No repitas la misma pregunta
-- No inventes citas ni disponibilidad
+- No inventes citas
 - No inventes requisitos legales
 - No prometas aprobación
-- Si no sabes algo con certeza, dilo claro y sigue ayudando
-
-OBJETIVO:
-- ayudar a pedir cita
-- ayudar a elegir el tipo correcto de cita
-- decir claramente qué pasa en cada momento
-- avisar de que se notificará por WhatsApp cuando aparezca una cita
-- acompañar hasta la confirmación final
-
-CUANDO EL CLIENTE YA RELLENÓ DATOS:
-Puedes responder cosas como:
-- "Perfecto. Ahora vamos a buscarte una cita lo más rápido posible. En cuanto la encontremos, te avisaremos por WhatsApp."
-- en darija: "ممتاز. دابا غادي نبداو نقلبو ليك على موعد بأسرع وقت ممكن. منين نلقاو الموعد غادي نعلموك عبر واتساب."
-
-CUANDO APARECE UNA CITA:
-- "Perfecto, ha aparecido una cita. Entra ahora a confirmarla y seguimos contigo."
-- darija: "مزيان، بان موعد دابا. دخل أكد الموعد ونكملو معاك."
-
-CUANDO EL CLIENTE HABLA DE EXPEDIENTE, DOCUMENTOS, REGULARIZACIÓN DOCUMENTAL O PREPARACIÓN DE PAPELES:
-- deriva a Mohamed de forma natural
-- ejemplo español: "Perfecto. Mohamed seguirá contigo para preparar el expediente paso a paso."
-- ejemplo darija: "مزيان، محمد غادي يكمل معاك ويجهز الملف ديالك خطوة بخطوة."
-
-REGLA DE PAGO:
-Si aún no ha pagado y ya hubo algo de conversación útil, puedes recordarlo de forma natural:
-- español: "Para continuar con tu trámite, activa el servicio y seguimos contigo paso a paso."
-- darija: "باش نكملو ونخدمو على الملف ديالك، خاصك تفعل الخدمة. منين تخلص نكملو معاك مباشرة."
+- Si habla de expediente o documentos complejos, puedes derivar a Mohamed
+- Si ya dejó sus datos, recuérdale que se le avisará por WhatsApp cuando aparezca una cita
 
 CONTEXTO ACTUAL:
-- idioma actual de interfaz: ${lang}
+- idioma UI: ${lang}
 - procedureKey: ${procedureKey || "vacío"}
 - procedureLabel: ${procedureLabel || "vacío"}
 - context: ${context || "vacío"}
 
-CONOCIMIENTO INTERNO:
-${knowledge}
+TRÁMITE SELECCIONADO:
+${knowledge || "No especificado"}
 
-INSTRUCCIÓN FINAL:
-Responde SIEMPRE como una persona real.
+Responde como persona real.
 No respondas largo.
-No hagas listas salvo que sea imprescindible.
-Termina casi siempre con una instrucción clara o una pregunta simple.
+Termina con un siguiente paso claro o una pregunta simple.
 `;
 }
 
@@ -242,7 +135,7 @@ function normalizeHistory(history?: ChatHistoryItem[]) {
     .map((item) => ({
       role: item.from === "user" ? "user" : "assistant",
       content: item.text.trim(),
-    })) as Array<{ role: ChatRole; content: string }>;
+    }));
 }
 
 export async function enviarMensajeSara({
@@ -255,6 +148,10 @@ export async function enviarMensajeSara({
   history = [],
   context = "buscar_citas",
 }: EnviarMensajeSaraInput): Promise<string> {
+  if (!OPENAI_API_KEY) {
+    throw new Error("Falta OPENAI_API_KEY o VITE_OPENAI_API_KEY");
+  }
+
   const systemPrompt = buildSaraSystemPrompt({
     lang,
     procedureKey,
@@ -264,12 +161,12 @@ export async function enviarMensajeSara({
 
   const messages = [
     {
-      role: "system" as ChatRole,
+      role: "system",
       content: systemPrompt,
     },
     ...normalizeHistory(history),
     {
-      role: "user" as ChatRole,
+      role: "user",
       content: [
         `MENSAJE DEL CLIENTE: ${message}`,
         `IDIOMA UI: ${lang}`,
@@ -281,23 +178,35 @@ export async function enviarMensajeSara({
     },
   ];
 
-  const response = await openai.chat.completions.create({
-    model: "gpt-5.4-mini",
-    temperature: 0.6,
-    messages,
+  const res = await fetch("https://api.openai.com/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${OPENAI_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: "gpt-4.1-mini",
+      temperature: 0.6,
+      messages,
+    }),
   });
 
-  const reply = response.choices?.[0]?.message?.content?.trim();
+  if (!res.ok) {
+    const errorText = await res.text();
+    throw new Error(`Error OpenAI Sara: ${errorText}`);
+  }
+
+  const data = await res.json();
+
+  const reply = data?.choices?.[0]?.message?.content?.trim();
 
   if (!reply) {
     if (lang === "darija") {
       return "سمح ليا، وقع مشكل بسيط. كتب ليا سؤالك بطريقة قصيرة ونكملو.";
     }
-
     if (lang === "en") {
       return "Sorry, there was a small issue. Write your question briefly and we continue.";
     }
-
     return "Lo siento, hubo un pequeño problema. Escríbeme tu duda de forma breve y continuamos.";
   }
 
