@@ -126,13 +126,14 @@ function OfficialBrowserBox({
   onFormSubmit: () => void;
   formReady: boolean;
 }) {
-  const formIntro =
-    lang === "darija"
-      ? "عمر المعطيات الأساسية واختار نوع الموعد. من بعد سارة غادي تكمل معاك البحث والتأكيد."
-      : lang === "en"
-      ? "Fill in the basic details and choose the appointment type. Then Sara will continue with the search and confirmation."
-      : "Rellena los datos básicos y elige el tipo de cita. Después Sara continuará con la búsqueda y la confirmación.";
-
+  
+      const formIntro =
+  lang === "darija"
+    ? "إلا بغيتي موعد، عمر المعطيات ديالك واختار نوع الموعد، ومن بعد سارة غادي تكمل معاك وتعلمك عبر واتساب منين تلقى الموعد."
+    : lang === "en"
+    ? "If you need an appointment, fill in your details and choose the appointment type. Then Sara will continue and notify you on WhatsApp as soon as an appointment is found."
+    : "Si necesitas una cita, rellena tus datos y elige el tipo de cita. Después Sara continuará y te avisará por WhatsApp en cuanto encuentre una cita.";
+  
   const confirmationIntro =
     lang === "darija"
       ? "جاك رابط التأكيد. سارة وجدات الملف باش تكمل غير التأكيد النهائي."
@@ -226,84 +227,126 @@ function OfficialBrowserBox({
 
             <div className="rounded-2xl border border-gray-200 bg-white p-4 sm:p-5">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">
-                    Nombre completo
-                  </label>
-                  <input
-                    className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-primary/40"
-                    value={formData.fullName}
-                    onChange={(e) => onFormChange("fullName", e.target.value)}
-                    placeholder="Ejemplo: Mourad Mouna"
-                  />
-                </div>
+  <div>
+    <label className="block text-xs font-bold text-gray-700 mb-1">
+      {lang === "darija"
+        ? "الاسم الكامل"
+        : lang === "en"
+        ? "Full name"
+        : "Nombre completo"}
+    </label>
+    <input
+      className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-primary/40"
+      value={formData.fullName}
+      onChange={(e) => onFormChange("fullName", e.target.value)}
+      placeholder={
+        lang === "darija"
+          ? "مثال: Mourad Mouna"
+          : lang === "en"
+          ? "Example: Mourad Mouna"
+          : "Ejemplo: Mourad Mouna"
+      }
+    />
+  </div>
 
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">
-                    Teléfono
-                  </label>
-                  <input
-                    className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-primary/40"
-                    value={formData.phone}
-                    onChange={(e) => onFormChange("phone", e.target.value)}
-                    placeholder="+34644403748"
-                  />
-                </div>
+  <div>
+    <label className="block text-xs font-bold text-gray-700 mb-1">
+      {lang === "darija"
+        ? "الهاتف"
+        : lang === "en"
+        ? "Phone"
+        : "Teléfono"}
+    </label>
+    <input
+      className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-primary/40"
+      value={formData.phone}
+      onChange={(e) => onFormChange("phone", e.target.value)}
+      placeholder="+34644403748"
+    />
+  </div>
 
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">
-                    Email
-                  </label>
-                  <input
-                    className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-primary/40"
-                    value={formData.email}
-                    onChange={(e) => onFormChange("email", e.target.value)}
-                    placeholder="correo@ejemplo.com"
-                  />
-                </div>
+  <div>
+    <label className="block text-xs font-bold text-gray-700 mb-1">
+      {lang === "darija"
+        ? "البريد الإلكتروني"
+        : lang === "en"
+        ? "Email"
+        : "Email"}
+    </label>
+    <input
+      className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-primary/40"
+      value={formData.email}
+      onChange={(e) => onFormChange("email", e.target.value)}
+      placeholder={
+        lang === "darija"
+          ? "بريدك الإلكتروني"
+          : lang === "en"
+          ? "your@email.com"
+          : "correo@ejemplo.com"
+      }
+    />
+  </div>
 
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">
-                    NIE / Pasaporte
-                  </label>
-                  <input
-                    className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-primary/40"
-                    value={formData.nie}
-                    onChange={(e) => onFormChange("nie", e.target.value)}
-                    placeholder="X1234567A"
-                  />
-                </div>
+  <div>
+    <label className="block text-xs font-bold text-gray-700 mb-1">
+      {lang === "darija"
+        ? "NIE / الباسبور"
+        : lang === "en"
+        ? "NIE / Passport"
+        : "NIE / Pasaporte"}
+    </label>
+    <input
+      className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-primary/40"
+      value={formData.nie}
+      onChange={(e) => onFormChange("nie", e.target.value)}
+      placeholder="X1234567A"
+    />
+  </div>
 
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">
-                    Ciudad
-                  </label>
-                  <input
-                    className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-primary/40"
-                    value={formData.city}
-                    onChange={(e) => onFormChange("city", e.target.value)}
-                    placeholder="Madrid"
-                  />
-                </div>
+  <div>
+    <label className="block text-xs font-bold text-gray-700 mb-1">
+      {lang === "darija"
+        ? "المدينة"
+        : lang === "en"
+        ? "City"
+        : "Ciudad"}
+    </label>
+    <input
+      className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-primary/40"
+      value={formData.city}
+      onChange={(e) => onFormChange("city", e.target.value)}
+      placeholder={
+        lang === "darija"
+          ? "مثال: Madrid"
+          : lang === "en"
+          ? "Example: Madrid"
+          : "Madrid"
+      }
+    />
+  </div>
 
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">
-                    Tipo de cita
-                  </label>
-                  <select
-                    className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-primary/40"
-                    value={selectedTramite}
-                    onChange={(e) => onSelectTramite(e.target.value)}
-                  >
-                    <option value="">{ui.procedurePlaceholder}</option>
-                    {tramites.map((item) => (
-                      <option key={item.value} value={item.value}>
-                        {item.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
+  <div>
+    <label className="block text-xs font-bold text-gray-700 mb-1">
+      {lang === "darija"
+        ? "نوع الموعد"
+        : lang === "en"
+        ? "Appointment type"
+        : "Tipo de cita"}
+    </label>
+    <select
+      className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-primary/40"
+      value={selectedTramite}
+      onChange={(e) => onSelectTramite(e.target.value)}
+    >
+      <option value="">{ui.procedurePlaceholder}</option>
+      {tramites.map((item) => (
+        <option key={item.value} value={item.value}>
+          {item.label}
+        </option>
+      ))}
+    </select>
+  </div>
+</div>
 
               <div className="mt-4 flex flex-col sm:flex-row gap-3">
                 <button
@@ -602,7 +645,8 @@ export default function BuscarCitas() {
           ],
         } as Record<string, FormItem[]>,
         initialChat:
-          "وعليكم السلام، مرحبا بيك فـ GestoriaCitaIA. باش بغيتي نعاونك؟",
+          initialChat:
+  "السلام، أنا سارة. إلا بغيتي موعد، عمر المعطيات ديالك واختار نوع الموعد فالفورمولير، ومن بعد نكمل معاك خطوة بخطوة فالحين.",
         online: "متصلة الآن",
         agentRole: "مستشارة المواعيد",
         procedureLabel: "الإجراء",
@@ -764,7 +808,8 @@ export default function BuscarCitas() {
             },
           ],
         } as Record<string, FormItem[]>,
-        initialChat: "Hello, welcome to GestoriaCitaIA. How can I help you?",
+        initialChat:
+  "Hello, I’m Sara. If you need an appointment, fill in your details and choose the appointment type in the form. After that, we will continue with you step by step in real time.",
         online: "Online",
         agentRole: "Appointments Advisor",
         procedureLabel: "PROCEDURE",
@@ -929,7 +974,8 @@ export default function BuscarCitas() {
           },
         ],
       } as Record<string, FormItem[]>,
-      initialChat: "Hola, bienvenida a GestoriaCitaIA. ¿En qué te ayudo?",
+      initialChat:
+  "Hola, soy Sara. Si necesitas una cita, rellena tus datos y elige el tipo de cita en el formulario. Después continuamos contigo paso a paso en tiempo real.",
       online: "En línea",
       agentRole: "Asesora de Citas",
       procedureLabel: "TRÁMITE",
@@ -1158,10 +1204,12 @@ export default function BuscarCitas() {
           from: "agent",
           text:
             lang === "darija"
-              ? "ممتاز. المعطيات ديالك وجدات واختاريتي نوع الموعد. دابا سارة غادي تكمل البحث وتعلمك ملي تلقى الموعد."
-              : lang === "en"
-              ? "Perfect. Your details are ready and you selected the appointment type. Sara will now continue the search and notify you when an appointment appears."
-              : "Perfecto. Tus datos ya han sido preparados y has elegido el tipo de cita. Sara continuará ahora con la búsqueda y te avisará en cuanto aparezca una cita.",
+              text:
+  lang === "darija"
+    ? "ممتاز. دابا غادي نبداو نقلبو ليك على موعد بأسرع وقت ممكن. منين نلقاو الموعد غادي نعلموك عبر واتساب."
+    : lang === "en"
+    ? "Perfect. We will now start searching for your appointment as fast as possible. As soon as we find one, we will notify you on WhatsApp."
+    : "Perfecto. Ahora vamos a buscarte una cita lo más rápido posible. En cuanto la encontremos, te avisaremos por WhatsApp.",
           ts: Date.now(),
         },
       ];
