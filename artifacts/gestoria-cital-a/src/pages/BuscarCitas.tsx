@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from "react";
+import { useLocation } from "wouter";
 import { Navbar } from "@/components/Navbar";
 import { PaymentModal } from "@/components/PaymentModal";
 import { useLang } from "@/contexts/LanguageContext";
@@ -89,6 +90,7 @@ function OfficialBrowserBox({
   onAceptar,
   isPending,
   lang,
+  cameFromConfirmationLink,
 }: {
   avatarImage: string;
   title: string;
@@ -116,6 +118,7 @@ function OfficialBrowserBox({
   onAceptar: () => void;
   isPending: boolean;
   lang: string;
+  cameFromConfirmationLink: boolean;
 }) {
   const integratedPanelText =
     lang === "darija"
@@ -123,6 +126,13 @@ function OfficialBrowserBox({
       : lang === "en"
       ? "The official site cannot be loaded inside an iframe for security reasons. Sara prepares everything here and opens the official website in a real tab so you can continue."
       : "La sede oficial no permite cargarse dentro de un iframe por seguridad. Sara te deja todo preparado aquí y abre la web oficial en una pestaña real para continuar.";
+
+  const confirmReadyText =
+    lang === "darija"
+      ? "جاك رابط التأكيد. سارة وجدات الملف باش تكمل غير التأكيد النهائي."
+      : lang === "en"
+      ? "You arrived from the confirmation link. Sara has prepared the case so you only need the final confirmation."
+      : "Has llegado desde el enlace de confirmación. Sara ha dejado el expediente preparado para que solo falte la confirmación final.";
 
   return (
     <motion.div
@@ -179,6 +189,14 @@ function OfficialBrowserBox({
                 </div>
               </div>
             </div>
+
+            {cameFromConfirmationLink && (
+              <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 mb-4">
+                <p className="text-sm font-semibold text-emerald-800">
+                  {confirmReadyText}
+                </p>
+              </div>
+            )}
 
             <div className="mb-4">
               <p className="text-xs font-bold text-gray-700 uppercase tracking-wide mb-2">
@@ -380,6 +398,7 @@ function OfficialBrowserBox({
 }
 
 export default function BuscarCitas() {
+  const [location] = useLocation();
   const [selectedTramite, setSelectedTramite] = useState("tie");
   const [step, setStep] = useState(0);
   const [muted, setMuted] = useState(false);
@@ -399,6 +418,14 @@ export default function BuscarCitas() {
   const [paymentTriggered, setPaymentTriggered] = useState(false);
   const [chatMessages, setChatMessages] = useState<ChatMsg[]>([]);
   const [chatBootstrapped, setChatBootstrapped] = useState(false);
+
+  const urlParams = useMemo(() => {
+    const url = new URL(window.location.href);
+    return {
+      token: url.searchParams.get("token") || "",
+      appointmentId: url.searchParams.get("appointment_id") || "",
+    };
+  }, [location]);
 
   const { t, lang } = useLang();
   const { toast } = useToast();
@@ -1014,6 +1041,35 @@ export default function BuscarCitas() {
   }, []);
 
   useEffect(() => {
+    if (!urlParams.appointmentId && !urlParams.token) return;
+
+    setShowChat(true);
+    setStep(1);
+
+    setChatMessages((prev) => {
+      const alreadyExists = prev.some((msg) =>
+        msg.text.includes("He cargado tu enlace de confirmación")
+      );
+
+      if (alreadyExists) return prev;
+
+      return [
+        ...prev,
+        {
+          from: "agent",
+          text:
+            lang === "darija"
+              ? "حملت رابط التأكيد ديالك. سارة وجدات كلشي باش تكمل غير التأكيد."
+              : lang === "en"
+              ? "I loaded your confirmation link. Sara has prepared everything so you only need to confirm."
+              : "He cargado tu enlace de confirmación. Sara ha dejado todo preparado para que solo tengas que confirmar.",
+          ts: Date.now(),
+        },
+      ];
+    });
+  }, [urlParams.appointmentId, urlParams.token, lang]);
+
+  useEffect(() => {
     if (!chatStorageKey) return;
 
     try {
@@ -1023,7 +1079,12 @@ export default function BuscarCitas() {
         const parsed = JSON.parse(raw) as ChatMsg[];
 
         if (Array.isArray(parsed) && parsed.length > 0) {
-          setChatMessages(parsed);
+          setChatMessages((prev) => {
+            if (prev.length > 0 && (urlParams.appointmentId || urlParams.token)) {
+              return prev;
+            }
+            return parsed;
+          });
 
           const userMsgs = parsed.filter((m) => m.from === "user").length;
           setUserMessageCount(userMsgs);
@@ -1050,7 +1111,12 @@ export default function BuscarCitas() {
         },
       ];
 
-      setChatMessages(freshChat);
+      setChatMessages((prev) => {
+        if (prev.length > 0 && (urlParams.appointmentId || urlParams.token)) {
+          return prev;
+        }
+        return freshChat;
+      });
       setUserMessageCount(0);
       setPaymentTriggered(false);
       setChatBootstrapped(true);
@@ -1058,7 +1124,7 @@ export default function BuscarCitas() {
       console.error("Error cargando historial de Sara:", error);
       setChatBootstrapped(true);
     }
-  }, [chatStorageKey, ui.initialChat]);
+  }, [chatStorageKey, ui.initialChat, urlParams.appointmentId, urlParams.token]);
 
   useEffect(() => {
     if (!chatBootstrapped || !chatStorageKey || chatMessages.length === 0) {
@@ -1264,6 +1330,7 @@ export default function BuscarCitas() {
     appointmentData?.confirmation_pdf_url || appointmentData?.pdf_url || null;
 
   const officialUrl = "icp.administracionelectronica.gob.es";
+  const cameFromConfirmationLink = !!urlParams.appointmentId || !!urlParams.token;
 
   return (
     <div className="min-h-screen bg-background text-foreground relative flex flex-col">
@@ -1286,7 +1353,13 @@ export default function BuscarCitas() {
 
       <main className="flex-1 relative z-10 flex flex-col pt-16 pb-0">
         <h1 className="text-xl font-display font-bold px-4 sm:px-6 py-3 max-w-7xl mx-auto w-full">
-          {t("buscar_title")}
+          {cameFromConfirmationLink
+            ? lang === "darija"
+              ? "سارة: تأكيد الموعد"
+              : lang === "en"
+              ? "Sara: Appointment confirmation"
+              : "Sara: confirmación de cita"
+            : t("buscar_title")}
         </h1>
 
         <div className="flex-1 flex flex-col lg:flex-row gap-4 px-4 sm:px-6 max-w-7xl mx-auto w-full pb-4">
@@ -1572,7 +1645,13 @@ export default function BuscarCitas() {
           <OfficialBrowserBox
             avatarImage={`${import.meta.env.BASE_URL}images/avatar-sara.png`}
             title={
-              lang === "darija"
+              cameFromConfirmationLink
+                ? lang === "darija"
+                  ? "تأكيد الموعد مع سارة"
+                  : lang === "en"
+                  ? "Appointment confirmation with Sara"
+                  : "Confirmación de cita con Sara"
+                : lang === "darija"
                 ? "لوحة رسمية مدمجة"
                 : lang === "en"
                 ? "Integrated official panel"
@@ -1617,6 +1696,7 @@ export default function BuscarCitas() {
             onAceptar={handleAceptar}
             isPending={scheduleMutation.isPending}
             lang={lang}
+            cameFromConfirmationLink={cameFromConfirmationLink}
           />
         </div>
 
