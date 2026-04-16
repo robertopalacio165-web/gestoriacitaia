@@ -976,7 +976,6 @@ export default function BuscarCitas() {
         ],
       } as Record<string, FormItem[]>,
       initialChat:
-        initialChat:
   "Hola, soy Sara. Para coger una cita, relléname tus datos en 5 segundos y elige el tipo de cita. Después seguimos contigo paso a paso.",
       online: "En línea",
       agentRole: "Asesora de Citas",
