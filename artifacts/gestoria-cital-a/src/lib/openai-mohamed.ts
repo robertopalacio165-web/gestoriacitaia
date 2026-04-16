@@ -1,130 +1,74 @@
-import OpenAI from "openai";
-
-type ChatHistoryItem = {
-  from: "agent" | "user";
-  text: string;
-};
-
-type LeadForm = {
-  nombre?: string;
-  telefono?: string;
-  email?: string;
-  niePasaporte?: string;
-  ciudad?: string;
-  nacionalidad?: string;
-  fechaLlegada?: string;
-  cumple5Meses?: string;
-  asilo?: string;
-  penales?: string;
-};
-
-type EnviarMensajeMohamedInput = {
-  message: string;
-  lang?: string;
-  context?: string;
-  sessionId?: string;
-  userId?: string;
-  procedureKey?: string;
-  procedureLabel?: string;
-  history?: ChatHistoryItem[];
-  leadForm?: LeadForm;
-};
-
+const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
 const MOHAMED_ASSISTANT_ID = "asst_lfID0KAxoIlvWreiFFDNiVxf";
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
-function buildLeadFormText(leadForm?: LeadForm) {
-  if (!leadForm) return "";
-
-  const lines = [
-    `NOMBRE: ${leadForm.nombre || "vacío"}`,
-    `TELÉFONO: ${leadForm.telefono || "vacío"}`,
-    `EMAIL: ${leadForm.email || "vacío"}`,
-    `NIE O PASAPORTE: ${leadForm.niePasaporte || "vacío"}`,
-    `CIUDAD: ${leadForm.ciudad || "vacío"}`,
-    `NACIONALIDAD: ${leadForm.nacionalidad || "vacío"}`,
-    `FECHA LLEGADA A ESPAÑA: ${leadForm.fechaLlegada || "vacío"}`,
-    `CUMPLE 5 MESES: ${leadForm.cumple5Meses || "vacío"}`,
-    `ASILO: ${leadForm.asilo || "vacío"}`,
-    `ANTECEDENTES PENALES: ${leadForm.penales || "vacío"}`,
-  ];
-
-  return `DATOS DEL FORMULARIO:\n${lines.join("\n")}`;
-}
-
-function buildMohamedMessage(input: EnviarMensajeMohamedInput) {
-  const {
-    message,
-    lang = "es",
-    context = "general",
-    sessionId = "",
-    userId = "",
-    procedureKey = "",
-    procedureLabel = "",
-    history = [],
-    leadForm,
-  } = input;
-
-  const historyText = Array.isArray(history)
-    ? history
-        .slice(-10)
-        .map(
-          (item) =>
-            `${item.from === "user" ? "CLIENTE" : "MOHAMED"}: ${item.text}`
-        )
-        .join("\n")
-    : "";
-
-  const leadFormText = buildLeadFormText(leadForm);
-
-  return [
-    `MENSAJE DEL CLIENTE: ${message}`,
-    `IDIOMA UI: ${lang}`,
-    `CONTEXTO: ${context}`,
-    `PROCEDURE KEY: ${procedureKey || "vacío"}`,
-    `PROCEDURE LABEL: ${procedureLabel || "vacío"}`,
-    `SESSION ID: ${sessionId || "vacío"}`,
-    `USER ID: ${userId || "vacío"}`,
-    leadFormText,
-    historyText ? `HISTORIAL RECIENTE:\n${historyText}` : "",
-    `INSTRUCCIÓN IMPORTANTE:
-- Responde en el idioma del cliente.
-- Si el cliente habla darija o árabe, responde en darija marroquí escrita con letras árabes.
-- Si habla español, responde en español.
-- Si habla inglés, responde en inglés.
-- Sé humano, profesional y breve.
-- Si ya tienes datos del formulario, no vuelvas a pedirlos todos otra vez.
-- Si faltan documentos, pide solo el siguiente paso.
-- Si el cliente pregunta por regularización 2026, céntrate en pruebas de 5 meses, pasaporte, documentos, formulario de vulnerabilidad y siguiente paso.`,
-  ]
-    .filter(Boolean)
-    .join("\n\n");
-}
-
-export async function enviarMensajeMohamed(
-  input: EnviarMensajeMohamedInput
-): Promise<string> {
-  if (!process.env.OPENAI_API_KEY) {
-    throw new Error("Falta OPENAI_API_KEY en variables de entorno del servidor");
+export async function enviarMensajeMohamed(mensaje: string): Promise<string> {
+  if (!OPENAI_API_KEY) {
+    throw new Error("Falta VITE_OPENAI_API_KEY en las variables de entorno");
   }
 
-  const thread = await openai.beta.threads.create();
-
-  await openai.beta.threads.messages.create(thread.id, {
-    role: "user",
-    content: buildMohamedMessage(input),
+  const threadRes = await fetch("https://api.openai.com/v1/threads", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${OPENAI_API_KEY}`,
+      "Content-Type": "application/json",
+      "OpenAI-Beta": "assistants=v2",
+    },
+    body: JSON.stringify({}),
   });
 
-  const run = await openai.beta.threads.runs.create(thread.id, {
-    assistant_id: MOHAMED_ASSISTANT_ID,
-  });
+  if (!threadRes.ok) {
+    const errorText = await threadRes.text();
+    throw new Error(`Error creando thread Mohamed: ${errorText}`);
+  }
+
+  const thread = await threadRes.json();
+
+  const messageRes = await fetch(
+    `https://api.openai.com/v1/threads/${thread.id}/messages`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${OPENAI_API_KEY}`,
+        "Content-Type": "application/json",
+        "OpenAI-Beta": "assistants=v2",
+      },
+      body: JSON.stringify({
+        role: "user",
+        content: mensaje,
+      }),
+    }
+  );
+
+  if (!messageRes.ok) {
+    const errorText = await messageRes.text();
+    throw new Error(`Error enviando mensaje Mohamed: ${errorText}`);
+  }
+
+  const runRes = await fetch(
+    `https://api.openai.com/v1/threads/${thread.id}/runs`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${OPENAI_API_KEY}`,
+        "Content-Type": "application/json",
+        "OpenAI-Beta": "assistants=v2",
+      },
+      body: JSON.stringify({
+        assistant_id: MOHAMED_ASSISTANT_ID,
+      }),
+    }
+  );
+
+  if (!runRes.ok) {
+    const errorText = await runRes.text();
+    throw new Error(`Error creando run Mohamed: ${errorText}`);
+  }
+
+  const run = await runRes.json();
 
   let status = run.status;
   let attempts = 0;
-  const maxAttempts = 60;
+  const maxAttempts = 50;
 
   while (
     status !== "completed" &&
@@ -136,10 +80,27 @@ export async function enviarMensajeMohamed(
       throw new Error("Tiempo agotado esperando respuesta de Mohamed");
     }
 
-    await new Promise((resolve) => setTimeout(resolve, 700));
+    await new Promise((r) => setTimeout(r, 500));
 
-    const runCheck = await openai.beta.threads.runs.retrieve(thread.id, run.id);
-    status = runCheck.status;
+    const checkRes = await fetch(
+      `https://api.openai.com/v1/threads/${thread.id}/runs/${run.id}`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${OPENAI_API_KEY}`,
+          "Content-Type": "application/json",
+          "OpenAI-Beta": "assistants=v2",
+        },
+      }
+    );
+
+    if (!checkRes.ok) {
+      const errorText = await checkRes.text();
+      throw new Error(`Error consultando run Mohamed: ${errorText}`);
+    }
+
+    const checkData = await checkRes.json();
+    status = checkData.status;
     attempts += 1;
   }
 
@@ -147,16 +108,28 @@ export async function enviarMensajeMohamed(
     throw new Error(`La ejecución de Mohamed terminó con estado: ${status}`);
   }
 
-  const messages = await openai.beta.threads.messages.list(thread.id);
+  const messagesRes = await fetch(
+    `https://api.openai.com/v1/threads/${thread.id}/messages`,
+    {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${OPENAI_API_KEY}`,
+        "Content-Type": "application/json",
+        "OpenAI-Beta": "assistants=v2",
+      },
+    }
+  );
 
-  const assistantMessage = messages.data.find((msg) => msg.role === "assistant");
+  if (!messagesRes.ok) {
+    const errorText = await messagesRes.text();
+    throw new Error(`Error obteniendo mensajes Mohamed: ${errorText}`);
+  }
 
-  const textPart = assistantMessage?.content?.find(
-    (part: any) => part.type === "text"
-  ) as any;
+  const messages = await messagesRes.json();
 
   const respuesta =
-    textPart?.text?.value?.trim() || "Mohamed no devolvió respuesta.";
+    messages?.data?.find((msg: any) => msg.role === "assistant")?.content?.[0]
+      ?.text?.value || "Mohamed no devolvió respuesta.";
 
   return respuesta;
 }
