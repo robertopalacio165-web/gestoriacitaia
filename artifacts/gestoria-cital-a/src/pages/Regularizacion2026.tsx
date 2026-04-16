@@ -95,6 +95,10 @@ function buildInitialDocs(procedureKey: string): StoredDocItem[] {
   }));
 }
 
+function normalizeDocType(value?: string) {
+  return (value || "").trim().toLowerCase();
+}
+
 export default function Regularizacion2026() {
   const [selectedSituacion, setSelectedSituacion] = useState(
     "regularizacion_2026_laboral"
@@ -115,6 +119,8 @@ export default function Regularizacion2026() {
   const [paymentTriggered, setPaymentTriggered] = useState(false);
   const [chatMessages, setChatMessages] = useState<ChatMsg[]>([]);
   const [chatBootstrapped, setChatBootstrapped] = useState(false);
+  const [generalUploading, setGeneralUploading] = useState(false);
+  const [completionMessageSent, setCompletionMessageSent] = useState(false);
 
   const { t, lang } = useLang();
   const { toast } = useToast();
@@ -167,6 +173,9 @@ export default function Regularizacion2026() {
         readyPlural: "واجدين",
         uploading: "كيترفع...",
         uploadPdf: "رفع ملف",
+        uploadGeneral: "رفع الوثائق",
+        uploadGeneralDesc:
+          "من هنا تقدر ترفع جميع الوثائق اللي طلب منك محمد.",
         uploadedPdfs: "ملفات مرفوعة",
         aiVerified: "تحقق الذكاء",
         pending: "معلق",
@@ -215,6 +224,18 @@ export default function Regularizacion2026() {
         noForms: "ما كايناش استمارات لهاد المسطرة دابا.",
         noFees: "ما كايناش رسوم مضافة دابا.",
         channel: "طريقة المسطرة",
+        uploadSuccessTitle: "تقبلات الوثيقة",
+        uploadSuccessDesc: "راجعنا الوثيقة وربطناها مع الملف.",
+        uploadErrorTitle: "خطأ فالوثيقة",
+        uploadErrorDesc: "ما قدرناش نربط هاد الوثيقة مع الملف.",
+        mohamedDocOk: (fileName: string, docName: string) =>
+          `مزيان. توصلت بــ ${fileName} وراجعتو. حطيناه دابا فخانة «${docName}».`,
+        mohamedDocWarn: (fileName: string) =>
+          `توصلت بــ ${fileName} ولكن مازال خاصني نسخة أوضح ولا الوثيقة المناسبة باش نكمل المراجعة.`,
+        mohamedDocUnknown: (fileName: string) =>
+          `توصلت بــ ${fileName}، ولكن ما قدرناش نربطو أوتوماتيكياً مع وثيقة معينة. إلا بغيتي، زيد رفع الوثائق الباقية وأنا نكمل المراجعة.`,
+        mohamedFinal:
+          "مزيان. راجعنا الوثائق ديالك ووجدنا الملف ديالك، وحتى وثيقة الهشاشة، باش يكون واجد للتقديم فالضمان الاجتماعي. إلا بغيتي دابا نكملو بالموعد، غادي ندوزك لسارة باش تعاونك فيه.",
       };
     }
 
@@ -255,6 +276,9 @@ export default function Regularizacion2026() {
         readyPlural: "ready",
         uploading: "Uploading...",
         uploadPdf: "Upload file",
+        uploadGeneral: "Upload documents",
+        uploadGeneralDesc:
+          "Use this single button to upload all documents Mohamed requests.",
         uploadedPdfs: "Uploaded files",
         aiVerified: "AI verified",
         pending: "Pending",
@@ -303,6 +327,18 @@ export default function Regularizacion2026() {
         noForms: "There are no forms configured for this procedure yet.",
         noFees: "There are no fees configured for this procedure yet.",
         channel: "Procedure channel",
+        uploadSuccessTitle: "Document received",
+        uploadSuccessDesc: "The document was reviewed and linked to the case.",
+        uploadErrorTitle: "Document error",
+        uploadErrorDesc: "We could not link that document to the case.",
+        mohamedDocOk: (fileName: string, docName: string) =>
+          `Perfect. I received ${fileName} and reviewed it. I linked it to “${docName}”.`,
+        mohamedDocWarn: (fileName: string) =>
+          `I received ${fileName}, but I still need a clearer version or the correct document to continue the review.`,
+        mohamedDocUnknown: (fileName: string) =>
+          `I received ${fileName}, but I could not match it automatically to a specific required document. Upload the remaining files and I’ll continue reviewing them.`,
+        mohamedFinal:
+          "Perfect. We have reviewed your documents and prepared your case, including the vulnerability document, so it is ready for Social Security submission. If you now want an appointment, I will pass you to Sara to help with that.",
       };
     }
 
@@ -342,6 +378,9 @@ export default function Regularizacion2026() {
       readyPlural: "listos",
       uploading: "Subiendo...",
       uploadPdf: "Subir archivo",
+      uploadGeneral: "Subir documentos",
+      uploadGeneralDesc:
+        "Usa este único botón para subir todos los documentos que te pida Mohamed.",
       uploadedPdfs: "Archivos subidos",
       aiVerified: "Verificados IA",
       pending: "Pendiente",
@@ -390,6 +429,18 @@ export default function Regularizacion2026() {
       noForms: "No hay formularios configurados todavía para este trámite.",
       noFees: "No hay tasas configuradas todavía para este trámite.",
       channel: "Canal del trámite",
+      uploadSuccessTitle: "Documento recibido",
+      uploadSuccessDesc: "El documento se ha revisado y vinculado al expediente.",
+      uploadErrorTitle: "Error en documento",
+      uploadErrorDesc: "No se pudo vincular ese documento al expediente.",
+      mohamedDocOk: (fileName: string, docName: string) =>
+        `Perfecto. Ya he recibido ${fileName} y lo he revisado. Lo he colocado en «${docName}».`,
+      mohamedDocWarn: (fileName: string) =>
+        `He recibido ${fileName}, pero todavía necesito una versión más clara o el documento correcto para seguir con la revisión.`,
+      mohamedDocUnknown: (fileName: string) =>
+        `He recibido ${fileName}, pero no he podido relacionarlo automáticamente con un documento concreto del expediente. Sube los demás y sigo revisando.`,
+      mohamedFinal:
+        "Perfecto. Ya hemos revisado tu documentación y hemos dejado preparado tu expediente, incluido el documento de vulnerabilidad, para presentar en la Seguridad Social. Si ahora quieres continuar con la cita, te paso con Sara para gestionarla.",
     };
   }, [safeLang]);
 
@@ -405,6 +456,7 @@ export default function Regularizacion2026() {
     setDocs(buildInitialDocs(selectedSituacion));
     setStep(0);
     setSubmitted(false);
+    setCompletionMessageSent(false);
   }, [selectedSituacion]);
 
   useEffect(() => {
@@ -426,7 +478,12 @@ export default function Regularizacion2026() {
             (m) => m.from === "agent" && m.text === ui.paymentTriggerMessage
           );
 
+          const completionAlreadySent = parsed.some(
+            (m) => m.from === "agent" && m.text === ui.mohamedFinal
+          );
+
           setPaymentTriggered(paymentAlreadyTriggered);
+          setCompletionMessageSent(completionAlreadySent);
           setChatBootstrapped(true);
           return;
         }
@@ -443,6 +500,7 @@ export default function Regularizacion2026() {
       setChatMessages(freshChat);
       setUserMessageCount(0);
       setPaymentTriggered(false);
+      setCompletionMessageSent(false);
       setChatBootstrapped(true);
     } catch (error) {
       console.error("Error cargando historial de Mohamed:", error);
@@ -458,9 +516,15 @@ export default function Regularizacion2026() {
       setChatMessages(freshChat);
       setUserMessageCount(0);
       setPaymentTriggered(false);
+      setCompletionMessageSent(false);
       setChatBootstrapped(true);
     }
-  }, [chatStorageKey, ui.initialChat, ui.paymentTriggerMessage]);
+  }, [
+    chatStorageKey,
+    ui.initialChat,
+    ui.paymentTriggerMessage,
+    ui.mohamedFinal,
+  ]);
 
   useEffect(() => {
     if (!chatBootstrapped || !chatStorageKey || chatMessages.length === 0) return;
@@ -474,7 +538,7 @@ export default function Regularizacion2026() {
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [chatMessages, sendingChat]);
+  }, [chatMessages, sendingChat, generalUploading]);
 
   const selectedSituationLabel = currentProcedure.name;
   const selectedIntro =
@@ -597,101 +661,198 @@ export default function Regularizacion2026() {
     return doc.expectedType;
   };
 
-  const handleUploadDoc = async (id: string) => {
+  const getBestDocMatch = (
+    detectedType: string | undefined,
+    currentDocs: StoredDocItem[]
+  ): StoredDocItem | null => {
+    const normalizedDetected = normalizeDocType(detectedType);
+
+    if (normalizedDetected) {
+      const exactMissing = currentDocs.find(
+        (doc) =>
+          doc.estado !== "ok" &&
+          normalizeDocType(doc.expectedType) === normalizedDetected
+      );
+
+      if (exactMissing) return exactMissing;
+
+      const exactWarn = currentDocs.find(
+        (doc) =>
+          doc.estado === "warn" &&
+          normalizeDocType(doc.expectedType) === normalizedDetected
+      );
+
+      if (exactWarn) return exactWarn;
+    }
+
+    const firstMissing = currentDocs.find((doc) => doc.estado === "missing");
+    if (firstMissing) return firstMissing;
+
+    const firstWarn = currentDocs.find((doc) => doc.estado === "warn");
+    if (firstWarn) return firstWarn;
+
+    return null;
+  };
+
+  const pushAgentMessage = (text: string) => {
+    setChatMessages((prev) => [
+      ...prev,
+      {
+        from: "agent",
+        text,
+        ts: Date.now(),
+      },
+    ]);
+  };
+
+  const maybeSendCompletionMessage = (nextDocs: StoredDocItem[]) => {
+    const okCount = nextDocs.filter((d) => d.estado === "ok").length;
+    const total = nextDocs.length;
+    const readyNow = okCount >= Math.max(1, total - 1);
+
+    if (readyNow && !completionMessageSent) {
+      pushAgentMessage(ui.mohamedFinal);
+      setCompletionMessageSent(true);
+      setStep((prev) => (prev < 2 ? 2 : prev));
+    }
+  };
+
+  const handleGeneralUpload = async () => {
     if (!planActivo) {
       setShowPayment(true);
       return;
     }
 
-    const currentDoc = docs.find((d) => d.id === id);
-
-    if (!currentDoc) return;
-
     try {
       const input = document.createElement("input");
       input.type = "file";
       input.accept = "image/*,application/pdf";
+      input.multiple = true;
 
       input.onchange = async () => {
-        const file = input.files?.[0];
-        if (!file) return;
+        const files = Array.from(input.files || []);
+        if (files.length === 0) return;
 
-        setUploadingId(id);
+        setGeneralUploading(true);
+        setUploadingId("general");
 
-        try {
-          const base64 = await fileToDataUrl(file);
-          const expectedType = buildExpectedType(currentDoc);
+        for (const file of files) {
+          try {
+            const base64 = await fileToDataUrl(file);
 
-          const result = await verifyDocument({
-            imageBase64: base64,
-            expectedDocumentType: expectedType,
-            lang: safeLang,
-          });
+            const result = await verifyDocument({
+              imageBase64: base64,
+              expectedDocumentType: "auto",
+              lang: safeLang,
+            });
 
-          const nextStatus: DocStatus =
-            result.status === "invalid" || result.match_expected_type === false
-              ? "warn"
-              : "ok";
+            let matchedDocSnapshot: StoredDocItem | null = null;
+            let nextDocsSnapshot: StoredDocItem[] = [];
 
-          setDocs((prev) =>
-            prev.map((d) =>
-              d.id === id
-                ? {
-                    ...d,
-                    estado: nextStatus,
-                    archivo: file.name,
-                    kb: `${Math.round(file.size / 1024)} KB`,
-                    detectedType: result.document_type || "",
-                    note: result.summary || "",
-                  }
-                : d
-            )
-          );
+            setDocs((prev) => {
+              const matchedDoc = getBestDocMatch(result.document_type, prev);
+              matchedDocSnapshot = matchedDoc;
 
-          toast({
-            title:
+              if (!matchedDoc) {
+                nextDocsSnapshot = [...prev];
+                return prev;
+              }
+
+              const nextStatus: DocStatus =
+                result.status === "invalid" || result.match_expected_type === false
+                  ? "warn"
+                  : "ok";
+
+              const updatedDocs = prev.map((doc) =>
+                doc.id === matchedDoc.id
+                  ? {
+                      ...doc,
+                      estado: nextStatus,
+                      archivo: file.name,
+                      kb: `${Math.round(file.size / 1024)} KB`,
+                      detectedType: result.document_type || "",
+                      note: result.summary || "",
+                    }
+                  : doc
+              );
+
+              nextDocsSnapshot = updatedDocs;
+              return updatedDocs;
+            });
+
+            if (!matchedDocSnapshot) {
+              pushAgentMessage(ui.mohamedDocUnknown(file.name));
+
+              toast({
+                title: ui.uploadErrorTitle,
+                description: ui.uploadErrorDesc,
+                variant: "destructive",
+              });
+
+              continue;
+            }
+
+            const isWarn =
+              result.status === "invalid" || result.match_expected_type === false;
+
+            if (isWarn) {
+              pushAgentMessage(ui.mohamedDocWarn(file.name));
+            } else {
+              pushAgentMessage(
+                ui.mohamedDocOk(file.name, matchedDocSnapshot.nombre)
+              );
+            }
+
+            toast({
+              title: ui.uploadSuccessTitle,
+              description:
+                result?.summary || ui.uploadSuccessDesc,
+            });
+
+            if (step < 1) setStep(1);
+
+            if (nextDocsSnapshot.length > 0) {
+              maybeSendCompletionMessage(nextDocsSnapshot);
+            }
+          } catch (err: any) {
+            console.error("Error IA documento:", err);
+
+            pushAgentMessage(
               safeLang === "darija"
-                ? "تراجع الوثيقة"
+                ? "وقع مشكل فمراجعة واحد الوثيقة. عاود رفعها من فضلك."
                 : safeLang === "en"
-                ? "Document verified"
-                : "Documento verificado",
-            description:
-              result?.summary ||
-              (safeLang === "darija"
-                ? "الذكاء الاصطناعي حلل الوثيقة بنجاح."
-                : safeLang === "en"
-                ? "The AI analyzed the document successfully."
-                : "La IA analizó el documento correctamente."),
-          });
+                ? "There was a problem reviewing one document. Please upload it again."
+                : "Ha habido un problema revisando uno de los documentos. Súbelo otra vez, por favor."
+            );
 
-          if (step < 1) setStep(1);
-        } catch (err: any) {
-          console.error("Error IA documento:", err);
-
-          toast({
-            title:
-              safeLang === "darija"
-                ? "خطأ فالتحليل"
-                : safeLang === "en"
-                ? "Verification error"
-                : "Error de verificación",
-            description:
-              err?.message ||
-              (safeLang === "darija"
-                ? "ما قدرناش نحللو الوثيقة."
-                : safeLang === "en"
-                ? "Could not analyze the document."
-                : "No se pudo analizar el documento."),
-            variant: "destructive",
-          });
-        } finally {
-          setUploadingId(null);
+            toast({
+              title:
+                safeLang === "darija"
+                  ? "خطأ فالتحليل"
+                  : safeLang === "en"
+                  ? "Verification error"
+                  : "Error de verificación",
+              description:
+                err?.message ||
+                (safeLang === "darija"
+                  ? "ما قدرناش نحللو الوثيقة."
+                  : safeLang === "en"
+                  ? "Could not analyze the document."
+                  : "No se pudo analizar el documento."),
+              variant: "destructive",
+            });
+          }
         }
+
+        setGeneralUploading(false);
+        setUploadingId(null);
       };
 
       input.click();
     } catch (error: any) {
-      console.error("Error general handleUploadDoc:", error);
+      console.error("Error general handleGeneralUpload:", error);
+      setGeneralUploading(false);
+      setUploadingId(null);
 
       toast({
         title:
@@ -974,7 +1135,7 @@ export default function Regularizacion2026() {
                   animate={{ opacity: 1, height: "auto" }}
                   exit={{ opacity: 0, height: 0 }}
                   className="glass-panel-heavy border border-white/10 rounded-2xl overflow-hidden flex flex-col"
-                  style={{ maxHeight: "220px" }}
+                  style={{ maxHeight: "320px" }}
                 >
                   <div className="flex-1 overflow-y-auto p-3 space-y-2">
                     {chatMessages.map((msg, i) => (
@@ -1003,7 +1164,7 @@ export default function Regularizacion2026() {
                       </div>
                     ))}
 
-                    {sendingChat && (
+                    {(sendingChat || generalUploading) && (
                       <div className="flex gap-2 justify-start">
                         <img
                           src={`${import.meta.env.BASE_URL}images/avatar-mohamed.png`}
@@ -1035,6 +1196,39 @@ export default function Regularizacion2026() {
                     >
                       <Send className="w-3.5 h-3.5 text-primary-foreground" />
                     </button>
+                  </div>
+
+                  <div className="border-t border-white/10 p-3">
+                    <button
+                      onClick={handleGeneralUpload}
+                      disabled={generalUploading}
+                      className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary hover:bg-primary/90 disabled:opacity-60 text-primary-foreground font-bold text-xs px-4 py-3 transition-colors"
+                      type="button"
+                    >
+                      {generalUploading ? (
+                        <>
+                          <motion.div
+                            className="w-3.5 h-3.5 border border-primary-foreground border-t-transparent rounded-full"
+                            animate={{ rotate: 360 }}
+                            transition={{
+                              duration: 0.7,
+                              repeat: Infinity,
+                              ease: "linear",
+                            }}
+                          />
+                          {ui.uploading}
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="w-4 h-4" />
+                          {ui.uploadGeneral}
+                        </>
+                      )}
+                    </button>
+
+                    <p className="mt-2 text-[10px] text-white/50 text-center">
+                      {ui.uploadGeneralDesc}
+                    </p>
                   </div>
                 </motion.div>
               )}
@@ -1178,30 +1372,17 @@ export default function Regularizacion2026() {
                         </button>
                       )}
 
-                      {(doc.estado === "missing" || doc.estado === "warn") &&
-                        (uploadingId === doc.id ? (
-                          <span className="text-[9px] text-primary flex items-center gap-1">
-                            <motion.div
-                              className="w-2.5 h-2.5 border border-primary border-t-transparent rounded-full"
-                              animate={{ rotate: 360 }}
-                              transition={{
-                                duration: 0.7,
-                                repeat: Infinity,
-                                ease: "linear",
-                              }}
-                            />
-                            {ui.uploading}
-                          </span>
-                        ) : (
-                          <button
-                            onClick={() => handleUploadDoc(doc.id)}
-                            className="flex items-center gap-1 text-[9px] font-bold text-white bg-primary/80 hover:bg-primary px-2 py-0.5 rounded transition-colors whitespace-nowrap"
-                            type="button"
-                          >
-                            <Upload className="w-2.5 h-2.5" />
-                            {ui.uploadPdf}
-                          </button>
-                        ))}
+                      {doc.estado === "warn" && (
+                        <span className="text-[9px] text-amber-400 font-semibold">
+                          {ui.review}
+                        </span>
+                      )}
+
+                      {doc.estado === "missing" && (
+                        <span className="text-[9px] text-white/40 font-semibold">
+                          {ui.pending}
+                        </span>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -1458,9 +1639,38 @@ export default function Regularizacion2026() {
                         animate={{ opacity: 1, height: "auto" }}
                         className="mb-5"
                       >
-                        <p className="text-xs font-bold text-gray-700 uppercase tracking-wide mb-3">
-                          {ui.requiredDocuments}
-                        </p>
+                        <div className="flex items-center justify-between gap-3 mb-3">
+                          <p className="text-xs font-bold text-gray-700 uppercase tracking-wide">
+                            {ui.requiredDocuments}
+                          </p>
+
+                          <button
+                            onClick={handleGeneralUpload}
+                            disabled={generalUploading}
+                            type="button"
+                            className="flex items-center gap-2 rounded-lg bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white text-xs font-bold px-3 py-2 transition-colors"
+                          >
+                            {generalUploading ? (
+                              <>
+                                <motion.div
+                                  className="w-3.5 h-3.5 border border-white border-t-transparent rounded-full"
+                                  animate={{ rotate: 360 }}
+                                  transition={{
+                                    duration: 0.7,
+                                    repeat: Infinity,
+                                    ease: "linear",
+                                  }}
+                                />
+                                {ui.uploading}
+                              </>
+                            ) : (
+                              <>
+                                <Upload className="w-3 h-3" />
+                                {ui.uploadGeneral}
+                              </>
+                            )}
+                          </button>
+                        </div>
 
                         <div className="space-y-2">
                           {DOCS_REQUERIDOS.map((doc) => (
@@ -1479,14 +1689,7 @@ export default function Regularizacion2026() {
                               )}
 
                               {doc.estado === "missing" && (
-                                <button
-                                  onClick={() => handleUploadDoc(doc.id)}
-                                  type="button"
-                                  className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 font-medium"
-                                >
-                                  <Upload className="w-3 h-3" />
-                                  {ui.uploadPdf}
-                                </button>
+                                <Clock className="w-4 h-4 text-gray-400" />
                               )}
                             </div>
                           ))}
