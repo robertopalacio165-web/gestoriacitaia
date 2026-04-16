@@ -21,7 +21,7 @@ function sendBadRequest(res: VercelResponse, message: string) {
 
 export default async function handler(
   req: VercelRequest,
-  res: VercelResponse,
+  res: VercelResponse
 ) {
   if (req.method !== "POST") {
     return sendMethodNotAllowed(res);
@@ -38,6 +38,7 @@ export default async function handler(
       sessionId = "",
       userId = "",
       history = [],
+      leadForm = {},
     } = req.body || {};
 
     const cleanMessage =
@@ -54,7 +55,7 @@ export default async function handler(
               item &&
               (item.from === "user" || item.from === "agent") &&
               typeof item.text === "string" &&
-              item.text.trim().length > 0,
+              item.text.trim().length > 0
           )
           .map((item) => ({
             from: item.from,
@@ -71,7 +72,10 @@ export default async function handler(
         context,
         sessionId,
         userId,
+        procedureKey,
+        procedureLabel,
         history: cleanHistory,
+        leadForm,
       });
     } else {
       reply = await enviarMensajeSara({
@@ -90,11 +94,11 @@ export default async function handler(
       ok: true,
       reply,
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error("api/chat error:", error);
 
     return res.status(500).json({
-      error: error?.message || "Internal server error",
+      error: "Internal server error",
     });
   }
 }
