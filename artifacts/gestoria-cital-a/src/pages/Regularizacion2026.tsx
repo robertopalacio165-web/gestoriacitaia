@@ -13,15 +13,12 @@ import {
   Upload,
   AlertTriangle,
   Star,
-  FileUp,
-  Clock,
   ArrowRight,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
   fileToDataUrl,
   verifyDocument,
-  getDocumentLabel,
 } from "@/lib/verifyDocument";
 import {
   EXTRANJERIA_PROCEDURES,
@@ -80,7 +77,6 @@ export default function Regularizacion2026() {
   const [chatInput, setChatInput] = useState("");
   const [showPayment, setShowPayment] = useState(false);
   const [planActivo, setPlanActivo] = useState<string | null>(null);
-  const [uploadingId, setUploadingId] = useState<string | null>(null);
   const [sendingChat, setSendingChat] = useState(false);
   const [userMessageCount, setUserMessageCount] = useState(0);
   const [paymentTriggered, setPaymentTriggered] = useState(false);
@@ -118,23 +114,15 @@ export default function Regularizacion2026() {
         openChat: "فتح الشات",
         closeChat: "سد الشات",
         writeQuestion: "كتب سؤالك...",
-        docsPanelTitle: "وثائق الملف",
         uploadGeneral: "رفع الوثائق",
         uploadGeneralDesc:
           "من هنا تقدر ترفع جميع الوثائق اللي طلب منك محمد.",
-        uploadedPdfs: "ملفات مرفوعة",
-        aiVerified: "موثقين",
-        pending: "معلق",
-        ready: "واجد",
-        review: "راجع",
         withoutAudio: "بلا صوت",
         mute: "كتم",
         activePlanLabel: "الخطة",
         active: "نشطة",
-        detected: "مكتشف",
         situationTitle: "اختر المسطرة",
         uploading: "كيترفع...",
-        notUploadedRequired: "ما ترفعش · إجباري",
         uploadSuccessTitle: "تقبلات الوثيقة",
         uploadSuccessDesc: "راجعنا الوثيقة وربطناها مع الملف.",
         uploadErrorTitle: "خطأ فالوثيقة",
@@ -149,9 +137,11 @@ export default function Regularizacion2026() {
           "مزيان. راجعنا الوثائق ديالك ووجدنا الملف ديالك، وحتى وثيقة الهشاشة، باش يكون واجد للتقديم. إلا بغيتي دابا نكملو بالموعد، تقدر تدخل لهاد الرابط وسارة غادي تعاونك.",
         goSara: "المرور إلى سارة",
         goSaraDesc: "إلى بغيتي تكمل بالموعد، سارة غادي تعاونك.",
-        noDocsYet: "مازال ما ترفع حتى وثيقة.",
         simpleInfo:
           "هنا غادي تهضر مع محمد، ترفع الوثائق، ويتحققو مباشرة ويدخلو لملفك.",
+        cleanCardTitle: "محمد كيهز الملف ديالك",
+        cleanCardText:
+          "هضر مع محمد، ومنين يطلب منك الوثائق رفعهم من الزر اللي تحت. من بعد هو كيراجعهم ويكمل معاك حتى تكون واجد.",
       };
     }
 
@@ -170,23 +160,15 @@ export default function Regularizacion2026() {
         openChat: "Open chat",
         closeChat: "Close chat",
         writeQuestion: "Type your question...",
-        docsPanelTitle: "Case documents",
         uploadGeneral: "Upload documents",
         uploadGeneralDesc:
           "Use this single button to upload all documents Mohamed requests.",
-        uploadedPdfs: "Uploaded",
-        aiVerified: "Verified",
-        pending: "Pending",
-        ready: "Ready",
-        review: "Review",
         withoutAudio: "No audio",
         mute: "Mute",
         activePlanLabel: "Plan",
         active: "active",
-        detected: "Detected",
         situationTitle: "Select procedure",
         uploading: "Uploading...",
-        notUploadedRequired: "Not uploaded · required",
         uploadSuccessTitle: "Document received",
         uploadSuccessDesc: "The document was reviewed and linked to the case.",
         uploadErrorTitle: "Document error",
@@ -201,9 +183,11 @@ export default function Regularizacion2026() {
           "Perfect. We have reviewed your documents and prepared your case, including the vulnerability document. If you want to continue with the appointment, enter this link and Sara will help you.",
         goSara: "Go to Sara",
         goSaraDesc: "If you want to continue with the appointment, Sara will help you.",
-        noDocsYet: "No documents uploaded yet.",
         simpleInfo:
           "Here you talk to Mohamed, upload documents, and they go directly into your case panel.",
+        cleanCardTitle: "Mohamed is managing your case",
+        cleanCardText:
+          "Talk to Mohamed, and when he asks for documents, upload them with the button below. He will review them and keep guiding you.",
       };
     }
 
@@ -221,23 +205,15 @@ export default function Regularizacion2026() {
       openChat: "Abrir chat",
       closeChat: "Cerrar chat",
       writeQuestion: "Escribe tu pregunta...",
-      docsPanelTitle: "Documentos del expediente",
       uploadGeneral: "Subir documentos",
       uploadGeneralDesc:
         "Usa este único botón para subir todos los documentos que te pida Mohamed.",
-      uploadedPdfs: "Subidos",
-      aiVerified: "Verificados",
-      pending: "Pendiente",
-      ready: "Listo",
-      review: "Revisar",
       withoutAudio: "Sin audio",
       mute: "Mute",
       activePlanLabel: "Plan",
       active: "activo",
-      detected: "Detectado",
       situationTitle: "Selecciona el trámite",
       uploading: "Subiendo...",
-      notUploadedRequired: "Sin subir · obligatorio",
       uploadSuccessTitle: "Documento recibido",
       uploadSuccessDesc: "El documento se ha revisado y vinculado al expediente.",
       uploadErrorTitle: "Error en documento",
@@ -252,9 +228,11 @@ export default function Regularizacion2026() {
         "Perfecto. Ya hemos revisado tu documentación y hemos dejado preparado tu expediente, incluido el documento de vulnerabilidad. Si ahora quieres continuar con la cita, entra en este enlace y Sara te ayudará.",
       goSara: "Ir con Sara",
       goSaraDesc: "Si quieres seguir con la cita, Sara te ayuda.",
-      noDocsYet: "Todavía no has subido ningún documento.",
       simpleInfo:
         "Aquí hablas con Mohamed, subes documentos, y se verifican directamente dentro de tu expediente.",
+      cleanCardTitle: "Mohamed está gestionando tu expediente",
+      cleanCardText:
+        "Habla con Mohamed y, cuando te pida documentos, súbelos desde el botón de abajo. Él los revisa y sigue contigo paso a paso.",
     };
   }, [safeLang]);
 
@@ -358,7 +336,6 @@ export default function Regularizacion2026() {
   }));
 
   const docsOk = docs.filter((d) => d.estado === "ok").length;
-  const docsWarn = docs.filter((d) => d.estado === "warn").length;
   const docsTotal = docs.length;
   const allReady = docsOk >= Math.max(1, docsTotal - 1);
 
@@ -444,7 +421,6 @@ export default function Regularizacion2026() {
         if (files.length === 0) return;
 
         setGeneralUploading(true);
-        setUploadingId("general");
 
         for (const file of files) {
           try {
@@ -552,14 +528,12 @@ export default function Regularizacion2026() {
         }
 
         setGeneralUploading(false);
-        setUploadingId(null);
       };
 
       input.click();
     } catch (error: any) {
       console.error("Error general handleGeneralUpload:", error);
       setGeneralUploading(false);
-      setUploadingId(null);
 
       toast({
         title:
@@ -821,7 +795,7 @@ export default function Regularizacion2026() {
                   exit={{ opacity: 0, height: 0 }}
                   className="glass-panel-heavy border border-white/10 rounded-2xl overflow-hidden flex flex-col"
                 >
-                  <div className="flex-1 overflow-y-auto p-3 space-y-2 max-h-[320px]">
+                  <div className="flex-1 overflow-y-auto p-3 space-y-2 max-h-[340px]">
                     {chatMessages.map((msg, i) => (
                       <div
                         key={`${msg.ts || i}-${i}`}
@@ -924,139 +898,27 @@ export default function Regularizacion2026() {
               <p className="text-sm text-white/90">{ui.simpleInfo}</p>
             </div>
 
-            <div className="rounded-2xl border border-white/10 bg-white shadow-xl overflow-hidden">
-              <div className="px-5 py-4 border-b border-gray-200">
-                <p className="text-xs font-bold text-gray-700 uppercase tracking-wide mb-2">
-                  {ui.situationTitle}
-                </p>
-                <select
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  value={selectedSituacion}
-                  onChange={(e) => setSelectedSituacion(e.target.value)}
+            <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm p-5">
+              <p className="text-sm text-white font-semibold mb-2">
+                {ui.cleanCardTitle}
+              </p>
+
+              <p className="text-xs text-white/70 leading-relaxed">
+                {ui.cleanCardText}
+              </p>
+
+              <div className="mt-4">
+                <p className="text-xs text-white/60 mb-2">{currentProcedure.name}</p>
+
+                <button
+                  onClick={handleGeneralUpload}
+                  disabled={generalUploading}
+                  className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary hover:bg-primary/90 disabled:opacity-60 text-primary-foreground font-bold text-sm px-4 py-3 transition-colors"
+                  type="button"
                 >
-                  {SITUACIONES.map((s) => (
-                    <option key={s.value} value={s.value}>
-                      {s.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="px-5 py-4 border-b border-gray-200">
-                <div className="flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-2">
-                    <FileUp className="w-4 h-4 text-primary" />
-                    <span className="text-sm font-bold text-gray-800">
-                      {ui.docsPanelTitle}
-                    </span>
-                  </div>
-
-                  <div className="text-xs text-gray-500">
-                    {docsOk}/{docsTotal}
-                  </div>
-                </div>
-
-                <div className="mt-3 w-full h-2 bg-gray-100 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-gradient-to-r from-green-500 to-emerald-400 rounded-full transition-all duration-500"
-                    style={{
-                      width: `${(docsOk / Math.max(1, docsTotal)) * 100}%`,
-                    }}
-                  />
-                </div>
-
-                <div className="mt-4 grid grid-cols-3 gap-2 text-center">
-                  <div className="rounded-xl bg-green-50 border border-green-100 py-2">
-                    <p className="text-sm font-black text-green-700">{docsOk}</p>
-                    <p className="text-[11px] text-green-700/70">{ui.uploadedPdfs}</p>
-                  </div>
-                  <div className="rounded-xl bg-blue-50 border border-blue-100 py-2">
-                    <p className="text-sm font-black text-blue-700">{docsOk}</p>
-                    <p className="text-[11px] text-blue-700/70">{ui.aiVerified}</p>
-                  </div>
-                  <div className="rounded-xl bg-amber-50 border border-amber-100 py-2">
-                    <p className="text-sm font-black text-amber-700">
-                      {docsWarn > 0 ? docsWarn : allReady ? "✓" : docsTotal - docsOk}
-                    </p>
-                    <p className="text-[11px] text-amber-700/70">
-                      {allReady ? ui.ready : ui.pending}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="px-5 py-4">
-                <div className="space-y-2">
-                  {docs.map((doc) => (
-                    <div
-                      key={doc.id}
-                      className="flex items-center gap-3 rounded-xl border border-gray-200 px-3 py-3"
-                    >
-                      <div
-                        className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
-                          doc.estado === "ok"
-                            ? "bg-green-100"
-                            : doc.estado === "warn"
-                            ? "bg-amber-100"
-                            : "bg-red-100"
-                        }`}
-                      >
-                        {doc.estado === "ok" && (
-                          <CheckCircle2 className="w-4 h-4 text-green-600" />
-                        )}
-                        {doc.estado === "warn" && (
-                          <AlertTriangle className="w-4 h-4 text-amber-600" />
-                        )}
-                        {doc.estado === "missing" && (
-                          <Clock className="w-4 h-4 text-red-500" />
-                        )}
-                      </div>
-
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-gray-800">
-                          {doc.nombre}
-                        </p>
-                        <p className="text-xs text-gray-500 truncate">
-                          {doc.archivo ? doc.archivo : ui.notUploadedRequired}
-                        </p>
-
-                        {!!doc.detectedType && (
-                          <p className="text-[11px] text-gray-400 truncate">
-                            {ui.detected}: {getDocumentLabel(doc.detectedType)}
-                          </p>
-                        )}
-
-                        {!!doc.note && (
-                          <p className="text-[11px] text-gray-400 truncate">
-                            {doc.note}
-                          </p>
-                        )}
-                      </div>
-
-                      <div className="shrink-0">
-                        {doc.estado === "ok" && (
-                          <span className="text-xs font-bold text-green-600">
-                            {ui.ready}
-                          </span>
-                        )}
-                        {doc.estado === "warn" && (
-                          <span className="text-xs font-bold text-amber-600">
-                            {ui.review}
-                          </span>
-                        )}
-                        {doc.estado === "missing" && (
-                          <span className="text-xs font-bold text-red-500">
-                            {ui.pending}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {docs.every((d) => !d.archivo) && (
-                  <p className="mt-4 text-sm text-gray-500">{ui.noDocsYet}</p>
-                )}
+                  <Upload className="w-4 h-4" />
+                  {generalUploading ? ui.uploading : ui.uploadGeneral}
+                </button>
               </div>
             </div>
 
