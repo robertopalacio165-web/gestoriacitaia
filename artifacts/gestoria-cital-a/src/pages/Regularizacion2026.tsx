@@ -723,193 +723,284 @@ const getBestDocMatch = (
     }
   };
 
-  const handleGeneralUpload = async () => {
-    if (!leadSaved) {
-      pushAgentMessage(ui.formBlockedReply);
+const handleGeneralUpload = async () => {
+  if (!leadSaved) {
+    pushAgentMessage(ui.formBlockedReply);
 
-      toast({
-        title: ui.missingTitle,
-        description: ui.missingDesc,
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!planActivo) {
-      setShowPayment(true);
-      return;
-    }
-
-    try {
-      const input = document.createElement("input");
-      input.type = "file";
-      input.accept = "image/*,application/pdf";
-      input.multiple = true;
-
-      input.onchange = async () => {
-        const files = Array.from(input.files || []);
-        if (files.length === 0) return;
-
-        setGeneralUploading(true);
-
-        try {
-          for (const file of files) {
-            try {
-              const result: VerifyDocumentResult = await verifyDocument({
-                file,
-                expectedDocumentType: "auto",
-                lang: safeLang,
-              });
-
-              let matchedDocSnapshot: StoredDocItem | null = null;
-              let nextDocsSnapshot: StoredDocItem[] = [];
-
-              setDocs((prev) => {
-                const matchedDoc = getBestDocMatch(result, prev, file.name);
-                matchedDocSnapshot = matchedDoc;
-
-                if (!matchedDoc) {
-                  nextDocsSnapshot = [...prev];
-                  return prev;
-                }
-
-                const nextStatus: DocStatus =
-                  result.status === "invalid" ||
-                  result.match_expected_type === false
-                    ? "warn"
-                    : "ok";
-
-                const updatedDocs = prev.map((doc) =>
-                  doc.id === matchedDoc.id
-                    ? {
-                        ...doc,
-                        estado: nextStatus,
-                        archivo: file.name,
-                        kb: `${Math.round(file.size / 1024)} KB`,
-                        detectedType: result.document_type || "",
-                        note: result.summary || "",
-                      }
-                    : doc
-                );
-
-                nextDocsSnapshot = updatedDocs;
-                return updatedDocs;
-              });
-if (!matchedDocSnapshot) {
-  const bucket = (result?.recommended_bucket || "").toLowerCase();
-
-  let smartMessage = "";
-
-  if (bucket === "identity_document") {
-    smartMessage =
-      safeLang === "darija"
-        ? `توصلت بــ ${file.name}. هاد الوثيقة باينة وثيقة هوية وتمت قراءتها، غادي نضيفها للملف.`
-        : safeLang === "en"
-        ? `I received ${file.name}. This looks like an identity document and it was read correctly. I will add it to the case.`
-        : `He recibido ${file.name}. Parece un documento de identidad y se ha leído correctamente. Lo añadiré al expediente.`;
-  } else if (result?.is_stay_proof || bucket === "stay_proof") {
-    smartMessage =
-      safeLang === "darija"
-        ? `توصلت بــ ${file.name}. هادي باينة prueba de estancia وغادي نحتافظ بها ضمن pruebas de los 5 meses.`
-        : safeLang === "en"
-        ? `I received ${file.name}. This appears to be a stay proof and I will keep it for the 5-month evidence file.`
-        : `He recibido ${file.name}. Parece una prueba de estancia y la guardaré dentro de las pruebas de los 5 meses.`;
-  } else {
-    smartMessage =
-      safeLang === "darija"
-        ? `توصلت بــ ${file.name}. قريت الوثيقة وغادي نخليها ضمن otros documentos.`
-        : safeLang === "en"
-        ? `I received ${file.name}. I read the document and I will keep it under other documents.`
-        : `He recibido ${file.name}. He leído el documento y lo guardaré en otros documentos.`;
+    toast({
+      title: ui.missingTitle,
+      description: ui.missingDesc,
+      variant: "destructive",
+    });
+    return;
   }
 
-  pushAgentMessage(smartMessage);
+  if (!planActivo) {
+    setShowPayment(true);
+    return;
+  }
 
-  toast({
-    title: ui.uploadSuccessTitle,
-    description: result?.summary || ui.uploadSuccessDesc,
-  });
+  try {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "image/*,application/pdf";
+    input.multiple = true;
 
-  continue;
-}
+    input.onchange = async () => {
+      const files = Array.from(input.files || []);
+      if (files.length === 0) return;
 
-              const isWarn =
-                result.status === "invalid" ||
-                result.match_expected_type === false;
+      setGeneralUploading(true);
 
-              if (isWarn) {
-                pushAgentMessage(ui.mohamedDocWarn(file.name));
-              } else {
-                pushAgentMessage(
-                  ui.mohamedDocOk(file.name, matchedDocSnapshot.nombre)
-                );
+      try {
+        for (const file of files) {
+          try {
+            const result: VerifyDocumentResult = await verifyDocument({
+              file,
+              expectedDocumentType: "auto",
+              lang: safeLang,
+            });
+
+            let matchedDocSnapshot: StoredDocItem | null = null;
+            let nextDocsSnapshot: StoredDocItem[] = [];
+
+            setDocs((prev) => {
+              const matchedDoc = getBestDocMatch(result, prev, file.name);
+              matchedDocSnapshot = matchedDoc;
+
+              if (!matchedDoc) {
+                nextDocsSnapshot = [...prev];
+                return prev;
               }
+
+              const nextStatus: DocStatus =
+                result.status === "invalid" ||
+                result.match_expected_type === false
+                  ? "warn"
+                  : "ok";
+
+              const updatedDocs = prev.map((doc) =>
+                doc.id === matchedDoc.id
+                  ? {
+                      ...doc,
+                      estado: nextStatus,
+                      archivo: file.name,
+                      kb: `${Math.round(file.size / 1024)} KB`,
+                      detectedType: result.document_type || "",
+                      note: result.summary || "",
+                    }
+                  : doc
+              );
+
+              nextDocsSnapshot = updatedDocs;
+              return updatedDocs;
+            });
+
+            const bucket = (result?.recommended_bucket || "").toLowerCase();
+            const detectedType = (result?.document_type || "").toLowerCase();
+            const stayStrength = (result?.stay_proof_strength || "").toLowerCase();
+
+            if (!matchedDocSnapshot) {
+              let smartMessage = "";
+
+              if (bucket === "identity_document" || detectedType === "passport" || detectedType === "nie" || detectedType === "tie") {
+                smartMessage =
+                  safeLang === "darija"
+                    ? `توصلت بــ ${file.name}. هاد الوثيقة باينة وثيقة هوية وتمت قراءتها، غادي نضيفها للملف.`
+                    : safeLang === "en"
+                    ? `I received ${file.name}. This looks like an identity document and it was read correctly. I will add it to the case.`
+                    : `He recibido ${file.name}. Parece un documento de identidad y se ha leído correctamente. Lo añadiré al expediente.`;
+              } else if (result?.is_stay_proof || bucket === "stay_proof") {
+                smartMessage =
+                  safeLang === "darija"
+                    ? stayStrength === "strong"
+                      ? `توصلت بــ ${file.name}. هادي باينة prueba قوية ديال التواجد أو الإقامة فإسبانيا، وغادي نحتافظ بها ضمن pruebas de los 5 meses.`
+                      : `توصلت بــ ${file.name}. هادي باينة prueba إضافية ديال التواجد فإسبانيا، وغادي نخليها ضمن الملف ونراجعها مع باقي البروفات.`
+                    : safeLang === "en"
+                    ? stayStrength === "strong"
+                      ? `I received ${file.name}. This looks like a strong proof of stay in Spain, and I will keep it inside the 5-month evidence.`
+                      : `I received ${file.name}. This looks like an additional proof of stay in Spain, and I will keep it in the file to review it with the other proofs.`
+                    : stayStrength === "strong"
+                    ? `He recibido ${file.name}. Parece una prueba fuerte de estancia en España y la guardaré dentro de las pruebas de los 5 meses.`
+                    : `He recibido ${file.name}. Parece una prueba adicional de estancia en España y la guardaré en el expediente para revisarla con las demás pruebas.`;
+              } else if (bucket === "official_form") {
+                smartMessage =
+                  safeLang === "darija"
+                    ? `توصلت بــ ${file.name}. هادي باينة formulario oficial وغادي نضيفو للملف.`
+                    : safeLang === "en"
+                    ? `I received ${file.name}. This looks like an official form and I will add it to the file.`
+                    : `He recibido ${file.name}. Parece un formulario oficial y lo añadiré al expediente.`;
+              } else if (bucket === "personal_photo") {
+                smartMessage =
+                  safeLang === "darija"
+                    ? `توصلت بــ ${file.name}. هادي باينة صورة شخصية، وغادي نخليها ضمن الملف باش نراجع واش صالحة للتصاريح والإجراءات.`
+                    : safeLang === "en"
+                    ? `I received ${file.name}. This looks like a personal photo, and I will keep it in the file to review whether it is suitable for the procedure.`
+                    : `He recibido ${file.name}. Parece una foto personal y la guardaré en el expediente para revisar si sirve para el trámite.`;
+              } else {
+                smartMessage =
+                  safeLang === "darija"
+                    ? `توصلت بــ ${file.name}. قريت الوثيقة وغادي نخليها ضمن otros documentos ونكمل الترتيب مع باقي الملف.`
+                    : safeLang === "en"
+                    ? `I received ${file.name}. I read the document and I will keep it under other documents while I continue organizing the case.`
+                    : `He recibido ${file.name}. He leído el documento y lo guardaré en otros documentos mientras sigo organizando el expediente.`;
+              }
+
+              pushAgentMessage(smartMessage);
 
               toast({
                 title: ui.uploadSuccessTitle,
                 description: result?.summary || ui.uploadSuccessDesc,
               });
 
-              if (nextDocsSnapshot.length > 0) {
-                maybeSendCompletionMessage(nextDocsSnapshot);
-              }
-            } catch (err: any) {
-              console.error("Error IA documento:", err);
+              continue;
+            }
 
+            const isWarn =
+              result.status === "invalid" ||
+              result.match_expected_type === false;
+
+            if (isWarn) {
+              pushAgentMessage(ui.mohamedDocWarn(file.name));
+            } else if (detectedType === "passport") {
               pushAgentMessage(
                 safeLang === "darija"
-                  ? `وقع مشكل فمراجعة الوثيقة: ${err?.message || "خطأ غير معروف"}`
+                  ? `مزيان. توصلت بــ ${file.name} وهادي باينة بوضوح باسبور. ضفتو للملف.`
                   : safeLang === "en"
-                  ? `There was a problem reviewing the document: ${err?.message || "Unknown error"}`
-                  : `Ha habido un problema revisando el documento: ${err?.message || "Error desconocido"}`
+                  ? `Perfect. I received ${file.name} and it clearly looks like a passport. I added it to the file.`
+                  : `Perfecto. He recibido ${file.name} y se ve claramente que es un pasaporte. Lo he añadido al expediente.`
               );
-
-              toast({
-                title:
-                  safeLang === "darija"
-                    ? "خطأ فالتحليل"
-                    : safeLang === "en"
-                    ? "Verification error"
-                    : "Error de verificación",
-                description:
-                  err?.message ||
-                  (safeLang === "darija"
-                    ? "ما قدرناش نحللو الوثيقة."
-                    : safeLang === "en"
-                    ? "Could not analyze the document."
-                    : "No se pudo analizar el documento."),
-                variant: "destructive",
-              });
+            } else if (detectedType === "nie") {
+              pushAgentMessage(
+                safeLang === "darija"
+                  ? `مزيان. توصلت بــ ${file.name} وهادي باينة NIE. ضفتها للملف.`
+                  : safeLang === "en"
+                  ? `Perfect. I received ${file.name} and it looks like a NIE. I added it to the file.`
+                  : `Perfecto. He recibido ${file.name} y parece un NIE. Lo he añadido al expediente.`
+              );
+            } else if (detectedType === "tie") {
+              pushAgentMessage(
+                safeLang === "darija"
+                  ? `مزيان. توصلت بــ ${file.name} وهادي باينة TIE. ضفتها للملف.`
+                  : safeLang === "en"
+                  ? `Perfect. I received ${file.name} and it looks like a TIE. I added it to the file.`
+                  : `Perfecto. He recibido ${file.name} y parece una TIE. La he añadido al expediente.`
+              );
+            } else if (detectedType === "empadronamiento") {
+              pushAgentMessage(
+                safeLang === "darija"
+                  ? `مزيان. توصلت بــ ${file.name} وهادي باينة empadronamiento. ضفتو للملف.`
+                  : safeLang === "en"
+                  ? `Perfect. I received ${file.name} and it looks like an empadronamiento document. I added it to the file.`
+                  : `Perfecto. He recibido ${file.name} y parece un empadronamiento. Lo he añadido al expediente.`
+              );
+            } else if (detectedType === "criminal_record") {
+              pushAgentMessage(
+                safeLang === "darija"
+                  ? `مزيان. توصلت بــ ${file.name} وهادي باينة شهادة السوابق العدلية. ضفتها للملف.`
+                  : safeLang === "en"
+                  ? `Perfect. I received ${file.name} and it looks like a criminal record certificate. I added it to the file.`
+                  : `Perfecto. He recibido ${file.name} y parece un certificado de antecedentes penales. Lo he añadido al expediente.`
+              );
+            } else if (result?.is_stay_proof || bucket === "stay_proof") {
+              pushAgentMessage(
+                safeLang === "darija"
+                  ? stayStrength === "strong"
+                    ? `مزيان. توصلت بــ ${file.name} وهادي باينة prueba قوية ديال الإقامة أو التواجد فإسبانيا. غادي نعتمدها ضمن بروفات 5 شهور.`
+                    : `توصلت بــ ${file.name} وهادي باينة prueba إضافية ديال التواجد فإسبانيا. غادي نخليها ضمن الملف ونراجعها مع باقي البروفات.`
+                  : safeLang === "en"
+                  ? stayStrength === "strong"
+                    ? `Perfect. I received ${file.name} and it looks like a strong proof of stay in Spain. I will count it within the 5-month evidence.`
+                    : `I received ${file.name} and it looks like an additional proof of stay in Spain. I will keep it in the file and review it together with the other proofs.`
+                  : stayStrength === "strong"
+                  ? `Perfecto. He recibido ${file.name} y parece una prueba fuerte de estancia en España. La tendré en cuenta dentro de las pruebas de los 5 meses.`
+                  : `He recibido ${file.name} y parece una prueba adicional de estancia en España. La guardaré en el expediente y la revisaré junto con las demás pruebas.`
+              );
+            } else if (bucket === "official_form") {
+              pushAgentMessage(
+                safeLang === "darija"
+                  ? `مزيان. توصلت بــ ${file.name} وهادي باينة formulario oficial. ضفتو للملف.`
+                  : safeLang === "en"
+                  ? `Perfect. I received ${file.name} and it looks like an official form. I added it to the file.`
+                  : `Perfecto. He recibido ${file.name} y parece un formulario oficial. Lo he añadido al expediente.`
+              );
+            } else if (bucket === "personal_photo") {
+              pushAgentMessage(
+                safeLang === "darija"
+                  ? `توصلت بــ ${file.name}. هادي باينة صورة شخصية، وغادي نخليها ضمن الملف باش نراجع واش صالحة للتصاريح والإجراءات.`
+                  : safeLang === "en"
+                  ? `I received ${file.name}. This looks like a personal photo, and I will keep it in the file to review whether it is suitable for the procedure.`
+                  : `He recibido ${file.name}. Parece una foto personal, y la guardaré en el expediente para revisar si sirve para el trámite.`
+              );
+            } else {
+              pushAgentMessage(ui.mohamedDocOk(file.name, matchedDocSnapshot.nombre));
             }
+
+            toast({
+              title: ui.uploadSuccessTitle,
+              description: result?.summary || ui.uploadSuccessDesc,
+            });
+
+            if (nextDocsSnapshot.length > 0) {
+              maybeSendCompletionMessage(nextDocsSnapshot);
+            }
+          } catch (err: any) {
+            console.error("Error IA documento:", err);
+
+            pushAgentMessage(
+              safeLang === "darija"
+                ? `وقع مشكل فمراجعة الوثيقة: ${err?.message || "خطأ غير معروف"}`
+                : safeLang === "en"
+                ? `There was a problem reviewing the document: ${err?.message || "Unknown error"}`
+                : `Ha habido un problema revisando el documento: ${err?.message || "Error desconocido"}`
+            );
+
+            toast({
+              title:
+                safeLang === "darija"
+                  ? "خطأ فالتحليل"
+                  : safeLang === "en"
+                  ? "Verification error"
+                  : "Error de verificación",
+              description:
+                err?.message ||
+                (safeLang === "darija"
+                  ? "ما قدرناش نحللو الوثيقة."
+                  : safeLang === "en"
+                  ? "Could not analyze the document."
+                  : "No se pudo analizar el documento."),
+              variant: "destructive",
+            });
           }
-        } finally {
-          setGeneralUploading(false);
         }
-      };
+      } finally {
+        setGeneralUploading(false);
+      }
+    };
 
-      input.click();
-    } catch (error: any) {
-      console.error("Error general handleGeneralUpload:", error);
-      setGeneralUploading(false);
+    input.click();
+  } catch (error: any) {
+    console.error("Error general handleGeneralUpload:", error);
+    setGeneralUploading(false);
 
-      toast({
-        title:
-          safeLang === "darija"
-            ? "خطأ"
-            : safeLang === "en"
-            ? "Error"
-            : "Error",
-        description:
-          error?.message ||
-          (safeLang === "darija"
-            ? "وقع مشكل غير متوقع."
-            : safeLang === "en"
-            ? "An unexpected error occurred."
-            : "Ocurrió un error inesperado."),
-        variant: "destructive",
-      });
-    }
-  };
+    toast({
+      title:
+        safeLang === "darija"
+          ? "خطأ"
+          : safeLang === "en"
+          ? "Error"
+          : "Error",
+      description:
+        error?.message ||
+        (safeLang === "darija"
+          ? "وقع مشكل غير متوقع."
+          : safeLang === "en"
+          ? "An unexpected error occurred."
+          : "Ocurrió un error inesperado."),
+      variant: "destructive",
+    });
+  }
+};
 
   const handleSendChat = async () => {
     if (!chatInput.trim() || sendingChat || !chatBootstrapped) return;
