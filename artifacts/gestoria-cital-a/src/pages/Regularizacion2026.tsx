@@ -168,7 +168,8 @@ export default function Regularizacion2026() {
         saveLeadTitle: "تحفظات المعطيات",
         saveLeadDesc: "محمد قدر يبدا يراجع معاك الوثائق.",
         missingTitle: "كاينين بيانات ناقصين",
-        missingDesc: "عمر الاسم والهاتف والمدينة والجنسية وتاريخ الدخول قبل ما تكمل.",
+        missingDesc:
+          "عمر الاسم والهاتف والمدينة والجنسية وتاريخ الدخول قبل ما تكمل.",
         labels: {
           nombre: "الاسم الكامل",
           telefono: "الهاتف",
@@ -470,7 +471,9 @@ export default function Regularizacion2026() {
   ]);
 
   useEffect(() => {
-    if (!chatBootstrapped || !chatStorageKey || chatMessages.length === 0) return;
+    if (!chatBootstrapped || !chatStorageKey || chatMessages.length === 0) {
+      return;
+    }
 
     try {
       localStorage.setItem(chatStorageKey, JSON.stringify(chatMessages));
@@ -542,209 +545,168 @@ export default function Regularizacion2026() {
     });
   };
 
-const getBestDocMatch = (
-  result: {
-    document_type?: string | null;
-    summary?: string;
-    visible_fields?: string[];
-    missing_or_unclear_fields?: string[];
-    warnings?: string[];
-  },
-  currentDocs: StoredDocItem[],
-  fileName?: string
-): StoredDocItem | null => {
-  const detectedType = normalizeDocType(result?.document_type || "");
-  const lowerFileName = (fileName || "").toLowerCase();
+  const getBestDocMatch = (
+    result: {
+      document_type?: string | null;
+      summary?: string;
+      visible_fields?: string[];
+      missing_or_unclear_fields?: string[];
+      warnings?: string[];
+    },
+    currentDocs: StoredDocItem[],
+    fileName?: string
+  ): StoredDocItem | null => {
+    const detectedType = normalizeDocType(result?.document_type || "");
+    const lowerFileName = (fileName || "").toLowerCase();
 
-  const combinedText = [
-    result?.summary || "",
-    ...(result?.visible_fields || []),
-    ...(result?.missing_or_unclear_fields || []),
-    ...(result?.warnings || []),
-    lowerFileName,
-  ]
-    .join(" ")
-    .toLowerCase();
+    const combinedText = [
+      result?.summary || "",
+      ...(result?.visible_fields || []),
+      ...(result?.missing_or_unclear_fields || []),
+      ...(result?.warnings || []),
+      lowerFileName,
+    ]
+      .join(" ")
+      .toLowerCase();
 
-  const includesAny = (words: string[]) =>
-    words.some((word) => combinedText.includes(word));
+    const includesAny = (words: string[]) =>
+      words.some((word) => combinedText.includes(word));
 
-  if (detectedType && detectedType !== "unknown" && detectedType !== "photo") {
-    const exactMissing = currentDocs.find(
-      (doc) =>
-        doc.estado !== "ok" &&
-        normalizeDocType(doc.expectedType) === detectedType
-    );
-    if (exactMissing) return exactMissing;
-
-    const exactWarn = currentDocs.find(
-      (doc) =>
-        doc.estado === "warn" &&
-        normalizeDocType(doc.expectedType) === detectedType
-    );
-    if (exactWarn) return exactWarn;
-  }
-
-  if (
-    includesAny([
-      "antecedentes",
-      "antecedentes penales",
-      "criminal",
-      "criminal record",
-      "penales",
-      "registro de antecedentes",
-      "casier",
-    ])
-  ) {
-    const criminalDoc =
-      currentDocs.find(
+    if (detectedType && detectedType !== "unknown" && detectedType !== "photo") {
+      const exactMissing = currentDocs.find(
         (doc) =>
           doc.estado !== "ok" &&
-          normalizeDocType(doc.expectedType) === "criminal_record"
-      ) ||
-      currentDocs.find(
-        (doc) => normalizeDocType(doc.expectedType) === "criminal_record"
+          normalizeDocType(doc.expectedType) === detectedType
       );
+      if (exactMissing) return exactMissing;
 
-    if (criminalDoc) return criminalDoc;
-  }
-
-  if (
-    includesAny([
-      "passport",
-      "pasaporte",
-      "passeport",
-      "documento de viaje",
-    ])
-  ) {
-    const passportDoc =
-      currentDocs.find(
+      const exactWarn = currentDocs.find(
         (doc) =>
+          doc.estado === "warn" &&
+          normalizeDocType(doc.expectedType) === detectedType
+      );
+      if (exactWarn) return exactWarn;
+    }
+
+    if (
+      includesAny([
+        "antecedentes",
+        "antecedentes penales",
+        "criminal",
+        "criminal record",
+        "penales",
+        "registro de antecedentes",
+        "casier",
+      ])
+    ) {
+      const criminalDoc =
+        currentDocs.find(
+          (doc) =>
+            doc.estado !== "ok" &&
+            normalizeDocType(doc.expectedType) === "criminal_record"
+        ) ||
+        currentDocs.find(
+          (doc) => normalizeDocType(doc.expectedType) === "criminal_record"
+        );
+
+      if (criminalDoc) return criminalDoc;
+    }
+
+    if (
+      includesAny([
+        "passport",
+        "pasaporte",
+        "passeport",
+        "documento de viaje",
+      ])
+    ) {
+      const passportDoc =
+        currentDocs.find(
+          (doc) =>
+            doc.estado !== "ok" &&
+            normalizeDocType(doc.expectedType) === "passport"
+        ) ||
+        currentDocs.find(
+          (doc) => normalizeDocType(doc.expectedType) === "passport"
+        );
+
+      if (passportDoc) return passportDoc;
+    }
+
+    if (includesAny(["nie"])) {
+      const nieDoc =
+        currentDocs.find(
+          (doc) =>
+            doc.estado !== "ok" && normalizeDocType(doc.expectedType) === "nie"
+        ) ||
+        currentDocs.find((doc) => normalizeDocType(doc.expectedType) === "nie");
+
+      if (nieDoc) return nieDoc;
+    }
+
+    if (includesAny(["tie", "tarjeta de identidad de extranjero"])) {
+      const tieDoc =
+        currentDocs.find(
+          (doc) =>
+            doc.estado !== "ok" && normalizeDocType(doc.expectedType) === "tie"
+        ) ||
+        currentDocs.find((doc) => normalizeDocType(doc.expectedType) === "tie");
+
+      if (tieDoc) return tieDoc;
+    }
+
+    if (includesAny(["empadronamiento", "padron", "padrón", "volante"])) {
+      const empDoc =
+        currentDocs.find(
+          (doc) =>
+            doc.estado !== "ok" &&
+            normalizeDocType(doc.expectedType) === "empadronamiento"
+        ) ||
+        currentDocs.find(
+          (doc) => normalizeDocType(doc.expectedType) === "empadronamiento"
+        );
+
+      if (empDoc) return empDoc;
+    }
+
+    if (
+      includesAny(["formulario", "official form", "solicitud", "modelo ex"])
+    ) {
+      const formDoc =
+        currentDocs.find(
+          (doc) =>
+            doc.estado !== "ok" &&
+            normalizeDocType(doc.expectedType) === "official_form"
+        ) ||
+        currentDocs.find(
+          (doc) => normalizeDocType(doc.expectedType) === "official_form"
+        );
+
+      if (formDoc) return formDoc;
+    }
+
+    if (lowerFileName) {
+      const byNameMissing = currentDocs.find((doc) => {
+        const expected = normalizeDocType(doc.expectedType);
+        return (
           doc.estado !== "ok" &&
-          normalizeDocType(doc.expectedType) === "passport"
-      ) ||
-      currentDocs.find(
-        (doc) => normalizeDocType(doc.expectedType) === "passport"
-      );
+          expected &&
+          expected !== "auto" &&
+          lowerFileName.includes(expected)
+        );
+      });
 
-    if (passportDoc) return passportDoc;
-  }
+      if (byNameMissing) return byNameMissing;
+    }
 
-  if (includesAny(["nie"])) {
-    const nieDoc =
-      currentDocs.find(
-        (doc) =>
-          doc.estado !== "ok" && normalizeDocType(doc.expectedType) === "nie"
-      ) ||
-      currentDocs.find((doc) => normalizeDocType(doc.expectedType) === "nie");
+    const firstMissing = currentDocs.find((doc) => doc.estado === "missing");
+    if (firstMissing) return firstMissing;
 
-    if (nieDoc) return nieDoc;
-  }
+    const firstWarn = currentDocs.find((doc) => doc.estado === "warn");
+    if (firstWarn) return firstWarn;
 
-  if (includesAny(["tie", "tarjeta de identidad de extranjero"])) {
-    const tieDoc =
-      currentDocs.find(
-        (doc) =>
-          doc.estado !== "ok" && normalizeDocType(doc.expectedType) === "tie"
-      ) ||
-      currentDocs.find((doc) => normalizeDocType(doc.expectedType) === "tie");
-
-    if (tieDoc) return tieDoc;
-  }
-
-  if (includesAny(["empadronamiento", "padron", "padrón", "volante"])) {
-    const empDoc =
-      currentDocs.find(
-        (doc) =>
-          doc.estado !== "ok" &&
-          normalizeDocType(doc.expectedType) === "empadronamiento"
-      ) ||
-      currentDocs.find(
-        (doc) => normalizeDocType(doc.expectedType) === "empadronamiento"
-      );
-
-    if (empDoc) return empDoc;
-  }
-
-  if (includesAny(["formulario", "official form", "solicitud", "modelo ex"])) {
-    const formDoc =
-      currentDocs.find(
-        (doc) =>
-          doc.estado !== "ok" &&
-          normalizeDocType(doc.expectedType) === "official_form"
-      ) ||
-      currentDocs.find(
-        (doc) => normalizeDocType(doc.expectedType) === "official_form"
-      );
-
-    if (formDoc) return formDoc;
-  }
-
-  if (lowerFileName) {
-    const byNameMissing = currentDocs.find((doc) => {
-      const expected = normalizeDocType(doc.expectedType);
-      return (
-        doc.estado !== "ok" &&
-        expected &&
-        expected !== "auto" &&
-        lowerFileName.includes(expected)
-      );
-    });
-
-    if (byNameMissing) return byNameMissing;
-  }
-
-  const firstMissing = currentDocs.find((doc) => doc.estado === "missing");
-  if (firstMissing) return firstMissing;
-
-  const firstWarn = currentDocs.find((doc) => doc.estado === "warn");
-  if (firstWarn) return firstWarn;
-
-  return null;
-};
-  const normalizedDetected = normalizeDocType(detectedType || "");
-  const lowerFileName = (fileName || "").toLowerCase();
-
-  if (normalizedDetected && normalizedDetected !== "unknown" && normalizedDetected !== "photo") {
-    const exactMissing = currentDocs.find(
-      (doc) =>
-        doc.estado !== "ok" &&
-        normalizeDocType(doc.expectedType) === normalizedDetected
-    );
-
-    if (exactMissing) return exactMissing;
-
-    const exactWarn = currentDocs.find(
-      (doc) =>
-        doc.estado === "warn" &&
-        normalizeDocType(doc.expectedType) === normalizedDetected
-    );
-
-    if (exactWarn) return exactWarn;
-  }
-
-  if (lowerFileName) {
-    const byNameMissing = currentDocs.find((doc) => {
-      const expected = normalizeDocType(doc.expectedType);
-      return (
-        doc.estado !== "ok" &&
-        expected &&
-        expected !== "auto" &&
-        lowerFileName.includes(expected)
-      );
-    });
-
-    if (byNameMissing) return byNameMissing;
-  }
-
-  const firstMissing = currentDocs.find((doc) => doc.estado === "missing");
-  if (firstMissing) return firstMissing;
-
-  const firstWarn = currentDocs.find((doc) => doc.estado === "warn");
-  if (firstWarn) return firstWarn;
-
-  return null;
-};
+    return null;
+  };
 
   const pushAgentMessage = (text: string) => {
     setChatMessages((prev) => [
@@ -842,22 +804,22 @@ const getBestDocMatch = (
               });
 
               if (!matchedDocSnapshot) {
-  pushAgentMessage(
-    safeLang === "darija"
-      ? `توصلت بــ ${file.name}. قريت الوثيقة ولكن ما قدرتش نربطها أوتوماتيكياً مع خانة محددة. صيفط باقي الوثائق وأنا نكمل الترتيب.`
-      : safeLang === "en"
-      ? `I received ${file.name}. I could read the document, but I could not automatically assign it to a specific slot yet. Send the remaining documents and I will continue organizing them.`
-      : `He recibido ${file.name}. He podido leer el documento, pero todavía no he podido asignarlo automáticamente a una casilla concreta del expediente. Sube los demás documentos y sigo organizándolo.`
-  );
+                pushAgentMessage(
+                  safeLang === "darija"
+                    ? `توصلت بــ ${file.name}. قريت الوثيقة ولكن ما قدرتش نربطها أوتوماتيكياً مع خانة محددة. صيفط باقي الوثائق وأنا نكمل الترتيب.`
+                    : safeLang === "en"
+                    ? `I received ${file.name}. I could read the document, but I could not automatically assign it to a specific slot yet. Send the remaining documents and I will continue organizing them.`
+                    : `He recibido ${file.name}. He podido leer el documento, pero todavía no he podido asignarlo automáticamente a una casilla concreta del expediente. Sube los demás documentos y sigo organizándolo.`
+                );
 
-  toast({
-    title: ui.uploadErrorTitle,
-    description: result?.summary || ui.uploadErrorDesc,
-    variant: "destructive",
-  });
+                toast({
+                  title: ui.uploadErrorTitle,
+                  description: result?.summary || ui.uploadErrorDesc,
+                  variant: "destructive",
+                });
 
-  continue;
-}
+                continue;
+              }
 
               const isWarn =
                 result.status === "invalid" ||
@@ -882,13 +844,14 @@ const getBestDocMatch = (
             } catch (err: any) {
               console.error("Error IA documento:", err);
 
-             pushAgentMessage(
-  safeLang === "darija"
-    ? `وقع مشكل فمراجعة الوثيقة: ${err?.message || "خطأ غير معروف"}`
-    : safeLang === "en"
-    ? `There was a problem reviewing the document: ${err?.message || "Unknown error"}`
-    : `Ha habido un problema revisando el documento: ${err?.message || "Error desconocido"}`
-);
+              pushAgentMessage(
+                safeLang === "darija"
+                  ? `وقع مشكل فمراجعة الوثيقة: ${err?.message || "خطأ غير معروف"}`
+                  : safeLang === "en"
+                  ? `There was a problem reviewing the document: ${err?.message || "Unknown error"}`
+                  : `Ha habido un problema revisando el documento: ${err?.message || "Error desconocido"}`
+              );
+
               toast({
                 title:
                   safeLang === "darija"
@@ -1079,7 +1042,9 @@ const getBestDocMatch = (
                 {t("reg_new")}
               </span>
             </h1>
-            <p className="text-xs text-muted-foreground">{currentProcedure.name}</p>
+            <p className="text-xs text-muted-foreground">
+              {currentProcedure.name}
+            </p>
           </div>
 
           {planActivo ? (
@@ -1112,7 +1077,9 @@ const getBestDocMatch = (
 
               <div className="absolute top-3 left-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/60 border border-white/10 backdrop-blur-md">
                 <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                <span className="text-xs font-medium text-white">{ui.online}</span>
+                <span className="text-xs font-medium text-white">
+                  {ui.online}
+                </span>
               </div>
 
               <div className="absolute top-3 right-3">
@@ -1420,6 +1387,8 @@ const getBestDocMatch = (
       </main>
     </div>
   );
+}
+
 function FieldLabel({ label }: { label: string }) {
   return (
     <label className="block text-[12px] font-semibold text-slate-600 mb-1">
