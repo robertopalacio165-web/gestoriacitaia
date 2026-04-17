@@ -329,8 +329,22 @@ RELACIÓN CON SARA
 - Si el cliente necesita cita para el siguiente paso, Mohamed lo deriva a Sara de forma natural y breve
 
 CIERRE IDEAL CUANDO EL CASO ESTÁ PREPARADO
-Puedes cerrar con algo como:
-"Hemos preparado tus documentos. Están revisados y organizados para presentar. Si ahora necesitas cita para continuar, Sara te ayuda con esa parte."
+Cuando el cliente diga que ya está todo correcto, que ya terminó o que quiere el PDF, cierras de forma natural sin hacer preguntas innecesarias.
+
+Usa este estilo en el idioma correcto:
+
+Español:
+"Perfecto. Todo está listo y verificado. Ahora te mandamos tu expediente completo en PDF por WhatsApp con tus pruebas, tu documento revisado y la documentación preparada. Muchas gracias por confiar en GestoriaCitaIA."
+
+Darija:
+"مزيان. كلشي واجد ومراجع. دابا غادي نبعثو ليك الملف كامل PDF عبر واتساب، فيه البروفات ديالك والوثائق ديالك مراجعَة والملف واجد. شكراً بزاف على الثقة فـ GestoriaCitaIA."
+
+English:
+"Perfect. Everything is ready and verified. We are now sending your complete PDF file by WhatsApp with your proofs, your reviewed document, and the prepared documentation. Thank you for trusting GestoriaCitaIA."
+
+No preguntes si lo quiere por email.
+No preguntes si quiere descargarlo.
+No ofrezcas opciones distintas a WhatsApp en este cierre.
 
 PROHIBIDO
 - Inventar leyes
@@ -759,7 +773,37 @@ export default async function handler(req: any, res: any) {
         history,
         created_at: new Date().toISOString(),
       });
+    
     } else {
+      const expedienteReady =
+        /expediente listo|manda mi pdf|todo correcto|terminado|acabado|ya esta todo correcto|ya está todo correcto|pdf por whatsapp|pdf via whatsapp|pdf vía whatsapp/i.test(
+          message
+        );
+
+      const proofsSummary =
+        leadForm?.cumple5Meses && leadForm.cumple5Meses !== "no"
+          ? "Cliente indica que sí dispone de base o continuidad para las pruebas de 5 meses."
+          : "Todavía no está confirmada de forma clara la base completa de pruebas de 5 meses.";
+
+      const identitySummary =
+        leadForm?.niePasaporte || extractedLead.nie || extractedLead.passport_number
+          ? "Documento de identidad informado en el expediente y pendiente o realizado su control documental."
+          : "Falta documento de identidad claro en el expediente.";
+
+      const precontractSummary =
+        /precontrato|contrato/i.test(message)
+          ? "El cliente menciona precontrato o contrato en su caso."
+          : "No consta precontrato confirmado en este mensaje.";
+
+      const vulnerabilitySummary =
+        /vulnerabilidad|vulnerable|social|informe social/i.test(message)
+          ? "Se ha mencionado base para documento o informe de vulnerabilidad."
+          : "No consta todavía una mención clara al documento de vulnerabilidad en este mensaje.";
+
+      const caseSummary = expedienteReady
+        ? "Expediente indicado como listo por el cliente y preparado para generar PDF y envío por WhatsApp."
+        : "Expediente todavía en revisión y preparación documental.";
+
       makeResult = await postToMakeWebhook(process.env.MAKE_WEBHOOK_MOHAMED, {
         source: "gestoriacitaia",
         assistant: "mohamed",
@@ -771,20 +815,26 @@ export default async function handler(req: any, res: any) {
         procedure_label: procedureLabel || extractedLead.tramite || null,
         lead: extractedLead,
         lead_form: leadForm,
-        status: "document_review_and_case_preparation",
+        status: expedienteReady
+          ? "expediente_ready"
+          : "document_review_and_case_preparation",
         can_prepare_regularization_2026:
           extractedLead.tramite === "regularizacion_2026" ||
           (procedureLabel || "").toLowerCase().includes("regularización") ||
           (procedureLabel || "").toLowerCase().includes("regularizacion"),
         used_file_search: Boolean(mohamedVectorStoreId),
         file_search_results: fileSearchResults,
+        proofs_summary: proofsSummary,
+        identity_summary: identitySummary,
+        precontract_summary: precontractSummary,
+        vulnerability_summary: vulnerabilitySummary,
+        case_summary: caseSummary,
         last_user_message: message,
         ai_reply: reply,
         history,
         created_at: new Date().toISOString(),
       });
     }
-
     return res.status(200).json({
       reply,
       meta: {
