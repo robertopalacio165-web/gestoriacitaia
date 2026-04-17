@@ -85,3 +85,15 @@ export async function verifyDocument({
 
   return data.result as VerifyDocumentResult;
 }
+export function getDocumentLabel(type?: string): string {
+  const v = (type || "").toLowerCase().trim();
+
+  if (v === "passport") return "Pasaporte";
+  if (v === "nie") return "NIE";
+  if (v === "tie") return "TIE";
+  if (v === "empadronamiento") return "Empadronamiento";
+  if (v === "criminal_record") return "Antecedentes penales";
+  if (v === "official_form") return "Formulario oficial";
+  if (v === "photo") return "Foto";
+  return "Documento";
+}
