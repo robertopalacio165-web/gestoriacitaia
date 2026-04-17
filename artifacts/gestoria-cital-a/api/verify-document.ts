@@ -66,8 +66,8 @@ async function pdfToImageDataUrl(file: File): Promise<string> {
     throw new Error("No se pudo crear canvas para convertir el PDF");
   }
 
-  canvas.width = viewport.width;
-  canvas.height = viewport.height;
+  canvas.width = Math.ceil(viewport.width);
+  canvas.height = Math.ceil(viewport.height);
 
   await page.render({
     canvasContext: context,
