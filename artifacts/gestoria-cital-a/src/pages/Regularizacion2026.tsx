@@ -14,7 +14,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { fileToDataUrl, verifyDocument } from "@/lib/verifyDocument";
+import { verifyDocument } from "@/lib/verifyDocument";
 import {
   EXTRANJERIA_PROCEDURES,
   getProcedureByKey,
@@ -137,7 +137,7 @@ export default function Regularizacion2026() {
         writeQuestion: "عمر الفورمولار الأول باش نكمل معاك",
         uploadGeneral: "رفع الوثائق",
         uploadGeneralDesc:
-          "من هنا تقدر ترفع جميع الوثائق اللي طلب منك محمد.",
+          "من هنا تقدر ترفع جميع الوثائق اللي طلب منك محمد، سواء كانت صورة أو PDF.",
         withoutAudio: "بلا صوت",
         mute: "كتم",
         activePlanLabel: "الخطة",
@@ -162,7 +162,7 @@ export default function Regularizacion2026() {
           "عمر المعطيات الأساسية باش محمد يبدا معاك التحقق من 5 شهور والوثائق.",
         saveLeadButton: "حفظ المعطيات والمتابعة مع محمد",
         savedLeadReply:
-          "مزيان. خديت المعطيات ديالك. دابا صيفط ليا الوثائق ديالك ونبدا نراجعهم خطوة بخطوة.",
+          "مزيان. خديت المعطيات ديالك. دابا صيفط ليا الوثائق ديالك، سواء كانوا صور أو PDF، ونبدا نراجعهم خطوة بخطوة.",
         formBlockedReply:
           "عافاك عمّر ليا الفورمولار الأول، ومن بعد نكمل معاك البروسيجير ديال regularización 2026.",
         saveLeadTitle: "تحفظات المعطيات",
@@ -205,7 +205,7 @@ export default function Regularizacion2026() {
         writeQuestion: "Fill in the form first to continue",
         uploadGeneral: "Upload documents",
         uploadGeneralDesc:
-          "Use this single button to upload all documents Mohamed requests.",
+          "Use this button to upload all documents Mohamed requests, as images or PDFs.",
         withoutAudio: "No audio",
         mute: "Mute",
         activePlanLabel: "Plan",
@@ -231,7 +231,7 @@ export default function Regularizacion2026() {
           "Fill in the basic details so Mohamed can start checking the 5 months and your documents.",
         saveLeadButton: "Save details and continue with Mohamed",
         savedLeadReply:
-          "Perfect. I already have your details. Now send me your documents and I will review them step by step.",
+          "Perfect. I already have your details. Now send me your documents, as images or PDFs, and I will review them step by step.",
         formBlockedReply:
           "Please fill in the form first, then I will continue with your 2026 regularization process.",
         saveLeadTitle: "Details saved",
@@ -274,7 +274,7 @@ export default function Regularizacion2026() {
       writeQuestion: "Rellena primero el formulario para continuar",
       uploadGeneral: "Subir documentos",
       uploadGeneralDesc:
-        "Usa este único botón para subir todos los documentos que te pida Mohamed.",
+        "Usa este botón para subir todos los documentos que te pida Mohamed, en foto o en PDF.",
       withoutAudio: "Sin audio",
       mute: "Mute",
       activePlanLabel: "Plan",
@@ -299,7 +299,7 @@ export default function Regularizacion2026() {
         "Rellena los datos básicos para que Mohamed empiece a comprobar los 5 meses y tus documentos.",
       saveLeadButton: "Guardar datos y continuar con Mohamed",
       savedLeadReply:
-        "Perfecto. Ya tengo tus datos. Ahora súbeme tus documentos y empezaré a revisarlos paso a paso.",
+        "Perfecto. Ya tengo tus datos. Ahora súbeme tus documentos, en foto o en PDF, y empezaré a revisarlos paso a paso.",
       formBlockedReply:
         "Relléname primero este formulario y después continúo contigo con el proceso de la regularización 2026.",
       saveLeadTitle: "Datos guardados",
@@ -334,6 +334,14 @@ export default function Regularizacion2026() {
     return `gestoriacitaia_mohamed_chat_procedure_${safeLang}_${selectedSituacion}`;
   }, [safeLang, selectedSituacion]);
 
+  const formStorageKey = useMemo(() => {
+    return `gestoriacitaia_mohamed_form_${safeLang}_${selectedSituacion}`;
+  }, [safeLang, selectedSituacion]);
+
+  const leadSavedStorageKey = useMemo(() => {
+    return `gestoriacitaia_mohamed_lead_saved_${safeLang}_${selectedSituacion}`;
+  }, [safeLang, selectedSituacion]);
+
   const leadFormReady =
     !!leadForm.nombre.trim() &&
     !!leadForm.telefono.trim() &&
@@ -345,6 +353,48 @@ export default function Regularizacion2026() {
     setDocs(buildInitialDocs(selectedSituacion));
     setCompletionMessageSent(false);
   }, [selectedSituacion]);
+
+  useEffect(() => {
+    try {
+      const rawForm = localStorage.getItem(formStorageKey);
+      if (rawForm) {
+        const parsed = JSON.parse(rawForm) as LeadFormState;
+        setLeadForm({
+          nombre: parsed?.nombre || "",
+          telefono: parsed?.telefono || "",
+          email: parsed?.email || "",
+          niePasaporte: parsed?.niePasaporte || "",
+          ciudad: parsed?.ciudad || "",
+          nacionalidad: parsed?.nacionalidad || "",
+          fechaLlegada: parsed?.fechaLlegada || "",
+          cumple5Meses: parsed?.cumple5Meses || "",
+          asilo: parsed?.asilo || "",
+          penales: parsed?.penales || "",
+        });
+      }
+
+      const rawLeadSaved = localStorage.getItem(leadSavedStorageKey);
+      setLeadSaved(rawLeadSaved === "true");
+    } catch (error) {
+      console.error("Error cargando formulario de Mohamed:", error);
+    }
+  }, [formStorageKey, leadSavedStorageKey]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(formStorageKey, JSON.stringify(leadForm));
+    } catch (error) {
+      console.error("Error guardando formulario de Mohamed:", error);
+    }
+  }, [leadForm, formStorageKey]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(leadSavedStorageKey, leadSaved ? "true" : "false");
+    } catch (error) {
+      console.error("Error guardando estado leadSaved de Mohamed:", error);
+    }
+  }, [leadSaved, leadSavedStorageKey]);
 
   useEffect(() => {
     if (!chatStorageKey) return;
@@ -375,7 +425,7 @@ export default function Regularizacion2026() {
 
           setPaymentTriggered(paymentAlreadyTriggered);
           setCompletionMessageSent(completionAlreadySent);
-          setLeadSaved(leadAlreadySaved);
+          setLeadSaved((prev) => prev || leadAlreadySaved);
           setChatBootstrapped(true);
           return;
         }
@@ -393,7 +443,6 @@ export default function Regularizacion2026() {
       setUserMessageCount(0);
       setPaymentTriggered(false);
       setCompletionMessageSent(false);
-      setLeadSaved(false);
       setChatBootstrapped(true);
     } catch (error) {
       console.error("Error cargando historial de Mohamed:", error);
@@ -410,7 +459,6 @@ export default function Regularizacion2026() {
       setUserMessageCount(0);
       setPaymentTriggered(false);
       setCompletionMessageSent(false);
-      setLeadSaved(false);
       setChatBootstrapped(true);
     }
   }, [
@@ -495,10 +543,10 @@ export default function Regularizacion2026() {
   };
 
   const getBestDocMatch = (
-    detectedType: string | undefined,
+    detectedType: string | undefined | null,
     currentDocs: StoredDocItem[]
   ): StoredDocItem | null => {
-    const normalizedDetected = normalizeDocType(detectedType);
+    const normalizedDetected = normalizeDocType(detectedType || "");
 
     if (normalizedDetected) {
       const exactMissing = currentDocs.find(
@@ -578,110 +626,114 @@ export default function Regularizacion2026() {
 
         setGeneralUploading(true);
 
-        for (const file of files) {
-          try {
-            const result = await verifyDocument({
-  file,
-  expectedDocumentType: "auto",
-  lang: safeLang,
-});
-
-            let matchedDocSnapshot: StoredDocItem | null = null;
-            let nextDocsSnapshot: StoredDocItem[] = [];
-
-            setDocs((prev) => {
-              const matchedDoc = getBestDocMatch(result.document_type, prev);
-              matchedDocSnapshot = matchedDoc;
-
-              if (!matchedDoc) {
-                nextDocsSnapshot = [...prev];
-                return prev;
-              }
-
-              const nextStatus: DocStatus =
-                result.status === "invalid" || result.match_expected_type === false
-                  ? "warn"
-                  : "ok";
-
-              const updatedDocs = prev.map((doc) =>
-                doc.id === matchedDoc.id
-                  ? {
-                      ...doc,
-                      estado: nextStatus,
-                      archivo: file.name,
-                      kb: `${Math.round(file.size / 1024)} KB`,
-                      detectedType: result.document_type || "",
-                      note: result.summary || "",
-                    }
-                  : doc
-              );
-
-              nextDocsSnapshot = updatedDocs;
-              return updatedDocs;
-            });
-
-            if (!matchedDocSnapshot) {
-              pushAgentMessage(ui.mohamedDocUnknown(file.name));
-
-              toast({
-                title: ui.uploadErrorTitle,
-                description: ui.uploadErrorDesc,
-                variant: "destructive",
+        try {
+          for (const file of files) {
+            try {
+              const result = await verifyDocument({
+                file,
+                expectedDocumentType: "auto",
+                lang: safeLang,
               });
 
-              continue;
-            }
+              let matchedDocSnapshot: StoredDocItem | null = null;
+              let nextDocsSnapshot: StoredDocItem[] = [];
 
-            const isWarn =
-              result.status === "invalid" || result.match_expected_type === false;
+              setDocs((prev) => {
+                const matchedDoc = getBestDocMatch(result.document_type, prev);
+                matchedDocSnapshot = matchedDoc;
 
-            if (isWarn) {
-              pushAgentMessage(ui.mohamedDocWarn(file.name));
-            } else {
+                if (!matchedDoc) {
+                  nextDocsSnapshot = [...prev];
+                  return prev;
+                }
+
+                const nextStatus: DocStatus =
+                  result.status === "invalid" ||
+                  result.match_expected_type === false
+                    ? "warn"
+                    : "ok";
+
+                const updatedDocs = prev.map((doc) =>
+                  doc.id === matchedDoc.id
+                    ? {
+                        ...doc,
+                        estado: nextStatus,
+                        archivo: file.name,
+                        kb: `${Math.round(file.size / 1024)} KB`,
+                        detectedType: result.document_type || "",
+                        note: result.summary || "",
+                      }
+                    : doc
+                );
+
+                nextDocsSnapshot = updatedDocs;
+                return updatedDocs;
+              });
+
+              if (!matchedDocSnapshot) {
+                pushAgentMessage(ui.mohamedDocUnknown(file.name));
+
+                toast({
+                  title: ui.uploadErrorTitle,
+                  description: ui.uploadErrorDesc,
+                  variant: "destructive",
+                });
+
+                continue;
+              }
+
+              const isWarn =
+                result.status === "invalid" ||
+                result.match_expected_type === false;
+
+              if (isWarn) {
+                pushAgentMessage(ui.mohamedDocWarn(file.name));
+              } else {
+                pushAgentMessage(
+                  ui.mohamedDocOk(file.name, matchedDocSnapshot.nombre)
+                );
+              }
+
+              toast({
+                title: ui.uploadSuccessTitle,
+                description: result?.summary || ui.uploadSuccessDesc,
+              });
+
+              if (nextDocsSnapshot.length > 0) {
+                maybeSendCompletionMessage(nextDocsSnapshot);
+              }
+            } catch (err: any) {
+              console.error("Error IA documento:", err);
+
               pushAgentMessage(
-                ui.mohamedDocOk(file.name, matchedDocSnapshot.nombre)
-              );
-            }
-
-            toast({
-              title: ui.uploadSuccessTitle,
-              description: result?.summary || ui.uploadSuccessDesc,
-            });
-
-            if (nextDocsSnapshot.length > 0) {
-              maybeSendCompletionMessage(nextDocsSnapshot);
-            }
-          } catch (err: any) {
-            console.error("Error IA documento:", err);
-
-            pushAgentMessage(
-              safeLang === "darija"
-                ? "وقع مشكل فمراجعة واحد الوثيقة. عاود رفعها من فضلك."
-                : safeLang === "en"
-                ? "There was a problem reviewing one document. Please upload it again."
-                : "Ha habido un problema revisando uno de los documentos. Súbelo otra vez, por favor."
-            );
-
-            toast({
-              title:
                 safeLang === "darija"
-                  ? "خطأ فالتحليل"
+                  ? "وقع مشكل فمراجعة واحد الوثيقة. عاود رفعها من فضلك."
                   : safeLang === "en"
-                  ? "Verification error"
-                  : "Error de verificación",
-              description:
-                err?.message ||
-                (safeLang === "darija"
-                  ? "ما قدرناش نحللو الوثيقة."
-                  : safeLang === "en"
-                  ? "Could not analyze the document."
-                  : "No se pudo analizar el documento."),
-              variant: "destructive",
-            });
-          }
-        }
+                  ? "There was a problem reviewing one document. Please upload it again."
+                  : "Ha habido un problema revisando uno de los documentos. Súbelo otra vez, por favor."
+              );
 
-        setGeneralUploading(false);
+              toast({
+                title:
+                  safeLang === "darija"
+                    ? "خطأ فالتحليل"
+                    : safeLang === "en"
+                    ? "Verification error"
+                    : "Error de verificación",
+                description:
+                  err?.message ||
+                  (safeLang === "darija"
+                    ? "ما قدرناش نحللو الوثيقة."
+                    : safeLang === "en"
+                    ? "Could not analyze the document."
+                    : "No se pudo analizar el documento."),
+                variant: "destructive",
+              });
+            }
+          }
+        } finally {
+          setGeneralUploading(false);
+        }
       };
 
       input.click();
