@@ -1420,7 +1420,6 @@ const getBestDocMatch = (
       </main>
     </div>
   );
-}
 function FieldLabel({ label }: { label: string }) {
   return (
     <label className="block text-[12px] font-semibold text-slate-600 mb-1">
