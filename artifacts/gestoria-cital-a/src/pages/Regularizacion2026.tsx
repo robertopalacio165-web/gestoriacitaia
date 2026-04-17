@@ -14,7 +14,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { verifyDocument } from "@/lib/verifyDocument";
+import { verifyDocument, type VerifyDocumentResult } from "@/lib/verifyDocument";
 import {
   EXTRANJERIA_PROCEDURES,
   getProcedureByKey,
@@ -542,38 +542,54 @@ export default function Regularizacion2026() {
     });
   };
 
-  const getBestDocMatch = (
-    detectedType: string | undefined | null,
-    currentDocs: StoredDocItem[]
-  ): StoredDocItem | null => {
-    const normalizedDetected = normalizeDocType(detectedType || "");
+const getBestDocMatch = (
+  detectedType: string | undefined | null,
+  currentDocs: StoredDocItem[],
+  fileName?: string
+): StoredDocItem | null => {
+  const normalizedDetected = normalizeDocType(detectedType || "");
+  const lowerFileName = (fileName || "").toLowerCase();
 
-    if (normalizedDetected) {
-      const exactMissing = currentDocs.find(
-        (doc) =>
-          doc.estado !== "ok" &&
-          normalizeDocType(doc.expectedType) === normalizedDetected
+  if (normalizedDetected && normalizedDetected !== "unknown" && normalizedDetected !== "photo") {
+    const exactMissing = currentDocs.find(
+      (doc) =>
+        doc.estado !== "ok" &&
+        normalizeDocType(doc.expectedType) === normalizedDetected
+    );
+
+    if (exactMissing) return exactMissing;
+
+    const exactWarn = currentDocs.find(
+      (doc) =>
+        doc.estado === "warn" &&
+        normalizeDocType(doc.expectedType) === normalizedDetected
+    );
+
+    if (exactWarn) return exactWarn;
+  }
+
+  if (lowerFileName) {
+    const byNameMissing = currentDocs.find((doc) => {
+      const expected = normalizeDocType(doc.expectedType);
+      return (
+        doc.estado !== "ok" &&
+        expected &&
+        expected !== "auto" &&
+        lowerFileName.includes(expected)
       );
+    });
 
-      if (exactMissing) return exactMissing;
+    if (byNameMissing) return byNameMissing;
+  }
 
-      const exactWarn = currentDocs.find(
-        (doc) =>
-          doc.estado === "warn" &&
-          normalizeDocType(doc.expectedType) === normalizedDetected
-      );
+  const firstMissing = currentDocs.find((doc) => doc.estado === "missing");
+  if (firstMissing) return firstMissing;
 
-      if (exactWarn) return exactWarn;
-    }
+  const firstWarn = currentDocs.find((doc) => doc.estado === "warn");
+  if (firstWarn) return firstWarn;
 
-    const firstMissing = currentDocs.find((doc) => doc.estado === "missing");
-    if (firstMissing) return firstMissing;
-
-    const firstWarn = currentDocs.find((doc) => doc.estado === "warn");
-    if (firstWarn) return firstWarn;
-
-    return null;
-  };
+  return null;
+};
 
   const pushAgentMessage = (text: string) => {
     setChatMessages((prev) => [
@@ -629,7 +645,7 @@ export default function Regularizacion2026() {
         try {
           for (const file of files) {
             try {
-              const result = await verifyDocument({
+              const result: VerifyDocumentResult = await verifyDocument({
                 file,
                 expectedDocumentType: "auto",
                 lang: safeLang,
@@ -639,7 +655,7 @@ export default function Regularizacion2026() {
               let nextDocsSnapshot: StoredDocItem[] = [];
 
               setDocs((prev) => {
-                const matchedDoc = getBestDocMatch(result.document_type, prev);
+                const matchedDoc = getBestDocMatch(result.document_type, prev, file.name);
                 matchedDocSnapshot = matchedDoc;
 
                 if (!matchedDoc) {
@@ -671,16 +687,22 @@ export default function Regularizacion2026() {
               });
 
               if (!matchedDocSnapshot) {
-                pushAgentMessage(ui.mohamedDocUnknown(file.name));
+  pushAgentMessage(
+    safeLang === "darija"
+      ? `توصلت بــ ${file.name}. قريت الوثيقة ولكن ما قدرتش نربطها أوتوماتيكياً مع خانة محددة. صيفط باقي الوثائق وأنا نكمل الترتيب.`
+      : safeLang === "en"
+      ? `I received ${file.name}. I could read the document, but I could not automatically assign it to a specific slot yet. Send the remaining documents and I will continue organizing them.`
+      : `He recibido ${file.name}. He podido leer el documento, pero todavía no he podido asignarlo automáticamente a una casilla concreta del expediente. Sube los demás documentos y sigo organizándolo.`
+  );
 
-                toast({
-                  title: ui.uploadErrorTitle,
-                  description: ui.uploadErrorDesc,
-                  variant: "destructive",
-                });
+  toast({
+    title: ui.uploadErrorTitle,
+    description: result?.summary || ui.uploadErrorDesc,
+    variant: "destructive",
+  });
 
-                continue;
-              }
+  continue;
+}
 
               const isWarn =
                 result.status === "invalid" ||
@@ -705,14 +727,13 @@ export default function Regularizacion2026() {
             } catch (err: any) {
               console.error("Error IA documento:", err);
 
-              pushAgentMessage(
-                safeLang === "darija"
-                  ? "وقع مشكل فمراجعة واحد الوثيقة. عاود رفعها من فضلك."
-                  : safeLang === "en"
-                  ? "There was a problem reviewing one document. Please upload it again."
-                  : "Ha habido un problema revisando uno de los documentos. Súbelo otra vez, por favor."
-              );
-
+             pushAgentMessage(
+  safeLang === "darija"
+    ? `وقع مشكل فمراجعة الوثيقة: ${err?.message || "خطأ غير معروف"}`
+    : safeLang === "en"
+    ? `There was a problem reviewing the document: ${err?.message || "Unknown error"}`
+    : `Ha habido un problema revisando el documento: ${err?.message || "Error desconocido"}`
+);
               toast({
                 title:
                   safeLang === "darija"
