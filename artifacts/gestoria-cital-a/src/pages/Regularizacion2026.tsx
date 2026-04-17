@@ -92,6 +92,7 @@ export default function Regularizacion2026() {
   const [chatBootstrapped, setChatBootstrapped] = useState(false);
   const [generalUploading, setGeneralUploading] = useState(false);
   const [completionMessageSent, setCompletionMessageSent] = useState(false);
+  const [leadSaved, setLeadSaved] = useState(false);
 
   const [leadForm, setLeadForm] = useState<LeadFormState>({
     nombre: "",
@@ -122,7 +123,7 @@ export default function Regularizacion2026() {
     if (safeLang === "darija") {
       return {
         initialChat:
-          "السلام، مرحبا بيك فـ GestoriaCitaIA. إلا بغيتي نوجدولك الملف، ونراجعولك وثائق 5 شهور والبروفات، ونعمرو ليك الفورموليرات اللي غادي تحتاج، أول حاجة عمر لينا هاد المعطيات ومن بعد غادي نكملو معاك خطوة بخطوة إن شاء الله.",
+          "السلام، لباس عليك. إلا بغيتي باش نوجدّ لك الوراق ديالك ديال regularización 2026، عافاك عمّر ليا هاد الفورمولار الأول، ومن بعد نكمل معاك البروسيجير.",
         online: "متصل الآن",
         role: "مختص فالهجرة",
         paymentMessage:
@@ -133,7 +134,7 @@ export default function Regularizacion2026() {
         planContinue: "مزيان. نكملو فالملف ديالك.",
         openChat: "سد الشات",
         closeChat: "فتح الشات",
-        writeQuestion: "كتب سؤالك...",
+        writeQuestion: "عمر الفورمولار الأول باش نكمل معاك",
         uploadGeneral: "رفع الوثائق",
         uploadGeneralDesc:
           "من هنا تقدر ترفع جميع الوثائق اللي طلب منك محمد.",
@@ -162,6 +163,12 @@ export default function Regularizacion2026() {
         saveLeadButton: "حفظ المعطيات والمتابعة مع محمد",
         savedLeadReply:
           "مزيان. خديت المعطيات ديالك. دابا صيفط ليا الوثائق ديالك ونبدا نراجعهم خطوة بخطوة.",
+        formBlockedReply:
+          "عافاك عمّر ليا الفورمولار الأول، ومن بعد نكمل معاك البروسيجير ديال regularización 2026.",
+        saveLeadTitle: "تحفظات المعطيات",
+        saveLeadDesc: "محمد قدر يبدا يراجع معاك الوثائق.",
+        missingTitle: "كاينين بيانات ناقصين",
+        missingDesc: "عمر الاسم والهاتف والمدينة والجنسية وتاريخ الدخول قبل ما تكمل.",
         labels: {
           nombre: "الاسم الكامل",
           telefono: "الهاتف",
@@ -184,7 +191,7 @@ export default function Regularizacion2026() {
     if (safeLang === "en") {
       return {
         initialChat:
-          "Hello, welcome to GestoriaCitaIA. If you want us to prepare your file, review your 5-month proof documents, and fill in the forms you may need, first complete these details and then we will continue with you step by step.",
+          "Hello, how are you? If you want me to prepare your 2026 regularization documents, please fill in this form first and then I will continue with the process.",
         online: "Online",
         role: "Immigration Specialist",
         paymentMessage:
@@ -195,7 +202,7 @@ export default function Regularizacion2026() {
         planContinue: "Perfect. Let’s continue with your case.",
         openChat: "Close chat",
         closeChat: "Open chat",
-        writeQuestion: "Type your question...",
+        writeQuestion: "Fill in the form first to continue",
         uploadGeneral: "Upload documents",
         uploadGeneralDesc:
           "Use this single button to upload all documents Mohamed requests.",
@@ -225,6 +232,13 @@ export default function Regularizacion2026() {
         saveLeadButton: "Save details and continue with Mohamed",
         savedLeadReply:
           "Perfect. I already have your details. Now send me your documents and I will review them step by step.",
+        formBlockedReply:
+          "Please fill in the form first, then I will continue with your 2026 regularization process.",
+        saveLeadTitle: "Details saved",
+        saveLeadDesc: "Mohamed can now start reviewing your documents.",
+        missingTitle: "Missing data",
+        missingDesc:
+          "Please fill in name, phone, city, nationality and arrival date before continuing.",
         labels: {
           nombre: "Full name",
           telefono: "Phone",
@@ -246,7 +260,7 @@ export default function Regularizacion2026() {
 
     return {
       initialChat:
-        "Hola, bienvenido a GestoriaCitaIA. Si quieres que te preparemos el expediente, revisemos tus pruebas de 5 meses y te rellenemos los formularios que vas a necesitar, primero rellena estos datos y después seguimos contigo paso a paso.",
+        "Hola, ¿qué tal? Si quieres que te prepare los papeles de la regularización 2026, relléname primero este formulario y después continúo contigo con el proceso.",
       online: "En línea",
       role: "Especialista en Extranjería",
       paymentMessage:
@@ -257,7 +271,7 @@ export default function Regularizacion2026() {
       planContinue: "Perfecto. Continuamos con tu trámite.",
       openChat: "Cerrar chat",
       closeChat: "Abrir chat",
-      writeQuestion: "Escribe tu pregunta...",
+      writeQuestion: "Rellena primero el formulario para continuar",
       uploadGeneral: "Subir documentos",
       uploadGeneralDesc:
         "Usa este único botón para subir todos los documentos que te pida Mohamed.",
@@ -286,6 +300,13 @@ export default function Regularizacion2026() {
       saveLeadButton: "Guardar datos y continuar con Mohamed",
       savedLeadReply:
         "Perfecto. Ya tengo tus datos. Ahora súbeme tus documentos y empezaré a revisarlos paso a paso.",
+      formBlockedReply:
+        "Relléname primero este formulario y después continúo contigo con el proceso de la regularización 2026.",
+      saveLeadTitle: "Datos guardados",
+      saveLeadDesc: "Mohamed ya puede empezar a revisar tus documentos.",
+      missingTitle: "Faltan datos",
+      missingDesc:
+        "Rellena nombre, teléfono, ciudad, nacionalidad y fecha de llegada antes de continuar.",
       labels: {
         nombre: "Nombre completo",
         telefono: "Teléfono",
@@ -312,6 +333,13 @@ export default function Regularizacion2026() {
   const chatStorageKey = useMemo(() => {
     return `gestoriacitaia_mohamed_chat_procedure_${safeLang}_${selectedSituacion}`;
   }, [safeLang, selectedSituacion]);
+
+  const leadFormReady =
+    !!leadForm.nombre.trim() &&
+    !!leadForm.telefono.trim() &&
+    !!leadForm.ciudad.trim() &&
+    !!leadForm.nacionalidad.trim() &&
+    !!leadForm.fechaLlegada.trim();
 
   useEffect(() => {
     setDocs(buildInitialDocs(selectedSituacion));
@@ -341,8 +369,13 @@ export default function Regularizacion2026() {
             (m) => m.from === "agent" && m.text === ui.mohamedFinal
           );
 
+          const leadAlreadySaved = parsed.some(
+            (m) => m.from === "agent" && m.text === ui.savedLeadReply
+          );
+
           setPaymentTriggered(paymentAlreadyTriggered);
           setCompletionMessageSent(completionAlreadySent);
+          setLeadSaved(leadAlreadySaved);
           setChatBootstrapped(true);
           return;
         }
@@ -360,6 +393,7 @@ export default function Regularizacion2026() {
       setUserMessageCount(0);
       setPaymentTriggered(false);
       setCompletionMessageSent(false);
+      setLeadSaved(false);
       setChatBootstrapped(true);
     } catch (error) {
       console.error("Error cargando historial de Mohamed:", error);
@@ -376,6 +410,7 @@ export default function Regularizacion2026() {
       setUserMessageCount(0);
       setPaymentTriggered(false);
       setCompletionMessageSent(false);
+      setLeadSaved(false);
       setChatBootstrapped(true);
     }
   }, [
@@ -383,6 +418,7 @@ export default function Regularizacion2026() {
     ui.initialChat,
     ui.paymentTriggerMessage,
     ui.mohamedFinal,
+    ui.savedLeadReply,
   ]);
 
   useEffect(() => {
@@ -426,30 +462,35 @@ export default function Regularizacion2026() {
   };
 
   const handleSaveLeadForm = () => {
-    const message = ui.savedLeadReply;
+    if (!leadFormReady) {
+      toast({
+        title: ui.missingTitle,
+        description: ui.missingDesc,
+        variant: "destructive",
+      });
+      return;
+    }
 
-    setChatMessages((prev) => [
-      ...prev,
-      {
-        from: "agent",
-        text: message,
-        ts: Date.now(),
-      },
-    ]);
+    setLeadSaved(true);
+
+    const alreadyExists = chatMessages.some(
+      (msg) => msg.from === "agent" && msg.text === ui.savedLeadReply
+    );
+
+    if (!alreadyExists) {
+      setChatMessages((prev) => [
+        ...prev,
+        {
+          from: "agent",
+          text: ui.savedLeadReply,
+          ts: Date.now(),
+        },
+      ]);
+    }
 
     toast({
-      title:
-        safeLang === "darija"
-          ? "تحفظات المعطيات"
-          : safeLang === "en"
-          ? "Details saved"
-          : "Datos guardados",
-      description:
-        safeLang === "darija"
-          ? "محمد قدر يبدا يراجع معاك الوثائق."
-          : safeLang === "en"
-          ? "Mohamed can now start reviewing your documents."
-          : "Mohamed ya puede empezar a revisar tus documentos.",
+      title: ui.saveLeadTitle,
+      description: ui.saveLeadDesc,
     });
   };
 
@@ -509,6 +550,17 @@ export default function Regularizacion2026() {
   };
 
   const handleGeneralUpload = async () => {
+    if (!leadSaved) {
+      pushAgentMessage(ui.formBlockedReply);
+
+      toast({
+        title: ui.missingTitle,
+        description: ui.missingDesc,
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (!planActivo) {
       setShowPayment(true);
       return;
@@ -660,6 +712,18 @@ export default function Regularizacion2026() {
 
   const handleSendChat = async () => {
     if (!chatInput.trim() || sendingChat || !chatBootstrapped) return;
+
+    if (!leadSaved) {
+      setChatInput("");
+      pushAgentMessage(ui.formBlockedReply);
+
+      toast({
+        title: ui.missingTitle,
+        description: ui.missingDesc,
+        variant: "destructive",
+      });
+      return;
+    }
 
     const rawText = chatInput.trim();
     const nextUserCount = userMessageCount + 1;
@@ -949,11 +1013,12 @@ export default function Regularizacion2026() {
                       onChange={(e) => setChatInput(e.target.value)}
                       onKeyDown={(e) => e.key === "Enter" && handleSendChat()}
                       placeholder={ui.writeQuestion}
-                      className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white placeholder-white/30 focus:outline-none focus:border-primary/50"
+                      disabled={!leadSaved}
+                      className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white placeholder-white/30 focus:outline-none focus:border-primary/50 disabled:opacity-50 disabled:cursor-not-allowed"
                     />
                     <button
                       onClick={handleSendChat}
-                      disabled={sendingChat}
+                      disabled={sendingChat || !leadSaved}
                       className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center hover:bg-primary/90 transition-colors shrink-0 disabled:opacity-60"
                       type="button"
                     >
@@ -964,7 +1029,7 @@ export default function Regularizacion2026() {
                   <div className="border-t border-white/10 p-3">
                     <button
                       onClick={handleGeneralUpload}
-                      disabled={generalUploading}
+                      disabled={generalUploading || !leadSaved}
                       className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary hover:bg-primary/90 disabled:opacity-60 text-primary-foreground font-bold text-xs px-4 py-3 transition-colors"
                       type="button"
                     >
