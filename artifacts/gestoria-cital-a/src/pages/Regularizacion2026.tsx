@@ -543,10 +543,165 @@ export default function Regularizacion2026() {
   };
 
 const getBestDocMatch = (
-  detectedType: string | undefined | null,
+  result: {
+    document_type?: string | null;
+    summary?: string;
+    visible_fields?: string[];
+    missing_or_unclear_fields?: string[];
+    warnings?: string[];
+  },
   currentDocs: StoredDocItem[],
   fileName?: string
 ): StoredDocItem | null => {
+  const detectedType = normalizeDocType(result?.document_type || "");
+  const lowerFileName = (fileName || "").toLowerCase();
+
+  const combinedText = [
+    result?.summary || "",
+    ...(result?.visible_fields || []),
+    ...(result?.missing_or_unclear_fields || []),
+    ...(result?.warnings || []),
+    lowerFileName,
+  ]
+    .join(" ")
+    .toLowerCase();
+
+  const includesAny = (words: string[]) =>
+    words.some((word) => combinedText.includes(word));
+
+  if (detectedType && detectedType !== "unknown" && detectedType !== "photo") {
+    const exactMissing = currentDocs.find(
+      (doc) =>
+        doc.estado !== "ok" &&
+        normalizeDocType(doc.expectedType) === detectedType
+    );
+    if (exactMissing) return exactMissing;
+
+    const exactWarn = currentDocs.find(
+      (doc) =>
+        doc.estado === "warn" &&
+        normalizeDocType(doc.expectedType) === detectedType
+    );
+    if (exactWarn) return exactWarn;
+  }
+
+  if (
+    includesAny([
+      "antecedentes",
+      "antecedentes penales",
+      "criminal",
+      "criminal record",
+      "penales",
+      "registro de antecedentes",
+      "casier",
+    ])
+  ) {
+    const criminalDoc =
+      currentDocs.find(
+        (doc) =>
+          doc.estado !== "ok" &&
+          normalizeDocType(doc.expectedType) === "criminal_record"
+      ) ||
+      currentDocs.find(
+        (doc) => normalizeDocType(doc.expectedType) === "criminal_record"
+      );
+
+    if (criminalDoc) return criminalDoc;
+  }
+
+  if (
+    includesAny([
+      "passport",
+      "pasaporte",
+      "passeport",
+      "documento de viaje",
+    ])
+  ) {
+    const passportDoc =
+      currentDocs.find(
+        (doc) =>
+          doc.estado !== "ok" &&
+          normalizeDocType(doc.expectedType) === "passport"
+      ) ||
+      currentDocs.find(
+        (doc) => normalizeDocType(doc.expectedType) === "passport"
+      );
+
+    if (passportDoc) return passportDoc;
+  }
+
+  if (includesAny(["nie"])) {
+    const nieDoc =
+      currentDocs.find(
+        (doc) =>
+          doc.estado !== "ok" && normalizeDocType(doc.expectedType) === "nie"
+      ) ||
+      currentDocs.find((doc) => normalizeDocType(doc.expectedType) === "nie");
+
+    if (nieDoc) return nieDoc;
+  }
+
+  if (includesAny(["tie", "tarjeta de identidad de extranjero"])) {
+    const tieDoc =
+      currentDocs.find(
+        (doc) =>
+          doc.estado !== "ok" && normalizeDocType(doc.expectedType) === "tie"
+      ) ||
+      currentDocs.find((doc) => normalizeDocType(doc.expectedType) === "tie");
+
+    if (tieDoc) return tieDoc;
+  }
+
+  if (includesAny(["empadronamiento", "padron", "padrón", "volante"])) {
+    const empDoc =
+      currentDocs.find(
+        (doc) =>
+          doc.estado !== "ok" &&
+          normalizeDocType(doc.expectedType) === "empadronamiento"
+      ) ||
+      currentDocs.find(
+        (doc) => normalizeDocType(doc.expectedType) === "empadronamiento"
+      );
+
+    if (empDoc) return empDoc;
+  }
+
+  if (includesAny(["formulario", "official form", "solicitud", "modelo ex"])) {
+    const formDoc =
+      currentDocs.find(
+        (doc) =>
+          doc.estado !== "ok" &&
+          normalizeDocType(doc.expectedType) === "official_form"
+      ) ||
+      currentDocs.find(
+        (doc) => normalizeDocType(doc.expectedType) === "official_form"
+      );
+
+    if (formDoc) return formDoc;
+  }
+
+  if (lowerFileName) {
+    const byNameMissing = currentDocs.find((doc) => {
+      const expected = normalizeDocType(doc.expectedType);
+      return (
+        doc.estado !== "ok" &&
+        expected &&
+        expected !== "auto" &&
+        lowerFileName.includes(expected)
+      );
+    });
+
+    if (byNameMissing) return byNameMissing;
+  }
+
+  const firstMissing = currentDocs.find((doc) => doc.estado === "missing");
+  if (firstMissing) return firstMissing;
+
+  const firstWarn = currentDocs.find((doc) => doc.estado === "warn");
+  if (firstWarn) return firstWarn;
+
+  return null;
+};
   const normalizedDetected = normalizeDocType(detectedType || "");
   const lowerFileName = (fileName || "").toLowerCase();
 
@@ -655,7 +810,7 @@ const getBestDocMatch = (
               let nextDocsSnapshot: StoredDocItem[] = [];
 
               setDocs((prev) => {
-                const matchedDoc = getBestDocMatch(result.document_type, prev, file.name);
+                const matchedDoc = getBestDocMatch(result, prev, file.name);
                 matchedDocSnapshot = matchedDoc;
 
                 if (!matchedDoc) {
