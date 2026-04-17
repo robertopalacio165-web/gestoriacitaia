@@ -78,7 +78,6 @@ function OfficialBrowserBox({
   selectedTramiteLabel,
   profileLoading,
   ui,
-  step,
   confirmed,
   appointmentData,
   finalDate,
@@ -106,7 +105,6 @@ function OfficialBrowserBox({
   selectedTramiteLabel: string;
   profileLoading: boolean;
   ui: any;
-  step: number;
   confirmed: boolean;
   appointmentData: AppointmentResult | null;
   finalDate: string;
@@ -130,10 +128,10 @@ function OfficialBrowserBox({
 }) {
   const formIntro =
     lang === "darija"
-      ? "إلا بغيتي موعد، عمر المعطيات ديالك واختار نوع الموعد، ومن بعد سارة غادي تكمل معاك وتعلمك عبر واتساب منين تلقى الموعد."
+      ? "السلام، لباس عليك. إلا بغيتي باش نشدّ لك الرونديفو، عمر هاد الفورمولار لي كاين لتحت، ومن بعد غادي نكمل معاك إن شاء الله باش نشدّ لك السيتا."
       : lang === "en"
-      ? "If you need an appointment, fill in your details and choose the appointment type. Then Sara will continue and notify you on WhatsApp as soon as an appointment is found."
-      : "Si necesitas una cita, rellena tus datos y elige el tipo de cita. Después Sara continuará y te avisará por WhatsApp en cuanto encuentre una cita.";
+      ? "Hello, how are you? If you want me to book your appointment, please fill in the form below first. Then I will continue with you step by step."
+      : "Hola, ¿qué tal? Si quieres que te consiga la cita, rellena primero este formulario de abajo. Después seguiré contigo paso a paso.";
 
   const confirmationIntro =
     lang === "darija"
@@ -647,7 +645,7 @@ export default function BuscarCitas() {
           ],
         } as Record<string, FormItem[]>,
         initialChat:
-  "السلام، أنا سارة. باش تشد موعد، عمّر ليا المعطيات ديالك فـ 5 ثواني واختار نوع الموعد، وغادي نكملو إن شاء الله الإجراءات خطوة بخطوة.",
+          "السلام، لباس عليك. إلا بغيتي باش نشدّ لك الرونديفو، عافاك عمر هاد الفورمولار لي كاين لتحت، ومن بعد غادي نكمل معاك إن شاء الله باش نشدّ لك السيتا.",
         online: "متصلة الآن",
         agentRole: "مستشارة المواعيد",
         procedureLabel: "الإجراء",
@@ -684,7 +682,7 @@ export default function BuscarCitas() {
         paymentTriggerMessage:
           "باش نكملو ونخدمو على الملف ديالك، خاصك تفعل الخدمة. منين تخلص نكملو معاك مباشرة.",
         procedureShort: "الإجراء",
-        chatPlaceholder: "كتب سؤالك...",
+        chatPlaceholder: "عمر الفورمولار الأول باش نكمل معاك",
         openOfficialSite: "فتح الموقع الرسمي",
         downloadPdf: "تحميل PDF",
       };
@@ -810,7 +808,7 @@ export default function BuscarCitas() {
           ],
         } as Record<string, FormItem[]>,
         initialChat:
-  "Hello, I’m Sara. To get an appointment, fill in your details in 5 seconds and choose the appointment type. After that, we will continue step by step.",
+          "Hello, how are you? If you want me to book your appointment, please fill in the form below first. Then I will continue with you step by step.",
         online: "Online",
         agentRole: "Appointments Advisor",
         procedureLabel: "PROCEDURE",
@@ -848,7 +846,7 @@ export default function BuscarCitas() {
         paymentTriggerMessage:
           "To continue with your case, activate the service and we continue with you step by step.",
         procedureShort: "Procedure",
-        chatPlaceholder: "Type your question...",
+        chatPlaceholder: "Fill in the form first to continue",
         openOfficialSite: "Open official site",
         downloadPdf: "Download PDF",
       };
@@ -976,7 +974,7 @@ export default function BuscarCitas() {
         ],
       } as Record<string, FormItem[]>,
       initialChat:
-  "Hola, soy Sara. Para coger una cita, relléname tus datos en 5 segundos y elige el tipo de cita. Después seguimos contigo paso a paso.",
+        "Hola, ¿qué tal? Si quieres que te consiga la cita, rellena primero este formulario de abajo. Después seguiré contigo paso a paso.",
       online: "En línea",
       agentRole: "Asesora de Citas",
       procedureLabel: "TRÁMITE",
@@ -1013,7 +1011,7 @@ export default function BuscarCitas() {
       paymentTriggerMessage:
         "Para continuar con tu trámite, activa el servicio y seguimos contigo paso a paso.",
       procedureShort: "Trámite",
-      chatPlaceholder: "Escribe tu pregunta...",
+      chatPlaceholder: "Rellena primero el formulario para continuar",
       openOfficialSite: "Abrir sede oficial",
       downloadPdf: "Descargar PDF",
     };
@@ -1035,6 +1033,13 @@ export default function BuscarCitas() {
 
   const formsForSelectedTramite =
     ui.formsByTramite[selectedTramite] ?? ui.formsByTramite.tie;
+
+  const chatEnabled =
+    formReady &&
+    !!formData.fullName.trim() &&
+    !!formData.phone.trim() &&
+    !!formData.city.trim() &&
+    !!selectedTramite;
 
   const agentSteps = useMemo(() => {
     if (lang === "darija") {
@@ -1345,7 +1350,34 @@ export default function BuscarCitas() {
   };
 
   const handleSendChat = async () => {
-    if (!chatInput.trim() || sendingChat || !chatBootstrapped) return;
+    if (!chatBootstrapped || sendingChat || !chatInput.trim()) return;
+
+    if (!chatEnabled) {
+      const warningText =
+        lang === "darija"
+          ? "عافاك عمر الفورمولار الأول لي كاين لتحت، ومن بعد نكمل معاك باش نشدّ لك السيتا."
+          : lang === "en"
+          ? "Please fill in the form below first, then I will continue with your appointment."
+          : "Rellena primero el formulario de abajo y después continúo contigo para coger la cita.";
+
+      setChatMessages((prev) => {
+        const lastMessage = prev[prev.length - 1];
+        if (lastMessage?.from === "agent" && lastMessage.text === warningText) {
+          return prev;
+        }
+
+        return [
+          ...prev,
+          {
+            from: "agent",
+            text: warningText,
+            ts: Date.now(),
+          },
+        ];
+      });
+
+      return;
+    }
 
     const rawText = chatInput.trim();
     const nextUserCount = userMessageCount + 1;
@@ -1703,11 +1735,12 @@ export default function BuscarCitas() {
                       onChange={(e) => setChatInput(e.target.value)}
                       onKeyDown={(e) => e.key === "Enter" && handleSendChat()}
                       placeholder={ui.chatPlaceholder}
-                      className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white placeholder-white/30 focus:outline-none focus:border-primary/50"
+                      disabled={!chatEnabled}
+                      className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white placeholder-white/30 focus:outline-none focus:border-primary/50 disabled:opacity-50 disabled:cursor-not-allowed"
                     />
                     <button
                       onClick={handleSendChat}
-                      disabled={sendingChat}
+                      disabled={sendingChat || !chatEnabled}
                       className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center hover:bg-primary/90 transition-colors shrink-0 disabled:opacity-60"
                       type="button"
                     >
@@ -1855,7 +1888,6 @@ export default function BuscarCitas() {
             selectedTramiteLabel={selectedTramiteLabel}
             profileLoading={profileLoading}
             ui={ui}
-            step={step}
             confirmed={confirmed}
             appointmentData={appointmentData}
             finalDate={finalDate}
