@@ -580,13 +580,11 @@ export default function Regularizacion2026() {
 
         for (const file of files) {
           try {
-            const base64 = await fileToDataUrl(file);
-
             const result = await verifyDocument({
-              imageBase64: base64,
-              expectedDocumentType: "auto",
-              lang: safeLang,
-            });
+  file,
+  expectedDocumentType: "auto",
+  lang: safeLang,
+});
 
             let matchedDocSnapshot: StoredDocItem | null = null;
             let nextDocsSnapshot: StoredDocItem[] = [];
