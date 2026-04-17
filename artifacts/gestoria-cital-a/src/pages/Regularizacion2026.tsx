@@ -795,24 +795,43 @@ const getBestDocMatch = (
                 nextDocsSnapshot = updatedDocs;
                 return updatedDocs;
               });
+if (!matchedDocSnapshot) {
+  const bucket = (result?.recommended_bucket || "").toLowerCase();
 
-              if (!matchedDocSnapshot) {
-                pushAgentMessage(
-                  safeLang === "darija"
-                    ? `توصلت بــ ${file.name}. قريت الوثيقة ولكن ما قدرتش نربطها أوتوماتيكياً مع خانة محددة. صيفط باقي الوثائق وأنا نكمل الترتيب.`
-                    : safeLang === "en"
-                    ? `I received ${file.name}. I could read the document, but I could not automatically assign it to a specific slot yet. Send the remaining documents and I will continue organizing them.`
-                    : `He recibido ${file.name}. He podido leer el documento, pero todavía no he podido asignarlo automáticamente a una casilla concreta del expediente. Sube los demás documentos y sigo organizándolo.`
-                );
+  let smartMessage = "";
 
-                toast({
-                  title: ui.uploadErrorTitle,
-                  description: result?.summary || ui.uploadErrorDesc,
-                  variant: "destructive",
-                });
+  if (bucket === "identity_document") {
+    smartMessage =
+      safeLang === "darija"
+        ? `توصلت بــ ${file.name}. هاد الوثيقة باينة وثيقة هوية وتمت قراءتها، غادي نضيفها للملف.`
+        : safeLang === "en"
+        ? `I received ${file.name}. This looks like an identity document and it was read correctly. I will add it to the case.`
+        : `He recibido ${file.name}. Parece un documento de identidad y se ha leído correctamente. Lo añadiré al expediente.`;
+  } else if (result?.is_stay_proof || bucket === "stay_proof") {
+    smartMessage =
+      safeLang === "darija"
+        ? `توصلت بــ ${file.name}. هادي باينة prueba de estancia وغادي نحتافظ بها ضمن pruebas de los 5 meses.`
+        : safeLang === "en"
+        ? `I received ${file.name}. This appears to be a stay proof and I will keep it for the 5-month evidence file.`
+        : `He recibido ${file.name}. Parece una prueba de estancia y la guardaré dentro de las pruebas de los 5 meses.`;
+  } else {
+    smartMessage =
+      safeLang === "darija"
+        ? `توصلت بــ ${file.name}. قريت الوثيقة وغادي نخليها ضمن otros documentos.`
+        : safeLang === "en"
+        ? `I received ${file.name}. I read the document and I will keep it under other documents.`
+        : `He recibido ${file.name}. He leído el documento y lo guardaré en otros documentos.`;
+  }
 
-                continue;
-              }
+  pushAgentMessage(smartMessage);
+
+  toast({
+    title: ui.uploadSuccessTitle,
+    description: result?.summary || ui.uploadSuccessDesc,
+  });
+
+  continue;
+}
 
               const isWarn =
                 result.status === "invalid" ||
