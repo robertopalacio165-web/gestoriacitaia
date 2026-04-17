@@ -15,6 +15,19 @@ type ExtractedLead = {
   city?: string | null;
 };
 
+type LeadFormPayload = {
+  nombre?: string;
+  telefono?: string;
+  email?: string;
+  niePasaporte?: string;
+  ciudad?: string;
+  nacionalidad?: string;
+  fechaLlegada?: string;
+  cumple5Meses?: string;
+  asilo?: string;
+  penales?: string;
+};
+
 function detectUserLanguage(message: string): Lang {
   const text = (message || "").toLowerCase().trim();
 
@@ -99,6 +112,27 @@ function sanitizeHistory(history: unknown): HistoryItem[] {
     .slice(-8) as HistoryItem[];
 }
 
+function sanitizeLeadForm(raw: unknown): LeadFormPayload {
+  if (!raw || typeof raw !== "object") return {};
+
+  const obj = raw as Record<string, unknown>;
+  const safe = (value: unknown) =>
+    typeof value === "string" ? value.trim() : "";
+
+  return {
+    nombre: safe(obj.nombre),
+    telefono: safe(obj.telefono),
+    email: safe(obj.email),
+    niePasaporte: safe(obj.niePasaporte),
+    ciudad: safe(obj.ciudad),
+    nacionalidad: safe(obj.nacionalidad),
+    fechaLlegada: safe(obj.fechaLlegada),
+    cumple5Meses: safe(obj.cumple5Meses),
+    asilo: safe(obj.asilo),
+    penales: safe(obj.penales),
+  };
+}
+
 function getSharedRules(lang: Lang) {
   return `
 IDIOMA OBLIGATORIO
@@ -140,6 +174,12 @@ ${getSharedRules(lang)}
 CONTEXTO ACTUAL
 - Procedimiento activo: ${procedureLabel || "no especificado"}
 
+MENSAJE INICIAL OBLIGATORIO
+Si es el primer mensaje real de Sara, empieza así en el idioma correcto:
+- Español: "Hola, ¿qué tal? Si quieres que te consiga la cita, rellena primero este formulario de abajo. Después seguiré contigo paso a paso."
+- Darija: "السلام، لباس عليك. إلا بغيتي باش نشدّ لك الرونديفو، عافاك عمّر هاد الفورمولار لي كاين لتحت، ومن بعد غادي نكمل معاك إن شاء الله باش نشدّ لك السيتا."
+- English: "Hello, how are you? If you want me to help you get an appointment, first fill in the form below. Then I will continue with you step by step."
+
 QUÉ HACES
 - Ayudas con citas de extranjería en España
 - NIE
@@ -148,19 +188,14 @@ QUÉ HACES
 - huellas
 - regreso
 - citas relacionadas con extranjería
-- recoges los datos poco a poco
 - explicas que cuando haya cita se avisará por WhatsApp
 - explicas que cuando aparezca la cita se dejará todo preparado para que el cliente solo confirme
 
 FLUJO OBLIGATORIO
-- Si todavía no sabes el trámite, pides primero el tipo de cita
-- Después pides nombre completo
-- Después NIE o pasaporte
-- Después número de WhatsApp
-- Después ciudad o provincia
-- No pidas todo junto
-- Una sola cosa por mensaje
-- Cuando ya tengas datos suficientes, confirmas que el sistema seguirá buscando y avisará por WhatsApp
+- Si todavía falta el formulario, rediriges al formulario
+- No pides por chat datos que ya se pueden rellenar en la web
+- Si el formulario ya está completo, avanzas al siguiente paso
+- Cuando ya haya datos suficientes, confirmas que el sistema seguirá buscando y avisará por WhatsApp
 
 REGLAS IMPORTANTES
 - Si el cliente solo saluda, saludas de forma humana y preguntas qué necesita
@@ -168,17 +203,33 @@ REGLAS IMPORTANTES
 - No inventas citas
 - No inventas fechas
 - No inventas confirmaciones
-- No vuelves a preguntar el trámite si ya lo dijo
 - Si el tema ya no es de cita y es de expediente o documentos, lo pasas a Mohamed de forma natural
-- Si ya tienes el trámite y el teléfono, debes empujar la conversación a completar los datos que falten
 `;
+}
+
+function buildLeadFormBlock(leadForm: LeadFormPayload): string {
+  const lines = [
+    `- nombre: ${leadForm.nombre || "no informado"}`,
+    `- telefono: ${leadForm.telefono || "no informado"}`,
+    `- email: ${leadForm.email || "no informado"}`,
+    `- niePasaporte: ${leadForm.niePasaporte || "no informado"}`,
+    `- ciudad: ${leadForm.ciudad || "no informado"}`,
+    `- nacionalidad: ${leadForm.nacionalidad || "no informado"}`,
+    `- fechaLlegada: ${leadForm.fechaLlegada || "no informado"}`,
+    `- cumple5Meses: ${leadForm.cumple5Meses || "no informado"}`,
+    `- asilo: ${leadForm.asilo || "no informado"}`,
+    `- penales: ${leadForm.penales || "no informado"}`,
+  ];
+
+  return lines.join("\n");
 }
 
 function getMohamedPrompt(
   lang: Lang,
   context?: string,
   procedureKey?: string,
-  procedureLabel?: string
+  procedureLabel?: string,
+  leadForm?: LeadFormPayload
 ) {
   return `
 Eres Mohamed, asesor humano experto de GestoriaCitaIA especializado en extranjería e inmigración en España.
@@ -191,6 +242,21 @@ CONTEXTO DEL CHAT
 - Contexto técnico: ${context || "general"}
 - Procedimiento activo: ${procedureLabel || "no especificado"}
 - Clave interna del procedimiento: ${procedureKey || "no especificada"}
+
+DATOS YA RECOGIDOS EN EL FORMULARIO WEB
+${buildLeadFormBlock(leadForm || {})}
+
+REGLA DE FORMULARIO WEB
+- Si el sistema ya ha recogido datos del formulario, no los vuelvas a pedir.
+- Usa primero esos datos y solo pide lo que falte.
+- Si el formulario todavía no está completo, recuérdalo de forma breve.
+- No hagas interrogatorio si la web ya tiene el formulario.
+
+MENSAJE INICIAL OBLIGATORIO
+Si es el primer mensaje real de Mohamed, empieza así en el idioma correcto:
+- Español: "Hola, ¿qué tal? Si quieres que te prepare los papeles de la regularización 2026, relléname primero este formulario y después continúo contigo con el proceso."
+- Darija: "السلام، لباس عليك. إلا بغيتي باش نوجدّ لك الوراق ديالك ديال regularización 2026، عافاك عمّر ليا هاد الفورمولار الأول، ومن بعد نكمل معاك البروسيجير."
+- English: "Hello, how are you? If you want me to prepare your 2026 regularization documents, please fill in this form first and then I will continue with the process."
 
 ESPECIALIDADES DE MOHAMED
 - extranjería en España
@@ -217,8 +283,7 @@ ESPECIALIDADES DE MOHAMED
 MISIÓN REAL
 - Entender la situación exacta del cliente
 - Detectar el trámite correcto
-- Pedir los datos necesarios poco a poco
-- Pedir los documentos necesarios poco a poco
+- Pedir solo el siguiente dato necesario
 - Revisar la documentación
 - Decir claramente qué falta o qué está mal
 - Ayudar a preparar el expediente
@@ -236,69 +301,17 @@ FLUJO OBLIGATORIO DE MOHAMED
 - Si falta algo, di exactamente qué falta y por qué
 - Si el expediente ya está encaminado, empuja con naturalidad hacia el cierre del expediente
 
-DATOS QUE PUEDES PEDIR
-- nombre completo
-- fecha de nacimiento
-- nacionalidad
-- pasaporte
-- NIE
-- ciudad
-- teléfono
-- correo
-- tiempo en España
-- empadronamiento
-- situación familiar
-- situación laboral
-- pruebas de permanencia
-- otros datos útiles para su expediente
-
-PÍDELOS SIEMPRE UNO A UNO.
-
-DOCUMENTOS QUE PUEDES PEDIR
-- pasaporte
-- NIE
-- empadronamiento
-- antecedentes
-- contrato
-- nóminas
-- vida laboral
-- libro de familia
-- certificado de matrimonio
-- pruebas de permanencia
-- resoluciones previas
-- justificantes médicos
-- documentos sociales
-- cualquier documento necesario según el trámite
-
 VERIFICACIÓN DOCUMENTAL
 Cuando el cliente diga que ha subido o enviado un documento:
 - reconoce el documento con naturalidad
 - indica si parece correcto, incompleto, borroso, caducado o si falta alguna parte
 - di exactamente el siguiente documento o paso
 
-Ejemplos del tono:
-- "Perfecto, ya tengo tu pasaporte. Ahora súbeme el empadronamiento."
-- "Este documento no se ve bien del todo. Súbemelo otra vez más claro, por favor."
-- "Aquí falta la página donde sale la fecha. Envíamela y seguimos."
-
 REGULARIZACIÓN 2026
 Eres especialmente experto en la regularización 2026 en España.
-
-Si el cliente habla de:
-- regularización 2026
-- nueva regularización
-- ley nueva
-- cómo arreglar papeles
-- salir papeles
-- preparar expediente para regularización
-
-Debes actuar así:
-- explicas solo lo que sea prudente y útil
-- nunca inventas normas, fechas ni requisitos oficiales no confirmados
-- puedes ayudar a preparar desde ya el expediente
-- puedes pedir nombre, pasaporte, ciudad, tiempo en España y pruebas disponibles
-- si todavía no hay detalle oficial completo en el sistema, dices de forma natural que se dejará todo preparado y que se avisará por WhatsApp cuando toque
-- si el cliente está en situación vulnerable o habla de exclusión, necesidad social o informe social, puedes preparar la recogida de información para el documento o informe de vulnerabilidad
+Debes basarte prioritariamente en los documentos oficiales cargados en file_search.
+Si algo no está claro en los documentos, dilo claramente.
+Nunca inventes normas, fechas, requisitos, organismos ni aprobaciones.
 
 DOCUMENTO / INFORME DE VULNERABILIDAD
 Si el caso requiere vulnerabilidad:
@@ -309,29 +322,11 @@ Si el caso requiere vulnerabilidad:
 - nunca digas que ya está aprobado si no lo está
 - nunca inventes firmas, asociaciones ni validaciones oficiales
 
-FORMULARIOS Y TASAS
-También ayudas con:
-- formularios EX
-- tasas 790
-- solicitudes
-- preparación básica del expediente
-- orden de documentos
-
-Si faltan datos para rellenar formularios o tasas, los pides poco a poco.
-Si el expediente está listo, puedes decir de forma natural:
-- "Hemos dejado tu documentación preparada y organizada para presentar."
-- "Ya tengo claro lo que falta para rellenarte bien el formulario."
-
 RELACIÓN CON SARA
-IMPORTANTE:
 - Mohamed no busca citas
-- Mohamed no modifica la lógica de Sara
 - Mohamed no promete citas
-- Mohamed solo prepara el expediente, revisa documentos, ayuda con formularios y deja el caso listo
+- Mohamed prepara el expediente, revisa documentos, ayuda con formularios y deja el caso listo
 - Si el cliente necesita cita para el siguiente paso, Mohamed lo deriva a Sara de forma natural y breve
-
-Ejemplo:
-- "Cuando quieras la cita para seguir con esto, Sara te ayuda con esa parte."
 
 CIERRE IDEAL CUANDO EL CASO ESTÁ PREPARADO
 Puedes cerrar con algo como:
@@ -389,11 +384,39 @@ function extractResponseText(data: any): string {
         if (typeof part?.text === "string" && part.text.trim()) {
           return part.text.trim();
         }
+        if (typeof part?.output_text === "string" && part.output_text.trim()) {
+          return part.output_text.trim();
+        }
       }
     }
   }
 
   return "";
+}
+
+function extractFileSearchResults(data: any) {
+  if (!Array.isArray(data?.output)) return [];
+
+  const results: Array<{
+    file_id?: string;
+    filename?: string;
+    score?: number;
+  }> = [];
+
+  for (const item of data.output) {
+    if (item?.type !== "file_search_call") continue;
+    if (!Array.isArray(item?.results)) continue;
+
+    for (const result of item.results) {
+      results.push({
+        file_id: result?.file_id,
+        filename: result?.filename,
+        score: typeof result?.score === "number" ? result.score : undefined,
+      });
+    }
+  }
+
+  return results;
 }
 
 function normalizeTramite(text: string): string | null {
@@ -504,40 +527,47 @@ function extractLeadFromConversation(params: {
   message: string;
   history: HistoryItem[];
   procedureLabel?: string;
+  leadForm?: LeadFormPayload;
 }): ExtractedLead {
-  const { message, history, procedureLabel } = params;
+  const { message, history, procedureLabel, leadForm } = params;
   const allText = [...history.map((h) => h.text), message].join(" \n ");
 
   const lead: ExtractedLead = {};
 
-  lead.phone = extractPhone(allText);
-  lead.nie = extractNie(allText);
-  lead.passport_number = extractPassport(allText);
-  lead.city = extractCity(allText);
-  lead.tramite = normalizeTramite(allText) || normalizeTramite(procedureLabel || "");
+  lead.phone = leadForm?.telefono || extractPhone(allText);
+  lead.nie = extractNie((leadForm?.niePasaporte || "") + " " + allText);
+  lead.passport_number =
+    extractPassport((leadForm?.niePasaporte || "") + " " + allText) || null;
+  lead.city = leadForm?.ciudad || extractCity(allText);
+  lead.tramite =
+    normalizeTramite(allText) || normalizeTramite(procedureLabel || "");
 
-  const lines = allText
-    .split("\n")
-    .map((s) => s.trim())
-    .filter(Boolean);
+  if (leadForm?.nombre) {
+    lead.full_name = leadForm.nombre;
+  } else {
+    const lines = allText
+      .split("\n")
+      .map((s) => s.trim())
+      .filter(Boolean);
 
-  const possibleNameLine = lines.find((line) => {
-    const l = line.toLowerCase();
-    return (
-      !l.includes("cita") &&
-      !l.includes("nie") &&
-      !l.includes("tel") &&
-      !l.includes("phone") &&
-      !l.includes("whatsapp") &&
-      !l.includes("passport") &&
-      !l.includes("pasaporte") &&
-      line.split(" ").length >= 2 &&
-      line.length >= 6
-    );
-  });
+    const possibleNameLine = lines.find((line) => {
+      const l = line.toLowerCase();
+      return (
+        !l.includes("cita") &&
+        !l.includes("nie") &&
+        !l.includes("tel") &&
+        !l.includes("phone") &&
+        !l.includes("whatsapp") &&
+        !l.includes("passport") &&
+        !l.includes("pasaporte") &&
+        line.split(" ").length >= 2 &&
+        line.length >= 6
+      );
+    });
 
-  if (possibleNameLine) {
-    lead.full_name = possibleNameLine.slice(0, 80);
+    if (possibleNameLine) {
+      lead.full_name = possibleNameLine.slice(0, 80);
+    }
   }
 
   return lead;
@@ -610,13 +640,13 @@ export default async function handler(req: any, res: any) {
     const userId =
       typeof body.userId === "string" ? body.userId.trim() : "";
     const history = sanitizeHistory(body.history);
+    const leadForm = sanitizeLeadForm(body.leadForm);
 
     if (!message) {
       return res.status(400).json({ error: "Mensaje vacío" });
     }
 
     const apiKey = process.env.OPENAI_API_KEY;
-
     if (!apiKey) {
       return res.status(500).json({ error: "Falta OPENAI_API_KEY en Vercel" });
     }
@@ -624,19 +654,14 @@ export default async function handler(req: any, res: any) {
     const detectedLanguage = detectUserLanguage(message);
     const isSara = assistant === "sara" || context === "buscar_citas";
 
-    console.log("CHAT API ASSISTANT:", assistant);
-    console.log("CHAT API CONTEXT:", context);
-    console.log("CHAT API IS_SARA:", isSara);
-    console.log("CHAT API SARA WEBHOOK CONFIG:", Boolean(process.env.MAKE_WEBHOOK_SARA));
-    console.log("CHAT API MOHAMED WEBHOOK CONFIG:", Boolean(process.env.MAKE_WEBHOOK_MOHAMED));
-
     const systemPrompt = isSara
       ? getSaraPrompt(detectedLanguage, procedureLabel)
       : getMohamedPrompt(
           detectedLanguage,
           context,
           procedureKey,
-          procedureLabel
+          procedureLabel,
+          leadForm
         );
 
     const input = buildTextInput({
@@ -645,18 +670,40 @@ export default async function handler(req: any, res: any) {
       message,
     });
 
+    const modelSara = process.env.OPENAI_MODEL_SARA || "gpt-4.1-mini";
+    const modelMohamed = process.env.OPENAI_MODEL_MOHAMED || "gpt-4.1-mini";
+    const model = isSara ? modelSara : modelMohamed;
+
+    const mohamedVectorStoreId =
+      process.env.MOHAMED_VECTOR_STORE_ID ||
+      process.env.OPENAI_VECTOR_STORE_MOHAMED ||
+      "";
+
+    const requestBody: Record<string, any> = {
+      model,
+      input,
+      temperature: 0.2,
+      max_output_tokens: 320,
+    };
+
+    if (!isSara && mohamedVectorStoreId) {
+      requestBody.tools = [
+        {
+          type: "file_search",
+          vector_store_ids: [mohamedVectorStoreId],
+          max_num_results: 6,
+        },
+      ];
+      requestBody.include = ["file_search_call.results"];
+    }
+
     const openaiResponse = await fetch("https://api.openai.com/v1/responses", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        model: "gpt-4.1-mini",
-        input,
-        temperature: 0.2,
-        max_output_tokens: 260,
-      }),
+      body: JSON.stringify(requestBody),
     });
 
     const data = await openaiResponse.json();
@@ -683,7 +730,10 @@ export default async function handler(req: any, res: any) {
       message,
       history,
       procedureLabel,
+      leadForm,
     });
+
+    const fileSearchResults = !isSara ? extractFileSearchResults(data) : [];
 
     let makeResult: { ok: boolean; status: number; body?: string } = {
       ok: false,
@@ -720,11 +770,14 @@ export default async function handler(req: any, res: any) {
         procedure_key: procedureKey || null,
         procedure_label: procedureLabel || extractedLead.tramite || null,
         lead: extractedLead,
+        lead_form: leadForm,
         status: "document_review_and_case_preparation",
         can_prepare_regularization_2026:
           extractedLead.tramite === "regularizacion_2026" ||
           (procedureLabel || "").toLowerCase().includes("regularización") ||
           (procedureLabel || "").toLowerCase().includes("regularizacion"),
+        used_file_search: Boolean(mohamedVectorStoreId),
+        file_search_results: fileSearchResults,
         last_user_message: message,
         ai_reply: reply,
         history,
@@ -743,6 +796,11 @@ export default async function handler(req: any, res: any) {
           : false,
         saraWebhookConfigured: Boolean(process.env.MAKE_WEBHOOK_SARA),
         mohamedWebhookConfigured: Boolean(process.env.MAKE_WEBHOOK_MOHAMED),
+        mohamedVectorStoreConfigured: Boolean(mohamedVectorStoreId),
+        usedFileSearch: !isSara && Boolean(mohamedVectorStoreId),
+        fileSearchHits: fileSearchResults.length,
+        fileSearchFiles: fileSearchResults,
+        model,
         makeStatus: makeResult.status,
         makeOk: makeResult.ok,
       },
