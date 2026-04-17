@@ -32,7 +32,6 @@ import { useLang } from "@/contexts/LanguageContext";
 import { uploadDocument } from "@/lib/uploadDocument";
 import { supabase } from "@/lib/supabaseClient";
 import {
-  fileToDataUrl,
   getDocumentLabel,
   verifyDocument,
   type VerifyDocumentLang,
