@@ -71,7 +71,9 @@ const ALLOWED_DOCUMENT_TYPES: VerifyDocumentType[] = [
   "unknown",
 ];
 
-function normalizeDocumentType(value?: string | null): VerifyDocumentType | string | null {
+function normalizeDocumentType(
+  value?: string | null
+): VerifyDocumentType | string | null {
   if (!value || typeof value !== "string") return null;
 
   const v = value.trim().toLowerCase();
@@ -108,7 +110,10 @@ function sanitizeLang(value?: string): VerifyDocumentLang {
   return "es";
 }
 
-function buildSystemPrompt(lang: VerifyDocumentLang, expectedDocumentType?: string | null) {
+function buildSystemPrompt(
+  lang: VerifyDocumentLang,
+  expectedDocumentType?: string | null
+) {
   const base = `
 Eres un verificador profesional de documentos para GestoriaCitaIA.
 
@@ -223,7 +228,11 @@ Haz exactamente esto:
 4. indica si coincide con el tipo esperado
 5. devuelve SOLO JSON válido
 
-Tipo esperado del documento: ${expectedDocumentType && expectedDocumentType !== "auto" ? expectedDocumentType : "no especificado"}
+Tipo esperado del documento: ${
+    expectedDocumentType && expectedDocumentType !== "auto"
+      ? expectedDocumentType
+      : "no especificado"
+  }
 `;
 }
 
@@ -296,12 +305,16 @@ function normalizeResult(
 
   return {
     status:
-      raw?.status === "valid" || raw?.status === "review" || raw?.status === "invalid"
+      raw?.status === "valid" ||
+      raw?.status === "review" ||
+      raw?.status === "invalid"
         ? raw.status
         : "review",
     document_type: normalizedType,
     expected_document_type:
-      normalizedExpected && normalizedExpected !== "auto" ? normalizedExpected : null,
+      normalizedExpected && normalizedExpected !== "auto"
+        ? normalizedExpected
+        : null,
     match_expected_type: matchExpectedType,
     country: safeNullableString(raw?.country),
     full_name: safeNullableString(raw?.full_name),
@@ -363,8 +376,16 @@ export default async function handler(req: any, res: any) {
       return res.status(400).json({ error: requestError });
     }
 
+    const normalizedExpected = normalizeDocumentType(body.expectedDocumentType);
     const expectedDocumentType =
-      normalizeDocumentType(body.expectedDocumentType) || null;
+      normalizedExpected &&
+      (ALLOWED_DOCUMENT_TYPES.includes(
+        normalizedExpected as VerifyDocumentType
+      ) ||
+        normalizedExpected === "auto")
+        ? normalizedExpected
+        : null;
+
     const lang = sanitizeLang(body.lang);
 
     let finalImageUrl = "";
@@ -416,9 +437,9 @@ export default async function handler(req: any, res: any) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "gpt-4o-mini",
+        model: process.env.OPENAI_MODEL_VERIFY_DOCUMENT || "gpt-4o-mini",
         temperature: 0.1,
-        max_tokens: 1000,
+        max_completion_tokens: 1000,
         response_format: {
           type: "json_object",
         },
