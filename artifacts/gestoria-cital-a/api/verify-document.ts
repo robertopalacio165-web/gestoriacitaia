@@ -12,23 +12,12 @@ type VerifyDocumentType =
   | "unknown";
 
 type VerifyDocumentRequest = {
-  imageBase64?: string;
-  imageUrl?: string;
+  fileBase64?: string;
+  fileName?: string;
+  mimeType?: string;
   expectedDocumentType?: string;
   lang?: VerifyDocumentLang;
 };
-
-type OpenAIMessageContent =
-  | {
-      type: "text";
-      text: string;
-    }
-  | {
-      type: "image_url";
-      image_url: {
-        url: string;
-      };
-    };
 
 type VerifyDocumentResult = {
   status: "valid" | "review" | "invalid";
@@ -110,165 +99,6 @@ function sanitizeLang(value?: string): VerifyDocumentLang {
   return "es";
 }
 
-function buildSystemPrompt(
-  lang: VerifyDocumentLang,
-  expectedDocumentType?: string | null
-) {
-  const base = `
-Eres un verificador profesional de documentos para GestoriaCitaIA.
-
-Tu trabajo es analizar visualmente UNA imagen y devolver SOLO JSON válido.
-No escribas markdown.
-No escribas explicaciones fuera del JSON.
-No inventes datos que no se vean claramente.
-Si un campo no es visible o no es seguro, usa null.
-Si hay duda razonable, usa status = "review".
-Si la imagen está demasiado borrosa, cortada, oscura, con reflejos o ilegible, usa status = "invalid".
-
-Objetivo:
-- detectar qué tipo de documento parece
-- comprobar si coincide con el tipo esperado cuando exista
-- extraer solo campos realmente visibles
-- detectar problemas de calidad visual
-- devolver un resumen claro
-
-Estados permitidos:
-- "valid"
-- "review"
-- "invalid"
-
-Tipos de documento permitidos:
-- "passport"
-- "nie"
-- "tie"
-- "empadronamiento"
-- "criminal_record"
-- "photo"
-- "official_form"
-- "unknown"
-
-Reglas adicionales importantes:
-- Si la imagen parece una foto tipo carnet/selfie/documento no oficial, usa "photo" o "unknown" según corresponda.
-- Si parece NIE o TIE y no es posible distinguir con seguridad cuál de los dos es, elige el más probable y añade warning.
-- Si el tipo esperado es "auto", trátalo como sin tipo obligatorio.
-- Si el documento no coincide con el esperado, marca match_expected_type = false.
-- No asumas autenticidad forense real. Solo evalúa apariencia visual, legibilidad y coherencia básica.
-- Fechas idealmente en formato ISO YYYY-MM-DD cuando se vean claramente. Si no, copia el formato visible o usa null.
-- "visible_fields" solo debe incluir nombres de campos realmente visibles.
-- "missing_or_unclear_fields" debe incluir campos esperables pero no claros.
-
-Debes devolver exactamente un objeto JSON con esta estructura:
-{
-  "status": "valid" | "review" | "invalid",
-  "document_type": "passport" | "nie" | "tie" | "empadronamiento" | "criminal_record" | "photo" | "official_form" | "unknown",
-  "expected_document_type": string | null,
-  "match_expected_type": boolean | null,
-  "country": string | null,
-  "full_name": string | null,
-  "document_number": string | null,
-  "nie": string | null,
-  "passport_number": string | null,
-  "birth_date": string | null,
-  "expiry_date": string | null,
-  "issue_date": string | null,
-  "nationality": string | null,
-  "sex": string | null,
-  "warnings": string[],
-  "visible_fields": string[],
-  "missing_or_unclear_fields": string[],
-  "image_quality": {
-    "blurred": boolean,
-    "cropped": boolean,
-    "dark": boolean,
-    "glare": boolean,
-    "low_resolution": boolean,
-    "multiple_documents": boolean
-  },
-  "summary": string
-}
-`;
-
-  const languageBlock =
-    lang === "darija"
-      ? `
-El campo "summary" y cada elemento de "warnings" deben estar en darija marroquí escrita con letras árabes.
-El resto de claves del JSON deben mantenerse exactamente igual.
-`
-      : lang === "en"
-      ? `
-The "summary" field and each "warnings" item must be written in English.
-All JSON keys must remain exactly as defined.
-`
-      : `
-El campo "summary" y cada elemento de "warnings" deben estar escritos en español.
-El resto de claves del JSON deben mantenerse exactamente igual.
-`;
-
-  const expectedBlock =
-    expectedDocumentType && expectedDocumentType !== "auto"
-      ? `
-Tipo esperado del documento: ${expectedDocumentType}
-Debes comparar visualmente la imagen contra este tipo esperado.
-`
-      : `
-No hay tipo esperado obligatorio.
-`;
-
-  return `${base}\n${languageBlock}\n${expectedBlock}`;
-}
-
-function buildUserPrompt(expectedDocumentType?: string | null) {
-  return `
-Analiza esta imagen.
-
-Haz exactamente esto:
-1. detecta qué tipo de documento parece
-2. extrae solo los datos realmente visibles
-3. evalúa la calidad de la imagen
-4. indica si coincide con el tipo esperado
-5. devuelve SOLO JSON válido
-
-Tipo esperado del documento: ${
-    expectedDocumentType && expectedDocumentType !== "auto"
-      ? expectedDocumentType
-      : "no especificado"
-  }
-`;
-}
-
-function detectMimeTypeFromUrl(url: string): string {
-  const lower = url.toLowerCase();
-
-  if (lower.includes(".png")) return "image/png";
-  if (lower.includes(".webp")) return "image/webp";
-  if (lower.includes(".gif")) return "image/gif";
-  if (lower.includes(".jpg") || lower.includes(".jpeg")) return "image/jpeg";
-
-  return "image/jpeg";
-}
-
-function looksLikeDataUrl(value: string): boolean {
-  return /^data:image\/[a-zA-Z0-9.+-]+;base64,/.test(value);
-}
-
-async function downloadImageAsDataUrl(imageUrl: string): Promise<string> {
-  const response = await fetch(imageUrl);
-
-  if (!response.ok) {
-    throw new Error(`No se pudo descargar la imagen: ${response.status}`);
-  }
-
-  const arrayBuffer = await response.arrayBuffer();
-  const base64 = Buffer.from(arrayBuffer).toString("base64");
-
-  const contentType =
-    response.headers.get("content-type") ||
-    detectMimeTypeFromUrl(imageUrl) ||
-    "image/jpeg";
-
-  return `data:${contentType};base64,${base64}`;
-}
-
 function safeArray(value: unknown): string[] {
   if (!Array.isArray(value)) return [];
   return value
@@ -342,17 +172,141 @@ function normalizeResult(
 }
 
 function validateRequest(body: VerifyDocumentRequest) {
-  const hasBase64 =
-    typeof body.imageBase64 === "string" && body.imageBase64.trim().length > 0;
+  const hasFileBase64 =
+    typeof body.fileBase64 === "string" && body.fileBase64.trim().length > 0;
 
-  const hasImageUrl =
-    typeof body.imageUrl === "string" && body.imageUrl.trim().length > 0;
-
-  if (!hasBase64 && !hasImageUrl) {
-    return "Debes enviar imageBase64 o imageUrl";
+  if (!hasFileBase64) {
+    return "Debes enviar fileBase64";
   }
 
   return null;
+}
+
+function buildSystemPrompt(
+  lang: VerifyDocumentLang,
+  expectedDocumentType?: string | null
+) {
+  const base = `
+Eres un verificador profesional de documentos para GestoriaCitaIA.
+
+Tu trabajo es analizar visualmente UN documento recibido del cliente y devolver SOLO JSON válido.
+No escribas markdown.
+No escribas explicaciones fuera del JSON.
+No inventes datos que no se vean claramente.
+Si un campo no es visible o no es seguro, usa null.
+Si hay duda razonable, usa status = "review".
+Si el archivo está ilegible, muy borroso, recortado o no permite leer bien el documento, usa status = "invalid".
+
+Objetivo:
+- detectar qué tipo de documento parece
+- comprobar si coincide con el tipo esperado cuando exista
+- extraer solo campos realmente visibles
+- detectar problemas de calidad visual
+- devolver un resumen claro
+
+Estados permitidos:
+- "valid"
+- "review"
+- "invalid"
+
+Tipos de documento permitidos:
+- "passport"
+- "nie"
+- "tie"
+- "empadronamiento"
+- "criminal_record"
+- "photo"
+- "official_form"
+- "unknown"
+
+Reglas adicionales importantes:
+- Si es una foto hecha con móvil a un papel o a un PDF impreso, también debes analizarla.
+- Si parece una captura o conversión de un PDF, también debes analizarla igual como documento válido.
+- Si parece NIE o TIE y no es posible distinguir con seguridad cuál de los dos es, elige el más probable y añade warning.
+- Si el tipo esperado es "auto", trátalo como sin tipo obligatorio.
+- Si el documento no coincide con el esperado, marca match_expected_type = false.
+- No asumas autenticidad forense real. Solo evalúa apariencia visual, legibilidad y coherencia básica.
+- Fechas idealmente en formato ISO YYYY-MM-DD cuando se vean claramente. Si no, copia el formato visible o usa null.
+- "visible_fields" solo debe incluir nombres de campos realmente visibles.
+- "missing_or_unclear_fields" debe incluir campos esperables pero no claros.
+
+Debes devolver exactamente un objeto JSON con esta estructura:
+{
+  "status": "valid" | "review" | "invalid",
+  "document_type": "passport" | "nie" | "tie" | "empadronamiento" | "criminal_record" | "photo" | "official_form" | "unknown",
+  "expected_document_type": string | null,
+  "match_expected_type": boolean | null,
+  "country": string | null,
+  "full_name": string | null,
+  "document_number": string | null,
+  "nie": string | null,
+  "passport_number": string | null,
+  "birth_date": string | null,
+  "expiry_date": string | null,
+  "issue_date": string | null,
+  "nationality": string | null,
+  "sex": string | null,
+  "warnings": string[],
+  "visible_fields": string[],
+  "missing_or_unclear_fields": string[],
+  "image_quality": {
+    "blurred": boolean,
+    "cropped": boolean,
+    "dark": boolean,
+    "glare": boolean,
+    "low_resolution": boolean,
+    "multiple_documents": boolean
+  },
+  "summary": string
+}
+`;
+
+  const languageBlock =
+    lang === "darija"
+      ? `
+El campo "summary" y cada elemento de "warnings" deben estar en darija marroquí escrita con letras árabes.
+El resto de claves del JSON deben mantenerse exactamente igual.
+`
+      : lang === "en"
+      ? `
+The "summary" field and each "warnings" item must be written in English.
+All JSON keys must remain exactly as defined.
+`
+      : `
+El campo "summary" y cada elemento de "warnings" deben estar escritos en español.
+El resto de claves del JSON deben mantenerse exactamente igual.
+`;
+
+  const expectedBlock =
+    expectedDocumentType && expectedDocumentType !== "auto"
+      ? `
+Tipo esperado del documento: ${expectedDocumentType}
+Debes comparar visualmente el documento contra este tipo esperado.
+`
+      : `
+No hay tipo esperado obligatorio.
+`;
+
+  return `${base}\n${languageBlock}\n${expectedBlock}`;
+}
+
+function buildDataUrlFromFile(params: {
+  fileBase64: string;
+  mimeType?: string;
+  fileName?: string;
+}) {
+  const { fileBase64, mimeType, fileName } = params;
+
+  const safeMime =
+    mimeType && mimeType.trim()
+      ? mimeType.trim()
+      : fileName?.toLowerCase().endsWith(".png")
+      ? "image/png"
+      : fileName?.toLowerCase().endsWith(".webp")
+      ? "image/webp"
+      : "image/jpeg";
+
+  return `data:${safeMime};base64,${fileBase64}`;
 }
 
 export default async function handler(req: any, res: any) {
@@ -388,47 +342,11 @@ export default async function handler(req: any, res: any) {
 
     const lang = sanitizeLang(body.lang);
 
-    let finalImageUrl = "";
-
-    if (body.imageBase64 && body.imageBase64.trim()) {
-      const trimmed = body.imageBase64.trim();
-
-      finalImageUrl = looksLikeDataUrl(trimmed)
-        ? trimmed
-        : `data:image/jpeg;base64,${trimmed}`;
-    } else if (body.imageUrl && body.imageUrl.trim()) {
-      try {
-        finalImageUrl = await downloadImageAsDataUrl(body.imageUrl.trim());
-      } catch (downloadError: any) {
-        return res.status(500).json({
-          error: `No se pudo descargar la imagen externa: ${
-            downloadError?.message || "error desconocido"
-          }`,
-        });
-      }
-    }
-
-    const messages = [
-      {
-        role: "system",
-        content: buildSystemPrompt(lang, expectedDocumentType),
-      },
-      {
-        role: "user",
-        content: [
-          {
-            type: "text",
-            text: buildUserPrompt(expectedDocumentType),
-          },
-          {
-            type: "image_url",
-            image_url: {
-              url: finalImageUrl,
-            },
-          },
-        ] as OpenAIMessageContent[],
-      },
-    ];
+    const dataUrl = buildDataUrlFromFile({
+      fileBase64: body.fileBase64!.trim(),
+      mimeType: body.mimeType,
+      fileName: body.fileName,
+    });
 
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
@@ -443,7 +361,27 @@ export default async function handler(req: any, res: any) {
         response_format: {
           type: "json_object",
         },
-        messages,
+        messages: [
+          {
+            role: "system",
+            content: buildSystemPrompt(lang, expectedDocumentType),
+          },
+          {
+            role: "user",
+            content: [
+              {
+                type: "text",
+                text: `Analiza este documento del cliente. Puede ser foto, escaneo, captura o PDF convertido a imagen. Devuelve SOLO JSON válido.`,
+              },
+              {
+                type: "image_url",
+                image_url: {
+                  url: dataUrl,
+                },
+              },
+            ],
+          },
+        ],
       }),
     });
 
