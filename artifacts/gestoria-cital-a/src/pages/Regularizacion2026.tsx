@@ -47,10 +47,14 @@ type StoredDocItem = {
 type LeadFormState = {
   nombre: string;
   telefono: string;
+  email: string;
   niePasaporte: string;
   ciudad: string;
   nacionalidad: string;
   fechaLlegada: string;
+  cumple5Meses: string;
+  asilo: string;
+  penales: string;
 };
 
 function buildInitialDocs(procedureKey: string): StoredDocItem[] {
@@ -71,69 +75,6 @@ function buildInitialDocs(procedureKey: string): StoredDocItem[] {
 function normalizeDocType(value?: string) {
   return (value || "").trim().toLowerCase();
 }
-
-const NATIONALITY_OPTIONS = [
-  { value: "", label: "Selecciona nacionalidad" },
-  { value: "afgana", label: "Afgana" },
-  { value: "alemana", label: "Alemana" },
-  { value: "argelina", label: "Argelina" },
-  { value: "argentina", label: "Argentina" },
-  { value: "belga", label: "Belga" },
-  { value: "boliviana", label: "Boliviana" },
-  { value: "brasileña", label: "Brasileña" },
-  { value: "búlgara", label: "Búlgara" },
-  { value: "canadiense", label: "Canadiense" },
-  { value: "chilena", label: "Chilena" },
-  { value: "china", label: "China" },
-  { value: "colombiana", label: "Colombiana" },
-  { value: "congoleña", label: "Congoleña" },
-  { value: "cubana", label: "Cubana" },
-  { value: "dominicana", label: "Dominicana" },
-  { value: "ecuatoriana", label: "Ecuatoriana" },
-  { value: "egipcia", label: "Egipcia" },
-  { value: "española", label: "Española" },
-  { value: "estadounidense", label: "Estadounidense" },
-  { value: "filipina", label: "Filipina" },
-  { value: "francesa", label: "Francesa" },
-  { value: "gambiana", label: "Gambiana" },
-  { value: "ghanesa", label: "Ghanesa" },
-  { value: "guineana", label: "Guineana" },
-  { value: "india", label: "India" },
-  { value: "italiana", label: "Italiana" },
-  { value: "maliense", label: "Maliense" },
-  { value: "marfileña", label: "Marfileña" },
-  { value: "marroquí", label: "Marroquí" },
-  { value: "mauritana", label: "Mauritana" },
-  { value: "mexicana", label: "Mexicana" },
-  { value: "neerlandesa", label: "Neerlandesa" },
-  { value: "nigeriana", label: "Nigeriana" },
-  { value: "pakistaní", label: "Pakistaní" },
-  { value: "paraguaya", label: "Paraguaya" },
-  { value: "peruana", label: "Peruana" },
-  { value: "portuguesa", label: "Portuguesa" },
-  { value: "rumana", label: "Rumana" },
-  { value: "rusa", label: "Rusa" },
-  { value: "senegalesa", label: "Senegalesa" },
-  { value: "siria", label: "Siria" },
-  { value: "sudanesa", label: "Sudanesa" },
-  { value: "tunecina", label: "Tunecina" },
-  { value: "turca", label: "Turca" },
-  { value: "ucraniana", label: "Ucraniana" },
-  { value: "uruguaya", label: "Uruguaya" },
-  { value: "venezolana", label: "Venezolana" },
-  { value: "otra", label: "Otra" },
-];
-
-const ARRIVAL_YEAR_OPTIONS = [
-  { value: "", label: "Selecciona año" },
-  { value: "2026", label: "2026" },
-  { value: "2025", label: "2025" },
-  { value: "2024", label: "2024" },
-  { value: "2023", label: "2023" },
-  { value: "2022", label: "2022" },
-  { value: "2021", label: "2021" },
-  { value: "antes_2021", label: "Antes de 2021" },
-];
 
 export default function Regularizacion2026() {
   const [selectedSituacion, setSelectedSituacion] = useState(
@@ -156,10 +97,14 @@ export default function Regularizacion2026() {
   const [leadForm, setLeadForm] = useState<LeadFormState>({
     nombre: "",
     telefono: "",
+    email: "",
     niePasaporte: "",
     ciudad: "",
     nacionalidad: "",
     fechaLlegada: "",
+    cumple5Meses: "",
+    asilo: "",
+    penales: "",
   });
 
   const { t, lang } = useLang();
@@ -214,7 +159,7 @@ export default function Regularizacion2026() {
         goSaraDesc: "إلى بغيتي تكمل بالموعد، سارة غادي تعاونك.",
         formTitle: "لوحة رسمية مدمجة",
         formDesc:
-          "عمر غير المعطيات الأساسية، ومن بعد محمد غادي يكمل معاك خطوة بخطوة.",
+          "عمر المعطيات الأساسية باش محمد يبدا معاك التحقق من 5 شهور والوثائق.",
         saveLeadButton: "حفظ المعطيات والمتابعة مع محمد",
         savedLeadReply:
           "مزيان. خديت المعطيات ديالك. دابا صيفط ليا الوثائق ديالك، سواء كانوا صور أو PDF، ونبدا نراجعهم خطوة بخطوة.",
@@ -224,14 +169,18 @@ export default function Regularizacion2026() {
         saveLeadDesc: "محمد قدر يبدا يراجع معاك الوثائق.",
         missingTitle: "كاينين بيانات ناقصين",
         missingDesc:
-          "عمر الاسم وواتساب والمدينة فإسبانيا والجنسية والعام اللي دخلتي فيه لإسبانيا قبل ما تكمل.",
+          "عمر الاسم والهاتف والمدينة والجنسية وتاريخ الدخول قبل ما تكمل.",
         labels: {
           nombre: "الاسم الكامل",
-          telefono: "واتساب",
-          niePasaporte: "الباسبور / NIE",
-          ciudad: "المدينة فإسبانيا",
+          telefono: "الهاتف",
+          email: "الإيميل",
+          niePasaporte: "NIE / الباسبور",
+          ciudad: "المدينة",
           nacionalidad: "الجنسية",
-          fechaLlegada: "العام اللي دخلتي فيه لإسبانيا",
+          fechaLlegada: "تاريخ الدخول لإسبانيا",
+          cumple5Meses: "واش عندك 5 شهور متواصلة؟",
+          asilo: "واش عندك طلب لجوء؟",
+          penales: "سوابق عدلية",
           select: "اختر",
           yes: "نعم",
           no: "لا",
@@ -280,7 +229,7 @@ export default function Regularizacion2026() {
           "If you want to continue with the appointment, Sara will help you.",
         formTitle: "Integrated official panel",
         formDesc:
-          "Fill in the basic details and then Mohamed will continue with you step by step.",
+          "Fill in the basic details so Mohamed can start checking the 5 months and your documents.",
         saveLeadButton: "Save details and continue with Mohamed",
         savedLeadReply:
           "Perfect. I already have your details. Now send me your documents, as images or PDFs, and I will review them step by step.",
@@ -290,14 +239,18 @@ export default function Regularizacion2026() {
         saveLeadDesc: "Mohamed can now start reviewing your documents.",
         missingTitle: "Missing data",
         missingDesc:
-          "Please fill in full name, WhatsApp, city in Spain, nationality and year of arrival before continuing.",
+          "Please fill in name, phone, city, nationality and arrival date before continuing.",
         labels: {
           nombre: "Full name",
-          telefono: "WhatsApp",
-          niePasaporte: "Passport / NIE",
-          ciudad: "City in Spain",
+          telefono: "Phone",
+          email: "Email",
+          niePasaporte: "NIE / Passport",
+          ciudad: "City",
           nacionalidad: "Nationality",
-          fechaLlegada: "Year of arrival in Spain",
+          fechaLlegada: "Arrival date in Spain",
+          cumple5Meses: "Do you have 5 continuous months?",
+          asilo: "Do you have an asylum application?",
+          penales: "Criminal record",
           select: "Select",
           yes: "Yes",
           no: "No",
@@ -344,7 +297,7 @@ export default function Regularizacion2026() {
       goSaraDesc: "Si quieres seguir con la cita, Sara te ayuda.",
       formTitle: "Panel oficial integrado",
       formDesc:
-        "Rellena los datos básicos y después Mohamed seguirá contigo paso a paso.",
+        "Rellena los datos básicos para que Mohamed empiece a comprobar los 5 meses y tus documentos.",
       saveLeadButton: "Guardar datos y continuar con Mohamed",
       savedLeadReply:
         "Perfecto. Ya tengo tus datos. Ahora súbeme tus documentos, en foto o en PDF, y empezaré a revisarlos paso a paso.",
@@ -354,14 +307,18 @@ export default function Regularizacion2026() {
       saveLeadDesc: "Mohamed ya puede empezar a revisar tus documentos.",
       missingTitle: "Faltan datos",
       missingDesc:
-        "Rellena nombre, WhatsApp, ciudad en España, nacionalidad y año de llegada antes de continuar.",
+        "Rellena nombre, teléfono, ciudad, nacionalidad y fecha de llegada antes de continuar.",
       labels: {
         nombre: "Nombre completo",
-        telefono: "WhatsApp",
-        niePasaporte: "Pasaporte / NIE",
-        ciudad: "Ciudad en España",
+        telefono: "Teléfono",
+        email: "Email",
+        niePasaporte: "NIE / Pasaporte",
+        ciudad: "Ciudad",
         nacionalidad: "Nacionalidad",
-        fechaLlegada: "Año llegada a España",
+        fechaLlegada: "Fecha llegada a España",
+        cumple5Meses: "¿Cumples 5 meses continuos?",
+        asilo: "¿Tienes solicitud de asilo?",
+        penales: "Antecedentes penales",
         select: "Selecciona",
         yes: "Sí",
         no: "No",
@@ -406,10 +363,14 @@ export default function Regularizacion2026() {
         setLeadForm({
           nombre: parsed?.nombre || "",
           telefono: parsed?.telefono || "",
+          email: parsed?.email || "",
           niePasaporte: parsed?.niePasaporte || "",
           ciudad: parsed?.ciudad || "",
           nacionalidad: parsed?.nacionalidad || "",
           fechaLlegada: parsed?.fechaLlegada || "",
+          cumple5Meses: parsed?.cumple5Meses || "",
+          asilo: parsed?.asilo || "",
+          penales: parsed?.penales || "",
         });
       }
 
@@ -526,44 +487,6 @@ export default function Regularizacion2026() {
   }, [chatMessages, sendingChat, generalUploading]);
 
   const docsOk = docs.filter((d) => d.estado === "ok").length;
-  const acceptedDocs = docs.filter((d) => d.estado === "ok");
-  const rejectedDocs = docs.filter((d) => d.estado === "warn");
-
-  const stayProofDocs = acceptedDocs.filter((d) => {
-    const txt = `${d.nombre} ${d.detectedType} ${d.note}`.toLowerCase();
-
-    return (
-      txt.includes("stay") ||
-      txt.includes("estancia") ||
-      txt.includes("empadron") ||
-      txt.includes("factura") ||
-      txt.includes("banco") ||
-      txt.includes("transfer") ||
-      txt.includes("ticket") ||
-      txt.includes("medico") ||
-      txt.includes("hospital") ||
-      txt.includes("cita") ||
-      txt.includes("proof")
-    );
-  });
-
-  const strongProofs = stayProofDocs.filter((d) => {
-    const txt = `${d.nombre} ${d.detectedType} ${d.note}`.toLowerCase();
-
-    return (
-      txt.includes("empadron") ||
-      txt.includes("bank") ||
-      txt.includes("banco") ||
-      txt.includes("hospital") ||
-      txt.includes("oficial")
-    );
-  });
-
-  const estimatedMonthsCovered = Math.min(
-    5,
-    Math.max(1, Math.ceil(stayProofDocs.length / 2))
-  );
-
   const docsTotal = docs.length;
   const allReady = docsOk >= Math.max(1, docsTotal - 1);
 
@@ -623,17 +546,21 @@ export default function Regularizacion2026() {
   };
 
   const getBestDocMatch = (
-    result: VerifyDocumentResult,
+    result: {
+      document_type?: string | null;
+      summary?: string;
+      visible_fields?: string[];
+      missing_or_unclear_fields?: string[];
+      warnings?: string[];
+    },
     currentDocs: StoredDocItem[],
     fileName?: string
   ): StoredDocItem | null => {
     const detectedType = normalizeDocType(result?.document_type || "");
-    const bucket = ((result as any)?.recommended_bucket || "").toLowerCase();
     const lowerFileName = (fileName || "").toLowerCase();
 
     const combinedText = [
       result?.summary || "",
-      ((result as any)?.stay_proof_reason || "") as string,
       ...(result?.visible_fields || []),
       ...(result?.missing_or_unclear_fields || []),
       ...(result?.warnings || []),
@@ -645,46 +572,23 @@ export default function Regularizacion2026() {
     const includesAny = (words: string[]) =>
       words.some((word) => combinedText.includes(word));
 
-    if (bucket === "identity_document") {
-      if (detectedType === "passport") {
-        const passportDoc =
-          currentDocs.find(
-            (doc) =>
-              doc.estado !== "ok" &&
-              normalizeDocType(doc.expectedType) === "passport"
-          ) ||
-          currentDocs.find(
-            (doc) => normalizeDocType(doc.expectedType) === "passport"
-          );
+    if (detectedType && detectedType !== "unknown" && detectedType !== "photo") {
+      const exactMissing = currentDocs.find(
+        (doc) =>
+          doc.estado !== "ok" &&
+          normalizeDocType(doc.expectedType) === detectedType
+      );
+      if (exactMissing) return exactMissing;
 
-        if (passportDoc) return passportDoc;
-      }
-
-      if (detectedType === "nie") {
-        const nieDoc =
-          currentDocs.find(
-            (doc) =>
-              doc.estado !== "ok" && normalizeDocType(doc.expectedType) === "nie"
-          ) ||
-          currentDocs.find((doc) => normalizeDocType(doc.expectedType) === "nie");
-
-        if (nieDoc) return nieDoc;
-      }
-
-      if (detectedType === "tie") {
-        const tieDoc =
-          currentDocs.find(
-            (doc) =>
-              doc.estado !== "ok" && normalizeDocType(doc.expectedType) === "tie"
-          ) ||
-          currentDocs.find((doc) => normalizeDocType(doc.expectedType) === "tie");
-
-        if (tieDoc) return tieDoc;
-      }
+      const exactWarn = currentDocs.find(
+        (doc) =>
+          doc.estado === "warn" &&
+          normalizeDocType(doc.expectedType) === detectedType
+      );
+      if (exactWarn) return exactWarn;
     }
 
     if (
-      detectedType === "criminal_record" ||
       includesAny([
         "antecedentes",
         "antecedentes penales",
@@ -709,9 +613,49 @@ export default function Regularizacion2026() {
     }
 
     if (
-      detectedType === "empadronamiento" ||
-      includesAny(["empadronamiento", "padron", "padrón", "volante"])
+      includesAny([
+        "passport",
+        "pasaporte",
+        "passeport",
+        "documento de viaje",
+      ])
     ) {
+      const passportDoc =
+        currentDocs.find(
+          (doc) =>
+            doc.estado !== "ok" &&
+            normalizeDocType(doc.expectedType) === "passport"
+        ) ||
+        currentDocs.find(
+          (doc) => normalizeDocType(doc.expectedType) === "passport"
+        );
+
+      if (passportDoc) return passportDoc;
+    }
+
+    if (includesAny(["nie"])) {
+      const nieDoc =
+        currentDocs.find(
+          (doc) =>
+            doc.estado !== "ok" && normalizeDocType(doc.expectedType) === "nie"
+        ) ||
+        currentDocs.find((doc) => normalizeDocType(doc.expectedType) === "nie");
+
+      if (nieDoc) return nieDoc;
+    }
+
+    if (includesAny(["tie", "tarjeta de identidad de extranjero"])) {
+      const tieDoc =
+        currentDocs.find(
+          (doc) =>
+            doc.estado !== "ok" && normalizeDocType(doc.expectedType) === "tie"
+        ) ||
+        currentDocs.find((doc) => normalizeDocType(doc.expectedType) === "tie");
+
+      if (tieDoc) return tieDoc;
+    }
+
+    if (includesAny(["empadronamiento", "padron", "padrón", "volante"])) {
       const empDoc =
         currentDocs.find(
           (doc) =>
@@ -726,8 +670,6 @@ export default function Regularizacion2026() {
     }
 
     if (
-      detectedType === "official_form" ||
-      bucket === "official_form" ||
       includesAny(["formulario", "official form", "solicitud", "modelo ex"])
     ) {
       const formDoc =
@@ -741,18 +683,6 @@ export default function Regularizacion2026() {
         );
 
       if (formDoc) return formDoc;
-    }
-
-    if (
-      detectedType === "stay_proof" ||
-      bucket === "stay_proof" ||
-      (result as any)?.is_stay_proof
-    ) {
-      const firstMissing = currentDocs.find((doc) => doc.estado === "missing");
-      if (firstMissing) return firstMissing;
-
-      const firstWarn = currentDocs.find((doc) => doc.estado === "warn");
-      if (firstWarn) return firstWarn;
     }
 
     if (lowerFileName) {
@@ -873,66 +803,19 @@ export default function Regularizacion2026() {
                 return updatedDocs;
               });
 
-              const bucket = (((result as any)?.recommended_bucket || "") as string).toLowerCase();
-              const detectedType = (result?.document_type || "").toLowerCase();
-              const stayStrength = (((result as any)?.stay_proof_strength || "") as string).toLowerCase();
-
               if (!matchedDocSnapshot) {
-                let smartMessage = "";
-
-                if (
-                  bucket === "identity_document" ||
-                  detectedType === "passport" ||
-                  detectedType === "nie" ||
-                  detectedType === "tie"
-                ) {
-                  smartMessage =
-                    safeLang === "darija"
-                      ? `توصلت بــ ${file.name}. هاد الوثيقة باينة وثيقة هوية وتمت قراءتها، غادي نضيفها للملف.`
-                      : safeLang === "en"
-                      ? `I received ${file.name}. This looks like an identity document and it was read correctly. I will add it to the case.`
-                      : `He recibido ${file.name}. Parece un documento de identidad y se ha leído correctamente. Lo añadiré al expediente.`;
-                } else if ((result as any)?.is_stay_proof || bucket === "stay_proof") {
-                  smartMessage =
-                    safeLang === "darija"
-                      ? stayStrength === "strong"
-                        ? `توصلت بــ ${file.name}. هادي باينة prueba قوية ديال التواجد أو الإقامة فإسبانيا، وغادي نحتافظ بها ضمن pruebas de los 5 meses.`
-                        : `توصلت بــ ${file.name}. هادي باينة prueba إضافية ديال التواجد فإسبانيا، وغادي نخليها ضمن الملف ونراجعها مع باقي البروفات.`
-                      : safeLang === "en"
-                      ? stayStrength === "strong"
-                        ? `I received ${file.name}. This looks like a strong proof of stay in Spain, and I will keep it inside the 5-month evidence.`
-                        : `I received ${file.name}. This looks like an additional proof of stay in Spain, and I will keep it in the file to review it with the other proofs.`
-                      : stayStrength === "strong"
-                      ? `He recibido ${file.name}. Parece una prueba fuerte de estancia en España y la guardaré dentro de las pruebas de los 5 meses.`
-                      : `He recibido ${file.name}. Parece una prueba adicional de estancia en España y la guardaré en el expediente para revisarla con las demás pruebas.`;
-                } else if (bucket === "official_form") {
-                  smartMessage =
-                    safeLang === "darija"
-                      ? `توصلت بــ ${file.name}. هادي باينة formulario oficial وغادي نضيفو للملف.`
-                      : safeLang === "en"
-                      ? `I received ${file.name}. This looks like an official form and I will add it to the file.`
-                      : `He recibido ${file.name}. Parece un formulario oficial y lo añadiré al expediente.`;
-                } else if (bucket === "personal_photo") {
-                  smartMessage =
-                    safeLang === "darija"
-                      ? `توصلت بــ ${file.name}. هادي باينة صورة شخصية، وغادي نخليها ضمن الملف باش نراجع واش صالحة للتصاريح والإجراءات.`
-                      : safeLang === "en"
-                      ? `I received ${file.name}. This looks like a personal photo, and I will keep it in the file to review whether it is suitable for the procedure.`
-                      : `He recibido ${file.name}. Parece una foto personal y la guardaré en el expediente para revisar si sirve para el trámite.`;
-                } else {
-                  smartMessage =
-                    safeLang === "darija"
-                      ? `توصلت بــ ${file.name}. قريت الوثيقة وغادي نخليها ضمن otros documentos ونكمل الترتيب مع باقي الملف.`
-                      : safeLang === "en"
-                      ? `I received ${file.name}. I read the document and I will keep it under other documents while I continue organizing the case.`
-                      : `He recibido ${file.name}. He leído el documento y lo guardaré en otros documentos mientras sigo organizando el expediente.`;
-                }
-
-                pushAgentMessage(smartMessage);
+                pushAgentMessage(
+                  safeLang === "darija"
+                    ? `توصلت بــ ${file.name}. قريت الوثيقة ولكن ما قدرتش نربطها أوتوماتيكياً مع خانة محددة. صيفط باقي الوثائق وأنا نكمل الترتيب.`
+                    : safeLang === "en"
+                    ? `I received ${file.name}. I could read the document, but I could not automatically assign it to a specific slot yet. Send the remaining documents and I will continue organizing them.`
+                    : `He recibido ${file.name}. He podido leer el documento, pero todavía no he podido asignarlo automáticamente a una casilla concreta del expediente. Sube los demás documentos y sigo organizándolo.`
+                );
 
                 toast({
-                  title: ui.uploadSuccessTitle,
-                  description: result?.summary || ui.uploadSuccessDesc,
+                  title: ui.uploadErrorTitle,
+                  description: result?.summary || ui.uploadErrorDesc,
+                  variant: "destructive",
                 });
 
                 continue;
@@ -944,76 +827,6 @@ export default function Regularizacion2026() {
 
               if (isWarn) {
                 pushAgentMessage(ui.mohamedDocWarn(file.name));
-              } else if (detectedType === "passport") {
-                pushAgentMessage(
-                  safeLang === "darija"
-                    ? `مزيان. توصلت بــ ${file.name} وهادي باينة بوضوح باسبور. ضفتو للملف.`
-                    : safeLang === "en"
-                    ? `Perfect. I received ${file.name} and it clearly looks like a passport. I added it to the file.`
-                    : `Perfecto. He recibido ${file.name} y se ve claramente que es un pasaporte. Lo he añadido al expediente.`
-                );
-              } else if (detectedType === "nie") {
-                pushAgentMessage(
-                  safeLang === "darija"
-                    ? `مزيان. توصلت بــ ${file.name} وهادي باينة NIE. ضفتها للملف.`
-                    : safeLang === "en"
-                    ? `Perfect. I received ${file.name} and it looks like a NIE. I added it to the file.`
-                    : `Perfecto. He recibido ${file.name} y parece un NIE. Lo he añadido al expediente.`
-                );
-              } else if (detectedType === "tie") {
-                pushAgentMessage(
-                  safeLang === "darija"
-                    ? `مزيان. توصلت بــ ${file.name} وهادي باينة TIE. ضفتها للملف.`
-                    : safeLang === "en"
-                    ? `Perfect. I received ${file.name} and it looks like a TIE. I added it to the file.`
-                    : `Perfecto. He recibido ${file.name} y parece una TIE. La he añadido al expediente.`
-                );
-              } else if (detectedType === "empadronamiento") {
-                pushAgentMessage(
-                  safeLang === "darija"
-                    ? `مزيان. توصلت بــ ${file.name} وهادي باينة empadronamiento. ضفتو للملف.`
-                    : safeLang === "en"
-                    ? `Perfect. I received ${file.name} and it looks like an empadronamiento document. I added it to the file.`
-                    : `Perfecto. He recibido ${file.name} y parece un empadronamiento. Lo he añadido al expediente.`
-                );
-              } else if (detectedType === "criminal_record") {
-                pushAgentMessage(
-                  safeLang === "darija"
-                    ? `مزيان. توصلت بــ ${file.name} وهادي باينة شهادة السوابق العدلية. ضفتها للملف.`
-                    : safeLang === "en"
-                    ? `Perfect. I received ${file.name} and it looks like a criminal record certificate. I added it to the file.`
-                    : `Perfecto. He recibido ${file.name} y parece un certificado de antecedentes penales. Lo he añadido al expediente.`
-                );
-              } else if ((result as any)?.is_stay_proof || bucket === "stay_proof") {
-                pushAgentMessage(
-                  safeLang === "darija"
-                    ? stayStrength === "strong"
-                      ? `مزيان. توصلت بــ ${file.name} وهادي باينة prueba قوية ديال الإقامة أو التواجد فإسبانيا. غادي نعتمدها ضمن بروفات 5 شهور.`
-                      : `توصلت بــ ${file.name} وهادي باينة prueba إضافية ديال التواجد فإسبانيا. غادي نخليها ضمن الملف ونراجعها مع باقي البروفات.`
-                    : safeLang === "en"
-                    ? stayStrength === "strong"
-                      ? `Perfect. I received ${file.name} and it looks like a strong proof of stay in Spain. I will count it within the 5-month evidence.`
-                      : `I received ${file.name} and it looks like an additional proof of stay in Spain. I will keep it in the file and review it together with the other proofs.`
-                    : stayStrength === "strong"
-                    ? `Perfecto. He recibido ${file.name} y parece una prueba fuerte de estancia en España. La tendré en cuenta dentro de las pruebas de los 5 meses.`
-                    : `He recibido ${file.name} y parece una prueba adicional de estancia en España. La guardaré en el expediente y la revisaré junto con las demás pruebas.`
-                );
-              } else if (bucket === "official_form") {
-                pushAgentMessage(
-                  safeLang === "darija"
-                    ? `مزيان. توصلت بــ ${file.name} وهادي باينة formulario oficial. ضفتو للملف.`
-                    : safeLang === "en"
-                    ? `Perfect. I received ${file.name} and it looks like an official form. I added it to the file.`
-                    : `Perfecto. He recibido ${file.name} y parece un formulario oficial. Lo he añadido al expediente.`
-                );
-              } else if (bucket === "personal_photo") {
-                pushAgentMessage(
-                  safeLang === "darija"
-                    ? `توصلت بــ ${file.name}. هادي باينة صورة شخصية، وغادي نخليها ضمن الملف باش نراجع واش صالحة للتصاريح والإجراءات.`
-                    : safeLang === "en"
-                    ? `I received ${file.name}. This looks like a personal photo, and I will keep it in the file to review whether it is suitable for the procedure.`
-                    : `He recibido ${file.name}. Parece una foto personal، y la guardaré en el expediente para revisar si sirve para el trámite.`
-                );
               } else {
                 pushAgentMessage(
                   ui.mohamedDocOk(file.name, matchedDocSnapshot.nombre)
@@ -1128,22 +941,16 @@ export default function Regularizacion2026() {
         headers: {
           "Content-Type": "application/json",
         },
-       body: JSON.stringify({
-  assistant: "mohamed",
-  message: rawText,
-  context: "multi_extranjeria_procedure",
-  procedureKey: selectedSituacion,
-  procedureLabel: currentProcedure.name,
-  lang: safeLang,
-  history: historyToSend,
-  leadForm,
-  documents: docs.map((doc) => ({
-    nombre: doc.nombre,
-    estado: doc.estado,
-    detectedType: doc.detectedType || "",
-    note: doc.note || "",
-  })),
-}),
+        body: JSON.stringify({
+          assistant: "mohamed",
+          message: rawText,
+          context: "multi_extranjeria_procedure",
+          procedureKey: selectedSituacion,
+          procedureLabel: currentProcedure.name,
+          lang: safeLang,
+          history: historyToSend,
+          leadForm,
+        }),
       });
 
       const data = await res.json();
@@ -1450,46 +1257,6 @@ export default function Regularizacion2026() {
           </div>
 
           <div className="flex flex-col gap-4">
-            <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4">
-              <p className="text-sm font-bold text-white">Estado del expediente</p>
-
-              <div className="mt-3 grid grid-cols-2 gap-3 text-xs">
-                <div className="rounded-xl bg-white/5 p-3 border border-white/10">
-                  <p className="text-white/60">Pruebas válidas</p>
-                  <p className="text-white font-bold text-lg">
-                    {stayProofDocs.length}
-                  </p>
-                </div>
-
-                <div className="rounded-xl bg-white/5 p-3 border border-white/10">
-                  <p className="text-white/60">Pruebas fuertes</p>
-                  <p className="text-white font-bold text-lg">
-                    {strongProofs.length}
-                  </p>
-                </div>
-
-                <div className="rounded-xl bg-white/5 p-3 border border-white/10">
-                  <p className="text-white/60">Meses cubiertos</p>
-                  <p className="text-white font-bold text-lg">
-                    {estimatedMonthsCovered}/5
-                  </p>
-                </div>
-
-                <div className="rounded-xl bg-white/5 p-3 border border-white/10">
-                  <p className="text-white/60">Rechazados</p>
-                  <p className="text-white font-bold text-lg">
-                    {rejectedDocs.length}
-                  </p>
-                </div>
-              </div>
-
-              <p className="mt-3 text-xs text-white/70">
-                {estimatedMonthsCovered >= 5
-                  ? "Expediente fuerte para regularización."
-                  : "Sigue subiendo pruebas para completar los 5 meses."}
-              </p>
-            </div>
-
             <div className="rounded-[28px] border border-white/10 bg-white shadow-xl overflow-hidden">
               <div className="bg-[#f8fafc] border-b border-gray-200 px-4 py-3">
                 <div className="flex items-center gap-2">
@@ -1520,6 +1287,13 @@ export default function Regularizacion2026() {
                   placeholder={ui.labels.telefono}
                 />
 
+                <FieldLabel label={ui.labels.email} />
+                <FieldInput
+                  value={leadForm.email}
+                  onChange={(v) => updateLeadForm("email", v)}
+                  placeholder="email@example.com"
+                />
+
                 <FieldLabel label={ui.labels.niePasaporte} />
                 <FieldInput
                   value={leadForm.niePasaporte}
@@ -1535,17 +1309,52 @@ export default function Regularizacion2026() {
                 />
 
                 <FieldLabel label={ui.labels.nacionalidad} />
-                <FieldSelect
+                <FieldInput
                   value={leadForm.nacionalidad}
                   onChange={(v) => updateLeadForm("nacionalidad", v)}
-                  options={NATIONALITY_OPTIONS}
+                  placeholder={ui.labels.nacionalidad}
                 />
 
                 <FieldLabel label={ui.labels.fechaLlegada} />
-                <FieldSelect
+                <FieldInput
                   value={leadForm.fechaLlegada}
                   onChange={(v) => updateLeadForm("fechaLlegada", v)}
-                  options={ARRIVAL_YEAR_OPTIONS}
+                  placeholder="DD/MM/AAAA"
+                />
+
+                <FieldLabel label={ui.labels.cumple5Meses} />
+                <FieldSelect
+                  value={leadForm.cumple5Meses}
+                  onChange={(v) => updateLeadForm("cumple5Meses", v)}
+                  options={[
+                    { value: "", label: ui.labels.select },
+                    { value: "si", label: ui.labels.yes },
+                    { value: "no", label: ui.labels.no },
+                    { value: "nose", label: ui.labels.dontKnow },
+                  ]}
+                />
+
+                <FieldLabel label={ui.labels.asilo} />
+                <FieldSelect
+                  value={leadForm.asilo}
+                  onChange={(v) => updateLeadForm("asilo", v)}
+                  options={[
+                    { value: "", label: ui.labels.select },
+                    { value: "no", label: ui.labels.no },
+                    { value: "si", label: ui.labels.yes },
+                    { value: "nose", label: ui.labels.dontKnow },
+                  ]}
+                />
+
+                <FieldLabel label={ui.labels.penales} />
+                <FieldSelect
+                  value={leadForm.penales}
+                  onChange={(v) => updateLeadForm("penales", v)}
+                  options={[
+                    { value: "", label: ui.labels.select },
+                    { value: "no", label: ui.labels.no },
+                    { value: "si", label: ui.labels.yes },
+                  ]}
                 />
 
                 <button
