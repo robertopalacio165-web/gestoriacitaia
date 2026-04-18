@@ -27,7 +27,7 @@ type LeadFormPayload = {
   asilo?: string;
   penales?: string;
 };
-
+import { mohamedBrain } from "./mohamed-brain";
 function detectUserLanguage(message: string): Lang {
   const text = (message || "").toLowerCase().trim();
 
@@ -667,7 +667,83 @@ export default async function handler(req: any, res: any) {
 
     const detectedLanguage = detectUserLanguage(message);
     const isSara = assistant === "sara" || context === "buscar_citas";
+if (!isSara && context === "multi_extranjeria_procedure") {
+  const brainReply = mohamedBrain({
+    lang: detectedLanguage,
+    userMessage: message,
+    leadForm,
+  });
 
+  const extractedLead = extractLeadFromConversation({
+    message,
+    history,
+    procedureLabel,
+    leadForm,
+  });
+
+  const expedienteReady =
+    /expediente listo|manda mi pdf|todo correcto|terminado|acabado|ya esta todo correcto|ya está todo correcto|pdf por whatsapp|pdf via whatsapp|pdf vía whatsapp/i.test(
+      message
+    );
+
+  const makeResult = await postToMakeWebhook(process.env.MAKE_WEBHOOK_MOHAMED, {
+    source: "gestoriacitaia",
+    assistant: "mohamed",
+    session_id: sessionId || null,
+    user_id: userId || null,
+    lang: detectedLanguage,
+    context: context || "general",
+    procedure_key: procedureKey || null,
+    procedure_label: procedureLabel || extractedLead.tramite || null,
+    lead: extractedLead,
+    lead_form: leadForm,
+    status: expedienteReady
+      ? "expediente_ready"
+      : "document_review_and_case_preparation",
+    can_prepare_regularization_2026:
+      extractedLead.tramite === "regularizacion_2026" ||
+      (procedureLabel || "").toLowerCase().includes("regularización") ||
+      (procedureLabel || "").toLowerCase().includes("regularizacion"),
+    used_file_search: false,
+    file_search_results: [],
+    proofs_summary:
+      leadForm?.fechaLlegada
+        ? "Cliente con datos básicos guardados en formulario."
+        : "Faltan datos básicos del formulario.",
+    identity_summary:
+      leadForm?.niePasaporte || extractedLead.nie || extractedLead.passport_number
+        ? "Documento de identidad informado en el expediente."
+        : "Falta documento de identidad claro en el expediente.",
+    precontract_summary: "No evaluado en mohamed-brain básico.",
+    vulnerability_summary: "No evaluado en mohamed-brain básico.",
+    case_summary: expedienteReady
+      ? "Expediente indicado como listo por el cliente."
+      : "Expediente todavía en revisión.",
+    last_user_message: message,
+    ai_reply: brainReply,
+    history,
+    created_at: new Date().toISOString(),
+  });
+
+  return res.status(200).json({
+    reply: brainReply,
+    meta: {
+      assistant: "mohamed",
+      lang: detectedLanguage,
+      extractedLead,
+      leadReadyForAutomation: false,
+      saraWebhookConfigured: Boolean(process.env.MAKE_WEBHOOK_SARA),
+      mohamedWebhookConfigured: Boolean(process.env.MAKE_WEBHOOK_MOHAMED),
+      mohamedVectorStoreConfigured: false,
+      usedFileSearch: false,
+      fileSearchHits: 0,
+      fileSearchFiles: [],
+      model: "mohamed-brain-local",
+      makeStatus: makeResult.status,
+      makeOk: makeResult.ok,
+    },
+  });
+}
     const systemPrompt = isSara
       ? getSaraPrompt(detectedLanguage, procedureLabel)
       : getMohamedPrompt(
