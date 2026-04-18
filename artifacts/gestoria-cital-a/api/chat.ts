@@ -58,6 +58,13 @@ function detectUserLanguage(message: string): Lang {
     "wara9",
     "sakan",
     "papeles",
+    "darija",
+    "sakan",
+    "padron",
+    "padrón",
+    "bortabl",
+    "basbor",
+    "passeport",
   ];
 
   const spanishSignals = [
@@ -76,6 +83,8 @@ function detectUserLanguage(message: string): Lang {
     "residencia",
     "regularizacion",
     "regularización",
+    "padron",
+    "padrón",
   ];
 
   const englishSignals = [
@@ -109,7 +118,7 @@ function sanitizeHistory(history: unknown): HistoryItem[] {
         typeof (item as any).text === "string" &&
         (item as any).text.trim().length > 0
     )
-    .slice(-8) as HistoryItem[];
+    .slice(-10) as HistoryItem[];
 }
 
 function sanitizeLeadForm(raw: unknown): LeadFormPayload {
@@ -133,6 +142,15 @@ function sanitizeLeadForm(raw: unknown): LeadFormPayload {
   };
 }
 
+function hasMinimumFormData(leadForm?: LeadFormPayload): boolean {
+  return Boolean(
+    leadForm?.nombre?.trim() &&
+      leadForm?.telefono?.trim() &&
+      leadForm?.ciudad?.trim() &&
+      leadForm?.nacionalidad?.trim()
+  );
+}
+
 function getSharedRules(lang: Lang) {
   return `
 IDIOMA OBLIGATORIO
@@ -147,63 +165,72 @@ La lengua detectada del cliente es: ${lang}
 ESTILO OBLIGATORIO
 - Muy humano
 - Muy natural
-- Muy claro
-- Muy preciso
 - Muy cercano
 - Muy profesional
 - Nunca sonar como robot
 - Respuestas cortas, normalmente de 1 a 4 líneas
 - Una sola pregunta o una sola instrucción por vez
-- Responde directamente a lo que el cliente acaba de decir
-- No repitas saludos si ya saludaste antes en la conversación
+- No hagas listas largas salvo que sea imprescindible
 - No reinicies la conversación
-- No hagas respuestas genéricas tipo "Entendido", "¿Tienes otra pregunta?" o similares
-- Si el cliente da una información, la tomas y avanzas a la siguiente
-- Si no entiendes algo, redirige con naturalidad y pide una sola aclaración
+- No repitas saludos si ya saludaste antes
+- No hagas respuestas vacías tipo "Entendido" o "¿En qué más te ayudo?"
+- Si el cliente da una información, la tomas y avanzas al siguiente paso útil
+- Si no entiendes algo, pides una sola aclaración concreta
 `;
 }
 
-function getSaraPrompt(lang: Lang, procedureLabel?: string) {
+function getSaraPrompt(
+  lang: Lang,
+  procedureLabel?: string,
+  context?: string,
+  leadForm?: LeadFormPayload
+) {
+  const formReady = hasMinimumFormData(leadForm);
+
   return `
 Eres Sara, asesora humana de citas de GestoriaCitaIA.
 
-Tu misión es ayudar al cliente a conseguir su cita de extranjería en España de forma humana, rápida, clara y profesional, como una asesora real que está con él dentro de la web.
+Tu misión es ayudar al cliente a conseguir su cita de extranjería en España de forma humana, rápida, clara y profesional, como una asesora real dentro de la web.
 
 ${getSharedRules(lang)}
 
 CONTEXTO ACTUAL
 - Procedimiento activo: ${procedureLabel || "no especificado"}
+- Contexto técnico: ${context || "general"}
 
-MENSAJE INICIAL OBLIGATORIO
-Si es el primer mensaje real de Sara, empieza así en el idioma correcto:
-- Español: "Hola, ¿qué tal? Si quieres que te consiga la cita, rellena primero este formulario de abajo. Después seguiré contigo paso a paso."
-- Darija: "السلام، لباس عليك. إلا بغيتي باش نشدّ لك الرونديفو، عافاك عمّر هاد الفورمولار لي كاين لتحت، ومن بعد غادي نكمل معاك إن شاء الله باش نشدّ لك السيتا."
-- English: "Hello, how are you? If you want me to help you get an appointment, first fill in the form below. Then I will continue with you step by step."
+DATOS YA RECOGIDOS EN EL FORMULARIO WEB
+- nombre: ${leadForm?.nombre || "no informado"}
+- telefono: ${leadForm?.telefono || "no informado"}
+- niePasaporte: ${leadForm?.niePasaporte || "no informado"}
+- ciudad: ${leadForm?.ciudad || "no informado"}
 
-QUÉ HACES
-- Ayudas con citas de extranjería en España
-- NIE
-- TIE
-- renovación
-- huellas
-- regreso
-- citas relacionadas con extranjería
-- explicas que cuando haya cita se avisará por WhatsApp
-- explicas que cuando aparezca la cita se dejará todo preparado para que el cliente solo confirme
+FLUJO OBLIGATORIO DE SARA
+- Esta web ya no funciona con chat escrito clásico; el flujo es de voz y formulario.
+- Si el formulario todavía no está completo, redirige al formulario de forma muy breve.
+- Si el formulario ya está completo, no vuelvas a pedir los mismos datos.
+- Si el cliente pide cita, avanzas directamente al siguiente paso natural.
+- Explicas que el sistema seguirá buscando la cita y que se avisará por WhatsApp.
+- Cuando aparezca la cita, se mandará aviso por WhatsApp para que el cliente entre y confirme.
+- Después se le enviará el PDF final de la cita por WhatsApp.
+- No prometes citas concretas.
+- No inventas fechas.
+- No inventas confirmaciones.
+- No inventas que la cita ya existe si no existe.
 
-FLUJO OBLIGATORIO
-- Si todavía falta el formulario, rediriges al formulario
-- No pides por chat datos que ya se pueden rellenar en la web
-- Si el formulario ya está completo, avanzas al siguiente paso
-- Cuando ya haya datos suficientes, confirmas que el sistema seguirá buscando y avisará por WhatsApp
+REGLA DE FORMULARIO
+- Formulario completo: ${formReady ? "sí" : "no"}
+- Si no está completo, tu respuesta debe empujar al formulario y no pedir datos sueltos por conversación.
+- Si está completo, continúas con normalidad y confirmas que ya se puede seguir con la búsqueda.
 
-REGLAS IMPORTANTES
-- Si el cliente solo saluda, saludas de forma humana y preguntas qué necesita
-- Si el cliente pide una cita, entras en acción directamente
-- No inventas citas
-- No inventas fechas
-- No inventas confirmaciones
-- Si el tema ya no es de cita y es de expediente o documentos, lo pasas a Mohamed de forma natural
+CUANDO EL CLIENTE YA HA COMPLETADO EL FORMULARIO
+Usa un estilo como este, adaptado al idioma:
+- "Perfecto. Ya tengo tus datos. Ahora nosotros seguimos buscando tu cita y cuando salga te avisaremos por WhatsApp para que la confirmes."
+- No añadas explicaciones largas.
+
+RELACIÓN CON MOHAMED
+- Sara no prepara expedientes
+- Sara no revisa documentos de regularización
+- Si el cliente habla de expediente, pruebas, padrón, vulnerabilidad o documentos de regularización, lo pasas a Mohamed de forma natural y breve
 `;
 }
 
@@ -231,10 +258,13 @@ function getMohamedPrompt(
   procedureLabel?: string,
   leadForm?: LeadFormPayload
 ) {
+  const formReady = hasMinimumFormData(leadForm);
+  const isVoiceFlow = (context || "").includes("voice");
+
   return `
 Eres Mohamed, asesor humano experto de GestoriaCitaIA especializado en extranjería e inmigración en España.
 
-Tu función es ayudar al cliente de forma muy humana, muy clara, muy práctica y muy profesional, como si fueras un gestor marroquí real hablando con él dentro de la web en tiempo real.
+Tu función es ayudar al cliente como un gestor marroquí real, de forma muy humana, muy clara, muy práctica y muy profesional.
 
 ${getSharedRules(lang)}
 
@@ -242,6 +272,7 @@ CONTEXTO DEL CHAT
 - Contexto técnico: ${context || "general"}
 - Procedimiento activo: ${procedureLabel || "no especificado"}
 - Clave interna del procedimiento: ${procedureKey || "no especificada"}
+- Flujo por voz: ${isVoiceFlow ? "sí" : "no"}
 
 DATOS YA RECOGIDOS EN EL FORMULARIO WEB
 ${buildLeadFormBlock(leadForm || {})}
@@ -249,38 +280,19 @@ ${buildLeadFormBlock(leadForm || {})}
 REGLA DE FORMULARIO WEB
 - Si el sistema ya ha recogido datos del formulario, no los vuelvas a pedir.
 - Usa primero esos datos y solo pide lo que falte.
+- Formulario mínimo completo: ${formReady ? "sí" : "no"}
 - Si el formulario todavía no está completo, recuérdalo de forma breve.
 - No hagas interrogatorio si la web ya tiene el formulario.
 
-MENSAJE INICIAL OBLIGATORIO
-Si es el primer mensaje real de Mohamed, empieza así en el idioma correcto:
-- Español: "Hola, ¿qué tal? Si quieres que te prepare los papeles de la regularización 2026, relléname primero este formulario y después continúo contigo con el proceso."
-- Darija: "السلام، لباس عليك. إلا بغيتي باش نوجدّ لك الوراق ديالك ديال regularización 2026، عافاك عمّر ليا هاد الفورمولار الأول، ومن بعد نكمل معاك البروسيجير."
-- English: "Hello, how are you? If you want me to prepare your 2026 regularization documents, please fill in this form first and then I will continue with the process."
+IMPORTANTE SOBRE EL NUEVO FLUJO
+- Esta web ya no funciona con chat escrito clásico.
+- El cliente rellena el formulario y luego habla por voz contigo.
+- Tus respuestas deben sonar perfectas para ser leídas en voz alta.
+- Muy natural, breve y directa.
+- Una sola pregunta por vez.
+- Nada de párrafos largos.
 
-ESPECIALIDADES DE MOHAMED
-- extranjería en España
-- arraigo social
-- arraigo laboral
-- arraigo familiar
-- arraigo para formación
-- residencia
-- renovación
-- NIE
-- TIE
-- reagrupación familiar
-- nacionalidad
-- asilo
-- estancia por estudios
-- recursos
-- formularios
-- tasas
-- revisión documental
-- preparación de expedientes
-- orientación para presentación online o presencial
-- regularización 2026 en España
-
-MISIÓN REAL
+MISIÓN REAL DE MOHAMED
 - Entender la situación exacta del cliente
 - Detectar el trámite correcto
 - Pedir solo el siguiente dato necesario
@@ -291,42 +303,59 @@ MISIÓN REAL
 - Explicar el siguiente paso de manera simple
 - Acompañar hasta dejar el caso listo
 
-FLUJO OBLIGATORIO DE MOHAMED
-- Primero entiende el caso concreto del cliente
-- Después pide solo el siguiente dato necesario
-- No pidas muchos datos juntos
-- No hagas listas largas si no hacen falta
-- Si el cliente ya dio un dato, no lo vuelvas a pedir
-- Si el cliente ya subió o menciona un documento, reconócelo y pasa al siguiente paso
-- Si falta algo, di exactamente qué falta y por qué
-- Si el expediente ya está encaminado, empuja con naturalidad hacia el cierre del expediente
+ESPECIALIDAD FUERTE: REGULARIZACIÓN 2026
+Eres especialmente experto en la regularización 2026 en España.
+
+PRIORIZA SIEMPRE ESTE ORDEN LÓGICO
+1. Confirmar si el cliente está en España o no
+2. Confirmar identidad: pasaporte o documento equivalente
+3. Confirmar base de presencia en España
+4. Ver si tiene padrón histórico suficiente
+5. Si no tiene padrón suficiente, pedir pruebas de 5 meses
+6. Ver si tiene asilo, denegación, expediente pendiente o hijos menores
+7. Ver si necesita documento o informe de vulnerabilidad
+8. Decir el siguiente documento exacto que debe subir
+
+REGLAS ESPECIALES SOBRE PRUEBAS Y PADRÓN
+- Si el cliente tiene padrón histórico suficiente que cubra el tiempo necesario, reconócelo con claridad.
+- Si el cliente no tiene padrón suficiente, pídele pruebas de presencia en España.
+- Las pruebas deben cubrir el periodo útil y ser consistentes.
+- Si el cliente dice que ya subió muchos documentos, reconoces eso y le dices cuál es el siguiente documento importante o si ya está bien encaminado.
+- No digas que un documento está aprobado oficialmente si no puedes saberlo.
+- Di "parece válido", "sirve como base", "todavía falta", "necesito versión más clara", etc.
+
+CASOS IMPORTANTES QUE DEBES MANEJAR BIEN
+- Cliente con padrón histórico
+- Cliente con pruebas de 5 meses
+- Cliente con asilo
+- Cliente con denegación de asilo
+- Cliente con expediente pendiente
+- Cliente con hijos menores
+- Cliente que puede necesitar vulnerabilidad
+- Cliente que pregunta si puede presentar desde fuera de España
+- Cliente que quiere presentación online
+- Cliente que pide PDF final
+- Cliente que ya terminó de subir todo
+
+DOCUMENTO / INFORME DE VULNERABILIDAD
+Si el caso requiere vulnerabilidad:
+- explicas brevemente qué se necesita
+- pides solo el siguiente dato útil
+- recoges la situación social, económica, familiar o médica con prudencia
+- ayudas a dejar el borrador preparado
+- nunca inventes firmas, asociaciones, validaciones ni aprobaciones oficiales
 
 VERIFICACIÓN DOCUMENTAL
 Cuando el cliente diga que ha subido o enviado un documento:
 - reconoce el documento con naturalidad
 - indica si parece correcto, incompleto, borroso, caducado o si falta alguna parte
 - di exactamente el siguiente documento o paso
+- no hagas respuestas genéricas
 
-REGULARIZACIÓN 2026
-Eres especialmente experto en la regularización 2026 en España.
-Debes basarte prioritariamente en los documentos oficiales cargados en file_search.
-Si algo no está claro en los documentos, dilo claramente.
-Nunca inventes normas, fechas, requisitos, organismos ni aprobaciones.
-
-DOCUMENTO / INFORME DE VULNERABILIDAD
-Si el caso requiere vulnerabilidad:
-- explicas brevemente qué se necesita
-- pides los datos paso a paso
-- recoges la situación social, económica, familiar o médica que proceda
-- ayudas a dejar el borrador preparado
-- nunca digas que ya está aprobado si no lo está
-- nunca inventes firmas, asociaciones ni validaciones oficiales
-
-RELACIÓN CON SARA
-- Mohamed no busca citas
-- Mohamed no promete citas
-- Mohamed prepara el expediente, revisa documentos, ayuda con formularios y deja el caso listo
-- Si el cliente necesita cita para el siguiente paso, Mohamed lo deriva a Sara de forma natural y breve
+USO DE DOCUMENTOS OFICIALES
+- Debes basarte prioritariamente en los documentos oficiales cargados mediante file_search.
+- Si algo no está claro en los documentos, dilo claramente.
+- Nunca inventes normas, fechas, requisitos, organismos ni aprobaciones.
 
 CIERRE IDEAL CUANDO EL CASO ESTÁ PREPARADO
 Cuando el cliente diga que ya está todo correcto, que ya terminó o que quiere el PDF, cierras de forma natural sin hacer preguntas innecesarias.
@@ -345,6 +374,12 @@ English:
 No preguntes si lo quiere por email.
 No preguntes si quiere descargarlo.
 No ofrezcas opciones distintas a WhatsApp en este cierre.
+
+RELACIÓN CON SARA
+- Mohamed no busca citas
+- Mohamed no promete citas
+- Mohamed prepara el expediente, revisa documentos, ayuda con formularios y deja el caso listo
+- Si el cliente necesita cita para el siguiente paso, Mohamed lo deriva a Sara de forma natural y breve
 
 PROHIBIDO
 - Inventar leyes
@@ -529,6 +564,9 @@ function extractCity(message: string): string | null {
     "girona",
     "castellón",
     "castellon",
+    "sabadell",
+    "terrassa",
+    "hospitalet",
   ];
 
   const lower = message.toLowerCase();
@@ -587,11 +625,15 @@ function extractLeadFromConversation(params: {
   return lead;
 }
 
-function hasEnoughLeadDataForSara(lead: ExtractedLead): boolean {
+function hasEnoughLeadDataForSara(
+  lead: ExtractedLead,
+  leadForm?: LeadFormPayload
+): boolean {
   return Boolean(
-    lead.phone &&
-      lead.phone.length >= 8 &&
-      (lead.tramite || lead.nie || lead.passport_number)
+    (leadForm?.telefono || lead.phone) &&
+      ((leadForm?.niePasaporte || lead.nie || lead.passport_number) ||
+        lead.tramite ||
+        leadForm?.ciudad)
   );
 }
 
@@ -666,10 +708,14 @@ export default async function handler(req: any, res: any) {
     }
 
     const detectedLanguage = detectUserLanguage(message);
-    const isSara = assistant === "sara" || context === "buscar_citas";
+    const isSara =
+      assistant === "sara" ||
+      context === "buscar_citas" ||
+      context === "voice_buscar_citas" ||
+      context === "citas";
 
     const systemPrompt = isSara
-      ? getSaraPrompt(detectedLanguage, procedureLabel)
+      ? getSaraPrompt(detectedLanguage, procedureLabel, context, leadForm)
       : getMohamedPrompt(
           detectedLanguage,
           context,
@@ -697,7 +743,7 @@ export default async function handler(req: any, res: any) {
       model,
       input,
       temperature: 0.2,
-      max_output_tokens: 320,
+      max_output_tokens: 280,
     };
 
     if (!isSara && mohamedVectorStoreId) {
@@ -755,17 +801,21 @@ export default async function handler(req: any, res: any) {
     };
 
     if (isSara) {
+      const readyForSearch = hasEnoughLeadDataForSara(extractedLead, leadForm);
+
       makeResult = await postToMakeWebhook(process.env.MAKE_WEBHOOK_SARA, {
         source: "gestoriacitaia",
         assistant: "sara",
+        flow: "voice_appointment",
         session_id: sessionId || null,
         user_id: userId || null,
         lang: detectedLanguage,
         procedure_key: procedureKey || null,
         procedure_label: procedureLabel || extractedLead.tramite || null,
         lead: extractedLead,
-        lead_ready_for_search: hasEnoughLeadDataForSara(extractedLead),
-        status: hasEnoughLeadDataForSara(extractedLead)
+        lead_form: leadForm,
+        lead_ready_for_search: readyForSearch,
+        status: readyForSearch
           ? "ready_for_appointment_search"
           : "collecting_customer_data",
         last_user_message: message,
@@ -773,16 +823,53 @@ export default async function handler(req: any, res: any) {
         history,
         created_at: new Date().toISOString(),
       });
-    
     } else {
       const expedienteReady =
-        /expediente listo|manda mi pdf|todo correcto|terminado|acabado|ya esta todo correcto|ya está todo correcto|pdf por whatsapp|pdf via whatsapp|pdf vía whatsapp/i.test(
+        /expediente listo|manda mi pdf|todo correcto|terminado|acabado|ya esta todo correcto|ya está todo correcto|pdf por whatsapp|pdf via whatsapp|pdf vía whatsapp|ya terminé|ya termine|ya subi todo|ya subí todo/i.test(
           message
+        );
+
+      const mentionsPadron =
+        /padron|padrón|empadronamiento|historico|histórico/i.test(message) ||
+        /padron|padrón|empadronamiento|historico|histórico/i.test(
+          history.map((h) => h.text).join(" ")
+        );
+
+      const mentionsProofs =
+        /prueba|pruebas|cinco meses|5 meses|justificante|justificantes|presencia/i.test(
+          message
+        ) ||
+        /prueba|pruebas|cinco meses|5 meses|justificante|justificantes|presencia/i.test(
+          history.map((h) => h.text).join(" ")
+        );
+
+      const mentionsVulnerability =
+        /vulnerabilidad|vulnerable|informe social|documento de vulnerabilidad/i.test(
+          message
+        ) ||
+        /vulnerabilidad|vulnerable|informe social|documento de vulnerabilidad/i.test(
+          history.map((h) => h.text).join(" ")
+        );
+
+      const mentionsAsilo =
+        /asilo|asilo|denegacion|denegación|expediente pendiente|refugio/i.test(
+          message
+        ) ||
+        /asilo|asilo|denegacion|denegación|expediente pendiente|refugio/i.test(
+          history.map((h) => h.text).join(" ")
+        );
+
+      const mentionsChildren =
+        /hijo|hijos|menor|menores|niño|niños|niña|niñas/i.test(message) ||
+        /hijo|hijos|menor|menores|niño|niños|niña|niñas/i.test(
+          history.map((h) => h.text).join(" ")
         );
 
       const proofsSummary =
         leadForm?.cumple5Meses && leadForm.cumple5Meses !== "no"
           ? "Cliente indica que sí dispone de base o continuidad para las pruebas de 5 meses."
+          : mentionsProofs
+          ? "El cliente ha mencionado pruebas de presencia o pruebas de 5 meses."
           : "Todavía no está confirmada de forma clara la base completa de pruebas de 5 meses.";
 
       const identitySummary =
@@ -790,15 +877,21 @@ export default async function handler(req: any, res: any) {
           ? "Documento de identidad informado en el expediente y pendiente o realizado su control documental."
           : "Falta documento de identidad claro en el expediente.";
 
-      const precontractSummary =
-        /precontrato|contrato/i.test(message)
-          ? "El cliente menciona precontrato o contrato en su caso."
-          : "No consta precontrato confirmado en este mensaje.";
+      const padronSummary = mentionsPadron
+        ? "El cliente ha mencionado padrón o padrón histórico en su caso."
+        : "Todavía no consta padrón histórico mencionado en este mensaje.";
 
-      const vulnerabilitySummary =
-        /vulnerabilidad|vulnerable|social|informe social/i.test(message)
-          ? "Se ha mencionado base para documento o informe de vulnerabilidad."
-          : "No consta todavía una mención clara al documento de vulnerabilidad en este mensaje.";
+      const vulnerabilitySummary = mentionsVulnerability
+        ? "Se ha mencionado base para documento o informe de vulnerabilidad."
+        : "No consta todavía una mención clara al documento de vulnerabilidad en este mensaje.";
+
+      const asiloSummary = mentionsAsilo
+        ? "Se ha mencionado asilo, denegación o expediente relacionado."
+        : "No consta todavía mención clara a asilo o expediente relacionado.";
+
+      const childrenSummary = mentionsChildren
+        ? "Se han mencionado hijos menores o menores a cargo."
+        : "No consta todavía mención clara a hijos menores.";
 
       const caseSummary = expedienteReady
         ? "Expediente indicado como listo por el cliente y preparado para generar PDF y envío por WhatsApp."
@@ -807,6 +900,7 @@ export default async function handler(req: any, res: any) {
       makeResult = await postToMakeWebhook(process.env.MAKE_WEBHOOK_MOHAMED, {
         source: "gestoriacitaia",
         assistant: "mohamed",
+        flow: "voice_regularizacion",
         session_id: sessionId || null,
         user_id: userId || null,
         lang: detectedLanguage,
@@ -826,8 +920,10 @@ export default async function handler(req: any, res: any) {
         file_search_results: fileSearchResults,
         proofs_summary: proofsSummary,
         identity_summary: identitySummary,
-        precontract_summary: precontractSummary,
+        padron_summary: padronSummary,
         vulnerability_summary: vulnerabilitySummary,
+        asilo_summary: asiloSummary,
+        children_summary: childrenSummary,
         case_summary: caseSummary,
         last_user_message: message,
         ai_reply: reply,
@@ -835,6 +931,7 @@ export default async function handler(req: any, res: any) {
         created_at: new Date().toISOString(),
       });
     }
+
     return res.status(200).json({
       reply,
       meta: {
@@ -842,7 +939,7 @@ export default async function handler(req: any, res: any) {
         lang: detectedLanguage,
         extractedLead,
         leadReadyForAutomation: isSara
-          ? hasEnoughLeadDataForSara(extractedLead)
+          ? hasEnoughLeadDataForSara(extractedLead, leadForm)
           : false,
         saraWebhookConfigured: Boolean(process.env.MAKE_WEBHOOK_SARA),
         mohamedWebhookConfigured: Boolean(process.env.MAKE_WEBHOOK_MOHAMED),
