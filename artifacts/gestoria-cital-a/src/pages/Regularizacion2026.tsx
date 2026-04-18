@@ -1128,16 +1128,22 @@ export default function Regularizacion2026() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          assistant: "mohamed",
-          message: rawText,
-          context: "multi_extranjeria_procedure",
-          procedureKey: selectedSituacion,
-          procedureLabel: currentProcedure.name,
-          lang: safeLang,
-          history: historyToSend,
-          leadForm,
-        }),
+       body: JSON.stringify({
+  assistant: "mohamed",
+  message: rawText,
+  context: "multi_extranjeria_procedure",
+  procedureKey: selectedSituacion,
+  procedureLabel: currentProcedure.name,
+  lang: safeLang,
+  history: historyToSend,
+  leadForm,
+  documents: docs.map((doc) => ({
+    nombre: doc.nombre,
+    estado: doc.estado,
+    detectedType: doc.detectedType || "",
+    note: doc.note || "",
+  })),
+}),
       });
 
       const data = await res.json();
