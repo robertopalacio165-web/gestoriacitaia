@@ -561,6 +561,35 @@ async function postToMakeWebhook(
   }
 }
 
+function getLeadFormFromBody(body: any): LeadFormPayload {
+  const rawLeadForm = sanitizeLeadForm(body.leadForm);
+
+  if (
+    rawLeadForm.nombre ||
+    rawLeadForm.telefono ||
+    rawLeadForm.email ||
+    rawLeadForm.niePasaporte ||
+    rawLeadForm.ciudad ||
+    rawLeadForm.nacionalidad ||
+    rawLeadForm.fechaLlegada ||
+    rawLeadForm.cumple5Meses ||
+    rawLeadForm.asilo ||
+    rawLeadForm.penales
+  ) {
+    return rawLeadForm;
+  }
+
+  const user = body?.user && typeof body.user === "object" ? body.user : {};
+
+  return sanitizeLeadForm({
+    nombre: user.fullName,
+    telefono: user.phone,
+    email: user.email,
+    niePasaporte: user.nie,
+    ciudad: user.city,
+  });
+}
+
 export default async function handler(req: any, res: any) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Método no permitido" });
@@ -584,7 +613,7 @@ export default async function handler(req: any, res: any) {
     const userId =
       typeof body.userId === "string" ? body.userId.trim() : "";
     const history = sanitizeHistory(body.history);
-    const leadForm = sanitizeLeadForm(body.leadForm);
+    const leadForm = getLeadFormFromBody(body);
     const documents = sanitizeDocuments(body.documents);
 
     if (!message) {
@@ -775,6 +804,7 @@ export default async function handler(req: any, res: any) {
         procedure_key: procedureKey || null,
         procedure_label: procedureLabel || extractedLead.tramite || null,
         lead: extractedLead,
+        lead_form: leadForm,
         lead_ready_for_search: hasEnoughLeadDataForSara(extractedLead),
         status: hasEnoughLeadDataForSara(extractedLead)
           ? "ready_for_appointment_search"
