@@ -34,11 +34,6 @@ interface ChatMsg {
 
 type DocStatus = "ok" | "warn" | "missing";
 
-type SituationItem = {
-  value: string;
-  label: string;
-};
-
 type StoredDocItem = {
   id: string;
   nombre: string;
@@ -135,7 +130,8 @@ export default function Regularizacion2026() {
           "مزيان. خديت المعطيات ديالك. دابا ضغط على زر الميكروفون ونجاوبك سؤال بسؤال، ومن بعد تقدر تطلع الوثائق ديالك.",
         formTitle: "لوحة رسمية مدمجة",
         formDesc:
-          "عمر المعطيات الأساسية باش محمد يبدا يراجع الملف ديالك بالصوت.",
+          "عمر غير المعطيات الأساسية. محمد من بعد غادي يكمل معاك سؤال بسؤال بالصوت.",
+        caseStatusTitle: "وضعية الملف دابا",
         uploadGeneral: "رفع الوثائق",
         uploadGeneralDesc:
           "من هنا تقدر ترفع جميع الوثائق اللي طلب منك محمد، سواء كانت صورة أو PDF.",
@@ -145,8 +141,7 @@ export default function Regularizacion2026() {
         uploadErrorTitle: "خطأ فالوثيقة",
         uploadErrorDesc: "ما قدرناش نربط هاد الوثيقة مع الملف.",
         missingTitle: "كاينين بيانات ناقصين",
-        missingDesc:
-          "عمر الاسم والهاتف والمدينة والجنسية وتاريخ الدخول قبل ما تكمل.",
+        missingDesc: "عمر الاسم والهاتف والمدينة قبل ما تكمل.",
         listening: "محمد كيسمع ليك دابا...",
         latestReply: "آخر جواب ديال محمد",
         yourVoice: "آخر جواب ديالك بالصوت",
@@ -162,6 +157,12 @@ export default function Regularizacion2026() {
           "مزيان. راجعنا الوثائق ديالك ووجدنا الملف ديالك. إلا بغيتي دابا تكمل مع سارة فالسيطة، تقدر تدوز ليها.",
         goSara: "المرور إلى سارة",
         goSaraDesc: "إلى بغيتي تكمل بالموعد، سارة غادي تعاونك.",
+        chips: {
+          basic: "الهوية والتواصل",
+          city: "المدينة",
+          arrival: "تاريخ الدخول",
+          situation: "الوضعية الأولية",
+        },
         labels: {
           nombre: "الاسم الكامل",
           telefono: "الهاتف",
@@ -197,7 +198,8 @@ export default function Regularizacion2026() {
           "Perfect. I already have your details. Now press the microphone button and I will guide you question by question. After that, you can upload your documents.",
         formTitle: "Integrated official panel",
         formDesc:
-          "Fill in the basic details so Mohamed can start reviewing your case by voice.",
+          "Only fill in the basic details. Mohamed will continue step by step by voice.",
+        caseStatusTitle: "Current case status",
         uploadGeneral: "Upload documents",
         uploadGeneralDesc:
           "Use this button to upload all documents Mohamed asks for, as images or PDFs.",
@@ -207,8 +209,7 @@ export default function Regularizacion2026() {
         uploadErrorTitle: "Document error",
         uploadErrorDesc: "We could not link that document to the file.",
         missingTitle: "Missing data",
-        missingDesc:
-          "Fill in name, phone, city, nationality and arrival date before continuing.",
+        missingDesc: "Fill in name, phone and city before continuing.",
         listening: "Mohamed is listening to you now...",
         latestReply: "Mohamed's latest reply",
         yourVoice: "Your latest voice answer",
@@ -225,6 +226,12 @@ export default function Regularizacion2026() {
         goSara: "Go to Sara",
         goSaraDesc:
           "If you want to continue with the appointment, Sara will help you.",
+        chips: {
+          basic: "Identity and contact",
+          city: "City",
+          arrival: "Arrival date",
+          situation: "Initial situation",
+        },
         labels: {
           nombre: "Full name",
           telefono: "Phone",
@@ -259,7 +266,8 @@ export default function Regularizacion2026() {
         "Perfecto. Ya tengo tus datos. Ahora pulsa el botón del micrófono y te iré guiando pregunta por pregunta. Después podrás subir tus documentos.",
       formTitle: "Panel oficial integrado",
       formDesc:
-        "Rellena los datos básicos para que Mohamed empiece a revisar tu caso por voz.",
+        "Rellena solo los datos básicos. Mohamed después seguirá contigo paso a paso por voz.",
+      caseStatusTitle: "Estado inicial de tu expediente",
       uploadGeneral: "Subir documentos",
       uploadGeneralDesc:
         "Usa este botón para subir todos los documentos que te pida Mohamed, en foto o en PDF.",
@@ -269,8 +277,7 @@ export default function Regularizacion2026() {
       uploadErrorTitle: "Error en documento",
       uploadErrorDesc: "No se pudo vincular ese documento al expediente.",
       missingTitle: "Faltan datos",
-      missingDesc:
-        "Rellena nombre, teléfono, ciudad, nacionalidad y fecha de llegada antes de continuar.",
+      missingDesc: "Rellena nombre, teléfono y ciudad antes de continuar.",
       listening: "Mohamed te está escuchando ahora...",
       latestReply: "Última respuesta de Mohamed",
       yourVoice: "Tu última respuesta por voz",
@@ -286,6 +293,12 @@ export default function Regularizacion2026() {
         "Perfecto. Ya hemos revisado tu documentación y hemos dejado preparado tu expediente. Si ahora quieres continuar con la cita, Sara te ayudará.",
       goSara: "Ir con Sara",
       goSaraDesc: "Si quieres seguir con la cita, Sara te ayuda.",
+      chips: {
+        basic: "Identidad y contacto",
+        city: "Ciudad",
+        arrival: "Fecha de llegada",
+        situation: "Situación inicial",
+      },
       labels: {
         nombre: "Nombre completo",
         telefono: "Teléfono",
@@ -320,12 +333,12 @@ export default function Regularizacion2026() {
     return `gestoriacitaia_mohamed_lead_saved_${safeLang}_${selectedSituacion}`;
   }, [safeLang, selectedSituacion]);
 
-const leadFormReady =
-  !!leadForm.nombre.trim() &&
-  !!leadForm.telefono.trim() &&
-  !!leadForm.ciudad.trim();
+  const leadFormReady =
+    !!leadForm.nombre.trim() &&
+    !!leadForm.telefono.trim() &&
+    !!leadForm.ciudad.trim();
+
   useEffect(() => {
-    
     setDocs(buildInitialDocs(selectedSituacion));
     setCompletionMessageSent(false);
   }, [selectedSituacion]);
@@ -399,14 +412,13 @@ const leadFormReady =
         }
       }
 
-      const freshHistory: ChatMsg[] = [
+      setVoiceHistory([
         {
           from: "agent",
           text: ui.initialVoice,
           ts: Date.now(),
         },
-      ];
-      setVoiceHistory(freshHistory);
+      ]);
     } catch (error) {
       console.error("Error cargando historial de Mohamed:", error);
       setVoiceHistory([
@@ -431,11 +443,6 @@ const leadFormReady =
   const docsOk = docs.filter((d) => d.estado === "ok").length;
   const docsTotal = docs.length;
   const allReady = docsOk >= Math.max(1, docsTotal - 1);
-
-  const SITUACIONES: SituationItem[] = EXTRANJERIA_PROCEDURES.map((p) => ({
-    value: p.key,
-    label: p.name,
-  }));
 
   const updateLeadForm = (field: keyof LeadFormState, value: string) => {
     setLeadForm((prev) => ({
@@ -1032,6 +1039,35 @@ const leadFormReady =
     [...voiceHistory].reverse().find((msg) => msg.from === "agent")?.text ||
     ui.initialVoice;
 
+  const caseChecks = [
+    {
+      key: "basic",
+      label: ui.chips.basic,
+      status:
+        leadForm.nombre.trim() && leadForm.telefono.trim() ? "ok" : "missing",
+    },
+    {
+      key: "city",
+      label: ui.chips.city,
+      status: leadForm.ciudad.trim() ? "ok" : "missing",
+    },
+    {
+      key: "arrival",
+      label: ui.chips.arrival,
+      status: leadForm.fechaLlegada.trim() ? "ok" : "warn",
+    },
+    {
+      key: "situation",
+      label: ui.chips.situation,
+      status:
+        leadForm.cumple5Meses || leadForm.asilo || leadForm.penales
+          ? "ok"
+          : "warn",
+    },
+  ] as const;
+
+  const caseChecksOk = caseChecks.filter((item) => item.status === "ok").length;
+
   return (
     <div className="min-h-screen bg-background text-foreground relative flex flex-col">
       <div
@@ -1054,9 +1090,7 @@ const leadFormReady =
                 {t("reg_new")}
               </span>
             </h1>
-            <p className="text-xs text-muted-foreground">
-              {currentProcedure.name}
-            </p>
+            <p className="text-xs text-muted-foreground">{currentProcedure.name}</p>
           </div>
         </div>
 
@@ -1075,9 +1109,7 @@ const leadFormReady =
 
               <div className="absolute top-3 left-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/60 border border-white/10 backdrop-blur-md">
                 <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                <span className="text-xs font-medium text-white">
-                  {ui.online}
-                </span>
+                <span className="text-xs font-medium text-white">{ui.online}</span>
               </div>
 
               <div className="absolute top-3 right-3 flex items-center gap-2">
@@ -1119,12 +1151,8 @@ const leadFormReady =
               )}
 
               <div className="absolute bottom-12 right-3 text-right">
-                <p className="text-white font-bold text-sm drop-shadow-lg">
-                  Mohamed
-                </p>
-                <p className="text-white/70 text-[11px] drop-shadow-lg">
-                  {ui.role}
-                </p>
+                <p className="text-white font-bold text-sm drop-shadow-lg">Mohamed</p>
+                <p className="text-white/70 text-[11px] drop-shadow-lg">{ui.role}</p>
               </div>
 
               <div className="absolute bottom-3 left-0 right-0 flex justify-center">
@@ -1174,17 +1202,13 @@ const leadFormReady =
                 )}
 
                 {isListening && (
-                  <p className="mt-2 text-xs text-primary text-center">
-                    {ui.listening}
-                  </p>
+                  <p className="mt-2 text-xs text-primary text-center">{ui.listening}</p>
                 )}
               </div>
 
               <div className="p-4 space-y-4">
                 <div>
-                  <p className="text-[11px] text-white/50 mb-1">
-                    {ui.latestReply}
-                  </p>
+                  <p className="text-[11px] text-white/50 mb-1">{ui.latestReply}</p>
                   <div className="rounded-xl bg-white/5 border border-white/10 px-3 py-3 text-sm text-white/90 leading-relaxed">
                     {latestAgentMessage}
                   </div>
@@ -1192,9 +1216,7 @@ const leadFormReady =
 
                 {lastUserTranscript ? (
                   <div>
-                    <p className="text-[11px] text-white/50 mb-1">
-                      {ui.yourVoice}
-                    </p>
+                    <p className="text-[11px] text-white/50 mb-1">{ui.yourVoice}</p>
                     <div className="rounded-xl bg-primary/10 border border-primary/20 px-3 py-3 text-sm text-white leading-relaxed">
                       {lastUserTranscript}
                     </div>
@@ -1251,43 +1273,47 @@ const leadFormReady =
                     <span className="text-blue-700 text-sm">✓</span>
                   </div>
                   <div>
-                    <p className="text-sm font-bold text-slate-800">
-                      {ui.formTitle}
-                    </p>
+                    <p className="text-sm font-bold text-slate-800">{ui.formTitle}</p>
                     <p className="text-[11px] text-slate-500">{ui.formDesc}</p>
                   </div>
                 </div>
               </div>
 
               <div className="px-4 py-4 space-y-3 bg-white">
-                <div className="rounded-2xl border border-blue-100 bg-blue-50 p-4 mb-3">
-  <div className="flex items-center justify-between mb-2">
-    <p className="text-sm font-bold text-[#003b82]">
-      Estado de tu expediente
-    </p>
-    <span className="text-xs font-bold text-[#003b82]">
-      {docsOk}/{docsTotal}
-    </span>
-  </div>
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 mb-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-sm font-bold text-slate-800">{ui.caseStatusTitle}</p>
+                    <span className="text-xs font-bold text-slate-700">
+                      {caseChecksOk}/{caseChecks.length}
+                    </span>
+                  </div>
 
-  <div className="w-full h-2 bg-blue-100 rounded-full overflow-hidden">
-    <div
-      className="h-full bg-[#003b82] rounded-full transition-all"
-      style={{ width: `${(docsOk / docsTotal) * 100}%` }}
-    />
-  </div>
+                  <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-slate-700 rounded-full transition-all duration-300"
+                      style={{ width: `${(caseChecksOk / caseChecks.length) * 100}%` }}
+                    />
+                  </div>
 
-  <div className="grid grid-cols-2 gap-2 mt-3 text-[11px]">
-    {docs.slice(0, 4).map((doc) => (
-      <div
-        key={doc.id}
-        className="rounded-xl px-2 py-1 border border-slate-200 text-slate-700 bg-white"
-      >
-        {doc.estado === "ok" ? "✅" : doc.estado === "warn" ? "🟡" : "⬜"} {doc.nombre}
-      </div>
-    ))}
-  </div>
-</div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3 text-[11px]">
+                    {caseChecks.map((item) => (
+                      <div
+                        key={item.key}
+                        className="rounded-xl px-3 py-2 border border-slate-200 text-slate-700 bg-white flex items-center gap-2"
+                      >
+                        <span>
+                          {item.status === "ok"
+                            ? "✅"
+                            : item.status === "warn"
+                            ? "🟡"
+                            : "⬜"}
+                        </span>
+                        <span className="truncate">{item.label}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
                 <FieldLabel label={ui.labels.nombre} />
                 <FieldInput
                   value={leadForm.nombre}
