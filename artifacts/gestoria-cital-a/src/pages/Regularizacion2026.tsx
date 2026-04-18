@@ -487,6 +487,43 @@ export default function Regularizacion2026() {
   }, [chatMessages, sendingChat, generalUploading]);
 
   const docsOk = docs.filter((d) => d.estado === "ok").length;
+  const acceptedDocs = docs.filter((d) => d.estado === "ok");
+const rejectedDocs = docs.filter((d) => d.estado === "warn");
+
+const stayProofDocs = acceptedDocs.filter((d) => {
+  const txt = `${d.nombre} ${d.detectedType} ${d.note}`.toLowerCase();
+
+  return (
+    txt.includes("stay") ||
+    txt.includes("estancia") ||
+    txt.includes("empadron") ||
+    txt.includes("factura") ||
+    txt.includes("banco") ||
+    txt.includes("transfer") ||
+    txt.includes("ticket") ||
+    txt.includes("medico") ||
+    txt.includes("hospital") ||
+    txt.includes("cita") ||
+    txt.includes("proof")
+  );
+});
+
+const strongProofs = stayProofDocs.filter((d) => {
+  const txt = `${d.nombre} ${d.detectedType} ${d.note}`.toLowerCase();
+
+  return (
+    txt.includes("empadron") ||
+    txt.includes("bank") ||
+    txt.includes("banco") ||
+    txt.includes("hospital") ||
+    txt.includes("oficial")
+  );
+});
+
+const estimatedMonthsCovered = Math.min(
+  5,
+  Math.max(1, Math.ceil(stayProofDocs.length / 2))
+);
   const docsTotal = docs.length;
   const allReady = docsOk >= Math.max(1, docsTotal - 1);
 
@@ -1360,6 +1397,47 @@ const handleGeneralUpload = async () => {
           </div>
 
           <div className="flex flex-col gap-4">
+            <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4">
+  <p className="text-sm font-bold text-white">
+    Estado del expediente
+  </p>
+
+  <div className="mt-3 grid grid-cols-2 gap-3 text-xs">
+    <div className="rounded-xl bg-white/5 p-3 border border-white/10">
+      <p className="text-white/60">Pruebas válidas</p>
+      <p className="text-white font-bold text-lg">
+        {stayProofDocs.length}
+      </p>
+    </div>
+
+    <div className="rounded-xl bg-white/5 p-3 border border-white/10">
+      <p className="text-white/60">Pruebas fuertes</p>
+      <p className="text-white font-bold text-lg">
+        {strongProofs.length}
+      </p>
+    </div>
+
+    <div className="rounded-xl bg-white/5 p-3 border border-white/10">
+      <p className="text-white/60">Meses cubiertos</p>
+      <p className="text-white font-bold text-lg">
+        {estimatedMonthsCovered}/5
+      </p>
+    </div>
+
+    <div className="rounded-xl bg-white/5 p-3 border border-white/10">
+      <p className="text-white/60">Rechazados</p>
+      <p className="text-white font-bold text-lg">
+        {rejectedDocs.length}
+      </p>
+    </div>
+  </div>
+
+  <p className="mt-3 text-xs text-white/70">
+    {estimatedMonthsCovered >= 5
+      ? "Expediente fuerte para regularización."
+      : "Sigue subiendo pruebas para completar los 5 meses."}
+  </p>
+</div>
             <div className="rounded-[28px] border border-white/10 bg-white shadow-xl overflow-hidden">
               <div className="bg-[#f8fafc] border-b border-gray-200 px-4 py-3">
                 <div className="flex items-center gap-2">
