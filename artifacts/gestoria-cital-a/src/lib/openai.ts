@@ -1,71 +1,135 @@
-type SaraHistoryItem = {
-  from: "user" | "agent";
-  text: string;
-};
+const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
+const SARA_ASSISTANT_ID = "asst_3G5bN4wX6BmtWjk9uiA6eVUa";
 
-type SaraLeadForm = {
-  nombre?: string;
-  telefono?: string;
-  email?: string;
-  niePasaporte?: string;
-  ciudad?: string;
-  nacionalidad?: string;
-  fechaLlegada?: string;
-  cumple5Meses?: string;
-  asilo?: string;
-  penales?: string;
-};
-
-type EnviarMensajeSaraParams = {
-  mensaje: string;
-  lang?: "darija" | "es" | "en";
-  context?: string;
-  procedureKey?: string;
-  procedureLabel?: string;
-  sessionId?: string;
-  userId?: string;
-  history?: SaraHistoryItem[];
-  leadForm?: SaraLeadForm;
-};
-
-export async function enviarMensajeSara({
-  mensaje,
-  lang = "es",
-  context = "buscar_citas",
-  procedureKey = "",
-  procedureLabel = "",
-  sessionId = "",
-  userId = "",
-  history = [],
-  leadForm = {},
-}: EnviarMensajeSaraParams): Promise<string> {
-  const res = await fetch("/api/chat", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      assistant: "sara",
-      context,
-      message: mensaje,
-      lang,
-      procedureKey,
-      procedureLabel,
-      sessionId,
-      userId,
-      history,
-      leadForm,
-    }),
-  });
-
-  const data = await res.json().catch(() => null);
-
-  if (!res.ok) {
-    throw new Error(data?.error || "Error conectando con Sara");
+export async function enviarMensajeSara(mensaje: string): Promise<string> {
+  if (!OPENAI_API_KEY) {
+    throw new Error("Falta VITE_OPENAI_API_KEY en las variables de entorno");
   }
 
-  return (
-    data?.reply ||
-    "Sara no devolvió respuesta."
+  const threadRes = await fetch("https://api.openai.com/v1/threads", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${OPENAI_API_KEY}`,
+      "Content-Type": "application/json",
+      "OpenAI-Beta": "assistants=v2",
+    },
+    body: JSON.stringify({}),
+  });
+
+  if (!threadRes.ok) {
+    const errorText = await threadRes.text();
+    throw new Error(`Error creando thread: ${errorText}`);
+  }
+
+  const thread = await threadRes.json();
+
+  const messageRes = await fetch(
+    `https://api.openai.com/v1/threads/${thread.id}/messages`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${OPENAI_API_KEY}`,
+        "Content-Type": "application/json",
+        "OpenAI-Beta": "assistants=v2",
+      },
+      body: JSON.stringify({
+        role: "user",
+        content: mensaje,
+      }),
+    }
   );
+
+  if (!messageRes.ok) {
+    const errorText = await messageRes.text();
+    throw new Error(`Error enviando mensaje: ${errorText}`);
+  }
+
+  const runRes = await fetch(
+    `https://api.openai.com/v1/threads/${thread.id}/runs`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${OPENAI_API_KEY}`,
+        "Content-Type": "application/json",
+        "OpenAI-Beta": "assistants=v2",
+      },
+      body: JSON.stringify({
+        assistant_id: SARA_ASSISTANT_ID,
+      }),
+    }
+  );
+
+  if (!runRes.ok) {
+    const errorText = await runRes.text();
+    throw new Error(`Error creando run: ${errorText}`);
+  }
+
+  const run = await runRes.json();
+
+  let status = run.status;
+  let attempts = 0;
+  const maxAttempts = 45;
+
+  while (
+    status !== "completed" &&
+    status !== "failed" &&
+    status !== "cancelled" &&
+    status !== "expired"
+  ) {
+    if (attempts >= maxAttempts) {
+      throw new Error("Tiempo de espera agotado para la respuesta de Sara");
+    }
+
+    await new Promise((r) => setTimeout(r, 350));
+
+    const checkRes = await fetch(
+      `https://api.openai.com/v1/threads/${thread.id}/runs/${run.id}`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${OPENAI_API_KEY}`,
+          "Content-Type": "application/json",
+          "OpenAI-Beta": "assistants=v2",
+        },
+      }
+    );
+
+    if (!checkRes.ok) {
+      const errorText = await checkRes.text();
+      throw new Error(`Error consultando run: ${errorText}`);
+    }
+
+    const checkData = await checkRes.json();
+    status = checkData.status;
+    attempts += 1;
+  }
+
+  if (status !== "completed") {
+    throw new Error(`La ejecución terminó con estado: ${status}`);
+  }
+
+  const messagesRes = await fetch(
+    `https://api.openai.com/v1/threads/${thread.id}/messages`,
+    {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${OPENAI_API_KEY}`,
+        "Content-Type": "application/json",
+        "OpenAI-Beta": "assistants=v2",
+      },
+    }
+  );
+
+  if (!messagesRes.ok) {
+    const errorText = await messagesRes.text();
+    throw new Error(`Error obteniendo mensajes: ${errorText}`);
+  }
+
+  const messages = await messagesRes.json();
+
+  const respuesta =
+    messages?.data?.find((msg: any) => msg.role === "assistant")?.content?.[0]
+      ?.text?.value || "Sara no devolvió respuesta.";
+
+  return respuesta;
 }
