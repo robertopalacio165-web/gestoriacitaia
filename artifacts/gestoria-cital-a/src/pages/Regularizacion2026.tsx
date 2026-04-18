@@ -1,17 +1,16 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { Navbar } from "@/components/Navbar";
-import { PaymentModal } from "@/components/PaymentModal";
 import { useLang } from "@/contexts/LanguageContext";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import {
   Mic,
   MicOff,
-  Bell,
-  MessageSquare,
-  Send,
   Upload,
   Star,
   ArrowRight,
+  Bell,
+  Volume2,
+  VolumeX,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { verifyDocument, type VerifyDocumentResult } from "@/lib/verifyDocument";
@@ -19,6 +18,13 @@ import {
   EXTRANJERIA_PROCEDURES,
   getProcedureByKey,
 } from "@/lib/extranjeriaProcedures";
+
+declare global {
+  interface Window {
+    SpeechRecognition?: any;
+    webkitSpeechRecognition?: any;
+  }
+}
 
 interface ChatMsg {
   from: "agent" | "user";
@@ -47,7 +53,6 @@ type StoredDocItem = {
 type LeadFormState = {
   nombre: string;
   telefono: string;
-  email: string;
   niePasaporte: string;
   ciudad: string;
   nacionalidad: string;
@@ -77,27 +82,20 @@ function normalizeDocType(value?: string) {
 }
 
 export default function Regularizacion2026() {
-  const [selectedSituacion, setSelectedSituacion] = useState(
-    "regularizacion_2026_laboral"
-  );
+  const [selectedSituacion] = useState("regularizacion_2026_laboral");
   const [muted, setMuted] = useState(false);
-  const [showChat, setShowChat] = useState(true);
-  const [chatInput, setChatInput] = useState("");
-  const [showPayment, setShowPayment] = useState(false);
-  const [planActivo, setPlanActivo] = useState<string | null>(null);
-  const [sendingChat, setSendingChat] = useState(false);
-  const [userMessageCount, setUserMessageCount] = useState(0);
-  const [paymentTriggered, setPaymentTriggered] = useState(false);
-  const [chatMessages, setChatMessages] = useState<ChatMsg[]>([]);
-  const [chatBootstrapped, setChatBootstrapped] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const [voiceSupported, setVoiceSupported] = useState(true);
+  const [leadSaved, setLeadSaved] = useState(false);
   const [generalUploading, setGeneralUploading] = useState(false);
   const [completionMessageSent, setCompletionMessageSent] = useState(false);
-  const [leadSaved, setLeadSaved] = useState(false);
+  const [voiceHistory, setVoiceHistory] = useState<ChatMsg[]>([]);
+  const [lastUserTranscript, setLastUserTranscript] = useState("");
+  const [waitingMohamed, setWaitingMohamed] = useState(false);
 
   const [leadForm, setLeadForm] = useState<LeadFormState>({
     nombre: "",
     telefono: "",
-    email: "",
     niePasaporte: "",
     ciudad: "",
     nacionalidad: "",
@@ -109,7 +107,7 @@ export default function Regularizacion2026() {
 
   const { t, lang } = useLang();
   const { toast } = useToast();
-  const chatEndRef = useRef<HTMLDivElement>(null);
+  const recognitionRef = useRef<any>(null);
 
   const safeLang = (lang === "darija" || lang === "en" ? lang : "es") as
     | "darija"
@@ -122,58 +120,51 @@ export default function Regularizacion2026() {
   const ui = useMemo(() => {
     if (safeLang === "darija") {
       return {
-        initialChat:
-          "السلام، لباس عليك. إلا بغيتي باش نوجدّ لك الوراق ديالك ديال regularización 2026، عافاك عمّر ليا هاد الفورمولار الأول، ومن بعد نكمل معاك البروسيجير.",
+        initialVoice:
+          "السلام عليكم، مرحبا بك في Gestoria Cita IA. إلا بغيتي نوجد ليك الملف ديال regularización 2026، عمر أولاً الفورمولار اللي على اليمين ومن بعد ضغط على زر الميكروفون باش نكمل معاك بالصوت.",
         online: "متصل الآن",
         role: "مختص فالهجرة",
-        paymentMessage:
-          "باش نكملو فالملف ديالك ونخدمو على الوثائق، فعل الخطة ديالك.",
-        paymentTriggerMessage:
-          "باش نكملو معاك بشكل كامل، خاصك تفعّل الخدمة.",
-        planActivated: "تفعلات الخطة",
-        planContinue: "مزيان. نكملو فالملف ديالك.",
-        openChat: "سد الشات",
-        closeChat: "فتح الشات",
-        writeQuestion: "عمر الفورمولار الأول باش نكمل معاك",
+        voiceButton: "تكلم مع محمد",
+        stopButton: "وقف الميكروفون",
+        voiceBlocked:
+          "عافاك عمّر ليا الفورمولار الأول ومن بعد ضغط على زر الميكروفون باش نكمل معاك.",
+        saveLeadButton: "حفظ المعطيات والمتابعة مع محمد",
+        saveLeadTitle: "تحفظات المعطيات",
+        saveLeadDesc: "محمد يقدر دابا يبدا معاك بالصوت.",
+        savedLeadReply:
+          "مزيان. خديت المعطيات ديالك. دابا ضغط على زر الميكروفون ونجاوبك سؤال بسؤال، ومن بعد تقدر تطلع الوثائق ديالك.",
+        formTitle: "لوحة رسمية مدمجة",
+        formDesc:
+          "عمر المعطيات الأساسية باش محمد يبدا يراجع الملف ديالك بالصوت.",
         uploadGeneral: "رفع الوثائق",
         uploadGeneralDesc:
           "من هنا تقدر ترفع جميع الوثائق اللي طلب منك محمد، سواء كانت صورة أو PDF.",
-        withoutAudio: "بلا صوت",
-        mute: "كتم",
-        activePlanLabel: "الخطة",
-        active: "نشطة",
         uploading: "كيترفع...",
         uploadSuccessTitle: "تقبلات الوثيقة",
         uploadSuccessDesc: "راجعنا الوثيقة وربطناها مع الملف.",
         uploadErrorTitle: "خطأ فالوثيقة",
         uploadErrorDesc: "ما قدرناش نربط هاد الوثيقة مع الملف.",
+        missingTitle: "كاينين بيانات ناقصين",
+        missingDesc:
+          "عمر الاسم والهاتف والمدينة والجنسية وتاريخ الدخول قبل ما تكمل.",
+        listening: "محمد كيسمع ليك دابا...",
+        latestReply: "آخر جواب ديال محمد",
+        yourVoice: "آخر جواب ديالك بالصوت",
+        micNotSupported:
+          "هاد المتصفح ما كيدعمش التعرف على الصوت. استعمل Chrome.",
         mohamedDocOk: (fileName: string, docName: string) =>
           `مزيان. توصلت بــ ${fileName} وراجعتو. حطيناه دابا فخانة «${docName}».`,
         mohamedDocWarn: (fileName: string) =>
           `توصلت بــ ${fileName} ولكن مازال خاصني نسخة أوضح ولا الوثيقة المناسبة باش نكمل المراجعة.`,
         mohamedDocUnknown: (fileName: string) =>
-          `توصلت بــ ${fileName}، ولكن ما قدرناش نربطو أوتوماتيكياً مع وثيقة معينة. زيد رفع الوثائق الباقية وأنا نكمل المراجعة.`,
+          `توصلت بــ ${fileName}، ولكن ما قدرناش نربطو أوتوماتيكياً مع وثيقة معينة.`,
         mohamedFinal:
-          "مزيان. راجعنا الوثائق ديالك ووجدنا الملف ديالك. إلى بغيتي دابا نكملو بالموعد، تقدر تدخل لسارة وغادي تعاونك.",
+          "مزيان. راجعنا الوثائق ديالك ووجدنا الملف ديالك. إلا بغيتي دابا تكمل مع سارة فالسيطة، تقدر تدوز ليها.",
         goSara: "المرور إلى سارة",
         goSaraDesc: "إلى بغيتي تكمل بالموعد، سارة غادي تعاونك.",
-        formTitle: "لوحة رسمية مدمجة",
-        formDesc:
-          "عمر المعطيات الأساسية باش محمد يبدا معاك التحقق من 5 شهور والوثائق.",
-        saveLeadButton: "حفظ المعطيات والمتابعة مع محمد",
-        savedLeadReply:
-          "مزيان. خديت المعطيات ديالك. دابا صيفط ليا الوثائق ديالك، سواء كانوا صور أو PDF، ونبدا نراجعهم خطوة بخطوة.",
-        formBlockedReply:
-          "عافاك عمّر ليا الفورمولار الأول، ومن بعد نكمل معاك البروسيجير ديال regularización 2026.",
-        saveLeadTitle: "تحفظات المعطيات",
-        saveLeadDesc: "محمد قدر يبدا يراجع معاك الوثائق.",
-        missingTitle: "كاينين بيانات ناقصين",
-        missingDesc:
-          "عمر الاسم والهاتف والمدينة والجنسية وتاريخ الدخول قبل ما تكمل.",
         labels: {
           nombre: "الاسم الكامل",
           telefono: "الهاتف",
-          email: "الإيميل",
           niePasaporte: "NIE / الباسبور",
           ciudad: "المدينة",
           nacionalidad: "الجنسية",
@@ -191,59 +182,52 @@ export default function Regularizacion2026() {
 
     if (safeLang === "en") {
       return {
-        initialChat:
-          "Hello, how are you? If you want me to prepare your 2026 regularization documents, please fill in this form first and then I will continue with the process.",
+        initialVoice:
+          "Hello, welcome to Gestoria Cita IA. If you want me to prepare your 2026 regularization file, first complete the form on the right and then press the microphone button so I can continue with you by voice.",
         online: "Online",
         role: "Immigration Specialist",
-        paymentMessage:
-          "To continue with your case and document review, activate your plan.",
-        paymentTriggerMessage:
-          "To continue fully with your case, activate the service.",
-        planActivated: "Plan activated",
-        planContinue: "Perfect. Let’s continue with your case.",
-        openChat: "Close chat",
-        closeChat: "Open chat",
-        writeQuestion: "Fill in the form first to continue",
+        voiceButton: "Talk to Mohamed",
+        stopButton: "Stop microphone",
+        voiceBlocked:
+          "Please complete the form first, then press the microphone button so I can continue with you.",
+        saveLeadButton: "Save details and continue with Mohamed",
+        saveLeadTitle: "Details saved",
+        saveLeadDesc: "Mohamed can now start with you by voice.",
+        savedLeadReply:
+          "Perfect. I already have your details. Now press the microphone button and I will guide you question by question. After that, you can upload your documents.",
+        formTitle: "Integrated official panel",
+        formDesc:
+          "Fill in the basic details so Mohamed can start reviewing your case by voice.",
         uploadGeneral: "Upload documents",
         uploadGeneralDesc:
-          "Use this button to upload all documents Mohamed requests, as images or PDFs.",
-        withoutAudio: "No audio",
-        mute: "Mute",
-        activePlanLabel: "Plan",
-        active: "active",
+          "Use this button to upload all documents Mohamed asks for, as images or PDFs.",
         uploading: "Uploading...",
         uploadSuccessTitle: "Document received",
-        uploadSuccessDesc: "The document was reviewed and linked to the case.",
+        uploadSuccessDesc: "The document was reviewed and linked to the file.",
         uploadErrorTitle: "Document error",
-        uploadErrorDesc: "We could not link that document to the case.",
+        uploadErrorDesc: "We could not link that document to the file.",
+        missingTitle: "Missing data",
+        missingDesc:
+          "Fill in name, phone, city, nationality and arrival date before continuing.",
+        listening: "Mohamed is listening to you now...",
+        latestReply: "Mohamed's latest reply",
+        yourVoice: "Your latest voice answer",
+        micNotSupported:
+          "This browser does not support voice recognition. Use Chrome.",
         mohamedDocOk: (fileName: string, docName: string) =>
-          `Perfect. I received ${fileName} and linked it to “${docName}”.`,
+          `Perfect. I received ${fileName} and placed it in "${docName}".`,
         mohamedDocWarn: (fileName: string) =>
-          `I received ${fileName}, but I still need a clearer version or the correct document to continue.`,
+          `I received ${fileName}, but I still need a clearer version or the correct document.`,
         mohamedDocUnknown: (fileName: string) =>
-          `I received ${fileName}, but I could not match it automatically to a required document yet.`,
+          `I received ${fileName}, but I could not automatically match it to a specific document.`,
         mohamedFinal:
-          "Perfect. We have reviewed your documents and prepared your case. If you want to continue with the appointment, Sara will help you.",
+          "Perfect. We reviewed your documents and prepared your file. If you want to continue with Sara for the appointment, you can go now.",
         goSara: "Go to Sara",
         goSaraDesc:
           "If you want to continue with the appointment, Sara will help you.",
-        formTitle: "Integrated official panel",
-        formDesc:
-          "Fill in the basic details so Mohamed can start checking the 5 months and your documents.",
-        saveLeadButton: "Save details and continue with Mohamed",
-        savedLeadReply:
-          "Perfect. I already have your details. Now send me your documents, as images or PDFs, and I will review them step by step.",
-        formBlockedReply:
-          "Please fill in the form first, then I will continue with your 2026 regularization process.",
-        saveLeadTitle: "Details saved",
-        saveLeadDesc: "Mohamed can now start reviewing your documents.",
-        missingTitle: "Missing data",
-        missingDesc:
-          "Please fill in name, phone, city, nationality and arrival date before continuing.",
         labels: {
           nombre: "Full name",
           telefono: "Phone",
-          email: "Email",
           niePasaporte: "NIE / Passport",
           ciudad: "City",
           nacionalidad: "Nationality",
@@ -260,31 +244,38 @@ export default function Regularizacion2026() {
     }
 
     return {
-      initialChat:
-        "Hola, ¿qué tal? Si quieres que te prepare los papeles de la regularización 2026, relléname primero este formulario y después continúo contigo con el proceso.",
+      initialVoice:
+        "Hola, bienvenido a Gestoria Cita IA. Si quieres que te prepare el expediente de regularización 2026, primero rellena el formulario de la derecha y después pulsa el botón del micrófono para continuar por voz conmigo.",
       online: "En línea",
       role: "Especialista en Extranjería",
-      paymentMessage:
-        "Para continuar con tu trámite y la revisión de documentos, activa tu plan.",
-      paymentTriggerMessage:
-        "Para seguir contigo de forma completa, activa el servicio.",
-      planActivated: "Plan activado",
-      planContinue: "Perfecto. Continuamos con tu trámite.",
-      openChat: "Cerrar chat",
-      closeChat: "Abrir chat",
-      writeQuestion: "Rellena primero el formulario para continuar",
+      voiceButton: "Hablar con Mohamed",
+      stopButton: "Parar micrófono",
+      voiceBlocked:
+        "Rellena primero el formulario y después pulsa el botón del micrófono para continuar conmigo.",
+      saveLeadButton: "Guardar datos y continuar con Mohamed",
+      saveLeadTitle: "Datos guardados",
+      saveLeadDesc: "Mohamed ya puede empezar contigo por voz.",
+      savedLeadReply:
+        "Perfecto. Ya tengo tus datos. Ahora pulsa el botón del micrófono y te iré guiando pregunta por pregunta. Después podrás subir tus documentos.",
+      formTitle: "Panel oficial integrado",
+      formDesc:
+        "Rellena los datos básicos para que Mohamed empiece a revisar tu caso por voz.",
       uploadGeneral: "Subir documentos",
       uploadGeneralDesc:
         "Usa este botón para subir todos los documentos que te pida Mohamed, en foto o en PDF.",
-      withoutAudio: "Sin audio",
-      mute: "Mute",
-      activePlanLabel: "Plan",
-      active: "activo",
       uploading: "Subiendo...",
       uploadSuccessTitle: "Documento recibido",
       uploadSuccessDesc: "El documento se ha revisado y vinculado al expediente.",
       uploadErrorTitle: "Error en documento",
       uploadErrorDesc: "No se pudo vincular ese documento al expediente.",
+      missingTitle: "Faltan datos",
+      missingDesc:
+        "Rellena nombre, teléfono, ciudad, nacionalidad y fecha de llegada antes de continuar.",
+      listening: "Mohamed te está escuchando ahora...",
+      latestReply: "Última respuesta de Mohamed",
+      yourVoice: "Tu última respuesta por voz",
+      micNotSupported:
+        "Este navegador no soporta reconocimiento de voz. Usa Chrome.",
       mohamedDocOk: (fileName: string, docName: string) =>
         `Perfecto. Ya he recibido ${fileName} y lo he colocado en «${docName}».`,
       mohamedDocWarn: (fileName: string) =>
@@ -295,23 +286,9 @@ export default function Regularizacion2026() {
         "Perfecto. Ya hemos revisado tu documentación y hemos dejado preparado tu expediente. Si ahora quieres continuar con la cita, Sara te ayudará.",
       goSara: "Ir con Sara",
       goSaraDesc: "Si quieres seguir con la cita, Sara te ayuda.",
-      formTitle: "Panel oficial integrado",
-      formDesc:
-        "Rellena los datos básicos para que Mohamed empiece a comprobar los 5 meses y tus documentos.",
-      saveLeadButton: "Guardar datos y continuar con Mohamed",
-      savedLeadReply:
-        "Perfecto. Ya tengo tus datos. Ahora súbeme tus documentos, en foto o en PDF, y empezaré a revisarlos paso a paso.",
-      formBlockedReply:
-        "Relléname primero este formulario y después continúo contigo con el proceso de la regularización 2026.",
-      saveLeadTitle: "Datos guardados",
-      saveLeadDesc: "Mohamed ya puede empezar a revisar tus documentos.",
-      missingTitle: "Faltan datos",
-      missingDesc:
-        "Rellena nombre, teléfono, ciudad, nacionalidad y fecha de llegada antes de continuar.",
       labels: {
         nombre: "Nombre completo",
         telefono: "Teléfono",
-        email: "Email",
         niePasaporte: "NIE / Pasaporte",
         ciudad: "Ciudad",
         nacionalidad: "Nacionalidad",
@@ -331,8 +308,8 @@ export default function Regularizacion2026() {
     buildInitialDocs(selectedSituacion)
   );
 
-  const chatStorageKey = useMemo(() => {
-    return `gestoriacitaia_mohamed_chat_procedure_${safeLang}_${selectedSituacion}`;
+  const historyStorageKey = useMemo(() => {
+    return `gestoriacitaia_mohamed_voice_history_${safeLang}_${selectedSituacion}`;
   }, [safeLang, selectedSituacion]);
 
   const formStorageKey = useMemo(() => {
@@ -356,6 +333,12 @@ export default function Regularizacion2026() {
   }, [selectedSituacion]);
 
   useEffect(() => {
+    const SpeechRecognition =
+      window.SpeechRecognition || window.webkitSpeechRecognition;
+    setVoiceSupported(!!SpeechRecognition);
+  }, []);
+
+  useEffect(() => {
     try {
       const rawForm = localStorage.getItem(formStorageKey);
       if (rawForm) {
@@ -363,7 +346,6 @@ export default function Regularizacion2026() {
         setLeadForm({
           nombre: parsed?.nombre || "",
           telefono: parsed?.telefono || "",
-          email: parsed?.email || "",
           niePasaporte: parsed?.niePasaporte || "",
           ciudad: parsed?.ciudad || "",
           nacionalidad: parsed?.nacionalidad || "",
@@ -398,93 +380,55 @@ export default function Regularizacion2026() {
   }, [leadSaved, leadSavedStorageKey]);
 
   useEffect(() => {
-    if (!chatStorageKey) return;
-
     try {
-      const raw = localStorage.getItem(chatStorageKey);
+      const raw = localStorage.getItem(historyStorageKey);
 
       if (raw) {
         const parsed = JSON.parse(raw) as ChatMsg[];
-
         if (Array.isArray(parsed) && parsed.length > 0) {
-          setChatMessages(parsed);
-
-          const userMsgs = parsed.filter((m) => m.from === "user").length;
-          setUserMessageCount(userMsgs);
-
-          const paymentAlreadyTriggered = parsed.some(
-            (m) => m.from === "agent" && m.text === ui.paymentTriggerMessage
-          );
+          setVoiceHistory(parsed);
 
           const completionAlreadySent = parsed.some(
             (m) => m.from === "agent" && m.text === ui.mohamedFinal
           );
-
           const leadAlreadySaved = parsed.some(
             (m) => m.from === "agent" && m.text === ui.savedLeadReply
           );
 
-          setPaymentTriggered(paymentAlreadyTriggered);
           setCompletionMessageSent(completionAlreadySent);
           setLeadSaved((prev) => prev || leadAlreadySaved);
-          setChatBootstrapped(true);
           return;
         }
       }
 
-      const freshChat: ChatMsg[] = [
+      const freshHistory: ChatMsg[] = [
         {
           from: "agent",
-          text: ui.initialChat,
+          text: ui.initialVoice,
           ts: Date.now(),
         },
       ];
-
-      setChatMessages(freshChat);
-      setUserMessageCount(0);
-      setPaymentTriggered(false);
-      setCompletionMessageSent(false);
-      setChatBootstrapped(true);
+      setVoiceHistory(freshHistory);
     } catch (error) {
       console.error("Error cargando historial de Mohamed:", error);
-
-      const freshChat: ChatMsg[] = [
+      setVoiceHistory([
         {
           from: "agent",
-          text: ui.initialChat,
+          text: ui.initialVoice,
           ts: Date.now(),
         },
-      ];
-
-      setChatMessages(freshChat);
-      setUserMessageCount(0);
-      setPaymentTriggered(false);
-      setCompletionMessageSent(false);
-      setChatBootstrapped(true);
+      ]);
     }
-  }, [
-    chatStorageKey,
-    ui.initialChat,
-    ui.paymentTriggerMessage,
-    ui.mohamedFinal,
-    ui.savedLeadReply,
-  ]);
+  }, [historyStorageKey, ui.initialVoice, ui.mohamedFinal, ui.savedLeadReply]);
 
   useEffect(() => {
-    if (!chatBootstrapped || !chatStorageKey || chatMessages.length === 0) {
-      return;
-    }
-
+    if (voiceHistory.length === 0) return;
     try {
-      localStorage.setItem(chatStorageKey, JSON.stringify(chatMessages));
+      localStorage.setItem(historyStorageKey, JSON.stringify(voiceHistory));
     } catch (error) {
       console.error("Error guardando historial de Mohamed:", error);
     }
-  }, [chatMessages, chatBootstrapped, chatStorageKey]);
-
-  useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [chatMessages, sendingChat, generalUploading]);
+  }, [voiceHistory, historyStorageKey]);
 
   const docsOk = docs.filter((d) => d.estado === "ok").length;
   const docsTotal = docs.length;
@@ -495,22 +439,75 @@ export default function Regularizacion2026() {
     label: p.name,
   }));
 
-  const handleSelectPlan = (plan: string) => {
-    setPlanActivo(plan);
-    setShowPayment(false);
-
-    toast({
-      title: ui.planActivated,
-      description: ui.planContinue,
-    });
-  };
-
   const updateLeadForm = (field: keyof LeadFormState, value: string) => {
     setLeadForm((prev) => ({
       ...prev,
       [field]: value,
     }));
   };
+
+  const speakText = (text: string) => {
+    if (muted) return;
+    if (!("speechSynthesis" in window)) return;
+
+    try {
+      window.speechSynthesis.cancel();
+
+      const utterance = new SpeechSynthesisUtterance(text);
+
+      if (safeLang === "darija") {
+        utterance.lang = "ar-MA";
+      } else if (safeLang === "en") {
+        utterance.lang = "en-US";
+      } else {
+        utterance.lang = "es-ES";
+      }
+
+      utterance.rate = 1;
+      utterance.pitch = 1;
+      window.speechSynthesis.speak(utterance);
+    } catch (error) {
+      console.error("Error reproduciendo voz:", error);
+    }
+  };
+
+  const pushAgentMessage = (text: string, speak = false) => {
+    setVoiceHistory((prev) => [
+      ...prev,
+      {
+        from: "agent",
+        text,
+        ts: Date.now(),
+      },
+    ]);
+
+    if (speak) {
+      setTimeout(() => {
+        speakText(text);
+      }, 150);
+    }
+  };
+
+  const pushUserMessage = (text: string) => {
+    setVoiceHistory((prev) => [
+      ...prev,
+      {
+        from: "user",
+        text,
+        ts: Date.now(),
+      },
+    ]);
+  };
+
+  useEffect(() => {
+    if (voiceHistory.length === 1 && voiceHistory[0]?.text === ui.initialVoice) {
+      const timer = setTimeout(() => {
+        speakText(ui.initialVoice);
+      }, 600);
+
+      return () => clearTimeout(timer);
+    }
+  }, [voiceHistory, ui.initialVoice]);
 
   const handleSaveLeadForm = () => {
     if (!leadFormReady) {
@@ -524,25 +521,168 @@ export default function Regularizacion2026() {
 
     setLeadSaved(true);
 
-    const alreadyExists = chatMessages.some(
+    const alreadyExists = voiceHistory.some(
       (msg) => msg.from === "agent" && msg.text === ui.savedLeadReply
     );
 
     if (!alreadyExists) {
-      setChatMessages((prev) => [
-        ...prev,
-        {
-          from: "agent",
-          text: ui.savedLeadReply,
-          ts: Date.now(),
-        },
-      ]);
+      pushAgentMessage(ui.savedLeadReply, true);
     }
 
     toast({
       title: ui.saveLeadTitle,
       description: ui.saveLeadDesc,
     });
+  };
+
+  const getRecognitionLang = () => {
+    if (safeLang === "darija") return "ar-MA";
+    if (safeLang === "en") return "en-US";
+    return "es-ES";
+  };
+
+  const stopListening = () => {
+    try {
+      recognitionRef.current?.stop?.();
+    } catch (error) {
+      console.error("Error deteniendo micro:", error);
+    } finally {
+      setIsListening(false);
+    }
+  };
+
+  const handleVoiceConversation = async (spokenText: string) => {
+    if (!spokenText.trim()) return;
+
+    pushUserMessage(spokenText);
+    setLastUserTranscript(spokenText);
+    setWaitingMohamed(true);
+
+    try {
+      const historyToSend = voiceHistory.slice(-8).map((msg) => ({
+        from: msg.from,
+        text: msg.text,
+      }));
+
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          assistant: "mohamed",
+          message: spokenText,
+          context: "voice_regularizacion_2026",
+          procedureKey: selectedSituacion,
+          procedureLabel: currentProcedure.name,
+          lang: safeLang,
+          history: historyToSend,
+          leadForm,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data?.error || "Error en Mohamed");
+      }
+
+      const finalReply =
+        data?.reply ||
+        (safeLang === "darija"
+          ? "سمح ليا، ما قدرتش نجاوب دابا."
+          : safeLang === "en"
+          ? "Sorry, I could not answer right now."
+          : "Lo siento, no pude responder ahora mismo.");
+
+      pushAgentMessage(finalReply, true);
+    } catch (error) {
+      console.error("Error conectando con Mohamed:", error);
+
+      const errorReply =
+        safeLang === "darija"
+          ? "وقع مشكل فالاتصال مع محمد، عاود حاول."
+          : safeLang === "en"
+          ? "There was a connection error with Mohamed. Please try again."
+          : "Error conectando con Mohamed, intenta otra vez.";
+
+      pushAgentMessage(errorReply, true);
+    } finally {
+      setWaitingMohamed(false);
+    }
+  };
+
+  const startListening = () => {
+    if (!leadSaved) {
+      pushAgentMessage(ui.voiceBlocked, true);
+
+      toast({
+        title: ui.missingTitle,
+        description: ui.missingDesc,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const SpeechRecognition =
+      window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      setVoiceSupported(false);
+      toast({
+        title: "Micrófono no compatible",
+        description: ui.micNotSupported,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const recognition = new SpeechRecognition();
+      recognition.lang = getRecognitionLang();
+      recognition.interimResults = false;
+      recognition.continuous = false;
+      recognition.maxAlternatives = 1;
+
+      recognition.onstart = () => {
+        setIsListening(true);
+      };
+
+      recognition.onend = () => {
+        setIsListening(false);
+      };
+
+      recognition.onerror = (event: any) => {
+        console.error("Speech error:", event);
+        setIsListening(false);
+
+        toast({
+          title: "Error de micrófono",
+          description:
+            safeLang === "darija"
+              ? "وقع مشكل فالمايكروفون، عاود حاول."
+              : safeLang === "en"
+              ? "There was a microphone error. Please try again."
+              : "Hubo un error con el micrófono. Inténtalo otra vez.",
+          variant: "destructive",
+        });
+      };
+
+      recognition.onresult = async (event: any) => {
+        const transcript =
+          event?.results?.[0]?.[0]?.transcript?.trim?.() || "";
+
+        if (!transcript) return;
+
+        await handleVoiceConversation(transcript);
+      };
+
+      recognitionRef.current = recognition;
+      recognition.start();
+    } catch (error) {
+      console.error("Error iniciando reconocimiento:", error);
+      setIsListening(false);
+    }
   };
 
   const getBestDocMatch = (
@@ -708,42 +848,26 @@ export default function Regularizacion2026() {
     return null;
   };
 
-  const pushAgentMessage = (text: string) => {
-    setChatMessages((prev) => [
-      ...prev,
-      {
-        from: "agent",
-        text,
-        ts: Date.now(),
-      },
-    ]);
-  };
-
   const maybeSendCompletionMessage = (nextDocs: StoredDocItem[]) => {
     const okCount = nextDocs.filter((d) => d.estado === "ok").length;
     const total = nextDocs.length;
     const readyNow = okCount >= Math.max(1, total - 1);
 
     if (readyNow && !completionMessageSent) {
-      pushAgentMessage(ui.mohamedFinal);
+      pushAgentMessage(ui.mohamedFinal, true);
       setCompletionMessageSent(true);
     }
   };
 
   const handleGeneralUpload = async () => {
     if (!leadSaved) {
-      pushAgentMessage(ui.formBlockedReply);
+      pushAgentMessage(ui.voiceBlocked, true);
 
       toast({
         title: ui.missingTitle,
         description: ui.missingDesc,
         variant: "destructive",
       });
-      return;
-    }
-
-    if (!planActivo) {
-      setShowPayment(true);
       return;
     }
 
@@ -804,13 +928,14 @@ export default function Regularizacion2026() {
               });
 
               if (!matchedDocSnapshot) {
-                pushAgentMessage(
+                const unknownText =
                   safeLang === "darija"
-                    ? `توصلت بــ ${file.name}. قريت الوثيقة ولكن ما قدرتش نربطها أوتوماتيكياً مع خانة محددة. صيفط باقي الوثائق وأنا نكمل الترتيب.`
+                    ? `توصلت بــ ${file.name}. قريت الوثيقة ولكن ما قدرتش نربطها أوتوماتيكياً مع خانة محددة.`
                     : safeLang === "en"
-                    ? `I received ${file.name}. I could read the document, but I could not automatically assign it to a specific slot yet. Send the remaining documents and I will continue organizing them.`
-                    : `He recibido ${file.name}. He podido leer el documento, pero todavía no he podido asignarlo automáticamente a una casilla concreta del expediente. Sube los demás documentos y sigo organizándolo.`
-                );
+                    ? `I received ${file.name}. I could read the document, but I could not automatically assign it to a specific slot yet.`
+                    : `He recibido ${file.name}. He podido leer el documento, pero todavía no he podido asignarlo automáticamente a una casilla concreta del expediente.`;
+
+                pushAgentMessage(unknownText, true);
 
                 toast({
                   title: ui.uploadErrorTitle,
@@ -826,10 +951,11 @@ export default function Regularizacion2026() {
                 result.match_expected_type === false;
 
               if (isWarn) {
-                pushAgentMessage(ui.mohamedDocWarn(file.name));
+                pushAgentMessage(ui.mohamedDocWarn(file.name), true);
               } else {
                 pushAgentMessage(
-                  ui.mohamedDocOk(file.name, matchedDocSnapshot.nombre)
+                  ui.mohamedDocOk(file.name, matchedDocSnapshot.nombre),
+                  true
                 );
               }
 
@@ -844,13 +970,14 @@ export default function Regularizacion2026() {
             } catch (err: any) {
               console.error("Error IA documento:", err);
 
-              pushAgentMessage(
+              const errText =
                 safeLang === "darija"
                   ? `وقع مشكل فمراجعة الوثيقة: ${err?.message || "خطأ غير معروف"}`
                   : safeLang === "en"
                   ? `There was a problem reviewing the document: ${err?.message || "Unknown error"}`
-                  : `Ha habido un problema revisando el documento: ${err?.message || "Error desconocido"}`
-              );
+                  : `Ha habido un problema revisando el documento: ${err?.message || "Error desconocido"}`;
+
+              pushAgentMessage(errText, true);
 
               toast({
                 title:
@@ -899,119 +1026,13 @@ export default function Regularizacion2026() {
     }
   };
 
-  const handleSendChat = async () => {
-    if (!chatInput.trim() || sendingChat || !chatBootstrapped) return;
-
-    if (!leadSaved) {
-      setChatInput("");
-      pushAgentMessage(ui.formBlockedReply);
-
-      toast({
-        title: ui.missingTitle,
-        description: ui.missingDesc,
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const rawText = chatInput.trim();
-    const nextUserCount = userMessageCount + 1;
-    const shouldTriggerPayment =
-      !planActivo && !paymentTriggered && nextUserCount >= 2;
-
-    const userMessage: ChatMsg = {
-      from: "user",
-      text: rawText,
-      ts: Date.now(),
-    };
-
-    const historyToSend = chatMessages.slice(-8).map((msg) => ({
-      from: msg.from,
-      text: msg.text,
-    }));
-
-    setChatMessages((prev) => [...prev, userMessage]);
-    setChatInput("");
-    setSendingChat(true);
-    setUserMessageCount(nextUserCount);
-
-    try {
-      const res = await fetch("/api/chat", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          assistant: "mohamed",
-          message: rawText,
-          context: "multi_extranjeria_procedure",
-          procedureKey: selectedSituacion,
-          procedureLabel: currentProcedure.name,
-          lang: safeLang,
-          history: historyToSend,
-          leadForm,
-        }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data?.error || "Error en Mohamed");
-      }
-
-      const finalReply =
-        data?.reply ||
-        (safeLang === "darija"
-          ? "سمح ليا، ما قدرتش نجاوب دابا."
-          : safeLang === "en"
-          ? "Sorry, I could not answer right now."
-          : "Lo siento, no pude responder ahora mismo.");
-
-      const agentReply: ChatMsg = {
-        from: "agent",
-        text: finalReply,
-        ts: Date.now(),
-      };
-
-      if (shouldTriggerPayment) {
-        const paymentMsg: ChatMsg = {
-          from: "agent",
-          text: ui.paymentTriggerMessage,
-          ts: Date.now() + 1,
-        };
-
-        setChatMessages((prev) => [...prev, agentReply, paymentMsg]);
-        setPaymentTriggered(true);
-
-        setTimeout(() => {
-          setShowPayment(true);
-        }, 900);
-      } else {
-        setChatMessages((prev) => [...prev, agentReply]);
-      }
-    } catch (error) {
-      console.error("Error conectando con Mohamed:", error);
-
-      const errorReply: ChatMsg = {
-        from: "agent",
-        text:
-          safeLang === "darija"
-            ? "وقع مشكل فالاتصال مع محمد، عاود حاول."
-            : safeLang === "en"
-            ? "There was a connection error with Mohamed. Please try again."
-            : "Error conectando con Mohamed, intenta otra vez.",
-        ts: Date.now(),
-      };
-
-      setChatMessages((prev) => [...prev, errorReply]);
-    } finally {
-      setSendingChat(false);
-    }
-  };
-
   const goToSara = () => {
     window.location.href = "/citas";
   };
+
+  const latestAgentMessage =
+    [...voiceHistory].reverse().find((msg) => msg.from === "agent")?.text ||
+    ui.initialVoice;
 
   return (
     <div className="min-h-screen bg-background text-foreground relative flex flex-col">
@@ -1024,13 +1045,6 @@ export default function Regularizacion2026() {
       />
 
       <Navbar />
-
-      <PaymentModal
-        open={showPayment}
-        onClose={() => setShowPayment(false)}
-        onSelectPlan={handleSelectPlan}
-        agentMessage={ui.paymentMessage}
-      />
 
       <main className="flex-1 relative z-10 pt-16 pb-8">
         <div className="px-4 sm:px-6 py-3 max-w-7xl mx-auto w-full flex items-center justify-between">
@@ -1046,20 +1060,6 @@ export default function Regularizacion2026() {
               {currentProcedure.name}
             </p>
           </div>
-
-          {planActivo ? (
-            <span className="text-xs px-3 py-1 rounded-full bg-primary/10 border border-primary/30 text-primary font-medium">
-              {ui.activePlanLabel} {planActivo} {ui.active} ✓
-            </span>
-          ) : (
-            <button
-              onClick={() => setShowPayment(true)}
-              className="text-xs px-3 py-1.5 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold transition-colors"
-              type="button"
-            >
-              {t("reg_activar")}
-            </button>
-          )}
         </div>
 
         <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 grid grid-cols-1 lg:grid-cols-[380px_minmax(0,1fr)] gap-4">
@@ -1082,13 +1082,25 @@ export default function Regularizacion2026() {
                 </span>
               </div>
 
-              <div className="absolute top-3 right-3">
+              <div className="absolute top-3 right-3 flex items-center gap-2">
                 <div className="relative w-7 h-7 rounded-full bg-black/50 backdrop-blur-md border border-white/10 flex items-center justify-center">
                   <Bell className="w-3.5 h-3.5 text-white" />
                   <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-amber-500 rounded-full text-[8px] text-white flex items-center justify-center font-bold">
                     !
                   </span>
                 </div>
+
+                <button
+                  onClick={() => setMuted(!muted)}
+                  className="w-8 h-8 rounded-full bg-black/50 border border-white/10 flex items-center justify-center"
+                  type="button"
+                >
+                  {muted ? (
+                    <VolumeX className="w-4 h-4 text-white" />
+                  ) : (
+                    <Volume2 className="w-4 h-4 text-white" />
+                  )}
+                </button>
               </div>
 
               {!muted && (
@@ -1119,141 +1131,118 @@ export default function Regularizacion2026() {
 
               <div className="absolute bottom-3 left-0 right-0 flex justify-center">
                 <button
-                  onClick={() => setMuted(!muted)}
-                  className={`w-10 h-10 rounded-full border flex items-center justify-center backdrop-blur-md transition-colors ${
-                    muted
+                  onClick={isListening ? stopListening : startListening}
+                  className={`w-12 h-12 rounded-full border flex items-center justify-center backdrop-blur-md transition-colors ${
+                    isListening
                       ? "bg-destructive/80 border-destructive"
                       : "bg-black/50 border-white/20 hover:bg-black/70"
                   }`}
                   type="button"
                 >
-                  {muted ? (
-                    <MicOff className="w-4 h-4 text-white" />
+                  {isListening ? (
+                    <MicOff className="w-5 h-5 text-white" />
                   ) : (
-                    <Mic className="w-4 h-4 text-white" />
+                    <Mic className="w-5 h-5 text-white" />
                   )}
                 </button>
               </div>
             </div>
 
-            <button
-              onClick={() => setShowChat(!showChat)}
-              className={`flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-semibold border transition-all ${
-                showChat
-                  ? "bg-secondary/20 border-secondary/40 text-secondary"
-                  : "glass-panel border-white/10 text-white/70 hover:text-white hover:border-white/20"
-              }`}
-              type="button"
-            >
-              <MessageSquare className="w-4 h-4" />
-              {showChat ? ui.openChat : ui.closeChat}
-            </button>
-
-            <AnimatePresence>
-              {showChat && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  exit={{ opacity: 0, height: 0 }}
-                  className="glass-panel-heavy border border-white/10 rounded-2xl overflow-hidden flex flex-col"
+            <div className="glass-panel-heavy border border-white/10 rounded-2xl overflow-hidden">
+              <div className="p-4 border-b border-white/10">
+                <button
+                  onClick={isListening ? stopListening : startListening}
+                  disabled={!voiceSupported}
+                  className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary hover:bg-primary/90 disabled:opacity-50 text-primary-foreground font-bold text-sm px-4 py-3 transition-colors"
+                  type="button"
                 >
-                  <div className="flex-1 overflow-y-auto p-3 space-y-2 max-h-[340px]">
-                    {chatMessages.map((msg, i) => (
-                      <div
-                        key={`${msg.ts || i}-${i}`}
-                        className={`flex gap-2 ${
-                          msg.from === "user" ? "justify-end" : "justify-start"
-                        }`}
-                      >
-                        {msg.from === "agent" && (
-                          <img
-                            src={`${import.meta.env.BASE_URL}images/avatar-mohamed.png`}
-                            className="w-6 h-6 rounded-full object-cover object-top shrink-0"
-                            alt=""
-                          />
-                        )}
-                        <div
-                          className={`px-3 py-1.5 rounded-xl text-xs max-w-[85%] leading-relaxed ${
-                            msg.from === "agent"
-                              ? "bg-white/8 text-white/90 border border-white/10"
-                              : "bg-primary text-primary-foreground"
-                          }`}
-                        >
-                          {msg.text}
-                        </div>
-                      </div>
-                    ))}
+                  {isListening ? (
+                    <>
+                      <MicOff className="w-4 h-4" />
+                      {ui.stopButton}
+                    </>
+                  ) : (
+                    <>
+                      <Mic className="w-4 h-4" />
+                      {ui.voiceButton}
+                    </>
+                  )}
+                </button>
 
-                    {(sendingChat || generalUploading) && (
-                      <div className="flex gap-2 justify-start">
-                        <img
-                          src={`${import.meta.env.BASE_URL}images/avatar-mohamed.png`}
-                          className="w-6 h-6 rounded-full object-cover object-top shrink-0"
-                          alt=""
-                        />
-                        <div className="px-3 py-1.5 rounded-xl text-xs max-w-[85%] leading-relaxed bg-white/8 text-white/90 border border-white/10">
-                          ...
-                        </div>
-                      </div>
-                    )}
+                {!voiceSupported && (
+                  <p className="mt-2 text-xs text-red-400 text-center">
+                    {ui.micNotSupported}
+                  </p>
+                )}
 
-                    <div ref={chatEndRef} />
+                {isListening && (
+                  <p className="mt-2 text-xs text-primary text-center">
+                    {ui.listening}
+                  </p>
+                )}
+              </div>
+
+              <div className="p-4 space-y-4">
+                <div>
+                  <p className="text-[11px] text-white/50 mb-1">
+                    {ui.latestReply}
+                  </p>
+                  <div className="rounded-xl bg-white/5 border border-white/10 px-3 py-3 text-sm text-white/90 leading-relaxed">
+                    {latestAgentMessage}
                   </div>
+                </div>
 
-                  <div className="border-t border-white/10 p-2 flex gap-2">
-                    <input
-                      value={chatInput}
-                      onChange={(e) => setChatInput(e.target.value)}
-                      onKeyDown={(e) => e.key === "Enter" && handleSendChat()}
-                      placeholder={ui.writeQuestion}
-                      disabled={!leadSaved}
-                      className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white placeholder-white/30 focus:outline-none focus:border-primary/50 disabled:opacity-50 disabled:cursor-not-allowed"
-                    />
-                    <button
-                      onClick={handleSendChat}
-                      disabled={sendingChat || !leadSaved}
-                      className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center hover:bg-primary/90 transition-colors shrink-0 disabled:opacity-60"
-                      type="button"
-                    >
-                      <Send className="w-3.5 h-3.5 text-primary-foreground" />
-                    </button>
-                  </div>
-
-                  <div className="border-t border-white/10 p-3">
-                    <button
-                      onClick={handleGeneralUpload}
-                      disabled={generalUploading || !leadSaved}
-                      className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary hover:bg-primary/90 disabled:opacity-60 text-primary-foreground font-bold text-xs px-4 py-3 transition-colors"
-                      type="button"
-                    >
-                      {generalUploading ? (
-                        <>
-                          <motion.div
-                            className="w-3.5 h-3.5 border border-primary-foreground border-t-transparent rounded-full"
-                            animate={{ rotate: 360 }}
-                            transition={{
-                              duration: 0.7,
-                              repeat: Infinity,
-                              ease: "linear",
-                            }}
-                          />
-                          {ui.uploading}
-                        </>
-                      ) : (
-                        <>
-                          <Upload className="w-4 h-4" />
-                          {ui.uploadGeneral}
-                        </>
-                      )}
-                    </button>
-
-                    <p className="mt-2 text-[10px] text-white/50 text-center">
-                      {ui.uploadGeneralDesc}
+                {lastUserTranscript ? (
+                  <div>
+                    <p className="text-[11px] text-white/50 mb-1">
+                      {ui.yourVoice}
                     </p>
+                    <div className="rounded-xl bg-primary/10 border border-primary/20 px-3 py-3 text-sm text-white leading-relaxed">
+                      {lastUserTranscript}
+                    </div>
                   </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+                ) : null}
+
+                {waitingMohamed && (
+                  <div className="rounded-xl bg-white/5 border border-white/10 px-3 py-3 text-sm text-white/70">
+                    ...
+                  </div>
+                )}
+              </div>
+
+              <div className="border-t border-white/10 p-3">
+                <button
+                  onClick={handleGeneralUpload}
+                  disabled={generalUploading || !leadSaved}
+                  className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary hover:bg-primary/90 disabled:opacity-60 text-primary-foreground font-bold text-xs px-4 py-3 transition-colors"
+                  type="button"
+                >
+                  {generalUploading ? (
+                    <>
+                      <motion.div
+                        className="w-3.5 h-3.5 border border-primary-foreground border-t-transparent rounded-full"
+                        animate={{ rotate: 360 }}
+                        transition={{
+                          duration: 0.7,
+                          repeat: Infinity,
+                          ease: "linear",
+                        }}
+                      />
+                      {ui.uploading}
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="w-4 h-4" />
+                      {ui.uploadGeneral}
+                    </>
+                  )}
+                </button>
+
+                <p className="mt-2 text-[10px] text-white/50 text-center">
+                  {ui.uploadGeneralDesc}
+                </p>
+              </div>
+            </div>
           </div>
 
           <div className="flex flex-col gap-4">
@@ -1285,13 +1274,6 @@ export default function Regularizacion2026() {
                   value={leadForm.telefono}
                   onChange={(v) => updateLeadForm("telefono", v)}
                   placeholder={ui.labels.telefono}
-                />
-
-                <FieldLabel label={ui.labels.email} />
-                <FieldInput
-                  value={leadForm.email}
-                  onChange={(v) => updateLeadForm("email", v)}
-                  placeholder="email@example.com"
                 />
 
                 <FieldLabel label={ui.labels.niePasaporte} />
