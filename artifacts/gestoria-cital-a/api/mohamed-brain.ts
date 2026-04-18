@@ -150,21 +150,19 @@ function replyES(input: BrainInput) {
       return "Todo lo importante aparece ya cargado. Tu expediente va bien encaminado para la regularización 2026.";
     }
 
-    return `Todavía faltan estos puntos para la regularización 2026: ${faltan.join(
-      ", "
-    )}. Súbelos y sigo revisando.`;
+    return `Todavía faltan estos puntos para la regularización 2026: ${faltan.join(", ")}. Súbelos y sigo revisando.`;
   }
 
   if (intent === "status") {
     if (meses >= 5 && valid && identidad) {
-      return "✅ Expediente APTO para la regularización 2026. Ya tienes base suficiente y documentación válida. Sigue subiendo lo que falte para cerrar el expediente final.";
+      return "APTO para la regularización 2026. Ya tienes base suficiente y documentación válida. Sigue subiendo lo que falte para cerrar el expediente final.";
     }
 
     if (meses >= 3 && identidad) {
-      return "🟡 Parte del expediente es APTA, pero todavía NO ESTÁ COMPLETO para la regularización 2026. Faltan más pruebas para llegar a los 5 meses o completar documentos importantes.";
+      return "Todavía no está completo para la regularización 2026. Ya hay parte válida, pero faltan más pruebas para llegar a los 5 meses o completar documentos importantes.";
     }
 
-    return "❌ De momento NO APTO para la regularización 2026. Faltan pruebas claras o documentos válidos. Sube otro documento más claro y sigo revisando.";
+    return "NO APTO de momento para la regularización 2026. Faltan pruebas claras o documentos válidos. Sube otro documento más claro y sigo revisando.";
   }
 
   if (meses >= 5 && identidad) {
