@@ -320,14 +320,12 @@ export default function Regularizacion2026() {
     return `gestoriacitaia_mohamed_lead_saved_${safeLang}_${selectedSituacion}`;
   }, [safeLang, selectedSituacion]);
 
-  const leadFormReady =
-    !!leadForm.nombre.trim() &&
-    !!leadForm.telefono.trim() &&
-    !!leadForm.ciudad.trim() &&
-    !!leadForm.nacionalidad.trim() &&
-    !!leadForm.fechaLlegada.trim();
-
+const leadFormReady =
+  !!leadForm.nombre.trim() &&
+  !!leadForm.telefono.trim() &&
+  !!leadForm.ciudad.trim();
   useEffect(() => {
+    
     setDocs(buildInitialDocs(selectedSituacion));
     setCompletionMessageSent(false);
   }, [selectedSituacion]);
@@ -1262,6 +1260,34 @@ export default function Regularizacion2026() {
               </div>
 
               <div className="px-4 py-4 space-y-3 bg-white">
+                <div className="rounded-2xl border border-blue-100 bg-blue-50 p-4 mb-3">
+  <div className="flex items-center justify-between mb-2">
+    <p className="text-sm font-bold text-[#003b82]">
+      Estado de tu expediente
+    </p>
+    <span className="text-xs font-bold text-[#003b82]">
+      {docsOk}/{docsTotal}
+    </span>
+  </div>
+
+  <div className="w-full h-2 bg-blue-100 rounded-full overflow-hidden">
+    <div
+      className="h-full bg-[#003b82] rounded-full transition-all"
+      style={{ width: `${(docsOk / docsTotal) * 100}%` }}
+    />
+  </div>
+
+  <div className="grid grid-cols-2 gap-2 mt-3 text-[11px]">
+    {docs.slice(0, 4).map((doc) => (
+      <div
+        key={doc.id}
+        className="rounded-xl px-2 py-1 border border-slate-200 text-slate-700 bg-white"
+      >
+        {doc.estado === "ok" ? "✅" : doc.estado === "warn" ? "🟡" : "⬜"} {doc.nombre}
+      </div>
+    ))}
+  </div>
+</div>
                 <FieldLabel label={ui.labels.nombre} />
                 <FieldInput
                   value={leadForm.nombre}
