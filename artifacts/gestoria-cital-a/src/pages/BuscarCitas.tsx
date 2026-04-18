@@ -78,6 +78,7 @@ function OfficialBrowserBox({
   selectedTramiteLabel,
   profileLoading,
   ui,
+  step,
   confirmed,
   appointmentData,
   finalDate,
@@ -105,6 +106,7 @@ function OfficialBrowserBox({
   selectedTramiteLabel: string;
   profileLoading: boolean;
   ui: any;
+  step: number;
   confirmed: boolean;
   appointmentData: AppointmentResult | null;
   finalDate: string;
@@ -123,15 +125,15 @@ function OfficialBrowserBox({
   cameFromConfirmationLink: boolean;
   formData: ClientFormData;
   onFormChange: (field: keyof ClientFormData, value: string) => void;
-  onFormSubmit: () => void | Promise<void>;
+  onFormSubmit: () => void;
   formReady: boolean;
 }) {
   const formIntro =
     lang === "darija"
-      ? "السلام، لباس عليك. إلا بغيتي باش نشدّ لك الرونديفو، عمر هاد الفورمولار لي كاين لتحت، ومن بعد غادي نكمل معاك إن شاء الله باش نشدّ لك السيتا."
+      ? "إلا بغيتي موعد، عمر المعطيات ديالك واختار نوع الموعد، ومن بعد سارة غادي تكمل معاك وتعلمك عبر واتساب منين تلقى الموعد."
       : lang === "en"
-      ? "Hello, how are you? If you want me to book your appointment, please fill in the form below first. Then I will continue with you step by step."
-      : "Hola, ¿qué tal? Si quieres que te consiga la cita, rellena primero este formulario de abajo. Después seguiré contigo paso a paso.";
+      ? "If you need an appointment, fill in your details and choose the appointment type. Then Sara will continue and notify you on WhatsApp as soon as an appointment is found."
+      : "Si necesitas una cita, rellena tus datos y elige el tipo de cita. Después Sara continuará y te avisará por WhatsApp en cuanto encuentre una cita.";
 
   const confirmationIntro =
     lang === "darija"
@@ -352,7 +354,7 @@ function OfficialBrowserBox({
               <div className="mt-4 flex flex-col sm:flex-row gap-3">
                 <button
                   type="button"
-                  onClick={() => void onFormSubmit()}
+                  onClick={onFormSubmit}
                   className="inline-flex items-center justify-center rounded-xl bg-[#003366] text-white px-5 py-3 text-sm font-bold hover:bg-[#002244] transition-colors"
                 >
                   {saveButtonText}
@@ -645,7 +647,7 @@ export default function BuscarCitas() {
           ],
         } as Record<string, FormItem[]>,
         initialChat:
-          "السلام، لباس عليك. إلا بغيتي باش نشدّ لك الرونديفو، عافاك عمر هاد الفورمولار لي كاين لتحت، ومن بعد غادي نكمل معاك إن شاء الله باش نشدّ لك السيتا.",
+  "السلام، أنا سارة. باش تشد موعد، عمّر ليا المعطيات ديالك فـ 5 ثواني واختار نوع الموعد، وغادي نكملو إن شاء الله الإجراءات خطوة بخطوة.",
         online: "متصلة الآن",
         agentRole: "مستشارة المواعيد",
         procedureLabel: "الإجراء",
@@ -682,7 +684,7 @@ export default function BuscarCitas() {
         paymentTriggerMessage:
           "باش نكملو ونخدمو على الملف ديالك، خاصك تفعل الخدمة. منين تخلص نكملو معاك مباشرة.",
         procedureShort: "الإجراء",
-        chatPlaceholder: "عمر الفورمولار الأول باش نكمل معاك",
+        chatPlaceholder: "كتب سؤالك...",
         openOfficialSite: "فتح الموقع الرسمي",
         downloadPdf: "تحميل PDF",
       };
@@ -808,7 +810,7 @@ export default function BuscarCitas() {
           ],
         } as Record<string, FormItem[]>,
         initialChat:
-          "Hello, how are you? If you want me to book your appointment, please fill in the form below first. Then I will continue with you step by step.",
+  "Hello, I’m Sara. To get an appointment, fill in your details in 5 seconds and choose the appointment type. After that, we will continue step by step.",
         online: "Online",
         agentRole: "Appointments Advisor",
         procedureLabel: "PROCEDURE",
@@ -846,7 +848,7 @@ export default function BuscarCitas() {
         paymentTriggerMessage:
           "To continue with your case, activate the service and we continue with you step by step.",
         procedureShort: "Procedure",
-        chatPlaceholder: "Fill in the form first to continue",
+        chatPlaceholder: "Type your question...",
         openOfficialSite: "Open official site",
         downloadPdf: "Download PDF",
       };
@@ -974,7 +976,7 @@ export default function BuscarCitas() {
         ],
       } as Record<string, FormItem[]>,
       initialChat:
-        "Hola, ¿qué tal? Si quieres que te consiga la cita, rellena primero el formulario de abajo. Después seguiré contigo paso a paso.",
+  "Hola, soy Sara. Para coger una cita, relléname tus datos en 5 segundos y elige el tipo de cita. Después seguimos contigo paso a paso.",
       online: "En línea",
       agentRole: "Asesora de Citas",
       procedureLabel: "TRÁMITE",
@@ -1011,7 +1013,7 @@ export default function BuscarCitas() {
       paymentTriggerMessage:
         "Para continuar con tu trámite, activa el servicio y seguimos contigo paso a paso.",
       procedureShort: "Trámite",
-      chatPlaceholder: "Rellena primero el formulario para continuar",
+      chatPlaceholder: "Escribe tu pregunta...",
       openOfficialSite: "Abrir sede oficial",
       downloadPdf: "Descargar PDF",
     };
@@ -1033,13 +1035,6 @@ export default function BuscarCitas() {
 
   const formsForSelectedTramite =
     ui.formsByTramite[selectedTramite] ?? ui.formsByTramite.tie;
-
-  const chatEnabled =
-    formReady &&
-    !!formData.fullName.trim() &&
-    !!formData.phone.trim() &&
-    !!formData.city.trim() &&
-    !!selectedTramite;
 
   const agentSteps = useMemo(() => {
     if (lang === "darija") {
@@ -1265,7 +1260,7 @@ export default function BuscarCitas() {
     setSelectedTramite(value);
   };
 
-  const handleFormSubmit = async () => {
+  const handleFormSubmit = () => {
     if (!formData.fullName.trim() || !formData.phone.trim() || !formData.city.trim()) {
       toast({
         title:
@@ -1304,159 +1299,53 @@ export default function BuscarCitas() {
       return;
     }
 
-    setSendingChat(true);
+    setFormReady(true);
+    setShowChat(true);
+    setStep(1);
 
-    try {
-      const formMessage =
-        lang === "darija"
-          ? `العميل عمّر الاستمارة. الاسم: ${formData.fullName}. الهاتف: ${formData.phone}. المدينة: ${formData.city}. البريد: ${formData.email || "-"}. NIE/Pasaporte: ${formData.nie || "-"}. الإجراء: ${selectedTramiteLabel}.`
-          : lang === "en"
-          ? `The client completed the form. Name: ${formData.fullName}. Phone: ${formData.phone}. City: ${formData.city}. Email: ${formData.email || "-"}. NIE/Passport: ${formData.nie || "-"}. Procedure: ${selectedTramiteLabel}.`
-          : `El cliente ha completado el formulario. Nombre: ${formData.fullName}. Teléfono: ${formData.phone}. Ciudad: ${formData.city}. Email: ${formData.email || "-"}. NIE/Pasaporte: ${formData.nie || "-"}. Trámite: ${selectedTramiteLabel}.`;
+    setChatMessages((prev) => {
+      const alreadyExists = prev.some(
+        (msg) =>
+          msg.text.includes("Ahora vamos a buscarte una cita") ||
+          msg.text.includes("We will now start searching") ||
+          msg.text.includes("دابا غادي نبداو نقلبو ليك")
+      );
 
-      const res = await fetch("/api/chat", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          assistant: "sara",
-          context: "buscar_citas",
-          message: formMessage,
-          lang,
-          procedureKey: selectedTramite,
-          procedureLabel: selectedTramiteLabel,
-          sessionId: `sara-${profile?.id || "guest"}-${lang}`,
-          userId: profile?.id || "",
-          history: [],
-          leadForm: {
-            nombre: formData.fullName.trim(),
-            telefono: formData.phone.trim(),
-            email: formData.email.trim(),
-            niePasaporte: formData.nie.trim(),
-            ciudad: formData.city.trim(),
-          },
-        }),
-      });
+      if (alreadyExists) return prev;
 
-      const data = await res.json().catch(() => null);
-
-      if (!res.ok) {
-        throw new Error(data?.error || "Error en Sara");
-      }
-
-      const finalReply =
-        data?.reply ||
-        (lang === "darija"
-          ? "ممتاز. دابا غادي نبداو نقلبو ليك على موعد بأسرع وقت ممكن. منين نلقاو الموعد غادي نعلموك عبر واتساب."
-          : lang === "en"
-          ? "Perfect. We will now start searching for your appointment as fast as possible. As soon as we find one, we will notify you on WhatsApp."
-          : "Perfecto. Ahora vamos a buscarte una cita lo más rápido posible. En cuanto la encontremos, te avisaremos por WhatsApp.");
-
-      setFormReady(true);
-      setShowChat(true);
-      setStep(1);
-
-      setChatMessages((prev) => {
-        const alreadyExists = prev.some(
-          (msg) =>
-            msg.text.includes("Ahora vamos a buscarte una cita") ||
-            msg.text.includes("We will now start searching") ||
-            msg.text.includes("دابا غادي نبداو نقلبو ليك")
-        );
-
-        if (alreadyExists) return prev;
-
-        return [
-          ...prev,
-          {
-            from: "agent",
-            text: finalReply,
-            ts: Date.now(),
-          },
-        ];
-      });
-
-      toast({
-        title:
-          lang === "en"
-            ? "Data saved"
-            : lang === "darija"
-            ? "تم حفظ البيانات"
-            : "Datos guardados",
-        description:
-          lang === "en"
-            ? "Sara can now continue with the appointment search."
-            : lang === "darija"
-            ? "سارة دابا تقدر تكمل البحث على الموعد."
-            : "Sara ya puede continuar con la búsqueda de la cita.",
-      });
-    } catch (error) {
-      console.error("Error guardando formulario con Sara:", error);
-
-      setChatMessages((prev) => [
+      return [
         ...prev,
         {
           from: "agent",
           text:
             lang === "darija"
-              ? "وقع مشكل فالاتصال مع سارة أثناء حفظ الاستمارة، عاود حاول."
+              ? "ممتاز. دابا غادي نبداو نقلبو ليك على موعد بأسرع وقت ممكن. منين نلقاو الموعد غادي نعلموك عبر واتساب."
               : lang === "en"
-              ? "There was a connection error with Sara while saving the form. Please try again."
-              : "Error conectando con Sara al guardar el formulario, intenta otra vez.",
+              ? "Perfect. We will now start searching for your appointment as fast as possible. As soon as we find one, we will notify you on WhatsApp."
+              : "Perfecto. Ahora vamos a buscarte una cita lo más rápido posible. En cuanto la encontremos, te avisaremos por WhatsApp.",
           ts: Date.now(),
         },
-      ]);
+      ];
+    });
 
-      toast({
-        title:
-          lang === "en"
-            ? "Connection error"
-            : lang === "darija"
-            ? "مشكلة في الاتصال"
-            : "Error de conexión",
-        description:
-          lang === "en"
-            ? "Sara could not save the form right now."
-            : lang === "darija"
-            ? "سارة ما قدرتش تحفظ الاستمارة دابا."
-            : "Sara no pudo guardar el formulario ahora mismo.",
-        variant: "destructive",
-      });
-    } finally {
-      setSendingChat(false);
-    }
+    toast({
+      title:
+        lang === "en"
+          ? "Data saved"
+          : lang === "darija"
+          ? "تم حفظ البيانات"
+          : "Datos guardados",
+      description:
+        lang === "en"
+          ? "Sara can now continue with the appointment search."
+          : lang === "darija"
+          ? "سارة دابا تقدر تكمل البحث على الموعد."
+          : "Sara ya puede continuar con la búsqueda de la cita.",
+    });
   };
 
   const handleSendChat = async () => {
-    if (!chatBootstrapped || sendingChat || !chatInput.trim()) return;
-
-    if (!chatEnabled) {
-      const warningText =
-        lang === "darija"
-          ? "عافاك عمر الفورمولار الأول لي كاين لتحت، ومن بعد نكمل معاك باش نشدّ لك السيتا."
-          : lang === "en"
-          ? "Please fill in the form below first, then I will continue with your appointment."
-          : "Rellena primero el formulario de abajo y después continúo contigo para coger la cita.";
-
-      setChatMessages((prev) => {
-        const lastMessage = prev[prev.length - 1];
-        if (lastMessage?.from === "agent" && lastMessage.text === warningText) {
-          return prev;
-        }
-
-        return [
-          ...prev,
-          {
-            from: "agent",
-            text: warningText,
-            ts: Date.now(),
-          },
-        ];
-      });
-
-      return;
-    }
+    if (!chatInput.trim() || sendingChat || !chatBootstrapped) return;
 
     const rawText = chatInput.trim();
     const nextUserCount = userMessageCount + 1;
@@ -1469,12 +1358,10 @@ export default function BuscarCitas() {
       ts: Date.now(),
     };
 
-    const historyToSend = [...chatMessages, userMessage]
-      .slice(-8)
-      .map((msg) => ({
-        from: msg.from,
-        text: msg.text,
-      }));
+    const historyToSend = chatMessages.slice(-8).map((msg) => ({
+      from: msg.from,
+      text: msg.text,
+    }));
 
     setChatMessages((prev) => [...prev, userMessage]);
     setChatInput("");
@@ -1497,17 +1384,10 @@ export default function BuscarCitas() {
           sessionId: `sara-${profile?.id || "guest"}-${lang}`,
           userId: profile?.id || "",
           history: historyToSend,
-          leadForm: {
-            nombre: formData.fullName.trim(),
-            telefono: formData.phone.trim(),
-            email: formData.email.trim(),
-            niePasaporte: formData.nie.trim(),
-            ciudad: formData.city.trim(),
-          },
         }),
       });
 
-      const data = await res.json().catch(() => null);
+      const data = await res.json();
 
       if (!res.ok) {
         throw new Error(data?.error || "Error en Sara");
@@ -1821,19 +1701,13 @@ export default function BuscarCitas() {
                     <input
                       value={chatInput}
                       onChange={(e) => setChatInput(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          e.preventDefault();
-                          void handleSendChat();
-                        }
-                      }}
+                      onKeyDown={(e) => e.key === "Enter" && handleSendChat()}
                       placeholder={ui.chatPlaceholder}
-                      disabled={!chatEnabled}
-                      className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white placeholder-white/30 focus:outline-none focus:border-primary/50 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white placeholder-white/30 focus:outline-none focus:border-primary/50"
                     />
                     <button
-                      onClick={() => void handleSendChat()}
-                      disabled={sendingChat || !chatEnabled}
+                      onClick={handleSendChat}
+                      disabled={sendingChat}
                       className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center hover:bg-primary/90 transition-colors shrink-0 disabled:opacity-60"
                       type="button"
                     >
@@ -1981,6 +1855,7 @@ export default function BuscarCitas() {
             selectedTramiteLabel={selectedTramiteLabel}
             profileLoading={profileLoading}
             ui={ui}
+            step={step}
             confirmed={confirmed}
             appointmentData={appointmentData}
             finalDate={finalDate}
