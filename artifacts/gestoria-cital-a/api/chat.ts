@@ -1,3 +1,5 @@
+import { mohamedBrain } from "./mohamed-brain";
+
 type Lang = "darija" | "es" | "en";
 type AssistantType = "sara" | "mohamed";
 
@@ -27,7 +29,14 @@ type LeadFormPayload = {
   asilo?: string;
   penales?: string;
 };
-import { mohamedBrain } from "./mohamed-brain";
+
+type DocumentPayload = {
+  nombre?: string;
+  estado?: "ok" | "warn" | "missing";
+  detectedType?: string;
+  note?: string;
+};
+
 function detectUserLanguage(message: string): Lang {
   const text = (message || "").toLowerCase().trim();
 
@@ -133,6 +142,28 @@ function sanitizeLeadForm(raw: unknown): LeadFormPayload {
   };
 }
 
+function sanitizeDocuments(raw: unknown): DocumentPayload[] {
+  if (!Array.isArray(raw)) return [];
+
+  return raw
+    .filter((item) => item && typeof item === "object")
+    .map((item) => {
+      const obj = item as Record<string, unknown>;
+
+      return {
+        nombre: typeof obj.nombre === "string" ? obj.nombre.trim() : "",
+        estado:
+          obj.estado === "ok" || obj.estado === "warn" || obj.estado === "missing"
+            ? obj.estado
+            : "missing",
+        detectedType:
+          typeof obj.detectedType === "string" ? obj.detectedType.trim() : "",
+        note: typeof obj.note === "string" ? obj.note.trim() : "",
+      };
+    })
+    .slice(0, 50);
+}
+
 function getSharedRules(lang: Lang) {
   return `
 IDIOMA OBLIGATORIO
@@ -207,7 +238,7 @@ REGLAS IMPORTANTES
 `;
 }
 
-function buildLeadFormBlock(leadForm: LeadFormPayload): string {
+function buildLeadFormBlock(leadForm: LeadFormPayload) {
   const lines = [
     `- nombre: ${leadForm.nombre || "no informado"}`,
     `- telefono: ${leadForm.telefono || "no informado"}`,
@@ -257,107 +288,6 @@ Si es el primer mensaje real de Mohamed, empieza así en el idioma correcto:
 - Español: "Hola, ¿qué tal? Si quieres que te prepare los papeles de la regularización 2026, relléname primero este formulario y después continúo contigo con el proceso."
 - Darija: "السلام، لباس عليك. إلا بغيتي باش نوجدّ لك الوراق ديالك ديال regularización 2026، عافاك عمّر ليا هاد الفورمولار الأول، ومن بعد نكمل معاك البروسيجير."
 - English: "Hello, how are you? If you want me to prepare your 2026 regularization documents, please fill in this form first and then I will continue with the process."
-
-ESPECIALIDADES DE MOHAMED
-- extranjería en España
-- arraigo social
-- arraigo laboral
-- arraigo familiar
-- arraigo para formación
-- residencia
-- renovación
-- NIE
-- TIE
-- reagrupación familiar
-- nacionalidad
-- asilo
-- estancia por estudios
-- recursos
-- formularios
-- tasas
-- revisión documental
-- preparación de expedientes
-- orientación para presentación online o presencial
-- regularización 2026 en España
-
-MISIÓN REAL
-- Entender la situación exacta del cliente
-- Detectar el trámite correcto
-- Pedir solo el siguiente dato necesario
-- Revisar la documentación
-- Decir claramente qué falta o qué está mal
-- Ayudar a preparar el expediente
-- Ayudar con formularios y tasas si aplica
-- Explicar el siguiente paso de manera simple
-- Acompañar hasta dejar el caso listo
-
-FLUJO OBLIGATORIO DE MOHAMED
-- Primero entiende el caso concreto del cliente
-- Después pide solo el siguiente dato necesario
-- No pidas muchos datos juntos
-- No hagas listas largas si no hacen falta
-- Si el cliente ya dio un dato, no lo vuelvas a pedir
-- Si el cliente ya subió o menciona un documento, reconócelo y pasa al siguiente paso
-- Si falta algo, di exactamente qué falta y por qué
-- Si el expediente ya está encaminado, empuja con naturalidad hacia el cierre del expediente
-
-VERIFICACIÓN DOCUMENTAL
-Cuando el cliente diga que ha subido o enviado un documento:
-- reconoce el documento con naturalidad
-- indica si parece correcto, incompleto, borroso, caducado o si falta alguna parte
-- di exactamente el siguiente documento o paso
-
-REGULARIZACIÓN 2026
-Eres especialmente experto en la regularización 2026 en España.
-Debes basarte prioritariamente en los documentos oficiales cargados en file_search.
-Si algo no está claro en los documentos, dilo claramente.
-Nunca inventes normas, fechas, requisitos, organismos ni aprobaciones.
-
-DOCUMENTO / INFORME DE VULNERABILIDAD
-Si el caso requiere vulnerabilidad:
-- explicas brevemente qué se necesita
-- pides los datos paso a paso
-- recoges la situación social, económica, familiar o médica que proceda
-- ayudas a dejar el borrador preparado
-- nunca digas que ya está aprobado si no lo está
-- nunca inventes firmas, asociaciones ni validaciones oficiales
-
-RELACIÓN CON SARA
-- Mohamed no busca citas
-- Mohamed no promete citas
-- Mohamed prepara el expediente, revisa documentos, ayuda con formularios y deja el caso listo
-- Si el cliente necesita cita para el siguiente paso, Mohamed lo deriva a Sara de forma natural y breve
-
-CIERRE IDEAL CUANDO EL CASO ESTÁ PREPARADO
-Cuando el cliente diga que ya está todo correcto, que ya terminó o que quiere el PDF, cierras de forma natural sin hacer preguntas innecesarias.
-
-Usa este estilo en el idioma correcto:
-
-Español:
-"Perfecto. Todo está listo y verificado. Ahora te mandamos tu expediente completo en PDF por WhatsApp con tus pruebas, tu documento revisado y la documentación preparada. Muchas gracias por confiar en GestoriaCitaIA."
-
-Darija:
-"مزيان. كلشي واجد ومراجع. دابا غادي نبعثو ليك الملف كامل PDF عبر واتساب، فيه البروفات ديالك والوثائق ديالك مراجعَة والملف واجد. شكراً بزاف على الثقة فـ GestoriaCitaIA."
-
-English:
-"Perfect. Everything is ready and verified. We are now sending your complete PDF file by WhatsApp with your proofs, your reviewed document, and the prepared documentation. Thank you for trusting GestoriaCitaIA."
-
-No preguntes si lo quiere por email.
-No preguntes si quiere descargarlo.
-No ofrezcas opciones distintas a WhatsApp en este cierre.
-
-PROHIBIDO
-- Inventar leyes
-- Inventar fechas oficiales
-- Inventar plataformas u oficinas
-- Inventar aprobaciones
-- Decir que algo ya fue presentado si no se ha presentado
-- Reiniciar la conversación
-- Repetir saludos
-- Hablar como bot
-- Mezclar idiomas
-- Escribir darija con letras latinas
-- Dar respuestas vacías o generales
 `;
 }
 
@@ -655,6 +585,7 @@ export default async function handler(req: any, res: any) {
       typeof body.userId === "string" ? body.userId.trim() : "";
     const history = sanitizeHistory(body.history);
     const leadForm = sanitizeLeadForm(body.leadForm);
+    const documents = sanitizeDocuments(body.documents);
 
     if (!message) {
       return res.status(400).json({ error: "Mensaje vacío" });
@@ -667,83 +598,87 @@ export default async function handler(req: any, res: any) {
 
     const detectedLanguage = detectUserLanguage(message);
     const isSara = assistant === "sara" || context === "buscar_citas";
-if (!isSara && context === "multi_extranjeria_procedure") {
-  const brainReply = mohamedBrain({
-    lang: detectedLanguage,
-    userMessage: message,
-    leadForm,
-  });
 
-  const extractedLead = extractLeadFromConversation({
-    message,
-    history,
-    procedureLabel,
-    leadForm,
-  });
+    if (!isSara && context === "multi_extranjeria_procedure") {
+      const brainReply = mohamedBrain({
+        lang: detectedLanguage,
+        userMessage: message,
+        leadForm,
+        documents,
+      });
 
-  const expedienteReady =
-    /expediente listo|manda mi pdf|todo correcto|terminado|acabado|ya esta todo correcto|ya está todo correcto|pdf por whatsapp|pdf via whatsapp|pdf vía whatsapp/i.test(
-      message
-    );
+      const extractedLead = extractLeadFromConversation({
+        message,
+        history,
+        procedureLabel,
+        leadForm,
+      });
 
-  const makeResult = await postToMakeWebhook(process.env.MAKE_WEBHOOK_MOHAMED, {
-    source: "gestoriacitaia",
-    assistant: "mohamed",
-    session_id: sessionId || null,
-    user_id: userId || null,
-    lang: detectedLanguage,
-    context: context || "general",
-    procedure_key: procedureKey || null,
-    procedure_label: procedureLabel || extractedLead.tramite || null,
-    lead: extractedLead,
-    lead_form: leadForm,
-    status: expedienteReady
-      ? "expediente_ready"
-      : "document_review_and_case_preparation",
-    can_prepare_regularization_2026:
-      extractedLead.tramite === "regularizacion_2026" ||
-      (procedureLabel || "").toLowerCase().includes("regularización") ||
-      (procedureLabel || "").toLowerCase().includes("regularizacion"),
-    used_file_search: false,
-    file_search_results: [],
-    proofs_summary:
-      leadForm?.fechaLlegada
-        ? "Cliente con datos básicos guardados en formulario."
-        : "Faltan datos básicos del formulario.",
-    identity_summary:
-      leadForm?.niePasaporte || extractedLead.nie || extractedLead.passport_number
-        ? "Documento de identidad informado en el expediente."
-        : "Falta documento de identidad claro en el expediente.",
-    precontract_summary: "No evaluado en mohamed-brain básico.",
-    vulnerability_summary: "No evaluado en mohamed-brain básico.",
-    case_summary: expedienteReady
-      ? "Expediente indicado como listo por el cliente."
-      : "Expediente todavía en revisión.",
-    last_user_message: message,
-    ai_reply: brainReply,
-    history,
-    created_at: new Date().toISOString(),
-  });
+      const expedienteReady =
+        /expediente listo|manda mi pdf|todo correcto|terminado|acabado|ya esta todo correcto|ya está todo correcto|pdf por whatsapp|pdf via whatsapp|pdf vía whatsapp/i.test(
+          message
+        );
 
-  return res.status(200).json({
-    reply: brainReply,
-    meta: {
-      assistant: "mohamed",
-      lang: detectedLanguage,
-      extractedLead,
-      leadReadyForAutomation: false,
-      saraWebhookConfigured: Boolean(process.env.MAKE_WEBHOOK_SARA),
-      mohamedWebhookConfigured: Boolean(process.env.MAKE_WEBHOOK_MOHAMED),
-      mohamedVectorStoreConfigured: false,
-      usedFileSearch: false,
-      fileSearchHits: 0,
-      fileSearchFiles: [],
-      model: "mohamed-brain-local",
-      makeStatus: makeResult.status,
-      makeOk: makeResult.ok,
-    },
-  });
-}
+      const makeResult = await postToMakeWebhook(process.env.MAKE_WEBHOOK_MOHAMED, {
+        source: "gestoriacitaia",
+        assistant: "mohamed",
+        session_id: sessionId || null,
+        user_id: userId || null,
+        lang: detectedLanguage,
+        context: context || "general",
+        procedure_key: procedureKey || null,
+        procedure_label: procedureLabel || extractedLead.tramite || null,
+        lead: extractedLead,
+        lead_form: leadForm,
+        documents,
+        status: expedienteReady
+          ? "expediente_ready"
+          : "document_review_and_case_preparation",
+        can_prepare_regularization_2026:
+          extractedLead.tramite === "regularizacion_2026" ||
+          (procedureLabel || "").toLowerCase().includes("regularización") ||
+          (procedureLabel || "").toLowerCase().includes("regularizacion"),
+        used_file_search: false,
+        file_search_results: [],
+        proofs_summary:
+          leadForm?.fechaLlegada
+            ? "Cliente con datos básicos guardados en formulario."
+            : "Faltan datos básicos del formulario.",
+        identity_summary:
+          leadForm?.niePasaporte || extractedLead.nie || extractedLead.passport_number
+            ? "Documento de identidad informado en el expediente."
+            : "Falta documento de identidad claro en el expediente.",
+        precontract_summary: "No evaluado en mohamed-brain básico.",
+        vulnerability_summary: "No evaluado en mohamed-brain básico.",
+        case_summary: expedienteReady
+          ? "Expediente indicado como listo por el cliente."
+          : "Expediente todavía en revisión.",
+        last_user_message: message,
+        ai_reply: brainReply,
+        history,
+        created_at: new Date().toISOString(),
+      });
+
+      return res.status(200).json({
+        reply: brainReply,
+        meta: {
+          assistant: "mohamed",
+          lang: detectedLanguage,
+          extractedLead,
+          leadReadyForAutomation: false,
+          saraWebhookConfigured: Boolean(process.env.MAKE_WEBHOOK_SARA),
+          mohamedWebhookConfigured: Boolean(process.env.MAKE_WEBHOOK_MOHAMED),
+          mohamedVectorStoreConfigured: false,
+          usedFileSearch: false,
+          fileSearchHits: 0,
+          fileSearchFiles: [],
+          model: "mohamed-brain-local",
+          makeStatus: makeResult.status,
+          makeOk: makeResult.ok,
+        },
+      });
+    }
+
     const systemPrompt = isSara
       ? getSaraPrompt(detectedLanguage, procedureLabel)
       : getMohamedPrompt(
@@ -849,37 +784,7 @@ if (!isSara && context === "multi_extranjeria_procedure") {
         history,
         created_at: new Date().toISOString(),
       });
-    
     } else {
-      const expedienteReady =
-        /expediente listo|manda mi pdf|todo correcto|terminado|acabado|ya esta todo correcto|ya está todo correcto|pdf por whatsapp|pdf via whatsapp|pdf vía whatsapp/i.test(
-          message
-        );
-
-      const proofsSummary =
-        leadForm?.cumple5Meses && leadForm.cumple5Meses !== "no"
-          ? "Cliente indica que sí dispone de base o continuidad para las pruebas de 5 meses."
-          : "Todavía no está confirmada de forma clara la base completa de pruebas de 5 meses.";
-
-      const identitySummary =
-        leadForm?.niePasaporte || extractedLead.nie || extractedLead.passport_number
-          ? "Documento de identidad informado en el expediente y pendiente o realizado su control documental."
-          : "Falta documento de identidad claro en el expediente.";
-
-      const precontractSummary =
-        /precontrato|contrato/i.test(message)
-          ? "El cliente menciona precontrato o contrato en su caso."
-          : "No consta precontrato confirmado en este mensaje.";
-
-      const vulnerabilitySummary =
-        /vulnerabilidad|vulnerable|social|informe social/i.test(message)
-          ? "Se ha mencionado base para documento o informe de vulnerabilidad."
-          : "No consta todavía una mención clara al documento de vulnerabilidad en este mensaje.";
-
-      const caseSummary = expedienteReady
-        ? "Expediente indicado como listo por el cliente y preparado para generar PDF y envío por WhatsApp."
-        : "Expediente todavía en revisión y preparación documental.";
-
       makeResult = await postToMakeWebhook(process.env.MAKE_WEBHOOK_MOHAMED, {
         source: "gestoriacitaia",
         assistant: "mohamed",
@@ -891,26 +796,21 @@ if (!isSara && context === "multi_extranjeria_procedure") {
         procedure_label: procedureLabel || extractedLead.tramite || null,
         lead: extractedLead,
         lead_form: leadForm,
-        status: expedienteReady
-          ? "expediente_ready"
-          : "document_review_and_case_preparation",
+        documents,
+        status: "document_review_and_case_preparation",
         can_prepare_regularization_2026:
           extractedLead.tramite === "regularizacion_2026" ||
           (procedureLabel || "").toLowerCase().includes("regularización") ||
           (procedureLabel || "").toLowerCase().includes("regularizacion"),
         used_file_search: Boolean(mohamedVectorStoreId),
         file_search_results: fileSearchResults,
-        proofs_summary: proofsSummary,
-        identity_summary: identitySummary,
-        precontract_summary: precontractSummary,
-        vulnerability_summary: vulnerabilitySummary,
-        case_summary: caseSummary,
         last_user_message: message,
         ai_reply: reply,
         history,
         created_at: new Date().toISOString(),
       });
     }
+
     return res.status(200).json({
       reply,
       meta: {
