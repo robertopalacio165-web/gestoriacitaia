@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { useLocation } from "wouter";
 import { Navbar } from "@/components/Navbar";
-import { PaymentModal } from "@/components/PaymentModal";
 import { useLang } from "@/contexts/LanguageContext";
 import { useToast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
@@ -14,12 +13,19 @@ import {
   Shield,
   Bell,
   CheckCircle2,
-  MessageSquare,
-  Send,
   ExternalLink,
+  Volume2,
+  VolumeX,
 } from "lucide-react";
 import { useScheduleAppointment } from "@/hooks/use-appointments";
 import { supabase } from "@/lib/supabaseClient";
+
+declare global {
+  interface Window {
+    SpeechRecognition?: any;
+    webkitSpeechRecognition?: any;
+  }
+}
 
 interface ChatMsg {
   from: "agent" | "user";
@@ -66,7 +72,6 @@ type AppointmentResult = {
 type ClientFormData = {
   fullName: string;
   phone: string;
-  email: string;
   nie: string;
   city: string;
 };
@@ -78,7 +83,6 @@ function OfficialBrowserBox({
   selectedTramiteLabel,
   profileLoading,
   ui,
-  step,
   confirmed,
   appointmentData,
   finalDate,
@@ -106,7 +110,6 @@ function OfficialBrowserBox({
   selectedTramiteLabel: string;
   profileLoading: boolean;
   ui: any;
-  step: number;
   confirmed: boolean;
   appointmentData: AppointmentResult | null;
   finalDate: string;
@@ -130,10 +133,10 @@ function OfficialBrowserBox({
 }) {
   const formIntro =
     lang === "darija"
-      ? "إلا بغيتي موعد، عمر المعطيات ديالك واختار نوع الموعد، ومن بعد سارة غادي تكمل معاك وتعلمك عبر واتساب منين تلقى الموعد."
+      ? "إلا بغيتي موعد، عمر المعطيات ديالك واختار نوع الموعد، ومن بعد سارة غادي تكمل معاك بالصوت وتعلمك عبر واتساب منين تلقى الموعد."
       : lang === "en"
-      ? "If you need an appointment, fill in your details and choose the appointment type. Then Sara will continue and notify you on WhatsApp as soon as an appointment is found."
-      : "Si necesitas una cita, rellena tus datos y elige el tipo de cita. Después Sara continuará y te avisará por WhatsApp en cuanto encuentre una cita.";
+      ? "If you need an appointment, fill in your details and choose the appointment type. Then Sara will continue with you by voice and notify you on WhatsApp as soon as an appointment is found."
+      : "Si necesitas una cita, rellena tus datos y elige el tipo de cita. Después Sara continuará contigo por voz y te avisará por WhatsApp en cuanto encuentre una cita.";
 
   const confirmationIntro =
     lang === "darija"
@@ -271,28 +274,6 @@ function OfficialBrowserBox({
                 <div>
                   <label className="block text-xs font-bold text-gray-700 mb-1">
                     {lang === "darija"
-                      ? "البريد الإلكتروني"
-                      : lang === "en"
-                      ? "Email"
-                      : "Email"}
-                  </label>
-                  <input
-                    className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-primary/40"
-                    value={formData.email}
-                    onChange={(e) => onFormChange("email", e.target.value)}
-                    placeholder={
-                      lang === "darija"
-                        ? "بريدك الإلكتروني"
-                        : lang === "en"
-                        ? "your@email.com"
-                        : "correo@ejemplo.com"
-                    }
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">
-                    {lang === "darija"
                       ? "NIE / الباسبور"
                       : lang === "en"
                       ? "NIE / Passport"
@@ -328,7 +309,7 @@ function OfficialBrowserBox({
                   />
                 </div>
 
-                <div>
+                <div className="sm:col-span-2">
                   <label className="block text-xs font-bold text-gray-700 mb-1">
                     {lang === "darija"
                       ? "نوع الموعد"
@@ -489,29 +470,26 @@ export default function BuscarCitas() {
   const [step, setStep] = useState(0);
   const [muted, setMuted] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
-  const [showChat, setShowChat] = useState(false);
   const [showDocs, setShowDocs] = useState(false);
   const [showForms, setShowForms] = useState(false);
-  const [chatInput, setChatInput] = useState("");
-  const [showPayment, setShowPayment] = useState(false);
-  const [planActivo, setPlanActivo] = useState<string | null>(null);
   const [profile, setProfile] = useState<ProfileRow | null>(null);
   const [appointmentData, setAppointmentData] =
     useState<AppointmentResult | null>(null);
   const [profileLoading, setProfileLoading] = useState(true);
-  const [sendingChat, setSendingChat] = useState(false);
-  const [userMessageCount, setUserMessageCount] = useState(0);
-  const [paymentTriggered, setPaymentTriggered] = useState(false);
-  const [chatMessages, setChatMessages] = useState<ChatMsg[]>([]);
-  const [chatBootstrapped, setChatBootstrapped] = useState(false);
   const [formData, setFormData] = useState<ClientFormData>({
     fullName: "",
     phone: "",
-    email: "",
     nie: "",
     city: "",
   });
   const [formReady, setFormReady] = useState(false);
+  const [voiceSupported, setVoiceSupported] = useState(true);
+  const [isListening, setIsListening] = useState(false);
+  const [waitingSara, setWaitingSara] = useState(false);
+  const [voiceHistory, setVoiceHistory] = useState<ChatMsg[]>([]);
+  const [lastUserTranscript, setLastUserTranscript] = useState("");
+
+  const recognitionRef = useRef<any>(null);
 
   const urlParams = useMemo(() => {
     const url = new URL(window.location.href);
@@ -524,7 +502,6 @@ export default function BuscarCitas() {
   const { t, lang } = useLang();
   const { toast } = useToast();
   const scheduleMutation = useScheduleAppointment();
-  const chatEndRef = useRef<HTMLDivElement>(null);
 
   const ui = useMemo(() => {
     if (lang === "darija") {
@@ -646,18 +623,13 @@ export default function BuscarCitas() {
             },
           ],
         } as Record<string, FormItem[]>,
-        initialChat:
-  "السلام، أنا سارة. باش تشد موعد، عمّر ليا المعطيات ديالك فـ 5 ثواني واختار نوع الموعد، وغادي نكملو إن شاء الله الإجراءات خطوة بخطوة.",
+        initialVoice:
+          "السلام، أنا سارة. إلا بغيتي نشد لك الموعد، عمر المعطيات ديالك واختار نوع الموعد، ومن بعد ضغط على الميكروفون باش نكمل معاك بالصوت.",
         online: "متصلة الآن",
         agentRole: "مستشارة المواعيد",
         procedureLabel: "الإجراء",
         procedurePlaceholder: "اختار الإجراء من اللائحة",
-        personalData: "المعطيات الشخصية",
-        fullName: "الاسم",
-        phone: "الهاتف",
         loadingUserData: "جاري تحميل معطيات المستخدم...",
-        aiFilledData: "المعطيات تعمرات أوتوماتيكياً من طرف الوكيل الذكي",
-        accept: "موافق",
         govSmall: "الهجرة:",
         govTitle: "الموعد المسبق",
         govLine1: "المديرية العامة",
@@ -670,23 +642,26 @@ export default function BuscarCitas() {
         appointmentNumber: "رقم الموعد",
         reservationSaved: "تم حفظ الحجز بنجاح",
         sourceLabel: "المصدر الرسمي",
-        muteSimple: "كتم",
         foundSuccessTitle: "لقينا الموعد!",
         foundSuccessDesc: "دابا أكد باش تكمل.",
         foundErrorTitle: "خطأ فالبحث عن الموعد",
         foundErrorDesc: "ما قدرناش نقلبو على الموعد دابا.",
         confirmSuccessTitle: "تم تأكيد الموعد!",
         confirmSuccessDesc: "الحجز تسجل بنجاح.",
-        planActivated: "تفعلات الخطة",
-        planContinue: "مزيان. نكملو دابا الموعد خطوة بخطوة.",
-        paymentMessage:
-          "باش تحجز الموعد وتكمل العملية، فعل الخطة ديالك. أنا نرشدك خطوة بخطوة.",
-        paymentTriggerMessage:
-          "باش نكملو ونخدمو على الملف ديالك، خاصك تفعل الخدمة. منين تخلص نكملو معاك مباشرة.",
         procedureShort: "الإجراء",
-        chatPlaceholder: "كتب سؤالك...",
         openOfficialSite: "فتح الموقع الرسمي",
         downloadPdf: "تحميل PDF",
+        voiceButton: "تكلم مع سارة",
+        stopButton: "وقف الميكروفون",
+        voiceBlocked: "عافاك عمر الفورمولار الأول ومن بعد ضغط على الميكروفون.",
+        latestReply: "آخر جواب ديال سارة",
+        yourVoice: "آخر جواب ديالك بالصوت",
+        listening: "سارة كاتسمع ليك دابا...",
+        saveTitle: "تحفظات المعطيات",
+        saveDesc: "سارة تقدر دابا تكمل معاك بالصوت.",
+        missingTitle: "كاينين بيانات ناقصين",
+        missingDesc: "عمر الاسم والهاتف والمدينة قبل ما تكمل.",
+        micNotSupported: "هاد المتصفح ما كيدعمش الميكروفون. استعمل Chrome.",
       };
     }
 
@@ -809,18 +784,13 @@ export default function BuscarCitas() {
             },
           ],
         } as Record<string, FormItem[]>,
-        initialChat:
-  "Hello, I’m Sara. To get an appointment, fill in your details in 5 seconds and choose the appointment type. After that, we will continue step by step.",
+        initialVoice:
+          "Hello, I’m Sara. If you want me to get your appointment, fill in your details, choose the appointment type, and then press the microphone so I can continue with you by voice.",
         online: "Online",
         agentRole: "Appointments Advisor",
         procedureLabel: "PROCEDURE",
         procedurePlaceholder: "Select the procedure from the list",
-        personalData: "PERSONAL DATA",
-        fullName: "Name",
-        phone: "Phone",
         loadingUserData: "Loading user data...",
-        aiFilledData: "Data automatically filled by the AI agent",
-        accept: "Accept",
         govSmall: "immigration:",
         govTitle: "APPOINTMENT",
         govLine1: "GENERAL OFFICE",
@@ -833,24 +803,26 @@ export default function BuscarCitas() {
         appointmentNumber: "Appointment No.",
         reservationSaved: "Reservation saved successfully",
         sourceLabel: "Official source",
-        muteSimple: "Mute",
         foundSuccessTitle: "Appointment found!",
         foundSuccessDesc: "Now confirm to continue.",
         foundErrorTitle: "Error finding appointment",
         foundErrorDesc: "Could not search for an appointment right now.",
         confirmSuccessTitle: "Appointment confirmed!",
         confirmSuccessDesc: "The booking was saved successfully.",
-        planActivated: "Plan activated",
-        planContinue:
-          "Perfect. Let's continue with your appointment step by step.",
-        paymentMessage:
-          "To book your appointment and continue the process, activate your plan. I’ll guide you step by step.",
-        paymentTriggerMessage:
-          "To continue with your case, activate the service and we continue with you step by step.",
         procedureShort: "Procedure",
-        chatPlaceholder: "Type your question...",
         openOfficialSite: "Open official site",
         downloadPdf: "Download PDF",
+        voiceButton: "Talk to Sara",
+        stopButton: "Stop microphone",
+        voiceBlocked: "Complete the form first and then press the microphone.",
+        latestReply: "Sara's latest reply",
+        yourVoice: "Your latest voice answer",
+        listening: "Sara is listening to you now...",
+        saveTitle: "Data saved",
+        saveDesc: "Sara can now continue with you by voice.",
+        missingTitle: "Missing data",
+        missingDesc: "Fill in name, phone and city before continuing.",
+        micNotSupported: "This browser does not support microphone. Use Chrome.",
       };
     }
 
@@ -975,18 +947,13 @@ export default function BuscarCitas() {
           },
         ],
       } as Record<string, FormItem[]>,
-      initialChat:
-  "Hola, soy Sara. Para coger una cita, relléname tus datos en 5 segundos y elige el tipo de cita. Después seguimos contigo paso a paso.",
+      initialVoice:
+        "Hola, soy Sara. Si quieres que te consiga la cita, rellena tus datos, elige el tipo de cita y después pulsa el micrófono para continuar conmigo por voz.",
       online: "En línea",
       agentRole: "Asesora de Citas",
       procedureLabel: "TRÁMITE",
       procedurePlaceholder: "Seleccione el trámite entre los relacionados",
-      personalData: "DATOS PERSONALES",
-      fullName: "Nombre",
-      phone: "Teléfono",
       loadingUserData: "Cargando datos del usuario...",
-      aiFilledData: "Datos rellenados automáticamente por el agente IA",
-      accept: "Aceptar",
       govSmall: "extranjería:",
       govTitle: "CITA PREVIA",
       govLine1: "COMISARÍA GENERAL",
@@ -999,23 +966,26 @@ export default function BuscarCitas() {
       appointmentNumber: "Nº Cita",
       reservationSaved: "Reserva guardada correctamente",
       sourceLabel: "Fuente oficial",
-      muteSimple: "Mute",
       foundSuccessTitle: "¡Cita encontrada!",
       foundSuccessDesc: "Ahora confirma para continuar.",
       foundErrorTitle: "Error al buscar cita",
       foundErrorDesc: "No se pudo buscar la cita en este momento.",
       confirmSuccessTitle: "¡Cita confirmada!",
       confirmSuccessDesc: "La reserva ha quedado registrada correctamente.",
-      planActivated: "Plan activado",
-      planContinue: "Perfecto. Continuamos con tu cita paso a paso.",
-      paymentMessage:
-        "Para reservar tu cita y continuar con el proceso, activa tu plan. Yo te guío paso a paso.",
-      paymentTriggerMessage:
-        "Para continuar con tu trámite, activa el servicio y seguimos contigo paso a paso.",
       procedureShort: "Trámite",
-      chatPlaceholder: "Escribe tu pregunta...",
       openOfficialSite: "Abrir sede oficial",
       downloadPdf: "Descargar PDF",
+      voiceButton: "Hablar con Sara",
+      stopButton: "Parar micrófono",
+      voiceBlocked: "Rellena primero el formulario y después pulsa el micrófono.",
+      latestReply: "Última respuesta de Sara",
+      yourVoice: "Tu última respuesta por voz",
+      listening: "Sara te está escuchando ahora...",
+      saveTitle: "Datos guardados",
+      saveDesc: "Sara ya puede continuar contigo por voz.",
+      missingTitle: "Faltan datos",
+      missingDesc: "Rellena nombre, teléfono y ciudad antes de continuar.",
+      micNotSupported: "Este navegador no soporta micrófono. Usa Chrome.",
     };
   }, [lang]);
 
@@ -1025,9 +995,9 @@ export default function BuscarCitas() {
     TRAMITES.find((item) => item.value === selectedTramite)?.label ||
     TRAMITES[0].label;
 
-  const chatStorageKey = useMemo(() => {
+  const voiceStorageKey = useMemo(() => {
     const userId = profile?.id || "guest";
-    return `gestoriacitaia_sara_chat_${userId}_${lang}`;
+    return `gestoriacitaia_sara_voice_${userId}_${lang}`;
   }, [profile?.id, lang]);
 
   const docsForSelectedTramite =
@@ -1088,8 +1058,10 @@ export default function BuscarCitas() {
   }, [lang, selectedTramiteLabel]);
 
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [chatMessages, sendingChat]);
+    const SpeechRecognition =
+      window.SpeechRecognition || window.webkitSpeechRecognition;
+    setVoiceSupported(!!SpeechRecognition);
+  }, []);
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -1141,19 +1113,17 @@ export default function BuscarCitas() {
       ...prev,
       fullName: profile?.full_name?.trim() || prev.fullName,
       phone: profile?.phone?.trim() || prev.phone,
-      email: profile?.email?.trim() || prev.email,
       nie: profile?.nie?.trim() || prev.nie,
     }));
-  }, [profile?.full_name, profile?.phone, profile?.email, profile?.nie]);
+  }, [profile?.full_name, profile?.phone, profile?.nie]);
 
   useEffect(() => {
     if (!urlParams.appointmentId && !urlParams.token) return;
 
-    setShowChat(true);
     setStep(1);
     setFormReady(true);
 
-    setChatMessages((prev) => {
+    setVoiceHistory((prev) => {
       const alreadyExists = prev.some(
         (msg) =>
           msg.text.includes("enlace de confirmación") ||
@@ -1180,74 +1150,112 @@ export default function BuscarCitas() {
   }, [urlParams.appointmentId, urlParams.token, lang]);
 
   useEffect(() => {
-    if (!chatStorageKey) return;
+    if (!voiceStorageKey) return;
 
     try {
-      const raw = localStorage.getItem(chatStorageKey);
+      const raw = localStorage.getItem(voiceStorageKey);
 
       if (raw) {
         const parsed = JSON.parse(raw) as ChatMsg[];
 
         if (Array.isArray(parsed) && parsed.length > 0) {
-          setChatMessages((prev) => {
-            if (prev.length > 0) {
-              return prev;
-            }
+          setVoiceHistory((prev) => {
+            if (prev.length > 0) return prev;
             return parsed;
           });
-
-          const userMsgs = parsed.filter((m) => m.from === "user").length;
-          setUserMessageCount(userMsgs);
-
-          const paymentAlreadyTriggered = parsed.some(
-            (m) =>
-              m.from === "agent" &&
-              (m.text.includes("activar el servicio") ||
-                m.text.includes("تفعل الخدمة") ||
-                m.text.includes("activate the service"))
-          );
-
-          setPaymentTriggered(paymentAlreadyTriggered);
-          setChatBootstrapped(true);
           return;
         }
       }
 
-      const freshChat: ChatMsg[] = [
+      const freshHistory: ChatMsg[] = [
         {
           from: "agent",
-          text: ui.initialChat,
+          text: ui.initialVoice,
           ts: Date.now(),
         },
       ];
 
-      setChatMessages((prev) => {
-        if (prev.length > 0) {
-          return prev;
-        }
-        return freshChat;
+      setVoiceHistory((prev) => {
+        if (prev.length > 0) return prev;
+        return freshHistory;
       });
-
-      setUserMessageCount(0);
-      setPaymentTriggered(false);
-      setChatBootstrapped(true);
     } catch (error) {
       console.error("Error cargando historial de Sara:", error);
-      setChatBootstrapped(true);
     }
-  }, [chatStorageKey, ui.initialChat]);
+  }, [voiceStorageKey, ui.initialVoice]);
 
   useEffect(() => {
-    if (!chatBootstrapped || !chatStorageKey || chatMessages.length === 0) {
-      return;
-    }
+    if (!voiceStorageKey || voiceHistory.length === 0) return;
 
     try {
-      localStorage.setItem(chatStorageKey, JSON.stringify(chatMessages));
+      localStorage.setItem(voiceStorageKey, JSON.stringify(voiceHistory));
     } catch (error) {
       console.error("Error guardando historial de Sara:", error);
     }
-  }, [chatMessages, chatBootstrapped, chatStorageKey]);
+  }, [voiceHistory, voiceStorageKey]);
+
+  const speakText = (text: string) => {
+    if (muted) return;
+    if (!("speechSynthesis" in window)) return;
+
+    try {
+      window.speechSynthesis.cancel();
+
+      const utterance = new SpeechSynthesisUtterance(text);
+
+      if (lang === "darija") {
+        utterance.lang = "ar-MA";
+      } else if (lang === "en") {
+        utterance.lang = "en-US";
+      } else {
+        utterance.lang = "es-ES";
+      }
+
+      utterance.rate = 1;
+      utterance.pitch = 1;
+      window.speechSynthesis.speak(utterance);
+    } catch (error) {
+      console.error("Error reproduciendo voz de Sara:", error);
+    }
+  };
+
+  const pushAgentMessage = (text: string, speak = false) => {
+    setVoiceHistory((prev) => [
+      ...prev,
+      {
+        from: "agent",
+        text,
+        ts: Date.now(),
+      },
+    ]);
+
+    if (speak) {
+      setTimeout(() => {
+        speakText(text);
+      }, 120);
+    }
+  };
+
+  const pushUserMessage = (text: string) => {
+    setVoiceHistory((prev) => [
+      ...prev,
+      {
+        from: "user",
+        text,
+        ts: Date.now(),
+      },
+    ]);
+  };
+
+  useEffect(() => {
+    if (voiceHistory.length === 1 && voiceHistory[0]?.text === ui.initialVoice) {
+      const timer = setTimeout(() => {
+        speakText(ui.initialVoice);
+      }, 700);
+
+      return () => clearTimeout(timer);
+    }
+  }, [voiceHistory, ui.initialVoice]);
 
   const handleFormChange = (field: keyof ClientFormData, value: string) => {
     setFormData((prev) => ({
@@ -1263,18 +1271,8 @@ export default function BuscarCitas() {
   const handleFormSubmit = () => {
     if (!formData.fullName.trim() || !formData.phone.trim() || !formData.city.trim()) {
       toast({
-        title:
-          lang === "en"
-            ? "Missing data"
-            : lang === "darija"
-            ? "كاينين بيانات ناقصين"
-            : "Faltan datos",
-        description:
-          lang === "en"
-            ? "Please fill in name, phone and city before continuing."
-            : lang === "darija"
-            ? "عمر الاسم والهاتف والمدينة قبل ما تكمل."
-            : "Rellena nombre, teléfono y ciudad antes de continuar.",
+        title: ui.missingTitle,
+        description: ui.missingDesc,
         variant: "destructive",
       });
       return;
@@ -1300,75 +1298,52 @@ export default function BuscarCitas() {
     }
 
     setFormReady(true);
-    setShowChat(true);
     setStep(1);
 
-    setChatMessages((prev) => {
-      const alreadyExists = prev.some(
-        (msg) =>
-          msg.text.includes("Ahora vamos a buscarte una cita") ||
-          msg.text.includes("We will now start searching") ||
-          msg.text.includes("دابا غادي نبداو نقلبو ليك")
-      );
+    const msg =
+      lang === "darija"
+        ? "ممتاز. دابا خديت المعطيات ديالك. ضغط على الميكروفون وغادي نكمل معاك بالصوت، ومنين نلقاو الموعد غادي نعلموك عبر واتساب."
+        : lang === "en"
+        ? "Perfect. I already have your details. Press the microphone and I will continue with you by voice. As soon as we find the appointment, we will notify you on WhatsApp."
+        : "Perfecto. Ya tengo tus datos. Pulsa el micrófono y continuaré contigo por voz. En cuanto encontremos la cita, te avisaremos por WhatsApp.";
 
-      if (alreadyExists) return prev;
-
-      return [
-        ...prev,
-        {
-          from: "agent",
-          text:
-            lang === "darija"
-              ? "ممتاز. دابا غادي نبداو نقلبو ليك على موعد بأسرع وقت ممكن. منين نلقاو الموعد غادي نعلموك عبر واتساب."
-              : lang === "en"
-              ? "Perfect. We will now start searching for your appointment as fast as possible. As soon as we find one, we will notify you on WhatsApp."
-              : "Perfecto. Ahora vamos a buscarte una cita lo más rápido posible. En cuanto la encontremos, te avisaremos por WhatsApp.",
-          ts: Date.now(),
-        },
-      ];
-    });
+    pushAgentMessage(msg, true);
 
     toast({
-      title:
-        lang === "en"
-          ? "Data saved"
-          : lang === "darija"
-          ? "تم حفظ البيانات"
-          : "Datos guardados",
-      description:
-        lang === "en"
-          ? "Sara can now continue with the appointment search."
-          : lang === "darija"
-          ? "سارة دابا تقدر تكمل البحث على الموعد."
-          : "Sara ya puede continuar con la búsqueda de la cita.",
+      title: ui.saveTitle,
+      description: ui.saveDesc,
     });
   };
 
-  const handleSendChat = async () => {
-    if (!chatInput.trim() || sendingChat || !chatBootstrapped) return;
+  const getRecognitionLang = () => {
+    if (lang === "darija") return "ar-MA";
+    if (lang === "en") return "en-US";
+    return "es-ES";
+  };
 
-    const rawText = chatInput.trim();
-    const nextUserCount = userMessageCount + 1;
-    const shouldTriggerPayment =
-      !planActivo && !paymentTriggered && nextUserCount >= 2;
+  const stopListening = () => {
+    try {
+      recognitionRef.current?.stop?.();
+    } catch (error) {
+      console.error("Error deteniendo micro Sara:", error);
+    } finally {
+      setIsListening(false);
+    }
+  };
 
-    const userMessage: ChatMsg = {
-      from: "user",
-      text: rawText,
-      ts: Date.now(),
-    };
+  const handleVoiceConversation = async (spokenText: string) => {
+    if (!spokenText.trim()) return;
 
-    const historyToSend = chatMessages.slice(-8).map((msg) => ({
-      from: msg.from,
-      text: msg.text,
-    }));
-
-    setChatMessages((prev) => [...prev, userMessage]);
-    setChatInput("");
-    setSendingChat(true);
-    setUserMessageCount(nextUserCount);
+    pushUserMessage(spokenText);
+    setLastUserTranscript(spokenText);
+    setWaitingSara(true);
 
     try {
+      const historyToSend = voiceHistory.slice(-8).map((msg) => ({
+        from: msg.from,
+        text: msg.text,
+      }));
+
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: {
@@ -1376,14 +1351,20 @@ export default function BuscarCitas() {
         },
         body: JSON.stringify({
           assistant: "sara",
-          context: "buscar_citas",
-          message: rawText,
+          context: "voice_buscar_citas",
+          message: spokenText,
           lang,
           procedureKey: selectedTramite,
           procedureLabel: selectedTramiteLabel,
           sessionId: `sara-${profile?.id || "guest"}-${lang}`,
           userId: profile?.id || "",
           history: historyToSend,
+          leadForm: {
+            nombre: formData.fullName,
+            telefono: formData.phone,
+            niePasaporte: formData.nie,
+            ciudad: formData.city,
+          },
         }),
       });
 
@@ -1401,66 +1382,97 @@ export default function BuscarCitas() {
           ? "Sorry, I could not answer right now."
           : "Lo siento, no pude responder ahora mismo.");
 
-      const agentReply: ChatMsg = {
-        from: "agent",
-        text: finalReply,
-        ts: Date.now(),
-      };
-
-      if (shouldTriggerPayment) {
-        const paymentMsg: ChatMsg = {
-          from: "agent",
-          text: ui.paymentTriggerMessage,
-          ts: Date.now() + 1,
-        };
-
-        setChatMessages((prev) => [...prev, agentReply, paymentMsg]);
-        setPaymentTriggered(true);
-
-        setTimeout(() => {
-          setShowPayment(true);
-        }, 900);
-      } else {
-        setChatMessages((prev) => [...prev, agentReply]);
-      }
+      pushAgentMessage(finalReply, true);
     } catch (error) {
       console.error("Error conectando con Sara:", error);
 
-      const errorReply: ChatMsg = {
-        from: "agent",
-        text:
-          lang === "darija"
-            ? "وقع مشكل فالاتصال مع سارة، عاود حاول."
-            : lang === "en"
-            ? "There was a connection error with Sara. Please try again."
-            : "Error conectando con Sara, intenta otra vez.",
-        ts: Date.now(),
-      };
+      const errorReply =
+        lang === "darija"
+          ? "وقع مشكل فالاتصال مع سارة، عاود حاول."
+          : lang === "en"
+          ? "There was a connection error with Sara. Please try again."
+          : "Error conectando con Sara, intenta otra vez.";
 
-      setChatMessages((prev) => [...prev, errorReply]);
+      pushAgentMessage(errorReply, true);
     } finally {
-      setSendingChat(false);
+      setWaitingSara(false);
     }
   };
 
-  const handleSelectPlan = (plan: string) => {
-    setPlanActivo(plan);
-    setShowPayment(false);
-    setStep(1);
+  const startListening = () => {
+    if (!formReady) {
+      pushAgentMessage(ui.voiceBlocked, true);
 
-    toast({
-      title: ui.planActivated,
-      description: ui.planContinue,
-    });
+      toast({
+        title: ui.missingTitle,
+        description: ui.missingDesc,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const SpeechRecognition =
+      window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      setVoiceSupported(false);
+      toast({
+        title: "Micrófono no compatible",
+        description: ui.micNotSupported,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const recognition = new SpeechRecognition();
+      recognition.lang = getRecognitionLang();
+      recognition.interimResults = false;
+      recognition.continuous = false;
+      recognition.maxAlternatives = 1;
+
+      recognition.onstart = () => {
+        setIsListening(true);
+      };
+
+      recognition.onend = () => {
+        setIsListening(false);
+      };
+
+      recognition.onerror = () => {
+        setIsListening(false);
+
+        toast({
+          title: "Error de micrófono",
+          description:
+            lang === "darija"
+              ? "وقع مشكل فالمايكروفون، عاود حاول."
+              : lang === "en"
+              ? "There was a microphone error. Please try again."
+              : "Hubo un error con el micrófono. Inténtalo otra vez.",
+          variant: "destructive",
+        });
+      };
+
+      recognition.onresult = async (event: any) => {
+        const transcript =
+          event?.results?.[0]?.[0]?.transcript?.trim?.() || "";
+
+        if (!transcript) return;
+
+        await handleVoiceConversation(transcript);
+      };
+
+      recognitionRef.current = recognition;
+      recognition.start();
+    } catch (error) {
+      console.error("Error iniciando reconocimiento Sara:", error);
+      setIsListening(false);
+    }
   };
 
   const handleAceptar = () => {
     if (!selectedTramite) return;
-
-    if (!planActivo) {
-      setShowPayment(true);
-      return;
-    }
 
     scheduleMutation.mutate(
       { type: selectedTramite },
@@ -1469,6 +1481,15 @@ export default function BuscarCitas() {
           const data = (result as AppointmentResult | null) ?? null;
           setAppointmentData(data);
           setStep(2);
+
+          const foundMsg =
+            lang === "darija"
+              ? "مزيان. لقينا ليك موعد. دابا أكد الموعد باش نكملو ونصيفطو ليك PDF النهائي."
+              : lang === "en"
+              ? "Perfect. We found an appointment for you. Now confirm it so we can continue and send you the final PDF."
+              : "Perfecto. Hemos encontrado una cita para ti. Ahora confírmala para continuar y enviarte el PDF final.";
+
+          pushAgentMessage(foundMsg, true);
 
           toast({
             title: ui.foundSuccessTitle,
@@ -1490,12 +1511,16 @@ export default function BuscarCitas() {
   };
 
   const handleConfirm = () => {
-    if (!planActivo) {
-      setShowPayment(true);
-      return;
-    }
-
     setConfirmed(true);
+
+    const confirmMsg =
+      lang === "darija"
+        ? "مزيان. تم تأكيد الموعد ديالك. غادي توصلك التفاصيل وPDF عبر واتساب."
+        : lang === "en"
+        ? "Perfect. Your appointment has been confirmed. You will receive the details and the PDF on WhatsApp."
+        : "Perfecto. Tu cita ha quedado confirmada. Te llegará el detalle y el PDF por WhatsApp.";
+
+    pushAgentMessage(confirmMsg, true);
 
     toast({
       title: ui.confirmSuccessTitle,
@@ -1526,6 +1551,10 @@ export default function BuscarCitas() {
   const cameFromConfirmationLink =
     !!urlParams.appointmentId || !!urlParams.token;
 
+  const latestAgentMessage =
+    [...voiceHistory].reverse().find((msg) => msg.from === "agent")?.text ||
+    ui.initialVoice;
+
   return (
     <div className="min-h-screen bg-background text-foreground relative flex flex-col">
       <div
@@ -1537,13 +1566,6 @@ export default function BuscarCitas() {
       />
 
       <Navbar />
-
-      <PaymentModal
-        open={showPayment}
-        onClose={() => setShowPayment(false)}
-        onSelectPlan={handleSelectPlan}
-        agentMessage={ui.paymentMessage}
-      />
 
       <main className="flex-1 relative z-10 flex flex-col pt-16 pb-0">
         <h1 className="text-xl font-display font-bold px-4 sm:px-6 py-3 max-w-7xl mx-auto w-full">
@@ -1580,10 +1602,22 @@ export default function BuscarCitas() {
                 </span>
               </div>
 
-              <div className="absolute top-3 right-3 relative">
+              <div className="absolute top-3 right-3 flex items-center gap-2">
                 <div className="w-7 h-7 rounded-full bg-black/50 backdrop-blur-md border border-white/10 flex items-center justify-center">
                   <Bell className="w-3.5 h-3.5 text-white" />
                 </div>
+
+                <button
+                  onClick={() => setMuted(!muted)}
+                  className="w-8 h-8 rounded-full bg-black/50 border border-white/10 flex items-center justify-center"
+                  type="button"
+                >
+                  {muted ? (
+                    <VolumeX className="w-4 h-4 text-white" />
+                  ) : (
+                    <Volume2 className="w-4 h-4 text-white" />
+                  )}
+                </button>
               </div>
 
               {!muted && (
@@ -1603,24 +1637,6 @@ export default function BuscarCitas() {
                 </div>
               )}
 
-              <div className="absolute bottom-3 left-0 right-0 flex items-center justify-center">
-                <button
-                  onClick={() => setMuted(!muted)}
-                  className={`w-10 h-10 rounded-full border flex items-center justify-center backdrop-blur-md transition-colors ${
-                    muted
-                      ? "bg-destructive/80 border-destructive"
-                      : "bg-black/50 border-white/20 hover:bg-black/70"
-                  }`}
-                  type="button"
-                >
-                  {muted ? (
-                    <MicOff className="w-4 h-4 text-white" />
-                  ) : (
-                    <Mic className="w-4 h-4 text-white" />
-                  )}
-                </button>
-              </div>
-
               <div className="absolute bottom-14 right-3 text-right">
                 <p className="text-white font-bold text-sm drop-shadow-lg">
                   Sara
@@ -1629,94 +1645,88 @@ export default function BuscarCitas() {
                   {ui.agentRole}
                 </p>
               </div>
+
+              <div className="absolute bottom-3 left-0 right-0 flex items-center justify-center">
+                <button
+                  onClick={isListening ? stopListening : startListening}
+                  className={`w-12 h-12 rounded-full border flex items-center justify-center backdrop-blur-md transition-colors ${
+                    isListening
+                      ? "bg-destructive/80 border-destructive"
+                      : "bg-black/50 border-white/20 hover:bg-black/70"
+                  }`}
+                  type="button"
+                >
+                  {isListening ? (
+                    <MicOff className="w-5 h-5 text-white" />
+                  ) : (
+                    <Mic className="w-5 h-5 text-white" />
+                  )}
+                </button>
+              </div>
             </div>
 
-            <button
-              onClick={() => setShowChat(!showChat)}
-              className={`flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-semibold border transition-all ${
-                showChat
-                  ? "bg-secondary/20 border-secondary/40 text-secondary"
-                  : "glass-panel border-white/10 text-white/70 hover:text-white hover:border-white/20"
-              }`}
-              type="button"
-            >
-              <MessageSquare className="w-4 h-4" />
-              Chat
-            </button>
-
-            <AnimatePresence>
-              {showChat && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  exit={{ opacity: 0, height: 0 }}
-                  className="glass-panel-heavy border border-white/10 rounded-2xl overflow-hidden flex flex-col"
-                  style={{ maxHeight: "260px" }}
+            <div className="glass-panel-heavy border border-white/10 rounded-2xl overflow-hidden">
+              <div className="p-4 border-b border-white/10">
+                <button
+                  onClick={isListening ? stopListening : startListening}
+                  disabled={!voiceSupported}
+                  className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary hover:bg-primary/90 disabled:opacity-50 text-primary-foreground font-bold text-sm px-4 py-3 transition-colors"
+                  type="button"
                 >
-                  <div className="flex-1 overflow-y-auto p-3 space-y-2">
-                    {chatMessages.map((msg, i) => (
-                      <div
-                        key={`${msg.ts || i}-${i}`}
-                        className={`flex gap-2 ${
-                          msg.from === "user" ? "justify-end" : "justify-start"
-                        }`}
-                      >
-                        {msg.from === "agent" && (
-                          <img
-                            src={`${import.meta.env.BASE_URL}images/avatar-sara.png`}
-                            className="w-6 h-6 rounded-full object-cover object-top shrink-0"
-                            alt=""
-                          />
-                        )}
+                  {isListening ? (
+                    <>
+                      <MicOff className="w-4 h-4" />
+                      {ui.stopButton}
+                    </>
+                  ) : (
+                    <>
+                      <Mic className="w-4 h-4" />
+                      {ui.voiceButton}
+                    </>
+                  )}
+                </button>
 
-                        <div
-                          className={`px-3 py-1.5 rounded-xl text-xs max-w-[85%] leading-relaxed ${
-                            msg.from === "agent"
-                              ? "bg-white/8 text-white/90 border border-white/10"
-                              : "bg-primary text-primary-foreground"
-                          }`}
-                        >
-                          {msg.text}
-                        </div>
-                      </div>
-                    ))}
+                {!voiceSupported && (
+                  <p className="mt-2 text-xs text-red-400 text-center">
+                    {ui.micNotSupported}
+                  </p>
+                )}
 
-                    {sendingChat && (
-                      <div className="flex gap-2 justify-start">
-                        <img
-                          src={`${import.meta.env.BASE_URL}images/avatar-sara.png`}
-                          className="w-6 h-6 rounded-full object-cover object-top shrink-0"
-                          alt=""
-                        />
-                        <div className="px-3 py-1.5 rounded-xl text-xs max-w-[85%] leading-relaxed bg-white/8 text-white/90 border border-white/10">
-                          ...
-                        </div>
-                      </div>
-                    )}
+                {isListening && (
+                  <p className="mt-2 text-xs text-primary text-center">
+                    {ui.listening}
+                  </p>
+                )}
+              </div>
 
-                    <div ref={chatEndRef} />
+              <div className="p-4 space-y-4">
+                <div>
+                  <p className="text-[11px] text-white/50 mb-1">
+                    {ui.latestReply}
+                  </p>
+                  <div className="rounded-xl bg-white/5 border border-white/10 px-3 py-3 text-sm text-white/90 leading-relaxed">
+                    {latestAgentMessage}
                   </div>
+                </div>
 
-                  <div className="border-t border-white/10 p-2 flex gap-2">
-                    <input
-                      value={chatInput}
-                      onChange={(e) => setChatInput(e.target.value)}
-                      onKeyDown={(e) => e.key === "Enter" && handleSendChat()}
-                      placeholder={ui.chatPlaceholder}
-                      className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white placeholder-white/30 focus:outline-none focus:border-primary/50"
-                    />
-                    <button
-                      onClick={handleSendChat}
-                      disabled={sendingChat}
-                      className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center hover:bg-primary/90 transition-colors shrink-0 disabled:opacity-60"
-                      type="button"
-                    >
-                      <Send className="w-3.5 h-3.5 text-primary-foreground" />
-                    </button>
+                {lastUserTranscript ? (
+                  <div>
+                    <p className="text-[11px] text-white/50 mb-1">
+                      {ui.yourVoice}
+                    </p>
+                    <div className="rounded-xl bg-primary/10 border border-primary/20 px-3 py-3 text-sm text-white leading-relaxed">
+                      {lastUserTranscript}
+                    </div>
                   </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+                ) : null}
+
+                {waitingSara && (
+                  <div className="rounded-xl bg-white/5 border border-white/10 px-3 py-3 text-sm text-white/70">
+                    ...
+                  </div>
+                )}
+              </div>
+            </div>
 
             <AnimatePresence mode="wait">
               <motion.div
@@ -1786,23 +1796,6 @@ export default function BuscarCitas() {
 
             <div className="lg:hidden glass-panel-heavy border border-white/10 rounded-2xl py-2.5 px-4 flex items-center justify-between">
               <button
-                onClick={() => setMuted(!muted)}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-colors ${
-                  muted
-                    ? "bg-destructive/20 border-destructive/40 text-destructive"
-                    : "bg-white/5 border-white/10 text-white/80"
-                }`}
-                type="button"
-              >
-                {muted ? (
-                  <MicOff className="w-4 h-4" />
-                ) : (
-                  <Mic className="w-4 h-4" />
-                )}
-                {ui.muteSimple}
-              </button>
-
-              <button
                 onClick={() => {
                   setShowDocs(true);
                   setShowForms(false);
@@ -1855,7 +1848,6 @@ export default function BuscarCitas() {
             selectedTramiteLabel={selectedTramiteLabel}
             profileLoading={profileLoading}
             ui={ui}
-            step={step}
             confirmed={confirmed}
             appointmentData={appointmentData}
             finalDate={finalDate}
@@ -1896,23 +1888,6 @@ export default function BuscarCitas() {
 
         <div className="hidden lg:block sticky bottom-0 z-30 glass-panel-heavy border-t border-white/10 py-3">
           <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
-            <button
-              onClick={() => setMuted(!muted)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold border transition-colors ${
-                muted
-                  ? "bg-destructive/20 border-destructive/40 text-destructive"
-                  : "bg-white/5 border-white/10 text-white/80 hover:bg-white/10"
-              }`}
-              type="button"
-            >
-              {muted ? (
-                <MicOff className="w-4 h-4" />
-              ) : (
-                <Mic className="w-4 h-4" />
-              )}
-              {t("buscar_sin_audio")}
-            </button>
-
             <div className="flex gap-3">
               <button
                 onClick={() => {
