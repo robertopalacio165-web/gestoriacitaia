@@ -988,11 +988,30 @@ if (
               if (isWarn) {
                 pushAgentMessage(ui.mohamedDocWarn(file.name), true);
               } else {
-                pushAgentMessage(
-                  ui.mohamedDocOk(file.name, matchedDocSnapshot.nombre),
-                  true
-                );
-              }
+             if (isWarn) {
+  pushAgentMessage(ui.mohamedDocWarn(file.name), true);
+} else {
+
+  const matchedName = matchedDocSnapshot.nombre.toLowerCase();
+
+  let successMessage = ui.mohamedDocOk(file.name, matchedDocSnapshot.nombre);
+
+  if (
+    matchedName.includes("pasaporte o nie") ||
+    matchedName.includes("pasaporte") ||
+    matchedName.includes("nie vigente")
+  ) {
+    successMessage =
+      safeLang === "darija"
+        ? "الباسبور ديالك متحقق مزيان. دابا نمرّو للوثيقة اللي من بعد."
+        : safeLang === "en"
+        ? "Your passport has been verified correctly. Now let's continue with the next document."
+        : "Tu pasaporte ha sido verificado correctamente. Ahora seguimos con el siguiente documento.";
+  }
+
+  pushAgentMessage(successMessage, true);
+}
+              
 
               toast({
                 title: ui.uploadSuccessTitle,
