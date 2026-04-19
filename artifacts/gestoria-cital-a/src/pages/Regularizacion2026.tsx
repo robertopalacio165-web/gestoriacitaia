@@ -18,7 +18,6 @@ import {
   EXTRANJERIA_PROCEDURES,
   getProcedureByKey,
 } from "@/lib/extranjeriaProcedures";
-import { supabase } from "@/lib/supabaseClient";
 
 declare global {
   interface Window {
@@ -88,9 +87,7 @@ export default function Regularizacion2026() {
   const [voiceHistory, setVoiceHistory] = useState<ChatMsg[]>([]);
   const [lastUserTranscript, setLastUserTranscript] = useState("");
   const [waitingMohamed, setWaitingMohamed] = useState(false);
-const [currentCaseId, setCurrentCaseId] = useState<string | null>(null);
-const [savingCase, setSavingCase] = useState(false);
-  
+
   const [leadForm, setLeadForm] = useState<LeadFormState>({
     nombre: "",
     telefono: "",
@@ -133,8 +130,7 @@ const [savingCase, setSavingCase] = useState(false);
           "مزيان. خديت المعطيات ديالك. دابا ضغط على زر الميكروفون ونجاوبك سؤال بسؤال، ومن بعد تقدر تطلع الوثائق ديالك.",
         formTitle: "لوحة رسمية مدمجة",
         formDesc:
-          "عمر غير المعطيات الأساسية. محمد من بعد غادي يكمل معاك سؤال بسؤال بالصوت.",
-        caseStatusTitle: "وضعية الملف دابا",
+          "عمر المعطيات الأساسية باش محمد يبدا يراجع الملف ديالك بالصوت.",
         uploadGeneral: "رفع الوثائق",
         uploadGeneralDesc:
           "من هنا تقدر ترفع جميع الوثائق اللي طلب منك محمد، سواء كانت صورة أو PDF.",
@@ -150,6 +146,10 @@ const [savingCase, setSavingCase] = useState(false);
         yourVoice: "آخر جواب ديالك بالصوت",
         micNotSupported:
           "هاد المتصفح ما كيدعمش التعرف على الصوت. استعمل Chrome.",
+        docStatusTitle: "حالة الملف ديالك",
+        docStatusDone: "جاهز",
+        docStatusReview: "مراجعة",
+        docStatusMissing: "ناقص",
         mohamedDocOk: (fileName: string, docName: string) =>
           `مزيان. توصلت بــ ${fileName} وراجعتو. حطيناه دابا فخانة «${docName}».`,
         mohamedDocWarn: (fileName: string) =>
@@ -160,12 +160,6 @@ const [savingCase, setSavingCase] = useState(false);
           "مزيان. راجعنا الوثائق ديالك ووجدنا الملف ديالك. إلا بغيتي دابا تكمل مع سارة فالسيطة، تقدر تدوز ليها.",
         goSara: "المرور إلى سارة",
         goSaraDesc: "إلى بغيتي تكمل بالموعد، سارة غادي تعاونك.",
-        chips: {
-          basic: "الهوية والتواصل",
-          city: "المدينة",
-          arrival: "تاريخ الدخول",
-          situation: "الوضعية الأولية",
-        },
         labels: {
           nombre: "الاسم الكامل",
           telefono: "الهاتف",
@@ -201,8 +195,7 @@ const [savingCase, setSavingCase] = useState(false);
           "Perfect. I already have your details. Now press the microphone button and I will guide you question by question. After that, you can upload your documents.",
         formTitle: "Integrated official panel",
         formDesc:
-          "Only fill in the basic details. Mohamed will continue step by step by voice.",
-        caseStatusTitle: "Current case status",
+          "Fill in the basic details so Mohamed can start reviewing your case by voice.",
         uploadGeneral: "Upload documents",
         uploadGeneralDesc:
           "Use this button to upload all documents Mohamed asks for, as images or PDFs.",
@@ -218,6 +211,10 @@ const [savingCase, setSavingCase] = useState(false);
         yourVoice: "Your latest voice answer",
         micNotSupported:
           "This browser does not support voice recognition. Use Chrome.",
+        docStatusTitle: "Your file status",
+        docStatusDone: "Ready",
+        docStatusReview: "Review",
+        docStatusMissing: "Missing",
         mohamedDocOk: (fileName: string, docName: string) =>
           `Perfect. I received ${fileName} and placed it in "${docName}".`,
         mohamedDocWarn: (fileName: string) =>
@@ -229,12 +226,6 @@ const [savingCase, setSavingCase] = useState(false);
         goSara: "Go to Sara",
         goSaraDesc:
           "If you want to continue with the appointment, Sara will help you.",
-        chips: {
-          basic: "Identity and contact",
-          city: "City",
-          arrival: "Arrival date",
-          situation: "Initial situation",
-        },
         labels: {
           nombre: "Full name",
           telefono: "Phone",
@@ -269,8 +260,7 @@ const [savingCase, setSavingCase] = useState(false);
         "Perfecto. Ya tengo tus datos. Ahora pulsa el botón del micrófono y te iré guiando pregunta por pregunta. Después podrás subir tus documentos.",
       formTitle: "Panel oficial integrado",
       formDesc:
-        "Rellena solo los datos básicos. Mohamed después seguirá contigo paso a paso por voz.",
-      caseStatusTitle: "Estado inicial de tu expediente",
+        "Rellena los datos básicos para que Mohamed empiece a revisar tu caso por voz.",
       uploadGeneral: "Subir documentos",
       uploadGeneralDesc:
         "Usa este botón para subir todos los documentos que te pida Mohamed, en foto o en PDF.",
@@ -286,6 +276,10 @@ const [savingCase, setSavingCase] = useState(false);
       yourVoice: "Tu última respuesta por voz",
       micNotSupported:
         "Este navegador no soporta reconocimiento de voz. Usa Chrome.",
+      docStatusTitle: "Estado de tu expediente",
+      docStatusDone: "Listo",
+      docStatusReview: "Revisar",
+      docStatusMissing: "Falta",
       mohamedDocOk: (fileName: string, docName: string) =>
         `Perfecto. Ya he recibido ${fileName} y lo he colocado en «${docName}».`,
       mohamedDocWarn: (fileName: string) =>
@@ -296,12 +290,6 @@ const [savingCase, setSavingCase] = useState(false);
         "Perfecto. Ya hemos revisado tu documentación y hemos dejado preparado tu expediente. Si ahora quieres continuar con la cita, Sara te ayudará.",
       goSara: "Ir con Sara",
       goSaraDesc: "Si quieres seguir con la cita, Sara te ayuda.",
-      chips: {
-        basic: "Identidad y contacto",
-        city: "Ciudad",
-        arrival: "Fecha de llegada",
-        situation: "Situación inicial",
-      },
       labels: {
         nombre: "Nombre completo",
         telefono: "Teléfono",
@@ -335,9 +323,6 @@ const [savingCase, setSavingCase] = useState(false);
   const leadSavedStorageKey = useMemo(() => {
     return `gestoriacitaia_mohamed_lead_saved_${safeLang}_${selectedSituacion}`;
   }, [safeLang, selectedSituacion]);
-  const caseStorageKey = useMemo(() => {
-  return `gestoriacitaia_mohamed_case_id_${safeLang}_${selectedSituacion}`;
-}, [safeLang, selectedSituacion]);
 
   const leadFormReady =
     !!leadForm.nombre.trim() &&
@@ -357,33 +342,28 @@ const [savingCase, setSavingCase] = useState(false);
 
   useEffect(() => {
     try {
- useEffect(() => {
-  try {
-    const rawForm = localStorage.getItem(formStorageKey);
-    if (rawForm) {
-      const parsed = JSON.parse(rawForm) as LeadFormState;
-      setLeadForm({
-        nombre: parsed?.nombre || "",
-        telefono: parsed?.telefono || "",
-        niePasaporte: parsed?.niePasaporte || "",
-        ciudad: parsed?.ciudad || "",
-        nacionalidad: parsed?.nacionalidad || "",
-        fechaLlegada: parsed?.fechaLlegada || "",
-        cumple5Meses: parsed?.cumple5Meses || "",
-        asilo: parsed?.asilo || "",
-        penales: parsed?.penales || "",
-      });
+      const rawForm = localStorage.getItem(formStorageKey);
+      if (rawForm) {
+        const parsed = JSON.parse(rawForm) as LeadFormState;
+        setLeadForm({
+          nombre: parsed?.nombre || "",
+          telefono: parsed?.telefono || "",
+          niePasaporte: parsed?.niePasaporte || "",
+          ciudad: parsed?.ciudad || "",
+          nacionalidad: parsed?.nacionalidad || "",
+          fechaLlegada: parsed?.fechaLlegada || "",
+          cumple5Meses: parsed?.cumple5Meses || "",
+          asilo: parsed?.asilo || "",
+          penales: parsed?.penales || "",
+        });
+      }
+
+      const rawLeadSaved = localStorage.getItem(leadSavedStorageKey);
+      setLeadSaved(rawLeadSaved === "true");
+    } catch (error) {
+      console.error("Error cargando formulario de Mohamed:", error);
     }
-
-    const rawLeadSaved = localStorage.getItem(leadSavedStorageKey);
-    setLeadSaved(rawLeadSaved === "true");
-
-    const rawCaseId = localStorage.getItem(caseStorageKey);
-    setCurrentCaseId(rawCaseId || null);
-  } catch (error) {
-    console.error("Error cargando formulario de Mohamed:", error);
-  }
-}, [formStorageKey, leadSavedStorageKey, caseStorageKey]);
+  }, [formStorageKey, leadSavedStorageKey]);
 
   useEffect(() => {
     try {
@@ -400,17 +380,6 @@ const [savingCase, setSavingCase] = useState(false);
       console.error("Error guardando estado leadSaved de Mohamed:", error);
     }
   }, [leadSaved, leadSavedStorageKey]);
-      useEffect(() => {
-  try {
-    if (currentCaseId) {
-      localStorage.setItem(caseStorageKey, currentCaseId);
-    } else {
-      localStorage.removeItem(caseStorageKey);
-    }
-  } catch (error) {
-    console.error("Error guardando case_id de Mohamed:", error);
-  }
-}, [currentCaseId, caseStorageKey]);
 
   useEffect(() => {
     try {
@@ -434,13 +403,14 @@ const [savingCase, setSavingCase] = useState(false);
         }
       }
 
-      setVoiceHistory([
+      const freshHistory: ChatMsg[] = [
         {
           from: "agent",
           text: ui.initialVoice,
           ts: Date.now(),
         },
-      ]);
+      ];
+      setVoiceHistory(freshHistory);
     } catch (error) {
       console.error("Error cargando historial de Mohamed:", error);
       setVoiceHistory([
@@ -472,59 +442,6 @@ const [savingCase, setSavingCase] = useState(false);
       [field]: value,
     }));
   };
-      const createClientCase = async () => {
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser();
-
-  if (userError) throw userError;
-  if (!user) throw new Error("Usuario no autenticado");
-
-  const payload = {
-    user_id: user.id,
-    case_type: "regularizacion_2026",
-    title: "Expediente Regularización 2026",
-    status: "collecting_data",
-    progress: 20,
-    assigned_agent: "Mohamed",
-    notes: `Nombre: ${leadForm.nombre || "-"} · Teléfono: ${
-      leadForm.telefono || "-"
-    } · Ciudad: ${leadForm.ciudad || "-"}`,
-  };
-
-  const { data, error } = await supabase
-    .from("client_cases")
-    .insert([payload])
-    .select("id")
-    .single();
-
-  if (error) throw error;
-
-  setCurrentCaseId(data.id);
-  return data.id as string;
-};
-
-const updateClientCase = async (
-  caseId: string,
-  updates: {
-    status?: string;
-    progress?: number;
-    notes?: string;
-    title?: string;
-    assigned_agent?: string;
-  }
-) => {
-  const { error } = await supabase
-    .from("client_cases")
-    .update({
-      ...updates,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", caseId);
-
-  if (error) throw error;
-};
 
   const speakText = (text: string) => {
     if (muted) return;
@@ -590,42 +507,13 @@ const updateClientCase = async (
   }, [voiceHistory, ui.initialVoice]);
 
   const handleSaveLeadForm = () => {
-const handleSaveLeadForm = async () => {
-  if (!leadFormReady) {
-    toast({
-      title: ui.missingTitle,
-      description: ui.missingDesc,
-      variant: "destructive",
-    });
-    return;
-  }
-
-  try {
-    setSavingCase(true);
-
-    let caseId = currentCaseId;
-
-    const notesText =
-      `Nombre: ${leadForm.nombre || "-"} · ` +
-      `Teléfono: ${leadForm.telefono || "-"} · ` +
-      `NIE/Pasaporte: ${leadForm.niePasaporte || "-"} · ` +
-      `Ciudad: ${leadForm.ciudad || "-"} · ` +
-      `Nacionalidad: ${leadForm.nacionalidad || "-"} · ` +
-      `Fecha llegada: ${leadForm.fechaLlegada || "-"} · ` +
-      `5 meses: ${leadForm.cumple5Meses || "-"} · ` +
-      `Asilo: ${leadForm.asilo || "-"} · ` +
-      `Penales: ${leadForm.penales || "-"}`;
-
-    if (!caseId) {
-      caseId = await createClientCase();
-    } else {
-      await updateClientCase(caseId, {
-        status: "collecting_docs",
-        progress: 35,
-        notes: notesText,
-        assigned_agent: "Mohamed",
-        title: "Expediente Regularización 2026",
+    if (!leadFormReady) {
+      toast({
+        title: ui.missingTitle,
+        description: ui.missingDesc,
+        variant: "destructive",
       });
+      return;
     }
 
     setLeadSaved(true);
@@ -642,19 +530,7 @@ const handleSaveLeadForm = async () => {
       title: ui.saveLeadTitle,
       description: ui.saveLeadDesc,
     });
-  } catch (error: any) {
-    console.error("Error guardando expediente client_cases:", error);
-
-    toast({
-      title: "Error guardando expediente",
-      description:
-        error?.message || "No se pudo crear o actualizar el expediente.",
-      variant: "destructive",
-    });
-  } finally {
-    setSavingCase(false);
-  }
-};
+  };
 
   const getRecognitionLang = () => {
     if (safeLang === "darija") return "ar-MA";
@@ -773,8 +649,7 @@ const handleSaveLeadForm = async () => {
         setIsListening(false);
       };
 
-      recognition.onerror = (event: any) => {
-        console.error("Speech error:", event);
+      recognition.onerror = () => {
         setIsListening(false);
 
         toast({
@@ -794,7 +669,6 @@ const handleSaveLeadForm = async () => {
           event?.results?.[0]?.[0]?.transcript?.trim?.() || "";
 
         if (!transcript) return;
-
         await handleVoiceConversation(transcript);
       };
 
@@ -1088,17 +962,6 @@ const handleSaveLeadForm = async () => {
               if (nextDocsSnapshot.length > 0) {
                 maybeSendCompletionMessage(nextDocsSnapshot);
               }
-              if (currentCaseId && nextDocsSnapshot.length > 0) {
-  const okCount = nextDocsSnapshot.filter((d) => d.estado === "ok").length;
-  const totalCount = nextDocsSnapshot.length;
-  const pct = Math.min(95, Math.round((okCount / Math.max(totalCount, 1)) * 100));
-
-  await updateClientCase(currentCaseId, {
-    status: okCount >= totalCount - 1 ? "ready" : "reviewing",
-    progress: pct,
-    notes: `Documentos verificados: ${okCount}/${totalCount}`,
-  });
-}
             } catch (err: any) {
               console.error("Error IA documento:", err);
 
@@ -1166,35 +1029,6 @@ const handleSaveLeadForm = async () => {
     [...voiceHistory].reverse().find((msg) => msg.from === "agent")?.text ||
     ui.initialVoice;
 
-  const caseChecks = [
-    {
-      key: "basic",
-      label: ui.chips.basic,
-      status:
-        leadForm.nombre.trim() && leadForm.telefono.trim() ? "ok" : "missing",
-    },
-    {
-      key: "city",
-      label: ui.chips.city,
-      status: leadForm.ciudad.trim() ? "ok" : "missing",
-    },
-    {
-      key: "arrival",
-      label: ui.chips.arrival,
-      status: leadForm.fechaLlegada.trim() ? "ok" : "warn",
-    },
-    {
-      key: "situation",
-      label: ui.chips.situation,
-      status:
-        leadForm.cumple5Meses || leadForm.asilo || leadForm.penales
-          ? "ok"
-          : "warn",
-    },
-  ] as const;
-
-  const caseChecksOk = caseChecks.filter((item) => item.status === "ok").length;
-
   return (
     <div className="min-h-screen bg-background text-foreground relative flex flex-col">
       <div
@@ -1217,7 +1051,9 @@ const handleSaveLeadForm = async () => {
                 {t("reg_new")}
               </span>
             </h1>
-            <p className="text-xs text-muted-foreground">{currentProcedure.name}</p>
+            <p className="text-xs text-muted-foreground">
+              {currentProcedure.name}
+            </p>
           </div>
         </div>
 
@@ -1236,7 +1072,9 @@ const handleSaveLeadForm = async () => {
 
               <div className="absolute top-3 left-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/60 border border-white/10 backdrop-blur-md">
                 <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                <span className="text-xs font-medium text-white">{ui.online}</span>
+                <span className="text-xs font-medium text-white">
+                  {ui.online}
+                </span>
               </div>
 
               <div className="absolute top-3 right-3 flex items-center gap-2">
@@ -1278,8 +1116,12 @@ const handleSaveLeadForm = async () => {
               )}
 
               <div className="absolute bottom-12 right-3 text-right">
-                <p className="text-white font-bold text-sm drop-shadow-lg">Mohamed</p>
-                <p className="text-white/70 text-[11px] drop-shadow-lg">{ui.role}</p>
+                <p className="text-white font-bold text-sm drop-shadow-lg">
+                  Mohamed
+                </p>
+                <p className="text-white/70 text-[11px] drop-shadow-lg">
+                  {ui.role}
+                </p>
               </div>
 
               <div className="absolute bottom-3 left-0 right-0 flex justify-center">
@@ -1329,13 +1171,17 @@ const handleSaveLeadForm = async () => {
                 )}
 
                 {isListening && (
-                  <p className="mt-2 text-xs text-primary text-center">{ui.listening}</p>
+                  <p className="mt-2 text-xs text-primary text-center">
+                    {ui.listening}
+                  </p>
                 )}
               </div>
 
               <div className="p-4 space-y-4">
                 <div>
-                  <p className="text-[11px] text-white/50 mb-1">{ui.latestReply}</p>
+                  <p className="text-[11px] text-white/50 mb-1">
+                    {ui.latestReply}
+                  </p>
                   <div className="rounded-xl bg-white/5 border border-white/10 px-3 py-3 text-sm text-white/90 leading-relaxed">
                     {latestAgentMessage}
                   </div>
@@ -1343,7 +1189,9 @@ const handleSaveLeadForm = async () => {
 
                 {lastUserTranscript ? (
                   <div>
-                    <p className="text-[11px] text-white/50 mb-1">{ui.yourVoice}</p>
+                    <p className="text-[11px] text-white/50 mb-1">
+                      {ui.yourVoice}
+                    </p>
                     <div className="rounded-xl bg-primary/10 border border-primary/20 px-3 py-3 text-sm text-white leading-relaxed">
                       {lastUserTranscript}
                     </div>
@@ -1400,7 +1248,9 @@ const handleSaveLeadForm = async () => {
                     <span className="text-blue-700 text-sm">✓</span>
                   </div>
                   <div>
-                    <p className="text-sm font-bold text-slate-800">{ui.formTitle}</p>
+                    <p className="text-sm font-bold text-slate-800">
+                      {ui.formTitle}
+                    </p>
                     <p className="text-[11px] text-slate-500">{ui.formDesc}</p>
                   </div>
                 </div>
@@ -1409,33 +1259,47 @@ const handleSaveLeadForm = async () => {
               <div className="px-4 py-4 space-y-3 bg-white">
                 <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 mb-3">
                   <div className="flex items-center justify-between mb-2">
-                    <p className="text-sm font-bold text-slate-800">{ui.caseStatusTitle}</p>
+                    <p className="text-sm font-bold text-slate-800">
+                      {ui.docStatusTitle}
+                    </p>
                     <span className="text-xs font-bold text-slate-700">
-                      {caseChecksOk}/{caseChecks.length}
+                      {docsOk}/{docsTotal}
                     </span>
                   </div>
 
                   <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-slate-700 rounded-full transition-all duration-300"
-                      style={{ width: `${(caseChecksOk / caseChecks.length) * 100}%` }}
+                      className="h-full bg-[#003b82] rounded-full transition-all"
+                      style={{
+                        width: `${docsTotal > 0 ? (docsOk / docsTotal) * 100 : 0}%`,
+                      }}
                     />
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3 text-[11px]">
-                    {caseChecks.map((item) => (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3">
+                    {docs.slice(0, 4).map((doc) => (
                       <div
-                        key={item.key}
-                        className="rounded-xl px-3 py-2 border border-slate-200 text-slate-700 bg-white flex items-center gap-2"
+                        key={doc.id}
+                        className="rounded-xl px-3 py-2 border border-slate-200 text-slate-700 bg-white flex items-center justify-between gap-2"
                       >
-                        <span>
-                          {item.status === "ok"
-                            ? "✅"
-                            : item.status === "warn"
-                            ? "🟡"
-                            : "⬜"}
+                        <span className="text-[11px] font-medium leading-tight">
+                          {doc.nombre}
                         </span>
-                        <span className="truncate">{item.label}</span>
+                        <span
+                          className={`text-[10px] font-bold px-2 py-1 rounded-full ${
+                            doc.estado === "ok"
+                              ? "bg-green-100 text-green-700"
+                              : doc.estado === "warn"
+                              ? "bg-yellow-100 text-yellow-700"
+                              : "bg-slate-100 text-slate-500"
+                          }`}
+                        >
+                          {doc.estado === "ok"
+                            ? ui.docStatusDone
+                            : doc.estado === "warn"
+                            ? ui.docStatusReview
+                            : ui.docStatusMissing}
+                        </span>
                       </div>
                     ))}
                   </div>
@@ -1518,14 +1382,13 @@ const handleSaveLeadForm = async () => {
                   ]}
                 />
 
-               <button
-  onClick={handleSaveLeadForm}
-  disabled={savingCase}
-  className="w-full rounded-[18px] bg-[#003b82] hover:bg-[#002f69] disabled:opacity-60 text-white font-bold text-sm py-3 transition-colors"
-  type="button"
->
-  {savingCase ? "Guardando expediente..." : ui.saveLeadButton}
-</button>
+                <button
+                  onClick={handleSaveLeadForm}
+                  className="w-full rounded-[18px] bg-[#003b82] hover:bg-[#002f69] text-white font-bold text-sm py-3 transition-colors"
+                  type="button"
+                >
+                  {ui.saveLeadButton}
+                </button>
               </div>
             </div>
 
