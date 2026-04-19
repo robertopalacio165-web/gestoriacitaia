@@ -724,28 +724,40 @@ export default function Regularizacion2026() {
     }
 
     if (
-      includesAny([
-        "antecedentes",
-        "antecedentes penales",
-        "criminal",
-        "criminal record",
-        "penales",
-        "registro de antecedentes",
-        "casier",
-      ])
-    ) {
-      const criminalDoc =
-        currentDocs.find(
-          (doc) =>
-            doc.estado !== "ok" &&
-            normalizeDocType(doc.expectedType) === "criminal_record"
-        ) ||
-        currentDocs.find(
-          (doc) => normalizeDocType(doc.expectedType) === "criminal_record"
-        );
+  includesAny([
+    "passport",
+    "pasaporte",
+    "passeport",
+    "documento de viaje",
+    "travel document",
+    "passaporte",
+    "numero de pasaporte",
+    "passport number",
+  ])
+) {
+  const passportDoc =
+    currentDocs.find(
+      (doc) =>
+        doc.estado !== "ok" &&
+        (
+          normalizeDocType(doc.expectedType) === "passport" ||
+          doc.nombre.toLowerCase().includes("pasaporte") ||
+          doc.nombre.toLowerCase().includes("passport") ||
+          doc.nombre.toLowerCase().includes("nie vigente") ||
+          doc.nombre.toLowerCase().includes("pasaporte o nie")
+        )
+    ) ||
+    currentDocs.find(
+      (doc) =>
+        normalizeDocType(doc.expectedType) === "passport" ||
+        doc.nombre.toLowerCase().includes("pasaporte") ||
+        doc.nombre.toLowerCase().includes("passport") ||
+        doc.nombre.toLowerCase().includes("nie vigente") ||
+        doc.nombre.toLowerCase().includes("pasaporte o nie")
+    );
 
-      if (criminalDoc) return criminalDoc;
-    }
+  if (passportDoc) return passportDoc;
+}
 
     if (
       includesAny([
@@ -778,7 +790,35 @@ export default function Regularizacion2026() {
 
       if (nieDoc) return nieDoc;
     }
+if (
+  includesAny([
+    "passport",
+    "pasaporte",
+    "nie",
+    "identity card",
+    "documento identidad",
+    "documento de identidad",
+  ])
+) {
+  const identityDoc =
+    currentDocs.find(
+      (doc) =>
+        doc.estado !== "ok" &&
+        (
+          doc.nombre.toLowerCase().includes("pasaporte o nie") ||
+          doc.nombre.toLowerCase().includes("pasaporte") ||
+          doc.nombre.toLowerCase().includes("nie vigente")
+        )
+    ) ||
+    currentDocs.find(
+      (doc) =>
+        doc.nombre.toLowerCase().includes("pasaporte o nie") ||
+        doc.nombre.toLowerCase().includes("pasaporte") ||
+        doc.nombre.toLowerCase().includes("nie vigente")
+    );
 
+  if (identityDoc) return identityDoc;
+}
     if (includesAny(["tie", "tarjeta de identidad de extranjero"])) {
       const tieDoc =
         currentDocs.find(
