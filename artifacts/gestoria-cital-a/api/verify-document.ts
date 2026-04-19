@@ -60,7 +60,6 @@ type VerifyDocumentResult = {
     multiple_documents: boolean;
   };
   summary: string;
-
   is_stay_proof: boolean;
   stay_proof_strength: StayProofStrength;
   document_date: string | null;
@@ -97,7 +96,14 @@ function normalizeDocumentType(
   if (!v) return null;
 
   if (v === "auto") return "auto";
-  if (v === "passport" || v === "pasaporte") return "passport";
+  if (
+    v === "passport" ||
+    v === "pasaporte" ||
+    v === "passport_document" ||
+    v === "documento_pasaporte"
+  ) {
+    return "passport";
+  }
   if (v === "nie") return "nie";
   if (v === "tie") return "tie";
   if (v === "empadronamiento" || v === "padron" || v === "padrón") {
@@ -185,6 +191,122 @@ function safeNullableBoolean(value: unknown): boolean | null {
   return null;
 }
 
+function textIncludesPassport(text: string) {
+  const t = (text || "").toLowerCase();
+  return (
+    t.includes("passport") ||
+    t.includes("pasaporte") ||
+    t.includes("passeport") ||
+    t.includes("documento de viaje") ||
+    t.includes("travel document") ||
+    t.includes("passport number") ||
+    t.includes("numero de pasaporte") ||
+    t.includes("número de pasaporte") ||
+    t.includes(" p<") ||
+    t.includes("mrz")
+  );
+}
+
+function textIncludesNie(text: string) {
+  const t = (text || "").toLowerCase();
+  return (
+    t.includes("nie") ||
+    t.includes("número nie") ||
+    t.includes("numero nie") ||
+    t.includes("número de identidad de extranjero") ||
+    t.includes("numero de identidad de extranjero")
+  );
+}
+
+function hasStrongIdentityData(raw: any) {
+  return Boolean(
+    safeNullableString(raw?.passport_number) ||
+      safeNullableString(raw?.nie) ||
+      safeNullableString(raw?.document_number)
+  );
+}
+
+function forceHeuristics(result: VerifyDocumentResult, raw: any): VerifyDocumentResult {
+  const joinedText = [
+    result.summary,
+    ...result.visible_fields,
+    ...result.missing_or_unclear_fields,
+    ...result.warnings,
+    safeNullableString(raw?.document_number) || "",
+    safeNullableString(raw?.passport_number) || "",
+    safeNullableString(raw?.nie) || "",
+    safeNullableString(raw?.full_name) || "",
+    safeNullableString(raw?.country) || "",
+    safeNullableString(raw?.nationality) || "",
+  ]
+    .join(" ")
+    .toLowerCase();
+
+  const looksPassport =
+    result.document_type === "passport" ||
+    Boolean(result.passport_number) ||
+    (textIncludesPassport(joinedText) && !textIncludesNie(joinedText));
+
+  const looksNie =
+    result.document_type === "nie" ||
+    Boolean(result.nie) ||
+    (textIncludesNie(joinedText) && !textIncludesPassport(joinedText));
+
+  if (looksPassport) {
+    result.document_type = "passport";
+    result.recommended_bucket = "identity_document";
+    result.usable_for_regularizacion_2026 = true;
+    result.is_stay_proof = false;
+    result.stay_proof_strength = "none";
+    result.linked_to_client =
+      result.full_name || result.passport_number || result.document_number
+        ? true
+        : result.linked_to_client;
+
+    if (result.status === "review" && hasStrongIdentityData(raw)) {
+      const severeQualityIssue =
+        result.image_quality.blurred ||
+        result.image_quality.cropped ||
+        result.image_quality.dark ||
+        result.image_quality.glare ||
+        result.image_quality.low_resolution ||
+        result.image_quality.multiple_documents;
+
+      if (!severeQualityIssue) {
+        result.status = "valid";
+      }
+    }
+  }
+
+  if (looksNie) {
+    result.document_type = "nie";
+    result.recommended_bucket = "identity_document";
+    result.usable_for_regularizacion_2026 = true;
+    result.is_stay_proof = false;
+    result.stay_proof_strength = "none";
+    result.linked_to_client =
+      result.full_name || result.nie || result.document_number
+        ? true
+        : result.linked_to_client;
+
+    if (result.status === "review" && hasStrongIdentityData(raw)) {
+      const severeQualityIssue =
+        result.image_quality.blurred ||
+        result.image_quality.cropped ||
+        result.image_quality.dark ||
+        result.image_quality.glare ||
+        result.image_quality.low_resolution ||
+        result.image_quality.multiple_documents;
+
+      if (!severeQualityIssue) {
+        result.status = "valid";
+      }
+    }
+  }
+
+  return result;
+}
+
 function normalizeResult(
   raw: any,
   expectedDocumentType: string | null
@@ -201,7 +323,7 @@ function normalizeResult(
         : normalizedType === normalizedExpected;
   }
 
-  return {
+  const result: VerifyDocumentResult = {
     status:
       raw?.status === "valid" ||
       raw?.status === "review" ||
@@ -236,7 +358,6 @@ function normalizeResult(
       multiple_documents: safeBoolean(raw?.image_quality?.multiple_documents),
     },
     summary: safeNullableString(raw?.summary) || "",
-
     is_stay_proof: safeBoolean(raw?.is_stay_proof),
     stay_proof_strength: safeStayProofStrength(raw?.stay_proof_strength),
     document_date: safeNullableString(raw?.document_date),
@@ -248,6 +369,8 @@ function normalizeResult(
     recommended_bucket: safeRecommendedBucket(raw?.recommended_bucket),
     stay_proof_reason: safeNullableString(raw?.stay_proof_reason) || "",
   };
+
+  return forceHeuristics(result, raw);
 }
 
 function validateRequest(body: VerifyDocumentRequest) {
@@ -269,6 +392,7 @@ function buildSystemPrompt(
 Eres un verificador profesional de documentos para GestoriaCitaIA.
 
 Tu trabajo es analizar visualmente UN archivo del cliente y devolver SOLO JSON válido.
+
 Puede ser:
 - foto hecha con móvil
 - escaneo
@@ -282,6 +406,12 @@ No inventes datos que no se vean claramente.
 Si un campo no es visible o no es seguro, usa null.
 Si hay duda razonable, usa status = "review".
 Si el archivo está ilegible, muy borroso, recortado o no permite leer bien el contenido, usa status = "invalid".
+
+MUY IMPORTANTE:
+- Si ves claramente una página de pasaporte, una MRZ, un número de pasaporte, la palabra PASSPORT, PASAPORTE o un documento de viaje, entonces document_type debe ser "passport".
+- Si ves claramente un NIE, entonces document_type debe ser "nie".
+- Si el documento es de identidad y se lee bien, no devuelvas "unknown".
+- No seas demasiado estricto: si el pasaporte se entiende razonablemente y el dato principal es visible, usa "valid" o "review", pero no "unknown".
 
 Tu objetivo es:
 1. detectar qué tipo de documento parece
@@ -422,8 +552,6 @@ function buildDataUrlFromFile(params: {
       ? "image/png"
       : fileName?.toLowerCase().endsWith(".webp")
       ? "image/webp"
-      : fileName?.toLowerCase().endsWith(".pdf")
-      ? "application/pdf"
       : "image/jpeg";
 
   return `data:${safeMime};base64,${fileBase64}`;
@@ -491,7 +619,7 @@ export default async function handler(req: any, res: any) {
             content: [
               {
                 type: "text",
-                text: `Analiza este archivo del cliente. Puede ser foto, escaneo, captura o PDF convertido a imagen. Decide si sirve como prueba de estancia en España y si es útil para el expediente de regularización 2026. Devuelve SOLO JSON válido.`,
+                text: "Analiza este archivo del cliente. Si es un pasaporte y se ve razonablemente bien, debes detectarlo como passport. Devuelve SOLO JSON válido.",
               },
               {
                 type: "image_url",
