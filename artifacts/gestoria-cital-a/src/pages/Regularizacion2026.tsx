@@ -685,231 +685,184 @@ export default function Regularizacion2026() {
     }
   };
 
-  const getBestDocMatch = (
-    result: {
-      document_type?: string | null;
-      summary?: string;
-      visible_fields?: string[];
-      missing_or_unclear_fields?: string[];
-      warnings?: string[];
-    },
-    currentDocs: StoredDocItem[],
-    fileName?: string
-  ): StoredDocItem | null => {
-    const detectedType = normalizeDocType(result?.document_type || "");
-    const lowerFileName = (fileName || "").toLowerCase();
+const getBestDocMatch = (
+  result: {
+    document_type?: string | null;
+    summary?: string;
+    visible_fields?: string[];
+    missing_or_unclear_fields?: string[];
+    warnings?: string[];
+  },
+  currentDocs: StoredDocItem[],
+  fileName?: string
+): StoredDocItem | null => {
+  const detectedType = normalizeDocType(result?.document_type || "");
+  const lowerFileName = (fileName || "").toLowerCase();
 
-    const combinedText = [
-      result?.summary || "",
-      ...(result?.visible_fields || []),
-      ...(result?.missing_or_unclear_fields || []),
-      ...(result?.warnings || []),
-      lowerFileName,
-    ]
-      .join(" ")
-      .toLowerCase();
+  const combinedText = [
+    result?.summary || "",
+    ...(result?.visible_fields || []),
+    ...(result?.missing_or_unclear_fields || []),
+    ...(result?.warnings || []),
+    lowerFileName,
+  ]
+    .join(" ")
+    .toLowerCase();
 
-    const includesAny = (words: string[]) =>
-      words.some((word) => combinedText.includes(word));
+  const includesAny = (words: string[]) =>
+    words.some((word) => combinedText.includes(word));
 
-    if (detectedType && detectedType !== "unknown" && detectedType !== "photo") {
-      const exactMissing = currentDocs.find(
+  const findByName = (words: string[]) => {
+    return (
+      currentDocs.find(
         (doc) =>
           doc.estado !== "ok" &&
-          normalizeDocType(doc.expectedType) === detectedType
-      );
-      if (exactMissing) return exactMissing;
+          words.some((word) => doc.nombre.toLowerCase().includes(word))
+      ) ||
+      currentDocs.find((doc) =>
+        words.some((word) => doc.nombre.toLowerCase().includes(word))
+      ) ||
+      null
+    );
+  };
 
-      const exactWarn = currentDocs.find(
+  const findByExpectedType = (expectedType: string) => {
+    return (
+      currentDocs.find(
         (doc) =>
-          doc.estado === "warn" &&
-          normalizeDocType(doc.expectedType) === detectedType
-      );
-      if (exactWarn) return exactWarn;
-    }
+          doc.estado !== "ok" &&
+          normalizeDocType(doc.expectedType) === expectedType
+      ) ||
+      currentDocs.find(
+        (doc) => normalizeDocType(doc.expectedType) === expectedType
+      ) ||
+      null
+    );
+  };
 
-    if (
-      includesAny([
-        "antecedentes",
+  // 1) coincidencia exacta por tipo detectado por IA
+  if (detectedType && detectedType !== "unknown" && detectedType !== "photo") {
+    const exactDoc = findByExpectedType(detectedType);
+    if (exactDoc) return exactDoc;
+  }
+
+  // 2) PASAPORTE / NIE / DOCUMENTO IDENTIDAD
+  if (
+    includesAny([
+      "passport",
+      "pasaporte",
+      "passeport",
+      "travel document",
+      "documento de viaje",
+      "passport number",
+      "numero de pasaporte",
+      "identity card",
+      "documento identidad",
+      "documento de identidad",
+      "nie",
+    ])
+  ) {
+    const identityDoc =
+      findByName(["pasaporte o nie", "pasaporte", "nie vigente"]) ||
+      findByExpectedType("passport") ||
+      findByExpectedType("nie");
+
+    if (identityDoc) return identityDoc;
+  }
+
+  // 3) TIE
+  if (includesAny(["tie", "tarjeta de identidad de extranjero"])) {
+    const tieDoc =
+      findByName(["tie", "tarjeta de identidad"]) || findByExpectedType("tie");
+
+    if (tieDoc) return tieDoc;
+  }
+
+  // 4) EMPADRONAMIENTO
+  if (includesAny(["empadronamiento", "padron", "padrón", "volante"])) {
+    const empDoc =
+      findByName(["empadronamiento", "prueba de permanencia", "padron"]) ||
+      findByExpectedType("empadronamiento");
+
+    if (empDoc) return empDoc;
+  }
+
+  // 5) CONTRATO
+  if (
+    includesAny([
+      "contrato",
+      "contrato de trabajo",
+      "employment contract",
+      "job contract",
+      "trabajo firmado",
+    ])
+  ) {
+    const contratoDoc = findByName(["contrato de trabajo"]);
+    if (contratoDoc) return contratoDoc;
+  }
+
+  // 6) ANTECEDENTES
+  if (
+    includesAny([
+      "antecedentes",
+      "antecedentes penales",
+      "criminal",
+      "criminal record",
+      "penales",
+      "casier",
+    ])
+  ) {
+    const penalesDoc =
+      findByName(["antecedentes penales", "certificado de antecedentes"]) ||
+      findByExpectedType("criminal_record");
+
+    if (penalesDoc) return penalesDoc;
+  }
+
+  // 7) FORMULARIO
+  if (includesAny(["formulario", "official form", "solicitud", "modelo ex"])) {
+    const formDoc =
+      findByName(["formulario", "modelo ex"]) ||
+      findByExpectedType("official_form");
+
+    if (formDoc) return formDoc;
+  }
+
+  // 8) si el nombre del archivo da pista
+  if (lowerFileName) {
+    const byFileName =
+      findByName([
+        "pasaporte o nie",
+        "pasaporte",
+        "nie vigente",
+        "empadronamiento",
+        "prueba de permanencia",
+        "contrato de trabajo",
         "antecedentes penales",
-        "criminal",
-        "criminal record",
-        "penales",
-        "registro de antecedentes",
-        "casier",
-      ])
-    ) {
-      const criminalDoc =
-        currentDocs.find(
-          (doc) =>
-            doc.estado !== "ok" &&
-            normalizeDocType(doc.expectedType) === "criminal_record"
-        ) ||
-        currentDocs.find(
-          (doc) => normalizeDocType(doc.expectedType) === "criminal_record"
-        );
+      ]) || null;
 
-      if (criminalDoc) return criminalDoc;
-    }
+    if (byFileName) return byFileName;
+  }
 
-    if (
-      includesAny([
-        "passport",
-        "pasaporte",
-        "passeport",
-        "documento de viaje",
-        "travel document",
-        "passaporte",
-        "numero de pasaporte",
-        "passport number",
-      ])
-    ) {
-      const passportDoc =
-        currentDocs.find(
-          (doc) =>
-            doc.estado !== "ok" &&
-            (normalizeDocType(doc.expectedType) === "passport" ||
-              doc.nombre.toLowerCase().includes("pasaporte") ||
-              doc.nombre.toLowerCase().includes("passport") ||
-              doc.nombre.toLowerCase().includes("nie vigente") ||
-              doc.nombre.toLowerCase().includes("pasaporte o nie"))
-        ) ||
-        currentDocs.find(
-          (doc) =>
-            normalizeDocType(doc.expectedType) === "passport" ||
-            doc.nombre.toLowerCase().includes("pasaporte") ||
-            doc.nombre.toLowerCase().includes("passport") ||
-            doc.nombre.toLowerCase().includes("nie vigente") ||
-            doc.nombre.toLowerCase().includes("pasaporte o nie")
-        );
+  // 9) si no encuentra nada, y la IA detectó passport o nie, forzamos primera casilla de identidad
+  if (detectedType === "passport" || detectedType === "nie") {
+    const forcedIdentity =
+      findByName(["pasaporte o nie", "pasaporte", "nie vigente"]) ||
+      currentDocs[0] ||
+      null;
 
-      if (passportDoc) return passportDoc;
-    }
+    if (forcedIdentity) return forcedIdentity;
+  }
 
-    if (
-      includesAny([
-        "passport",
-        "pasaporte",
-        "nie",
-        "identity card",
-        "documento identidad",
-        "documento de identidad",
-      ])
-    ) {
-      const identityDoc =
-        currentDocs.find(
-          (doc) =>
-            doc.estado !== "ok" &&
-            (doc.nombre.toLowerCase().includes("pasaporte o nie") ||
-              doc.nombre.toLowerCase().includes("pasaporte") ||
-              doc.nombre.toLowerCase().includes("nie vigente"))
-        ) ||
-        currentDocs.find(
-          (doc) =>
-            doc.nombre.toLowerCase().includes("pasaporte o nie") ||
-            doc.nombre.toLowerCase().includes("pasaporte") ||
-            doc.nombre.toLowerCase().includes("nie vigente")
-        );
+  // 10) fallback final
+  const firstMissing = currentDocs.find((doc) => doc.estado === "missing");
+  if (firstMissing) return firstMissing;
 
-      if (identityDoc) return identityDoc;
-    }
+  const firstWarn = currentDocs.find((doc) => doc.estado === "warn");
+  if (firstWarn) return firstWarn;
 
-    if (includesAny(["nie"])) {
-      const nieDoc =
-        currentDocs.find(
-          (doc) =>
-            doc.estado !== "ok" && normalizeDocType(doc.expectedType) === "nie"
-        ) ||
-        currentDocs.find((doc) => normalizeDocType(doc.expectedType) === "nie");
-
-      if (nieDoc) return nieDoc;
-    }
-
-    if (includesAny(["tie", "tarjeta de identidad de extranjero"])) {
-      const tieDoc =
-        currentDocs.find(
-          (doc) =>
-            doc.estado !== "ok" && normalizeDocType(doc.expectedType) === "tie"
-        ) ||
-        currentDocs.find((doc) => normalizeDocType(doc.expectedType) === "tie");
-
-      if (tieDoc) return tieDoc;
-    }
-
-    if (includesAny(["empadronamiento", "padron", "padrón", "volante"])) {
-      const empDoc =
-        currentDocs.find(
-          (doc) =>
-            doc.estado !== "ok" &&
-            normalizeDocType(doc.expectedType) === "empadronamiento"
-        ) ||
-        currentDocs.find(
-          (doc) => normalizeDocType(doc.expectedType) === "empadronamiento"
-        );
-
-      if (empDoc) return empDoc;
-    }
-
-    if (
-      includesAny(["formulario", "official form", "solicitud", "modelo ex"])
-    ) {
-      const formDoc =
-        currentDocs.find(
-          (doc) =>
-            doc.estado !== "ok" &&
-            normalizeDocType(doc.expectedType) === "official_form"
-        ) ||
-        currentDocs.find(
-          (doc) => normalizeDocType(doc.expectedType) === "official_form"
-        );
-
-      if (formDoc) return formDoc;
-    }
-
-    if (lowerFileName) {
-      const byNameMissing = currentDocs.find((doc) => {
-        const expected = normalizeDocType(doc.expectedType);
-        return (
-          doc.estado !== "ok" &&
-          expected &&
-          expected !== "auto" &&
-          lowerFileName.includes(expected)
-        );
-      });
-
-      if (byNameMissing) return byNameMissing;
-    }
-
-    const firstMissing = currentDocs.find((doc) => doc.estado === "missing");
-    if (firstMissing) return firstMissing;
-
-    const firstWarn = currentDocs.find((doc) => doc.estado === "warn");
-    if (firstWarn) return firstWarn;
-
-    return null;
-  };
-
-  const maybeSendCompletionMessage = (nextDocs: StoredDocItem[]) => {
-    const okCount = nextDocs.filter((d) => d.estado === "ok").length;
-    const total = nextDocs.length;
-    const readyNow = okCount >= Math.max(1, total - 1);
-
-    if (readyNow && !completionMessageSent) {
-      pushAgentMessage(ui.mohamedFinal, true);
-      setCompletionMessageSent(true);
-    }
-  };
-
-  const handleGeneralUpload = async () => {
-    if (!leadSaved) {
-      pushAgentMessage(ui.voiceBlocked, true);
-
-      toast({
-        title: ui.missingTitle,
-        description: ui.missingDesc,
-        variant: "destructive",
-      });
-      return;
+  return null;
+};
     }
 
     try {
