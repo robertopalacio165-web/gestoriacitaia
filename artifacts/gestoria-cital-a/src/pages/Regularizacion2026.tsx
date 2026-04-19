@@ -981,20 +981,19 @@ if (
                 continue;
               }
 
-              const isWarn =
-                result.status === "invalid" ||
-                result.match_expected_type === false;
+        const isWarn =
+  result.status === "invalid" ||
+  result.match_expected_type === false;
 
-              if (isWarn) {
-                pushAgentMessage(ui.mohamedDocWarn(file.name), true);
-              } else {
-             if (isWarn) {
+if (isWarn) {
   pushAgentMessage(ui.mohamedDocWarn(file.name), true);
 } else {
-
   const matchedName = matchedDocSnapshot.nombre.toLowerCase();
 
-  let successMessage = ui.mohamedDocOk(file.name, matchedDocSnapshot.nombre);
+  let successMessage = ui.mohamedDocOk(
+    file.name,
+    matchedDocSnapshot.nombre
+  );
 
   if (
     matchedName.includes("pasaporte o nie") ||
@@ -1011,17 +1010,15 @@ if (
 
   pushAgentMessage(successMessage, true);
 }
-              
 
-              toast({
-                title: ui.uploadSuccessTitle,
-                description: result?.summary || ui.uploadSuccessDesc,
-              });
+toast({
+  title: ui.uploadSuccessTitle,
+  description: result?.summary || ui.uploadSuccessDesc,
+});
 
-              if (nextDocsSnapshot.length > 0) {
-                maybeSendCompletionMessage(nextDocsSnapshot);
-              }
-            } catch (err: any) {
+if (nextDocsSnapshot.length > 0) {
+  maybeSendCompletionMessage(nextDocsSnapshot);
+}
               console.error("Error IA documento:", err);
 
               const errText =
