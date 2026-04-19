@@ -127,7 +127,7 @@ export default function Regularizacion2026() {
         saveLeadTitle: "تحفظات المعطيات",
         saveLeadDesc: "محمد يقدر دابا يبدا معاك بالصوت.",
         savedLeadReply:
-          "مزيان. خديت المعطيات ديالك. دابا ضغط على زر الميكروفون ونجاوبك سؤال بسؤال، ومن بعد تقدر تطلع الوثائق ديالك.",
+          "مزيان. خديت المعطيات ديالك. دابا ضغط على زر الميكروفون ونجاوبك سؤال بسؤال. من بعد، صيفط ليا أولاً وثائق الإثبات ديال 5 شهور، ومن بعد الباسبور ولا NIE، ومن بعد نكملو الملف ديالك.",
         formTitle: "لوحة رسمية مدمجة",
         formDesc:
           "عمر المعطيات الأساسية باش محمد يبدا يراجع الملف ديالك بالصوت.",
@@ -150,16 +150,20 @@ export default function Regularizacion2026() {
         docStatusDone: "جاهز",
         docStatusReview: "مراجعة",
         docStatusMissing: "ناقص",
+        docStepForm: "الفورمولار معمر",
+        docStepStayProof: "وثائق الإثبات ديال 5 شهور",
+        docStepIdentity: "الباسبور أو NIE",
+        docStepFinal: "الملف النهائي واجد",
         mohamedDocOk: (_fileName: string, _docName: string) =>
           "توصلت بالوثيقة وربطتها مع الملف ديالك.",
         mohamedDocWarn: () =>
           "توصلت بالوثيقة ولكن مازال خاصني نسخة أوضح باش نكمل المراجعة.",
         mohamedDocUnknown: () =>
-          "توصلت بالوثيقة ديالك، ولكن خاصني نربطها مزيان بالملف. دابا جرّب تصيفط ليا غير الباسبور بوحدو واضح.",
+          "توصلت بالوثيقة ديالك، ولكن مازال خاصني نربطها مزيان بالملف. دابا جرّب تصيفط ليا أولاً وثائق الإثبات ديال 5 شهور، ومن بعد الباسبور بوحدو واضح.",
         passportVerified:
-          "الباسبور ديالك متحقق مزيان. دابا نمرّو للوثيقة اللي من بعد.",
+          "الباسبور ولا NIE ديالك متحقق مزيان. دابا نكملو المراحل اللي بقاو.",
         mohamedFinal:
-          "مزيان. راجعنا الوثائق ديالك ووجدنا الملف ديالك. إلا بغيتي دابا تكمل مع سارة فالسيطة، تقدر تدوز ليها.",
+          "مزيان. سالينا، هنيئاً. غادي نصيفطو ليك الملف ديالك فـ PDF فالواتساب.",
         goSara: "المرور إلى سارة",
         goSaraDesc: "إلى بغيتي تكمل بالموعد، سارة غادي تعاونك.",
         labels: {
@@ -194,7 +198,7 @@ export default function Regularizacion2026() {
         saveLeadTitle: "Details saved",
         saveLeadDesc: "Mohamed can now start with you by voice.",
         savedLeadReply:
-          "Perfect. I already have your details. Now press the microphone button and I will guide you question by question. After that, you can upload your documents.",
+          "Perfect. I already have your details. Now press the microphone button and I will guide you question by question. After that, first upload your 5-month stay proof documents, then your passport or NIE, and then we will finish your file.",
         formTitle: "Integrated official panel",
         formDesc:
           "Fill in the basic details so Mohamed can start reviewing your case by voice.",
@@ -217,16 +221,20 @@ export default function Regularizacion2026() {
         docStatusDone: "Ready",
         docStatusReview: "Review",
         docStatusMissing: "Missing",
+        docStepForm: "Form completed",
+        docStepStayProof: "5-month proof documents",
+        docStepIdentity: "Passport or NIE",
+        docStepFinal: "Final file ready",
         mohamedDocOk: (_fileName: string, _docName: string) =>
           "I received the document and linked it to your file.",
         mohamedDocWarn: () =>
           "I received the document, but I still need a clearer version to continue the review.",
         mohamedDocUnknown: () =>
-          "I received your document, but I still need to match it correctly to your file. Please upload only the passport clearly.",
+          "I received your document, but I still need to match it correctly to your file. Please upload your 5-month proof documents first, then your passport or NIE clearly.",
         passportVerified:
-          "Your passport has been verified correctly. Now let's continue with the next document.",
+          "Your passport or NIE has been verified correctly. Now let's continue with the remaining steps.",
         mohamedFinal:
-          "Perfect. We reviewed your documents and prepared your file. If you want to continue with Sara for the appointment, you can go now.",
+          "Perfect. We have finished, congratulations. We will send your file in PDF by WhatsApp.",
         goSara: "Go to Sara",
         goSaraDesc:
           "If you want to continue with the appointment, Sara will help you.",
@@ -261,7 +269,7 @@ export default function Regularizacion2026() {
       saveLeadTitle: "Datos guardados",
       saveLeadDesc: "Mohamed ya puede empezar contigo por voz.",
       savedLeadReply:
-        "Perfecto. Ya tengo tus datos. Ahora pulsa el botón del micrófono y te iré guiando pregunta por pregunta. Después podrás subir tus documentos.",
+        "Perfecto. Ya tengo tus datos. Ahora pulsa el botón del micrófono y te iré guiando pregunta por pregunta. Después, sube primero tus pruebas de 5 meses, luego tu pasaporte o NIE, y después terminamos tu expediente.",
       formTitle: "Panel oficial integrado",
       formDesc:
         "Rellena los datos básicos para que Mohamed empiece a revisar tu caso por voz.",
@@ -284,16 +292,20 @@ export default function Regularizacion2026() {
       docStatusDone: "Listo",
       docStatusReview: "Revisar",
       docStatusMissing: "Falta",
+      docStepForm: "Formulario completado",
+      docStepStayProof: "Pruebas de 5 meses",
+      docStepIdentity: "Pasaporte o NIE",
+      docStepFinal: "Expediente final listo",
       mohamedDocOk: (_fileName: string, _docName: string) =>
         "He recibido el documento y lo he relacionado con tu expediente.",
       mohamedDocWarn: () =>
         "He recibido el documento, pero todavía necesito una versión más clara para seguir con la revisión.",
       mohamedDocUnknown: () =>
-        "He recibido tu documento, pero todavía no está bien relacionado con tu expediente. Ahora sube solo el pasaporte bien claro.",
+        "He recibido tu documento, pero todavía no está bien relacionado con tu expediente. Ahora sube primero tus pruebas de 5 meses y después tu pasaporte o NIE bien claro.",
       passportVerified:
-        "Tu pasaporte ha sido verificado correctamente. Ahora seguimos con el siguiente documento.",
+        "Tu pasaporte o NIE ha sido verificado correctamente. Ahora seguimos con los pasos que faltan.",
       mohamedFinal:
-        "Perfecto. Ya hemos revisado tu documentación y hemos dejado preparado tu expediente. Si ahora quieres continuar con la cita, Sara te ayudará.",
+        "Perfecto. Hemos acabado, enhorabuena. Te mandamos tu expediente en archivo PDF por WhatsApp.",
       goSara: "Ir con Sara",
       goSaraDesc: "Si quieres seguir con la cita, Sara te ayuda.",
       labels: {
@@ -440,7 +452,100 @@ export default function Regularizacion2026() {
 
   const docsOk = docs.filter((d) => d.estado === "ok").length;
   const docsTotal = docs.length;
-  const allReady = docsOk >= Math.max(1, docsTotal - 1);
+
+  const identityDocs = docs.filter((doc) => {
+    const expected = normalizeDocType(doc.expectedType);
+    const detected = normalizeDocType(doc.detectedType);
+    const name = doc.nombre.toLowerCase();
+
+    return (
+      expected === "passport" ||
+      expected === "nie" ||
+      expected === "tie" ||
+      detected === "passport" ||
+      detected === "nie" ||
+      detected === "tie" ||
+      name.includes("pasaporte") ||
+      name.includes("passport") ||
+      name.includes("nie")
+    );
+  });
+
+  const stayProofDocs = docs.filter((doc) => {
+    const expected = normalizeDocType(doc.expectedType);
+    const detected = normalizeDocType(doc.detectedType);
+    const name = doc.nombre.toLowerCase();
+    const note = (doc.note || "").toLowerCase();
+
+    return (
+      expected === "empadronamiento" ||
+      expected === "stay_proof" ||
+      detected === "empadronamiento" ||
+      detected === "stay_proof" ||
+      name.includes("empadronamiento") ||
+      name.includes("padron") ||
+      name.includes("padrón") ||
+      name.includes("prueba de permanencia") ||
+      name.includes("prueba permanencia") ||
+      note.includes("empadronamiento") ||
+      note.includes("stay proof") ||
+      note.includes("prueba de permanencia")
+    );
+  });
+
+  const formCompletedStatus: DocStatus = leadSaved ? "ok" : "missing";
+
+  const stayProofStatus: DocStatus =
+    stayProofDocs.some((doc) => doc.estado === "ok")
+      ? "ok"
+      : stayProofDocs.some((doc) => doc.estado === "warn")
+      ? "warn"
+      : "missing";
+
+  const identityStatus: DocStatus =
+    identityDocs.some((doc) => doc.estado === "ok")
+      ? "ok"
+      : identityDocs.some((doc) => doc.estado === "warn")
+      ? "warn"
+      : "missing";
+
+  const finalFileStatus: DocStatus =
+    formCompletedStatus === "ok" &&
+    stayProofStatus === "ok" &&
+    identityStatus === "ok"
+      ? "ok"
+      : formCompletedStatus === "warn" ||
+        stayProofStatus === "warn" ||
+        identityStatus === "warn"
+      ? "warn"
+      : "missing";
+
+  const progressCards = [
+    {
+      id: "form_completed",
+      nombre: ui.docStepForm,
+      estado: formCompletedStatus,
+    },
+    {
+      id: "stay_proof",
+      nombre: ui.docStepStayProof,
+      estado: stayProofStatus,
+    },
+    {
+      id: "identity_document",
+      nombre: ui.docStepIdentity,
+      estado: identityStatus,
+    },
+    {
+      id: "final_file",
+      nombre: ui.docStepFinal,
+      estado: finalFileStatus,
+    },
+  ];
+
+  const progressOk = progressCards.filter((item) => item.estado === "ok").length;
+  const progressTotal = progressCards.length;
+  const allReady = finalFileStatus === "ok";
 
   const updateLeadForm = (field: keyof LeadFormState, value: string) => {
     setLeadForm((prev) => ({
@@ -686,33 +791,42 @@ export default function Regularizacion2026() {
     }
   };
 
-const getBestDocMatch = (
-  result: VerifyDocumentResult,
-  currentDocs: StoredDocItem[],
-  fileName?: string
-): StoredDocItem | null => {
-  const detectedType = normalizeDocType(result?.document_type || "");
-  const lowerFileName = (fileName || "").toLowerCase();
+  const getBestDocMatch = (
+    result: VerifyDocumentResult,
+    currentDocs: StoredDocItem[],
+    fileName?: string
+  ): StoredDocItem | null => {
+    const detectedType = normalizeDocType(result?.document_type || "");
+    const lowerFileName = (fileName || "").toLowerCase();
 
-  const combinedText = [
-    result?.summary || "",
-    ...(result?.visible_fields || []),
-    ...(result?.missing_or_unclear_fields || []),
-    ...(result?.warnings || []),
-    result?.stay_proof_reason || "",
-    lowerFileName,
-  ]
-    .join(" ")
-    .toLowerCase();
+    const combinedText = [
+      result?.summary || "",
+      ...(result?.visible_fields || []),
+      ...(result?.missing_or_unclear_fields || []),
+      ...(result?.warnings || []),
+      result?.stay_proof_reason || "",
+      lowerFileName,
+    ]
+      .join(" ")
+      .toLowerCase();
 
-  const includesAny = (words: string[]) =>
-    words.some((word) => combinedText.includes(word));
+    const includesAny = (words: string[]) =>
+      words.some((word) => combinedText.includes(word));
 
-  const findIdentityDoc = () =>
-    currentDocs.find(
-      (doc) =>
-        doc.estado !== "ok" &&
-        (
+    const findIdentityDoc = () =>
+      currentDocs.find(
+        (doc) =>
+          doc.estado !== "ok" &&
+          (normalizeDocType(doc.expectedType) === "passport" ||
+            normalizeDocType(doc.expectedType) === "nie" ||
+            normalizeDocType(doc.expectedType) === "tie" ||
+            doc.nombre.toLowerCase().includes("pasaporte o nie") ||
+            doc.nombre.toLowerCase().includes("pasaporte") ||
+            doc.nombre.toLowerCase().includes("passport") ||
+            doc.nombre.toLowerCase().includes("nie vigente"))
+      ) ||
+      currentDocs.find(
+        (doc) =>
           normalizeDocType(doc.expectedType) === "passport" ||
           normalizeDocType(doc.expectedType) === "nie" ||
           normalizeDocType(doc.expectedType) === "tie" ||
@@ -720,202 +834,231 @@ const getBestDocMatch = (
           doc.nombre.toLowerCase().includes("pasaporte") ||
           doc.nombre.toLowerCase().includes("passport") ||
           doc.nombre.toLowerCase().includes("nie vigente")
-        )
-    ) ||
-    currentDocs.find(
-      (doc) =>
-        normalizeDocType(doc.expectedType) === "passport" ||
-        normalizeDocType(doc.expectedType) === "nie" ||
-        normalizeDocType(doc.expectedType) === "tie" ||
-        doc.nombre.toLowerCase().includes("pasaporte o nie") ||
-        doc.nombre.toLowerCase().includes("pasaporte") ||
-        doc.nombre.toLowerCase().includes("passport") ||
-        doc.nombre.toLowerCase().includes("nie vigente")
-    ) ||
-    null;
+      ) ||
+      null;
 
-  const findStayProofDoc = () =>
-    currentDocs.find(
-      (doc) =>
-        doc.estado !== "ok" &&
-        (
+    const findStayProofDoc = () =>
+      currentDocs.find(
+        (doc) =>
+          doc.estado !== "ok" &&
+          (normalizeDocType(doc.expectedType) === "empadronamiento" ||
+            normalizeDocType(doc.expectedType) === "stay_proof" ||
+            doc.nombre.toLowerCase().includes("empadronamiento") ||
+            doc.nombre.toLowerCase().includes("prueba de permanencia") ||
+            doc.nombre.toLowerCase().includes("prueba permanencia") ||
+            doc.nombre.toLowerCase().includes("padron") ||
+            doc.nombre.toLowerCase().includes("padrón"))
+      ) ||
+      currentDocs.find(
+        (doc) =>
           normalizeDocType(doc.expectedType) === "empadronamiento" ||
+          normalizeDocType(doc.expectedType) === "stay_proof" ||
           doc.nombre.toLowerCase().includes("empadronamiento") ||
           doc.nombre.toLowerCase().includes("prueba de permanencia") ||
           doc.nombre.toLowerCase().includes("prueba permanencia") ||
           doc.nombre.toLowerCase().includes("padron") ||
           doc.nombre.toLowerCase().includes("padrón")
-        )
-    ) ||
-    currentDocs.find(
-      (doc) =>
-        normalizeDocType(doc.expectedType) === "empadronamiento" ||
-        doc.nombre.toLowerCase().includes("empadronamiento") ||
-        doc.nombre.toLowerCase().includes("prueba de permanencia") ||
-        doc.nombre.toLowerCase().includes("prueba permanencia") ||
-        doc.nombre.toLowerCase().includes("padron") ||
-        doc.nombre.toLowerCase().includes("padrón")
-    ) ||
-    null;
+      ) ||
+      null;
 
-  const findCriminalDoc = () =>
-    currentDocs.find(
-      (doc) =>
-        doc.estado !== "ok" &&
-        (
-          normalizeDocType(doc.expectedType) === "criminal_record" ||
-          doc.nombre.toLowerCase().includes("antecedentes") ||
-          doc.nombre.toLowerCase().includes("penales")
-        )
-    ) ||
-    currentDocs.find(
-      (doc) =>
-        normalizeDocType(doc.expectedType) === "criminal_record" ||
-        doc.nombre.toLowerCase().includes("antecedentes") ||
-        doc.nombre.toLowerCase().includes("penales")
-    ) ||
-    null;
-
-  if (
-    detectedType === "passport" ||
-    detectedType === "nie" ||
-    detectedType === "tie"
-  ) {
-    const identityDoc = findIdentityDoc();
-    if (identityDoc) return identityDoc;
-  }
-
-  if (
-    detectedType === "empadronamiento" ||
-    result?.recommended_bucket === "stay_proof" ||
-    result?.is_stay_proof === true
-  ) {
-    const stayProofDoc = findStayProofDoc();
-    if (stayProofDoc) return stayProofDoc;
-  }
-
-  if (detectedType === "criminal_record") {
-    const criminalDoc = findCriminalDoc();
-    if (criminalDoc) return criminalDoc;
-  }
-
-  if (
-    includesAny([
-      "passport",
-      "pasaporte",
-      "passeport",
-      "documento de viaje",
-      "travel document",
-      "identity card",
-      "documento identidad",
-      "documento de identidad",
-      "nie",
-      "tie",
-      "tarjeta de identidad",
-      "tarjeta de residencia",
-    ])
-  ) {
-    const identityDoc = findIdentityDoc();
-    if (identityDoc) return identityDoc;
-  }
-
-  if (
-    includesAny([
-      "empadronamiento",
-      "padron",
-      "padrón",
-      "volante",
-      "certificado de empadronamiento",
-      "prueba de permanencia",
-      "prueba permanencia",
-      "justificante",
-      "resguardo",
-      "cita médica",
-      "ticket",
-      "factura",
-      "contrato",
-      "nomina",
-      "nómina",
-      "receta",
-    ])
-  ) {
-    const stayProofDoc = findStayProofDoc();
-    if (stayProofDoc) return stayProofDoc;
-  }
-
-  if (
-    includesAny([
-      "antecedentes",
-      "antecedentes penales",
-      "criminal",
-      "criminal record",
-      "penales",
-      "registro de antecedentes",
-      "casier",
-    ])
-  ) {
-    const criminalDoc = findCriminalDoc();
-    if (criminalDoc) return criminalDoc;
-  }
-
-  if (
-    includesAny(["formulario", "official form", "solicitud", "modelo ex"])
-  ) {
-    const formDoc =
+    const findCriminalDoc = () =>
       currentDocs.find(
         (doc) =>
           doc.estado !== "ok" &&
-          normalizeDocType(doc.expectedType) === "official_form"
+          (normalizeDocType(doc.expectedType) === "criminal_record" ||
+            doc.nombre.toLowerCase().includes("antecedentes") ||
+            doc.nombre.toLowerCase().includes("penales"))
       ) ||
       currentDocs.find(
-        (doc) => normalizeDocType(doc.expectedType) === "official_form"
-      );
-
-    if (formDoc) return formDoc;
-  }
-
-  if (lowerFileName) {
-    if (
-      lowerFileName.includes("padron") ||
-      lowerFileName.includes("padron") ||
-      lowerFileName.includes("empadronamiento")
-    ) {
-      const stayProofDoc = findStayProofDoc();
-      if (stayProofDoc) return stayProofDoc;
-    }
+        (doc) =>
+          normalizeDocType(doc.expectedType) === "criminal_record" ||
+          doc.nombre.toLowerCase().includes("antecedentes") ||
+          doc.nombre.toLowerCase().includes("penales")
+      ) ||
+      null;
 
     if (
-      lowerFileName.includes("pasaporte") ||
-      lowerFileName.includes("passport") ||
-      lowerFileName.includes("nie") ||
-      lowerFileName.includes("tie")
+      detectedType === "passport" ||
+      detectedType === "nie" ||
+      detectedType === "tie"
     ) {
       const identityDoc = findIdentityDoc();
       if (identityDoc) return identityDoc;
     }
 
     if (
-      lowerFileName.includes("penales") ||
-      lowerFileName.includes("antecedentes")
+      detectedType === "empadronamiento" ||
+      detectedType === "stay_proof" ||
+      result?.recommended_bucket === "stay_proof" ||
+      result?.is_stay_proof === true
+    ) {
+      const stayProofDoc = findStayProofDoc();
+      if (stayProofDoc) return stayProofDoc;
+    }
+
+    if (detectedType === "criminal_record") {
+      const criminalDoc = findCriminalDoc();
+      if (criminalDoc) return criminalDoc;
+    }
+
+    if (
+      includesAny([
+        "passport",
+        "pasaporte",
+        "passeport",
+        "documento de viaje",
+        "travel document",
+        "identity card",
+        "documento identidad",
+        "documento de identidad",
+        "nie",
+        "tie",
+        "tarjeta de identidad",
+        "tarjeta de residencia",
+      ])
+    ) {
+      const identityDoc = findIdentityDoc();
+      if (identityDoc) return identityDoc;
+    }
+
+    if (
+      includesAny([
+        "empadronamiento",
+        "padron",
+        "padrón",
+        "volante",
+        "certificado de empadronamiento",
+        "prueba de permanencia",
+        "prueba permanencia",
+        "justificante",
+        "resguardo",
+        "cita médica",
+        "ticket",
+        "factura",
+        "nomina",
+        "nómina",
+        "receta",
+        "stay proof",
+      ])
+    ) {
+      const stayProofDoc = findStayProofDoc();
+      if (stayProofDoc) return stayProofDoc;
+    }
+
+    if (
+      includesAny([
+        "antecedentes",
+        "antecedentes penales",
+        "criminal",
+        "criminal record",
+        "penales",
+        "registro de antecedentes",
+        "casier",
+      ])
     ) {
       const criminalDoc = findCriminalDoc();
       if (criminalDoc) return criminalDoc;
     }
-  }
 
-  const firstMissing = currentDocs.find((doc) => doc.estado === "missing");
-  if (firstMissing) return firstMissing;
+    if (
+      includesAny(["formulario", "official form", "solicitud", "modelo ex"])
+    ) {
+      const formDoc =
+        currentDocs.find(
+          (doc) =>
+            doc.estado !== "ok" &&
+            normalizeDocType(doc.expectedType) === "official_form"
+        ) ||
+        currentDocs.find(
+          (doc) => normalizeDocType(doc.expectedType) === "official_form"
+        );
 
-  const firstWarn = currentDocs.find((doc) => doc.estado === "warn");
-  if (firstWarn) return firstWarn;
+      if (formDoc) return formDoc;
+    }
 
-  return null;
-};
+    if (lowerFileName) {
+      if (
+        lowerFileName.includes("padron") ||
+        lowerFileName.includes("padrón") ||
+        lowerFileName.includes("empadronamiento")
+      ) {
+        const stayProofDoc = findStayProofDoc();
+        if (stayProofDoc) return stayProofDoc;
+      }
+
+      if (
+        lowerFileName.includes("pasaporte") ||
+        lowerFileName.includes("passport") ||
+        lowerFileName.includes("nie") ||
+        lowerFileName.includes("tie")
+      ) {
+        const identityDoc = findIdentityDoc();
+        if (identityDoc) return identityDoc;
+      }
+
+      if (
+        lowerFileName.includes("penales") ||
+        lowerFileName.includes("antecedentes")
+      ) {
+        const criminalDoc = findCriminalDoc();
+        if (criminalDoc) return criminalDoc;
+      }
+    }
+
+    const firstMissing = currentDocs.find((doc) => doc.estado === "missing");
+    if (firstMissing) return firstMissing;
+
+    const firstWarn = currentDocs.find((doc) => doc.estado === "warn");
+    if (firstWarn) return firstWarn;
+
+    return null;
+  };
 
   const maybeSendCompletionMessage = (nextDocs: StoredDocItem[]) => {
-    const okCount = nextDocs.filter((d) => d.estado === "ok").length;
-    const total = nextDocs.length;
-    const readyNow = okCount >= Math.max(1, total - 1);
+    const nextIdentityDocs = nextDocs.filter((doc) => {
+      const expected = normalizeDocType(doc.expectedType);
+      const detected = normalizeDocType(doc.detectedType);
+      const name = doc.nombre.toLowerCase();
+
+      return (
+        expected === "passport" ||
+        expected === "nie" ||
+        expected === "tie" ||
+        detected === "passport" ||
+        detected === "nie" ||
+        detected === "tie" ||
+        name.includes("pasaporte") ||
+        name.includes("passport") ||
+        name.includes("nie")
+      );
+    });
+
+    const nextStayProofDocs = nextDocs.filter((doc) => {
+      const expected = normalizeDocType(doc.expectedType);
+      const detected = normalizeDocType(doc.detectedType);
+      const name = doc.nombre.toLowerCase();
+      const note = (doc.note || "").toLowerCase();
+
+      return (
+        expected === "empadronamiento" ||
+        expected === "stay_proof" ||
+        detected === "empadronamiento" ||
+        detected === "stay_proof" ||
+        name.includes("empadronamiento") ||
+        name.includes("padron") ||
+        name.includes("padrón") ||
+        name.includes("prueba de permanencia") ||
+        name.includes("prueba permanencia") ||
+        note.includes("empadronamiento") ||
+        note.includes("stay proof") ||
+        note.includes("prueba de permanencia")
+      );
+    });
+
+    const readyNow =
+      leadSaved &&
+      nextStayProofDocs.some((doc) => doc.estado === "ok") &&
+      nextIdentityDocs.some((doc) => doc.estado === "ok");
 
     if (readyNow && !completionMessageSent) {
       pushAgentMessage(ui.mohamedFinal, true);
@@ -923,126 +1066,125 @@ const getBestDocMatch = (
     }
   };
 
- const handleGeneralUpload = async () => {
-  if (!leadSaved) {
-    pushAgentMessage(ui.voiceBlocked, true);
+  const handleGeneralUpload = async () => {
+    if (!leadSaved) {
+      pushAgentMessage(ui.voiceBlocked, true);
 
-    toast({
-      title: ui.missingTitle,
-      description: ui.missingDesc,
-      variant: "destructive",
-    });
-    return;
-  }
+      toast({
+        title: ui.missingTitle,
+        description: ui.missingDesc,
+        variant: "destructive",
+      });
+      return;
+    }
 
-  try {
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = "image/*,application/pdf";
-    input.multiple = true;
+    try {
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = "image/*,application/pdf";
+      input.multiple = true;
 
-    input.onchange = async () => {
-      const files = Array.from(input.files || []);
-      if (!files.length) return;
+      input.onchange = async () => {
+        const files = Array.from(input.files || []);
+        if (!files.length) return;
 
-      setGeneralUploading(true);
+        setGeneralUploading(true);
 
-      try {
-        for (const file of files) {
-          try {
-            const currentDocs = [...docs];
+        try {
+          for (const file of files) {
+            try {
+              const currentDocs = [...docs];
 
-            const result = await verifyDocument({
-              file,
-              expectedDocumentType: "auto",
-              lang: safeLang,
-            });
+              const result = await verifyDocument({
+                file,
+                expectedDocumentType: "auto",
+                lang: safeLang,
+              });
 
-            const matchedDoc = getBestDocMatch(result as any, currentDocs, file.name);
+              const matchedDoc = getBestDocMatch(result as any, currentDocs, file.name);
 
-            if (!matchedDoc) {
-              pushAgentMessage(ui.mohamedDocUnknown(), true);
+              if (!matchedDoc) {
+                pushAgentMessage(ui.mohamedDocUnknown(), true);
+
+                toast({
+                  title: ui.uploadErrorTitle,
+                  description: result.summary || ui.uploadErrorDesc,
+                  variant: "destructive",
+                });
+
+                continue;
+              }
+
+              const isWarn =
+                result.status === "invalid" ||
+                result.match_expected_type === false;
+
+              const nextStatus: DocStatus = isWarn ? "warn" : "ok";
+
+              const updatedDocs = currentDocs.map((doc) =>
+                doc.id === matchedDoc.id
+                  ? {
+                      ...doc,
+                      estado: nextStatus,
+                      archivo: file.name,
+                      kb: `${Math.round(file.size / 1024)} KB`,
+                      detectedType: result.document_type || "",
+                      note: result.summary || "",
+                    }
+                  : doc
+              );
+
+              setDocs(updatedDocs);
+
+              const matchedName = matchedDoc.nombre.toLowerCase();
+
+              if (isWarn) {
+                pushAgentMessage(ui.mohamedDocWarn(), true);
+              } else if (
+                matchedName.includes("pasaporte") ||
+                matchedName.includes("nie") ||
+                matchedName.includes("passport")
+              ) {
+                pushAgentMessage(ui.passportVerified, true);
+              } else {
+                pushAgentMessage(
+                  ui.mohamedDocOk(file.name, matchedDoc.nombre),
+                  true
+                );
+              }
+
+              toast({
+                title: ui.uploadSuccessTitle,
+                description: result.summary || ui.uploadSuccessDesc,
+              });
+
+              maybeSendCompletionMessage(updatedDocs);
+            } catch (err: any) {
+              console.error(err);
 
               toast({
                 title: ui.uploadErrorTitle,
-                description: result.summary || ui.uploadErrorDesc,
+                description: err?.message || ui.uploadErrorDesc,
                 variant: "destructive",
               });
-
-              continue;
             }
-
-            const isWarn =
-              result.status === "invalid" ||
-              result.match_expected_type === false;
-
-            const nextStatus: DocStatus = isWarn ? "warn" : "ok";
-
-            const updatedDocs = currentDocs.map((doc) =>
-              doc.id === matchedDoc.id
-                ? {
-                    ...doc,
-                    estado: nextStatus,
-                    archivo: file.name,
-                    kb: `${Math.round(file.size / 1024)} KB`,
-                    detectedType: result.document_type || "",
-                    note: result.summary || "",
-                  }
-                : doc
-            );
-
-            setDocs(updatedDocs);
-
-            const matchedName = matchedDoc.nombre.toLowerCase();
-
-            if (isWarn) {
-              pushAgentMessage(ui.mohamedDocWarn(), true);
-            } else if (
-              matchedName.includes("pasaporte") ||
-              matchedName.includes("nie") ||
-              matchedName.includes("passport")
-            ) {
-              pushAgentMessage(ui.passportVerified, true);
-            } else {
-              pushAgentMessage(
-                ui.mohamedDocOk(file.name, matchedDoc.nombre),
-                true
-              );
-            }
-
-            toast({
-              title: ui.uploadSuccessTitle,
-              description: result.summary || ui.uploadSuccessDesc,
-            });
-
-            maybeSendCompletionMessage(updatedDocs);
-          } catch (err: any) {
-            console.error(err);
-
-            toast({
-              title: ui.uploadErrorTitle,
-              description:
-                err?.message || ui.uploadErrorDesc,
-              variant: "destructive",
-            });
           }
+        } finally {
+          setGeneralUploading(false);
         }
-      } finally {
-        setGeneralUploading(false);
-      }
-    };
+      };
 
-    input.click();
-  } catch (error: any) {
-    setGeneralUploading(false);
+      input.click();
+    } catch (error: any) {
+      setGeneralUploading(false);
 
-    toast({
-      title: "Error",
-      description: error?.message || "Error inesperado",
-      variant: "destructive",
-    });
-  }
-};
+      toast({
+        title: "Error",
+        description: error?.message || "Error inesperado",
+        variant: "destructive",
+      });
+    }
+  };
 
   const goToSara = () => {
     window.location.href = "/citas";
@@ -1286,7 +1428,7 @@ const getBestDocMatch = (
                       {ui.docStatusTitle}
                     </p>
                     <span className="text-xs font-bold text-slate-700">
-                      {docsOk}/{docsTotal}
+                      {progressOk}/{progressTotal}
                     </span>
                   </div>
 
@@ -1295,14 +1437,14 @@ const getBestDocMatch = (
                       className="h-full bg-[#003b82] rounded-full transition-all"
                       style={{
                         width: `${
-                          docsTotal > 0 ? (docsOk / docsTotal) * 100 : 0
+                          progressTotal > 0 ? (progressOk / progressTotal) * 100 : 0
                         }%`,
                       }}
                     />
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3">
-                    {docs.slice(0, 4).map((doc) => (
+                    {progressCards.map((doc) => (
                       <div
                         key={doc.id}
                         className="rounded-xl px-3 py-2 border border-slate-200 text-slate-700 bg-white flex items-center justify-between gap-2"
