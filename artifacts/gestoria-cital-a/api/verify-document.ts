@@ -92,23 +92,17 @@ function normalizeDocumentType(
   if (!value || typeof value !== "string") return null;
 
   const v = value.trim().toLowerCase();
-
   if (!v) return null;
 
   if (v === "auto") return "auto";
-  if (
-    v === "passport" ||
-    v === "pasaporte" ||
-    v === "passport_document" ||
-    v === "documento_pasaporte"
-  ) {
-    return "passport";
-  }
+  if (v === "passport" || v === "pasaporte") return "passport";
   if (v === "nie") return "nie";
   if (v === "tie") return "tie";
+
   if (v === "empadronamiento" || v === "padron" || v === "padrón") {
     return "empadronamiento";
   }
+
   if (
     v === "criminal_record" ||
     v === "criminal records" ||
@@ -118,7 +112,9 @@ function normalizeDocumentType(
   ) {
     return "criminal_record";
   }
+
   if (v === "photo" || v === "foto" || v === "selfie") return "photo";
+
   if (
     v === "official_form" ||
     v === "formulario" ||
@@ -127,6 +123,7 @@ function normalizeDocumentType(
   ) {
     return "official_form";
   }
+
   if (v === "stay_proof") return "stay_proof";
   if (v === "supporting_document") return "supporting_document";
   if (v === "personal_photo") return "personal_photo";
@@ -191,122 +188,6 @@ function safeNullableBoolean(value: unknown): boolean | null {
   return null;
 }
 
-function textIncludesPassport(text: string) {
-  const t = (text || "").toLowerCase();
-  return (
-    t.includes("passport") ||
-    t.includes("pasaporte") ||
-    t.includes("passeport") ||
-    t.includes("documento de viaje") ||
-    t.includes("travel document") ||
-    t.includes("passport number") ||
-    t.includes("numero de pasaporte") ||
-    t.includes("número de pasaporte") ||
-    t.includes(" p<") ||
-    t.includes("mrz")
-  );
-}
-
-function textIncludesNie(text: string) {
-  const t = (text || "").toLowerCase();
-  return (
-    t.includes("nie") ||
-    t.includes("número nie") ||
-    t.includes("numero nie") ||
-    t.includes("número de identidad de extranjero") ||
-    t.includes("numero de identidad de extranjero")
-  );
-}
-
-function hasStrongIdentityData(raw: any) {
-  return Boolean(
-    safeNullableString(raw?.passport_number) ||
-      safeNullableString(raw?.nie) ||
-      safeNullableString(raw?.document_number)
-  );
-}
-
-function forceHeuristics(result: VerifyDocumentResult, raw: any): VerifyDocumentResult {
-  const joinedText = [
-    result.summary,
-    ...result.visible_fields,
-    ...result.missing_or_unclear_fields,
-    ...result.warnings,
-    safeNullableString(raw?.document_number) || "",
-    safeNullableString(raw?.passport_number) || "",
-    safeNullableString(raw?.nie) || "",
-    safeNullableString(raw?.full_name) || "",
-    safeNullableString(raw?.country) || "",
-    safeNullableString(raw?.nationality) || "",
-  ]
-    .join(" ")
-    .toLowerCase();
-
-  const looksPassport =
-    result.document_type === "passport" ||
-    Boolean(result.passport_number) ||
-    (textIncludesPassport(joinedText) && !textIncludesNie(joinedText));
-
-  const looksNie =
-    result.document_type === "nie" ||
-    Boolean(result.nie) ||
-    (textIncludesNie(joinedText) && !textIncludesPassport(joinedText));
-
-  if (looksPassport) {
-    result.document_type = "passport";
-    result.recommended_bucket = "identity_document";
-    result.usable_for_regularizacion_2026 = true;
-    result.is_stay_proof = false;
-    result.stay_proof_strength = "none";
-    result.linked_to_client =
-      result.full_name || result.passport_number || result.document_number
-        ? true
-        : result.linked_to_client;
-
-    if (result.status === "review" && hasStrongIdentityData(raw)) {
-      const severeQualityIssue =
-        result.image_quality.blurred ||
-        result.image_quality.cropped ||
-        result.image_quality.dark ||
-        result.image_quality.glare ||
-        result.image_quality.low_resolution ||
-        result.image_quality.multiple_documents;
-
-      if (!severeQualityIssue) {
-        result.status = "valid";
-      }
-    }
-  }
-
-  if (looksNie) {
-    result.document_type = "nie";
-    result.recommended_bucket = "identity_document";
-    result.usable_for_regularizacion_2026 = true;
-    result.is_stay_proof = false;
-    result.stay_proof_strength = "none";
-    result.linked_to_client =
-      result.full_name || result.nie || result.document_number
-        ? true
-        : result.linked_to_client;
-
-    if (result.status === "review" && hasStrongIdentityData(raw)) {
-      const severeQualityIssue =
-        result.image_quality.blurred ||
-        result.image_quality.cropped ||
-        result.image_quality.dark ||
-        result.image_quality.glare ||
-        result.image_quality.low_resolution ||
-        result.image_quality.multiple_documents;
-
-      if (!severeQualityIssue) {
-        result.status = "valid";
-      }
-    }
-  }
-
-  return result;
-}
-
 function normalizeResult(
   raw: any,
   expectedDocumentType: string | null
@@ -323,7 +204,7 @@ function normalizeResult(
         : normalizedType === normalizedExpected;
   }
 
-  const result: VerifyDocumentResult = {
+  return {
     status:
       raw?.status === "valid" ||
       raw?.status === "review" ||
@@ -369,8 +250,6 @@ function normalizeResult(
     recommended_bucket: safeRecommendedBucket(raw?.recommended_bucket),
     stay_proof_reason: safeNullableString(raw?.stay_proof_reason) || "",
   };
-
-  return forceHeuristics(result, raw);
 }
 
 function validateRequest(body: VerifyDocumentRequest) {
@@ -391,41 +270,31 @@ function buildSystemPrompt(
   const base = `
 Eres un verificador profesional de documentos para GestoriaCitaIA.
 
-Tu trabajo es analizar visualmente UN archivo del cliente y devolver SOLO JSON válido.
+Analizas UN archivo del cliente y devuelves SOLO JSON válido.
 
-Puede ser:
+El archivo puede ser:
 - foto hecha con móvil
 - escaneo
 - captura
-- imagen de un documento
-- PDF convertido a imagen por el frontend
+- imagen de documento
+- PDF real
 
-No escribas markdown.
-No escribas explicaciones fuera del JSON.
-No inventes datos que no se vean claramente.
-Si un campo no es visible o no es seguro, usa null.
-Si hay duda razonable, usa status = "review".
-Si el archivo está ilegible, muy borroso, recortado o no permite leer bien el contenido, usa status = "invalid".
-
-MUY IMPORTANTE:
-- Si ves claramente una página de pasaporte, una MRZ, un número de pasaporte, la palabra PASSPORT, PASAPORTE o un documento de viaje, entonces document_type debe ser "passport".
-- Si ves claramente un NIE, entonces document_type debe ser "nie".
-- Si el documento es de identidad y se lee bien, no devuelvas "unknown".
-- No seas demasiado estricto: si el pasaporte se entiende razonablemente y el dato principal es visible, usa "valid" o "review", pero no "unknown".
+Reglas:
+- No escribas markdown.
+- No escribas explicaciones fuera del JSON.
+- No inventes datos que no se vean claramente.
+- Si un campo no es visible o no es seguro, usa null.
+- Si hay duda razonable, usa status = "review".
+- Si el archivo está ilegible, muy borroso, recortado o no permite leer bien el contenido, usa status = "invalid".
 
 Tu objetivo es:
-1. detectar qué tipo de documento parece
-2. extraer solo datos claramente visibles
-3. decidir si puede servir como prueba de estancia en España
-4. evaluar si puede servir para la regularización extraordinaria 2026
-5. clasificarlo dentro de un bucket útil del expediente
+1. detectar el tipo de documento
+2. extraer datos visibles
+3. decidir si sirve como prueba de estancia en España
+4. decidir si sirve para regularización 2026
+5. clasificarlo en el bucket correcto
 
-Estados permitidos:
-- "valid"
-- "review"
-- "invalid"
-
-Tipos de documento permitidos:
+Tipos permitidos:
 - "passport"
 - "nie"
 - "tie"
@@ -441,36 +310,22 @@ Tipos de documento permitidos:
 
 Reglas importantes:
 - Si es pasaporte, NIE, TIE, empadronamiento, antecedentes o formulario, detecta eso.
-- Si no es un documento de identidad pero sí puede demostrar presencia o estancia del cliente en España, usa "stay_proof".
-- Ejemplos de stay_proof: cita médica, receta, ticket, factura, envío, certificado, resguardo, documento bancario, carta administrativa, justificante, contrato, nómina, documento social, transporte, consumo, etc.
-- Si solo es un documento de apoyo general pero no prueba fuerte de estancia, usa "supporting_document".
-- Si es una foto personal tipo selfie o retrato del cliente, usa "personal_photo" o "photo" según proceda.
-- Si es una foto normal del cliente para trámites, puedes marcar recommended_bucket = "personal_photo".
-- Si el tipo esperado es "auto", trátalo como sin tipo obligatorio.
-- Si el documento no coincide con el esperado, marca match_expected_type = false.
-- No asumas autenticidad forense real. Solo evalúa apariencia visual, legibilidad y coherencia básica.
-- Fechas idealmente en formato ISO YYYY-MM-DD cuando se vean claramente. Si no, copia el formato visible o usa null.
-- "document_date" debe intentar reflejar la fecha principal visible del documento o prueba.
-- "person_name_visible" indica si aparece claramente el nombre de una persona en el documento.
-- "linked_to_client" debe ser:
-  - true si parece claramente vinculado a la persona titular
-  - false si parece claramente no vinculado
+- Si no es identidad pero sí demuestra presencia o estancia en España, usa "stay_proof".
+- Ejemplos de stay_proof: cita médica, receta, ticket, factura, envío, certificado, resguardo, documento bancario, carta administrativa, justificante, contrato, nómina, documento social, transporte, consumo.
+- Si solo ayuda pero no es prueba fuerte, usa "supporting_document".
+- Si es selfie o foto de persona, usa "personal_photo" o "photo".
+- Si expected_document_type es "auto", no obligues coincidencia.
+- Si no coincide con el esperado, match_expected_type = false.
+- No asumas autenticidad forense real. Solo legibilidad y coherencia visual.
+- Si ves número de pasaporte, MRZ, nacionalidad, fechas o nombre, extráelos.
+- Si ves NIE, extráelo.
+- Si ves una fecha principal de documento o justificante, guárdala en document_date.
+- linked_to_client:
+  - true si parece claramente vinculado a la persona
+  - false si claramente no lo está
   - null si no se puede saber
-- "stay_proof_strength":
-  - "strong" si parece una prueba útil y clara de estancia/presencia
-  - "medium" si parece útil pero con alguna duda
-  - "weak" si apenas ayuda
-  - "none" si no sirve como prueba de estancia
-- "usable_for_regularizacion_2026" debe ser true si el documento parece útil dentro del expediente o como prueba de estancia
-- "recommended_bucket" debe ser uno de:
-  - "identity_document"
-  - "stay_proof"
-  - "official_form"
-  - "supporting_document"
-  - "personal_photo"
-  - "other"
 
-Debes devolver exactamente un objeto JSON con esta estructura:
+Devuelve exactamente un objeto JSON con esta estructura:
 {
   "status": "valid" | "review" | "invalid",
   "document_type": "passport" | "nie" | "tie" | "empadronamiento" | "criminal_record" | "photo" | "official_form" | "stay_proof" | "supporting_document" | "personal_photo" | "other" | "unknown",
@@ -535,10 +390,10 @@ Debes comparar visualmente el documento contra este tipo esperado.
 No hay tipo esperado obligatorio.
 `;
 
-  return `${base}\n${languageBlock}\n${expectedBlock}`;
+  return `${base}\n${languageBlock}\n${expectedBlock}`.trim();
 }
 
-function buildDataUrlFromFile(params: {
+function buildDataUrl(params: {
   fileBase64: string;
   mimeType?: string;
   fileName?: string;
@@ -552,9 +407,38 @@ function buildDataUrlFromFile(params: {
       ? "image/png"
       : fileName?.toLowerCase().endsWith(".webp")
       ? "image/webp"
+      : fileName?.toLowerCase().endsWith(".pdf")
+      ? "application/pdf"
       : "image/jpeg";
 
   return `data:${safeMime};base64,${fileBase64}`;
+}
+
+function isPdf(mimeType?: string, fileName?: string) {
+  return (
+    (mimeType || "").toLowerCase().includes("pdf") ||
+    (fileName || "").toLowerCase().endsWith(".pdf")
+  );
+}
+
+function extractResponseText(data: any): string {
+  if (typeof data?.output_text === "string" && data.output_text.trim()) {
+    return data.output_text.trim();
+  }
+
+  if (Array.isArray(data?.output)) {
+    for (const item of data.output) {
+      if (!Array.isArray(item?.content)) continue;
+
+      for (const part of item.content) {
+        if (typeof part?.text === "string" && part.text.trim()) {
+          return part.text.trim();
+        }
+      }
+    }
+  }
+
+  return "";
 }
 
 export default async function handler(req: any, res: any) {
@@ -589,45 +473,54 @@ export default async function handler(req: any, res: any) {
         : null;
 
     const lang = sanitizeLang(body.lang);
-
-    const dataUrl = buildDataUrlFromFile({
+    const dataUrl = buildDataUrl({
       fileBase64: body.fileBase64!.trim(),
       mimeType: body.mimeType,
       fileName: body.fileName,
     });
 
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+    const contentParts: any[] = [
+      {
+        type: "input_text",
+        text: `Analiza este archivo del cliente. Puede ser foto, escaneo, captura o PDF. Detecta si es pasaporte, NIE, empadronamiento, antecedentes, formulario, prueba de estancia u otro documento útil para regularización 2026. Devuelve SOLO JSON válido.`,
+      },
+    ];
+
+    if (isPdf(body.mimeType, body.fileName)) {
+      contentParts.push({
+        type: "input_file",
+        filename: body.fileName || "documento.pdf",
+        file_data: dataUrl,
+      });
+    } else {
+      contentParts.push({
+        type: "input_image",
+        image_url: dataUrl,
+      });
+    }
+
+    const response = await fetch("https://api.openai.com/v1/responses", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: process.env.OPENAI_MODEL_VERIFY_DOCUMENT || "gpt-4o-mini",
-        temperature: 0.1,
-        max_tokens: 1400,
-        response_format: {
-          type: "json_object",
-        },
-        messages: [
+        model: process.env.OPENAI_MODEL_VERIFY_DOCUMENT || "gpt-4.1-mini",
+        max_output_tokens: 1800,
+        input: [
           {
             role: "system",
-            content: buildSystemPrompt(lang, expectedDocumentType),
+            content: [
+              {
+                type: "input_text",
+                text: buildSystemPrompt(lang, expectedDocumentType),
+              },
+            ],
           },
           {
             role: "user",
-            content: [
-              {
-                type: "text",
-                text: "Analiza este archivo del cliente. Si es un pasaporte y se ve razonablemente bien, debes detectarlo como passport. Devuelve SOLO JSON válido.",
-              },
-              {
-                type: "image_url",
-                image_url: {
-                  url: dataUrl,
-                },
-              },
-            ],
+            content: contentParts,
           },
         ],
       }),
@@ -642,9 +535,10 @@ export default async function handler(req: any, res: any) {
       });
     }
 
-    const raw = data?.choices?.[0]?.message?.content;
+    const raw = extractResponseText(data);
 
     if (!raw || typeof raw !== "string") {
+      console.error("EMPTY VERIFY RESPONSE:", JSON.stringify(data, null, 2));
       return res.status(500).json({
         error: "La IA no devolvió contenido válido",
       });
