@@ -18,6 +18,7 @@ import {
   EXTRANJERIA_PROCEDURES,
   getProcedureByKey,
 } from "@/lib/extranjeriaProcedures";
+import { supabase } from "@/lib/supabaseClient";
 
 declare global {
   interface Window {
@@ -87,7 +88,9 @@ export default function Regularizacion2026() {
   const [voiceHistory, setVoiceHistory] = useState<ChatMsg[]>([]);
   const [lastUserTranscript, setLastUserTranscript] = useState("");
   const [waitingMohamed, setWaitingMohamed] = useState(false);
-
+const [currentCaseId, setCurrentCaseId] = useState<string | null>(null);
+const [savingCase, setSavingCase] = useState(false);
+  
   const [leadForm, setLeadForm] = useState<LeadFormState>({
     nombre: "",
     telefono: "",
@@ -332,6 +335,9 @@ export default function Regularizacion2026() {
   const leadSavedStorageKey = useMemo(() => {
     return `gestoriacitaia_mohamed_lead_saved_${safeLang}_${selectedSituacion}`;
   }, [safeLang, selectedSituacion]);
+  const caseStorageKey = useMemo(() => {
+  return `gestoriacitaia_mohamed_case_id_${safeLang}_${selectedSituacion}`;
+}, [safeLang, selectedSituacion]);
 
   const leadFormReady =
     !!leadForm.nombre.trim() &&
@@ -351,28 +357,33 @@ export default function Regularizacion2026() {
 
   useEffect(() => {
     try {
-      const rawForm = localStorage.getItem(formStorageKey);
-      if (rawForm) {
-        const parsed = JSON.parse(rawForm) as LeadFormState;
-        setLeadForm({
-          nombre: parsed?.nombre || "",
-          telefono: parsed?.telefono || "",
-          niePasaporte: parsed?.niePasaporte || "",
-          ciudad: parsed?.ciudad || "",
-          nacionalidad: parsed?.nacionalidad || "",
-          fechaLlegada: parsed?.fechaLlegada || "",
-          cumple5Meses: parsed?.cumple5Meses || "",
-          asilo: parsed?.asilo || "",
-          penales: parsed?.penales || "",
-        });
-      }
-
-      const rawLeadSaved = localStorage.getItem(leadSavedStorageKey);
-      setLeadSaved(rawLeadSaved === "true");
-    } catch (error) {
-      console.error("Error cargando formulario de Mohamed:", error);
+ useEffect(() => {
+  try {
+    const rawForm = localStorage.getItem(formStorageKey);
+    if (rawForm) {
+      const parsed = JSON.parse(rawForm) as LeadFormState;
+      setLeadForm({
+        nombre: parsed?.nombre || "",
+        telefono: parsed?.telefono || "",
+        niePasaporte: parsed?.niePasaporte || "",
+        ciudad: parsed?.ciudad || "",
+        nacionalidad: parsed?.nacionalidad || "",
+        fechaLlegada: parsed?.fechaLlegada || "",
+        cumple5Meses: parsed?.cumple5Meses || "",
+        asilo: parsed?.asilo || "",
+        penales: parsed?.penales || "",
+      });
     }
-  }, [formStorageKey, leadSavedStorageKey]);
+
+    const rawLeadSaved = localStorage.getItem(leadSavedStorageKey);
+    setLeadSaved(rawLeadSaved === "true");
+
+    const rawCaseId = localStorage.getItem(caseStorageKey);
+    setCurrentCaseId(rawCaseId || null);
+  } catch (error) {
+    console.error("Error cargando formulario de Mohamed:", error);
+  }
+}, [formStorageKey, leadSavedStorageKey, caseStorageKey]);
 
   useEffect(() => {
     try {
@@ -389,6 +400,17 @@ export default function Regularizacion2026() {
       console.error("Error guardando estado leadSaved de Mohamed:", error);
     }
   }, [leadSaved, leadSavedStorageKey]);
+      useEffect(() => {
+  try {
+    if (currentCaseId) {
+      localStorage.setItem(caseStorageKey, currentCaseId);
+    } else {
+      localStorage.removeItem(caseStorageKey);
+    }
+  } catch (error) {
+    console.error("Error guardando case_id de Mohamed:", error);
+  }
+}, [currentCaseId, caseStorageKey]);
 
   useEffect(() => {
     try {
@@ -450,6 +472,59 @@ export default function Regularizacion2026() {
       [field]: value,
     }));
   };
+      const createClientCase = async () => {
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
+  if (userError) throw userError;
+  if (!user) throw new Error("Usuario no autenticado");
+
+  const payload = {
+    user_id: user.id,
+    case_type: "regularizacion_2026",
+    title: "Expediente Regularización 2026",
+    status: "collecting_data",
+    progress: 20,
+    assigned_agent: "Mohamed",
+    notes: `Nombre: ${leadForm.nombre || "-"} · Teléfono: ${
+      leadForm.telefono || "-"
+    } · Ciudad: ${leadForm.ciudad || "-"}`,
+  };
+
+  const { data, error } = await supabase
+    .from("client_cases")
+    .insert([payload])
+    .select("id")
+    .single();
+
+  if (error) throw error;
+
+  setCurrentCaseId(data.id);
+  return data.id as string;
+};
+
+const updateClientCase = async (
+  caseId: string,
+  updates: {
+    status?: string;
+    progress?: number;
+    notes?: string;
+    title?: string;
+    assigned_agent?: string;
+  }
+) => {
+  const { error } = await supabase
+    .from("client_cases")
+    .update({
+      ...updates,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", caseId);
+
+  if (error) throw error;
+};
 
   const speakText = (text: string) => {
     if (muted) return;
@@ -515,13 +590,42 @@ export default function Regularizacion2026() {
   }, [voiceHistory, ui.initialVoice]);
 
   const handleSaveLeadForm = () => {
-    if (!leadFormReady) {
-      toast({
-        title: ui.missingTitle,
-        description: ui.missingDesc,
-        variant: "destructive",
+const handleSaveLeadForm = async () => {
+  if (!leadFormReady) {
+    toast({
+      title: ui.missingTitle,
+      description: ui.missingDesc,
+      variant: "destructive",
+    });
+    return;
+  }
+
+  try {
+    setSavingCase(true);
+
+    let caseId = currentCaseId;
+
+    const notesText =
+      `Nombre: ${leadForm.nombre || "-"} · ` +
+      `Teléfono: ${leadForm.telefono || "-"} · ` +
+      `NIE/Pasaporte: ${leadForm.niePasaporte || "-"} · ` +
+      `Ciudad: ${leadForm.ciudad || "-"} · ` +
+      `Nacionalidad: ${leadForm.nacionalidad || "-"} · ` +
+      `Fecha llegada: ${leadForm.fechaLlegada || "-"} · ` +
+      `5 meses: ${leadForm.cumple5Meses || "-"} · ` +
+      `Asilo: ${leadForm.asilo || "-"} · ` +
+      `Penales: ${leadForm.penales || "-"}`;
+
+    if (!caseId) {
+      caseId = await createClientCase();
+    } else {
+      await updateClientCase(caseId, {
+        status: "collecting_docs",
+        progress: 35,
+        notes: notesText,
+        assigned_agent: "Mohamed",
+        title: "Expediente Regularización 2026",
       });
-      return;
     }
 
     setLeadSaved(true);
@@ -538,7 +642,19 @@ export default function Regularizacion2026() {
       title: ui.saveLeadTitle,
       description: ui.saveLeadDesc,
     });
-  };
+  } catch (error: any) {
+    console.error("Error guardando expediente client_cases:", error);
+
+    toast({
+      title: "Error guardando expediente",
+      description:
+        error?.message || "No se pudo crear o actualizar el expediente.",
+      variant: "destructive",
+    });
+  } finally {
+    setSavingCase(false);
+  }
+};
 
   const getRecognitionLang = () => {
     if (safeLang === "darija") return "ar-MA";
@@ -972,6 +1088,17 @@ export default function Regularizacion2026() {
               if (nextDocsSnapshot.length > 0) {
                 maybeSendCompletionMessage(nextDocsSnapshot);
               }
+              if (currentCaseId && nextDocsSnapshot.length > 0) {
+  const okCount = nextDocsSnapshot.filter((d) => d.estado === "ok").length;
+  const totalCount = nextDocsSnapshot.length;
+  const pct = Math.min(95, Math.round((okCount / Math.max(totalCount, 1)) * 100));
+
+  await updateClientCase(currentCaseId, {
+    status: okCount >= totalCount - 1 ? "ready" : "reviewing",
+    progress: pct,
+    notes: `Documentos verificados: ${okCount}/${totalCount}`,
+  });
+}
             } catch (err: any) {
               console.error("Error IA documento:", err);
 
@@ -1391,13 +1518,14 @@ export default function Regularizacion2026() {
                   ]}
                 />
 
-                <button
-                  onClick={handleSaveLeadForm}
-                  className="w-full rounded-[18px] bg-[#003b82] hover:bg-[#002f69] text-white font-bold text-sm py-3 transition-colors"
-                  type="button"
-                >
-                  {ui.saveLeadButton}
-                </button>
+               <button
+  onClick={handleSaveLeadForm}
+  disabled={savingCase}
+  className="w-full rounded-[18px] bg-[#003b82] hover:bg-[#002f69] disabled:opacity-60 text-white font-bold text-sm py-3 transition-colors"
+  type="button"
+>
+  {savingCase ? "Guardando expediente..." : ui.saveLeadButton}
+</button>
               </div>
             </div>
 
