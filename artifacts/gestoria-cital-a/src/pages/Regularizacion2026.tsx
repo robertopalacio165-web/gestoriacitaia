@@ -129,7 +129,8 @@ export default function Regularizacion2026() {
         savedLeadReply:
           "مزيان. خديت المعطيات ديالك. دابا ضغط على زر الميكروفون ونجاوبك سؤال بسؤال، ومن بعد تقدر تطلع الوثائق ديالك.",
         formTitle: "لوحة رسمية مدمجة",
-        formDesc: "عمر المعطيات الأساسية باش محمد يبدا يراجع الملف ديالك بالصوت.",
+        formDesc:
+          "عمر المعطيات الأساسية باش محمد يبدا يراجع الملف ديالك بالصوت.",
         uploadGeneral: "رفع الوثائق",
         uploadGeneralDesc:
           "من هنا تقدر ترفع جميع الوثائق اللي طلب منك محمد، سواء كانت صورة أو PDF.",
@@ -143,17 +144,18 @@ export default function Regularizacion2026() {
         listening: "محمد كيسمع ليك دابا...",
         latestReply: "آخر جواب ديال محمد",
         yourVoice: "آخر جواب ديالك بالصوت",
-        micNotSupported: "هاد المتصفح ما كيدعمش التعرف على الصوت. استعمل Chrome.",
+        micNotSupported:
+          "هاد المتصفح ما كيدعمش التعرف على الصوت. استعمل Chrome.",
         docStatusTitle: "حالة الملف ديالك",
         docStatusDone: "جاهز",
         docStatusReview: "مراجعة",
         docStatusMissing: "ناقص",
         mohamedDocOk: (fileName: string, docName: string) =>
           `مزيان. توصلت بــ ${fileName} وراجعتو. حطيناه دابا فخانة «${docName}».`,
-        mohamedDocWarn: (fileName: string) =>
-          `توصلت بــ ${fileName} ولكن مازال خاصني نسخة أوضح ولا الوثيقة المناسبة باش نكمل المراجعة.`,
-        mohamedDocUnknown: (fileName: string) =>
-          `توصلت بــ ${fileName}، ولكن ما قدرناش نربطو أوتوماتيكياً مع وثيقة معينة.`,
+        mohamedDocWarn: () =>
+          "توصلت بالوثيقة ولكن مازال خاصني نسخة أوضح باش نكمل المراجعة.",
+        mohamedDocUnknown: () =>
+          "توصلت بالوثيقة ديالك، ولكن خاصني نربطها مزيان بالملف. دابا جرّب تصيفط ليا غير الباسبور بوحدو واضح.",
         mohamedFinal:
           "مزيان. راجعنا الوثائق ديالك ووجدنا الملف ديالك. إلا بغيتي دابا تكمل مع سارة فالسيطة، تقدر تدوز ليها.",
         goSara: "المرور إلى سارة",
@@ -207,21 +209,23 @@ export default function Regularizacion2026() {
         listening: "Mohamed is listening to you now...",
         latestReply: "Mohamed's latest reply",
         yourVoice: "Your latest voice answer",
-        micNotSupported: "This browser does not support voice recognition. Use Chrome.",
+        micNotSupported:
+          "This browser does not support voice recognition. Use Chrome.",
         docStatusTitle: "Your file status",
         docStatusDone: "Ready",
         docStatusReview: "Review",
         docStatusMissing: "Missing",
         mohamedDocOk: (fileName: string, docName: string) =>
           `Perfect. I received ${fileName} and placed it in "${docName}".`,
-        mohamedDocWarn: (fileName: string) =>
-          `I received ${fileName}, but I still need a clearer version or the correct document.`,
-        mohamedDocUnknown: (fileName: string) =>
-          `I received ${fileName}, but I could not automatically match it to a specific document.`,
+        mohamedDocWarn: () =>
+          "I received the document, but I still need a clearer version to continue the review.",
+        mohamedDocUnknown: () =>
+          "I received your document, but I still need to match it correctly to your file. Please upload only the passport clearly.",
         mohamedFinal:
           "Perfect. We reviewed your documents and prepared your file. If you want to continue with Sara for the appointment, you can go now.",
         goSara: "Go to Sara",
-        goSaraDesc: "If you want to continue with the appointment, Sara will help you.",
+        goSaraDesc:
+          "If you want to continue with the appointment, Sara will help you.",
         labels: {
           nombre: "Full name",
           telefono: "Phone",
@@ -270,17 +274,18 @@ export default function Regularizacion2026() {
       listening: "Mohamed te está escuchando ahora...",
       latestReply: "Última respuesta de Mohamed",
       yourVoice: "Tu última respuesta por voz",
-      micNotSupported: "Este navegador no soporta reconocimiento de voz. Usa Chrome.",
+      micNotSupported:
+        "Este navegador no soporta reconocimiento de voz. Usa Chrome.",
       docStatusTitle: "Estado de tu expediente",
       docStatusDone: "Listo",
       docStatusReview: "Revisar",
       docStatusMissing: "Falta",
       mohamedDocOk: (fileName: string, docName: string) =>
         `Perfecto. Ya he recibido ${fileName} y lo he colocado en «${docName}».`,
-      mohamedDocWarn: (fileName: string) =>
-        `He recibido ${fileName}, pero todavía necesito una versión más clara o el documento correcto para seguir.`,
-      mohamedDocUnknown: (fileName: string) =>
-        `He recibido ${fileName}, pero no he podido relacionarlo automáticamente con un documento concreto del expediente.`,
+      mohamedDocWarn: () =>
+        "He recibido el documento, pero todavía necesito una versión más clara para seguir con la revisión.",
+      mohamedDocUnknown: () =>
+        "He recibido tu documento, pero todavía necesito relacionarlo bien con tu expediente. Ahora sube solo el pasaporte bien claro.",
       mohamedFinal:
         "Perfecto. Ya hemos revisado tu documentación y hemos dejado preparado tu expediente. Si ahora quieres continuar con la cita, Sara te ayudará.",
       goSara: "Ir con Sara",
@@ -318,6 +323,11 @@ export default function Regularizacion2026() {
   const leadSavedStorageKey = useMemo(() => {
     return `gestoriacitaia_mohamed_lead_saved_${safeLang}_${selectedSituacion}`;
   }, [safeLang, selectedSituacion]);
+
+  const leadFormReady =
+    !!leadForm.nombre.trim() &&
+    !!leadForm.telefono.trim() &&
+    !!leadForm.ciudad.trim();
 
   useEffect(() => {
     setDocs(buildInitialDocs(selectedSituacion));
@@ -393,13 +403,14 @@ export default function Regularizacion2026() {
         }
       }
 
-      setVoiceHistory([
+      const freshHistory: ChatMsg[] = [
         {
           from: "agent",
           text: ui.initialVoice,
           ts: Date.now(),
         },
-      ]);
+      ];
+      setVoiceHistory(freshHistory);
     } catch (error) {
       console.error("Error cargando historial de Mohamed:", error);
       setVoiceHistory([
@@ -438,11 +449,16 @@ export default function Regularizacion2026() {
 
     try {
       window.speechSynthesis.cancel();
+
       const utterance = new SpeechSynthesisUtterance(text);
 
-      if (safeLang === "darija") utterance.lang = "ar-MA";
-      else if (safeLang === "en") utterance.lang = "en-US";
-      else utterance.lang = "es-ES";
+      if (safeLang === "darija") {
+        utterance.lang = "ar-MA";
+      } else if (safeLang === "en") {
+        utterance.lang = "en-US";
+      } else {
+        utterance.lang = "es-ES";
+      }
 
       utterance.rate = 1;
       utterance.pitch = 1;
@@ -491,7 +507,7 @@ export default function Regularizacion2026() {
   }, [voiceHistory, ui.initialVoice]);
 
   const handleSaveLeadForm = () => {
-    if (!leadForm.nombre.trim() || !leadForm.telefono.trim() || !leadForm.ciudad.trim()) {
+    if (!leadFormReady) {
       toast({
         title: ui.missingTitle,
         description: ui.missingDesc,
@@ -649,7 +665,9 @@ export default function Regularizacion2026() {
       };
 
       recognition.onresult = async (event: any) => {
-        const transcript = event?.results?.[0]?.[0]?.transcript?.trim?.() || "";
+        const transcript =
+          event?.results?.[0]?.[0]?.transcript?.trim?.() || "";
+
         if (!transcript) return;
         await handleVoiceConversation(transcript);
       };
@@ -692,13 +710,15 @@ export default function Regularizacion2026() {
     if (detectedType && detectedType !== "unknown" && detectedType !== "photo") {
       const exactMissing = currentDocs.find(
         (doc) =>
-          doc.estado !== "ok" && normalizeDocType(doc.expectedType) === detectedType
+          doc.estado !== "ok" &&
+          normalizeDocType(doc.expectedType) === detectedType
       );
       if (exactMissing) return exactMissing;
 
       const exactWarn = currentDocs.find(
         (doc) =>
-          doc.estado === "warn" && normalizeDocType(doc.expectedType) === detectedType
+          doc.estado === "warn" &&
+          normalizeDocType(doc.expectedType) === detectedType
       );
       if (exactWarn) return exactWarn;
     }
@@ -713,72 +733,43 @@ export default function Regularizacion2026() {
         "passaporte",
         "numero de pasaporte",
         "passport number",
-      ])
-    ) {
-      const passportDoc =
-        currentDocs.find(
-          (doc) =>
-            doc.estado !== "ok" &&
-            (normalizeDocType(doc.expectedType) === "passport" ||
-              doc.nombre.toLowerCase().includes("pasaporte") ||
-              doc.nombre.toLowerCase().includes("passport") ||
-              doc.nombre.toLowerCase().includes("nie vigente") ||
-              doc.nombre.toLowerCase().includes("pasaporte o nie"))
-        ) ||
-        currentDocs.find(
-          (doc) =>
-            normalizeDocType(doc.expectedType) === "passport" ||
-            doc.nombre.toLowerCase().includes("pasaporte") ||
-            doc.nombre.toLowerCase().includes("passport") ||
-            doc.nombre.toLowerCase().includes("nie vigente") ||
-            doc.nombre.toLowerCase().includes("pasaporte o nie")
-        );
-
-      if (passportDoc) return passportDoc;
-    }
-
-    if (
-      includesAny([
-        "passport",
-        "pasaporte",
-        "nie",
         "identity card",
         "documento identidad",
         "documento de identidad",
+        "nie",
       ])
     ) {
       const identityDoc =
         currentDocs.find(
           (doc) =>
             doc.estado !== "ok" &&
-            (doc.nombre.toLowerCase().includes("pasaporte o nie") ||
+            (normalizeDocType(doc.expectedType) === "passport" ||
+              normalizeDocType(doc.expectedType) === "nie" ||
+              doc.nombre.toLowerCase().includes("pasaporte o nie") ||
               doc.nombre.toLowerCase().includes("pasaporte") ||
+              doc.nombre.toLowerCase().includes("passport") ||
               doc.nombre.toLowerCase().includes("nie vigente"))
         ) ||
         currentDocs.find(
           (doc) =>
+            normalizeDocType(doc.expectedType) === "passport" ||
+            normalizeDocType(doc.expectedType) === "nie" ||
             doc.nombre.toLowerCase().includes("pasaporte o nie") ||
             doc.nombre.toLowerCase().includes("pasaporte") ||
+            doc.nombre.toLowerCase().includes("passport") ||
             doc.nombre.toLowerCase().includes("nie vigente")
         );
 
       if (identityDoc) return identityDoc;
     }
 
-    if (includesAny(["nie"])) {
-      const nieDoc =
-        currentDocs.find(
-          (doc) => doc.estado !== "ok" && normalizeDocType(doc.expectedType) === "nie"
-        ) || currentDocs.find((doc) => normalizeDocType(doc.expectedType) === "nie");
-
-      if (nieDoc) return nieDoc;
-    }
-
     if (includesAny(["tie", "tarjeta de identidad de extranjero"])) {
       const tieDoc =
         currentDocs.find(
-          (doc) => doc.estado !== "ok" && normalizeDocType(doc.expectedType) === "tie"
-        ) || currentDocs.find((doc) => normalizeDocType(doc.expectedType) === "tie");
+          (doc) =>
+            doc.estado !== "ok" && normalizeDocType(doc.expectedType) === "tie"
+        ) ||
+        currentDocs.find((doc) => normalizeDocType(doc.expectedType) === "tie");
 
       if (tieDoc) return tieDoc;
     }
@@ -797,7 +788,33 @@ export default function Regularizacion2026() {
       if (empDoc) return empDoc;
     }
 
-    if (includesAny(["formulario", "official form", "solicitud", "modelo ex"])) {
+    if (
+      includesAny([
+        "antecedentes",
+        "antecedentes penales",
+        "criminal",
+        "criminal record",
+        "penales",
+        "registro de antecedentes",
+        "casier",
+      ])
+    ) {
+      const criminalDoc =
+        currentDocs.find(
+          (doc) =>
+            doc.estado !== "ok" &&
+            normalizeDocType(doc.expectedType) === "criminal_record"
+        ) ||
+        currentDocs.find(
+          (doc) => normalizeDocType(doc.expectedType) === "criminal_record"
+        );
+
+      if (criminalDoc) return criminalDoc;
+    }
+
+    if (
+      includesAny(["formulario", "official form", "solicitud", "modelo ex"])
+    ) {
       const formDoc =
         currentDocs.find(
           (doc) =>
@@ -891,7 +908,8 @@ export default function Regularizacion2026() {
                 }
 
                 const nextStatus: DocStatus =
-                  result.status === "invalid" || result.match_expected_type === false
+                  result.status === "invalid" ||
+                  result.match_expected_type === false
                     ? "warn"
                     : "ok";
 
@@ -913,14 +931,7 @@ export default function Regularizacion2026() {
               });
 
               if (!matchedDocSnapshot) {
-                const unknownText =
-                  safeLang === "darija"
-                    ? `توصلت بــ ${file.name}، ولكن ما قدرتش نربط هاد الوثيقة مع خانة محددة فالملف.`
-                    : safeLang === "en"
-                    ? `I received ${file.name}, but I could not match it to a specific document slot yet.`
-                    : `He recibido ${file.name}, pero no he podido relacionarlo automáticamente con un documento concreto del expediente.`;
-
-                pushAgentMessage(unknownText, true);
+                pushAgentMessage(ui.mohamedDocUnknown(), true);
 
                 toast({
                   title: ui.uploadErrorTitle,
@@ -932,10 +943,11 @@ export default function Regularizacion2026() {
               }
 
               const isWarn =
-                result.status === "invalid" || result.match_expected_type === false;
+                result.status === "invalid" ||
+                result.match_expected_type === false;
 
               if (isWarn) {
-                pushAgentMessage(ui.mohamedDocWarn(file.name), true);
+                pushAgentMessage(ui.mohamedDocWarn(), true);
               } else {
                 const matchedName = matchedDocSnapshot.nombre.toLowerCase();
 
@@ -947,7 +959,8 @@ export default function Regularizacion2026() {
                 if (
                   matchedName.includes("pasaporte o nie") ||
                   matchedName.includes("pasaporte") ||
-                  matchedName.includes("nie vigente")
+                  matchedName.includes("nie vigente") ||
+                  matchedName.includes("passport")
                 ) {
                   successMessage =
                     safeLang === "darija"
@@ -973,7 +986,9 @@ export default function Regularizacion2026() {
 
               const errText =
                 safeLang === "darija"
-                  ? `وقع مشكل فمراجعة الوثيقة: ${err?.message || "خطأ غير معروف"}`
+                  ? `وقع مشكل فمراجعة الوثيقة: ${
+                      err?.message || "خطأ غير معروف"
+                    }`
                   : safeLang === "en"
                   ? `There was a problem reviewing the document: ${
                       err?.message || "Unknown error"
@@ -1061,7 +1076,9 @@ export default function Regularizacion2026() {
                 {t("reg_new")}
               </span>
             </h1>
-            <p className="text-xs text-muted-foreground">{currentProcedure.name}</p>
+            <p className="text-xs text-muted-foreground">
+              {currentProcedure.name}
+            </p>
           </div>
         </div>
 
@@ -1080,7 +1097,9 @@ export default function Regularizacion2026() {
 
               <div className="absolute top-3 left-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/60 border border-white/10 backdrop-blur-md">
                 <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                <span className="text-xs font-medium text-white">{ui.online}</span>
+                <span className="text-xs font-medium text-white">
+                  {ui.online}
+                </span>
               </div>
 
               <div className="absolute top-3 right-3 flex items-center gap-2">
@@ -1122,8 +1141,12 @@ export default function Regularizacion2026() {
               )}
 
               <div className="absolute bottom-12 right-3 text-right">
-                <p className="text-white font-bold text-sm drop-shadow-lg">Mohamed</p>
-                <p className="text-white/70 text-[11px] drop-shadow-lg">{ui.role}</p>
+                <p className="text-white font-bold text-sm drop-shadow-lg">
+                  Mohamed
+                </p>
+                <p className="text-white/70 text-[11px] drop-shadow-lg">
+                  {ui.role}
+                </p>
               </div>
 
               <div className="absolute bottom-3 left-0 right-0 flex justify-center">
@@ -1173,13 +1196,17 @@ export default function Regularizacion2026() {
                 )}
 
                 {isListening && (
-                  <p className="mt-2 text-xs text-primary text-center">{ui.listening}</p>
+                  <p className="mt-2 text-xs text-primary text-center">
+                    {ui.listening}
+                  </p>
                 )}
               </div>
 
               <div className="p-4 space-y-4">
                 <div>
-                  <p className="text-[11px] text-white/50 mb-1">{ui.latestReply}</p>
+                  <p className="text-[11px] text-white/50 mb-1">
+                    {ui.latestReply}
+                  </p>
                   <div className="rounded-xl bg-white/5 border border-white/10 px-3 py-3 text-sm text-white/90 leading-relaxed">
                     {latestAgentMessage}
                   </div>
@@ -1187,7 +1214,9 @@ export default function Regularizacion2026() {
 
                 {lastUserTranscript ? (
                   <div>
-                    <p className="text-[11px] text-white/50 mb-1">{ui.yourVoice}</p>
+                    <p className="text-[11px] text-white/50 mb-1">
+                      {ui.yourVoice}
+                    </p>
                     <div className="rounded-xl bg-primary/10 border border-primary/20 px-3 py-3 text-sm text-white leading-relaxed">
                       {lastUserTranscript}
                     </div>
@@ -1244,7 +1273,9 @@ export default function Regularizacion2026() {
                     <span className="text-blue-700 text-sm">✓</span>
                   </div>
                   <div>
-                    <p className="text-sm font-bold text-slate-800">{ui.formTitle}</p>
+                    <p className="text-sm font-bold text-slate-800">
+                      {ui.formTitle}
+                    </p>
                     <p className="text-[11px] text-slate-500">{ui.formDesc}</p>
                   </div>
                 </div>
@@ -1253,7 +1284,9 @@ export default function Regularizacion2026() {
               <div className="px-4 py-4 space-y-3 bg-white">
                 <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 mb-3">
                   <div className="flex items-center justify-between mb-2">
-                    <p className="text-sm font-bold text-slate-800">{ui.docStatusTitle}</p>
+                    <p className="text-sm font-bold text-slate-800">
+                      {ui.docStatusTitle}
+                    </p>
                     <span className="text-xs font-bold text-slate-700">
                       {docsOk}/{docsTotal}
                     </span>
