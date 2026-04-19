@@ -246,16 +246,16 @@ export default function Landing() {
             {t("hero_sub")}
           </p>
 
-          <div className="flex flex-wrap justify-center gap-3 mb-5">
+          <div className="flex flex-col sm:flex-row flex-wrap justify-center items-stretch gap-3 mb-5 max-w-2xl mx-auto">
             <Button
-              className="rounded-full px-7 py-3 shadow-lg shadow-primary/30 bg-primary hover:bg-primary/90 text-base font-bold"
+              className="w-full sm:w-auto rounded-full px-7 py-3 shadow-lg shadow-primary/30 bg-primary hover:bg-primary/90 text-base font-bold min-h-[52px]"
               onClick={() => goWithGoogleAuth("/regularizacion-2026")}
             >
               {t("hero_btn1")} <ArrowRight className="w-4 h-4 ml-1" />
             </Button>
 
             <Button
-              className="rounded-full px-7 py-3 shadow-lg shadow-blue-500/30 bg-blue-600 hover:bg-blue-500 text-white text-base font-bold border-0"
+              className="w-full sm:w-auto rounded-full px-7 py-3 shadow-lg shadow-blue-500/30 bg-blue-600 hover:bg-blue-500 text-white text-base font-bold border-0 min-h-[52px]"
               onClick={() => goWithGoogleAuth("/buscar-citas")}
             >
               {t("hero_btn_citas")} <ArrowRight className="w-4 h-4 ml-1" />
@@ -263,7 +263,7 @@ export default function Landing() {
 
             <Button
               variant="outline"
-              className="rounded-full px-6 border-white/15 hover:bg-white/5"
+              className="w-full sm:w-auto rounded-full px-6 border-white/15 hover:bg-white/5 min-h-[52px]"
               onClick={() => goWithGoogleAuth("/panel")}
             >
               {t("hero_btn2")}
@@ -313,7 +313,7 @@ export default function Landing() {
         >
           {[t("feat1"), t("feat2"), t("feat3"), t("feat4")].map((f, i) => (
             <div key={i} className="flex items-center gap-2 text-white/75 text-sm">
-              <CheckCircle2 className="w-4 h-4 text-accent shrink-0" />
+              <CheckCircle2 className="w-4 h-4 text-accent shrink-0 mt-0.5" />
               <span>{f}</span>
             </div>
           ))}
