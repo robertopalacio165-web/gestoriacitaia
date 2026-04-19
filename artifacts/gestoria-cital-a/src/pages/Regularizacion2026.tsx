@@ -1029,7 +1029,6 @@ const getBestDocMatch = (
             : "Ocurrió un error inesperado."),
         variant: "destructive",
       });
-    }
   };
 
   const goToSara = () => {
