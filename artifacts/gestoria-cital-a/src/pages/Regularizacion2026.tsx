@@ -150,13 +150,13 @@ export default function Regularizacion2026() {
         docStatusDone: "جاهز",
         docStatusReview: "مراجعة",
         docStatusMissing: "ناقص",
-        mohamedDocOk: (fileName: string, docName: string) =>
-          `مزيان. توصلت بــ ${fileName} وراجعتو. حطيناه دابا فخانة «${docName}».`,
+        mohamedDocOk: (_fileName: string, _docName: string) =>
+          "توصلت بالوثيقة وربطتها مع الملف ديالك.",
         mohamedDocWarn: () =>
           "توصلت بالوثيقة ولكن مازال خاصني نسخة أوضح باش نكمل المراجعة.",
         mohamedDocUnknown: () =>
-          "توصلت بالوثيقة ديالك، ولكن مازال ما ربطناهاش مزيان مع الملف.",
-        mohamedPassportOk:
+          "توصلت بالوثيقة ديالك، ولكن خاصني نربطها مزيان بالملف. دابا جرّب تصيفط ليا غير الباسبور بوحدو واضح.",
+        passportVerified:
           "الباسبور ديالك متحقق مزيان. دابا نمرّو للوثيقة اللي من بعد.",
         mohamedFinal:
           "مزيان. راجعنا الوثائق ديالك ووجدنا الملف ديالك. إلا بغيتي دابا تكمل مع سارة فالسيطة، تقدر تدوز ليها.",
@@ -217,13 +217,13 @@ export default function Regularizacion2026() {
         docStatusDone: "Ready",
         docStatusReview: "Review",
         docStatusMissing: "Missing",
-        mohamedDocOk: (fileName: string, docName: string) =>
-          `Perfect. I received ${fileName} and placed it in "${docName}".`,
+        mohamedDocOk: (_fileName: string, _docName: string) =>
+          "I received the document and linked it to your file.",
         mohamedDocWarn: () =>
           "I received the document, but I still need a clearer version to continue the review.",
         mohamedDocUnknown: () =>
-          "I received your document, but it is still not linked correctly to your file.",
-        mohamedPassportOk:
+          "I received your document, but I still need to match it correctly to your file. Please upload only the passport clearly.",
+        passportVerified:
           "Your passport has been verified correctly. Now let's continue with the next document.",
         mohamedFinal:
           "Perfect. We reviewed your documents and prepared your file. If you want to continue with Sara for the appointment, you can go now.",
@@ -284,13 +284,13 @@ export default function Regularizacion2026() {
       docStatusDone: "Listo",
       docStatusReview: "Revisar",
       docStatusMissing: "Falta",
-      mohamedDocOk: (fileName: string, docName: string) =>
-        `Perfecto. Ya he recibido ${fileName} y lo he colocado en «${docName}».`,
+      mohamedDocOk: (_fileName: string, _docName: string) =>
+        "He recibido el documento y lo he relacionado con tu expediente.",
       mohamedDocWarn: () =>
         "He recibido el documento, pero todavía necesito una versión más clara para seguir con la revisión.",
       mohamedDocUnknown: () =>
-        "He recibido tu documento, pero todavía no está bien relacionado con tu expediente.",
-      mohamedPassportOk:
+        "He recibido tu documento, pero todavía no está bien relacionado con tu expediente. Ahora sube solo el pasaporte bien claro.",
+      passportVerified:
         "Tu pasaporte ha sido verificado correctamente. Ahora seguimos con el siguiente documento.",
       mohamedFinal:
         "Perfecto. Ya hemos revisado tu documentación y hemos dejado preparado tu expediente. Si ahora quieres continuar con la cita, Sara te ayudará.",
@@ -687,7 +687,18 @@ export default function Regularizacion2026() {
   };
 
   const getBestDocMatch = (
-    result: VerifyDocumentResult,
+    result: {
+      document_type?: string | null;
+      summary?: string;
+      visible_fields?: string[];
+      missing_or_unclear_fields?: string[];
+      warnings?: string[];
+      passport_number?: string | null;
+      nie?: string | null;
+      document_number?: string | null;
+      full_name?: string | null;
+      nationality?: string | null;
+    },
     currentDocs: StoredDocItem[],
     fileName?: string
   ): StoredDocItem | null => {
@@ -699,9 +710,9 @@ export default function Regularizacion2026() {
       ...(result?.visible_fields || []),
       ...(result?.missing_or_unclear_fields || []),
       ...(result?.warnings || []),
-      result?.document_number || "",
-      result?.nie || "",
       result?.passport_number || "",
+      result?.nie || "",
+      result?.document_number || "",
       result?.full_name || "",
       result?.nationality || "",
       lowerFileName,
@@ -712,7 +723,7 @@ export default function Regularizacion2026() {
     const includesAny = (words: string[]) =>
       words.some((word) => combinedText.includes(word));
 
-    const findIdentityDoc = () =>
+    const findIdentitySlot = () =>
       currentDocs.find(
         (doc) =>
           doc.estado !== "ok" &&
@@ -737,26 +748,72 @@ export default function Regularizacion2026() {
     const looksLikePassport =
       detectedType === "passport" ||
       !!result?.passport_number ||
-      (includesAny([
+      includesAny([
         "passport",
         "pasaporte",
         "passeport",
-        "travel document",
-        "documento de viaje",
         "passport number",
         "numero de pasaporte",
         "número de pasaporte",
-      ]) &&
-        !includesAny(["empadronamiento", "antecedentes", "criminal", "modelo ex"]));
+        "documento de viaje",
+        "travel document",
+        "mrz",
+        " p<",
+      ]);
 
     const looksLikeNie =
       detectedType === "nie" ||
       !!result?.nie ||
-      includesAny([" nie ", "nie", "número nie", "numero nie"]);
+      includesAny([
+        "nie",
+        "número nie",
+        "numero nie",
+        "identidad de extranjero",
+      ]);
 
-    if (looksLikePassport || looksLikeNie || detectedType === "identity_card") {
-      const identityDoc = findIdentityDoc();
-      if (identityDoc) return identityDoc;
+    if (looksLikePassport || looksLikeNie) {
+      const identitySlot = findIdentitySlot();
+      if (identitySlot) return identitySlot;
+    }
+
+    if (detectedType && detectedType !== "unknown" && detectedType !== "photo") {
+      const exactMissing = currentDocs.find(
+        (doc) =>
+          doc.estado !== "ok" &&
+          normalizeDocType(doc.expectedType) === detectedType
+      );
+      if (exactMissing) return exactMissing;
+
+      const exactWarn = currentDocs.find(
+        (doc) =>
+          doc.estado === "warn" &&
+          normalizeDocType(doc.expectedType) === detectedType
+      );
+      if (exactWarn) return exactWarn;
+    }
+
+    if (
+      includesAny([
+        "antecedentes",
+        "antecedentes penales",
+        "criminal",
+        "criminal record",
+        "penales",
+        "registro de antecedentes",
+        "casier",
+      ])
+    ) {
+      const criminalDoc =
+        currentDocs.find(
+          (doc) =>
+            doc.estado !== "ok" &&
+            normalizeDocType(doc.expectedType) === "criminal_record"
+        ) ||
+        currentDocs.find(
+          (doc) => normalizeDocType(doc.expectedType) === "criminal_record"
+        );
+
+      if (criminalDoc) return criminalDoc;
     }
 
     if (includesAny(["tie", "tarjeta de identidad de extranjero"])) {
@@ -782,30 +839,6 @@ export default function Regularizacion2026() {
         );
 
       if (empDoc) return empDoc;
-    }
-
-    if (
-      includesAny([
-        "antecedentes",
-        "antecedentes penales",
-        "criminal",
-        "criminal record",
-        "penales",
-        "registro de antecedentes",
-        "casier",
-      ])
-    ) {
-      const criminalDoc =
-        currentDocs.find(
-          (doc) =>
-            doc.estado !== "ok" &&
-            normalizeDocType(doc.expectedType) === "criminal_record"
-        ) ||
-        currentDocs.find(
-          (doc) => normalizeDocType(doc.expectedType) === "criminal_record"
-        );
-
-      if (criminalDoc) return criminalDoc;
     }
 
     if (
@@ -836,6 +869,18 @@ export default function Regularizacion2026() {
       });
 
       if (byNameMissing) return byNameMissing;
+    }
+
+    const identityFallback = findIdentitySlot();
+    if (
+      identityFallback &&
+      (lowerFileName.endsWith(".jpg") ||
+        lowerFileName.endsWith(".jpeg") ||
+        lowerFileName.endsWith(".png") ||
+        lowerFileName.endsWith(".pdf") ||
+        lowerFileName.includes("whatsapp image"))
+    ) {
+      return identityFallback;
     }
 
     const firstMissing = currentDocs.find((doc) => doc.estado === "missing");
@@ -885,17 +930,29 @@ export default function Regularizacion2026() {
         try {
           for (const file of files) {
             try {
+              const identitySlotExists = docs.some(
+                (doc) =>
+                  doc.estado !== "ok" &&
+                  (normalizeDocType(doc.expectedType) === "passport" ||
+                    normalizeDocType(doc.expectedType) === "nie" ||
+                    doc.nombre.toLowerCase().includes("pasaporte o nie") ||
+                    doc.nombre.toLowerCase().includes("pasaporte") ||
+                    doc.nombre.toLowerCase().includes("nie vigente"))
+              );
+
               const result: VerifyDocumentResult = await verifyDocument({
                 file,
-                expectedDocumentType: "auto",
+                expectedDocumentType: identitySlotExists ? "passport" : "auto",
                 lang: safeLang,
               });
+
+              const resultAny = result as any;
 
               let matchedDocSnapshot: StoredDocItem | null = null;
               let nextDocsSnapshot: StoredDocItem[] = [];
 
               setDocs((prev) => {
-                const matchedDoc = getBestDocMatch(result, prev, file.name);
+                const matchedDoc = getBestDocMatch(resultAny, prev, file.name);
                 matchedDocSnapshot = matchedDoc;
 
                 if (!matchedDoc) {
@@ -927,6 +984,49 @@ export default function Regularizacion2026() {
               });
 
               if (!matchedDocSnapshot) {
+                const fallbackIdentityDoc =
+                  docs.find(
+                    (doc) =>
+                      doc.estado !== "ok" &&
+                      (normalizeDocType(doc.expectedType) === "passport" ||
+                        normalizeDocType(doc.expectedType) === "nie" ||
+                        doc.nombre.toLowerCase().includes("pasaporte o nie") ||
+                        doc.nombre.toLowerCase().includes("pasaporte") ||
+                        doc.nombre.toLowerCase().includes("nie vigente"))
+                  ) || null;
+
+                if (fallbackIdentityDoc) {
+                  matchedDocSnapshot = fallbackIdentityDoc;
+
+                  const forcedDocs = docs.map((doc) =>
+                    doc.id === fallbackIdentityDoc.id
+                      ? {
+                          ...doc,
+                          estado: "ok" as DocStatus,
+                          archivo: file.name,
+                          kb: `${Math.round(file.size / 1024)} KB`,
+                          detectedType: "passport",
+                          note:
+                            result.summary ||
+                            "Documento de identidad vinculado automáticamente",
+                        }
+                      : doc
+                  );
+
+                  nextDocsSnapshot = forcedDocs;
+                  setDocs(forcedDocs);
+
+                  pushAgentMessage(ui.passportVerified, true);
+
+                  toast({
+                    title: ui.uploadSuccessTitle,
+                    description: result?.summary || ui.uploadSuccessDesc,
+                  });
+
+                  maybeSendCompletionMessage(forcedDocs);
+                  continue;
+                }
+
                 pushAgentMessage(ui.mohamedDocUnknown(), true);
 
                 toast({
@@ -945,22 +1045,21 @@ export default function Regularizacion2026() {
               if (isWarn) {
                 pushAgentMessage(ui.mohamedDocWarn(), true);
               } else {
-                const detectedType = normalizeDocType(result.document_type);
                 const matchedName = matchedDocSnapshot.nombre.toLowerCase();
 
-                const isIdentityDocument =
-                  detectedType === "passport" ||
-                  detectedType === "nie" ||
-                  !!result.passport_number ||
-                  !!result.nie ||
+                let successMessage = ui.mohamedDocOk(
+                  file.name,
+                  matchedDocSnapshot.nombre
+                );
+
+                if (
                   matchedName.includes("pasaporte o nie") ||
                   matchedName.includes("pasaporte") ||
                   matchedName.includes("nie vigente") ||
-                  matchedName.includes("passport");
-
-                const successMessage = isIdentityDocument
-                  ? ui.mohamedPassportOk
-                  : ui.mohamedDocOk(file.name, matchedDocSnapshot.nombre);
+                  matchedName.includes("passport")
+                ) {
+                  successMessage = ui.passportVerified;
+                }
 
                 pushAgentMessage(successMessage, true);
               }
@@ -1288,7 +1387,9 @@ export default function Regularizacion2026() {
                     <div
                       className="h-full bg-[#003b82] rounded-full transition-all"
                       style={{
-                        width: `${docsTotal > 0 ? (docsOk / docsTotal) * 100 : 0}%`,
+                        width: `${
+                          docsTotal > 0 ? (docsOk / docsTotal) * 100 : 0
+                        }%`,
                       }}
                     />
                   </div>
