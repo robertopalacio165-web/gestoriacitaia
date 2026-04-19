@@ -923,239 +923,126 @@ const getBestDocMatch = (
     }
   };
 
-  const handleGeneralUpload = async () => {
-    if (!leadSaved) {
-      pushAgentMessage(ui.voiceBlocked, true);
+ const handleGeneralUpload = async () => {
+  if (!leadSaved) {
+    pushAgentMessage(ui.voiceBlocked, true);
 
-      toast({
-        title: ui.missingTitle,
-        description: ui.missingDesc,
-        variant: "destructive",
-      });
-      return;
-    }
+    toast({
+      title: ui.missingTitle,
+      description: ui.missingDesc,
+      variant: "destructive",
+    });
+    return;
+  }
 
-    try {
-      const input = document.createElement("input");
-      input.type = "file";
-      input.accept = "image/*,application/pdf";
-      input.multiple = true;
+  try {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "image/*,application/pdf";
+    input.multiple = true;
 
-      input.onchange = async () => {
-        const files = Array.from(input.files || []);
-        if (files.length === 0) return;
+    input.onchange = async () => {
+      const files = Array.from(input.files || []);
+      if (!files.length) return;
 
-        setGeneralUploading(true);
+      setGeneralUploading(true);
 
-        try {
-          for (const file of files) {
-            try {
-              const identitySlotExists = docs.some(
-                (doc) =>
-                  doc.estado !== "ok" &&
-                  (normalizeDocType(doc.expectedType) === "passport" ||
-                    normalizeDocType(doc.expectedType) === "nie" ||
-                    doc.nombre.toLowerCase().includes("pasaporte o nie") ||
-                    doc.nombre.toLowerCase().includes("pasaporte") ||
-                    doc.nombre.toLowerCase().includes("nie vigente"))
-              );
+      try {
+        for (const file of files) {
+          try {
+            const currentDocs = [...docs];
 
-              const result: VerifyDocumentResult = await verifyDocument({
-                file,
-                expectedDocumentType: identitySlotExists ? "passport" : "auto",
-                lang: safeLang,
-              });
+            const result = await verifyDocument({
+              file,
+              expectedDocumentType: "auto",
+              lang: safeLang,
+            });
 
-              const resultAny = result as any;
+            const matchedDoc = getBestDocMatch(result as any, currentDocs, file.name);
 
-              let matchedDocSnapshot: StoredDocItem | null = null;
-              let nextDocsSnapshot: StoredDocItem[] = [];
-
-              setDocs((prev) => {
-                const matchedDoc = getBestDocMatch(resultAny, prev, file.name);
-                matchedDocSnapshot = matchedDoc;
-
-                if (!matchedDoc) {
-                  nextDocsSnapshot = [...prev];
-                  return prev;
-                }
-
-                const nextStatus: DocStatus =
-                  result.status === "invalid" ||
-                  result.match_expected_type === false
-                    ? "warn"
-                    : "ok";
-
-                const updatedDocs = prev.map((doc) =>
-                  doc.id === matchedDoc.id
-                    ? {
-                        ...doc,
-                        estado: nextStatus,
-                        archivo: file.name,
-                        kb: `${Math.round(file.size / 1024)} KB`,
-                        detectedType: result.document_type || "",
-                        note: result.summary || "",
-                      }
-                    : doc
-                );
-
-                nextDocsSnapshot = updatedDocs;
-                return updatedDocs;
-              });
-
-              if (!matchedDocSnapshot) {
-                const fallbackIdentityDoc =
-                  docs.find(
-                    (doc) =>
-                      doc.estado !== "ok" &&
-                      (normalizeDocType(doc.expectedType) === "passport" ||
-                        normalizeDocType(doc.expectedType) === "nie" ||
-                        doc.nombre.toLowerCase().includes("pasaporte o nie") ||
-                        doc.nombre.toLowerCase().includes("pasaporte") ||
-                        doc.nombre.toLowerCase().includes("nie vigente"))
-                  ) || null;
-
-                if (fallbackIdentityDoc) {
-                  matchedDocSnapshot = fallbackIdentityDoc;
-
-                  const forcedDocs = docs.map((doc) =>
-                    doc.id === fallbackIdentityDoc.id
-                      ? {
-                          ...doc,
-                          estado: "ok" as DocStatus,
-                          archivo: file.name,
-                          kb: `${Math.round(file.size / 1024)} KB`,
-                          detectedType: "passport",
-                          note:
-                            result.summary ||
-                            "Documento de identidad vinculado automáticamente",
-                        }
-                      : doc
-                  );
-
-                  nextDocsSnapshot = forcedDocs;
-                  setDocs(forcedDocs);
-
-                  pushAgentMessage(ui.passportVerified, true);
-
-                  toast({
-                    title: ui.uploadSuccessTitle,
-                    description: result?.summary || ui.uploadSuccessDesc,
-                  });
-
-                  maybeSendCompletionMessage(forcedDocs);
-                  continue;
-                }
-
-                pushAgentMessage(ui.mohamedDocUnknown(), true);
-
-                toast({
-                  title: ui.uploadErrorTitle,
-                  description: result?.summary || ui.uploadErrorDesc,
-                  variant: "destructive",
-                });
-
-                continue;
-              }
-
-              const isWarn =
-                result.status === "invalid" ||
-                result.match_expected_type === false;
-
-              if (isWarn) {
-                pushAgentMessage(ui.mohamedDocWarn(), true);
-              } else {
-                const matchedName = matchedDocSnapshot.nombre.toLowerCase();
-
-                let successMessage = ui.mohamedDocOk(
-                  file.name,
-                  matchedDocSnapshot.nombre
-                );
-
-                if (
-                  matchedName.includes("pasaporte o nie") ||
-                  matchedName.includes("pasaporte") ||
-                  matchedName.includes("nie vigente") ||
-                  matchedName.includes("passport")
-                ) {
-                  successMessage = ui.passportVerified;
-                }
-
-                pushAgentMessage(successMessage, true);
-              }
+            if (!matchedDoc) {
+              pushAgentMessage(ui.mohamedDocUnknown(), true);
 
               toast({
-                title: ui.uploadSuccessTitle,
-                description: result?.summary || ui.uploadSuccessDesc,
-              });
-
-              if (nextDocsSnapshot.length > 0) {
-                maybeSendCompletionMessage(nextDocsSnapshot);
-              }
-            } catch (err: any) {
-              console.error("Error IA documento:", err);
-
-              const errText =
-                safeLang === "darija"
-                  ? `وقع مشكل فمراجعة الوثيقة: ${
-                      err?.message || "خطأ غير معروف"
-                    }`
-                  : safeLang === "en"
-                  ? `There was a problem reviewing the document: ${
-                      err?.message || "Unknown error"
-                    }`
-                  : `Ha habido un problema revisando el documento: ${
-                      err?.message || "Error desconocido"
-                    }`;
-
-              pushAgentMessage(errText, true);
-
-              toast({
-                title:
-                  safeLang === "darija"
-                    ? "خطأ فالتحليل"
-                    : safeLang === "en"
-                    ? "Verification error"
-                    : "Error de verificación",
-                description:
-                  err?.message ||
-                  (safeLang === "darija"
-                    ? "ما قدرناش نحللو الوثيقة."
-                    : safeLang === "en"
-                    ? "Could not analyze the document."
-                    : "No se pudo analizar el documento."),
+                title: ui.uploadErrorTitle,
+                description: result.summary || ui.uploadErrorDesc,
                 variant: "destructive",
               });
+
+              continue;
             }
+
+            const isWarn =
+              result.status === "invalid" ||
+              result.match_expected_type === false;
+
+            const nextStatus: DocStatus = isWarn ? "warn" : "ok";
+
+            const updatedDocs = currentDocs.map((doc) =>
+              doc.id === matchedDoc.id
+                ? {
+                    ...doc,
+                    estado: nextStatus,
+                    archivo: file.name,
+                    kb: `${Math.round(file.size / 1024)} KB`,
+                    detectedType: result.document_type || "",
+                    note: result.summary || "",
+                  }
+                : doc
+            );
+
+            setDocs(updatedDocs);
+
+            const matchedName = matchedDoc.nombre.toLowerCase();
+
+            if (isWarn) {
+              pushAgentMessage(ui.mohamedDocWarn(), true);
+            } else if (
+              matchedName.includes("pasaporte") ||
+              matchedName.includes("nie") ||
+              matchedName.includes("passport")
+            ) {
+              pushAgentMessage(ui.passportVerified, true);
+            } else {
+              pushAgentMessage(
+                ui.mohamedDocOk(file.name, matchedDoc.nombre),
+                true
+              );
+            }
+
+            toast({
+              title: ui.uploadSuccessTitle,
+              description: result.summary || ui.uploadSuccessDesc,
+            });
+
+            maybeSendCompletionMessage(updatedDocs);
+          } catch (err: any) {
+            console.error(err);
+
+            toast({
+              title: ui.uploadErrorTitle,
+              description:
+                err?.message || ui.uploadErrorDesc,
+              variant: "destructive",
+            });
           }
-        } finally {
-          setGeneralUploading(false);
         }
-      };
+      } finally {
+        setGeneralUploading(false);
+      }
+    };
 
-      input.click();
-    } catch (error: any) {
-      console.error("Error general handleGeneralUpload:", error);
-      setGeneralUploading(false);
+    input.click();
+  } catch (error: any) {
+    setGeneralUploading(false);
 
-      toast({
-        title:
-          safeLang === "darija"
-            ? "خطأ"
-            : safeLang === "en"
-            ? "Error"
-            : "Error",
-        description:
-          error?.message ||
-          (safeLang === "darija"
-            ? "وقع مشكل غير متوقع."
-            : safeLang === "en"
-            ? "An unexpected error occurred."
-            : "Ocurrió un error inesperado."),
-        variant: "destructive",
-      });
-    }
-  };
+    toast({
+      title: "Error",
+      description: error?.message || "Error inesperado",
+      variant: "destructive",
+    });
+  }
+};
 
   const goToSara = () => {
     window.location.href = "/citas";
