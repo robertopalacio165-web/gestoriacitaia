@@ -13,7 +13,10 @@ import {
   VolumeX,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { verifyDocument, type VerifyDocumentResult } from "@/lib/verifyDocument";
+import {
+  verifyDocument,
+  type VerifyDocumentResult,
+} from "@/lib/verifyDocument";
 import {
   EXTRANJERIA_PROCEDURES,
   getProcedureByKey,
@@ -58,7 +61,8 @@ type LeadFormState = {
 };
 
 function buildInitialDocs(procedureKey: string): StoredDocItem[] {
-  const procedure = getProcedureByKey(procedureKey) || EXTRANJERIA_PROCEDURES[0];
+  const procedure =
+    getProcedureByKey(procedureKey) || EXTRANJERIA_PROCEDURES[0];
 
   return procedure.requiredDocuments.map((doc) => ({
     id: doc.id,
@@ -156,6 +160,8 @@ export default function Regularizacion2026() {
           `توصلت بــ ${fileName} ولكن مازال خاصني نسخة أوضح ولا الوثيقة المناسبة باش نكمل المراجعة.`,
         mohamedDocUnknown: (fileName: string) =>
           `توصلت بــ ${fileName}، ولكن ما قدرناش نربطو أوتوماتيكياً مع وثيقة معينة.`,
+        passportVerifiedNext:
+          "الباسبور ديالك متحقق مزيان. دابا نمرّو للوثيقة اللي من بعد.",
         mohamedFinal:
           "مزيان. راجعنا الوثائق ديالك ووجدنا الملف ديالك. إلا بغيتي دابا تكمل مع سارة فالسيطة، تقدر تدوز ليها.",
         goSara: "المرور إلى سارة",
@@ -221,6 +227,8 @@ export default function Regularizacion2026() {
           `I received ${fileName}, but I still need a clearer version or the correct document.`,
         mohamedDocUnknown: (fileName: string) =>
           `I received ${fileName}, but I could not automatically match it to a specific document.`,
+        passportVerifiedNext:
+          "Your passport has been verified correctly. Now let's continue with the next document.",
         mohamedFinal:
           "Perfect. We reviewed your documents and prepared your file. If you want to continue with Sara for the appointment, you can go now.",
         goSara: "Go to Sara",
@@ -286,6 +294,8 @@ export default function Regularizacion2026() {
         `He recibido ${fileName}, pero todavía necesito una versión más clara o el documento correcto para seguir.`,
       mohamedDocUnknown: (fileName: string) =>
         `He recibido ${fileName}, pero no he podido relacionarlo automáticamente con un documento concreto del expediente.`,
+      passportVerifiedNext:
+        "Tu pasaporte ha sido verificado correctamente. Ahora seguimos con el siguiente documento.",
       mohamedFinal:
         "Perfecto. Ya hemos revisado tu documentación y hemos dejado preparado tu expediente. Si ahora quieres continuar con la cita, Sara te ayudará.",
       goSara: "Ir con Sara",
@@ -323,11 +333,6 @@ export default function Regularizacion2026() {
   const leadSavedStorageKey = useMemo(() => {
     return `gestoriacitaia_mohamed_lead_saved_${safeLang}_${selectedSituacion}`;
   }, [safeLang, selectedSituacion]);
-
-  const leadFormReady =
-    !!leadForm.nombre.trim() &&
-    !!leadForm.telefono.trim() &&
-    !!leadForm.ciudad.trim();
 
   useEffect(() => {
     setDocs(buildInitialDocs(selectedSituacion));
@@ -403,14 +408,13 @@ export default function Regularizacion2026() {
         }
       }
 
-      const freshHistory: ChatMsg[] = [
+      setVoiceHistory([
         {
           from: "agent",
           text: ui.initialVoice,
           ts: Date.now(),
         },
-      ];
-      setVoiceHistory(freshHistory);
+      ]);
     } catch (error) {
       console.error("Error cargando historial de Mohamed:", error);
       setVoiceHistory([
@@ -425,12 +429,23 @@ export default function Regularizacion2026() {
 
   useEffect(() => {
     if (voiceHistory.length === 0) return;
+
     try {
       localStorage.setItem(historyStorageKey, JSON.stringify(voiceHistory));
     } catch (error) {
       console.error("Error guardando historial de Mohamed:", error);
     }
   }, [voiceHistory, historyStorageKey]);
+
+  useEffect(() => {
+    if (voiceHistory.length === 1 && voiceHistory[0]?.text === ui.initialVoice) {
+      const timer = setTimeout(() => {
+        speakText(ui.initialVoice);
+      }, 600);
+
+      return () => clearTimeout(timer);
+    }
+  }, [voiceHistory, ui.initialVoice]);
 
   const docsOk = docs.filter((d) => d.estado === "ok").length;
   const docsTotal = docs.length;
@@ -495,16 +510,6 @@ export default function Regularizacion2026() {
       },
     ]);
   };
-
-  useEffect(() => {
-    if (voiceHistory.length === 1 && voiceHistory[0]?.text === ui.initialVoice) {
-      const timer = setTimeout(() => {
-        speakText(ui.initialVoice);
-      }, 600);
-
-      return () => clearTimeout(timer);
-    }
-  }, [voiceHistory, ui.initialVoice]);
 
   const handleSaveLeadForm = () => {
     if (!leadFormReady) {
@@ -725,6 +730,30 @@ export default function Regularizacion2026() {
 
     if (
       includesAny([
+        "antecedentes",
+        "antecedentes penales",
+        "criminal",
+        "criminal record",
+        "penales",
+        "registro de antecedentes",
+        "casier",
+      ])
+    ) {
+      const criminalDoc =
+        currentDocs.find(
+          (doc) =>
+            doc.estado !== "ok" &&
+            normalizeDocType(doc.expectedType) === "criminal_record"
+        ) ||
+        currentDocs.find(
+          (doc) => normalizeDocType(doc.expectedType) === "criminal_record"
+        );
+
+      if (criminalDoc) return criminalDoc;
+    }
+
+    if (
+      includesAny([
         "passport",
         "pasaporte",
         "passeport",
@@ -940,14 +969,7 @@ export default function Regularizacion2026() {
               });
 
               if (!matchedDocSnapshot) {
-                const unknownText =
-                  safeLang === "darija"
-                    ? `توصلت بــ ${file.name}. قريت الوثيقة ولكن ما قدرتش نربطها أوتوماتيكياً مع خانة محددة.`
-                    : safeLang === "en"
-                    ? `I received ${file.name}. I could read the document, but I could not automatically assign it to a specific slot yet.`
-                    : `He recibido ${file.name}. He podido leer el documento, pero todavía no he podido asignarlo automáticamente a una casilla concreta del expediente.`;
-
-                pushAgentMessage(unknownText, true);
+                pushAgentMessage(ui.mohamedDocUnknown(file.name), true);
 
                 toast({
                   title: ui.uploadErrorTitle,
@@ -975,14 +997,10 @@ export default function Regularizacion2026() {
                 if (
                   matchedName.includes("pasaporte o nie") ||
                   matchedName.includes("pasaporte") ||
-                  matchedName.includes("nie vigente")
+                  matchedName.includes("nie vigente") ||
+                  matchedName.includes("passport")
                 ) {
-                  successMessage =
-                    safeLang === "darija"
-                      ? "الباسبور ديالك متحقق مزيان. دابا نمرّو للوثيقة اللي من بعد."
-                      : safeLang === "en"
-                      ? "Your passport has been verified correctly. Now let's continue with the next document."
-                      : "Tu pasaporte ha sido verificado correctamente. Ahora seguimos con el siguiente documento.";
+                  successMessage = ui.passportVerifiedNext;
                 }
 
                 pushAgentMessage(successMessage, true);
@@ -1311,7 +1329,9 @@ export default function Regularizacion2026() {
                     <div
                       className="h-full bg-[#003b82] rounded-full transition-all"
                       style={{
-                        width: `${docsTotal > 0 ? (docsOk / docsTotal) * 100 : 0}%`,
+                        width: `${
+                          docsTotal > 0 ? (docsOk / docsTotal) * 100 : 0
+                        }%`,
                       }}
                     />
                   </div>
