@@ -27,6 +27,21 @@ export type VerifyDocumentResult = {
     multiple_documents: boolean;
   };
   summary: string;
+
+  is_stay_proof?: boolean;
+  stay_proof_strength?: "strong" | "medium" | "weak" | "none";
+  document_date?: string | null;
+  person_name_visible?: boolean;
+  linked_to_client?: boolean | null;
+  usable_for_regularizacion_2026?: boolean;
+  recommended_bucket?:
+    | "identity_document"
+    | "stay_proof"
+    | "official_form"
+    | "supporting_document"
+    | "personal_photo"
+    | "other";
+  stay_proof_reason?: string;
 };
 
 type VerifyParams = {
@@ -41,12 +56,14 @@ function fileToBase64(file: File): Promise<string> {
 
     reader.onload = () => {
       const result = reader.result;
+
       if (typeof result !== "string") {
         reject(new Error("No se pudo leer el archivo"));
         return;
       }
 
       const commaIndex = result.indexOf(",");
+
       if (commaIndex === -1) {
         reject(new Error("Archivo en formato no válido"));
         return;
@@ -103,6 +120,9 @@ export function getDocumentLabel(type?: string): string {
   if (v === "empadronamiento") return "Empadronamiento";
   if (v === "criminal_record") return "Antecedentes penales";
   if (v === "official_form") return "Formulario oficial";
+  if (v === "stay_proof") return "Prueba de permanencia";
+  if (v === "supporting_document") return "Documento de apoyo";
+  if (v === "personal_photo") return "Foto personal";
   if (v === "photo") return "Foto";
   return "Documento";
 }
