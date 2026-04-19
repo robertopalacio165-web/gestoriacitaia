@@ -724,60 +724,65 @@ export default function Regularizacion2026() {
     }
 
     if (
-  includesAny([
-    "passport",
-    "pasaporte",
-    "passeport",
-    "documento de viaje",
-    "travel document",
-    "passaporte",
-    "numero de pasaporte",
-    "passport number",
-  ])
-) {
-  const passportDoc =
-    currentDocs.find(
-      (doc) =>
-        doc.estado !== "ok" &&
-        (
-          normalizeDocType(doc.expectedType) === "passport" ||
-          doc.nombre.toLowerCase().includes("pasaporte") ||
-          doc.nombre.toLowerCase().includes("passport") ||
-          doc.nombre.toLowerCase().includes("nie vigente") ||
-          doc.nombre.toLowerCase().includes("pasaporte o nie")
-        )
-    ) ||
-    currentDocs.find(
-      (doc) =>
-        normalizeDocType(doc.expectedType) === "passport" ||
-        doc.nombre.toLowerCase().includes("pasaporte") ||
-        doc.nombre.toLowerCase().includes("passport") ||
-        doc.nombre.toLowerCase().includes("nie vigente") ||
-        doc.nombre.toLowerCase().includes("pasaporte o nie")
-    );
-
-  if (passportDoc) return passportDoc;
-}
-
-    if (
       includesAny([
         "passport",
         "pasaporte",
         "passeport",
         "documento de viaje",
+        "travel document",
+        "passaporte",
+        "numero de pasaporte",
+        "passport number",
       ])
     ) {
       const passportDoc =
         currentDocs.find(
           (doc) =>
             doc.estado !== "ok" &&
-            normalizeDocType(doc.expectedType) === "passport"
+            (normalizeDocType(doc.expectedType) === "passport" ||
+              doc.nombre.toLowerCase().includes("pasaporte") ||
+              doc.nombre.toLowerCase().includes("passport") ||
+              doc.nombre.toLowerCase().includes("nie vigente") ||
+              doc.nombre.toLowerCase().includes("pasaporte o nie"))
         ) ||
         currentDocs.find(
-          (doc) => normalizeDocType(doc.expectedType) === "passport"
+          (doc) =>
+            normalizeDocType(doc.expectedType) === "passport" ||
+            doc.nombre.toLowerCase().includes("pasaporte") ||
+            doc.nombre.toLowerCase().includes("passport") ||
+            doc.nombre.toLowerCase().includes("nie vigente") ||
+            doc.nombre.toLowerCase().includes("pasaporte o nie")
         );
 
       if (passportDoc) return passportDoc;
+    }
+
+    if (
+      includesAny([
+        "passport",
+        "pasaporte",
+        "nie",
+        "identity card",
+        "documento identidad",
+        "documento de identidad",
+      ])
+    ) {
+      const identityDoc =
+        currentDocs.find(
+          (doc) =>
+            doc.estado !== "ok" &&
+            (doc.nombre.toLowerCase().includes("pasaporte o nie") ||
+              doc.nombre.toLowerCase().includes("pasaporte") ||
+              doc.nombre.toLowerCase().includes("nie vigente"))
+        ) ||
+        currentDocs.find(
+          (doc) =>
+            doc.nombre.toLowerCase().includes("pasaporte o nie") ||
+            doc.nombre.toLowerCase().includes("pasaporte") ||
+            doc.nombre.toLowerCase().includes("nie vigente")
+        );
+
+      if (identityDoc) return identityDoc;
     }
 
     if (includesAny(["nie"])) {
@@ -790,35 +795,7 @@ export default function Regularizacion2026() {
 
       if (nieDoc) return nieDoc;
     }
-if (
-  includesAny([
-    "passport",
-    "pasaporte",
-    "nie",
-    "identity card",
-    "documento identidad",
-    "documento de identidad",
-  ])
-) {
-  const identityDoc =
-    currentDocs.find(
-      (doc) =>
-        doc.estado !== "ok" &&
-        (
-          doc.nombre.toLowerCase().includes("pasaporte o nie") ||
-          doc.nombre.toLowerCase().includes("pasaporte") ||
-          doc.nombre.toLowerCase().includes("nie vigente")
-        )
-    ) ||
-    currentDocs.find(
-      (doc) =>
-        doc.nombre.toLowerCase().includes("pasaporte o nie") ||
-        doc.nombre.toLowerCase().includes("pasaporte") ||
-        doc.nombre.toLowerCase().includes("nie vigente")
-    );
 
-  if (identityDoc) return identityDoc;
-}
     if (includesAny(["tie", "tarjeta de identidad de extranjero"])) {
       const tieDoc =
         currentDocs.find(
@@ -981,52 +958,59 @@ if (
                 continue;
               }
 
-        const isWarn =
-  result.status === "invalid" ||
-  result.match_expected_type === false;
+              const isWarn =
+                result.status === "invalid" ||
+                result.match_expected_type === false;
 
-if (isWarn) {
-  pushAgentMessage(ui.mohamedDocWarn(file.name), true);
-} else {
-  const matchedName = matchedDocSnapshot.nombre.toLowerCase();
+              if (isWarn) {
+                pushAgentMessage(ui.mohamedDocWarn(file.name), true);
+              } else {
+                const matchedName = matchedDocSnapshot.nombre.toLowerCase();
 
-  let successMessage = ui.mohamedDocOk(
-    file.name,
-    matchedDocSnapshot.nombre
-  );
+                let successMessage = ui.mohamedDocOk(
+                  file.name,
+                  matchedDocSnapshot.nombre
+                );
 
-  if (
-    matchedName.includes("pasaporte o nie") ||
-    matchedName.includes("pasaporte") ||
-    matchedName.includes("nie vigente")
-  ) {
-    successMessage =
-      safeLang === "darija"
-        ? "الباسبور ديالك متحقق مزيان. دابا نمرّو للوثيقة اللي من بعد."
-        : safeLang === "en"
-        ? "Your passport has been verified correctly. Now let's continue with the next document."
-        : "Tu pasaporte ha sido verificado correctamente. Ahora seguimos con el siguiente documento.";
-  }
+                if (
+                  matchedName.includes("pasaporte o nie") ||
+                  matchedName.includes("pasaporte") ||
+                  matchedName.includes("nie vigente")
+                ) {
+                  successMessage =
+                    safeLang === "darija"
+                      ? "الباسبور ديالك متحقق مزيان. دابا نمرّو للوثيقة اللي من بعد."
+                      : safeLang === "en"
+                      ? "Your passport has been verified correctly. Now let's continue with the next document."
+                      : "Tu pasaporte ha sido verificado correctamente. Ahora seguimos con el siguiente documento.";
+                }
 
-  pushAgentMessage(successMessage, true);
-}
+                pushAgentMessage(successMessage, true);
+              }
 
-toast({
-  title: ui.uploadSuccessTitle,
-  description: result?.summary || ui.uploadSuccessDesc,
-});
+              toast({
+                title: ui.uploadSuccessTitle,
+                description: result?.summary || ui.uploadSuccessDesc,
+              });
 
-if (nextDocsSnapshot.length > 0) {
-  maybeSendCompletionMessage(nextDocsSnapshot);
-}
+              if (nextDocsSnapshot.length > 0) {
+                maybeSendCompletionMessage(nextDocsSnapshot);
+              }
+            } catch (err: any) {
               console.error("Error IA documento:", err);
 
               const errText =
                 safeLang === "darija"
-                  ? `وقع مشكل فمراجعة الوثيقة: ${err?.message || "خطأ غير معروف"}`
+                  ? `وقع مشكل فمراجعة الوثيقة: ${
+                      err?.message || "خطأ غير معروف"
+                    }`
                   : safeLang === "en"
-                  ? `There was a problem reviewing the document: ${err?.message || "Unknown error"}`
-                  : `Ha habido un problema revisando el documento: ${err?.message || "Error desconocido"}`;
+                  ? `There was a problem reviewing the document: ${
+                      err?.message || "Unknown error"
+                    }`
+                  : `Ha habido un problema revisando el documento: ${
+                      err?.message || "Error desconocido"
+                    }`;
 
               pushAgentMessage(errText, true);
 
