@@ -13,10 +13,7 @@ import {
   VolumeX,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import {
-  verifyDocument,
-  type VerifyDocumentResult,
-} from "@/lib/verifyDocument";
+import { verifyDocument, type VerifyDocumentResult } from "@/lib/verifyDocument";
 import {
   EXTRANJERIA_PROCEDURES,
   getProcedureByKey,
@@ -61,8 +58,7 @@ type LeadFormState = {
 };
 
 function buildInitialDocs(procedureKey: string): StoredDocItem[] {
-  const procedure =
-    getProcedureByKey(procedureKey) || EXTRANJERIA_PROCEDURES[0];
+  const procedure = getProcedureByKey(procedureKey) || EXTRANJERIA_PROCEDURES[0];
 
   return procedure.requiredDocuments.map((doc) => ({
     id: doc.id,
@@ -133,8 +129,7 @@ export default function Regularizacion2026() {
         savedLeadReply:
           "مزيان. خديت المعطيات ديالك. دابا ضغط على زر الميكروفون ونجاوبك سؤال بسؤال، ومن بعد تقدر تطلع الوثائق ديالك.",
         formTitle: "لوحة رسمية مدمجة",
-        formDesc:
-          "عمر المعطيات الأساسية باش محمد يبدا يراجع الملف ديالك بالصوت.",
+        formDesc: "عمر المعطيات الأساسية باش محمد يبدا يراجع الملف ديالك بالصوت.",
         uploadGeneral: "رفع الوثائق",
         uploadGeneralDesc:
           "من هنا تقدر ترفع جميع الوثائق اللي طلب منك محمد، سواء كانت صورة أو PDF.",
@@ -148,8 +143,7 @@ export default function Regularizacion2026() {
         listening: "محمد كيسمع ليك دابا...",
         latestReply: "آخر جواب ديال محمد",
         yourVoice: "آخر جواب ديالك بالصوت",
-        micNotSupported:
-          "هاد المتصفح ما كيدعمش التعرف على الصوت. استعمل Chrome.",
+        micNotSupported: "هاد المتصفح ما كيدعمش التعرف على الصوت. استعمل Chrome.",
         docStatusTitle: "حالة الملف ديالك",
         docStatusDone: "جاهز",
         docStatusReview: "مراجعة",
@@ -160,8 +154,6 @@ export default function Regularizacion2026() {
           `توصلت بــ ${fileName} ولكن مازال خاصني نسخة أوضح ولا الوثيقة المناسبة باش نكمل المراجعة.`,
         mohamedDocUnknown: (fileName: string) =>
           `توصلت بــ ${fileName}، ولكن ما قدرناش نربطو أوتوماتيكياً مع وثيقة معينة.`,
-        passportVerifiedNext:
-          "الباسبور ديالك متحقق مزيان. دابا نمرّو للوثيقة اللي من بعد.",
         mohamedFinal:
           "مزيان. راجعنا الوثائق ديالك ووجدنا الملف ديالك. إلا بغيتي دابا تكمل مع سارة فالسيطة، تقدر تدوز ليها.",
         goSara: "المرور إلى سارة",
@@ -215,8 +207,7 @@ export default function Regularizacion2026() {
         listening: "Mohamed is listening to you now...",
         latestReply: "Mohamed's latest reply",
         yourVoice: "Your latest voice answer",
-        micNotSupported:
-          "This browser does not support voice recognition. Use Chrome.",
+        micNotSupported: "This browser does not support voice recognition. Use Chrome.",
         docStatusTitle: "Your file status",
         docStatusDone: "Ready",
         docStatusReview: "Review",
@@ -227,13 +218,10 @@ export default function Regularizacion2026() {
           `I received ${fileName}, but I still need a clearer version or the correct document.`,
         mohamedDocUnknown: (fileName: string) =>
           `I received ${fileName}, but I could not automatically match it to a specific document.`,
-        passportVerifiedNext:
-          "Your passport has been verified correctly. Now let's continue with the next document.",
         mohamedFinal:
           "Perfect. We reviewed your documents and prepared your file. If you want to continue with Sara for the appointment, you can go now.",
         goSara: "Go to Sara",
-        goSaraDesc:
-          "If you want to continue with the appointment, Sara will help you.",
+        goSaraDesc: "If you want to continue with the appointment, Sara will help you.",
         labels: {
           nombre: "Full name",
           telefono: "Phone",
@@ -282,8 +270,7 @@ export default function Regularizacion2026() {
       listening: "Mohamed te está escuchando ahora...",
       latestReply: "Última respuesta de Mohamed",
       yourVoice: "Tu última respuesta por voz",
-      micNotSupported:
-        "Este navegador no soporta reconocimiento de voz. Usa Chrome.",
+      micNotSupported: "Este navegador no soporta reconocimiento de voz. Usa Chrome.",
       docStatusTitle: "Estado de tu expediente",
       docStatusDone: "Listo",
       docStatusReview: "Revisar",
@@ -294,8 +281,6 @@ export default function Regularizacion2026() {
         `He recibido ${fileName}, pero todavía necesito una versión más clara o el documento correcto para seguir.`,
       mohamedDocUnknown: (fileName: string) =>
         `He recibido ${fileName}, pero no he podido relacionarlo automáticamente con un documento concreto del expediente.`,
-      passportVerifiedNext:
-        "Tu pasaporte ha sido verificado correctamente. Ahora seguimos con el siguiente documento.",
       mohamedFinal:
         "Perfecto. Ya hemos revisado tu documentación y hemos dejado preparado tu expediente. Si ahora quieres continuar con la cita, Sara te ayudará.",
       goSara: "Ir con Sara",
@@ -429,23 +414,12 @@ export default function Regularizacion2026() {
 
   useEffect(() => {
     if (voiceHistory.length === 0) return;
-
     try {
       localStorage.setItem(historyStorageKey, JSON.stringify(voiceHistory));
     } catch (error) {
       console.error("Error guardando historial de Mohamed:", error);
     }
   }, [voiceHistory, historyStorageKey]);
-
-  useEffect(() => {
-    if (voiceHistory.length === 1 && voiceHistory[0]?.text === ui.initialVoice) {
-      const timer = setTimeout(() => {
-        speakText(ui.initialVoice);
-      }, 600);
-
-      return () => clearTimeout(timer);
-    }
-  }, [voiceHistory, ui.initialVoice]);
 
   const docsOk = docs.filter((d) => d.estado === "ok").length;
   const docsTotal = docs.length;
@@ -464,16 +438,11 @@ export default function Regularizacion2026() {
 
     try {
       window.speechSynthesis.cancel();
-
       const utterance = new SpeechSynthesisUtterance(text);
 
-      if (safeLang === "darija") {
-        utterance.lang = "ar-MA";
-      } else if (safeLang === "en") {
-        utterance.lang = "en-US";
-      } else {
-        utterance.lang = "es-ES";
-      }
+      if (safeLang === "darija") utterance.lang = "ar-MA";
+      else if (safeLang === "en") utterance.lang = "en-US";
+      else utterance.lang = "es-ES";
 
       utterance.rate = 1;
       utterance.pitch = 1;
@@ -511,8 +480,18 @@ export default function Regularizacion2026() {
     ]);
   };
 
+  useEffect(() => {
+    if (voiceHistory.length === 1 && voiceHistory[0]?.text === ui.initialVoice) {
+      const timer = setTimeout(() => {
+        speakText(ui.initialVoice);
+      }, 600);
+
+      return () => clearTimeout(timer);
+    }
+  }, [voiceHistory, ui.initialVoice]);
+
   const handleSaveLeadForm = () => {
-    if (!leadFormReady) {
+    if (!leadForm.nombre.trim() || !leadForm.telefono.trim() || !leadForm.ciudad.trim()) {
       toast({
         title: ui.missingTitle,
         description: ui.missingDesc,
@@ -670,9 +649,7 @@ export default function Regularizacion2026() {
       };
 
       recognition.onresult = async (event: any) => {
-        const transcript =
-          event?.results?.[0]?.[0]?.transcript?.trim?.() || "";
-
+        const transcript = event?.results?.[0]?.[0]?.transcript?.trim?.() || "";
         if (!transcript) return;
         await handleVoiceConversation(transcript);
       };
@@ -685,184 +662,199 @@ export default function Regularizacion2026() {
     }
   };
 
-const getBestDocMatch = (
-  result: {
-    document_type?: string | null;
-    summary?: string;
-    visible_fields?: string[];
-    missing_or_unclear_fields?: string[];
-    warnings?: string[];
-  },
-  currentDocs: StoredDocItem[],
-  fileName?: string
-): StoredDocItem | null => {
-  const detectedType = normalizeDocType(result?.document_type || "");
-  const lowerFileName = (fileName || "").toLowerCase();
+  const getBestDocMatch = (
+    result: {
+      document_type?: string | null;
+      summary?: string;
+      visible_fields?: string[];
+      missing_or_unclear_fields?: string[];
+      warnings?: string[];
+    },
+    currentDocs: StoredDocItem[],
+    fileName?: string
+  ): StoredDocItem | null => {
+    const detectedType = normalizeDocType(result?.document_type || "");
+    const lowerFileName = (fileName || "").toLowerCase();
 
-  const combinedText = [
-    result?.summary || "",
-    ...(result?.visible_fields || []),
-    ...(result?.missing_or_unclear_fields || []),
-    ...(result?.warnings || []),
-    lowerFileName,
-  ]
-    .join(" ")
-    .toLowerCase();
+    const combinedText = [
+      result?.summary || "",
+      ...(result?.visible_fields || []),
+      ...(result?.missing_or_unclear_fields || []),
+      ...(result?.warnings || []),
+      lowerFileName,
+    ]
+      .join(" ")
+      .toLowerCase();
 
-  const includesAny = (words: string[]) =>
-    words.some((word) => combinedText.includes(word));
+    const includesAny = (words: string[]) =>
+      words.some((word) => combinedText.includes(word));
 
-  const findByName = (words: string[]) => {
-    return (
-      currentDocs.find(
+    if (detectedType && detectedType !== "unknown" && detectedType !== "photo") {
+      const exactMissing = currentDocs.find(
         (doc) =>
-          doc.estado !== "ok" &&
-          words.some((word) => doc.nombre.toLowerCase().includes(word))
-      ) ||
-      currentDocs.find((doc) =>
-        words.some((word) => doc.nombre.toLowerCase().includes(word))
-      ) ||
-      null
-    );
-  };
+          doc.estado !== "ok" && normalizeDocType(doc.expectedType) === detectedType
+      );
+      if (exactMissing) return exactMissing;
 
-  const findByExpectedType = (expectedType: string) => {
-    return (
-      currentDocs.find(
+      const exactWarn = currentDocs.find(
         (doc) =>
-          doc.estado !== "ok" &&
-          normalizeDocType(doc.expectedType) === expectedType
-      ) ||
-      currentDocs.find(
-        (doc) => normalizeDocType(doc.expectedType) === expectedType
-      ) ||
-      null
-    );
-  };
+          doc.estado === "warn" && normalizeDocType(doc.expectedType) === detectedType
+      );
+      if (exactWarn) return exactWarn;
+    }
 
-  // 1) coincidencia exacta por tipo detectado por IA
-  if (detectedType && detectedType !== "unknown" && detectedType !== "photo") {
-    const exactDoc = findByExpectedType(detectedType);
-    if (exactDoc) return exactDoc;
-  }
-
-  // 2) PASAPORTE / NIE / DOCUMENTO IDENTIDAD
-  if (
-    includesAny([
-      "passport",
-      "pasaporte",
-      "passeport",
-      "travel document",
-      "documento de viaje",
-      "passport number",
-      "numero de pasaporte",
-      "identity card",
-      "documento identidad",
-      "documento de identidad",
-      "nie",
-    ])
-  ) {
-    const identityDoc =
-      findByName(["pasaporte o nie", "pasaporte", "nie vigente"]) ||
-      findByExpectedType("passport") ||
-      findByExpectedType("nie");
-
-    if (identityDoc) return identityDoc;
-  }
-
-  // 3) TIE
-  if (includesAny(["tie", "tarjeta de identidad de extranjero"])) {
-    const tieDoc =
-      findByName(["tie", "tarjeta de identidad"]) || findByExpectedType("tie");
-
-    if (tieDoc) return tieDoc;
-  }
-
-  // 4) EMPADRONAMIENTO
-  if (includesAny(["empadronamiento", "padron", "padrón", "volante"])) {
-    const empDoc =
-      findByName(["empadronamiento", "prueba de permanencia", "padron"]) ||
-      findByExpectedType("empadronamiento");
-
-    if (empDoc) return empDoc;
-  }
-
-  // 5) CONTRATO
-  if (
-    includesAny([
-      "contrato",
-      "contrato de trabajo",
-      "employment contract",
-      "job contract",
-      "trabajo firmado",
-    ])
-  ) {
-    const contratoDoc = findByName(["contrato de trabajo"]);
-    if (contratoDoc) return contratoDoc;
-  }
-
-  // 6) ANTECEDENTES
-  if (
-    includesAny([
-      "antecedentes",
-      "antecedentes penales",
-      "criminal",
-      "criminal record",
-      "penales",
-      "casier",
-    ])
-  ) {
-    const penalesDoc =
-      findByName(["antecedentes penales", "certificado de antecedentes"]) ||
-      findByExpectedType("criminal_record");
-
-    if (penalesDoc) return penalesDoc;
-  }
-
-  // 7) FORMULARIO
-  if (includesAny(["formulario", "official form", "solicitud", "modelo ex"])) {
-    const formDoc =
-      findByName(["formulario", "modelo ex"]) ||
-      findByExpectedType("official_form");
-
-    if (formDoc) return formDoc;
-  }
-
-  // 8) si el nombre del archivo da pista
-  if (lowerFileName) {
-    const byFileName =
-      findByName([
-        "pasaporte o nie",
+    if (
+      includesAny([
+        "passport",
         "pasaporte",
-        "nie vigente",
-        "empadronamiento",
-        "prueba de permanencia",
-        "contrato de trabajo",
-        "antecedentes penales",
-      ]) || null;
+        "passeport",
+        "documento de viaje",
+        "travel document",
+        "passaporte",
+        "numero de pasaporte",
+        "passport number",
+      ])
+    ) {
+      const passportDoc =
+        currentDocs.find(
+          (doc) =>
+            doc.estado !== "ok" &&
+            (normalizeDocType(doc.expectedType) === "passport" ||
+              doc.nombre.toLowerCase().includes("pasaporte") ||
+              doc.nombre.toLowerCase().includes("passport") ||
+              doc.nombre.toLowerCase().includes("nie vigente") ||
+              doc.nombre.toLowerCase().includes("pasaporte o nie"))
+        ) ||
+        currentDocs.find(
+          (doc) =>
+            normalizeDocType(doc.expectedType) === "passport" ||
+            doc.nombre.toLowerCase().includes("pasaporte") ||
+            doc.nombre.toLowerCase().includes("passport") ||
+            doc.nombre.toLowerCase().includes("nie vigente") ||
+            doc.nombre.toLowerCase().includes("pasaporte o nie")
+        );
 
-    if (byFileName) return byFileName;
-  }
+      if (passportDoc) return passportDoc;
+    }
 
-  // 9) si no encuentra nada, y la IA detectó passport o nie, forzamos primera casilla de identidad
-  if (detectedType === "passport" || detectedType === "nie") {
-    const forcedIdentity =
-      findByName(["pasaporte o nie", "pasaporte", "nie vigente"]) ||
-      currentDocs[0] ||
-      null;
+    if (
+      includesAny([
+        "passport",
+        "pasaporte",
+        "nie",
+        "identity card",
+        "documento identidad",
+        "documento de identidad",
+      ])
+    ) {
+      const identityDoc =
+        currentDocs.find(
+          (doc) =>
+            doc.estado !== "ok" &&
+            (doc.nombre.toLowerCase().includes("pasaporte o nie") ||
+              doc.nombre.toLowerCase().includes("pasaporte") ||
+              doc.nombre.toLowerCase().includes("nie vigente"))
+        ) ||
+        currentDocs.find(
+          (doc) =>
+            doc.nombre.toLowerCase().includes("pasaporte o nie") ||
+            doc.nombre.toLowerCase().includes("pasaporte") ||
+            doc.nombre.toLowerCase().includes("nie vigente")
+        );
 
-    if (forcedIdentity) return forcedIdentity;
-  }
+      if (identityDoc) return identityDoc;
+    }
 
-  // 10) fallback final
-  const firstMissing = currentDocs.find((doc) => doc.estado === "missing");
-  if (firstMissing) return firstMissing;
+    if (includesAny(["nie"])) {
+      const nieDoc =
+        currentDocs.find(
+          (doc) => doc.estado !== "ok" && normalizeDocType(doc.expectedType) === "nie"
+        ) || currentDocs.find((doc) => normalizeDocType(doc.expectedType) === "nie");
 
-  const firstWarn = currentDocs.find((doc) => doc.estado === "warn");
-  if (firstWarn) return firstWarn;
+      if (nieDoc) return nieDoc;
+    }
 
-  return null;
-};
+    if (includesAny(["tie", "tarjeta de identidad de extranjero"])) {
+      const tieDoc =
+        currentDocs.find(
+          (doc) => doc.estado !== "ok" && normalizeDocType(doc.expectedType) === "tie"
+        ) || currentDocs.find((doc) => normalizeDocType(doc.expectedType) === "tie");
+
+      if (tieDoc) return tieDoc;
+    }
+
+    if (includesAny(["empadronamiento", "padron", "padrón", "volante"])) {
+      const empDoc =
+        currentDocs.find(
+          (doc) =>
+            doc.estado !== "ok" &&
+            normalizeDocType(doc.expectedType) === "empadronamiento"
+        ) ||
+        currentDocs.find(
+          (doc) => normalizeDocType(doc.expectedType) === "empadronamiento"
+        );
+
+      if (empDoc) return empDoc;
+    }
+
+    if (includesAny(["formulario", "official form", "solicitud", "modelo ex"])) {
+      const formDoc =
+        currentDocs.find(
+          (doc) =>
+            doc.estado !== "ok" &&
+            normalizeDocType(doc.expectedType) === "official_form"
+        ) ||
+        currentDocs.find(
+          (doc) => normalizeDocType(doc.expectedType) === "official_form"
+        );
+
+      if (formDoc) return formDoc;
+    }
+
+    if (lowerFileName) {
+      const byNameMissing = currentDocs.find((doc) => {
+        const expected = normalizeDocType(doc.expectedType);
+        return (
+          doc.estado !== "ok" &&
+          expected &&
+          expected !== "auto" &&
+          lowerFileName.includes(expected)
+        );
+      });
+
+      if (byNameMissing) return byNameMissing;
+    }
+
+    const firstMissing = currentDocs.find((doc) => doc.estado === "missing");
+    if (firstMissing) return firstMissing;
+
+    const firstWarn = currentDocs.find((doc) => doc.estado === "warn");
+    if (firstWarn) return firstWarn;
+
+    return null;
+  };
+
+  const maybeSendCompletionMessage = (nextDocs: StoredDocItem[]) => {
+    const okCount = nextDocs.filter((d) => d.estado === "ok").length;
+    const total = nextDocs.length;
+    const readyNow = okCount >= Math.max(1, total - 1);
+
+    if (readyNow && !completionMessageSent) {
+      pushAgentMessage(ui.mohamedFinal, true);
+      setCompletionMessageSent(true);
+    }
+  };
+
+  const handleGeneralUpload = async () => {
+    if (!leadSaved) {
+      pushAgentMessage(ui.voiceBlocked, true);
+
+      toast({
+        title: ui.missingTitle,
+        description: ui.missingDesc,
+        variant: "destructive",
+      });
+      return;
     }
 
     try {
@@ -899,8 +891,7 @@ const getBestDocMatch = (
                 }
 
                 const nextStatus: DocStatus =
-                  result.status === "invalid" ||
-                  result.match_expected_type === false
+                  result.status === "invalid" || result.match_expected_type === false
                     ? "warn"
                     : "ok";
 
@@ -922,7 +913,14 @@ const getBestDocMatch = (
               });
 
               if (!matchedDocSnapshot) {
-                pushAgentMessage(ui.mohamedDocUnknown(file.name), true);
+                const unknownText =
+                  safeLang === "darija"
+                    ? `توصلت بــ ${file.name}، ولكن ما قدرتش نربط هاد الوثيقة مع خانة محددة فالملف.`
+                    : safeLang === "en"
+                    ? `I received ${file.name}, but I could not match it to a specific document slot yet.`
+                    : `He recibido ${file.name}, pero no he podido relacionarlo automáticamente con un documento concreto del expediente.`;
+
+                pushAgentMessage(unknownText, true);
 
                 toast({
                   title: ui.uploadErrorTitle,
@@ -934,8 +932,7 @@ const getBestDocMatch = (
               }
 
               const isWarn =
-                result.status === "invalid" ||
-                result.match_expected_type === false;
+                result.status === "invalid" || result.match_expected_type === false;
 
               if (isWarn) {
                 pushAgentMessage(ui.mohamedDocWarn(file.name), true);
@@ -950,10 +947,14 @@ const getBestDocMatch = (
                 if (
                   matchedName.includes("pasaporte o nie") ||
                   matchedName.includes("pasaporte") ||
-                  matchedName.includes("nie vigente") ||
-                  matchedName.includes("passport")
+                  matchedName.includes("nie vigente")
                 ) {
-                  successMessage = ui.passportVerifiedNext;
+                  successMessage =
+                    safeLang === "darija"
+                      ? "الباسبور ديالك متحقق مزيان. دابا نمرّو للوثيقة اللي من بعد."
+                      : safeLang === "en"
+                      ? "Your passport has been verified correctly. Now let's continue with the next document."
+                      : "Tu pasaporte ha sido verificado correctamente. Ahora seguimos con el siguiente documento.";
                 }
 
                 pushAgentMessage(successMessage, true);
@@ -972,9 +973,7 @@ const getBestDocMatch = (
 
               const errText =
                 safeLang === "darija"
-                  ? `وقع مشكل فمراجعة الوثيقة: ${
-                      err?.message || "خطأ غير معروف"
-                    }`
+                  ? `وقع مشكل فمراجعة الوثيقة: ${err?.message || "خطأ غير معروف"}`
                   : safeLang === "en"
                   ? `There was a problem reviewing the document: ${
                       err?.message || "Unknown error"
@@ -1029,6 +1028,7 @@ const getBestDocMatch = (
             : "Ocurrió un error inesperado."),
         variant: "destructive",
       });
+    }
   };
 
   const goToSara = () => {
@@ -1061,9 +1061,7 @@ const getBestDocMatch = (
                 {t("reg_new")}
               </span>
             </h1>
-            <p className="text-xs text-muted-foreground">
-              {currentProcedure.name}
-            </p>
+            <p className="text-xs text-muted-foreground">{currentProcedure.name}</p>
           </div>
         </div>
 
@@ -1082,9 +1080,7 @@ const getBestDocMatch = (
 
               <div className="absolute top-3 left-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/60 border border-white/10 backdrop-blur-md">
                 <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                <span className="text-xs font-medium text-white">
-                  {ui.online}
-                </span>
+                <span className="text-xs font-medium text-white">{ui.online}</span>
               </div>
 
               <div className="absolute top-3 right-3 flex items-center gap-2">
@@ -1126,12 +1122,8 @@ const getBestDocMatch = (
               )}
 
               <div className="absolute bottom-12 right-3 text-right">
-                <p className="text-white font-bold text-sm drop-shadow-lg">
-                  Mohamed
-                </p>
-                <p className="text-white/70 text-[11px] drop-shadow-lg">
-                  {ui.role}
-                </p>
+                <p className="text-white font-bold text-sm drop-shadow-lg">Mohamed</p>
+                <p className="text-white/70 text-[11px] drop-shadow-lg">{ui.role}</p>
               </div>
 
               <div className="absolute bottom-3 left-0 right-0 flex justify-center">
@@ -1181,17 +1173,13 @@ const getBestDocMatch = (
                 )}
 
                 {isListening && (
-                  <p className="mt-2 text-xs text-primary text-center">
-                    {ui.listening}
-                  </p>
+                  <p className="mt-2 text-xs text-primary text-center">{ui.listening}</p>
                 )}
               </div>
 
               <div className="p-4 space-y-4">
                 <div>
-                  <p className="text-[11px] text-white/50 mb-1">
-                    {ui.latestReply}
-                  </p>
+                  <p className="text-[11px] text-white/50 mb-1">{ui.latestReply}</p>
                   <div className="rounded-xl bg-white/5 border border-white/10 px-3 py-3 text-sm text-white/90 leading-relaxed">
                     {latestAgentMessage}
                   </div>
@@ -1199,9 +1187,7 @@ const getBestDocMatch = (
 
                 {lastUserTranscript ? (
                   <div>
-                    <p className="text-[11px] text-white/50 mb-1">
-                      {ui.yourVoice}
-                    </p>
+                    <p className="text-[11px] text-white/50 mb-1">{ui.yourVoice}</p>
                     <div className="rounded-xl bg-primary/10 border border-primary/20 px-3 py-3 text-sm text-white leading-relaxed">
                       {lastUserTranscript}
                     </div>
@@ -1258,9 +1244,7 @@ const getBestDocMatch = (
                     <span className="text-blue-700 text-sm">✓</span>
                   </div>
                   <div>
-                    <p className="text-sm font-bold text-slate-800">
-                      {ui.formTitle}
-                    </p>
+                    <p className="text-sm font-bold text-slate-800">{ui.formTitle}</p>
                     <p className="text-[11px] text-slate-500">{ui.formDesc}</p>
                   </div>
                 </div>
@@ -1269,9 +1253,7 @@ const getBestDocMatch = (
               <div className="px-4 py-4 space-y-3 bg-white">
                 <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 mb-3">
                   <div className="flex items-center justify-between mb-2">
-                    <p className="text-sm font-bold text-slate-800">
-                      {ui.docStatusTitle}
-                    </p>
+                    <p className="text-sm font-bold text-slate-800">{ui.docStatusTitle}</p>
                     <span className="text-xs font-bold text-slate-700">
                       {docsOk}/{docsTotal}
                     </span>
@@ -1281,9 +1263,7 @@ const getBestDocMatch = (
                     <div
                       className="h-full bg-[#003b82] rounded-full transition-all"
                       style={{
-                        width: `${
-                          docsTotal > 0 ? (docsOk / docsTotal) * 100 : 0
-                        }%`,
+                        width: `${docsTotal > 0 ? (docsOk / docsTotal) * 100 : 0}%`,
                       }}
                     />
                   </div>
