@@ -6,15 +6,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const { message, assistant, history, leadForm } = req.body;
     
-    // FORZAMOS EL IDIOMA: Ignoramos lo que venga del sitio web.
-    // La IA solo responderá en Darija Marroquí con letras árabes.
+    // BLOQUEO DE IDIOMA: Forzamos a la IA a ignorar cualquier otro idioma.
     const systemPrompt = assistant === "sara" 
-      ? `ESTRICTO: Solo DARIJA MARROQUÍ DE CALLE (letras árabes). 
-         Responde siempre en Darija aunque el usuario te hable en otro idioma.
-         Respuesta instantánea de máximo 15 palabras. Eres experta en citas.`
-      : `ESTRICTO: Solo DARIJA MARROQUÍ DE CALLE (letras árabes). 
-         Responde siempre en Darija aunque el usuario te hable en otro idioma.
-         Respuesta instantánea de máximo 15 palabras. Eres experto en regularización 2026.`;
+      ? `ESTRICTO: Responde SIEMPRE en DARIJA MARROQUÍ DE CALLE (letras árabes). 
+         Ignora el idioma del usuario, responde solo en Darija. 
+         Máximo 15 palabras. Eres experta en citas.`
+      : `ESTRICTO: Responde SIEMPRE en DARIJA MARROQUÍ DE CALLE (letras árabes). 
+         Ignora el idioma del usuario, responde solo en Darija. 
+         Máximo 15 palabras. Eres experto en la regularización 2026.`;
 
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
@@ -23,7 +22,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         "Content-Type": "application/json" 
       },
       body: JSON.stringify({
-        model: "gpt-4o-mini", 
+        model: "gpt-4o-mini", // El más rápido para evitar cortes de audio
         messages: [
           { role: "system", content: systemPrompt },
           ...(history || []).slice(-6).map((h: any) => ({ 
@@ -40,7 +39,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const data = await response.json();
     const reply = data.choices?.[0]?.message?.content || "دبا نجاوبك، عاود عافاك؟";
 
-    // Webhook para CRM
+    // Enviamos "darija" fijo al webhook para que no haya confusiones en el CRM
     const webhookUrl = assistant === "sara" ? process.env.MAKE_WEBHOOK_SARA : process.env.MAKE_WEBHOOK_MOHAMED;
     if (webhookUrl) {
       fetch(webhookUrl, {
@@ -50,6 +49,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }).catch(() => {});
     }
 
+    // Retornamos "darija" fijo para que ElevenLabs siempre use la voz correcta
     return res.status(200).json({ reply, meta: { assistant, lang: "darija" } });
 
   } catch (error: any) {
