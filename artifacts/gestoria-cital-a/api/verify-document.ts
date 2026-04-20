@@ -95,11 +95,45 @@ function normalizeDocumentType(
   if (!v) return null;
 
   if (v === "auto") return "auto";
-  if (v === "passport" || v === "pasaporte") return "passport";
-  if (v === "nie") return "nie";
-  if (v === "tie") return "tie";
 
-  if (v === "empadronamiento" || v === "padron" || v === "padrón") {
+  if (
+    v === "passport" ||
+    v === "pasaporte" ||
+    v === "passport document" ||
+    v === "travel document" ||
+    v === "documento de viaje" ||
+    v === "passeport"
+  ) {
+    return "passport";
+  }
+
+  if (
+    v === "nie" ||
+    v === "número de identidad de extranjero" ||
+    v === "numero de identidad de extranjero"
+  ) {
+    return "nie";
+  }
+
+  if (
+    v === "tie" ||
+    v === "tarjeta tie" ||
+    v === "tarjeta de identidad de extranjero" ||
+    v === "tarjeta de residencia" ||
+    v === "residence card"
+  ) {
+    return "tie";
+  }
+
+  if (
+    v === "empadronamiento" ||
+    v === "padron" ||
+    v === "padrón" ||
+    v === "certificado de empadronamiento" ||
+    v === "volante de empadronamiento" ||
+    v === "certificado padronal" ||
+    v === "volante padronal"
+  ) {
     return "empadronamiento";
   }
 
@@ -108,25 +142,51 @@ function normalizeDocumentType(
     v === "criminal records" ||
     v === "antecedentes" ||
     v === "antecedentes_penales" ||
-    v === "certificado_penales"
+    v === "antecedentes penales" ||
+    v === "certificado_penales" ||
+    v === "certificado de antecedentes penales" ||
+    v === "criminal record"
   ) {
     return "criminal_record";
   }
-
-  if (v === "photo" || v === "foto" || v === "selfie") return "photo";
 
   if (
     v === "official_form" ||
     v === "formulario" ||
     v === "form" ||
-    v === "modelo ex"
+    v === "modelo ex" ||
+    v === "solicitud" ||
+    v === "impreso oficial"
   ) {
     return "official_form";
   }
 
-  if (v === "stay_proof") return "stay_proof";
-  if (v === "supporting_document") return "supporting_document";
-  if (v === "personal_photo") return "personal_photo";
+  if (
+    v === "stay_proof" ||
+    v === "prueba de permanencia" ||
+    v === "prueba permanencia" ||
+    v === "proof of stay" ||
+    v === "proof of presence" ||
+    v === "stay proof" ||
+    v === "justificante" ||
+    v === "resguardo"
+  ) {
+    return "stay_proof";
+  }
+
+  if (
+    v === "supporting_document" ||
+    v === "documento de apoyo" ||
+    v === "supporting doc"
+  ) {
+    return "supporting_document";
+  }
+
+  if (v === "photo" || v === "foto") return "photo";
+  if (v === "personal_photo" || v === "selfie" || v === "foto personal") {
+    return "personal_photo";
+  }
+
   if (v === "other") return "other";
   if (v === "unknown") return "unknown";
 
@@ -188,11 +248,121 @@ function safeNullableBoolean(value: unknown): boolean | null {
   return null;
 }
 
+function normalizeDateLike(value: unknown): string | null {
+  const s = safeNullableString(value);
+  if (!s) return null;
+  return s;
+}
+
+function inferTypeFromText(text: string): VerifyDocumentType | null {
+  const t = (text || "").toLowerCase();
+
+  if (
+    t.includes("pasaporte") ||
+    t.includes("passport") ||
+    t.includes("passeport") ||
+    t.includes("mrz") ||
+    t.includes("documento de viaje")
+  ) {
+    return "passport";
+  }
+
+  if (
+    t.includes("tarjeta de identidad de extranjero") ||
+    t.includes("tarjeta de residencia") ||
+    t.includes("residence card")
+  ) {
+    return "tie";
+  }
+
+  if (
+    t.includes(" nie ") ||
+    t.startsWith("nie ") ||
+    t.endsWith(" nie") ||
+    t.includes("número de identidad de extranjero") ||
+    t.includes("numero de identidad de extranjero")
+  ) {
+    return "nie";
+  }
+
+  if (
+    t.includes("empadronamiento") ||
+    t.includes("certificado de empadronamiento") ||
+    t.includes("volante de empadronamiento") ||
+    t.includes("padrón") ||
+    t.includes("padron")
+  ) {
+    return "empadronamiento";
+  }
+
+  if (
+    t.includes("antecedentes penales") ||
+    t.includes("criminal record") ||
+    t.includes("certificado de antecedentes")
+  ) {
+    return "criminal_record";
+  }
+
+  if (
+    t.includes("modelo ex") ||
+    t.includes("formulario") ||
+    t.includes("solicitud oficial") ||
+    t.includes("impreso oficial")
+  ) {
+    return "official_form";
+  }
+
+  if (
+    t.includes("justificante") ||
+    t.includes("resguardo") ||
+    t.includes("ticket") ||
+    t.includes("factura") ||
+    t.includes("receta") ||
+    t.includes("cita médica") ||
+    t.includes("cita medica") ||
+    t.includes("certificado") ||
+    t.includes("documento bancario") ||
+    t.includes("transferencia") ||
+    t.includes("envío") ||
+    t.includes("envio") ||
+    t.includes("transporte") ||
+    t.includes("consumo") ||
+    t.includes("nómina") ||
+    t.includes("nomina") ||
+    t.includes("contrato de alquiler") ||
+    t.includes("empadronamiento histórico") ||
+    t.includes("prueba de permanencia") ||
+    t.includes("proof of stay") ||
+    t.includes("stay proof")
+  ) {
+    return "stay_proof";
+  }
+
+  return null;
+}
+
 function normalizeResult(
   raw: any,
-  expectedDocumentType: string | null
+  expectedDocumentType: string | null,
+  fileName?: string
 ): VerifyDocumentResult {
-  const normalizedType = normalizeDocumentType(raw?.document_type) || "unknown";
+  const textForInference = [
+    safeNullableString(raw?.document_type) || "",
+    safeNullableString(raw?.summary) || "",
+    ...(safeArray(raw?.visible_fields) || []),
+    ...(safeArray(raw?.warnings) || []),
+    safeNullableString(raw?.stay_proof_reason) || "",
+    (fileName || "").toLowerCase(),
+  ]
+    .join(" ")
+    .toLowerCase();
+
+  const inferredType = inferTypeFromText(textForInference);
+  const normalizedType =
+    normalizeDocumentType(raw?.document_type) ||
+    inferredType ||
+    "unknown";
+
   const normalizedExpected = normalizeDocumentType(expectedDocumentType);
 
   let matchExpectedType: boolean | null = null;
@@ -204,13 +374,33 @@ function normalizeResult(
         : normalizedType === normalizedExpected;
   }
 
+  const explicitStayProof =
+    safeBoolean(raw?.is_stay_proof) ||
+    normalizedType === "stay_proof" ||
+    normalizedType === "empadronamiento" ||
+    inferredType === "stay_proof" ||
+    inferredType === "empadronamiento";
+
+  const recommendedBucket =
+    normalizedType === "passport" ||
+    normalizedType === "nie" ||
+    normalizedType === "tie"
+      ? "identity_document"
+      : normalizedType === "empadronamiento" || normalizedType === "stay_proof"
+      ? "stay_proof"
+      : normalizedType === "official_form"
+      ? "official_form"
+      : safeRecommendedBucket(raw?.recommended_bucket);
+
+  const status =
+    raw?.status === "valid" ||
+    raw?.status === "review" ||
+    raw?.status === "invalid"
+      ? raw.status
+      : "review";
+
   return {
-    status:
-      raw?.status === "valid" ||
-      raw?.status === "review" ||
-      raw?.status === "invalid"
-        ? raw.status
-        : "review",
+    status,
     document_type: normalizedType,
     expected_document_type:
       normalizedExpected && normalizedExpected !== "auto"
@@ -222,9 +412,9 @@ function normalizeResult(
     document_number: safeNullableString(raw?.document_number),
     nie: safeNullableString(raw?.nie),
     passport_number: safeNullableString(raw?.passport_number),
-    birth_date: safeNullableString(raw?.birth_date),
-    expiry_date: safeNullableString(raw?.expiry_date),
-    issue_date: safeNullableString(raw?.issue_date),
+    birth_date: normalizeDateLike(raw?.birth_date),
+    expiry_date: normalizeDateLike(raw?.expiry_date),
+    issue_date: normalizeDateLike(raw?.issue_date),
     nationality: safeNullableString(raw?.nationality),
     sex: safeNullableString(raw?.sex),
     warnings: safeArray(raw?.warnings),
@@ -239,15 +429,22 @@ function normalizeResult(
       multiple_documents: safeBoolean(raw?.image_quality?.multiple_documents),
     },
     summary: safeNullableString(raw?.summary) || "",
-    is_stay_proof: safeBoolean(raw?.is_stay_proof),
-    stay_proof_strength: safeStayProofStrength(raw?.stay_proof_strength),
-    document_date: safeNullableString(raw?.document_date),
+    is_stay_proof: explicitStayProof,
+    stay_proof_strength:
+      normalizedType === "empadronamiento"
+        ? "strong"
+        : safeStayProofStrength(raw?.stay_proof_strength),
+    document_date: normalizeDateLike(raw?.document_date),
     person_name_visible: safeBoolean(raw?.person_name_visible),
     linked_to_client: safeNullableBoolean(raw?.linked_to_client),
-    usable_for_regularizacion_2026: safeBoolean(
-      raw?.usable_for_regularizacion_2026
-    ),
-    recommended_bucket: safeRecommendedBucket(raw?.recommended_bucket),
+    usable_for_regularizacion_2026:
+      normalizedType === "passport" ||
+      normalizedType === "nie" ||
+      normalizedType === "tie" ||
+      normalizedType === "empadronamiento" ||
+      normalizedType === "stay_proof" ||
+      safeBoolean(raw?.usable_for_regularizacion_2026),
+    recommended_bucket: recommendedBucket,
     stay_proof_reason: safeNullableString(raw?.stay_proof_reason) || "",
   };
 }
@@ -308,18 +505,16 @@ Tipos permitidos:
 - "other"
 - "unknown"
 
-Reglas importantes:
-- Si es pasaporte, NIE, TIE, empadronamiento, antecedentes o formulario, detecta eso.
-- Si no es identidad pero sí demuestra presencia o estancia en España, usa "stay_proof".
-- Ejemplos de stay_proof: cita médica, receta, ticket, factura, envío, certificado, resguardo, documento bancario, carta administrativa, justificante, contrato, nómina, documento social, transporte, consumo.
-- Si solo ayuda pero no es prueba fuerte, usa "supporting_document".
-- Si es selfie o foto de persona, usa "personal_photo" o "photo".
+Reglas MUY IMPORTANTES para este proyecto:
+- Prioriza detectar correctamente "passport", "nie", "tie", "empadronamiento" y "stay_proof".
+- "empadronamiento" NO debe salir como "other".
+- Si el documento demuestra presencia o permanencia en España, usa "stay_proof".
+- Ejemplos de "stay_proof": ticket, factura, receta, resguardo, justificante, carta administrativa, documento bancario, envío, transporte, consumo, cita médica, certificado, nómina, contrato de alquiler.
+- Si es pasaporte, intenta extraer número, nombre, nacionalidad, fechas y MRZ si es visible.
+- Si es NIE o TIE, intenta extraer NIE, nombre y fechas visibles.
 - Si expected_document_type es "auto", no obligues coincidencia.
 - Si no coincide con el esperado, match_expected_type = false.
 - No asumas autenticidad forense real. Solo legibilidad y coherencia visual.
-- Si ves número de pasaporte, MRZ, nacionalidad, fechas o nombre, extráelos.
-- Si ves NIE, extráelo.
-- Si ves una fecha principal de documento o justificante, guárdala en document_date.
 - linked_to_client:
   - true si parece claramente vinculado a la persona
   - false si claramente no lo está
@@ -441,6 +636,24 @@ function extractResponseText(data: any): string {
   return "";
 }
 
+function extractJsonObject(raw: string): string {
+  const trimmed = (raw || "").trim();
+  if (!trimmed) return "";
+
+  if (trimmed.startsWith("{") && trimmed.endsWith("}")) {
+    return trimmed;
+  }
+
+  const firstBrace = trimmed.indexOf("{");
+  const lastBrace = trimmed.lastIndexOf("}");
+
+  if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+    return trimmed.slice(firstBrace, lastBrace + 1);
+  }
+
+  return trimmed;
+}
+
 export default async function handler(req: any, res: any) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Método no permitido" });
@@ -482,7 +695,7 @@ export default async function handler(req: any, res: any) {
     const contentParts: any[] = [
       {
         type: "input_text",
-        text: `Analiza este archivo del cliente. Puede ser foto, escaneo, captura o PDF. Detecta si es pasaporte, NIE, empadronamiento, antecedentes, formulario, prueba de estancia u otro documento útil para regularización 2026. Devuelve SOLO JSON válido.`,
+        text: `Analiza este archivo del cliente. Puede ser foto, escaneo, captura o PDF. Prioriza detectar correctamente si es pasaporte, NIE, TIE, empadronamiento o prueba de permanencia de 5 meses. Devuelve SOLO JSON válido.`,
       },
     ];
 
@@ -547,7 +760,7 @@ export default async function handler(req: any, res: any) {
     let parsed: any;
 
     try {
-      parsed = JSON.parse(raw);
+      parsed = JSON.parse(extractJsonObject(raw));
     } catch (parseError) {
       console.error("JSON PARSE ERROR:", parseError, raw);
       return res.status(500).json({
@@ -556,7 +769,7 @@ export default async function handler(req: any, res: any) {
       });
     }
 
-    const result = normalizeResult(parsed, expectedDocumentType);
+    const result = normalizeResult(parsed, expectedDocumentType, body.fileName);
 
     return res.status(200).json({
       ok: true,
