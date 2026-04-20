@@ -97,4 +97,55 @@ ${getSharedRules(lang)}
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  if (req.
+  if (req.method !== "POST") return res.status(405).json({ error: "Method Not Allowed" });
+
+  try {
+    const { message, assistant, leadForm: rawLeadForm, history: rawHistory } = req.body;
+    const lang = detectUserLanguage(message);
+    const leadForm = sanitizeLeadForm(rawLeadForm);
+    const history = sanitizeHistory(rawHistory);
+
+    const isSara = assistant === "sara";
+    const systemPrompt = isSara 
+      ? getSaraPrompt(lang, "Citas", leadForm) 
+      : getMohamedPrompt(lang, leadForm);
+
+    const apiKey = process.env.OPENAI_API_KEY;
+    
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: { 
+        "Authorization": `Bearer ${apiKey}`,
+        "Content-Type": "application/json" 
+      },
+      body: JSON.stringify({
+        model: "gpt-4o", // Usamos 4o para que la respuesta sea instantánea
+        messages: [
+          { role: "system", content: systemPrompt },
+          ...history.map(h => ({ role: h.from === "user" ? "user" : "assistant", content: h.text })),
+          { role: "user", content: message }
+        ],
+        temperature: 0.4,
+        max_tokens: 150
+      }),
+    });
+
+    const data = await response.json();
+    const reply = data.choices[0].message.content;
+
+    // Enviar a Make para registro y automatización
+    const webhookUrl = isSara ? process.env.MAKE_WEBHOOK_SARA : process.env.MAKE_WEBHOOK_MOHAMED;
+    if (webhookUrl) {
+      fetch(webhookUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message, reply, leadForm, lang, assistant })
+      }).catch(err => console.error("Webhook error:", err));
+    }
+
+    return res.status(200).json({ reply, meta: { lang, assistant } });
+
+  } catch (error: any) {
+    return res.status(500).json({ error: error.message });
+  }
+}
