@@ -1,51 +1,5 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 
-type AssistantType = "mohamed" | "sara";
-
-function pickAssistant(value: unknown): AssistantType {
-  return value === "sara" ? "sara" : "mohamed";
-}
-
-function safeText(value: unknown): string {
-  return typeof value === "string" ? value.trim() : "";
-}
-
-function safeLang(value: unknown): "es" | "darija" | "en" {
-  if (value === "darija" || value === "en" || value === "es") return value;
-  return "es";
-}
-
-// AJUSTE CRÍTICO: Configuración de voz específica para realismo
-function buildVoiceSettings(lang: "es" | "darija" | "en") {
-  if (lang === "darija") {
-    return {
-      stability: 0.35,       // Bajamos la estabilidad para que tenga más "alma" y ritmo marroquí
-      similarity_boost: 0.85, // Subimos el parecido para mantener la esencia de Sara/Mohamed
-      style: 0.45,           // Subimos el estilo para capturar la exageración natural del Darija
-      use_speaker_boost: true,
-    };
-  }
-  return {
-    stability: 0.45,
-    similarity_boost: 0.8,
-    style: 0.35,
-    use_speaker_boost: true,
-  };
-}
-
-function pickModelId(lang: "es" | "darija" | "en") {
-  // El modelo Turbo v2.5 es mucho más rápido y fluido para Darija si está disponible, 
-  // pero Multilingual v2 es el estándar de oro para calidad.
-  return "eleven_multilingual_v2"; 
-}
-
-function pickVoiceId(assistant: AssistantType) {
-  if (assistant === "sara") {
-    return (process.env.ELEVENLABS_VOICE_ID_SARA || "").trim();
-  }
-  return (process.env.ELEVENLABS_VOICE_ID_MOHAMED || "").trim();
-}
-
 export default async function handler(
   req: VercelRequest,
   res: VercelResponse
@@ -55,21 +9,35 @@ export default async function handler(
   }
 
   try {
+    const { text, assistant, lang } = req.body;
     const apiKey = (process.env.ELEVENLABS_API_KEY || "").trim();
-    if (!apiKey) {
-      return res.status(500).json({ error: "Falta ELEVENLABS_API_KEY" });
+
+    // IDs de tus voces Ghizlane (Sara) y Jawad (Mohamed)
+    const voiceId = assistant === "sara"
+      ? (process.env.ELEVENLABS_VOICE_ID_SARA || "").trim()
+      : (process.env.ELEVENLABS_VOICE_ID_MOHAMED || "").trim();
+
+    if (!text || !voiceId || !apiKey) {
+      return res.status(400).json({ error: "Faltan parámetros: text, voiceId o API Key" });
     }
 
-    const text = safeText(req.body?.text);
-    const assistant = pickAssistant(req.body?.assistant);
-    const lang = safeLang(req.body?.lang);
-    const voiceId = pickVoiceId(assistant);
+    // CONFIGURACIÓN DE VOZ HUMANA
+    // Para Darija bajamos la estabilidad a 0.35 para que la voz tenga "movimiento"
+    const voiceSettings = lang === "darija" 
+      ? {
+          stability: 0.35,
+          similarity_boost: 0.85,
+          style: 0.50, // Más estilo para captar el acento marroquí
+          use_speaker_boost: true,
+        }
+      : {
+          stability: 0.45,
+          similarity_boost: 0.80,
+          style: 0.35,
+          use_speaker_boost: true,
+        };
 
-    if (!text) {
-      return res.status(400).json({ error: "Falta text" });
-    }
-
-    const elevenResponse = await fetch(
+    const response = await fetch(
       `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`,
       {
         method: "POST",
@@ -79,27 +47,26 @@ export default async function handler(
           Accept: "audio/mpeg",
         },
         body: JSON.stringify({
-          text,
-          model_id: pickModelId(lang),
-          // Pasamos el idioma para aplicar los ajustes dinámicos
-          voice_settings: buildVoiceSettings(lang),
+          text: text,
+          model_id: "eleven_multilingual_v2", // El mejor para Darija
+          voice_settings: voiceSettings,
         }),
       }
     );
 
-    if (!elevenResponse.ok) {
-      const errorText = await elevenResponse.text().catch(() => "");
-      return res.status(elevenResponse.status).json({
-        error: "Error con ElevenLabs",
-        details: errorText,
-      });
+    if (!response.ok) {
+      const errorData = await response.text();
+      return res.status(response.status).json({ error: "Error ElevenLabs", details: errorData });
     }
 
-    const audioBuffer = Buffer.from(await elevenResponse.arrayBuffer());
+    const audioBuffer = Buffer.from(await response.arrayBuffer());
+
     res.setHeader("Content-Type", "audio/mpeg");
+    res.setHeader("Cache-Control", "no-store");
     return res.status(200).send(audioBuffer);
-    
+
   } catch (error: any) {
-    return res.status(500).json({ error: error?.message });
+    console.error("TTS SERVER ERROR:", error);
+    return res.status(500).json({ error: error?.message || "Internal Server Error" });
   }
 }
