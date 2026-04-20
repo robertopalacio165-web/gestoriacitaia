@@ -490,7 +490,7 @@ export default function BuscarCitas() {
   const [lastUserTranscript, setLastUserTranscript] = useState("");
 
   const recognitionRef = useRef<any>(null);
-
+const currentAudioRef = useRef<HTMLAudioElement | null>(null);
   const urlParams = useMemo(() => {
     const url = new URL(window.location.href);
     return {
@@ -1194,30 +1194,59 @@ export default function BuscarCitas() {
     }
   }, [voiceHistory, voiceStorageKey]);
 
-  const speakText = (text: string) => {
-    if (muted) return;
-    if (!("speechSynthesis" in window)) return;
+ const speakText = async (text: string) => {
+  if (muted) return;
+  if (!text?.trim()) return;
 
-    try {
-      window.speechSynthesis.cancel();
-
-      const utterance = new SpeechSynthesisUtterance(text);
-
-      if (lang === "darija") {
-        utterance.lang = "ar-MA";
-      } else if (lang === "en") {
-        utterance.lang = "en-US";
-      } else {
-        utterance.lang = "es-ES";
-      }
-
-      utterance.rate = 1;
-      utterance.pitch = 1;
-      window.speechSynthesis.speak(utterance);
-    } catch (error) {
-      console.error("Error reproduciendo voz de Sara:", error);
+  try {
+    if (currentAudioRef.current) {
+      currentAudioRef.current.pause();
+      currentAudioRef.current.currentTime = 0;
+      currentAudioRef.current = null;
     }
-  };
+
+    const res = await fetch("/api/tts-elevenlabs", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        text,
+        assistant: "sara",
+        lang,
+      }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => null);
+      throw new Error(err?.error || "Error generando audio");
+    }
+
+    const audioBlob = await res.blob();
+    const audioUrl = URL.createObjectURL(audioBlob);
+    const audio = new Audio(audioUrl);
+
+    currentAudioRef.current = audio;
+
+    audio.onended = () => {
+      URL.revokeObjectURL(audioUrl);
+      if (currentAudioRef.current === audio) {
+        currentAudioRef.current = null;
+      }
+    };
+
+    audio.onerror = () => {
+      URL.revokeObjectURL(audioUrl);
+      if (currentAudioRef.current === audio) {
+        currentAudioRef.current = null;
+      }
+    };
+
+    await audio.play();
+  } catch (error) {
+    console.error("Error reproduciendo voz ElevenLabs Sara:", error);
+  }
+};
 
   const pushAgentMessage = (text: string, speak = false) => {
     setVoiceHistory((prev) => [
