@@ -15,7 +15,16 @@ function safeLang(value: unknown): "es" | "darija" | "en" {
   return "es";
 }
 
-function buildVoiceSettings() {
+// AJUSTE CRÍTICO: Configuración de voz específica para realismo
+function buildVoiceSettings(lang: "es" | "darija" | "en") {
+  if (lang === "darija") {
+    return {
+      stability: 0.35,       // Bajamos la estabilidad para que tenga más "alma" y ritmo marroquí
+      similarity_boost: 0.85, // Subimos el parecido para mantener la esencia de Sara/Mohamed
+      style: 0.45,           // Subimos el estilo para capturar la exageración natural del Darija
+      use_speaker_boost: true,
+    };
+  }
   return {
     stability: 0.45,
     similarity_boost: 0.8,
@@ -25,9 +34,9 @@ function buildVoiceSettings() {
 }
 
 function pickModelId(lang: "es" | "darija" | "en") {
-  if (lang === "darija") return "eleven_multilingual_v2";
-  if (lang === "en") return "eleven_multilingual_v2";
-  return "eleven_multilingual_v2";
+  // El modelo Turbo v2.5 es mucho más rápido y fluido para Darija si está disponible, 
+  // pero Multilingual v2 es el estándar de oro para calidad.
+  return "eleven_multilingual_v2"; 
 }
 
 function pickVoiceId(assistant: AssistantType) {
@@ -48,9 +57,7 @@ export default async function handler(
   try {
     const apiKey = (process.env.ELEVENLABS_API_KEY || "").trim();
     if (!apiKey) {
-      return res.status(500).json({
-        error: "Falta ELEVENLABS_API_KEY en Vercel",
-      });
+      return res.status(500).json({ error: "Falta ELEVENLABS_API_KEY" });
     }
 
     const text = safeText(req.body?.text);
@@ -59,18 +66,7 @@ export default async function handler(
     const voiceId = pickVoiceId(assistant);
 
     if (!text) {
-      return res.status(400).json({
-        error: "Falta text",
-      });
-    }
-
-    if (!voiceId) {
-      return res.status(500).json({
-        error:
-          assistant === "sara"
-            ? "Falta ELEVENLABS_VOICE_ID_SARA en Vercel"
-            : "Falta ELEVENLABS_VOICE_ID_MOHAMED en Vercel",
-      });
+      return res.status(400).json({ error: "Falta text" });
     }
 
     const elevenResponse = await fetch(
@@ -85,35 +81,25 @@ export default async function handler(
         body: JSON.stringify({
           text,
           model_id: pickModelId(lang),
-          voice_settings: buildVoiceSettings(),
+          // Pasamos el idioma para aplicar los ajustes dinámicos
+          voice_settings: buildVoiceSettings(lang),
         }),
       }
     );
 
     if (!elevenResponse.ok) {
       const errorText = await elevenResponse.text().catch(() => "");
-      console.error("ELEVENLABS TTS ERROR RAW:", errorText);
-
       return res.status(elevenResponse.status).json({
-        error: "Error generando audio con ElevenLabs",
-        assistant,
-        lang,
-        voiceId,
-        details: errorText || "Sin detalles",
+        error: "Error con ElevenLabs",
+        details: errorText,
       });
     }
 
     const audioBuffer = Buffer.from(await elevenResponse.arrayBuffer());
-
     res.setHeader("Content-Type", "audio/mpeg");
-    res.setHeader("Cache-Control", "no-store");
-    res.setHeader("Content-Length", audioBuffer.length.toString());
-
     return res.status(200).send(audioBuffer);
+    
   } catch (error: any) {
-    console.error("TTS ELEVENLABS SERVER ERROR:", error);
-    return res.status(500).json({
-      error: error?.message || "Error interno del servidor",
-    });
+    return res.status(500).json({ error: error?.message });
   }
 }
