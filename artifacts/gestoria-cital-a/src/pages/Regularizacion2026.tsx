@@ -554,7 +554,6 @@ const currentAudioRef = useRef<HTMLAudioElement | null>(null);
     }));
   };
 
-const currentAudioRef = useRef<HTMLAudioElement | null>(null);
 
 const speakText = async (text: string) => {
   if (muted) return;
