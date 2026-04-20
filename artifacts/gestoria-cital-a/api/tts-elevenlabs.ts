@@ -26,15 +26,15 @@ function buildVoiceSettings() {
 
 function pickModelId(lang: "es" | "darija" | "en") {
   if (lang === "darija") return "eleven_multilingual_v2";
-  if (lang === "en") return "eleven_flash_v2_5";
+  if (lang === "en") return "eleven_multilingual_v2";
   return "eleven_multilingual_v2";
 }
 
 function pickVoiceId(assistant: AssistantType) {
   if (assistant === "sara") {
-    return process.env.ELEVENLABS_VOICE_ID_SARA || "";
+    return (process.env.ELEVENLABS_VOICE_ID_SARA || "").trim();
   }
-  return process.env.ELEVENLABS_VOICE_ID_MOHAMED || "";
+  return (process.env.ELEVENLABS_VOICE_ID_MOHAMED || "").trim();
 }
 
 export default async function handler(
@@ -46,7 +46,7 @@ export default async function handler(
   }
 
   try {
-    const apiKey = process.env.ELEVENLABS_API_KEY;
+    const apiKey = (process.env.ELEVENLABS_API_KEY || "").trim();
     if (!apiKey) {
       return res.status(500).json({
         error: "Falta ELEVENLABS_API_KEY en Vercel",
@@ -92,11 +92,14 @@ export default async function handler(
 
     if (!elevenResponse.ok) {
       const errorText = await elevenResponse.text().catch(() => "");
-      console.error("ELEVENLABS TTS ERROR:", errorText);
+      console.error("ELEVENLABS TTS ERROR RAW:", errorText);
 
-      return res.status(500).json({
+      return res.status(elevenResponse.status).json({
         error: "Error generando audio con ElevenLabs",
-        details: errorText || null,
+        assistant,
+        lang,
+        voiceId,
+        details: errorText || "Sin detalles",
       });
     }
 
