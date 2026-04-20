@@ -20,34 +20,49 @@ type BrainInput = {
   }>;
 };
 
-function hasEnoughValidDocs(documents?: BrainInput["documents"]) {
-  if (!documents || !Array.isArray(documents)) return false;
-  const ok = documents.filter((d) => d.estado === "ok").length;
-  return ok >= 3;
+function normalizeText(value?: string) {
+  return (value || "").toLowerCase().trim();
 }
 
-function monthsCovered(documents?: BrainInput["documents"]) {
-  if (!documents || !Array.isArray(documents)) return 0;
+function hasLeadFormMinimum(leadForm?: BrainInput["leadForm"]) {
+  if (!leadForm) return false;
 
-  const stayDocs = documents.filter((d) => {
+  return Boolean(
+    normalizeText(leadForm.nombre) &&
+      normalizeText(leadForm.telefono) &&
+      normalizeText(leadForm.ciudad)
+  );
+}
+
+function getStayProofDocs(documents?: BrainInput["documents"]) {
+  if (!documents || !Array.isArray(documents)) return [];
+
+  return documents.filter((d) => {
     const txt =
       `${d.nombre || ""} ${d.detectedType || ""} ${d.note || ""}`.toLowerCase();
 
     return (
-      txt.includes("empadron") ||
-      txt.includes("factura") ||
-      txt.includes("banco") ||
-      txt.includes("transfer") ||
-      txt.includes("ticket") ||
-      txt.includes("medico") ||
-      txt.includes("hospital") ||
-      txt.includes("stay") ||
-      txt.includes("estancia") ||
-      txt.includes("proof")
+      d.estado === "ok" &&
+      (txt.includes("empadron") ||
+        txt.includes("stay_proof") ||
+        txt.includes("stay proof") ||
+        txt.includes("prueba de permanencia") ||
+        txt.includes("factura") ||
+        txt.includes("banco") ||
+        txt.includes("transfer") ||
+        txt.includes("ticket") ||
+        txt.includes("medico") ||
+        txt.includes("médico") ||
+        txt.includes("hospital") ||
+        txt.includes("estancia") ||
+        txt.includes("proof") ||
+        txt.includes("justificante") ||
+        txt.includes("resguardo") ||
+        txt.includes("receta") ||
+        txt.includes("consumo") ||
+        txt.includes("transporte"))
     );
   });
-
-  return Math.min(5, Math.max(0, Math.ceil(stayDocs.length / 2)));
 }
 
 function hasIdentityDoc(documents?: BrainInput["documents"]) {
@@ -68,169 +83,383 @@ function hasIdentityDoc(documents?: BrainInput["documents"]) {
   });
 }
 
-function hasCriminalRecord(documents?: BrainInput["documents"]) {
+function hasWarnDocuments(documents?: BrainInput["documents"]) {
   if (!documents || !Array.isArray(documents)) return false;
+  return documents.some((d) => d.estado === "warn");
+}
 
-  return documents.some((d) => {
-    const txt =
-      `${d.nombre || ""} ${d.detectedType || ""} ${d.note || ""}`.toLowerCase();
+function estimateStayProofProgress(documents?: BrainInput["documents"]) {
+  const stayDocs = getStayProofDocs(documents);
+  const count = stayDocs.length;
 
-    return (
-      d.estado === "ok" &&
-      (txt.includes("criminal") ||
-        txt.includes("antecedentes") ||
-        txt.includes("penales") ||
-        txt.includes("criminal_record"))
-    );
-  });
+  if (count >= 5) return 5;
+  return count;
 }
 
 function detectIntent(text: string) {
-  const t = text.toLowerCase();
-
-  if (
-    t.includes("aceptado") ||
-    t.includes("apto") ||
-    t.includes("sirve") ||
-    t.includes("vale") ||
-    t.includes("regularizacion") ||
-    t.includes("regularización")
-  ) {
-    return "status";
-  }
-
-  if (t.includes("cita") || t.includes("appointment") || t.includes("sara")) {
-    return "appointment";
-  }
+  const t = (text || "").toLowerCase();
 
   if (
     t.includes("hola") ||
     t.includes("hello") ||
     t.includes("slam") ||
-    t.includes("salam")
+    t.includes("salam") ||
+    t.includes("salam alaikum") ||
+    t.includes("السلام")
   ) {
     return "hello";
   }
 
   if (
-    t.includes("que falta") ||
     t.includes("qué falta") ||
+    t.includes("que falta") ||
     t.includes("falta algo") ||
-    t.includes("what is missing")
+    t.includes("what is missing") ||
+    t.includes("chno ناقص") ||
+    t.includes("شنو ناقص")
   ) {
     return "missing";
+  }
+
+  if (
+    t.includes("he subido") ||
+    t.includes("ya subi") ||
+    t.includes("ya subí") ||
+    t.includes("subi documento") ||
+    t.includes("subí documento") ||
+    t.includes("he enviado") ||
+    t.includes("ya mande") ||
+    t.includes("ya mandé")
+  ) {
+    return "uploaded";
+  }
+
+  if (
+    t.includes("pasaporte") ||
+    t.includes("passport") ||
+    t.includes("nie") ||
+    t.includes("tie")
+  ) {
+    return "identity";
+  }
+
+  if (
+    t.includes("5 meses") ||
+    t.includes("cinco meses") ||
+    t.includes("pruebas") ||
+    t.includes("empadronamiento") ||
+    t.includes("padron") ||
+    t.includes("padrón") ||
+    t.includes("proof")
+  ) {
+    return "stay_proof";
+  }
+
+  if (
+    t.includes("pdf") ||
+    t.includes("whatsapp") ||
+    t.includes("expediente final") ||
+    t.includes("hemos acabado")
+  ) {
+    return "final";
   }
 
   return "general";
 }
 
 function replyES(input: BrainInput) {
-  const meses = monthsCovered(input.documents);
-  const valid = hasEnoughValidDocs(input.documents);
-  const identidad = hasIdentityDoc(input.documents);
-  const penales = hasCriminalRecord(input.documents);
   const intent = detectIntent(input.userMessage || "");
+  const formReady = hasLeadFormMinimum(input.leadForm);
+  const identityReady = hasIdentityDoc(input.documents);
+  const stayProofCount = estimateStayProofProgress(input.documents);
+  const stayProofReady = stayProofCount >= 1;
+  const hasWarn = hasWarnDocuments(input.documents);
 
   if (intent === "hello") {
-    return "Hola. Soy Mohamed, especialista en extranjería. Ya puedes subir tus documentos y te diré claramente si son aptos o no aptos para la regularización 2026.";
-  }
+    if (!formReady) {
+      return "Hola. Soy Mohamed. Primero rellena el formulario con tus datos básicos y después seguimos por voz.";
+    }
 
-  if (intent === "appointment") {
-    return "Cuando tu expediente esté listo, Sara podrá ayudarte con la cita. Ahora primero terminamos la revisión documental.";
+    if (!stayProofReady) {
+      return "Perfecto. Ya tengo tus datos. Ahora sube primero tus pruebas de 5 meses.";
+    }
+
+    if (!identityReady) {
+      return "Perfecto. Ya he recibido pruebas de permanencia. Ahora sube tu pasaporte o tu NIE.";
+    }
+
+    if (hasWarn) {
+      return "He recibido parte de tu documentación, pero algunas cosas necesitan revisión. Súbelas más claras y seguimos.";
+    }
+
+    return "Perfecto. Ya está todo lo principal. Hemos acabado, enhorabuena. Te mandamos tu expediente en archivo PDF por WhatsApp.";
   }
 
   if (intent === "missing") {
-    const faltan: string[] = [];
-
-    if (!identidad) faltan.push("pasaporte o NIE");
-    if (!penales) faltan.push("antecedentes penales");
-    if (meses < 5) faltan.push("más pruebas para completar los 5 meses");
-
-    if (faltan.length === 0) {
-      return "Todo lo importante aparece ya cargado. Tu expediente va bien encaminado para la regularización 2026.";
+    if (!formReady) {
+      return "Primero falta rellenar el formulario con nombre, teléfono y ciudad.";
     }
 
-    return `Todavía faltan estos puntos para la regularización 2026: ${faltan.join(", ")}. Súbelos y sigo revisando.`;
-  }
-
-  if (intent === "status") {
-    if (meses >= 5 && valid && identidad) {
-      return "APTO para la regularización 2026. Ya tienes base suficiente y documentación válida. Sigue subiendo lo que falte para cerrar el expediente final.";
+    if (!stayProofReady) {
+      return "Ahora faltan tus pruebas de 5 meses. Súbelas primero y después seguimos.";
     }
 
-    if (meses >= 3 && identidad) {
-      return "Todavía no está completo para la regularización 2026. Ya hay parte válida, pero faltan más pruebas para llegar a los 5 meses o completar documentos importantes.";
+    if (!identityReady) {
+      return "Ahora falta tu pasaporte o tu NIE. Súbelo y sigo con tu expediente.";
     }
 
-    return "NO APTO de momento para la regularización 2026. Faltan pruebas claras o documentos válidos. Sube otro documento más claro y sigo revisando.";
+    if (hasWarn) {
+      return "Hay documentos subidos, pero alguno necesita revisión porque no se ve claro. Súbelo otra vez más claro.";
+    }
+
+    return "No falta nada importante. Hemos acabado, enhorabuena. Te mandamos tu expediente en archivo PDF por WhatsApp.";
   }
 
-  if (meses >= 5 && identidad) {
-    return "Vas bien. Ya tienes una base documental importante para la regularización 2026. Ahora sube lo que te falte y sigo revisando si es apto o no apto.";
+  if (intent === "uploaded") {
+    if (!formReady) {
+      return "Antes de seguir, rellena primero el formulario con tus datos básicos.";
+    }
+
+    if (!stayProofReady) {
+      return "Perfecto. Ya puedes empezar subiendo tus pruebas de 5 meses.";
+    }
+
+    if (!identityReady) {
+      return "Perfecto. Ya he recibido tus pruebas de permanencia. Ahora sube tu pasaporte o tu NIE.";
+    }
+
+    if (hasWarn) {
+      return "He recibido tu documento, pero necesito una versión más clara para continuar.";
+    }
+
+    return "Perfecto. Hemos acabado, enhorabuena. Te mandamos tu expediente en archivo PDF por WhatsApp.";
   }
 
-  return "Envíame tus documentos y te diré claramente si cada uno es APTO o NO APTO para la regularización 2026.";
+  if (intent === "identity") {
+    if (!formReady) {
+      return "Primero rellena el formulario. Después subes las pruebas de 5 meses y luego el pasaporte o NIE.";
+    }
+
+    if (!stayProofReady) {
+      return "Antes del pasaporte o NIE, sube primero tus pruebas de 5 meses.";
+    }
+
+    if (!identityReady) {
+      return "Ahora sí, sube tu pasaporte o tu NIE bien claro.";
+    }
+
+    if (hasWarn) {
+      return "He recibido un documento de identidad, pero necesito una imagen más clara para verificarlo bien.";
+    }
+
+    return "Tu pasaporte o NIE ya está correcto. Hemos acabado, enhorabuena. Te mandamos tu expediente en archivo PDF por WhatsApp.";
+  }
+
+  if (intent === "stay_proof") {
+    if (!formReady) {
+      return "Primero rellena el formulario con tus datos básicos.";
+    }
+
+    if (!stayProofReady) {
+      return "Ahora sube tus pruebas de 5 meses. Puedes subir empadronamiento, justificantes, tickets, facturas o documentos que demuestren permanencia.";
+    }
+
+    if (!identityReady) {
+      return "Perfecto. Ya he recibido pruebas de permanencia. Ahora sube tu pasaporte o tu NIE.";
+    }
+
+    if (hasWarn) {
+      return "Parte de las pruebas se han recibido, pero alguna necesita revisión porque no se ve clara.";
+    }
+
+    return "Las pruebas de permanencia ya están bien. Hemos acabado, enhorabuena. Te mandamos tu expediente en archivo PDF por WhatsApp.";
+  }
+
+  if (intent === "final") {
+    if (formReady && stayProofReady && identityReady && !hasWarn) {
+      return "Sí. Hemos acabado, enhorabuena. Te mandamos tu expediente en archivo PDF por WhatsApp.";
+    }
+
+    return "Todavía estamos terminando tu expediente. Primero formulario, después pruebas de 5 meses y después pasaporte o NIE.";
+  }
+
+  if (!formReady) {
+    return "Primero rellena el formulario con tus datos básicos y después seguimos.";
+  }
+
+  if (!stayProofReady) {
+    return "Ahora sube primero tus pruebas de 5 meses.";
+  }
+
+  if (!identityReady) {
+    return "Perfecto. Ya tengo tus pruebas de permanencia. Ahora sube tu pasaporte o tu NIE.";
+  }
+
+  if (hasWarn) {
+    return "Hay un documento que no se ve bien. Súbelo otra vez más claro para terminar.";
+  }
+
+  return "Perfecto. Hemos acabado, enhorabuena. Te mandamos tu expediente en archivo PDF por WhatsApp.";
 }
 
 function replyEN(input: BrainInput) {
-  const meses = monthsCovered(input.documents);
-  const valid = hasEnoughValidDocs(input.documents);
-  const identidad = hasIdentityDoc(input.documents);
+  const formReady = hasLeadFormMinimum(input.leadForm);
+  const identityReady = hasIdentityDoc(input.documents);
+  const stayProofReady = estimateStayProofProgress(input.documents) >= 1;
+  const hasWarn = hasWarnDocuments(input.documents);
 
-  if (meses >= 5 && valid && identidad) {
-    return "✅ File ACCEPTED for the 2026 regularization. You already have enough valid evidence.";
+  if (!formReady) {
+    return "First complete the basic form. Then we continue by voice.";
   }
 
-  return "❌ Not accepted yet for the 2026 regularization. Upload clearer or additional documents.";
+  if (!stayProofReady) {
+    return "Now upload your 5-month proof documents first.";
+  }
+
+  if (!identityReady) {
+    return "Perfect. Now upload your passport or NIE.";
+  }
+
+  if (hasWarn) {
+    return "One document still needs a clearer version.";
+  }
+
+  return "Perfect. We have finished. Congratulations. We will send your PDF file by WhatsApp.";
 }
 
 function replyDAR(input: BrainInput) {
-  const meses = monthsCovered(input.documents);
-  const valid = hasEnoughValidDocs(input.documents);
-  const identidad = hasIdentityDoc(input.documents);
   const intent = detectIntent(input.userMessage || "");
+  const formReady = hasLeadFormMinimum(input.leadForm);
+  const identityReady = hasIdentityDoc(input.documents);
+  const stayProofCount = estimateStayProofProgress(input.documents);
+  const stayProofReady = stayProofCount >= 1;
+  const hasWarn = hasWarnDocuments(input.documents);
 
   if (intent === "hello") {
-    return "السلام. أنا محمد، مختص فالهجرة. صيفط ليا الوثائق ديالك وغادي نقول ليك بوضوح واش كل وثيقة مقبولة ولا لا فالتسوية 2026.";
-  }
+    if (!formReady) {
+      return "السلام. أنا محمد. أول حاجة عمر الفورمولار بالمعطيات الأساسية ديالك ومن بعد نكملو بالصوت.";
+    }
 
-  if (intent === "appointment") {
-    return "منين يوجَد الملف ديالك مزيان، سارة تقدر تعاونك فالموعد. دابا الأول نكملو مراجعة الوثائق.";
+    if (!stayProofReady) {
+      return "مزيان. خديت المعطيات ديالك. دابا صيفط ليا أولاً بروفات 5 شهور.";
+    }
+
+    if (!identityReady) {
+      return "مزيان. توصلت ببروفات ديال الإقامة. دابا صيفط ليا الباسبور ولا NIE.";
+    }
+
+    if (hasWarn) {
+      return "توصلت بشي وثائق، ولكن كاين شي حاجة خاصها مراجعة. صيفطها أوضح ونكملو.";
+    }
+
+    return "مزيان. سالينا، هنيئاً. غادي نصيفطو ليك الملف ديالك PDF فالواتساب.";
   }
 
   if (intent === "missing") {
-    const faltan: string[] = [];
-
-    if (!identidad) faltan.push("الباسبور أو NIE");
-    if (!hasCriminalRecord(input.documents)) faltan.push("شهادة السوابق العدلية");
-    if (meses < 5) faltan.push("بروفات أخرى باش تكمل 5 شهور");
-
-    if (faltan.length === 0) {
-      return "كلشي باين مزيان دابا. الملف ديالك غادي مزيان فالتسوية 2026.";
+    if (!formReady) {
+      return "أول حاجة خاصك تعمر الفورمولار بالاسم والتليفون والمدينة.";
     }
 
-    return `مازال خاصك هاد الحوايج فالتسوية 2026: ${faltan.join(
-      "، "
-    )}. صيفطهم ليا ونكمل المراجعة.`;
-  }
-
-  if (intent === "status") {
-    if (meses >= 5 && valid && identidad) {
-      return "✅ الملف ديالك مقبول للتسوية 2026. عندك بروفات كافية ووثائق صالحة. كمل صيفط اللي بقا باش نسدو الملف النهائي.";
+    if (!stayProofReady) {
+      return "دابا خاصك تصيفط بروفات 5 شهور. صيفطهم أولاً ومن بعد نكملو.";
     }
 
-    if (meses >= 3 && identidad) {
-      return "🟡 جزء من الملف مقبول، ولكن مازال ما كملش باش يكون مقبول كامل فالتسوية 2026. خاصك تزيد بروفات أو وثائق مهمة.";
+    if (!identityReady) {
+      return "دابا خاص الباسبور ولا NIE. صيفطو ونكمل الملف ديالك.";
     }
 
-    return "❌ دابا الملف مازال غير مقبول للتسوية 2026. خاص بروفات واضحة أكثر أو وثائق صالحة. صيفط وثيقة أخرى وأنا نراجعها.";
+    if (hasWarn) {
+      return "كاينين وثائق طلعتيهم ولكن شي وحدة ما بايناش مزيان. صيفطها مرة أخرى واضحة.";
+    }
+
+    return "ما ناقص والو مهم. سالينا، هنيئاً. غادي نصيفطو ليك الملف ديالك PDF فالواتساب.";
   }
 
-  if (meses >= 5 && identidad) {
-    return "راك غادي مزيان. عندك قاعدة مزيانة ديال الوثائق للتسوية 2026. دابا صيفط اللي بقا وأنا نراجع واش مقبول ولا لا.";
+  if (intent === "uploaded") {
+    if (!formReady) {
+      return "قبل ما نكملو، عمر أولاً الفورمولار بالمعطيات الأساسية.";
+    }
+
+    if (!stayProofReady) {
+      return "مزيان. دابا بدا صيفط بروفات 5 شهور.";
+    }
+
+    if (!identityReady) {
+      return "مزيان. توصلت ببروفات ديال الإقامة. دابا صيفط الباسبور ولا NIE.";
+    }
+
+    if (hasWarn) {
+      return "توصلت بالوثيقة ولكن خاصني نسخة أوضح باش نكمل.";
+    }
+
+    return "مزيان. سالينا، هنيئاً. غادي نصيفطو ليك الملف ديالك PDF فالواتساب.";
   }
 
-  return "صيفط ليا الوثائق ديالك وغادي نقول ليك بوضوح واش كل وحدة مقبولة ولا غير مقبولة فالتسوية 2026.";
+  if (intent === "identity") {
+    if (!formReady) {
+      return "أولاً عمر الفورمولار. من بعد صيفط بروفات 5 شهور، ومن بعد الباسبور ولا NIE.";
+    }
+
+    if (!stayProofReady) {
+      return "قبل الباسبور ولا NIE، صيفط أولاً بروفات 5 شهور.";
+    }
+
+    if (!identityReady) {
+      return "دابا صيفط الباسبور ولا NIE واضح مزيان.";
+    }
+
+    if (hasWarn) {
+      return "توصلت بوثيقة ديال الهوية، ولكن خاصني صورة أوضح باش نتحقق منها مزيان.";
+    }
+
+    return "الباسبور ولا NIE ديالك مزيان. سالينا، هنيئاً. غادي نصيفطو ليك الملف ديالك PDF فالواتساب.";
+  }
+
+  if (intent === "stay_proof") {
+    if (!formReady) {
+      return "أولاً عمر الفورمولار بالمعطيات الأساسية.";
+    }
+
+    if (!stayProofReady) {
+      return "دابا صيفط بروفات 5 شهور. تقدر تصيفط إمبادروناميينتو، تيكيطات، فواتير، ولا أي وثائق كيبينو الإقامة.";
+    }
+
+    if (!identityReady) {
+      return "مزيان. توصلت ببروفات الإقامة. دابا صيفط الباسبور ولا NIE.";
+    }
+
+    if (hasWarn) {
+      return "شي بروفات توصلت بيهم ولكن كاين شي وحدة خاصها مراجعة حيت ما بايناش مزيان.";
+    }
+
+    return "بروفات الإقامة مزيانين. سالينا، هنيئاً. غادي نصيفطو ليك الملف ديالك PDF فالواتساب.";
+  }
+
+  if (intent === "final") {
+    if (formReady && stayProofReady && identityReady && !hasWarn) {
+      return "إيوا نعم. سالينا، هنيئاً. غادي نصيفطو ليك الملف ديالك PDF فالواتساب.";
+    }
+
+    return "مازال كنوجدو الملف ديالك. أولاً الفورمولار، من بعد بروفات 5 شهور، ومن بعد الباسبور ولا NIE.";
+  }
+
+  if (!formReady) {
+    return "أولاً عمر الفورمولار بالمعطيات الأساسية ديالك ومن بعد نكملو.";
+  }
+
+  if (!stayProofReady) {
+    return "دابا صيفط ليا أولاً بروفات 5 شهور.";
+  }
+
+  if (!identityReady) {
+    return "مزيان. عندي دابا بروفات الإقامة. دابا صيفط الباسبور ولا NIE.";
+  }
+
+  if (hasWarn) {
+    return "كاينة وثيقة ما بايناش مزيان. صيفطها مرة أخرى واضحة باش نكملو.";
+  }
+
+  return "مزيان. سالينا، هنيئاً. غادي نصيفطو ليك الملف ديالك PDF فالواتساب.";
 }
 
 export function mohamedBrain(input: BrainInput) {
