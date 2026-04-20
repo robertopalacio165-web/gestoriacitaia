@@ -25,12 +25,8 @@ function buildVoiceSettings() {
 }
 
 function pickModelId(lang: "es" | "darija" | "en") {
-  if (lang === "darija") {
-    return "eleven_multilingual_v2";
-  }
-  if (lang === "en") {
-    return "eleven_flash_v2_5";
-  }
+  if (lang === "darija") return "eleven_multilingual_v2";
+  if (lang === "en") return "eleven_flash_v2_5";
   return "eleven_multilingual_v2";
 }
 
