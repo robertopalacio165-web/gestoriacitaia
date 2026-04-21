@@ -727,11 +727,8 @@ export default function Regularizacion2026() {
         throw new Error(sessionData?.error || "Error creando sesión realtime");
       }
 
-      const ephemeralKey =
-        sessionData?.client_secret?.value ||
-        sessionData?.client_secret ||
-        "";
-
+      const ephemeralKey = sessionData?.value || "";
+      
       if (!ephemeralKey) {
         throw new Error("No llegó client_secret desde realtime-session");
       }
@@ -841,17 +838,17 @@ export default function Regularizacion2026() {
 
       const model = "gpt-realtime";
 
-      const sdpRes = await fetch(
-        `https://api.openai.com/v1/realtime?model=${model}`,
-        {
-          method: "POST",
-          body: offer.sdp,
-          headers: {
-            Authorization: `Bearer ${ephemeralKey}`,
-            "Content-Type": "application/sdp",
-          },
-        }
-      );
+     const sdpRes = await fetch(
+  "https://api.openai.com/v1/realtime/calls",
+  {
+    method: "POST",
+    body: offer.sdp,
+    headers: {
+      Authorization: `Bearer ${ephemeralKey}`,
+      "Content-Type": "application/sdp",
+    },
+  }
+);
 
       if (!sdpRes.ok) {
         const errText = await sdpRes.text();
