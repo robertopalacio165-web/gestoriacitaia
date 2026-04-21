@@ -1363,28 +1363,39 @@ export default function BuscarCitas() {
       const dc = pc.createDataChannel("oai-events");
       realtimeDcRef.current = dc;
 
-     dc.onopen = () => {
+dc.onopen = () => {
   setIsListening(true);
-  setWaitingSara(false);
+  setWaitingSara(true);
 
-  const firstPrompt = autoPrompt.trim()
-    ? autoPrompt
-    : [
-        "رحبي دابا بالعميل بالدارجة المغربية.",
-        "قولي ليه: السلام، مرحبا بيك فـ GestoriaCitaIA.",
-        "إلى بغيتي نشدّو ليك الموعد، عمر ليا الفورمولار ومن بعد نكمل معاك.",
-        "خلي الجواب قصير، طبيعي، وبشري.",
-      ].join(" ");
+  const firstPrompt = [
+    "ابدئي دابا أنتِ الأولى وما تستنايش العميل يهضر.",
+    "رحبي بالعميل بالدارجة المغربية وبالحروف العربية.",
+    "قولي ليه بالضبط: السلام، مرحبا بيك فـ GestoriaCitaIA. إلى بغيتي نشدّو ليك الموعد، عمر ليا الفورمولار ومن بعد نكمل معاك.",
+    "خلي الجواب قصير، طبيعي، وبشري.",
+  ].join(" ");
+
+  dc.send(
+    JSON.stringify({
+      type: "conversation.item.create",
+      item: {
+        type: "message",
+        role: "user",
+        content: [
+          {
+            type: "input_text",
+            text: "ابدئي دابا ورحبي بالعميل أنتِ الأولى.",
+          },
+        ],
+      },
+    })
+  );
 
   dc.send(
     JSON.stringify({
       type: "response.create",
       response: {
         modalities: ["audio", "text"],
-        instructions: [
-          voiceTexts.realtimeIntro(selectedTramiteLabel, formData),
-          firstPrompt,
-        ].join(" "),
+        instructions: [voiceTexts.realtimeIntro, firstPrompt].join(" "),
       },
     })
   );
