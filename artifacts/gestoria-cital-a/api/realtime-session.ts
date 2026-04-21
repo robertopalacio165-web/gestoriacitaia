@@ -18,58 +18,66 @@ export default async function handler(
     }
 
     const body = req.body || {};
-    const assistant =
-      body.assistant === "sara" ? "sara" : "mohamed";
+    const assistant = body.assistant === "sara" ? "sara" : "mohamed";
 
     const instructions =
       assistant === "sara"
-        ? `
-أنتِ سارة من GestoriaCitaIA.
-كتجاوبي ديما بالدارجة المغربية وبالحروف العربية.
-مختصة غير فالمواعيد ديال extranjería فإسبانيا.
-جاوبي باختصار، وبشكل طبيعي، وصوتي.
-إلى كان الفورمولار ناقص، قولي للعميل يعمرو.
-إلى كان الفورمولار واجد، قولي ليه:
-"مزيان. دابا غادي نقلبو ليك على الموعد، ومنين يبان غادي نعلموك فـ WhatsApp."
-`
-        : `
-أنت محمد من GestoriaCitaIA.
-كتجاوب ديما بالدارجة المغربية وبالحروف العربية.
-أنت خبير فالتسوية الجماعية 2026 وملفات extranjería فإسبانيا.
-جاوب باختصار، سؤال واحد ولا instruction وحدة فكل مرة.
-إلى كان العميل داخل أول مرة، قول:
-"السلام، مرحبا بيك فـ GestoriaCitaIA. إلا بغيتي نصيبو ليك الميلف ديال التسوية الجماعية، عمر ليا الفورمولار الأول، ومن بعد نكمل معاك. ملي تسالي، ضغط على الميكروفون وغادي نكمل معاك."
-إلى كان الفورمولار واجد، بدا تجمع المعلومات المهمة:
-واش داخل إسبانيا، واش عندو pasaporte، واش عندو padrón، واش عندو 5 شهور، واش عندو asilo، واش عندو ولاد، واش محتاج vulnerabilidad.
-`;
+        ? [
+            "جاوبي ديما غير بالدارجة المغربية وبالحروف العربية.",
+            "أنتِ سارة من GestoriaCitaIA.",
+            "مختصة غير فالمواعيد ديال extranjería فإسبانيا.",
+            "جاوبي باختصار وبشكل طبيعي ومهني.",
+            "إلى كان الفورمولار ناقص، قولي للعميل يعمرو.",
+            "إلى كان الفورمولار واجد، قولي ليه: مزيان. دابا غادي نقلبو ليك على الموعد، ومنين يبان غادي نعلموك فـ WhatsApp.",
+          ].join(" ")
+        : [
+            "جاوب ديما غير بالدارجة المغربية وبالحروف العربية.",
+            "أنت محمد من GestoriaCitaIA.",
+            "أنت خبير فالتسوية الجماعية 2026 وملفات extranjería فإسبانيا.",
+            "جاوب باختصار، سؤال واحد ولا instruction وحدة فكل مرة.",
+            "إلى كان العميل داخل أول مرة، قول: السلام، مرحبا بيك فـ GestoriaCitaIA. إلا بغيتي نصيبو ليك الميلف ديال التسوية الجماعية، عمر ليا الفورمولار الأول، ومن بعد نكمل معاك. ملي تسالي، ضغط على الميكروفون وغادي نكمل معاك.",
+            "منين يكمل الفورمولار، بدا تجمع المعلومات المهمة: واش داخل إسبانيا، واش عندو pasaporte، واش عندو padrón، واش عندو 5 شهور، واش عندو asilo، واش عندو ولاد، واش محتاج vulnerabilidad.",
+          ].join(" ");
 
-    const response = await fetch("https://api.openai.com/v1/realtime/sessions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
+    const payload = {
+      session: {
+        type: "realtime",
         model: "gpt-realtime",
-        modalities: ["audio", "text"],
         instructions,
-        input_audio_format: "pcm16",
-        output_audio_format: "pcm16",
-        input_audio_transcription: {
-          model: "gpt-4o-mini-transcribe",
+        audio: {
+          input: {
+            turn_detection: {
+              type: "server_vad",
+            },
+            transcription: {
+              model: "gpt-4o-mini-transcribe",
+            },
+          },
+          output: {
+            voice: "marin",
+          },
         },
-        turn_detection: {
-          type: "server_vad",
+      },
+    };
+
+    const response = await fetch(
+      "https://api.openai.com/v1/realtime/client_secrets",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
         },
-      }),
-    });
+        body: JSON.stringify(payload),
+      }
+    );
 
     const data = await response.json();
 
     if (!response.ok) {
-      console.error("REALTIME SESSION ERROR:", JSON.stringify(data, null, 2));
+      console.error("REALTIME CLIENT SECRET ERROR:", JSON.stringify(data, null, 2));
       return res.status(500).json({
-        error: data?.error?.message || "Error creando sesión realtime",
+        error: data?.error?.message || "Error creando client secret realtime",
         details: data || null,
       });
     }
