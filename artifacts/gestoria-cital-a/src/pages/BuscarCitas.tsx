@@ -480,7 +480,7 @@ export default function BuscarCitas() {
   const assistantTextBufferRef = useRef("");
   const lastUserTranscriptRef = useRef("");
   const lastAssistantTextRef = useRef("");
-  const welcomePlayedRef = useRef(false);
+  
 
   const urlParams = useMemo(() => {
     const url = new URL(window.location.href);
@@ -1228,33 +1228,7 @@ export default function BuscarCitas() {
     ]);
   };
 
-  const playWelcomeOnFirstTouch = () => {
-    if (welcomePlayedRef.current) return;
-    welcomePlayedRef.current = true;
 
-    const welcomeText =
-      voiceHistory.find((m) => m.from === "agent")?.text || voiceTexts.initialVoice;
-
-    setTimeout(() => {
-      speakLocalText(welcomeText);
-    }, 150);
-  };
-
-  useEffect(() => {
-    const unlockWelcome = () => {
-      playWelcomeOnFirstTouch();
-      window.removeEventListener("click", unlockWelcome);
-      window.removeEventListener("touchstart", unlockWelcome);
-    };
-
-    window.addEventListener("click", unlockWelcome, { once: true });
-    window.addEventListener("touchstart", unlockWelcome, { once: true });
-
-    return () => {
-      window.removeEventListener("click", unlockWelcome);
-      window.removeEventListener("touchstart", unlockWelcome);
-    };
-  }, [voiceHistory, voiceTexts.initialVoice]);
 
   const handleFormChange = (field: keyof ClientFormData, value: string) => {
     setFormData((prev) => ({
@@ -1389,25 +1363,32 @@ export default function BuscarCitas() {
       const dc = pc.createDataChannel("oai-events");
       realtimeDcRef.current = dc;
 
-      dc.onopen = () => {
-        setIsListening(true);
-        setWaitingSara(false);
+     dc.onopen = () => {
+  setIsListening(true);
+  setWaitingSara(false);
 
-        if (autoPrompt.trim()) {
-          dc.send(
-            JSON.stringify({
-              type: "response.create",
-              response: {
-                modalities: ["audio", "text"],
-                instructions: [
-                  voiceTexts.realtimeIntro(selectedTramiteLabel, formData),
-                  autoPrompt,
-                ].join(" "),
-              },
-            })
-          );
-        }
-      };
+  const firstPrompt = autoPrompt.trim()
+    ? autoPrompt
+    : [
+        "رحبي دابا بالعميل بالدارجة المغربية.",
+        "قولي ليه: السلام، مرحبا بيك فـ GestoriaCitaIA.",
+        "إلى بغيتي نشدّو ليك الموعد، عمر ليا الفورمولار ومن بعد نكمل معاك.",
+        "خلي الجواب قصير، طبيعي، وبشري.",
+      ].join(" ");
+
+  dc.send(
+    JSON.stringify({
+      type: "response.create",
+      response: {
+        modalities: ["audio", "text"],
+        instructions: [
+          voiceTexts.realtimeIntro(selectedTramiteLabel, formData),
+          firstPrompt,
+        ].join(" "),
+      },
+    })
+  );
+};
 
       dc.onmessage = (event) => {
         try {
