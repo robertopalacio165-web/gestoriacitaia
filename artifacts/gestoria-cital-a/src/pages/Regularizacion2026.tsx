@@ -787,20 +787,32 @@ const sendRealtimeSystemUpdate = (text: string) => {
       const dc = pc.createDataChannel("oai-events");
       realtimeDcRef.current = dc;
 
-      dc.onopen = () => {
-        setIsListening(true);
-        setWaitingMohamed(false);
+     dc.onopen = () => {
+  setIsListening(true);
+  setWaitingMohamed(false);
 
-        dc.send(
-          JSON.stringify({
-            type: "response.create",
-            response: {
-              modalities: ["audio", "text"],
-              instructions: voiceTexts.realtimeIntro,
-            },
-          })
-        );
-      };
+  const firstPrompt = autoPrompt.trim()
+    ? autoPrompt
+    : [
+        "رحب دابا بالعميل بالدارجة المغربية.",
+        "قول ليه: السلام، مرحبا بيك فـ GestoriaCitaIA.",
+        "إلى بغيتي نصيبو ليك الملف ديال التسوية الجماعية، عمر ليا الفورمولار الأول ومن بعد نكمل معاك.",
+        "خلي الجواب قصير، طبيعي، وبشري.",
+      ].join(" ");
+
+  dc.send(
+    JSON.stringify({
+      type: "response.create",
+      response: {
+        modalities: ["audio", "text"],
+        instructions: [
+          voiceTexts.realtimeIntro(leadForm),
+          firstPrompt,
+        ].join(" "),
+      },
+    })
+  );
+};
 
       dc.onmessage = (event) => {
         try {
