@@ -554,7 +554,6 @@ const currentAudioRef = useRef<HTMLAudioElement | null>(null);
     }));
   };
 
-
 const speakText = async (text: string) => {
   if (muted) return;
   if (!text?.trim()) return;
@@ -574,7 +573,7 @@ const speakText = async (text: string) => {
       body: JSON.stringify({
         text,
         assistant: "mohamed",
-        lang: safeLang,
+        lang: "darija",
       }),
     });
 
@@ -608,6 +607,7 @@ const speakText = async (text: string) => {
     console.error("Error reproduciendo voz ElevenLabs:", error);
   }
 };
+
 
   const pushAgentMessage = (text: string, speak = false) => {
     setVoiceHistory((prev) => [
