@@ -458,8 +458,7 @@ export default function BuscarCitas() {
   const [showDocs, setShowDocs] = useState(false);
   const [showForms, setShowForms] = useState(false);
   const [profile, setProfile] = useState<ProfileRow | null>(null);
-  const [appointmentData, setAppointmentData] =
-    useState<AppointmentResult | null>(null);
+  const [appointmentData, setAppointmentData] = useState<AppointmentResult | null>(null);
   const [profileLoading, setProfileLoading] = useState(true);
   const [formData, setFormData] = useState<ClientFormData>({
     fullName: "",
@@ -481,6 +480,7 @@ export default function BuscarCitas() {
   const assistantTextBufferRef = useRef("");
   const lastUserTranscriptRef = useRef("");
   const lastAssistantTextRef = useRef("");
+  const welcomePlayedRef = useRef(false);
 
   const urlParams = useMemo(() => {
     const url = new URL(window.location.href);
@@ -497,37 +497,35 @@ export default function BuscarCitas() {
   const voiceTexts = useMemo(
     () => ({
       initialVoice:
-        "السلام، مرحبا بيك فـ GestoriaCitaIA. إلا بغيتي نشدو ليك موعد، عمر ليا الفورمولار، ومن بعد أنا غادي نكمل معاك الهضرة.",
+        "السلام، مرحبا بيك فـ GestoriaCitaIA. إلا بغيتي نشدّو ليك الموعد ديالك، عمر ليا الفورمولار ومن بعد نكمل معاك.",
+      savedLeadReply:
+        "مزيان. دابا خديت المعطيات ديالك، وغادي نبدا نقلب ليك على الموعد. منين نلقاو شي موعد غادي نعلموك فالواتساب.",
       voiceBlocked:
         "عافاك عمر الفورمولار الأول ومن بعد ضغط على الميكروفون باش نكمل معاك.",
-      savedLeadReply:
-        "مزيان. دابا ملي عمرتي الفورمولار، حنا غادي نقلبو ليك على موعد فـ أقرب وقت، وملي يكون الموعد غادي نعلموك عبر الواتساب باش تدخل وتأكد الموعد ديالك.",
+      realtimeError:
+        "وقع مشكل فالاتصال المباشر مع سارة. عاود حاول.",
+      confirmationLinkMsg:
+        "حملت رابط التأكيد ديالك. دابا نكملو غير التأكيد النهائي.",
+      foundMsg:
+        "مزيان. لقينا ليك موعد. دابا خاصك تأكد الموعد باش نكملو.",
+      confirmMsg:
+        "مزيان. تم تأكيد الموعد ديالك. غادي توصلك التفاصيل وPDF عبر الواتساب.",
       realtimeIntro: (tramiteLabel: string, form: ClientFormData) =>
         [
           "جاوبي ديما غير بالدارجة المغربية وبالحروف العربية.",
           "أنتِ سارة من GestoriaCitaIA.",
-          "أنتِ مختصة غير فالمواعيد ديال extranjería فإسبانيا.",
-          "الأسلوب ديالك بشري، طبيعي، واضح، ومختصر.",
+          "مختصة غير فالمواعيد ديال extranjería فإسبانيا.",
+          "الأسلوب ديالك طبيعي، بشري، مهني، ومختصر.",
           "سولي غير سؤال واحد فكل مرة.",
           "ما تبدليش اللغة حسب لغة الموقع. ديما جاوبي بالدارجة المغربية.",
-          `نوع الموعد الحالي هو: ${tramiteLabel || "مازال ما تختارش"}.`,
-          `المعطيات الحالية: الاسم ${form.fullName || "ما متسجلش"}, الهاتف ${
-            form.phone || "ما متسجلش"
-          }, الهوية ${form.nie || "ما متسجلش"}, المدينة ${
-            form.city || "ما متسجلش"
-          }.`,
-          "إلى كان الفورمولار واجد، قولي للعميل باختصار أن البحث على الموعد بدا، ومن بعد سوليه غير على المعطى الناقص اللي محتاجاه.",
-          "إلى سَوّلك على الوثائق أو ملف regularización، حوليه لمحمد بشكل قصير.",
+          `نوع الموعد هو: ${tramiteLabel || "مازال ما تختارش"}.`,
+          `الاسم: ${form.fullName || "ما متسجلش"}.`,
+          `الهاتف: ${form.phone || "ما متسجلش"}.`,
+          `الهوية: ${form.nie || "ما متسجلش"}.`,
+          `المدينة: ${form.city || "ما متسجلش"}.`,
+          "إلى كان الفورمولار واجد، رحبي بالعميل وقولي ليه بلي غادي تبداي تقلبي ليه على الموعد، ومن بعد سوليه غير سؤال واحد قصير ومفيد.",
           "ما تخترعيش موعد وهمي وما تواعديش بموعد مضمون.",
         ].join(" "),
-      realtimeError:
-        "وقع مشكل فالاتصال المباشر مع سارة. عاود حاول من بعد.",
-      foundMsg:
-        "مزيان. لقينا ليك موعد. دابا خاصك تأكد الموعد باش نكملو ونصيفطو ليك التفاصيل النهائية.",
-      confirmMsg:
-        "مزيان. تم تأكيد الموعد ديالك. غادي توصلك التفاصيل وPDF عبر الواتساب.",
-      confirmationLinkMsg:
-        "حملت رابط التأكيد ديالك. سارة وجدات كلشي باش تكمل غير التأكيد.",
     }),
     []
   );
@@ -680,7 +678,6 @@ export default function BuscarCitas() {
         downloadPdf: "تحميل PDF",
         voiceButton: "تكلم مع سارة",
         stopButton: "وقف الميكروفون",
-        voiceBlocked: "عافاك عمر الفورمولار الأول ومن بعد ضغط على الميكروفون.",
         latestReply: "آخر جواب ديال سارة",
         yourVoice: "آخر جواب ديالك بالصوت",
         listening: "سارة كاتسمع ليك دابا...",
@@ -688,7 +685,7 @@ export default function BuscarCitas() {
         saveDesc: "سارة تقدر دابا تكمل معاك بالصوت.",
         missingTitle: "كاينين بيانات ناقصين",
         missingDesc: "عمر الاسم والهاتف والمدينة قبل ما تكمل.",
-        micNotSupported:
+        openRealtimeError:
           "هاد المتصفح ما كيدعمش الصوت المباشر. استعمل Chrome حديث.",
       };
     }
@@ -840,7 +837,6 @@ export default function BuscarCitas() {
         downloadPdf: "Download PDF",
         voiceButton: "Talk to Sara",
         stopButton: "Stop microphone",
-        voiceBlocked: "Complete the form first and then press the microphone.",
         latestReply: "Sara's latest reply",
         yourVoice: "Your latest voice answer",
         listening: "Sara is listening to you now...",
@@ -848,7 +844,7 @@ export default function BuscarCitas() {
         saveDesc: "Sara can now continue with you by voice.",
         missingTitle: "Missing data",
         missingDesc: "Fill in name, phone and city before continuing.",
-        micNotSupported:
+        openRealtimeError:
           "This browser does not support realtime voice. Use modern Chrome.",
       };
     }
@@ -1002,7 +998,6 @@ export default function BuscarCitas() {
       downloadPdf: "Descargar PDF",
       voiceButton: "Hablar con Sara",
       stopButton: "Parar micrófono",
-      voiceBlocked: "Rellena primero el formulario y después pulsa el micrófono.",
       latestReply: "Última respuesta de Sara",
       yourVoice: "Tu última respuesta por voz",
       listening: "Sara te está escuchando ahora...",
@@ -1010,7 +1005,7 @@ export default function BuscarCitas() {
       saveDesc: "Sara ya puede continuar contigo por voz.",
       missingTitle: "Faltan datos",
       missingDesc: "Rellena nombre, teléfono y ciudad antes de continuar.",
-      micNotSupported:
+      openRealtimeError:
         "Este navegador no soporta voz en tiempo real. Usa Chrome moderno.",
     };
   }, [lang]);
@@ -1033,55 +1028,21 @@ export default function BuscarCitas() {
     ui.formsByTramite[selectedTramite] ?? ui.formsByTramite.tie;
 
   const agentSteps = useMemo(() => {
-    if (lang === "darija") {
-      return [
-        {
-          text: `سلام، أنا سارة. غادي نعاونك فـ «${selectedTramiteLabel}» خطوة بخطوة.`,
-          highlight: selectedTramiteLabel,
-        },
-        {
-          text: "مزيان. دابا نقدر نكملو البحث على الموعد ديالك ونشعروك فواتساب منين يبان.",
-          highlight: "البحث على الموعد",
-        },
-        {
-          text: "إلى لقا النظام موعد، غادي نكملو التأكيد ونصيفطو ليك الإشعار النهائي.",
-          highlight: "التأكيد",
-        },
-      ];
-    }
-
-    if (lang === "en") {
-      return [
-        {
-          text: `Hi, I’m Sara. I’ll help you with “${selectedTramiteLabel}” step by step.`,
-          highlight: selectedTramiteLabel,
-        },
-        {
-          text: "Perfect. We can now continue searching for your appointment and notify you on WhatsApp when it appears.",
-          highlight: "searching for your appointment",
-        },
-        {
-          text: "If the system finds an appointment, we will continue with confirmation and send you the final notification.",
-          highlight: "confirmation",
-        },
-      ];
-    }
-
     return [
       {
-        text: `Hola, soy Sara. Voy a ayudarte con «${selectedTramiteLabel}» paso a paso.`,
+        text: `السلام، أنا سارة. غادي نعاونك فـ «${selectedTramiteLabel}» خطوة بخطوة.`,
         highlight: selectedTramiteLabel,
       },
       {
-        text: "Perfecto. Ahora ya podemos continuar con la búsqueda de tu cita y avisarte por WhatsApp cuando aparezca.",
-        highlight: "búsqueda de tu cita",
+        text: "مزيان. دابا نقدر نكملو البحث على الموعد ديالك ونشعروك فالواتساب منين يبان.",
+        highlight: "البحث على الموعد",
       },
       {
-        text: "Si el sistema encuentra una cita, continuaremos con la confirmación y te enviaremos el aviso final.",
-        highlight: "confirmación",
+        text: "إلى لقا النظام موعد، غادي نكملو التأكيد ونصيفطو ليك الإشعار النهائي.",
+        highlight: "التأكيد",
       },
     ];
-  }, [lang, selectedTramiteLabel]);
+  }, [selectedTramiteLabel]);
 
   useEffect(() => {
     const supported =
@@ -1223,7 +1184,6 @@ export default function BuscarCitas() {
 
     try {
       window.speechSynthesis.cancel();
-
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = "ar-MA";
       utterance.rate = 0.95;
@@ -1248,7 +1208,7 @@ export default function BuscarCitas() {
 
     lastAssistantTextRef.current = text;
 
-    if (speak) {
+    if (speak && !isListening) {
       setTimeout(() => {
         speakLocalText(text);
       }, 120);
@@ -1267,47 +1227,33 @@ export default function BuscarCitas() {
       },
     ]);
   };
-const welcomePlayedRef = useRef(false);
 
-const playWelcomeOnFirstTouch = () => {
-  if (welcomePlayedRef.current) return;
-  welcomePlayedRef.current = true;
+  const playWelcomeOnFirstTouch = () => {
+    if (welcomePlayedRef.current) return;
+    welcomePlayedRef.current = true;
 
-  const welcomeText =
-    voiceHistory.find((m) => m.from === "agent")?.text || voiceTexts.initialVoice;
+    const welcomeText =
+      voiceHistory.find((m) => m.from === "agent")?.text || voiceTexts.initialVoice;
 
-  setTimeout(() => {
-    speakLocalText(welcomeText);
-  }, 150);
-};
-
-useEffect(() => {
-  const unlockWelcome = () => {
-    playWelcomeOnFirstTouch();
-    window.removeEventListener("click", unlockWelcome);
-    window.removeEventListener("touchstart", unlockWelcome);
+    setTimeout(() => {
+      speakLocalText(welcomeText);
+    }, 150);
   };
 
-  window.addEventListener("click", unlockWelcome, { once: true });
-  window.addEventListener("touchstart", unlockWelcome, { once: true });
-
-  return () => {
-    window.removeEventListener("click", unlockWelcome);
-    window.removeEventListener("touchstart", unlockWelcome);
-  };
-}, [voiceHistory, voiceTexts.initialVoice]);
-  
   useEffect(() => {
-    if (
-      voiceHistory.length === 1 &&
-      voiceHistory[0]?.text === voiceTexts.initialVoice
-    ) {
-      const timer = setTimeout(() => {
-        speakLocalText(voiceTexts.initialVoice);
-      }, 700);
+    const unlockWelcome = () => {
+      playWelcomeOnFirstTouch();
+      window.removeEventListener("click", unlockWelcome);
+      window.removeEventListener("touchstart", unlockWelcome);
+    };
 
-      return () => clearTimeout(timer);
-    }
+    window.addEventListener("click", unlockWelcome, { once: true });
+    window.addEventListener("touchstart", unlockWelcome, { once: true });
+
+    return () => {
+      window.removeEventListener("click", unlockWelcome);
+      window.removeEventListener("touchstart", unlockWelcome);
+    };
   }, [voiceHistory, voiceTexts.initialVoice]);
 
   const handleFormChange = (field: keyof ClientFormData, value: string) => {
@@ -1321,60 +1267,16 @@ useEffect(() => {
     setSelectedTramite(value);
   };
 
-  const handleFormSubmit = () => {
-    if (!formData.fullName.trim() || !formData.phone.trim() || !formData.city.trim()) {
-      toast({
-        title: ui.missingTitle,
-        description: ui.missingDesc,
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!selectedTramite) {
-      toast({
-        title:
-          lang === "en"
-            ? "Select procedure"
-            : lang === "darija"
-            ? "اختار الإجراء"
-            : "Selecciona trámite",
-        description:
-          lang === "en"
-            ? "Choose the appointment type before continuing."
-            : lang === "darija"
-            ? "اختار نوع الموعد قبل ما تكمل."
-            : "Elige el tipo de cita antes de continuar.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setFormReady(true);
-    setStep(1);
-
-    pushAgentMessage(voiceTexts.savedLeadReply, true);
-
-    toast({
-      title: ui.saveTitle,
-      description: ui.saveDesc,
-    });
-  };
-
-  setTimeout(() => {
-  startListening().catch(() => {});
-}, 400);
-
   const finalizeAssistantBuffer = () => {
     const text = assistantTextBufferRef.current.trim();
     if (!text) return;
-    if (text === lastAssistantTextRef.current) {
-      assistantTextBufferRef.current = "";
-      return;
-    }
+
+    assistantTextBufferRef.current = "";
+
+    if (text === "..." || text === "…") return;
+    if (text === lastAssistantTextRef.current) return;
 
     pushAgentMessage(text, false);
-    assistantTextBufferRef.current = "";
   };
 
   const stopListening = () => {
@@ -1403,7 +1305,11 @@ useEffect(() => {
     }
   };
 
-  const startListening = async () => {
+  const startListening = async ({
+    autoPrompt = "",
+  }: {
+    autoPrompt?: string;
+  } = {}) => {
     if (!formReady) {
       pushAgentMessage(voiceTexts.voiceBlocked, true);
 
@@ -1418,7 +1324,7 @@ useEffect(() => {
     if (!voiceSupported) {
       toast({
         title: "Error",
-        description: ui.micNotSupported,
+        description: ui.openRealtimeError,
         variant: "destructive",
       });
       return;
@@ -1487,18 +1393,20 @@ useEffect(() => {
         setIsListening(true);
         setWaitingSara(false);
 
-        dc.send(
-          JSON.stringify({
-            type: "response.create",
-            response: {
-              modalities: ["audio", "text"],
-              instructions: voiceTexts.realtimeIntro(
-                selectedTramiteLabel,
-                formData
-              ),
-            },
-          })
-        );
+        if (autoPrompt.trim()) {
+          dc.send(
+            JSON.stringify({
+              type: "response.create",
+              response: {
+                modalities: ["audio", "text"],
+                instructions: [
+                  voiceTexts.realtimeIntro(selectedTramiteLabel, formData),
+                  autoPrompt,
+                ].join(" "),
+              },
+            })
+          );
+        }
       };
 
       dc.onmessage = (event) => {
@@ -1539,7 +1447,6 @@ useEffect(() => {
             msg.text.trim()
           ) {
             assistantTextBufferRef.current = msg.text.trim();
-            finalizeAssistantBuffer();
           }
 
           if (msg.type === "response.done") {
@@ -1592,6 +1499,57 @@ useEffect(() => {
         variant: "destructive",
       });
     }
+  };
+
+  const handleFormSubmit = () => {
+    if (!formData.fullName.trim() || !formData.phone.trim() || !formData.city.trim()) {
+      toast({
+        title: ui.missingTitle,
+        description: ui.missingDesc,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!selectedTramite) {
+      toast({
+        title:
+          lang === "en"
+            ? "Select procedure"
+            : lang === "darija"
+            ? "اختار الإجراء"
+            : "Selecciona trámite",
+        description:
+          lang === "en"
+            ? "Choose the appointment type before continuing."
+            : lang === "darija"
+            ? "اختار نوع الموعد قبل ما تكمل."
+            : "Elige el tipo de cita antes de continuar.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setFormReady(true);
+    setStep(1);
+
+    pushAgentMessage(voiceTexts.savedLeadReply, true);
+
+    toast({
+      title: ui.saveTitle,
+      description: ui.saveDesc,
+    });
+
+    setTimeout(() => {
+      startListening({
+        autoPrompt: [
+          "الفورمولار تكمل.",
+          "رحبي دابا بالعميل بالدارجة المغربية.",
+          "قولي ليه بلي غادي تبداي تقلبي ليه على الموعد.",
+          "ومن بعد سوليه غير سؤال واحد قصير ومفيد.",
+        ].join(" "),
+      }).catch(() => {});
+    }, 500);
   };
 
   const handleAceptar = () => {
@@ -1751,7 +1709,7 @@ useEffect(() => {
 
               <div className="absolute bottom-3 left-0 right-0 flex items-center justify-center">
                 <button
-                  onClick={isListening ? stopListening : startListening}
+                  onClick={isListening ? stopListening : () => startListening()}
                   className={`w-12 h-12 rounded-full border flex items-center justify-center backdrop-blur-md transition-colors ${
                     isListening
                       ? "bg-destructive/80 border-destructive"
@@ -1771,7 +1729,7 @@ useEffect(() => {
             <div className="glass-panel-heavy border border-white/10 rounded-2xl overflow-hidden">
               <div className="p-4 border-b border-white/10">
                 <button
-                  onClick={isListening ? stopListening : startListening}
+                  onClick={isListening ? stopListening : () => startListening()}
                   disabled={!voiceSupported}
                   className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary hover:bg-primary/90 disabled:opacity-50 text-primary-foreground font-bold text-sm px-4 py-3 transition-colors"
                   type="button"
@@ -1791,7 +1749,7 @@ useEffect(() => {
 
                 {!voiceSupported && (
                   <p className="mt-2 text-xs text-red-400 text-center">
-                    {ui.micNotSupported}
+                    {ui.openRealtimeError}
                   </p>
                 )}
 
@@ -1804,9 +1762,7 @@ useEffect(() => {
 
               <div className="p-4 space-y-4">
                 <div>
-                  <p className="text-[11px] text-white/50 mb-1">
-                    {ui.latestReply}
-                  </p>
+                  <p className="text-[11px] text-white/50 mb-1">{ui.latestReply}</p>
                   <div className="rounded-xl bg-white/5 border border-white/10 px-3 py-3 text-sm text-white/90 leading-relaxed">
                     {latestAgentMessage}
                   </div>
@@ -1814,9 +1770,7 @@ useEffect(() => {
 
                 {lastUserTranscript ? (
                   <div>
-                    <p className="text-[11px] text-white/50 mb-1">
-                      {ui.yourVoice}
-                    </p>
+                    <p className="text-[11px] text-white/50 mb-1">{ui.yourVoice}</p>
                     <div className="rounded-xl bg-primary/10 border border-primary/20 px-3 py-3 text-sm text-white leading-relaxed">
                       {lastUserTranscript}
                     </div>
@@ -1856,9 +1810,9 @@ useEffect(() => {
                 </div>
 
                 <div className="flex-1 min-w-0">
-   <p className="text-[11px] text-white/90 leading-relaxed">
-  {agentSteps[Math.min(step, agentSteps.length - 1)]?.text || ""}
-</p>
+                  <p className="text-[11px] text-white/90 leading-relaxed">
+                    {agentSteps[Math.min(step, agentSteps.length - 1)]?.text || ""}
+                  </p>
                 </div>
               </motion.div>
             </AnimatePresence>
