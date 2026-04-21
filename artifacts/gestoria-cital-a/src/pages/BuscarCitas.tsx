@@ -312,7 +312,7 @@ function OfficialBrowserBox({
                     onChange={(e) => onSelectTramite(e.target.value)}
                   >
                     <option value="">{ui.procedurePlaceholder}</option>
-                    {tramites.map((item) => (
+                    {tramites.map((item: TramiteItem) => (
                       <option key={item.value} value={item.value}>
                         {item.label}
                       </option>
@@ -480,7 +480,6 @@ export default function BuscarCitas() {
   const assistantTextBufferRef = useRef("");
   const lastUserTranscriptRef = useRef("");
   const lastAssistantTextRef = useRef("");
-  
 
   const urlParams = useMemo(() => {
     const url = new URL(window.location.href);
@@ -500,14 +499,10 @@ export default function BuscarCitas() {
         "السلام، مرحبا بيك فـ GestoriaCitaIA. إلا بغيتي نشدّو ليك الموعد ديالك، عمر ليا الفورمولار ومن بعد نكمل معاك.",
       savedLeadReply:
         "مزيان. دابا خديت المعطيات ديالك، وغادي نبدا نقلب ليك على الموعد. منين نلقاو شي موعد غادي نعلموك فالواتساب.",
-      voiceBlocked:
-        "عافاك عمر الفورمولار الأول ومن بعد ضغط على الميكروفون باش نكمل معاك.",
-      realtimeError:
-        "وقع مشكل فالاتصال المباشر مع سارة. عاود حاول.",
+      realtimeError: "وقع مشكل فالاتصال المباشر مع سارة. عاود حاول.",
       confirmationLinkMsg:
         "حملت رابط التأكيد ديالك. دابا نكملو غير التأكيد النهائي.",
-      foundMsg:
-        "مزيان. لقينا ليك موعد. دابا خاصك تأكد الموعد باش نكملو.",
+      foundMsg: "مزيان. لقينا ليك موعد. دابا خاصك تأكد الموعد باش نكملو.",
       confirmMsg:
         "مزيان. تم تأكيد الموعد ديالك. غادي توصلك التفاصيل وPDF عبر الواتساب.",
       realtimeIntro: (tramiteLabel: string, form: ClientFormData) =>
@@ -516,15 +511,13 @@ export default function BuscarCitas() {
           "أنتِ سارة من GestoriaCitaIA.",
           "مختصة غير فالمواعيد ديال extranjería فإسبانيا.",
           "الأسلوب ديالك طبيعي، بشري، مهني، ومختصر.",
-          "سولي غير سؤال واحد فكل مرة.",
           "ما تبدليش اللغة حسب لغة الموقع. ديما جاوبي بالدارجة المغربية.",
+          "سولي غير سؤال واحد فكل مرة.",
           `نوع الموعد هو: ${tramiteLabel || "مازال ما تختارش"}.`,
           `الاسم: ${form.fullName || "ما متسجلش"}.`,
           `الهاتف: ${form.phone || "ما متسجلش"}.`,
           `الهوية: ${form.nie || "ما متسجلش"}.`,
           `المدينة: ${form.city || "ما متسجلش"}.`,
-          "إلى كان الفورمولار واجد، رحبي بالعميل وقولي ليه بلي غادي تبداي تقلبي ليه على الموعد، ومن بعد سوليه غير سؤال واحد قصير ومفيد.",
-          "ما تخترعيش موعد وهمي وما تواعديش بموعد مضمون.",
         ].join(" "),
     }),
     []
@@ -1013,7 +1006,7 @@ export default function BuscarCitas() {
   const TRAMITES = ui.tramites;
 
   const selectedTramiteLabel =
-    TRAMITES.find((item) => item.value === selectedTramite)?.label ||
+    TRAMITES.find((item: TramiteItem) => item.value === selectedTramite)?.label ||
     TRAMITES[0].label;
 
   const voiceStorageKey = useMemo(() => {
@@ -1118,7 +1111,6 @@ export default function BuscarCitas() {
       const alreadyExists = prev.some((msg) =>
         msg.text.includes("رابط التأكيد")
       );
-
       if (alreadyExists) return prev;
 
       return [
@@ -1142,26 +1134,22 @@ export default function BuscarCitas() {
         const parsed = JSON.parse(raw) as ChatMsg[];
 
         if (Array.isArray(parsed) && parsed.length > 0) {
-          setVoiceHistory((prev) => {
-            if (prev.length > 0) return prev;
-            return parsed;
-          });
+          setVoiceHistory((prev) => (prev.length > 0 ? prev : parsed));
           return;
         }
       }
 
-      const freshHistory: ChatMsg[] = [
-        {
-          from: "agent",
-          text: voiceTexts.initialVoice,
-          ts: Date.now(),
-        },
-      ];
-
-      setVoiceHistory((prev) => {
-        if (prev.length > 0) return prev;
-        return freshHistory;
-      });
+      setVoiceHistory((prev) =>
+        prev.length > 0
+          ? prev
+          : [
+              {
+                from: "agent",
+                text: voiceTexts.initialVoice,
+                ts: Date.now(),
+              },
+            ]
+      );
     } catch (error) {
       console.error("Error cargando historial de Sara:", error);
     }
@@ -1177,24 +1165,7 @@ export default function BuscarCitas() {
     }
   }, [voiceHistory, voiceStorageKey]);
 
-  const speakLocalText = (text: string) => {
-    if (muted) return;
-    if (!("speechSynthesis" in window)) return;
-    if (!text?.trim()) return;
-
-    try {
-      window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = "ar-MA";
-      utterance.rate = 0.95;
-      utterance.pitch = 1;
-      window.speechSynthesis.speak(utterance);
-    } catch (error) {
-      console.error("Error reproduciendo voz local Sara:", error);
-    }
-  };
-
-  const pushAgentMessage = (text: string, speak = false) => {
+  const pushAgentMessage = (text: string) => {
     if (!text?.trim()) return;
 
     setVoiceHistory((prev) => [
@@ -1207,12 +1178,6 @@ export default function BuscarCitas() {
     ]);
 
     lastAssistantTextRef.current = text;
-
-    if (speak && !isListening) {
-      setTimeout(() => {
-        speakLocalText(text);
-      }, 120);
-    }
   };
 
   const pushUserMessage = (text: string) => {
@@ -1228,8 +1193,6 @@ export default function BuscarCitas() {
     ]);
   };
 
-
-
   const handleFormChange = (field: keyof ClientFormData, value: string) => {
     setFormData((prev) => ({
       ...prev,
@@ -1243,14 +1206,13 @@ export default function BuscarCitas() {
 
   const finalizeAssistantBuffer = () => {
     const text = assistantTextBufferRef.current.trim();
-    if (!text) return;
-
     assistantTextBufferRef.current = "";
 
+    if (!text) return;
     if (text === "..." || text === "…") return;
     if (text === lastAssistantTextRef.current) return;
 
-    pushAgentMessage(text, false);
+    pushAgentMessage(text);
   };
 
   const stopListening = () => {
@@ -1266,10 +1228,10 @@ export default function BuscarCitas() {
         realtimeLocalStreamRef.current = null;
       }
 
-   if (remoteAudioRef.current) {
-  remoteAudioRef.current.pause();
-  remoteAudioRef.current.srcObject = null;
-}
+      if (remoteAudioRef.current) {
+        remoteAudioRef.current.pause();
+        remoteAudioRef.current.srcObject = null;
+      }
     } catch (error) {
       console.error("Error deteniendo realtime Sara:", error);
     } finally {
@@ -1283,55 +1245,6 @@ export default function BuscarCitas() {
   }: {
     autoPrompt?: string;
   } = {}) => {
-dc.onopen = () => {
-  console.log("SARA dc.onopen OK");
-
-  setIsListening(true);
-  setWaitingSara(true);
-
-  const firstPrompt = formReady
-    ? [
-        "ابدئي دابا أنتِ الأولى وما تستنايش العميل يهضر.",
-        "رحبي بالعميل بالدارجة المغربية وبالحروف العربية.",
-        "قولي ليه بالضبط: مزيان. دابا غادي نقلبو ليك على الموعد، ومنين يبان غادي نعلموك فـ WhatsApp باش تدخل وتأكد الموعد ديالك.",
-        "خلي الجواب قصير، طبيعي، وبشري.",
-      ].join(" ")
-    : [
-        "ابدئي دابا أنتِ الأولى وما تستنايش العميل يهضر.",
-        "رحبي بالعميل بالدارجة المغربية وبالحروف العربية.",
-        "قولي ليه بالضبط: السلام، مرحبا بيك فـ GestoriaCitaIA. إلا بغيتي نشدّو ليك موعد، عمر ليا الفورمولار، ومن بعد أنا غادي نكمل معاك الهضرة.",
-        "خلي الجواب قصير، طبيعي، وبشري.",
-      ].join(" ");
-
-  dc.send(
-    JSON.stringify({
-      type: "conversation.item.create",
-      item: {
-        type: "message",
-        role: "user",
-        content: [
-          {
-            type: "input_text",
-            text: formReady
-              ? "ابدئي دابا وتكلمي مع العميل على البحث عن الموعد."
-              : "ابدئي دابا ورحبي بالعميل وطلبي منو يعمر الفورمولار الأول.",
-          },
-        ],
-      },
-    })
-  );
-
-  dc.send(
-    JSON.stringify({
-      type: "response.create",
-      response: {
-        modalities: ["audio", "text"],
-        instructions: [voiceTexts.realtimeIntro, firstPrompt].join(" "),
-      },
-    })
-  );
-};
-
     if (!voiceSupported) {
       toast({
         title: "Error",
@@ -1363,7 +1276,6 @@ dc.onopen = () => {
       }
 
       const ephemeralKey = sessionData?.value || "";
-
       if (!ephemeralKey) {
         throw new Error("No llegó value desde realtime-session");
       }
@@ -1371,30 +1283,21 @@ dc.onopen = () => {
       const pc = new RTCPeerConnection();
       realtimePcRef.current = pc;
 
-pc.ontrack = (event) => {
-  console.log("SARA ontrack OK", event.streams);
+      pc.ontrack = (event) => {
+        const [remoteStream] = event.streams;
 
-  const [remoteStream] = event.streams;
+        if (remoteStream && remoteAudioRef.current) {
+          remoteAudioRef.current.srcObject = remoteStream;
+          remoteAudioRef.current.autoplay = true;
+          remoteAudioRef.current.playsInline = true;
+          remoteAudioRef.current.muted = false;
+          remoteAudioRef.current.volume = muted ? 0 : 1;
 
-  if (remoteStream && remoteAudioRef.current) {
-    remoteAudioRef.current.srcObject = remoteStream;
-    remoteAudioRef.current.autoplay = true;
-    remoteAudioRef.current.playsInline = true;
-    remoteAudioRef.current.muted = false;
-    remoteAudioRef.current.volume = 1;
-
-    remoteAudioRef.current
-      .play()
-      .then(() => {
-        console.log("SARA audio.play OK");
-      })
-      .catch((err) => {
-        console.error("SARA audio.play ERROR", err);
-      });
-  } else {
-    console.error("SARA remote stream o audio ref missing");
-  }
-};
+          remoteAudioRef.current.play().catch((err) => {
+            console.error("SARA audio.play ERROR", err);
+          });
+        }
+      };
 
       const localStream = await navigator.mediaDevices.getUserMedia({
         audio: {
@@ -1413,54 +1316,57 @@ pc.ontrack = (event) => {
       const dc = pc.createDataChannel("oai-events");
       realtimeDcRef.current = dc;
 
-dc.onopen = () => {
-  console.log("SARA dc.onopen OK");
+      dc.onopen = () => {
+        setIsListening(true);
+        setWaitingSara(true);
 
-  setIsListening(true);
-  setWaitingSara(true);
+        const firstPrompt = autoPrompt.trim()
+          ? autoPrompt
+          : formReady
+          ? [
+              "ابدئي دابا أنتِ الأولى وما تستنايش العميل يهضر.",
+              "رحبي بالعميل بالدارجة المغربية وبالحروف العربية.",
+              "قولي ليه بالضبط: مزيان. دابا غادي نقلبو ليك على الموعد، ومنين يبان غادي نعلموك فـ WhatsApp باش تدخل وتأكد الموعد ديالك.",
+              "خلي الجواب قصير، طبيعي، وبشري.",
+            ].join(" ")
+          : [
+              "ابدئي دابا أنتِ الأولى وما تستنايش العميل يهضر.",
+              "رحبي بالعميل بالدارجة المغربية وبالحروف العربية.",
+              "قولي ليه بالضبط: السلام، مرحبا بيك فـ GestoriaCitaIA. إلا بغيتي نشدّو ليك موعد، عمر ليا الفورمولار، ومن بعد أنا غادي نكمل معاك الهضرة.",
+              "خلي الجواب قصير، طبيعي، وبشري.",
+            ].join(" ");
 
-  const firstPrompt = formReady
-    ? [
-        "ابدئي دابا أنتِ الأولى وما تستنايش العميل يهضر.",
-        "رحبي بالعميل بالدارجة المغربية وبالحروف العربية.",
-        "قولي ليه بالضبط: مزيان. دابا غادي نقلبو ليك على الموعد، ومنين يبان غادي نعلموك فـ WhatsApp باش تدخل وتأكد الموعد ديالك.",
-        "خلي الجواب قصير، طبيعي، وبشري.",
-      ].join(" ")
-    : [
-        "ابدئي دابا أنتِ الأولى وما تستنايش العميل يهضر.",
-        "رحبي بالعميل بالدارجة المغربية وبالحروف العربية.",
-        "قولي ليه بالضبط: السلام، مرحبا بيك فـ GestoriaCitaIA. إلا بغيتي نشدّو ليك موعد، عمر ليا الفورمولار، ومن بعد أنا غادي نكمل معاك الهضرة.",
-        "خلي الجواب قصير، طبيعي، وبشري.",
-      ].join(" ");
+        dc.send(
+          JSON.stringify({
+            type: "conversation.item.create",
+            item: {
+              type: "message",
+              role: "user",
+              content: [
+                {
+                  type: "input_text",
+                  text: formReady
+                    ? "ابدئي دابا وتكلمي مع العميل على البحث عن الموعد."
+                    : "ابدئي دابا ورحبي بالعميل وطلبي منو يعمر الفورمولار الأول.",
+                },
+              ],
+            },
+          })
+        );
 
-  dc.send(
-    JSON.stringify({
-      type: "conversation.item.create",
-      item: {
-        type: "message",
-        role: "user",
-        content: [
-          {
-            type: "input_text",
-            text: formReady
-              ? "ابدئي دابا وتكلمي مع العميل على البحث عن الموعد."
-              : "ابدئي دابا ورحبي بالعميل وطلبي منو يعمر الفورمولار الأول.",
-          },
-        ],
-      },
-    })
-  );
-
-  dc.send(
-    JSON.stringify({
-      type: "response.create",
-      response: {
-        modalities: ["audio", "text"],
-        instructions: [voiceTexts.realtimeIntro, firstPrompt].join(" "),
-      },
-    })
-  );
-};
+        dc.send(
+          JSON.stringify({
+            type: "response.create",
+            response: {
+              modalities: ["audio", "text"],
+              instructions: [
+                voiceTexts.realtimeIntro(selectedTramiteLabel, formData),
+                firstPrompt,
+              ].join(" "),
+            },
+          })
+        );
+      };
 
       dc.onmessage = (event) => {
         try {
@@ -1585,24 +1491,12 @@ dc.onopen = () => {
 
     setFormReady(true);
     setStep(1);
-
-    pushAgentMessage(voiceTexts.savedLeadReply, true);
+    pushAgentMessage(voiceTexts.savedLeadReply);
 
     toast({
       title: ui.saveTitle,
       description: ui.saveDesc,
     });
-
-    setTimeout(() => {
-      startListening({
-        autoPrompt: [
-          "الفورمولار تكمل.",
-          "رحبي دابا بالعميل بالدارجة المغربية.",
-          "قولي ليه بلي غادي تبداي تقلبي ليه على الموعد.",
-          "ومن بعد سوليه غير سؤال واحد قصير ومفيد.",
-        ].join(" "),
-      }).catch(() => {});
-    }, 500);
   };
 
   const handleAceptar = () => {
@@ -1615,8 +1509,7 @@ dc.onopen = () => {
           const data = (result as AppointmentResult | null) ?? null;
           setAppointmentData(data);
           setStep(2);
-
-          pushAgentMessage(voiceTexts.foundMsg, true);
+          pushAgentMessage(voiceTexts.foundMsg);
 
           toast({
             title: ui.foundSuccessTitle,
@@ -1639,14 +1532,26 @@ dc.onopen = () => {
 
   const handleConfirm = () => {
     setConfirmed(true);
-
-    pushAgentMessage(voiceTexts.confirmMsg, true);
+    pushAgentMessage(voiceTexts.confirmMsg);
 
     toast({
       title: ui.confirmSuccessTitle,
       description: ui.confirmSuccessDesc,
     });
   };
+
+  useEffect(() => {
+    return () => {
+      stopListening();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (remoteAudioRef.current) {
+      remoteAudioRef.current.volume = muted ? 0 : 1;
+      remoteAudioRef.current.muted = false;
+    }
+  }, [muted]);
 
   const finalLocator = appointmentData?.locator || "ESP-2026-034821";
   const finalDate =
@@ -2049,7 +1954,7 @@ dc.onopen = () => {
                 </div>
 
                 <div className="px-5 py-4 space-y-2.5 max-h-72 overflow-y-auto">
-                  {docsForSelectedTramite.map((doc, i) => (
+                  {docsForSelectedTramite.map((doc: DocItem, i: number) => (
                     <div key={i} className="flex items-center gap-3">
                       <span
                         className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 text-xs font-bold ${
@@ -2122,7 +2027,7 @@ dc.onopen = () => {
                 </div>
 
                 <div className="px-5 py-4 space-y-3">
-                  {formsForSelectedTramite.map((form, i) => (
+                  {formsForSelectedTramite.map((form: FormItem, i: number) => (
                     <a
                       key={i}
                       href={form.url}
@@ -2153,6 +2058,7 @@ dc.onopen = () => {
             </motion.div>
           )}
         </AnimatePresence>
+
         <audio ref={remoteAudioRef} autoPlay playsInline className="hidden" />
       </main>
     </div>
