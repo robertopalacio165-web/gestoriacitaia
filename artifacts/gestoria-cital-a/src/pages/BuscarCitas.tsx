@@ -1267,7 +1267,36 @@ export default function BuscarCitas() {
       },
     ]);
   };
+const welcomePlayedRef = useRef(false);
 
+const playWelcomeOnFirstTouch = () => {
+  if (welcomePlayedRef.current) return;
+  welcomePlayedRef.current = true;
+
+  const welcomeText =
+    voiceHistory.find((m) => m.from === "agent")?.text || voiceTexts.initialVoice;
+
+  setTimeout(() => {
+    speakLocalText(welcomeText);
+  }, 150);
+};
+
+useEffect(() => {
+  const unlockWelcome = () => {
+    playWelcomeOnFirstTouch();
+    window.removeEventListener("click", unlockWelcome);
+    window.removeEventListener("touchstart", unlockWelcome);
+  };
+
+  window.addEventListener("click", unlockWelcome, { once: true });
+  window.addEventListener("touchstart", unlockWelcome, { once: true });
+
+  return () => {
+    window.removeEventListener("click", unlockWelcome);
+    window.removeEventListener("touchstart", unlockWelcome);
+  };
+}, [voiceHistory, voiceTexts.initialVoice]);
+  
   useEffect(() => {
     if (
       voiceHistory.length === 1 &&
@@ -1331,6 +1360,10 @@ export default function BuscarCitas() {
       description: ui.saveDesc,
     });
   };
+
+  setTimeout(() => {
+  startListening().catch(() => {});
+}, 400);
 
   const finalizeAssistantBuffer = () => {
     const text = assistantTextBufferRef.current.trim();
