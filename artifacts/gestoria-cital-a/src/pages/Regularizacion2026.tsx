@@ -759,27 +759,43 @@ export default function Regularizacion2026() {
       const dc = pc.createDataChannel("oai-events");
       realtimeDcRef.current = dc;
 
-      dc.onopen = () => {
-        setIsListening(true);
-        setWaitingMohamed(false);
+   dc.onopen = () => {
+  setIsListening(true);
+  setWaitingMohamed(true);
 
-        const firstPrompt = [
-          "رحب دابا بالعميل بالدارجة المغربية.",
-          "قول ليه: السلام، مرحبا بيك فـ GestoriaCitaIA.",
-          "إلى بغيتي نصيبو ليك الملف ديال التسوية الجماعية، عمر ليا الفورمولار الأول ومن بعد نكمل معاك.",
-          "خلي الجواب قصير، طبيعي، وبشري.",
-        ].join(" ");
+  const firstPrompt = [
+    "ابدأ دابا أنت الأول وما تستناش العميل يهضر.",
+    "رحب بالعميل بالدارجة المغربية وبالحروف العربية.",
+    "قول ليه بالضبط: السلام، مرحبا بيك فـ GestoriaCitaIA. إلى بغيتي نصيبو ليك الملف ديال التسوية الجماعية، عمر ليا الفورمولار الأول ومن بعد نكمل معاك.",
+    "خلي الجواب قصير، طبيعي، وبشري.",
+  ].join(" ");
 
-        dc.send(
-          JSON.stringify({
-            type: "response.create",
-            response: {
-              modalities: ["audio", "text"],
-              instructions: [voiceTexts.realtimeIntro, firstPrompt].join(" "),
-            },
-          })
-        );
-      };
+  dc.send(
+    JSON.stringify({
+      type: "conversation.item.create",
+      item: {
+        type: "message",
+        role: "user",
+        content: [
+          {
+            type: "input_text",
+            text: "ابدأ دابا ورحب بالعميل أنت الأول.",
+          },
+        ],
+      },
+    })
+  );
+
+  dc.send(
+    JSON.stringify({
+      type: "response.create",
+      response: {
+        modalities: ["audio", "text"],
+        instructions: [voiceTexts.realtimeIntro, firstPrompt].join(" "),
+      },
+    })
+  );
+};
 
       dc.onmessage = (event) => {
         try {
