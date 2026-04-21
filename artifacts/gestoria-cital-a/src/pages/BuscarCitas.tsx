@@ -1823,28 +1823,9 @@ export default function BuscarCitas() {
                 </div>
 
                 <div className="flex-1 min-w-0">
-                  <p className="text-[11px] text-white/90 leading-relaxed">
-                    {(() => {
-                      const currentStep =
-                        agentSteps[Math.min(step, agentSteps.length - 1)];
-                      const parts = currentStep.text.split(currentStep.highlight);
-
-                      if (!currentStep.highlight) return currentStep.text;
-
-                      return parts.map((part, i, arr) =>
-                        i < arr.length - 1 ? (
-                          <span key={i}>
-                            {part}
-                            <span className="font-bold text-primary">
-                              {currentStep.highlight}
-                            </span>
-                          </span>
-                        ) : (
-                          part
-                        )
-                      );
-                    })()}
-                  </p>
+   <p className="text-[11px] text-white/90 leading-relaxed">
+  {agentSteps[Math.min(step, agentSteps.length - 1)]?.text || ""}
+</p>
                 </div>
               </motion.div>
             </AnimatePresence>
