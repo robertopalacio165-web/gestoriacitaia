@@ -608,7 +608,6 @@ const speakText = async (text: string) => {
   }
 };
 
-
   const pushAgentMessage = (text: string, speak = false) => {
     setVoiceHistory((prev) => [
       ...prev,
