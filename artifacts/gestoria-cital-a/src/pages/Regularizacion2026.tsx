@@ -591,11 +591,20 @@ export default function Regularizacion2026() {
 
     lastAssistantTextRef.current = text;
 
-    if (speak) {
-      setTimeout(() => {
-        speakLocalText(text);
-      }, 150);
-    }
+    const pushAgentMessage = (text: string, _speak = false) => {
+  if (!text?.trim()) return;
+
+  setVoiceHistory((prev) => [
+    ...prev,
+    {
+      from: "agent",
+      text,
+      ts: Date.now(),
+    },
+  ]);
+
+  lastAssistantTextRef.current = text;
+};
   };
 
   const pushUserMessage = (text: string) => {
@@ -634,14 +643,7 @@ const sendRealtimeSystemUpdate = (text: string) => {
   }
 };
   useEffect(() => {
-    if (voiceHistory.length === 1 && voiceHistory[0]?.text === voiceTexts.initialVoice) {
-      const timer = setTimeout(() => {
-        speakLocalText(voiceTexts.initialVoice);
-      }, 500);
 
-      return () => clearTimeout(timer);
-    }
-  }, [voiceHistory, voiceTexts.initialVoice]);
 
   const handleSaveLeadForm = () => {
     if (!leadFormReady) {
@@ -660,8 +662,8 @@ const sendRealtimeSystemUpdate = (text: string) => {
     );
 
     if (!alreadyExists) {
-      pushAgentMessage(voiceTexts.savedLeadReply, true);
-    }
+  pushAgentMessage(voiceTexts.savedLeadReply, false);
+}
 
     toast({
       title: ui.saveLeadTitle,
@@ -787,18 +789,16 @@ const sendRealtimeSystemUpdate = (text: string) => {
       const dc = pc.createDataChannel("oai-events");
       realtimeDcRef.current = dc;
 
-     dc.onopen = () => {
+dc.onopen = () => {
   setIsListening(true);
   setWaitingMohamed(false);
 
-  const firstPrompt = autoPrompt.trim()
-    ? autoPrompt
-    : [
-        "رحب دابا بالعميل بالدارجة المغربية.",
-        "قول ليه: السلام، مرحبا بيك فـ GestoriaCitaIA.",
-        "إلى بغيتي نصيبو ليك الملف ديال التسوية الجماعية، عمر ليا الفورمولار الأول ومن بعد نكمل معاك.",
-        "خلي الجواب قصير، طبيعي، وبشري.",
-      ].join(" ");
+  const firstPrompt = [
+    "رحب دابا بالعميل بالدارجة المغربية.",
+    "قول ليه: السلام، مرحبا بيك فـ GestoriaCitaIA.",
+    "إلى بغيتي نصيبو ليك الملف ديال التسوية الجماعية، عمر ليا الفورمولار الأول ومن بعد نكمل معاك.",
+    "خلي الجواب قصير، طبيعي، وبشري.",
+  ].join(" ");
 
   dc.send(
     JSON.stringify({
@@ -806,7 +806,7 @@ const sendRealtimeSystemUpdate = (text: string) => {
       response: {
         modalities: ["audio", "text"],
         instructions: [
-          voiceTexts.realtimeIntro(leadForm),
+          voiceTexts.realtimeIntro,
           firstPrompt,
         ].join(" "),
       },
