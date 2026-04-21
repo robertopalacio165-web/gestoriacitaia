@@ -19,13 +19,6 @@ import {
   getProcedureByKey,
 } from "@/lib/extranjeriaProcedures";
 
-declare global {
-  interface Window {
-    SpeechRecognition?: any;
-    webkitSpeechRecognition?: any;
-  }
-}
-
 interface ChatMsg {
   from: "agent" | "user";
   text: string;
@@ -76,6 +69,17 @@ function normalizeDocType(value?: string) {
   return (value || "").trim().toLowerCase();
 }
 
+function getStatusLabel(
+  status: DocStatus,
+  done: string,
+  review: string,
+  missing: string
+) {
+  if (status === "ok") return done;
+  if (status === "warn") return review;
+  return missing;
+}
+
 export default function Regularizacion2026() {
   const [selectedSituacion] = useState("regularizacion_2026_laboral");
   const [muted, setMuted] = useState(false);
@@ -102,8 +106,15 @@ export default function Regularizacion2026() {
 
   const { t, lang } = useLang();
   const { toast } = useToast();
-  const recognitionRef = useRef<any>(null);
-const currentAudioRef = useRef<HTMLAudioElement | null>(null);
+
+  const currentAudioRef = useRef<HTMLAudioElement | null>(null);
+  const realtimePcRef = useRef<RTCPeerConnection | null>(null);
+  const realtimeDcRef = useRef<RTCDataChannel | null>(null);
+  const realtimeLocalStreamRef = useRef<MediaStream | null>(null);
+  const assistantTextBufferRef = useRef("");
+  const lastUserTranscriptRef = useRef("");
+  const lastAssistantTextRef = useRef("");
+
   const safeLang = (lang === "darija" || lang === "en" ? lang : "es") as
     | "darija"
     | "es"
@@ -112,22 +123,58 @@ const currentAudioRef = useRef<HTMLAudioElement | null>(null);
   const currentProcedure = getProcedureByKey(selectedSituacion) || null;
   if (!currentProcedure) return null;
 
+  const voiceTexts = useMemo(
+    () => ({
+      initialVoice:
+        "السلام، مرحبا بيك فـ GestoriaCitaIA. إلا بغيتي نصيبو ليك الميلف ديال التسوية الجماعية، عمر ليا الفورمولار الأول، ومن بعد نكمل معاك. ملي تسالي، ضغط على الميكروفون وغادي نكمل معاك.",
+      voiceBlocked:
+        "عافاك عمّر ليا الفورمولار الأول ومن بعد ضغط على الميكروفون باش نكمل معاك.",
+      savedLeadReply:
+        "مزيان. خديت المعطيات ديالك. دابا ضغط على زر الميكروفون وغادي نكمل معاك خطوة بخطوة، ونسولك غير على المعلومات المهمة ديال الملف.",
+      passportVerified:
+        "مزيان. توصلت بالهوية ديالك وبانت مزيان. دابا نكملو الخطوة اللي من بعدها.",
+      mohamedFinal:
+        "مزيان. كلشي واجد ومراجع. دابا غادي نبعثو ليك الملف ديالك فـ PDF عبر WhatsApp.",
+      realtimeIntro:
+        [
+          "جاوب ديما غير بالدارجة المغربية وبالحروف العربية.",
+          "أنت محمد من GestoriaCitaIA.",
+          "أنت خبير فالتسوية الجماعية 2026 وملفات extranjería فإسبانيا.",
+          `الإجراء الحالي هو: ${currentProcedure.name}.`,
+          `المعطيات اللي عندك دابا: الاسم ${leadForm.nombre || "ما متسجلش"}, الهاتف ${
+            leadForm.telefono || "ما متسجلش"
+          }, الهوية ${leadForm.niePasaporte || "ما متسجلش"}, المدينة ${
+            leadForm.ciudad || "ما متسجلش"
+          }, الجنسية ${leadForm.nacionalidad || "ما متسجلش"}, تاريخ الدخول ${
+            leadForm.fechaLlegada || "ما متسجلش"
+          }, 5 شهور ${leadForm.cumple5Meses || "ما متسجلش"}, asilo ${
+            leadForm.asilo || "ما متسجلش"
+          }, السوابق ${leadForm.penales || "ما متسجلش"}.`,
+          "ابدأ دابا مباشرة بجواب طبيعي وقصير، وعرف براسك باختصار، ومن بعد سول غير السؤال الجاي المناسب باش تكمل الملف.",
+          "سول سؤال واحد فقط فكل مرة.",
+          "ركز على هاد الترتيب: واش داخل إسبانيا، واش عندو حضور قبل 1 يناير 2026، واش عندو 5 شهور متواصلة، واش عندو padrón historique، واش عندو بروفات ديال 5 شهور، واش عندو asilo، واش عندو ولاد، واش محتاج vulnerabilidad.",
+        ].join(" "),
+      realtimeError:
+        "وقع مشكل فالاتصال المباشر مع محمد. عاود حاول من بعد.",
+      uploadUnknown:
+        "توصلت بالوثيقة، ولكن مازال خاصني نربطها مزيان بالملف. صيفط ليا أولاً بروفات ديال 5 شهور، ومن بعد الباسبور ولا NIE بواضح.",
+      uploadWarn:
+        "توصلت بالوثيقة ولكن مازال خاصني نسخة أوضح باش نكمل المراجعة.",
+      uploadOk: "توصلت بالوثيقة وربطتها مع الملف ديالك.",
+    }),
+    [currentProcedure.name, leadForm]
+  );
+
   const ui = useMemo(() => {
     if (safeLang === "darija") {
       return {
-        initialVoice:
-          "السلام عليكم، مرحبا بك في Gestoria Cita IA. إلا بغيتي نوجد ليك الملف ديال regularización 2026، عمر أولاً الفورمولار اللي على اليمين ومن بعد ضغط على زر الميكروفون باش نكمل معاك بالصوت.",
         online: "متصل الآن",
         role: "مختص فالهجرة",
         voiceButton: "تكلم مع محمد",
         stopButton: "وقف الميكروفون",
-        voiceBlocked:
-          "عافاك عمّر ليا الفورمولار الأول ومن بعد ضغط على زر الميكروفون باش نكمل معاك.",
         saveLeadButton: "حفظ المعطيات والمتابعة مع محمد",
         saveLeadTitle: "تحفظات المعطيات",
         saveLeadDesc: "محمد يقدر دابا يبدا معاك بالصوت.",
-        savedLeadReply:
-          "مزيان. خديت المعطيات ديالك. دابا ضغط على زر الميكروفون ونجاوبك سؤال بسؤال. من بعد، صيفط ليا أولاً وثائق الإثبات ديال 5 شهور، ومن بعد الباسبور ولا NIE، ومن بعد نكملو الملف ديالك.",
         formTitle: "لوحة رسمية مدمجة",
         formDesc:
           "عمر المعطيات الأساسية باش محمد يبدا يراجع الملف ديالك بالصوت.",
@@ -145,25 +192,15 @@ const currentAudioRef = useRef<HTMLAudioElement | null>(null);
         latestReply: "آخر جواب ديال محمد",
         yourVoice: "آخر جواب ديالك بالصوت",
         micNotSupported:
-          "هاد المتصفح ما كيدعمش التعرف على الصوت. استعمل Chrome.",
+          "هاد المتصفح ما كيدعمش الصوت المباشر. استعمل Chrome حديث.",
         docStatusTitle: "حالة الملف ديالك",
         docStatusDone: "جاهز",
         docStatusReview: "مراجعة",
         docStatusMissing: "ناقص",
         docStepForm: "الفورمولار معمر",
-        docStepStayProof: "وثائق الإثبات ديال 5 شهور",
+        docStepStayProof: "بروفات ديال 5 شهور",
         docStepIdentity: "الباسبور أو NIE",
         docStepFinal: "الملف النهائي واجد",
-        mohamedDocOk: (_fileName: string, _docName: string) =>
-          "توصلت بالوثيقة وربطتها مع الملف ديالك.",
-        mohamedDocWarn: () =>
-          "توصلت بالوثيقة ولكن مازال خاصني نسخة أوضح باش نكمل المراجعة.",
-        mohamedDocUnknown: () =>
-          "توصلت بالوثيقة ديالك، ولكن مازال خاصني نربطها مزيان بالملف. دابا جرّب تصيفط ليا أولاً وثائق الإثبات ديال 5 شهور، ومن بعد الباسبور بوحدو واضح.",
-        passportVerified:
-          "الباسبور ولا NIE ديالك متحقق مزيان. دابا نكملو المراحل اللي بقاو.",
-        mohamedFinal:
-          "مزيان. سالينا، هنيئاً. غادي نصيفطو ليك الملف ديالك فـ PDF فالواتساب.",
         goSara: "المرور إلى سارة",
         goSaraDesc: "إلى بغيتي تكمل بالموعد، سارة غادي تعاونك.",
         labels: {
@@ -186,19 +223,13 @@ const currentAudioRef = useRef<HTMLAudioElement | null>(null);
 
     if (safeLang === "en") {
       return {
-        initialVoice:
-          "Hello, welcome to Gestoria Cita IA. If you want me to prepare your 2026 regularization file, first complete the form on the right and then press the microphone button so I can continue with you by voice.",
         online: "Online",
         role: "Immigration Specialist",
         voiceButton: "Talk to Mohamed",
         stopButton: "Stop microphone",
-        voiceBlocked:
-          "Please complete the form first, then press the microphone button so I can continue with you.",
         saveLeadButton: "Save details and continue with Mohamed",
         saveLeadTitle: "Details saved",
         saveLeadDesc: "Mohamed can now start with you by voice.",
-        savedLeadReply:
-          "Perfect. I already have your details. Now press the microphone button and I will guide you question by question. After that, first upload your 5-month stay proof documents, then your passport or NIE, and then we will finish your file.",
         formTitle: "Integrated official panel",
         formDesc:
           "Fill in the basic details so Mohamed can start reviewing your case by voice.",
@@ -212,32 +243,21 @@ const currentAudioRef = useRef<HTMLAudioElement | null>(null);
         uploadErrorDesc: "We could not link that document to the file.",
         missingTitle: "Missing data",
         missingDesc: "Fill in name, phone and city before continuing.",
-        listening: "Mohamed is listening to you now...",
+        listening: "Mohamed is listening now...",
         latestReply: "Mohamed's latest reply",
         yourVoice: "Your latest voice answer",
         micNotSupported:
-          "This browser does not support voice recognition. Use Chrome.",
+          "This browser does not support realtime voice. Use modern Chrome.",
         docStatusTitle: "Your file status",
         docStatusDone: "Ready",
         docStatusReview: "Review",
         docStatusMissing: "Missing",
         docStepForm: "Form completed",
-        docStepStayProof: "5-month proof documents",
+        docStepStayProof: "5-month proof",
         docStepIdentity: "Passport or NIE",
         docStepFinal: "Final file ready",
-        mohamedDocOk: (_fileName: string, _docName: string) =>
-          "I received the document and linked it to your file.",
-        mohamedDocWarn: () =>
-          "I received the document, but I still need a clearer version to continue the review.",
-        mohamedDocUnknown: () =>
-          "I received your document, but I still need to match it correctly to your file. Please upload your 5-month proof documents first, then your passport or NIE clearly.",
-        passportVerified:
-          "Your passport or NIE has been verified correctly. Now let's continue with the remaining steps.",
-        mohamedFinal:
-          "Perfect. We have finished, congratulations. We will send your file in PDF by WhatsApp.",
         goSara: "Go to Sara",
-        goSaraDesc:
-          "If you want to continue with the appointment, Sara will help you.",
+        goSaraDesc: "If you want to continue with the appointment, Sara will help you.",
         labels: {
           nombre: "Full name",
           telefono: "Phone",
@@ -257,19 +277,13 @@ const currentAudioRef = useRef<HTMLAudioElement | null>(null);
     }
 
     return {
-      initialVoice:
-        "Hola, bienvenido a Gestoria Cita IA. Si quieres que te prepare el expediente de regularización 2026, primero rellena el formulario de la derecha y después pulsa el botón del micrófono para continuar por voz conmigo.",
       online: "En línea",
       role: "Especialista en Extranjería",
       voiceButton: "Hablar con Mohamed",
       stopButton: "Parar micrófono",
-      voiceBlocked:
-        "Rellena primero el formulario y después pulsa el botón del micrófono para continuar conmigo.",
       saveLeadButton: "Guardar datos y continuar con Mohamed",
       saveLeadTitle: "Datos guardados",
       saveLeadDesc: "Mohamed ya puede empezar contigo por voz.",
-      savedLeadReply:
-        "Perfecto. Ya tengo tus datos. Ahora pulsa el botón del micrófono y te iré guiando pregunta por pregunta. Después, sube primero tus pruebas de 5 meses, luego tu pasaporte o NIE, y después terminamos tu expediente.",
       formTitle: "Panel oficial integrado",
       formDesc:
         "Rellena los datos básicos para que Mohamed empiece a revisar tu caso por voz.",
@@ -287,7 +301,7 @@ const currentAudioRef = useRef<HTMLAudioElement | null>(null);
       latestReply: "Última respuesta de Mohamed",
       yourVoice: "Tu última respuesta por voz",
       micNotSupported:
-        "Este navegador no soporta reconocimiento de voz. Usa Chrome.",
+        "Este navegador no soporta voz en tiempo real. Usa Chrome moderno.",
       docStatusTitle: "Estado de tu expediente",
       docStatusDone: "Listo",
       docStatusReview: "Revisar",
@@ -296,16 +310,6 @@ const currentAudioRef = useRef<HTMLAudioElement | null>(null);
       docStepStayProof: "Pruebas de 5 meses",
       docStepIdentity: "Pasaporte o NIE",
       docStepFinal: "Expediente final listo",
-      mohamedDocOk: (_fileName: string, _docName: string) =>
-        "He recibido el documento y lo he relacionado con tu expediente.",
-      mohamedDocWarn: () =>
-        "He recibido el documento, pero todavía necesito una versión más clara para seguir con la revisión.",
-      mohamedDocUnknown: () =>
-        "He recibido tu documento, pero todavía no está bien relacionado con tu expediente. Ahora sube primero tus pruebas de 5 meses y después tu pasaporte o NIE bien claro.",
-      passportVerified:
-        "Tu pasaporte o NIE ha sido verificado correctamente. Ahora seguimos con los pasos que faltan.",
-      mohamedFinal:
-        "Perfecto. Hemos acabado, enhorabuena. Te mandamos tu expediente en archivo PDF por WhatsApp.",
       goSara: "Ir con Sara",
       goSaraDesc: "Si quieres seguir con la cita, Sara te ayuda.",
       labels: {
@@ -331,16 +335,16 @@ const currentAudioRef = useRef<HTMLAudioElement | null>(null);
   );
 
   const historyStorageKey = useMemo(() => {
-    return `gestoriacitaia_mohamed_voice_history_${safeLang}_${selectedSituacion}`;
-  }, [safeLang, selectedSituacion]);
+    return `gestoriacitaia_mohamed_voice_history_${selectedSituacion}`;
+  }, [selectedSituacion]);
 
   const formStorageKey = useMemo(() => {
-    return `gestoriacitaia_mohamed_form_${safeLang}_${selectedSituacion}`;
-  }, [safeLang, selectedSituacion]);
+    return `gestoriacitaia_mohamed_form_${selectedSituacion}`;
+  }, [selectedSituacion]);
 
   const leadSavedStorageKey = useMemo(() => {
-    return `gestoriacitaia_mohamed_lead_saved_${safeLang}_${selectedSituacion}`;
-  }, [safeLang, selectedSituacion]);
+    return `gestoriacitaia_mohamed_lead_saved_${selectedSituacion}`;
+  }, [selectedSituacion]);
 
   const leadFormReady =
     !!leadForm.nombre.trim() &&
@@ -353,9 +357,13 @@ const currentAudioRef = useRef<HTMLAudioElement | null>(null);
   }, [selectedSituacion]);
 
   useEffect(() => {
-    const SpeechRecognition =
-      window.SpeechRecognition || window.webkitSpeechRecognition;
-    setVoiceSupported(!!SpeechRecognition);
+    const supported =
+      typeof window !== "undefined" &&
+      typeof window.RTCPeerConnection !== "undefined" &&
+      typeof navigator !== "undefined" &&
+      !!navigator.mediaDevices?.getUserMedia;
+
+    setVoiceSupported(Boolean(supported));
   }, []);
 
   useEffect(() => {
@@ -409,10 +417,10 @@ const currentAudioRef = useRef<HTMLAudioElement | null>(null);
           setVoiceHistory(parsed);
 
           const completionAlreadySent = parsed.some(
-            (m) => m.from === "agent" && m.text === ui.mohamedFinal
+            (m) => m.from === "agent" && m.text === voiceTexts.mohamedFinal
           );
           const leadAlreadySaved = parsed.some(
-            (m) => m.from === "agent" && m.text === ui.savedLeadReply
+            (m) => m.from === "agent" && m.text === voiceTexts.savedLeadReply
           );
 
           setCompletionMessageSent(completionAlreadySent);
@@ -424,7 +432,7 @@ const currentAudioRef = useRef<HTMLAudioElement | null>(null);
       const freshHistory: ChatMsg[] = [
         {
           from: "agent",
-          text: ui.initialVoice,
+          text: voiceTexts.initialVoice,
           ts: Date.now(),
         },
       ];
@@ -434,12 +442,12 @@ const currentAudioRef = useRef<HTMLAudioElement | null>(null);
       setVoiceHistory([
         {
           from: "agent",
-          text: ui.initialVoice,
+          text: voiceTexts.initialVoice,
           ts: Date.now(),
         },
       ]);
     }
-  }, [historyStorageKey, ui.initialVoice, ui.mohamedFinal, ui.savedLeadReply]);
+  }, [historyStorageKey, voiceTexts.initialVoice, voiceTexts.mohamedFinal, voiceTexts.savedLeadReply]);
 
   useEffect(() => {
     if (voiceHistory.length === 0) return;
@@ -449,9 +457,6 @@ const currentAudioRef = useRef<HTMLAudioElement | null>(null);
       console.error("Error guardando historial de Mohamed:", error);
     }
   }, [voiceHistory, historyStorageKey]);
-
-  const docsOk = docs.filter((d) => d.estado === "ok").length;
-  const docsTotal = docs.length;
 
   const identityDocs = docs.filter((doc) => {
     const expected = normalizeDocType(doc.expectedType);
@@ -554,61 +559,27 @@ const currentAudioRef = useRef<HTMLAudioElement | null>(null);
     }));
   };
 
-const speakText = async (text: string) => {
-  if (muted) return;
-  if (!text?.trim()) return;
+  const speakLocalText = (text: string) => {
+    if (muted) return;
+    if (!("speechSynthesis" in window)) return;
+    if (!text?.trim()) return;
 
-  try {
-    if (currentAudioRef.current) {
-      currentAudioRef.current.pause();
-      currentAudioRef.current.currentTime = 0;
-      currentAudioRef.current = null;
+    try {
+      window.speechSynthesis.cancel();
+
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = "ar-MA";
+      utterance.rate = 0.95;
+      utterance.pitch = 1;
+      window.speechSynthesis.speak(utterance);
+    } catch (error) {
+      console.error("Error reproduciendo voz local:", error);
     }
-
-    const res = await fetch("/api/tts-elevenlabs", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        text,
-        assistant: "mohamed",
-        lang: "darija",
-      }),
-    });
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => null);
-      throw new Error(err?.error || "Error generando audio");
-    }
-
-    const audioBlob = await res.blob();
-    const audioUrl = URL.createObjectURL(audioBlob);
-    const audio = new Audio(audioUrl);
-
-    currentAudioRef.current = audio;
-
-    audio.onended = () => {
-      URL.revokeObjectURL(audioUrl);
-      if (currentAudioRef.current === audio) {
-        currentAudioRef.current = null;
-      }
-    };
-
-    audio.onerror = () => {
-      URL.revokeObjectURL(audioUrl);
-      if (currentAudioRef.current === audio) {
-        currentAudioRef.current = null;
-      }
-    };
-
-    await audio.play();
-  } catch (error) {
-    console.error("Error reproduciendo voz ElevenLabs:", error);
-  }
-};
+  };
 
   const pushAgentMessage = (text: string, speak = false) => {
+    if (!text?.trim()) return;
+
     setVoiceHistory((prev) => [
       ...prev,
       {
@@ -618,14 +589,18 @@ const speakText = async (text: string) => {
       },
     ]);
 
+    lastAssistantTextRef.current = text;
+
     if (speak) {
       setTimeout(() => {
-        speakText(text);
+        speakLocalText(text);
       }, 150);
     }
   };
 
   const pushUserMessage = (text: string) => {
+    if (!text?.trim()) return;
+
     setVoiceHistory((prev) => [
       ...prev,
       {
@@ -637,14 +612,14 @@ const speakText = async (text: string) => {
   };
 
   useEffect(() => {
-    if (voiceHistory.length === 1 && voiceHistory[0]?.text === ui.initialVoice) {
+    if (voiceHistory.length === 1 && voiceHistory[0]?.text === voiceTexts.initialVoice) {
       const timer = setTimeout(() => {
-        speakText(ui.initialVoice);
-      }, 600);
+        speakLocalText(voiceTexts.initialVoice);
+      }, 500);
 
       return () => clearTimeout(timer);
     }
-  }, [voiceHistory, ui.initialVoice]);
+  }, [voiceHistory, voiceTexts.initialVoice]);
 
   const handleSaveLeadForm = () => {
     if (!leadFormReady) {
@@ -659,11 +634,11 @@ const speakText = async (text: string) => {
     setLeadSaved(true);
 
     const alreadyExists = voiceHistory.some(
-      (msg) => msg.from === "agent" && msg.text === ui.savedLeadReply
+      (msg) => msg.from === "agent" && msg.text === voiceTexts.savedLeadReply
     );
 
     if (!alreadyExists) {
-      pushAgentMessage(ui.savedLeadReply, true);
+      pushAgentMessage(voiceTexts.savedLeadReply, true);
     }
 
     toast({
@@ -672,86 +647,47 @@ const speakText = async (text: string) => {
     });
   };
 
-  const getRecognitionLang = () => {
-    if (safeLang === "darija") return "ar-MA";
-    if (safeLang === "en") return "en-US";
-    return "es-ES";
+  const finalizeAssistantBuffer = () => {
+    const text = assistantTextBufferRef.current.trim();
+    if (!text) return;
+    if (text === lastAssistantTextRef.current) {
+      assistantTextBufferRef.current = "";
+      return;
+    }
+
+    pushAgentMessage(text, false);
+    assistantTextBufferRef.current = "";
   };
 
   const stopListening = () => {
     try {
-      recognitionRef.current?.stop?.();
-    } catch (error) {
-      console.error("Error deteniendo micro:", error);
-    } finally {
-      setIsListening(false);
-    }
-  };
+      realtimeDcRef.current?.close();
+      realtimeDcRef.current = null;
 
-  const handleVoiceConversation = async (spokenText: string) => {
-    if (!spokenText.trim()) return;
+      realtimePcRef.current?.close();
+      realtimePcRef.current = null;
 
-    pushUserMessage(spokenText);
-    setLastUserTranscript(spokenText);
-    setWaitingMohamed(true);
-
-    try {
-      const historyToSend = voiceHistory.slice(-8).map((msg) => ({
-        from: msg.from,
-        text: msg.text,
-      }));
-
-      const res = await fetch("/api/chat", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          assistant: "mohamed",
-          message: spokenText,
-          context: "voice_regularizacion_2026",
-          procedureKey: selectedSituacion,
-          procedureLabel: currentProcedure.name,
-          lang: safeLang,
-          history: historyToSend,
-          leadForm,
-        }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data?.error || "Error en Mohamed");
+      if (realtimeLocalStreamRef.current) {
+        realtimeLocalStreamRef.current.getTracks().forEach((track) => track.stop());
+        realtimeLocalStreamRef.current = null;
       }
 
-      const finalReply =
-        data?.reply ||
-        (safeLang === "darija"
-          ? "سمح ليا، ما قدرتش نجاوب دابا."
-          : safeLang === "en"
-          ? "Sorry, I could not answer right now."
-          : "Lo siento, no pude responder ahora mismo.");
-
-      pushAgentMessage(finalReply, true);
+      if (currentAudioRef.current) {
+        currentAudioRef.current.pause();
+        currentAudioRef.current.srcObject = null;
+        currentAudioRef.current = null;
+      }
     } catch (error) {
-      console.error("Error conectando con Mohamed:", error);
-
-      const errorReply =
-        safeLang === "darija"
-          ? "وقع مشكل فالاتصال مع محمد، عاود حاول."
-          : safeLang === "en"
-          ? "There was a connection error with Mohamed. Please try again."
-          : "Error conectando con Mohamed, intenta otra vez.";
-
-      pushAgentMessage(errorReply, true);
+      console.error("Error deteniendo realtime:", error);
     } finally {
+      setIsListening(false);
       setWaitingMohamed(false);
     }
   };
 
-  const startListening = () => {
+  const startListening = async () => {
     if (!leadSaved) {
-      pushAgentMessage(ui.voiceBlocked, true);
+      pushAgentMessage(voiceTexts.voiceBlocked, true);
 
       toast({
         title: ui.missingTitle,
@@ -761,13 +697,9 @@ const speakText = async (text: string) => {
       return;
     }
 
-    const SpeechRecognition =
-      window.SpeechRecognition || window.webkitSpeechRecognition;
-
-    if (!SpeechRecognition) {
-      setVoiceSupported(false);
+    if (!voiceSupported) {
       toast({
-        title: "Micrófono no compatible",
+        title: "Error",
         description: ui.micNotSupported,
         variant: "destructive",
       });
@@ -775,48 +707,172 @@ const speakText = async (text: string) => {
     }
 
     try {
-      const recognition = new SpeechRecognition();
-      recognition.lang = getRecognitionLang();
-      recognition.interimResults = false;
-      recognition.continuous = false;
-      recognition.maxAlternatives = 1;
+      stopListening();
+      assistantTextBufferRef.current = "";
+      setWaitingMohamed(true);
 
-      recognition.onstart = () => {
+      const sessionRes = await fetch("/api/realtime-session", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          assistant: "mohamed",
+        }),
+      });
+
+      const sessionData = await sessionRes.json();
+
+      if (!sessionRes.ok) {
+        throw new Error(sessionData?.error || "Error creando sesión realtime");
+      }
+
+      const ephemeralKey =
+        sessionData?.client_secret?.value ||
+        sessionData?.client_secret ||
+        "";
+
+      if (!ephemeralKey) {
+        throw new Error("No llegó client_secret desde realtime-session");
+      }
+
+      const pc = new RTCPeerConnection();
+      realtimePcRef.current = pc;
+
+      const remoteAudio = new Audio();
+      remoteAudio.autoplay = true;
+      currentAudioRef.current = remoteAudio;
+
+      pc.ontrack = (event) => {
+        const [remoteStream] = event.streams;
+        if (remoteStream && currentAudioRef.current) {
+          currentAudioRef.current.srcObject = remoteStream;
+          currentAudioRef.current.play().catch(() => {});
+        }
+      };
+
+      const localStream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        },
+      });
+
+      realtimeLocalStreamRef.current = localStream;
+
+      for (const track of localStream.getTracks()) {
+        pc.addTrack(track, localStream);
+      }
+
+      const dc = pc.createDataChannel("oai-events");
+      realtimeDcRef.current = dc;
+
+      dc.onopen = () => {
         setIsListening(true);
+        setWaitingMohamed(false);
+
+        dc.send(
+          JSON.stringify({
+            type: "response.create",
+            response: {
+              modalities: ["audio", "text"],
+              instructions: voiceTexts.realtimeIntro,
+            },
+          })
+        );
       };
 
-      recognition.onend = () => {
-        setIsListening(false);
+      dc.onmessage = (event) => {
+        try {
+          const msg = JSON.parse(event.data);
+
+          const userTranscript =
+            msg?.transcript ||
+            msg?.item?.transcript ||
+            msg?.item?.content?.[0]?.transcript ||
+            "";
+
+          if (
+            (msg.type === "conversation.item.input_audio_transcription.completed" ||
+              msg.type === "input_audio_buffer.transcription.completed") &&
+            typeof userTranscript === "string" &&
+            userTranscript.trim()
+          ) {
+            const transcript = userTranscript.trim();
+
+            if (transcript !== lastUserTranscriptRef.current) {
+              lastUserTranscriptRef.current = transcript;
+              setLastUserTranscript(transcript);
+              pushUserMessage(transcript);
+            }
+          }
+
+          if (
+            msg.type === "response.output_text.delta" &&
+            typeof msg.delta === "string"
+          ) {
+            assistantTextBufferRef.current += msg.delta;
+          }
+
+          if (
+            msg.type === "response.output_text.done" &&
+            typeof msg.text === "string" &&
+            msg.text.trim()
+          ) {
+            assistantTextBufferRef.current = msg.text.trim();
+            finalizeAssistantBuffer();
+          }
+
+          if (msg.type === "response.done") {
+            finalizeAssistantBuffer();
+          }
+        } catch (err) {
+          console.error("Realtime event parse error:", err);
+        }
       };
 
-      recognition.onerror = () => {
-        setIsListening(false);
-
-        toast({
-          title: "Error de micrófono",
-          description:
-            safeLang === "darija"
-              ? "وقع مشكل فالمايكروفون، عاود حاول."
-              : safeLang === "en"
-              ? "There was a microphone error. Please try again."
-              : "Hubo un error con el micrófono. Inténtalo otra vez.",
-          variant: "destructive",
-        });
+      dc.onerror = (err) => {
+        console.error("Realtime data channel error:", err);
       };
 
-      recognition.onresult = async (event: any) => {
-        const transcript =
-          event?.results?.[0]?.[0]?.transcript?.trim?.() || "";
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
 
-        if (!transcript) return;
-        await handleVoiceConversation(transcript);
-      };
+      const model = "gpt-realtime";
 
-      recognitionRef.current = recognition;
-      recognition.start();
-    } catch (error) {
-      console.error("Error iniciando reconocimiento:", error);
-      setIsListening(false);
+      const sdpRes = await fetch(
+        `https://api.openai.com/v1/realtime?model=${model}`,
+        {
+          method: "POST",
+          body: offer.sdp,
+          headers: {
+            Authorization: `Bearer ${ephemeralKey}`,
+            "Content-Type": "application/sdp",
+          },
+        }
+      );
+
+      if (!sdpRes.ok) {
+        const errText = await sdpRes.text();
+        throw new Error(errText || "Error negociando WebRTC con OpenAI");
+      }
+
+      const answerSdp = await sdpRes.text();
+
+      await pc.setRemoteDescription({
+        type: "answer",
+        sdp: answerSdp,
+      });
+    } catch (error: any) {
+      console.error("Error iniciando realtime Mohamed:", error);
+      stopListening();
+
+      toast({
+        title: "Error realtime",
+        description: error?.message || voiceTexts.realtimeError,
+        variant: "destructive",
+      });
     }
   };
 
@@ -1090,14 +1146,14 @@ const speakText = async (text: string) => {
       nextIdentityDocs.some((doc) => doc.estado === "ok");
 
     if (readyNow && !completionMessageSent) {
-      pushAgentMessage(ui.mohamedFinal, true);
+      pushAgentMessage(voiceTexts.mohamedFinal, true);
       setCompletionMessageSent(true);
     }
   };
 
   const handleGeneralUpload = async () => {
     if (!leadSaved) {
-      pushAgentMessage(ui.voiceBlocked, true);
+      pushAgentMessage(voiceTexts.voiceBlocked, true);
 
       toast({
         title: ui.missingTitle,
@@ -1133,7 +1189,7 @@ const speakText = async (text: string) => {
               const matchedDoc = getBestDocMatch(result as any, currentDocs, file.name);
 
               if (!matchedDoc) {
-                pushAgentMessage(ui.mohamedDocUnknown(), true);
+                pushAgentMessage(voiceTexts.uploadUnknown, true);
 
                 toast({
                   title: ui.uploadErrorTitle,
@@ -1168,18 +1224,15 @@ const speakText = async (text: string) => {
               const matchedName = matchedDoc.nombre.toLowerCase();
 
               if (isWarn) {
-                pushAgentMessage(ui.mohamedDocWarn(), true);
+                pushAgentMessage(voiceTexts.uploadWarn, true);
               } else if (
                 matchedName.includes("pasaporte") ||
                 matchedName.includes("nie") ||
                 matchedName.includes("passport")
               ) {
-                pushAgentMessage(ui.passportVerified, true);
+                pushAgentMessage(voiceTexts.passportVerified, true);
               } else {
-                pushAgentMessage(
-                  ui.mohamedDocOk(file.name, matchedDoc.nombre),
-                  true
-                );
+                pushAgentMessage(voiceTexts.uploadOk, true);
               }
 
               toast({
@@ -1216,12 +1269,12 @@ const speakText = async (text: string) => {
   };
 
   const goToSara = () => {
-    window.location.href = "/citas";
+    window.location.href = "/buscar-citas";
   };
 
   const latestAgentMessage =
     [...voiceHistory].reverse().find((msg) => msg.from === "agent")?.text ||
-    ui.initialVoice;
+    voiceTexts.initialVoice;
 
   return (
     <div className="min-h-screen bg-background text-foreground relative flex flex-col">
@@ -1245,9 +1298,7 @@ const speakText = async (text: string) => {
                 {t("reg_new")}
               </span>
             </h1>
-            <p className="text-xs text-muted-foreground">
-              {currentProcedure.name}
-            </p>
+            <p className="text-xs text-muted-foreground">{currentProcedure.name}</p>
           </div>
         </div>
 
@@ -1266,9 +1317,7 @@ const speakText = async (text: string) => {
 
               <div className="absolute top-3 left-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/60 border border-white/10 backdrop-blur-md">
                 <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                <span className="text-xs font-medium text-white">
-                  {ui.online}
-                </span>
+                <span className="text-xs font-medium text-white">{ui.online}</span>
               </div>
 
               <div className="absolute top-3 right-3 flex items-center gap-2">
@@ -1310,12 +1359,8 @@ const speakText = async (text: string) => {
               )}
 
               <div className="absolute bottom-12 right-3 text-right">
-                <p className="text-white font-bold text-sm drop-shadow-lg">
-                  Mohamed
-                </p>
-                <p className="text-white/70 text-[11px] drop-shadow-lg">
-                  {ui.role}
-                </p>
+                <p className="text-white font-bold text-sm drop-shadow-lg">Mohamed</p>
+                <p className="text-white/70 text-[11px] drop-shadow-lg">{ui.role}</p>
               </div>
 
               <div className="absolute bottom-3 left-0 right-0 flex justify-center">
@@ -1373,9 +1418,7 @@ const speakText = async (text: string) => {
 
               <div className="p-4 space-y-4">
                 <div>
-                  <p className="text-[11px] text-white/50 mb-1">
-                    {ui.latestReply}
-                  </p>
+                  <p className="text-[11px] text-white/50 mb-1">{ui.latestReply}</p>
                   <div className="rounded-xl bg-white/5 border border-white/10 px-3 py-3 text-sm text-white/90 leading-relaxed">
                     {latestAgentMessage}
                   </div>
@@ -1383,9 +1426,7 @@ const speakText = async (text: string) => {
 
                 {lastUserTranscript ? (
                   <div>
-                    <p className="text-[11px] text-white/50 mb-1">
-                      {ui.yourVoice}
-                    </p>
+                    <p className="text-[11px] text-white/50 mb-1">{ui.yourVoice}</p>
                     <div className="rounded-xl bg-primary/10 border border-primary/20 px-3 py-3 text-sm text-white leading-relaxed">
                       {lastUserTranscript}
                     </div>
@@ -1442,9 +1483,7 @@ const speakText = async (text: string) => {
                     <span className="text-blue-700 text-sm">✓</span>
                   </div>
                   <div>
-                    <p className="text-sm font-bold text-slate-800">
-                      {ui.formTitle}
-                    </p>
+                    <p className="text-sm font-bold text-slate-800">{ui.formTitle}</p>
                     <p className="text-[11px] text-slate-500">{ui.formDesc}</p>
                   </div>
                 </div>
@@ -1453,9 +1492,7 @@ const speakText = async (text: string) => {
               <div className="px-4 py-4 space-y-3 bg-white">
                 <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 mb-3">
                   <div className="flex items-center justify-between mb-2">
-                    <p className="text-sm font-bold text-slate-800">
-                      {ui.docStatusTitle}
-                    </p>
+                    <p className="text-sm font-bold text-slate-800">{ui.docStatusTitle}</p>
                     <span className="text-xs font-bold text-slate-700">
                       {progressOk}/{progressTotal}
                     </span>
@@ -1490,11 +1527,12 @@ const speakText = async (text: string) => {
                               : "bg-slate-100 text-slate-500"
                           }`}
                         >
-                          {doc.estado === "ok"
-                            ? ui.docStatusDone
-                            : doc.estado === "warn"
-                            ? ui.docStatusReview
-                            : ui.docStatusMissing}
+                          {getStatusLabel(
+                            doc.estado,
+                            ui.docStatusDone,
+                            ui.docStatusReview,
+                            ui.docStatusMissing
+                          )}
                         </span>
                       </div>
                     ))}
