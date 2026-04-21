@@ -1283,16 +1283,54 @@ export default function BuscarCitas() {
   }: {
     autoPrompt?: string;
   } = {}) => {
-    if (!formReady) {
-      pushAgentMessage(voiceTexts.voiceBlocked, true);
+dc.onopen = () => {
+  console.log("SARA dc.onopen OK");
 
-      toast({
-        title: ui.missingTitle,
-        description: ui.missingDesc,
-        variant: "destructive",
-      });
-      return;
-    }
+  setIsListening(true);
+  setWaitingSara(true);
+
+  const firstPrompt = formReady
+    ? [
+        "ابدئي دابا أنتِ الأولى وما تستنايش العميل يهضر.",
+        "رحبي بالعميل بالدارجة المغربية وبالحروف العربية.",
+        "قولي ليه بالضبط: مزيان. دابا غادي نقلبو ليك على الموعد، ومنين يبان غادي نعلموك فـ WhatsApp باش تدخل وتأكد الموعد ديالك.",
+        "خلي الجواب قصير، طبيعي، وبشري.",
+      ].join(" ")
+    : [
+        "ابدئي دابا أنتِ الأولى وما تستنايش العميل يهضر.",
+        "رحبي بالعميل بالدارجة المغربية وبالحروف العربية.",
+        "قولي ليه بالضبط: السلام، مرحبا بيك فـ GestoriaCitaIA. إلا بغيتي نشدّو ليك موعد، عمر ليا الفورمولار، ومن بعد أنا غادي نكمل معاك الهضرة.",
+        "خلي الجواب قصير، طبيعي، وبشري.",
+      ].join(" ");
+
+  dc.send(
+    JSON.stringify({
+      type: "conversation.item.create",
+      item: {
+        type: "message",
+        role: "user",
+        content: [
+          {
+            type: "input_text",
+            text: formReady
+              ? "ابدئي دابا وتكلمي مع العميل على البحث عن الموعد."
+              : "ابدئي دابا ورحبي بالعميل وطلبي منو يعمر الفورمولار الأول.",
+          },
+        ],
+      },
+    })
+  );
+
+  dc.send(
+    JSON.stringify({
+      type: "response.create",
+      response: {
+        modalities: ["audio", "text"],
+        instructions: [voiceTexts.realtimeIntro, firstPrompt].join(" "),
+      },
+    })
+  );
+};
 
     if (!voiceSupported) {
       toast({
