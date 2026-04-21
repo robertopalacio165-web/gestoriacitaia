@@ -1194,7 +1194,7 @@ const currentAudioRef = useRef<HTMLAudioElement | null>(null);
     }
   }, [voiceHistory, voiceStorageKey]);
 
- const speakText = async (text: string) => {
+const speakText = async (text: string) => {
   if (muted) return;
   if (!text?.trim()) return;
 
@@ -1213,7 +1213,7 @@ const currentAudioRef = useRef<HTMLAudioElement | null>(null);
       body: JSON.stringify({
         text,
         assistant: "sara",
-        lang,
+        lang: "darija",
       }),
     });
 
