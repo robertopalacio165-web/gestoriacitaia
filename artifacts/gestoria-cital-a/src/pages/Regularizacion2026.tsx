@@ -610,7 +610,29 @@ export default function Regularizacion2026() {
       },
     ]);
   };
+const sendRealtimeSystemUpdate = (text: string) => {
+  try {
+    if (!realtimeDcRef.current) return;
+    if (realtimeDcRef.current.readyState !== "open") return;
 
+    realtimeDcRef.current.send(
+      JSON.stringify({
+        type: "response.create",
+        response: {
+          modalities: ["audio", "text"],
+          instructions: [
+            voiceTexts.realtimeIntro,
+            "هادشي تحديث جديد على الملف ديال العميل، خاصك تعتمد عليه فجوابك الجاي:",
+            text,
+            "جاوب دابا باختصار وبالدارجة المغربية وبالحروف العربية، وقل للعميل شنو الخطوة الجاية بالضبط.",
+          ].join(" "),
+        },
+      })
+    );
+  } catch (error) {
+    console.error("Error enviando actualización realtime:", error);
+  }
+};
   useEffect(() => {
     if (voiceHistory.length === 1 && voiceHistory[0]?.text === voiceTexts.initialVoice) {
       const timer = setTimeout(() => {
@@ -821,9 +843,14 @@ export default function Regularizacion2026() {
             finalizeAssistantBuffer();
           }
 
-          if (msg.type === "response.done") {
-            finalizeAssistantBuffer();
-          }
+       if (msg.type === "response.done") {
+  finalizeAssistantBuffer();
+  setWaitingMohamed(false);
+}
+
+if (msg.type === "response.created") {
+  setWaitingMohamed(true);
+}
         } catch (err) {
           console.error("Realtime event parse error:", err);
         }
@@ -1149,121 +1176,167 @@ export default function Regularizacion2026() {
   };
 
   const handleGeneralUpload = async () => {
-    if (!leadSaved) {
-      pushAgentMessage(voiceTexts.voiceBlocked, true);
+  if (!leadSaved) {
+    pushAgentMessage(voiceTexts.voiceBlocked, true);
 
-      toast({
-        title: ui.missingTitle,
-        description: ui.missingDesc,
-        variant: "destructive",
-      });
-      return;
-    }
+    toast({
+      title: ui.missingTitle,
+      description: ui.missingDesc,
+      variant: "destructive",
+    });
+    return;
+  }
 
-    try {
-      const input = document.createElement("input");
-      input.type = "file";
-      input.accept = "image/*,application/pdf";
-      input.multiple = true;
+  try {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "image/*,application/pdf";
+    input.multiple = true;
 
-      input.onchange = async () => {
-        const files = Array.from(input.files || []);
-        if (!files.length) return;
+    input.onchange = async () => {
+      const files = Array.from(input.files || []);
+      if (!files.length) return;
 
-        setGeneralUploading(true);
+      setGeneralUploading(true);
 
-        try {
-          for (const file of files) {
-            try {
-              const currentDocs = [...docs];
+      try {
+        for (const file of files) {
+          try {
+            const currentDocs = [...docs];
 
-              const result = await verifyDocument({
-                file,
-                expectedDocumentType: "auto",
-                lang: safeLang,
-              });
+            const result = await verifyDocument({
+              file,
+              expectedDocumentType: "auto",
+              lang: "darija",
+            });
 
-              const matchedDoc = getBestDocMatch(result as any, currentDocs, file.name);
+            const matchedDoc = getBestDocMatch(
+              result as VerifyDocumentResult,
+              currentDocs,
+              file.name
+            );
 
-              if (!matchedDoc) {
-                pushAgentMessage(voiceTexts.uploadUnknown, true);
+            if (!matchedDoc) {
+              pushAgentMessage(voiceTexts.uploadUnknown, true);
 
-                toast({
-                  title: ui.uploadErrorTitle,
-                  description: result.summary || ui.uploadErrorDesc,
-                  variant: "destructive",
-                });
-
-                continue;
-              }
-
-              const isWarn =
-                result.status === "invalid" ||
-                result.match_expected_type === false;
-
-              const nextStatus: DocStatus = isWarn ? "warn" : "ok";
-
-              const updatedDocs = currentDocs.map((doc) =>
-                doc.id === matchedDoc.id
-                  ? {
-                      ...doc,
-                      estado: nextStatus,
-                      archivo: file.name,
-                      kb: `${Math.round(file.size / 1024)} KB`,
-                      detectedType: result.document_type || "",
-                      note: result.summary || "",
-                    }
-                  : doc
+              sendRealtimeSystemUpdate(
+                [
+                  `توصلنا بوثيقة سميتها: ${file.name}.`,
+                  `النوع المتشاف: ${result.document_type || "غير واضح"}.`,
+                  `الخلاصة: ${result.summary || "ما كايناش خلاصة واضحة"}.`,
+                  "الوثيقة ما تقدرش ترتابط دابا مع حتى خانة واضحة فالملف.",
+                  "قول للعميل شنو خاصو يصيفط من بعد بشكل واضح.",
+                ].join(" ")
               );
-
-              setDocs(updatedDocs);
-
-              const matchedName = matchedDoc.nombre.toLowerCase();
-
-              if (isWarn) {
-                pushAgentMessage(voiceTexts.uploadWarn, true);
-              } else if (
-                matchedName.includes("pasaporte") ||
-                matchedName.includes("nie") ||
-                matchedName.includes("passport")
-              ) {
-                pushAgentMessage(voiceTexts.passportVerified, true);
-              } else {
-                pushAgentMessage(voiceTexts.uploadOk, true);
-              }
-
-              toast({
-                title: ui.uploadSuccessTitle,
-                description: result.summary || ui.uploadSuccessDesc,
-              });
-
-              maybeSendCompletionMessage(updatedDocs);
-            } catch (err: any) {
-              console.error(err);
 
               toast({
                 title: ui.uploadErrorTitle,
-                description: err?.message || ui.uploadErrorDesc,
+                description: result.summary || ui.uploadErrorDesc,
                 variant: "destructive",
               });
+
+              continue;
             }
+
+            const isWarn =
+              result.status === "invalid" ||
+              result.match_expected_type === false;
+
+            const nextStatus: DocStatus = isWarn ? "warn" : "ok";
+
+            const updatedDocs = currentDocs.map((doc) =>
+              doc.id === matchedDoc.id
+                ? {
+                    ...doc,
+                    estado: nextStatus,
+                    archivo: file.name,
+                    kb: `${Math.round(file.size / 1024)} KB`,
+                    detectedType: result.document_type || "",
+                    note: result.summary || "",
+                  }
+                : doc
+            );
+
+            setDocs(updatedDocs);
+
+            const matchedName = matchedDoc.nombre.toLowerCase();
+
+            let localReply = voiceTexts.uploadOk;
+
+            if (isWarn) {
+              localReply = voiceTexts.uploadWarn;
+              pushAgentMessage(localReply, true);
+            } else if (
+              matchedName.includes("pasaporte") ||
+              matchedName.includes("nie") ||
+              matchedName.includes("passport")
+            ) {
+              localReply = voiceTexts.passportVerified;
+              pushAgentMessage(localReply, true);
+            } else {
+              pushAgentMessage(localReply, true);
+            }
+
+            const progressSummary = updatedDocs
+              .map((doc) => `${doc.nombre}: ${doc.estado}`)
+              .join(" | ");
+
+            sendRealtimeSystemUpdate(
+              [
+                `توصلنا بوثيقة جديدة من العميل.`,
+                `اسم الوثيقة: ${file.name}.`,
+                `ترابطات مع هاد الخانة: ${matchedDoc.nombre}.`,
+                `النوع المتشاف: ${result.document_type || "غير واضح"}.`,
+                `الحالة: ${nextStatus === "ok" ? "مقبولة مزيان" : "خاصها مراجعة"}.`,
+                `الخلاصة ديال الفحص: ${result.summary || "ما كايناش خلاصة مفصلة"}.`,
+                `واش كتصلح للتسوية 2026: ${
+                  result.usable_for_regularizacion_2026 ? "نعم" : "لا أو مازال غير واضح"
+                }.`,
+                `الملف دابا فيه هاد الحالة: ${progressSummary}.`,
+                "اعتمد على هاد المعلومات وجاوب العميل على الوثيقة اللي صيفط، وقول ليه شنو الخطوة الجاية.",
+              ].join(" ")
+            );
+
+            toast({
+              title: ui.uploadSuccessTitle,
+              description: result.summary || ui.uploadSuccessDesc,
+            });
+
+            maybeSendCompletionMessage(updatedDocs);
+          } catch (err: any) {
+            console.error(err);
+
+            toast({
+              title: ui.uploadErrorTitle,
+              description: err?.message || ui.uploadErrorDesc,
+              variant: "destructive",
+            });
+
+            sendRealtimeSystemUpdate(
+              [
+                `وقع مشكل فقراءة الوثيقة اللي سميتها ${file.name}.`,
+                `التفاصيل: ${err?.message || "خطأ غير معروف"}.`,
+                "قول للعميل يعاود يصيفط الوثيقة بشكل أوضح أو بصيغة أخرى.",
+              ].join(" ")
+            );
           }
-        } finally {
-          setGeneralUploading(false);
         }
-      };
+      } finally {
+        setGeneralUploading(false);
+      }
+    };
 
-      input.click();
-    } catch (error: any) {
-      setGeneralUploading(false);
+    input.click();
+  } catch (error: any) {
+    setGeneralUploading(false);
 
-      toast({
-        title: "Error",
-        description: error?.message || "Error inesperado",
-        variant: "destructive",
-      });
-    }
-  };
+    toast({
+      title: "Error",
+      description: error?.message || "Error inesperado",
+      variant: "destructive",
+    });
+  }
+};
 
   const goToSara = () => {
     window.location.href = "/buscar-citas";
