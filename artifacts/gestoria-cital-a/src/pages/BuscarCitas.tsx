@@ -20,13 +20,6 @@ import {
 import { useScheduleAppointment } from "@/hooks/use-appointments";
 import { supabase } from "@/lib/supabaseClient";
 
-declare global {
-  interface Window {
-    SpeechRecognition?: any;
-    webkitSpeechRecognition?: any;
-  }
-}
-
 interface ChatMsg {
   from: "agent" | "user";
   text: string;
@@ -176,9 +169,7 @@ function OfficialBrowserBox({
       <div className="bg-[#f1f3f4] border-b border-gray-200 px-3 py-2 flex items-center gap-2 shrink-0">
         <div className="flex items-center gap-1.5 bg-white rounded-full px-3 py-1.5 flex-1 border border-gray-200 shadow-sm min-w-0">
           <Shield className="w-3 h-3 text-green-600 shrink-0" />
-          <span className="text-xs text-gray-600 font-medium truncate">
-            {url}
-          </span>
+          <span className="text-xs text-gray-600 font-medium truncate">{url}</span>
         </div>
 
         <button
@@ -223,9 +214,7 @@ function OfficialBrowserBox({
             </div>
 
             <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 mb-4">
-              <p className="text-sm font-semibold text-[#003366] mb-2">
-                {title}
-              </p>
+              <p className="text-sm font-semibold text-[#003366] mb-2">{title}</p>
               <p className="text-xs text-gray-700 leading-relaxed">
                 {cameFromConfirmationLink ? confirmationIntro : formIntro}
               </p>
@@ -352,16 +341,12 @@ function OfficialBrowserBox({
               </div>
 
               {profileLoading && (
-                <p className="mt-3 text-[11px] text-gray-400">
-                  {ui.loadingUserData}
-                </p>
+                <p className="mt-3 text-[11px] text-gray-400">{ui.loadingUserData}</p>
               )}
 
               {formReady && (
                 <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4">
-                  <p className="text-sm font-semibold text-emerald-800">
-                    {savedText}
-                  </p>
+                  <p className="text-sm font-semibold text-emerald-800">{savedText}</p>
 
                   <div className="mt-3 flex flex-wrap gap-2">
                     <div className="inline-flex items-center rounded-xl border border-emerald-300 bg-white px-3 py-2 text-xs text-gray-700">
@@ -489,8 +474,14 @@ export default function BuscarCitas() {
   const [voiceHistory, setVoiceHistory] = useState<ChatMsg[]>([]);
   const [lastUserTranscript, setLastUserTranscript] = useState("");
 
-  const recognitionRef = useRef<any>(null);
-const currentAudioRef = useRef<HTMLAudioElement | null>(null);
+  const currentAudioRef = useRef<HTMLAudioElement | null>(null);
+  const realtimePcRef = useRef<RTCPeerConnection | null>(null);
+  const realtimeDcRef = useRef<RTCDataChannel | null>(null);
+  const realtimeLocalStreamRef = useRef<MediaStream | null>(null);
+  const assistantTextBufferRef = useRef("");
+  const lastUserTranscriptRef = useRef("");
+  const lastAssistantTextRef = useRef("");
+
   const urlParams = useMemo(() => {
     const url = new URL(window.location.href);
     return {
@@ -502,6 +493,44 @@ const currentAudioRef = useRef<HTMLAudioElement | null>(null);
   const { t, lang } = useLang();
   const { toast } = useToast();
   const scheduleMutation = useScheduleAppointment();
+
+  const voiceTexts = useMemo(
+    () => ({
+      initialVoice:
+        "السلام، مرحبا بيك فـ GestoriaCitaIA. إلا بغيتي نشدو ليك موعد، عمر ليا الفورمولار، ومن بعد أنا غادي نكمل معاك الهضرة.",
+      voiceBlocked:
+        "عافاك عمر الفورمولار الأول ومن بعد ضغط على الميكروفون باش نكمل معاك.",
+      savedLeadReply:
+        "مزيان. دابا ملي عمرتي الفورمولار، حنا غادي نقلبو ليك على موعد فـ أقرب وقت، وملي يكون الموعد غادي نعلموك عبر الواتساب باش تدخل وتأكد الموعد ديالك.",
+      realtimeIntro: (tramiteLabel: string, form: ClientFormData) =>
+        [
+          "جاوبي ديما غير بالدارجة المغربية وبالحروف العربية.",
+          "أنتِ سارة من GestoriaCitaIA.",
+          "أنتِ مختصة غير فالمواعيد ديال extranjería فإسبانيا.",
+          "الأسلوب ديالك بشري، طبيعي، واضح، ومختصر.",
+          "سولي غير سؤال واحد فكل مرة.",
+          "ما تبدليش اللغة حسب لغة الموقع. ديما جاوبي بالدارجة المغربية.",
+          `نوع الموعد الحالي هو: ${tramiteLabel || "مازال ما تختارش"}.`,
+          `المعطيات الحالية: الاسم ${form.fullName || "ما متسجلش"}, الهاتف ${
+            form.phone || "ما متسجلش"
+          }, الهوية ${form.nie || "ما متسجلش"}, المدينة ${
+            form.city || "ما متسجلش"
+          }.`,
+          "إلى كان الفورمولار واجد، قولي للعميل باختصار أن البحث على الموعد بدا، ومن بعد سوليه غير على المعطى الناقص اللي محتاجاه.",
+          "إلى سَوّلك على الوثائق أو ملف regularización، حوليه لمحمد بشكل قصير.",
+          "ما تخترعيش موعد وهمي وما تواعديش بموعد مضمون.",
+        ].join(" "),
+      realtimeError:
+        "وقع مشكل فالاتصال المباشر مع سارة. عاود حاول من بعد.",
+      foundMsg:
+        "مزيان. لقينا ليك موعد. دابا خاصك تأكد الموعد باش نكملو ونصيفطو ليك التفاصيل النهائية.",
+      confirmMsg:
+        "مزيان. تم تأكيد الموعد ديالك. غادي توصلك التفاصيل وPDF عبر الواتساب.",
+      confirmationLinkMsg:
+        "حملت رابط التأكيد ديالك. سارة وجدات كلشي باش تكمل غير التأكيد.",
+    }),
+    []
+  );
 
   const ui = useMemo(() => {
     if (lang === "darija") {
@@ -623,8 +652,6 @@ const currentAudioRef = useRef<HTMLAudioElement | null>(null);
             },
           ],
         } as Record<string, FormItem[]>,
-        initialVoice:
-          "السلام، أنا سارة. إلا بغيتي نشد لك الموعد، عمر المعطيات ديالك واختار نوع الموعد، ومن بعد ضغط على الميكروفون باش نكمل معاك بالصوت.",
         online: "متصلة الآن",
         agentRole: "مستشارة المواعيد",
         procedureLabel: "الإجراء",
@@ -661,7 +688,8 @@ const currentAudioRef = useRef<HTMLAudioElement | null>(null);
         saveDesc: "سارة تقدر دابا تكمل معاك بالصوت.",
         missingTitle: "كاينين بيانات ناقصين",
         missingDesc: "عمر الاسم والهاتف والمدينة قبل ما تكمل.",
-        micNotSupported: "هاد المتصفح ما كيدعمش الميكروفون. استعمل Chrome.",
+        micNotSupported:
+          "هاد المتصفح ما كيدعمش الصوت المباشر. استعمل Chrome حديث.",
       };
     }
 
@@ -784,8 +812,6 @@ const currentAudioRef = useRef<HTMLAudioElement | null>(null);
             },
           ],
         } as Record<string, FormItem[]>,
-        initialVoice:
-          "Hello, I’m Sara. If you want me to get your appointment, fill in your details, choose the appointment type, and then press the microphone so I can continue with you by voice.",
         online: "Online",
         agentRole: "Appointments Advisor",
         procedureLabel: "PROCEDURE",
@@ -822,7 +848,8 @@ const currentAudioRef = useRef<HTMLAudioElement | null>(null);
         saveDesc: "Sara can now continue with you by voice.",
         missingTitle: "Missing data",
         missingDesc: "Fill in name, phone and city before continuing.",
-        micNotSupported: "This browser does not support microphone. Use Chrome.",
+        micNotSupported:
+          "This browser does not support realtime voice. Use modern Chrome.",
       };
     }
 
@@ -947,8 +974,6 @@ const currentAudioRef = useRef<HTMLAudioElement | null>(null);
           },
         ],
       } as Record<string, FormItem[]>,
-      initialVoice:
-        "Hola, soy Sara. Si quieres que te consiga la cita, rellena tus datos, elige el tipo de cita y después pulsa el micrófono para continuar conmigo por voz.",
       online: "En línea",
       agentRole: "Asesora de Citas",
       procedureLabel: "TRÁMITE",
@@ -985,7 +1010,8 @@ const currentAudioRef = useRef<HTMLAudioElement | null>(null);
       saveDesc: "Sara ya puede continuar contigo por voz.",
       missingTitle: "Faltan datos",
       missingDesc: "Rellena nombre, teléfono y ciudad antes de continuar.",
-      micNotSupported: "Este navegador no soporta micrófono. Usa Chrome.",
+      micNotSupported:
+        "Este navegador no soporta voz en tiempo real. Usa Chrome moderno.",
     };
   }, [lang]);
 
@@ -997,8 +1023,8 @@ const currentAudioRef = useRef<HTMLAudioElement | null>(null);
 
   const voiceStorageKey = useMemo(() => {
     const userId = profile?.id || "guest";
-    return `gestoriacitaia_sara_voice_${userId}_${lang}`;
-  }, [profile?.id, lang]);
+    return `gestoriacitaia_sara_voice_${userId}`;
+  }, [profile?.id]);
 
   const docsForSelectedTramite =
     ui.docsByTramite[selectedTramite] ?? ui.docsByTramite.tie;
@@ -1058,9 +1084,13 @@ const currentAudioRef = useRef<HTMLAudioElement | null>(null);
   }, [lang, selectedTramiteLabel]);
 
   useEffect(() => {
-    const SpeechRecognition =
-      window.SpeechRecognition || window.webkitSpeechRecognition;
-    setVoiceSupported(!!SpeechRecognition);
+    const supported =
+      typeof window !== "undefined" &&
+      typeof window.RTCPeerConnection !== "undefined" &&
+      typeof navigator !== "undefined" &&
+      !!navigator.mediaDevices?.getUserMedia;
+
+    setVoiceSupported(Boolean(supported));
   }, []);
 
   useEffect(() => {
@@ -1124,11 +1154,8 @@ const currentAudioRef = useRef<HTMLAudioElement | null>(null);
     setFormReady(true);
 
     setVoiceHistory((prev) => {
-      const alreadyExists = prev.some(
-        (msg) =>
-          msg.text.includes("enlace de confirmación") ||
-          msg.text.includes("confirmation link") ||
-          msg.text.includes("رابط التأكيد")
+      const alreadyExists = prev.some((msg) =>
+        msg.text.includes("رابط التأكيد")
       );
 
       if (alreadyExists) return prev;
@@ -1137,17 +1164,12 @@ const currentAudioRef = useRef<HTMLAudioElement | null>(null);
         ...prev,
         {
           from: "agent",
-          text:
-            lang === "darija"
-              ? "حملت رابط التأكيد ديالك. سارة وجدات كلشي باش تكمل غير التأكيد."
-              : lang === "en"
-              ? "I loaded your confirmation link. Sara has prepared everything so you only need to confirm."
-              : "He cargado tu enlace de confirmación. Sara ha dejado todo preparado para que solo tengas que confirmar.",
+          text: voiceTexts.confirmationLinkMsg,
           ts: Date.now(),
         },
       ];
     });
-  }, [urlParams.appointmentId, urlParams.token, lang]);
+  }, [urlParams.appointmentId, urlParams.token, voiceTexts.confirmationLinkMsg]);
 
   useEffect(() => {
     if (!voiceStorageKey) return;
@@ -1170,7 +1192,7 @@ const currentAudioRef = useRef<HTMLAudioElement | null>(null);
       const freshHistory: ChatMsg[] = [
         {
           from: "agent",
-          text: ui.initialVoice,
+          text: voiceTexts.initialVoice,
           ts: Date.now(),
         },
       ];
@@ -1182,7 +1204,7 @@ const currentAudioRef = useRef<HTMLAudioElement | null>(null);
     } catch (error) {
       console.error("Error cargando historial de Sara:", error);
     }
-  }, [voiceStorageKey, ui.initialVoice]);
+  }, [voiceStorageKey, voiceTexts.initialVoice]);
 
   useEffect(() => {
     if (!voiceStorageKey || voiceHistory.length === 0) return;
@@ -1194,61 +1216,27 @@ const currentAudioRef = useRef<HTMLAudioElement | null>(null);
     }
   }, [voiceHistory, voiceStorageKey]);
 
-const speakText = async (text: string) => {
-  if (muted) return;
-  if (!text?.trim()) return;
+  const speakLocalText = (text: string) => {
+    if (muted) return;
+    if (!("speechSynthesis" in window)) return;
+    if (!text?.trim()) return;
 
-  try {
-    if (currentAudioRef.current) {
-      currentAudioRef.current.pause();
-      currentAudioRef.current.currentTime = 0;
-      currentAudioRef.current = null;
+    try {
+      window.speechSynthesis.cancel();
+
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = "ar-MA";
+      utterance.rate = 0.95;
+      utterance.pitch = 1;
+      window.speechSynthesis.speak(utterance);
+    } catch (error) {
+      console.error("Error reproduciendo voz local Sara:", error);
     }
-
-    const res = await fetch("/api/tts-elevenlabs", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        text,
-        assistant: "sara",
-        lang: "darija",
-      }),
-    });
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => null);
-      throw new Error(err?.error || "Error generando audio");
-    }
-
-    const audioBlob = await res.blob();
-    const audioUrl = URL.createObjectURL(audioBlob);
-    const audio = new Audio(audioUrl);
-
-    currentAudioRef.current = audio;
-
-    audio.onended = () => {
-      URL.revokeObjectURL(audioUrl);
-      if (currentAudioRef.current === audio) {
-        currentAudioRef.current = null;
-      }
-    };
-
-    audio.onerror = () => {
-      URL.revokeObjectURL(audioUrl);
-      if (currentAudioRef.current === audio) {
-        currentAudioRef.current = null;
-      }
-    };
-
-    await audio.play();
-  } catch (error) {
-    console.error("Error reproduciendo voz ElevenLabs Sara:", error);
-  }
-};
+  };
 
   const pushAgentMessage = (text: string, speak = false) => {
+    if (!text?.trim()) return;
+
     setVoiceHistory((prev) => [
       ...prev,
       {
@@ -1258,14 +1246,18 @@ const speakText = async (text: string) => {
       },
     ]);
 
+    lastAssistantTextRef.current = text;
+
     if (speak) {
       setTimeout(() => {
-        speakText(text);
+        speakLocalText(text);
       }, 120);
     }
   };
 
   const pushUserMessage = (text: string) => {
+    if (!text?.trim()) return;
+
     setVoiceHistory((prev) => [
       ...prev,
       {
@@ -1277,14 +1269,17 @@ const speakText = async (text: string) => {
   };
 
   useEffect(() => {
-    if (voiceHistory.length === 1 && voiceHistory[0]?.text === ui.initialVoice) {
+    if (
+      voiceHistory.length === 1 &&
+      voiceHistory[0]?.text === voiceTexts.initialVoice
+    ) {
       const timer = setTimeout(() => {
-        speakText(ui.initialVoice);
+        speakLocalText(voiceTexts.initialVoice);
       }, 700);
 
       return () => clearTimeout(timer);
     }
-  }, [voiceHistory, ui.initialVoice]);
+  }, [voiceHistory, voiceTexts.initialVoice]);
 
   const handleFormChange = (field: keyof ClientFormData, value: string) => {
     setFormData((prev) => ({
@@ -1329,14 +1324,7 @@ const speakText = async (text: string) => {
     setFormReady(true);
     setStep(1);
 
-    const msg =
-      lang === "darija"
-        ? "ممتاز. دابا خديت المعطيات ديالك. ضغط على الميكروفون وغادي نكمل معاك بالصوت، ومنين نلقاو الموعد غادي نعلموك عبر واتساب."
-        : lang === "en"
-        ? "Perfect. I already have your details. Press the microphone and I will continue with you by voice. As soon as we find the appointment, we will notify you on WhatsApp."
-        : "Perfecto. Ya tengo tus datos. Pulsa el micrófono y continuaré contigo por voz. En cuanto encontremos la cita, te avisaremos por WhatsApp.";
-
-    pushAgentMessage(msg, true);
+    pushAgentMessage(voiceTexts.savedLeadReply, true);
 
     toast({
       title: ui.saveTitle,
@@ -1344,93 +1332,47 @@ const speakText = async (text: string) => {
     });
   };
 
-  const getRecognitionLang = () => {
-    if (lang === "darija") return "ar-MA";
-    if (lang === "en") return "en-US";
-    return "es-ES";
+  const finalizeAssistantBuffer = () => {
+    const text = assistantTextBufferRef.current.trim();
+    if (!text) return;
+    if (text === lastAssistantTextRef.current) {
+      assistantTextBufferRef.current = "";
+      return;
+    }
+
+    pushAgentMessage(text, false);
+    assistantTextBufferRef.current = "";
   };
 
   const stopListening = () => {
     try {
-      recognitionRef.current?.stop?.();
-    } catch (error) {
-      console.error("Error deteniendo micro Sara:", error);
-    } finally {
-      setIsListening(false);
-    }
-  };
+      realtimeDcRef.current?.close();
+      realtimeDcRef.current = null;
 
-  const handleVoiceConversation = async (spokenText: string) => {
-    if (!spokenText.trim()) return;
+      realtimePcRef.current?.close();
+      realtimePcRef.current = null;
 
-    pushUserMessage(spokenText);
-    setLastUserTranscript(spokenText);
-    setWaitingSara(true);
-
-    try {
-      const historyToSend = voiceHistory.slice(-8).map((msg) => ({
-        from: msg.from,
-        text: msg.text,
-      }));
-
-      const res = await fetch("/api/chat", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          assistant: "sara",
-          context: "voice_buscar_citas",
-          message: spokenText,
-          lang,
-          procedureKey: selectedTramite,
-          procedureLabel: selectedTramiteLabel,
-          sessionId: `sara-${profile?.id || "guest"}-${lang}`,
-          userId: profile?.id || "",
-          history: historyToSend,
-          leadForm: {
-            nombre: formData.fullName,
-            telefono: formData.phone,
-            niePasaporte: formData.nie,
-            ciudad: formData.city,
-          },
-        }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data?.error || "Error en Sara");
+      if (realtimeLocalStreamRef.current) {
+        realtimeLocalStreamRef.current.getTracks().forEach((track) => track.stop());
+        realtimeLocalStreamRef.current = null;
       }
 
-      const finalReply =
-        data?.reply ||
-        (lang === "darija"
-          ? "سمح ليا، ما قدرتش نجاوب دابا."
-          : lang === "en"
-          ? "Sorry, I could not answer right now."
-          : "Lo siento, no pude responder ahora mismo.");
-
-      pushAgentMessage(finalReply, true);
+      if (currentAudioRef.current) {
+        currentAudioRef.current.pause();
+        currentAudioRef.current.srcObject = null;
+        currentAudioRef.current = null;
+      }
     } catch (error) {
-      console.error("Error conectando con Sara:", error);
-
-      const errorReply =
-        lang === "darija"
-          ? "وقع مشكل فالاتصال مع سارة، عاود حاول."
-          : lang === "en"
-          ? "There was a connection error with Sara. Please try again."
-          : "Error conectando con Sara, intenta otra vez.";
-
-      pushAgentMessage(errorReply, true);
+      console.error("Error deteniendo realtime Sara:", error);
     } finally {
+      setIsListening(false);
       setWaitingSara(false);
     }
   };
 
-  const startListening = () => {
+  const startListening = async () => {
     if (!formReady) {
-      pushAgentMessage(ui.voiceBlocked, true);
+      pushAgentMessage(voiceTexts.voiceBlocked, true);
 
       toast({
         title: ui.missingTitle,
@@ -1440,13 +1382,9 @@ const speakText = async (text: string) => {
       return;
     }
 
-    const SpeechRecognition =
-      window.SpeechRecognition || window.webkitSpeechRecognition;
-
-    if (!SpeechRecognition) {
-      setVoiceSupported(false);
+    if (!voiceSupported) {
       toast({
-        title: "Micrófono no compatible",
+        title: "Error",
         description: ui.micNotSupported,
         variant: "destructive",
       });
@@ -1454,49 +1392,172 @@ const speakText = async (text: string) => {
     }
 
     try {
-      const recognition = new SpeechRecognition();
-      recognition.lang = getRecognitionLang();
-      recognition.interimResults = false;
-      recognition.continuous = false;
-      recognition.maxAlternatives = 1;
+      stopListening();
+      assistantTextBufferRef.current = "";
+      setWaitingSara(true);
 
-      recognition.onstart = () => {
+      const sessionRes = await fetch("/api/realtime-session", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          assistant: "sara",
+        }),
+      });
+
+      const sessionData = await sessionRes.json();
+
+      if (!sessionRes.ok) {
+        throw new Error(sessionData?.error || "Error creando sesión realtime");
+      }
+
+      const ephemeralKey = sessionData?.value || "";
+
+      if (!ephemeralKey) {
+        throw new Error("No llegó value desde realtime-session");
+      }
+
+      const pc = new RTCPeerConnection();
+      realtimePcRef.current = pc;
+
+      const remoteAudio = new Audio();
+      remoteAudio.autoplay = true;
+      currentAudioRef.current = remoteAudio;
+
+      pc.ontrack = (event) => {
+        const [remoteStream] = event.streams;
+        if (remoteStream && currentAudioRef.current) {
+          currentAudioRef.current.srcObject = remoteStream;
+          currentAudioRef.current.play().catch(() => {});
+        }
+      };
+
+      const localStream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        },
+      });
+
+      realtimeLocalStreamRef.current = localStream;
+
+      for (const track of localStream.getTracks()) {
+        pc.addTrack(track, localStream);
+      }
+
+      const dc = pc.createDataChannel("oai-events");
+      realtimeDcRef.current = dc;
+
+      dc.onopen = () => {
         setIsListening(true);
+        setWaitingSara(false);
+
+        dc.send(
+          JSON.stringify({
+            type: "response.create",
+            response: {
+              modalities: ["audio", "text"],
+              instructions: voiceTexts.realtimeIntro(
+                selectedTramiteLabel,
+                formData
+              ),
+            },
+          })
+        );
       };
 
-      recognition.onend = () => {
-        setIsListening(false);
+      dc.onmessage = (event) => {
+        try {
+          const msg = JSON.parse(event.data);
+
+          const userTranscript =
+            msg?.transcript ||
+            msg?.item?.transcript ||
+            msg?.item?.content?.[0]?.transcript ||
+            "";
+
+          if (
+            (msg.type === "conversation.item.input_audio_transcription.completed" ||
+              msg.type === "input_audio_buffer.transcription.completed") &&
+            typeof userTranscript === "string" &&
+            userTranscript.trim()
+          ) {
+            const transcript = userTranscript.trim();
+
+            if (transcript !== lastUserTranscriptRef.current) {
+              lastUserTranscriptRef.current = transcript;
+              setLastUserTranscript(transcript);
+              pushUserMessage(transcript);
+            }
+          }
+
+          if (
+            msg.type === "response.output_text.delta" &&
+            typeof msg.delta === "string"
+          ) {
+            assistantTextBufferRef.current += msg.delta;
+          }
+
+          if (
+            msg.type === "response.output_text.done" &&
+            typeof msg.text === "string" &&
+            msg.text.trim()
+          ) {
+            assistantTextBufferRef.current = msg.text.trim();
+            finalizeAssistantBuffer();
+          }
+
+          if (msg.type === "response.done") {
+            finalizeAssistantBuffer();
+            setWaitingSara(false);
+          }
+
+          if (msg.type === "response.created") {
+            setWaitingSara(true);
+          }
+        } catch (err) {
+          console.error("Realtime Sara parse error:", err);
+        }
       };
 
-      recognition.onerror = () => {
-        setIsListening(false);
-
-        toast({
-          title: "Error de micrófono",
-          description:
-            lang === "darija"
-              ? "وقع مشكل فالمايكروفون، عاود حاول."
-              : lang === "en"
-              ? "There was a microphone error. Please try again."
-              : "Hubo un error con el micrófono. Inténtalo otra vez.",
-          variant: "destructive",
-        });
+      dc.onerror = (err) => {
+        console.error("Realtime Sara data channel error:", err);
       };
 
-      recognition.onresult = async (event: any) => {
-        const transcript =
-          event?.results?.[0]?.[0]?.transcript?.trim?.() || "";
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
 
-        if (!transcript) return;
+      const sdpRes = await fetch("https://api.openai.com/v1/realtime/calls", {
+        method: "POST",
+        body: offer.sdp,
+        headers: {
+          Authorization: `Bearer ${ephemeralKey}`,
+          "Content-Type": "application/sdp",
+        },
+      });
 
-        await handleVoiceConversation(transcript);
-      };
+      if (!sdpRes.ok) {
+        const errText = await sdpRes.text();
+        throw new Error(errText || "Error negociando WebRTC con OpenAI");
+      }
 
-      recognitionRef.current = recognition;
-      recognition.start();
-    } catch (error) {
-      console.error("Error iniciando reconocimiento Sara:", error);
-      setIsListening(false);
+      const answerSdp = await sdpRes.text();
+
+      await pc.setRemoteDescription({
+        type: "answer",
+        sdp: answerSdp,
+      });
+    } catch (error: any) {
+      console.error("Error iniciando realtime Sara:", error);
+      stopListening();
+
+      toast({
+        title: "Error realtime",
+        description: error?.message || voiceTexts.realtimeError,
+        variant: "destructive",
+      });
     }
   };
 
@@ -1511,14 +1572,7 @@ const speakText = async (text: string) => {
           setAppointmentData(data);
           setStep(2);
 
-          const foundMsg =
-            lang === "darija"
-              ? "مزيان. لقينا ليك موعد. دابا أكد الموعد باش نكملو ونصيفطو ليك PDF النهائي."
-              : lang === "en"
-              ? "Perfect. We found an appointment for you. Now confirm it so we can continue and send you the final PDF."
-              : "Perfecto. Hemos encontrado una cita para ti. Ahora confírmala para continuar y enviarte el PDF final.";
-
-          pushAgentMessage(foundMsg, true);
+          pushAgentMessage(voiceTexts.foundMsg, true);
 
           toast({
             title: ui.foundSuccessTitle,
@@ -1542,14 +1596,7 @@ const speakText = async (text: string) => {
   const handleConfirm = () => {
     setConfirmed(true);
 
-    const confirmMsg =
-      lang === "darija"
-        ? "مزيان. تم تأكيد الموعد ديالك. غادي توصلك التفاصيل وPDF عبر واتساب."
-        : lang === "en"
-        ? "Perfect. Your appointment has been confirmed. You will receive the details and the PDF on WhatsApp."
-        : "Perfecto. Tu cita ha quedado confirmada. Te llegará el detalle y el PDF por WhatsApp.";
-
-    pushAgentMessage(confirmMsg, true);
+    pushAgentMessage(voiceTexts.confirmMsg, true);
 
     toast({
       title: ui.confirmSuccessTitle,
@@ -1582,7 +1629,7 @@ const speakText = async (text: string) => {
 
   const latestAgentMessage =
     [...voiceHistory].reverse().find((msg) => msg.from === "agent")?.text ||
-    ui.initialVoice;
+    voiceTexts.initialVoice;
 
   return (
     <div className="min-h-screen bg-background text-foreground relative flex flex-col">
@@ -1626,9 +1673,7 @@ const speakText = async (text: string) => {
 
               <div className="absolute top-3 left-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/60 border border-white/10 backdrop-blur-md">
                 <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                <span className="text-xs font-medium text-white">
-                  {ui.online}
-                </span>
+                <span className="text-xs font-medium text-white">{ui.online}</span>
               </div>
 
               <div className="absolute top-3 right-3 flex items-center gap-2">
@@ -1667,12 +1712,8 @@ const speakText = async (text: string) => {
               )}
 
               <div className="absolute bottom-14 right-3 text-right">
-                <p className="text-white font-bold text-sm drop-shadow-lg">
-                  Sara
-                </p>
-                <p className="text-white/70 text-xs drop-shadow-lg">
-                  {ui.agentRole}
-                </p>
+                <p className="text-white font-bold text-sm drop-shadow-lg">Sara</p>
+                <p className="text-white/70 text-xs drop-shadow-lg">{ui.agentRole}</p>
               </div>
 
               <div className="absolute bottom-3 left-0 right-0 flex items-center justify-center">
@@ -2005,9 +2046,7 @@ const speakText = async (text: string) => {
                           : "✗"}
                       </span>
 
-                      <span className="text-sm text-white/90">
-                        {doc.nombre}
-                      </span>
+                      <span className="text-sm text-white/90">{doc.nombre}</span>
 
                       <span
                         className={`ml-auto text-[10px] font-semibold px-2 py-0.5 rounded-full ${
@@ -2075,12 +2114,8 @@ const speakText = async (text: string) => {
                       </div>
 
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs font-bold text-primary">
-                          {form.codigo}
-                        </p>
-                        <p className="text-sm text-white/80 truncate">
-                          {form.nombre}
-                        </p>
+                        <p className="text-xs font-bold text-primary">{form.codigo}</p>
+                        <p className="text-sm text-white/80 truncate">{form.nombre}</p>
                       </div>
 
                       <span className="text-[10px] font-semibold text-white/40 group-hover:text-primary transition-colors shrink-0">
