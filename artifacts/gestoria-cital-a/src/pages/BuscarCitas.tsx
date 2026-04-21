@@ -1333,21 +1333,28 @@ export default function BuscarCitas() {
       const pc = new RTCPeerConnection();
       realtimePcRef.current = pc;
 
-  pc.ontrack = (event) => {
+pc.ontrack = (event) => {
+  console.log("SARA ontrack OK", event.streams);
+
   const [remoteStream] = event.streams;
 
   if (remoteStream && remoteAudioRef.current) {
     remoteAudioRef.current.srcObject = remoteStream;
     remoteAudioRef.current.autoplay = true;
+    remoteAudioRef.current.playsInline = true;
     remoteAudioRef.current.muted = false;
     remoteAudioRef.current.volume = 1;
 
-    const playPromise = remoteAudioRef.current.play();
-    if (playPromise) {
-      playPromise.catch((err) => {
-        console.error("Error reproduciendo audio remoto Sara:", err);
+    remoteAudioRef.current
+      .play()
+      .then(() => {
+        console.log("SARA audio.play OK");
+      })
+      .catch((err) => {
+        console.error("SARA audio.play ERROR", err);
       });
-    }
+  } else {
+    console.error("SARA remote stream o audio ref missing");
   }
 };
 
@@ -1369,6 +1376,7 @@ export default function BuscarCitas() {
       realtimeDcRef.current = dc;
 
 dc.onopen = () => {
+  console.log("SARA dc.onopen OK");
   setIsListening(true);
   setWaitingSara(true);
 
