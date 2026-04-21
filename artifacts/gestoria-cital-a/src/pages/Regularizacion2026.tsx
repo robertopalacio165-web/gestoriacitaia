@@ -135,27 +135,25 @@ export default function Regularizacion2026() {
         "مزيان. توصلت بالهوية ديالك وبانت مزيان. دابا نكملو الخطوة اللي من بعدها.",
       mohamedFinal:
         "مزيان. كلشي واجد ومراجع. دابا غادي نبعثو ليك الملف ديالك فـ PDF عبر WhatsApp.",
-      realtimeIntro:
-        [
-          "جاوب ديما غير بالدارجة المغربية وبالحروف العربية.",
-          "أنت محمد من GestoriaCitaIA.",
-          "أنت خبير فالتسوية الجماعية 2026 وملفات extranjería فإسبانيا.",
-          `الإجراء الحالي هو: ${currentProcedure.name}.`,
-          `المعطيات اللي عندك دابا: الاسم ${leadForm.nombre || "ما متسجلش"}, الهاتف ${
-            leadForm.telefono || "ما متسجلش"
-          }, الهوية ${leadForm.niePasaporte || "ما متسجلش"}, المدينة ${
-            leadForm.ciudad || "ما متسجلش"
-          }, الجنسية ${leadForm.nacionalidad || "ما متسجلش"}, تاريخ الدخول ${
-            leadForm.fechaLlegada || "ما متسجلش"
-          }, 5 شهور ${leadForm.cumple5Meses || "ما متسجلش"}, asilo ${
-            leadForm.asilo || "ما متسجلش"
-          }, السوابق ${leadForm.penales || "ما متسجلش"}.`,
-          "ابدأ دابا مباشرة بجواب طبيعي وقصير، وعرف براسك باختصار، ومن بعد سول غير السؤال الجاي المناسب باش تكمل الملف.",
-          "سول سؤال واحد فقط فكل مرة.",
-          "ركز على هاد الترتيب: واش داخل إسبانيا، واش عندو حضور قبل 1 يناير 2026، واش عندو 5 شهور متواصلة، واش عندو padrón historique، واش عندو بروفات ديال 5 شهور، واش عندو asilo، واش عندو ولاد، واش محتاج vulnerabilidad.",
-        ].join(" "),
-      realtimeError:
-        "وقع مشكل فالاتصال المباشر مع محمد. عاود حاول من بعد.",
+      realtimeIntro: [
+        "جاوب ديما غير بالدارجة المغربية وبالحروف العربية.",
+        "أنت محمد من GestoriaCitaIA.",
+        "أنت خبير فالتسوية الجماعية 2026 وملفات extranjería فإسبانيا.",
+        `الإجراء الحالي هو: ${currentProcedure.name}.`,
+        `المعطيات اللي عندك دابا: الاسم ${leadForm.nombre || "ما متسجلش"}, الهاتف ${
+          leadForm.telefono || "ما متسجلش"
+        }, الهوية ${leadForm.niePasaporte || "ما متسجلش"}, المدينة ${
+          leadForm.ciudad || "ما متسجلش"
+        }, الجنسية ${leadForm.nacionalidad || "ما متسجلش"}, تاريخ الدخول ${
+          leadForm.fechaLlegada || "ما متسجلش"
+        }, 5 شهور ${leadForm.cumple5Meses || "ما متسجلش"}, asilo ${
+          leadForm.asilo || "ما متسجلش"
+        }, السوابق ${leadForm.penales || "ما متسجلش"}.`,
+        "ابدأ دابا مباشرة بجواب طبيعي وقصير، وعرف براسك باختصار، ومن بعد سول غير السؤال الجاي المناسب باش تكمل الملف.",
+        "سول سؤال واحد فقط فكل مرة.",
+        "ركز على هاد الترتيب: واش داخل إسبانيا، واش عندو حضور قبل 1 يناير 2026، واش عندو 5 شهور متواصلة، واش عندو padrón historique، واش عندو بروفات ديال 5 شهور، واش عندو asilo، واش عندو ولاد، واش محتاج vulnerabilidad.",
+      ].join(" "),
+      realtimeError: "وقع مشكل فالاتصال المباشر مع محمد. عاود حاول من بعد.",
       uploadUnknown:
         "توصلت بالوثيقة، ولكن مازال خاصني نربطها مزيان بالملف. صيفط ليا أولاً بروفات ديال 5 شهور، ومن بعد الباسبور ولا NIE بواضح.",
       uploadWarn:
@@ -257,7 +255,8 @@ export default function Regularizacion2026() {
         docStepIdentity: "Passport or NIE",
         docStepFinal: "Final file ready",
         goSara: "Go to Sara",
-        goSaraDesc: "If you want to continue with the appointment, Sara will help you.",
+        goSaraDesc:
+          "If you want to continue with the appointment, Sara will help you.",
         labels: {
           nombre: "Full name",
           telefono: "Phone",
@@ -447,7 +446,12 @@ export default function Regularizacion2026() {
         },
       ]);
     }
-  }, [historyStorageKey, voiceTexts.initialVoice, voiceTexts.mohamedFinal, voiceTexts.savedLeadReply]);
+  }, [
+    historyStorageKey,
+    voiceTexts.initialVoice,
+    voiceTexts.mohamedFinal,
+    voiceTexts.savedLeadReply,
+  ]);
 
   useEffect(() => {
     if (voiceHistory.length === 0) return;
@@ -559,25 +563,7 @@ export default function Regularizacion2026() {
     }));
   };
 
-  const speakLocalText = (text: string) => {
-    if (muted) return;
-    if (!("speechSynthesis" in window)) return;
-    if (!text?.trim()) return;
-
-    try {
-      window.speechSynthesis.cancel();
-
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = "ar-MA";
-      utterance.rate = 0.95;
-      utterance.pitch = 1;
-      window.speechSynthesis.speak(utterance);
-    } catch (error) {
-      console.error("Error reproduciendo voz local:", error);
-    }
-  };
-
-  const pushAgentMessage = (text: string, speak = false) => {
+  const pushAgentMessage = (text: string, _speak = false) => {
     if (!text?.trim()) return;
 
     setVoiceHistory((prev) => [
@@ -590,21 +576,6 @@ export default function Regularizacion2026() {
     ]);
 
     lastAssistantTextRef.current = text;
-
-    const pushAgentMessage = (text: string, _speak = false) => {
-  if (!text?.trim()) return;
-
-  setVoiceHistory((prev) => [
-    ...prev,
-    {
-      from: "agent",
-      text,
-      ts: Date.now(),
-    },
-  ]);
-
-  lastAssistantTextRef.current = text;
-};
   };
 
   const pushUserMessage = (text: string) => {
@@ -619,31 +590,30 @@ export default function Regularizacion2026() {
       },
     ]);
   };
-const sendRealtimeSystemUpdate = (text: string) => {
-  try {
-    if (!realtimeDcRef.current) return;
-    if (realtimeDcRef.current.readyState !== "open") return;
 
-    realtimeDcRef.current.send(
-      JSON.stringify({
-        type: "response.create",
-        response: {
-          modalities: ["audio", "text"],
-          instructions: [
-            voiceTexts.realtimeIntro,
-            "هادشي تحديث جديد على الملف ديال العميل، خاصك تعتمد عليه فجوابك الجاي:",
-            text,
-            "جاوب دابا باختصار وبالدارجة المغربية وبالحروف العربية، وقل للعميل شنو الخطوة الجاية بالضبط.",
-          ].join(" "),
-        },
-      })
-    );
-  } catch (error) {
-    console.error("Error enviando actualización realtime:", error);
-  }
-};
-  useEffect(() => {
+  const sendRealtimeSystemUpdate = (text: string) => {
+    try {
+      if (!realtimeDcRef.current) return;
+      if (realtimeDcRef.current.readyState !== "open") return;
 
+      realtimeDcRef.current.send(
+        JSON.stringify({
+          type: "response.create",
+          response: {
+            modalities: ["audio", "text"],
+            instructions: [
+              voiceTexts.realtimeIntro,
+              "هادشي تحديث جديد على الملف ديال العميل، خاصك تعتمد عليه فجوابك الجاي:",
+              text,
+              "جاوب دابا باختصار وبالدارجة المغربية وبالحروف العربية، وقل للعميل شنو الخطوة الجاية بالضبط.",
+            ].join(" "),
+          },
+        })
+      );
+    } catch (error) {
+      console.error("Error enviando actualización realtime:", error);
+    }
+  };
 
   const handleSaveLeadForm = () => {
     if (!leadFormReady) {
@@ -662,8 +632,8 @@ const sendRealtimeSystemUpdate = (text: string) => {
     );
 
     if (!alreadyExists) {
-  pushAgentMessage(voiceTexts.savedLeadReply, false);
-}
+      pushAgentMessage(voiceTexts.savedLeadReply, false);
+    }
 
     toast({
       title: ui.saveLeadTitle,
@@ -711,7 +681,7 @@ const sendRealtimeSystemUpdate = (text: string) => {
 
   const startListening = async () => {
     if (!leadSaved) {
-      pushAgentMessage(voiceTexts.voiceBlocked, true);
+      pushAgentMessage(voiceTexts.voiceBlocked, false);
 
       toast({
         title: ui.missingTitle,
@@ -752,9 +722,9 @@ const sendRealtimeSystemUpdate = (text: string) => {
       }
 
       const ephemeralKey = sessionData?.value || "";
-      
+
       if (!ephemeralKey) {
-        throw new Error("No llegó client_secret desde realtime-session");
+        throw new Error("No llegó value desde realtime-session");
       }
 
       const pc = new RTCPeerConnection();
@@ -789,30 +759,27 @@ const sendRealtimeSystemUpdate = (text: string) => {
       const dc = pc.createDataChannel("oai-events");
       realtimeDcRef.current = dc;
 
-dc.onopen = () => {
-  setIsListening(true);
-  setWaitingMohamed(false);
+      dc.onopen = () => {
+        setIsListening(true);
+        setWaitingMohamed(false);
 
-  const firstPrompt = [
-    "رحب دابا بالعميل بالدارجة المغربية.",
-    "قول ليه: السلام، مرحبا بيك فـ GestoriaCitaIA.",
-    "إلى بغيتي نصيبو ليك الملف ديال التسوية الجماعية، عمر ليا الفورمولار الأول ومن بعد نكمل معاك.",
-    "خلي الجواب قصير، طبيعي، وبشري.",
-  ].join(" ");
+        const firstPrompt = [
+          "رحب دابا بالعميل بالدارجة المغربية.",
+          "قول ليه: السلام، مرحبا بيك فـ GestoriaCitaIA.",
+          "إلى بغيتي نصيبو ليك الملف ديال التسوية الجماعية، عمر ليا الفورمولار الأول ومن بعد نكمل معاك.",
+          "خلي الجواب قصير، طبيعي، وبشري.",
+        ].join(" ");
 
-  dc.send(
-    JSON.stringify({
-      type: "response.create",
-      response: {
-        modalities: ["audio", "text"],
-        instructions: [
-          voiceTexts.realtimeIntro,
-          firstPrompt,
-        ].join(" "),
-      },
-    })
-  );
-};
+        dc.send(
+          JSON.stringify({
+            type: "response.create",
+            response: {
+              modalities: ["audio", "text"],
+              instructions: [voiceTexts.realtimeIntro, firstPrompt].join(" "),
+            },
+          })
+        );
+      };
 
       dc.onmessage = (event) => {
         try {
@@ -855,14 +822,14 @@ dc.onopen = () => {
             finalizeAssistantBuffer();
           }
 
-       if (msg.type === "response.done") {
-  finalizeAssistantBuffer();
-  setWaitingMohamed(false);
-}
+          if (msg.type === "response.done") {
+            finalizeAssistantBuffer();
+            setWaitingMohamed(false);
+          }
 
-if (msg.type === "response.created") {
-  setWaitingMohamed(true);
-}
+          if (msg.type === "response.created") {
+            setWaitingMohamed(true);
+          }
         } catch (err) {
           console.error("Realtime event parse error:", err);
         }
@@ -875,19 +842,14 @@ if (msg.type === "response.created") {
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
 
-      const model = "gpt-realtime";
-
-     const sdpRes = await fetch(
-  "https://api.openai.com/v1/realtime/calls",
-  {
-    method: "POST",
-    body: offer.sdp,
-    headers: {
-      Authorization: `Bearer ${ephemeralKey}`,
-      "Content-Type": "application/sdp",
-    },
-  }
-);
+      const sdpRes = await fetch("https://api.openai.com/v1/realtime/calls", {
+        method: "POST",
+        body: offer.sdp,
+        headers: {
+          Authorization: `Bearer ${ephemeralKey}`,
+          "Content-Type": "application/sdp",
+        },
+      });
 
       if (!sdpRes.ok) {
         const errText = await sdpRes.text();
@@ -1081,9 +1043,7 @@ if (msg.type === "response.created") {
       if (criminalDoc) return criminalDoc;
     }
 
-    if (
-      includesAny(["formulario", "official form", "solicitud", "modelo ex"])
-    ) {
+    if (includesAny(["formulario", "official form", "solicitud", "modelo ex"])) {
       const formDoc =
         currentDocs.find(
           (doc) =>
@@ -1182,173 +1142,175 @@ if (msg.type === "response.created") {
       nextIdentityDocs.some((doc) => doc.estado === "ok");
 
     if (readyNow && !completionMessageSent) {
-      pushAgentMessage(voiceTexts.mohamedFinal, true);
+      pushAgentMessage(voiceTexts.mohamedFinal, false);
       setCompletionMessageSent(true);
     }
   };
 
   const handleGeneralUpload = async () => {
-  if (!leadSaved) {
-    pushAgentMessage(voiceTexts.voiceBlocked, true);
+    if (!leadSaved) {
+      pushAgentMessage(voiceTexts.voiceBlocked, false);
 
-    toast({
-      title: ui.missingTitle,
-      description: ui.missingDesc,
-      variant: "destructive",
-    });
-    return;
-  }
+      toast({
+        title: ui.missingTitle,
+        description: ui.missingDesc,
+        variant: "destructive",
+      });
+      return;
+    }
 
-  try {
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = "image/*,application/pdf";
-    input.multiple = true;
+    try {
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = "image/*,application/pdf";
+      input.multiple = true;
 
-    input.onchange = async () => {
-      const files = Array.from(input.files || []);
-      if (!files.length) return;
+      input.onchange = async () => {
+        const files = Array.from(input.files || []);
+        if (!files.length) return;
 
-      setGeneralUploading(true);
+        setGeneralUploading(true);
 
-      try {
-        for (const file of files) {
-          try {
-            const currentDocs = [...docs];
+        try {
+          for (const file of files) {
+            try {
+              const currentDocs = [...docs];
 
-            const result = await verifyDocument({
-              file,
-              expectedDocumentType: "auto",
-              lang: "darija",
-            });
+              const result = await verifyDocument({
+                file,
+                expectedDocumentType: "auto",
+                lang: "darija",
+              });
 
-            const matchedDoc = getBestDocMatch(
-              result as VerifyDocumentResult,
-              currentDocs,
-              file.name
-            );
+              const matchedDoc = getBestDocMatch(
+                result as VerifyDocumentResult,
+                currentDocs,
+                file.name
+              );
 
-            if (!matchedDoc) {
-              pushAgentMessage(voiceTexts.uploadUnknown, true);
+              if (!matchedDoc) {
+                pushAgentMessage(voiceTexts.uploadUnknown, false);
+
+                sendRealtimeSystemUpdate(
+                  [
+                    `توصلنا بوثيقة سميتها: ${file.name}.`,
+                    `النوع المتشاف: ${result.document_type || "غير واضح"}.`,
+                    `الخلاصة: ${result.summary || "ما كايناش خلاصة واضحة"}.`,
+                    "الوثيقة ما تقدرش ترتابط دابا مع حتى خانة واضحة فالملف.",
+                    "قول للعميل شنو خاصو يصيفط من بعد بشكل واضح.",
+                  ].join(" ")
+                );
+
+                toast({
+                  title: ui.uploadErrorTitle,
+                  description: result.summary || ui.uploadErrorDesc,
+                  variant: "destructive",
+                });
+
+                continue;
+              }
+
+              const isWarn =
+                result.status === "invalid" ||
+                result.match_expected_type === false;
+
+              const nextStatus: DocStatus = isWarn ? "warn" : "ok";
+
+              const updatedDocs = currentDocs.map((doc) =>
+                doc.id === matchedDoc.id
+                  ? {
+                      ...doc,
+                      estado: nextStatus,
+                      archivo: file.name,
+                      kb: `${Math.round(file.size / 1024)} KB`,
+                      detectedType: result.document_type || "",
+                      note: result.summary || "",
+                    }
+                  : doc
+              );
+
+              setDocs(updatedDocs);
+
+              const matchedName = matchedDoc.nombre.toLowerCase();
+
+              let localReply = voiceTexts.uploadOk;
+
+              if (isWarn) {
+                localReply = voiceTexts.uploadWarn;
+                pushAgentMessage(localReply, false);
+              } else if (
+                matchedName.includes("pasaporte") ||
+                matchedName.includes("nie") ||
+                matchedName.includes("passport")
+              ) {
+                localReply = voiceTexts.passportVerified;
+                pushAgentMessage(localReply, false);
+              } else {
+                pushAgentMessage(localReply, false);
+              }
+
+              const progressSummary = updatedDocs
+                .map((doc) => `${doc.nombre}: ${doc.estado}`)
+                .join(" | ");
 
               sendRealtimeSystemUpdate(
                 [
-                  `توصلنا بوثيقة سميتها: ${file.name}.`,
+                  `توصلنا بوثيقة جديدة من العميل.`,
+                  `اسم الوثيقة: ${file.name}.`,
+                  `ترابطات مع هاد الخانة: ${matchedDoc.nombre}.`,
                   `النوع المتشاف: ${result.document_type || "غير واضح"}.`,
-                  `الخلاصة: ${result.summary || "ما كايناش خلاصة واضحة"}.`,
-                  "الوثيقة ما تقدرش ترتابط دابا مع حتى خانة واضحة فالملف.",
-                  "قول للعميل شنو خاصو يصيفط من بعد بشكل واضح.",
+                  `الحالة: ${nextStatus === "ok" ? "مقبولة مزيان" : "خاصها مراجعة"}.`,
+                  `الخلاصة ديال الفحص: ${result.summary || "ما كايناش خلاصة مفصلة"}.`,
+                  `واش كتصلح للتسوية 2026: ${
+                    result.usable_for_regularizacion_2026
+                      ? "نعم"
+                      : "لا أو مازال غير واضح"
+                  }.`,
+                  `الملف دابا فيه هاد الحالة: ${progressSummary}.`,
+                  "اعتمد على هاد المعلومات وجاوب العميل على الوثيقة اللي صيفط، وقول ليه شنو الخطوة الجاية.",
                 ].join(" ")
               );
 
               toast({
+                title: ui.uploadSuccessTitle,
+                description: result.summary || ui.uploadSuccessDesc,
+              });
+
+              maybeSendCompletionMessage(updatedDocs);
+            } catch (err: any) {
+              console.error(err);
+
+              toast({
                 title: ui.uploadErrorTitle,
-                description: result.summary || ui.uploadErrorDesc,
+                description: err?.message || ui.uploadErrorDesc,
                 variant: "destructive",
               });
 
-              continue;
+              sendRealtimeSystemUpdate(
+                [
+                  `وقع مشكل فقراءة الوثيقة اللي سميتها ${file.name}.`,
+                  `التفاصيل: ${err?.message || "خطأ غير معروف"}.`,
+                  "قول للعميل يعاود يصيفط الوثيقة بشكل أوضح أو بصيغة أخرى.",
+                ].join(" ")
+              );
             }
-
-            const isWarn =
-              result.status === "invalid" ||
-              result.match_expected_type === false;
-
-            const nextStatus: DocStatus = isWarn ? "warn" : "ok";
-
-            const updatedDocs = currentDocs.map((doc) =>
-              doc.id === matchedDoc.id
-                ? {
-                    ...doc,
-                    estado: nextStatus,
-                    archivo: file.name,
-                    kb: `${Math.round(file.size / 1024)} KB`,
-                    detectedType: result.document_type || "",
-                    note: result.summary || "",
-                  }
-                : doc
-            );
-
-            setDocs(updatedDocs);
-
-            const matchedName = matchedDoc.nombre.toLowerCase();
-
-            let localReply = voiceTexts.uploadOk;
-
-            if (isWarn) {
-              localReply = voiceTexts.uploadWarn;
-              pushAgentMessage(localReply, true);
-            } else if (
-              matchedName.includes("pasaporte") ||
-              matchedName.includes("nie") ||
-              matchedName.includes("passport")
-            ) {
-              localReply = voiceTexts.passportVerified;
-              pushAgentMessage(localReply, true);
-            } else {
-              pushAgentMessage(localReply, true);
-            }
-
-            const progressSummary = updatedDocs
-              .map((doc) => `${doc.nombre}: ${doc.estado}`)
-              .join(" | ");
-
-            sendRealtimeSystemUpdate(
-              [
-                `توصلنا بوثيقة جديدة من العميل.`,
-                `اسم الوثيقة: ${file.name}.`,
-                `ترابطات مع هاد الخانة: ${matchedDoc.nombre}.`,
-                `النوع المتشاف: ${result.document_type || "غير واضح"}.`,
-                `الحالة: ${nextStatus === "ok" ? "مقبولة مزيان" : "خاصها مراجعة"}.`,
-                `الخلاصة ديال الفحص: ${result.summary || "ما كايناش خلاصة مفصلة"}.`,
-                `واش كتصلح للتسوية 2026: ${
-                  result.usable_for_regularizacion_2026 ? "نعم" : "لا أو مازال غير واضح"
-                }.`,
-                `الملف دابا فيه هاد الحالة: ${progressSummary}.`,
-                "اعتمد على هاد المعلومات وجاوب العميل على الوثيقة اللي صيفط، وقول ليه شنو الخطوة الجاية.",
-              ].join(" ")
-            );
-
-            toast({
-              title: ui.uploadSuccessTitle,
-              description: result.summary || ui.uploadSuccessDesc,
-            });
-
-            maybeSendCompletionMessage(updatedDocs);
-          } catch (err: any) {
-            console.error(err);
-
-            toast({
-              title: ui.uploadErrorTitle,
-              description: err?.message || ui.uploadErrorDesc,
-              variant: "destructive",
-            });
-
-            sendRealtimeSystemUpdate(
-              [
-                `وقع مشكل فقراءة الوثيقة اللي سميتها ${file.name}.`,
-                `التفاصيل: ${err?.message || "خطأ غير معروف"}.`,
-                "قول للعميل يعاود يصيفط الوثيقة بشكل أوضح أو بصيغة أخرى.",
-              ].join(" ")
-            );
           }
+        } finally {
+          setGeneralUploading(false);
         }
-      } finally {
-        setGeneralUploading(false);
-      }
-    };
+      };
 
-    input.click();
-  } catch (error: any) {
-    setGeneralUploading(false);
+      input.click();
+    } catch (error: any) {
+      setGeneralUploading(false);
 
-    toast({
-      title: "Error",
-      description: error?.message || "Error inesperado",
-      variant: "destructive",
-    });
-  }
-};
+      toast({
+        title: "Error",
+        description: error?.message || "Error inesperado",
+        variant: "destructive",
+      });
+    }
+  };
 
   const goToSara = () => {
     window.location.href = "/buscar-citas";
@@ -1574,7 +1536,9 @@ if (msg.type === "response.created") {
               <div className="px-4 py-4 space-y-3 bg-white">
                 <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 mb-3">
                   <div className="flex items-center justify-between mb-2">
-                    <p className="text-sm font-bold text-slate-800">{ui.docStatusTitle}</p>
+                    <p className="text-sm font-bold text-slate-800">
+                      {ui.docStatusTitle}
+                    </p>
                     <span className="text-xs font-bold text-slate-700">
                       {progressOk}/{progressTotal}
                     </span>
