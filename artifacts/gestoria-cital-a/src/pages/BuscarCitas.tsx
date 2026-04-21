@@ -473,7 +473,7 @@ export default function BuscarCitas() {
   const [voiceHistory, setVoiceHistory] = useState<ChatMsg[]>([]);
   const [lastUserTranscript, setLastUserTranscript] = useState("");
 
-  const currentAudioRef = useRef<HTMLAudioElement | null>(null);
+  const remoteAudioRef = useRef<HTMLAudioElement | null>(null);
   const realtimePcRef = useRef<RTCPeerConnection | null>(null);
   const realtimeDcRef = useRef<RTCDataChannel | null>(null);
   const realtimeLocalStreamRef = useRef<MediaStream | null>(null);
@@ -1266,11 +1266,10 @@ export default function BuscarCitas() {
         realtimeLocalStreamRef.current = null;
       }
 
-      if (currentAudioRef.current) {
-        currentAudioRef.current.pause();
-        currentAudioRef.current.srcObject = null;
-        currentAudioRef.current = null;
-      }
+   if (remoteAudioRef.current) {
+  remoteAudioRef.current.pause();
+  remoteAudioRef.current.srcObject = null;
+}
     } catch (error) {
       console.error("Error deteniendo realtime Sara:", error);
     } finally {
@@ -1334,17 +1333,23 @@ export default function BuscarCitas() {
       const pc = new RTCPeerConnection();
       realtimePcRef.current = pc;
 
-      const remoteAudio = new Audio();
-      remoteAudio.autoplay = true;
-      currentAudioRef.current = remoteAudio;
+  pc.ontrack = (event) => {
+  const [remoteStream] = event.streams;
 
-      pc.ontrack = (event) => {
-        const [remoteStream] = event.streams;
-        if (remoteStream && currentAudioRef.current) {
-          currentAudioRef.current.srcObject = remoteStream;
-          currentAudioRef.current.play().catch(() => {});
-        }
-      };
+  if (remoteStream && remoteAudioRef.current) {
+    remoteAudioRef.current.srcObject = remoteStream;
+    remoteAudioRef.current.autoplay = true;
+    remoteAudioRef.current.muted = false;
+    remoteAudioRef.current.volume = 1;
+
+    const playPromise = remoteAudioRef.current.play();
+    if (playPromise) {
+      playPromise.catch((err) => {
+        console.error("Error reproduciendo audio remoto Sara:", err);
+      });
+    }
+  }
+};
 
       const localStream = await navigator.mediaDevices.getUserMedia({
         audio: {
@@ -2092,6 +2097,7 @@ dc.onopen = () => {
             </motion.div>
           )}
         </AnimatePresence>
+        <audio ref={remoteAudioRef} autoPlay playsInline className="hidden" />
       </main>
     </div>
   );
