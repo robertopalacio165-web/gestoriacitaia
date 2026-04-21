@@ -72,8 +72,7 @@ function hasMinimumFormData(leadForm?: LeadFormPayload): boolean {
   return Boolean(
     leadForm?.nombre?.trim() &&
       leadForm?.telefono?.trim() &&
-      leadForm?.ciudad?.trim() &&
-      leadForm?.nacionalidad?.trim()
+      leadForm?.ciudad?.trim()
   );
 }
 
@@ -85,7 +84,7 @@ IDIOMA OBLIGATORIO
 - ممنوع تجاوب بالإسبانية.
 - ممنوع تجاوب بالإنجليزية.
 - ممنوع تخلط اللغات.
-- تقدر تستعمل غير كلمات تقنية قليلة إلا كانت ضرورية بحال: NIE, TIE, PDF, WhatsApp, cita, padrón, pasaporte.
+- تقدر تستعمل غير كلمات تقنية قليلة إلا كانت ضرورية بحال: NIE, TIE, PDF, WhatsApp, cita, padrón, pasaporte, asilo.
 - باقي الجواب كامل خاصو يكون دارجة مغربية حقيقية.
 - ممنوع تكتب الدارجة باللاتيني.
 - ممنوع العربية الفصحى الثقيلة.
@@ -148,7 +147,10 @@ ${getSharedRules(lang)}
 - NIE / pasaporte: ${leadForm?.niePasaporte || "ما متسجلش"}
 - المدينة: ${leadForm?.ciudad || "ما متسجلش"}
 
-قواعد سارة
+الرسالة الأولى ديال سارة إلا كان العميل داخل أول مرة:
+"السلام، مرحبا بيك فـ GestoriaCitaIA. إلا بغيتي نشدو ليك الموعد، عمر ليا الفورمولار الأول، ومن بعد نكمل معاك الهدرة."
+
+القواعد ديال سارة
 - سارة مختصة غير فالمواعيد.
 - إلا كان الفورمولار ناقص، وجهي العميل يعمرو باختصار.
 - إلا كان الفورمولار واجد، ما تعاوديش تطلبي نفس المعطيات.
@@ -163,11 +165,8 @@ ${getSharedRules(lang)}
 قاعدة الفورمولار
 - واش الفورمولار كامل: ${formReady ? "نعم" : "لا"}
 - إلا ما كانش كامل، خاص الجواب ديالك يدفع العميل يعمر الفورمولار.
-- إلا كان كامل، قولي بلي دابا نقدروا نكملو البحث.
-
-أسلوب الجواب إلا كان الفورمولار كامل
-- "مزيان. خديت المعطيات ديالك. دابا غادي نبقاو نقلبو ليك على cita، ومنين تبان غادي نعلموك فـ WhatsApp باش تأكدها."
-- جاوبي بهاد الروح، وباختصار.
+- إلا كان كامل، قولي بهاد المعنى:
+"مزيان. دابا ملي عمرتي الفورمولار، حنا غادي نقلبو ليك على موعد فأقرب وقت، وملي يبان غادي نصيفطو ليك رسالة عبر WhatsApp باش تدخل وتأكد sita ديالك."
 
 العلاقة مع محمد
 - Sara ما كتوجدش الملفات
@@ -219,12 +218,16 @@ ${getSharedRules(lang)}
 المعطيات اللي راه موجودة فالفورمولار
 ${buildLeadFormBlock(leadForm || {})}
 
+الرسالة الأولى ديال محمد إلا كان العميل داخل أول مرة:
+"السلام، مرحبا بيك فـ GestoriaCitaIA. إلا بغيتي نصيبو ليك الميلف ديال التسوية الجماعية، عمر ليا الفورمولار الأول، ومن بعد نكمل معاك. ملي تسالي، ضغط على الميكروفون وغادي نكمل معاك."
+
 قاعدة الفورمولار
 - إلا كانت المعطيات راه موجودة، ما تعاودش تطلبها.
 - استعمل أولاً المعطيات اللي عندك.
 - واش الفورمولار الأدنى كامل: ${formReady ? "نعم" : "لا"}
 - إلا كان ناقص، ذكر هادشي باختصار.
 - ما تديرش interrogatorio.
+- منين يعمر العميل الفورمولار، بدا تجمع المعلومات الناقصة خطوة بخطوة.
 
 طريقة الخدمة
 - العميل كيعمر الفورمولار ومن بعد كيهضر معاك بالصوت.
@@ -242,15 +245,26 @@ ${buildLeadFormBlock(leadForm || {})}
 - يعاون فالفورمولار ولا الرسوم إلا كانو داخلين فالمسار
 - يشرح الخطوة الجاية ببساطة
 
-فـ regularización 2026 تبع هاد الترتيب
-1. تأكد واش العميل داخل إسبانيا
+فـ regularización extraordinaria 2026 تبع هاد الترتيب الإجباري
+1. تأكد واش العميل كاين داخل إسبانيا دابا
 2. تأكد من الهوية: pasaporte ولا document équivalent
-3. شوف واش عندو base ديال الوجود فإسبانيا
-4. شوف واش عندو padrón historique كافي
-5. إلا ما كانش كافي، طلب بروفات ديال 5 شهور
-6. شوف واش كاين asilo ولا denegación ولا expediente pendiente ولا أولاد صغار
-7. شوف واش محتاج vulnerabilidad
-8. قل ليه شنو الوثيقة الجاية بالضبط
+3. سولو واش كان فإسبانيا قبل 1 يناير 2026
+4. سولو واش عندو حضور متواصل على الأقل 5 شهور حتى لنهار التقديم
+5. شوف واش عندو padrón historique كافي
+6. إلا ما كانش كافي، طلب بروفات ديال 5 شهور
+7. سولو على antecedentes penales
+8. سولو واش عندو asilo، denegación، expediente pendiente، ولا solicitud de protección internacional قبل 1 يناير 2026
+9. سولو واش عندو أولاد صغار
+10. شوف واش محتاج vulnerabilidad
+11. من بعد قل ليه شنو الوثيقة الجاية بالضبط
+
+المعرفة القانونية اللي خاصك تتبع
+- العملية extraordinary 2026 موجهة لناس اللي كانو فإسبانيا قبل 1 يناير 2026
+- وخاصهم يثبتو بقاو على الأقل 5 شهور بشكل متواصل وقت التقديم
+- وخاص ما يكونش عندهم antecedentes penales
+- وكاينة طريق خاصة لناس اللي دارو solicitud de protección internacional قبل 1 يناير 2026
+- ما تقولش أي شرط آخر على أنه رسمي إلا إلا كان ثابت فالمصادر اللي عطاك النظام
+- إذا ما كنتيش متأكد من شي نقطة، قول: "هاد النقطة خاصني نراجعها مزيان فالمصدر"
 
 قواعد مهمة
 - إلا كان padrón historique كافي، قولها بوضوح.
@@ -677,17 +691,7 @@ export default async function handler(req: any, res: any) {
       });
     }
 
-    const reply =
-      extractResponseText(data) ||
-      "سمح ليا، عاود عافاك.";
-
-    if (!reply) {
-      console.error("EMPTY RESPONSE DATA:", JSON.stringify(data, null, 2));
-      return res.status(500).json({
-        error: "La IA no devolvió respuesta",
-        details: data || null,
-      });
-    }
+    const reply = extractResponseText(data) || "سمح ليا، عاود عافاك.";
 
     const extractedLead = extractLeadFromConversation({
       message,
@@ -732,74 +736,6 @@ export default async function handler(req: any, res: any) {
           message
         );
 
-      const mentionsPadron =
-        /padron|padrón|empadronamiento|historico|histórico/i.test(message) ||
-        /padron|padrón|empadronamiento|historico|histórico/i.test(
-          history.map((h) => h.text).join(" ")
-        );
-
-      const mentionsProofs =
-        /prueba|pruebas|cinco meses|5 meses|justificante|justificantes|presencia/i.test(
-          message
-        ) ||
-        /prueba|pruebas|cinco meses|5 meses|justificante|justificantes|presencia/i.test(
-          history.map((h) => h.text).join(" ")
-        );
-
-      const mentionsVulnerability =
-        /vulnerabilidad|vulnerable|informe social|documento de vulnerabilidad/i.test(
-          message
-        ) ||
-        /vulnerabilidad|vulnerable|informe social|documento de vulnerabilidad/i.test(
-          history.map((h) => h.text).join(" ")
-        );
-
-      const mentionsAsilo =
-        /asilo|denegacion|denegación|expediente pendiente|refugio/i.test(
-          message
-        ) ||
-        /asilo|denegacion|denegación|expediente pendiente|refugio/i.test(
-          history.map((h) => h.text).join(" ")
-        );
-
-      const mentionsChildren =
-        /hijo|hijos|menor|menores|niño|niños|niña|niñas/i.test(message) ||
-        /hijo|hijos|menor|menores|niño|niños|niña|niñas/i.test(
-          history.map((h) => h.text).join(" ")
-        );
-
-      const proofsSummary =
-        leadForm?.cumple5Meses && leadForm.cumple5Meses !== "no"
-          ? "العميل كايقول بلي عندو base ديال بروفات 5 شهور."
-          : mentionsProofs
-          ? "العميل ذكر بروفات ديال الحضور ولا 5 شهور."
-          : "باقي ما تبانش base واضحة ديال بروفات 5 شهور.";
-
-      const identitySummary =
-        leadForm?.niePasaporte || extractedLead.nie || extractedLead.passport_number
-          ? "الهوية متسجلة فالملف وباقي ولا دازت المراجعة ديالها."
-          : "باقي ما كايناش هوية واضحة فالملف.";
-
-      const padronSummary = mentionsPadron
-        ? "العميل ذكر padrón ولا padrón historique."
-        : "باقي ما ذكرش padrón historique بوضوح.";
-
-      const vulnerabilitySummary = mentionsVulnerability
-        ? "كاين mention ديال vulnerabilidad."
-        : "باقي ما كايناش mention واضحة ديال vulnerabilidad.";
-
-      const asiloSummary = mentionsAsilo
-        ? "كاين mention ديال asilo ولا denegación ولا expediente."
-        : "باقي ما كايناش mention واضحة ديال asilo.";
-
-      const childrenSummary = mentionsChildren
-        ? "العميل ذكر أولاد صغار ولا menores."
-        : "باقي ما كايناش mention واضحة ديال الأولاد الصغار.";
-
-      const caseSummary = expedienteReady
-        ? "العميل كايقول الملف واجد وموجد باش يتصاوب PDF ويتصيفط فـ WhatsApp."
-        : "الملف باقي فالمراجعة والتجهيز.";
-
       makeResult = await postToMakeWebhook(process.env.MAKE_WEBHOOK_MOHAMED, {
         source: "gestoriacitaia",
         assistant: "mohamed",
@@ -815,19 +751,8 @@ export default async function handler(req: any, res: any) {
         status: expedienteReady
           ? "expediente_ready"
           : "document_review_and_case_preparation",
-        can_prepare_regularization_2026:
-          extractedLead.tramite === "regularizacion_2026" ||
-          (procedureLabel || "").toLowerCase().includes("regularización") ||
-          (procedureLabel || "").toLowerCase().includes("regularizacion"),
         used_file_search: Boolean(mohamedVectorStoreId),
         file_search_results: fileSearchResults,
-        proofs_summary: proofsSummary,
-        identity_summary: identitySummary,
-        padron_summary: padronSummary,
-        vulnerability_summary: vulnerabilitySummary,
-        asilo_summary: asiloSummary,
-        children_summary: childrenSummary,
-        case_summary: caseSummary,
         last_user_message: message,
         ai_reply: reply,
         history,
