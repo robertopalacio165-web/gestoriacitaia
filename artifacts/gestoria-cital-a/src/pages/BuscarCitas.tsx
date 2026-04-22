@@ -633,7 +633,7 @@ export default function BuscarCitas() {
       stopButton: "Parar micrófono",
       latestReply: "Última respuesta de Sara",
       yourVoice: "Tu última respuesta por voz",
-      listening: "Sara te está escuchando ahora...",
+      listening: "Sara está hablando ahora...",
       saveTitle: "Datos guardados",
       saveDesc: "Sara ya puede continuar contigo.",
       missingTitle: "Faltan datos",
@@ -745,20 +745,35 @@ export default function BuscarCitas() {
     localStorage.setItem(voiceStorageKey, JSON.stringify(voiceHistory));
   }, [voiceHistory, voiceStorageKey]);
 
-  const speakText = (text: string) => {
-    if (muted) return;
-    if (!("speechSynthesis" in window)) return;
-    if (!text?.trim()) return;
+  const speakText = (text: string, onEnd?: () => void) => {
+    if (muted) {
+      onEnd?.();
+      return;
+    }
+
+    if (!("speechSynthesis" in window)) {
+      onEnd?.();
+      return;
+    }
+
+    if (!text?.trim()) {
+      onEnd?.();
+      return;
+    }
 
     try {
       window.speechSynthesis.cancel();
+
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = "ar-MA";
       utterance.rate = 0.92;
       utterance.pitch = 1;
+      utterance.onend = () => onEnd?.();
+      utterance.onerror = () => onEnd?.();
+
       window.speechSynthesis.speak(utterance);
     } catch {
-      // vacío
+      onEnd?.();
     }
   };
 
@@ -775,11 +790,27 @@ export default function BuscarCitas() {
     ]);
 
     if (speak) {
-      setTimeout(() => speakText(text), 150);
+      setWaitingSara(true);
+      setIsListening(true);
+
+      setTimeout(() => {
+        speakText(text, () => {
+          setWaitingSara(false);
+          setIsListening(false);
+        });
+      }, 120);
     }
   };
 
   const stopListening = () => {
+    try {
+      if ("speechSynthesis" in window) {
+        window.speechSynthesis.cancel();
+      }
+    } catch {
+      // vacío
+    }
+
     setIsListening(false);
     setWaitingSara(false);
   };
@@ -794,19 +825,11 @@ export default function BuscarCitas() {
       return;
     }
 
-    setIsListening(true);
-    setWaitingSara(true);
-
     const firstMessage = formReady
       ? voiceTexts.savedLeadReply
       : voiceTexts.initialVoice;
 
     pushAgentMessage(firstMessage, true);
-
-    setTimeout(() => {
-      setWaitingSara(false);
-      setIsListening(false);
-    }, 1200);
   };
 
   const handleFormChange = (field: keyof ClientFormData, value: string) => {
