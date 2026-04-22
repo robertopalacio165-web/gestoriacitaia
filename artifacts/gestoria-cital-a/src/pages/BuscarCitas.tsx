@@ -920,21 +920,39 @@ export default function BuscarCitas() {
       const dc = pc.createDataChannel("oai-events");
       realtimeDcRef.current = dc;
 
-      dc.onopen = () => {
-        setIsListening(true);
-        setWaitingSara(true);
-        setLastUserTranscript("");
-        lastUserTranscriptRef.current = "";
-        assistantTextBufferRef.current = "";
+     dc.onopen = () => {
+  setIsListening(true);
+  setWaitingSara(true);
+  setLastUserTranscript("");
+  lastUserTranscriptRef.current = "";
+  assistantTextBufferRef.current = "";
 
-        const firstMessage = formReady
-          ? voiceTexts.savedLeadReply
-          : voiceTexts.initialVoice;
+  const firstMessage = formReady
+    ? "مزيان. دابا عندنا المعلومات ديالك. منين تفتح شي cita غادي نعلموك عاجل فـ WhatsApp."
+    : "السلام، مرحبا بيك فـ GestoriaCitaIA. إلا بغيتي نشدّو ليك موعد، عمر ليا الفورمولار، ومن بعد أنا غادي نكمل معاك الهضرة.";
 
-        setTimeout(() => {
-          sendSaraStartMessage(firstMessage);
-        }, 250);
-      };
+  if (!realtimeDcRef.current || realtimeDcRef.current.readyState !== "open") {
+    return;
+  }
+
+  realtimeDcRef.current.send(
+    JSON.stringify({
+      type: "response.create",
+      response: {
+        modalities: ["audio", "text"],
+        instructions: [
+          "جاوبي ديما غير بالدارجة المغربية وبالحروف العربية.",
+          "أنتِ سارة من GestoriaCitaIA.",
+          "أنتِ مختصة غير فالمواعيد ديال extranjería فإسبانيا.",
+          "أنتِ اللي خاصك تبداي الهضرة الأولى مباشرة.",
+          "ممنوع تنتظري العميل يهضر.",
+          "قولي الآن هذا الكلام بصوت طبيعي وبشكل بشري:",
+          firstMessage,
+        ].join(" "),
+      },
+    })
+  );
+};
 
       dc.onmessage = (event) => {
         try {
