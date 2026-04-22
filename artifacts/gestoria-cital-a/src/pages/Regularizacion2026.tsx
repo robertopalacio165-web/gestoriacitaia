@@ -114,6 +114,7 @@ export default function Regularizacion2026() {
   const assistantTextBufferRef = useRef("");
   const lastUserTranscriptRef = useRef("");
   const lastAssistantTextRef = useRef("");
+  const shouldKickoffMohamedRef = useRef(false);
 
   const safeLang = (lang === "darija" || lang === "en" ? lang : "es") as
     | "darija"
@@ -151,7 +152,6 @@ export default function Regularizacion2026() {
         }, السوابق ${leadForm.penales || "ما متسجلش"}.`,
         "ابدأ دابا مباشرة بجواب طبيعي وقصير، وعرف براسك باختصار، ومن بعد سول غير السؤال الجاي المناسب باش تكمل الملف.",
         "سول سؤال واحد فقط فكل مرة.",
-        "ركز على هاد الترتيب: واش داخل إسبانيا، واش عندو حضور قبل 1 يناير 2026، واش عندو 5 شهور متواصلة، واش عندو padrón historique، واش عندو بروفات ديال 5 شهور، واش عندو asilo، واش عندو ولاد، واش محتاج vulnerabilidad.",
       ].join(" "),
       realtimeError: "وقع مشكل فالاتصال المباشر مع محمد. عاود حاول من بعد.",
       uploadUnknown:
@@ -595,6 +595,7 @@ export default function Regularizacion2026() {
     try {
       if (!realtimeDcRef.current) return;
       if (realtimeDcRef.current.readyState !== "open") return;
+      if (!realtimePcRef.current?.remoteDescription) return;
 
       realtimeDcRef.current.send(
         JSON.stringify({
@@ -639,6 +640,16 @@ export default function Regularizacion2026() {
       title: ui.saveLeadTitle,
       description: ui.saveLeadDesc,
     });
+
+    setTimeout(() => {
+      if (
+        realtimeDcRef.current &&
+        realtimeDcRef.current.readyState === "open" &&
+        realtimePcRef.current?.remoteDescription
+      ) {
+        sendMohamedSpokenMessage(voiceTexts.savedLeadReply);
+      }
+    }, 150);
   };
 
   const finalizeAssistantBuffer = () => {
@@ -651,6 +662,54 @@ export default function Regularizacion2026() {
 
     pushAgentMessage(text, false);
     assistantTextBufferRef.current = "";
+  };
+
+  const sendMohamedSpokenMessage = (message: string) => {
+    if (!message.trim()) return;
+    if (!realtimeDcRef.current || realtimeDcRef.current.readyState !== "open") return;
+    if (!realtimePcRef.current || !realtimePcRef.current.remoteDescription) return;
+
+    setWaitingMohamed(true);
+    assistantTextBufferRef.current = "";
+
+    realtimeDcRef.current.send(
+      JSON.stringify({
+        type: "conversation.item.create",
+        item: {
+          type: "message",
+          role: "user",
+          content: [
+            {
+              type: "input_text",
+              text: `ابدأ أنت الكلام الآن مباشرة. لا تنتظر العميل. قل هذا الآن بصوت طبيعي وبشكل بشري: ${message}`,
+            },
+          ],
+        },
+      })
+    );
+
+    realtimeDcRef.current.send(
+      JSON.stringify({
+        type: "response.create",
+        response: {
+          modalities: ["audio", "text"],
+        },
+      })
+    );
+  };
+
+  const kickoffMohamed = () => {
+    setIsListening(true);
+    setWaitingMohamed(true);
+    setLastUserTranscript("");
+    lastUserTranscriptRef.current = "";
+    assistantTextBufferRef.current = "";
+
+    const firstMessage = leadSaved
+      ? voiceTexts.savedLeadReply
+      : voiceTexts.initialVoice;
+
+    sendMohamedSpokenMessage(firstMessage);
   };
 
   const stopListening = () => {
@@ -666,10 +725,10 @@ export default function Regularizacion2026() {
         realtimeLocalStreamRef.current = null;
       }
 
-     if (remoteAudioRef.current) {
-  remoteAudioRef.current.pause();
-  remoteAudioRef.current.srcObject = null;
-}
+      if (remoteAudioRef.current) {
+        remoteAudioRef.current.pause();
+        remoteAudioRef.current.srcObject = null;
+      }
     } catch (error) {
       console.error("Error deteniendo realtime:", error);
     } finally {
@@ -729,23 +788,24 @@ export default function Regularizacion2026() {
       const pc = new RTCPeerConnection();
       realtimePcRef.current = pc;
 
-   pc.ontrack = (event) => {
-  const [remoteStream] = event.streams;
+      pc.ontrack = (event) => {
+        const [remoteStream] = event.streams;
 
-  if (remoteStream && remoteAudioRef.current) {
-    remoteAudioRef.current.srcObject = remoteStream;
-    remoteAudioRef.current.autoplay = true;
-    remoteAudioRef.current.muted = false;
-    remoteAudioRef.current.volume = 1;
+        if (remoteStream && remoteAudioRef.current) {
+          remoteAudioRef.current.srcObject = remoteStream;
+          remoteAudioRef.current.autoplay = true;
+          remoteAudioRef.current.playsInline = true;
+          remoteAudioRef.current.muted = false;
+          remoteAudioRef.current.volume = 1;
 
-    const playPromise = remoteAudioRef.current.play();
-    if (playPromise) {
-      playPromise.catch((err) => {
-        console.error("Error reproduciendo audio remoto Mohamed:", err);
-      });
-    }
-  }
-};
+          const playPromise = remoteAudioRef.current.play();
+          if (playPromise) {
+            playPromise.catch((err) => {
+              console.error("Error reproduciendo audio remoto Mohamed:", err);
+            });
+          }
+        }
+      };
 
       const localStream = await navigator.mediaDevices.getUserMedia({
         audio: {
@@ -763,46 +823,10 @@ export default function Regularizacion2026() {
 
       const dc = pc.createDataChannel("oai-events");
       realtimeDcRef.current = dc;
-dc.onopen = () => {
-  setIsListening(true);
-  setWaitingMohamed(true);
-  setLastUserTranscript("");
-  lastUserTranscriptRef.current = "";
-  assistantTextBufferRef.current = "";
 
-  const firstMessage = leadSaved
-    ? "مزيان. خديت المعطيات ديالك. دابا ضغط على زر الميكروفون وهادي نكمل معك الملف خطوة بخطوة."
-    : "السلام، مرحبا بيك فـ GestoriaCitaIA. إلا بغيتي نصيبو ليك الملف، عمر ليا الفورمولار الأول ومن بعد نكمل معاك.";
-
-  if (!realtimeDcRef.current || realtimeDcRef.current.readyState !== "open") {
-    return;
-  }
-
-  realtimeDcRef.current.send(
-    JSON.stringify({
-      type: "conversation.item.create",
-      item: {
-        type: "message",
-        role: "user",
-        content: [
-          {
-            type: "input_text",
-            text: `ابدأ أنت الكلام الآن مباشرة. لا تنتظر العميل. قل هذا الآن بصوت طبيعي وبشكل بشري: ${firstMessage}`,
-          },
-        ],
-      },
-    })
-  );
-
-  realtimeDcRef.current.send(
-    JSON.stringify({
-      type: "response.create",
-      response: {
-        modalities: ["audio", "text"],
-      },
-    })
-  );
-};
+      dc.onopen = () => {
+        shouldKickoffMohamedRef.current = true;
+      };
 
       dc.onmessage = (event) => {
         try {
@@ -885,6 +909,13 @@ dc.onopen = () => {
         type: "answer",
         sdp: answerSdp,
       });
+
+      if (shouldKickoffMohamedRef.current) {
+        shouldKickoffMohamedRef.current = false;
+        setTimeout(() => {
+          kickoffMohamed();
+        }, 150);
+      }
     } catch (error: any) {
       console.error("Error iniciando realtime Mohamed:", error);
       stopListening();
@@ -1167,6 +1198,16 @@ dc.onopen = () => {
     if (readyNow && !completionMessageSent) {
       pushAgentMessage(voiceTexts.mohamedFinal, false);
       setCompletionMessageSent(true);
+
+      setTimeout(() => {
+        if (
+          realtimeDcRef.current &&
+          realtimeDcRef.current.readyState === "open" &&
+          realtimePcRef.current?.remoteDescription
+        ) {
+          sendMohamedSpokenMessage(voiceTexts.mohamedFinal);
+        }
+      }, 150);
     }
   };
 
