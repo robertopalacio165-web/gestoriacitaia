@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useLocation } from "wouter";
 import { Navbar } from "@/components/Navbar";
 import { useToast } from "@/hooks/use-toast";
@@ -329,7 +329,9 @@ function OfficialBrowserBox({
                 <p className="text-sm text-gray-700">Fecha: {finalDate}</p>
                 <p className="text-sm text-gray-700">Hora: {finalTime}</p>
                 <p className="text-sm text-gray-700">Oficina: {finalOffice}</p>
-                <p className="text-sm text-gray-700">Localizador: {finalLocator}</p>
+                <p className="text-sm text-gray-700">
+                  Localizador: {finalLocator}
+                </p>
               </div>
             )}
           </>
@@ -416,7 +418,8 @@ export default function BuscarCitas() {
   const [showDocs, setShowDocs] = useState(false);
   const [showForms, setShowForms] = useState(false);
   const [profile, setProfile] = useState<ProfileRow | null>(null);
-  const [appointmentData, setAppointmentData] = useState<AppointmentResult | null>(null);
+  const [appointmentData, setAppointmentData] =
+    useState<AppointmentResult | null>(null);
   const [profileLoading, setProfileLoading] = useState(true);
   const [formData, setFormData] = useState<ClientFormData>({
     fullName: "",
@@ -429,7 +432,7 @@ export default function BuscarCitas() {
   const [isListening, setIsListening] = useState(false);
   const [waitingSara, setWaitingSara] = useState(false);
   const [voiceHistory, setVoiceHistory] = useState<ChatMsg[]>([]);
-  const [lastUserTranscript, setLastUserTranscript] = useState("");
+  const [lastUserTranscript] = useState("");
 
   const urlParams = useMemo(() => {
     const url = new URL(window.location.href);
@@ -448,7 +451,6 @@ export default function BuscarCitas() {
         "مرحبا بك فـ Gestoria Cita AI. خلي ليا المعلومات ديالك. عمر ليا الفورمولار باش نكمل معاك.",
       savedLeadReply:
         "دابا عندنا المعلومات ديالك. منين تفتح شي cita غادي نعلموك عاجل فـ WhatsApp.",
-      voiceBlocked: "عمر الفورمولار الأول ومن بعد نكمل معاك.",
       foundMsg: "لقينا ليك cita حقيقية. دخل بسرعة باش تأكدها.",
       confirmMsg:
         "شكرا على الثقة فـ Gestoria Cita AI. تم تأكيد الموعد ديالك.",
@@ -658,7 +660,9 @@ export default function BuscarCitas() {
     ui.formsByTramite[selectedTramite] ?? ui.formsByTramite.tie;
 
   useEffect(() => {
-    setVoiceSupported(typeof window !== "undefined" && "speechSynthesis" in window);
+    setVoiceSupported(
+      typeof window !== "undefined" && "speechSynthesis" in window
+    );
   }, []);
 
   useEffect(() => {
@@ -754,7 +758,7 @@ export default function BuscarCitas() {
       utterance.pitch = 1;
       window.speechSynthesis.speak(utterance);
     } catch {
-      // no-op
+      // vacío
     }
   };
 
@@ -817,7 +821,11 @@ export default function BuscarCitas() {
   };
 
   const handleFormSubmit = () => {
-    if (!formData.fullName.trim() || !formData.phone.trim() || !formData.city.trim()) {
+    if (
+      !formData.fullName.trim() ||
+      !formData.phone.trim() ||
+      !formData.city.trim()
+    ) {
       toast({
         title: ui.missingTitle,
         description: ui.missingDesc,
@@ -952,7 +960,9 @@ export default function BuscarCitas() {
 
       <main className="flex-1 relative z-10 flex flex-col pt-16 pb-0">
         <h1 className="text-xl font-display font-bold px-4 sm:px-6 py-3 max-w-7xl mx-auto w-full">
-          {cameFromConfirmationLink ? "Sara: confirmación de cita" : "Buscar citas"}
+          {cameFromConfirmationLink
+            ? "Sara: confirmación de cita"
+            : "Buscar citas"}
         </h1>
 
         <div className="flex-1 flex flex-col lg:flex-row gap-4 px-4 sm:px-6 max-w-7xl mx-auto w-full pb-4">
@@ -974,7 +984,9 @@ export default function BuscarCitas() {
 
               <div className="absolute top-3 left-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/60 border border-white/10 backdrop-blur-md">
                 <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                <span className="text-xs font-medium text-white">{ui.online}</span>
+                <span className="text-xs font-medium text-white">
+                  {ui.online}
+                </span>
               </div>
 
               <div className="absolute top-3 right-3 flex items-center gap-2">
@@ -1013,8 +1025,12 @@ export default function BuscarCitas() {
               )}
 
               <div className="absolute bottom-14 right-3 text-right">
-                <p className="text-white font-bold text-sm drop-shadow-lg">Sara</p>
-                <p className="text-white/70 text-xs drop-shadow-lg">{ui.agentRole}</p>
+                <p className="text-white font-bold text-sm drop-shadow-lg">
+                  Sara
+                </p>
+                <p className="text-white/70 text-xs drop-shadow-lg">
+                  {ui.agentRole}
+                </p>
               </div>
 
               <div className="absolute bottom-3 left-0 right-0 flex items-center justify-center">
@@ -1072,7 +1088,9 @@ export default function BuscarCitas() {
 
               <div className="p-4 space-y-4">
                 <div>
-                  <p className="text-[11px] text-white/50 mb-1">{ui.latestReply}</p>
+                  <p className="text-[11px] text-white/50 mb-1">
+                    {ui.latestReply}
+                  </p>
                   <div className="rounded-xl bg-white/5 border border-white/10 px-3 py-3 text-sm text-white/90 leading-relaxed">
                     {latestAgentMessage}
                   </div>
@@ -1080,7 +1098,9 @@ export default function BuscarCitas() {
 
                 {lastUserTranscript ? (
                   <div>
-                    <p className="text-[11px] text-white/50 mb-1">{ui.yourVoice}</p>
+                    <p className="text-[11px] text-white/50 mb-1">
+                      {ui.yourVoice}
+                    </p>
                     <div className="rounded-xl bg-primary/10 border border-primary/20 px-3 py-3 text-sm text-white leading-relaxed">
                       {lastUserTranscript}
                     </div>
@@ -1295,7 +1315,9 @@ export default function BuscarCitas() {
                           : "✗"}
                       </span>
 
-                      <span className="text-sm text-white/90">{doc.nombre}</span>
+                      <span className="text-sm text-white/90">
+                        {doc.nombre}
+                      </span>
                     </div>
                   ))}
                 </div>
@@ -1347,8 +1369,12 @@ export default function BuscarCitas() {
                       </div>
 
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs font-bold text-primary">{form.codigo}</p>
-                        <p className="text-sm text-white/80 truncate">{form.nombre}</p>
+                        <p className="text-xs font-bold text-primary">
+                          {form.codigo}
+                        </p>
+                        <p className="text-sm text-white/80 truncate">
+                          {form.nombre}
+                        </p>
                       </div>
 
                       <span className="text-[10px] font-semibold text-white/40 group-hover:text-primary transition-colors shrink-0">
