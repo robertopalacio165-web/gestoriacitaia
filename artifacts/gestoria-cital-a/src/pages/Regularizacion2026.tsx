@@ -766,27 +766,15 @@ export default function Regularizacion2026() {
 dc.onopen = () => {
   setIsListening(true);
   setWaitingMohamed(true);
+  setLastUserTranscript("");
+  lastUserTranscriptRef.current = "";
+  assistantTextBufferRef.current = "";
 
-  const introInstructions = [
-    "جاوب ديما غير بالدارجة المغربية وبالحروف العربية.",
-    "أنت محمد من GestoriaCitaIA.",
-    "أنت خبير فالتسوية الجماعية وملفات extranjería فإسبانيا.",
-    "تكلم بصوت طبيعي، بشري، واضح، ومهني.",
-    "أنت اللي خاصك تبدا الهضرة الأولى مباشرة منين يتحل الميكروفون.",
-    "ما تستناش العميل يهضر.",
-    "ما تقراش نص حرفي. تكلم بشكل طبيعي.",
-    leadSaved
-      ? "الفورمولار واجد. رحب بالعميل بشكل طبيعي وقول ليه بالمعنى أننا خذينا المعطيات وغادي تكمل معاه الملف خطوة بخطوة."
-      : "الفورمولار مازال ما تكملش. رحب بالعميل بشكل طبيعي وطلب منو يعمر الفورمولار الأول.",
-    `الاسم: ${leadForm.nombre || "ما متسجلش"}.`,
-    `الهاتف: ${leadForm.telefono || "ما متسجلش"}.`,
-    `الهوية: ${leadForm.niePasaporte || "ما متسجلش"}.`,
-    `المدينة: ${leadForm.ciudad || "ما متسجلش"}.`,
-  ].join(" ");
+  const firstMessage = leadSaved
+    ? "مزيان. خديت المعطيات ديالك. دابا غادي نكمل معاك خطوة بخطوة، ونسولك غير على المعلومات المهمة ديال الملف."
+    : "السلام، مرحبا بيك فـ GestoriaCitaIA. إلا بغيتي نصيبو ليك الميلف ديال التسوية الجماعية، عمر ليا الفورمولار الأول، ومن بعد نكمل معاك.";
 
-  if (!realtimeDcRef.current || realtimeDcRef.current.readyState !== "open") {
-    return;
-  }
+  if (!realtimeDcRef.current || realtimeDcRef.current.readyState !== "open") return;
 
   realtimeDcRef.current.send(
     JSON.stringify({
@@ -798,23 +786,34 @@ dc.onopen = () => {
           {
             type: "input_text",
             text: leadSaved
-              ? "ابدأ دابا الهضرة الأولى بشكل طبيعي، وقل للعميل أننا خذينا المعطيات وغادي تكمل معاه الملف خطوة بخطوة."
-              : "ابدأ دابا الهضرة الأولى بشكل طبيعي، ورحب بالعميل وطلب منو يعمر الفورمولار الأول.",
+              ? "ابدأ أنت الكلام الآن مباشرة. لا تنتظر العميل. أخبره الآن أنك أخذت بياناته وستكمل معه خطوة خطوة."
+              : "ابدأ أنت الكلام الآن مباشرة. لا تنتظر العميل. رحب به الآن واطلب منه أن يملأ الفورمولار الأول.",
           },
         ],
       },
     })
   );
 
-  realtimeDcRef.current.send(
-    JSON.stringify({
-      type: "response.create",
-      response: {
-        modalities: ["audio", "text"],
-        instructions: introInstructions,
-      },
-    })
-  );
+  setTimeout(() => {
+    if (!realtimeDcRef.current || realtimeDcRef.current.readyState !== "open") return;
+
+    realtimeDcRef.current.send(
+      JSON.stringify({
+        type: "response.create",
+        response: {
+          modalities: ["audio", "text"],
+          instructions: [
+            "جاوب ديما غير بالدارجة المغربية وبالحروف العربية.",
+            "أنت محمد من GestoriaCitaIA.",
+            "أنت اللي خاصك تبدا الهضرة الأولى مباشرة.",
+            "ممنوع تنتظر العميل يهضر.",
+            "قول الآن هذا المعنى بصوت طبيعي وبشكل بشري:",
+            firstMessage,
+          ].join(" "),
+        },
+      })
+    );
+  }, 250);
 };
 
       dc.onmessage = (event) => {
