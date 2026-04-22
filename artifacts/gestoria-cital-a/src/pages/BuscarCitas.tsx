@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { Navbar } from "@/components/Navbar";
 import { useToast } from "@/hooks/use-toast";
@@ -142,9 +142,7 @@ function OfficialBrowserBox({
       <div className="bg-[#f1f3f4] border-b border-gray-200 px-3 py-2 flex items-center gap-2 shrink-0">
         <div className="flex items-center gap-1.5 bg-white rounded-full px-3 py-1.5 flex-1 border border-gray-200 shadow-sm min-w-0">
           <Shield className="w-3 h-3 text-green-600 shrink-0" />
-          <span className="text-xs text-gray-600 font-medium truncate">
-            {url}
-          </span>
+          <span className="text-xs text-gray-600 font-medium truncate">{url}</span>
         </div>
 
         <button
@@ -189,9 +187,7 @@ function OfficialBrowserBox({
             </div>
 
             <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 mb-4">
-              <p className="text-sm font-semibold text-[#003366] mb-2">
-                {title}
-              </p>
+              <p className="text-sm font-semibold text-[#003366] mb-2">{title}</p>
               <p className="text-xs text-gray-700 leading-relaxed">
                 {cameFromConfirmationLink ? confirmationIntro : formIntro}
               </p>
@@ -286,9 +282,7 @@ function OfficialBrowserBox({
               </div>
 
               {profileLoading && (
-                <p className="mt-3 text-[11px] text-gray-400">
-                  {ui.loadingUserData}
-                </p>
+                <p className="mt-3 text-[11px] text-gray-400">{ui.loadingUserData}</p>
               )}
 
               {formReady && (
@@ -329,9 +323,7 @@ function OfficialBrowserBox({
                 <p className="text-sm text-gray-700">Fecha: {finalDate}</p>
                 <p className="text-sm text-gray-700">Hora: {finalTime}</p>
                 <p className="text-sm text-gray-700">Oficina: {finalOffice}</p>
-                <p className="text-sm text-gray-700">
-                  Localizador: {finalLocator}
-                </p>
+                <p className="text-sm text-gray-700">Localizador: {finalLocator}</p>
               </div>
             )}
           </>
@@ -432,7 +424,15 @@ export default function BuscarCitas() {
   const [isListening, setIsListening] = useState(false);
   const [waitingSara, setWaitingSara] = useState(false);
   const [voiceHistory, setVoiceHistory] = useState<ChatMsg[]>([]);
-  const [lastUserTranscript] = useState("");
+  const [lastUserTranscript, setLastUserTranscript] = useState("");
+
+  const remoteAudioRef = useRef<HTMLAudioElement | null>(null);
+  const realtimePcRef = useRef<RTCPeerConnection | null>(null);
+  const realtimeDcRef = useRef<RTCDataChannel | null>(null);
+  const realtimeLocalStreamRef = useRef<MediaStream | null>(null);
+  const assistantTextBufferRef = useRef("");
+  const lastUserTranscriptRef = useRef("");
+  const lastAssistantTextRef = useRef("");
 
   const urlParams = useMemo(() => {
     const url = new URL(window.location.href);
@@ -633,7 +633,7 @@ export default function BuscarCitas() {
       stopButton: "Parar micrófono",
       latestReply: "Última respuesta de Sara",
       yourVoice: "Tu última respuesta por voz",
-      listening: "Sara está hablando ahora...",
+      listening: "Sara te está escuchando ahora...",
       saveTitle: "Datos guardados",
       saveDesc: "Sara ya puede continuar contigo.",
       missingTitle: "Faltan datos",
@@ -660,9 +660,13 @@ export default function BuscarCitas() {
     ui.formsByTramite[selectedTramite] ?? ui.formsByTramite.tie;
 
   useEffect(() => {
-    setVoiceSupported(
-      typeof window !== "undefined" && "speechSynthesis" in window
-    );
+    const supported =
+      typeof window !== "undefined" &&
+      typeof window.RTCPeerConnection !== "undefined" &&
+      typeof navigator !== "undefined" &&
+      !!navigator.mediaDevices?.getUserMedia;
+
+    setVoiceSupported(Boolean(supported));
   }, []);
 
   useEffect(() => {
@@ -745,39 +749,7 @@ export default function BuscarCitas() {
     localStorage.setItem(voiceStorageKey, JSON.stringify(voiceHistory));
   }, [voiceHistory, voiceStorageKey]);
 
-  const speakText = (text: string, onEnd?: () => void) => {
-    if (muted) {
-      onEnd?.();
-      return;
-    }
-
-    if (!("speechSynthesis" in window)) {
-      onEnd?.();
-      return;
-    }
-
-    if (!text?.trim()) {
-      onEnd?.();
-      return;
-    }
-
-    try {
-      window.speechSynthesis.cancel();
-
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = "ar-MA";
-      utterance.rate = 0.92;
-      utterance.pitch = 1;
-      utterance.onend = () => onEnd?.();
-      utterance.onerror = () => onEnd?.();
-
-      window.speechSynthesis.speak(utterance);
-    } catch {
-      onEnd?.();
-    }
-  };
-
-  const pushAgentMessage = (text: string, speak = false) => {
+  const pushAgentMessage = (text: string) => {
     if (!text?.trim()) return;
 
     setVoiceHistory((prev) => [
@@ -789,33 +761,62 @@ export default function BuscarCitas() {
       },
     ]);
 
-    if (speak) {
-      setWaitingSara(true);
-      setIsListening(true);
+    lastAssistantTextRef.current = text;
+  };
 
-      setTimeout(() => {
-        speakText(text, () => {
-          setWaitingSara(false);
-          setIsListening(false);
-        });
-      }, 120);
-    }
+  const pushUserMessage = (text: string) => {
+    if (!text?.trim()) return;
+
+    setVoiceHistory((prev) => [
+      ...prev,
+      {
+        from: "user",
+        text,
+        ts: Date.now(),
+      },
+    ]);
+
+    setLastUserTranscript(text);
+  };
+
+  const finalizeAssistantBuffer = () => {
+    const text = assistantTextBufferRef.current.trim();
+    if (!text) return;
+
+    assistantTextBufferRef.current = "";
+
+    if (text === "..." || text === "…") return;
+    if (text === lastAssistantTextRef.current) return;
+
+    pushAgentMessage(text);
   };
 
   const stopListening = () => {
     try {
-      if ("speechSynthesis" in window) {
-        window.speechSynthesis.cancel();
-      }
-    } catch {
-      // vacío
-    }
+      realtimeDcRef.current?.close();
+      realtimeDcRef.current = null;
 
-    setIsListening(false);
-    setWaitingSara(false);
+      realtimePcRef.current?.close();
+      realtimePcRef.current = null;
+
+      if (realtimeLocalStreamRef.current) {
+        realtimeLocalStreamRef.current.getTracks().forEach((track) => track.stop());
+        realtimeLocalStreamRef.current = null;
+      }
+
+      if (remoteAudioRef.current) {
+        remoteAudioRef.current.pause();
+        remoteAudioRef.current.srcObject = null;
+      }
+    } catch (error) {
+      console.error("Error deteniendo realtime Sara:", error);
+    } finally {
+      setIsListening(false);
+      setWaitingSara(false);
+    }
   };
 
-  const startListening = () => {
+  const startListening = async () => {
     if (!voiceSupported) {
       toast({
         title: "Error",
@@ -825,11 +826,207 @@ export default function BuscarCitas() {
       return;
     }
 
-    const firstMessage = formReady
-      ? voiceTexts.savedLeadReply
-      : voiceTexts.initialVoice;
+    try {
+      stopListening();
+      assistantTextBufferRef.current = "";
+      setWaitingSara(true);
 
-    pushAgentMessage(firstMessage, true);
+      const sessionRes = await fetch("/api/realtime-session", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          assistant: "sara",
+        }),
+      });
+
+      const sessionData = await sessionRes.json();
+
+      if (!sessionRes.ok) {
+        throw new Error(sessionData?.error || "Error creando sesión realtime");
+      }
+
+      const ephemeralKey = sessionData?.value || "";
+
+      if (!ephemeralKey) {
+        throw new Error("No llegó client secret desde /api/realtime-session");
+      }
+
+      const pc = new RTCPeerConnection();
+      realtimePcRef.current = pc;
+
+      pc.ontrack = (event) => {
+        const [remoteStream] = event.streams;
+
+        if (remoteStream && remoteAudioRef.current) {
+          remoteAudioRef.current.srcObject = remoteStream;
+          remoteAudioRef.current.autoplay = true;
+          remoteAudioRef.current.playsInline = true;
+          remoteAudioRef.current.muted = false;
+          remoteAudioRef.current.volume = 1;
+
+          remoteAudioRef.current.play().catch((err) => {
+            console.error("Sara audio play error:", err);
+          });
+        }
+      };
+
+      const localStream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        },
+      });
+
+      realtimeLocalStreamRef.current = localStream;
+
+      for (const track of localStream.getTracks()) {
+        pc.addTrack(track, localStream);
+      }
+
+      const dc = pc.createDataChannel("oai-events");
+      realtimeDcRef.current = dc;
+
+      dc.onopen = () => {
+        setIsListening(true);
+        setWaitingSara(true);
+
+        const firstPrompt = formReady
+          ? "ابدئي دابا أنتِ الأولى وما تستنايش العميل يهضر. رحبي بالعميل بالدارجة المغربية. قولي ليه بالضبط: دابا عندنا المعلومات ديالك. منين تفتح شي cita غادي نعلموك عاجل فـ WhatsApp."
+          : "ابدئي دابا أنتِ الأولى وما تستنايش العميل يهضر. رحبي بالعميل بالدارجة المغربية. قولي ليه بالضبط: مرحبا بك فـ Gestoria Cita AI. خلي ليا المعلومات ديالك. عمر ليا الفورمولار باش نكمل معاك.";
+
+        dc.send(
+          JSON.stringify({
+            type: "conversation.item.create",
+            item: {
+              type: "message",
+              role: "user",
+              content: [
+                {
+                  type: "input_text",
+                  text: formReady
+                    ? "ابدئي دابا وكلمي العميل على أن البيانات تسجلات وأنك غادي تعلميه فواتساب."
+                    : "ابدئي دابا ورحبي بالعميل وطلبي منو يعمر الفورمولار.",
+                },
+              ],
+            },
+          })
+        );
+
+        dc.send(
+          JSON.stringify({
+            type: "response.create",
+            response: {
+              modalities: ["audio", "text"],
+              instructions: [
+                "جاوبي ديما غير بالدارجة المغربية وبالحروف العربية.",
+                "أنتِ سارة من GestoriaCitaIA.",
+                "أنتِ مختصة غير فالمواعيد ديال extranjería فإسبانيا.",
+                "الأسلوب ديالك طبيعي، واضح، مهني، ومختصر.",
+                "أنتِ اللي خاصك تبداي الهضرة الأولى، ما تستنايش العميل.",
+                `نوع الموعد: ${selectedTramiteLabel}.`,
+                `الاسم: ${formData.fullName || "ما متسجلش"}.`,
+                `الهاتف: ${formData.phone || "ما متسجلش"}.`,
+                `الهوية: ${formData.nie || "ما متسجلش"}.`,
+                `المدينة: ${formData.city || "ما متسجلش"}.`,
+                firstPrompt,
+              ].join(" "),
+            },
+          })
+        );
+      };
+
+      dc.onmessage = (event) => {
+        try {
+          const msg = JSON.parse(event.data);
+
+          const userTranscript =
+            msg?.transcript ||
+            msg?.item?.transcript ||
+            msg?.item?.content?.[0]?.transcript ||
+            "";
+
+          if (
+            (msg.type === "conversation.item.input_audio_transcription.completed" ||
+              msg.type === "input_audio_buffer.transcription.completed") &&
+            typeof userTranscript === "string" &&
+            userTranscript.trim()
+          ) {
+            const transcript = userTranscript.trim();
+
+            if (transcript !== lastUserTranscriptRef.current) {
+              lastUserTranscriptRef.current = transcript;
+              pushUserMessage(transcript);
+            }
+          }
+
+          if (
+            msg.type === "response.output_text.delta" &&
+            typeof msg.delta === "string"
+          ) {
+            assistantTextBufferRef.current += msg.delta;
+          }
+
+          if (
+            msg.type === "response.output_text.done" &&
+            typeof msg.text === "string" &&
+            msg.text.trim()
+          ) {
+            assistantTextBufferRef.current = msg.text.trim();
+          }
+
+          if (msg.type === "response.done") {
+            finalizeAssistantBuffer();
+            setWaitingSara(false);
+          }
+
+          if (msg.type === "response.created") {
+            setWaitingSara(true);
+          }
+        } catch (err) {
+          console.error("Realtime Sara parse error:", err);
+        }
+      };
+
+      dc.onerror = (err) => {
+        console.error("Realtime Sara data channel error:", err);
+      };
+
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+
+      const sdpRes = await fetch("https://api.openai.com/v1/realtime/calls", {
+        method: "POST",
+        body: offer.sdp,
+        headers: {
+          Authorization: `Bearer ${ephemeralKey}`,
+          "Content-Type": "application/sdp",
+        },
+      });
+
+      if (!sdpRes.ok) {
+        const errText = await sdpRes.text();
+        throw new Error(errText || "Error negociando WebRTC con OpenAI");
+      }
+
+      const answerSdp = await sdpRes.text();
+
+      await pc.setRemoteDescription({
+        type: "answer",
+        sdp: answerSdp,
+      });
+    } catch (error: any) {
+      console.error("Error iniciando realtime Sara:", error);
+      stopListening();
+
+      toast({
+        title: "Error realtime",
+        description: error?.message || "No se pudo iniciar Sara realtime",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleFormChange = (field: keyof ClientFormData, value: string) => {
@@ -868,8 +1065,7 @@ export default function BuscarCitas() {
 
     setFormReady(true);
     setStep(1);
-
-    pushAgentMessage(voiceTexts.savedLeadReply, true);
+    pushAgentMessage(voiceTexts.savedLeadReply);
 
     toast({
       title: ui.saveTitle,
@@ -903,7 +1099,7 @@ export default function BuscarCitas() {
 
           setAppointmentData(data);
           setStep(2);
-          pushAgentMessage(voiceTexts.foundMsg, true);
+          pushAgentMessage(voiceTexts.foundMsg);
 
           toast({
             title: ui.foundSuccessTitle,
@@ -940,7 +1136,7 @@ export default function BuscarCitas() {
     }
 
     setConfirmed(true);
-    pushAgentMessage(voiceTexts.confirmMsg, true);
+    pushAgentMessage(voiceTexts.confirmMsg);
 
     toast({
       title: ui.confirmSuccessTitle,
@@ -1414,6 +1610,8 @@ export default function BuscarCitas() {
             </motion.div>
           )}
         </AnimatePresence>
+
+        <audio ref={remoteAudioRef} autoPlay playsInline className="hidden" />
       </main>
     </div>
   );
