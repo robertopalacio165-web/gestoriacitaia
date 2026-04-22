@@ -1,7 +1,6 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useLocation } from "wouter";
 import { Navbar } from "@/components/Navbar";
-import { useLang } from "@/contexts/LanguageContext";
 import { useToast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -91,7 +90,6 @@ function OfficialBrowserBox({
   selectedTramite,
   onAceptar,
   isPending,
-  lang,
   cameFromConfirmationLink,
   formData,
   onFormChange,
@@ -119,7 +117,6 @@ function OfficialBrowserBox({
   selectedTramite: string;
   onAceptar: () => void;
   isPending: boolean;
-  lang: string;
   cameFromConfirmationLink: boolean;
   formData: ClientFormData;
   onFormChange: (field: keyof ClientFormData, value: string) => void;
@@ -134,9 +131,6 @@ function OfficialBrowserBox({
 
   const savedText =
     "Perfecto. Ya tenemos tus datos. En cuanto aparezca una cita real, te avisaremos por WhatsApp para entrar y confirmarla.";
-
-  const searchButtonText = "Empezar búsqueda de cita";
-  const saveButtonText = "Guardar datos y continuar con Sara";
 
   return (
     <motion.div
@@ -278,7 +272,7 @@ function OfficialBrowserBox({
                   onClick={onFormSubmit}
                   className="inline-flex items-center justify-center rounded-xl bg-[#003366] text-white px-5 py-3 text-sm font-bold hover:bg-[#002244] transition-colors"
                 >
-                  {saveButtonText}
+                  Guardar datos y continuar con Sara
                 </button>
 
                 <button
@@ -314,8 +308,10 @@ function OfficialBrowserBox({
                       className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 text-white text-sm font-bold px-5 py-2.5 hover:bg-emerald-700 transition-colors disabled:opacity-50"
                       type="button"
                     >
-                      {isPending && <RefreshCw className="w-4 h-4 animate-spin" />}
-                      {searchButtonText}
+                      {isPending && (
+                        <RefreshCw className="w-4 h-4 animate-spin" />
+                      )}
+                      Empezar búsqueda de cita
                     </button>
                   </div>
                 </div>
@@ -435,8 +431,6 @@ export default function BuscarCitas() {
   const [voiceHistory, setVoiceHistory] = useState<ChatMsg[]>([]);
   const [lastUserTranscript, setLastUserTranscript] = useState("");
 
-  const speechStartedRef = useRef(false);
-
   const urlParams = useMemo(() => {
     const url = new URL(window.location.href);
     return {
@@ -445,7 +439,6 @@ export default function BuscarCitas() {
     };
   }, [location]);
 
-  const { t } = useLang();
   const { toast } = useToast();
   const scheduleMutation = useScheduleAppointment();
 
@@ -455,10 +448,8 @@ export default function BuscarCitas() {
         "مرحبا بك فـ Gestoria Cita AI. خلي ليا المعلومات ديالك. عمر ليا الفورمولار باش نكمل معاك.",
       savedLeadReply:
         "دابا عندنا المعلومات ديالك. منين تفتح شي cita غادي نعلموك عاجل فـ WhatsApp.",
-      voiceBlocked:
-        "عمر الفورمولار الأول ومن بعد نكمل معاك.",
-      foundMsg:
-        "لقينا ليك cita حقيقية. دخل بسرعة باش تأكدها.",
+      voiceBlocked: "عمر الفورمولار الأول ومن بعد نكمل معاك.",
+      foundMsg: "لقينا ليك cita حقيقية. دخل بسرعة باش تأكدها.",
       confirmMsg:
         "شكرا على الثقة فـ Gestoria Cita AI. تم تأكيد الموعد ديالك.",
     }),
@@ -484,7 +475,10 @@ export default function BuscarCitas() {
         tie: [
           { nombre: "Pasaporte o NIE vigente", estado: "ok" as DocState },
           { nombre: "Empadronamiento actual", estado: "ok" as DocState },
-          { nombre: "Tarjeta TIE caducada o próxima a caducar", estado: "ok" as DocState },
+          {
+            nombre: "Tarjeta TIE caducada o próxima a caducar",
+            estado: "ok" as DocState,
+          },
           { nombre: "Fotografías recientes (2)", estado: "ok" as DocState },
           { nombre: "Formulario EX-17", estado: "warn" as DocState },
         ],
@@ -495,7 +489,10 @@ export default function BuscarCitas() {
         ],
         nie: [
           { nombre: "Pasaporte vigente", estado: "ok" as DocState },
-          { nombre: "Justificación solicitud NIE", estado: "warn" as DocState },
+          {
+            nombre: "Justificación solicitud NIE",
+            estado: "warn" as DocState,
+          },
           { nombre: "Formulario EX-15", estado: "missing" as DocState },
           { nombre: "Fotografías recientes (2)", estado: "ok" as DocState },
         ],
@@ -506,26 +503,44 @@ export default function BuscarCitas() {
         ],
         estudiantes: [
           { nombre: "Pasaporte vigente", estado: "ok" as DocState },
-          { nombre: "Carta de admisión universitaria", estado: "warn" as DocState },
+          {
+            nombre: "Carta de admisión universitaria",
+            estado: "warn" as DocState,
+          },
           { nombre: "Seguro médico", estado: "ok" as DocState },
-          { nombre: "Justificante económico", estado: "missing" as DocState },
+          {
+            nombre: "Justificante económico",
+            estado: "missing" as DocState,
+          },
         ],
         trabajo: [
           { nombre: "Pasaporte vigente", estado: "ok" as DocState },
           { nombre: "Contrato de trabajo", estado: "warn" as DocState },
-          { nombre: "Alta en Seguridad Social", estado: "missing" as DocState },
+          {
+            nombre: "Alta en Seguridad Social",
+            estado: "missing" as DocState,
+          },
           { nombre: "Formulario EX-07", estado: "missing" as DocState },
         ],
         arraigo: [
           { nombre: "Pasaporte vigente", estado: "ok" as DocState },
           { nombre: "Empadronamiento (3 años)", estado: "ok" as DocState },
-          { nombre: "Certificado antecedentes penales", estado: "warn" as DocState },
+          {
+            nombre: "Certificado antecedentes penales",
+            estado: "warn" as DocState,
+          },
           { nombre: "Formulario EX-10", estado: "missing" as DocState },
         ],
         familiar: [
           { nombre: "Pasaporte vigente", estado: "ok" as DocState },
-          { nombre: "Certificado familiar UE/español", estado: "ok" as DocState },
-          { nombre: "Libro de familia / acta matrimonial", estado: "warn" as DocState },
+          {
+            nombre: "Certificado familiar UE/español",
+            estado: "ok" as DocState,
+          },
+          {
+            nombre: "Libro de familia / acta matrimonial",
+            estado: "warn" as DocState,
+          },
           { nombre: "Formulario EX-19", estado: "missing" as DocState },
         ],
       } as Record<string, DocItem[]>,
@@ -643,7 +658,7 @@ export default function BuscarCitas() {
     ui.formsByTramite[selectedTramite] ?? ui.formsByTramite.tie;
 
   useEffect(() => {
-    setVoiceSupported("speechSynthesis" in window);
+    setVoiceSupported(typeof window !== "undefined" && "speechSynthesis" in window);
   }, []);
 
   useEffect(() => {
@@ -651,12 +666,10 @@ export default function BuscarCitas() {
       try {
         setProfileLoading(true);
 
-        const {
-          data: { user },
-          error: userError,
-        } = await supabase.auth.getUser();
+        const { data: sessionData } = await supabase.auth.getSession();
+        const user = sessionData?.session?.user;
 
-        if (userError || !user?.id) {
+        if (!user?.id) {
           setProfile(null);
           setProfileLoading(false);
           return;
@@ -740,7 +753,9 @@ export default function BuscarCitas() {
       utterance.rate = 0.92;
       utterance.pitch = 1;
       window.speechSynthesis.speak(utterance);
-    } catch {}
+    } catch {
+      // no-op
+    }
   };
 
   const pushAgentMessage = (text: string, speak = false) => {
@@ -758,19 +773,6 @@ export default function BuscarCitas() {
     if (speak) {
       setTimeout(() => speakText(text), 150);
     }
-  };
-
-  const pushUserMessage = (text: string) => {
-    if (!text?.trim()) return;
-    setVoiceHistory((prev) => [
-      ...prev,
-      {
-        from: "user",
-        text,
-        ts: Date.now(),
-      },
-    ]);
-    setLastUserTranscript(text);
   };
 
   const stopListening = () => {
@@ -792,8 +794,8 @@ export default function BuscarCitas() {
     setWaitingSara(true);
 
     const firstMessage = formReady
-      ? "دابا عندنا المعلومات ديالك. منين تفتح شي cita غادي نعلموك عاجل فـ WhatsApp."
-      : "مرحبا بك فـ Gestoria Cita AI. خلي ليا المعلومات ديالك. عمر ليا الفورمولار باش نكمل معاك.";
+      ? voiceTexts.savedLeadReply
+      : voiceTexts.initialVoice;
 
     pushAgentMessage(firstMessage, true);
 
@@ -892,7 +894,12 @@ export default function BuscarCitas() {
   };
 
   const handleConfirm = () => {
-    if (!appointmentData?.locator || !appointmentData?.date || !appointmentData?.time || !appointmentData?.office) {
+    if (
+      !appointmentData?.locator ||
+      !appointmentData?.date ||
+      !appointmentData?.time ||
+      !appointmentData?.office
+    ) {
       toast({
         title: "No hay cita real",
         description: "No puedes confirmar una cita inventada o incompleta.",
@@ -945,7 +952,7 @@ export default function BuscarCitas() {
 
       <main className="flex-1 relative z-10 flex flex-col pt-16 pb-0">
         <h1 className="text-xl font-display font-bold px-4 sm:px-6 py-3 max-w-7xl mx-auto w-full">
-          {cameFromConfirmationLink ? "Sara: confirmación de cita" : t("buscar_title")}
+          {cameFromConfirmationLink ? "Sara: confirmación de cita" : "Buscar citas"}
         </h1>
 
         <div className="flex-1 flex flex-col lg:flex-row gap-4 px-4 sm:px-6 max-w-7xl mx-auto w-full pb-4">
@@ -1115,7 +1122,7 @@ export default function BuscarCitas() {
                 type="button"
               >
                 <CheckCircle2 className="w-5 h-5" />
-                {t("buscar_confirmar")}
+                Confirmar cita
               </motion.button>
             )}
 
@@ -1133,7 +1140,7 @@ export default function BuscarCitas() {
                 type="button"
               >
                 <FileText className="w-4 h-4 text-primary" />
-                {t("buscar_docs")}
+                Documentos
               </button>
 
               <button
@@ -1149,7 +1156,7 @@ export default function BuscarCitas() {
                 type="button"
               >
                 <Settings className="w-4 h-4 text-secondary" />
-                {t("buscar_forms")}
+                Formularios
               </button>
             </div>
           </motion.div>
@@ -1190,7 +1197,6 @@ export default function BuscarCitas() {
             selectedTramite={selectedTramite}
             onAceptar={handleAceptar}
             isPending={scheduleMutation.isPending}
-            lang="es"
             cameFromConfirmationLink={cameFromConfirmationLink}
             formData={formData}
             onFormChange={handleFormChange}
@@ -1215,7 +1221,7 @@ export default function BuscarCitas() {
                 type="button"
               >
                 <FileText className="w-4 h-4 text-primary" />
-                {t("buscar_docs")}
+                Documentos
               </button>
 
               <button
@@ -1231,7 +1237,7 @@ export default function BuscarCitas() {
                 type="button"
               >
                 <Settings className="w-4 h-4 text-secondary" />
-                {t("buscar_forms")}
+                Formularios
               </button>
             </div>
 
@@ -1257,7 +1263,7 @@ export default function BuscarCitas() {
                   <div className="flex items-center gap-2">
                     <FileText className="w-4 h-4 text-primary" />
                     <span className="font-bold text-sm text-white">
-                      {t("buscar_docs_required")}
+                      Documentos requeridos
                     </span>
                   </div>
 
@@ -1314,7 +1320,7 @@ export default function BuscarCitas() {
                   <div className="flex items-center gap-2">
                     <Settings className="w-4 h-4 text-secondary" />
                     <span className="font-bold text-sm text-white">
-                      {t("buscar_forms_official")}
+                      Formularios oficiales
                     </span>
                   </div>
 
