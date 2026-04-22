@@ -448,12 +448,12 @@ export default function BuscarCitas() {
   const voiceTexts = useMemo(
     () => ({
       initialVoice:
-        "مرحبا بك فـ Gestoria Cita AI. خلي ليا المعلومات ديالك. عمر ليا الفورمولار باش نكمل معاك.",
+        "السلام، مرحبا بيك فـ GestoriaCitaIA. إلا بغيتي نشدّو ليك موعد، عمر ليا الفورمولار، ومن بعد أنا غادي نكمل معاك الهضرة.",
       savedLeadReply:
-        "دابا عندنا المعلومات ديالك. منين تفتح شي cita غادي نعلموك عاجل فـ WhatsApp.",
+        "مزيان. دابا عندنا المعلومات ديالك. منين تفتح شي cita غادي نعلموك عاجل فـ WhatsApp.",
       foundMsg: "لقينا ليك cita حقيقية. دخل بسرعة باش تأكدها.",
       confirmMsg:
-        "شكرا على الثقة فـ Gestoria Cita AI. تم تأكيد الموعد ديالك.",
+        "شكرا على الثقة فـ GestoriaCitaIA. تم تأكيد الموعد ديالك.",
     }),
     []
   );
@@ -791,6 +791,37 @@ export default function BuscarCitas() {
     pushAgentMessage(text);
   };
 
+  const sendSaraStartMessage = (message: string) => {
+    if (!realtimeDcRef.current || realtimeDcRef.current.readyState !== "open") {
+      return;
+    }
+
+    realtimeDcRef.current.send(
+      JSON.stringify({
+        type: "conversation.item.create",
+        item: {
+          type: "message",
+          role: "user",
+          content: [
+            {
+              type: "input_text",
+              text: `ابدئي أنتِ الكلام الآن مباشرة. لا تنتظري العميل. قولي الآن هذا الكلام بصوت طبيعي وبشكل بشري: ${message}`,
+            },
+          ],
+        },
+      })
+    );
+
+    realtimeDcRef.current.send(
+      JSON.stringify({
+        type: "response.create",
+        response: {
+          modalities: ["audio", "text"],
+        },
+      })
+    );
+  };
+
   const stopListening = () => {
     try {
       realtimeDcRef.current?.close();
@@ -888,59 +919,23 @@ export default function BuscarCitas() {
 
       const dc = pc.createDataChannel("oai-events");
       realtimeDcRef.current = dc;
-dc.onopen = () => {
-  setIsListening(true);
-  setWaitingSara(true);
-  setLastUserTranscript("");
-  lastUserTranscriptRef.current = "";
-  assistantTextBufferRef.current = "";
 
-  const firstMessage = formReady
-    ? "دابا عندنا المعلومات ديالك. منين تفتح شي cita غادي نعلموك عاجل فـ WhatsApp."
-    : "السلام، مرحبا بيك فـ GestoriaCitaIA. إلا بغيتي نشدّو ليك موعد، عمر ليا الفورمولار، ومن بعد أنا غادي نكمل معاك الهضرة.";
+      dc.onopen = () => {
+        setIsListening(true);
+        setWaitingSara(true);
+        setLastUserTranscript("");
+        lastUserTranscriptRef.current = "";
+        assistantTextBufferRef.current = "";
 
-  if (!realtimeDcRef.current || realtimeDcRef.current.readyState !== "open") return;
+        const firstMessage = formReady
+          ? voiceTexts.savedLeadReply
+          : voiceTexts.initialVoice;
 
-  realtimeDcRef.current.send(
-    JSON.stringify({
-      type: "conversation.item.create",
-      item: {
-        type: "message",
-        role: "user",
-        content: [
-          {
-            type: "input_text",
-            text: formReady
-              ? "ابدئي أنتِ الكلام الآن مباشرة. لا تنتظري العميل. قولي له الآن أن بياناته وصلت وأنك ستخبرينه في واتساب فور ظهور cita."
-              : "ابدئي أنتِ الكلام الآن مباشرة. لا تنتظري العميل. رحبي به الآن واطلبي منه أن يملأ الفورمولار.",
-          },
-        ],
-      },
-    })
-  );
+        setTimeout(() => {
+          sendSaraStartMessage(firstMessage);
+        }, 250);
+      };
 
-  setTimeout(() => {
-    if (!realtimeDcRef.current || realtimeDcRef.current.readyState !== "open") return;
-
-    realtimeDcRef.current.send(
-      JSON.stringify({
-        type: "response.create",
-        response: {
-          modalities: ["audio", "text"],
-          instructions: [
-            "جاوبي ديما غير بالدارجة المغربية وبالحروف العربية.",
-            "أنتِ سارة من GestoriaCitaIA.",
-            "أنتِ مختصة غير فالمواعيد ديال extranjería فإسبانيا.",
-            "أنتِ اللي خاصك تبداي الهضرة الأولى مباشرة.",
-            "ممنوع تنتظري العميل يهضر.",
-            "قولي الآن هذا المعنى بصوت طبيعي وبشكل بشري:",
-            firstMessage,
-          ].join(" "),
-        },
-      })
-    );
-  }, 250);
-};
       dc.onmessage = (event) => {
         try {
           const msg = JSON.parse(event.data);
@@ -1074,6 +1069,12 @@ dc.onopen = () => {
       title: ui.saveTitle,
       description: ui.saveDesc,
     });
+
+    if (realtimeDcRef.current && realtimeDcRef.current.readyState === "open") {
+      setTimeout(() => {
+        sendSaraStartMessage(voiceTexts.savedLeadReply);
+      }, 300);
+    }
   };
 
   const handleAceptar = () => {
@@ -1103,6 +1104,12 @@ dc.onopen = () => {
           setAppointmentData(data);
           setStep(2);
           pushAgentMessage(voiceTexts.foundMsg);
+
+          if (realtimeDcRef.current && realtimeDcRef.current.readyState === "open") {
+            setTimeout(() => {
+              sendSaraStartMessage(voiceTexts.foundMsg);
+            }, 300);
+          }
 
           toast({
             title: ui.foundSuccessTitle,
@@ -1140,6 +1147,12 @@ dc.onopen = () => {
 
     setConfirmed(true);
     pushAgentMessage(voiceTexts.confirmMsg);
+
+    if (realtimeDcRef.current && realtimeDcRef.current.readyState === "open") {
+      setTimeout(() => {
+        sendSaraStartMessage(voiceTexts.confirmMsg);
+      }, 300);
+    }
 
     toast({
       title: ui.confirmSuccessTitle,
