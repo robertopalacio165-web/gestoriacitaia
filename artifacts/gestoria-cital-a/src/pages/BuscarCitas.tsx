@@ -889,55 +889,41 @@ export default function BuscarCitas() {
       const dc = pc.createDataChannel("oai-events");
       realtimeDcRef.current = dc;
 
-      dc.onopen = () => {
-        setIsListening(true);
-        setWaitingSara(true);
+dc.onopen = () => {
+  setIsListening(true);
+  setWaitingSara(true);
 
-        const firstPrompt = formReady
-          ? "ابدئي دابا أنتِ الأولى وما تستنايش العميل يهضر. رحبي بالعميل بالدارجة المغربية. قولي ليه بالضبط: دابا عندنا المعلومات ديالك. منين تفتح شي cita غادي نعلموك عاجل فـ WhatsApp."
-          : "ابدئي دابا أنتِ الأولى وما تستنايش العميل يهضر. رحبي بالعميل بالدارجة المغربية. قولي ليه بالضبط: مرحبا بك فـ Gestoria Cita AI. خلي ليا المعلومات ديالك. عمر ليا الفورمولار باش نكمل معاك.";
+  const firstMessage = formReady
+    ? "دابا عندنا المعلومات ديالك. منين تفتح شي cita غادي نعلموك عاجل فـ WhatsApp."
+    : "مرحبا بك فـ Gestoria Cita AI. خلي ليا المعلومات ديالك. عمر ليا الفورمولار باش نكمل معاك.";
 
-        dc.send(
-          JSON.stringify({
-            type: "conversation.item.create",
-            item: {
-              type: "message",
-              role: "user",
-              content: [
-                {
-                  type: "input_text",
-                  text: formReady
-                    ? "ابدئي دابا وكلمي العميل على أن البيانات تسجلات وأنك غادي تعلميه فواتساب."
-                    : "ابدئي دابا ورحبي بالعميل وطلبي منو يعمر الفورمولار.",
-                },
-              ],
-            },
-          })
-        );
+  setTimeout(() => {
+    if (!realtimeDcRef.current || realtimeDcRef.current.readyState !== "open") return;
 
-        dc.send(
-          JSON.stringify({
-            type: "response.create",
-            response: {
-              modalities: ["audio", "text"],
-              instructions: [
-                "جاوبي ديما غير بالدارجة المغربية وبالحروف العربية.",
-                "أنتِ سارة من GestoriaCitaIA.",
-                "أنتِ مختصة غير فالمواعيد ديال extranjería فإسبانيا.",
-                "الأسلوب ديالك طبيعي، واضح، مهني، ومختصر.",
-                "أنتِ اللي خاصك تبداي الهضرة الأولى، ما تستنايش العميل.",
-                `نوع الموعد: ${selectedTramiteLabel}.`,
-                `الاسم: ${formData.fullName || "ما متسجلش"}.`,
-                `الهاتف: ${formData.phone || "ما متسجلش"}.`,
-                `الهوية: ${formData.nie || "ما متسجلش"}.`,
-                `المدينة: ${formData.city || "ما متسجلش"}.`,
-                firstPrompt,
-              ].join(" "),
-            },
-          })
-        );
-      };
-
+    realtimeDcRef.current.send(
+      JSON.stringify({
+        type: "response.create",
+        response: {
+          modalities: ["audio", "text"],
+          instructions: [
+            "جاوبي ديما غير بالدارجة المغربية وبالحروف العربية.",
+            "أنتِ سارة من GestoriaCitaIA.",
+            "أنتِ مختصة غير فالمواعيد ديال extranjería فإسبانيا.",
+            "الأسلوب ديالك طبيعي، واضح، مهني، ومختصر.",
+            "أنتِ اللي خاصك تبداي الهضرة الأولى مباشرة بعد فتح الميكروفون.",
+            "ما تستنايش العميل يهضر.",
+            `نوع الموعد: ${selectedTramiteLabel}.`,
+            `الاسم: ${formData.fullName || "ما متسجلش"}.`,
+            `الهاتف: ${formData.phone || "ما متسجلش"}.`,
+            `الهوية: ${formData.nie || "ما متسجلش"}.`,
+            `المدينة: ${formData.city || "ما متسجلش"}.`,
+            `قولي دابا هاد الجملة نفسها وبنفس المعنى وبشكل طبيعي: ${firstMessage}`,
+          ].join(" "),
+        },
+      })
+    );
+  }, 350);
+};
       dc.onmessage = (event) => {
         try {
           const msg = JSON.parse(event.data);
