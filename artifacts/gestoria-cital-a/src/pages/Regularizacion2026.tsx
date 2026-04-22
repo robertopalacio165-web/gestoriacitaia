@@ -764,42 +764,32 @@ export default function Regularizacion2026() {
       const dc = pc.createDataChannel("oai-events");
       realtimeDcRef.current = dc;
 
-   dc.onopen = () => {
+dc.onopen = () => {
   setIsListening(true);
   setWaitingMohamed(true);
 
-  const firstPrompt = [
-    "ابدأ دابا أنت الأول وما تستناش العميل يهضر.",
-    "رحب بالعميل بالدارجة المغربية وبالحروف العربية.",
-    "قول ليه بالضبط: السلام، مرحبا بيك فـ GestoriaCitaIA. إلى بغيتي نصيبو ليك الملف ديال التسوية الجماعية، عمر ليا الفورمولار الأول ومن بعد نكمل معاك.",
-    "خلي الجواب قصير، طبيعي، وبشري.",
-  ].join(" ");
+  const firstMessage = leadSaved
+    ? "دابا عندنا المعلومات ديالك وغادي نكملو الملف خطوة بخطوة."
+    : "مرحبا بك فـ Gestoria Cita AI. عمر ليا الفورمولار الأول ومن بعد نكمل معاك الملف.";
 
-  dc.send(
-    JSON.stringify({
-      type: "conversation.item.create",
-      item: {
-        type: "message",
-        role: "user",
-        content: [
-          {
-            type: "input_text",
-            text: "ابدأ دابا ورحب بالعميل أنت الأول.",
-          },
-        ],
-      },
-    })
-  );
+  setTimeout(() => {
+    if (!realtimeDcRef.current || realtimeDcRef.current.readyState !== "open") return;
 
-  dc.send(
-    JSON.stringify({
-      type: "response.create",
-      response: {
-        modalities: ["audio", "text"],
-        instructions: [voiceTexts.realtimeIntro, firstPrompt].join(" "),
-      },
-    })
-  );
+    realtimeDcRef.current.send(
+      JSON.stringify({
+        type: "response.create",
+        response: {
+          modalities: ["audio", "text"],
+          instructions: [
+            voiceTexts.realtimeIntro,
+            "أنت اللي خاصك تبدا الهضرة الأولى مباشرة بعد فتح الميكروفون.",
+            "ما تستناش العميل يهضر.",
+            `قول دابا هاد الجملة نفسها وبشكل طبيعي: ${firstMessage}`,
+          ].join(" "),
+        },
+      })
+    );
+  }, 350);
 };
 
       dc.onmessage = (event) => {
