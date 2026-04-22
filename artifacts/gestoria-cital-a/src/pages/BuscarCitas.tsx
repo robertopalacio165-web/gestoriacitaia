@@ -888,22 +888,21 @@ export default function BuscarCitas() {
 
       const dc = pc.createDataChannel("oai-events");
       realtimeDcRef.current = dc;
-
 dc.onopen = () => {
   setIsListening(true);
   setWaitingSara(true);
-
-  const firstMessage = formReady
-    ? "دابا عندنا المعلومات ديالك. منين تفتح شي cita غادي نعلموك عاجل فـ WhatsApp."
-    : "مرحبا بك فـ Gestoria Cita AI. خلي ليا المعلومات ديالك. عمر ليا الفورمولار باش نكمل معاك.";
 
   const introInstructions = [
     "جاوبي ديما غير بالدارجة المغربية وبالحروف العربية.",
     "أنتِ سارة من GestoriaCitaIA.",
     "أنتِ مختصة غير فالمواعيد ديال extranjería فإسبانيا.",
-    "الأسلوب ديالك طبيعي، واضح، مهني، ومختصر.",
-    "أنتِ اللي خاصك تبداي الهضرة الأولى مباشرة بعد فتح الميكروفون.",
+    "تكلمي بصوت طبيعي، بشري، واضح، ومهني.",
+    "أنتِ اللي خاصك تبداي الهضرة الأولى مباشرة منين يتحل الميكروفون.",
     "ما تستنايش العميل يهضر.",
+    "ما تقرايش نص حرفي. تكلمي بشكل طبيعي.",
+    formReady
+      ? "الفورمولار واجد. رحبي بالعميل بشكل طبيعي وقولي ليه بالمعنى أننا خذينا المعطيات ديالو، ومنين تبان cita غادي نعلموه فـ WhatsApp."
+      : "الفورمولار مازال ما تكملش. رحبي بالعميل بشكل طبيعي وطلبي منو يعمر الفورمولار باش تكملي معاه.",
     `نوع الموعد: ${selectedTramiteLabel}.`,
     `الاسم: ${formData.fullName || "ما متسجلش"}.`,
     `الهاتف: ${formData.phone || "ما متسجلش"}.`,
@@ -911,38 +910,39 @@ dc.onopen = () => {
     `المدينة: ${formData.city || "ما متسجلش"}.`,
   ].join(" ");
 
-  setTimeout(() => {
-    if (!realtimeDcRef.current || realtimeDcRef.current.readyState !== "open") {
-      return;
-    }
+  if (!realtimeDcRef.current || realtimeDcRef.current.readyState !== "open") {
+    return;
+  }
 
-    realtimeDcRef.current.send(
-      JSON.stringify({
-        type: "conversation.item.create",
-        item: {
-          type: "message",
-          role: "user",
-          content: [
-            {
-              type: "input_text",
-              text: `Empieza tú primero ahora mismo. No esperes al cliente. Di este mensaje inicial en darija marroquí con letras árabes: ${firstMessage}`,
-            },
-          ],
-        },
-      })
-    );
+  realtimeDcRef.current.send(
+    JSON.stringify({
+      type: "conversation.item.create",
+      item: {
+        type: "message",
+        role: "user",
+        content: [
+          {
+            type: "input_text",
+            text: formReady
+              ? "ابدئي دابا الهضرة الأولى بشكل طبيعي، وقولي للعميل أننا خذينا المعلومات ديالو وغادي نعلموه فـ WhatsApp منين تبان cita."
+              : "ابدئي دابا الهضرة الأولى بشكل طبيعي، ورحبي بالعميل وطلبي منو يعمر الفورمولار.",
+          },
+        ],
+      },
+    })
+  );
 
-    realtimeDcRef.current.send(
-      JSON.stringify({
-        type: "response.create",
-        response: {
-          modalities: ["audio", "text"],
-          instructions: introInstructions,
-        },
-      })
-    );
-  }, 250);
+  realtimeDcRef.current.send(
+    JSON.stringify({
+      type: "response.create",
+      response: {
+        modalities: ["audio", "text"],
+        instructions: introInstructions,
+      },
+    })
+  );
 };
+
       dc.onmessage = (event) => {
         try {
           const msg = JSON.parse(event.data);
