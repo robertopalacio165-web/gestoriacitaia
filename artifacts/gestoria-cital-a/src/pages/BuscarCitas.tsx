@@ -433,6 +433,7 @@ export default function BuscarCitas() {
   const assistantTextBufferRef = useRef("");
   const lastUserTranscriptRef = useRef("");
   const lastAssistantTextRef = useRef("");
+  const shouldKickoffSaraRef = useRef(false);
 
   const urlParams = useMemo(() => {
     const url = new URL(window.location.href);
@@ -452,8 +453,7 @@ export default function BuscarCitas() {
       savedLeadReply:
         "مزيان. دابا عندنا المعلومات ديالك. منين تفتح شي cita غادي نعلموك عاجل فـ WhatsApp.",
       foundMsg: "لقينا ليك cita حقيقية. دخل بسرعة باش تأكدها.",
-      confirmMsg:
-        "شكرا على الثقة فـ GestoriaCitaIA. تم تأكيد الموعد ديالك.",
+      confirmMsg: "شكرا على الثقة فـ GestoriaCitaIA. تم تأكيد الموعد ديالك.",
     }),
     []
   );
@@ -791,10 +791,13 @@ export default function BuscarCitas() {
     pushAgentMessage(text);
   };
 
-  const sendSaraStartMessage = (message: string) => {
-    if (!realtimeDcRef.current || realtimeDcRef.current.readyState !== "open") {
-      return;
-    }
+  const sendSaraSpokenMessage = (message: string) => {
+    if (!message.trim()) return;
+    if (!realtimeDcRef.current || realtimeDcRef.current.readyState !== "open") return;
+    if (!realtimePcRef.current || !realtimePcRef.current.remoteDescription) return;
+
+    setWaitingSara(true);
+    assistantTextBufferRef.current = "";
 
     realtimeDcRef.current.send(
       JSON.stringify({
@@ -820,6 +823,20 @@ export default function BuscarCitas() {
         },
       })
     );
+  };
+
+  const kickoffSara = () => {
+    setIsListening(true);
+    setWaitingSara(true);
+    setLastUserTranscript("");
+    lastUserTranscriptRef.current = "";
+    assistantTextBufferRef.current = "";
+
+    const firstMessage = formReady
+      ? voiceTexts.savedLeadReply
+      : voiceTexts.initialVoice;
+
+    sendSaraSpokenMessage(firstMessage);
   };
 
   const stopListening = () => {
@@ -920,46 +937,10 @@ export default function BuscarCitas() {
       const dc = pc.createDataChannel("oai-events");
       realtimeDcRef.current = dc;
 
-dc.onopen = () => {
-  setIsListening(true);
-  setWaitingSara(true);
-  setLastUserTranscript("");
-  lastUserTranscriptRef.current = "";
-  assistantTextBufferRef.current = "";
+      dc.onopen = () => {
+        shouldKickoffSaraRef.current = true;
+      };
 
-  const firstMessage = formReady
-    ? "مزيان. دابا عندنا المعلومات ديالك. منين تفتح شي cita غادي نعلموك عاجل فـ WhatsApp."
-    : "السلام، مرحبا بيك فـ GestoriaCitaIA. إلا بغيتي نشدّو ليك موعد، عمر ليا الفورمولار، ومن بعد أنا غادي نكمل معاك الهضرة.";
-
-  if (!realtimeDcRef.current || realtimeDcRef.current.readyState !== "open") {
-    return;
-  }
-
-  realtimeDcRef.current.send(
-    JSON.stringify({
-      type: "conversation.item.create",
-      item: {
-        type: "message",
-        role: "user",
-        content: [
-          {
-            type: "input_text",
-            text: `ابدئي أنتِ الكلام الآن مباشرة. لا تنتظري العميل. قولي هذا الآن بصوت طبيعي وبشكل بشري: ${firstMessage}`,
-          },
-        ],
-      },
-    })
-  );
-
-  realtimeDcRef.current.send(
-    JSON.stringify({
-      type: "response.create",
-      response: {
-        modalities: ["audio", "text"],
-      },
-    })
-  );
-};
       dc.onmessage = (event) => {
         try {
           const msg = JSON.parse(event.data);
@@ -1039,6 +1020,13 @@ dc.onopen = () => {
         type: "answer",
         sdp: answerSdp,
       });
+
+      if (shouldKickoffSaraRef.current) {
+        shouldKickoffSaraRef.current = false;
+        setTimeout(() => {
+          kickoffSara();
+        }, 150);
+      }
     } catch (error: any) {
       console.error("Error iniciando realtime Sara:", error);
       stopListening();
@@ -1094,11 +1082,15 @@ dc.onopen = () => {
       description: ui.saveDesc,
     });
 
-    if (realtimeDcRef.current && realtimeDcRef.current.readyState === "open") {
-      setTimeout(() => {
-        sendSaraStartMessage(voiceTexts.savedLeadReply);
-      }, 300);
-    }
+    setTimeout(() => {
+      if (
+        realtimeDcRef.current &&
+        realtimeDcRef.current.readyState === "open" &&
+        realtimePcRef.current?.remoteDescription
+      ) {
+        sendSaraSpokenMessage(voiceTexts.savedLeadReply);
+      }
+    }, 150);
   };
 
   const handleAceptar = () => {
@@ -1129,11 +1121,15 @@ dc.onopen = () => {
           setStep(2);
           pushAgentMessage(voiceTexts.foundMsg);
 
-          if (realtimeDcRef.current && realtimeDcRef.current.readyState === "open") {
-            setTimeout(() => {
-              sendSaraStartMessage(voiceTexts.foundMsg);
-            }, 300);
-          }
+          setTimeout(() => {
+            if (
+              realtimeDcRef.current &&
+              realtimeDcRef.current.readyState === "open" &&
+              realtimePcRef.current?.remoteDescription
+            ) {
+              sendSaraSpokenMessage(voiceTexts.foundMsg);
+            }
+          }, 150);
 
           toast({
             title: ui.foundSuccessTitle,
@@ -1172,11 +1168,15 @@ dc.onopen = () => {
     setConfirmed(true);
     pushAgentMessage(voiceTexts.confirmMsg);
 
-    if (realtimeDcRef.current && realtimeDcRef.current.readyState === "open") {
-      setTimeout(() => {
-        sendSaraStartMessage(voiceTexts.confirmMsg);
-      }, 300);
-    }
+    setTimeout(() => {
+      if (
+        realtimeDcRef.current &&
+        realtimeDcRef.current.readyState === "open" &&
+        realtimePcRef.current?.remoteDescription
+      ) {
+        sendSaraSpokenMessage(voiceTexts.confirmMsg);
+      }
+    }, 150);
 
     toast({
       title: ui.confirmSuccessTitle,
@@ -1574,9 +1574,7 @@ dc.onopen = () => {
                           : "✗"}
                       </span>
 
-                      <span className="text-sm text-white/90">
-                        {doc.nombre}
-                      </span>
+                      <span className="text-sm text-white/90">{doc.nombre}</span>
                     </div>
                   ))}
                 </div>
