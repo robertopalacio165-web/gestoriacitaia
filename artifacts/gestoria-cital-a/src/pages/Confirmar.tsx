@@ -6,6 +6,7 @@ export default function Confirmar() {
 
   const params = useMemo(() => {
     const url = new URL(window.location.href);
+
     return {
       token: url.searchParams.get("token") || "",
       appointmentId: url.searchParams.get("appointment_id") || "",
@@ -30,8 +31,10 @@ export default function Confirmar() {
     if (!hasRealData) return;
 
     const qs = new URLSearchParams();
+
     qs.set("token", params.token);
     qs.set("appointment_id", params.appointmentId);
+
     if (params.fullName) qs.set("full_name", params.fullName);
     if (params.tramite) qs.set("tramite", params.tramite);
     if (params.city) qs.set("city", params.city);
