@@ -763,14 +763,13 @@ export default function Regularizacion2026() {
 
       const dc = pc.createDataChannel("oai-events");
       realtimeDcRef.current = dc;
-
 dc.onopen = () => {
   setIsListening(true);
   setWaitingMohamed(true);
 
   const firstMessage = leadSaved
-    ? "دابا عندنا المعلومات ديالك وغادي نكملو الملف خطوة بخطوة."
-    : "مرحبا بك فـ Gestoria Cita AI. عمر ليا الفورمولار الأول ومن بعد نكمل معاك الملف.";
+    ? "دابا عندنا المعلومات ديالك. غادي نكملو الملف خطوة بخطوة."
+    : "مرحبا بك فـ Gestoria Cita AI. عمر ليا الفورمولار الأول ومن بعد نكمل معاك فالملف.";
 
   setTimeout(() => {
     if (!realtimeDcRef.current || realtimeDcRef.current.readyState !== "open") return;
@@ -784,7 +783,7 @@ dc.onopen = () => {
             voiceTexts.realtimeIntro,
             "أنت اللي خاصك تبدا الهضرة الأولى مباشرة بعد فتح الميكروفون.",
             "ما تستناش العميل يهضر.",
-            `قول دابا هاد الجملة نفسها وبشكل طبيعي: ${firstMessage}`,
+            `قول هاد الجملة نفسها وبشكل طبيعي: ${firstMessage}`,
           ].join(" "),
         },
       })
