@@ -891,28 +891,15 @@ export default function BuscarCitas() {
 dc.onopen = () => {
   setIsListening(true);
   setWaitingSara(true);
+  setLastUserTranscript("");
+  lastUserTranscriptRef.current = "";
+  assistantTextBufferRef.current = "";
 
-  const introInstructions = [
-    "جاوبي ديما غير بالدارجة المغربية وبالحروف العربية.",
-    "أنتِ سارة من GestoriaCitaIA.",
-    "أنتِ مختصة غير فالمواعيد ديال extranjería فإسبانيا.",
-    "تكلمي بصوت طبيعي، بشري، واضح، ومهني.",
-    "أنتِ اللي خاصك تبداي الهضرة الأولى مباشرة منين يتحل الميكروفون.",
-    "ما تستنايش العميل يهضر.",
-    "ما تقرايش نص حرفي. تكلمي بشكل طبيعي.",
-    formReady
-      ? "الفورمولار واجد. رحبي بالعميل بشكل طبيعي وقولي ليه بالمعنى أننا خذينا المعطيات ديالو، ومنين تبان cita غادي نعلموه فـ WhatsApp."
-      : "الفورمولار مازال ما تكملش. رحبي بالعميل بشكل طبيعي وطلبي منو يعمر الفورمولار باش تكملي معاه.",
-    `نوع الموعد: ${selectedTramiteLabel}.`,
-    `الاسم: ${formData.fullName || "ما متسجلش"}.`,
-    `الهاتف: ${formData.phone || "ما متسجلش"}.`,
-    `الهوية: ${formData.nie || "ما متسجلش"}.`,
-    `المدينة: ${formData.city || "ما متسجلش"}.`,
-  ].join(" ");
+  const firstMessage = formReady
+    ? "دابا عندنا المعلومات ديالك. منين تفتح شي cita غادي نعلموك عاجل فـ WhatsApp."
+    : "السلام، مرحبا بيك فـ GestoriaCitaIA. إلا بغيتي نشدّو ليك موعد، عمر ليا الفورمولار، ومن بعد أنا غادي نكمل معاك الهضرة.";
 
-  if (!realtimeDcRef.current || realtimeDcRef.current.readyState !== "open") {
-    return;
-  }
+  if (!realtimeDcRef.current || realtimeDcRef.current.readyState !== "open") return;
 
   realtimeDcRef.current.send(
     JSON.stringify({
@@ -924,25 +911,36 @@ dc.onopen = () => {
           {
             type: "input_text",
             text: formReady
-              ? "ابدئي دابا الهضرة الأولى بشكل طبيعي، وقولي للعميل أننا خذينا المعلومات ديالو وغادي نعلموه فـ WhatsApp منين تبان cita."
-              : "ابدئي دابا الهضرة الأولى بشكل طبيعي، ورحبي بالعميل وطلبي منو يعمر الفورمولار.",
+              ? "ابدئي أنتِ الكلام الآن مباشرة. لا تنتظري العميل. قولي له الآن أن بياناته وصلت وأنك ستخبرينه في واتساب فور ظهور cita."
+              : "ابدئي أنتِ الكلام الآن مباشرة. لا تنتظري العميل. رحبي به الآن واطلبي منه أن يملأ الفورمولار.",
           },
         ],
       },
     })
   );
 
-  realtimeDcRef.current.send(
-    JSON.stringify({
-      type: "response.create",
-      response: {
-        modalities: ["audio", "text"],
-        instructions: introInstructions,
-      },
-    })
-  );
-};
+  setTimeout(() => {
+    if (!realtimeDcRef.current || realtimeDcRef.current.readyState !== "open") return;
 
+    realtimeDcRef.current.send(
+      JSON.stringify({
+        type: "response.create",
+        response: {
+          modalities: ["audio", "text"],
+          instructions: [
+            "جاوبي ديما غير بالدارجة المغربية وبالحروف العربية.",
+            "أنتِ سارة من GestoriaCitaIA.",
+            "أنتِ مختصة غير فالمواعيد ديال extranjería فإسبانيا.",
+            "أنتِ اللي خاصك تبداي الهضرة الأولى مباشرة.",
+            "ممنوع تنتظري العميل يهضر.",
+            "قولي الآن هذا المعنى بصوت طبيعي وبشكل بشري:",
+            firstMessage,
+          ].join(" "),
+        },
+      })
+    );
+  }, 250);
+};
       dc.onmessage = (event) => {
         try {
           const msg = JSON.parse(event.data);
