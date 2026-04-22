@@ -920,7 +920,7 @@ export default function BuscarCitas() {
       const dc = pc.createDataChannel("oai-events");
       realtimeDcRef.current = dc;
 
-     dc.onopen = () => {
+dc.onopen = () => {
   setIsListening(true);
   setWaitingSara(true);
   setLastUserTranscript("");
@@ -937,23 +937,29 @@ export default function BuscarCitas() {
 
   realtimeDcRef.current.send(
     JSON.stringify({
+      type: "conversation.item.create",
+      item: {
+        type: "message",
+        role: "user",
+        content: [
+          {
+            type: "input_text",
+            text: `ابدئي أنتِ الكلام الآن مباشرة. لا تنتظري العميل. قولي هذا الآن بصوت طبيعي وبشكل بشري: ${firstMessage}`,
+          },
+        ],
+      },
+    })
+  );
+
+  realtimeDcRef.current.send(
+    JSON.stringify({
       type: "response.create",
       response: {
         modalities: ["audio", "text"],
-        instructions: [
-          "جاوبي ديما غير بالدارجة المغربية وبالحروف العربية.",
-          "أنتِ سارة من GestoriaCitaIA.",
-          "أنتِ مختصة غير فالمواعيد ديال extranjería فإسبانيا.",
-          "أنتِ اللي خاصك تبداي الهضرة الأولى مباشرة.",
-          "ممنوع تنتظري العميل يهضر.",
-          "قولي الآن هذا الكلام بصوت طبيعي وبشكل بشري:",
-          firstMessage,
-        ].join(" "),
       },
     })
   );
 };
-
       dc.onmessage = (event) => {
         try {
           const msg = JSON.parse(event.data);
