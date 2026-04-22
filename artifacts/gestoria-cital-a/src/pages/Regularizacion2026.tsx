@@ -771,10 +771,12 @@ dc.onopen = () => {
   assistantTextBufferRef.current = "";
 
   const firstMessage = leadSaved
-    ? "مزيان. خديت المعطيات ديالك. دابا غادي نكمل معاك خطوة بخطوة، ونسولك غير على المعلومات المهمة ديال الملف."
-    : "السلام، مرحبا بيك فـ GestoriaCitaIA. إلا بغيتي نصيبو ليك الميلف ديال التسوية الجماعية، عمر ليا الفورمولار الأول، ومن بعد نكمل معاك.";
+    ? "مزيان. خديت المعطيات ديالك. دابا ضغط على زر الميكروفون وهادي نكمل معك الملف خطوة بخطوة."
+    : "السلام، مرحبا بيك فـ GestoriaCitaIA. إلا بغيتي نصيبو ليك الملف، عمر ليا الفورمولار الأول ومن بعد نكمل معاك.";
 
-  if (!realtimeDcRef.current || realtimeDcRef.current.readyState !== "open") return;
+  if (!realtimeDcRef.current || realtimeDcRef.current.readyState !== "open") {
+    return;
+  }
 
   realtimeDcRef.current.send(
     JSON.stringify({
@@ -785,35 +787,21 @@ dc.onopen = () => {
         content: [
           {
             type: "input_text",
-            text: leadSaved
-              ? "ابدأ أنت الكلام الآن مباشرة. لا تنتظر العميل. أخبره الآن أنك أخذت بياناته وستكمل معه خطوة خطوة."
-              : "ابدأ أنت الكلام الآن مباشرة. لا تنتظر العميل. رحب به الآن واطلب منه أن يملأ الفورمولار الأول.",
+            text: `ابدأ أنت الكلام الآن مباشرة. لا تنتظر العميل. قل هذا الآن بصوت طبيعي وبشكل بشري: ${firstMessage}`,
           },
         ],
       },
     })
   );
 
-  setTimeout(() => {
-    if (!realtimeDcRef.current || realtimeDcRef.current.readyState !== "open") return;
-
-    realtimeDcRef.current.send(
-      JSON.stringify({
-        type: "response.create",
-        response: {
-          modalities: ["audio", "text"],
-          instructions: [
-            "جاوب ديما غير بالدارجة المغربية وبالحروف العربية.",
-            "أنت محمد من GestoriaCitaIA.",
-            "أنت اللي خاصك تبدا الهضرة الأولى مباشرة.",
-            "ممنوع تنتظر العميل يهضر.",
-            "قول الآن هذا المعنى بصوت طبيعي وبشكل بشري:",
-            firstMessage,
-          ].join(" "),
-        },
-      })
-    );
-  }, 250);
+  realtimeDcRef.current.send(
+    JSON.stringify({
+      type: "response.create",
+      response: {
+        modalities: ["audio", "text"],
+      },
+    })
+  );
 };
 
       dc.onmessage = (event) => {
