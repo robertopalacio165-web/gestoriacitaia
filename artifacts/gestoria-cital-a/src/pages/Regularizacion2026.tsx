@@ -767,55 +767,54 @@ dc.onopen = () => {
   setIsListening(true);
   setWaitingMohamed(true);
 
-  const firstMessage = leadSaved
-    ? "دابا عندنا المعطيات ديالك وغادي نكملو الملف خطوة بخطوة."
-    : "مرحبا بك فـ Gestoria Cita AI. عمر ليا الفورمولار الأول ومن بعد نكمل معاك فالملف.";
-
   const introInstructions = [
     "جاوب ديما غير بالدارجة المغربية وبالحروف العربية.",
     "أنت محمد من GestoriaCitaIA.",
     "أنت خبير فالتسوية الجماعية وملفات extranjería فإسبانيا.",
-    "الأسلوب ديالك طبيعي، واضح، مهني، ومختصر.",
-    "أنت اللي خاصك تبدا الهضرة الأولى مباشرة بعد فتح الميكروفون.",
+    "تكلم بصوت طبيعي، بشري، واضح، ومهني.",
+    "أنت اللي خاصك تبدا الهضرة الأولى مباشرة منين يتحل الميكروفون.",
     "ما تستناش العميل يهضر.",
+    "ما تقراش نص حرفي. تكلم بشكل طبيعي.",
+    leadSaved
+      ? "الفورمولار واجد. رحب بالعميل بشكل طبيعي وقول ليه بالمعنى أننا خذينا المعطيات وغادي تكمل معاه الملف خطوة بخطوة."
+      : "الفورمولار مازال ما تكملش. رحب بالعميل بشكل طبيعي وطلب منو يعمر الفورمولار الأول.",
     `الاسم: ${leadForm.nombre || "ما متسجلش"}.`,
     `الهاتف: ${leadForm.telefono || "ما متسجلش"}.`,
     `الهوية: ${leadForm.niePasaporte || "ما متسجلش"}.`,
     `المدينة: ${leadForm.ciudad || "ما متسجلش"}.`,
-    `الجنسية: ${leadForm.nacionalidad || "ما متسجلش"}.`,
   ].join(" ");
 
-  setTimeout(() => {
-    if (!realtimeDcRef.current || realtimeDcRef.current.readyState !== "open") {
-      return;
-    }
+  if (!realtimeDcRef.current || realtimeDcRef.current.readyState !== "open") {
+    return;
+  }
 
-    realtimeDcRef.current.send(
-      JSON.stringify({
-        type: "conversation.item.create",
-        item: {
-          type: "message",
-          role: "user",
-          content: [
-            {
-              type: "input_text",
-              text: `Empieza tú primero ahora mismo. No esperes al cliente. Di este mensaje inicial en darija marroquí con letras árabes: ${firstMessage}`,
-            },
-          ],
-        },
-      })
-    );
+  realtimeDcRef.current.send(
+    JSON.stringify({
+      type: "conversation.item.create",
+      item: {
+        type: "message",
+        role: "user",
+        content: [
+          {
+            type: "input_text",
+            text: leadSaved
+              ? "ابدأ دابا الهضرة الأولى بشكل طبيعي، وقل للعميل أننا خذينا المعطيات وغادي تكمل معاه الملف خطوة بخطوة."
+              : "ابدأ دابا الهضرة الأولى بشكل طبيعي، ورحب بالعميل وطلب منو يعمر الفورمولار الأول.",
+          },
+        ],
+      },
+    })
+  );
 
-    realtimeDcRef.current.send(
-      JSON.stringify({
-        type: "response.create",
-        response: {
-          modalities: ["audio", "text"],
-          instructions: introInstructions,
-        },
-      })
-    );
-  }, 250);
+  realtimeDcRef.current.send(
+    JSON.stringify({
+      type: "response.create",
+      response: {
+        modalities: ["audio", "text"],
+        instructions: introInstructions,
+      },
+    })
+  );
 };
 
       dc.onmessage = (event) => {
