@@ -1349,14 +1349,13 @@ export default function Regularizacion2026() {
               setDocs(updatedDocs);
               await saveFullStateToSupabase(updatedDocs);
 
-             const { error: insertDocumentError } = await supabase
+const { error: insertDocumentError } = await supabase
   .from("user_documents")
   .insert({
     user_id: user.id,
     case_id: null,
     document_type: result.document_type || matchedDoc.expectedType || "auto",
     original_name: file.name,
-    storage_path: storagePath,
     verification_status: nextStatus,
     extracted_data: {
       summary: result.summary || "",
