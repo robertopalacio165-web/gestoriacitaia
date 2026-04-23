@@ -704,7 +704,6 @@ export default function Regularizacion2026() {
         .update({
           title: "Formulario Mohamed Regularización 2026",
           form_data: payload,
-          pdf_url: null,
         })
         .eq("id", existingForm.id);
 
@@ -718,7 +717,6 @@ export default function Regularizacion2026() {
         form_type: "regularizacion_2026",
         title: "Formulario Mohamed Regularización 2026",
         form_data: payload,
-        pdf_url: null,
       });
 
       if (insertError) {
