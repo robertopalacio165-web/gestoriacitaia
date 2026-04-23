@@ -1349,27 +1349,26 @@ export default function Regularizacion2026() {
               setDocs(updatedDocs);
               await saveFullStateToSupabase(updatedDocs);
 
-              const { error: insertDocumentError } = await supabase
-                .from("user_documents")
-                .insert({
-                  user_id: user.id,
-                  case_id: null,
-                  document_type: result.document_type || matchedDoc.expectedType || "auto",
-                  original_name: file.name,
-                  storage_path: storagePath,
-                  public_url: publicUrl,
-                  verification_status: nextStatus,
-                  extracted_data: {
-                    summary: result.summary || "",
-                    visible_fields: result.visible_fields || [],
-                    warnings: result.warnings || [],
-                    missing_or_unclear_fields: result.missing_or_unclear_fields || [],
-                    usable_for_regularizacion_2026:
-                      result.usable_for_regularizacion_2026 ?? null,
-                    stay_proof_reason: result.stay_proof_reason || "",
-                    recommended_bucket: result.recommended_bucket || "",
-                  },
-                });
+             const { error: insertDocumentError } = await supabase
+  .from("user_documents")
+  .insert({
+    user_id: user.id,
+    case_id: null,
+    document_type: result.document_type || matchedDoc.expectedType || "auto",
+    original_name: file.name,
+    storage_path: storagePath,
+    verification_status: nextStatus,
+    extracted_data: {
+      summary: result.summary || "",
+      visible_fields: result.visible_fields || [],
+      warnings: result.warnings || [],
+      missing_or_unclear_fields: result.missing_or_unclear_fields || [],
+      usable_for_regularizacion_2026:
+        result.usable_for_regularizacion_2026 ?? null,
+      stay_proof_reason: result.stay_proof_reason || "",
+      recommended_bucket: result.recommended_bucket || "",
+    },
+  });
 
               if (insertDocumentError) {
                 console.error("Error guardando user_document:", insertDocumentError);
