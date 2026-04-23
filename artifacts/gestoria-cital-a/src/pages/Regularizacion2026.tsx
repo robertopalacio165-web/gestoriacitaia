@@ -52,23 +52,6 @@ type LeadFormState = {
   penales: string;
 };
 
-type ClientCaseRow = {
-  id: string;
-  user_id: string;
-  status?: string | null;
-  created_at?: string | null;
-};
-
-type UserFormRow = {
-  id: string;
-  user_id: string;
-  case_id: string | null;
-  form_type: string;
-  title: string | null;
-  form_data: Record<string, any> | null;
-  pdf_url?: string | null;
-};
-
 function buildInitialDocs(procedureKey: string): StoredDocItem[] {
   const procedure = getProcedureByKey(procedureKey) || EXTRANJERIA_PROCEDURES[0];
 
@@ -148,11 +131,11 @@ export default function Regularizacion2026() {
   const voiceTexts = useMemo(
     () => ({
       initialVoice:
-        "السلام عليكم، مرحبا بك. توصلت بالمعطيات الأولى ديالك. دابا غادي نكمل معاك غير بأسئلة قصيرة باش نراجع الملف ديالك مزيان. جاوبني غير بنعم أو لا، أو بأي جواب قصير كيفما بغيتي.",
+        "السلام عليكم، أنا محمد. غادي نعاونك خطوة بخطوة فمراجعة الوثائق ديالك. عمر ليا الفورمولار الأول، ومن بعد نكملو الهضرة.",
       voiceBlocked:
         "عافاك عمر ليا الفورمولار الأول ومن بعد ضغط على الميكروفون باش نكمل معاك.",
       savedLeadReply:
-        "مزيان. توصلت بالمعطيات ديالك. دابا غادي نكمل معاك خطوة بخطوة. جاوبني غير بأجوبة قصيرة بحال نعم ولا لا.",
+        "مزيان. توصلت بالمعطيات ديالك. دابا غادي نكمل معاك خطوة بخطوة. جاوبني غير بنعم أو لا، أو بأي جواب قصير.",
       passportVerified:
         "مزيان. راجعت وثيقة الهوية ديالك. دابا نكملو للخطوة اللي من بعدها.",
       mohamedFinal:
@@ -328,25 +311,24 @@ export default function Regularizacion2026() {
     };
   }, [safeLang, savingForm]);
 
-  const [docs, setDocs] = useState<StoredDocItem[]>(
-    buildInitialDocs(selectedSituacion)
+  const [docs, setDocs] = useState<StoredDocItem[]>(buildInitialDocs(selectedSituacion));
+
+  const historyStorageKey = useMemo(
+    () => `gestoriacitaia_mohamed_voice_history_${selectedSituacion}`,
+    [selectedSituacion]
   );
-
-  const historyStorageKey = useMemo(() => {
-    return `gestoriacitaia_mohamed_voice_history_${selectedSituacion}`;
-  }, [selectedSituacion]);
-
-  const formStorageKey = useMemo(() => {
-    return `gestoriacitaia_mohamed_form_${selectedSituacion}`;
-  }, [selectedSituacion]);
-
-  const leadSavedStorageKey = useMemo(() => {
-    return `gestoriacitaia_mohamed_lead_saved_${selectedSituacion}`;
-  }, [selectedSituacion]);
-
-  const caseStorageKey = useMemo(() => {
-    return `gestoriacitaia_mohamed_case_id_${selectedSituacion}`;
-  }, [selectedSituacion]);
+  const formStorageKey = useMemo(
+    () => `gestoriacitaia_mohamed_form_${selectedSituacion}`,
+    [selectedSituacion]
+  );
+  const leadSavedStorageKey = useMemo(
+    () => `gestoriacitaia_mohamed_lead_saved_${selectedSituacion}`,
+    [selectedSituacion]
+  );
+  const caseStorageKey = useMemo(
+    () => `gestoriacitaia_mohamed_case_id_${selectedSituacion}`,
+    [selectedSituacion]
+  );
 
   const leadFormReady =
     !!leadForm.nombre.trim() &&
@@ -364,7 +346,6 @@ export default function Regularizacion2026() {
       typeof window.RTCPeerConnection !== "undefined" &&
       typeof navigator !== "undefined" &&
       !!navigator.mediaDevices?.getUserMedia;
-
     setVoiceSupported(Boolean(supported));
   }, []);
 
@@ -408,15 +389,13 @@ export default function Regularizacion2026() {
     try {
       localStorage.setItem(leadSavedStorageKey, leadSaved ? "true" : "false");
     } catch (error) {
-      console.error("Error guardando estado leadSaved de Mohamed:", error);
+      console.error("Error guardando estado leadSaved:", error);
     }
   }, [leadSaved, leadSavedStorageKey]);
 
   useEffect(() => {
     try {
-      if (caseId) {
-        localStorage.setItem(caseStorageKey, caseId);
-      }
+      if (caseId) localStorage.setItem(caseStorageKey, caseId);
     } catch (error) {
       console.error("Error guardando caseId:", error);
     }
@@ -425,7 +404,6 @@ export default function Regularizacion2026() {
   useEffect(() => {
     try {
       const raw = localStorage.getItem(historyStorageKey);
-
       if (raw) {
         const parsed = JSON.parse(raw) as ChatMsg[];
         if (Array.isArray(parsed) && parsed.length > 0) {
@@ -444,16 +422,15 @@ export default function Regularizacion2026() {
         }
       }
 
-      const freshHistory: ChatMsg[] = [
+      setVoiceHistory([
         {
           from: "agent",
           text: voiceTexts.initialVoice,
           ts: Date.now(),
         },
-      ];
-      setVoiceHistory(freshHistory);
+      ]);
     } catch (error) {
-      console.error("Error cargando historial de Mohamed:", error);
+      console.error("Error cargando historial:", error);
       setVoiceHistory([
         {
           from: "agent",
@@ -474,7 +451,7 @@ export default function Regularizacion2026() {
     try {
       localStorage.setItem(historyStorageKey, JSON.stringify(voiceHistory));
     } catch (error) {
-      console.error("Error guardando historial de Mohamed:", error);
+      console.error("Error guardando historial:", error);
     }
   }, [voiceHistory, historyStorageKey]);
 
@@ -546,26 +523,10 @@ export default function Regularizacion2026() {
       : "missing";
 
   const progressCards = [
-    {
-      id: "form_completed",
-      nombre: ui.docStepForm,
-      estado: formCompletedStatus,
-    },
-    {
-      id: "stay_proof",
-      nombre: ui.docStepStayProof,
-      estado: stayProofStatus,
-    },
-    {
-      id: "identity_document",
-      nombre: ui.docStepIdentity,
-      estado: identityStatus,
-    },
-    {
-      id: "final_file",
-      nombre: ui.docStepFinal,
-      estado: finalFileStatus,
-    },
+    { id: "form_completed", nombre: ui.docStepForm, estado: formCompletedStatus },
+    { id: "stay_proof", nombre: ui.docStepStayProof, estado: stayProofStatus },
+    { id: "identity_document", nombre: ui.docStepIdentity, estado: identityStatus },
+    { id: "final_file", nombre: ui.docStepFinal, estado: finalFileStatus },
   ];
 
   const progressOk = progressCards.filter((item) => item.estado === "ok").length;
@@ -610,17 +571,22 @@ export default function Regularizacion2026() {
   const createOrGetCase = async (userId: string) => {
     if (caseId) return caseId;
 
-    const { data: existingCase } = await supabase
+    const { data: existingCase, error: existingError } = await supabase
       .from("client_cases")
       .select("id,user_id,status,created_at")
       .eq("user_id", userId)
       .order("created_at", { ascending: false })
       .limit(1)
-      .maybeSingle<ClientCaseRow>();
+      .maybeSingle();
 
-    if (existingCase?.id) {
-      setCaseId(existingCase.id);
-      return existingCase.id;
+    if (existingError) {
+      throw new Error(existingError.message);
+    }
+
+    const existing = existingCase as { id?: string } | null;
+    if (existing?.id) {
+      setCaseId(existing.id);
+      return existing.id;
     }
 
     const { data: newCase, error: newCaseError } = await supabase
@@ -632,15 +598,17 @@ export default function Regularizacion2026() {
       .select("id")
       .single();
 
-    if (newCaseError || !newCase?.id) {
+    const created = newCase as { id?: string } | null;
+
+    if (newCaseError || !created?.id) {
       throw new Error(newCaseError?.message || "No se pudo crear client_case");
     }
 
-    setCaseId(newCase.id);
-    return newCase.id;
+    setCaseId(created.id);
+    return created.id;
   };
 
-  const saveFullStateToSupabase = async (opts?: { latestDoc?: StoredDocItem[] }) => {
+  const saveFullStateToSupabase = async (opts?: { latestDocs?: StoredDocItem[] }) => {
     const {
       data: { user },
       error: authError,
@@ -651,7 +619,7 @@ export default function Regularizacion2026() {
     }
 
     const finalCaseId = await createOrGetCase(user.id);
-    const finalDocs = opts?.latestDoc || docs;
+    const finalDocs = opts?.latestDocs || docs;
 
     const payload = {
       applicant: {
@@ -679,16 +647,22 @@ export default function Regularizacion2026() {
       updated_at: new Date().toISOString(),
     };
 
-    const { data: existingForm } = await supabase
+    const { data: existingForm, error: existingFormError } = await supabase
       .from("user_forms")
       .select("id")
       .eq("user_id", user.id)
       .eq("form_type", "regularizacion_2026")
       .eq("case_id", finalCaseId)
       .limit(1)
-      .maybeSingle<UserFormRow>();
+      .maybeSingle();
 
-    if (existingForm?.id) {
+    if (existingFormError) {
+      throw new Error(existingFormError.message);
+    }
+
+    const existing = existingForm as { id?: string } | null;
+
+    if (existing?.id) {
       const { error: updateError } = await supabase
         .from("user_forms")
         .update({
@@ -696,11 +670,9 @@ export default function Regularizacion2026() {
           form_data: payload,
           pdf_url: null,
         })
-        .eq("id", existingForm.id);
+        .eq("id", existing.id);
 
-      if (updateError) {
-        throw new Error(updateError.message);
-      }
+      if (updateError) throw new Error(updateError.message);
     } else {
       const { error: insertError } = await supabase.from("user_forms").insert({
         user_id: user.id,
@@ -711,9 +683,7 @@ export default function Regularizacion2026() {
         pdf_url: null,
       });
 
-      if (insertError) {
-        throw new Error(insertError.message);
-      }
+      if (insertError) throw new Error(insertError.message);
     }
 
     return { userId: user.id, caseId: finalCaseId };
@@ -753,154 +723,690 @@ export default function Regularizacion2026() {
     }
   };
 
-const handleSaveLeadForm = () => {
-  if (!leadFormReady) {
-    toast({
-      title: ui.missingTitle,
-      description: ui.missingDesc,
-      variant: "destructive",
-    });
-    return;
-  }
+  const finalizeAssistantBuffer = () => {
+    const text = assistantTextBufferRef.current.trim();
+    if (!text) return;
 
-  setLeadSaved(true);
+    assistantTextBufferRef.current = "";
 
-  const savedMessage =
-    "مزيان. توصلت بالمعطيات ديالك. دابا غادي نكمل معاك خطوة بخطوة. جاوبني غير بنعم أو لا، أو بأي جواب قصير.";
+    if (text === lastAssistantTextRef.current) return;
 
-  const alreadyExists = voiceHistory.some(
-    (msg) => msg.from === "agent" && msg.text === savedMessage
-  );
+    pushAgentMessage(text);
+  };
 
-  if (!alreadyExists) {
-    pushAgentMessage(savedMessage, false);
-  }
+  const stopListening = () => {
+    try {
+      realtimeDcRef.current?.close();
+      realtimeDcRef.current = null;
 
-  toast({
-    title: ui.saveLeadTitle,
-    description: ui.saveLeadDesc,
-  });
+      realtimePcRef.current?.close();
+      realtimePcRef.current = null;
 
-  if (realtimeDcRef.current && realtimeDcRef.current.readyState === "open") {
-    realtimeDcRef.current.send(
-      JSON.stringify({
-        type: "conversation.item.create",
-        item: {
-          type: "message",
-          role: "user",
-          content: [
-            {
-              type: "input_text",
-              text: "العميل كمل الفورمولار دابا. بدأ أنت الكلام مباشرة، وما تستناش العميل. رحب به باختصار وقل له أنك توصلت بالمعطيات دياله، ثم اطرح عليه أول سؤال مهم في الملف، وجاوب دائما بالدارجة المغربية وبالحروف العربية.",
-            },
-          ],
-        },
-      })
-    );
-
-    realtimeDcRef.current.send(
-      JSON.stringify({
-        type: "response.create",
-        response: {
-          modalities: ["audio", "text"],
-        },
-      })
-    );
-  }
-};
-
-    dc.onmessage = (event) => {
-      try {
-        const msg = JSON.parse(event.data);
-
-        const userTranscript =
-          msg?.transcript ||
-          msg?.item?.transcript ||
-          msg?.item?.content?.[0]?.transcript ||
-          "";
-
-        if (
-          (msg.type === "conversation.item.input_audio_transcription.completed" ||
-            msg.type === "input_audio_buffer.transcription.completed") &&
-          typeof userTranscript === "string" &&
-          userTranscript.trim()
-        ) {
-          const transcript = userTranscript.trim();
-
-          if (transcript !== lastUserTranscriptRef.current) {
-            lastUserTranscriptRef.current = transcript;
-            setLastUserTranscript(transcript);
-            pushUserMessage(transcript);
-          }
-        }
-
-        if (
-          msg.type === "response.output_text.delta" &&
-          typeof msg.delta === "string"
-        ) {
-          assistantTextBufferRef.current += msg.delta;
-        }
-
-        if (
-          msg.type === "response.output_text.done" &&
-          typeof msg.text === "string" &&
-          msg.text.trim()
-        ) {
-          assistantTextBufferRef.current = msg.text.trim();
-          finalizeAssistantBuffer();
-        }
-
-        if (msg.type === "response.done") {
-          finalizeAssistantBuffer();
-          setWaitingMohamed(false);
-        }
-
-        if (msg.type === "response.created") {
-          setWaitingMohamed(true);
-        }
-      } catch (err) {
-        console.error("Realtime event parse error:", err);
+      if (realtimeLocalStreamRef.current) {
+        realtimeLocalStreamRef.current.getTracks().forEach((track) => track.stop());
+        realtimeLocalStreamRef.current = null;
       }
-    };
 
-    dc.onerror = (err) => {
-      console.error("Realtime data channel error:", err);
-    };
+      if (remoteAudioRef.current) {
+        remoteAudioRef.current.pause();
+        remoteAudioRef.current.srcObject = null;
+      }
+    } catch (error) {
+      console.error("Error deteniendo realtime:", error);
+    } finally {
+      setIsListening(false);
+      setWaitingMohamed(false);
+    }
+  };
 
-    const offer = await pc.createOffer();
-    await pc.setLocalDescription(offer);
-
-    const sdpRes = await fetch("https://api.openai.com/v1/realtime/calls", {
-      method: "POST",
-      body: offer.sdp,
-      headers: {
-        Authorization: `Bearer ${ephemeralKey}`,
-        "Content-Type": "application/sdp",
-      },
-    });
-
-    if (!sdpRes.ok) {
-      const errText = await sdpRes.text();
-      throw new Error(errText || "Error negociando WebRTC con OpenAI");
+  const startListening = async () => {
+    if (!voiceSupported) {
+      toast({
+        title: "Error",
+        description: ui.micNotSupported,
+        variant: "destructive",
+      });
+      return;
     }
 
-    const answerSdp = await sdpRes.text();
+    try {
+      stopListening();
+      assistantTextBufferRef.current = "";
+      setWaitingMohamed(true);
 
-    await pc.setRemoteDescription({
-      type: "answer",
-      sdp: answerSdp,
-    });
-  } catch (error: any) {
-    console.error("Error iniciando realtime Mohamed:", error);
-    stopListening();
+      const sessionRes = await fetch("/api/realtime-session", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          assistant: "mohamed",
+        }),
+      });
 
-    toast({
-      title: "Error realtime",
-      description: error?.message || voiceTexts.realtimeError,
-      variant: "destructive",
+      const sessionData = await sessionRes.json();
+
+      if (!sessionRes.ok) {
+        throw new Error(sessionData?.error || "Error creando sesión realtime");
+      }
+
+      const ephemeralKey = sessionData?.value || "";
+      if (!ephemeralKey) {
+        throw new Error("No llegó value desde realtime-session");
+      }
+
+      const pc = new RTCPeerConnection();
+      realtimePcRef.current = pc;
+
+      pc.ontrack = (event) => {
+        const [remoteStream] = event.streams;
+        if (remoteStream && remoteAudioRef.current) {
+          remoteAudioRef.current.srcObject = remoteStream;
+          remoteAudioRef.current.autoplay = true;
+          remoteAudioRef.current.playsInline = true;
+          remoteAudioRef.current.muted = false;
+          remoteAudioRef.current.volume = 1;
+
+          const playPromise = remoteAudioRef.current.play();
+          if (playPromise) {
+            playPromise.catch((err) => {
+              console.error("Error reproduciendo audio remoto Mohamed:", err);
+            });
+          }
+        }
+      };
+
+      const localStream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        },
+      });
+
+      realtimeLocalStreamRef.current = localStream;
+
+      for (const track of localStream.getTracks()) {
+        pc.addTrack(track, localStream);
+      }
+
+      const dc = pc.createDataChannel("oai-events");
+      realtimeDcRef.current = dc;
+
+      dc.onopen = () => {
+        setIsListening(true);
+        setWaitingMohamed(true);
+        setLastUserTranscript("");
+        lastUserTranscriptRef.current = "";
+        assistantTextBufferRef.current = "";
+
+        const firstMessage = leadSaved
+          ? "السلام عليكم، أنا محمد. توصلت بالمعطيات ديالك. دابا غادي نكمل معاك خطوة بخطوة باش نراجع الملف ديالك. جاوبني غير بنعم أو لا، أو بأي جواب قصير."
+          : "السلام عليكم، أنا محمد. غادي نعاونك خطوة بخطوة فمراجعة الوثائق ديالك. عمر ليا الفورمولار الأول، ومن بعد نكملو الهضرة.";
+
+        setTimeout(() => {
+          askMohamedToSpeak(
+            `ابدأ أنت الكلام الآن مباشرة. لا تنتظر العميل. قل الآن بصوت طبيعي وبالدارجة المغربية هذا المعنى: ${firstMessage}`
+          );
+        }, 300);
+      };
+
+      dc.onmessage = (event) => {
+        try {
+          const msg = JSON.parse(event.data);
+
+          const userTranscript =
+            msg?.transcript ||
+            msg?.item?.transcript ||
+            msg?.item?.content?.[0]?.transcript ||
+            "";
+
+          if (
+            (msg.type === "conversation.item.input_audio_transcription.completed" ||
+              msg.type === "input_audio_buffer.transcription.completed") &&
+            typeof userTranscript === "string" &&
+            userTranscript.trim()
+          ) {
+            const transcript = userTranscript.trim();
+
+            if (transcript !== lastUserTranscriptRef.current) {
+              lastUserTranscriptRef.current = transcript;
+              setLastUserTranscript(transcript);
+              pushUserMessage(transcript);
+            }
+          }
+
+          if (
+            msg.type === "response.output_text.delta" &&
+            typeof msg.delta === "string"
+          ) {
+            assistantTextBufferRef.current += msg.delta;
+          }
+
+          if (
+            msg.type === "response.output_text.done" &&
+            typeof msg.text === "string" &&
+            msg.text.trim()
+          ) {
+            assistantTextBufferRef.current = msg.text.trim();
+            finalizeAssistantBuffer();
+          }
+
+          if (msg.type === "response.done") {
+            finalizeAssistantBuffer();
+            setWaitingMohamed(false);
+          }
+
+          if (msg.type === "response.created") {
+            setWaitingMohamed(true);
+          }
+        } catch (err) {
+          console.error("Realtime event parse error:", err);
+        }
+      };
+
+      dc.onerror = (err) => {
+        console.error("Realtime data channel error:", err);
+      };
+
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+
+      const sdpRes = await fetch("https://api.openai.com/v1/realtime/calls", {
+        method: "POST",
+        body: offer.sdp,
+        headers: {
+          Authorization: `Bearer ${ephemeralKey}`,
+          "Content-Type": "application/sdp",
+        },
+      });
+
+      if (!sdpRes.ok) {
+        const errText = await sdpRes.text();
+        throw new Error(errText || "Error negociando WebRTC con OpenAI");
+      }
+
+      const answerSdp = await sdpRes.text();
+
+      await pc.setRemoteDescription({
+        type: "answer",
+        sdp: answerSdp,
+      });
+    } catch (error: any) {
+      console.error("Error iniciando realtime Mohamed:", error);
+      stopListening();
+
+      toast({
+        title: "Error realtime",
+        description: error?.message || voiceTexts.realtimeError,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const getBestDocMatch = (
+    result: VerifyDocumentResult,
+    currentDocs: StoredDocItem[],
+    fileName?: string
+  ): StoredDocItem | null => {
+    const detectedType = normalizeDocType(result?.document_type || "");
+    const lowerFileName = (fileName || "").toLowerCase();
+
+    const combinedText = [
+      result?.summary || "",
+      ...(result?.visible_fields || []),
+      ...(result?.missing_or_unclear_fields || []),
+      ...(result?.warnings || []),
+      result?.stay_proof_reason || "",
+      lowerFileName,
+    ]
+      .join(" ")
+      .toLowerCase();
+
+    const includesAny = (words: string[]) =>
+      words.some((word) => combinedText.includes(word));
+
+    const findIdentityDoc = () =>
+      currentDocs.find(
+        (doc) =>
+          doc.estado !== "ok" &&
+          (normalizeDocType(doc.expectedType) === "passport" ||
+            normalizeDocType(doc.expectedType) === "nie" ||
+            normalizeDocType(doc.expectedType) === "tie" ||
+            doc.nombre.toLowerCase().includes("pasaporte o nie") ||
+            doc.nombre.toLowerCase().includes("pasaporte") ||
+            doc.nombre.toLowerCase().includes("passport") ||
+            doc.nombre.toLowerCase().includes("nie vigente"))
+      ) ||
+      currentDocs.find(
+        (doc) =>
+          normalizeDocType(doc.expectedType) === "passport" ||
+          normalizeDocType(doc.expectedType) === "nie" ||
+          normalizeDocType(doc.expectedType) === "tie" ||
+          doc.nombre.toLowerCase().includes("pasaporte o nie") ||
+          doc.nombre.toLowerCase().includes("pasaporte") ||
+          doc.nombre.toLowerCase().includes("passport") ||
+          doc.nombre.toLowerCase().includes("nie vigente")
+      ) ||
+      null;
+
+    const findStayProofDoc = () =>
+      currentDocs.find(
+        (doc) =>
+          doc.estado !== "ok" &&
+          (normalizeDocType(doc.expectedType) === "empadronamiento" ||
+            normalizeDocType(doc.expectedType) === "stay_proof" ||
+            doc.nombre.toLowerCase().includes("empadronamiento") ||
+            doc.nombre.toLowerCase().includes("prueba de permanencia") ||
+            doc.nombre.toLowerCase().includes("prueba permanencia") ||
+            doc.nombre.toLowerCase().includes("padron") ||
+            doc.nombre.toLowerCase().includes("padrón"))
+      ) ||
+      currentDocs.find(
+        (doc) =>
+          normalizeDocType(doc.expectedType) === "empadronamiento" ||
+          normalizeDocType(doc.expectedType) === "stay_proof" ||
+          doc.nombre.toLowerCase().includes("empadronamiento") ||
+          doc.nombre.toLowerCase().includes("prueba de permanencia") ||
+          doc.nombre.toLowerCase().includes("prueba permanencia") ||
+          doc.nombre.toLowerCase().includes("padron") ||
+          doc.nombre.toLowerCase().includes("padrón")
+      ) ||
+      null;
+
+    const findCriminalDoc = () =>
+      currentDocs.find(
+        (doc) =>
+          doc.estado !== "ok" &&
+          (normalizeDocType(doc.expectedType) === "criminal_record" ||
+            doc.nombre.toLowerCase().includes("antecedentes") ||
+            doc.nombre.toLowerCase().includes("penales"))
+      ) ||
+      currentDocs.find(
+        (doc) =>
+          normalizeDocType(doc.expectedType) === "criminal_record" ||
+          doc.nombre.toLowerCase().includes("antecedentes") ||
+          doc.nombre.toLowerCase().includes("penales")
+      ) ||
+      null;
+
+    if (
+      detectedType === "passport" ||
+      detectedType === "nie" ||
+      detectedType === "tie"
+    ) {
+      const identityDoc = findIdentityDoc();
+      if (identityDoc) return identityDoc;
+    }
+
+    if (
+      detectedType === "empadronamiento" ||
+      detectedType === "stay_proof" ||
+      result?.recommended_bucket === "stay_proof" ||
+      result?.is_stay_proof === true
+    ) {
+      const stayProofDoc = findStayProofDoc();
+      if (stayProofDoc) return stayProofDoc;
+    }
+
+    if (detectedType === "criminal_record") {
+      const criminalDoc = findCriminalDoc();
+      if (criminalDoc) return criminalDoc;
+    }
+
+    if (
+      includesAny([
+        "passport",
+        "pasaporte",
+        "passeport",
+        "documento de viaje",
+        "travel document",
+        "identity card",
+        "documento identidad",
+        "documento de identidad",
+        "nie",
+        "tie",
+        "tarjeta de identidad",
+        "tarjeta de residencia",
+      ])
+    ) {
+      const identityDoc = findIdentityDoc();
+      if (identityDoc) return identityDoc;
+    }
+
+    if (
+      includesAny([
+        "empadronamiento",
+        "padron",
+        "padrón",
+        "volante",
+        "certificado de empadronamiento",
+        "prueba de permanencia",
+        "prueba permanencia",
+        "justificante",
+        "resguardo",
+        "cita médica",
+        "ticket",
+        "factura",
+        "nomina",
+        "nómina",
+        "receta",
+        "stay proof",
+      ])
+    ) {
+      const stayProofDoc = findStayProofDoc();
+      if (stayProofDoc) return stayProofDoc;
+    }
+
+    if (
+      includesAny([
+        "antecedentes",
+        "antecedentes penales",
+        "criminal",
+        "criminal record",
+        "penales",
+        "registro de antecedentes",
+        "casier",
+      ])
+    ) {
+      const criminalDoc = findCriminalDoc();
+      if (criminalDoc) return criminalDoc;
+    }
+
+    if (lowerFileName) {
+      if (
+        lowerFileName.includes("padron") ||
+        lowerFileName.includes("padrón") ||
+        lowerFileName.includes("empadronamiento")
+      ) {
+        const stayProofDoc = findStayProofDoc();
+        if (stayProofDoc) return stayProofDoc;
+      }
+
+      if (
+        lowerFileName.includes("pasaporte") ||
+        lowerFileName.includes("passport") ||
+        lowerFileName.includes("nie") ||
+        lowerFileName.includes("tie")
+      ) {
+        const identityDoc = findIdentityDoc();
+        if (identityDoc) return identityDoc;
+      }
+
+      if (
+        lowerFileName.includes("penales") ||
+        lowerFileName.includes("antecedentes")
+      ) {
+        const criminalDoc = findCriminalDoc();
+        if (criminalDoc) return criminalDoc;
+      }
+    }
+
+    const firstMissing = currentDocs.find((doc) => doc.estado === "missing");
+    if (firstMissing) return firstMissing;
+
+    const firstWarn = currentDocs.find((doc) => doc.estado === "warn");
+    if (firstWarn) return firstWarn;
+
+    return null;
+  };
+
+  const maybeSendCompletionMessage = (nextDocs: StoredDocItem[]) => {
+    const nextIdentityDocs = nextDocs.filter((doc) => {
+      const expected = normalizeDocType(doc.expectedType);
+      const detected = normalizeDocType(doc.detectedType);
+      const name = doc.nombre.toLowerCase();
+
+      return (
+        expected === "passport" ||
+        expected === "nie" ||
+        expected === "tie" ||
+        detected === "passport" ||
+        detected === "nie" ||
+        detected === "tie" ||
+        name.includes("pasaporte") ||
+        name.includes("passport") ||
+        name.includes("nie")
+      );
     });
-  }
-};
+
+    const nextStayProofDocs = nextDocs.filter((doc) => {
+      const expected = normalizeDocType(doc.expectedType);
+      const detected = normalizeDocType(doc.detectedType);
+      const name = doc.nombre.toLowerCase();
+      const note = (doc.note || "").toLowerCase();
+
+      return (
+        expected === "empadronamiento" ||
+        expected === "stay_proof" ||
+        detected === "empadronamiento" ||
+        detected === "stay_proof" ||
+        name.includes("empadronamiento") ||
+        name.includes("padron") ||
+        name.includes("padrón") ||
+        name.includes("prueba de permanencia") ||
+        name.includes("prueba permanencia") ||
+        note.includes("empadronamiento") ||
+        note.includes("stay proof") ||
+        note.includes("prueba de permanencia")
+      );
+    });
+
+    const readyNow =
+      leadSaved &&
+      nextStayProofDocs.some((doc) => doc.estado === "ok") &&
+      nextIdentityDocs.some((doc) => doc.estado === "ok");
+
+    if (readyNow && !completionMessageSent) {
+      pushAgentMessage(voiceTexts.mohamedFinal);
+      setCompletionMessageSent(true);
+
+      if (realtimeDcRef.current && realtimeDcRef.current.readyState === "open") {
+        setTimeout(() => {
+          askMohamedToSpeak(
+            "قل للعميل الآن أن الملف بان منظم مبدئيا وأنك غادي تجهز المراحل النهائية، وجاوب بالدارجة المغربية."
+          );
+        }, 400);
+      }
+    }
+  };
+
+  const handleSaveLeadForm = async () => {
+    if (!leadFormReady) {
+      toast({
+        title: ui.missingTitle,
+        description: ui.missingDesc,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setSavingForm(true);
+
+      await saveFullStateToSupabase();
+
+      setLeadSaved(true);
+
+      const savedMessage = voiceTexts.savedLeadReply;
+
+      const alreadyExists = voiceHistory.some(
+        (msg) => msg.from === "agent" && msg.text === savedMessage
+      );
+
+      if (!alreadyExists) {
+        pushAgentMessage(savedMessage);
+      }
+
+      toast({
+        title: ui.saveLeadTitle,
+        description: ui.saveLeadDesc,
+      });
+
+      if (realtimeDcRef.current && realtimeDcRef.current.readyState === "open") {
+        setTimeout(() => {
+          askMohamedToSpeak(
+            "العميل كمل الفورمولار دابا. ابدأ أنت الكلام مباشرة، وما تستناش العميل. رحب به باختصار، وقل له أنك توصلت بالمعطيات دياله، ثم اطرح عليه أول سؤال مهم في الملف، وجاوب دائما بالدارجة المغربية وبالحروف العربية."
+          );
+        }, 400);
+      }
+    } catch (error: any) {
+      console.error("Error guardando formulario Mohamed:", error);
+
+      toast({
+        title: "Error",
+        description: error?.message || "No se pudo guardar el formulario",
+        variant: "destructive",
+      });
+    } finally {
+      setSavingForm(false);
+    }
+  };
+
+  const handleGeneralUpload = async () => {
+    if (!leadSaved) {
+      pushAgentMessage(voiceTexts.voiceBlocked);
+
+      toast({
+        title: ui.missingTitle,
+        description: ui.missingDesc,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = "image/*,application/pdf";
+      input.multiple = true;
+
+      input.onchange = async () => {
+        const files = Array.from(input.files || []);
+        if (!files.length) return;
+
+        setGeneralUploading(true);
+
+        try {
+          for (const file of files) {
+            try {
+              const currentDocs = [...docs];
+
+              const result = await verifyDocument({
+                file,
+                expectedDocumentType: "auto",
+                lang: "darija",
+              });
+
+              const matchedDoc = getBestDocMatch(
+                result as VerifyDocumentResult,
+                currentDocs,
+                file.name
+              );
+
+              if (!matchedDoc) {
+                pushAgentMessage("توصلت بالوثيقة، ولكن مازال خاصني نربطها مزيان مع الملف.");
+
+                if (realtimeDcRef.current && realtimeDcRef.current.readyState === "open") {
+                  askMohamedToSpeak(
+                    "توصلت بوثيقة جديدة ولكن الربط ديالها مازال ما واضحش. قل للعميل باختصار شنو خاصو يصيفط من بعد."
+                  );
+                }
+
+                toast({
+                  title: ui.uploadErrorTitle,
+                  description: result.summary || ui.uploadErrorDesc,
+                  variant: "destructive",
+                });
+
+                continue;
+              }
+
+              const isWarn =
+                result.status === "invalid" ||
+                result.match_expected_type === false;
+
+              const nextStatus: DocStatus = isWarn ? "warn" : "ok";
+
+              const updatedDocs = currentDocs.map((doc) =>
+                doc.id === matchedDoc.id
+                  ? {
+                      ...doc,
+                      estado: nextStatus,
+                      archivo: file.name,
+                      kb: `${Math.round(file.size / 1024)} KB`,
+                      detectedType: result.document_type || "",
+                      note: result.summary || "",
+                      uploadedAt: new Date().toISOString(),
+                    }
+                  : doc
+              );
+
+              setDocs(updatedDocs);
+              await saveFullStateToSupabase({ latestDocs: updatedDocs });
+
+              const matchedName = matchedDoc.nombre.toLowerCase();
+
+              let localReply = "توصلت بالوثيقة وربطتها مع الملف ديالك.";
+
+              if (isWarn) {
+                localReply = "توصلت بالوثيقة ولكن مازال خاصني نسخة أوضح باش نكمل المراجعة.";
+              } else if (
+                matchedName.includes("pasaporte") ||
+                matchedName.includes("nie") ||
+                matchedName.includes("passport")
+              ) {
+                localReply = voiceTexts.passportVerified;
+              }
+
+              pushAgentMessage(localReply);
+
+              if (realtimeDcRef.current && realtimeDcRef.current.readyState === "open") {
+                askMohamedToSpeak(
+                  `توصلت الآن بوثيقة جديدة. الوثيقة هي: ${matchedDoc.nombre}. الحالة ديالها: ${
+                    nextStatus === "ok" ? "مزيانة" : "خاصها مراجعة"
+                  }. الخلاصة: ${result.summary || "ما كايناش خلاصة واضحة"}. جاوب العميل الآن باختصار وقول له شنو الخطوة الجاية.`
+                );
+              }
+
+              toast({
+                title: ui.uploadSuccessTitle,
+                description: result.summary || ui.uploadSuccessDesc,
+              });
+
+              maybeSendCompletionMessage(updatedDocs);
+            } catch (err: any) {
+              console.error(err);
+
+              toast({
+                title: ui.uploadErrorTitle,
+                description: err?.message || ui.uploadErrorDesc,
+                variant: "destructive",
+              });
+
+              if (realtimeDcRef.current && realtimeDcRef.current.readyState === "open") {
+                askMohamedToSpeak(
+                  "وقع مشكل فقراءة الوثيقة. قل للعميل يعاود يصيفط الوثيقة بشكل أوضح أو بصيغة أخرى."
+                );
+              }
+            }
+          }
+        } finally {
+          setGeneralUploading(false);
+        }
+      };
+
+      input.click();
+    } catch (error: any) {
+      setGeneralUploading(false);
+
+      toast({
+        title: "Error",
+        description: error?.message || "Error inesperado",
+        variant: "destructive",
+      });
+    }
+  };
 
   const goToSara = () => {
     window.location.href = "/buscar-citas";
@@ -913,7 +1419,7 @@ const handleSaveLeadForm = () => {
   return (
     <div className="min-h-screen bg-background text-foreground relative flex flex-col">
       <div
-        className="fixed inset-0 z-0 opacity-25 pointer-events-none"
+        className="fixed inset-0 z-0 opacity-25 pointerEvents-none"
         style={{
           backgroundImage:
             "radial-gradient(ellipse 70% 40% at 30% 20%, rgba(34,197,94,0.1), transparent), radial-gradient(ellipse 60% 40% at 80% 80%, rgba(59,130,246,0.08), transparent)",
@@ -1138,9 +1644,7 @@ const handleSaveLeadForm = () => {
                     <div
                       className="h-full bg-[#003b82] rounded-full transition-all"
                       style={{
-                        width: `${
-                          progressTotal > 0 ? (progressOk / progressTotal) * 100 : 0
-                        }%`,
+                        width: `${progressTotal > 0 ? (progressOk / progressTotal) * 100 : 0}%`,
                       }}
                     />
                   </div>
@@ -1280,6 +1784,7 @@ const handleSaveLeadForm = () => {
             )}
           </div>
         </div>
+
         <audio ref={remoteAudioRef} autoPlay playsInline className="hidden" />
       </main>
     </div>
