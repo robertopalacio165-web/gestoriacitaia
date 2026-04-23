@@ -589,14 +589,15 @@ export default function Regularizacion2026() {
       return existing.id;
     }
 
-    const { data: newCase, error: newCaseError } = await supabase
-      .from("client_cases")
-      .insert({
-        user_id: userId,
-        status: "open",
-      })
-      .select("id")
-      .single();
+   const { data: newCase, error: newCaseError } = await supabase
+  .from("client_cases")
+  .insert({
+    user_id: userId,
+    status: "open",
+    case_type: "regularizacion_2026",
+  })
+  .select("id")
+  .single();
 
     const created = newCase as { id?: string } | null;
 
