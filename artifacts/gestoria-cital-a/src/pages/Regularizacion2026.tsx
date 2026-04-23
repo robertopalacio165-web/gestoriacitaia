@@ -753,715 +753,154 @@ export default function Regularizacion2026() {
     }
   };
 
-  const handleSaveLeadForm = async () => {
-    if (!leadFormReady) {
-      toast({
-        title: ui.missingTitle,
-        description: ui.missingDesc,
-        variant: "destructive",
-      });
-      return;
-    }
+const handleSaveLeadForm = () => {
+  if (!leadFormReady) {
+    toast({
+      title: ui.missingTitle,
+      description: ui.missingDesc,
+      variant: "destructive",
+    });
+    return;
+  }
 
-    try {
-      setSavingForm(true);
+  setLeadSaved(true);
 
-      await saveFullStateToSupabase();
+  const savedMessage =
+    "مزيان. توصلت بالمعطيات ديالك. دابا غادي نكمل معاك خطوة بخطوة. جاوبني غير بنعم أو لا، أو بأي جواب قصير.";
 
-      setLeadSaved(true);
+  const alreadyExists = voiceHistory.some(
+    (msg) => msg.from === "agent" && msg.text === savedMessage
+  );
 
-      const alreadyExists = voiceHistory.some(
-        (msg) => msg.from === "agent" && msg.text === voiceTexts.savedLeadReply
-      );
+  if (!alreadyExists) {
+    pushAgentMessage(savedMessage, false);
+  }
 
-      if (!alreadyExists) {
-        pushAgentMessage(voiceTexts.savedLeadReply);
-      }
+  toast({
+    title: ui.saveLeadTitle,
+    description: ui.saveLeadDesc,
+  });
 
-      toast({
-        title: ui.saveLeadTitle,
-        description: ui.saveLeadDesc,
-      });
-
-      if (realtimeDcRef.current && realtimeDcRef.current.readyState === "open") {
-        askMohamedToSpeak(
-          "العميل كمل الفورمولار دابا. بدا معاه مباشرة بلا ما تستنا منو حتى كلمة. قول ليه: توصلت بالمعطيات ديالك، ودابا غادي نكمل معاك خطوة بخطوة. ومن بعد سول غير سؤال واحد قصير مناسب للمرحلة الجاية."
-        );
-      }
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error?.message || "No se pudo guardar el formulario",
-        variant: "destructive",
-      });
-    } finally {
-      setSavingForm(false);
-    }
-  };
-
-  const finalizeAssistantBuffer = () => {
-    const text = assistantTextBufferRef.current.trim();
-    if (!text) return;
-    if (text === lastAssistantTextRef.current) {
-      assistantTextBufferRef.current = "";
-      return;
-    }
-
-    pushAgentMessage(text);
-    assistantTextBufferRef.current = "";
-  };
-
-  const stopListening = () => {
-    try {
-      realtimeDcRef.current?.close();
-      realtimeDcRef.current = null;
-
-      realtimePcRef.current?.close();
-      realtimePcRef.current = null;
-
-      if (realtimeLocalStreamRef.current) {
-        realtimeLocalStreamRef.current.getTracks().forEach((track) => track.stop());
-        realtimeLocalStreamRef.current = null;
-      }
-
-      if (remoteAudioRef.current) {
-        remoteAudioRef.current.pause();
-        remoteAudioRef.current.srcObject = null;
-      }
-    } catch (error) {
-      console.error("Error deteniendo realtime:", error);
-    } finally {
-      setIsListening(false);
-      setWaitingMohamed(false);
-    }
-  };
-
-  const startListening = async () => {
-    if (!leadSaved) {
-      pushAgentMessage(voiceTexts.voiceBlocked);
-
-      toast({
-        title: ui.missingTitle,
-        description: ui.missingDesc,
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!voiceSupported) {
-      toast({
-        title: "Error",
-        description: ui.micNotSupported,
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      stopListening();
-      assistantTextBufferRef.current = "";
-      setWaitingMohamed(true);
-
-      const sessionRes = await fetch("/api/realtime-session", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+  if (realtimeDcRef.current && realtimeDcRef.current.readyState === "open") {
+    realtimeDcRef.current.send(
+      JSON.stringify({
+        type: "conversation.item.create",
+        item: {
+          type: "message",
+          role: "user",
+          content: [
+            {
+              type: "input_text",
+              text: "العميل كمل الفورمولار دابا. بدأ أنت الكلام مباشرة، وما تستناش العميل. رحب به باختصار وقل له أنك توصلت بالمعطيات دياله، ثم اطرح عليه أول سؤال مهم في الملف، وجاوب دائما بالدارجة المغربية وبالحروف العربية.",
+            },
+          ],
         },
-        body: JSON.stringify({
-          assistant: "mohamed",
-        }),
-      });
+      })
+    );
 
-      const sessionData = await sessionRes.json();
+    realtimeDcRef.current.send(
+      JSON.stringify({
+        type: "response.create",
+        response: {
+          modalities: ["audio", "text"],
+        },
+      })
+    );
+  }
+};
 
-      if (!sessionRes.ok) {
-        throw new Error(sessionData?.error || "Error creando sesión realtime");
-      }
+    dc.onmessage = (event) => {
+      try {
+        const msg = JSON.parse(event.data);
 
-      const ephemeralKey = sessionData?.value || "";
+        const userTranscript =
+          msg?.transcript ||
+          msg?.item?.transcript ||
+          msg?.item?.content?.[0]?.transcript ||
+          "";
 
-      if (!ephemeralKey) {
-        throw new Error("No llegó value desde realtime-session");
-      }
+        if (
+          (msg.type === "conversation.item.input_audio_transcription.completed" ||
+            msg.type === "input_audio_buffer.transcription.completed") &&
+          typeof userTranscript === "string" &&
+          userTranscript.trim()
+        ) {
+          const transcript = userTranscript.trim();
 
-      const pc = new RTCPeerConnection();
-      realtimePcRef.current = pc;
-
-      pc.ontrack = (event) => {
-        const [remoteStream] = event.streams;
-
-        if (remoteStream && remoteAudioRef.current) {
-          remoteAudioRef.current.srcObject = remoteStream;
-          remoteAudioRef.current.autoplay = true;
-          remoteAudioRef.current.muted = false;
-          remoteAudioRef.current.volume = 1;
-          remoteAudioRef.current.playsInline = true;
-
-          const playPromise = remoteAudioRef.current.play();
-          if (playPromise) {
-            playPromise.catch((err) => {
-              console.error("Error reproduciendo audio remoto Mohamed:", err);
-            });
+          if (transcript !== lastUserTranscriptRef.current) {
+            lastUserTranscriptRef.current = transcript;
+            setLastUserTranscript(transcript);
+            pushUserMessage(transcript);
           }
         }
-      };
 
-      const localStream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true,
-        },
-      });
-
-      realtimeLocalStreamRef.current = localStream;
-
-      for (const track of localStream.getTracks()) {
-        pc.addTrack(track, localStream);
-      }
-
-      const dc = pc.createDataChannel("oai-events");
-      realtimeDcRef.current = dc;
-
-      dc.onopen = () => {
-        setIsListening(true);
-        setWaitingMohamed(true);
-        setLastUserTranscript("");
-        lastUserTranscriptRef.current = "";
-        assistantTextBufferRef.current = "";
-
-        askMohamedToSpeak(
-          "ابدأ أنت الكلام الآن مباشرة. لا تنتظر العميل. قل له الآن بشكل طبيعي: السلام عليكم، مرحباً بك. توصلت بالمعطيات الأولى ديالك. دابا غادي نكمل معاك غير بأسئلة قصيرة باش نراجع الملف ديالك مزيان. جاوبني غير بنعم أو لا، أو بأي جواب قصير كيفما بغيتي."
-        );
-      };
-
-      dc.onmessage = (event) => {
-        try {
-          const msg = JSON.parse(event.data);
-
-          const userTranscript =
-            msg?.transcript ||
-            msg?.item?.transcript ||
-            msg?.item?.content?.[0]?.transcript ||
-            "";
-
-          if (
-            (msg.type === "conversation.item.input_audio_transcription.completed" ||
-              msg.type === "input_audio_buffer.transcription.completed") &&
-            typeof userTranscript === "string" &&
-            userTranscript.trim()
-          ) {
-            const transcript = userTranscript.trim();
-
-            if (transcript !== lastUserTranscriptRef.current) {
-              lastUserTranscriptRef.current = transcript;
-              setLastUserTranscript(transcript);
-              pushUserMessage(transcript);
-            }
-          }
-
-          if (
-            msg.type === "response.output_text.delta" &&
-            typeof msg.delta === "string"
-          ) {
-            assistantTextBufferRef.current += msg.delta;
-          }
-
-          if (
-            msg.type === "response.output_text.done" &&
-            typeof msg.text === "string" &&
-            msg.text.trim()
-          ) {
-            assistantTextBufferRef.current = msg.text.trim();
-            finalizeAssistantBuffer();
-          }
-
-          if (msg.type === "response.done") {
-            finalizeAssistantBuffer();
-            setWaitingMohamed(false);
-          }
-
-          if (msg.type === "response.created") {
-            setWaitingMohamed(true);
-          }
-        } catch (err) {
-          console.error("Realtime event parse error:", err);
+        if (
+          msg.type === "response.output_text.delta" &&
+          typeof msg.delta === "string"
+        ) {
+          assistantTextBufferRef.current += msg.delta;
         }
-      };
 
-      dc.onerror = (err) => {
-        console.error("Realtime data channel error:", err);
-      };
+        if (
+          msg.type === "response.output_text.done" &&
+          typeof msg.text === "string" &&
+          msg.text.trim()
+        ) {
+          assistantTextBufferRef.current = msg.text.trim();
+          finalizeAssistantBuffer();
+        }
 
-      const offer = await pc.createOffer();
-      await pc.setLocalDescription(offer);
+        if (msg.type === "response.done") {
+          finalizeAssistantBuffer();
+          setWaitingMohamed(false);
+        }
 
-      const sdpRes = await fetch("https://api.openai.com/v1/realtime/calls", {
-        method: "POST",
-        body: offer.sdp,
-        headers: {
-          Authorization: `Bearer ${ephemeralKey}`,
-          "Content-Type": "application/sdp",
-        },
-      });
-
-      if (!sdpRes.ok) {
-        const errText = await sdpRes.text();
-        throw new Error(errText || "Error negociando WebRTC con OpenAI");
+        if (msg.type === "response.created") {
+          setWaitingMohamed(true);
+        }
+      } catch (err) {
+        console.error("Realtime event parse error:", err);
       }
+    };
 
-      const answerSdp = await sdpRes.text();
+    dc.onerror = (err) => {
+      console.error("Realtime data channel error:", err);
+    };
 
-      await pc.setRemoteDescription({
-        type: "answer",
-        sdp: answerSdp,
-      });
-    } catch (error: any) {
-      console.error("Error iniciando realtime Mohamed:", error);
-      stopListening();
+    const offer = await pc.createOffer();
+    await pc.setLocalDescription(offer);
 
-      toast({
-        title: "Error realtime",
-        description: error?.message || voiceTexts.realtimeError,
-        variant: "destructive",
-      });
-    }
-  };
-
-  const getBestDocMatch = (
-    result: VerifyDocumentResult,
-    currentDocs: StoredDocItem[],
-    fileName?: string
-  ): StoredDocItem | null => {
-    const detectedType = normalizeDocType(result?.document_type || "");
-    const lowerFileName = (fileName || "").toLowerCase();
-
-    const combinedText = [
-      result?.summary || "",
-      ...(result?.visible_fields || []),
-      ...(result?.missing_or_unclear_fields || []),
-      ...(result?.warnings || []),
-      result?.stay_proof_reason || "",
-      lowerFileName,
-    ]
-      .join(" ")
-      .toLowerCase();
-
-    const includesAny = (words: string[]) =>
-      words.some((word) => combinedText.includes(word));
-
-    const findIdentityDoc = () =>
-      currentDocs.find(
-        (doc) =>
-          doc.estado !== "ok" &&
-          (normalizeDocType(doc.expectedType) === "passport" ||
-            normalizeDocType(doc.expectedType) === "nie" ||
-            normalizeDocType(doc.expectedType) === "tie" ||
-            doc.nombre.toLowerCase().includes("pasaporte o nie") ||
-            doc.nombre.toLowerCase().includes("pasaporte") ||
-            doc.nombre.toLowerCase().includes("passport") ||
-            doc.nombre.toLowerCase().includes("nie vigente"))
-      ) ||
-      currentDocs.find(
-        (doc) =>
-          normalizeDocType(doc.expectedType) === "passport" ||
-          normalizeDocType(doc.expectedType) === "nie" ||
-          normalizeDocType(doc.expectedType) === "tie" ||
-          doc.nombre.toLowerCase().includes("pasaporte o nie") ||
-          doc.nombre.toLowerCase().includes("pasaporte") ||
-          doc.nombre.toLowerCase().includes("passport") ||
-          doc.nombre.toLowerCase().includes("nie vigente")
-      ) ||
-      null;
-
-    const findStayProofDoc = () =>
-      currentDocs.find(
-        (doc) =>
-          doc.estado !== "ok" &&
-          (normalizeDocType(doc.expectedType) === "empadronamiento" ||
-            normalizeDocType(doc.expectedType) === "stay_proof" ||
-            doc.nombre.toLowerCase().includes("empadronamiento") ||
-            doc.nombre.toLowerCase().includes("prueba de permanencia") ||
-            doc.nombre.toLowerCase().includes("prueba permanencia") ||
-            doc.nombre.toLowerCase().includes("padron") ||
-            doc.nombre.toLowerCase().includes("padrón"))
-      ) ||
-      currentDocs.find(
-        (doc) =>
-          normalizeDocType(doc.expectedType) === "empadronamiento" ||
-          normalizeDocType(doc.expectedType) === "stay_proof" ||
-          doc.nombre.toLowerCase().includes("empadronamiento") ||
-          doc.nombre.toLowerCase().includes("prueba de permanencia") ||
-          doc.nombre.toLowerCase().includes("prueba permanencia") ||
-          doc.nombre.toLowerCase().includes("padron") ||
-          doc.nombre.toLowerCase().includes("padrón")
-      ) ||
-      null;
-
-    const findCriminalDoc = () =>
-      currentDocs.find(
-        (doc) =>
-          doc.estado !== "ok" &&
-          (normalizeDocType(doc.expectedType) === "criminal_record" ||
-            doc.nombre.toLowerCase().includes("antecedentes") ||
-            doc.nombre.toLowerCase().includes("penales"))
-      ) ||
-      currentDocs.find(
-        (doc) =>
-          normalizeDocType(doc.expectedType) === "criminal_record" ||
-          doc.nombre.toLowerCase().includes("antecedentes") ||
-          doc.nombre.toLowerCase().includes("penales")
-      ) ||
-      null;
-
-    if (
-      detectedType === "passport" ||
-      detectedType === "nie" ||
-      detectedType === "tie"
-    ) {
-      const identityDoc = findIdentityDoc();
-      if (identityDoc) return identityDoc;
-    }
-
-    if (
-      detectedType === "empadronamiento" ||
-      detectedType === "stay_proof" ||
-      result?.recommended_bucket === "stay_proof" ||
-      result?.is_stay_proof === true
-    ) {
-      const stayProofDoc = findStayProofDoc();
-      if (stayProofDoc) return stayProofDoc;
-    }
-
-    if (detectedType === "criminal_record") {
-      const criminalDoc = findCriminalDoc();
-      if (criminalDoc) return criminalDoc;
-    }
-
-    if (
-      includesAny([
-        "passport",
-        "pasaporte",
-        "passeport",
-        "documento de viaje",
-        "travel document",
-        "identity card",
-        "documento identidad",
-        "documento de identidad",
-        "nie",
-        "tie",
-        "tarjeta de identidad",
-        "tarjeta de residencia",
-      ])
-    ) {
-      const identityDoc = findIdentityDoc();
-      if (identityDoc) return identityDoc;
-    }
-
-    if (
-      includesAny([
-        "empadronamiento",
-        "padron",
-        "padrón",
-        "volante",
-        "certificado de empadronamiento",
-        "prueba de permanencia",
-        "prueba permanencia",
-        "justificante",
-        "resguardo",
-        "cita médica",
-        "ticket",
-        "factura",
-        "nomina",
-        "nómina",
-        "receta",
-        "stay proof",
-      ])
-    ) {
-      const stayProofDoc = findStayProofDoc();
-      if (stayProofDoc) return stayProofDoc;
-    }
-
-    if (
-      includesAny([
-        "antecedentes",
-        "antecedentes penales",
-        "criminal",
-        "criminal record",
-        "penales",
-        "registro de antecedentes",
-        "casier",
-      ])
-    ) {
-      const criminalDoc = findCriminalDoc();
-      if (criminalDoc) return criminalDoc;
-    }
-
-    if (lowerFileName) {
-      if (
-        lowerFileName.includes("padron") ||
-        lowerFileName.includes("padrón") ||
-        lowerFileName.includes("empadronamiento")
-      ) {
-        const stayProofDoc = findStayProofDoc();
-        if (stayProofDoc) return stayProofDoc;
-      }
-
-      if (
-        lowerFileName.includes("pasaporte") ||
-        lowerFileName.includes("passport") ||
-        lowerFileName.includes("nie") ||
-        lowerFileName.includes("tie")
-      ) {
-        const identityDoc = findIdentityDoc();
-        if (identityDoc) return identityDoc;
-      }
-
-      if (
-        lowerFileName.includes("penales") ||
-        lowerFileName.includes("antecedentes")
-      ) {
-        const criminalDoc = findCriminalDoc();
-        if (criminalDoc) return criminalDoc;
-      }
-    }
-
-    const firstMissing = currentDocs.find((doc) => doc.estado === "missing");
-    if (firstMissing) return firstMissing;
-
-    const firstWarn = currentDocs.find((doc) => doc.estado === "warn");
-    if (firstWarn) return firstWarn;
-
-    return null;
-  };
-
-  const maybeSendCompletionMessage = (nextDocs: StoredDocItem[]) => {
-    const nextIdentityDocs = nextDocs.filter((doc) => {
-      const expected = normalizeDocType(doc.expectedType);
-      const detected = normalizeDocType(doc.detectedType);
-      const name = doc.nombre.toLowerCase();
-
-      return (
-        expected === "passport" ||
-        expected === "nie" ||
-        expected === "tie" ||
-        detected === "passport" ||
-        detected === "nie" ||
-        detected === "tie" ||
-        name.includes("pasaporte") ||
-        name.includes("passport") ||
-        name.includes("nie")
-      );
+    const sdpRes = await fetch("https://api.openai.com/v1/realtime/calls", {
+      method: "POST",
+      body: offer.sdp,
+      headers: {
+        Authorization: `Bearer ${ephemeralKey}`,
+        "Content-Type": "application/sdp",
+      },
     });
 
-    const nextStayProofDocs = nextDocs.filter((doc) => {
-      const expected = normalizeDocType(doc.expectedType);
-      const detected = normalizeDocType(doc.detectedType);
-      const name = doc.nombre.toLowerCase();
-      const note = (doc.note || "").toLowerCase();
+    if (!sdpRes.ok) {
+      const errText = await sdpRes.text();
+      throw new Error(errText || "Error negociando WebRTC con OpenAI");
+    }
 
-      return (
-        expected === "empadronamiento" ||
-        expected === "stay_proof" ||
-        detected === "empadronamiento" ||
-        detected === "stay_proof" ||
-        name.includes("empadronamiento") ||
-        name.includes("padron") ||
-        name.includes("padrón") ||
-        name.includes("prueba de permanencia") ||
-        name.includes("prueba permanencia") ||
-        note.includes("empadronamiento") ||
-        note.includes("stay proof") ||
-        note.includes("prueba de permanencia")
-      );
+    const answerSdp = await sdpRes.text();
+
+    await pc.setRemoteDescription({
+      type: "answer",
+      sdp: answerSdp,
     });
+  } catch (error: any) {
+    console.error("Error iniciando realtime Mohamed:", error);
+    stopListening();
 
-    const readyNow =
-      leadSaved &&
-      nextStayProofDocs.some((doc) => doc.estado === "ok") &&
-      nextIdentityDocs.some((doc) => doc.estado === "ok");
-
-    if (readyNow && !completionMessageSent) {
-      pushAgentMessage(voiceTexts.mohamedFinal);
-      setCompletionMessageSent(true);
-
-      if (realtimeDcRef.current && realtimeDcRef.current.readyState === "open") {
-        askMohamedToSpeak(
-          "كلشي بان واجد ومراجع مبدئيا. قول للعميل باختصار أن الوثائق المهمة تراجعات، وأن الخطوة الجاية هي تجهيز الملف النهائي."
-        );
-      }
-    }
-  };
-
-  const handleGeneralUpload = async () => {
-    if (!leadSaved) {
-      pushAgentMessage(voiceTexts.voiceBlocked);
-
-      toast({
-        title: ui.missingTitle,
-        description: ui.missingDesc,
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      const input = document.createElement("input");
-      input.type = "file";
-      input.accept = "image/*,application/pdf";
-      input.multiple = true;
-
-      input.onchange = async () => {
-        const files = Array.from(input.files || []);
-        if (!files.length) return;
-
-        setGeneralUploading(true);
-
-        try {
-          for (const file of files) {
-            try {
-              const currentDocs = [...docs];
-
-              const result = await verifyDocument({
-                file,
-                expectedDocumentType: "auto",
-                lang: "darija",
-              });
-
-              const matchedDoc = getBestDocMatch(
-                result as VerifyDocumentResult,
-                currentDocs,
-                file.name
-              );
-
-              if (!matchedDoc) {
-                pushAgentMessage(
-                  "توصلت بالوثيقة، ولكن مازال ما بانش ليا فين نربطها فهاد الملف. صيفط ليا الوثيقة اللي من بعد أو نسخة أوضح."
-                );
-
-                if (
-                  realtimeDcRef.current &&
-                  realtimeDcRef.current.readyState === "open"
-                ) {
-                  askMohamedToSpeak(
-                    `توصلنا بوثيقة جديدة سميتها ${file.name} ولكن الربط ديالها مازال غير واضح. جاوب العميل باختصار وقول ليه شنو خاصو يصيفط من بعد.`
-                  );
-                }
-
-                toast({
-                  title: ui.uploadErrorTitle,
-                  description: result.summary || ui.uploadErrorDesc,
-                  variant: "destructive",
-                });
-
-                continue;
-              }
-
-              const isWarn =
-                result.status === "invalid" ||
-                result.match_expected_type === false;
-
-              const nextStatus: DocStatus = isWarn ? "warn" : "ok";
-
-              const updatedDocs = currentDocs.map((doc) =>
-                doc.id === matchedDoc.id
-                  ? {
-                      ...doc,
-                      estado: nextStatus,
-                      archivo: file.name,
-                      kb: `${Math.round(file.size / 1024)} KB`,
-                      detectedType: result.document_type || "",
-                      note: result.summary || "",
-                      uploadedAt: new Date().toISOString(),
-                    }
-                  : doc
-              );
-
-              setDocs(updatedDocs);
-              await saveFullStateToSupabase({ latestDoc: updatedDocs });
-
-              const matchedName = matchedDoc.nombre.toLowerCase();
-
-              let localReply = "توصلت بالوثيقة وربطتها مع الملف ديالك.";
-
-              if (isWarn) {
-                localReply =
-                  "توصلت بالوثيقة ولكن مازال خاصني نسخة أوضح أو وثيقة تزيد تقوي الملف.";
-              } else if (
-                matchedName.includes("pasaporte") ||
-                matchedName.includes("nie") ||
-                matchedName.includes("passport")
-              ) {
-                localReply = voiceTexts.passportVerified;
-              } else if (
-                matchedName.includes("empadronamiento") ||
-                matchedName.includes("prueba") ||
-                matchedName.includes("permanencia")
-              ) {
-                localReply =
-                  "مزيان. راجعت هاد البروفة وكتعاون فالملف. دابا نشوفو شنو خاص من بعدها.";
-              }
-
-              pushAgentMessage(localReply);
-
-              if (
-                realtimeDcRef.current &&
-                realtimeDcRef.current.readyState === "open"
-              ) {
-                askMohamedToSpeak(
-                  [
-                    `توصلنا بوثيقة جديدة من العميل.`,
-                    `اسم الوثيقة: ${file.name}.`,
-                    `ترابطات مع هاد الخانة: ${matchedDoc.nombre}.`,
-                    `النوع المتشاف: ${result.document_type || "غير واضح"}.`,
-                    `الحالة: ${nextStatus === "ok" ? "مقبولة مزيان" : "خاصها مراجعة"}.`,
-                    `الخلاصة: ${result.summary || "ما كايناش خلاصة مفصلة"}.`,
-                    `جاوب دابا العميل بصوت مباشر وباختصار، وقل ليه شنو الخطوة الجاية بالضبط.`,
-                  ].join(" ")
-                );
-              }
-
-              toast({
-                title: ui.uploadSuccessTitle,
-                description: result.summary || ui.uploadSuccessDesc,
-              });
-
-              maybeSendCompletionMessage(updatedDocs);
-            } catch (err: any) {
-              console.error(err);
-
-              toast({
-                title: ui.uploadErrorTitle,
-                description: err?.message || ui.uploadErrorDesc,
-                variant: "destructive",
-              });
-
-              if (
-                realtimeDcRef.current &&
-                realtimeDcRef.current.readyState === "open"
-              ) {
-                askMohamedToSpeak(
-                  `وقع مشكل فقراءة الوثيقة ${file.name}. جاوب العميل باختصار وقل ليه يعاود يصيفطها واضحة.`
-                );
-              }
-            }
-          }
-        } finally {
-          setGeneralUploading(false);
-        }
-      };
-
-      input.click();
-    } catch (error: any) {
-      setGeneralUploading(false);
-
-      toast({
-        title: "Error",
-        description: error?.message || "Error inesperado",
-        variant: "destructive",
-      });
-    }
-  };
+    toast({
+      title: "Error realtime",
+      description: error?.message || voiceTexts.realtimeError,
+      variant: "destructive",
+    });
+  }
+};
 
   const goToSara = () => {
     window.location.href = "/buscar-citas";
