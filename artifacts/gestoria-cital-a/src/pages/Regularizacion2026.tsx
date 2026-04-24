@@ -101,36 +101,6 @@ function slugifyFileName(name: string) {
     .replace(/[^a-zA-Z0-9._-]/g, "_");
 }
 
-async function getCurrentSupabaseUserId() {
-  const {
-    data: { session },
-    error: sessionError,
-  } = await supabase.auth.getSession();
-
-  if (sessionError) {
-    throw new Error(sessionError.message);
-  }
-
-  if (session?.user?.id) {
-    return session.user.id;
-  }
-
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser();
-
-  if (userError) {
-    throw new Error(userError.message);
-  }
-
-  if (!user?.id) {
-    throw new Error("No hay usuario conectado en Supabase");
-  }
-
-  return user.id;
-}
-
 export default function Regularizacion2026() {
   const [selectedSituacion] = useState("regularizacion_2026_laboral");
   const [muted, setMuted] = useState(false);
@@ -144,6 +114,9 @@ export default function Regularizacion2026() {
   const [waitingMohamed, setWaitingMohamed] = useState(false);
   const [savingForm, setSavingForm] = useState(false);
   const [waitingForDocument, setWaitingForDocument] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState("");
+  const [formConfirmed, setFormConfirmed] = useState(false);
 
   const [leadForm, setLeadForm] = useState<LeadFormState>({
     nombre: "",
@@ -169,8 +142,6 @@ export default function Regularizacion2026() {
   const lastAssistantTextRef = useRef("");
   const dcOpenedRef = useRef(false);
   const introAlreadySentRef = useRef(false);
-  const formJustSavedRef = useRef(false);
-  const documentReplyToSpeakRef = useRef<string | null>(null);
 
   const safeLang = (lang === "darija" || lang === "en" ? lang : "es") as
     | "darija"
@@ -187,7 +158,7 @@ export default function Regularizacion2026() {
       voiceBlocked:
         "عافاك عمر ليا الفورمولار الأول ومن بعد ضغط على الميكروفون باش نكمل معاك.",
       savedLeadReply:
-        "مزيان. توصلنا بالمعطيات ديالك كاملة. دابا نكمل معاك خطوة بخطوة ونسولك على الوثائق اللي خاصين.",
+        "مزيان. توصلت بالمعطيات ديالك. دابا غادي نكمل معاك خطوة بخطوة. جاوبني غير بنعم أو لا، أو بأي جواب قصير.",
       passportVerified:
         "مزيان. راجعت وثيقة الهوية ديالك. الاسم والبيانات باينين مزيان. دابا نكملو للخطوة اللي من بعدها.",
       stayProofVerified:
@@ -406,6 +377,42 @@ export default function Regularizacion2026() {
   }, []);
 
   useEffect(() => {
+    let active = true;
+
+    const loadAuth = async () => {
+      try {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+
+        if (!active) return;
+
+        setCurrentUserId(session?.user?.id || "");
+        setAuthChecked(true);
+      } catch (error) {
+        console.error("Error cargando sesión:", error);
+        if (!active) return;
+        setCurrentUserId("");
+        setAuthChecked(true);
+      }
+    };
+
+    loadAuth();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setCurrentUserId(session?.user?.id || "");
+      setAuthChecked(true);
+    });
+
+    return () => {
+      active = false;
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  useEffect(() => {
     try {
       const rawForm = localStorage.getItem(formStorageKey);
       if (rawForm) {
@@ -424,7 +431,9 @@ export default function Regularizacion2026() {
       }
 
       const rawLeadSaved = localStorage.getItem(leadSavedStorageKey);
-      setLeadSaved(rawLeadSaved === "true");
+      const saved = rawLeadSaved === "true";
+      setLeadSaved(saved);
+      setFormConfirmed(saved);
 
       const rawDocs = localStorage.getItem(docsStorageKey);
       if (rawDocs) {
@@ -448,11 +457,14 @@ export default function Regularizacion2026() {
 
   useEffect(() => {
     try {
-      localStorage.setItem(leadSavedStorageKey, leadSaved ? "true" : "false");
+      localStorage.setItem(
+        leadSavedStorageKey,
+        leadSaved || formConfirmed ? "true" : "false"
+      );
     } catch (error) {
       console.error("Error guardando leadSaved:", error);
     }
-  }, [leadSaved, leadSavedStorageKey]);
+  }, [leadSaved, formConfirmed, leadSavedStorageKey]);
 
   useEffect(() => {
     try {
@@ -475,11 +487,15 @@ export default function Regularizacion2026() {
             (m) => m.from === "agent" && m.text === voiceTexts.mohamedFinal
           );
           const leadAlreadySaved = parsed.some(
-            (m) => m.from === "agent" && m.text === voiceTexts.savedLeadReply
+            (m) =>
+              m.from === "agent" &&
+              (m.text === voiceTexts.savedLeadReply ||
+                m.text.includes("المعطيات ديالك تحفظات"))
           );
 
           setCompletionMessageSent(completionAlreadySent);
           setLeadSaved((prev) => prev || leadAlreadySaved);
+          setFormConfirmed((prev) => prev || leadAlreadySaved);
           return;
         }
       }
@@ -557,7 +573,8 @@ export default function Regularizacion2026() {
     );
   });
 
-  const formCompletedStatus: DocStatus = leadSaved ? "ok" : "missing";
+  const formCompletedStatus: DocStatus =
+    leadSaved || formConfirmed ? "ok" : "missing";
 
   const stayProofStatus: DocStatus =
     stayProofDocs.some((doc) => doc.estado === "ok")
@@ -624,12 +641,17 @@ export default function Regularizacion2026() {
 
   const loadDocsFromSupabase = async () => {
     try {
-      const userId = await getCurrentSupabaseUserId();
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser();
+
+      if (authError || !user?.id) return;
 
       const { data, error } = await supabase
         .from("user_documents")
         .select("*")
-        .eq("user_id", userId)
+        .eq("user_id", user.id)
         .order("created_at", { ascending: false });
 
       if (error || !data) {
@@ -712,7 +734,10 @@ export default function Regularizacion2026() {
             estado: rowStatus,
             kb: row.file_size ? `${Math.round(row.file_size / 1024)} KB` : "",
             detectedType: row.document_type || "",
-            note: row.verification_notes || row.extracted_data?.summary || "",
+            note:
+              row.verification_notes ||
+              row.extracted_data?.summary ||
+              "",
             uploadedAt: row.created_at || "",
             storagePath: row.file_path || "",
           };
@@ -754,7 +779,14 @@ export default function Regularizacion2026() {
   };
 
   const saveFullStateToSupabase = async (nextDocs?: StoredDocItem[]) => {
-    const userId = await getCurrentSupabaseUserId();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user?.id) {
+      throw new Error("No hay usuario conectado en Supabase");
+    }
 
     const docsToSave = nextDocs || docs;
 
@@ -788,45 +820,29 @@ export default function Regularizacion2026() {
       },
       documents: docsToSave,
       progress: {
-        formCompletedStatus: leadFormReady ? "ok" : "missing",
-        stayProofStatus: docsToSave.some((doc) =>
-          (normalizeDocType(doc.expectedType) === "empadronamiento" ||
-            normalizeDocType(doc.expectedType) === "stay_proof" ||
-            doc.nombre.toLowerCase().includes("empadronamiento") ||
-            doc.nombre.toLowerCase().includes("padron") ||
-            doc.nombre.toLowerCase().includes("padrón")) &&
-          doc.estado === "ok"
-        )
-          ? "ok"
-          : docsToSave.some((doc) =>
-              (normalizeDocType(doc.expectedType) === "empadronamiento" ||
-                normalizeDocType(doc.expectedType) === "stay_proof" ||
-                doc.nombre.toLowerCase().includes("empadronamiento") ||
-                doc.nombre.toLowerCase().includes("padron") ||
-                doc.nombre.toLowerCase().includes("padrón")) &&
-              doc.estado === "warn"
-            )
-          ? "warn"
-          : "missing",
-        identityStatus: docsToSave.some((doc) =>
-          (normalizeDocType(doc.expectedType) === "passport" ||
-            normalizeDocType(doc.expectedType) === "nie" ||
-            normalizeDocType(doc.expectedType) === "tie" ||
-            doc.nombre.toLowerCase().includes("pasaporte") ||
-            doc.nombre.toLowerCase().includes("nie")) &&
-          doc.estado === "ok"
-        )
-          ? "ok"
-          : docsToSave.some((doc) =>
-              (normalizeDocType(doc.expectedType) === "passport" ||
-                normalizeDocType(doc.expectedType) === "nie" ||
-                normalizeDocType(doc.expectedType) === "tie" ||
-                doc.nombre.toLowerCase().includes("pasaporte") ||
-                doc.nombre.toLowerCase().includes("nie")) &&
-              doc.estado === "warn"
-            )
-          ? "warn"
-          : "missing",
+        formCompletedStatus: leadSaved || formConfirmed || leadFormReady ? "ok" : "missing",
+        stayProofStatus:
+          docsToSave.some((doc) =>
+            (normalizeDocType(doc.expectedType) === "empadronamiento" ||
+              normalizeDocType(doc.expectedType) === "stay_proof" ||
+              doc.nombre.toLowerCase().includes("empadronamiento") ||
+              doc.nombre.toLowerCase().includes("padron") ||
+              doc.nombre.toLowerCase().includes("padrón")) &&
+            doc.estado === "ok"
+          )
+            ? "ok"
+            : "missing",
+        identityStatus:
+          docsToSave.some((doc) =>
+            (normalizeDocType(doc.expectedType) === "passport" ||
+              normalizeDocType(doc.expectedType) === "nie" ||
+              normalizeDocType(doc.expectedType) === "tie" ||
+              doc.nombre.toLowerCase().includes("pasaporte") ||
+              doc.nombre.toLowerCase().includes("nie")) &&
+            doc.estado === "ok"
+          )
+            ? "ok"
+            : "missing",
       },
       updated_at: new Date().toISOString(),
     };
@@ -839,20 +855,16 @@ export default function Regularizacion2026() {
         file_path: doc.storagePath || "",
       }));
 
-    const { data: existingForm, error: existingFormError } = await supabase
+    const { data: existingForm } = await supabase
       .from("user_forms")
       .select("id")
-      .eq("user_id", userId)
+      .eq("user_id", user.id)
       .eq("form_type", "regularizacion_2026")
       .limit(1)
       .maybeSingle<UserFormRow>();
 
-    if (existingFormError) {
-      throw new Error(existingFormError.message);
-    }
-
     const rowData = {
-      user_id: userId,
+      user_id: user.id,
       case_id: null,
       form_type: "regularizacion_2026",
       title: "Formulario Mohamed Regularización 2026",
@@ -864,6 +876,7 @@ export default function Regularizacion2026() {
       auto_fill_status: "pending",
       auto_fill_notes: "Formulario Mohamed guardado desde regularización 2026",
       source_document_ids: sourceDocumentIds,
+      updated_at: new Date().toISOString(),
     };
 
     if (existingForm?.id) {
@@ -885,7 +898,7 @@ export default function Regularizacion2026() {
       }
     }
 
-    return userId;
+    return user.id;
   };
 
   const askMohamedToSpeak = (instruction: string) => {
@@ -925,21 +938,11 @@ export default function Regularizacion2026() {
 
     introAlreadySentRef.current = true;
 
-    if (documentReplyToSpeakRef.current) {
-      askMohamedToSpeak(documentReplyToSpeakRef.current);
-      documentReplyToSpeakRef.current = null;
-      formJustSavedRef.current = false;
-      return;
-    }
-
-    const shouldContinueAfterForm = leadSaved || formJustSavedRef.current;
-
-    const intro = shouldContinueAfterForm
-      ? "ابدأ أنت الكلام الآن مباشرة. لا تنتظر العميل. قل له الآن: مزيان. توصلنا بالمعطيات ديالك كاملة. دابا غادي نكمل معاك خطوة بخطوة ونسولك على الوثائق اللي خاصين. ومن بعد اطرح عليه أول سؤال مهم في الملف. جاوب دائما بالدارجة المغربية وبالحروف العربية."
+    const intro = leadSaved || formConfirmed
+      ? "ابدأ أنت الكلام الآن مباشرة. لا تنتظر العميل. قل له الآن: مزيان. توصلت بالمعطيات ديالك. دابا غادي نكمل معاك خطوة بخطوة. ومن بعد اطرح عليه أول سؤال مهم في الملف. جاوب دائما بالدارجة المغربية وبالحروف العربية."
       : "ابدأ أنت الكلام الآن مباشرة. لا تنتظر العميل. قل له الآن: السلام عليكم، أنا محمد. غادي نعاونك خطوة بخطوة باش نراجع الملف ديالك. عمر ليا الفورمولار الأول، ومن بعد نكمل معاك بالصوت. جاوب دائما بالدارجة المغربية وبالحروف العربية.";
 
     askMohamedToSpeak(intro);
-    formJustSavedRef.current = false;
   };
 
   const stopListening = () => {
@@ -1165,16 +1168,102 @@ export default function Regularizacion2026() {
       return;
     }
 
+    if (!authChecked) {
+      toast({
+        title: "Espera",
+        description: "Estamos comprobando tu sesión.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!currentUserId) {
+      toast({
+        title: "Sesión no detectada",
+        description: "Debes entrar con Google antes de confirmar.",
+        variant: "destructive",
+      });
+
+      pushAgentMessage(
+        "عافاك دخل بحسابك أولاً، ومن بعد عاود دير تأكيد باش نكملو."
+      );
+
+      return;
+    }
+
     try {
       setSavingForm(true);
 
-      await saveFullStateToSupabase();
+      const payload = {
+        applicant: {
+          nombre: leadForm.nombre || "",
+          telefono: leadForm.telefono || "",
+          nie_pasaporte: leadForm.niePasaporte || "",
+          ciudad: leadForm.ciudad || "",
+          nacionalidad: leadForm.nacionalidad || "",
+          fecha_llegada: leadForm.fechaLlegada || "",
+          cumple_5_meses: leadForm.cumple5Meses || "",
+          asilo: leadForm.asilo || "",
+          penales: leadForm.penales || "",
+        },
+        procedure: {
+          key: selectedSituacion,
+          name: currentProcedure.name,
+        },
+        progress: {
+          formCompletedStatus: "ok",
+          stayProofStatus: "missing",
+          identityStatus: "missing",
+        },
+        updated_at: new Date().toISOString(),
+      };
 
-      formJustSavedRef.current = true;
+      const { data: existingForm, error: searchError } = await supabase
+        .from("user_forms")
+        .select("id")
+        .eq("user_id", currentUserId)
+        .eq("form_type", "regularizacion_2026")
+        .limit(1)
+        .maybeSingle();
+
+      if (searchError) {
+        throw new Error(searchError.message);
+      }
+
+      if (existingForm?.id) {
+        const { error: updateError } = await supabase
+          .from("user_forms")
+          .update({
+            title: "Formulario Mohamed Regularización 2026",
+            form_data: payload,
+            status: "draft",
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", existingForm.id);
+
+        if (updateError) {
+          throw new Error(updateError.message);
+        }
+      } else {
+        const { error: insertError } = await supabase.from("user_forms").insert({
+          user_id: currentUserId,
+          case_id: null,
+          form_type: "regularizacion_2026",
+          title: "Formulario Mohamed Regularización 2026",
+          form_data: payload,
+          status: "draft",
+        });
+
+        if (insertError) {
+          throw new Error(insertError.message);
+        }
+      }
+
       setLeadSaved(true);
+      setFormConfirmed(true);
 
       const savedMessage =
-        "مزيان. توصلنا بالمعطيات ديالك كاملة. دابا نكمل معاك خطوة بخطوة ونسولك على الوثائق اللي خاصين.";
+        "مزيان. المعطيات ديالك تحفظات فالنظام. دابا نكمل معاك ونسولك على الوثائق خطوة بخطوة.";
 
       const alreadyExists = voiceHistory.some(
         (msg) => msg.from === "agent" && msg.text === savedMessage
@@ -1186,21 +1275,16 @@ export default function Regularizacion2026() {
 
       toast({
         title: ui.saveLeadTitle,
-        description: ui.saveLeadDesc,
+        description: "Se han guardado los datos correctamente.",
       });
 
-      if (!realtimeDcRef.current || realtimeDcRef.current.readyState !== "open") {
-        await startListening();
-        return;
+      if (realtimeDcRef.current && realtimeDcRef.current.readyState === "open") {
+        askMohamedToSpeak(
+          "العميل أكد المعطيات ديالو وتحفظات فالنظام بنجاح. قول ليه باختصار: مزيان، المعطيات ديالك تحفظات، ودابا غادي نكملو فالأسئلة ديال الملف. ومن بعد بدا بأول سؤال مهم."
+        );
       }
-
-      askMohamedToSpeak(
-        "العميل صاوب دابا الفورمولار كامل وتحفظ فالنظام بنجاح. قول ليه باختصار: مزيان، توصلنا بالمعطيات ديالك، ودابا غادي نكملو بالأسئلة ديال الملف. من بعد بدا غير بأول سؤال مهم على الوثائق."
-      );
     } catch (error: any) {
       console.error("Error guardando formulario Mohamed:", error);
-
-      formJustSavedRef.current = false;
 
       toast({
         title: "Error guardando formulario",
@@ -1208,11 +1292,9 @@ export default function Regularizacion2026() {
         variant: "destructive",
       });
 
-      if (realtimeDcRef.current && realtimeDcRef.current.readyState === "open") {
-        askMohamedToSpeak(
-          "وقع مشكل فحفظ المعطيات ديالك. عافاك عاود حاول فزر التأكيد قبل ما نكملو."
-        );
-      }
+      pushAgentMessage(
+        "وقع مشكل فحفظ المعطيات. عافاك عاود دير تأكيد مرة أخرى."
+      );
     } finally {
       setSavingForm(false);
     }
@@ -1403,7 +1485,7 @@ export default function Regularizacion2026() {
       );
     });
 
-    const readyNow = leadSaved && nextStayOk && nextIdentityOk;
+    const readyNow = (leadSaved || formConfirmed) && nextStayOk && nextIdentityOk;
 
     if (readyNow && !completionMessageSent) {
       pushAgentMessage(voiceTexts.mohamedFinal);
@@ -1418,14 +1500,16 @@ export default function Regularizacion2026() {
   };
 
   const handleGeneralUpload = async () => {
-    if (!leadSaved) {
-      pushAgentMessage("عافاك عمر الفورمولار الأول ومن بعد دير تأكيد، ومن بعد نكمل معاك بالصوت.");
+    if (!leadSaved || !formConfirmed) {
+      pushAgentMessage(
+        "عافاك عمر الفورمولار الأول ودير تأكيد، ومن بعد صيفط ليا الوثائق."
+      );
 
-      if (realtimeDcRef.current && realtimeDcRef.current.readyState === "open") {
-        askMohamedToSpeak(
-          "قول للعميل باختصار: خاصك تعمر الفورمولار الأول وتأكد المعطيات ديالك، ومن بعد نكملو بالصوت."
-        );
-      }
+      toast({
+        title: "Primero confirma el formulario",
+        description: "Debes guardar tus datos antes de subir documentos.",
+        variant: "destructive",
+      });
 
       return;
     }
@@ -1446,14 +1530,21 @@ export default function Regularizacion2026() {
         assistantTextBufferRef.current = "";
 
         try {
-          const userId = await getCurrentSupabaseUserId();
+          const {
+            data: { user },
+            error: authError,
+          } = await supabase.auth.getUser();
+
+          if (authError || !user?.id) {
+            throw new Error("No hay usuario conectado en Supabase");
+          }
 
           for (const file of files) {
             try {
               const currentDocs = [...docs];
 
               const safeName = `${Date.now()}_${slugifyFileName(file.name)}`;
-              const storagePath = `${userId}/regularizacion_2026/${safeName}`;
+              const storagePath = `${user.id}/regularizacion_2026/${safeName}`;
 
               const { error: uploadError } = await supabase.storage
                 .from("user-documents")
@@ -1536,7 +1627,7 @@ export default function Regularizacion2026() {
               const { error: insertDocumentError } = await supabase
                 .from("user_documents")
                 .insert({
-                  user_id: userId,
+                  user_id: user.id,
                   case_id: null,
                   document_type:
                     result.document_type || matchedDoc.expectedType || "general",
@@ -1599,27 +1690,23 @@ export default function Regularizacion2026() {
 
               pushAgentMessage(localReply);
 
-              const documentInstruction = [
-                "العميل صيفط دابا الوثيقة المطلوبة.",
-                `الوثيقة هي: ${matchedDoc.nombre}.`,
-                `اسم الملف: ${file.name}.`,
-                `النوع المتشاف: ${result.document_type || "غير واضح"}.`,
-                `الخلاصة: ${result.summary || "تمت المراجعة"}.`,
-                `الحالة: ${
-                  nextStatus === "ok"
-                    ? "مزيانة ومقبولة"
-                    : "خاصها مراجعة أو نسخة أوضح"
-                }.`,
-                "جاوب الآن فقط على هاد الوثيقة بشكل بشري ومختصر.",
-                "قول واش فيها الاسم والتفاصيل باينين ولا لا.",
-                "ومن بعد اطلب الوثيقة الجاية فقط."
-              ].join(" ");
-
               if (realtimeDcRef.current && realtimeDcRef.current.readyState === "open") {
-                askMohamedToSpeak(documentInstruction);
-              } else {
-                documentReplyToSpeakRef.current = documentInstruction;
-                await startListening();
+                askMohamedToSpeak(
+                  [
+                    `العميل صيفط دابا الوثيقة المطلوبة.`,
+                    `الوثيقة هي: ${matchedDoc.nombre}.`,
+                    `النوع المتشاف: ${result.document_type || "غير واضح"}.`,
+                    `الخلاصة: ${result.summary || "تمت المراجعة"}.`,
+                    `الحالة: ${
+                      nextStatus === "ok"
+                        ? "مزيانة ومقبولة"
+                        : "خاصها مراجعة أو نسخة أوضح"
+                    }.`,
+                    "جاوب الآن فقط على هاد الوثيقة بشكل بشري ومختصر.",
+                    "قول واش فيها الاسم والتفاصيل باينين ولا لا.",
+                    "ومن بعد اطلب الوثيقة الجاية فقط.",
+                  ].join(" ")
+                );
               }
 
               toast({
@@ -1843,7 +1930,7 @@ export default function Regularizacion2026() {
               <div className="border-t border-white/10 p-3">
                 <button
                   onClick={handleGeneralUpload}
-                  disabled={generalUploading || !leadSaved}
+                  disabled={generalUploading || !leadSaved || !formConfirmed}
                   className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary hover:bg-primary/90 disabled:opacity-60 text-primary-foreground font-bold text-xs px-4 py-3 transition-colors"
                   type="button"
                 >
@@ -2020,11 +2107,11 @@ export default function Regularizacion2026() {
 
                 <button
                   onClick={handleSaveLeadForm}
-                  disabled={savingForm}
+                  disabled={savingForm || !authChecked}
                   className="w-full rounded-[18px] bg-[#003b82] hover:bg-[#002f69] disabled:opacity-60 text-white font-bold text-sm py-3 transition-colors"
                   type="button"
                 >
-                  {ui.saveLeadButton}
+                  {savingForm ? "Guardando..." : "Guardar datos y continuar con Mohamed"}
                 </button>
               </div>
             </div>
