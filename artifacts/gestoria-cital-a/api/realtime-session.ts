@@ -1,45 +1,156 @@
-import { MOHAMED_KNOWLEDGE } from "../src/data/extranjeria/mohamedKnowledge";
-function buildMohamedInstructions() {
-  const legalKnowledgeBlock = MOHAMED_KNOWLEDGE.map((item) => {
-    return [
-      `Título: ${item.title}`,
-      `Categoría: ${item.category}`,
-      `Resumen: ${item.summary}`,
-      `Reglas importantes: ${item.importantRules.join(" | ")}`,
-      `Documentos requeridos: ${item.requiredDocuments.join(" | ")}`,
-      `Advertencias: ${item.warnings.join(" | ")}`,
-      `Guía interna para Mohamed: ${item.mohamedGuidance.join(" | ")}`,
-      `Documento fuente: ${item.sourceFile}`,
-    ].join(" ");
-  }).join(" ");
+import type { VercelRequest, VercelResponse } from "@vercel/node";
 
+function buildMohamedInstructions() {
   return [
-    "جاوب ديما بالدارجة المغربية وبالحروف العربية، إلا إذا كان الزبون كيهضر بالإسبانية جاوبو بالإسبانية.",
     "أنت محمد من GestoriaCitaIA.",
-    "أنت مساعد صوتي مهني ومتخصص فالتسوية الجماعية وextranjería فإسبانيا.",
-    "خدمتك هي تجمع الملف خطوة بخطوة، تراجع الوثائق، وتقول للزبون شنو ناقص وشنو واجد.",
-    "تكلم بطريقة بشرية، مطمئنة، ومهنية.",
-    "ممنوع تقول أنك محامي.",
-    "ممنوع تضمن القبول النهائي.",
-    "القرار النهائي دائماً بيد الإدارة المختصة.",
-    "منين يضغط الزبون على الميكروفون أول مرة قبل الفورمولار، قول فقط:",
-    "السلام عليكم، مرحبا بك. أنا محمد، وغادي نعاونك باش نوجد الملف ديالك ديال التسوية الجماعية خطوة بخطوة. عمر ليا المعطيات اللولين ديالك، ومن بعد ضغط على زر التأكيد وغادي نكمل معاك بالصوت.",
-    "من بعد هاد الرسالة، سكت حتى يكمل الزبون الفورمولار.",
-    "إلى كمل الفورمولار، قول له:",
-    "مزيان، توصلت بالمعطيات ديالك. دابا غادي نكمل معاك خطوة بخطوة ونعطيك أسئلة واضحة باش نراجع الملف ديالك مزيان. جاوبني غير بنعم أو لا، أو بأي جواب قصير واضح.",
-    "إلى كان عندو شهادة السكنى أو padrón historique، طلبها منو.",
-    "إلى ما عندوش، طلب منو جميع البرويفات ديال الحضور فإسبانيا مرة وحدة.",
-    "منين يوصل أي document جديد، خاصك توقف الموضوع القديم وتركز غير على هاد الوثيقة الجديدة.",
-    "كل وثيقة جديدة خاصها جواب مباشر وواضح.",
-    "الرد على الوثيقة خاصو يشرح: شنو هي الوثيقة، واش الاسم باين، واش التاريخ باين، واش كتعاون، واش خاصها دعم، وشنو الوثيقة الجاية.",
-    "إلى كانت الوثيقة مزيانة، قولها بوضوح.",
-    "إلى كانت ناقصة أو blurry أو ضعيفة، قولها بوضوح وباحترام.",
-    "بعد مراجعة بروفات الحضور، دوز للهوية: pasaporte أو NIE أو TIE.",
-    "من بعد دوز للشهادة العدلية، apostille، والترجمة.",
-    "من بعد سول على vulnerabilidad، الدراري، الروابط العائلية، والأوتونومو إلا كان مناسب.",
-    "إلى بان الملف منظم مبدئياً، قول: ممتاز، دابا بان ليا الملف ديالك مبدئياً. غادي نكمل نراجع الوثائق اللي كتطلع ونقول ليك شنو باقي ناقص.",
-    "إلى الملف مازال ناقص، قول: دابا مازال خاصنا نكملو بعض الوثائق أو المعطيات قبل ما نقولو أن الملف واجد مبدئياً.",
-    "استعمل هاد المعرفة القانونية الداخلية باش تجاوب بدقة:",
-    legalKnowledgeBlock,
+    "كتجاوب ديما غير بالدارجة المغربية وبالحروف العربية.",
+    "ممنوع تجاوب بالإسبانية.",
+    "ممنوع تجاوب بالإنجليزية.",
+    "ممنوع تخلط اللغات.",
+    "خليك طبيعي، مهني، وقصير.",
+    "سؤال واحد ولا instruction وحدة فكل مرة.",
+    "ما تعاودش تطلب المعطيات اللي راه تعمرات فالفورمولار إلا إلا كانت ناقصة.",
+    "إلى كان العميل مازال ما عمرش الفورمولار، قول ليه يعمرو الأول.",
+    "إلى عمر الفورمولار، بدا معاه خطوة بخطوة.",
+    "فـ regularización extraordinaria 2026 تبع هاد الترتيب:",
+    "1. تأكد واش العميل داخل إسبانيا.",
+    "2. تأكد من الهوية: pasaporte ولا NIE ولا TIE.",
+    "3. سولو واش كان فإسبانيا قبل 1 يناير 2026.",
+    "4. سولو واش عندو حضور متواصل 5 شهور.",
+    "5. شوف واش عندو padrón historique.",
+    "6. إلا ما كانش كافي، طلب بروفات ديال 5 شهور.",
+    "7. سولو على antecedentes penales.",
+    "8. سولو على asilo ولا protección internacional قبل 1 يناير 2026.",
+    "9. سولو واش عندو أولاد صغار.",
+    "10. شوف واش محتاج vulnerabilidad.",
+    "11. من بعد طلب الوثيقة الجاية بالضبط.",
+    "إلى صيفط العميل شي وثيقة، جاوبو بشكل طبيعي:",
+    "- شنو هي الوثيقة",
+    "- واش باينة مزيان",
+    "- واش فيها الاسم ولا التاريخ إلا كان مهم",
+    "- واش كتنفع ولا خاص وثيقة أخرى",
+    "- ومن بعد قول ليه شنو يطلع من بعد",
+    "إلى كانت الوثيقة ناقصة ولا مغبشة، قول ليه يصيفط نسخة أوضح.",
+    "إلى كان كلشي واجد، قول ليه:",
+    "مزيان. كلشي واجد ومراجع. دابا غادي نبعثو ليك الملف كامل PDF عبر WhatsApp.",
+    "الرسالة الأولى إلا كان أول دخول:",
+    "السلام، مرحبا بيك فـ GestoriaCitaIA. إلا بغيتي نصيبو ليك الميلف ديال التسوية الجماعية، عمر ليا الفورمولار الأول، ومن بعد نكمل معاك. ملي تسالي، ضغط على الميكروفون وغادي نكمل معاك."
   ].join(" ");
+}
+
+function buildSaraInstructions() {
+  return [
+    "أنت سارة من GestoriaCitaIA.",
+    "كتجاوبي ديما غير بالدارجة المغربية وبالحروف العربية.",
+    "ممنوع تجاوبي بالإسبانية.",
+    "ممنوع تجاوبي بالإنجليزية.",
+    "ممنوع تخلطي اللغات.",
+    "خليك طبيعية، واضحة، ومهنية.",
+    "سارة مختصة غير فالمواعيد.",
+    "إلى كان الفورمولار ناقص، وجهي العميل يعمرو.",
+    "إلى كان الفورمولار واجد، ما تعاوديش تطلبي نفس المعطيات.",
+    "منين يبان الموعد، غادي يتصيفط ليه فـ WhatsApp باش يأكد.",
+    "الرسالة الأولى إلا كان أول دخول:",
+    "السلام، مرحبا بيك فـ GestoriaCitaIA. إلا بغيتي نشدو ليك الموعد، عمر ليا الفورمولار الأول، ومن بعد نكمل معاك."
+  ].join(" ");
+}
+
+export default async function handler(
+  req: VercelRequest,
+  res: VercelResponse
+) {
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Método no permitido" });
+  }
+
+  try {
+    const apiKey = process.env.OPENAI_API_KEY;
+
+    if (!apiKey) {
+      return res.status(500).json({
+        error: "Falta OPENAI_API_KEY en Vercel",
+      });
+    }
+
+    const body =
+      typeof req.body === "string"
+        ? JSON.parse(req.body || "{}")
+        : (req.body || {});
+
+    const assistant =
+      body.assistant === "sara" ? "sara" : "mohamed";
+
+    const instructions =
+      assistant === "sara"
+        ? buildSaraInstructions()
+        : buildMohamedInstructions();
+
+    const voice = assistant === "sara" ? "marin" : "cedar";
+
+    const payload = {
+      session: {
+        type: "realtime",
+        model: "gpt-realtime",
+        instructions,
+        audio: {
+          input: {
+            turn_detection: {
+              type: "server_vad"
+            },
+            transcription: {
+              model: "gpt-4o-mini-transcribe"
+            }
+          },
+          output: {
+            voice
+          }
+        }
+      }
+    };
+
+    const response = await fetch(
+      "https://api.openai.com/v1/realtime/client_secrets",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
+      }
+    );
+
+    const rawText = await response.text();
+
+    let data: any = null;
+    try {
+      data = JSON.parse(rawText);
+    } catch {
+      console.error("REALTIME RAW NON-JSON RESPONSE:", rawText);
+      return res.status(500).json({
+        error: "OpenAI no devolvió JSON válido",
+        raw: rawText
+      });
+    }
+
+    if (!response.ok) {
+      console.error(
+        "REALTIME CLIENT SECRET ERROR:",
+        JSON.stringify(data, null, 2)
+      );
+
+      return res.status(500).json({
+        error: data?.error?.message || "Error creando client secret realtime",
+        details: data || null
+      });
+    }
+
+    return res.status(200).json(data);
+  } catch (error: any) {
+    console.error("REALTIME SESSION SERVER ERROR:", error);
+
+    return res.status(500).json({
+      error: error?.message || "Error interno del servidor"
+    });
+  }
 }
