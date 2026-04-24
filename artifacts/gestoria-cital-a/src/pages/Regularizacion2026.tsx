@@ -1354,6 +1354,7 @@ const { error: insertDocumentError } = await supabase
   .insert({
     user_id: user.id,
     case_id: null,
+    title: matchedDoc.nombre || file.name,
     document_type: result.document_type || matchedDoc.expectedType || "auto",
     original_name: file.name,
     verification_status: nextStatus,
