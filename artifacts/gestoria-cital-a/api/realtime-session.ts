@@ -25,11 +25,11 @@ function buildMohamedInstructions() {
     "10. شوف واش محتاج vulnerabilidad.",
     "11. من بعد طلب الوثيقة الجاية بالضبط.",
     "إلى صيفط العميل شي وثيقة، جاوبو بشكل طبيعي:",
-    "- شنو هي الوثيقة",
-    "- واش باينة مزيان",
-    "- واش فيها الاسم ولا التاريخ إلا كان مهم",
-    "- واش كتنفع ولا خاص وثيقة أخرى",
-    "- ومن بعد قول ليه شنو يطلع من بعد",
+    "- شنو هي الوثيقة.",
+    "- واش باينة مزيان.",
+    "- واش فيها الاسم ولا التاريخ إلا كان مهم.",
+    "- واش كتنفع ولا خاص وثيقة أخرى.",
+    "- ومن بعد قول ليه شنو يطلع من بعد.",
     "إلى كانت الوثيقة ناقصة ولا مغبشة، قول ليه يصيفط نسخة أوضح.",
     "إلى كان كلشي واجد، قول ليه:",
     "مزيان. كلشي واجد ومراجع. دابا غادي نبعثو ليك الملف كامل PDF عبر WhatsApp.",
@@ -77,8 +77,7 @@ export default async function handler(
         ? JSON.parse(req.body || "{}")
         : (req.body || {});
 
-    const assistant =
-      body.assistant === "sara" ? "sara" : "mohamed";
+    const assistant = body.assistant === "sara" ? "sara" : "mohamed";
 
     const instructions =
       assistant === "sara"
@@ -94,23 +93,23 @@ export default async function handler(
         instructions,
         audio: {
           input: {
-           turn_detection: {
-  type: "server_vad",
-  threshold: 0.8,
-  prefix_padding_ms: 500,
-  silence_duration_ms: 1200,
-  create_response: true,
-  interrupt_response: false
-}
+            turn_detection: {
+              type: "server_vad",
+              threshold: 0.9,
+              prefix_padding_ms: 700,
+              silence_duration_ms: 1500,
+              create_response: true,
+              interrupt_response: false,
+            },
             transcription: {
-              model: "gpt-4o-mini-transcribe"
-            }
+              model: "gpt-4o-mini-transcribe",
+            },
           },
           output: {
-            voice
-          }
-        }
-      }
+            voice,
+          },
+        },
+      },
     };
 
     const response = await fetch(
@@ -119,9 +118,9 @@ export default async function handler(
         method: "POST",
         headers: {
           Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
       }
     );
 
@@ -134,7 +133,7 @@ export default async function handler(
       console.error("REALTIME RAW NON-JSON RESPONSE:", rawText);
       return res.status(500).json({
         error: "OpenAI no devolvió JSON válido",
-        raw: rawText
+        raw: rawText,
       });
     }
 
@@ -146,7 +145,7 @@ export default async function handler(
 
       return res.status(500).json({
         error: data?.error?.message || "Error creando client secret realtime",
-        details: data || null
+        details: data || null,
       });
     }
 
@@ -155,7 +154,7 @@ export default async function handler(
     console.error("REALTIME SESSION SERVER ERROR:", error);
 
     return res.status(500).json({
-      error: error?.message || "Error interno del servidor"
+      error: error?.message || "Error interno del servidor",
     });
   }
 }
