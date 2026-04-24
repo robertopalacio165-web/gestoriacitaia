@@ -39,7 +39,6 @@ type StoredDocItem = {
   note?: string;
   uploadedAt?: string;
   storagePath?: string;
-  publicUrl?: string;
 };
 
 type LeadFormState = {
@@ -77,7 +76,6 @@ function buildInitialDocs(procedureKey: string): StoredDocItem[] {
     note: doc.notes || "",
     uploadedAt: "",
     storagePath: "",
-    publicUrl: "",
   }));
 }
 
@@ -115,6 +113,7 @@ export default function Regularizacion2026() {
   const [lastUserTranscript, setLastUserTranscript] = useState("");
   const [waitingMohamed, setWaitingMohamed] = useState(false);
   const [savingForm, setSavingForm] = useState(false);
+  const [waitingForDocument, setWaitingForDocument] = useState(false);
 
   const [leadForm, setLeadForm] = useState<LeadFormState>({
     nombre: "",
@@ -158,9 +157,9 @@ export default function Regularizacion2026() {
       savedLeadReply:
         "مزيان. توصلت بالمعطيات ديالك. دابا غادي نكمل معاك خطوة بخطوة. جاوبني غير بنعم أو لا، أو بأي جواب قصير.",
       passportVerified:
-        "مزيان. راجعت وثيقة الهوية ديالك. دابا نكملو للخطوة اللي من بعدها.",
+        "مزيان. راجعت وثيقة الهوية ديالك. الاسم والبيانات باينين مزيان. دابا نكملو للخطوة اللي من بعدها.",
       stayProofVerified:
-        "مزيان. راجعت بروفات السكن أو البقاء. دابا نشوفو شنو خاص من بعد.",
+        "مزيان. راجعت بروفات السكن أو البقاء. هادشي كيعطينا أساس مزيان. دابا نشوفو شنو خاص من بعد.",
       uploadWarn:
         "توصلت بالوثيقة، ولكن خاصها شوية مراجعة أو نسخة أوضح.",
       uploadUnknown:
@@ -185,7 +184,7 @@ export default function Regularizacion2026() {
         formTitle: "لوحة رسمية مدمجة",
         formDesc:
           "عمر المعطيات الأساسية باش محمد يبدا يراجع الملف ديالك بالصوت.",
-        uploadGeneral: "رفع الوثائق",
+        uploadGeneral: generalUploading ? "كيترفع..." : "رفع الوثائق",
         uploadGeneralDesc:
           "من هنا تقدر ترفع جميع الوثائق اللي طلب منك محمد، سواء كانت صورة أو PDF.",
         uploading: "كيترفع...",
@@ -240,7 +239,7 @@ export default function Regularizacion2026() {
         formTitle: "Integrated official panel",
         formDesc:
           "Fill in the basic details so Mohamed can start reviewing your case by voice.",
-        uploadGeneral: "Upload documents",
+        uploadGeneral: generalUploading ? "Uploading..." : "Upload documents",
         uploadGeneralDesc:
           "Use this button to upload all documents Mohamed asks for, as images or PDFs.",
         uploading: "Uploading...",
@@ -295,7 +294,7 @@ export default function Regularizacion2026() {
       formTitle: "Panel oficial integrado",
       formDesc:
         "Rellena los datos básicos para que Mohamed empiece a revisar tu caso por voz.",
-      uploadGeneral: "Subir documentos",
+      uploadGeneral: generalUploading ? "Subiendo..." : "Subir documentos",
       uploadGeneralDesc:
         "Usa este botón para subir todos los documentos que te pida Mohamed, en foto o en PDF.",
       uploading: "Subiendo...",
@@ -336,27 +335,28 @@ export default function Regularizacion2026() {
         dontKnow: "No sé",
       },
     };
-  }, [safeLang, savingForm]);
+  }, [safeLang, savingForm, generalUploading]);
 
   const [docs, setDocs] = useState<StoredDocItem[]>(
     buildInitialDocs(selectedSituacion)
   );
 
-  const historyStorageKey = useMemo(() => {
-    return `gestoriacitaia_mohamed_voice_history_${selectedSituacion}`;
-  }, [selectedSituacion]);
-
-  const formStorageKey = useMemo(() => {
-    return `gestoriacitaia_mohamed_form_${selectedSituacion}`;
-  }, [selectedSituacion]);
-
-  const leadSavedStorageKey = useMemo(() => {
-    return `gestoriacitaia_mohamed_lead_saved_${selectedSituacion}`;
-  }, [selectedSituacion]);
-
-  const docsStorageKey = useMemo(() => {
-    return `gestoriacitaia_mohamed_docs_${selectedSituacion}`;
-  }, [selectedSituacion]);
+  const historyStorageKey = useMemo(
+    () => `gestoriacitaia_mohamed_voice_history_${selectedSituacion}`,
+    [selectedSituacion]
+  );
+  const formStorageKey = useMemo(
+    () => `gestoriacitaia_mohamed_form_${selectedSituacion}`,
+    [selectedSituacion]
+  );
+  const leadSavedStorageKey = useMemo(
+    () => `gestoriacitaia_mohamed_lead_saved_${selectedSituacion}`,
+    [selectedSituacion]
+  );
+  const docsStorageKey = useMemo(
+    () => `gestoriacitaia_mohamed_docs_${selectedSituacion}`,
+    [selectedSituacion]
+  );
 
   const leadFormReady =
     !!leadForm.nombre.trim() &&
@@ -452,14 +452,13 @@ export default function Regularizacion2026() {
         }
       }
 
-      const freshHistory: ChatMsg[] = [
+      setVoiceHistory([
         {
           from: "agent",
           text: voiceTexts.initialVoice,
           ts: Date.now(),
         },
-      ];
-      setVoiceHistory(freshHistory);
+      ]);
     } catch (error) {
       console.error("Error cargando historial de Mohamed:", error);
       setVoiceHistory([
@@ -554,26 +553,10 @@ export default function Regularizacion2026() {
       : "missing";
 
   const progressCards = [
-    {
-      id: "form_completed",
-      nombre: ui.docStepForm,
-      estado: formCompletedStatus,
-    },
-    {
-      id: "stay_proof",
-      nombre: ui.docStepStayProof,
-      estado: stayProofStatus,
-    },
-    {
-      id: "identity_document",
-      nombre: ui.docStepIdentity,
-      estado: identityStatus,
-    },
-    {
-      id: "final_file",
-      nombre: ui.docStepFinal,
-      estado: finalFileStatus,
-    },
+    { id: "form_completed", nombre: ui.docStepForm, estado: formCompletedStatus },
+    { id: "stay_proof", nombre: ui.docStepStayProof, estado: stayProofStatus },
+    { id: "identity_document", nombre: ui.docStepIdentity, estado: identityStatus },
+    { id: "final_file", nombre: ui.docStepFinal, estado: finalFileStatus },
   ];
 
   const progressOk = progressCards.filter((item) => item.estado === "ok").length;
@@ -592,11 +575,7 @@ export default function Regularizacion2026() {
 
     setVoiceHistory((prev) => [
       ...prev,
-      {
-        from: "agent",
-        text,
-        ts: Date.now(),
-      },
+      { from: "agent", text, ts: Date.now() },
     ]);
 
     lastAssistantTextRef.current = text;
@@ -607,186 +586,271 @@ export default function Regularizacion2026() {
 
     setVoiceHistory((prev) => [
       ...prev,
-      {
-        from: "user",
-        text,
-        ts: Date.now(),
-      },
+      { from: "user", text, ts: Date.now() },
     ]);
+  };
+
+  const loadDocsFromSupabase = async () => {
+    try {
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser();
+
+      if (authError || !user?.id) return;
+
+      const { data, error } = await supabase
+        .from("user_documents")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+
+      if (error || !data) {
+        console.error("Error cargando user_documents:", error);
+        return;
+      }
+
+      const nextDocs = buildInitialDocs(selectedSituacion);
+
+      for (const row of data) {
+        const rowType = normalizeDocType(row.document_type || "");
+        const rowTitle = (row.title || "").toLowerCase();
+
+        const rowStatus: DocStatus =
+          row.verification_status === "verified"
+            ? "ok"
+            : row.verification_status === "needs_review" ||
+              row.verification_status === "pending"
+            ? "warn"
+            : "missing";
+
+        const matchedIndex = nextDocs.findIndex((doc) => {
+          const expected = normalizeDocType(doc.expectedType || "");
+          const name = doc.nombre.toLowerCase();
+
+          if (
+            (expected === "passport" || expected === "nie" || expected === "tie") &&
+            (rowType === "passport" ||
+              rowType === "nie" ||
+              rowType === "tie" ||
+              rowTitle.includes("pasaporte") ||
+              rowTitle.includes("passport") ||
+              rowTitle.includes("nie"))
+          ) {
+            return true;
+          }
+
+          if (
+            (expected === "empadronamiento" || expected === "stay_proof") &&
+            (rowType === "empadronamiento" ||
+              rowType === "stay_proof" ||
+              rowTitle.includes("empadronamiento") ||
+              rowTitle.includes("padron") ||
+              rowTitle.includes("padrón") ||
+              rowTitle.includes("prueba"))
+          ) {
+            return true;
+          }
+
+          if (
+            (name.includes("pasaporte") || name.includes("nie")) &&
+            (rowTitle.includes("pasaporte") ||
+              rowTitle.includes("passport") ||
+              rowTitle.includes("nie"))
+          ) {
+            return true;
+          }
+
+          if (
+            (name.includes("empadronamiento") ||
+              name.includes("padron") ||
+              name.includes("padrón") ||
+              name.includes("prueba de permanencia")) &&
+            (rowTitle.includes("empadronamiento") ||
+              rowTitle.includes("padron") ||
+              rowTitle.includes("padrón") ||
+              rowType === "empadronamiento" ||
+              rowType === "stay_proof")
+          ) {
+            return true;
+          }
+
+          return false;
+        });
+
+        if (matchedIndex >= 0) {
+          nextDocs[matchedIndex] = {
+            ...nextDocs[matchedIndex],
+            archivo: row.original_name || row.title || "",
+            estado: rowStatus,
+            kb: row.file_size ? `${Math.round(row.file_size / 1024)} KB` : "",
+            detectedType: row.document_type || "",
+            note:
+              row.verification_notes ||
+              row.extracted_data?.summary ||
+              "",
+            uploadedAt: row.created_at || "",
+            storagePath: row.file_path || "",
+          };
+        }
+      }
+
+      setDocs(nextDocs);
+    } catch (error) {
+      console.error("Error cargando documentos verificados:", error);
+    }
   };
 
   const finalizeAssistantBuffer = () => {
     const text = assistantTextBufferRef.current.trim();
     if (!text) return;
-    if (text === "..." || text === "…") {
-      assistantTextBufferRef.current = "";
-      return;
-    }
-    if (text === lastAssistantTextRef.current) {
-      assistantTextBufferRef.current = "";
-      return;
-    }
+
+    assistantTextBufferRef.current = "";
+
+    if (text === "..." || text === "…") return;
+    if (text === lastAssistantTextRef.current) return;
 
     pushAgentMessage(text);
-    assistantTextBufferRef.current = "";
+
+    const lower = text.toLowerCase();
+    const asksForDocument =
+      lower.includes("صيفط") ||
+      lower.includes("الوثيقة") ||
+      lower.includes("الباسبور") ||
+      lower.includes("passport") ||
+      lower.includes("nie") ||
+      lower.includes("pdf") ||
+      lower.includes("empadronamiento") ||
+      lower.includes("padrón") ||
+      lower.includes("padron") ||
+      lower.includes("pruebas") ||
+      lower.includes("بروفات");
+
+    setWaitingForDocument(asksForDocument);
   };
 
   const saveFullStateToSupabase = async (nextDocs?: StoredDocItem[]) => {
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
 
-  if (authError || !user?.id) {
-    throw new Error("No hay usuario conectado en Supabase");
-  }
-
-  const docsToSave = nextDocs || docs;
-
-  const extractedProfileData = {
-    full_name: leadForm.nombre || "",
-    phone: leadForm.telefono || "",
-    nie: leadForm.niePasaporte || "",
-    city: leadForm.ciudad || "",
-    nationality: leadForm.nacionalidad || "",
-    arrival_date: leadForm.fechaLlegada || "",
-    has_5_months: leadForm.cumple5Meses || "",
-    asylum: leadForm.asilo || "",
-    criminal_record: leadForm.penales || "",
-  };
-
-  const payload = {
-    applicant: {
-      nombre: leadForm.nombre || "",
-      telefono: leadForm.telefono || "",
-      nie_pasaporte: leadForm.niePasaporte || "",
-      ciudad: leadForm.ciudad || "",
-      nacionalidad: leadForm.nacionalidad || "",
-      fecha_llegada: leadForm.fechaLlegada || "",
-      cumple_5_meses: leadForm.cumple5Meses || "",
-      asilo: leadForm.asilo || "",
-      penales: leadForm.penales || "",
-    },
-    procedure: {
-      key: selectedSituacion,
-      name: currentProcedure.name,
-    },
-    documents: docsToSave.map((doc) => ({
-      id: doc.id,
-      nombre: doc.nombre,
-      archivo: doc.archivo,
-      estado: doc.estado,
-      kb: doc.kb,
-      expectedType: doc.expectedType || "",
-      detectedType: doc.detectedType || "",
-      note: doc.note || "",
-      uploadedAt: doc.uploadedAt || "",
-      storagePath: doc.storagePath || "",
-      publicUrl: doc.publicUrl || "",
-    })),
-    progress: {
-      formCompletedStatus: leadSaved || leadFormReady ? "ok" : "missing",
-      stayProofStatus:
-        docsToSave.some((doc) =>
-          (normalizeDocType(doc.expectedType) === "empadronamiento" ||
-            normalizeDocType(doc.expectedType) === "stay_proof" ||
-            doc.nombre.toLowerCase().includes("empadronamiento") ||
-            doc.nombre.toLowerCase().includes("padron") ||
-            doc.nombre.toLowerCase().includes("padrón") ||
-            doc.nombre.toLowerCase().includes("prueba de permanencia")) &&
-          doc.estado === "ok"
-        )
-          ? "ok"
-          : docsToSave.some((doc) =>
-              (normalizeDocType(doc.expectedType) === "empadronamiento" ||
-                normalizeDocType(doc.expectedType) === "stay_proof" ||
-                doc.nombre.toLowerCase().includes("empadronamiento") ||
-                doc.nombre.toLowerCase().includes("padron") ||
-                doc.nombre.toLowerCase().includes("padrón") ||
-                doc.nombre.toLowerCase().includes("prueba de permanencia")) &&
-              doc.estado === "warn"
-            )
-          ? "warn"
-          : "missing",
-      identityStatus:
-        docsToSave.some((doc) =>
-          (normalizeDocType(doc.expectedType) === "passport" ||
-            normalizeDocType(doc.expectedType) === "nie" ||
-            normalizeDocType(doc.expectedType) === "tie" ||
-            doc.nombre.toLowerCase().includes("pasaporte") ||
-            doc.nombre.toLowerCase().includes("passport") ||
-            doc.nombre.toLowerCase().includes("nie")) &&
-          doc.estado === "ok"
-        )
-          ? "ok"
-          : docsToSave.some((doc) =>
-              (normalizeDocType(doc.expectedType) === "passport" ||
-                normalizeDocType(doc.expectedType) === "nie" ||
-                normalizeDocType(doc.expectedType) === "tie" ||
-                doc.nombre.toLowerCase().includes("pasaporte") ||
-                doc.nombre.toLowerCase().includes("passport") ||
-                doc.nombre.toLowerCase().includes("nie")) &&
-              doc.estado === "warn"
-            )
-          ? "warn"
-          : "missing",
-    },
-    updated_at: new Date().toISOString(),
-  };
-
-  const sourceDocumentIds = docsToSave
-    .filter((doc) => doc.storagePath || doc.publicUrl)
-    .map((doc) => ({
-      id: doc.id,
-      nombre: doc.nombre,
-      file_path: doc.storagePath || "",
-      public_url: doc.publicUrl || "",
-    }));
-
-  const { data: existingForm } = await supabase
-    .from("user_forms")
-    .select("id")
-    .eq("user_id", user.id)
-    .eq("form_type", "regularizacion_2026")
-    .limit(1)
-    .maybeSingle<UserFormRow>();
-
-  const rowData = {
-    user_id: user.id,
-    case_id: null,
-    form_type: "regularizacion_2026",
-    title: "Formulario Mohamed Regularización 2026",
-    form_data: payload,
-    pdf_bucket: "user-files",
-    pdf_path: null,
-    status: "draft",
-    extracted_profile_data: extractedProfileData,
-    auto_fill_status: "pending",
-    auto_fill_notes: "Formulario Mohamed guardado desde regularización 2026",
-    source_document_ids: sourceDocumentIds,
-  };
-
-  if (existingForm?.id) {
-    const { error: updateError } = await supabase
-      .from("user_forms")
-      .update(rowData)
-      .eq("id", existingForm.id);
-
-    if (updateError) {
-      throw new Error(updateError.message);
+    if (authError || !user?.id) {
+      throw new Error("No hay usuario conectado en Supabase");
     }
-  } else {
-    const { error: insertError } = await supabase
+
+    const docsToSave = nextDocs || docs;
+
+    const extractedProfileData = {
+      full_name: leadForm.nombre || "",
+      phone: leadForm.telefono || "",
+      nie: leadForm.niePasaporte || "",
+      city: leadForm.ciudad || "",
+      nationality: leadForm.nacionalidad || "",
+      arrival_date: leadForm.fechaLlegada || "",
+      has_5_months: leadForm.cumple5Meses || "",
+      asylum: leadForm.asilo || "",
+      criminal_record: leadForm.penales || "",
+    };
+
+    const payload = {
+      applicant: {
+        nombre: leadForm.nombre || "",
+        telefono: leadForm.telefono || "",
+        nie_pasaporte: leadForm.niePasaporte || "",
+        ciudad: leadForm.ciudad || "",
+        nacionalidad: leadForm.nacionalidad || "",
+        fecha_llegada: leadForm.fechaLlegada || "",
+        cumple_5_meses: leadForm.cumple5Meses || "",
+        asilo: leadForm.asilo || "",
+        penales: leadForm.penales || "",
+      },
+      procedure: {
+        key: selectedSituacion,
+        name: currentProcedure.name,
+      },
+      documents: docsToSave,
+      progress: {
+        formCompletedStatus:
+          leadSaved || leadFormReady ? "ok" : "missing",
+        stayProofStatus:
+          docsToSave.some((doc) =>
+            (normalizeDocType(doc.expectedType) === "empadronamiento" ||
+              normalizeDocType(doc.expectedType) === "stay_proof" ||
+              doc.nombre.toLowerCase().includes("empadronamiento") ||
+              doc.nombre.toLowerCase().includes("padron") ||
+              doc.nombre.toLowerCase().includes("padrón")) &&
+            doc.estado === "ok"
+          )
+            ? "ok"
+            : "missing",
+        identityStatus:
+          docsToSave.some((doc) =>
+            (normalizeDocType(doc.expectedType) === "passport" ||
+              normalizeDocType(doc.expectedType) === "nie" ||
+              normalizeDocType(doc.expectedType) === "tie" ||
+              doc.nombre.toLowerCase().includes("pasaporte") ||
+              doc.nombre.toLowerCase().includes("nie")) &&
+            doc.estado === "ok"
+          )
+            ? "ok"
+            : "missing",
+      },
+      updated_at: new Date().toISOString(),
+    };
+
+    const sourceDocumentIds = docsToSave
+      .filter((doc) => doc.storagePath)
+      .map((doc) => ({
+        id: doc.id,
+        nombre: doc.nombre,
+        file_path: doc.storagePath || "",
+      }));
+
+    const { data: existingForm } = await supabase
       .from("user_forms")
-      .insert(rowData);
+      .select("id")
+      .eq("user_id", user.id)
+      .eq("form_type", "regularizacion_2026")
+      .limit(1)
+      .maybeSingle<UserFormRow>();
 
-    if (insertError) {
-      throw new Error(insertError.message);
+    const rowData = {
+      user_id: user.id,
+      case_id: null,
+      form_type: "regularizacion_2026",
+      title: "Formulario Mohamed Regularización 2026",
+      form_data: payload,
+      pdf_bucket: "user-files",
+      pdf_path: null,
+      status: "draft",
+      extracted_profile_data: extractedProfileData,
+      auto_fill_status: "pending",
+      auto_fill_notes: "Formulario Mohamed guardado desde regularización 2026",
+      source_document_ids: sourceDocumentIds,
+    };
+
+    if (existingForm?.id) {
+      const { error: updateError } = await supabase
+        .from("user_forms")
+        .update(rowData)
+        .eq("id", existingForm.id);
+
+      if (updateError) {
+        throw new Error(updateError.message);
+      }
+    } else {
+      const { error: insertError } = await supabase
+        .from("user_forms")
+        .insert(rowData);
+
+      if (insertError) {
+        throw new Error(insertError.message);
+      }
     }
-  }
 
-  return user.id;
-};
+    return user.id;
+  };
 
   const askMohamedToSpeak = (instruction: string) => {
     try {
@@ -799,12 +863,7 @@ export default function Regularizacion2026() {
           item: {
             type: "message",
             role: "user",
-            content: [
-              {
-                type: "input_text",
-                text: instruction,
-              },
-            ],
+            content: [{ type: "input_text", text: instruction }],
           },
         })
       );
@@ -898,7 +957,6 @@ export default function Regularizacion2026() {
       }
 
       const ephemeralKey = sessionData?.value || "";
-
       if (!ephemeralKey) {
         throw new Error("No llegó value desde realtime-session");
       }
@@ -1069,7 +1127,6 @@ export default function Regularizacion2026() {
       setLeadSaved(true);
 
       const savedMessage = voiceTexts.savedLeadReply;
-
       const alreadyExists = voiceHistory.some(
         (msg) => msg.from === "agent" && msg.text === savedMessage
       );
@@ -1323,6 +1380,9 @@ export default function Regularizacion2026() {
         if (!files.length) return;
 
         setGeneralUploading(true);
+        setWaitingMohamed(true);
+        setWaitingForDocument(false);
+        assistantTextBufferRef.current = "";
 
         try {
           const {
@@ -1351,10 +1411,6 @@ export default function Regularizacion2026() {
                 throw new Error(uploadError.message);
               }
 
-              const {
-                data: { publicUrl },
-              } = supabase.storage.from("user-documents").getPublicUrl(storagePath);
-
               const result = await verifyDocument({
                 file,
                 expectedDocumentType: "auto",
@@ -1372,7 +1428,7 @@ export default function Regularizacion2026() {
 
                 if (realtimeDcRef.current && realtimeDcRef.current.readyState === "open") {
                   askMohamedToSpeak(
-                    `توصلنا بوثيقة جديدة سميتها ${file.name} ولكن مازال ما تربطاتش مزيان مع الملف. قول للعميل شنو خاصو يصيفط بشكل واضح.`
+                    `العميل صيفط دابا وثيقة سميتها ${file.name} ولكن مازال ما تربطاتش مزيان مع الملف. قل له شنو خاصو يصيفط بشكل واضح.`
                   );
                 }
 
@@ -1402,73 +1458,70 @@ export default function Regularizacion2026() {
                       note: result.summary || "",
                       uploadedAt: new Date().toISOString(),
                       storagePath,
-                      publicUrl,
                     }
                   : doc
               );
 
               setDocs(updatedDocs);
-              
 
-              const dbVerificationStatus =
+              const verificationStatus =
                 nextStatus === "ok"
                   ? "verified"
-                  : nextStatus === "warn"
-                  ? "review"
-                  : "missing";
+                  : result.status === "invalid"
+                  ? "rejected"
+                  : "needs_review";
 
-       const verificationStatus =
-  nextStatus === "ok"
-    ? "verified"
-    : result.status === "invalid"
-    ? "rejected"
-    : "needs_review";
+              const verificationNotes =
+                result.summary ||
+                (verificationStatus === "verified"
+                  ? "Documento verificado automáticamente"
+                  : verificationStatus === "rejected"
+                  ? "Documento rechazado por validación automática"
+                  : "Documento recibido. Pendiente de revisión");
 
-const verificationNotes =
-  result.summary ||
-  (verificationStatus === "verified"
-    ? "Documento verificado automáticamente"
-    : verificationStatus === "rejected"
-    ? "Documento rechazado por validación automática"
-    : "Documento recibido. Pendiente de revisión");
-
-const { error: insertDocumentError } = await supabase
-  .from("user_documents")
-  .insert({
-    user_id: user.id,
-    case_id: null,
-    document_type: result.document_type || matchedDoc.expectedType || "general",
-    title: matchedDoc.nombre || file.name,
-    description: null,
-    storage_bucket: "user-documents",
-    file_path: storagePath,
-    original_name: file.name,
-    mime_type: file.type || "application/octet-stream",
-    file_size: file.size,
-    verification_status: verificationStatus,
-    verification_notes: verificationNotes,
-    extracted_data: {
-      summary: result.summary || "",
-      visible_fields: result.visible_fields || [],
-      warnings: result.warnings || [],
-      missing_or_unclear_fields: result.missing_or_unclear_fields || [],
-      usable_for_regularizacion_2026:
-        result.usable_for_regularizacion_2026 ?? null,
-      stay_proof_reason: result.stay_proof_reason || "",
-      recommended_bucket: result.recommended_bucket || "",
-      path: storagePath,
-      public_url: publicUrl,
-    },
-    expires_at: null,
-    is_required: true,
-    reviewed_at: verificationStatus === "verified" ? new Date().toISOString() : null,
-    updated_at: new Date().toISOString(),
-  });
+              const { error: insertDocumentError } = await supabase
+                .from("user_documents")
+                .insert({
+                  user_id: user.id,
+                  case_id: null,
+                  document_type:
+                    result.document_type || matchedDoc.expectedType || "general",
+                  title: matchedDoc.nombre || file.name,
+                  description: null,
+                  storage_bucket: "user-documents",
+                  file_path: storagePath,
+                  original_name: file.name,
+                  mime_type: file.type || "application/octet-stream",
+                  file_size: file.size,
+                  verification_status: verificationStatus,
+                  verification_notes: verificationNotes,
+                  extracted_data: {
+                    summary: result.summary || "",
+                    visible_fields: result.visible_fields || [],
+                    warnings: result.warnings || [],
+                    missing_or_unclear_fields: result.missing_or_unclear_fields || [],
+                    usable_for_regularizacion_2026:
+                      result.usable_for_regularizacion_2026 ?? null,
+                    stay_proof_reason: result.stay_proof_reason || "",
+                    recommended_bucket: result.recommended_bucket || "",
+                    path: storagePath,
+                  },
+                  expires_at: null,
+                  is_required: true,
+                  reviewed_at:
+                    verificationStatus === "verified"
+                      ? new Date().toISOString()
+                      : null,
+                  updated_at: new Date().toISOString(),
+                });
 
               if (insertDocumentError) {
                 console.error("Error guardando user_document:", insertDocumentError);
               }
-await saveFullStateToSupabase(updatedDocs);
+
+              await saveFullStateToSupabase(updatedDocs);
+              await loadDocsFromSupabase();
+
               const matchedName = matchedDoc.nombre.toLowerCase();
 
               let localReply = "مزيان. توصلت بالوثيقة وربطتها مع الملف ديالك.";
@@ -1495,13 +1548,18 @@ await saveFullStateToSupabase(updatedDocs);
               if (realtimeDcRef.current && realtimeDcRef.current.readyState === "open") {
                 askMohamedToSpeak(
                   [
-                    `توصلنا بوثيقة جديدة من العميل.`,
-                    `اسم الوثيقة: ${file.name}.`,
-                    `ترابطات مع هاد الخانة: ${matchedDoc.nombre}.`,
+                    `العميل صيفط دابا الوثيقة المطلوبة.`,
+                    `الوثيقة هي: ${matchedDoc.nombre}.`,
                     `النوع المتشاف: ${result.document_type || "غير واضح"}.`,
-                    `الحالة: ${nextStatus === "ok" ? "مقبولة مزيان" : "خاصها مراجعة"}.`,
-                    `الخلاصة: ${result.summary || "ما كايناش خلاصة مفصلة"}.`,
-                    `قول للعميل الآن باختصار شنو وقع وشنو الخطوة الجاية.`,
+                    `الخلاصة: ${result.summary || "تمت المراجعة"}.`,
+                    `الحالة: ${
+                      nextStatus === "ok"
+                        ? "مزيانة ومقبولة"
+                        : "خاصها مراجعة أو نسخة أوضح"
+                    }.`,
+                    "جاوب الآن فقط على هاد الوثيقة بشكل بشري ومختصر.",
+                    "قول واش فيها الاسم والتفاصيل باينين ولا لا.",
+                    "ومن بعد اطلب الوثيقة الجاية فقط.",
                   ].join(" ")
                 );
               }
@@ -1530,6 +1588,7 @@ await saveFullStateToSupabase(updatedDocs);
           }
         } finally {
           setGeneralUploading(false);
+          setWaitingMohamed(false);
         }
       };
 
@@ -1713,6 +1772,12 @@ await saveFullStateToSupabase(updatedDocs);
                 {waitingMohamed && (
                   <div className="rounded-xl bg-white/5 border border-white/10 px-3 py-3 text-sm text-white/70">
                     ...
+                  </div>
+                )}
+
+                {waitingForDocument && !generalUploading && (
+                  <div className="rounded-xl bg-amber-500/10 border border-amber-400/20 px-3 py-3 text-sm text-amber-200">
+                    Mohamed está esperando el documento que te pidió.
                   </div>
                 )}
               </div>
@@ -1923,6 +1988,7 @@ await saveFullStateToSupabase(updatedDocs);
             )}
           </div>
         </div>
+
         <audio ref={remoteAudioRef} autoPlay playsInline className="hidden" />
       </main>
     </div>
