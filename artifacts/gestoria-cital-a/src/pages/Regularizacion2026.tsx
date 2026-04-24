@@ -117,6 +117,7 @@ export default function Regularizacion2026() {
   const [authChecked, setAuthChecked] = useState(false);
   const [currentUserId, setCurrentUserId] = useState("");
   const [formConfirmed, setFormConfirmed] = useState(false);
+  const [pendingAutomationPrompt, setPendingAutomationPrompt] = useState("");
 
   const [leadForm, setLeadForm] = useState<LeadFormState>({
     nombre: "",
@@ -142,6 +143,7 @@ export default function Regularizacion2026() {
   const lastAssistantTextRef = useRef("");
   const dcOpenedRef = useRef(false);
   const introAlreadySentRef = useRef(false);
+  const pendingAutomationPromptRef = useRef("");
 
   const safeLang = (lang === "darija" || lang === "en" ? lang : "es") as
     | "darija"
@@ -158,7 +160,7 @@ export default function Regularizacion2026() {
       voiceBlocked:
         "عافاك عمر ليا الفورمولار الأول ومن بعد ضغط على الميكروفون باش نكمل معاك.",
       savedLeadReply:
-        "مزيان. توصلت بالمعطيات ديالك. دابا غادي نكمل معاك خطوة بخطوة. جاوبني غير بنعم أو لا، أو بأي جواب قصير.",
+        "مزيان. المعطيات ديالك تحفظات فالنظام. دابا نكمل معاك ونسولك على الوثائق خطوة بخطوة.",
       passportVerified:
         "مزيان. راجعت وثيقة الهوية ديالك. الاسم والبيانات باينين مزيان. دابا نكملو للخطوة اللي من بعدها.",
       stayProofVerified:
@@ -226,62 +228,6 @@ export default function Regularizacion2026() {
           yes: "نعم",
           no: "لا",
           dontKnow: "ما عرفت",
-        },
-      };
-    }
-
-    if (safeLang === "en") {
-      return {
-        online: "Online",
-        role: "Immigration Specialist",
-        voiceButton: "Talk to Mohamed",
-        stopButton: "Stop microphone",
-        saveLeadButton: savingForm ? "Saving..." : "Save details and continue with Mohamed",
-        saveLeadTitle: "Details saved",
-        saveLeadDesc: "Mohamed can now start with you by voice.",
-        formTitle: "Integrated official panel",
-        formDesc:
-          "Fill in the basic details so Mohamed can start reviewing your case by voice.",
-        uploadGeneral: generalUploading ? "Uploading..." : "Upload documents",
-        uploadGeneralDesc:
-          "Use this button to upload all documents Mohamed asks for, as images or PDFs.",
-        uploading: "Uploading...",
-        uploadSuccessTitle: "Document received",
-        uploadSuccessDesc: "The document was reviewed and linked to the file.",
-        uploadErrorTitle: "Document error",
-        uploadErrorDesc: "We could not link that document to the file.",
-        missingTitle: "Missing data",
-        missingDesc: "Fill in name, phone and city before continuing.",
-        listening: "Mohamed is listening now...",
-        latestReply: "Mohamed's latest reply",
-        yourVoice: "Your latest voice answer",
-        micNotSupported:
-          "This browser does not support realtime voice. Use modern Chrome.",
-        docStatusTitle: "Your file status",
-        docStatusDone: "Ready",
-        docStatusReview: "Review",
-        docStatusMissing: "Missing",
-        docStepForm: "Form completed",
-        docStepStayProof: "5-month proof",
-        docStepIdentity: "Passport or NIE",
-        docStepFinal: "Final file ready",
-        goSara: "Go to Sara",
-        goSaraDesc:
-          "If you want to continue with the appointment, Sara will help you.",
-        labels: {
-          nombre: "Full name",
-          telefono: "Phone",
-          niePasaporte: "NIE / Passport",
-          ciudad: "City",
-          nacionalidad: "Nationality",
-          fechaLlegada: "Arrival date in Spain",
-          cumple5Meses: "Do you have 5 continuous months?",
-          asilo: "Do you have an asylum application?",
-          penales: "Criminal record",
-          select: "Select",
-          yes: "Yes",
-          no: "No",
-          dontKnow: "I don't know",
         },
       };
     }
@@ -386,7 +332,6 @@ export default function Regularizacion2026() {
         } = await supabase.auth.getSession();
 
         if (!active) return;
-
         setCurrentUserId(session?.user?.id || "");
         setAuthChecked(true);
       } catch (error) {
@@ -487,10 +432,7 @@ export default function Regularizacion2026() {
             (m) => m.from === "agent" && m.text === voiceTexts.mohamedFinal
           );
           const leadAlreadySaved = parsed.some(
-            (m) =>
-              m.from === "agent" &&
-              (m.text === voiceTexts.savedLeadReply ||
-                m.text.includes("المعطيات ديالك تحفظات"))
+            (m) => m.from === "agent" && m.text.includes("المعطيات ديالك تحفظات")
           );
 
           setCompletionMessageSent(completionAlreadySent);
@@ -517,12 +459,7 @@ export default function Regularizacion2026() {
         },
       ]);
     }
-  }, [
-    historyStorageKey,
-    voiceTexts.initialVoice,
-    voiceTexts.mohamedFinal,
-    voiceTexts.savedLeadReply,
-  ]);
+  }, [historyStorageKey, voiceTexts.initialVoice, voiceTexts.mohamedFinal]);
 
   useEffect(() => {
     if (voiceHistory.length === 0) return;
@@ -566,7 +503,6 @@ export default function Regularizacion2026() {
       name.includes("padron") ||
       name.includes("padrón") ||
       name.includes("prueba de permanencia") ||
-      name.includes("prueba permanencia") ||
       note.includes("empadronamiento") ||
       note.includes("stay proof") ||
       note.includes("prueba de permanencia")
@@ -621,133 +557,13 @@ export default function Regularizacion2026() {
 
   const pushAgentMessage = (text: string) => {
     if (!text?.trim()) return;
-
-    setVoiceHistory((prev) => [
-      ...prev,
-      { from: "agent", text, ts: Date.now() },
-    ]);
-
+    setVoiceHistory((prev) => [...prev, { from: "agent", text, ts: Date.now() }]);
     lastAssistantTextRef.current = text;
   };
 
   const pushUserMessage = (text: string) => {
     if (!text?.trim()) return;
-
-    setVoiceHistory((prev) => [
-      ...prev,
-      { from: "user", text, ts: Date.now() },
-    ]);
-  };
-
-  const loadDocsFromSupabase = async () => {
-    try {
-      const {
-        data: { user },
-        error: authError,
-      } = await supabase.auth.getUser();
-
-      if (authError || !user?.id) return;
-
-      const { data, error } = await supabase
-        .from("user_documents")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false });
-
-      if (error || !data) {
-        console.error("Error cargando user_documents:", error);
-        return;
-      }
-
-      const nextDocs = buildInitialDocs(selectedSituacion);
-
-      for (const row of data) {
-        const rowType = normalizeDocType(row.document_type || "");
-        const rowTitle = (row.title || "").toLowerCase();
-
-        const rowStatus: DocStatus =
-          row.verification_status === "verified"
-            ? "ok"
-            : row.verification_status === "needs_review" ||
-              row.verification_status === "pending"
-            ? "warn"
-            : "missing";
-
-        const matchedIndex = nextDocs.findIndex((doc) => {
-          const expected = normalizeDocType(doc.expectedType || "");
-          const name = doc.nombre.toLowerCase();
-
-          if (
-            (expected === "passport" || expected === "nie" || expected === "tie") &&
-            (rowType === "passport" ||
-              rowType === "nie" ||
-              rowType === "tie" ||
-              rowTitle.includes("pasaporte") ||
-              rowTitle.includes("passport") ||
-              rowTitle.includes("nie"))
-          ) {
-            return true;
-          }
-
-          if (
-            (expected === "empadronamiento" || expected === "stay_proof") &&
-            (rowType === "empadronamiento" ||
-              rowType === "stay_proof" ||
-              rowTitle.includes("empadronamiento") ||
-              rowTitle.includes("padron") ||
-              rowTitle.includes("padrón") ||
-              rowTitle.includes("prueba"))
-          ) {
-            return true;
-          }
-
-          if (
-            (name.includes("pasaporte") || name.includes("nie")) &&
-            (rowTitle.includes("pasaporte") ||
-              rowTitle.includes("passport") ||
-              rowTitle.includes("nie"))
-          ) {
-            return true;
-          }
-
-          if (
-            (name.includes("empadronamiento") ||
-              name.includes("padron") ||
-              name.includes("padrón") ||
-              name.includes("prueba de permanencia")) &&
-            (rowTitle.includes("empadronamiento") ||
-              rowTitle.includes("padron") ||
-              rowTitle.includes("padrón") ||
-              rowType === "empadronamiento" ||
-              rowType === "stay_proof")
-          ) {
-            return true;
-          }
-
-          return false;
-        });
-
-        if (matchedIndex >= 0) {
-          nextDocs[matchedIndex] = {
-            ...nextDocs[matchedIndex],
-            archivo: row.original_name || row.title || "",
-            estado: rowStatus,
-            kb: row.file_size ? `${Math.round(row.file_size / 1024)} KB` : "",
-            detectedType: row.document_type || "",
-            note:
-              row.verification_notes ||
-              row.extracted_data?.summary ||
-              "",
-            uploadedAt: row.created_at || "",
-            storagePath: row.file_path || "",
-          };
-        }
-      }
-
-      setDocs(nextDocs);
-    } catch (error) {
-      console.error("Error cargando documentos verificados:", error);
-    }
+    setVoiceHistory((prev) => [...prev, { from: "user", text, ts: Date.now() }]);
   };
 
   const finalizeAssistantBuffer = () => {
@@ -756,8 +572,9 @@ export default function Regularizacion2026() {
 
     assistantTextBufferRef.current = "";
 
-    if (text === "..." || text === "…") return;
-    if (text === lastAssistantTextRef.current) return;
+    if (text === "..." || text === "…" || text === lastAssistantTextRef.current) {
+      return;
+    }
 
     pushAgentMessage(text);
 
@@ -790,18 +607,6 @@ export default function Regularizacion2026() {
 
     const docsToSave = nextDocs || docs;
 
-    const extractedProfileData = {
-      full_name: leadForm.nombre || "",
-      phone: leadForm.telefono || "",
-      nie: leadForm.niePasaporte || "",
-      city: leadForm.ciudad || "",
-      nationality: leadForm.nacionalidad || "",
-      arrival_date: leadForm.fechaLlegada || "",
-      has_5_months: leadForm.cumple5Meses || "",
-      asylum: leadForm.asilo || "",
-      criminal_record: leadForm.penales || "",
-    };
-
     const payload = {
       applicant: {
         nombre: leadForm.nombre || "",
@@ -822,38 +627,27 @@ export default function Regularizacion2026() {
       progress: {
         formCompletedStatus: leadSaved || formConfirmed || leadFormReady ? "ok" : "missing",
         stayProofStatus:
-          docsToSave.some((doc) =>
-            (normalizeDocType(doc.expectedType) === "empadronamiento" ||
-              normalizeDocType(doc.expectedType) === "stay_proof" ||
-              doc.nombre.toLowerCase().includes("empadronamiento") ||
-              doc.nombre.toLowerCase().includes("padron") ||
-              doc.nombre.toLowerCase().includes("padrón")) &&
-            doc.estado === "ok"
+          docsToSave.some(
+            (doc) =>
+              (normalizeDocType(doc.expectedType) === "empadronamiento" ||
+                normalizeDocType(doc.expectedType) === "stay_proof") &&
+              doc.estado === "ok"
           )
             ? "ok"
             : "missing",
         identityStatus:
-          docsToSave.some((doc) =>
-            (normalizeDocType(doc.expectedType) === "passport" ||
-              normalizeDocType(doc.expectedType) === "nie" ||
-              normalizeDocType(doc.expectedType) === "tie" ||
-              doc.nombre.toLowerCase().includes("pasaporte") ||
-              doc.nombre.toLowerCase().includes("nie")) &&
-            doc.estado === "ok"
+          docsToSave.some(
+            (doc) =>
+              (normalizeDocType(doc.expectedType) === "passport" ||
+                normalizeDocType(doc.expectedType) === "nie" ||
+                normalizeDocType(doc.expectedType) === "tie") &&
+              doc.estado === "ok"
           )
             ? "ok"
             : "missing",
       },
       updated_at: new Date().toISOString(),
     };
-
-    const sourceDocumentIds = docsToSave
-      .filter((doc) => doc.storagePath)
-      .map((doc) => ({
-        id: doc.id,
-        nombre: doc.nombre,
-        file_path: doc.storagePath || "",
-      }));
 
     const { data: existingForm } = await supabase
       .from("user_forms")
@@ -869,13 +663,7 @@ export default function Regularizacion2026() {
       form_type: "regularizacion_2026",
       title: "Formulario Mohamed Regularización 2026",
       form_data: payload,
-      pdf_bucket: "user-files",
-      pdf_path: null,
       status: "draft",
-      extracted_profile_data: extractedProfileData,
-      auto_fill_status: "pending",
-      auto_fill_notes: "Formulario Mohamed guardado desde regularización 2026",
-      source_document_ids: sourceDocumentIds,
       updated_at: new Date().toISOString(),
     };
 
@@ -885,17 +673,13 @@ export default function Regularizacion2026() {
         .update(rowData)
         .eq("id", existingForm.id);
 
-      if (updateError) {
-        throw new Error(updateError.message);
-      }
+      if (updateError) throw new Error(updateError.message);
     } else {
       const { error: insertError } = await supabase
         .from("user_forms")
         .insert(rowData);
 
-      if (insertError) {
-        throw new Error(insertError.message);
-      }
+      if (insertError) throw new Error(insertError.message);
     }
 
     return user.id;
@@ -935,12 +719,14 @@ export default function Regularizacion2026() {
     if (!realtimeDcRef.current) return;
     if (realtimeDcRef.current.readyState !== "open") return;
     if (introAlreadySentRef.current) return;
+    if (pendingAutomationPromptRef.current.trim()) return;
 
     introAlreadySentRef.current = true;
 
-    const intro = leadSaved || formConfirmed
-      ? "ابدأ أنت الكلام الآن مباشرة. لا تنتظر العميل. قل له الآن: مزيان. توصلت بالمعطيات ديالك. دابا غادي نكمل معاك خطوة بخطوة. ومن بعد اطرح عليه أول سؤال مهم في الملف. جاوب دائما بالدارجة المغربية وبالحروف العربية."
-      : "ابدأ أنت الكلام الآن مباشرة. لا تنتظر العميل. قل له الآن: السلام عليكم، أنا محمد. غادي نعاونك خطوة بخطوة باش نراجع الملف ديالك. عمر ليا الفورمولار الأول، ومن بعد نكمل معاك بالصوت. جاوب دائما بالدارجة المغربية وبالحروف العربية.";
+    const intro =
+      leadSaved || formConfirmed
+        ? "ابدأ أنت الكلام الآن مباشرة. لا تنتظر العميل. قل له الآن: مزيان. توصلت بالمعطيات ديالك. دابا غادي نكمل معاك خطوة بخطوة. ومن بعد اطرح عليه أول سؤال مهم في الملف. جاوب دائما بالدارجة المغربية وبالحروف العربية."
+        : "ابدأ أنت الكلام الآن مباشرة. لا تنتظر العميل. قل له الآن: السلام عليكم، أنا محمد. غادي نعاونك خطوة بخطوة باش نراجع الملف ديالك. عمر ليا الفورمولار الأول، ومن بعد نكمل معاك بالصوت. جاوب دائما بالدارجة المغربية وبالحروف العربية.";
 
     askMohamedToSpeak(intro);
   };
@@ -1053,6 +839,21 @@ export default function Regularizacion2026() {
         dcOpenedRef.current = true;
         setIsListening(true);
         setWaitingMohamed(true);
+
+        const queuedPrompt = pendingAutomationPromptRef.current.trim();
+
+        if (queuedPrompt) {
+          setTimeout(() => {
+            askMohamedToSpeak(queuedPrompt);
+            pendingAutomationPromptRef.current = "";
+            setPendingAutomationPrompt("");
+          }, 500);
+          return;
+        }
+
+        setTimeout(() => {
+          maybeSendIntroToMohamed();
+        }, 600);
       };
 
       dc.onmessage = (event) => {
@@ -1080,18 +881,11 @@ export default function Regularizacion2026() {
             }
           }
 
-          if (
-            msg.type === "response.output_text.delta" &&
-            typeof msg.delta === "string"
-          ) {
+          if (msg.type === "response.output_text.delta" && typeof msg.delta === "string") {
             assistantTextBufferRef.current += msg.delta;
           }
 
-          if (
-            msg.type === "response.output_text.done" &&
-            typeof msg.text === "string" &&
-            msg.text.trim()
-          ) {
+          if (msg.type === "response.output_text.done" && typeof msg.text === "string" && msg.text.trim()) {
             assistantTextBufferRef.current = msg.text.trim();
           }
 
@@ -1135,10 +929,6 @@ export default function Regularizacion2026() {
         type: "answer",
         sdp: answerSdp,
       });
-
-      setTimeout(() => {
-        maybeSendIntroToMohamed();
-      }, 600);
     } catch (error: any) {
       console.error("Error iniciando realtime Mohamed:", error);
       stopListening();
@@ -1148,6 +938,26 @@ export default function Regularizacion2026() {
         description: error?.message || voiceTexts.realtimeError,
         variant: "destructive",
       });
+    }
+  };
+
+  const speakFromAutomation = async (instruction: string) => {
+    if (!instruction.trim()) return;
+
+    pendingAutomationPromptRef.current = instruction;
+    setPendingAutomationPrompt(instruction);
+
+    if (realtimeDcRef.current && realtimeDcRef.current.readyState === "open") {
+      askMohamedToSpeak(instruction);
+      pendingAutomationPromptRef.current = "";
+      setPendingAutomationPrompt("");
+      return;
+    }
+
+    try {
+      await startListening();
+    } catch (error) {
+      console.error("Error iniciando realtime desde automatización:", error);
     }
   };
 
@@ -1184,80 +994,14 @@ export default function Regularizacion2026() {
         variant: "destructive",
       });
 
-      pushAgentMessage(
-        "عافاك دخل بحسابك أولاً، ومن بعد عاود دير تأكيد باش نكملو."
-      );
-
+      pushAgentMessage("عافاك دخل بحسابك أولاً، ومن بعد عاود دير تأكيد باش نكملو.");
       return;
     }
 
     try {
       setSavingForm(true);
 
-      const payload = {
-        applicant: {
-          nombre: leadForm.nombre || "",
-          telefono: leadForm.telefono || "",
-          nie_pasaporte: leadForm.niePasaporte || "",
-          ciudad: leadForm.ciudad || "",
-          nacionalidad: leadForm.nacionalidad || "",
-          fecha_llegada: leadForm.fechaLlegada || "",
-          cumple_5_meses: leadForm.cumple5Meses || "",
-          asilo: leadForm.asilo || "",
-          penales: leadForm.penales || "",
-        },
-        procedure: {
-          key: selectedSituacion,
-          name: currentProcedure.name,
-        },
-        progress: {
-          formCompletedStatus: "ok",
-          stayProofStatus: "missing",
-          identityStatus: "missing",
-        },
-        updated_at: new Date().toISOString(),
-      };
-
-      const { data: existingForm, error: searchError } = await supabase
-        .from("user_forms")
-        .select("id")
-        .eq("user_id", currentUserId)
-        .eq("form_type", "regularizacion_2026")
-        .limit(1)
-        .maybeSingle();
-
-      if (searchError) {
-        throw new Error(searchError.message);
-      }
-
-      if (existingForm?.id) {
-        const { error: updateError } = await supabase
-          .from("user_forms")
-          .update({
-            title: "Formulario Mohamed Regularización 2026",
-            form_data: payload,
-            status: "draft",
-            updated_at: new Date().toISOString(),
-          })
-          .eq("id", existingForm.id);
-
-        if (updateError) {
-          throw new Error(updateError.message);
-        }
-      } else {
-        const { error: insertError } = await supabase.from("user_forms").insert({
-          user_id: currentUserId,
-          case_id: null,
-          form_type: "regularizacion_2026",
-          title: "Formulario Mohamed Regularización 2026",
-          form_data: payload,
-          status: "draft",
-        });
-
-        if (insertError) {
-          throw new Error(insertError.message);
-        }
-      }
+      await saveFullStateToSupabase();
 
       setLeadSaved(true);
       setFormConfirmed(true);
@@ -1278,11 +1022,9 @@ export default function Regularizacion2026() {
         description: "Se han guardado los datos correctamente.",
       });
 
-      if (realtimeDcRef.current && realtimeDcRef.current.readyState === "open") {
-        askMohamedToSpeak(
-          "العميل أكد المعطيات ديالو وتحفظات فالنظام بنجاح. قول ليه باختصار: مزيان، المعطيات ديالك تحفظات، ودابا غادي نكملو فالأسئلة ديال الملف. ومن بعد بدا بأول سؤال مهم."
-        );
-      }
+      await speakFromAutomation(
+        "العميل أكد المعطيات ديالو وتحفظات فالنظام بنجاح. قول ليه باختصار: مزيان، المعطيات ديالك تحفظات فالنظام، ودابا غادي نكملو فالأسئلة ديال الملف. ومن بعد بدا بأول سؤال مهم."
+      );
     } catch (error: any) {
       console.error("Error guardando formulario Mohamed:", error);
 
@@ -1292,9 +1034,7 @@ export default function Regularizacion2026() {
         variant: "destructive",
       });
 
-      pushAgentMessage(
-        "وقع مشكل فحفظ المعطيات. عافاك عاود دير تأكيد مرة أخرى."
-      );
+      pushAgentMessage("وقع مشكل فحفظ المعطيات. عافاك عاود دير تأكيد مرة أخرى.");
     } finally {
       setSavingForm(false);
     }
@@ -1366,11 +1106,7 @@ export default function Regularizacion2026() {
       ) ||
       null;
 
-    if (
-      detectedType === "passport" ||
-      detectedType === "nie" ||
-      detectedType === "tie"
-    ) {
+    if (detectedType === "passport" || detectedType === "nie" || detectedType === "tie") {
       const identityDoc = findIdentityDoc();
       if (identityDoc) return identityDoc;
     }
@@ -1438,16 +1174,12 @@ export default function Regularizacion2026() {
       }
     }
 
-    const firstMissing = currentDocs.find((doc) => doc.estado === "missing");
-    if (firstMissing) return firstMissing;
-
-    const firstWarn = currentDocs.find((doc) => doc.estado === "warn");
-    if (firstWarn) return firstWarn;
-
-    return null;
+    return currentDocs.find((doc) => doc.estado === "missing") ||
+      currentDocs.find((doc) => doc.estado === "warn") ||
+      null;
   };
 
-  const maybeSendCompletionMessage = (nextDocs: StoredDocItem[]) => {
+  const maybeSendCompletionMessage = async (nextDocs: StoredDocItem[]) => {
     const nextIdentityOk = nextDocs.some((doc) => {
       const expected = normalizeDocType(doc.expectedType);
       const detected = normalizeDocType(doc.detectedType);
@@ -1491,11 +1223,9 @@ export default function Regularizacion2026() {
       pushAgentMessage(voiceTexts.mohamedFinal);
       setCompletionMessageSent(true);
 
-      if (realtimeDcRef.current && realtimeDcRef.current.readyState === "open") {
-        askMohamedToSpeak(
-          "قل الآن للعميل باختصار: مزيان. كلشي واجد ومراجع. دابا غادي نجهزو ليك الملف النهائي باش يتبعث ليك فـ واتساب."
-        );
-      }
+      await speakFromAutomation(
+        "قل الآن للعميل باختصار: مزيان. كلشي واجد ومراجع. دابا غادي نجهزو ليك الملف النهائي باش يتبعث ليك فـ واتساب."
+      );
     }
   };
 
@@ -1548,9 +1278,7 @@ export default function Regularizacion2026() {
 
               const { error: uploadError } = await supabase.storage
                 .from("user-documents")
-                .upload(storagePath, file, {
-                  upsert: true,
-                });
+                .upload(storagePath, file, { upsert: true });
 
               if (uploadError) {
                 throw new Error(uploadError.message);
@@ -1571,11 +1299,9 @@ export default function Regularizacion2026() {
               if (!matchedDoc) {
                 pushAgentMessage(voiceTexts.uploadUnknown);
 
-                if (realtimeDcRef.current && realtimeDcRef.current.readyState === "open") {
-                  askMohamedToSpeak(
-                    `العميل صيفط دابا وثيقة سميتها ${file.name} ولكن مازال ما تربطاتش مزيان مع الملف. قل له شنو خاصو يصيفط بشكل واضح.`
-                  );
-                }
+                await speakFromAutomation(
+                  `العميل صيفط دابا وثيقة سميتها ${file.name} ولكن مازال ما تربطاتش مزيان مع الملف. قل له شنو خاصو يصيفط بشكل واضح.`
+                );
 
                 toast({
                   title: ui.uploadErrorTitle,
@@ -1644,7 +1370,8 @@ export default function Regularizacion2026() {
                     summary: result.summary || "",
                     visible_fields: result.visible_fields || [],
                     warnings: result.warnings || [],
-                    missing_or_unclear_fields: result.missing_or_unclear_fields || [],
+                    missing_or_unclear_fields:
+                      result.missing_or_unclear_fields || [],
                     usable_for_regularizacion_2026:
                       result.usable_for_regularizacion_2026 ?? null,
                     stay_proof_reason: result.stay_proof_reason || "",
@@ -1665,7 +1392,6 @@ export default function Regularizacion2026() {
               }
 
               await saveFullStateToSupabase(updatedDocs);
-              await loadDocsFromSupabase();
 
               const matchedName = matchedDoc.nombre.toLowerCase();
 
@@ -1690,31 +1416,29 @@ export default function Regularizacion2026() {
 
               pushAgentMessage(localReply);
 
-              if (realtimeDcRef.current && realtimeDcRef.current.readyState === "open") {
-                askMohamedToSpeak(
-                  [
-                    `العميل صيفط دابا الوثيقة المطلوبة.`,
-                    `الوثيقة هي: ${matchedDoc.nombre}.`,
-                    `النوع المتشاف: ${result.document_type || "غير واضح"}.`,
-                    `الخلاصة: ${result.summary || "تمت المراجعة"}.`,
-                    `الحالة: ${
-                      nextStatus === "ok"
-                        ? "مزيانة ومقبولة"
-                        : "خاصها مراجعة أو نسخة أوضح"
-                    }.`,
-                    "جاوب الآن فقط على هاد الوثيقة بشكل بشري ومختصر.",
-                    "قول واش فيها الاسم والتفاصيل باينين ولا لا.",
-                    "ومن بعد اطلب الوثيقة الجاية فقط.",
-                  ].join(" ")
-                );
-              }
+              await speakFromAutomation(
+                [
+                  `العميل صيفط دابا الوثيقة المطلوبة.`,
+                  `الوثيقة هي: ${matchedDoc.nombre}.`,
+                  `النوع المتشاف: ${result.document_type || "غير واضح"}.`,
+                  `الخلاصة: ${result.summary || "تمت المراجعة"}.`,
+                  `الحالة: ${
+                    nextStatus === "ok"
+                      ? "مزيانة ومقبولة"
+                      : "خاصها مراجعة أو نسخة أوضح"
+                  }.`,
+                  "جاوب دابا مباشرة على هاد الوثيقة بشكل واضح ومختصر.",
+                  "قول واش باين فيها الاسم أو الرقم أو التاريخ إلى كانوا ظاهرين.",
+                  "ومن بعد اطلب الوثيقة الجاية فقط.",
+                ].join(" ")
+              );
 
               toast({
                 title: ui.uploadSuccessTitle,
                 description: result.summary || ui.uploadSuccessDesc,
               });
 
-              maybeSendCompletionMessage(updatedDocs);
+              await maybeSendCompletionMessage(updatedDocs);
             } catch (err: any) {
               console.error(err);
 
@@ -1724,11 +1448,9 @@ export default function Regularizacion2026() {
                 variant: "destructive",
               });
 
-              if (realtimeDcRef.current && realtimeDcRef.current.readyState === "open") {
-                askMohamedToSpeak(
-                  `وقع مشكل فقراءة أو حفظ الوثيقة ${file.name}. قول للعميل يعاود يصيفطها بشكل أوضح أو بصيغة أخرى.`
-                );
-              }
+              await speakFromAutomation(
+                `وقع مشكل فقراءة أو حفظ الوثيقة ${file.name}. قول للعميل يعاود يصيفطها بشكل أوضح أو بصيغة أخرى.`
+              );
             }
           }
         } finally {
@@ -1925,6 +1647,12 @@ export default function Regularizacion2026() {
                     Mohamed está esperando el documento que te pidió.
                   </div>
                 )}
+
+                {!!pendingAutomationPrompt && (
+                  <div className="rounded-xl bg-blue-500/10 border border-blue-400/20 px-3 py-3 text-xs text-blue-200">
+                    Automatización activa...
+                  </div>
+                )}
               </div>
 
               <div className="border-t border-white/10 p-3">
@@ -1991,9 +1719,7 @@ export default function Regularizacion2026() {
                     <div
                       className="h-full bg-[#003b82] rounded-full transition-all"
                       style={{
-                        width: `${
-                          progressTotal > 0 ? (progressOk / progressTotal) * 100 : 0
-                        }%`,
+                        width: `${progressTotal > 0 ? (progressOk / progressTotal) * 100 : 0}%`,
                       }}
                     />
                   </div>
