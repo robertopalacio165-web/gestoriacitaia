@@ -130,15 +130,16 @@ export default function Regularizacion2026() {
   const { t, lang } = useLang();
   const { toast } = useToast();
 
-  const remoteAudioRef = useRef<HTMLAudioElement | null>(null);
-  const realtimePcRef = useRef<RTCPeerConnection | null>(null);
-  const realtimeDcRef = useRef<RTCDataChannel | null>(null);
-  const realtimeLocalStreamRef = useRef<MediaStream | null>(null);
-  const assistantTextBufferRef = useRef("");
-  const lastUserTranscriptRef = useRef("");
-  const lastAssistantTextRef = useRef("");
-  const dcOpenedRef = useRef(false);
-  const introAlreadySentRef = useRef(false);
+ const remoteAudioRef = useRef<HTMLAudioElement | null>(null);
+const realtimePcRef = useRef<RTCPeerConnection | null>(null);
+const realtimeDcRef = useRef<RTCDataChannel | null>(null);
+const realtimeLocalStreamRef = useRef<MediaStream | null>(null);
+const assistantTextBufferRef = useRef("");
+const lastUserTranscriptRef = useRef("");
+const lastAssistantTextRef = useRef("");
+const dcOpenedRef = useRef(false);
+const introAlreadySentRef = useRef(false);
+const formJustSavedRef = useRef(false);
 
   const safeLang = (lang === "darija" || lang === "en" ? lang : "es") as
     | "darija"
@@ -881,20 +882,24 @@ export default function Regularizacion2026() {
     }
   };
 
-  const maybeSendIntroToMohamed = () => {
-    if (!dcOpenedRef.current) return;
-    if (!realtimeDcRef.current) return;
-    if (realtimeDcRef.current.readyState !== "open") return;
-    if (introAlreadySentRef.current) return;
+const maybeSendIntroToMohamed = () => {
+  if (!dcOpenedRef.current) return;
+  if (!realtimeDcRef.current) return;
+  if (realtimeDcRef.current.readyState !== "open") return;
+  if (introAlreadySentRef.current) return;
 
-    introAlreadySentRef.current = true;
+  introAlreadySentRef.current = true;
 
-    const intro = leadSaved
-      ? "ابدأ أنت الكلام الآن مباشرة. لا تنتظر العميل. قل له الآن: مزيان. توصلت بالمعطيات ديالك. دابا غادي نكمل معاك خطوة بخطوة. ومن بعد اطرح عليه أول سؤال مهم في الملف. جاوب دائما بالدارجة المغربية وبالحروف العربية."
-      : "ابدأ أنت الكلام الآن مباشرة. لا تنتظر العميل. قل له الآن: السلام عليكم، أنا محمد. غادي نعاونك خطوة بخطوة باش نراجع الملف ديالك. عمر ليا الفورمولار الأول، ومن بعد نكمل معاك بالصوت. جاوب دائما بالدارجة المغربية وبالحروف العربية.";
+  const shouldContinueAfterForm = leadSaved || formJustSavedRef.current;
 
-    askMohamedToSpeak(intro);
-  };
+  const intro = shouldContinueAfterForm
+    ? "ابدأ أنت الكلام الآن مباشرة. لا تنتظر العميل. قل له الآن: مزيان. توصلنا بالمعطيات ديالك كاملة. دابا غادي نكمل معاك خطوة بخطوة ونسولك على الوثائق اللي خاصين. ومن بعد اطرح عليه أول سؤال مهم في الملف. جاوب دائما بالدارجة المغربية وبالحروف العربية."
+    : "ابدأ أنت الكلام الآن مباشرة. لا تنتظر العميل. قل له الآن: السلام عليكم، أنا محمد. غادي نعاونك خطوة بخطوة باش نراجع الملف ديالك. عمر ليا الفورمولار الأول، ومن بعد نكمل معاك بالصوت. جاوب دائما بالدارجة المغربية وبالحروف العربية.";
+
+  askMohamedToSpeak(intro);
+
+  formJustSavedRef.current = false;
+};
 
   const stopListening = () => {
     try {
@@ -1124,6 +1129,7 @@ const handleSaveLeadForm = async () => {
 
     await saveFullStateToSupabase();
 
+    formJustSavedRef.current = true;
     setLeadSaved(true);
 
     const savedMessage =
@@ -1142,13 +1148,18 @@ const handleSaveLeadForm = async () => {
       description: ui.saveLeadDesc,
     });
 
-    if (realtimeDcRef.current && realtimeDcRef.current.readyState === "open") {
-      askMohamedToSpeak(
-        "العميل صاوب دابا الفورمولار كامل وتحفظ فالنظام بنجاح. قول ليه باختصار: مزيان، توصلنا بالمعطيات ديالك، ودابا غادي نكملو بالأسئلة ديال الملف. من بعد بدا غير بأول سؤال مهم على الوثائق."
-      );
+    if (!realtimeDcRef.current || realtimeDcRef.current.readyState !== "open") {
+      await startListening();
+      return;
     }
+
+    askMohamedToSpeak(
+      "العميل صاوب دابا الفورمولار كامل وتحفظ فالنظام بنجاح. قول ليه باختصار: مزيان، توصلنا بالمعطيات ديالك، ودابا غادي نكملو بالأسئلة ديال الملف. من بعد بدا غير بأول سؤال مهم على الوثائق."
+    );
   } catch (error: any) {
     console.error("Error guardando formulario Mohamed:", error);
+
+    formJustSavedRef.current = false;
 
     toast({
       title: "Error guardando formulario",
