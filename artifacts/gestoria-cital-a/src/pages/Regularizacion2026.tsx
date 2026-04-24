@@ -1357,6 +1357,7 @@ const { error: insertDocumentError } = await supabase
     title: matchedDoc.nombre || file.name,
     document_type: result.document_type || matchedDoc.expectedType || "auto",
     original_name: file.name,
+    file_path: storagePath,
     verification_status: nextStatus,
     extracted_data: {
       summary: result.summary || "",
@@ -1369,6 +1370,7 @@ const { error: insertDocumentError } = await supabase
       recommended_bucket: result.recommended_bucket || "",
     },
   });
+
 
               if (insertDocumentError) {
                 console.error("Error guardando user_document:", insertDocumentError);
