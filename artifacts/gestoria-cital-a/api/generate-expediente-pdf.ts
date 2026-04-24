@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
+import { PDFDocument, StandardFonts, rgb, PDFPage } from "pdf-lib";
 
 function safe(value: unknown) {
   if (value === null || value === undefined) return "";
@@ -51,15 +51,29 @@ export default async function handler(
     } = req.body || {};
 
     const pdfDoc = await PDFDocument.create();
-    const page = pdfDoc.addPage([595.28, 841.89]); // A4
-    const { width, height } = page.getSize();
+    const pageWidth = 595.28;
+    const pageHeight = 841.89;
 
+    let page: PDFPage = pdfDoc.addPage([pageWidth, pageHeight]);
     const fontRegular = await pdfDoc.embedFont(StandardFonts.Helvetica);
     const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
-    let y = height - 50;
+    let y = pageHeight - 50;
 
-    const drawLine = (text: string, size = 11, bold = false, color = rgb(0, 0, 0)) => {
+    const ensureSpace = (needed = 40) => {
+      if (y < needed) {
+        page = pdfDoc.addPage([pageWidth, pageHeight]);
+        y = pageHeight - 50;
+      }
+    };
+
+    const drawLine = (
+      text: string,
+      size = 11,
+      bold = false,
+      color = rgb(0, 0, 0)
+    ) => {
+      ensureSpace(size + 20);
       page.drawText(text, {
         x: 50,
         y,
@@ -71,11 +85,12 @@ export default async function handler(
     };
 
     const drawSectionTitle = (text: string) => {
+      ensureSpace(40);
       y -= 6;
       page.drawRectangle({
         x: 50,
         y: y - 6,
-        width: width - 100,
+        width: pageWidth - 100,
         height: 22,
         color: rgb(0.92, 0.95, 1),
       });
@@ -97,18 +112,19 @@ export default async function handler(
       }
     };
 
-    const addNewPageIfNeeded = () => {
-      if (y < 90) {
-        const newPage = pdfDoc.addPage([595.28, 841.89]);
-        y = height - 50;
-
-        (page as any) = newPage;
-      }
-    };
-
     drawLine("GESTORIACITAIA - EXPEDIENTE FINAL", 18, true, rgb(0.0, 0.23, 0.51));
-    drawLine("Documento generado automáticamente por GestoriaCitaIA.", 10, false, rgb(0.35, 0.35, 0.35));
-    drawLine(`Fecha de generación: ${new Date().toLocaleString("es-ES")}`, 10, false, rgb(0.35, 0.35, 0.35));
+    drawLine(
+      "Documento generado automáticamente por GestoriaCitaIA.",
+      10,
+      false,
+      rgb(0.35, 0.35, 0.35)
+    );
+    drawLine(
+      `Fecha de generación: ${new Date().toLocaleString("es-ES")}`,
+      10,
+      false,
+      rgb(0.35, 0.35, 0.35)
+    );
 
     y -= 10;
     drawSectionTitle("DATOS DEL CLIENTE");
@@ -120,8 +136,6 @@ export default async function handler(
     drawField("Nacionalidad", safe(nacionalidad));
     drawField("Fecha llegada a España", safe(fecha_llegada));
 
-    addNewPageIfNeeded();
-
     drawSectionTitle("DATOS DEL EXPEDIENTE");
     drawField("Trámite", safe(tramite));
     drawField("Cumple 5 meses", safe(cumple_5_meses));
@@ -129,14 +143,11 @@ export default async function handler(
     drawField("Antecedentes penales", safe(penales));
     drawField("Estado expediente", safe(estado_expediente));
 
-    addNewPageIfNeeded();
-
     drawSectionTitle("OBSERVACIONES");
     const notes = safe(observaciones) || "Sin observaciones.";
     const noteLines = wrapText(notes, 90);
     for (const line of noteLines) {
       drawLine(line, 11, false);
-      addNewPageIfNeeded();
     }
 
     y -= 8;
