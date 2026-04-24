@@ -632,99 +632,161 @@ export default function Regularizacion2026() {
   };
 
   const saveFullStateToSupabase = async (nextDocs?: StoredDocItem[]) => {
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
 
-    if (authError || !user?.id) {
-      throw new Error("No hay usuario conectado en Supabase");
-    }
+  if (authError || !user?.id) {
+    throw new Error("No hay usuario conectado en Supabase");
+  }
 
-    const docsToSave = nextDocs || docs;
+  const docsToSave = nextDocs || docs;
 
-    const payload = {
-      applicant: {
-        nombre: leadForm.nombre || "",
-        telefono: leadForm.telefono || "",
-        nie_pasaporte: leadForm.niePasaporte || "",
-        ciudad: leadForm.ciudad || "",
-        nacionalidad: leadForm.nacionalidad || "",
-        fecha_llegada: leadForm.fechaLlegada || "",
-        cumple_5_meses: leadForm.cumple5Meses || "",
-        asilo: leadForm.asilo || "",
-        penales: leadForm.penales || "",
-      },
-      procedure: {
-        key: selectedSituacion,
-        name: currentProcedure.name,
-      },
-      documents: docsToSave,
-      progress: {
-        formCompletedStatus:
-          leadSaved || leadFormReady ? "ok" : "missing",
-        stayProofStatus:
-          docsToSave.some((doc) =>
-            (normalizeDocType(doc.expectedType) === "empadronamiento" ||
-              normalizeDocType(doc.expectedType) === "stay_proof" ||
-              doc.nombre.toLowerCase().includes("empadronamiento") ||
-              doc.nombre.toLowerCase().includes("padron") ||
-              doc.nombre.toLowerCase().includes("padrón")) &&
-            doc.estado === "ok"
-          )
-            ? "ok"
-            : "missing",
-        identityStatus:
-          docsToSave.some((doc) =>
-            (normalizeDocType(doc.expectedType) === "passport" ||
-              normalizeDocType(doc.expectedType) === "nie" ||
-              normalizeDocType(doc.expectedType) === "tie" ||
-              doc.nombre.toLowerCase().includes("pasaporte") ||
-              doc.nombre.toLowerCase().includes("nie")) &&
-            doc.estado === "ok"
-          )
-            ? "ok"
-            : "missing",
-      },
-      updated_at: new Date().toISOString(),
-    };
-
-    const { data: existingForm } = await supabase
-      .from("user_forms")
-      .select("id")
-      .eq("user_id", user.id)
-      .eq("form_type", "regularizacion_2026")
-      .limit(1)
-      .maybeSingle<UserFormRow>();
-
-    if (existingForm?.id) {
-      const { error: updateError } = await supabase
-        .from("user_forms")
-        .update({
-          title: "Formulario Mohamed Regularización 2026",
-          form_data: payload,
-        })
-        .eq("id", existingForm.id);
-
-      if (updateError) {
-        throw new Error(updateError.message);
-      }
-    } else {
-      const { error: insertError } = await supabase.from("user_forms").insert({
-        user_id: user.id,
-        case_id: null,
-        form_type: "regularizacion_2026",
-        title: "Formulario Mohamed Regularización 2026",
-        form_data: payload,
-      });
-
-      if (insertError) {
-        throw new Error(insertError.message);
-      }
-    }
-
-    return user.id;
+  const extractedProfileData = {
+    full_name: leadForm.nombre || "",
+    phone: leadForm.telefono || "",
+    nie: leadForm.niePasaporte || "",
+    city: leadForm.ciudad || "",
+    nationality: leadForm.nacionalidad || "",
+    arrival_date: leadForm.fechaLlegada || "",
+    has_5_months: leadForm.cumple5Meses || "",
+    asylum: leadForm.asilo || "",
+    criminal_record: leadForm.penales || "",
   };
+
+  const payload = {
+    applicant: {
+      nombre: leadForm.nombre || "",
+      telefono: leadForm.telefono || "",
+      nie_pasaporte: leadForm.niePasaporte || "",
+      ciudad: leadForm.ciudad || "",
+      nacionalidad: leadForm.nacionalidad || "",
+      fecha_llegada: leadForm.fechaLlegada || "",
+      cumple_5_meses: leadForm.cumple5Meses || "",
+      asilo: leadForm.asilo || "",
+      penales: leadForm.penales || "",
+    },
+    procedure: {
+      key: selectedSituacion,
+      name: currentProcedure.name,
+    },
+    documents: docsToSave.map((doc) => ({
+      id: doc.id,
+      nombre: doc.nombre,
+      archivo: doc.archivo,
+      estado: doc.estado,
+      kb: doc.kb,
+      expectedType: doc.expectedType || "",
+      detectedType: doc.detectedType || "",
+      note: doc.note || "",
+      uploadedAt: doc.uploadedAt || "",
+      storagePath: doc.storagePath || "",
+      publicUrl: doc.publicUrl || "",
+    })),
+    progress: {
+      formCompletedStatus: leadSaved || leadFormReady ? "ok" : "missing",
+      stayProofStatus:
+        docsToSave.some((doc) =>
+          (normalizeDocType(doc.expectedType) === "empadronamiento" ||
+            normalizeDocType(doc.expectedType) === "stay_proof" ||
+            doc.nombre.toLowerCase().includes("empadronamiento") ||
+            doc.nombre.toLowerCase().includes("padron") ||
+            doc.nombre.toLowerCase().includes("padrón") ||
+            doc.nombre.toLowerCase().includes("prueba de permanencia")) &&
+          doc.estado === "ok"
+        )
+          ? "ok"
+          : docsToSave.some((doc) =>
+              (normalizeDocType(doc.expectedType) === "empadronamiento" ||
+                normalizeDocType(doc.expectedType) === "stay_proof" ||
+                doc.nombre.toLowerCase().includes("empadronamiento") ||
+                doc.nombre.toLowerCase().includes("padron") ||
+                doc.nombre.toLowerCase().includes("padrón") ||
+                doc.nombre.toLowerCase().includes("prueba de permanencia")) &&
+              doc.estado === "warn"
+            )
+          ? "warn"
+          : "missing",
+      identityStatus:
+        docsToSave.some((doc) =>
+          (normalizeDocType(doc.expectedType) === "passport" ||
+            normalizeDocType(doc.expectedType) === "nie" ||
+            normalizeDocType(doc.expectedType) === "tie" ||
+            doc.nombre.toLowerCase().includes("pasaporte") ||
+            doc.nombre.toLowerCase().includes("passport") ||
+            doc.nombre.toLowerCase().includes("nie")) &&
+          doc.estado === "ok"
+        )
+          ? "ok"
+          : docsToSave.some((doc) =>
+              (normalizeDocType(doc.expectedType) === "passport" ||
+                normalizeDocType(doc.expectedType) === "nie" ||
+                normalizeDocType(doc.expectedType) === "tie" ||
+                doc.nombre.toLowerCase().includes("pasaporte") ||
+                doc.nombre.toLowerCase().includes("passport") ||
+                doc.nombre.toLowerCase().includes("nie")) &&
+              doc.estado === "warn"
+            )
+          ? "warn"
+          : "missing",
+    },
+    updated_at: new Date().toISOString(),
+  };
+
+  const sourceDocumentIds = docsToSave
+    .filter((doc) => doc.storagePath || doc.publicUrl)
+    .map((doc) => ({
+      id: doc.id,
+      nombre: doc.nombre,
+      file_path: doc.storagePath || "",
+      public_url: doc.publicUrl || "",
+    }));
+
+  const { data: existingForm } = await supabase
+    .from("user_forms")
+    .select("id")
+    .eq("user_id", user.id)
+    .eq("form_type", "regularizacion_2026")
+    .limit(1)
+    .maybeSingle<UserFormRow>();
+
+  const rowData = {
+    user_id: user.id,
+    case_id: null,
+    form_type: "regularizacion_2026",
+    title: "Formulario Mohamed Regularización 2026",
+    form_data: payload,
+    pdf_bucket: "user-files",
+    pdf_path: null,
+    status: "draft",
+    extracted_profile_data: extractedProfileData,
+    auto_fill_status: "pending",
+    auto_fill_notes: "Formulario Mohamed guardado desde regularización 2026",
+    source_document_ids: sourceDocumentIds,
+  };
+
+  if (existingForm?.id) {
+    const { error: updateError } = await supabase
+      .from("user_forms")
+      .update(rowData)
+      .eq("id", existingForm.id);
+
+    if (updateError) {
+      throw new Error(updateError.message);
+    }
+  } else {
+    const { error: insertError } = await supabase
+      .from("user_forms")
+      .insert(rowData);
+
+    if (insertError) {
+      throw new Error(insertError.message);
+    }
+  }
+
+  return user.id;
+};
 
   const askMohamedToSpeak = (instruction: string) => {
     try {
@@ -1346,7 +1408,7 @@ export default function Regularizacion2026() {
               );
 
               setDocs(updatedDocs);
-              await saveFullStateToSupabase(updatedDocs);
+              
 
               const dbVerificationStatus =
                 nextStatus === "ok"
@@ -1355,34 +1417,58 @@ export default function Regularizacion2026() {
                   ? "review"
                   : "missing";
 
-              const { error: insertDocumentError } = await supabase
-                .from("user_documents")
-                .insert({
-                  user_id: user.id,
-                  case_id: null,
-                  title: matchedDoc.nombre || file.name,
-                  document_type:
-                    result.document_type || matchedDoc.expectedType || "auto",
-                  original_name: file.name,
-                  file_path: storagePath,
-                  verification_status: dbVerificationStatus,
-                  extracted_data: {
-                    summary: result.summary || "",
-                    visible_fields: result.visible_fields || [],
-                    warnings: result.warnings || [],
-                    missing_or_unclear_fields:
-                      result.missing_or_unclear_fields || [],
-                    usable_for_regularizacion_2026:
-                      result.usable_for_regularizacion_2026 ?? null,
-                    stay_proof_reason: result.stay_proof_reason || "",
-                    recommended_bucket: result.recommended_bucket || "",
-                  },
-                });
+       const verificationStatus =
+  nextStatus === "ok"
+    ? "verified"
+    : result.status === "invalid"
+    ? "rejected"
+    : "needs_review";
+
+const verificationNotes =
+  result.summary ||
+  (verificationStatus === "verified"
+    ? "Documento verificado automáticamente"
+    : verificationStatus === "rejected"
+    ? "Documento rechazado por validación automática"
+    : "Documento recibido. Pendiente de revisión");
+
+const { error: insertDocumentError } = await supabase
+  .from("user_documents")
+  .insert({
+    user_id: user.id,
+    case_id: null,
+    document_type: result.document_type || matchedDoc.expectedType || "general",
+    title: matchedDoc.nombre || file.name,
+    description: null,
+    storage_bucket: "user-documents",
+    file_path: storagePath,
+    original_name: file.name,
+    mime_type: file.type || "application/octet-stream",
+    file_size: file.size,
+    verification_status: verificationStatus,
+    verification_notes: verificationNotes,
+    extracted_data: {
+      summary: result.summary || "",
+      visible_fields: result.visible_fields || [],
+      warnings: result.warnings || [],
+      missing_or_unclear_fields: result.missing_or_unclear_fields || [],
+      usable_for_regularizacion_2026:
+        result.usable_for_regularizacion_2026 ?? null,
+      stay_proof_reason: result.stay_proof_reason || "",
+      recommended_bucket: result.recommended_bucket || "",
+      path: storagePath,
+      public_url: publicUrl,
+    },
+    expires_at: null,
+    is_required: true,
+    reviewed_at: verificationStatus === "verified" ? new Date().toISOString() : null,
+    updated_at: new Date().toISOString(),
+  });
 
               if (insertDocumentError) {
                 console.error("Error guardando user_document:", insertDocumentError);
               }
-
+await saveFullStateToSupabase(updatedDocs);
               const matchedName = matchedDoc.nombre.toLowerCase();
 
               let localReply = "مزيان. توصلت بالوثيقة وربطتها مع الملف ديالك.";
