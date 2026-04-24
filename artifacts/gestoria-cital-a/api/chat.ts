@@ -763,4 +763,4 @@ export default async function handler(req: any, res: any) {
       error: error?.message || "Error servidor",
     });
   }
-} verfica esto solo ese codigo si esta bien o no no quiero cambiar nada dime solo si esta bien o no
+} 
