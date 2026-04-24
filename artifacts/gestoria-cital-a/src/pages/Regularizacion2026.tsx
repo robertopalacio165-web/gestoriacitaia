@@ -1109,54 +1109,62 @@ export default function Regularizacion2026() {
     }
   }, [muted]);
 
-  const handleSaveLeadForm = async () => {
-    if (!leadFormReady) {
-      toast({
-        title: ui.missingTitle,
-        description: ui.missingDesc,
-        variant: "destructive",
-      });
-      return;
+const handleSaveLeadForm = async () => {
+  if (!leadFormReady) {
+    toast({
+      title: ui.missingTitle,
+      description: ui.missingDesc,
+      variant: "destructive",
+    });
+    return;
+  }
+
+  try {
+    setSavingForm(true);
+
+    await saveFullStateToSupabase();
+
+    setLeadSaved(true);
+
+    const savedMessage =
+      "مزيان. توصلنا بالمعطيات ديالك كاملة. دابا نكمل معاك خطوة بخطوة ونسولك على الوثائق اللي خاصين.";
+
+    const alreadyExists = voiceHistory.some(
+      (msg) => msg.from === "agent" && msg.text === savedMessage
+    );
+
+    if (!alreadyExists) {
+      pushAgentMessage(savedMessage);
     }
 
-    try {
-      setSavingForm(true);
+    toast({
+      title: ui.saveLeadTitle,
+      description: ui.saveLeadDesc,
+    });
 
-      await saveFullStateToSupabase();
-
-      setLeadSaved(true);
-
-      const savedMessage = voiceTexts.savedLeadReply;
-      const alreadyExists = voiceHistory.some(
-        (msg) => msg.from === "agent" && msg.text === savedMessage
+    if (realtimeDcRef.current && realtimeDcRef.current.readyState === "open") {
+      askMohamedToSpeak(
+        "العميل صاوب دابا الفورمولار كامل وتحفظ فالنظام بنجاح. قول ليه باختصار: مزيان، توصلنا بالمعطيات ديالك، ودابا غادي نكملو بالأسئلة ديال الملف. من بعد بدا غير بأول سؤال مهم على الوثائق."
       );
-
-      if (!alreadyExists) {
-        pushAgentMessage(savedMessage);
-      }
-
-      toast({
-        title: ui.saveLeadTitle,
-        description: ui.saveLeadDesc,
-      });
-
-      if (realtimeDcRef.current && realtimeDcRef.current.readyState === "open") {
-        askMohamedToSpeak(
-          "العميل كمل الفورمولار دابا. بدأ أنت الكلام مباشرة، وما تستناش العميل. رحب به باختصار وقل له أنك توصلت بالمعطيات دياله، ثم اطرح عليه أول سؤال مهم في الملف، وجاوب دائما بالدارجة المغربية وبالحروف العربية."
-        );
-      }
-    } catch (error: any) {
-      console.error("Error guardando formulario Mohamed:", error);
-
-      toast({
-        title: "Error guardando formulario",
-        description: error?.message || "No se pudo guardar en Supabase",
-        variant: "destructive",
-      });
-    } finally {
-      setSavingForm(false);
     }
-  };
+  } catch (error: any) {
+    console.error("Error guardando formulario Mohamed:", error);
+
+    toast({
+      title: "Error guardando formulario",
+      description: error?.message || "No se pudo guardar en Supabase",
+      variant: "destructive",
+    });
+
+    if (realtimeDcRef.current && realtimeDcRef.current.readyState === "open") {
+      askMohamedToSpeak(
+        "وقع مشكل فحفظ المعطيات ديالك. عافاك عاود حاول فزر التأكيد قبل ما نكملو."
+      );
+    }
+  } finally {
+    setSavingForm(false);
+  }
+};
 
   const getBestDocMatch = (
     result: VerifyDocumentResult,
@@ -1358,16 +1366,17 @@ export default function Regularizacion2026() {
   };
 
   const handleGeneralUpload = async () => {
-    if (!leadSaved) {
-      pushAgentMessage(voiceTexts.voiceBlocked);
+if (!leadSaved) {
+  pushAgentMessage("عافاك عمر الفورمولار الأول ومن بعد دير تأكيد، ومن بعد نكمل معاك بالصوت.");
 
-      toast({
-        title: ui.missingTitle,
-        description: ui.missingDesc,
-        variant: "destructive",
-      });
-      return;
-    }
+  if (realtimeDcRef.current && realtimeDcRef.current.readyState === "open") {
+    askMohamedToSpeak(
+      "قول للعميل باختصار: خاصك تعمر الفورمولار الأول وتأكد المعطيات ديالك، ومن بعد نكملو بالصوت."
+    );
+  }
+
+  return;
+}
 
     try {
       const input = document.createElement("input");
