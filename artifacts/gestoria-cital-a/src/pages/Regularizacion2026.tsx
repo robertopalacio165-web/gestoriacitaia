@@ -1432,7 +1432,7 @@ const speakFromAutomation = async (instruction: string) => {
               }
 
               await saveFullStateToSupabase(updatedDocs);
-
+console.log("UPLOAD STEP 3 FORM SAVED");
               const matchedName = matchedDoc.nombre.toLowerCase();
 
               let localReply = "مزيان. توصلت بالوثيقة وربطتها مع الملف ديالك.";
@@ -1453,9 +1453,9 @@ const speakFromAutomation = async (instruction: string) => {
               ) {
                 localReply = voiceTexts.stayProofVerified;
               }
-
+console.log("UPLOAD STEP 4 ABOUT TO PUSH MESSAGE", localReply);
               pushAgentMessage(localReply);
-
+console.log("UPLOAD STEP 5 MESSAGE PUSHED");
               await speakFromAutomation(
                 [
                   `العميل صيفط دابا الوثيقة المطلوبة.`,
@@ -1472,7 +1472,7 @@ const speakFromAutomation = async (instruction: string) => {
                   "ومن بعد اطلب الوثيقة الجاية فقط.",
                 ].join(" ")
               );
-
+console.log("UPLOAD STEP 6 SPEAK AUTOMATION SENT");
               toast({
                 title: ui.uploadSuccessTitle,
                 description: result.summary || ui.uploadSuccessDesc,
