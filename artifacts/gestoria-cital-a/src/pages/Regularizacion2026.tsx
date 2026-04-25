@@ -1136,7 +1136,10 @@ if (msg.type === "response.done") {
       pushAgentMessage("عافاك دخل بحسابك أولاً، ومن بعد عاود دير تأكيد باش نكملو.");
       return;
     }
-
+console.log("AUTH CHECK", {
+  authChecked,
+  currentUserId,
+});
     try {
       setSavingForm(true);
 
@@ -1395,7 +1398,10 @@ await speakExactText(savedMessage);
             data: { user },
             error: authError,
           } = await supabase.auth.getUser();
-
+console.log("SUPABASE USER IN saveFullStateToSupabase", {
+  user,
+  authError,
+});
           if (authError || !user?.id) {
             throw new Error("No hay usuario conectado en Supabase");
           }
