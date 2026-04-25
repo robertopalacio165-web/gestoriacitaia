@@ -117,6 +117,7 @@ export default function Regularizacion2026() {
   const [authChecked, setAuthChecked] = useState(false);
   const [currentUserId, setCurrentUserId] = useState("");
   const [formConfirmed, setFormConfirmed] = useState(false);
+  const [pendingAutomationPrompt, setPendingAutomationPrompt] = useState("");
 
   const [leadForm, setLeadForm] = useState<LeadFormState>({
     nombre: "",
@@ -158,14 +159,8 @@ export default function Regularizacion2026() {
     () => ({
       initialVoice:
         "السلام عليكم، أنا محمد. غادي نعاونك خطوة بخطوة باش نراجع الملف ديالك. عمر ليا الفورمولار الأول، ومن بعد نكمل معاك بالصوت.",
-      voiceBlocked:
-        "عافاك عمر ليا الفورمولار الأول ومن بعد ضغط على الميكروفون باش نكمل معاك.",
       savedLeadReply:
         "مزيان. المعطيات ديالك تحفظات فالنظام. دابا نكمل معاك ونسولك على الوثائق خطوة بخطوة.",
-      passportVerified:
-        "مزيان. راجعت وثيقة الهوية ديالك. الاسم والبيانات باينين مزيان. دابا نكملو للخطوة اللي من بعدها.",
-      stayProofVerified:
-        "مزيان. راجعت بروفات السكن أو البقاء. هادشي كيعطينا أساس مزيان. دابا نشوفو شنو خاص من بعد.",
       uploadWarn:
         "توصلت بالوثيقة، ولكن خاصها شوية مراجعة أو نسخة أوضح.",
       uploadUnknown:
@@ -575,99 +570,87 @@ export default function Regularizacion2026() {
       { from: "user", text, ts: Date.now() },
     ]);
   };
-const buildSavedFormSpeech = () => {
-  return "مزيان. المعطيات ديالك تحفظات فالنظام. دابا غادي نكمل معاك ونسولك على الوثائق خطوة بخطوة.";
-};
 
-const buildDocSpeech = (
-  matchedDocName: string,
-  result: VerifyDocumentResult,
-  nextStatus: DocStatus
-) => {
-  const parts: string[] = [];
+  const setMicEnabled = (enabled: boolean) => {
+    try {
+      if (!realtimeLocalStreamRef.current) return;
 
-  const docName = matchedDocName || "الوثيقة";
-  parts.push(`مزيان. توصلت بـ ${docName}.`);
+      realtimeLocalStreamRef.current.getAudioTracks().forEach((track) => {
+        track.enabled = enabled;
+      });
+    } catch (error) {
+      console.error("Error cambiando estado del micrófono:", error);
+    }
+  };
 
-  if (result.document_type === "passport") {
-    parts.push("هاد الوثيقة هي الباسبور.");
-  } else if (result.document_type === "nie") {
-    parts.push("هاد الوثيقة هي NIE.");
-  } else if (result.document_type === "tie") {
-    parts.push("هاد الوثيقة هي TIE.");
-  } else if (result.document_type === "empadronamiento") {
-    parts.push("هاد الوثيقة هي empadronamiento.");
-  } else if (result.document_type === "stay_proof") {
-    parts.push("هاد الوثيقة كتنفع كبرهان ديال البقاء.");
-  }
+  const buildSavedFormSpeech = () => {
+    return "مزيان. المعطيات ديالك تحفظات فالنظام. دابا نكمل معاك ونسولك على الوثائق خطوة بخطوة.";
+  };
 
-  if (result.full_name) {
-    parts.push(`الاسم اللي باين هو ${result.full_name}.`);
-  }
+  const buildDocSpeech = (
+    matchedDocName: string,
+    result: VerifyDocumentResult,
+    nextStatus: DocStatus
+  ) => {
+    const parts: string[] = [];
 
-  if (result.birth_date) {
-    parts.push(`تاريخ الازدياد الباين هو ${result.birth_date}.`);
-  }
+    const docName = matchedDocName || "الوثيقة";
+    parts.push(`مزيان. توصلت بـ ${docName}.`);
 
-  if (result.passport_number) {
-    parts.push(`رقم الباسبور الباين هو ${result.passport_number}.`);
-  } else if (result.document_number) {
-    parts.push(`الرقم الباين هو ${result.document_number}.`);
-  }
-
-  if (nextStatus === "ok") {
-    parts.push("الوثيقة باينة مزيان ومقبولة.");
-  } else {
-    parts.push("الوثيقة توصلت بها ولكن خاصها مراجعة ولا نسخة أوضح.");
-  }
-
-  const lowerName = (matchedDocName || "").toLowerCase();
-
-  if (
-    lowerName.includes("pasaporte") ||
-    lowerName.includes("passport") ||
-    lowerName.includes("nie")
-  ) {
-    parts.push("دابا صيفط ليا بروفات ديال 5 شهور إلا باقي ما صيفطتيهمش.");
-  } else if (
-    lowerName.includes("empadronamiento") ||
-    lowerName.includes("padron") ||
-    lowerName.includes("padrón") ||
-    lowerName.includes("prueba de permanencia")
-  ) {
-    parts.push("دابا صيفط ليا الباسبور ولا NIE إلا باقي.");
-  } else {
-    parts.push("دابا غادي نطلب منك الوثيقة اللي من بعدها.");
-  }
-
-  return parts.join(" ");
-};
-
-const speakExactText = async (text: string) => {
-  if (!text.trim()) return;
-
-  pushAgentMessage(text);
-
-  pendingAutomationPromptRef.current = text;
-  setPendingAutomationPrompt(text);
-
-  if (realtimeDcRef.current && realtimeDcRef.current.readyState === "open") {
-    const ok = await askMohamedToSpeak(text);
-
-    if (ok) {
-      pendingAutomationPromptRef.current = "";
-      setPendingAutomationPrompt("");
+    if (result.document_type === "passport") {
+      parts.push("هاد الوثيقة هي الباسبور.");
+    } else if (result.document_type === "nie") {
+      parts.push("هاد الوثيقة هي NIE.");
+    } else if (result.document_type === "tie") {
+      parts.push("هاد الوثيقة هي TIE.");
+    } else if (result.document_type === "empadronamiento") {
+      parts.push("هاد الوثيقة هي empadronamiento.");
+    } else if (result.document_type === "stay_proof") {
+      parts.push("هاد الوثيقة كتنفع كبرهان ديال البقاء.");
     }
 
-    return;
-  }
+    if (result.full_name) {
+      parts.push(`الاسم اللي باين هو ${result.full_name}.`);
+    }
 
-  try {
-    await startListening();
-  } catch (error) {
-    console.error("Error iniciando realtime para hablar texto exacto:", error);
-  }
-};
+    if (result.birth_date) {
+      parts.push(`تاريخ الازدياد الباين هو ${result.birth_date}.`);
+    }
+
+    if (result.passport_number) {
+      parts.push(`رقم الباسبور الباين هو ${result.passport_number}.`);
+    } else if (result.document_number) {
+      parts.push(`الرقم الباين هو ${result.document_number}.`);
+    }
+
+    if (nextStatus === "ok") {
+      parts.push("الوثيقة باينة مزيان ومقبولة.");
+    } else {
+      parts.push("الوثيقة توصلت بها ولكن خاصها مراجعة ولا نسخة أوضح.");
+    }
+
+    const lowerName = (matchedDocName || "").toLowerCase();
+
+    if (
+      lowerName.includes("pasaporte") ||
+      lowerName.includes("passport") ||
+      lowerName.includes("nie")
+    ) {
+      parts.push("دابا صيفط ليا بروفات ديال 5 شهور إلا باقي ما صيفطتيهمش.");
+    } else if (
+      lowerName.includes("empadronamiento") ||
+      lowerName.includes("padron") ||
+      lowerName.includes("padrón") ||
+      lowerName.includes("prueba de permanencia")
+    ) {
+      parts.push("دابا صيفط ليا الباسبور ولا NIE إلا باقي.");
+    } else {
+      parts.push("دابا غادي نطلب منك الوثيقة اللي من بعدها.");
+    }
+
+    return parts.join(" ");
+  };
+
   const finalizeAssistantBuffer = () => {
     const text = assistantTextBufferRef.current.trim();
     if (!text) return;
@@ -787,41 +770,51 @@ const speakExactText = async (text: string) => {
     return user.id;
   };
 
-const askMohamedToSpeak = async (instruction: string) => {
-  try {
-    if (!realtimeDcRef.current) return false;
-    if (realtimeDcRef.current.readyState !== "open") return false;
+  const askMohamedToSpeak = async (text: string) => {
+    try {
+      if (!realtimeDcRef.current) return false;
+      if (realtimeDcRef.current.readyState !== "open") return false;
 
-    setMicEnabled(false);
-    setWaitingMohamed(true);
-    assistantTextBufferRef.current = "";
+      setMicEnabled(false);
+      setWaitingMohamed(true);
+      assistantTextBufferRef.current = "";
 
-    realtimeDcRef.current.send(
-      JSON.stringify({
-        type: "conversation.item.create",
-        item: {
-          type: "message",
-          role: "user",
-          content: [{ type: "input_text", text: instruction }],
-        },
-      })
-    );
+      try {
+        realtimeDcRef.current.send(
+          JSON.stringify({
+            type: "response.cancel",
+          })
+        );
+      } catch (error) {
+        console.error("No se pudo cancelar respuesta anterior:", error);
+      }
 
-    realtimeDcRef.current.send(
-      JSON.stringify({
-        type: "response.create",
-        response: {
-          modalities: ["audio", "text"],
-        },
-      })
-    );
+      realtimeDcRef.current.send(
+        JSON.stringify({
+          type: "conversation.item.create",
+          item: {
+            type: "message",
+            role: "user",
+            content: [{ type: "input_text", text }],
+          },
+        })
+      );
 
-    return true;
-  } catch (error) {
-    console.error("Error pidiendo respuesta realtime:", error);
-    return false;
-  }
-};
+      realtimeDcRef.current.send(
+        JSON.stringify({
+          type: "response.create",
+          response: {
+            modalities: ["audio", "text"],
+          },
+        })
+      );
+
+      return true;
+    } catch (error) {
+      console.error("Error pidiendo respuesta realtime:", error);
+      return false;
+    }
+  };
 
   const flushPendingAutomation = async () => {
     const prompt = pendingAutomationPromptRef.current;
@@ -834,6 +827,35 @@ const askMohamedToSpeak = async (instruction: string) => {
 
     if (ok) {
       pendingAutomationPromptRef.current = null;
+      setPendingAutomationPrompt("");
+    }
+  };
+
+  const speakExactText = async (text: string) => {
+    if (!text.trim()) return;
+
+    pushAgentMessage(text);
+
+    pendingAutomationPromptRef.current = text;
+    setPendingAutomationPrompt(text);
+
+    if (realtimeDcRef.current && realtimeDcRef.current.readyState === "open") {
+      if (!assistantBusyRef.current) {
+        const ok = await askMohamedToSpeak(text);
+
+        if (ok) {
+          pendingAutomationPromptRef.current = null;
+          setPendingAutomationPrompt("");
+        }
+      }
+
+      return;
+    }
+
+    try {
+      await startListening();
+    } catch (error) {
+      console.error("Error iniciando realtime para hablar texto exacto:", error);
     }
   };
 
@@ -878,6 +900,8 @@ const askMohamedToSpeak = async (instruction: string) => {
       introAlreadySentRef.current = false;
       assistantBusyRef.current = false;
       isConnectingRef.current = false;
+      pendingAutomationPromptRef.current = null;
+      setPendingAutomationPrompt("");
       setIsListening(false);
       setWaitingMohamed(false);
     }
@@ -1019,19 +1043,22 @@ const askMohamedToSpeak = async (instruction: string) => {
           if (msg.type === "response.created") {
             assistantBusyRef.current = true;
             setWaitingMohamed(true);
+            setMicEnabled(false);
           }
-if (msg.type === "response.done") {
-  assistantBusyRef.current = false;
-  finalizeAssistantBuffer();
-  setWaitingMohamed(false);
-  pendingAutomationPromptRef.current = "";
-  setPendingAutomationPrompt("");
 
-  setTimeout(() => {
-    void flushPendingAutomation();
-  }, 150);
-}
-       
+          if (msg.type === "response.done") {
+            assistantBusyRef.current = false;
+            finalizeAssistantBuffer();
+            setWaitingMohamed(false);
+
+            setTimeout(() => {
+              setMicEnabled(true);
+            }, 400);
+
+            setTimeout(() => {
+              void flushPendingAutomation();
+            }, 150);
+          }
         } catch (err) {
           console.error("Realtime event parse error:", err);
         }
@@ -1085,21 +1112,6 @@ if (msg.type === "response.done") {
     }
   };
 
-  const speakFromAutomation = async (instruction: string) => {
-    if (!instruction.trim()) return;
-
-    pendingAutomationPromptRef.current = instruction;
-
-    if (realtimeDcRef.current && realtimeDcRef.current.readyState === "open") {
-      if (!assistantBusyRef.current) {
-        await flushPendingAutomation();
-      }
-      return;
-    }
-
-    await startListening();
-  };
-
   useEffect(() => {
     if (remoteAudioRef.current) {
       remoteAudioRef.current.volume = muted ? 0 : 1;
@@ -1136,10 +1148,7 @@ if (msg.type === "response.done") {
       pushAgentMessage("عافاك دخل بحسابك أولاً، ومن بعد عاود دير تأكيد باش نكملو.");
       return;
     }
-console.log("AUTH CHECK", {
-  authChecked,
-  currentUserId,
-});
+
     try {
       setSavingForm(true);
 
@@ -1148,15 +1157,14 @@ console.log("AUTH CHECK", {
       setLeadSaved(true);
       setFormConfirmed(true);
 
-  const savedMessage = buildSavedFormSpeech();
+      const savedMessage = buildSavedFormSpeech();
 
-toast({
-  title: ui.saveLeadTitle,
-  description: "Se han guardado los datos correctamente.",
-});
+      toast({
+        title: ui.saveLeadTitle,
+        description: "Se han guardado los datos correctamente.",
+      });
 
-await speakExactText(savedMessage);
-      
+      await speakExactText(savedMessage);
     } catch (error: any) {
       console.error("Error guardando formulario Mohamed:", error);
 
@@ -1354,12 +1362,8 @@ await speakExactText(savedMessage);
     const readyNow = (leadSaved || formConfirmed) && nextStayOk && nextIdentityOk;
 
     if (readyNow && !completionMessageSent) {
-      pushAgentMessage(voiceTexts.mohamedFinal);
       setCompletionMessageSent(true);
-
-      await speakFromAutomation(
-        "قل الآن للعميل باختصار: مزيان. كلشي واجد ومراجع. دابا غادي نجهزو ليك الملف النهائي باش يتبعث ليك فـ واتساب."
-      );
+      await speakExactText(voiceTexts.mohamedFinal);
     }
   };
 
@@ -1398,10 +1402,7 @@ await speakExactText(savedMessage);
             data: { user },
             error: authError,
           } = await supabase.auth.getUser();
-console.log("SUPABASE USER IN saveFullStateToSupabase", {
-  user,
-  authError,
-});
+
           if (authError || !user?.id) {
             throw new Error("No hay usuario conectado en Supabase");
           }
@@ -1434,11 +1435,7 @@ console.log("SUPABASE USER IN saveFullStateToSupabase", {
               );
 
               if (!matchedDoc) {
-                pushAgentMessage(voiceTexts.uploadUnknown);
-
-                await speakFromAutomation(
-                  `العميل صيفط دابا وثيقة سميتها ${file.name} ولكن مازال ما تربطاتش مزيان مع الملف. قل له شنو خاصو يصيفط بشكل واضح.`
-                );
+                await speakExactText(voiceTexts.uploadUnknown);
 
                 toast({
                   title: ui.uploadErrorTitle,
@@ -1530,11 +1527,13 @@ console.log("SUPABASE USER IN saveFullStateToSupabase", {
 
               await saveFullStateToSupabase(updatedDocs);
 
-              const matchedName = matchedDoc.nombre.toLowerCase();
+              const localReply = buildDocSpeech(
+                matchedDoc.nombre,
+                result,
+                nextStatus
+              );
 
-     const localReply = buildDocSpeech(matchedDoc.nombre, result, nextStatus);
-
-await speakExactText(localReply);
+              await speakExactText(localReply);
 
               toast({
                 title: ui.uploadSuccessTitle,
@@ -1551,7 +1550,7 @@ await speakExactText(localReply);
                 variant: "destructive",
               });
 
-              await speakFromAutomation(
+              await speakExactText(
                 `وقع مشكل فقراءة أو حفظ الوثيقة ${file.name}. قول للعميل يعاود يصيفطها بشكل أوضح أو بصيغة أخرى.`
               );
             }
@@ -1748,6 +1747,12 @@ await speakExactText(localReply);
                 {waitingForDocument && !generalUploading && (
                   <div className="rounded-xl bg-amber-500/10 border border-amber-400/20 px-3 py-3 text-sm text-amber-200">
                     Mohamed está esperando el documento que te pidió.
+                  </div>
+                )}
+
+                {!!pendingAutomationPrompt && (
+                  <div className="rounded-xl bg-blue-500/10 border border-blue-400/20 px-3 py-3 text-xs text-blue-200">
+                    Automatización activa...
                   </div>
                 )}
               </div>
