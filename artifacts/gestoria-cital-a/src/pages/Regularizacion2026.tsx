@@ -117,7 +117,6 @@ export default function Regularizacion2026() {
   const [authChecked, setAuthChecked] = useState(false);
   const [currentUserId, setCurrentUserId] = useState("");
   const [formConfirmed, setFormConfirmed] = useState(false);
-  const [pendingAutomationPrompt, setPendingAutomationPrompt] = useState("");
 
   const [leadForm, setLeadForm] = useState<LeadFormState>({
     nombre: "",
@@ -143,7 +142,9 @@ export default function Regularizacion2026() {
   const lastAssistantTextRef = useRef("");
   const dcOpenedRef = useRef(false);
   const introAlreadySentRef = useRef(false);
-  const pendingAutomationPromptRef = useRef("");
+  const pendingAutomationPromptRef = useRef<string | null>(null);
+  const isConnectingRef = useRef(false);
+  const assistantBusyRef = useRef(false);
 
   const safeLang = (lang === "darija" || lang === "en" ? lang : "es") as
     | "darija"
@@ -557,34 +558,32 @@ export default function Regularizacion2026() {
 
   const pushAgentMessage = (text: string) => {
     if (!text?.trim()) return;
-    setVoiceHistory((prev) => [...prev, { from: "agent", text, ts: Date.now() }]);
+
+    setVoiceHistory((prev) => [
+      ...prev,
+      { from: "agent", text, ts: Date.now() },
+    ]);
+
     lastAssistantTextRef.current = text;
   };
 
   const pushUserMessage = (text: string) => {
     if (!text?.trim()) return;
-    setVoiceHistory((prev) => [...prev, { from: "user", text, ts: Date.now() }]);
-  };
-const setMicEnabled = (enabled: boolean) => {
-  try {
-    if (!realtimeLocalStreamRef.current) return;
 
-    realtimeLocalStreamRef.current.getAudioTracks().forEach((track) => {
-      track.enabled = enabled;
-    });
-  } catch (error) {
-    console.error("Error cambiando estado del micrófono:", error);
-  }
-};
+    setVoiceHistory((prev) => [
+      ...prev,
+      { from: "user", text, ts: Date.now() },
+    ]);
+  };
+
   const finalizeAssistantBuffer = () => {
     const text = assistantTextBufferRef.current.trim();
     if (!text) return;
 
     assistantTextBufferRef.current = "";
 
-    if (text === "..." || text === "…" || text === lastAssistantTextRef.current) {
-      return;
-    }
+    if (text === "..." || text === "…") return;
+    if (text === lastAssistantTextRef.current) return;
 
     pushAgentMessage(text);
 
@@ -635,7 +634,8 @@ const setMicEnabled = (enabled: boolean) => {
       },
       documents: docsToSave,
       progress: {
-        formCompletedStatus: leadSaved || formConfirmed || leadFormReady ? "ok" : "missing",
+        formCompletedStatus:
+          leadSaved || formConfirmed || leadFormReady ? "ok" : "missing",
         stayProofStatus:
           docsToSave.some(
             (doc) =>
@@ -695,56 +695,58 @@ const setMicEnabled = (enabled: boolean) => {
     return user.id;
   };
 
-const askMohamedToSpeak = async (instruction: string) => {
-  try {
-    if (!realtimeDcRef.current) return false;
-    if (realtimeDcRef.current.readyState !== "open") return false;
-
-    setMicEnabled(false);
-
+  const askMohamedToSpeak = async (instruction: string) => {
     try {
+      if (!realtimeDcRef.current) return false;
+      if (realtimeDcRef.current.readyState !== "open") return false;
+
       realtimeDcRef.current.send(
         JSON.stringify({
-          type: "response.cancel",
+          type: "conversation.item.create",
+          item: {
+            type: "message",
+            role: "user",
+            content: [{ type: "input_text", text: instruction }],
+          },
         })
       );
+
+      realtimeDcRef.current.send(
+        JSON.stringify({
+          type: "response.create",
+          response: {
+            modalities: ["audio", "text"],
+          },
+        })
+      );
+
+      return true;
     } catch (error) {
-      console.error("No se pudo cancelar respuesta anterior:", error);
+      console.error("Error pidiendo respuesta realtime:", error);
+      return false;
     }
+  };
 
-    realtimeDcRef.current.send(
-      JSON.stringify({
-        type: "conversation.item.create",
-        item: {
-          type: "message",
-          role: "user",
-          content: [{ type: "input_text", text: instruction }],
-        },
-      })
-    );
+  const flushPendingAutomation = async () => {
+    const prompt = pendingAutomationPromptRef.current;
+    if (!prompt) return;
+    if (!realtimeDcRef.current) return;
+    if (realtimeDcRef.current.readyState !== "open") return;
+    if (assistantBusyRef.current) return;
 
-    realtimeDcRef.current.send(
-      JSON.stringify({
-        type: "response.create",
-        response: {
-          modalities: ["audio", "text"],
-        },
-      })
-    );
+    const ok = await askMohamedToSpeak(prompt);
 
-    return true;
-  } catch (error) {
-    console.error("Error pidiendo respuesta realtime:", error);
-    return false;
-  }
-};
+    if (ok) {
+      pendingAutomationPromptRef.current = null;
+    }
+  };
 
-  const maybeSendIntroToMohamed = () => {
+  const maybeSendIntroToMohamed = async () => {
     if (!dcOpenedRef.current) return;
     if (!realtimeDcRef.current) return;
     if (realtimeDcRef.current.readyState !== "open") return;
     if (introAlreadySentRef.current) return;
-    if (pendingAutomationPromptRef.current.trim()) return;
+    if (pendingAutomationPromptRef.current) return;
 
     introAlreadySentRef.current = true;
 
@@ -753,7 +755,7 @@ const askMohamedToSpeak = async (instruction: string) => {
         ? "ابدأ أنت الكلام الآن مباشرة. لا تنتظر العميل. قل له الآن: مزيان. توصلت بالمعطيات ديالك. دابا غادي نكمل معاك خطوة بخطوة. ومن بعد اطرح عليه أول سؤال مهم في الملف. جاوب دائما بالدارجة المغربية وبالحروف العربية."
         : "ابدأ أنت الكلام الآن مباشرة. لا تنتظر العميل. قل له الآن: السلام عليكم، أنا محمد. غادي نعاونك خطوة بخطوة باش نراجع الملف ديالك. عمر ليا الفورمولار الأول، ومن بعد نكمل معاك بالصوت. جاوب دائما بالدارجة المغربية وبالحروف العربية.";
 
-    askMohamedToSpeak(intro);
+    await askMohamedToSpeak(intro);
   };
 
   const stopListening = () => {
@@ -778,6 +780,8 @@ const askMohamedToSpeak = async (instruction: string) => {
     } finally {
       dcOpenedRef.current = false;
       introAlreadySentRef.current = false;
+      assistantBusyRef.current = false;
+      isConnectingRef.current = false;
       setIsListening(false);
       setWaitingMohamed(false);
     }
@@ -793,11 +797,11 @@ const askMohamedToSpeak = async (instruction: string) => {
       return;
     }
 
+    if (isConnectingRef.current) return;
+    if (realtimeDcRef.current && realtimeDcRef.current.readyState === "open") return;
+
     try {
-      stopListening();
-      assistantTextBufferRef.current = "";
-      lastUserTranscriptRef.current = "";
-      setLastUserTranscript("");
+      isConnectingRef.current = true;
       setWaitingMohamed(true);
 
       const sessionRes = await fetch("/api/realtime-session", {
@@ -860,31 +864,20 @@ const askMohamedToSpeak = async (instruction: string) => {
       const dc = pc.createDataChannel("oai-events");
       realtimeDcRef.current = dc;
 
-      dc.onopen = () => {
+      dc.onopen = async () => {
         dcOpenedRef.current = true;
+        isConnectingRef.current = false;
         setIsListening(true);
-        setWaitingMohamed(true);
+        setWaitingMohamed(false);
 
-        const queuedPrompt = pendingAutomationPromptRef.current.trim();
-
-   if (queuedPrompt) {
-  setMicEnabled(false);
-
-  setTimeout(async () => {
-    const ok = await askMohamedToSpeak(queuedPrompt);
-
-    if (ok) {
-      pendingAutomationPromptRef.current = "";
-      setPendingAutomationPrompt("");
-    }
-  }, 500);
-
-  return;
-}
+        if (pendingAutomationPromptRef.current) {
+          await flushPendingAutomation();
+          return;
+        }
 
         setTimeout(() => {
-          maybeSendIntroToMohamed();
-        }, 600);
+          void maybeSendIntroToMohamed();
+        }, 500);
       };
 
       dc.onmessage = (event) => {
@@ -912,27 +905,35 @@ const askMohamedToSpeak = async (instruction: string) => {
             }
           }
 
-          if (msg.type === "response.output_text.delta" && typeof msg.delta === "string") {
+          if (
+            msg.type === "response.output_text.delta" &&
+            typeof msg.delta === "string"
+          ) {
             assistantTextBufferRef.current += msg.delta;
           }
 
-          if (msg.type === "response.output_text.done" && typeof msg.text === "string" && msg.text.trim()) {
+          if (
+            msg.type === "response.output_text.done" &&
+            typeof msg.text === "string" &&
+            msg.text.trim()
+          ) {
             assistantTextBufferRef.current = msg.text.trim();
           }
 
-        if (msg.type === "response.created") {
-  setWaitingMohamed(true);
-  setMicEnabled(false);
-}
+          if (msg.type === "response.created") {
+            assistantBusyRef.current = true;
+            setWaitingMohamed(true);
+          }
 
-if (msg.type === "response.done") {
-  finalizeAssistantBuffer();
-  setWaitingMohamed(false);
+          if (msg.type === "response.done") {
+            assistantBusyRef.current = false;
+            finalizeAssistantBuffer();
+            setWaitingMohamed(false);
 
-  setTimeout(() => {
-    setMicEnabled(true);
-  }, 500);
-}
+            setTimeout(() => {
+              void flushPendingAutomation();
+            }, 150);
+          }
         } catch (err) {
           console.error("Realtime event parse error:", err);
         }
@@ -940,6 +941,13 @@ if (msg.type === "response.done") {
 
       dc.onerror = (err) => {
         console.error("Realtime data channel error:", err);
+      };
+
+      dc.onclose = () => {
+        dcOpenedRef.current = false;
+        isConnectingRef.current = false;
+        assistantBusyRef.current = false;
+        setIsListening(false);
       };
 
       const offer = await pc.createOffer();
@@ -974,32 +982,25 @@ if (msg.type === "response.done") {
         description: error?.message || voiceTexts.realtimeError,
         variant: "destructive",
       });
+    } finally {
+      isConnectingRef.current = false;
     }
   };
 
-const speakFromAutomation = async (instruction: string) => {
-  if (!instruction.trim()) return;
+  const speakFromAutomation = async (instruction: string) => {
+    if (!instruction.trim()) return;
 
-  pendingAutomationPromptRef.current = instruction;
-  setPendingAutomationPrompt(instruction);
+    pendingAutomationPromptRef.current = instruction;
 
-  if (realtimeDcRef.current && realtimeDcRef.current.readyState === "open") {
-    const ok = await askMohamedToSpeak(instruction);
-
-    if (ok) {
-      pendingAutomationPromptRef.current = "";
-      setPendingAutomationPrompt("");
+    if (realtimeDcRef.current && realtimeDcRef.current.readyState === "open") {
+      if (!assistantBusyRef.current) {
+        await flushPendingAutomation();
+      }
+      return;
     }
 
-    return;
-  }
-
-  try {
     await startListening();
-  } catch (error) {
-    console.error("Error iniciando realtime desde automatización:", error);
-  }
-};
+  };
 
   useEffect(() => {
     if (remoteAudioRef.current) {
@@ -1046,8 +1047,7 @@ const speakFromAutomation = async (instruction: string) => {
       setLeadSaved(true);
       setFormConfirmed(true);
 
-      const savedMessage =
-        "مزيان. المعطيات ديالك تحفظات فالنظام. دابا نكمل معاك ونسولك على الوثائق خطوة بخطوة.";
+      const savedMessage = voiceTexts.savedLeadReply;
 
       const alreadyExists = voiceHistory.some(
         (msg) => msg.from === "agent" && msg.text === savedMessage
@@ -1063,7 +1063,7 @@ const speakFromAutomation = async (instruction: string) => {
       });
 
       await speakFromAutomation(
-        "العميل أكد المعطيات ديالو وتحفظات فالنظام بنجاح. قول ليه باختصار: مزيان، المعطيات ديالك تحفظات فالنظام، ودابا غادي نكملو فالأسئلة ديال الملف. ومن بعد بدا بأول سؤال مهم."
+        "العميل أكد المعطيات ديالو وتحفظات فالنظام بنجاح. قل له باختصار: مزيان، المعطيات ديالك تحفظات فالنظام، ودابا غادي نكملو فالأسئلة ديال الملف. ومن بعد بدا بأول سؤال مهم."
       );
     } catch (error: any) {
       console.error("Error guardando formulario Mohamed:", error);
@@ -1214,9 +1214,11 @@ const speakFromAutomation = async (instruction: string) => {
       }
     }
 
-    return currentDocs.find((doc) => doc.estado === "missing") ||
+    return (
+      currentDocs.find((doc) => doc.estado === "missing") ||
       currentDocs.find((doc) => doc.estado === "warn") ||
-      null;
+      null
+    );
   };
 
   const maybeSendCompletionMessage = async (nextDocs: StoredDocItem[]) => {
@@ -1687,12 +1689,6 @@ const speakFromAutomation = async (instruction: string) => {
                     Mohamed está esperando el documento que te pidió.
                   </div>
                 )}
-
-                {!!pendingAutomationPrompt && (
-                  <div className="rounded-xl bg-blue-500/10 border border-blue-400/20 px-3 py-3 text-xs text-blue-200">
-                    Automatización activa...
-                  </div>
-                )}
               </div>
 
               <div className="border-t border-white/10 p-3">
@@ -1877,7 +1873,7 @@ const speakFromAutomation = async (instruction: string) => {
                   className="w-full rounded-[18px] bg-[#003b82] hover:bg-[#002f69] disabled:opacity-60 text-white font-bold text-sm py-3 transition-colors"
                   type="button"
                 >
-                  {savingForm ? "Guardando..." : "Guardar datos y continuar con Mohamed"}
+                  {ui.saveLeadButton}
                 </button>
               </div>
             </div>
