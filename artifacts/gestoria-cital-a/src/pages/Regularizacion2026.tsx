@@ -575,7 +575,99 @@ export default function Regularizacion2026() {
       { from: "user", text, ts: Date.now() },
     ]);
   };
+const buildSavedFormSpeech = () => {
+  return "مزيان. المعطيات ديالك تحفظات فالنظام. دابا غادي نكمل معاك ونسولك على الوثائق خطوة بخطوة.";
+};
 
+const buildDocSpeech = (
+  matchedDocName: string,
+  result: VerifyDocumentResult,
+  nextStatus: DocStatus
+) => {
+  const parts: string[] = [];
+
+  const docName = matchedDocName || "الوثيقة";
+  parts.push(`مزيان. توصلت بـ ${docName}.`);
+
+  if (result.document_type === "passport") {
+    parts.push("هاد الوثيقة هي الباسبور.");
+  } else if (result.document_type === "nie") {
+    parts.push("هاد الوثيقة هي NIE.");
+  } else if (result.document_type === "tie") {
+    parts.push("هاد الوثيقة هي TIE.");
+  } else if (result.document_type === "empadronamiento") {
+    parts.push("هاد الوثيقة هي empadronamiento.");
+  } else if (result.document_type === "stay_proof") {
+    parts.push("هاد الوثيقة كتنفع كبرهان ديال البقاء.");
+  }
+
+  if (result.full_name) {
+    parts.push(`الاسم اللي باين هو ${result.full_name}.`);
+  }
+
+  if (result.birth_date) {
+    parts.push(`تاريخ الازدياد الباين هو ${result.birth_date}.`);
+  }
+
+  if (result.passport_number) {
+    parts.push(`رقم الباسبور الباين هو ${result.passport_number}.`);
+  } else if (result.document_number) {
+    parts.push(`الرقم الباين هو ${result.document_number}.`);
+  }
+
+  if (nextStatus === "ok") {
+    parts.push("الوثيقة باينة مزيان ومقبولة.");
+  } else {
+    parts.push("الوثيقة توصلت بها ولكن خاصها مراجعة ولا نسخة أوضح.");
+  }
+
+  const lowerName = (matchedDocName || "").toLowerCase();
+
+  if (
+    lowerName.includes("pasaporte") ||
+    lowerName.includes("passport") ||
+    lowerName.includes("nie")
+  ) {
+    parts.push("دابا صيفط ليا بروفات ديال 5 شهور إلا باقي ما صيفطتيهمش.");
+  } else if (
+    lowerName.includes("empadronamiento") ||
+    lowerName.includes("padron") ||
+    lowerName.includes("padrón") ||
+    lowerName.includes("prueba de permanencia")
+  ) {
+    parts.push("دابا صيفط ليا الباسبور ولا NIE إلا باقي.");
+  } else {
+    parts.push("دابا غادي نطلب منك الوثيقة اللي من بعدها.");
+  }
+
+  return parts.join(" ");
+};
+
+const speakExactText = async (text: string) => {
+  if (!text.trim()) return;
+
+  pushAgentMessage(text);
+
+  pendingAutomationPromptRef.current = text;
+  setPendingAutomationPrompt(text);
+
+  if (realtimeDcRef.current && realtimeDcRef.current.readyState === "open") {
+    const ok = await askMohamedToSpeak(text);
+
+    if (ok) {
+      pendingAutomationPromptRef.current = "";
+      setPendingAutomationPrompt("");
+    }
+
+    return;
+  }
+
+  try {
+    await startListening();
+  } catch (error) {
+    console.error("Error iniciando realtime para hablar texto exacto:", error);
+  }
+};
   const finalizeAssistantBuffer = () => {
     const text = assistantTextBufferRef.current.trim();
     if (!text) return;
@@ -695,37 +787,41 @@ export default function Regularizacion2026() {
     return user.id;
   };
 
-  const askMohamedToSpeak = async (instruction: string) => {
-    try {
-      if (!realtimeDcRef.current) return false;
-      if (realtimeDcRef.current.readyState !== "open") return false;
+const askMohamedToSpeak = async (instruction: string) => {
+  try {
+    if (!realtimeDcRef.current) return false;
+    if (realtimeDcRef.current.readyState !== "open") return false;
 
-      realtimeDcRef.current.send(
-        JSON.stringify({
-          type: "conversation.item.create",
-          item: {
-            type: "message",
-            role: "user",
-            content: [{ type: "input_text", text: instruction }],
-          },
-        })
-      );
+    setMicEnabled(false);
+    setWaitingMohamed(true);
+    assistantTextBufferRef.current = "";
 
-      realtimeDcRef.current.send(
-        JSON.stringify({
-          type: "response.create",
-          response: {
-            modalities: ["audio", "text"],
-          },
-        })
-      );
+    realtimeDcRef.current.send(
+      JSON.stringify({
+        type: "conversation.item.create",
+        item: {
+          type: "message",
+          role: "user",
+          content: [{ type: "input_text", text: instruction }],
+        },
+      })
+    );
 
-      return true;
-    } catch (error) {
-      console.error("Error pidiendo respuesta realtime:", error);
-      return false;
-    }
-  };
+    realtimeDcRef.current.send(
+      JSON.stringify({
+        type: "response.create",
+        response: {
+          modalities: ["audio", "text"],
+        },
+      })
+    );
+
+    return true;
+  } catch (error) {
+    console.error("Error pidiendo respuesta realtime:", error);
+    return false;
+  }
+};
 
   const flushPendingAutomation = async () => {
     const prompt = pendingAutomationPromptRef.current;
@@ -924,16 +1020,18 @@ export default function Regularizacion2026() {
             assistantBusyRef.current = true;
             setWaitingMohamed(true);
           }
+if (msg.type === "response.done") {
+  assistantBusyRef.current = false;
+  finalizeAssistantBuffer();
+  setWaitingMohamed(false);
+  pendingAutomationPromptRef.current = "";
+  setPendingAutomationPrompt("");
 
-          if (msg.type === "response.done") {
-            assistantBusyRef.current = false;
-            finalizeAssistantBuffer();
-            setWaitingMohamed(false);
-
-            setTimeout(() => {
-              void flushPendingAutomation();
-            }, 150);
-          }
+  setTimeout(() => {
+    void flushPendingAutomation();
+  }, 150);
+}
+       
         } catch (err) {
           console.error("Realtime event parse error:", err);
         }
@@ -1047,24 +1145,15 @@ export default function Regularizacion2026() {
       setLeadSaved(true);
       setFormConfirmed(true);
 
-      const savedMessage = voiceTexts.savedLeadReply;
+  const savedMessage = buildSavedFormSpeech();
 
-      const alreadyExists = voiceHistory.some(
-        (msg) => msg.from === "agent" && msg.text === savedMessage
-      );
+toast({
+  title: ui.saveLeadTitle,
+  description: "Se han guardado los datos correctamente.",
+});
 
-      if (!alreadyExists) {
-        pushAgentMessage(savedMessage);
-      }
-
-      toast({
-        title: ui.saveLeadTitle,
-        description: "Se han guardado los datos correctamente.",
-      });
-
-      await speakFromAutomation(
-        "العميل أكد المعطيات ديالو وتحفظات فالنظام بنجاح. قل له باختصار: مزيان، المعطيات ديالك تحفظات فالنظام، ودابا غادي نكملو فالأسئلة ديال الملف. ومن بعد بدا بأول سؤال مهم."
-      );
+await speakExactText(savedMessage);
+      
     } catch (error: any) {
       console.error("Error guardando formulario Mohamed:", error);
 
@@ -1437,43 +1526,9 @@ export default function Regularizacion2026() {
 
               const matchedName = matchedDoc.nombre.toLowerCase();
 
-              let localReply = "مزيان. توصلت بالوثيقة وربطتها مع الملف ديالك.";
+     const localReply = buildDocSpeech(matchedDoc.nombre, result, nextStatus);
 
-              if (isWarn) {
-                localReply = voiceTexts.uploadWarn;
-              } else if (
-                matchedName.includes("pasaporte") ||
-                matchedName.includes("passport") ||
-                matchedName.includes("nie")
-              ) {
-                localReply = voiceTexts.passportVerified;
-              } else if (
-                matchedName.includes("empadronamiento") ||
-                matchedName.includes("padron") ||
-                matchedName.includes("padrón") ||
-                matchedName.includes("prueba de permanencia")
-              ) {
-                localReply = voiceTexts.stayProofVerified;
-              }
-
-              pushAgentMessage(localReply);
-
-              await speakFromAutomation(
-                [
-                  `العميل صيفط دابا الوثيقة المطلوبة.`,
-                  `الوثيقة هي: ${matchedDoc.nombre}.`,
-                  `النوع المتشاف: ${result.document_type || "غير واضح"}.`,
-                  `الخلاصة: ${result.summary || "تمت المراجعة"}.`,
-                  `الحالة: ${
-                    nextStatus === "ok"
-                      ? "مزيانة ومقبولة"
-                      : "خاصها مراجعة أو نسخة أوضح"
-                  }.`,
-                  "جاوب دابا مباشرة على هاد الوثيقة بشكل واضح ومختصر.",
-                  "قول واش باين فيها الاسم أو الرقم أو التاريخ إلى كانوا ظاهرين.",
-                  "ومن بعد اطلب الوثيقة الجاية فقط.",
-                ].join(" ")
-              );
+await speakExactText(localReply);
 
               toast({
                 title: ui.uploadSuccessTitle,
