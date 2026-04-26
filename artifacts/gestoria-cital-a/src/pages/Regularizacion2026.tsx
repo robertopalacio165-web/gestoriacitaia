@@ -117,6 +117,7 @@ export default function Regularizacion2026() {
   const [authChecked, setAuthChecked] = useState(false);
   const [currentUserId, setCurrentUserId] = useState("");
   const [formConfirmed, setFormConfirmed] = useState(false);
+  const [pendingAutomationPrompt, setPendingAutomationPrompt] = useState("");
 
   const [leadForm, setLeadForm] = useState<LeadFormState>({
     nombre: "",
@@ -558,125 +559,91 @@ export default function Regularizacion2026() {
 
   const pushAgentMessage = (text: string) => {
     if (!text?.trim()) return;
-
     setVoiceHistory((prev) => [
       ...prev,
       { from: "agent", text, ts: Date.now() },
     ]);
-
     lastAssistantTextRef.current = text;
   };
 
   const pushUserMessage = (text: string) => {
     if (!text?.trim()) return;
-
     setVoiceHistory((prev) => [
       ...prev,
       { from: "user", text, ts: Date.now() },
     ]);
   };
-const buildSavedFormSpeech = () => {
-  return "مزيان. المعطيات ديالك تحفظات فالنظام. دابا غادي نكمل معاك ونسولك على الوثائق خطوة بخطوة.";
-};
 
-const buildDocSpeech = (
-  matchedDocName: string,
-  result: VerifyDocumentResult,
-  nextStatus: DocStatus
-) => {
-  const parts: string[] = [];
+  const buildSavedFormSpeech = () => {
+    return "مزيان. المعطيات ديالك تحفظات فالنظام. دابا غادي نكمل معاك ونسولك على الوثائق خطوة بخطوة.";
+  };
 
-  const docName = matchedDocName || "الوثيقة";
-  parts.push(`مزيان. توصلت بـ ${docName}.`);
+  const buildDocSpeech = (
+    matchedDocName: string,
+    result: VerifyDocumentResult,
+    nextStatus: DocStatus
+  ) => {
+    const parts: string[] = [];
+    const docName = matchedDocName || "الوثيقة";
+    parts.push(`مزيان. توصلت بـ ${docName}.`);
 
-  if (result.document_type === "passport") {
-    parts.push("هاد الوثيقة هي الباسبور.");
-  } else if (result.document_type === "nie") {
-    parts.push("هاد الوثيقة هي NIE.");
-  } else if (result.document_type === "tie") {
-    parts.push("هاد الوثيقة هي TIE.");
-  } else if (result.document_type === "empadronamiento") {
-    parts.push("هاد الوثيقة هي empadronamiento.");
-  } else if (result.document_type === "stay_proof") {
-    parts.push("هاد الوثيقة كتنفع كبرهان ديال البقاء.");
-  }
-
-  if (result.full_name) {
-    parts.push(`الاسم اللي باين هو ${result.full_name}.`);
-  }
-
-  if (result.birth_date) {
-    parts.push(`تاريخ الازدياد الباين هو ${result.birth_date}.`);
-  }
-
-  if (result.passport_number) {
-    parts.push(`رقم الباسبور الباين هو ${result.passport_number}.`);
-  } else if (result.document_number) {
-    parts.push(`الرقم الباين هو ${result.document_number}.`);
-  }
-
-  if (nextStatus === "ok") {
-    parts.push("الوثيقة باينة مزيان ومقبولة.");
-  } else {
-    parts.push("الوثيقة توصلت بها ولكن خاصها مراجعة ولا نسخة أوضح.");
-  }
-
-  const lowerName = (matchedDocName || "").toLowerCase();
-
-  if (
-    lowerName.includes("pasaporte") ||
-    lowerName.includes("passport") ||
-    lowerName.includes("nie")
-  ) {
-    parts.push("دابا صيفط ليا بروفات ديال 5 شهور إلا باقي ما صيفطتيهمش.");
-  } else if (
-    lowerName.includes("empadronamiento") ||
-    lowerName.includes("padron") ||
-    lowerName.includes("padrón") ||
-    lowerName.includes("prueba de permanencia")
-  ) {
-    parts.push("دابا صيفط ليا الباسبور ولا NIE إلا باقي.");
-  } else {
-    parts.push("دابا غادي نطلب منك الوثيقة اللي من بعدها.");
-  }
-
-  return parts.join(" ");
-};
-
-const speakExactText = async (text: string) => {
-  if (!text.trim()) return;
-
-  pushAgentMessage(text);
-
-  pendingAutomationPromptRef.current = text;
-  setPendingAutomationPrompt(text);
-
-  if (realtimeDcRef.current && realtimeDcRef.current.readyState === "open") {
-    const ok = await askMohamedToSpeak(text);
-
-    if (ok) {
-      pendingAutomationPromptRef.current = "";
-      setPendingAutomationPrompt("");
+    if (result.document_type === "passport") {
+      parts.push("هاد الوثيقة هي الباسبور.");
+    } else if (result.document_type === "nie") {
+      parts.push("هاد الوثيقة هي NIE.");
+    } else if (result.document_type === "tie") {
+      parts.push("هاد الوثيقة هي TIE.");
+    } else if (result.document_type === "empadronamiento") {
+      parts.push("هاد الوثيقة هي empadronamiento.");
+    } else if (result.document_type === "stay_proof") {
+      parts.push("هاد الوثيقة كتنفع كبرهان ديال البقاء.");
     }
 
-    return;
-  }
+    if (result.full_name) {
+      parts.push(`الاسم اللي باين هو ${result.full_name}.`);
+    }
+    if (result.birth_date) {
+      parts.push(`تاريخ الازدياد الباين هو ${result.birth_date}.`);
+    }
+    if (result.passport_number) {
+      parts.push(`رقم الباسبور الباين هو ${result.passport_number}.`);
+    } else if (result.document_number) {
+      parts.push(`الرقم الباين هو ${result.document_number}.`);
+    }
 
-  try {
-    await startListening();
-  } catch (error) {
-    console.error("Error iniciando realtime para hablar texto exacto:", error);
-  }
-};
+    if (nextStatus === "ok") {
+      parts.push("الوثيقة باينة مزيان ومقبولة.");
+    } else {
+      parts.push("الوثيقة توصلت بها ولكن خاصها مراجعة ولا نسخة أوضح.");
+    }
+
+    const lowerName = (matchedDocName || "").toLowerCase();
+    if (
+      lowerName.includes("pasaporte") ||
+      lowerName.includes("passport") ||
+      lowerName.includes("nie")
+    ) {
+      parts.push("دابا صيفط ليا بروفات ديال 5 شهور إلا باقي ما صيفطتيهمش.");
+    } else if (
+      lowerName.includes("empadronamiento") ||
+      lowerName.includes("padron") ||
+      lowerName.includes("padrón") ||
+      lowerName.includes("prueba de permanencia")
+    ) {
+      parts.push("دابا صيفط ليا الباسبور ولا NIE إلا باقي.");
+    } else {
+      parts.push("دابا غادي نطلب منك الوثيقة اللي من بعدها.");
+    }
+
+    return parts.join(" ");
+  };
+
   const finalizeAssistantBuffer = () => {
     const text = assistantTextBufferRef.current.trim();
     if (!text) return;
-
     assistantTextBufferRef.current = "";
-
     if (text === "..." || text === "…") return;
     if (text === lastAssistantTextRef.current) return;
-
     pushAgentMessage(text);
 
     const lower = text.toLowerCase();
@@ -774,66 +741,70 @@ const speakExactText = async (text: string) => {
         .from("user_forms")
         .update(rowData)
         .eq("id", existingForm.id);
-
       if (updateError) throw new Error(updateError.message);
     } else {
       const { error: insertError } = await supabase
         .from("user_forms")
         .insert(rowData);
-
       if (insertError) throw new Error(insertError.message);
     }
 
     return user.id;
   };
 
-const askMohamedToSpeak = async (instruction: string) => {
-  try {
-    if (!realtimeDcRef.current) return false;
-    if (realtimeDcRef.current.readyState !== "open") return false;
+  const askMohamedToSpeak = async (instruction: string) => {
+    try {
+      if (!realtimeDcRef.current) return false;
+      if (realtimeDcRef.current.readyState !== "open") return false;
 
-    setMicEnabled(false);
-    setWaitingMohamed(true);
-    assistantTextBufferRef.current = "";
+      setWaitingMohamed(true);
+      assistantTextBufferRef.current = "";
 
-    realtimeDcRef.current.send(
-      JSON.stringify({
-        type: "conversation.item.create",
-        item: {
-          type: "message",
-          role: "user",
-          content: [{ type: "input_text", text: instruction }],
-        },
-      })
-    );
+      realtimeDcRef.current.send(
+        JSON.stringify({
+          type: "conversation.item.create",
+          item: {
+            type: "message",
+            role: "user",
+            content: [{ type: "input_text", text: instruction }],
+          },
+        })
+      );
 
-    realtimeDcRef.current.send(
-      JSON.stringify({
-        type: "response.create",
-        response: {
-          modalities: ["audio", "text"],
-        },
-      })
-    );
+      realtimeDcRef.current.send(
+        JSON.stringify({
+          type: "response.create",
+          response: {
+            modalities: ["audio", "text"],
+          },
+        })
+      );
 
-    return true;
-  } catch (error) {
-    console.error("Error pidiendo respuesta realtime:", error);
-    return false;
-  }
-};
+      return true;
+    } catch (error) {
+      console.error("Error pidiendo respuesta realtime:", error);
+      return false;
+    }
+  };
 
-  const flushPendingAutomation = async () => {
+  // ─── FIX 2: flushPendingAutomation con reintentos si Mohammed está ocupado ───
+  const flushPendingAutomation = async (retries = 0) => {
     const prompt = pendingAutomationPromptRef.current;
     if (!prompt) return;
     if (!realtimeDcRef.current) return;
     if (realtimeDcRef.current.readyState !== "open") return;
-    if (assistantBusyRef.current) return;
+
+    if (assistantBusyRef.current) {
+      if (retries < 6) {
+        setTimeout(() => flushPendingAutomation(retries + 1), 300);
+      }
+      return;
+    }
 
     const ok = await askMohamedToSpeak(prompt);
-
     if (ok) {
       pendingAutomationPromptRef.current = null;
+      setPendingAutomationPrompt("");
     }
   };
 
@@ -902,12 +873,8 @@ const askMohamedToSpeak = async (instruction: string) => {
 
       const sessionRes = await fetch("/api/realtime-session", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          assistant: "mohamed",
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ assistant: "mohamed" }),
       });
 
       const sessionData = await sessionRes.json();
@@ -926,14 +893,12 @@ const askMohamedToSpeak = async (instruction: string) => {
 
       pc.ontrack = (event) => {
         const [remoteStream] = event.streams;
-
         if (remoteStream && remoteAudioRef.current) {
           remoteAudioRef.current.srcObject = remoteStream;
           remoteAudioRef.current.autoplay = true;
           remoteAudioRef.current.playsInline = true;
           remoteAudioRef.current.muted = false;
           remoteAudioRef.current.volume = muted ? 0 : 1;
-
           const playPromise = remoteAudioRef.current.play();
           if (playPromise) {
             playPromise.catch((err) => {
@@ -960,14 +925,39 @@ const askMohamedToSpeak = async (instruction: string) => {
       const dc = pc.createDataChannel("oai-events");
       realtimeDcRef.current = dc;
 
+      // ─── FIX 1 + FIX 3: dc.onopen corregido ───
       dc.onopen = async () => {
         dcOpenedRef.current = true;
         isConnectingRef.current = false;
         setIsListening(true);
         setWaitingMohamed(false);
 
-        if (pendingAutomationPromptRef.current) {
-          await flushPendingAutomation();
+        // FIX 3: configurar VAD con threshold alto para evitar que Mohammed
+        // hable con ruido ambiental o sonidos que no son del cliente
+        dc.send(
+          JSON.stringify({
+            type: "session.update",
+            session: {
+              turn_detection: {
+                type: "server_vad",
+                threshold: 0.75,
+                prefix_padding_ms: 300,
+                silence_duration_ms: 800,
+              },
+            },
+          })
+        );
+
+        // FIX 1: capturar el texto pendiente ANTES de cualquier await
+        // para no perderlo cuando la sesión async cambia de estado
+        const capturedPending = pendingAutomationPromptRef.current;
+
+        if (capturedPending) {
+          pendingAutomationPromptRef.current = null;
+          setPendingAutomationPrompt("");
+          setTimeout(() => {
+            void askMohamedToSpeak(capturedPending);
+          }, 400);
           return;
         }
 
@@ -993,7 +983,6 @@ const askMohamedToSpeak = async (instruction: string) => {
             userTranscript.trim()
           ) {
             const transcript = userTranscript.trim();
-
             if (transcript !== lastUserTranscriptRef.current) {
               lastUserTranscriptRef.current = transcript;
               setLastUserTranscript(transcript);
@@ -1020,18 +1009,18 @@ const askMohamedToSpeak = async (instruction: string) => {
             assistantBusyRef.current = true;
             setWaitingMohamed(true);
           }
-if (msg.type === "response.done") {
-  assistantBusyRef.current = false;
-  finalizeAssistantBuffer();
-  setWaitingMohamed(false);
-  pendingAutomationPromptRef.current = "";
-  setPendingAutomationPrompt("");
 
-  setTimeout(() => {
-    void flushPendingAutomation();
-  }, 150);
-}
-       
+          if (msg.type === "response.done") {
+            assistantBusyRef.current = false;
+            finalizeAssistantBuffer();
+            setWaitingMohamed(false);
+            pendingAutomationPromptRef.current = null;
+            setPendingAutomationPrompt("");
+
+            setTimeout(() => {
+              void flushPendingAutomation();
+            }, 150);
+          }
         } catch (err) {
           console.error("Realtime event parse error:", err);
         }
@@ -1066,15 +1055,10 @@ if (msg.type === "response.done") {
       }
 
       const answerSdp = await sdpRes.text();
-
-      await pc.setRemoteDescription({
-        type: "answer",
-        sdp: answerSdp,
-      });
+      await pc.setRemoteDescription({ type: "answer", sdp: answerSdp });
     } catch (error: any) {
       console.error("Error iniciando realtime Mohamed:", error);
       stopListening();
-
       toast({
         title: "Error realtime",
         description: error?.message || voiceTexts.realtimeError,
@@ -1085,10 +1069,40 @@ if (msg.type === "response.done") {
     }
   };
 
+  const speakExactText = async (text: string) => {
+    if (!text.trim()) return;
+
+    pushAgentMessage(text);
+
+    // Guardar el texto antes de cualquier operación async
+    pendingAutomationPromptRef.current = text;
+    setPendingAutomationPrompt(text);
+
+    if (realtimeDcRef.current && realtimeDcRef.current.readyState === "open") {
+      if (!assistantBusyRef.current) {
+        const ok = await askMohamedToSpeak(text);
+        if (ok) {
+          pendingAutomationPromptRef.current = null;
+          setPendingAutomationPrompt("");
+        }
+      }
+      // Si está ocupado, flushPendingAutomation lo enviará cuando termine
+      return;
+    }
+
+    // Si no hay sesión abierta, iniciarla — el texto se enviará en dc.onopen (Fix 1)
+    try {
+      await startListening();
+    } catch (error) {
+      console.error("Error iniciando realtime para hablar texto exacto:", error);
+    }
+  };
+
   const speakFromAutomation = async (instruction: string) => {
     if (!instruction.trim()) return;
 
     pendingAutomationPromptRef.current = instruction;
+    setPendingAutomationPrompt(instruction);
 
     if (realtimeDcRef.current && realtimeDcRef.current.readyState === "open") {
       if (!assistantBusyRef.current) {
@@ -1132,37 +1146,31 @@ if (msg.type === "response.done") {
         description: "Debes entrar con Google antes de confirmar.",
         variant: "destructive",
       });
-
       pushAgentMessage("عافاك دخل بحسابك أولاً، ومن بعد عاود دير تأكيد باش نكملو.");
       return;
     }
 
     try {
       setSavingForm(true);
-
       await saveFullStateToSupabase();
-
       setLeadSaved(true);
       setFormConfirmed(true);
 
-  const savedMessage = buildSavedFormSpeech();
+      const savedMessage = buildSavedFormSpeech();
 
-toast({
-  title: ui.saveLeadTitle,
-  description: "Se han guardado los datos correctamente.",
-});
+      toast({
+        title: ui.saveLeadTitle,
+        description: "Se han guardado los datos correctamente.",
+      });
 
-await speakExactText(savedMessage);
-      
+      await speakExactText(savedMessage);
     } catch (error: any) {
       console.error("Error guardando formulario Mohamed:", error);
-
       toast({
         title: "Error guardando formulario",
         description: error?.message || "No se pudo guardar en Supabase",
         variant: "destructive",
       });
-
       pushAgentMessage("وقع مشكل فحفظ المعطيات. عافاك عاود دير تأكيد مرة أخرى.");
     } finally {
       setSavingForm(false);
@@ -1252,12 +1260,8 @@ await speakExactText(savedMessage);
 
     if (
       includesAny([
-        "passport",
-        "pasaporte",
-        "nie",
-        "tie",
-        "tarjeta de identidad",
-        "documento identidad",
+        "passport", "pasaporte", "nie", "tie",
+        "tarjeta de identidad", "documento identidad",
       ])
     ) {
       const identityDoc = findIdentityDoc();
@@ -1266,15 +1270,8 @@ await speakExactText(savedMessage);
 
     if (
       includesAny([
-        "empadronamiento",
-        "padron",
-        "padrón",
-        "prueba de permanencia",
-        "stay proof",
-        "ticket",
-        "factura",
-        "nomina",
-        "nómina",
+        "empadronamiento", "padron", "padrón", "prueba de permanencia",
+        "stay proof", "ticket", "factura", "nomina", "nómina",
         "cita médica",
       ])
     ) {
@@ -1291,7 +1288,6 @@ await speakExactText(savedMessage);
         const stayProofDoc = findStayProofDoc();
         if (stayProofDoc) return stayProofDoc;
       }
-
       if (
         lowerFileName.includes("pasaporte") ||
         lowerFileName.includes("passport") ||
@@ -1315,17 +1311,10 @@ await speakExactText(savedMessage);
       const expected = normalizeDocType(doc.expectedType);
       const detected = normalizeDocType(doc.detectedType);
       const name = doc.nombre.toLowerCase();
-
       return (
-        (expected === "passport" ||
-          expected === "nie" ||
-          expected === "tie" ||
-          detected === "passport" ||
-          detected === "nie" ||
-          detected === "tie" ||
-          name.includes("pasaporte") ||
-          name.includes("passport") ||
-          name.includes("nie")) &&
+        (expected === "passport" || expected === "nie" || expected === "tie" ||
+          detected === "passport" || detected === "nie" || detected === "tie" ||
+          name.includes("pasaporte") || name.includes("passport") || name.includes("nie")) &&
         doc.estado === "ok"
       );
     });
@@ -1334,16 +1323,11 @@ await speakExactText(savedMessage);
       const expected = normalizeDocType(doc.expectedType);
       const detected = normalizeDocType(doc.detectedType);
       const name = doc.nombre.toLowerCase();
-
       return (
-        (expected === "empadronamiento" ||
-          expected === "stay_proof" ||
-          detected === "empadronamiento" ||
-          detected === "stay_proof" ||
-          name.includes("empadronamiento") ||
-          name.includes("padron") ||
-          name.includes("padrón") ||
-          name.includes("prueba de permanencia")) &&
+        (expected === "empadronamiento" || expected === "stay_proof" ||
+          detected === "empadronamiento" || detected === "stay_proof" ||
+          name.includes("empadronamiento") || name.includes("padron") ||
+          name.includes("padrón") || name.includes("prueba de permanencia")) &&
         doc.estado === "ok"
       );
     });
@@ -1353,7 +1337,6 @@ await speakExactText(savedMessage);
     if (readyNow && !completionMessageSent) {
       pushAgentMessage(voiceTexts.mohamedFinal);
       setCompletionMessageSent(true);
-
       await speakFromAutomation(
         "قل الآن للعميل باختصار: مزيان. كلشي واجد ومراجع. دابا غادي نجهزو ليك الملف النهائي باش يتبعث ليك فـ واتساب."
       );
@@ -1362,16 +1345,12 @@ await speakExactText(savedMessage);
 
   const handleGeneralUpload = async () => {
     if (!leadSaved || !formConfirmed) {
-      pushAgentMessage(
-        "عافاك عمر الفورمولار الأول ودير تأكيد، ومن بعد صيفط ليا الوثائق."
-      );
-
+      pushAgentMessage("عافاك عمر الفورمولار الأول ودير تأكيد، ومن بعد صيفط ليا الوثائق.");
       toast({
         title: "Primero confirma el formulario",
         description: "Debes guardar tus datos antes de subir documentos.",
         variant: "destructive",
       });
-
       return;
     }
 
@@ -1403,7 +1382,6 @@ await speakExactText(savedMessage);
           for (const file of files) {
             try {
               const currentDocs = [...docs];
-
               const safeName = `${Date.now()}_${slugifyFileName(file.name)}`;
               const storagePath = `${user.id}/regularizacion_2026/${safeName}`;
 
@@ -1411,9 +1389,7 @@ await speakExactText(savedMessage);
                 .from("user-documents")
                 .upload(storagePath, file, { upsert: true });
 
-              if (uploadError) {
-                throw new Error(uploadError.message);
-              }
+              if (uploadError) throw new Error(uploadError.message);
 
               const result = await verifyDocument({
                 file,
@@ -1429,17 +1405,14 @@ await speakExactText(savedMessage);
 
               if (!matchedDoc) {
                 pushAgentMessage(voiceTexts.uploadUnknown);
-
                 await speakFromAutomation(
                   `العميل صيفط دابا وثيقة سميتها ${file.name} ولكن مازال ما تربطاتش مزيان مع الملف. قل له شنو خاصو يصيفط بشكل واضح.`
                 );
-
                 toast({
                   title: ui.uploadErrorTitle,
                   description: result.summary || ui.uploadErrorDesc,
                   variant: "destructive",
                 });
-
                 continue;
               }
 
@@ -1501,8 +1474,7 @@ await speakExactText(savedMessage);
                     summary: result.summary || "",
                     visible_fields: result.visible_fields || [],
                     warnings: result.warnings || [],
-                    missing_or_unclear_fields:
-                      result.missing_or_unclear_fields || [],
+                    missing_or_unclear_fields: result.missing_or_unclear_fields || [],
                     usable_for_regularizacion_2026:
                       result.usable_for_regularizacion_2026 ?? null,
                     stay_proof_reason: result.stay_proof_reason || "",
@@ -1524,11 +1496,8 @@ await speakExactText(savedMessage);
 
               await saveFullStateToSupabase(updatedDocs);
 
-              const matchedName = matchedDoc.nombre.toLowerCase();
-
-     const localReply = buildDocSpeech(matchedDoc.nombre, result, nextStatus);
-
-await speakExactText(localReply);
+              const localReply = buildDocSpeech(matchedDoc.nombre, result, nextStatus);
+              await speakExactText(localReply);
 
               toast({
                 title: ui.uploadSuccessTitle,
@@ -1538,13 +1507,11 @@ await speakExactText(localReply);
               await maybeSendCompletionMessage(updatedDocs);
             } catch (err: any) {
               console.error(err);
-
               toast({
                 title: ui.uploadErrorTitle,
                 description: err?.message || ui.uploadErrorDesc,
                 variant: "destructive",
               });
-
               await speakFromAutomation(
                 `وقع مشكل فقراءة أو حفظ الوثيقة ${file.name}. قول للعميل يعاود يصيفطها بشكل أوضح أو بصيغة أخرى.`
               );
@@ -1559,7 +1526,6 @@ await speakExactText(localReply);
       input.click();
     } catch (error: any) {
       setGeneralUploading(false);
-
       toast({
         title: "Error",
         description: error?.message || "Error inesperado",
@@ -1627,7 +1593,6 @@ await speakExactText(localReply);
                     !
                   </span>
                 </div>
-
                 <button
                   onClick={() => setMuted(!muted)}
                   className="w-8 h-8 rounded-full bg-black/50 border border-white/10 flex items-center justify-center"
@@ -1648,11 +1613,7 @@ await speakExactText(localReply);
                       key={i}
                       className="w-1 bg-primary rounded-full"
                       animate={{ height: [`${h}px`, `${h * 2}px`, `${h}px`] }}
-                      transition={{
-                        duration: 0.5,
-                        repeat: Infinity,
-                        delay: i * 0.07,
-                      }}
+                      transition={{ duration: 0.5, repeat: Infinity, delay: i * 0.07 }}
                     />
                   ))}
                 </div>
@@ -1758,11 +1719,7 @@ await speakExactText(localReply);
                       <motion.div
                         className="w-3.5 h-3.5 border border-primary-foreground border-t-transparent rounded-full"
                         animate={{ rotate: 360 }}
-                        transition={{
-                          duration: 0.7,
-                          repeat: Infinity,
-                          ease: "linear",
-                        }}
+                        transition={{ duration: 0.7, repeat: Infinity, ease: "linear" }}
                       />
                       {ui.uploading}
                     </>
@@ -1773,7 +1730,6 @@ await speakExactText(localReply);
                     </>
                   )}
                 </button>
-
                 <p className="mt-2 text-[10px] text-white/50 text-center">
                   {ui.uploadGeneralDesc}
                 </p>
@@ -1798,14 +1754,11 @@ await speakExactText(localReply);
               <div className="px-4 py-4 space-y-3 bg-white">
                 <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 mb-3">
                   <div className="flex items-center justify-between mb-2">
-                    <p className="text-sm font-bold text-slate-800">
-                      {ui.docStatusTitle}
-                    </p>
+                    <p className="text-sm font-bold text-slate-800">{ui.docStatusTitle}</p>
                     <span className="text-xs font-bold text-slate-700">
                       {progressOk}/{progressTotal}
                     </span>
                   </div>
-
                   <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
                     <div
                       className="h-full bg-[#003b82] rounded-full transition-all"
@@ -1814,7 +1767,6 @@ await speakExactText(localReply);
                       }}
                     />
                   </div>
-
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3">
                     {progressCards.map((doc) => (
                       <div
@@ -1937,7 +1889,6 @@ await speakExactText(localReply);
               <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4">
                 <p className="text-sm font-bold text-white">{ui.goSara}</p>
                 <p className="mt-1 text-xs text-white/70">{ui.goSaraDesc}</p>
-
                 <button
                   onClick={goToSara}
                   className="mt-4 inline-flex items-center gap-2 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2.5 text-sm font-bold transition-colors"
