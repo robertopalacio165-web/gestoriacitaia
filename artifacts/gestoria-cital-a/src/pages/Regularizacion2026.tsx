@@ -1,6 +1,3 @@
-Aquí tienes el código completo y corregido. He integrado las funciones de activación de voz dentro de los procesos de guardado y subida, respetando escrupulosamente tu estructura y diseño original.
-
-```typescript
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Navbar } from "@/components/Navbar";
 import { useLang } from "@/contexts/LanguageContext";
@@ -617,4 +614,3 @@ export default function Regularizacion2026() {
     </div>
   );
 }
-```
