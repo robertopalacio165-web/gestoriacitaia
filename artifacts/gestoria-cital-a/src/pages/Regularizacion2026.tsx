@@ -1048,79 +1048,110 @@ export default function Regularizacion2026() {
     }
   };
 
-  const speakFromAutomation = async (instruction: string) => {
-    if (!instruction.trim()) return;
-    console.log("🎤 Mohamed quiere hablar proactivamente:", instruction);
+const speakFromAutomation = async (instruction: string) => {
+  if (!instruction.trim()) return;
+
+  console.log("🎤 Mohamed quiere hablar proactivamente:", instruction);
+
+  if (realtimeDcRef.current && realtimeDcRef.current.readyState === "open" && !assistantBusyRef.current) {
+    console.log("✅ Usando sesión existente");
     pendingAutomationPromptRef.current = instruction;
-    setPendingAutomationPrompt(instruction);
-    if (realtimeDcRef.current && realtimeDcRef.current.readyState === "open") {
-      if (!assistantBusyRef.current) {
-        await flushPendingAutomation();
+    await flushPendingAutomation();
+    return;
+  }
+
+  console.log("🔌 Creando sesión temporal...");
+  
+  try {
+    const sessionRes = await fetch("/api/realtime-session", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ assistant: "mohamed" }),
+    });
+
+    const sessionData = await sessionRes.json();
+    if (!sessionRes.ok || !sessionData?.value) {
+      throw new Error("No se pudo obtener token");
+    }
+
+    const ephemeralKey = sessionData.value;
+    const pc = new RTCPeerConnection();
+
+    pc.ontrack = (event) => {
+      const [remoteStream] = event.streams;
+      if (remoteStream && remoteAudioRef.current) {
+        console.log("🔊 Audio remoto recibido - Reproduciendo...");
+        remoteAudioRef.current.srcObject = remoteStream;
+        remoteAudioRef.current.autoplay = true;
+        remoteAudioRef.current.muted = false;
+        remoteAudioRef.current.volume = 1.0;
+        
+        remoteAudioRef.current.play().catch(err => {
+          console.error("❌ Error al reproducir:", err);
+          toast({
+            title: "Mohamed tiene algo que decir",
+            description: instruction.substring(0, 50) + "...",
+          });
+        });
       }
-      return;
-    }
-    console.log("🔌 Iniciando sesión temporal para mensaje proactivo...");
-    try {
-      const sessionRes = await fetch("/api/realtime-session", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ assistant: "mohamed" }),
-      });
-      const sessionData = await sessionRes.json();
-      if (!sessionRes.ok) throw new Error(sessionData?.error);
-      const ephemeralKey = sessionData?.value || "";
-      if (!ephemeralKey) throw new Error("No llegó ephemeral key");
-      const pc = new RTCPeerConnection();
-      pc.ontrack = (event) => {
-        const [remoteStream] = event.streams;
-        if (remoteStream && remoteAudioRef.current) {
-          remoteAudioRef.current.srcObject = remoteStream;
-          remoteAudioRef.current.autoplay = true;
-          remoteAudioRef.current.play().catch(console.error);
-        }
-      };
-      const dc = pc.createDataChannel("oai-events");
-      dc.onopen = async () => {
-        console.log("✅ Sesión temporal abierta");
-        dc.send(
-          JSON.stringify({
-            type: "conversation.item.create",
-            item: {
-              type: "message",
-              role: "user",
-              content: [{ type: "input_text", text: instruction }],
-            },
-          })
-        );
-        dc.send(
-          JSON.stringify({
-            type: "response.create",
-            response: { modalities: ["audio", "text"] },
-          })
-        );
-        setTimeout(() => {
-          dc.close();
-          pc.close();
-          console.log("🔌 Sesión temporal cerrada");
-        }, 10000);
-      };
-      const offer = await pc.createOffer();
-      await pc.setLocalDescription(offer);
-      const sdpRes = await fetch("https://api.openai.com/v1/realtime/calls", {
-        method: "POST",
-        body: offer.sdp,
-        headers: {
-          Authorization: `Bearer ${ephemeralKey}`,
-          "Content-Type": "application/sdp",
+    };
+
+    const dc = pc.createDataChannel("oai-events");
+    
+    dc.onopen = () => {
+      console.log("✅ Sesión lista - Enviando mensaje");
+      dc.send(JSON.stringify({
+        type: "conversation.item.create",
+        item: {
+          type: "message",
+          role: "user",
+          content: [{ type: "input_text", text: instruction }],
         },
-      });
-      if (!sdpRes.ok) throw new Error("Error negociando WebRTC");
-      const answerSdp = await sdpRes.text();
-      await pc.setRemoteDescription({ type: "answer", sdp: answerSdp });
-    } catch (error) {
-      console.error("❌ Error en sesión proactiva:", error);
-    }
-  };
+      }));
+      
+      dc.send(JSON.stringify({
+        type: "response.create",
+        response: { modalities: ["audio", "text"] },
+      }));
+    };
+
+    dc.onmessage = (event) => {
+      try {
+        const msg = JSON.parse(event.data);
+        if (msg.type === "response.done") {
+          console.log("✅ Respuesta completada - Cerrando en 2s");
+          setTimeout(() => {
+            dc.close();
+            pc.close();
+          }, 2000);
+        }
+      } catch (e) {}
+    };
+
+    const offer = await pc.createOffer();
+    await pc.setLocalDescription(offer);
+    
+    const sdpRes = await fetch("https://api.openai.com/v1/realtime/calls", {
+      method: "POST",
+      body: offer.sdp,
+      headers: {
+        Authorization: `Bearer ${ephemeralKey}`,
+        "Content-Type": "application/sdp",
+      },
+    });
+
+    if (!sdpRes.ok) throw new Error("Error en SDP");
+
+    const answerSdp = await sdpRes.text();
+    await pc.setRemoteDescription({ type: "answer", sdp: answerSdp });
+    
+    console.log("✅ Conexión WebRTC establecida");
+
+  } catch (error) {
+    console.error("❌ Error en speakFromAutomation:", error);
+    pushAgentMessage(instruction);
+  }
+};
 
   useEffect(() => {
     if (remoteAudioRef.current) {
