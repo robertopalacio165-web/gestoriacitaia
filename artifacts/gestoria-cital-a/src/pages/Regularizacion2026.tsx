@@ -59,7 +59,7 @@ type UserFormRow = {
   case_id: string | null;
   form_type: string;
   title: string | null;
-  form_: Record<string, any> | null;
+  form_ Record<string, any> | null;
 };
 
 function buildInitialDocs(procedureKey: string): StoredDocItem[] {
@@ -312,24 +312,23 @@ export default function Regularizacion2026() {
   useEffect(() => {
     let active = true;
     const loadAuth = async () => {
-  try {
-    const { data: { session } } = await supabase.auth.getSession();
-    
-    if (!active) return;
-    setCurrentUserId(session?.user?.id || "");
-    setAuthChecked(true);
-  } catch (error) {
-    console.error("Error cargando sesión:", error);
-    if (!active) return;
-    setCurrentUserId("");
-    setAuthChecked(true);
-  }
-};
+      try {
+        const {  { session } } = await supabase.auth.getSession();
+        if (!active) return;
+        setCurrentUserId(session?.user?.id || "");
+        setAuthChecked(true);
+      } catch (error) {
+        console.error("Error cargando sesión:", error);
+        if (!active) return;
+        setCurrentUserId("");
+        setAuthChecked(true);
+      }
+    };
     loadAuth();
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-  setCurrentUserId(session?.user?.id || "");
-  setAuthChecked(true);
-});
+    const {  { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setCurrentUserId(session?.user?.id || "");
+      setAuthChecked(true);
+    });
     return () => {
       active = false;
       subscription.unsubscribe();
