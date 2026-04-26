@@ -158,7 +158,7 @@ export default function Regularizacion2026() {
   const voiceTexts = useMemo(
     () => ({
       initialVoice:
-        "السلام عليكم، أنا محمد. غادي نعاونك خطوة بخطوة باش نراجع الملف ديالك. عمر ليا الفورمولار الأول، ومن بعد نكمل معاك بالصوت.",
+        "السلام عليكم، أنا محمد. غادي نعاونك خطوة بخطوة باش نراجع الملف ديالك. عمر ليا الفورمولار الأول، ومن بعد نكمل معاك الهدرة.",
       voiceBlocked:
         "عافاك عمر ليا الفورمولار الأول ومن بعد ضغط على الميكروفون باش نكمل معاك.",
       savedLeadReply:
@@ -787,7 +787,6 @@ export default function Regularizacion2026() {
     }
   };
 
-  // ─── FIX 2: flushPendingAutomation con reintentos si Mohammed está ocupado ───
   const flushPendingAutomation = async (retries = 0) => {
     const prompt = pendingAutomationPromptRef.current;
     if (!prompt) return;
@@ -819,8 +818,8 @@ export default function Regularizacion2026() {
 
     const intro =
       leadSaved || formConfirmed
-        ? "ابدأ أنت الكلام الآن مباشرة. لا تنتظر العميل. قل له الآن: مزيان. توصلت بالمعطيات ديالك. دابا غادي نكمل معاك خطوة بخطوة. ومن بعد اطرح عليه أول سؤال مهم في الملف. جاوب دائما بالدارجة المغربية وبالحروف العربية."
-        : "ابدأ أنت الكلام الآن مباشرة. لا تنتظر العميل. قل له الآن: السلام عليكم، أنا محمد. غادي نعاونك خطوة بخطوة باش نراجع الملف ديالك. عمر ليا الفورمولار الأول، ومن بعد نكمل معاك بالصوت. جاوب دائما بالدارجة المغربية وبالحروف العربية.";
+        ? "ابدأ أنت الكلام الآن مباشرة. لا تنتظر العميل. قل له الآن: مزيان. توصلت بالمعطيات ديالك. دابا غادي نكمل معاك ونسولك على الوثائق خطوة بخطوة."
+        : "ابدأ أنت الكلام الآن مباشرة. لا تنتظر العميل. قل له الآن: السلام عليكم، أنا محمد. غادي نعاونك خطوة بخطوة باش نراجع الملف ديالك. عمر ليا الفورمولار الأول، ومن بعد نكمل معاك الهدرة.";
 
     await askMohamedToSpeak(intro);
   };
@@ -852,6 +851,48 @@ export default function Regularizacion2026() {
       setIsListening(false);
       setWaitingMohamed(false);
     }
+  };
+
+  // ★ FUNCIÓN CLAVE: Asegura que Mohamed esté conectado
+  const ensureMohamedConnected = async (): Promise<boolean> => {
+    // Si ya está conectado, retorna true inmediatamente
+    if (realtimeDcRef.current && realtimeDcRef.current.readyState === "open") {
+      return true;
+    }
+
+    // Si está conectando, espera a que se complete
+    if (isConnectingRef.current) {
+      let attempts = 0;
+      while (isConnectingRef.current && attempts < 50) {
+        await new Promise((resolve) => setTimeout(resolve, 100));
+        attempts++;
+      }
+      return dcOpenedRef.current;
+    }
+
+    // Si no está conectado, inicia la conexión
+    return new Promise((resolve) => {
+      const startPromise = startListening();
+
+      // Espera a que se abra el canal de datos
+      const checkInterval = setInterval(() => {
+        if (dcOpenedRef.current) {
+          clearInterval(checkInterval);
+          resolve(true);
+        }
+      }, 100);
+
+      // Timeout después de 10 segundos
+      setTimeout(() => {
+        clearInterval(checkInterval);
+        resolve(false);
+      }, 10000);
+
+      startPromise.catch(() => {
+        clearInterval(checkInterval);
+        resolve(false);
+      });
+    });
   };
 
   const startListening = async () => {
@@ -925,15 +966,12 @@ export default function Regularizacion2026() {
       const dc = pc.createDataChannel("oai-events");
       realtimeDcRef.current = dc;
 
-      // ─── FIX 1 + FIX 3: dc.onopen corregido ───
       dc.onopen = async () => {
         dcOpenedRef.current = true;
         isConnectingRef.current = false;
         setIsListening(true);
         setWaitingMohamed(false);
 
-          // FIX 1: capturar el texto pendiente ANTES de cualquier await
-        // para no perderlo cuando la sesión async cambia de estado
         const capturedPending = pendingAutomationPromptRef.current;
 
         if (capturedPending) {
@@ -1061,7 +1099,6 @@ export default function Regularizacion2026() {
 
     pushAgentMessage(text);
 
-    // Guardar el texto antes de cualquier operación async
     pendingAutomationPromptRef.current = text;
     setPendingAutomationPrompt(text);
 
@@ -1073,11 +1110,9 @@ export default function Regularizacion2026() {
           setPendingAutomationPrompt("");
         }
       }
-      // Si está ocupado, flushPendingAutomation lo enviará cuando termine
       return;
     }
 
-    // Si no hay sesión abierta, iniciarla — el texto se enviará en dc.onopen (Fix 1)
     try {
       await startListening();
     } catch (error) {
@@ -1150,6 +1185,8 @@ export default function Regularizacion2026() {
         description: "Se han guardado los datos correctamente.",
       });
 
+      // ★ Asegura que Mohamed esté conectado ANTES de hablar
+      await ensureMohamedConnected();
       await speakExactText(savedMessage);
     } catch (error: any) {
       console.error("Error guardando formulario Mohamed:", error);
@@ -1355,6 +1392,19 @@ export default function Regularizacion2026() {
         setWaitingMohamed(true);
         setWaitingForDocument(false);
         assistantTextBufferRef.current = "";
+
+        // ★ Asegura que Mohamed esté conectado ANTES de procesar archivos
+        const connected = await ensureMohamedConnected();
+        if (!connected) {
+          toast({
+            title: "Error de conexión",
+            description: "No se pudo conectar con Mohamed. Intenta de nuevo.",
+            variant: "destructive",
+          });
+          setGeneralUploading(false);
+          setWaitingMohamed(false);
+          return;
+        }
 
         try {
           const {
