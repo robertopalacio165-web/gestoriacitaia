@@ -158,7 +158,7 @@ export default function Regularizacion2026() {
   const voiceTexts = useMemo(
     () => ({
       initialVoice:
-        "السلام عليكم، أنا محمد. غادي نعاونك خطوة بخطوة باش نراجع الملف ديالك. عمر ليا الفورمولار الأول، ومن بعد نكمل معاك الهدرة.",
+        "السلام عليكم، أنا محمد. غادي نعاونك خطوة بخطوة باش نراجع الملف ديالك. عمر ليا الفورمولار الأول، ومن بعد نكمل معاك بالصوت.",
       voiceBlocked:
         "عافاك عمر ليا الفورمولار الأول ومن بعد ضغط على الميكروفون باش نكمل معاك.",
       savedLeadReply:
@@ -223,7 +223,7 @@ export default function Regularizacion2026() {
           ciudad: "المدينة",
           nacionalidad: "الجنسية",
           fechaLlegada: "تاريخ الدخول لإسبانيا",
-          cumple5Meses: "و��ش عندك 5 شهور متواصلة؟",
+          cumple5Meses: "واش عندك 5 شهور متواصلة؟",
           asilo: "واش عندك طلب لجوء؟",
           penales: "سوابق عدلية",
           select: "اختر",
@@ -787,6 +787,7 @@ export default function Regularizacion2026() {
     }
   };
 
+  // ─── FIX 2: flushPendingAutomation con reintentos si Mohammed está ocupado ───
   const flushPendingAutomation = async (retries = 0) => {
     const prompt = pendingAutomationPromptRef.current;
     if (!prompt) return;
@@ -818,8 +819,8 @@ export default function Regularizacion2026() {
 
     const intro =
       leadSaved || formConfirmed
-        ? "ابدأ أنت الكلام الآن مباشرة. لا تنتظر العميل. قل له الآن: مزيان. توصلت بالمعطيات ديالك. دابا غادي نكمل معاك ونسولك على الوثائق خطوة بخطوة."
-        : "ابدأ أنت الكلام الآن مباشرة. لا تنتظر العميل. قل له الآن: السلام عليكم، أنا محمد. غادي نعاونك خطوة بخطوة باش نراجع الملف ديالك. عمر ليا الفورمولار الأول، ومن بعد نكمل معاك الهدرة.";
+        ? "ابدأ أنت الكلام الآن مباشرة. لا تنتظر العميل. قل له الآن: مزيان. توصلت بالمعطيات ديالك. دابا غادي نكمل معاك خطوة بخطوة. ومن بعد اطرح عليه أول سؤال مهم في الملف. جاوب دائما بالدارجة المغربية وبالحروف العربية."
+        : "ابدأ أنت الكلام الآن مباشرة. لا تنتظر العميل. قل له الآن: السلام عليكم، أنا محمد. غادي نعاونك خطوة بخطوة باش نراجع الملف ديالك. عمر ليا الفورمولار الأول، ومن بعد نكمل معاك بالصوت. جاوب دائما بالدارجة المغربية وبالحروف العربية.";
 
     await askMohamedToSpeak(intro);
   };
@@ -924,12 +925,15 @@ export default function Regularizacion2026() {
       const dc = pc.createDataChannel("oai-events");
       realtimeDcRef.current = dc;
 
+      // ─── FIX 1 + FIX 3: dc.onopen corregido ───
       dc.onopen = async () => {
         dcOpenedRef.current = true;
         isConnectingRef.current = false;
         setIsListening(true);
         setWaitingMohamed(false);
 
+          // FIX 1: capturar el texto pendiente ANTES de cualquier await
+        // para no perderlo cuando la sesión async cambia de estado
         const capturedPending = pendingAutomationPromptRef.current;
 
         if (capturedPending) {
@@ -1020,17 +1024,14 @@ export default function Regularizacion2026() {
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
 
-      const sdpRes = await fetch(
-        "https://api.openai.com/v1/realtime/calls?model=gpt-4o-realtime-preview-2024-12-17",
-        {
-          method: "POST",
-          body: offer.sdp,
-          headers: {
-            Authorization: `Bearer ${ephemeralKey}`,
-            "Content-Type": "application/sdp",
-          },
-        }
-      );
+      const sdpRes = await fetch("https://api.openai.com/v1/realtime/calls", {
+        method: "POST",
+        body: offer.sdp,
+        headers: {
+          Authorization: `Bearer ${ephemeralKey}`,
+          "Content-Type": "application/sdp",
+        },
+      });
 
       if (!sdpRes.ok) {
         const errText = await sdpRes.text();
@@ -1057,6 +1058,7 @@ export default function Regularizacion2026() {
 
     pushAgentMessage(text);
 
+    // Guardar el texto antes de cualquier operación async
     pendingAutomationPromptRef.current = text;
     setPendingAutomationPrompt(text);
 
@@ -1068,9 +1070,11 @@ export default function Regularizacion2026() {
           setPendingAutomationPrompt("");
         }
       }
+      // Si está ocupado, flushPendingAutomation lo enviará cuando termine
       return;
     }
 
+    // Si no hay sesión abierta, iniciarla — el texto se enviará en dc.onopen (Fix 1)
     try {
       await startListening();
     } catch (error) {
@@ -1317,28 +1321,10 @@ export default function Regularizacion2026() {
     if (readyNow && !completionMessageSent) {
       pushAgentMessage(voiceTexts.mohamedFinal);
       setCompletionMessageSent(true);
-      await speakFromAutomation("قل الآن للعميل باختصار: مزيان. كلشي واجد ومراجع. دابا غادي نجهزو ليك الملف النهائي باش يتبعث ليك فـ واتساب.");
+      await speakFromAutomation(
+        "قل الآن للعميل باختصار: مزيان. كلشي واجد ومراجع. دابا غادي نجهزو ليك الملف النهائي باش يتبعث ليك فـ واتساب."
+      );
     }
-  };
-
-  const connectMohamedIfNeeded = async () => {
-    const isConnected = realtimeDcRef.current && realtimeDcRef.current.readyState === "open";
-    if (isConnected) return;
-
-    await startListening();
-
-    await new Promise((resolve) => {
-      const checkInterval = setInterval(() => {
-        if (dcOpenedRef.current && realtimeDcRef.current?.readyState === "open") {
-          clearInterval(checkInterval);
-          resolve(null);
-        }
-      }, 100);
-      setTimeout(() => {
-        clearInterval(checkInterval);
-        resolve(null);
-      }, 8000);
-    });
   };
 
   const handleGeneralUpload = async () => {
@@ -1366,8 +1352,6 @@ export default function Regularizacion2026() {
         setWaitingMohamed(true);
         setWaitingForDocument(false);
         assistantTextBufferRef.current = "";
-
-        await connectMohamedIfNeeded();
 
         try {
           const {
@@ -1405,9 +1389,9 @@ export default function Regularizacion2026() {
 
               if (!matchedDoc) {
                 pushAgentMessage(voiceTexts.uploadUnknown);
-                if (realtimeDcRef.current?.readyState === "open") {
-                  await askMohamedToSpeak("توصلت بالوثيقة ولكن مازال ما تربطاتش مزيان مع الملف. صيفط ليا وثيقة أخرى باشكل واضح.");
-                }
+                await speakFromAutomation(
+                  `العميل صيفط دابا وثيقة سميتها ${file.name} ولكن مازال ما تربطاتش مزيان مع الملف. قل له شنو خاصو يصيفط بشكل واضح.`
+                );
                 toast({
                   title: ui.uploadErrorTitle,
                   description: result.summary || ui.uploadErrorDesc,
@@ -1497,12 +1481,7 @@ export default function Regularizacion2026() {
               await saveFullStateToSupabase(updatedDocs);
 
               const localReply = buildDocSpeech(matchedDoc.nombre, result, nextStatus);
-              pushAgentMessage(localReply);
-
-              if (realtimeDcRef.current?.readyState === "open" && !assistantBusyRef.current) {
-                await askMohamedToSpeak(localReply);
-                await new Promise((resolve) => setTimeout(resolve, 500));
-              }
+              await speakExactText(localReply);
 
               toast({
                 title: ui.uploadSuccessTitle,
@@ -1517,9 +1496,9 @@ export default function Regularizacion2026() {
                 description: err?.message || ui.uploadErrorDesc,
                 variant: "destructive",
               });
-              if (realtimeDcRef.current?.readyState === "open") {
-                await askMohamedToSpeak("وقع مشكل فقراءة الوثيقة. عاود يصيفطها بشكل واضح.");
-              }
+              await speakFromAutomation(
+                `وقع مشكل فقراءة أو حفظ الوثيقة ${file.name}. قول للعميل يعاود يصيفطها بشكل أوضح أو بصيغة أخرى.`
+              );
             }
           }
         } finally {
