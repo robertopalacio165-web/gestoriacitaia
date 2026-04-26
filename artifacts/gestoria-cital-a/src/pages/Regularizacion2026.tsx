@@ -59,7 +59,7 @@ type UserFormRow = {
   case_id: string | null;
   form_type: string;
   title: string | null;
-  form_data: Record<string, any> | null;
+  form_ Record<string, any> | null;
 };
 
 function buildInitialDocs(procedureKey: string): StoredDocItem[] {
@@ -116,7 +116,6 @@ export default function Regularizacion2026() {
   const [authChecked, setAuthChecked] = useState(false);
   const [currentUserId, setCurrentUserId] = useState("");
   const [formConfirmed, setFormConfirmed] = useState(false);
-  const [pendingAutomationPrompt, setPendingAutomationPrompt] = useState("");
 
   const [leadForm, setLeadForm] = useState<LeadFormState>({
     nombre: "",
@@ -142,7 +141,6 @@ export default function Regularizacion2026() {
   const lastAssistantTextRef = useRef("");
   const dcOpenedRef = useRef(false);
   const introAlreadySentRef = useRef(false);
-  const pendingAutomationPromptRef = useRef<string | null>(null);
   const isConnectingRef = useRef(false);
   const assistantBusyRef = useRef(false);
 
@@ -158,18 +156,8 @@ export default function Regularizacion2026() {
     () => ({
       initialVoice:
         "السلام عليكم، أنا محمد. غادي نعاونك خطوة بخطوة باش نراجع الملف ديالك. عمر ليا الفورمولار الأول، ومن بعد نكمل معاك بالصوت.",
-      voiceBlocked:
-        "عافاك عمر ليا الفورمولار الأول ومن بعد ضغط على الميكروفون باش نكمل معاك.",
       savedLeadReply:
         "مزيان. المعطيات ديالك تحفظات فالنظام. دابا نكمل معاك ونسولك على الوثائق خطوة بخطوة.",
-      passportVerified:
-        "مزيان. راجعت وثيقة الهوية ديالك. الاسم والبيانات باينين مزيان. دابا نكملو للخطوة اللي من بعدها.",
-      stayProofVerified:
-        "مزيان. راجعت بروفات السكن أو البقاء. هادشي كيعطينا أساس مزيان. دابا نشوفو شنو خاص من بعد.",
-      uploadWarn:
-        "توصلت بالوثيقة، ولكن خاصها شوية مراجعة أو نسخة أوضح.",
-      uploadUnknown:
-        "توصلت بالوثيقة، ولكن مازال خاصني نربطها مزيان مع الملف. صيفط ليا الوثيقة اللي طلبت منك بشكل واضح.",
       mohamedFinal:
         "مزيان. كلشي واجد ومراجع. دابا غادي نجهزو ليك الملف النهائي باش يتبعث ليك فـ واتساب.",
       realtimeError: "وقع مشكل فالاتصال المباشر مع محمد. عاود حاول من بعد.",
@@ -325,7 +313,7 @@ export default function Regularizacion2026() {
     let active = true;
     const loadAuth = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        const {  { session } } = await supabase.auth.getSession();
         if (!active) return;
         setCurrentUserId(session?.user?.id || "");
         setAuthChecked(true);
@@ -337,7 +325,7 @@ export default function Regularizacion2026() {
       }
     };
     loadAuth();
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const {  { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setCurrentUserId(session?.user?.id || "");
       setAuthChecked(true);
     });
@@ -346,68 +334,6 @@ export default function Regularizacion2026() {
       subscription.unsubscribe();
     };
   }, []);
-
-  useEffect(() => {
-    if (!currentUserId || !authChecked) return;
-    
-    const docsChannel = supabase
-      .channel(`docs-${currentUserId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "documentos_de_usuario",
-          filter: `user_id=eq.${currentUserId}`,
-        },
-        async (payload) => {
-          const newDoc = payload.new as any;
-          const docName = newDoc.title || newDoc.original_name || "documento";
-          let proactiveMessage = "";
-          
-          if (newDoc.document_type === "passport" || newDoc.document_type === "nie") {
-            proactiveMessage = `مزيان. توصلت بـ ${docName}. غادي نراجعو دابا ونشوف واش كلشي مزيان.`;
-          } else if (newDoc.document_type === "empadronamiento" || newDoc.document_type === "stay_proof") {
-            proactiveMessage = `مزيان. توصلت بـ ${docName}. هاد الوثيقة كتنفع كبرهان ديال البقاء.`;
-          } else {
-            proactiveMessage = `توصلت بـ ${docName}. غادي نراجعو دابا.`;
-          }
-          
-          setTimeout(() => {
-            speakFromAutomation(proactiveMessage);
-          }, 1500);
-        }
-      )
-      .subscribe();
-
-    const formsChannel = supabase
-      .channel(`forms-${currentUserId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "formularios_de_usuario",
-          filter: `user_id=eq.${currentUserId}`,
-        },
-        async (payload) => {
-          const formData = payload.new as any;
-          if (formData.form_type === "regularizacion_2026") {
-            setTimeout(() => {
-              speakFromAutomation(
-                "مزيان. المعطيات ديالك تحفظات فالنظام. دابا غادي نكمل معاك خطوة بخطوة."
-              );
-            }, 1000);
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(docsChannel);
-      supabase.removeChannel(formsChannel);
-    };
-  }, [currentUserId, authChecked]);
 
   useEffect(() => {
     try {
@@ -508,6 +434,155 @@ export default function Regularizacion2026() {
     }
   }, [voiceHistory, historyStorageKey]);
 
+  const updateLeadForm = (field: keyof LeadFormState, value: string) => {
+    setLeadForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const pushAgentMessage = (text: string) => {
+    if (!text?.trim()) return;
+    setVoiceHistory((prev) => [
+      ...prev,
+      { from: "agent", text, ts: Date.now() },
+    ]);
+    lastAssistantTextRef.current = text;
+  };
+
+  const pushUserMessage = (text: string) => {
+    if (!text?.trim()) return;
+    setVoiceHistory((prev) => [
+      ...prev,
+      { from: "user", text, ts: Date.now() },
+    ]);
+  };
+
+  const handleSaveLeadForm = async () => {
+    console.log("🔵 INICIANDO GUARDADO DE FORMULARIO");
+    
+    if (!leadFormReady) {
+      console.log("❌ Formulario incompleto");
+      toast({
+        title: ui.missingTitle,
+        description: ui.missingDesc,
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (!authChecked) {
+      console.log("⏳ Esperando autenticación...");
+      toast({
+        title: "Espera",
+        description: "Estamos comprobando tu sesión.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (!currentUserId) {
+      console.log("❌ No hay usuario autenticado");
+      toast({
+        title: "Sesión no detectada",
+        description: "Debes entrar con Google antes de confirmar.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    try {
+      setSavingForm(true);
+      console.log("✅ Iniciando guardado en Supabase...");
+      
+      const payload = {
+        applicant: {
+          nombre: leadForm.nombre,
+          telefono: leadForm.telefono,
+          nie_pasaporte: leadForm.niePasaporte,
+          ciudad: leadForm.ciudad,
+          nacionalidad: leadForm.nacionalidad,
+          fecha_llegada: leadForm.fechaLlegada,
+          cumple_5_meses: leadForm.cumple5Meses,
+          asilo: leadForm.asilo,
+          penales: leadForm.penales,
+        },
+        procedure: {
+          key: selectedSituacion,
+          name: currentProcedure.name,
+        },
+        updated_at: new Date().toISOString(),
+      };
+
+      const rowData = {
+        user_id: currentUserId,
+        case_id: null,
+        form_type: "regularizacion_2026",
+        title: "Formulario Mohamed Regularización 2026",
+        form_ payload,
+        status: "draft",
+        updated_at: new Date().toISOString(),
+      };
+
+      console.log("📤 Enviando a Supabase:", rowData);
+
+      const {  existingForm } = await supabase
+        .from("formularios_de_usuario")
+        .select("id")
+        .eq("user_id", currentUserId)
+        .eq("form_type", "regularizacion_2026")
+        .limit(1)
+        .maybeSingle<UserFormRow>();
+
+      let error;
+      if (existingForm?.id) {
+        console.log("✏️ Actualizando formulario existente:", existingForm.id);
+        const { error: updateError } = await supabase
+          .from("formularios_de_usuario")
+          .update(rowData)
+          .eq("id", existingForm.id);
+        error = updateError;
+      } else {
+        console.log("➕ Insertando nuevo formulario");
+        const { error: insertError } = await supabase
+          .from("formularios_de_usuario")
+          .insert(rowData);
+        error = insertError;
+      }
+
+      if (error) {
+        console.error("❌ Error en Supabase:", error);
+        throw new Error(error.message);
+      }
+
+      console.log("✅ Formulario guardado correctamente");
+      setLeadSaved(true);
+      setFormConfirmed(true);
+      
+      toast({
+        title: ui.saveLeadTitle,
+        description: "Se han guardado los datos correctamente.",
+      });
+      
+      pushAgentMessage(voiceTexts.savedLeadReply);
+      
+    } catch (error: any) {
+      console.error("❌ ERROR CRÍTICO:", error);
+      toast({
+        title: "Error guardando formulario",
+        description: error?.message || "No se pudo guardar en Supabase",
+        variant: "destructive",
+      });
+    } finally {
+      setSavingForm(false);
+    }
+  };
+
+  const goToSara = () => {
+    window.location.href = "/buscar-citas";
+  };
+
+  const latestAgentMessage =
+    [...voiceHistory].reverse().find((msg) => msg.from === "agent")?.text ||
+    voiceTexts.initialVoice;
+
   const identityDocs = docs.filter((doc) => {
     const expected = normalizeDocType(doc.expectedType);
     const detected = normalizeDocType(doc.detectedType);
@@ -580,958 +655,6 @@ export default function Regularizacion2026() {
   const progressOk = progressCards.filter((item) => item.estado === "ok").length;
   const progressTotal = progressCards.length;
   const allReady = finalFileStatus === "ok";
-
-  const updateLeadForm = (field: keyof LeadFormState, value: string) => {
-    setLeadForm((prev) => ({ ...prev, [field]: value }));
-  };
-
-  const pushAgentMessage = (text: string) => {
-    if (!text?.trim()) return;
-    setVoiceHistory((prev) => [
-      ...prev,
-      { from: "agent", text, ts: Date.now() },
-    ]);
-    lastAssistantTextRef.current = text;
-  };
-
-  const pushUserMessage = (text: string) => {
-    if (!text?.trim()) return;
-    setVoiceHistory((prev) => [
-      ...prev,
-      { from: "user", text, ts: Date.now() },
-    ]);
-  };
-
-  const buildSavedFormSpeech = () => {
-    return "مزيان. المعطيات ديالك تحفظات فالنظام. دابا غادي نكمل معاك ونسولك على الوثائق خطوة بخطوة.";
-  };
-
-  const buildDocSpeech = (
-    matchedDocName: string,
-    result: VerifyDocumentResult,
-    nextStatus: DocStatus
-  ) => {
-    const parts: string[] = [];
-    const docName = matchedDocName || "الوثيقة";
-    parts.push(`مزيان. توصلت بـ ${docName}.`);
-    if (result.document_type === "passport") {
-      parts.push("هاد الوثيقة هي الباسبور.");
-    } else if (result.document_type === "nie") {
-      parts.push("هاد الوثيقة هي NIE.");
-    } else if (result.document_type === "tie") {
-      parts.push("هاد الوثيقة هي TIE.");
-    } else if (result.document_type === "empadronamiento") {
-      parts.push("هاد الوثيقة هي empadronamiento.");
-    } else if (result.document_type === "stay_proof") {
-      parts.push("هاد الوثيقة كتنفع كبرهان ديال البقاء.");
-    }
-    if (result.full_name) {
-      parts.push(`الاسم اللي باين هو ${result.full_name}.`);
-    }
-    if (result.birth_date) {
-      parts.push(`تاريخ الازدياد الباين هو ${result.birth_date}.`);
-    }
-    if (result.passport_number) {
-      parts.push(`رقم الباسبور الباين هو ${result.passport_number}.`);
-    } else if (result.document_number) {
-      parts.push(`الرقم الباين هو ${result.document_number}.`);
-    }
-    if (nextStatus === "ok") {
-      parts.push("الوثيقة باينة مزيان ومقبولة.");
-    } else {
-      parts.push("الوثيقة توصلت بها ولكن خاصها مراجعة ولا نسخة أوضح.");
-    }
-    const lowerName = (matchedDocName || "").toLowerCase();
-    if (
-      lowerName.includes("pasaporte") ||
-      lowerName.includes("passport") ||
-      lowerName.includes("nie")
-    ) {
-      parts.push("دابا صيفط ليا بروفات ديال 5 شهور إلا باقي ما صيفطتيهمش.");
-    } else if (
-      lowerName.includes("empadronamiento") ||
-      lowerName.includes("padron") ||
-      lowerName.includes("padrón") ||
-      lowerName.includes("prueba de permanencia")
-    ) {
-      parts.push("دابا صيفط ليا الباسبور ولا NIE إلا باقي.");
-    } else {
-      parts.push("دابا غادي نطلب منك الوثيقة اللي من بعدها.");
-    }
-    return parts.join(" ");
-  };
-
-  const finalizeAssistantBuffer = () => {
-    const text = assistantTextBufferRef.current.trim();
-    if (!text) return;
-    assistantTextBufferRef.current = "";
-    if (text === "..." || text === "…") return;
-    if (text === lastAssistantTextRef.current) return;
-    pushAgentMessage(text);
-    const lower = text.toLowerCase();
-    const asksForDocument =
-      lower.includes("صيفط") ||
-      lower.includes("الوثيقة") ||
-      lower.includes("الباسبور") ||
-      lower.includes("passport") ||
-      lower.includes("nie") ||
-      lower.includes("pdf") ||
-      lower.includes("empadronamiento") ||
-      lower.includes("padrón") ||
-      lower.includes("padron") ||
-      lower.includes("pruebas") ||
-      lower.includes("بروفات");
-    setWaitingForDocument(asksForDocument);
-  };
-
-  const saveFullStateToSupabase = async (nextDocs?: StoredDocItem[]) => {
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user?.id) {
-      throw new Error("No hay usuario conectado en Supabase");
-    }
-    const docsToSave = nextDocs || docs;
-    const payload = {
-      applicant: {
-        nombre: leadForm.nombre || "",
-        telefono: leadForm.telefono || "",
-        nie_pasaporte: leadForm.niePasaporte || "",
-        ciudad: leadForm.ciudad || "",
-        nacionalidad: leadForm.nacionalidad || "",
-        fecha_llegada: leadForm.fechaLlegada || "",
-        cumple_5_meses: leadForm.cumple5Meses || "",
-        asilo: leadForm.asilo || "",
-        penales: leadForm.penales || "",
-      },
-      procedure: {
-        key: selectedSituacion,
-        name: currentProcedure.name,
-      },
-      documents: docsToSave,
-      progress: {
-        formCompletedStatus:
-          leadSaved || formConfirmed || leadFormReady ? "ok" : "missing",
-        stayProofStatus:
-          docsToSave.some(
-            (doc) =>
-              (normalizeDocType(doc.expectedType) === "empadronamiento" ||
-                normalizeDocType(doc.expectedType) === "stay_proof") &&
-              doc.estado === "ok"
-          )
-            ? "ok"
-            : "missing",
-        identityStatus:
-          docsToSave.some(
-            (doc) =>
-              (normalizeDocType(doc.expectedType) === "passport" ||
-                normalizeDocType(doc.expectedType) === "nie" ||
-                normalizeDocType(doc.expectedType) === "tie") &&
-              doc.estado === "ok"
-          )
-            ? "ok"
-            : "missing",
-      },
-      updated_at: new Date().toISOString(),
-    };
-    const { data: existingForm } = await supabase
-      .from("formularios_de_usuario")
-      .select("id")
-      .eq("user_id", user.id)
-      .eq("form_type", "regularizacion_2026")
-      .limit(1)
-      .maybeSingle<UserFormRow>();
-    const rowData = {
-      user_id: user.id,
-      case_id: null,
-      form_type: "regularizacion_2026",
-      title: "Formulario Mohamed Regularización 2026",
-      form_data: payload,
-      status: "draft",
-      updated_at: new Date().toISOString(),
-    };
-    if (existingForm?.id) {
-      const { error: updateError } = await supabase
-        .from("formularios_de_usuario")
-        .update(rowData)
-        .eq("id", existingForm.id);
-      if (updateError) throw new Error(updateError.message);
-    } else {
-      const { error: insertError } = await supabase
-        .from("formularios_de_usuario")
-        .insert(rowData);
-      if (insertError) throw new Error(insertError.message);
-    }
-    return user.id;
-  };
-
-  const askMohamedToSpeak = async (instruction: string) => {
-    try {
-      if (!realtimeDcRef.current) return false;
-      if (realtimeDcRef.current.readyState !== "open") return false;
-      setWaitingMohamed(true);
-      assistantTextBufferRef.current = "";
-      realtimeDcRef.current.send(
-        JSON.stringify({
-          type: "conversation.item.create",
-          item: {
-            type: "message",
-            role: "user",
-            content: [{ type: "input_text", text: instruction }],
-          },
-        })
-      );
-      realtimeDcRef.current.send(
-        JSON.stringify({
-          type: "response.create",
-          response: { modalities: ["audio", "text"] },
-        })
-      );
-      return true;
-    } catch (error) {
-      console.error("Error pidiendo respuesta realtime:", error);
-      return false;
-    }
-  };
-
-  const flushPendingAutomation = async (retries = 0) => {
-    const prompt = pendingAutomationPromptRef.current;
-    if (!prompt) return;
-    if (!realtimeDcRef.current) return;
-    if (realtimeDcRef.current.readyState !== "open") return;
-    if (assistantBusyRef.current) {
-      if (retries < 6) {
-        setTimeout(() => flushPendingAutomation(retries + 1), 300);
-      }
-      return;
-    }
-    const ok = await askMohamedToSpeak(prompt);
-    if (ok) {
-      pendingAutomationPromptRef.current = null;
-      setPendingAutomationPrompt("");
-    }
-  };
-
-  const maybeSendIntroToMohamed = async () => {
-    if (!dcOpenedRef.current) return;
-    if (!realtimeDcRef.current) return;
-    if (realtimeDcRef.current.readyState !== "open") return;
-    if (introAlreadySentRef.current) return;
-    if (pendingAutomationPromptRef.current) return;
-    introAlreadySentRef.current = true;
-    const intro =
-      leadSaved || formConfirmed
-        ? "ابدأ أنت الكلام الآن مباشرة. لا تنتظر العميل. قل له الآن: مزيان. توصلت بالمعطيات ديالك. دابا غادي نكمل معاك خطوة بخطوة. ومن بعد اطرح عليه أول سؤال مهم في الملف. جاوب دائما بالدارجة المغربية وبالحروف العربية."
-        : "ابدأ أنت الكلام الآن مباشرة. لا تنتظر العميل. قل له الآن: السلام عليكم، أنا محمد. غادي نعاونك خطوة بخطوة باش نراجع الملف ديالك. عمر ليا الفورمولار الأول، ومن بعد نكمل معاك بالصوت. جاوب دائما بالدارجة المغربية وبالحروف العربية.";
-    await askMohamedToSpeak(intro);
-  };
-
-  const stopListening = () => {
-    try {
-      realtimeDcRef.current?.close();
-      realtimeDcRef.current = null;
-      realtimePcRef.current?.close();
-      realtimePcRef.current = null;
-      if (realtimeLocalStreamRef.current) {
-        realtimeLocalStreamRef.current.getTracks().forEach((track) => track.stop());
-        realtimeLocalStreamRef.current = null;
-      }
-      if (remoteAudioRef.current) {
-        remoteAudioRef.current.pause();
-        remoteAudioRef.current.srcObject = null;
-      }
-    } catch (error) {
-      console.error("Error deteniendo realtime:", error);
-    } finally {
-      dcOpenedRef.current = false;
-      introAlreadySentRef.current = false;
-      assistantBusyRef.current = false;
-      isConnectingRef.current = false;
-      setIsListening(false);
-      setWaitingMohamed(false);
-    }
-  };
-
-  const startListening = async () => {
-    if (!voiceSupported) {
-      toast({
-        title: "Error",
-        description: ui.micNotSupported,
-        variant: "destructive",
-      });
-      return;
-    }
-    if (isConnectingRef.current) return;
-    if (realtimeDcRef.current && realtimeDcRef.current.readyState === "open") return;
-    try {
-      isConnectingRef.current = true;
-      setWaitingMohamed(true);
-      const sessionRes = await fetch("/api/realtime-session", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ assistant: "mohamed" }),
-      });
-      const sessionData = await sessionRes.json();
-      if (!sessionRes.ok) {
-        throw new Error(sessionData?.error || "Error creando sesión realtime");
-      }
-      const ephemeralKey = sessionData?.value || "";
-      if (!ephemeralKey) {
-        throw new Error("No llegó value desde realtime-session");
-      }
-      const pc = new RTCPeerConnection();
-      realtimePcRef.current = pc;
-      pc.ontrack = (event) => {
-        const [remoteStream] = event.streams;
-        if (remoteStream && remoteAudioRef.current) {
-          remoteAudioRef.current.srcObject = remoteStream;
-          remoteAudioRef.current.autoplay = true;
-          remoteAudioRef.current.playsInline = true;
-          remoteAudioRef.current.muted = false;
-          remoteAudioRef.current.volume = muted ? 0 : 1;
-          const playPromise = remoteAudioRef.current.play();
-          if (playPromise) {
-            playPromise.catch((err) => {
-              console.error("Error reproduciendo audio remoto Mohamed:", err);
-            });
-          }
-        }
-      };
-      const localStream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true,
-        },
-      });
-      realtimeLocalStreamRef.current = localStream;
-      for (const track of localStream.getTracks()) {
-        pc.addTrack(track, localStream);
-      }
-      const dc = pc.createDataChannel("oai-events");
-      realtimeDcRef.current = dc;
-      dc.onopen = async () => {
-        dcOpenedRef.current = true;
-        isConnectingRef.current = false;
-        setIsListening(true);
-        setWaitingMohamed(false);
-        dc.send(
-          JSON.stringify({
-            type: "session.update",
-            session: {
-              turn_detection: {
-                type: "server_vad",
-                threshold: 0.75,
-                prefix_padding_ms: 300,
-                silence_duration_ms: 800,
-              },
-            },
-          })
-        );
-        const capturedPending = pendingAutomationPromptRef.current;
-        if (capturedPending) {
-          pendingAutomationPromptRef.current = null;
-          setPendingAutomationPrompt("");
-          setTimeout(() => {
-            void askMohamedToSpeak(capturedPending);
-          }, 400);
-          return;
-        }
-        setTimeout(() => {
-          void maybeSendIntroToMohamed();
-        }, 500);
-      };
-      dc.onmessage = (event) => {
-        try {
-          const msg = JSON.parse(event.data);
-          const userTranscript =
-            msg?.transcript ||
-            msg?.item?.transcript ||
-            msg?.item?.content?.[0]?.transcript ||
-            "";
-          if (
-            (msg.type === "conversation.item.input_audio_transcription.completed" ||
-              msg.type === "input_audio_buffer.transcription.completed") &&
-            typeof userTranscript === "string" &&
-            userTranscript.trim()
-          ) {
-            const transcript = userTranscript.trim();
-            if (transcript !== lastUserTranscriptRef.current) {
-              lastUserTranscriptRef.current = transcript;
-              setLastUserTranscript(transcript);
-              pushUserMessage(transcript);
-            }
-          }
-          if (
-            msg.type === "response.output_text.delta" &&
-            typeof msg.delta === "string"
-          ) {
-            assistantTextBufferRef.current += msg.delta;
-          }
-          if (
-            msg.type === "response.output_text.done" &&
-            typeof msg.text === "string" &&
-            msg.text.trim()
-          ) {
-            assistantTextBufferRef.current = msg.text.trim();
-          }
-          if (msg.type === "response.created") {
-            assistantBusyRef.current = true;
-            setWaitingMohamed(true);
-          }
-          if (msg.type === "response.done") {
-            assistantBusyRef.current = false;
-            finalizeAssistantBuffer();
-            setWaitingMohamed(false);
-            pendingAutomationPromptRef.current = null;
-            setPendingAutomationPrompt("");
-            setTimeout(() => {
-              void flushPendingAutomation();
-            }, 150);
-          }
-        } catch (err) {
-          console.error("Realtime event parse error:", err);
-        }
-      };
-      dc.onerror = (err) => {
-        console.error("Realtime data channel error:", err);
-      };
-      dc.onclose = () => {
-        dcOpenedRef.current = false;
-        isConnectingRef.current = false;
-        assistantBusyRef.current = false;
-        setIsListening(false);
-      };
-      const offer = await pc.createOffer();
-      await pc.setLocalDescription(offer);
-      const sdpRes = await fetch("https://api.openai.com/v1/realtime/calls", {
-        method: "POST",
-        body: offer.sdp,
-        headers: {
-          Authorization: `Bearer ${ephemeralKey}`,
-          "Content-Type": "application/sdp",
-        },
-      });
-      if (!sdpRes.ok) {
-        const errText = await sdpRes.text();
-        throw new Error(errText || "Error negociando WebRTC con OpenAI");
-      }
-      const answerSdp = await sdpRes.text();
-      await pc.setRemoteDescription({ type: "answer", sdp: answerSdp });
-    } catch (error: any) {
-      console.error("Error iniciando realtime Mohamed:", error);
-      stopListening();
-      toast({
-        title: "Error realtime",
-        description: error?.message || voiceTexts.realtimeError,
-        variant: "destructive",
-      });
-    } finally {
-      isConnectingRef.current = false;
-    }
-  };
-
-  const speakExactText = async (text: string) => {
-    if (!text.trim()) return;
-    pushAgentMessage(text);
-    pendingAutomationPromptRef.current = text;
-    setPendingAutomationPrompt(text);
-    if (realtimeDcRef.current && realtimeDcRef.current.readyState === "open") {
-      if (!assistantBusyRef.current) {
-        const ok = await askMohamedToSpeak(text);
-        if (ok) {
-          pendingAutomationPromptRef.current = null;
-          setPendingAutomationPrompt("");
-        }
-      }
-      return;
-    }
-    try {
-      await startListening();
-    } catch (error) {
-      console.error("Error iniciando realtime para hablar texto exacto:", error);
-    }
-  };
-
-  const speakFromAutomation = async (instruction: string) => {
-    if (!instruction.trim()) return;
-
-    console.log("🎤 Mohamed quiere hablar proactivamente:", instruction);
-    pendingAutomationPromptRef.current = instruction;
-    setPendingAutomationPrompt(instruction);
-
-    console.log("🔌 Creando sesión temporal para mensaje proactivo...");
-
-    try {
-      const sessionRes = await fetch("/api/realtime-session", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ assistant: "mohamed" }),
-      });
-
-      const sessionData = await sessionRes.json();
-      if (!sessionRes.ok || !sessionData?.value) {
-        throw new Error("No se pudo obtener token de sesión");
-      }
-
-      const ephemeralKey = sessionData.value;
-      const pc = new RTCPeerConnection();
-
-      pc.ontrack = (event) => {
-        const [remoteStream] = event.streams;
-        if (remoteStream && remoteAudioRef.current) {
-          console.log("🔊 Audio remoto recibido");
-          remoteAudioRef.current.srcObject = remoteStream;
-          remoteAudioRef.current.autoplay = true;
-          remoteAudioRef.current.muted = false;
-          remoteAudioRef.current.volume = 1.0;
-
-          const playPromise = remoteAudioRef.current.play();
-          if (playPromise !== undefined) {
-            playPromise.catch((err) => {
-              console.error("❌ Error al reproducir audio:", err);
-            });
-          }
-        }
-      };
-
-      const dc = pc.createDataChannel("oai-events");
-
-      dc.onopen = async () => {
-        console.log("✅ Sesión temporal lista. Enviando mensaje...");
-        dc.send(
-          JSON.stringify({
-            type: "conversation.item.create",
-            item: {
-              type: "message",
-              role: "user",
-              content: [{ type: "input_text", text: instruction }],
-            },
-          })
-        );
-        dc.send(
-          JSON.stringify({
-            type: "response.create",
-            response: { modalities: ["audio", "text"] },
-          })
-        );
-      };
-
-      dc.onmessage = (event) => {
-        try {
-          const msg = JSON.parse(event.data);
-          if (msg.type === "response.done") {
-            console.log("✅ Audio terminado. Cerrando sesión temporal...");
-            setTimeout(() => {
-              dc.close();
-              pc.close();
-            }, 1000);
-          }
-        } catch (e) {}
-      };
-
-      const offer = await pc.createOffer();
-      await pc.setLocalDescription(offer);
-
-      const sdpRes = await fetch("https://api.openai.com/v1/realtime/calls", {
-        method: "POST",
-        body: offer.sdp,
-        headers: {
-          Authorization: `Bearer ${ephemeralKey}`,
-          "Content-Type": "application/sdp",
-        },
-      });
-
-      if (!sdpRes.ok) throw new Error("Error al negociar WebRTC");
-
-      const answerSdp = await sdpRes.text();
-      await pc.setRemoteDescription({ type: "answer", sdp: answerSdp });
-
-    } catch (error) {
-      console.error("❌ Error en sesión proactiva:", error);
-      pushAgentMessage(instruction);
-    }
-  };
-
-  useEffect(() => {
-    if (remoteAudioRef.current) {
-      remoteAudioRef.current.volume = muted ? 0 : 1;
-      remoteAudioRef.current.muted = false;
-    }
-  }, [muted]);
-
-  const handleSaveLeadForm = async () => {
-    if (!leadFormReady) {
-      toast({
-        title: ui.missingTitle,
-        description: ui.missingDesc,
-        variant: "destructive",
-      });
-      return;
-    }
-    if (!authChecked) {
-      toast({
-        title: "Espera",
-        description: "Estamos comprobando tu sesión.",
-        variant: "destructive",
-      });
-      return;
-    }
-    if (!currentUserId) {
-      toast({
-        title: "Sesión no detectada",
-        description: "Debes entrar con Google antes de confirmar.",
-        variant: "destructive",
-      });
-      pushAgentMessage("عافاك دخل بحسابك أولاً، ومن بعد عاود دير تأكيد باش نكملو.");
-      return;
-    }
-    try {
-      setSavingForm(true);
-      await saveFullStateToSupabase();
-      setLeadSaved(true);
-      setFormConfirmed(true);
-      const savedMessage = buildSavedFormSpeech();
-      toast({
-        title: ui.saveLeadTitle,
-        description: "Se han guardado los datos correctamente.",
-      });
-      await speakExactText(savedMessage);
-    } catch (error: any) {
-      console.error("Error guardando formulario Mohamed:", error);
-      toast({
-        title: "Error guardando formulario",
-        description: error?.message || "No se pudo guardar en Supabase",
-        variant: "destructive",
-      });
-      pushAgentMessage("وقع مشكل فحفظ المعطيات. عافاك عاود دير تأكيد مرة أخرى.");
-    } finally {
-      setSavingForm(false);
-    }
-  };
-
-  const getBestDocMatch = (
-    result: VerifyDocumentResult,
-    currentDocs: StoredDocItem[],
-    fileName?: string
-  ): StoredDocItem | null => {
-    const detectedType = normalizeDocType(result?.document_type || "");
-    const lowerFileName = (fileName || "").toLowerCase();
-    const combinedText = [
-      result?.summary || "",
-      ...(result?.visible_fields || []),
-      ...(result?.missing_or_unclear_fields || []),
-      ...(result?.warnings || []),
-      result?.stay_proof_reason || "",
-      lowerFileName,
-    ]
-      .join(" ")
-      .toLowerCase();
-    const includesAny = (words: string[]) =>
-      words.some((word) => combinedText.includes(word));
-    const findIdentityDoc = () =>
-      currentDocs.find(
-        (doc) =>
-          doc.estado !== "ok" &&
-          (normalizeDocType(doc.expectedType) === "passport" ||
-            normalizeDocType(doc.expectedType) === "nie" ||
-            normalizeDocType(doc.expectedType) === "tie" ||
-            doc.nombre.toLowerCase().includes("pasaporte") ||
-            doc.nombre.toLowerCase().includes("passport") ||
-            doc.nombre.toLowerCase().includes("nie"))
-      ) ||
-      currentDocs.find(
-        (doc) =>
-          normalizeDocType(doc.expectedType) === "passport" ||
-          normalizeDocType(doc.expectedType) === "nie" ||
-          normalizeDocType(doc.expectedType) === "tie" ||
-          doc.nombre.toLowerCase().includes("pasaporte") ||
-          doc.nombre.toLowerCase().includes("passport") ||
-          doc.nombre.toLowerCase().includes("nie")
-      ) ||
-      null;
-    const findStayProofDoc = () =>
-      currentDocs.find(
-        (doc) =>
-          doc.estado !== "ok" &&
-          (normalizeDocType(doc.expectedType) === "empadronamiento" ||
-            normalizeDocType(doc.expectedType) === "stay_proof" ||
-            doc.nombre.toLowerCase().includes("empadronamiento") ||
-            doc.nombre.toLowerCase().includes("padron") ||
-            doc.nombre.toLowerCase().includes("padrón") ||
-            doc.nombre.toLowerCase().includes("prueba de permanencia"))
-      ) ||
-      currentDocs.find(
-        (doc) =>
-          normalizeDocType(doc.expectedType) === "empadronamiento" ||
-          normalizeDocType(doc.expectedType) === "stay_proof" ||
-          doc.nombre.toLowerCase().includes("empadronamiento") ||
-          doc.nombre.toLowerCase().includes("padron") ||
-          doc.nombre.toLowerCase().includes("padrón") ||
-          doc.nombre.toLowerCase().includes("prueba de permanencia")
-      ) ||
-      null;
-    if (detectedType === "passport" || detectedType === "nie" || detectedType === "tie") {
-      const identityDoc = findIdentityDoc();
-      if (identityDoc) return identityDoc;
-    }
-    if (
-      detectedType === "empadronamiento" ||
-      detectedType === "stay_proof" ||
-      result?.recommended_bucket === "stay_proof" ||
-      result?.is_stay_proof === true
-    ) {
-      const stayProofDoc = findStayProofDoc();
-      if (stayProofDoc) return stayProofDoc;
-    }
-    if (
-      includesAny([
-        "passport", "pasaporte", "nie", "tie",
-        "tarjeta de identidad", "documento identidad",
-      ])
-    ) {
-      const identityDoc = findIdentityDoc();
-      if (identityDoc) return identityDoc;
-    }
-    if (
-      includesAny([
-        "empadronamiento", "padron", "padrón", "prueba de permanencia",
-        "stay proof", "ticket", "factura", "nomina", "nómina",
-        "cita médica",
-      ])
-    ) {
-      const stayProofDoc = findStayProofDoc();
-      if (stayProofDoc) return stayProofDoc;
-    }
-    if (lowerFileName) {
-      if (
-        lowerFileName.includes("padron") ||
-        lowerFileName.includes("padrón") ||
-        lowerFileName.includes("empadronamiento")
-      ) {
-        const stayProofDoc = findStayProofDoc();
-        if (stayProofDoc) return stayProofDoc;
-      }
-      if (
-        lowerFileName.includes("pasaporte") ||
-        lowerFileName.includes("passport") ||
-        lowerFileName.includes("nie") ||
-        lowerFileName.includes("tie")
-      ) {
-        const identityDoc = findIdentityDoc();
-        if (identityDoc) return identityDoc;
-      }
-    }
-    return (
-      currentDocs.find((doc) => doc.estado === "missing") ||
-      currentDocs.find((doc) => doc.estado === "warn") ||
-      null
-    );
-  };
-
-  const maybeSendCompletionMessage = async (nextDocs: StoredDocItem[]) => {
-    const nextIdentityOk = nextDocs.some((doc) => {
-      const expected = normalizeDocType(doc.expectedType);
-      const detected = normalizeDocType(doc.detectedType);
-      const name = doc.nombre.toLowerCase();
-      return (
-        (expected === "passport" || expected === "nie" || expected === "tie" ||
-          detected === "passport" || detected === "nie" || detected === "tie" ||
-          name.includes("pasaporte") || name.includes("passport") || name.includes("nie")) &&
-        doc.estado === "ok"
-      );
-    });
-    const nextStayOk = nextDocs.some((doc) => {
-      const expected = normalizeDocType(doc.expectedType);
-      const detected = normalizeDocType(doc.detectedType);
-      const name = doc.nombre.toLowerCase();
-      return (
-        (expected === "empadronamiento" || expected === "stay_proof" ||
-          detected === "empadronamiento" || detected === "stay_proof" ||
-          name.includes("empadronamiento") || name.includes("padron") ||
-          name.includes("padrón") || name.includes("prueba de permanencia")) &&
-        doc.estado === "ok"
-      );
-    });
-    const readyNow = (leadSaved || formConfirmed) && nextStayOk && nextIdentityOk;
-    if (readyNow && !completionMessageSent) {
-      pushAgentMessage(voiceTexts.mohamedFinal);
-      setCompletionMessageSent(true);
-      await speakFromAutomation(
-        "قل الآن للعميل باختصار: مزيان. كلشي واجد ومراجع. دابا غادي نجهزو ليك الملف النهائي باش يتبعث ليك فـ واتساب."
-      );
-    }
-  };
-
-  const handleGeneralUpload = async () => {
-    if (!leadSaved || !formConfirmed) {
-      pushAgentMessage("عافاك عمر الفورمولار الأول ودير تأكيد، ومن بعد صيفط ليا الوثائق.");
-      toast({
-        title: "Primero confirma el formulario",
-        description: "Debes guardar tus datos antes de subir documentos.",
-        variant: "destructive",
-      });
-      return;
-    }
-    try {
-      const input = document.createElement("input");
-      input.type = "file";
-      input.accept = "image/*,application/pdf";
-      input.multiple = true;
-      input.onchange = async () => {
-        const files = Array.from(input.files || []);
-        if (!files.length) return;
-        setGeneralUploading(true);
-        setWaitingMohamed(true);
-        setWaitingForDocument(false);
-        assistantTextBufferRef.current = "";
-        try {
-          const { data: { user }, error: authError } = await supabase.auth.getUser();
-          if (authError || !user?.id) {
-            throw new Error("No hay usuario conectado en Supabase");
-          }
-          for (const file of files) {
-            try {
-              const currentDocs = [...docs];
-              const safeName = `${Date.now()}_${slugifyFileName(file.name)}`;
-              const storagePath = `${user.id}/regularizacion_2026/${safeName}`;
-              const { error: uploadError } = await supabase.storage
-                .from("user-documents")
-                .upload(storagePath, file, { upsert: true });
-              if (uploadError) throw new Error(uploadError.message);
-              const result = await verifyDocument({
-                file,
-                expectedDocumentType: "auto",
-                lang: "darija",
-              });
-              const matchedDoc = getBestDocMatch(
-                result as VerifyDocumentResult,
-                currentDocs,
-                file.name
-              );
-              if (!matchedDoc) {
-                pushAgentMessage(voiceTexts.uploadUnknown);
-                await speakExactText(
-                  `العميل صيفط دابا وثيقة سميتها ${file.name} ولكن مازال ما تربطاتش مزيان مع الملف.`
-                );
-                toast({
-                  title: ui.uploadErrorTitle,
-                  description: result.summary || ui.uploadErrorDesc,
-                  variant: "destructive",
-                });
-                continue;
-              }
-              const isWarn =
-                result.status === "invalid" ||
-                result.match_expected_type === false;
-              const nextStatus: DocStatus = isWarn ? "warn" : "ok";
-              const updatedDocs = currentDocs.map((doc) =>
-                doc.id === matchedDoc.id
-                  ? {
-                      ...doc,
-                      estado: nextStatus,
-                      archivo: file.name,
-                      kb: `${Math.round(file.size / 1024)} KB`,
-                      detectedType: result.document_type || "",
-                      note: result.summary || "",
-                      uploadedAt: new Date().toISOString(),
-                      storagePath,
-                    }
-                  : doc
-              );
-              setDocs(updatedDocs);
-              const verificationStatus =
-                nextStatus === "ok"
-                  ? "verified"
-                  : result.status === "invalid"
-                  ? "rejected"
-                  : "needs_review";
-              const verificationNotes =
-                result.summary ||
-                (verificationStatus === "verified"
-                  ? "Documento verificado automáticamente"
-                  : verificationStatus === "rejected"
-                  ? "Documento rechazado por validación automática"
-                  : "Documento recibido. Pendiente de revisión");
-              const { error: insertDocumentError } = await supabase
-                .from("documentos_de_usuario")
-                .insert({
-                  user_id: user.id,
-                  case_id: null,
-                  document_type:
-                    result.document_type || matchedDoc.expectedType || "general",
-                  title: matchedDoc.nombre || file.name,
-                  description: null,
-                  storage_bucket: "user-documents",
-                  file_path: storagePath,
-                  original_name: file.name,
-                  mime_type: file.type || "application/octet-stream",
-                  file_size: file.size,
-                  verification_status: verificationStatus,
-                  verification_notes: verificationNotes,
-                  extracted_data: {
-                    summary: result.summary || "",
-                    visible_fields: result.visible_fields || [],
-                    warnings: result.warnings || [],
-                    missing_or_unclear_fields: result.missing_or_unclear_fields || [],
-                    usable_for_regularizacion_2026:
-                      result.usable_for_regularizacion_2026 ?? null,
-                    stay_proof_reason: result.stay_proof_reason || "",
-                    recommended_bucket: result.recommended_bucket || "",
-                    path: storagePath,
-                  },
-                  expires_at: null,
-                  is_required: true,
-                  reviewed_at:
-                    verificationStatus === "verified"
-                      ? new Date().toISOString()
-                      : null,
-                  updated_at: new Date().toISOString(),
-                });
-              if (insertDocumentError) {
-                console.error("Error guardando user_document:", insertDocumentError);
-              }
-              await saveFullStateToSupabase(updatedDocs);
-              const localReply = buildDocSpeech(matchedDoc.nombre, result, nextStatus);
-              await speakExactText(localReply);
-              toast({
-                title: ui.uploadSuccessTitle,
-                description: result.summary || ui.uploadSuccessDesc,
-              });
-              await maybeSendCompletionMessage(updatedDocs);
-            } catch (err: any) {
-              console.error(err);
-              toast({
-                title: ui.uploadErrorTitle,
-                description: err?.message || ui.uploadErrorDesc,
-                variant: "destructive",
-              });
-              await speakFromAutomation(
-                `وقع مشكل فقراءة أو حفظ الوثيقة ${file.name}.`
-              );
-            }
-          }
-        } finally {
-          setGeneralUploading(false);
-          setWaitingMohamed(false);
-        }
-      };
-      input.click();
-    } catch (error: any) {
-      setGeneralUploading(false);
-      toast({
-        title: "Error",
-        description: error?.message || "Error inesperado",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const goToSara = () => {
-    window.location.href = "/buscar-citas";
-  };
-
-  const latestAgentMessage =
-    [...voiceHistory].reverse().find((msg) => msg.from === "agent")?.text ||
-    voiceTexts.initialVoice;
 
   return (
     <div className="min-h-screen bg-background text-foreground relative flex flex-col">
@@ -1609,50 +732,29 @@ export default function Regularizacion2026() {
               </div>
               <div className="absolute bottom-3 left-0 right-0 flex justify-center">
                 <button
-                  onClick={isListening ? stopListening : startListening}
-                  className={`w-12 h-12 rounded-full border flex items-center justify-center backdrop-blur-md transition-colors ${
-                    isListening
-                      ? "bg-destructive/80 border-destructive"
-                      : "bg-black/50 border-white/20 hover:bg-black/70"
-                  }`}
+                  onClick={() => {
+                    console.log("🔵 Botón de micrófono clickeado");
+                  }}
+                  className="w-12 h-12 rounded-full border flex items-center justify-center backdrop-blur-md transition-colors bg-black/50 border-white/20 hover:bg-black/70"
                   type="button"
                 >
-                  {isListening ? (
-                    <MicOff className="w-5 h-5 text-white" />
-                  ) : (
-                    <Mic className="w-5 h-5 text-white" />
-                  )}
+                  <Mic className="w-5 h-5 text-white" />
                 </button>
               </div>
             </div>
             <div className="glass-panel-heavy border border-white/10 rounded-2xl overflow-hidden">
               <div className="p-4 border-b border-white/10">
                 <button
-                  onClick={isListening ? stopListening : startListening}
                   disabled={!voiceSupported}
                   className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary hover:bg-primary/90 disabled:opacity-50 text-primary-foreground font-bold text-sm px-4 py-3 transition-colors"
                   type="button"
                 >
-                  {isListening ? (
-                    <>
-                      <MicOff className="w-4 h-4" />
-                      {ui.stopButton}
-                    </>
-                  ) : (
-                    <>
-                      <Mic className="w-4 h-4" />
-                      {ui.voiceButton}
-                    </>
-                  )}
+                  <Mic className="w-4 h-4" />
+                  {ui.voiceButton}
                 </button>
                 {!voiceSupported && (
                   <p className="mt-2 text-xs text-red-400 text-center">
                     {ui.micNotSupported}
-                  </p>
-                )}
-                {isListening && (
-                  <p className="mt-2 text-xs text-primary text-center">
-                    {ui.listening}
                   </p>
                 )}
               </div>
@@ -1663,47 +765,15 @@ export default function Regularizacion2026() {
                     {latestAgentMessage}
                   </div>
                 </div>
-                {lastUserTranscript ? (
-                  <div>
-                    <p className="text-[11px] text-white/50 mb-1">{ui.yourVoice}</p>
-                    <div className="rounded-xl bg-primary/10 border border-primary/20 px-3 py-3 text-sm text-white leading-relaxed">
-                      {lastUserTranscript}
-                    </div>
-                  </div>
-                ) : null}
-                {waitingMohamed && (
-                  <div className="rounded-xl bg-white/5 border border-white/10 px-3 py-3 text-sm text-white/70">
-                    ...
-                  </div>
-                )}
-                {waitingForDocument && !generalUploading && (
-                  <div className="rounded-xl bg-amber-500/10 border border-amber-400/20 px-3 py-3 text-sm text-amber-200">
-                    Mohamed está esperando el documento que te pidió.
-                  </div>
-                )}
               </div>
               <div className="border-t border-white/10 p-3">
                 <button
-                  onClick={handleGeneralUpload}
                   disabled={generalUploading || !leadSaved || !formConfirmed}
                   className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary hover:bg-primary/90 disabled:opacity-60 text-primary-foreground font-bold text-xs px-4 py-3 transition-colors"
                   type="button"
                 >
-                  {generalUploading ? (
-                    <>
-                      <motion.div
-                        className="w-3.5 h-3.5 border border-primary-foreground border-t-transparent rounded-full"
-                        animate={{ rotate: 360 }}
-                        transition={{ duration: 0.7, repeat: Infinity, ease: "linear" }}
-                      />
-                      {ui.uploading}
-                    </>
-                  ) : (
-                    <>
-                      <Upload className="w-4 h-4" />
-                      {ui.uploadGeneral}
-                    </>
-                  )}
+                  <Upload className="w-4 h-4" />
+                  {ui.uploadGeneral}
                 </button>
                 <p className="mt-2 text-[10px] text-white/50 text-center">
                   {ui.uploadGeneralDesc}
@@ -1769,74 +839,98 @@ export default function Regularizacion2026() {
                     ))}
                   </div>
                 </div>
-                <FieldLabel label={ui.labels.nombre} />
-                <FieldInput
+                <label className="block text-[12px] font-semibold text-slate-600 mb-1">
+                  {ui.labels.nombre}
+                </label>
+                <input
                   value={leadForm.nombre}
-                  onChange={(v) => updateLeadForm("nombre", v)}
+                  onChange={(e) => updateLeadForm("nombre", e.target.value)}
+                  className="w-full rounded-[18px] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none focus:border-blue-400"
                   placeholder={ui.labels.nombre}
                 />
-                <FieldLabel label={ui.labels.telefono} />
-                <FieldInput
+                <label className="block text-[12px] font-semibold text-slate-600 mb-1">
+                  {ui.labels.telefono}
+                </label>
+                <input
                   value={leadForm.telefono}
-                  onChange={(v) => updateLeadForm("telefono", v)}
+                  onChange={(e) => updateLeadForm("telefono", e.target.value)}
+                  className="w-full rounded-[18px] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none focus:border-blue-400"
                   placeholder={ui.labels.telefono}
                 />
-                <FieldLabel label={ui.labels.niePasaporte} />
-                <FieldInput
+                <label className="block text-[12px] font-semibold text-slate-600 mb-1">
+                  {ui.labels.niePasaporte}
+                </label>
+                <input
                   value={leadForm.niePasaporte}
-                  onChange={(v) => updateLeadForm("niePasaporte", v)}
+                  onChange={(e) => updateLeadForm("niePasaporte", e.target.value)}
+                  className="w-full rounded-[18px] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none focus:border-blue-400"
                   placeholder={ui.labels.niePasaporte}
                 />
-                <FieldLabel label={ui.labels.ciudad} />
-                <FieldInput
+                <label className="block text-[12px] font-semibold text-slate-600 mb-1">
+                  {ui.labels.ciudad}
+                </label>
+                <input
                   value={leadForm.ciudad}
-                  onChange={(v) => updateLeadForm("ciudad", v)}
+                  onChange={(e) => updateLeadForm("ciudad", e.target.value)}
+                  className="w-full rounded-[18px] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none focus:border-blue-400"
                   placeholder={ui.labels.ciudad}
                 />
-                <FieldLabel label={ui.labels.nacionalidad} />
-                <FieldInput
+                <label className="block text-[12px] font-semibold text-slate-600 mb-1">
+                  {ui.labels.nacionalidad}
+                </label>
+                <input
                   value={leadForm.nacionalidad}
-                  onChange={(v) => updateLeadForm("nacionalidad", v)}
+                  onChange={(e) => updateLeadForm("nacionalidad", e.target.value)}
+                  className="w-full rounded-[18px] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none focus:border-blue-400"
                   placeholder={ui.labels.nacionalidad}
                 />
-                <FieldLabel label={ui.labels.fechaLlegada} />
-                <FieldInput
+                <label className="block text-[12px] font-semibold text-slate-600 mb-1">
+                  {ui.labels.fechaLlegada}
+                </label>
+                <input
                   value={leadForm.fechaLlegada}
-                  onChange={(v) => updateLeadForm("fechaLlegada", v)}
+                  onChange={(e) => updateLeadForm("fechaLlegada", e.target.value)}
+                  className="w-full rounded-[18px] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none focus:border-blue-400"
                   placeholder="DD/MM/AAAA"
                 />
-                <FieldLabel label={ui.labels.cumple5Meses} />
-                <FieldSelect
+                <label className="block text-[12px] font-semibold text-slate-600 mb-1">
+                  {ui.labels.cumple5Meses}
+                </label>
+                <select
                   value={leadForm.cumple5Meses}
-                  onChange={(v) => updateLeadForm("cumple5Meses", v)}
-                  options={[
-                    { value: "", label: ui.labels.select },
-                    { value: "si", label: ui.labels.yes },
-                    { value: "no", label: ui.labels.no },
-                    { value: "nose", label: ui.labels.dontKnow },
-                  ]}
-                />
-                <FieldLabel label={ui.labels.asilo} />
-                <FieldSelect
+                  onChange={(e) => updateLeadForm("cumple5Meses", e.target.value)}
+                  className="w-full rounded-[18px] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none focus:border-blue-400"
+                >
+                  <option value="">{ui.labels.select}</option>
+                  <option value="si">{ui.labels.yes}</option>
+                  <option value="no">{ui.labels.no}</option>
+                  <option value="nose">{ui.labels.dontKnow}</option>
+                </select>
+                <label className="block text-[12px] font-semibold text-slate-600 mb-1">
+                  {ui.labels.asilo}
+                </label>
+                <select
                   value={leadForm.asilo}
-                  onChange={(v) => updateLeadForm("asilo", v)}
-                  options={[
-                    { value: "", label: ui.labels.select },
-                    { value: "no", label: ui.labels.no },
-                    { value: "si", label: ui.labels.yes },
-                    { value: "nose", label: ui.labels.dontKnow },
-                  ]}
-                />
-                <FieldLabel label={ui.labels.penales} />
-                <FieldSelect
+                  onChange={(e) => updateLeadForm("asilo", e.target.value)}
+                  className="w-full rounded-[18px] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none focus:border-blue-400"
+                >
+                  <option value="">{ui.labels.select}</option>
+                  <option value="no">{ui.labels.no}</option>
+                  <option value="si">{ui.labels.yes}</option>
+                  <option value="nose">{ui.labels.dontKnow}</option>
+                </select>
+                <label className="block text-[12px] font-semibold text-slate-600 mb-1">
+                  {ui.labels.penales}
+                </label>
+                <select
                   value={leadForm.penales}
-                  onChange={(v) => updateLeadForm("penales", v)}
-                  options={[
-                    { value: "", label: ui.labels.select },
-                    { value: "no", label: ui.labels.no },
-                    { value: "si", label: ui.labels.yes },
-                  ]}
-                />
+                  onChange={(e) => updateLeadForm("penales", e.target.value)}
+                  className="w-full rounded-[18px] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none focus:border-blue-400"
+                >
+                  <option value="">{ui.labels.select}</option>
+                  <option value="no">{ui.labels.no}</option>
+                  <option value="si">{ui.labels.yes}</option>
+                </select>
                 <button
                   onClick={handleSaveLeadForm}
                   disabled={savingForm || !authChecked}
@@ -1866,56 +960,5 @@ export default function Regularizacion2026() {
         <audio ref={remoteAudioRef} autoPlay playsInline className="hidden" />
       </main>
     </div>
-  );
-}
-
-function FieldLabel({ label }: { label: string }) {
-  return (
-    <label className="block text-[12px] font-semibold text-slate-600 mb-1">
-      {label}
-    </label>
-  );
-}
-
-function FieldInput({
-  value,
-  onChange,
-  placeholder,
-}: {
-  value: string;
-  onChange: (value: string) => void;
-  placeholder: string;
-}) {
-  return (
-    <input
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      className="w-full rounded-[18px] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none focus:border-blue-400"
-      placeholder={placeholder}
-    />
-  );
-}
-
-function FieldSelect({
-  value,
-  onChange,
-  options,
-}: {
-  value: string;
-  onChange: (value: string) => void;
-  options: { value: string; label: string }[];
-}) {
-  return (
-    <select
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      className="w-full rounded-[18px] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none focus:border-blue-400"
-    >
-      {options.map((opt) => (
-        <option key={`${opt.value}-${opt.label}`} value={opt.value}>
-          {opt.label}
-        </option>
-      ))}
-    </select>
   );
 }
