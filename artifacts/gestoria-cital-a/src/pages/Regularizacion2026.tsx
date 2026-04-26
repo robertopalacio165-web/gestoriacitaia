@@ -1050,38 +1050,65 @@ export default function Regularizacion2026() {
 
   const speakFromAutomation = async (instruction: string) => {
     if (!instruction.trim()) return;
+
     console.log("🎤 Mohamed quiere hablar proactivamente:", instruction);
     pendingAutomationPromptRef.current = instruction;
     setPendingAutomationPrompt(instruction);
-    if (realtimeDcRef.current && realtimeDcRef.current.readyState === "open") {
-      if (!assistantBusyRef.current) {
-        await flushPendingAutomation();
-      }
+
+    if (
+      realtimeDcRef.current &&
+      realtimeDcRef.current.readyState === "open" &&
+      !assistantBusyRef.current
+    ) {
+      console.log("✅ Usando conexión existente para hablar");
+      await flushPendingAutomation();
       return;
     }
-    console.log("🔌 Iniciando sesión temporal para mensaje proactivo...");
+
+    console.log("🔌 Creando sesión temporal para mensaje proactivo...");
+
     try {
       const sessionRes = await fetch("/api/realtime-session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ assistant: "mohamed" }),
       });
+
       const sessionData = await sessionRes.json();
-      if (!sessionRes.ok) throw new Error(sessionData?.error);
-      const ephemeralKey = sessionData?.value || "";
-      if (!ephemeralKey) throw new Error("No llegó ephemeral key");
+      if (!sessionRes.ok || !sessionData?.value) {
+        throw new Error("No se pudo obtener token de sesión");
+      }
+
+      const ephemeralKey = sessionData.value;
       const pc = new RTCPeerConnection();
+
       pc.ontrack = (event) => {
         const [remoteStream] = event.streams;
         if (remoteStream && remoteAudioRef.current) {
+          console.log("🔊 Audio remoto recibido");
           remoteAudioRef.current.srcObject = remoteStream;
           remoteAudioRef.current.autoplay = true;
-          remoteAudioRef.current.play().catch(console.error);
+          remoteAudioRef.current.muted = false;
+          remoteAudioRef.current.volume = 1.0;
+
+          const playPromise = remoteAudioRef.current.play();
+          if (playPromise !== undefined) {
+            playPromise.catch((err) => {
+              console.error("❌ Error al reproducir audio (bloqueado por navegador?):", err);
+              toast({
+                title: "Mohamed tiene algo que decirte",
+                description: "Toca el botón del micrófono para escuchar",
+              });
+            });
+          }
         }
       };
+
       const dc = pc.createDataChannel("oai-events");
+
       dc.onopen = async () => {
-        console.log("✅ Sesión temporal abierta");
+        console.log("✅ Sesión temporal lista. Enviando mensaje...");
+
         dc.send(
           JSON.stringify({
             type: "conversation.item.create",
@@ -1092,20 +1119,32 @@ export default function Regularizacion2026() {
             },
           })
         );
+
         dc.send(
           JSON.stringify({
             type: "response.create",
             response: { modalities: ["audio", "text"] },
           })
         );
-        setTimeout(() => {
-          dc.close();
-          pc.close();
-          console.log("🔌 Sesión temporal cerrada");
-        }, 10000);
       };
+
+      dc.onmessage = (event) => {
+        try {
+          const msg = JSON.parse(event.data);
+          if (msg.type === "response.done") {
+            console.log("✅ Audio terminado. Cerrando sesión temporal...");
+            setTimeout(() => {
+              dc.close();
+              pc.close();
+            }, 1000);
+          }
+        } catch (e) {
+        }
+      };
+
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
+
       const sdpRes = await fetch("https://api.openai.com/v1/realtime/calls", {
         method: "POST",
         body: offer.sdp,
@@ -1114,11 +1153,17 @@ export default function Regularizacion2026() {
           "Content-Type": "application/sdp",
         },
       });
-      if (!sdpRes.ok) throw new Error("Error negociando WebRTC");
+
+      if (!sdpRes.ok) {
+        throw new Error("Error al negociar WebRTC con OpenAI");
+      }
+
       const answerSdp = await sdpRes.text();
       await pc.setRemoteDescription({ type: "answer", sdp: answerSdp });
+
     } catch (error) {
       console.error("❌ Error en sesión proactiva:", error);
+      pushAgentMessage(instruction);
     }
   };
 
@@ -1380,7 +1425,7 @@ export default function Regularizacion2026() {
               );
               if (!matchedDoc) {
                 pushAgentMessage(voiceTexts.uploadUnknown);
-                await speakFromAutomation(
+                await speakExactText(
                   `العميل صيفط دابا وثيقة سميتها ${file.name} ولكن مازال ما تربطاتش مزيان مع الملف. قل له شنو خاصو يصيفط بشكل واضح.`
                 );
                 toast({
