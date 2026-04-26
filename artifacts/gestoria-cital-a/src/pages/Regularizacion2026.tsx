@@ -312,18 +312,19 @@ export default function Regularizacion2026() {
   useEffect(() => {
     let active = true;
     const loadAuth = async () => {
-      try {
-        const {  { session } } = await supabase.auth.getSession();
-        if (!active) return;
-        setCurrentUserId(session?.user?.id || "");
-        setAuthChecked(true);
-      } catch (error) {
-        console.error("Error cargando sesión:", error);
-        if (!active) return;
-        setCurrentUserId("");
-        setAuthChecked(true);
-      }
-    };
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!active) return;
+    setCurrentUserId(session?.user?.id || "");
+    setAuthChecked(true);
+  } catch (error) {
+    console.error("Error cargando sesión:", error);
+    if (!active) return;
+    setCurrentUserId("");
+    setAuthChecked(true);
+  }
+};
     loadAuth();
     const {  { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setCurrentUserId(session?.user?.id || "");
