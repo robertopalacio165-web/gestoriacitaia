@@ -1024,14 +1024,17 @@ export default function Regularizacion2026() {
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
 
-      const sdpRes = await fetch("https://api.openai.com/v1/realtime/calls", {
-        method: "POST",
-        body: offer.sdp,
-        headers: {
-          Authorization: `Bearer ${ephemeralKey}`,
-          "Content-Type": "application/sdp",
-        },
-      });
+      const sdpRes = await fetch(
+        "https://api.openai.com/v1/realtime/calls?model=gpt-4o-realtime-preview-2024-12-17",
+        {
+          method: "POST",
+          body: offer.sdp,
+          headers: {
+            Authorization: `Bearer ${ephemeralKey}`,
+            "Content-Type": "application/sdp",
+          },
+        }
+      );
 
       if (!sdpRes.ok) {
         const errText = await sdpRes.text();
