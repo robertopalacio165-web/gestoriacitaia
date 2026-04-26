@@ -59,7 +59,7 @@ type UserFormRow = {
   case_id: string | null;
   form_type: string;
   title: string | null;
-  form_ Record<string, any> | null;
+  form_data: Record<string, any> | null;
 };
 
 function buildInitialDocs(procedureKey: string): StoredDocItem[] {
@@ -337,7 +337,7 @@ export default function Regularizacion2026() {
       }
     };
     loadAuth();
-    const {  { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setCurrentUserId(session?.user?.id || "");
       setAuthChecked(true);
     });
@@ -347,11 +347,9 @@ export default function Regularizacion2026() {
     };
   }, []);
 
-  // ─── FIX: Nombres de tablas en español según tu captura ───
   useEffect(() => {
     if (!currentUserId || !authChecked) return;
     
-    // Suscribirse a documentos (Tabla: documentos_de_usuario)
     const docsChannel = supabase
       .channel(`docs-${currentUserId}`)
       .on(
@@ -359,7 +357,7 @@ export default function Regularizacion2026() {
         {
           event: "INSERT",
           schema: "public",
-          table: "documentos_de_usuario", // Nombre corregido
+          table: "documentos_de_usuario",
           filter: `user_id=eq.${currentUserId}`,
         },
         async (payload) => {
@@ -382,7 +380,6 @@ export default function Regularizacion2026() {
       )
       .subscribe();
 
-    // Suscribirse a formularios (Tabla: formularios_de_usuario)
     const formsChannel = supabase
       .channel(`forms-${currentUserId}`)
       .on(
@@ -390,7 +387,7 @@ export default function Regularizacion2026() {
         {
           event: "INSERT",
           schema: "public",
-          table: "formularios_de_usuario", // Nombre corregido
+          table: "formularios_de_usuario",
           filter: `user_id=eq.${currentUserId}`,
         },
         async (payload) => {
@@ -735,8 +732,8 @@ export default function Regularizacion2026() {
       },
       updated_at: new Date().toISOString(),
     };
-    const {  existingForm } = await supabase
-      .from("formularios_de_usuario") // Nombre corregido
+    const { data: existingForm } = await supabase
+      .from("formularios_de_usuario")
       .select("id")
       .eq("user_id", user.id)
       .eq("form_type", "regularizacion_2026")
@@ -747,19 +744,19 @@ export default function Regularizacion2026() {
       case_id: null,
       form_type: "regularizacion_2026",
       title: "Formulario Mohamed Regularización 2026",
-      form_ payload,
+      form_data: payload,
       status: "draft",
       updated_at: new Date().toISOString(),
     };
     if (existingForm?.id) {
       const { error: updateError } = await supabase
-        .from("formularios_de_usuario") // Nombre corregido
+        .from("formularios_de_usuario")
         .update(rowData)
         .eq("id", existingForm.id);
       if (updateError) throw new Error(updateError.message);
     } else {
       const { error: insertError } = await supabase
-        .from("formularios_de_usuario") // Nombre corregido
+        .from("formularios_de_usuario")
         .insert(rowData);
       if (insertError) throw new Error(insertError.message);
     }
@@ -1054,7 +1051,6 @@ export default function Regularizacion2026() {
     }
   };
 
-  // ─── FIX FINAL: Siempre crear conexión nueva para proactividad ───
   const speakFromAutomation = async (instruction: string) => {
     if (!instruction.trim()) return;
 
@@ -1062,8 +1058,6 @@ export default function Regularizacion2026() {
     pendingAutomationPromptRef.current = instruction;
     setPendingAutomationPrompt(instruction);
 
-    // IGNORAMOS la conexión existente para evitar conflictos de silencio.
-    // Creamos una conexión TEMPORAL exclusiva para este mensaje.
     console.log("🔌 Creando sesión temporal para mensaje proactivo...");
 
     try {
@@ -1458,7 +1452,7 @@ export default function Regularizacion2026() {
                   ? "Documento rechazado por validación automática"
                   : "Documento recibido. Pendiente de revisión");
               const { error: insertDocumentError } = await supabase
-                .from("documentos_de_usuario") // Nombre corregido
+                .from("documentos_de_usuario")
                 .insert({
                   user_id: user.id,
                   case_id: null,
@@ -1473,7 +1467,7 @@ export default function Regularizacion2026() {
                   file_size: file.size,
                   verification_status: verificationStatus,
                   verification_notes: verificationNotes,
-                  extracted_ {
+                  extracted_data: {
                     summary: result.summary || "",
                     visible_fields: result.visible_fields || [],
                     warnings: result.warnings || [],
