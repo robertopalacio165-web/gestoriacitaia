@@ -64,7 +64,6 @@ type UserFormRow = {
 
 function buildInitialDocs(procedureKey: string): StoredDocItem[] {
   const procedure = getProcedureByKey(procedureKey) || EXTRANJERIA_PROCEDURES[0];
-
   return procedure.requiredDocuments.map((doc) => ({
     id: doc.id,
     nombre: doc.name,
@@ -233,7 +232,6 @@ export default function Regularizacion2026() {
         },
       };
     }
-
     return {
       online: "En línea",
       role: "Especialista en Extranjería",
@@ -320,19 +318,14 @@ export default function Regularizacion2026() {
       typeof window.RTCPeerConnection !== "undefined" &&
       typeof navigator !== "undefined" &&
       !!navigator.mediaDevices?.getUserMedia;
-
     setVoiceSupported(Boolean(supported));
   }, []);
 
   useEffect(() => {
     let active = true;
-
     const loadAuth = async () => {
       try {
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
-
+        const { data: { session } } = await supabase.auth.getSession();
         if (!active) return;
         setCurrentUserId(session?.user?.id || "");
         setAuthChecked(true);
@@ -343,21 +336,75 @@ export default function Regularizacion2026() {
         setAuthChecked(true);
       }
     };
-
     loadAuth();
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setCurrentUserId(session?.user?.id || "");
       setAuthChecked(true);
     });
-
     return () => {
       active = false;
       subscription.unsubscribe();
     };
   }, []);
+
+  useEffect(() => {
+    if (!currentUserId || !authChecked) return;
+    const docsChannel = supabase
+      .channel(`docs-${currentUserId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "user_documents",
+          filter: `user_id=eq.${currentUserId}`,
+        },
+        async (payload) => {
+          const newDoc = payload.new as any;
+          const docName = newDoc.title || newDoc.original_name || "documento";
+          let proactiveMessage = "";
+          if (newDoc.document_type === "passport" || newDoc.document_type === "nie") {
+            proactiveMessage = `مزيان. توصلت بـ ${docName}. غادي نراجعو دابا ونشوف واش كلشي مزيان. وانت راجع الفورمولار إلا كنتي باغي تزيد شي حاجة.`;
+          } else if (newDoc.document_type === "empadronamiento" || newDoc.document_type === "stay_proof") {
+            proactiveMessage = `مزيان. توصلت بـ ${docName}. هاد الوثيقة كتنفع كبرهان ديال البقاء. دابا خاصنا غير الباسبور ولا NIE باش نكملو الملف.`;
+          } else {
+            proactiveMessage = `توصلت بـ ${docName}. غادي نراجعو دابا ونشوف واش كلشي مزيان.`;
+          }
+          setTimeout(() => {
+            speakFromAutomation(proactiveMessage);
+          }, 1500);
+        }
+      )
+      .subscribe();
+
+    const formsChannel = supabase
+      .channel(`forms-${currentUserId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "user_forms",
+          filter: `user_id=eq.${currentUserId}`,
+        },
+        async (payload) => {
+          const formData = payload.new as any;
+          if (formData.form_type === "regularizacion_2026") {
+            setTimeout(() => {
+              speakFromAutomation(
+                "مزيان. المعطيات ديالك تحفظات فالنظام. دابا غادي نكمل معاك خطوة بخطوة. أول حاجة، خاصني بروفات ديال 5 شهور باش نثبتو واش كنتي فإسبانيا قبل 1 يناير 2026."
+              );
+            }, 1000);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(docsChannel);
+      supabase.removeChannel(formsChannel);
+    };
+  }, [currentUserId, authChecked]);
 
   useEffect(() => {
     try {
@@ -376,12 +423,10 @@ export default function Regularizacion2026() {
           penales: parsed?.penales || "",
         });
       }
-
       const rawLeadSaved = localStorage.getItem(leadSavedStorageKey);
       const saved = rawLeadSaved === "true";
       setLeadSaved(saved);
       setFormConfirmed(saved);
-
       const rawDocs = localStorage.getItem(docsStorageKey);
       if (rawDocs) {
         const parsedDocs = JSON.parse(rawDocs) as StoredDocItem[];
@@ -424,41 +469,29 @@ export default function Regularizacion2026() {
   useEffect(() => {
     try {
       const raw = localStorage.getItem(historyStorageKey);
-
       if (raw) {
         const parsed = JSON.parse(raw) as ChatMsg[];
         if (Array.isArray(parsed) && parsed.length > 0) {
           setVoiceHistory(parsed);
-
           const completionAlreadySent = parsed.some(
             (m) => m.from === "agent" && m.text === voiceTexts.mohamedFinal
           );
           const leadAlreadySaved = parsed.some(
             (m) => m.from === "agent" && m.text.includes("المعطيات ديالك تحفظات")
           );
-
           setCompletionMessageSent(completionAlreadySent);
           setLeadSaved((prev) => prev || leadAlreadySaved);
           setFormConfirmed((prev) => prev || leadAlreadySaved);
           return;
         }
       }
-
       setVoiceHistory([
-        {
-          from: "agent",
-          text: voiceTexts.initialVoice,
-          ts: Date.now(),
-        },
+        { from: "agent", text: voiceTexts.initialVoice, ts: Date.now() },
       ]);
     } catch (error) {
       console.error("Error cargando historial de Mohamed:", error);
       setVoiceHistory([
-        {
-          from: "agent",
-          text: voiceTexts.initialVoice,
-          ts: Date.now(),
-        },
+        { from: "agent", text: voiceTexts.initialVoice, ts: Date.now() },
       ]);
     }
   }, [historyStorageKey, voiceTexts.initialVoice, voiceTexts.mohamedFinal]);
@@ -476,7 +509,6 @@ export default function Regularizacion2026() {
     const expected = normalizeDocType(doc.expectedType);
     const detected = normalizeDocType(doc.detectedType);
     const name = doc.nombre.toLowerCase();
-
     return (
       expected === "passport" ||
       expected === "nie" ||
@@ -495,7 +527,6 @@ export default function Regularizacion2026() {
     const detected = normalizeDocType(doc.detectedType);
     const name = doc.nombre.toLowerCase();
     const note = (doc.note || "").toLowerCase();
-
     return (
       expected === "empadronamiento" ||
       expected === "stay_proof" ||
@@ -513,21 +544,18 @@ export default function Regularizacion2026() {
 
   const formCompletedStatus: DocStatus =
     leadSaved || formConfirmed ? "ok" : "missing";
-
   const stayProofStatus: DocStatus =
     stayProofDocs.some((doc) => doc.estado === "ok")
       ? "ok"
       : stayProofDocs.some((doc) => doc.estado === "warn")
       ? "warn"
       : "missing";
-
   const identityStatus: DocStatus =
     identityDocs.some((doc) => doc.estado === "ok")
       ? "ok"
       : identityDocs.some((doc) => doc.estado === "warn")
       ? "warn"
       : "missing";
-
   const finalFileStatus: DocStatus =
     formCompletedStatus === "ok" &&
     stayProofStatus === "ok" &&
@@ -551,10 +579,7 @@ export default function Regularizacion2026() {
   const allReady = finalFileStatus === "ok";
 
   const updateLeadForm = (field: keyof LeadFormState, value: string) => {
-    setLeadForm((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+    setLeadForm((prev) => ({ ...prev, [field]: value }));
   };
 
   const pushAgentMessage = (text: string) => {
@@ -586,7 +611,6 @@ export default function Regularizacion2026() {
     const parts: string[] = [];
     const docName = matchedDocName || "الوثيقة";
     parts.push(`مزيان. توصلت بـ ${docName}.`);
-
     if (result.document_type === "passport") {
       parts.push("هاد الوثيقة هي الباسبور.");
     } else if (result.document_type === "nie") {
@@ -598,7 +622,6 @@ export default function Regularizacion2026() {
     } else if (result.document_type === "stay_proof") {
       parts.push("هاد الوثيقة كتنفع كبرهان ديال البقاء.");
     }
-
     if (result.full_name) {
       parts.push(`الاسم اللي باين هو ${result.full_name}.`);
     }
@@ -610,13 +633,11 @@ export default function Regularizacion2026() {
     } else if (result.document_number) {
       parts.push(`الرقم الباين هو ${result.document_number}.`);
     }
-
     if (nextStatus === "ok") {
       parts.push("الوثيقة باينة مزيان ومقبولة.");
     } else {
       parts.push("الوثيقة توصلت بها ولكن خاصها مراجعة ولا نسخة أوضح.");
     }
-
     const lowerName = (matchedDocName || "").toLowerCase();
     if (
       lowerName.includes("pasaporte") ||
@@ -634,7 +655,6 @@ export default function Regularizacion2026() {
     } else {
       parts.push("دابا غادي نطلب منك الوثيقة اللي من بعدها.");
     }
-
     return parts.join(" ");
   };
 
@@ -645,7 +665,6 @@ export default function Regularizacion2026() {
     if (text === "..." || text === "…") return;
     if (text === lastAssistantTextRef.current) return;
     pushAgentMessage(text);
-
     const lower = text.toLowerCase();
     const asksForDocument =
       lower.includes("صيفط") ||
@@ -659,22 +678,15 @@ export default function Regularizacion2026() {
       lower.includes("padron") ||
       lower.includes("pruebas") ||
       lower.includes("بروفات");
-
     setWaitingForDocument(asksForDocument);
   };
 
   const saveFullStateToSupabase = async (nextDocs?: StoredDocItem[]) => {
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user?.id) {
       throw new Error("No hay usuario conectado en Supabase");
     }
-
     const docsToSave = nextDocs || docs;
-
     const payload = {
       applicant: {
         nombre: leadForm.nombre || "",
@@ -717,7 +729,6 @@ export default function Regularizacion2026() {
       },
       updated_at: new Date().toISOString(),
     };
-
     const { data: existingForm } = await supabase
       .from("user_forms")
       .select("id")
@@ -725,7 +736,6 @@ export default function Regularizacion2026() {
       .eq("form_type", "regularizacion_2026")
       .limit(1)
       .maybeSingle<UserFormRow>();
-
     const rowData = {
       user_id: user.id,
       case_id: null,
@@ -735,7 +745,6 @@ export default function Regularizacion2026() {
       status: "draft",
       updated_at: new Date().toISOString(),
     };
-
     if (existingForm?.id) {
       const { error: updateError } = await supabase
         .from("user_forms")
@@ -748,7 +757,6 @@ export default function Regularizacion2026() {
         .insert(rowData);
       if (insertError) throw new Error(insertError.message);
     }
-
     return user.id;
   };
 
@@ -756,10 +764,8 @@ export default function Regularizacion2026() {
     try {
       if (!realtimeDcRef.current) return false;
       if (realtimeDcRef.current.readyState !== "open") return false;
-
       setWaitingMohamed(true);
       assistantTextBufferRef.current = "";
-
       realtimeDcRef.current.send(
         JSON.stringify({
           type: "conversation.item.create",
@@ -770,16 +776,12 @@ export default function Regularizacion2026() {
           },
         })
       );
-
       realtimeDcRef.current.send(
         JSON.stringify({
           type: "response.create",
-          response: {
-            modalities: ["audio", "text"],
-          },
+          response: { modalities: ["audio", "text"] },
         })
       );
-
       return true;
     } catch (error) {
       console.error("Error pidiendo respuesta realtime:", error);
@@ -787,20 +789,17 @@ export default function Regularizacion2026() {
     }
   };
 
-  // ─── FIX 2: flushPendingAutomation con reintentos si Mohammed está ocupado ───
   const flushPendingAutomation = async (retries = 0) => {
     const prompt = pendingAutomationPromptRef.current;
     if (!prompt) return;
     if (!realtimeDcRef.current) return;
     if (realtimeDcRef.current.readyState !== "open") return;
-
     if (assistantBusyRef.current) {
       if (retries < 6) {
         setTimeout(() => flushPendingAutomation(retries + 1), 300);
       }
       return;
     }
-
     const ok = await askMohamedToSpeak(prompt);
     if (ok) {
       pendingAutomationPromptRef.current = null;
@@ -814,14 +813,11 @@ export default function Regularizacion2026() {
     if (realtimeDcRef.current.readyState !== "open") return;
     if (introAlreadySentRef.current) return;
     if (pendingAutomationPromptRef.current) return;
-
     introAlreadySentRef.current = true;
-
     const intro =
       leadSaved || formConfirmed
         ? "ابدأ أنت الكلام الآن مباشرة. لا تنتظر العميل. قل له الآن: مزيان. توصلت بالمعطيات ديالك. دابا غادي نكمل معاك خطوة بخطوة. ومن بعد اطرح عليه أول سؤال مهم في الملف. جاوب دائما بالدارجة المغربية وبالحروف العربية."
         : "ابدأ أنت الكلام الآن مباشرة. لا تنتظر العميل. قل له الآن: السلام عليكم، أنا محمد. غادي نعاونك خطوة بخطوة باش نراجع الملف ديالك. عمر ليا الفورمولار الأول، ومن بعد نكمل معاك بالصوت. جاوب دائما بالدارجة المغربية وبالحروف العربية.";
-
     await askMohamedToSpeak(intro);
   };
 
@@ -829,15 +825,12 @@ export default function Regularizacion2026() {
     try {
       realtimeDcRef.current?.close();
       realtimeDcRef.current = null;
-
       realtimePcRef.current?.close();
       realtimePcRef.current = null;
-
       if (realtimeLocalStreamRef.current) {
         realtimeLocalStreamRef.current.getTracks().forEach((track) => track.stop());
         realtimeLocalStreamRef.current = null;
       }
-
       if (remoteAudioRef.current) {
         remoteAudioRef.current.pause();
         remoteAudioRef.current.srcObject = null;
@@ -863,34 +856,26 @@ export default function Regularizacion2026() {
       });
       return;
     }
-
     if (isConnectingRef.current) return;
     if (realtimeDcRef.current && realtimeDcRef.current.readyState === "open") return;
-
     try {
       isConnectingRef.current = true;
       setWaitingMohamed(true);
-
       const sessionRes = await fetch("/api/realtime-session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ assistant: "mohamed" }),
       });
-
       const sessionData = await sessionRes.json();
-
       if (!sessionRes.ok) {
         throw new Error(sessionData?.error || "Error creando sesión realtime");
       }
-
       const ephemeralKey = sessionData?.value || "";
       if (!ephemeralKey) {
         throw new Error("No llegó value desde realtime-session");
       }
-
       const pc = new RTCPeerConnection();
       realtimePcRef.current = pc;
-
       pc.ontrack = (event) => {
         const [remoteStream] = event.streams;
         if (remoteStream && remoteAudioRef.current) {
@@ -907,7 +892,6 @@ export default function Regularizacion2026() {
           }
         }
       };
-
       const localStream = await navigator.mediaDevices.getUserMedia({
         audio: {
           echoCancellation: true,
@@ -915,25 +899,17 @@ export default function Regularizacion2026() {
           autoGainControl: true,
         },
       });
-
       realtimeLocalStreamRef.current = localStream;
-
       for (const track of localStream.getTracks()) {
         pc.addTrack(track, localStream);
       }
-
       const dc = pc.createDataChannel("oai-events");
       realtimeDcRef.current = dc;
-
-      // ─── FIX 1 + FIX 3: dc.onopen corregido ───
       dc.onopen = async () => {
         dcOpenedRef.current = true;
         isConnectingRef.current = false;
         setIsListening(true);
         setWaitingMohamed(false);
-
-        // FIX 3: configurar VAD con threshold alto para evitar que Mohammed
-        // hable con ruido ambiental o sonidos que no son del cliente
         dc.send(
           JSON.stringify({
             type: "session.update",
@@ -947,11 +923,7 @@ export default function Regularizacion2026() {
             },
           })
         );
-
-        // FIX 1: capturar el texto pendiente ANTES de cualquier await
-        // para no perderlo cuando la sesión async cambia de estado
         const capturedPending = pendingAutomationPromptRef.current;
-
         if (capturedPending) {
           pendingAutomationPromptRef.current = null;
           setPendingAutomationPrompt("");
@@ -960,22 +932,18 @@ export default function Regularizacion2026() {
           }, 400);
           return;
         }
-
         setTimeout(() => {
           void maybeSendIntroToMohamed();
         }, 500);
       };
-
       dc.onmessage = (event) => {
         try {
           const msg = JSON.parse(event.data);
-
           const userTranscript =
             msg?.transcript ||
             msg?.item?.transcript ||
             msg?.item?.content?.[0]?.transcript ||
             "";
-
           if (
             (msg.type === "conversation.item.input_audio_transcription.completed" ||
               msg.type === "input_audio_buffer.transcription.completed") &&
@@ -989,14 +957,12 @@ export default function Regularizacion2026() {
               pushUserMessage(transcript);
             }
           }
-
           if (
             msg.type === "response.output_text.delta" &&
             typeof msg.delta === "string"
           ) {
             assistantTextBufferRef.current += msg.delta;
           }
-
           if (
             msg.type === "response.output_text.done" &&
             typeof msg.text === "string" &&
@@ -1004,19 +970,16 @@ export default function Regularizacion2026() {
           ) {
             assistantTextBufferRef.current = msg.text.trim();
           }
-
           if (msg.type === "response.created") {
             assistantBusyRef.current = true;
             setWaitingMohamed(true);
           }
-
           if (msg.type === "response.done") {
             assistantBusyRef.current = false;
             finalizeAssistantBuffer();
             setWaitingMohamed(false);
             pendingAutomationPromptRef.current = null;
             setPendingAutomationPrompt("");
-
             setTimeout(() => {
               void flushPendingAutomation();
             }, 150);
@@ -1025,21 +988,17 @@ export default function Regularizacion2026() {
           console.error("Realtime event parse error:", err);
         }
       };
-
       dc.onerror = (err) => {
         console.error("Realtime data channel error:", err);
       };
-
       dc.onclose = () => {
         dcOpenedRef.current = false;
         isConnectingRef.current = false;
         assistantBusyRef.current = false;
         setIsListening(false);
       };
-
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
-
       const sdpRes = await fetch("https://api.openai.com/v1/realtime/calls", {
         method: "POST",
         body: offer.sdp,
@@ -1048,12 +1007,10 @@ export default function Regularizacion2026() {
           "Content-Type": "application/sdp",
         },
       });
-
       if (!sdpRes.ok) {
         const errText = await sdpRes.text();
         throw new Error(errText || "Error negociando WebRTC con OpenAI");
       }
-
       const answerSdp = await sdpRes.text();
       await pc.setRemoteDescription({ type: "answer", sdp: answerSdp });
     } catch (error: any) {
@@ -1071,13 +1028,9 @@ export default function Regularizacion2026() {
 
   const speakExactText = async (text: string) => {
     if (!text.trim()) return;
-
     pushAgentMessage(text);
-
-    // Guardar el texto antes de cualquier operación async
     pendingAutomationPromptRef.current = text;
     setPendingAutomationPrompt(text);
-
     if (realtimeDcRef.current && realtimeDcRef.current.readyState === "open") {
       if (!assistantBusyRef.current) {
         const ok = await askMohamedToSpeak(text);
@@ -1086,11 +1039,8 @@ export default function Regularizacion2026() {
           setPendingAutomationPrompt("");
         }
       }
-      // Si está ocupado, flushPendingAutomation lo enviará cuando termine
       return;
     }
-
-    // Si no hay sesión abierta, iniciarla — el texto se enviará en dc.onopen (Fix 1)
     try {
       await startListening();
     } catch (error) {
@@ -1100,18 +1050,76 @@ export default function Regularizacion2026() {
 
   const speakFromAutomation = async (instruction: string) => {
     if (!instruction.trim()) return;
-
+    console.log("🎤 Mohamed quiere hablar proactivamente:", instruction);
     pendingAutomationPromptRef.current = instruction;
     setPendingAutomationPrompt(instruction);
-
     if (realtimeDcRef.current && realtimeDcRef.current.readyState === "open") {
       if (!assistantBusyRef.current) {
         await flushPendingAutomation();
       }
       return;
     }
-
-    await startListening();
+    console.log("🔌 Iniciando sesión temporal para mensaje proactivo...");
+    try {
+      const sessionRes = await fetch("/api/realtime-session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ assistant: "mohamed" }),
+      });
+      const sessionData = await sessionRes.json();
+      if (!sessionRes.ok) throw new Error(sessionData?.error);
+      const ephemeralKey = sessionData?.value || "";
+      if (!ephemeralKey) throw new Error("No llegó ephemeral key");
+      const pc = new RTCPeerConnection();
+      pc.ontrack = (event) => {
+        const [remoteStream] = event.streams;
+        if (remoteStream && remoteAudioRef.current) {
+          remoteAudioRef.current.srcObject = remoteStream;
+          remoteAudioRef.current.autoplay = true;
+          remoteAudioRef.current.play().catch(console.error);
+        }
+      };
+      const dc = pc.createDataChannel("oai-events");
+      dc.onopen = async () => {
+        console.log("✅ Sesión temporal abierta");
+        dc.send(
+          JSON.stringify({
+            type: "conversation.item.create",
+            item: {
+              type: "message",
+              role: "user",
+              content: [{ type: "input_text", text: instruction }],
+            },
+          })
+        );
+        dc.send(
+          JSON.stringify({
+            type: "response.create",
+            response: { modalities: ["audio", "text"] },
+          })
+        );
+        setTimeout(() => {
+          dc.close();
+          pc.close();
+          console.log("🔌 Sesión temporal cerrada");
+        }, 10000);
+      };
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+      const sdpRes = await fetch("https://api.openai.com/v1/realtime/calls", {
+        method: "POST",
+        body: offer.sdp,
+        headers: {
+          Authorization: `Bearer ${ephemeralKey}`,
+          "Content-Type": "application/sdp",
+        },
+      });
+      if (!sdpRes.ok) throw new Error("Error negociando WebRTC");
+      const answerSdp = await sdpRes.text();
+      await pc.setRemoteDescription({ type: "answer", sdp: answerSdp });
+    } catch (error) {
+      console.error("❌ Error en sesión proactiva:", error);
+    }
   };
 
   useEffect(() => {
@@ -1130,7 +1138,6 @@ export default function Regularizacion2026() {
       });
       return;
     }
-
     if (!authChecked) {
       toast({
         title: "Espera",
@@ -1139,7 +1146,6 @@ export default function Regularizacion2026() {
       });
       return;
     }
-
     if (!currentUserId) {
       toast({
         title: "Sesión no detectada",
@@ -1149,20 +1155,16 @@ export default function Regularizacion2026() {
       pushAgentMessage("عافاك دخل بحسابك أولاً، ومن بعد عاود دير تأكيد باش نكملو.");
       return;
     }
-
     try {
       setSavingForm(true);
       await saveFullStateToSupabase();
       setLeadSaved(true);
       setFormConfirmed(true);
-
       const savedMessage = buildSavedFormSpeech();
-
       toast({
         title: ui.saveLeadTitle,
         description: "Se han guardado los datos correctamente.",
       });
-
       await speakExactText(savedMessage);
     } catch (error: any) {
       console.error("Error guardando formulario Mohamed:", error);
@@ -1184,7 +1186,6 @@ export default function Regularizacion2026() {
   ): StoredDocItem | null => {
     const detectedType = normalizeDocType(result?.document_type || "");
     const lowerFileName = (fileName || "").toLowerCase();
-
     const combinedText = [
       result?.summary || "",
       ...(result?.visible_fields || []),
@@ -1195,10 +1196,8 @@ export default function Regularizacion2026() {
     ]
       .join(" ")
       .toLowerCase();
-
     const includesAny = (words: string[]) =>
       words.some((word) => combinedText.includes(word));
-
     const findIdentityDoc = () =>
       currentDocs.find(
         (doc) =>
@@ -1220,7 +1219,6 @@ export default function Regularizacion2026() {
           doc.nombre.toLowerCase().includes("nie")
       ) ||
       null;
-
     const findStayProofDoc = () =>
       currentDocs.find(
         (doc) =>
@@ -1242,12 +1240,10 @@ export default function Regularizacion2026() {
           doc.nombre.toLowerCase().includes("prueba de permanencia")
       ) ||
       null;
-
     if (detectedType === "passport" || detectedType === "nie" || detectedType === "tie") {
       const identityDoc = findIdentityDoc();
       if (identityDoc) return identityDoc;
     }
-
     if (
       detectedType === "empadronamiento" ||
       detectedType === "stay_proof" ||
@@ -1257,7 +1253,6 @@ export default function Regularizacion2026() {
       const stayProofDoc = findStayProofDoc();
       if (stayProofDoc) return stayProofDoc;
     }
-
     if (
       includesAny([
         "passport", "pasaporte", "nie", "tie",
@@ -1267,7 +1262,6 @@ export default function Regularizacion2026() {
       const identityDoc = findIdentityDoc();
       if (identityDoc) return identityDoc;
     }
-
     if (
       includesAny([
         "empadronamiento", "padron", "padrón", "prueba de permanencia",
@@ -1278,7 +1272,6 @@ export default function Regularizacion2026() {
       const stayProofDoc = findStayProofDoc();
       if (stayProofDoc) return stayProofDoc;
     }
-
     if (lowerFileName) {
       if (
         lowerFileName.includes("padron") ||
@@ -1298,7 +1291,6 @@ export default function Regularizacion2026() {
         if (identityDoc) return identityDoc;
       }
     }
-
     return (
       currentDocs.find((doc) => doc.estado === "missing") ||
       currentDocs.find((doc) => doc.estado === "warn") ||
@@ -1318,7 +1310,6 @@ export default function Regularizacion2026() {
         doc.estado === "ok"
       );
     });
-
     const nextStayOk = nextDocs.some((doc) => {
       const expected = normalizeDocType(doc.expectedType);
       const detected = normalizeDocType(doc.detectedType);
@@ -1331,9 +1322,7 @@ export default function Regularizacion2026() {
         doc.estado === "ok"
       );
     });
-
     const readyNow = (leadSaved || formConfirmed) && nextStayOk && nextIdentityOk;
-
     if (readyNow && !completionMessageSent) {
       pushAgentMessage(voiceTexts.mohamedFinal);
       setCompletionMessageSent(true);
@@ -1353,56 +1342,42 @@ export default function Regularizacion2026() {
       });
       return;
     }
-
     try {
       const input = document.createElement("input");
       input.type = "file";
       input.accept = "image/*,application/pdf";
       input.multiple = true;
-
       input.onchange = async () => {
         const files = Array.from(input.files || []);
         if (!files.length) return;
-
         setGeneralUploading(true);
         setWaitingMohamed(true);
         setWaitingForDocument(false);
         assistantTextBufferRef.current = "";
-
         try {
-          const {
-            data: { user },
-            error: authError,
-          } = await supabase.auth.getUser();
-
+          const { data: { user }, error: authError } = await supabase.auth.getUser();
           if (authError || !user?.id) {
             throw new Error("No hay usuario conectado en Supabase");
           }
-
           for (const file of files) {
             try {
               const currentDocs = [...docs];
               const safeName = `${Date.now()}_${slugifyFileName(file.name)}`;
               const storagePath = `${user.id}/regularizacion_2026/${safeName}`;
-
               const { error: uploadError } = await supabase.storage
                 .from("user-documents")
                 .upload(storagePath, file, { upsert: true });
-
               if (uploadError) throw new Error(uploadError.message);
-
               const result = await verifyDocument({
                 file,
                 expectedDocumentType: "auto",
                 lang: "darija",
               });
-
               const matchedDoc = getBestDocMatch(
                 result as VerifyDocumentResult,
                 currentDocs,
                 file.name
               );
-
               if (!matchedDoc) {
                 pushAgentMessage(voiceTexts.uploadUnknown);
                 await speakFromAutomation(
@@ -1415,13 +1390,10 @@ export default function Regularizacion2026() {
                 });
                 continue;
               }
-
               const isWarn =
                 result.status === "invalid" ||
                 result.match_expected_type === false;
-
               const nextStatus: DocStatus = isWarn ? "warn" : "ok";
-
               const updatedDocs = currentDocs.map((doc) =>
                 doc.id === matchedDoc.id
                   ? {
@@ -1436,16 +1408,13 @@ export default function Regularizacion2026() {
                     }
                   : doc
               );
-
               setDocs(updatedDocs);
-
               const verificationStatus =
                 nextStatus === "ok"
                   ? "verified"
                   : result.status === "invalid"
                   ? "rejected"
                   : "needs_review";
-
               const verificationNotes =
                 result.summary ||
                 (verificationStatus === "verified"
@@ -1453,7 +1422,6 @@ export default function Regularizacion2026() {
                   : verificationStatus === "rejected"
                   ? "Documento rechazado por validación automática"
                   : "Documento recibido. Pendiente de revisión");
-
               const { error: insertDocumentError } = await supabase
                 .from("user_documents")
                 .insert({
@@ -1489,21 +1457,16 @@ export default function Regularizacion2026() {
                       : null,
                   updated_at: new Date().toISOString(),
                 });
-
               if (insertDocumentError) {
                 console.error("Error guardando user_document:", insertDocumentError);
               }
-
               await saveFullStateToSupabase(updatedDocs);
-
               const localReply = buildDocSpeech(matchedDoc.nombre, result, nextStatus);
               await speakExactText(localReply);
-
               toast({
                 title: ui.uploadSuccessTitle,
                 description: result.summary || ui.uploadSuccessDesc,
               });
-
               await maybeSendCompletionMessage(updatedDocs);
             } catch (err: any) {
               console.error(err);
@@ -1522,7 +1485,6 @@ export default function Regularizacion2026() {
           setWaitingMohamed(false);
         }
       };
-
       input.click();
     } catch (error: any) {
       setGeneralUploading(false);
@@ -1551,9 +1513,7 @@ export default function Regularizacion2026() {
             "radial-gradient(ellipse 70% 40% at 30% 20%, rgba(34,197,94,0.1), transparent), radial-gradient(ellipse 60% 40% at 80% 80%, rgba(59,130,246,0.08), transparent)",
         }}
       />
-
       <Navbar />
-
       <main className="flex-1 relative z-10 pt-16 pb-8">
         <div className="px-4 sm:px-6 py-3 max-w-7xl mx-auto w-full flex items-center justify-between">
           <div>
@@ -1567,7 +1527,6 @@ export default function Regularizacion2026() {
             <p className="text-xs text-muted-foreground">{currentProcedure.name}</p>
           </div>
         </div>
-
         <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 grid grid-cols-1 lg:grid-cols-[380px_minmax(0,1fr)] gap-4">
           <div className="flex flex-col gap-3">
             <div
@@ -1580,12 +1539,10 @@ export default function Regularizacion2026() {
                 className="w-full h-full object-cover object-top"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-
               <div className="absolute top-3 left-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/60 border border-white/10 backdrop-blur-md">
                 <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
                 <span className="text-xs font-medium text-white">{ui.online}</span>
               </div>
-
               <div className="absolute top-3 right-3 flex items-center gap-2">
                 <div className="relative w-7 h-7 rounded-full bg-black/50 backdrop-blur-md border border-white/10 flex items-center justify-center">
                   <Bell className="w-3.5 h-3.5 text-white" />
@@ -1605,7 +1562,6 @@ export default function Regularizacion2026() {
                   )}
                 </button>
               </div>
-
               {!muted && (
                 <div className="absolute bottom-14 left-4 flex items-end gap-0.5 h-5">
                   {[3, 6, 4, 8, 5, 7, 3].map((h, i) => (
@@ -1618,12 +1574,10 @@ export default function Regularizacion2026() {
                   ))}
                 </div>
               )}
-
               <div className="absolute bottom-12 right-3 text-right">
                 <p className="text-white font-bold text-sm drop-shadow-lg">Mohamed</p>
                 <p className="text-white/70 text-[11px] drop-shadow-lg">{ui.role}</p>
               </div>
-
               <div className="absolute bottom-3 left-0 right-0 flex justify-center">
                 <button
                   onClick={isListening ? stopListening : startListening}
@@ -1642,7 +1596,6 @@ export default function Regularizacion2026() {
                 </button>
               </div>
             </div>
-
             <div className="glass-panel-heavy border border-white/10 rounded-2xl overflow-hidden">
               <div className="p-4 border-b border-white/10">
                 <button
@@ -1663,20 +1616,17 @@ export default function Regularizacion2026() {
                     </>
                   )}
                 </button>
-
                 {!voiceSupported && (
                   <p className="mt-2 text-xs text-red-400 text-center">
                     {ui.micNotSupported}
                   </p>
                 )}
-
                 {isListening && (
                   <p className="mt-2 text-xs text-primary text-center">
                     {ui.listening}
                   </p>
                 )}
               </div>
-
               <div className="p-4 space-y-4">
                 <div>
                   <p className="text-[11px] text-white/50 mb-1">{ui.latestReply}</p>
@@ -1684,7 +1634,6 @@ export default function Regularizacion2026() {
                     {latestAgentMessage}
                   </div>
                 </div>
-
                 {lastUserTranscript ? (
                   <div>
                     <p className="text-[11px] text-white/50 mb-1">{ui.yourVoice}</p>
@@ -1693,20 +1642,17 @@ export default function Regularizacion2026() {
                     </div>
                   </div>
                 ) : null}
-
                 {waitingMohamed && (
                   <div className="rounded-xl bg-white/5 border border-white/10 px-3 py-3 text-sm text-white/70">
                     ...
                   </div>
                 )}
-
                 {waitingForDocument && !generalUploading && (
                   <div className="rounded-xl bg-amber-500/10 border border-amber-400/20 px-3 py-3 text-sm text-amber-200">
                     Mohamed está esperando el documento que te pidió.
                   </div>
                 )}
               </div>
-
               <div className="border-t border-white/10 p-3">
                 <button
                   onClick={handleGeneralUpload}
@@ -1736,7 +1682,6 @@ export default function Regularizacion2026() {
               </div>
             </div>
           </div>
-
           <div className="flex flex-col gap-4">
             <div className="rounded-[28px] border border-white/10 bg-white shadow-xl overflow-hidden">
               <div className="bg-[#f8fafc] border-b border-gray-200 px-4 py-3">
@@ -1750,7 +1695,6 @@ export default function Regularizacion2026() {
                   </div>
                 </div>
               </div>
-
               <div className="px-4 py-4 space-y-3 bg-white">
                 <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 mb-3">
                   <div className="flex items-center justify-between mb-2">
@@ -1796,49 +1740,42 @@ export default function Regularizacion2026() {
                     ))}
                   </div>
                 </div>
-
                 <FieldLabel label={ui.labels.nombre} />
                 <FieldInput
                   value={leadForm.nombre}
                   onChange={(v) => updateLeadForm("nombre", v)}
                   placeholder={ui.labels.nombre}
                 />
-
                 <FieldLabel label={ui.labels.telefono} />
                 <FieldInput
                   value={leadForm.telefono}
                   onChange={(v) => updateLeadForm("telefono", v)}
                   placeholder={ui.labels.telefono}
                 />
-
                 <FieldLabel label={ui.labels.niePasaporte} />
                 <FieldInput
                   value={leadForm.niePasaporte}
                   onChange={(v) => updateLeadForm("niePasaporte", v)}
                   placeholder={ui.labels.niePasaporte}
                 />
-
                 <FieldLabel label={ui.labels.ciudad} />
                 <FieldInput
                   value={leadForm.ciudad}
                   onChange={(v) => updateLeadForm("ciudad", v)}
                   placeholder={ui.labels.ciudad}
                 />
-
                 <FieldLabel label={ui.labels.nacionalidad} />
                 <FieldInput
                   value={leadForm.nacionalidad}
                   onChange={(v) => updateLeadForm("nacionalidad", v)}
                   placeholder={ui.labels.nacionalidad}
                 />
-
                 <FieldLabel label={ui.labels.fechaLlegada} />
                 <FieldInput
                   value={leadForm.fechaLlegada}
                   onChange={(v) => updateLeadForm("fechaLlegada", v)}
                   placeholder="DD/MM/AAAA"
                 />
-
                 <FieldLabel label={ui.labels.cumple5Meses} />
                 <FieldSelect
                   value={leadForm.cumple5Meses}
@@ -1850,7 +1787,6 @@ export default function Regularizacion2026() {
                     { value: "nose", label: ui.labels.dontKnow },
                   ]}
                 />
-
                 <FieldLabel label={ui.labels.asilo} />
                 <FieldSelect
                   value={leadForm.asilo}
@@ -1862,7 +1798,6 @@ export default function Regularizacion2026() {
                     { value: "nose", label: ui.labels.dontKnow },
                   ]}
                 />
-
                 <FieldLabel label={ui.labels.penales} />
                 <FieldSelect
                   value={leadForm.penales}
@@ -1873,7 +1808,6 @@ export default function Regularizacion2026() {
                     { value: "si", label: ui.labels.yes },
                   ]}
                 />
-
                 <button
                   onClick={handleSaveLeadForm}
                   disabled={savingForm || !authChecked}
@@ -1884,7 +1818,6 @@ export default function Regularizacion2026() {
                 </button>
               </div>
             </div>
-
             {allReady && (
               <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4">
                 <p className="text-sm font-bold text-white">{ui.goSara}</p>
@@ -1901,7 +1834,6 @@ export default function Regularizacion2026() {
             )}
           </div>
         </div>
-
         <audio ref={remoteAudioRef} autoPlay playsInline className="hidden" />
       </main>
     </div>
