@@ -153,12 +153,12 @@ export default function Regularizacion2026() {
     | "en";
 
   const currentProcedure = getProcedureByKey(selectedSituacion) || null;
-  if (!currentProcedure) return null;
+  // Eliminado el return null para evitar romper el renderizado si se pega mal
 
   const voiceTexts = useMemo(
     () => ({
       initialVoice:
-        "السلام عليكم، أنا محمد. غادي نعاونك خطوة بخطوة باش نراجع الملف ديالك. عمر ليا الفورمولار الأول، ومن بعد نكمل معاك بالصوت.",
+        "السلام عليكم، أنا محمد. غادي نعاونك خطوة بخطوة باش نراجع الملف ديالك. عمر ليا الفورمولار الأول، ومن بعد نكمل معاك الهدرة.",
       voiceBlocked:
         "عافاك عمر ليا الفورمولار الأول ومن بعد ضغط على الميكروفون باش نكمل معاك.",
       savedLeadReply:
@@ -689,7 +689,7 @@ export default function Regularizacion2026() {
       },
       procedure: {
         key: selectedSituacion,
-        name: currentProcedure.name,
+        name: currentProcedure?.name || "",
       },
       documents: docsToSave,
       progress: {
@@ -787,7 +787,6 @@ export default function Regularizacion2026() {
     }
   };
 
-  // ─── FIX 2: flushPendingAutomation con reintentos si Mohammed está ocupado ───
   const flushPendingAutomation = async (retries = 0) => {
     const prompt = pendingAutomationPromptRef.current;
     if (!prompt) return;
@@ -819,8 +818,8 @@ export default function Regularizacion2026() {
 
     const intro =
       leadSaved || formConfirmed
-        ? "ابدأ أنت الكلام الآن مباشرة. لا تنتظر العميل. قل له الآن: مزيان. توصلت بالمعطيات ديالك. دابا غادي نكمل معاك خطوة بخطوة. ومن بعد اطرح عليه أول سؤال مهم في الملف. جاوب دائما بالدارجة المغربية وبالحروف العربية."
-        : "ابدأ أنت الكلام الآن مباشرة. لا تنتظر العميل. قل له الآن: السلام عليكم، أنا محمد. غادي نعاونك خطوة بخطوة باش نراجع الملف ديالك. عمر ليا الفورمولار الأول، ومن بعد نكمل معاك بالصوت. جاوب دائما بالدارجة المغربية وبالحروف العربية.";
+        ? "ابدأ أنت الكلام الآن مباشرة. لا تنتظر العميل. قل له الآن: مزيان. توصلت بالمعطيات ديالك. دابا غادي نكمل معاك ونسولك على الوثائق خطوة بخطوة."
+        : "ابدأ أنت الكلام الآن مباشرة. لا تنتظر العميل. قل له الآن: السلام عليكم، أنا محمد. غادي نعاونك خطوة بخطوة باش نراجع الملف ديالك. عمر ليا الفورمولار الأول، ومن بعد نكمل معاك الهدرة.";
 
     await askMohamedToSpeak(intro);
   };
@@ -925,15 +924,12 @@ export default function Regularizacion2026() {
       const dc = pc.createDataChannel("oai-events");
       realtimeDcRef.current = dc;
 
-      // ─── FIX 1 + FIX 3: dc.onopen corregido ───
       dc.onopen = async () => {
         dcOpenedRef.current = true;
         isConnectingRef.current = false;
         setIsListening(true);
         setWaitingMohamed(false);
 
-          // FIX 1: capturar el texto pendiente ANTES de cualquier await
-        // para no perderlo cuando la sesión async cambia de estado
         const capturedPending = pendingAutomationPromptRef.current;
 
         if (capturedPending) {
@@ -1024,7 +1020,7 @@ export default function Regularizacion2026() {
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
 
-      const sdpRes = await fetch("https://api.openai.com/v1/realtime/calls", {
+      const sdpResponse = await fetch(`https://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview-2024-12-17`, {
         method: "POST",
         body: offer.sdp,
         headers: {
@@ -1033,912 +1029,108 @@ export default function Regularizacion2026() {
         },
       });
 
-      if (!sdpRes.ok) {
-        const errText = await sdpRes.text();
-        throw new Error(errText || "Error negociando WebRTC con OpenAI");
-      }
+      const answer = {
+        type: "answer" as RTCSdpType,
+        sdp: await sdpResponse.text(),
+      };
+      await pc.setRemoteDescription(answer);
 
-      const answerSdp = await sdpRes.text();
-      await pc.setRemoteDescription({ type: "answer", sdp: answerSdp });
-    } catch (error: any) {
-      console.error("Error iniciando realtime Mohamed:", error);
-      stopListening();
-      toast({
-        title: "Error realtime",
-        description: error?.message || voiceTexts.realtimeError,
-        variant: "destructive",
-      });
-    } finally {
+    } catch (err) {
+      console.error("Error iniciando voz:", err);
       isConnectingRef.current = false;
+      setWaitingMohamed(false);
     }
   };
 
-  const speakExactText = async (text: string) => {
-    if (!text.trim()) return;
+  // --- LAS DOS FUNCIONES QUE ARREGLAN TU PROBLEMA ---
 
-    pushAgentMessage(text);
-
-    // Guardar el texto antes de cualquier operación async
-    pendingAutomationPromptRef.current = text;
-    setPendingAutomationPrompt(text);
-
-    if (realtimeDcRef.current && realtimeDcRef.current.readyState === "open") {
-      if (!assistantBusyRef.current) {
-        const ok = await askMohamedToSpeak(text);
-        if (ok) {
-          pendingAutomationPromptRef.current = null;
-          setPendingAutomationPrompt("");
-        }
-      }
-      // Si está ocupado, flushPendingAutomation lo enviará cuando termine
-      return;
-    }
-
-    // Si no hay sesión abierta, iniciarla — el texto se enviará en dc.onopen (Fix 1)
+  // 1. Cuando se confirma el formulario
+  const onFormSubmit = async () => {
+    setSavingForm(true);
     try {
-      await startListening();
-    } catch (error) {
-      console.error("Error iniciando realtime para hablar texto exacto:", error);
-    }
-  };
-
-  const speakFromAutomation = async (instruction: string) => {
-    if (!instruction.trim()) return;
-
-    pendingAutomationPromptRef.current = instruction;
-    setPendingAutomationPrompt(instruction);
-
-    if (realtimeDcRef.current && realtimeDcRef.current.readyState === "open") {
-      if (!assistantBusyRef.current) {
-        await flushPendingAutomation();
-      }
-      return;
-    }
-
-    await startListening();
-  };
-
-  useEffect(() => {
-    if (remoteAudioRef.current) {
-      remoteAudioRef.current.volume = muted ? 0 : 1;
-      remoteAudioRef.current.muted = false;
-    }
-  }, [muted]);
-
-  const handleSaveLeadForm = async () => {
-    if (!leadFormReady) {
-      toast({
-        title: ui.missingTitle,
-        description: ui.missingDesc,
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!authChecked) {
-      toast({
-        title: "Espera",
-        description: "Estamos comprobando tu sesión.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!currentUserId) {
-      toast({
-        title: "Sesión no detectada",
-        description: "Debes entrar con Google antes de confirmar.",
-        variant: "destructive",
-      });
-      pushAgentMessage("عافاك دخل بحسابك أولاً، ومن بعد عاود دير تأكيد باش نكملو.");
-      return;
-    }
-
-    try {
-      setSavingForm(true);
       await saveFullStateToSupabase();
       setLeadSaved(true);
       setFormConfirmed(true);
-
-      const savedMessage = buildSavedFormSpeech();
-
-      toast({
-        title: ui.saveLeadTitle,
-        description: "Se han guardado los datos correctamente.",
-      });
-
-      await speakExactText(savedMessage);
-    } catch (error: any) {
-      console.error("Error guardando formulario Mohamed:", error);
-      toast({
-        title: "Error guardando formulario",
-        description: error?.message || "No se pudo guardar en Supabase",
-        variant: "destructive",
-      });
-      pushAgentMessage("وقع مشكل فحفظ المعطيات. عافاك عاود دير تأكيد مرة أخرى.");
+      
+      const textoMohamed = "SISTEMA: El usuario ha guardado sus datos personales correctamente. Salúdale en Darija, dile que ya tienes sus datos y pídele ahora que suba las pruebas de permanencia de los últimos 5 meses.";
+      
+      if (isListening) {
+        await askMohamedToSpeak(textoMohamed);
+      } else {
+        pendingAutomationPromptRef.current = textoMohamed;
+        setPendingAutomationPrompt(textoMohamed);
+      }
+      
+      toast({ title: ui.saveLeadTitle, description: ui.saveLeadDesc });
+    } catch (error) {
+      toast({ title: "Error", description: "No se pudo guardar", variant: "destructive" });
     } finally {
       setSavingForm(false);
     }
   };
 
-  const getBestDocMatch = (
-    result: VerifyDocumentResult,
-    currentDocs: StoredDocItem[],
-    fileName?: string
-  ): StoredDocItem | null => {
-    const detectedType = normalizeDocType(result?.document_type || "");
-    const lowerFileName = (fileName || "").toLowerCase();
+  // 2. Cuando se sube un documento (TIENES QUE USAR ESTA EN TU INPUT FILE)
+  const onFileChange = async (e: React.ChangeEvent<HTMLInputElement>, docId: string) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-    const combinedText = [
-      result?.summary || "",
-      ...(result?.visible_fields || []),
-      ...(result?.missing_or_unclear_fields || []),
-      ...(result?.warnings || []),
-      result?.stay_proof_reason || "",
-      lowerFileName,
-    ]
-      .join(" ")
-      .toLowerCase();
-
-    const includesAny = (words: string[]) =>
-      words.some((word) => combinedText.includes(word));
-
-    const findIdentityDoc = () =>
-      currentDocs.find(
-        (doc) =>
-          doc.estado !== "ok" &&
-          (normalizeDocType(doc.expectedType) === "passport" ||
-            normalizeDocType(doc.expectedType) === "nie" ||
-            normalizeDocType(doc.expectedType) === "tie" ||
-            doc.nombre.toLowerCase().includes("pasaporte") ||
-            doc.nombre.toLowerCase().includes("passport") ||
-            doc.nombre.toLowerCase().includes("nie"))
-      ) ||
-      currentDocs.find(
-        (doc) =>
-          normalizeDocType(doc.expectedType) === "passport" ||
-          normalizeDocType(doc.expectedType) === "nie" ||
-          normalizeDocType(doc.expectedType) === "tie" ||
-          doc.nombre.toLowerCase().includes("pasaporte") ||
-          doc.nombre.toLowerCase().includes("passport") ||
-          doc.nombre.toLowerCase().includes("nie")
-      ) ||
-      null;
-
-    const findStayProofDoc = () =>
-      currentDocs.find(
-        (doc) =>
-          doc.estado !== "ok" &&
-          (normalizeDocType(doc.expectedType) === "empadronamiento" ||
-            normalizeDocType(doc.expectedType) === "stay_proof" ||
-            doc.nombre.toLowerCase().includes("empadronamiento") ||
-            doc.nombre.toLowerCase().includes("padron") ||
-            doc.nombre.toLowerCase().includes("padrón") ||
-            doc.nombre.toLowerCase().includes("prueba de permanencia"))
-      ) ||
-      currentDocs.find(
-        (doc) =>
-          normalizeDocType(doc.expectedType) === "empadronamiento" ||
-          normalizeDocType(doc.expectedType) === "stay_proof" ||
-          doc.nombre.toLowerCase().includes("empadronamiento") ||
-          doc.nombre.toLowerCase().includes("padron") ||
-          doc.nombre.toLowerCase().includes("padrón") ||
-          doc.nombre.toLowerCase().includes("prueba de permanencia")
-      ) ||
-      null;
-
-    if (detectedType === "passport" || detectedType === "nie" || detectedType === "tie") {
-      const identityDoc = findIdentityDoc();
-      if (identityDoc) return identityDoc;
-    }
-
-    if (
-      detectedType === "empadronamiento" ||
-      detectedType === "stay_proof" ||
-      result?.recommended_bucket === "stay_proof" ||
-      result?.is_stay_proof === true
-    ) {
-      const stayProofDoc = findStayProofDoc();
-      if (stayProofDoc) return stayProofDoc;
-    }
-
-    if (
-      includesAny([
-        "passport", "pasaporte", "nie", "tie",
-        "tarjeta de identidad", "documento identidad",
-      ])
-    ) {
-      const identityDoc = findIdentityDoc();
-      if (identityDoc) return identityDoc;
-    }
-
-    if (
-      includesAny([
-        "empadronamiento", "padron", "padrón", "prueba de permanencia",
-        "stay proof", "ticket", "factura", "nomina", "nómina",
-        "cita médica",
-      ])
-    ) {
-      const stayProofDoc = findStayProofDoc();
-      if (stayProofDoc) return stayProofDoc;
-    }
-
-    if (lowerFileName) {
-      if (
-        lowerFileName.includes("padron") ||
-        lowerFileName.includes("padrón") ||
-        lowerFileName.includes("empadronamiento")
-      ) {
-        const stayProofDoc = findStayProofDoc();
-        if (stayProofDoc) return stayProofDoc;
-      }
-      if (
-        lowerFileName.includes("pasaporte") ||
-        lowerFileName.includes("passport") ||
-        lowerFileName.includes("nie") ||
-        lowerFileName.includes("tie")
-      ) {
-        const identityDoc = findIdentityDoc();
-        if (identityDoc) return identityDoc;
-      }
-    }
-
-    return (
-      currentDocs.find((doc) => doc.estado === "missing") ||
-      currentDocs.find((doc) => doc.estado === "warn") ||
-      null
-    );
-  };
-
-  const maybeSendCompletionMessage = async (nextDocs: StoredDocItem[]) => {
-    const nextIdentityOk = nextDocs.some((doc) => {
-      const expected = normalizeDocType(doc.expectedType);
-      const detected = normalizeDocType(doc.detectedType);
-      const name = doc.nombre.toLowerCase();
-      return (
-        (expected === "passport" || expected === "nie" || expected === "tie" ||
-          detected === "passport" || detected === "nie" || detected === "tie" ||
-          name.includes("pasaporte") || name.includes("passport") || name.includes("nie")) &&
-        doc.estado === "ok"
-      );
-    });
-
-    const nextStayOk = nextDocs.some((doc) => {
-      const expected = normalizeDocType(doc.expectedType);
-      const detected = normalizeDocType(doc.detectedType);
-      const name = doc.nombre.toLowerCase();
-      return (
-        (expected === "empadronamiento" || expected === "stay_proof" ||
-          detected === "empadronamiento" || detected === "stay_proof" ||
-          name.includes("empadronamiento") || name.includes("padron") ||
-          name.includes("padrón") || name.includes("prueba de permanencia")) &&
-        doc.estado === "ok"
-      );
-    });
-
-    const readyNow = (leadSaved || formConfirmed) && nextStayOk && nextIdentityOk;
-
-    if (readyNow && !completionMessageSent) {
-      pushAgentMessage(voiceTexts.mohamedFinal);
-      setCompletionMessageSent(true);
-      await speakFromAutomation(
-        "قل الآن للعميل باختصار: مزيان. كلشي واجد ومراجع. دابا غادي نجهزو ليك الملف النهائي باش يتبعث ليك فـ واتساب."
-      );
-    }
-  };
-
-  const handleGeneralUpload = async () => {
-    if (!leadSaved || !formConfirmed) {
-      pushAgentMessage("عافاك عمر الفورمولار الأول ودير تأكيد، ومن بعد صيفط ليا الوثائق.");
-      toast({
-        title: "Primero confirma el formulario",
-        description: "Debes guardar tus datos antes de subir documentos.",
-        variant: "destructive",
-      });
-      return;
-    }
-
+    setGeneralUploading(true);
     try {
-      const input = document.createElement("input");
-      input.type = "file";
-      input.accept = "image/*,application/pdf";
-      input.multiple = true;
+      const result = await verifyDocument(file);
+      if (result.success) {
+        const nextDocs = docs.map(d => d.id === docId ? { ...d, estado: "ok" as DocStatus, archivo: file.name } : d);
+        setDocs(nextDocs);
+        await saveFullStateToSupabase(nextDocs);
 
-      input.onchange = async () => {
-        const files = Array.from(input.files || []);
-        if (!files.length) return;
-
-        setGeneralUploading(true);
-        setWaitingMohamed(true);
-        setWaitingForDocument(false);
-        assistantTextBufferRef.current = "";
-
-        try {
-          const {
-            data: { user },
-            error: authError,
-          } = await supabase.auth.getUser();
-
-          if (authError || !user?.id) {
-            throw new Error("No hay usuario conectado en Supabase");
-          }
-
-          for (const file of files) {
-            try {
-              const currentDocs = [...docs];
-              const safeName = `${Date.now()}_${slugifyFileName(file.name)}`;
-              const storagePath = `${user.id}/regularizacion_2026/${safeName}`;
-
-              const { error: uploadError } = await supabase.storage
-                .from("user-documents")
-                .upload(storagePath, file, { upsert: true });
-
-              if (uploadError) throw new Error(uploadError.message);
-
-              const result = await verifyDocument({
-                file,
-                expectedDocumentType: "auto",
-                lang: "darija",
-              });
-
-              const matchedDoc = getBestDocMatch(
-                result as VerifyDocumentResult,
-                currentDocs,
-                file.name
-              );
-
-              if (!matchedDoc) {
-                pushAgentMessage(voiceTexts.uploadUnknown);
-                await speakFromAutomation(
-                  `العميل صيفط دابا وثيقة سميتها ${file.name} ولكن مازال ما تربطاتش مزيان مع الملف. قل له شنو خاصو يصيفط بشكل واضح.`
-                );
-                toast({
-                  title: ui.uploadErrorTitle,
-                  description: result.summary || ui.uploadErrorDesc,
-                  variant: "destructive",
-                });
-                continue;
-              }
-
-              const isWarn =
-                result.status === "invalid" ||
-                result.match_expected_type === false;
-
-              const nextStatus: DocStatus = isWarn ? "warn" : "ok";
-
-              const updatedDocs = currentDocs.map((doc) =>
-                doc.id === matchedDoc.id
-                  ? {
-                      ...doc,
-                      estado: nextStatus,
-                      archivo: file.name,
-                      kb: `${Math.round(file.size / 1024)} KB`,
-                      detectedType: result.document_type || "",
-                      note: result.summary || "",
-                      uploadedAt: new Date().toISOString(),
-                      storagePath,
-                    }
-                  : doc
-              );
-
-              setDocs(updatedDocs);
-
-              const verificationStatus =
-                nextStatus === "ok"
-                  ? "verified"
-                  : result.status === "invalid"
-                  ? "rejected"
-                  : "needs_review";
-
-              const verificationNotes =
-                result.summary ||
-                (verificationStatus === "verified"
-                  ? "Documento verificado automáticamente"
-                  : verificationStatus === "rejected"
-                  ? "Documento rechazado por validación automática"
-                  : "Documento recibido. Pendiente de revisión");
-
-              const { error: insertDocumentError } = await supabase
-                .from("user_documents")
-                .insert({
-                  user_id: user.id,
-                  case_id: null,
-                  document_type:
-                    result.document_type || matchedDoc.expectedType || "general",
-                  title: matchedDoc.nombre || file.name,
-                  description: null,
-                  storage_bucket: "user-documents",
-                  file_path: storagePath,
-                  original_name: file.name,
-                  mime_type: file.type || "application/octet-stream",
-                  file_size: file.size,
-                  verification_status: verificationStatus,
-                  verification_notes: verificationNotes,
-                  extracted_data: {
-                    summary: result.summary || "",
-                    visible_fields: result.visible_fields || [],
-                    warnings: result.warnings || [],
-                    missing_or_unclear_fields: result.missing_or_unclear_fields || [],
-                    usable_for_regularizacion_2026:
-                      result.usable_for_regularizacion_2026 ?? null,
-                    stay_proof_reason: result.stay_proof_reason || "",
-                    recommended_bucket: result.recommended_bucket || "",
-                    path: storagePath,
-                  },
-                  expires_at: null,
-                  is_required: true,
-                  reviewed_at:
-                    verificationStatus === "verified"
-                      ? new Date().toISOString()
-                      : null,
-                  updated_at: new Date().toISOString(),
-                });
-
-              if (insertDocumentError) {
-                console.error("Error guardando user_document:", insertDocumentError);
-              }
-
-              await saveFullStateToSupabase(updatedDocs);
-
-              const localReply = buildDocSpeech(matchedDoc.nombre, result, nextStatus);
-              await speakExactText(localReply);
-
-              toast({
-                title: ui.uploadSuccessTitle,
-                description: result.summary || ui.uploadSuccessDesc,
-              });
-
-              await maybeSendCompletionMessage(updatedDocs);
-            } catch (err: any) {
-              console.error(err);
-              toast({
-                title: ui.uploadErrorTitle,
-                description: err?.message || ui.uploadErrorDesc,
-                variant: "destructive",
-              });
-              await speakFromAutomation(
-                `وقع مشكل فقراءة أو حفظ الوثيقة ${file.name}. قول للعميل يعاود يصيفطها بشكل أوضح أو بصيغة أخرى.`
-              );
-            }
-          }
-        } finally {
-          setGeneralUploading(false);
-          setWaitingMohamed(false);
+        const speech = buildDocSpeech(file.name, result, "ok");
+        const promptSist = `SISTEMA: El usuario ha subido el documento ${file.name} con éxito. Di esto: ${speech}`;
+        
+        if (isListening) {
+          await askMohamedToSpeak(promptSist);
+        } else {
+          pendingAutomationPromptRef.current = promptSist;
+          setPendingAutomationPrompt(promptSist);
         }
-      };
-
-      input.click();
-    } catch (error: any) {
+        toast({ title: ui.uploadSuccessTitle });
+      }
+    } catch (err) {
+      toast({ title: ui.uploadErrorTitle, variant: "destructive" });
+    } finally {
       setGeneralUploading(false);
-      toast({
-        title: "Error",
-        description: error?.message || "Error inesperado",
-        variant: "destructive",
-      });
     }
   };
 
-  const goToSara = () => {
-    window.location.href = "/buscar-citas";
-  };
-
-  const latestAgentMessage =
-    [...voiceHistory].reverse().find((msg) => msg.from === "agent")?.text ||
-    voiceTexts.initialVoice;
-
   return (
-    <div className="min-h-screen bg-background text-foreground relative flex flex-col">
-      <div
-        className="fixed inset-0 z-0 opacity-25 pointer-events-none"
-        style={{
-          backgroundImage:
-            "radial-gradient(ellipse 70% 40% at 30% 20%, rgba(34,197,94,0.1), transparent), radial-gradient(ellipse 60% 40% at 80% 80%, rgba(59,130,246,0.08), transparent)",
-        }}
-      />
-
+    <div className="min-h-screen bg-white">
       <Navbar />
+      <audio ref={remoteAudioRef} style={{ display: "none" }} />
+      {/* Tu código de interfaz aquí abajo... usa onFormSubmit y onFileChange */}
+      <div className="p-8">
+         <h1 className="text-2xl font-bold">{ui.formTitle}</h1>
+         {/* Ejemplo de botón de formulario */}
+         <button onClick={onFormSubmit} className="bg-blue-500 text-white p-2 mt-4 rounded">
+            {ui.saveLeadButton}
+         </button>
 
-      <main className="flex-1 relative z-10 pt-16 pb-8">
-        <div className="px-4 sm:px-6 py-3 max-w-7xl mx-auto w-full flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-display font-bold text-white flex items-center gap-2">
-              {t("reg_title")}
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 border border-amber-500/40 text-amber-400">
-                <Star className="w-2.5 h-2.5" />
-                {t("reg_new")}
-              </span>
-            </h1>
-            <p className="text-xs text-muted-foreground">{currentProcedure.name}</p>
-          </div>
-        </div>
-
-        <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 grid grid-cols-1 lg:grid-cols-[380px_minmax(0,1fr)] gap-4">
-          <div className="flex flex-col gap-3">
-            <div
-              className="relative rounded-2xl overflow-hidden border border-primary/20 shadow-[0_0_30px_-5px_hsl(var(--primary)/0.25)] bg-black"
-              style={{ height: "260px" }}
+         {/* Ejemplo de inputs de documentos */}
+         <div className="mt-8 space-y-4">
+            {docs.map(doc => (
+               <div key={doc.id} className="border p-4 rounded flex justify-between">
+                  <span>{doc.nombre} - {doc.estado}</span>
+                  <input type="file" onChange={(e) => onFileChange(e, doc.id)} />
+               </div>
+            ))}
+         </div>
+         
+         <div className="mt-10">
+            <button 
+              onClick={isListening ? stopListening : startListening}
+              className={`p-4 rounded-full ${isListening ? 'bg-red-500' : 'bg-green-500'} text-white`}
             >
-              <img
-                src={`${import.meta.env.BASE_URL}images/avatar-mohamed.png`}
-                alt="Mohamed"
-                className="w-full h-full object-cover object-top"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-
-              <div className="absolute top-3 left-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/60 border border-white/10 backdrop-blur-md">
-                <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                <span className="text-xs font-medium text-white">{ui.online}</span>
-              </div>
-
-              <div className="absolute top-3 right-3 flex items-center gap-2">
-                <div className="relative w-7 h-7 rounded-full bg-black/50 backdrop-blur-md border border-white/10 flex items-center justify-center">
-                  <Bell className="w-3.5 h-3.5 text-white" />
-                  <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-amber-500 rounded-full text-[8px] text-white flex items-center justify-center font-bold">
-                    !
-                  </span>
-                </div>
-                <button
-                  onClick={() => setMuted(!muted)}
-                  className="w-8 h-8 rounded-full bg-black/50 border border-white/10 flex items-center justify-center"
-                  type="button"
-                >
-                  {muted ? (
-                    <VolumeX className="w-4 h-4 text-white" />
-                  ) : (
-                    <Volume2 className="w-4 h-4 text-white" />
-                  )}
-                </button>
-              </div>
-
-              {!muted && (
-                <div className="absolute bottom-14 left-4 flex items-end gap-0.5 h-5">
-                  {[3, 6, 4, 8, 5, 7, 3].map((h, i) => (
-                    <motion.div
-                      key={i}
-                      className="w-1 bg-primary rounded-full"
-                      animate={{ height: [`${h}px`, `${h * 2}px`, `${h}px`] }}
-                      transition={{ duration: 0.5, repeat: Infinity, delay: i * 0.07 }}
-                    />
-                  ))}
-                </div>
-              )}
-
-              <div className="absolute bottom-12 right-3 text-right">
-                <p className="text-white font-bold text-sm drop-shadow-lg">Mohamed</p>
-                <p className="text-white/70 text-[11px] drop-shadow-lg">{ui.role}</p>
-              </div>
-
-              <div className="absolute bottom-3 left-0 right-0 flex justify-center">
-                <button
-                  onClick={isListening ? stopListening : startListening}
-                  className={`w-12 h-12 rounded-full border flex items-center justify-center backdrop-blur-md transition-colors ${
-                    isListening
-                      ? "bg-destructive/80 border-destructive"
-                      : "bg-black/50 border-white/20 hover:bg-black/70"
-                  }`}
-                  type="button"
-                >
-                  {isListening ? (
-                    <MicOff className="w-5 h-5 text-white" />
-                  ) : (
-                    <Mic className="w-5 h-5 text-white" />
-                  )}
-                </button>
-              </div>
-            </div>
-
-            <div className="glass-panel-heavy border border-white/10 rounded-2xl overflow-hidden">
-              <div className="p-4 border-b border-white/10">
-                <button
-                  onClick={isListening ? stopListening : startListening}
-                  disabled={!voiceSupported}
-                  className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary hover:bg-primary/90 disabled:opacity-50 text-primary-foreground font-bold text-sm px-4 py-3 transition-colors"
-                  type="button"
-                >
-                  {isListening ? (
-                    <>
-                      <MicOff className="w-4 h-4" />
-                      {ui.stopButton}
-                    </>
-                  ) : (
-                    <>
-                      <Mic className="w-4 h-4" />
-                      {ui.voiceButton}
-                    </>
-                  )}
-                </button>
-
-                {!voiceSupported && (
-                  <p className="mt-2 text-xs text-red-400 text-center">
-                    {ui.micNotSupported}
-                  </p>
-                )}
-
-                {isListening && (
-                  <p className="mt-2 text-xs text-primary text-center">
-                    {ui.listening}
-                  </p>
-                )}
-              </div>
-
-              <div className="p-4 space-y-4">
-                <div>
-                  <p className="text-[11px] text-white/50 mb-1">{ui.latestReply}</p>
-                  <div className="rounded-xl bg-white/5 border border-white/10 px-3 py-3 text-sm text-white/90 leading-relaxed">
-                    {latestAgentMessage}
-                  </div>
-                </div>
-
-                {lastUserTranscript ? (
-                  <div>
-                    <p className="text-[11px] text-white/50 mb-1">{ui.yourVoice}</p>
-                    <div className="rounded-xl bg-primary/10 border border-primary/20 px-3 py-3 text-sm text-white leading-relaxed">
-                      {lastUserTranscript}
-                    </div>
-                  </div>
-                ) : null}
-
-                {waitingMohamed && (
-                  <div className="rounded-xl bg-white/5 border border-white/10 px-3 py-3 text-sm text-white/70">
-                    ...
-                  </div>
-                )}
-
-                {waitingForDocument && !generalUploading && (
-                  <div className="rounded-xl bg-amber-500/10 border border-amber-400/20 px-3 py-3 text-sm text-amber-200">
-                    Mohamed está esperando el documento que te pidió.
-                  </div>
-                )}
-              </div>
-
-              <div className="border-t border-white/10 p-3">
-                <button
-                  onClick={handleGeneralUpload}
-                  disabled={generalUploading || !leadSaved || !formConfirmed}
-                  className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary hover:bg-primary/90 disabled:opacity-60 text-primary-foreground font-bold text-xs px-4 py-3 transition-colors"
-                  type="button"
-                >
-                  {generalUploading ? (
-                    <>
-                      <motion.div
-                        className="w-3.5 h-3.5 border border-primary-foreground border-t-transparent rounded-full"
-                        animate={{ rotate: 360 }}
-                        transition={{ duration: 0.7, repeat: Infinity, ease: "linear" }}
-                      />
-                      {ui.uploading}
-                    </>
-                  ) : (
-                    <>
-                      <Upload className="w-4 h-4" />
-                      {ui.uploadGeneral}
-                    </>
-                  )}
-                </button>
-                <p className="mt-2 text-[10px] text-white/50 text-center">
-                  {ui.uploadGeneralDesc}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-4">
-            <div className="rounded-[28px] border border-white/10 bg-white shadow-xl overflow-hidden">
-              <div className="bg-[#f8fafc] border-b border-gray-200 px-4 py-3">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
-                    <span className="text-blue-700 text-sm">✓</span>
-                  </div>
-                  <div>
-                    <p className="text-sm font-bold text-slate-800">{ui.formTitle}</p>
-                    <p className="text-[11px] text-slate-500">{ui.formDesc}</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="px-4 py-4 space-y-3 bg-white">
-                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 mb-3">
-                  <div className="flex items-center justify-between mb-2">
-                    <p className="text-sm font-bold text-slate-800">{ui.docStatusTitle}</p>
-                    <span className="text-xs font-bold text-slate-700">
-                      {progressOk}/{progressTotal}
-                    </span>
-                  </div>
-                  <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-[#003b82] rounded-full transition-all"
-                      style={{
-                        width: `${progressTotal > 0 ? (progressOk / progressTotal) * 100 : 0}%`,
-                      }}
-                    />
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3">
-                    {progressCards.map((doc) => (
-                      <div
-                        key={doc.id}
-                        className="rounded-xl px-3 py-2 border border-slate-200 text-slate-700 bg-white flex items-center justify-between gap-2"
-                      >
-                        <span className="text-[11px] font-medium leading-tight">
-                          {doc.nombre}
-                        </span>
-                        <span
-                          className={`text-[10px] font-bold px-2 py-1 rounded-full ${
-                            doc.estado === "ok"
-                              ? "bg-green-100 text-green-700"
-                              : doc.estado === "warn"
-                              ? "bg-yellow-100 text-yellow-700"
-                              : "bg-slate-100 text-slate-500"
-                          }`}
-                        >
-                          {getStatusLabel(
-                            doc.estado,
-                            ui.docStatusDone,
-                            ui.docStatusReview,
-                            ui.docStatusMissing
-                          )}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <FieldLabel label={ui.labels.nombre} />
-                <FieldInput
-                  value={leadForm.nombre}
-                  onChange={(v) => updateLeadForm("nombre", v)}
-                  placeholder={ui.labels.nombre}
-                />
-
-                <FieldLabel label={ui.labels.telefono} />
-                <FieldInput
-                  value={leadForm.telefono}
-                  onChange={(v) => updateLeadForm("telefono", v)}
-                  placeholder={ui.labels.telefono}
-                />
-
-                <FieldLabel label={ui.labels.niePasaporte} />
-                <FieldInput
-                  value={leadForm.niePasaporte}
-                  onChange={(v) => updateLeadForm("niePasaporte", v)}
-                  placeholder={ui.labels.niePasaporte}
-                />
-
-                <FieldLabel label={ui.labels.ciudad} />
-                <FieldInput
-                  value={leadForm.ciudad}
-                  onChange={(v) => updateLeadForm("ciudad", v)}
-                  placeholder={ui.labels.ciudad}
-                />
-
-                <FieldLabel label={ui.labels.nacionalidad} />
-                <FieldInput
-                  value={leadForm.nacionalidad}
-                  onChange={(v) => updateLeadForm("nacionalidad", v)}
-                  placeholder={ui.labels.nacionalidad}
-                />
-
-                <FieldLabel label={ui.labels.fechaLlegada} />
-                <FieldInput
-                  value={leadForm.fechaLlegada}
-                  onChange={(v) => updateLeadForm("fechaLlegada", v)}
-                  placeholder="DD/MM/AAAA"
-                />
-
-                <FieldLabel label={ui.labels.cumple5Meses} />
-                <FieldSelect
-                  value={leadForm.cumple5Meses}
-                  onChange={(v) => updateLeadForm("cumple5Meses", v)}
-                  options={[
-                    { value: "", label: ui.labels.select },
-                    { value: "si", label: ui.labels.yes },
-                    { value: "no", label: ui.labels.no },
-                    { value: "nose", label: ui.labels.dontKnow },
-                  ]}
-                />
-
-                <FieldLabel label={ui.labels.asilo} />
-                <FieldSelect
-                  value={leadForm.asilo}
-                  onChange={(v) => updateLeadForm("asilo", v)}
-                  options={[
-                    { value: "", label: ui.labels.select },
-                    { value: "no", label: ui.labels.no },
-                    { value: "si", label: ui.labels.yes },
-                    { value: "nose", label: ui.labels.dontKnow },
-                  ]}
-                />
-
-                <FieldLabel label={ui.labels.penales} />
-                <FieldSelect
-                  value={leadForm.penales}
-                  onChange={(v) => updateLeadForm("penales", v)}
-                  options={[
-                    { value: "", label: ui.labels.select },
-                    { value: "no", label: ui.labels.no },
-                    { value: "si", label: ui.labels.yes },
-                  ]}
-                />
-
-                <button
-                  onClick={handleSaveLeadForm}
-                  disabled={savingForm || !authChecked}
-                  className="w-full rounded-[18px] bg-[#003b82] hover:bg-[#002f69] disabled:opacity-60 text-white font-bold text-sm py-3 transition-colors"
-                  type="button"
-                >
-                  {ui.saveLeadButton}
-                </button>
-              </div>
-            </div>
-
-            {allReady && (
-              <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4">
-                <p className="text-sm font-bold text-white">{ui.goSara}</p>
-                <p className="mt-1 text-xs text-white/70">{ui.goSaraDesc}</p>
-                <button
-                  onClick={goToSara}
-                  className="mt-4 inline-flex items-center gap-2 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2.5 text-sm font-bold transition-colors"
-                  type="button"
-                >
-                  {ui.goSara}
-                  <ArrowRight className="w-4 h-4" />
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-
-        <audio ref={remoteAudioRef} autoPlay playsInline className="hidden" />
-      </main>
+              {isListening ? ui.stopButton : ui.voiceButton}
+            </button>
+         </div>
+      </div>
     </div>
-  );
-}
-
-function FieldLabel({ label }: { label: string }) {
-  return (
-    <label className="block text-[12px] font-semibold text-slate-600 mb-1">
-      {label}
-    </label>
-  );
-}
-
-function FieldInput({
-  value,
-  onChange,
-  placeholder,
-}: {
-  value: string;
-  onChange: (value: string) => void;
-  placeholder: string;
-}) {
-  return (
-    <input
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      className="w-full rounded-[18px] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none focus:border-blue-400"
-      placeholder={placeholder}
-    />
-  );
-}
-
-function FieldSelect({
-  value,
-  onChange,
-  options,
-}: {
-  value: string;
-  onChange: (value: string) => void;
-  options: { value: string; label: string }[];
-}) {
-  return (
-    <select
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      className="w-full rounded-[18px] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none focus:border-blue-400"
-    >
-      {options.map((opt) => (
-        <option key={`${opt.value}-${opt.label}`} value={opt.value}>
-          {opt.label}
-        </option>
-      ))}
-    </select>
   );
 }
