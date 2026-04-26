@@ -932,23 +932,7 @@ export default function Regularizacion2026() {
         setIsListening(true);
         setWaitingMohamed(false);
 
-        // FIX 3: configurar VAD con threshold alto para evitar que Mohammed
-        // hable con ruido ambiental o sonidos que no son del cliente
-        dc.send(
-          JSON.stringify({
-            type: "session.update",
-            session: {
-              turn_detection: {
-                type: "server_vad",
-                threshold: 0.75,
-                prefix_padding_ms: 300,
-                silence_duration_ms: 800,
-              },
-            },
-          })
-        );
-
-        // FIX 1: capturar el texto pendiente ANTES de cualquier await
+          // FIX 1: capturar el texto pendiente ANTES de cualquier await
         // para no perderlo cuando la sesión async cambia de estado
         const capturedPending = pendingAutomationPromptRef.current;
 
