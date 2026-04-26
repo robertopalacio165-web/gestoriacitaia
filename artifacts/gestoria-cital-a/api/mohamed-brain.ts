@@ -20,7 +20,6 @@ export function mohamedBrain(input: BrainInput) {
     return "Safì, kolchi houwa hadak! Salina l-khidma. Ghadi nsift lik l-expediente dialek PDF f WhatsApp daba nite.";
   }
 
-  // Respuesta en Español
   if (!hasProofs) {
     return "Hola, soy Mohamed. Para tramitar tu regularización 2026, lo primero que necesito son tus pruebas de permanencia de los últimos 5 meses.";
   }
@@ -31,7 +30,6 @@ export function mohamedBrain(input: BrainInput) {
   return "¡Excelente! Ya tenemos toda la documentación necesaria. Te envío ahora mismo el borrador de tu solicitud por WhatsApp.";
 }
 
-// Handler por defecto para Vercel si se llama como API directa
 export default async function handler(req: any, res: any) {
   if (req.method === "POST") {
     const result = mohamedBrain(req.body);
