@@ -85,36 +85,29 @@ export default async function handler(
         ? buildSaraInstructions()
         : buildMohamedInstructions();
 
-    const voice = assistant === "sara" ? "marin" : "cedar";
+    // "ash" es la voz árabe de OpenAI Realtime — cedar y marin no existen
+    const voice = assistant === "sara" ? "ash" : "ash";
 
     const payload = {
-      session: {
-        type: "realtime",
-        model: "gpt-realtime",
-        instructions,
-        audio: {
-          input: {
-            turn_detection: {
-              type: "server_vad",
-              threshold: 0.88,
-              prefix_padding_ms: 600,
-              silence_duration_ms: 1400,
-              create_response: true,
-              interrupt_response: false,
-            },
-            transcription: {
-              model: "gpt-4o-mini-transcribe",
-            },
-          },
-          output: {
-            voice,
-          },
-        },
+      model: "gpt-4o-realtime-preview",
+      instructions,
+      voice,
+      turn_detection: {
+        type: "server_vad",
+        threshold: 0.88,
+        prefix_padding_ms: 600,
+        silence_duration_ms: 1400,
+        create_response: true,
+        interrupt_response: false,
+      },
+      input_audio_transcription: {
+        model: "whisper-1",
       },
     };
 
+    // ─── ENDPOINT CORRECTO para ephemeral key ───
     const response = await fetch(
-      "https://api.openai.com/v1/realtime/client_secrets",
+      "https://api.openai.com/v1/realtime/sessions",
       {
         method: "POST",
         headers: {
@@ -143,17 +136,29 @@ export default async function handler(
         "REALTIME CLIENT SECRET ERROR:",
         JSON.stringify(data, null, 2)
       );
-
       return res.status(500).json({
         error: data?.error?.message || "Error creando client secret realtime",
         details: data || null,
       });
     }
 
-    return res.status(200).json(data);
+    // La respuesta devuelve { client_secret: { value: "..." } }
+    // El frontend espera data.value — lo normalizamos aquí
+    const clientSecretValue =
+      data?.client_secret?.value || data?.value || null;
+
+    if (!clientSecretValue) {
+      console.error("No se encontró client_secret.value en la respuesta:", data);
+      return res.status(500).json({
+        error: "OpenAI no devolvió client_secret válido",
+        details: data,
+      });
+    }
+
+    return res.status(200).json({ value: clientSecretValue });
+
   } catch (error: any) {
     console.error("REALTIME SESSION SERVER ERROR:", error);
-
     return res.status(500).json({
       error: error?.message || "Error interno del servidor",
     });
