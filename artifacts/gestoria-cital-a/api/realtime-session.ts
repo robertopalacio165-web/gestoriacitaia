@@ -90,6 +90,7 @@ export default async function handler(
 
     const payload = {
       session: {
+        type: "realtime",
         model: "gpt-4o-realtime-preview-2024-12-17",
         instructions,
         voice,
