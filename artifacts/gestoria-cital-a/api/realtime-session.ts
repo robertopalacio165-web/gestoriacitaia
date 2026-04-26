@@ -91,19 +91,25 @@ export default async function handler(
     const payload = {
       session: {
         type: "realtime",
-        model: "gpt-4o-realtime-preview-2024-12-17",
+        model: "gpt-realtime",
         instructions,
-        voice,
-        turn_detection: {
-          type: "server_vad",
-          threshold: 0.88,
-          prefix_padding_ms: 600,
-          silence_duration_ms: 1400,
-          create_response: true,
-          interrupt_response: false,
-        },
-        input_audio_transcription: {
-          model: "whisper-1",
+        audio: {
+          input: {
+            turn_detection: {
+              type: "server_vad",
+              threshold: 0.88,
+              prefix_padding_ms: 600,
+              silence_duration_ms: 1400,
+              create_response: true,
+              interrupt_response: false,
+            },
+            transcription: {
+              model: "gpt-4o-mini-transcribe",
+            },
+          },
+          output: {
+            voice,
+          },
         },
       },
     };
