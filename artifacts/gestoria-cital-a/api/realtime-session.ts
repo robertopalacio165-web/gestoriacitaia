@@ -89,25 +89,27 @@ export default async function handler(
     const voice = assistant === "sara" ? "ash" : "ash";
 
     const payload = {
-      model: "gpt-4o-realtime-preview",
-      instructions,
-      voice,
-      turn_detection: {
-        type: "server_vad",
-        threshold: 0.88,
-        prefix_padding_ms: 600,
-        silence_duration_ms: 1400,
-        create_response: true,
-        interrupt_response: false,
-      },
-      input_audio_transcription: {
-        model: "whisper-1",
+      session: {
+        model: "gpt-4o-realtime-preview-2024-12-17",
+        instructions,
+        voice,
+        turn_detection: {
+          type: "server_vad",
+          threshold: 0.88,
+          prefix_padding_ms: 600,
+          silence_duration_ms: 1400,
+          create_response: true,
+          interrupt_response: false,
+        },
+        input_audio_transcription: {
+          model: "whisper-1",
+        },
       },
     };
 
-    // ─── ENDPOINT CORRECTO para ephemeral key ───
+    // ─── ENDPOINT GA para client_secret ───
     const response = await fetch(
-      "https://api.openai.com/v1/realtime/sessions",
+      "https://api.openai.com/v1/realtime/client_secrets",
       {
         method: "POST",
         headers: {
