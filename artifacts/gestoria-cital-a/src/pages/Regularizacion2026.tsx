@@ -326,10 +326,10 @@ export default function Regularizacion2026() {
   }
 };
     loadAuth();
-    const {  { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setCurrentUserId(session?.user?.id || "");
-      setAuthChecked(true);
-    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+  setCurrentUserId(session?.user?.id || "");
+  setAuthChecked(true);
+});
     return () => {
       active = false;
       subscription.unsubscribe();
