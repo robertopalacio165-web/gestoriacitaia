@@ -583,79 +583,6 @@ export default function Regularizacion2026() {
     [...voiceHistory].reverse().find((msg) => msg.from === "agent")?.text ||
     voiceTexts.initialVoice;
 
-  const identityDocs = docs.filter((doc) => {
-    const expected = normalizeDocType(doc.expectedType);
-    const detected = normalizeDocType(doc.detectedType);
-    const name = doc.nombre.toLowerCase();
-    return (
-      expected === "passport" ||
-      expected === "nie" ||
-      expected === "tie" ||
-      detected === "passport" ||
-      detected === "nie" ||
-      detected === "tie" ||
-      name.includes("pasaporte") ||
-      name.includes("passport") ||
-      name.includes("nie")
-    );
-  });
-
-  const stayProofDocs = docs.filter((doc) => {
-    const expected = normalizeDocType(doc.expectedType);
-    const detected = normalizeDocType(doc.detectedType);
-    const name = doc.nombre.toLowerCase();
-    const note = (doc.note || "").toLowerCase();
-    return (
-      expected === "empadronamiento" ||
-      expected === "stay_proof" ||
-      detected === "empadronamiento" ||
-      detected === "stay_proof" ||
-      name.includes("empadronamiento") ||
-      name.includes("padron") ||
-      name.includes("padrón") ||
-      name.includes("prueba de permanencia") ||
-      note.includes("empadronamiento") ||
-      note.includes("stay proof") ||
-      note.includes("prueba de permanencia")
-    );
-  });
-
-  const formCompletedStatus: DocStatus =
-    leadSaved || formConfirmed ? "ok" : "missing";
-  const stayProofStatus: DocStatus =
-    stayProofDocs.some((doc) => doc.estado === "ok")
-      ? "ok"
-      : stayProofDocs.some((doc) => doc.estado === "warn")
-      ? "warn"
-      : "missing";
-  const identityStatus: DocStatus =
-    identityDocs.some((doc) => doc.estado === "ok")
-      ? "ok"
-      : identityDocs.some((doc) => doc.estado === "warn")
-      ? "warn"
-      : "missing";
-  const finalFileStatus: DocStatus =
-    formCompletedStatus === "ok" &&
-    stayProofStatus === "ok" &&
-    identityStatus === "ok"
-      ? "ok"
-      : formCompletedStatus === "warn" ||
-        stayProofStatus === "warn" ||
-        identityStatus === "warn"
-      ? "warn"
-      : "missing";
-
-  const progressCards = [
-    { id: "form_completed", nombre: ui.docStepForm, estado: formCompletedStatus },
-    { id: "stay_proof", nombre: ui.docStepStayProof, estado: stayProofStatus },
-    { id: "identity_document", nombre: ui.docStepIdentity, estado: identityStatus },
-    { id: "final_file", nombre: ui.docStepFinal, estado: finalFileStatus },
-  ];
-
-  const progressOk = progressCards.filter((item) => item.estado === "ok").length;
-  const progressTotal = progressCards.length;
-  const allReady = finalFileStatus === "ok";
-
   return (
     <div className="min-h-screen bg-background text-foreground relative flex flex-col">
       <div
@@ -795,50 +722,6 @@ export default function Regularizacion2026() {
                 </div>
               </div>
               <div className="px-4 py-4 space-y-3 bg-white">
-                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 mb-3">
-                  <div className="flex items-center justify-between mb-2">
-                    <p className="text-sm font-bold text-slate-800">{ui.docStatusTitle}</p>
-                    <span className="text-xs font-bold text-slate-700">
-                      {progressOk}/{progressTotal}
-                    </span>
-                  </div>
-                  <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-[#003b82] rounded-full transition-all"
-                      style={{
-                        width: `${progressTotal > 0 ? (progressOk / progressTotal) * 100 : 0}%`,
-                      }}
-                    />
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3">
-                    {progressCards.map((doc) => (
-                      <div
-                        key={doc.id}
-                        className="rounded-xl px-3 py-2 border border-slate-200 text-slate-700 bg-white flex items-center justify-between gap-2"
-                      >
-                        <span className="text-[11px] font-medium leading-tight">
-                          {doc.nombre}
-                        </span>
-                        <span
-                          className={`text-[10px] font-bold px-2 py-1 rounded-full ${
-                            doc.estado === "ok"
-                              ? "bg-green-100 text-green-700"
-                              : doc.estado === "warn"
-                              ? "bg-yellow-100 text-yellow-700"
-                              : "bg-slate-100 text-slate-500"
-                          }`}
-                        >
-                          {getStatusLabel(
-                            doc.estado,
-                            ui.docStatusDone,
-                            ui.docStatusReview,
-                            ui.docStatusMissing
-                          )}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
                 <label className="block text-[12px] font-semibold text-slate-600 mb-1">
                   {ui.labels.nombre}
                 </label>
@@ -941,20 +824,6 @@ export default function Regularizacion2026() {
                 </button>
               </div>
             </div>
-            {allReady && (
-              <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4">
-                <p className="text-sm font-bold text-white">{ui.goSara}</p>
-                <p className="mt-1 text-xs text-white/70">{ui.goSaraDesc}</p>
-                <button
-                  onClick={goToSara}
-                  className="mt-4 inline-flex items-center gap-2 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2.5 text-sm font-bold transition-colors"
-                  type="button"
-                >
-                  {ui.goSara}
-                  <ArrowRight className="w-4 h-4" />
-                </button>
-              </div>
-            )}
           </div>
         </div>
         <audio ref={remoteAudioRef} autoPlay playsInline className="hidden" />
