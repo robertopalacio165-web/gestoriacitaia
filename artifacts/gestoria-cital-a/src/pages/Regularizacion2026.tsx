@@ -59,7 +59,7 @@ type UserFormRow = {
   case_id: string | null;
   form_type: string;
   title: string | null;
-  form_data: Record<string, any> | null;
+  form_ Record<string, any> | null;
 };
 
 function buildInitialDocs(procedureKey: string): StoredDocItem[] {
@@ -337,7 +337,7 @@ export default function Regularizacion2026() {
       }
     };
     loadAuth();
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const {  { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setCurrentUserId(session?.user?.id || "");
       setAuthChecked(true);
     });
@@ -347,8 +347,11 @@ export default function Regularizacion2026() {
     };
   }, []);
 
+  // ─── FIX: Nombres de tablas en español según tu captura ───
   useEffect(() => {
     if (!currentUserId || !authChecked) return;
+    
+    // Suscribirse a documentos (Tabla: documentos_de_usuario)
     const docsChannel = supabase
       .channel(`docs-${currentUserId}`)
       .on(
@@ -356,20 +359,22 @@ export default function Regularizacion2026() {
         {
           event: "INSERT",
           schema: "public",
-          table: "user_documents",
+          table: "documentos_de_usuario", // Nombre corregido
           filter: `user_id=eq.${currentUserId}`,
         },
         async (payload) => {
           const newDoc = payload.new as any;
           const docName = newDoc.title || newDoc.original_name || "documento";
           let proactiveMessage = "";
+          
           if (newDoc.document_type === "passport" || newDoc.document_type === "nie") {
-            proactiveMessage = `مزيان. توصلت بـ ${docName}. غادي نراجعو دابا ونشوف واش كلشي مزيان. وانت راجع الفورمولار إلا كنتي باغي تزيد شي حاجة.`;
+            proactiveMessage = `مزيان. توصلت بـ ${docName}. غادي نراجعو دابا ونشوف واش كلشي مزيان.`;
           } else if (newDoc.document_type === "empadronamiento" || newDoc.document_type === "stay_proof") {
-            proactiveMessage = `مزيان. توصلت بـ ${docName}. هاد الوثيقة كتنفع كبرهان ديال البقاء. دابا خاصنا غير الباسبور ولا NIE باش نكملو الملف.`;
+            proactiveMessage = `مزيان. توصلت بـ ${docName}. هاد الوثيقة كتنفع كبرهان ديال البقاء.`;
           } else {
-            proactiveMessage = `توصلت بـ ${docName}. غادي نراجعو دابا ونشوف واش كلشي مزيان.`;
+            proactiveMessage = `توصلت بـ ${docName}. غادي نراجعو دابا.`;
           }
+          
           setTimeout(() => {
             speakFromAutomation(proactiveMessage);
           }, 1500);
@@ -377,6 +382,7 @@ export default function Regularizacion2026() {
       )
       .subscribe();
 
+    // Suscribirse a formularios (Tabla: formularios_de_usuario)
     const formsChannel = supabase
       .channel(`forms-${currentUserId}`)
       .on(
@@ -384,7 +390,7 @@ export default function Regularizacion2026() {
         {
           event: "INSERT",
           schema: "public",
-          table: "user_forms",
+          table: "formularios_de_usuario", // Nombre corregido
           filter: `user_id=eq.${currentUserId}`,
         },
         async (payload) => {
@@ -392,7 +398,7 @@ export default function Regularizacion2026() {
           if (formData.form_type === "regularizacion_2026") {
             setTimeout(() => {
               speakFromAutomation(
-                "مزيان. المعطيات ديالك تحفظات فالنظام. دابا غادي نكمل معاك خطوة بخطوة. أول حاجة، خاصني بروفات ديال 5 شهور باش نثبتو واش كنتي فإسبانيا قبل 1 يناير 2026."
+                "مزيان. المعطيات ديالك تحفظات فالنظام. دابا غادي نكمل معاك خطوة بخطوة."
               );
             }, 1000);
           }
@@ -729,8 +735,8 @@ export default function Regularizacion2026() {
       },
       updated_at: new Date().toISOString(),
     };
-    const { data: existingForm } = await supabase
-      .from("user_forms")
+    const {  existingForm } = await supabase
+      .from("formularios_de_usuario") // Nombre corregido
       .select("id")
       .eq("user_id", user.id)
       .eq("form_type", "regularizacion_2026")
@@ -741,19 +747,19 @@ export default function Regularizacion2026() {
       case_id: null,
       form_type: "regularizacion_2026",
       title: "Formulario Mohamed Regularización 2026",
-      form_data: payload,
+      form_ payload,
       status: "draft",
       updated_at: new Date().toISOString(),
     };
     if (existingForm?.id) {
       const { error: updateError } = await supabase
-        .from("user_forms")
+        .from("formularios_de_usuario") // Nombre corregido
         .update(rowData)
         .eq("id", existingForm.id);
       if (updateError) throw new Error(updateError.message);
     } else {
       const { error: insertError } = await supabase
-        .from("user_forms")
+        .from("formularios_de_usuario") // Nombre corregido
         .insert(rowData);
       if (insertError) throw new Error(insertError.message);
     }
@@ -1048,6 +1054,7 @@ export default function Regularizacion2026() {
     }
   };
 
+  // ─── FIX FINAL: Siempre crear conexión nueva para proactividad ───
   const speakFromAutomation = async (instruction: string) => {
     if (!instruction.trim()) return;
 
@@ -1055,16 +1062,8 @@ export default function Regularizacion2026() {
     pendingAutomationPromptRef.current = instruction;
     setPendingAutomationPrompt(instruction);
 
-    if (
-      realtimeDcRef.current &&
-      realtimeDcRef.current.readyState === "open" &&
-      !assistantBusyRef.current
-    ) {
-      console.log("✅ Usando conexión existente para hablar");
-      await flushPendingAutomation();
-      return;
-    }
-
+    // IGNORAMOS la conexión existente para evitar conflictos de silencio.
+    // Creamos una conexión TEMPORAL exclusiva para este mensaje.
     console.log("🔌 Creando sesión temporal para mensaje proactivo...");
 
     try {
@@ -1094,11 +1093,7 @@ export default function Regularizacion2026() {
           const playPromise = remoteAudioRef.current.play();
           if (playPromise !== undefined) {
             playPromise.catch((err) => {
-              console.error("❌ Error al reproducir audio (bloqueado por navegador?):", err);
-              toast({
-                title: "Mohamed tiene algo que decirte",
-                description: "Toca el botón del micrófono para escuchar",
-              });
+              console.error("❌ Error al reproducir audio:", err);
             });
           }
         }
@@ -1108,7 +1103,6 @@ export default function Regularizacion2026() {
 
       dc.onopen = async () => {
         console.log("✅ Sesión temporal lista. Enviando mensaje...");
-
         dc.send(
           JSON.stringify({
             type: "conversation.item.create",
@@ -1119,7 +1113,6 @@ export default function Regularizacion2026() {
             },
           })
         );
-
         dc.send(
           JSON.stringify({
             type: "response.create",
@@ -1138,8 +1131,7 @@ export default function Regularizacion2026() {
               pc.close();
             }, 1000);
           }
-        } catch (e) {
-        }
+        } catch (e) {}
       };
 
       const offer = await pc.createOffer();
@@ -1154,9 +1146,7 @@ export default function Regularizacion2026() {
         },
       });
 
-      if (!sdpRes.ok) {
-        throw new Error("Error al negociar WebRTC con OpenAI");
-      }
+      if (!sdpRes.ok) throw new Error("Error al negociar WebRTC");
 
       const answerSdp = await sdpRes.text();
       await pc.setRemoteDescription({ type: "answer", sdp: answerSdp });
@@ -1426,7 +1416,7 @@ export default function Regularizacion2026() {
               if (!matchedDoc) {
                 pushAgentMessage(voiceTexts.uploadUnknown);
                 await speakExactText(
-                  `العميل صيفط دابا وثيقة سميتها ${file.name} ولكن مازال ما تربطاتش مزيان مع الملف. قل له شنو خاصو يصيفط بشكل واضح.`
+                  `العميل صيفط دابا وثيقة سميتها ${file.name} ولكن مازال ما تربطاتش مزيان مع الملف.`
                 );
                 toast({
                   title: ui.uploadErrorTitle,
@@ -1468,7 +1458,7 @@ export default function Regularizacion2026() {
                   ? "Documento rechazado por validación automática"
                   : "Documento recibido. Pendiente de revisión");
               const { error: insertDocumentError } = await supabase
-                .from("user_documents")
+                .from("documentos_de_usuario") // Nombre corregido
                 .insert({
                   user_id: user.id,
                   case_id: null,
@@ -1483,7 +1473,7 @@ export default function Regularizacion2026() {
                   file_size: file.size,
                   verification_status: verificationStatus,
                   verification_notes: verificationNotes,
-                  extracted_data: {
+                  extracted_ {
                     summary: result.summary || "",
                     visible_fields: result.visible_fields || [],
                     warnings: result.warnings || [],
@@ -1521,7 +1511,7 @@ export default function Regularizacion2026() {
                 variant: "destructive",
               });
               await speakFromAutomation(
-                `وقع مشكل فقراءة أو حفظ الوثيقة ${file.name}. قول للعميل يعاود يصيفطها بشكل أوضح أو بصيغة أخرى.`
+                `وقع مشكل فقراءة أو حفظ الوثيقة ${file.name}.`
               );
             }
           }
