@@ -59,7 +59,7 @@ type UserFormRow = {
   case_id: string | null;
   form_type: string;
   title: string | null;
-  form_: Record<string, any> | null;
+  form_data: Record<string, any> | null;
 };
 
 function buildInitialDocs(procedureKey: string): StoredDocItem[] {
@@ -325,7 +325,7 @@ export default function Regularizacion2026() {
     let active = true;
     const loadAuth = async () => {
       try {
-        const {  { session } } = await supabase.auth.getSession();
+        const { data: { session } } = await supabase.auth.getSession();
         if (!active) return;
         setCurrentUserId(session?.user?.id || "");
         setAuthChecked(true);
@@ -337,7 +337,7 @@ export default function Regularizacion2026() {
       }
     };
     loadAuth();
-    const {  { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setCurrentUserId(session?.user?.id || "");
       setAuthChecked(true);
     });
@@ -682,7 +682,7 @@ export default function Regularizacion2026() {
   };
 
   const saveFullStateToSupabase = async (nextDocs?: StoredDocItem[]) => {
-    const {  { user }, error: authError } = await supabase.auth.getUser();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user?.id) {
       throw new Error("No hay usuario conectado en Supabase");
     }
@@ -729,7 +729,7 @@ export default function Regularizacion2026() {
       },
       updated_at: new Date().toISOString(),
     };
-    const {  existingForm } = await supabase
+    const { data: existingForm } = await supabase
       .from("user_forms")
       .select("id")
       .eq("user_id", user.id)
@@ -741,7 +741,7 @@ export default function Regularizacion2026() {
       case_id: null,
       form_type: "regularizacion_2026",
       title: "Formulario Mohamed Regularización 2026",
-      form_ payload,
+      form_data: payload,
       status: "draft",
       updated_at: new Date().toISOString(),
     };
@@ -760,7 +760,6 @@ export default function Regularizacion2026() {
     return user.id;
   };
 
-  // ✅ CAMBIO #1: askMohamedToSpeak - AHORA ENVÍA instructions EN response.create
   const askMohamedToSpeak = async (instruction: string) => {
     try {
       if (!realtimeDcRef.current) {
@@ -776,7 +775,6 @@ export default function Regularizacion2026() {
       setWaitingMohamed(true);
       assistantTextBufferRef.current = "";
       
-      // ✅ PRIMER mensaje: crear el item
       realtimeDcRef.current.send(
         JSON.stringify({
           type: "conversation.item.create",
@@ -789,13 +787,12 @@ export default function Regularizacion2026() {
       );
       console.log("✅ conversation.item.create enviado");
       
-      // ✅ SEGUNDO mensaje: FORZAR respuesta CON instructions
       realtimeDcRef.current.send(
         JSON.stringify({
           type: "response.create",
           response: { 
             modalities: ["audio", "text"],
-            instructions: instruction // ✅ ESTO ES CLAVE
+            instructions: instruction
           },
         })
       );
@@ -808,7 +805,6 @@ export default function Regularizacion2026() {
     }
   };
 
-  // ✅ CAMBIO #2: flushPendingAutomation - AHORA ENVÍA DIRECTO SIN VERIFICAR assistantBusyRef
   const flushPendingAutomation = async (retries = 0) => {
     const prompt = pendingAutomationPromptRef.current;
     if (!prompt) return;
@@ -823,7 +819,6 @@ export default function Regularizacion2026() {
     
     console.log("🚀 ENVIANDO DIRECTAMENTE (sin verificar busy):", prompt);
     
-    // ✅ ENVÍO DIRECTO SIN VERIFICAR assistantBusyRef
     try {
       realtimeDcRef.current.send(
         JSON.stringify({
@@ -848,7 +843,6 @@ export default function Regularizacion2026() {
       );
       console.log("✅ response.create enviado - Mohamed DEBERÍA hablar");
       
-      // Limpiar después de enviar
       pendingAutomationPromptRef.current = null;
       setPendingAutomationPrompt("");
       setWaitingMohamed(false);
@@ -1085,20 +1079,17 @@ export default function Regularizacion2026() {
     pendingAutomationPromptRef.current = text;
     setPendingAutomationPrompt(text);
     
-    // ✅ Espera 300ms y DISPARA flush SIEMPRE
     setTimeout(() => {
       console.log("⚡ Forzando flushPendingAutomation...");
       void flushPendingAutomation();
     }, 300);
   };
 
-  // ✅ CAMBIO: speakFromAutomation mejorado con manejo de audio temporal
   const speakFromAutomation = async (instruction: string) => {
     if (!instruction.trim()) return;
 
     console.log("🎤 Mohamed quiere hablar proactivamente:", instruction);
 
-    // ✅ Si ya hay sesión activa y no está ocupado, úsala
     if (realtimeDcRef.current && realtimeDcRef.current.readyState === "open" && !assistantBusyRef.current) {
       console.log("✅ Usando sesión existente");
       pendingAutomationPromptRef.current = instruction;
@@ -1123,7 +1114,6 @@ export default function Regularizacion2026() {
       const ephemeralKey = sessionData.value;
       const pc = new RTCPeerConnection();
 
-      // ✅ CONFIGURAR AUDIO REMOTO CORRECTAMENTE
       pc.ontrack = (event) => {
         const [remoteStream] = event.streams;
         if (remoteStream && remoteAudioRef.current) {
@@ -1133,12 +1123,10 @@ export default function Regularizacion2026() {
           remoteAudioRef.current.muted = false;
           remoteAudioRef.current.volume = 1.0;
           
-          // ✅ FORZAR REPRODUCCIÓN
           const playPromise = remoteAudioRef.current.play();
           if (playPromise) {
             playPromise.catch(err => {
               console.error("❌ Error al reproducir audio:", err);
-              // ✅ Mostrar toast como fallback
               toast({
                 title: "🎤 Mohamed dice:",
                 description: instruction.substring(0, 100) + "...",
@@ -1154,7 +1142,6 @@ export default function Regularizacion2026() {
       dc.onopen = () => {
         console.log("✅ Canal de datos abierto - Enviando mensaje a Mohamed");
         
-        // ✅ Enviar instrucción como mensaje de usuario
         dc.send(JSON.stringify({
           type: "conversation.item.create",
           item: {
@@ -1164,7 +1151,6 @@ export default function Regularizacion2026() {
           },
         }));
         
-        // ✅ FORZAR RESPUESTA DE VOZ INMEDIATA
         setTimeout(() => {
           dc.send(JSON.stringify({
             type: "response.create",
@@ -1190,7 +1176,6 @@ export default function Regularizacion2026() {
         }
       };
 
-      // ✅ Crear offer y conectar
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
       
@@ -1210,7 +1195,6 @@ export default function Regularizacion2026() {
       
       console.log("✅ Conexión WebRTC establecida - Mohamed debería hablar");
 
-      // ✅ Cerrar después de 5 segundos
       setTimeout(() => {
         dc.close();
         pc.close();
@@ -1219,7 +1203,6 @@ export default function Regularizacion2026() {
 
     } catch (error) {
       console.error("❌ Error en speakFromAutomation:", error);
-      // ✅ Fallback: mostrar como mensaje de texto
       pushAgentMessage(instruction);
       toast({
         title: "Mohamed dice:",
@@ -1272,7 +1255,6 @@ export default function Regularizacion2026() {
         title: ui.saveLeadTitle,
         description: "Se han guardado los datos correctamente.",
       });
-      // ✅ CAMBIO: setTimeout para asegurar que Mohamed hable después de guardar
       setTimeout(() => {
         void speakExactText(savedMessage);
       }, 500);
@@ -1442,7 +1424,6 @@ export default function Regularizacion2026() {
     }
   };
 
-  // ✅ CAMBIO: handleGeneralUpload con lógica de voz mejorada
   const handleGeneralUpload = async () => {
     if (!leadSaved || !formConfirmed) {
       pushAgentMessage("عافاك عمر الفورمولار الأول ودير تأكيد، ومن بعد صيفط ليا الوثائق.");
@@ -1466,7 +1447,7 @@ export default function Regularizacion2026() {
         setWaitingForDocument(false);
         assistantTextBufferRef.current = "";
         try {
-          const {  { user }, error: authError } = await supabase.auth.getUser();
+          const { data: { user }, error: authError } = await supabase.auth.getUser();
           if (authError || !user?.id) {
             throw new Error("No hay usuario conectado en Supabase");
           }
@@ -1549,7 +1530,7 @@ export default function Regularizacion2026() {
                   file_size: file.size,
                   verification_status: verificationStatus,
                   verification_notes: verificationNotes,
-                  extracted_ {
+                  extracted_data: {
                     summary: result.summary || "",
                     visible_fields: result.visible_fields || [],
                     warnings: result.warnings || [],
@@ -1574,8 +1555,6 @@ export default function Regularizacion2026() {
               await saveFullStateToSupabase(updatedDocs);
               const localReply = buildDocSpeech(matchedDoc.nombre, result, nextStatus);
               
-              // ✅ CAMBIO: Usar speakFromAutomation que maneja sesiones temporales si es necesario
-              // Esto asegura que Mohamed hable aunque el micrófono no esté activo
               await speakFromAutomation(localReply);
               
               toast({
