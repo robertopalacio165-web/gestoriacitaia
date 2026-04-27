@@ -325,7 +325,7 @@ export default function Regularizacion2026() {
     let active = true;
     const loadAuth = async () => {
       try {
-        const {  { session } } = await supabase.auth.getSession();
+        const { data: { session } } = await supabase.auth.getSession();
         if (!active) return;
         setCurrentUserId(session?.user?.id || "");
         setAuthChecked(true);
@@ -337,7 +337,7 @@ export default function Regularizacion2026() {
       }
     };
     loadAuth();
-    const {  { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setCurrentUserId(session?.user?.id || "");
       setAuthChecked(true);
     });
@@ -682,7 +682,7 @@ export default function Regularizacion2026() {
   };
 
   const saveFullStateToSupabase = async (nextDocs?: StoredDocItem[]) => {
-    const {  { user }, error: authError } = await supabase.auth.getUser();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user?.id) {
       throw new Error("No hay usuario conectado en Supabase");
     }
@@ -729,7 +729,7 @@ export default function Regularizacion2026() {
       },
       updated_at: new Date().toISOString(),
     };
-    const {  existingForm } = await supabase
+    const { data: existingForm } = await supabase
       .from("user_forms")
       .select("id")
       .eq("user_id", user.id)
@@ -806,7 +806,6 @@ export default function Regularizacion2026() {
     }
   };
 
-  // ✅ FUNCIÓN CORREGIDA CON LOGS DETALLADOS
   const flushPendingAutomation = async (retries = 0) => {
     const prompt = pendingAutomationPromptRef.current;
     if (!prompt) {
@@ -1096,7 +1095,7 @@ export default function Regularizacion2026() {
     }, 300);
   };
 
-  // ✅ FUNCIÓN CORREGIDA CON LOGS DETALLADOS
+  // ✅ FUNCIÓN CON LOGS PARA DEPURAR
   const speakFromAutomation = async (instruction: string) => {
     if (!instruction.trim()) return;
 
