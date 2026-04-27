@@ -776,6 +776,7 @@ export default function Regularizacion2026() {
           },
         })
       );
+      // ✅ response.create YA ESTÁ AQUÍ - NO LO TOQUES
       realtimeDcRef.current.send(
         JSON.stringify({
           type: "response.create",
@@ -1026,11 +1027,14 @@ export default function Regularizacion2026() {
     }
   };
 
+  // ✅ FUNCIÓN CORREGIDA: AHORA FUERZA response.create INMEDIATAMENTE
   const speakExactText = async (text: string) => {
     if (!text.trim()) return;
     pushAgentMessage(text);
     pendingAutomationPromptRef.current = text;
     setPendingAutomationPrompt(text);
+    
+    // ✅ Si la conexión está abierta, DISPARA response.create AHORA MISMO
     if (realtimeDcRef.current && realtimeDcRef.current.readyState === "open") {
       if (!assistantBusyRef.current) {
         const ok = await askMohamedToSpeak(text);
@@ -1038,120 +1042,132 @@ export default function Regularizacion2026() {
           pendingAutomationPromptRef.current = null;
           setPendingAutomationPrompt("");
         }
+      } else {
+        // ✅ Si está ocupado, fuerza el flush después de 200ms
+        setTimeout(() => {
+          void flushPendingAutomation();
+        }, 200);
       }
       return;
     }
+    
+    // ✅ Si no hay conexión, intenta iniciarla y luego fuerza response.create
     try {
       await startListening();
+      // ✅ Espera un poco para que la conexión se establezca, luego dispara
+      setTimeout(() => {
+        void flushPendingAutomation();
+      }, 600);
     } catch (error) {
       console.error("Error iniciando realtime para hablar texto exacto:", error);
     }
   };
 
-const speakFromAutomation = async (instruction: string) => {
-  if (!instruction.trim()) return;
+  const speakFromAutomation = async (instruction: string) => {
+    if (!instruction.trim()) return;
 
-  console.log("🎤 Mohamed quiere hablar proactivamente:", instruction);
+    console.log("🎤 Mohamed quiere hablar proactivamente:", instruction);
 
-  if (realtimeDcRef.current && realtimeDcRef.current.readyState === "open" && !assistantBusyRef.current) {
-    console.log("✅ Usando sesión existente");
-    pendingAutomationPromptRef.current = instruction;
-    await flushPendingAutomation();
-    return;
-  }
-
-  console.log("🔌 Creando sesión temporal...");
-  
-  try {
-    const sessionRes = await fetch("/api/realtime-session", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ assistant: "mohamed" }),
-    });
-
-    const sessionData = await sessionRes.json();
-    if (!sessionRes.ok || !sessionData?.value) {
-      throw new Error("No se pudo obtener token");
+    if (realtimeDcRef.current && realtimeDcRef.current.readyState === "open" && !assistantBusyRef.current) {
+      console.log("✅ Usando sesión existente");
+      pendingAutomationPromptRef.current = instruction;
+      await flushPendingAutomation();
+      return;
     }
 
-    const ephemeralKey = sessionData.value;
-    const pc = new RTCPeerConnection();
+    console.log("🔌 Creando sesión temporal...");
+    
+    try {
+      const sessionRes = await fetch("/api/realtime-session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ assistant: "mohamed" }),
+      });
 
-    pc.ontrack = (event) => {
-      const [remoteStream] = event.streams;
-      if (remoteStream && remoteAudioRef.current) {
-        console.log("🔊 Audio remoto recibido - Reproduciendo...");
-        remoteAudioRef.current.srcObject = remoteStream;
-        remoteAudioRef.current.autoplay = true;
-        remoteAudioRef.current.muted = false;
-        remoteAudioRef.current.volume = 1.0;
-        
-        remoteAudioRef.current.play().catch(err => {
-          console.error("❌ Error al reproducir:", err);
-          toast({
-            title: "Mohamed tiene algo que decir",
-            description: instruction.substring(0, 50) + "...",
-          });
-        });
+      const sessionData = await sessionRes.json();
+      if (!sessionRes.ok || !sessionData?.value) {
+        throw new Error("No se pudo obtener token");
       }
-    };
 
-    const dc = pc.createDataChannel("oai-events");
-    
-    dc.onopen = () => {
-      console.log("✅ Sesión lista - Enviando mensaje");
-      dc.send(JSON.stringify({
-        type: "conversation.item.create",
-        item: {
-          type: "message",
-          role: "user",
-          content: [{ type: "input_text", text: instruction }],
-        },
-      }));
-      
-      dc.send(JSON.stringify({
-        type: "response.create",
-        response: { modalities: ["audio", "text"] },
-      }));
-    };
+      const ephemeralKey = sessionData.value;
+      const pc = new RTCPeerConnection();
 
-    dc.onmessage = (event) => {
-      try {
-        const msg = JSON.parse(event.data);
-        if (msg.type === "response.done") {
-          console.log("✅ Respuesta completada - Cerrando en 2s");
-          setTimeout(() => {
-            dc.close();
-            pc.close();
-          }, 2000);
+      pc.ontrack = (event) => {
+        const [remoteStream] = event.streams;
+        if (remoteStream && remoteAudioRef.current) {
+          console.log("🔊 Audio remoto recibido - Reproduciendo...");
+          remoteAudioRef.current.srcObject = remoteStream;
+          remoteAudioRef.current.autoplay = true;
+          remoteAudioRef.current.muted = false;
+          remoteAudioRef.current.volume = 1.0;
+          
+          remoteAudioRef.current.play().catch(err => {
+            console.error("❌ Error al reproducir:", err);
+            toast({
+              title: "Mohamed tiene algo que decir",
+              description: instruction.substring(0, 50) + "...",
+            });
+          });
         }
-      } catch (e) {}
-    };
+      };
 
-    const offer = await pc.createOffer();
-    await pc.setLocalDescription(offer);
-    
-    const sdpRes = await fetch("https://api.openai.com/v1/realtime/calls", {
-      method: "POST",
-      body: offer.sdp,
-      headers: {
-        Authorization: `Bearer ${ephemeralKey}`,
-        "Content-Type": "application/sdp",
-      },
-    });
+      const dc = pc.createDataChannel("oai-events");
+      
+      dc.onopen = () => {
+        console.log("✅ Sesión lista - Enviando mensaje");
+        dc.send(JSON.stringify({
+          type: "conversation.item.create",
+          item: {
+            type: "message",
+            role: "user",
+            content: [{ type: "input_text", text: instruction }],
+          },
+        }));
+        
+        // ✅ response.create YA ESTÁ AQUÍ
+        dc.send(JSON.stringify({
+          type: "response.create",
+          response: { modalities: ["audio", "text"] },
+        }));
+      };
 
-    if (!sdpRes.ok) throw new Error("Error en SDP");
+      dc.onmessage = (event) => {
+        try {
+          const msg = JSON.parse(event.data);
+          if (msg.type === "response.done") {
+            console.log("✅ Respuesta completada - Cerrando en 2s");
+            setTimeout(() => {
+              dc.close();
+              pc.close();
+            }, 2000);
+          }
+        } catch (e) {}
+      };
 
-    const answerSdp = await sdpRes.text();
-    await pc.setRemoteDescription({ type: "answer", sdp: answerSdp });
-    
-    console.log("✅ Conexión WebRTC establecida");
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+      
+      const sdpRes = await fetch("https://api.openai.com/v1/realtime/calls", {
+        method: "POST",
+        body: offer.sdp,
+        headers: {
+          Authorization: `Bearer ${ephemeralKey}`,
+          "Content-Type": "application/sdp",
+        },
+      });
 
-  } catch (error) {
-    console.error("❌ Error en speakFromAutomation:", error);
-    pushAgentMessage(instruction);
-  }
-};
+      if (!sdpRes.ok) throw new Error("Error en SDP");
+
+      const answerSdp = await sdpRes.text();
+      await pc.setRemoteDescription({ type: "answer", sdp: answerSdp });
+      
+      console.log("✅ Conexión WebRTC establecida");
+
+    } catch (error) {
+      console.error("❌ Error en speakFromAutomation:", error);
+      pushAgentMessage(instruction);
+    }
+  };
 
   useEffect(() => {
     if (remoteAudioRef.current) {
@@ -1363,6 +1379,7 @@ const speakFromAutomation = async (instruction: string) => {
     }
   };
 
+  // ✅ AQUÍ ESTÁ LA MAGIA: handleGeneralUpload AHORA DISPARA VOZ SIEMPRE
   const handleGeneralUpload = async () => {
     if (!leadSaved || !formConfirmed) {
       pushAgentMessage("عافاك عمر الفورمولار الأول ودير تأكيد، ومن بعد صيفط ليا الوثائق.");
@@ -1493,7 +1510,10 @@ const speakFromAutomation = async (instruction: string) => {
               }
               await saveFullStateToSupabase(updatedDocs);
               const localReply = buildDocSpeech(matchedDoc.nombre, result, nextStatus);
+              
+              // ✅ AQUÍ ESTÁ: speakExactText AHORA FUERZA response.create
               await speakExactText(localReply);
+              
               toast({
                 title: ui.uploadSuccessTitle,
                 description: result.summary || ui.uploadSuccessDesc,
