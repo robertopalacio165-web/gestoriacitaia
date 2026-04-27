@@ -59,7 +59,7 @@ type UserFormRow = {
   case_id: string | null;
   form_type: string;
   title: string | null;
-  form_data: Record<string, any> | null;
+  form_ Record<string, any> | null;
 };
 
 function buildInitialDocs(procedureKey: string): StoredDocItem[] {
@@ -325,7 +325,7 @@ export default function Regularizacion2026() {
     let active = true;
     const loadAuth = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        const {  { session } } = await supabase.auth.getSession();
         if (!active) return;
         setCurrentUserId(session?.user?.id || "");
         setAuthChecked(true);
@@ -337,7 +337,7 @@ export default function Regularizacion2026() {
       }
     };
     loadAuth();
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const {  { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setCurrentUserId(session?.user?.id || "");
       setAuthChecked(true);
     });
@@ -682,7 +682,7 @@ export default function Regularizacion2026() {
   };
 
   const saveFullStateToSupabase = async (nextDocs?: StoredDocItem[]) => {
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const {  { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user?.id) {
       throw new Error("No hay usuario conectado en Supabase");
     }
@@ -729,7 +729,7 @@ export default function Regularizacion2026() {
       },
       updated_at: new Date().toISOString(),
     };
-    const { data: existingForm } = await supabase
+    const {  existingForm } = await supabase
       .from("user_forms")
       .select("id")
       .eq("user_id", user.id)
@@ -741,7 +741,7 @@ export default function Regularizacion2026() {
       case_id: null,
       form_type: "regularizacion_2026",
       title: "Formulario Mohamed Regularización 2026",
-      form_data: payload,
+      form_ payload,
       status: "draft",
       updated_at: new Date().toISOString(),
     };
@@ -760,12 +760,23 @@ export default function Regularizacion2026() {
     return user.id;
   };
 
+  // ✅ CAMBIO #1: askMohamedToSpeak - AHORA ENVÍA instructions EN response.create
   const askMohamedToSpeak = async (instruction: string) => {
     try {
-      if (!realtimeDcRef.current) return false;
-      if (realtimeDcRef.current.readyState !== "open") return false;
+      if (!realtimeDcRef.current) {
+        console.error("❌ No hay data channel en askMohamedToSpeak");
+        return false;
+      }
+      if (realtimeDcRef.current.readyState !== "open") {
+        console.error("❌ Data channel no está open:", realtimeDcRef.current.readyState);
+        return false;
+      }
+      
+      console.log("🎤 askMohamedToSpeak llamado:", instruction);
       setWaitingMohamed(true);
       assistantTextBufferRef.current = "";
+      
+      // ✅ PRIMER mensaje: crear el item
       realtimeDcRef.current.send(
         JSON.stringify({
           type: "conversation.item.create",
@@ -776,34 +787,73 @@ export default function Regularizacion2026() {
           },
         })
       );
+      console.log("✅ conversation.item.create enviado");
+      
+      // ✅ SEGUNDO mensaje: FORZAR respuesta CON instructions
       realtimeDcRef.current.send(
         JSON.stringify({
           type: "response.create",
-          response: { modalities: ["audio", "text"] },
+          response: { 
+            modalities: ["audio", "text"],
+            instructions: instruction // ✅ ESTO ES CLAVE
+          },
         })
       );
+      console.log("✅ response.create enviado con instructions");
+      
       return true;
     } catch (error) {
-      console.error("Error pidiendo respuesta realtime:", error);
+      console.error("❌ Error en askMohamedToSpeak:", error);
       return false;
     }
   };
 
+  // ✅ CAMBIO #2: flushPendingAutomation - AHORA ENVÍA DIRECTO SIN VERIFICAR assistantBusyRef
   const flushPendingAutomation = async (retries = 0) => {
     const prompt = pendingAutomationPromptRef.current;
     if (!prompt) return;
-    if (!realtimeDcRef.current) return;
-    if (realtimeDcRef.current.readyState !== "open") return;
-    if (assistantBusyRef.current) {
-      if (retries < 6) {
-        setTimeout(() => flushPendingAutomation(retries + 1), 300);
-      }
+    if (!realtimeDcRef.current) {
+      console.error("❌ No hay data channel");
       return;
     }
-    const ok = await askMohamedToSpeak(prompt);
-    if (ok) {
+    if (realtimeDcRef.current.readyState !== "open") {
+      console.error("❌ Data channel no está abierto:", realtimeDcRef.current.readyState);
+      return;
+    }
+    
+    console.log("🚀 ENVIANDO DIRECTAMENTE (sin verificar busy):", prompt);
+    
+    // ✅ ENVÍO DIRECTO SIN VERIFICAR assistantBusyRef
+    try {
+      realtimeDcRef.current.send(
+        JSON.stringify({
+          type: "conversation.item.create",
+          item: {
+            type: "message",
+            role: "user",
+            content: [{ type: "input_text", text: prompt }],
+          },
+        })
+      );
+      console.log("✅ Item creado, enviando response.create...");
+      
+      realtimeDcRef.current.send(
+        JSON.stringify({
+          type: "response.create",
+          response: { 
+            modalities: ["audio", "text"],
+            instructions: prompt 
+          },
+        })
+      );
+      console.log("✅ response.create enviado - Mohamed DEBERÍA hablar");
+      
+      // Limpiar después de enviar
       pendingAutomationPromptRef.current = null;
       setPendingAutomationPrompt("");
+      setWaitingMohamed(false);
+    } catch (error) {
+      console.error("❌ Error enviando:", error);
     }
   };
 
@@ -1026,7 +1076,6 @@ export default function Regularizacion2026() {
     }
   };
 
-  // ✅ CAMBIO #1: speakExactText simplificado - SOLO ESTO CAMBIA
   const speakExactText = async (text: string) => {
     if (!text.trim()) return;
     
@@ -1385,7 +1434,7 @@ export default function Regularizacion2026() {
         setWaitingForDocument(false);
         assistantTextBufferRef.current = "";
         try {
-          const { data: { user }, error: authError } = await supabase.auth.getUser();
+          const {  { user }, error: authError } = await supabase.auth.getUser();
           if (authError || !user?.id) {
             throw new Error("No hay usuario conectado en Supabase");
           }
