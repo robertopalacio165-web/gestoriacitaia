@@ -59,7 +59,7 @@ type UserFormRow = {
   case_id: string | null;
   form_type: string;
   title: string | null;
-  form_ Record<string, any> | null;
+  form_data: Record<string, any> | null;
 };
 
 function buildInitialDocs(procedureKey: string): StoredDocItem[] {
@@ -325,7 +325,7 @@ export default function Regularizacion2026() {
     let active = true;
     const loadAuth = async () => {
       try {
-        const {  { session } } = await supabase.auth.getSession();
+        const { data: { session } } = await supabase.auth.getSession();
         if (!active) return;
         setCurrentUserId(session?.user?.id || "");
         setAuthChecked(true);
@@ -337,7 +337,7 @@ export default function Regularizacion2026() {
       }
     };
     loadAuth();
-    const {  { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setCurrentUserId(session?.user?.id || "");
       setAuthChecked(true);
     });
@@ -682,7 +682,7 @@ export default function Regularizacion2026() {
   };
 
   const saveFullStateToSupabase = async (nextDocs?: StoredDocItem[]) => {
-    const {  { user }, error: authError } = await supabase.auth.getUser();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user?.id) {
       throw new Error("No hay usuario conectado en Supabase");
     }
@@ -729,7 +729,7 @@ export default function Regularizacion2026() {
       },
       updated_at: new Date().toISOString(),
     };
-    const {  existingForm } = await supabase
+    const { data: existingForm } = await supabase
       .from("user_forms")
       .select("id")
       .eq("user_id", user.id)
@@ -741,7 +741,7 @@ export default function Regularizacion2026() {
       case_id: null,
       form_type: "regularizacion_2026",
       title: "Formulario Mohamed Regularización 2026",
-      form_ payload,
+      form_data: payload,
       status: "draft",
       updated_at: new Date().toISOString(),
     };
@@ -1434,7 +1434,7 @@ export default function Regularizacion2026() {
         setWaitingForDocument(false);
         assistantTextBufferRef.current = "";
         try {
-          const {  { user }, error: authError } = await supabase.auth.getUser();
+          const { data: { user }, error: authError } = await supabase.auth.getUser();
           if (authError || !user?.id) {
             throw new Error("No hay usuario conectado en Supabase");
           }
