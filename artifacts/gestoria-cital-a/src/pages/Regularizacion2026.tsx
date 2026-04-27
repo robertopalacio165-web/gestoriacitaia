@@ -600,7 +600,7 @@ export default function Regularizacion2026() {
   };
 
   const buildSavedFormSpeech = () => {
-    return "مزيان. المعطيات ديالك تحفظات فالنظام. دابا غادي نكمل معاك ونسولك على الوثائق خطوة بخطوة.";
+    return "مزيان. المعطيات ديالك تحفظات فالنظام. دابا نكمل معاك ونسولك على الوثائق خطوة بخطوة.";
   };
 
   const buildDocSpeech = (
@@ -760,6 +760,7 @@ export default function Regularizacion2026() {
     return user.id;
   };
 
+  // ✅ FUNCIÓN CORREGIDA: askMohamedToSpeak - SIN instructions en response.create
   const askMohamedToSpeak = async (instruction: string) => {
     try {
       if (!realtimeDcRef.current) {
@@ -775,6 +776,7 @@ export default function Regularizacion2026() {
       setWaitingMohamed(true);
       assistantTextBufferRef.current = "";
       
+      // ✅ PASO 1: Crear el mensaje del usuario con el texto
       realtimeDcRef.current.send(
         JSON.stringify({
           type: "conversation.item.create",
@@ -787,16 +789,19 @@ export default function Regularizacion2026() {
       );
       console.log("✅ conversation.item.create enviado");
       
-      realtimeDcRef.current.send(
-        JSON.stringify({
-          type: "response.create",
-          response: { 
-            modalities: ["audio", "text"],
-            instructions: instruction
-          },
-        })
-      );
-      console.log("✅ response.create enviado con instructions");
+      // ✅ PASO 2: Disparar respuesta SIN instructions (solo modalidades)
+      setTimeout(() => {
+        realtimeDcRef.current?.send(
+          JSON.stringify({
+            type: "response.create",
+            response: { 
+              modalities: ["audio", "text"]
+              // ✅ SIN instructions aquí - el texto ya está en el item de arriba
+            },
+          })
+        );
+        console.log("✅ response.create enviado - Mohamed debería hablar");
+      }, 100);
       
       return true;
     } catch (error) {
@@ -805,6 +810,7 @@ export default function Regularizacion2026() {
     }
   };
 
+  // ✅ FUNCIÓN CORREGIDA: flushPendingAutomation - SIN instructions en response.create
   const flushPendingAutomation = async (retries = 0) => {
     const prompt = pendingAutomationPromptRef.current;
     if (!prompt) return;
@@ -817,9 +823,10 @@ export default function Regularizacion2026() {
       return;
     }
     
-    console.log("🚀 ENVIANDO DIRECTAMENTE (sin verificar busy):", prompt);
+    console.log("🚀 ENVIANDO DIRECTAMENTE:", prompt);
     
     try {
+      // ✅ PASO 1: Crear el mensaje del usuario con el texto
       realtimeDcRef.current.send(
         JSON.stringify({
           type: "conversation.item.create",
@@ -830,18 +837,21 @@ export default function Regularizacion2026() {
           },
         })
       );
-      console.log("✅ Item creado, enviando response.create...");
+      console.log("✅ conversation.item.create enviado");
       
-      realtimeDcRef.current.send(
-        JSON.stringify({
-          type: "response.create",
-          response: { 
-            modalities: ["audio", "text"],
-            instructions: prompt 
-          },
-        })
-      );
-      console.log("✅ response.create enviado - Mohamed DEBERÍA hablar");
+      // ✅ PASO 2: Disparar respuesta SIN instructions (solo modalidades)
+      setTimeout(() => {
+        realtimeDcRef.current?.send(
+          JSON.stringify({
+            type: "response.create",
+            response: { 
+              modalities: ["audio", "text"]
+              // ✅ SIN instructions aquí - el texto ya está en el item de arriba
+            },
+          })
+        );
+        console.log("✅ response.create enviado - Mohamed debería hablar");
+      }, 100);
       
       pendingAutomationPromptRef.current = null;
       setPendingAutomationPrompt("");
@@ -1085,11 +1095,13 @@ export default function Regularizacion2026() {
     }, 300);
   };
 
+  // ✅ FUNCIÓN CORREGIDA: speakFromAutomation - SIN instructions en response.create
   const speakFromAutomation = async (instruction: string) => {
     if (!instruction.trim()) return;
 
     console.log("🎤 Mohamed quiere hablar proactivamente:", instruction);
 
+    // ✅ Si ya hay sesión activa, úsala
     if (realtimeDcRef.current && realtimeDcRef.current.readyState === "open" && !assistantBusyRef.current) {
       console.log("✅ Usando sesión existente");
       pendingAutomationPromptRef.current = instruction;
@@ -1114,25 +1126,31 @@ export default function Regularizacion2026() {
       const ephemeralKey = sessionData.value;
       const pc = new RTCPeerConnection();
 
+      // ✅ CONFIGURAR AUDIO para la sesión temporal
       pc.ontrack = (event) => {
         const [remoteStream] = event.streams;
         if (remoteStream && remoteAudioRef.current) {
-          console.log("🔊 Audio remoto recibido - Configurando...");
+          console.log("🔊 Audio remoto recibido - Configurando audio element...");
+          
           remoteAudioRef.current.srcObject = remoteStream;
           remoteAudioRef.current.autoplay = true;
           remoteAudioRef.current.muted = false;
           remoteAudioRef.current.volume = 1.0;
           
+          // ✅ Forzar reproducción con manejo de errores
           const playPromise = remoteAudioRef.current.play();
           if (playPromise) {
-            playPromise.catch(err => {
-              console.error("❌ Error al reproducir audio:", err);
-              toast({
-                title: "🎤 Mohamed dice:",
-                description: instruction.substring(0, 100) + "...",
-                duration: 5000,
+            playPromise
+              .then(() => console.log("✅ Audio reproduciéndose"))
+              .catch(err => {
+                console.error("❌ Error al reproducir audio:", err);
+                // ✅ Fallback: mostrar toast
+                toast({
+                  title: "🎤 Mohamed dice:",
+                  description: instruction.substring(0, 100) + "...",
+                  duration: 6000,
+                });
               });
-            });
           }
         }
       };
@@ -1140,8 +1158,9 @@ export default function Regularizacion2026() {
       const dc = pc.createDataChannel("oai-events");
       
       dc.onopen = () => {
-        console.log("✅ Canal de datos abierto - Enviando mensaje a Mohamed");
+        console.log("✅ Canal de datos abierto - Enviando mensaje");
         
+        // ✅ PASO 1: Enviar el texto como mensaje de usuario
         dc.send(JSON.stringify({
           type: "conversation.item.create",
           item: {
@@ -1150,17 +1169,19 @@ export default function Regularizacion2026() {
             content: [{ type: "input_text", text: instruction }],
           },
         }));
+        console.log("✅ conversation.item.create enviado");
         
+        // ✅ PASO 2: Disparar respuesta SIN instructions (delay pequeño)
         setTimeout(() => {
           dc.send(JSON.stringify({
             type: "response.create",
             response: { 
-              modalities: ["audio", "text"],
-              instructions: "Responde en voz alta confirmando lo siguiente: " + instruction
+              modalities: ["audio", "text"]
+              // ✅ SIN instructions - el texto ya está en el item
             },
           }));
-          console.log("✅ response.create enviado con instructions explícitas");
-        }, 200);
+          console.log("✅ response.create enviado - Mohamed debería hablar");
+        }, 150);
       };
 
       dc.onmessage = (event) => {
@@ -1176,6 +1197,7 @@ export default function Regularizacion2026() {
         }
       };
 
+      // ✅ Conectar WebRTC
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
       
@@ -1193,13 +1215,14 @@ export default function Regularizacion2026() {
       const answerSdp = await sdpRes.text();
       await pc.setRemoteDescription({ type: "answer", sdp: answerSdp });
       
-      console.log("✅ Conexión WebRTC establecida - Mohamed debería hablar");
+      console.log("✅ Conexión WebRTC establecida");
 
+      // ✅ Cerrar sesión temporal después de 6 segundos
       setTimeout(() => {
         dc.close();
         pc.close();
         console.log("🔌 Sesión temporal cerrada");
-      }, 5000);
+      }, 6000);
 
     } catch (error) {
       console.error("❌ Error en speakFromAutomation:", error);
@@ -1424,6 +1447,7 @@ export default function Regularizacion2026() {
     }
   };
 
+  // ✅ FUNCIÓN CORREGIDA: handleGeneralUpload - ahora usa speakFromAutomation corregida
   const handleGeneralUpload = async () => {
     if (!leadSaved || !formConfirmed) {
       pushAgentMessage("عافاك عمر الفورمولار الأول ودير تأكيد، ومن بعد صيفط ليا الوثائق.");
@@ -1555,6 +1579,7 @@ export default function Regularizacion2026() {
               await saveFullStateToSupabase(updatedDocs);
               const localReply = buildDocSpeech(matchedDoc.nombre, result, nextStatus);
               
+              // ✅ AHORA Mohamed DEBERÍA hablar porque speakFromAutomation está corregido
               await speakFromAutomation(localReply);
               
               toast({
