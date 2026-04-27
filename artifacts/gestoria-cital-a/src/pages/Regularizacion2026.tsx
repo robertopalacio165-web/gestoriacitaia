@@ -776,7 +776,6 @@ export default function Regularizacion2026() {
           },
         })
       );
-      // ✅ response.create YA ESTÁ AQUÍ - NO LO TOQUES
       realtimeDcRef.current.send(
         JSON.stringify({
           type: "response.create",
@@ -1027,40 +1026,21 @@ export default function Regularizacion2026() {
     }
   };
 
-  // ✅ FUNCIÓN CORREGIDA: AHORA FUERZA response.create INMEDIATAMENTE
+  // ✅ CAMBIO #1: speakExactText simplificado - SOLO ESTO CAMBIA
   const speakExactText = async (text: string) => {
     if (!text.trim()) return;
+    
+    console.log("🔊 speakExactText llamado:", text);
     pushAgentMessage(text);
+    
     pendingAutomationPromptRef.current = text;
     setPendingAutomationPrompt(text);
     
-    // ✅ Si la conexión está abierta, DISPARA response.create AHORA MISMO
-    if (realtimeDcRef.current && realtimeDcRef.current.readyState === "open") {
-      if (!assistantBusyRef.current) {
-        const ok = await askMohamedToSpeak(text);
-        if (ok) {
-          pendingAutomationPromptRef.current = null;
-          setPendingAutomationPrompt("");
-        }
-      } else {
-        // ✅ Si está ocupado, fuerza el flush después de 200ms
-        setTimeout(() => {
-          void flushPendingAutomation();
-        }, 200);
-      }
-      return;
-    }
-    
-    // ✅ Si no hay conexión, intenta iniciarla y luego fuerza response.create
-    try {
-      await startListening();
-      // ✅ Espera un poco para que la conexión se establezca, luego dispara
-      setTimeout(() => {
-        void flushPendingAutomation();
-      }, 600);
-    } catch (error) {
-      console.error("Error iniciando realtime para hablar texto exacto:", error);
-    }
+    // ✅ Espera 300ms y DISPARA flush SIEMPRE
+    setTimeout(() => {
+      console.log("⚡ Forzando flushPendingAutomation...");
+      void flushPendingAutomation();
+    }, 300);
   };
 
   const speakFromAutomation = async (instruction: string) => {
@@ -1124,7 +1104,6 @@ export default function Regularizacion2026() {
           },
         }));
         
-        // ✅ response.create YA ESTÁ AQUÍ
         dc.send(JSON.stringify({
           type: "response.create",
           response: { modalities: ["audio", "text"] },
@@ -1212,7 +1191,10 @@ export default function Regularizacion2026() {
         title: ui.saveLeadTitle,
         description: "Se han guardado los datos correctamente.",
       });
-      await speakExactText(savedMessage);
+      // ✅ CAMBIO #2: setTimeout para asegurar que Mohamed hable después de guardar
+      setTimeout(() => {
+        void speakExactText(savedMessage);
+      }, 500);
     } catch (error: any) {
       console.error("Error guardando formulario Mohamed:", error);
       toast({
@@ -1379,7 +1361,7 @@ export default function Regularizacion2026() {
     }
   };
 
-  // ✅ AQUÍ ESTÁ LA MAGIA: handleGeneralUpload AHORA DISPARA VOZ SIEMPRE
+  // ✅ CAMBIO #3: handleGeneralUpload con setTimeout para speakExactText
   const handleGeneralUpload = async () => {
     if (!leadSaved || !formConfirmed) {
       pushAgentMessage("عافاك عمر الفورمولار الأول ودير تأكيد، ومن بعد صيفط ليا الوثائق.");
@@ -1511,8 +1493,10 @@ export default function Regularizacion2026() {
               await saveFullStateToSupabase(updatedDocs);
               const localReply = buildDocSpeech(matchedDoc.nombre, result, nextStatus);
               
-              // ✅ AQUÍ ESTÁ: speakExactText AHORA FUERZA response.create
-              await speakExactText(localReply);
+              // ✅ CAMBIO #3: setTimeout para asegurar que Mohamed hable después de subir documento
+              setTimeout(() => {
+                void speakExactText(localReply);
+              }, 400);
               
               toast({
                 title: ui.uploadSuccessTitle,
