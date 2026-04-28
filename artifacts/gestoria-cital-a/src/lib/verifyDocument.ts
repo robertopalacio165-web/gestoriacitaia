@@ -27,7 +27,12 @@ export type VerifyDocumentResult = {
     multiple_documents: boolean;
   };
   summary: string;
-
+fraud_risk?: "low" | "medium" | "high";
+verification_score?: number;
+final_verdict?: "approved" | "review" | "rejected";
+is_expired?: boolean;
+name_match?: boolean | null;
+date_logic_ok?: boolean;
   is_stay_proof?: boolean;
   stay_proof_strength?: "strong" | "medium" | "weak" | "none";
   document_date?: string | null;
