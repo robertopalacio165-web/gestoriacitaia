@@ -407,7 +407,28 @@ function normalizeResult(
     typeof raw?.person_name_visible === "boolean"
       ? raw.person_name_visible
       : !!asNullableString(raw?.full_name);
+const isExpired =
+  !!asNullableString(raw?.expiry_date) &&
+  new Date(asNullableString(raw?.expiry_date) as string).getTime() < Date.now();
 
+let score = 100;
+
+if (status === "review") score -= 20;
+if (status === "invalid") score -= 60;
+if (imageQuality.blurred) score -= 15;
+if (imageQuality.cropped) score -= 15;
+if (imageQuality.low_resolution) score -= 15;
+if (imageQuality.dark) score -= 10;
+if (imageQuality.glare) score -= 10;
+if (isExpired) score -= 25;
+
+if (score < 0) score = 0;
+
+const fraudRisk =
+  score >= 80 ? "low" : score >= 50 ? "medium" : "high";
+
+const finalVerdict =
+  score >= 80 ? "approved" : score >= 50 ? "review" : "rejected";
   return {
     status,
     document_type: documentType,
@@ -431,6 +452,12 @@ function normalizeResult(
     missing_or_unclear_fields: missingOrUnclearFields,
     image_quality: imageQuality,
     summary,
+    fraud_risk: fraudRisk,
+verification_score: score,
+final_verdict: finalVerdict,
+is_expired: isExpired,
+name_match: null,
+date_logic_ok: !isExpired,
     is_stay_proof: isStayProof,
     stay_proof_strength: stayProofStrength,
     document_date: documentDate,
