@@ -157,7 +157,7 @@ export default function Regularizacion2026() {
 const voiceTexts = useMemo(
   () => ({
     initialVoice:
-      "السلام عليكم، أنا محمد من GestoriaCitaIA. غادي نطرح عليك أسئلة قصيرة باش نراجع الملف ديالك. جاوبني بآه ولا لا.",
+    "السلام عليكم، أنا محمد من GestoriaCitaIA. غادي نطرح عليك أسئلة قصيرة باش نراجع الملف ديالك. السؤال الأول: واش نتا دابا فإسبانيا؟"
     voiceBlocked:
       "ضغط على الميكروفون باش نبداو.",
     savedLeadReply:
@@ -171,7 +171,7 @@ const voiceTexts = useMemo(
     uploadUnknown:
       "توصلت بالوثيقة، غادي نراجعها.",
     mohamedFinal:
-      "دابا تقدر تضغط على Confirm باش توصلك الوثائق فالواتساب.",
+     "الملف ديالك واجد. دابا تقدر تضغط على Confirm باش توصلك الوثائق فالواتساب."
     realtimeError:
       "وقع مشكل فالاتصال. عاود حاول."
   }),
@@ -601,7 +601,7 @@ const voiceTexts = useMemo(
   };
 
   const buildSavedFormSpeech = () => {
-    return "مزيان. المعطيات ديالك تحفظات فالنظام. دابا غادي نكمل معاك ونسولك على الوثائق خطوة بخطوة.";
+   return "مزيان. السؤال الثاني: عندك باسبور ولا NIE ولا TIE؟";
   };
 
   const buildDocSpeech = (
@@ -1766,14 +1766,15 @@ lastUserTranscriptRef.current = "";
             </div>
           </div>
           <div className="flex flex-col gap-4">
-            <div className="rounded-2xl border border-white/10 bg-white p-6 shadow-xl">
-  <h3 className="text-lg font-bold text-slate-800 mb-3">
+     <div className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-xl">
+  <h3 className="text-lg font-bold text-white mb-3">
     Confirmación rápida
   </h3>
 
   <button
-    onClick={() => window.open("https://wa.me/34644403740","_blank")}
-    className="w-full rounded-xl bg-green-600 text-white py-4 font-bold"
+    onClick={() => window.open("https://wa.me/34644403740", "_blank")}
+    disabled={!allReady}
+    className="w-full rounded-xl bg-primary hover:bg-primary/90 disabled:opacity-60 text-white py-4 font-bold transition-colors"
     type="button"
   >
     ✅ Confirmar
