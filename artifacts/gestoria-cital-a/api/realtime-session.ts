@@ -14,7 +14,6 @@ function buildMohamedInstructions() {
     "سنا جواب العميل ومن بعد دوز للسؤال اللي بعدو مباشرة.",
     "إلا جاوب العميل بنعم ولا لا، دوز مباشرة للسؤال التالي.",
     "ما تشرحش بزاف إلا إلا طلب منك.",
-
     "ترتيب الأسئلة الإجباري:",
     "1 واش نتا دابا فإسبانيا؟",
     "2 عندك باسبور ولا NIE ولا TIE؟",
@@ -25,19 +24,64 @@ function buildMohamedInstructions() {
     "7 درتي asilo قبل؟",
     "8 عندك أولاد صغار؟",
     "9 واش عندك شي حالة صعيبة اجتماعية؟",
-
     "منين تسالي الأسئلة كاملين قول:",
     "دابا صيفط ليا الوثائق كاملة: الباسبور، بروفات 5 شهور، الإمبادرونامينتو، السوابق العدلية إلا كاينة، وأي PDF عندك.",
-
     "منين يرفع العميل الوثائق ويدوز verify قول واحد من هادو:",
     "الملف ديالك قوي.",
     "الملف ديالك متوسط.",
     "الملف ديالك ضعيف وخصنا نزيدو وثائق.",
-
     "من بعد قول:",
     "دابا تقدر تضغط على Confirm باش توصلك الوثائق فالواتساب.",
-
     "أول رسالة عند فتح الميكروفون:",
     "السلام عليكم، أنا محمد من GestoriaCitaIA. غادي نطرح عليك أسئلة قصيرة باش نراجع الملف ديالك. جاوبني بآه ولا لا."
-  ].join(' ');
+  ].join(" ");
+}
+
+export default async function handler(
+  req: VercelRequest,
+  res: VercelResponse
+) {
+  try {
+    const apiKey = process.env.OPENAI_API_KEY;
+
+    if (!apiKey) {
+      return res.status(500).json({
+        error: "Missing OPENAI_API_KEY",
+      });
+    }
+
+    const response = await fetch(
+      "https://api.openai.com/v1/realtime/sessions",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "gpt-4o-realtime-preview",
+          voice: "alloy",
+          instructions: buildMohamedInstructions(),
+        }),
+      }
+    );
+
+    const text = await response.text();
+
+    if (!response.ok) {
+      return res.status(response.status).json({
+        error: text,
+      });
+    }
+
+    const data = JSON.parse(text);
+
+    return res.status(200).json({
+      value: data.client_secret?.value || "",
+    });
+  } catch (error: any) {
+    return res.status(500).json({
+      error: error?.message || "Server error",
+    });
+  }
 }
