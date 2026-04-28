@@ -119,10 +119,10 @@ export default async function handler(
         ? buildSaraInstructions()
         : buildMohamedInstructions();
 
-    const voice =
-      assistant === "sara"
-        ? "marin"
-        : "cedar";
+ const voice =
+  assistant === "sara"
+    ? "marin"
+    : "alloy";
 
     const payload = {
       session: {
@@ -135,7 +135,7 @@ export default async function handler(
               type: "server_vad",
               threshold: 0.88,
               prefix_padding_ms: 600,
-              silence_duration_ms: 1400,
+              silence_duration_ms: 1100
               create_response: true,
               interrupt_response: false,
             },
