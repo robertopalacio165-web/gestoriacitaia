@@ -56,6 +56,10 @@ function buildSaraInstructions() {
   ].join(" ");
 }
 
+export const config = {
+  runtime: "nodejs",
+};
+
 export default async function handler(
   req: VercelRequest,
   res: VercelResponse
