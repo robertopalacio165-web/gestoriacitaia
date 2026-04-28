@@ -576,7 +576,16 @@ export default function Regularizacion2026() {
 
   const progressOk = progressCards.filter((item) => item.estado === "ok").length;
   const progressTotal = progressCards.length;
-  const allReady = finalFileStatus === "ok";
+  const allReady =
+  voiceHistory.some(
+    (m) =>
+      m.from === "agent" &&
+      (
+        m.text.includes("الملف ديالك قوي") ||
+        m.text.includes("الملف ديالك متوسط") ||
+        m.text.includes("الملف ديالك ضعيف")
+      )
+  );
 
   const updateLeadForm = (field: keyof LeadFormState, value: string) => {
     setLeadForm((prev) => ({ ...prev, [field]: value }));
@@ -1760,16 +1769,19 @@ const maybeSendIntroToMohamed = async () => {
           </div>
           <div className="flex flex-col gap-4">
             <div className="rounded-2xl border border-white/10 bg-white p-6 shadow-xl">
-  <h3 className="text-lg font-bold text-slate-800 mb-3">
-    Confirmación rápida
-  </h3>
-
+<div className="glass-panel-heavy border border-white/10 rounded-2xl overflow-hidden p-3">
   <button
-    onClick={() => window.open("https://wa.me/34644403740","_blank")}
-    className="w-full rounded-xl bg-green-600 text-white py-4 font-bold"
+    onClick={() =>
+      window.open(
+        "https://wa.me/34644403740?text=سلام، بغيت نتوصل بالملف ديالي",
+        "_blank"
+      )
+    }
+    disabled={!allReady}
+    className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary hover:bg-primary/90 disabled:opacity-40 text-primary-foreground font-bold text-sm px-4 py-3 transition-colors"
     type="button"
   >
-    ✅ Confirmar
+    ✅ Confirm
   </button>
 </div>
             {allReady && (
