@@ -113,9 +113,11 @@ export default function Regularizacion2026() {
   const [waitingMohamed, setWaitingMohamed] = useState(false);
   const [savingForm, setSavingForm] = useState(false);
   const [waitingForDocument, setWaitingForDocument] = useState(false);
+  const [documentsUnlocked, setDocumentsUnlocked] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
   const [currentUserId, setCurrentUserId] = useState("");
   const [formConfirmed, setFormConfirmed] = useState(false);
+  const [confirmUnlocked, setConfirmUnlocked] = useState(false);
   const [pendingAutomationPrompt, setPendingAutomationPrompt] = useState("");
 
   const [leadForm, setLeadForm] = useState<LeadFormState>({
@@ -675,6 +677,22 @@ const voiceTexts = useMemo(
     if (text === lastAssistantTextRef.current) return;
     pushAgentMessage(text);
     const lower = text.toLowerCase();
+    if (
+  lower.includes("الملف ديالك واجد") ||
+  lower.includes("مراجع") ||
+  lower.includes("قوي") ||
+  lower.includes("ضعيف") ||
+  lower.includes("normal")
+) {
+  setConfirmUnlocked(true);
+}
+    if (
+  lower.includes("صيفط ليا جميع الوثائق") ||
+  lower.includes("pdf") ||
+  lower.includes("جميع الوثائق اللي عندك")
+) {
+  setDocumentsUnlocked(true);
+}
     const asksForDocument =
       lower.includes("صيفط") ||
       lower.includes("الوثيقة") ||
@@ -1747,7 +1765,12 @@ lastUserTranscriptRef.current = "";
               <div className="border-t border-white/10 p-3">
                 <button
                   onClick={handleGeneralUpload}
-                  disabled={generalUploading || !leadSaved || !formConfirmed}
+              disabled={generalUploading || !leadSaved || !formConfirmed || !documentsUnlocked}
+                  {!documentsUnlocked && (
+  <p className="mt-2 text-[10px] text-amber-300 text-center">
+    كمل مع محمد الأسئلة باش يتحل رفع الوثائق
+  </p>
+)}
                   className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary hover:bg-primary/90 disabled:opacity-60 text-primary-foreground font-bold text-xs px-4 py-3 transition-colors"
                   type="button"
                 >
@@ -1781,7 +1804,7 @@ lastUserTranscriptRef.current = "";
 
   <button
     onClick={() => window.open("https://wa.me/34644403740", "_blank")}
-    disabled={!allReady}
+   disabled={!allReady || !confirmUnlocked}
     className="w-full rounded-xl bg-primary hover:bg-primary/90 disabled:opacity-60 text-white py-4 font-bold transition-colors"
     type="button"
   >
