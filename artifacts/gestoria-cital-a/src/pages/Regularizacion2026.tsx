@@ -1766,7 +1766,7 @@ lastUserTranscriptRef.current = "";
                 <button
                   onClick={handleGeneralUpload}
               disabled={generalUploading || !leadSaved || !formConfirmed || !documentsUnlocked}
-                  {!documentsUnlocked && (
+    {!documentsUnlocked && (
   <p className="mt-2 text-[10px] text-amber-300 text-center">
     كمل مع محمد الأسئلة باش يتحل رفع الوثائق
   </p>
