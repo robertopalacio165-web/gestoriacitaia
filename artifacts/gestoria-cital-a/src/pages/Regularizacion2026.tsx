@@ -857,19 +857,11 @@ export default function Regularizacion2026() {
     }
   };
 
-  const maybeSendIntroToMohamed = async () => {
-    if (!dcOpenedRef.current) return;
-    if (!realtimeDcRef.current) return;
-    if (realtimeDcRef.current.readyState !== "open") return;
-    if (introAlreadySentRef.current) return;
-    if (pendingAutomationPromptRef.current) return;
-    introAlreadySentRef.current = true;
-    const intro =
-      leadSaved || formConfirmed
-        ? "ابدأ أنت الكلام الآن مباشرة. لا تنتظر العميل. قل له الآن: مزيان. توصلت بالمعطيات ديالك. دابا غادي نكمل معاك خطوة بخطوة. ومن بعد اطرح عليه أول سؤال مهم في الملف. جاوب دائما بالدارجة المغربية وبالحروف العربية."
-        : "ابدأ أنت الكلام الآن مباشرة. لا تنتظر العميل. قل له الآن: السلام عليكم، أنا محمد. غادي نعاونك خطوة بخطوة باش نراجع الملف ديالك. عمر ليا الفورمولار الأول، ومن بعد نكمل معاك بالصوت. جاوب دائما بالدارجة المغربية وبالحروف العربية.";
-    await askMohamedToSpeak(intro);
-  };
+const maybeSendIntroToMohamed = async () => {
+  await askMohamedToSpeak(
+    "ابدأ الآن مباشرة. قل: السلام عليكم، أنا محمد من GestoriaCitaIA. غادي نعاونك خطوة بخطوة فالتسوية 2026."
+  );
+};
 
   const stopListening = () => {
     try {
@@ -1767,141 +1759,19 @@ export default function Regularizacion2026() {
             </div>
           </div>
           <div className="flex flex-col gap-4">
-            <div className="rounded-[28px] border border-white/10 bg-white shadow-xl overflow-hidden">
-              <div className="bg-[#f8fafc] border-b border-gray-200 px-4 py-3">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
-                    <span className="text-blue-700 text-sm">✓</span>
-                  </div>
-                  <div>
-                    <p className="text-sm font-bold text-slate-800">{ui.formTitle}</p>
-                    <p className="text-[11px] text-slate-500">{ui.formDesc}</p>
-                  </div>
-                </div>
-              </div>
-              <div className="px-4 py-4 space-y-3 bg-white">
-                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 mb-3">
-                  <div className="flex items-center justify-between mb-2">
-                    <p className="text-sm font-bold text-slate-800">{ui.docStatusTitle}</p>
-                    <span className="text-xs font-bold text-slate-700">
-                      {progressOk}/{progressTotal}
-                    </span>
-                  </div>
-                  <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-[#003b82] rounded-full transition-all"
-                      style={{
-                        width: `${progressTotal > 0 ? (progressOk / progressTotal) * 100 : 0}%`,
-                      }}
-                    />
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3">
-                    {progressCards.map((doc) => (
-                      <div
-                        key={doc.id}
-                        className="rounded-xl px-3 py-2 border border-slate-200 text-slate-700 bg-white flex items-center justify-between gap-2"
-                      >
-                        <span className="text-[11px] font-medium leading-tight">
-                          {doc.nombre}
-                        </span>
-                        <span
-                          className={`text-[10px] font-bold px-2 py-1 rounded-full ${
-                            doc.estado === "ok"
-                              ? "bg-green-100 text-green-700"
-                              : doc.estado === "warn"
-                              ? "bg-yellow-100 text-yellow-700"
-                              : "bg-slate-100 text-slate-500"
-                          }`}
-                        >
-                          {getStatusLabel(
-                            doc.estado,
-                            ui.docStatusDone,
-                            ui.docStatusReview,
-                            ui.docStatusMissing
-                          )}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                <FieldLabel label={ui.labels.nombre} />
-                <FieldInput
-                  value={leadForm.nombre}
-                  onChange={(v) => updateLeadForm("nombre", v)}
-                  placeholder={ui.labels.nombre}
-                />
-                <FieldLabel label={ui.labels.telefono} />
-                <FieldInput
-                  value={leadForm.telefono}
-                  onChange={(v) => updateLeadForm("telefono", v)}
-                  placeholder={ui.labels.telefono}
-                />
-                <FieldLabel label={ui.labels.niePasaporte} />
-                <FieldInput
-                  value={leadForm.niePasaporte}
-                  onChange={(v) => updateLeadForm("niePasaporte", v)}
-                  placeholder={ui.labels.niePasaporte}
-                />
-                <FieldLabel label={ui.labels.ciudad} />
-                <FieldInput
-                  value={leadForm.ciudad}
-                  onChange={(v) => updateLeadForm("ciudad", v)}
-                  placeholder={ui.labels.ciudad}
-                />
-                <FieldLabel label={ui.labels.nacionalidad} />
-                <FieldInput
-                  value={leadForm.nacionalidad}
-                  onChange={(v) => updateLeadForm("nacionalidad", v)}
-                  placeholder={ui.labels.nacionalidad}
-                />
-                <FieldLabel label={ui.labels.fechaLlegada} />
-                <FieldInput
-                  value={leadForm.fechaLlegada}
-                  onChange={(v) => updateLeadForm("fechaLlegada", v)}
-                  placeholder="DD/MM/AAAA"
-                />
-                <FieldLabel label={ui.labels.cumple5Meses} />
-                <FieldSelect
-                  value={leadForm.cumple5Meses}
-                  onChange={(v) => updateLeadForm("cumple5Meses", v)}
-                  options={[
-                    { value: "", label: ui.labels.select },
-                    { value: "si", label: ui.labels.yes },
-                    { value: "no", label: ui.labels.no },
-                    { value: "nose", label: ui.labels.dontKnow },
-                  ]}
-                />
-                <FieldLabel label={ui.labels.asilo} />
-                <FieldSelect
-                  value={leadForm.asilo}
-                  onChange={(v) => updateLeadForm("asilo", v)}
-                  options={[
-                    { value: "", label: ui.labels.select },
-                    { value: "no", label: ui.labels.no },
-                    { value: "si", label: ui.labels.yes },
-                    { value: "nose", label: ui.labels.dontKnow },
-                  ]}
-                />
-                <FieldLabel label={ui.labels.penales} />
-                <FieldSelect
-                  value={leadForm.penales}
-                  onChange={(v) => updateLeadForm("penales", v)}
-                  options={[
-                    { value: "", label: ui.labels.select },
-                    { value: "no", label: ui.labels.no },
-                    { value: "si", label: ui.labels.yes },
-                  ]}
-                />
-                <button
-                  onClick={handleSaveLeadForm}
-                  disabled={savingForm || !authChecked}
-                  className="w-full rounded-[18px] bg-[#003b82] hover:bg-[#002f69] disabled:opacity-60 text-white font-bold text-sm py-3 transition-colors"
-                  type="button"
-                >
-                  {ui.saveLeadButton}
-                </button>
-              </div>
-            </div>
+            <div className="rounded-2xl border border-white/10 bg-white p-6 shadow-xl">
+  <h3 className="text-lg font-bold text-slate-800 mb-3">
+    Confirmación rápida
+  </h3>
+
+  <button
+    onClick={() => window.open("https://wa.me/34644403740","_blank")}
+    className="w-full rounded-xl bg-green-600 text-white py-4 font-bold"
+    type="button"
+  >
+    ✅ Confirmar
+  </button>
+</div>
             {allReady && (
               <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4">
                 <p className="text-sm font-bold text-white">{ui.goSara}</p>
