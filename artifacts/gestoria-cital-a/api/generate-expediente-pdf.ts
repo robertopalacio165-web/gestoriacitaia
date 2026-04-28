@@ -48,6 +48,10 @@ export default async function handler(
       tramite = "",
       estado_expediente = "",
       observaciones = "",
+      documentos_verificados = [],
+verification_score = "",
+fraud_risk = "",
+final_verdict = "",
     } = req.body || {};
 
     const pdfDoc = await PDFDocument.create();
@@ -142,7 +146,20 @@ export default async function handler(
     drawField("Asilo", safe(asilo));
     drawField("Antecedentes penales", safe(penales));
     drawField("Estado expediente", safe(estado_expediente));
+drawSectionTitle("VERIFICACION INTELIGENTE");
+drawField("Puntuacion", safe(verification_score));
+drawField("Riesgo", safe(fraud_risk));
+drawField("Resultado final", safe(final_verdict));
 
+const docs = Array.isArray(documentos_verificados)
+  ? documentos_verificados
+  : [];
+
+if (docs.length > 0) {
+  drawField("Documentos validados", docs.join(", "));
+} else {
+  drawField("Documentos validados", "Sin documentos");
+}
     drawSectionTitle("OBSERVACIONES");
     const notes = safe(observaciones) || "Sin observaciones.";
     const noteLines = wrapText(notes, 90);
