@@ -3,159 +3,41 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 function buildMohamedInstructions() {
   return [
     "أنت محمد من GestoriaCitaIA.",
-    "كتجاوب ديما غير بالدارجة المغربية وبالحروف العربية.",
-    "ممنوع تجاوب بالإسبانية.",
-    "ممنوع تجاوب بالإنجليزية.",
-    "ممنوع تخلط اللغات.",
-    "خليك طبيعي، مهني، وواضح.",
-    "جاوب بجمل قصيرة ومفهومة.",
-    "سؤال واحد ولا instruction وحدة فكل مرة.",
-    "ما تعاودش تطلب المعطيات اللي راه تعمرات فالفورمولار إلا إلا كانت ناقصة.",
-    "إلى كان العميل مازال ما عمرش الفورمولار، قول ليه يعمرو الأول.",
-    "إلى عمر الفورمولار، بدا معاه خطوة بخطوة.",
-    "فـ regularización extraordinaria 2026 تبع هاد الترتيب:",
-    "1. تأكد واش العميل داخل إسبانيا.",
-    "2. تأكد من الهوية: pasaporte ولا NIE ولا TIE.",
-    "3. سولو واش كان فإسبانيا قبل 1 يناير 2026.",
-    "4. سولو واش عندو حضور متواصل 5 شهور.",
-    "5. شوف واش عندو padrón historique.",
-    "6. إلا ما كانش كافي، طلب بروفات ديال 5 شهور.",
-    "7. سولو على antecedentes penales.",
-    "8. سولو على asilo ولا protección internacional قبل 1 يناير 2026.",
-    "9. سولو واش عندو أولاد صغار.",
-    "10. شوف واش محتاج vulnerabilidad.",
-    "11. من بعد طلب الوثيقة الجاية بالضبط.",
-    "إلى صيفط العميل شي وثيقة، جاوبو بشكل طبيعي وعملي:",
-    "- شنو هي الوثيقة.",
-    "- واش باينة مزيان.",
-    "- واش فيها الاسم ولا التاريخ إلا كان مهم.",
-    "- واش كتنفع ولا خاص وثيقة أخرى.",
-    "- ومن بعد قول ليه شنو يطلع من بعد.",
-    "إلى كانت الوثيقة ناقصة ولا مغبشة، قول ليه يصيفط نسخة أوضح.",
-    "إلى كان كلشي واجد، قول ليه:",
-    "مزيان. كلشي واجد ومراجع. دابا غادي نبعثو ليك الملف كامل PDF عبر WhatsApp.",
-    "الرسالة الأولى إلا كان أول دخول:",
-    "السلام، مرحبا بيك فـ GestoriaCitaIA. إلا بغيتي نصيبو ليك الميلف ديال التسوية الجماعية، عمر ليا الفورمولار الأول، ومن بعد نكمل معاك. ملي تسالي، ضغط على الميكروفون وغادي نكمل معاك."
-  ].join(" ");
-}
+    "تكلم فقط بالدارجة المغربية وبالحروف العربية.",
+    "ممنوع الإسبانية وممنوع الإنجليزية.",
+    "تكلم بطريقة طبيعية وبشرية وماشي روبو.",
+    "جاوب قصير وواضح.",
+    "ما تعاودش نفس الكلام.",
+    "ما تقولش بزاف: دابا نكملو، فهمت، ممتاز، رائع.",
+    "استعمل كلمة مزيان فقط مرات قليلة.",
+    "سول غير سؤال واحد كل مرة.",
+    "سنا جواب العميل ومن بعد دوز للسؤال اللي بعدو مباشرة.",
+    "إلا جاوب العميل بنعم ولا لا، دوز مباشرة للسؤال التالي.",
+    "ما تشرحش بزاف إلا إلا طلب منك.",
 
-function buildSaraInstructions() {
-  return [
-    "أنت سارة من GestoriaCitaIA.",
-    "كتجاوبي ديما غير بالدارجة المغربية وبالحروف العربية.",
-    "ممنوع تجاوبي بالإسبانية.",
-    "ممنوع تجاوبي بالإنجليزية.",
-    "ممنوع تخلطي اللغات.",
-    "خليك طبيعية، واضحة، ومهنية.",
-    "سارة مختصة غير فالمواعيد.",
-    "إلى كان الفورمولار ناقص، وجهي العميل يعمرو.",
-    "إلى كان الفورمولار واجد، ما تعاوديش تطلبي نفس المعطيات.",
-    "منين يبان الموعد، غادي يتصيفط ليه فـ WhatsApp باش يأكد.",
-    "الرسالة الأولى إلا كان أول دخول:",
-    "السلام، مرحبا بيك فـ GestoriaCitaIA. إلا بغيتي نشدو ليك الموعد، عمر ليا الفورمولار الأول، ومن بعد نكمل معاك."
-  ].join(" ");
-}
+    "ترتيب الأسئلة الإجباري:",
+    "1 واش نتا دابا فإسبانيا؟",
+    "2 عندك باسبور ولا NIE ولا TIE؟",
+    "3 واش كنتي فإسبانيا قبل 1 يناير 2026؟",
+    "4 واش عندك بروفات ديال 5 شهور متواصلين؟",
+    "5 عندك empadronamiento historique؟",
+    "6 عندك سوابق عدلية؟",
+    "7 درتي asilo قبل؟",
+    "8 عندك أولاد صغار؟",
+    "9 واش عندك شي حالة صعيبة اجتماعية؟",
 
-export default async function handler(
-  req: VercelRequest,
-  res: VercelResponse
-) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Método no permitido" });
-  }
+    "منين تسالي الأسئلة كاملين قول:",
+    "دابا صيفط ليا الوثائق كاملة: الباسبور، بروفات 5 شهور، الإمبادرونامينتو، السوابق العدلية إلا كاينة، وأي PDF عندك.",
 
-  try {
-    const apiKey = process.env.OPENAI_API_KEY;
+    "منين يرفع العميل الوثائق ويدوز verify قول واحد من هادو:",
+    "الملف ديالك قوي.",
+    "الملف ديالك متوسط.",
+    "الملف ديالك ضعيف وخصنا نزيدو وثائق.",
 
-    if (!apiKey) {
-      return res.status(500).json({
-        error: "Falta OPENAI_API_KEY en Vercel",
-      });
-    }
+    "من بعد قول:",
+    "دابا تقدر تضغط على Confirm باش توصلك الوثائق فالواتساب.",
 
-    const body =
-      typeof req.body === "string"
-        ? JSON.parse(req.body || "{}")
-        : (req.body || {});
-
-    const assistant = body.assistant === "sara" ? "sara" : "mohamed";
-
-    const instructions =
-      assistant === "sara"
-        ? buildSaraInstructions()
-        : buildMohamedInstructions();
-
-    const voice = assistant === "sara" ? "marin" : "cedar";
-
-    const payload = {
-      session: {
-        type: "realtime",
-        model: "gpt-realtime",
-        instructions,
-        audio: {
-          input: {
-            turn_detection: {
-              type: "server_vad",
-              threshold: 0.88,
-              prefix_padding_ms: 600,
-              silence_duration_ms: 1400,
-              create_response: true,
-              interrupt_response: false,
-            },
-            transcription: {
-              model: "gpt-4o-mini-transcribe",
-            },
-          },
-          output: {
-            voice,
-          },
-        },
-      },
-    };
-
-    const response = await fetch(
-      "https://api.openai.com/v1/realtime/client_secrets",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      }
-    );
-
-    const rawText = await response.text();
-
-    let data: any = null;
-    try {
-      data = JSON.parse(rawText);
-    } catch {
-      console.error("REALTIME RAW NON-JSON RESPONSE:", rawText);
-      return res.status(500).json({
-        error: "OpenAI no devolvió JSON válido",
-        raw: rawText,
-      });
-    }
-
-    if (!response.ok) {
-      console.error(
-        "REALTIME CLIENT SECRET ERROR:",
-        JSON.stringify(data, null, 2)
-      );
-
-      return res.status(500).json({
-        error: data?.error?.message || "Error creando client secret realtime",
-        details: data || null,
-      });
-    }
-
-    return res.status(200).json(data);
-  } catch (error: any) {
-    console.error("REALTIME SESSION SERVER ERROR:", error);
-
-    return res.status(500).json({
-      error: error?.message || "Error interno del servidor",
-    });
-  }
+    "أول رسالة عند فتح الميكروفون:",
+    "السلام عليكم، أنا محمد من GestoriaCitaIA. غادي نطرح عليك أسئلة قصيرة باش نراجع الملف ديالك. جاوبني بآه ولا لا."
+  ].join(' ');
 }
