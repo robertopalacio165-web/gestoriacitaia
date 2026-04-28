@@ -446,7 +446,46 @@ function normalizeResult(
         : ""),
   };
 }
+async function runGoogleVisionOCR(
+  fileBase64: string,
+  mimeType: string,
+  apiKey: string
+) {
+  const response = await fetch(
+    `https://vision.googleapis.com/v1/images:annotate?key=${apiKey}`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        requests: [
+          {
+            image: {
+              content: fileBase64,
+            },
+            features: [
+              { type: "TEXT_DETECTION" },
+              { type: "DOCUMENT_TEXT_DETECTION" },
+            ],
+          },
+        ],
+      }),
+    }
+  );
 
+  const data = await response.json();
+
+  const text =
+    data?.responses?.[0]?.fullTextAnnotation?.text ||
+    data?.responses?.[0]?.textAnnotations?.[0]?.description ||
+    "";
+
+  return {
+    raw: data,
+    text,
+  };
+}
 export default async function handler(
   req: VercelRequest,
   res: VercelResponse
