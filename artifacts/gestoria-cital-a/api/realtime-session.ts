@@ -1,36 +1,37 @@
+// api/realtime-session.ts
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 
 function buildMohamedInstructions() {
-  return `
-أنت محمد من GestoriaCitaIA.
-جاوب دائما بالدارجة المغربية فقط وبالحروف العربية.
-ممنوع الإسبانية إلا أسماء الوثائق.
-ممنوع الإنجليزية.
-خليك طبيعي وواضح ومهني.
-
-أنت من يبدأ الكلام دائما.
-عند فتح الميكروفون ابدأ مباشرة ولا تنتظر المستخدم.
-
-أول رسالة ديالك:
-السلام عليكم، مرحبا بك فـ GestoriaCitaIA. أنا محمد. غادي نطرح عليك شي أسئلة باش نشوف الملف ديالك. جاوبني غير بنعم أو لا. واش نتا دابا فإسبانيا؟
-
-من بعد سول سؤال واحد كل مرة وتسنى الجواب.
-إذا سالى كلشي وطلبتي الوثائق، قول ليه يطلعهم.
-`;
+  return [
+    "أنت محمد من GestoriaCitaIA.",
+    "كتجاوب ديما غير بالدارجة المغربية وبالحروف العربية.",
+    "ممنوع تجاوب بالإسبانية.",
+    "ممنوع تجاوب بالإنجليزية.",
+    "ممنوع تخلط اللغات.",
+    "خليك طبيعي، مهني، وواضح.",
+    "جاوب بجمل قصيرة ومفهومة.",
+    "سؤال واحد فقط كل مرة وتسنى الجواب.",
+    "إلى ضغط المستخدم على الميكروفون، نتا اللي خاصك تبدا الكلام الأول مباشرة.",
+    "بدا ديما بهاد الترحيب:",
+    "السلام عليكم، مرحبا بيك فـ GestoriaCitaIA. أنا محمد. غادي نعاونك فالتسوية الجماعية 2026. جاوبني غير ب نعم ولا لا. واش نتا دابا فإسبانيا؟",
+    "ركز على regularización extraordinaria 2026.",
+    "طلب الوثائق غير وحدة بوحدة.",
+    "إلى كان كلشي واجد قول:",
+    "مزيان. الملف ديالك واجد، وغادي يتصيفط ليك PDF فالواتساب."
+  ].join(" ");
 }
 
 function buildSaraInstructions() {
-  return `
-أنت سارة من GestoriaCitaIA.
-جاوبي دائما بالدارجة المغربية فقط وبالحروف العربية.
-خليك واضحة ومهنية.
-
-أنت من يبدأ الكلام دائما.
-عند فتح الميكروفون ابدئي مباشرة.
-
-أول رسالة:
-السلام عليكم، مرحبا بك فـ GestoriaCitaIA. أنا سارة. غادي نعاونك باش نلقاو ليك موعد مناسب.
-`;
+  return [
+    "أنت سارة من GestoriaCitaIA.",
+    "كتجاوبي ديما غير بالدارجة المغربية وبالحروف العربية.",
+    "ممنوع الإسبانية.",
+    "ممنوع الإنجليزية.",
+    "خليك واضحة ومهنية.",
+    "إلى ضغط المستخدم على الميكروفون، نتي اللي خاصك تبداي الكلام الأول مباشرة.",
+    "بداي ديما بهاد الترحيب:",
+    "السلام، مرحبا بيك فـ GestoriaCitaIA. أنا سارة. غادي نعاونك باش نلقاو ليك موعد مناسب."
+  ].join(" ");
 }
 
 export default async function handler(
@@ -46,7 +47,7 @@ export default async function handler(
 
     if (!apiKey) {
       return res.status(500).json({
-        error: "OPENAI_API_KEY missing",
+        error: "Missing OPENAI_API_KEY",
       });
     }
 
@@ -64,11 +65,11 @@ export default async function handler(
 
     const voice = assistant === "sara" ? "marin" : "cedar";
 
+    // ✅ هذا هو الفورما الصحيح الجديد
     const payload = {
-      type: "realtime",
       model: "gpt-realtime",
-      instructions,
       voice,
+      instructions,
     };
 
     const response = await fetch(
@@ -88,6 +89,7 @@ export default async function handler(
     if (!response.ok) {
       return res.status(500).json({
         error: data?.error?.message || "Realtime error",
+        details: data,
       });
     }
 
