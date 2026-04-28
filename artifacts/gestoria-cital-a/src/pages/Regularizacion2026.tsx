@@ -614,60 +614,59 @@ const voiceTexts = useMemo(
    return "مزيان. السؤال الثاني: عندك باسبور ولا NIE ولا TIE؟";
   };
 
-  const buildDocSpeech = (
-    matchedDocName: string,
-    result: VerifyDocumentResult,
-    nextStatus: DocStatus
-  ) => {
-    const parts: string[] = [];
-    const docName = matchedDocName || "الوثيقة";
-    parts.push(`مزيان. توصلت بـ ${docName}.`);
-    if (result.document_type === "passport") {
-      parts.push("هاد الوثيقة هي الباسبور.");
-    } else if (result.document_type === "nie") {
-      parts.push("هاد الوثيقة هي NIE.");
-    } else if (result.document_type === "tie") {
-      parts.push("هاد الوثيقة هي TIE.");
-    } else if (result.document_type === "empadronamiento") {
-      parts.push("هاد الوثيقة هي empadronamiento.");
-    } else if (result.document_type === "stay_proof") {
-      parts.push("هاد الوثيقة كتنفع كبرهان ديال البقاء.");
-    }
-    if (result.full_name) {
-      parts.push(`الاسم اللي باين هو ${result.full_name}.`);
-    }
-    if (result.birth_date) {
-      parts.push(`تاريخ الازدياد الباين هو ${result.birth_date}.`);
-    }
-    if (result.passport_number) {
-      parts.push(`رقم الباسبور الباين هو ${result.passport_number}.`);
-    } else if (result.document_number) {
-      parts.push(`الرقم الباين هو ${result.document_number}.`);
-    }
-    if (nextStatus === "ok") {
-      parts.push("الوثيقة باينة مزيان ومقبولة.");
-    } else {
-      parts.push("الوثيقة توصلت بها ولكن خاصها مراجعة ولا نسخة أوضح.");
-    }
-    const lowerName = (matchedDocName || "").toLowerCase();
-    if (
-      lowerName.includes("pasaporte") ||
-      lowerName.includes("passport") ||
-      lowerName.includes("nie")
-    ) {
-      parts.push("دابا صيفط ليا بروفات ديال 5 شهور إلا باقي ما صيفطتيهمش.");
-    } else if (
-      lowerName.includes("empadronamiento") ||
-      lowerName.includes("padron") ||
-      lowerName.includes("padrón") ||
-      lowerName.includes("prueba de permanencia")
-    ) {
-      parts.push("دابا صيفط ليا الباسبور ولا NIE إلا باقي.");
-    } else {
-      parts.push("دابا غادي نطلب منك الوثيقة اللي من بعدها.");
-    }
-    return parts.join(" ");
-  };
+const buildDocSpeech = (
+  matchedDocName: string,
+  result: any,
+  nextStatus: DocStatus
+) => {
+  const parts: string[] = [];
+
+  parts.push(`توصلت بـ ${matchedDocName}.`);
+
+  if (result.full_name) {
+    parts.push(`الاسم: ${result.full_name}.`);
+  }
+
+  if (result.document_number) {
+    parts.push(`الرقم: ${result.document_number}.`);
+  }
+
+  if (result.birth_date) {
+    parts.push(`تاريخ الازدياد: ${result.birth_date}.`);
+  }
+
+  if (result.expiry_date) {
+    parts.push(`الصلاحية حتى: ${result.expiry_date}.`);
+  }
+
+  if (result.image_quality?.blurred) {
+    parts.push("الصورة شوية ما واضحةش.");
+  } else {
+    parts.push("الصورة واضحة.");
+  }
+
+  if (result.fraud_risk === "high") {
+    parts.push("كاين خطر عالي، خاص مراجعة.");
+  } else if (result.fraud_risk === "medium") {
+    parts.push("كاين شك متوسط.");
+  } else {
+    parts.push("ما بان حتى خطر مهم.");
+  }
+
+  if (result.final_verdict === "approved") {
+    parts.push("الوثيقة مقبولة.");
+  } else if (result.final_verdict === "review") {
+    parts.push("الوثيقة خاصها مراجعة.");
+  } else if (result.final_verdict === "rejected") {
+    parts.push("الوثيقة مرفوضة.");
+  }
+
+  if (typeof result.verification_score === "number") {
+    parts.push(`نسبة التحقق ${result.verification_score} من 100.`);
+  }
+
+  return parts.join(" ");
+};
 
   const finalizeAssistantBuffer = () => {
     const text = assistantTextBufferRef.current.trim();
