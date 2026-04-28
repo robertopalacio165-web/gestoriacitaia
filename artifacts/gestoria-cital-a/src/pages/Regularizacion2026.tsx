@@ -157,28 +157,28 @@ export default function Regularizacion2026() {
 const voiceTexts = useMemo(
   () => ({
     initialVoice:
-      "السلام عليكم، أنا محمد من GestoriaCitaIA. غادي نطرح عليك أسئلة قصيرة باش نراجع الملف ديالك. السؤال الأول: واش نتا دابا فإسبانيا؟",
+      "السلام عليكم، أنا محمد من GestoriaCitaIA. غادي نراجع معاك الملف ديال التسوية الجماعية خطوة بخطوة. جاوبني غير بآه ولا لا. السؤال الأول: واش نتا دابا فإسبانيا؟",
 
     voiceBlocked:
       "ضغط على الميكروفون باش نبداو.",
 
     savedLeadReply:
-      "مزيان. السؤال الثاني: عندك باسبور ولا NIE ولا TIE؟",
+      "مزيان. دابا نكملو. واش عندك باسبور ولا NIE ولا TIE؟",
 
     passportVerified:
       "توصلت بوثيقة الهوية.",
 
     stayProofVerified:
-      "توصلت بوثائق البقاء.",
+      "توصلت بوثائق الإثبات.",
 
     uploadWarn:
       "الوثيقة وصلت ولكن خاصها مراجعة.",
 
     uploadUnknown:
-      "توصلت بالوثيقة، غادي نراجعها.",
+      "توصلت بالوثيقة وغادي نراجعها.",
 
     mohamedFinal:
-      "الملف ديالك واجد. دابا تقدر تضغط على Confirm باش توصلك الوثائق فالواتساب.",
+      "مزيان. الملف ديالك واجد ومراجع. دابا ضغط على Confirm باش توصلك النتيجة فالواتساب.",
 
     realtimeError:
       "وقع مشكل فالاتصال. عاود حاول."
@@ -918,7 +918,7 @@ const maybeSendIntroToMohamed = async () => {
     "Content-Type": "application/json",
     "Cache-Control": "no-cache",
   },
- body: JSON.stringify({ assistant: "mohamed_brain" }),
+ body: JSON.stringify({ assistant: "mohamed" }),
 });
       const sessionData = await sessionRes.json();
       if (!sessionRes.ok) {
