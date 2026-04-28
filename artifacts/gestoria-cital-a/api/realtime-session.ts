@@ -65,13 +65,10 @@ export default async function handler(
 
     const voice = assistant === "sara" ? "marin" : "cedar";
 
-    // ✅ هذا هو الفورما الصحيح الجديد
-    const payload = {
-      model: "gpt-realtime",
-      voice,
-      instructions,
-    };
-
+ const payload = {
+  voice,
+  instructions,
+};
     const response = await fetch(
       "https://api.openai.com/v1/realtime/client_secrets",
       {
