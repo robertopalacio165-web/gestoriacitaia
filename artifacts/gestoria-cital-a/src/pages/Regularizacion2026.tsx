@@ -910,7 +910,7 @@ const maybeSendIntroToMohamed = async () => {
     "Content-Type": "application/json",
     "Cache-Control": "no-cache",
   },
-  body: JSON.stringify({ assistant: "mohamed" }),
+ body: JSON.stringify({ assistant: "mohamed_brain" }),
 });
       const sessionData = await sessionRes.json();
       if (!sessionRes.ok) {
