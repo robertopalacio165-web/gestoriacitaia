@@ -1786,22 +1786,25 @@ const maybeSendIntroToMohamed = async () => {
 </div>
             {allReady && (
               <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4">
-                <p className="text-sm font-bold text-white">{ui.goSara}</p>
-                <p className="mt-1 text-xs text-white/70">{ui.goSaraDesc}</p>
                 <button
-                  onClick={goToSara}
-                  className="mt-4 inline-flex items-center gap-2 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2.5 text-sm font-bold transition-colors"
+                  onClick={() =>
+                    window.open(
+                      "https://wa.me/34644403740?text=سلام، بغيت نتوصل بالملف ديالي",
+                      "_blank"
+                    )
+                  }
+                  className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-3 text-sm font-bold transition-colors"
                   type="button"
                 >
-                  {ui.goSara}
-                  <ArrowRight className="w-4 h-4" />
+                  ✅ Confirm
                 </button>
               </div>
             )}
-             </div>
-      </main>
+          </div>
+        </div>
 
-      <audio ref={remoteAudioRef} autoPlay playsInline className="hidden" />
+        <audio ref={remoteAudioRef} autoPlay playsInline className="hidden" />
+      </main>
     </div>
   );
 }
