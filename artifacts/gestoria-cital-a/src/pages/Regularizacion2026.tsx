@@ -1798,10 +1798,10 @@ const maybeSendIntroToMohamed = async () => {
                 </button>
               </div>
             )}
-          </div>
-        </div>
-        <audio ref={remoteAudioRef} autoPlay playsInline className="hidden" />
+             </div>
       </main>
+
+      <audio ref={remoteAudioRef} autoPlay playsInline className="hidden" />
     </div>
   );
 }
