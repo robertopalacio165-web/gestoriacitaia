@@ -1763,33 +1763,34 @@ lastUserTranscriptRef.current = "";
                 )}
               </div>
               <div className="border-t border-white/10 p-3">
-                <button
-                  onClick={handleGeneralUpload}
-              disabled={generalUploading || !leadSaved || !formConfirmed || !documentsUnlocked}
-    {!documentsUnlocked && (
+    <button
+  onClick={handleGeneralUpload}
+  disabled={generalUploading || !leadSaved || !formConfirmed || !documentsUnlocked}
+  className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary hover:bg-primary/90 disabled:opacity-60 text-primary-foreground font-bold text-xs px-4 py-3 transition-colors"
+  type="button"
+>
+  {generalUploading ? (
+    <>
+      <motion.div
+        className="w-3.5 h-3.5 border border-primary-foreground border-t-transparent rounded-full"
+        animate={{ rotate: 360 }}
+        transition={{ duration: 0.7, repeat: Infinity, ease: "linear" }}
+      />
+      {ui.uploading}
+    </>
+  ) : (
+    <>
+      <Upload className="w-4 h-4" />
+      {ui.uploadGeneral}
+    </>
+  )}
+</button>
+
+{!documentsUnlocked && (
   <p className="mt-2 text-[10px] text-amber-300 text-center">
     كمل مع محمد الأسئلة باش يتحل رفع الوثائق
   </p>
 )}
-                  className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary hover:bg-primary/90 disabled:opacity-60 text-primary-foreground font-bold text-xs px-4 py-3 transition-colors"
-                  type="button"
-                >
-                  {generalUploading ? (
-                    <>
-                      <motion.div
-                        className="w-3.5 h-3.5 border border-primary-foreground border-t-transparent rounded-full"
-                        animate={{ rotate: 360 }}
-                        transition={{ duration: 0.7, repeat: Infinity, ease: "linear" }}
-                      />
-                      {ui.uploading}
-                    </>
-                  ) : (
-                    <>
-                      <Upload className="w-4 h-4" />
-                      {ui.uploadGeneral}
-                    </>
-                  )}
-                </button>
                 <p className="mt-2 text-[10px] text-white/50 text-center">
                   {ui.uploadGeneralDesc}
                 </p>
