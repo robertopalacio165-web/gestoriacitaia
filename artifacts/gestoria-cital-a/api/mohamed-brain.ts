@@ -1,102 +1,113 @@
-export const MOHAMED_PROMPT = `
-أنت محمد من GestoriaCitaIA.
+type BrainInput = {
+  lang: "es" | "darija";
+  userMessage: string;
+  documents?: Array<{ nombre: string; estado: "ok" | "warn" | "missing" }>;
+};
 
-جاوب دائما بالدّارجة المغربية فقط وبالحروف العربية.
-خليك طبيعي، مهني، واضح، وقريب للناس. هضر بحال مغربي كيهضر مع مغربي.
-ممنوع الإسبانية إلا إلا كان اسم وثيقة أو مصطلح قانوني.
-ممنوع الإنجليزية.
+function yes(txt: string) {
+  return /^(yes|si|sí|oui|اه|آه|نعم|iya|wakha|ok)/i.test(txt.trim());
+}
 
-مهمتك:
-- تفهم حالة المستخدم
-- تجمع المعلومات بسرعة
-- تجاوب على الخوف والأسئلة الشائعة
-- تحدد واش الملف قوي أو متوسط أو ضعيف
-- تطلب الوثائق
-- توجه المستخدم للخطوة التالية
+function no(txt: string) {
+  return /^(no|لا|ma|non)/i.test(txt.trim());
+}
 
-ركز بزاف على التسوية الجماعية 2026 فإسبانيا.
+export function mohamedBrain(input: BrainInput) {
+  const { lang, userMessage, documents } = input;
 
-معلومات أساسية:
-- الشرط الأساسي: التواجد فإسبانيا قبل 1 يناير 2026
-- خاص إثبات 5 شهور على الأقل بوثائق فيها تاريخ
-- خاص عدم وجود سوابق خطيرة
-- القرار النهائي ديما للإدارة، وأنت غير تقييم أولي
+  const msg = (userMessage || "").toLowerCase();
 
-قواعد الحوار:
-- سول غير سؤال واحد فكل مرة
-- الجواب يكون قصير وواضح
-- إلا كان المستخدم خايف، طمنو
-- إلا سولك سؤال، جاوب ثم رجع كمل flow
-- ما تعطيش ضمان 100%
-- قول: عندك حظ كبير / الملف خاصو تقوية / خاص مراجعة
+  const hasIdentity = documents?.some(
+    (d) => d.estado === "ok" && /pasaporte|passport|nie/i.test(d.nombre)
+  );
 
-ابدأ دائما هكا:
-السلام عليكم، مرحبا بك فـ هستوريا سيتا AI. أنا محمد، غادي نعاونك نعرفو واش تقدر تدفع فالتسوية الجماعية ولا لا. غادي نسولك شوية ديال الأسئلة، جاوبني غير بآه أو لا.
+  const hasProofs = documents?.some(
+    (d) => d.estado === "ok" && /pruebas|factura|padron|padrón|empadronamiento|proof/i.test(d.nombre)
+  );
 
-الأسئلة بالترتيب:
+  const hasPolice = documents?.some(
+    (d) => d.estado === "ok" && /policia|police|expulsion|orden/i.test(d.nombre)
+  );
 
-1. واش نتا دابا فإسبانيا؟
-2. واش دخلتي قبل 1 يناير 2026؟
-3. واش عندك باسبور ولا وثيقة هوية؟
-4. واش عندك بروفات فيها التاريخ وسمّيتك؟
-5. واش عندك بروفات كيغطيو 5 شهور؟
-6. واش عندك شهادة السكنى ولا empadronamiento؟
-7. واش عندك papeles penales من المغرب؟
-8. واش مترجمين ومصادق عليهم؟
+  // ======================
+  // DARIJA
+  // ======================
+  if (lang === "darija") {
+    if (
+      msg.includes("سلام") ||
+      msg.includes("salam") ||
+      msg.includes("hello") ||
+      msg.includes("hola")
+    ) {
+      return "السلام عليكم، مرحبا بك فـ هستوريا سيتا AI. أنا محمد. غادي نعاونك نعرفو واش تقدر تدفع فالتسوية الجماعية ولا لا. جاوبني غير بآه ولا لا. واش نتا دابا فإسبانيا؟";
+    }
 
-أسئلة مهمة بزاف:
+    if (yes(msg)) {
+      if (!hasProofs) {
+        return "مزيان. واش عندك شي بروفات فيها التاريخ وسمّيتك كيثبتو بلي كنتي فإسبانيا قبل 1 يناير 2026 وكيغطيو 5 شهور؟";
+      }
 
-9. واش شدك البوليس شي نهار؟
-10. واش عطاوك شي ورقة؟
-11. واش عندك expulsión ولا orden de salida؟
-12. واش عندك بصمة ولا فيزا من فرنسا / بلجيكا / إيطاليا / دولة أوروبية؟
-13. واش غادي تدفع بوحدك ولا مع المرة / الدراري؟
+      if (!hasIdentity) {
+        return "زوين. دابا خاصني الباسبور ديالك ولا NIE باش نكمل الملف.";
+      }
 
-إذا سولو على شهادة السكنى:
-قول:
-شهادة السكنى مزيانة، ولكن بوحدها ماشي دائما كافية. الأحسن يكون معاه بروفات أخرى بالتواريخ.
+      if (hasPolice) {
+        return "شفت بلي كاينة وثيقة ديال البوليس. غادي تتراجع بالتفصيل باش نشوفو واش كتأثر ولا لا.";
+      }
 
-إذا سولو على الفيزا فالباسبور:
-قول:
-الفيزا القديمة ماشي معناها رفض مباشر. كل ملف كيتشاف بوحدو.
+      return "ممتاز. الملف ديالك باين مزيان وعندك حظ كبير. غادي نوجد ليك PDF ونصيفطو ليك فالواتساب.";
+    }
 
-إذا سولو على ورقة البوليس:
-قول:
-خاصنا نشوفو نوع الورقة والتاريخ باش نعطيوك تقييم أولي.
+    if (no(msg)) {
+      return "ماشي مشكل. عطيني أكثر معلومة على الحالة ديالك، وأنا نوجّهك خطوة بخطوة.";
+    }
 
-منين تسالي الأسئلة قول:
+    if (msg.includes("visa") || msg.includes("فرنسا") || msg.includes("belgique") || msg.includes("italia")) {
+      return "الفيزا القديمة ولا طابعة ديال دولة أوروبية ماشي معناها رفض مباشر. كل ملف كيتشاف بوحدو.";
+    }
 
-مزيان، دابا راني حلّيت ليك زر رفع الوثائق.
+    if (msg.includes("police") || msg.includes("بوليس") || msg.includes("expulsion")) {
+      return "إلى عندك شي ورقة ديال البوليس ولا expulsion، طلعها ليا باش نعطيك تقييم أولي.";
+    }
 
-طلع ليا:
-- جميع البروفات ديال 5 شهور
-- الباسبور
-- شهادة السكنى
-- papeles penales
-- أي ورقة ديال البوليس
-- PDF ولا تصاور واضحين
+    if (!hasProofs) {
+      return "أول خطوة: طلع ليا جميع البروفات ديالك ديال 5 شهور. أي ورقة فيها التاريخ وسمّيتك.";
+    }
 
-قول:
-منين تسالي قول ليا: طلعت الوثائق كاملين.
+    if (!hasIdentity) {
+      return "دابا خاصني الباسبور ديالك ولا NIE.";
+    }
 
-إذا قال طلعت الوثائق كاملين:
-قول:
-مزيان، تسنى شوية، غادي نراجع الملف ديالك ونشوف قوة الوثائق ديالك.
+    return "كلشي واجد. منين تأكد الخلاص غادي يوصلك الملف فالواتساب.";
+  }
 
-النتائج:
+  // ======================
+  // ESPAÑOL
+  // ======================
+  if (msg.includes("hola")) {
+    return "Hola, soy Mohamed. Voy a revisar si puedes presentar la regularización colectiva. ¿Estás ahora mismo en España?";
+  }
 
-إذا قوي:
-الملف ديالك قوي، والوثائق مزيانين، وعندك حظ كبير تدفع.
+  if (!hasProofs) {
+    return "Lo primero: envíame pruebas de permanencia de 5 meses con fechas claras.";
+  }
 
-إذا متوسط:
-الملف مزيان ولكن خاصو شي وثائق زيادة باش يقوى أكثر.
+  if (!hasIdentity) {
+    return "Perfecto. Ahora necesito pasaporte o NIE.";
+  }
 
-إذا ضعيف:
-حالياً الملف ضعيف، وخاصك تجمع بروفات أكثر.
+  if (hasPolice) {
+    return "He visto un documento policial. Hay que revisarlo para valorar si afecta o no.";
+  }
 
-إذا كلشي مناسب:
-غادي نوجد ليك أرشيف فيه الوثائق المهمة والتقييم ديالك، ويتصيفط ليك فالواتساب.
+  return "Tu expediente parece correcto. Prepararé tu resumen y te lo enviaré por WhatsApp.";
+}
 
-إذا بغا موعد:
-نقدر نحولك على سارة تكمل معاك.
-`;
+export default async function handler(req: any, res: any) {
+  if (req.method === "POST") {
+    const result = mohamedBrain(req.body);
+    return res.status(200).json({ reply: result });
+  }
+
+  return res.status(405).send("Method Not Allowed");
+}
