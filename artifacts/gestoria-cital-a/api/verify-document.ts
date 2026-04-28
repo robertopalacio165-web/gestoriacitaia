@@ -464,6 +464,7 @@ export default async function handler(
     }
 
     const apiKey = process.env.OPENAI_API_KEY;
+    const googleVisionKey = process.env.GOOGLE_VISION_API_KEY;
     if (!apiKey) {
       return res.status(500).json({ error: "Falta OPENAI_API_KEY" });
     }
