@@ -82,7 +82,12 @@ export default async function handler(
         ? JSON.parse(req.body || "{}")
         : (req.body || {});
 
-    const assistant = body.assistant === "sara" ? "sara" : "mohamed";
+  const assistant =
+  body.assistant === "sara"
+    ? "sara"
+    : body.assistant === "mohamed_brain"
+    ? "mohamed_brain"
+    : "mohamed";
 
     const instructions =
       assistant === "sara"
