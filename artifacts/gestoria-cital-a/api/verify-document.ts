@@ -59,6 +59,13 @@ type RawModelResult = {
     low_resolution?: boolean;
     multiple_documents?: boolean;
   };
+  fraud_risk?: "low" | "medium" | "high";
+verification_score?: number;
+final_verdict?: "approved" | "review" | "rejected";
+is_expired?: boolean;
+name_match?: boolean | null;
+date_logic_ok?: boolean;
+
   summary?: string;
   is_stay_proof?: boolean;
   stay_proof_strength?: StayProofStrength;
