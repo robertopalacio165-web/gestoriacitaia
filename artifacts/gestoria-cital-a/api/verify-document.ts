@@ -509,6 +509,21 @@ export default async function handler(
     }
 
     const systemPrompt = buildSystemPrompt(lang || "es", expectedDocumentType || "auto");
+    let googleOcrText = "";
+
+if (googleVisionKey) {
+  try {
+    const googleResult = await runGoogleVisionOCR(
+      fileBase64,
+      mimeType || "image/jpeg",
+      googleVisionKey
+    );
+
+    googleOcrText = googleResult.text || "";
+  } catch (error) {
+    console.error("GOOGLE OCR ERROR:", error);
+  }
+}
     const dataUrl = `data:${mimeType || "image/jpeg"};base64,${fileBase64}`;
 
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -527,10 +542,10 @@ export default async function handler(
           {
             role: "user",
             content: [
-              {
-                type: "text",
-                text: `Analiza este documento y devuelve solo JSON. Nombre del archivo: ${fileName || "documento"}.`,
-              },
+{
+  type: "text",
+  text: `Analiza este documento y devuelve solo JSON.\nTexto OCR detectado:\n${googleOcrText || "Sin texto detectado"}.\nNombre del archivo: ${fileName || "documento"}.`,
+},
               {
                 type: "image_url",
                 image_url: {
