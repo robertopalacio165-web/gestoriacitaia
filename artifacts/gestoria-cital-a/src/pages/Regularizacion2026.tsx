@@ -1711,7 +1711,7 @@ const handleConfirmFinal = async () => {
         fecha_llegada: leadForm.fechaLlegada,
         cumple_5_meses: leadForm.cumple5Meses,
         nie_pasaporte: leadForm.niePasaporte,
-        documents,
+        documents: progressCards,
       }),
     });
 
