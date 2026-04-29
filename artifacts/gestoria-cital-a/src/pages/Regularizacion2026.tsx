@@ -1892,7 +1892,6 @@ const res = await fetch("/api/generate-expediente-report", {
               <div className="border-t border-white/10 p-3">
     <button
   onClick={handleGeneralUpload}
- disabled={
 disabled={generalUploading}
   className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary hover:bg-primary/90 disabled:opacity-60 text-primary-foreground font-bold text-xs px-4 py-3 transition-colors"
   type="button"
