@@ -111,6 +111,7 @@ export default function Regularizacion2026() {
   const [voiceHistory, setVoiceHistory] = useState<ChatMsg[]>([]);
   const [lastUserTranscript, setLastUserTranscript] = useState("");
   const [waitingMohamed, setWaitingMohamed] = useState(false);
+  const [generalDocsEnabled, setGeneralDocsEnabled] = useState(false);
   const [savingForm, setSavingForm] = useState(false);
   const [waitingForDocument, setWaitingForDocument] = useState(false);
   const [documentsUnlocked, setDocumentsUnlocked] = useState(false);
@@ -738,6 +739,15 @@ const buildDocSpeech = (
     if (text === lastAssistantTextRef.current) return;
     pushAgentMessage(text);
     const lower = text.toLowerCase();
+    if (
+  lower.includes("زر الوثائق") ||
+  lower.includes("صيفط") ||
+  lower.includes("رفع الوثائق") ||
+  lower.includes("subir documentos")
+) {
+  setGeneralDocsEnabled(true);
+}
+
     if (
   lower.includes("الملف ديالك واجد") ||
   lower.includes("مراجع") ||
