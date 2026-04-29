@@ -685,10 +685,14 @@ const buildDocSpeech = (
 ) {
   setConfirmUnlocked(true);
 }
-    if (
+if (
+  lower.includes("زر الوثائق") ||
+  lower.includes("البوطون ديال الوثائق") ||
+  lower.includes("غادي نطلق ليك زر الوثائق") ||
   lower.includes("صيفط ليا جميع الوثائق") ||
+  lower.includes("جميع الوثائق اللي عندك") ||
   lower.includes("pdf") ||
-  lower.includes("جميع الوثائق اللي عندك")
+  lower.includes("صيفط ليا كلشي واضح")
 ) {
   setDocumentsUnlocked(true);
 }
