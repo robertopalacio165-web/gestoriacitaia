@@ -853,6 +853,20 @@ const buildDocSpeech = (
   // ✅ CAMBIO #1: askMohamedToSpeak - AHORA ENVÍA instructions EN response.create
   const askMohamedToSpeak = async (instruction: string) => {
     try {
+      const brainRes = await fetch("/api/mohamed-brain", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    lang: "darija",
+    userMessage: instruction,
+    documents: docs,
+  }),
+});
+
+const brainData = await brainRes.json();
+const finalText = brainData.reply || instruction;
       if (!realtimeDcRef.current) {
         console.error("❌ No hay data channel en askMohamedToSpeak");
         return false;
@@ -873,7 +887,7 @@ const buildDocSpeech = (
           item: {
             type: "message",
             role: "user",
-            content: [{ type: "input_text", text: instruction }],
+            content: [{ type: "input_text", text: finalText }],
           },
         })
       );
@@ -885,7 +899,7 @@ const buildDocSpeech = (
           type: "response.create",
          response: {
   modalities: ["audio", "text"],
-  instructions: `
+  instructions: finalText
 ${MOHAMED_SYSTEM_PROMPT}
 
 تعليمات إضافية للصوت:
