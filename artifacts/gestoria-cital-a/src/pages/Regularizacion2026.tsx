@@ -1933,11 +1933,7 @@ disabled={generalUploading}
 
   <button
   onClick={handleConfirmFinal}
-   disabled={
-  generalUploading ||
-  !leadSaved ||
-  !generalDocsEnabled
-}
+   disabled={false}
     className="w-full rounded-xl bg-primary hover:bg-primary/90 disabled:opacity-60 text-white py-4 font-bold transition-colors"
     type="button"
   >
