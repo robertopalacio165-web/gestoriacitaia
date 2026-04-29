@@ -1721,10 +1721,7 @@ const handleConfirmFinal = async () => {
       throw new Error(text);
     }
 
-    const msg = encodeURIComponent(text);
-    window.open(`https://wa.me/34644403740?text=${msg}`, "_blank");
-
-    alert("تم تجهيز التقرير وإرساله للواتساب");
+    alert("تم إرسال البيانات إلى Make بنجاح");
   } catch (error) {
     console.error(error);
     alert("وقع مشكل فالتقرير النهائي");
