@@ -1893,12 +1893,7 @@ const res = await fetch("/api/generate-expediente-report", {
     <button
   onClick={handleGeneralUpload}
  disabled={
-  generalUploading ||
-  !leadSaved ||
-  !formConfirmed ||
-  !documentsUnlocked ||
-  !generalDocsEnabled
-}
+disabled={generalUploading}
   className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary hover:bg-primary/90 disabled:opacity-60 text-primary-foreground font-bold text-xs px-4 py-3 transition-colors"
   type="button"
       
