@@ -994,19 +994,28 @@ const maybeSendIntroToMohamed = async () => {
         isConnectingRef.current = false;
         setIsListening(true);
         setWaitingMohamed(false);
-        dc.send(
-          JSON.stringify({
-            type: "session.update",
-            session: {
-              turn_detection: {
-                type: "server_vad",
-                threshold: 0.75,
-                prefix_padding_ms: 300,
-                silence_duration_ms: 800,
-              },
-            },
-          })
-        );
+dc.send(
+  JSON.stringify({
+    type: "session.update",
+    session: {
+      instructions: `
+تكلم بالدارجة المغربية فقط.
+اسمك محمد من خيستوريا سيتا AI.
+أنت خبير فالتسوية الجماعية 2026 والهجرة في إسبانيا.
+سارة فقط للمواعيد.
+تكلم بجمل قصيرة وواضحة.
+ما تستعملش الإسبانية إلا إذا طلبها العميل.
+ابدأ دائماً بثقة وبأسلوب مغربي طبيعي.
+      `,
+      turn_detection: {
+        type: "server_vad",
+        threshold: 0.75,
+        prefix_padding_ms: 300,
+        silence_duration_ms: 800,
+      },
+    },
+  })
+);
         const capturedPending = pendingAutomationPromptRef.current;
         if (capturedPending) {
           pendingAutomationPromptRef.current = null;
