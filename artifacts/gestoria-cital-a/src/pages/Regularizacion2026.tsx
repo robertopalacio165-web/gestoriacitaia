@@ -1698,7 +1698,7 @@ lastUserTranscriptRef.current = "";
   };
 const handleConfirmFinal = async () => {
   try {
-    const res = await fetch("/api/generate-expediente-report", {
+    const res = await fetch("https://hook.eu1.make.com/y81z7tmhileez8wv63l7wj5wrh2bqp51", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
