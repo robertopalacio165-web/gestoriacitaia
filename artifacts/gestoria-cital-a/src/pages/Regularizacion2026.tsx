@@ -897,22 +897,10 @@ const finalText = brainData.reply || instruction;
       realtimeDcRef.current.send(
         JSON.stringify({
           type: "response.create",
-         response: {
+ response: {
   modalities: ["audio", "text"],
   instructions: finalText
-${MOHAMED_SYSTEM_PROMPT}
-
-تعليمات إضافية للصوت:
-- هضر بالداريجة المغربية فقط.
-- النطق يكون مغربي طبيعي 100%.
-- مخارج الحروف مغربية.
-- ما تستعملش العربية الفصحى.
-- ما تستعملش لهجة أخرى.
-- هضر كيفما كيهضر المغاربة.
-
-${instruction}`
 },
-
         })
       );
       console.log("✅ response.create enviado con instructions");
