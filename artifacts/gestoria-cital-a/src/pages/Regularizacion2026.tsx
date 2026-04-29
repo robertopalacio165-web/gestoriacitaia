@@ -322,7 +322,11 @@ const voiceTexts = useMemo(
     !!leadForm.nombre.trim() &&
     !!leadForm.telefono.trim() &&
     !!leadForm.ciudad.trim();
-
+  
+useEffect(() => {
+  localStorage.removeItem(historyStorageKey);
+}, []);
+  
   useEffect(() => {
     const supported =
       typeof window !== "undefined" &&
@@ -477,36 +481,27 @@ const voiceTexts = useMemo(
     }
   }, [docs, docsStorageKey]);
 
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(historyStorageKey);
-      if (raw) {
-        const parsed = JSON.parse(raw) as ChatMsg[];
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setVoiceHistory(parsed);
-          const completionAlreadySent = parsed.some(
-            (m) => m.from === "agent" && m.text === voiceTexts.mohamedFinal
-          );
-          const leadAlreadySaved = parsed.some(
-            (m) => m.from === "agent" && m.text.includes("المعطيات ديالك تحفظات")
-          );
-          setCompletionMessageSent(completionAlreadySent);
-          setLeadSaved((prev) => prev || leadAlreadySaved);
-          setFormConfirmed((prev) => prev || leadAlreadySaved);
-          return;
-        }
-      }
-      setVoiceHistory([
-        { from: "agent", text: voiceTexts.initialVoice, ts: Date.now() },
-      ]);
-    } catch (error) {
-      console.error("Error cargando historial de Mohamed:", error);
-      setVoiceHistory([
-        { from: "agent", text: voiceTexts.initialVoice, ts: Date.now() },
-      ]);
-    }
-  }, [historyStorageKey, voiceTexts.initialVoice, voiceTexts.mohamedFinal]);
+ useEffect(() => {
+  const freshMessage = {
+    from: "agent",
+    text: voiceTexts.initialVoice,
+    ts: Date.now(),
+  };
 
+  setVoiceHistory([freshMessage]);
+
+  try {
+    localStorage.removeItem(historyStorageKey);
+    localStorage.setItem(
+      historyStorageKey,
+      JSON.stringify([freshMessage])
+    );
+  } catch (error) {
+    console.error("Error reseteando historial:", error);
+  }
+
+  setCompletionMessageSent(false);
+}, [historyStorageKey, voiceTexts.initialVoice]);
   useEffect(() => {
     if (voiceHistory.length === 0) return;
     try {
@@ -888,18 +883,7 @@ if (
   };
 
 const maybeSendIntroToMohamed = async () => {
-  await askMohamedToSpeak(`
-تكلم بالدارجة المغربية فقط، واضح وبطريقة مغربية طبيعية.
-اسمك محمد من خيستوريا سيتا AI.
-أنت خبير في التسوية الجماعية 2026 والهجرة في إسبانيا.
-سارة فقط للمواعيد، لا تتكلم أبداً عن المواعيد.
-
-ابدأ فوراً وقل:
-السلام عليكم، مرحبا بك فخيستوريا سيتا AI. أنا محمد، غادي نعاونك باش نراجع الملف ديالك ديال التسوية الجماعية. غنسولك شوية ديال الأسئلة، جاوبني بآه ولا لا.
-
-السؤال 1:
-دخلتي لإسبانيا قبل من 1 يناير 2026؟
-`);
+  await askMohamedToSpeak(voiceTexts.initialVoice);
 };
 
   const stopListening = () => {
@@ -1630,7 +1614,6 @@ lastUserTranscriptRef.current = "";
   const goToSara = () => {
     window.location.href = "/buscar-citas";
   };
-const handleConfirmFinal = async () => {
   try {
     const res = await fetch("/api/generate-expediente-pdf", {
       method: "POST",
