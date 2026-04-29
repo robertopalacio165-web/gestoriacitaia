@@ -932,8 +932,7 @@ const maybeSendIntroToMohamed = async () => {
     "Content-Type": "application/json",
     "Cache-Control": "no-cache",
   },
- body: JSON.stringify({ assistant: "mohamed" }),
-});
+
       const sessionData = await sessionRes.json();
       if (!sessionRes.ok) {
         throw new Error(sessionData?.error || "Error creando sesión realtime");
@@ -1914,41 +1913,6 @@ function FieldSelect({
   onChange: (value: string) => void;
   options: { value: string; label: string }[];
 }) {
-      body: JSON.stringify({
-        nombre: leadForm.nombre,
-        telefono: leadForm.telefono,
-        correo_electronico: "",
-        nie_pasaporte: leadForm.niePasaporte,
-        ciudad: leadForm.ciudad,
-        nacionalidad: leadForm.nacionalidad,
-        fecha_llegada: leadForm.fechaLlegada,
-        cumple_5_meses: leadForm.cumple5Meses,
-        asilo: leadForm.asilo,
-        penales: leadForm.penales,
-        tramite: "Regularización 2026",
-        estado_expediente: "Completo",
-        observaciones: "Expediente generado automáticamente por Mohamed.",
-      }),
-    });
-
-    if (!res.ok) {
-      throw new Error("No se pudo generar PDF");
-    }
-
-    const blob = await res.blob();
-    const url = window.URL.createObjectURL(blob);
-
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "expediente-final.pdf";
-    a.click();
-
-    window.open("https://wa.me/34644403740", "_blank");
-  } catch (error) {
-    console.error(error);
-    alert("Error generando expediente final");
-  }
-};
   return (
     <select
       value={value}
