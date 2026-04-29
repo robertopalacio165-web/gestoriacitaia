@@ -786,52 +786,48 @@ if (
   };
 
   // ✅ CAMBIO #1: askMohamedToSpeak - AHORA ENVÍA instructions EN response.create
-  const askMohamedToSpeak = async (instruction: string) => {
-    try {
-      if (!realtimeDcRef.current) {
-        console.error("❌ No hay data channel en askMohamedToSpeak");
-        return false;
-      }
-      if (realtimeDcRef.current.readyState !== "open") {
-        console.error("❌ Data channel no está open:", realtimeDcRef.current.readyState);
-        return false;
-      }
-      
-      console.log("🎤 askMohamedToSpeak llamado:", instruction);
-      setWaitingMohamed(true);
-      assistantTextBufferRef.current = "";
-      
-      // ✅ PRIMER mensaje: crear el item
-      realtimeDcRef.current.send(
-        JSON.stringify({
-          type: "conversation.item.create",
-          item: {
-            type: "message",
-            role: "user",
-            content: [{ type: "input_text", text: instruction }],
-          },
-        })
-      );
-      console.log("✅ conversation.item.create enviado");
-      
-      // ✅ SEGUNDO mensaje: FORZAR respuesta CON instructions
-      realtimeDcRef.current.send(
-        JSON.stringify({
-          type: "response.create",
-          response: { 
-            modalities: ["audio", "text"],
-            instructions: instruction // ✅ ESTO ES CLAVE
-          },
-        })
-      );
-      console.log("✅ response.create enviado con instructions");
-      
-      return true;
-    } catch (error) {
-      console.error("❌ Error en askMohamedToSpeak:", error);
-      return false;
-    }
-  };
+const askMohamedToSpeak = async (instruction: string) => {
+  try {
+    const dc = realtimeDcRef.current;
+    if (!dc || dc.readyState !== "open") return false;
+
+    setWaitingMohamed(true);
+    assistantTextBufferRef.current = "";
+
+    dc.send(
+      JSON.stringify({
+        type: "conversation.item.create",
+        item: {
+          type: "message",
+          role: "user",
+          content: [
+            {
+              type: "input_text",
+              text: instruction,
+            },
+          ],
+        },
+      })
+    );
+
+    dc.send(
+      JSON.stringify({
+        type: "response.create",
+        response: {
+          modalities: ["audio", "text"],
+          voice: "alloy",
+          audio_format: "pcm16",
+          instructions: instruction,
+        },
+      })
+    );
+
+    return true;
+  } catch (error) {
+    console.error("askMohamedToSpeak error:", error);
+    return false;
+  }
+};
 
   // ✅ CAMBIO #2: flushPendingAutomation - AHORA ENVÍA DIRECTO SIN VERIFICAR assistantBusyRef
   const flushPendingAutomation = async (retries = 0) => {
@@ -1015,6 +1011,7 @@ dc.send(
         }, 500);
       };
       dc.onmessage = (event) => {
+        console.log("Realtime MSG:", event.data);
         try {
           const msg = JSON.parse(event.data);
           const userTranscript =
