@@ -11,7 +11,7 @@ export default async function handler(
   try {
     const body =
       typeof req.body === "string"
-        ? JSON.parse(req.body)
+        ? JSON.parse(req.body || "{}")
         : req.body || {};
 
     const {
@@ -21,7 +21,6 @@ export default async function handler(
       nacionalidad,
       fecha_llegada,
       cumple_5_meses,
-      nie_pasaporte,
       documents = [],
     } = body;
 
@@ -34,18 +33,45 @@ export default async function handler(
 🌍 الجنسية: ${nacionalidad || "-"}
 📅 تاريخ الدخول: ${fecha_llegada || "-"}
 
-🪪 هوية: ${nie_pasaporte ? "✅ متوفرة" : "❌ ناقصة"}
-📌 5 شهور: ${cumple_5_meses === "yes" ? "✅" : "❌"}
+📌 5 شهور:
+${cumple_5_meses === "yes" ? "✅ نعم" : "❌ لا"}
 
-📎 عدد الوثائق: ${documents.length}
-
-📝 الملف توصل للمراجعة النهائية.
+📎 عدد الوثائق:
+${documents.length}
 
 شكراً على الثقة ديالك فـ GestoriaCitaIA
 `.trim();
 
-    return res.status(200).send(report);
+    const token = "PUT_YOUR_TOKEN_HERE";
+
+    const response = await fetch(
+      "https://graph.facebook.com/v20.0/1121390731046153/messages",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          messaging_product: "whatsapp",
+          to: "34644403748",
+          type: "text",
+          text: {
+            body: report,
+          },
+        }),
+      }
+    );
+
+    const data = await response.json();
+
+    return res.status(200).json({
+      ok: true,
+      whatsapp: data,
+    });
   } catch (error: any) {
-    return res.status(500).send(error?.message || "Server Error");
+    return res.status(500).json({
+      error: error.message,
+    });
   }
 }
