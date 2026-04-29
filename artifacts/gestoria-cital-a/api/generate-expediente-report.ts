@@ -42,7 +42,7 @@ ${documents.length}
 شكراً على الثقة ديالك فـ GestoriaCitaIA
 `.trim();
 
-    const token = "PUT_YOUR_TOKEN_HERE";
+    const token = "EAAX4uaZASSO0BRQsskoERLKcofZAIDtX9WZAQCiC5TdLNWPfeZBPqnLH4P9ZBzlhaV3kBZBa8u88aujoVfMVV5BrSC5FeZCVYR1kbg31A7qLZBPEZC9FU4YXomxjAZARXjUV9EJngZCcEovMoswU7ZBqZB4OxqDj8ZAYRj7fA6nV1NhtgukOEXFCr7Aey6ZAjFE516Clp0Ez3yTQQiZCSZB9k07gwDEpC4neL4tQxyFZC9ZCb3aa3yqzx226FWZClKqa0Rl2rgtFSAZANgQZAZAZAfIXInAtasY82Xg7NjtKAwZDZD";
 
     const response = await fetch(
       "https://graph.facebook.com/v20.0/1121390731046153/messages",
