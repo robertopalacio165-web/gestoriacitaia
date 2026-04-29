@@ -1032,17 +1032,28 @@ dc.send(
               pushUserMessage(transcript);
             }
           }
-          if (
-            msg.type === "response.output_text.delta" &&
-            typeof msg.delta === "string"
-          ) {
+    if (
+  (msg.type === "response.output_text.delta" ||
+    msg.type === "response.output_audio_transcript.delta") &&
+  typeof msg.delta === "string"
+)
             assistantTextBufferRef.current += msg.delta;
           }
           if (
-            msg.type === "response.output_text.done" &&
-            typeof msg.text === "string" &&
-            msg.text.trim()
-          ) {
+   if (
+  msg.type === "response.output_text.done" ||
+  msg.type === "response.output_audio_transcript.done"
+) {
+  const finalText =
+    msg.text ||
+    msg.transcript ||
+    msg?.item?.content?.[0]?.transcript ||
+    "";
+
+  if (typeof finalText === "string" && finalText.trim()) {
+    assistantTextBufferRef.current = finalText.trim();
+  }
+}
             assistantTextBufferRef.current = msg.text.trim();
           }
           if (msg.type === "response.created") {
