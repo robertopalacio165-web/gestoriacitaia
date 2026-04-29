@@ -159,7 +159,7 @@ export default function Regularizacion2026() {
 const voiceTexts = useMemo(
   () => ({
     initialVoice:
-  "السلام عليكم، مرحبا بك فخيستوريا سيتا AI. أنا محمد، غادي نعاونك باش نراجع الملف ديالك ديال التسوية الجماعية. غنسولك شوية ديال الأسئلة، جاوبني بآه ولا لا. السؤال الأول: دخلتي لإسبانيا قبل من 1 يناير 2026؟",
+      "السلام عليكم، أنا محمد من GestoriaCitaIA. غادي نراجع معاك الملف ديال التسوية الجماعية خطوة بخطوة. جاوبني غير بآه ولا لا. السؤال الأول: واش نتا دابا فإسبانيا؟",
 
     voiceBlocked:
       "ضغط على الميكروفون باش نبداو.",
@@ -322,11 +322,7 @@ const voiceTexts = useMemo(
     !!leadForm.nombre.trim() &&
     !!leadForm.telefono.trim() &&
     !!leadForm.ciudad.trim();
-  
-useEffect(() => {
-  localStorage.removeItem(historyStorageKey);
-}, []);
-  
+
   useEffect(() => {
     const supported =
       typeof window !== "undefined" &&
@@ -481,27 +477,36 @@ useEffect(() => {
     }
   }, [docs, docsStorageKey]);
 
- useEffect(() => {
-  const freshMessage = {
-    from: "agent",
-    text: voiceTexts.initialVoice,
-    ts: Date.now(),
-  };
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(historyStorageKey);
+      if (raw) {
+        const parsed = JSON.parse(raw) as ChatMsg[];
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setVoiceHistory(parsed);
+          const completionAlreadySent = parsed.some(
+            (m) => m.from === "agent" && m.text === voiceTexts.mohamedFinal
+          );
+          const leadAlreadySaved = parsed.some(
+            (m) => m.from === "agent" && m.text.includes("المعطيات ديالك تحفظات")
+          );
+          setCompletionMessageSent(completionAlreadySent);
+          setLeadSaved((prev) => prev || leadAlreadySaved);
+          setFormConfirmed((prev) => prev || leadAlreadySaved);
+          return;
+        }
+      }
+      setVoiceHistory([
+        { from: "agent", text: voiceTexts.initialVoice, ts: Date.now() },
+      ]);
+    } catch (error) {
+      console.error("Error cargando historial de Mohamed:", error);
+      setVoiceHistory([
+        { from: "agent", text: voiceTexts.initialVoice, ts: Date.now() },
+      ]);
+    }
+  }, [historyStorageKey, voiceTexts.initialVoice, voiceTexts.mohamedFinal]);
 
-  setVoiceHistory([freshMessage]);
-
-  try {
-    localStorage.removeItem(historyStorageKey);
-    localStorage.setItem(
-      historyStorageKey,
-      JSON.stringify([freshMessage])
-    );
-  } catch (error) {
-    console.error("Error reseteando historial:", error);
-  }
-
-  setCompletionMessageSent(false);
-}, [historyStorageKey, voiceTexts.initialVoice]);
   useEffect(() => {
     if (voiceHistory.length === 0) return;
     try {
@@ -680,14 +685,10 @@ const buildDocSpeech = (
 ) {
   setConfirmUnlocked(true);
 }
-if (
-  lower.includes("زر الوثائق") ||
-  lower.includes("البوطون ديال الوثائق") ||
-  lower.includes("غادي نطلق ليك زر الوثائق") ||
+    if (
   lower.includes("صيفط ليا جميع الوثائق") ||
-  lower.includes("جميع الوثائق اللي عندك") ||
   lower.includes("pdf") ||
-  lower.includes("صيفط ليا كلشي واضح")
+  lower.includes("جميع الوثائق اللي عندك")
 ) {
   setDocumentsUnlocked(true);
 }
@@ -786,48 +787,52 @@ if (
   };
 
   // ✅ CAMBIO #1: askMohamedToSpeak - AHORA ENVÍA instructions EN response.create
-const askMohamedToSpeak = async (instruction: string) => {
-  try {
-    const dc = realtimeDcRef.current;
-    if (!dc || dc.readyState !== "open") return false;
-
-    setWaitingMohamed(true);
-    assistantTextBufferRef.current = "";
-
-    dc.send(
-      JSON.stringify({
-        type: "conversation.item.create",
-        item: {
-          type: "message",
-          role: "user",
-          content: [
-            {
-              type: "input_text",
-              text: instruction,
-            },
-          ],
-        },
-      })
-    );
-
-    dc.send(
-      JSON.stringify({
-        type: "response.create",
-        response: {
-          modalities: ["audio", "text"],
-          voice: "alloy",
-          audio_format: "pcm16",
-          instructions: instruction,
-        },
-      })
-    );
-
-    return true;
-  } catch (error) {
-    console.error("askMohamedToSpeak error:", error);
-    return false;
-  }
-};
+  const askMohamedToSpeak = async (instruction: string) => {
+    try {
+      if (!realtimeDcRef.current) {
+        console.error("❌ No hay data channel en askMohamedToSpeak");
+        return false;
+      }
+      if (realtimeDcRef.current.readyState !== "open") {
+        console.error("❌ Data channel no está open:", realtimeDcRef.current.readyState);
+        return false;
+      }
+      
+      console.log("🎤 askMohamedToSpeak llamado:", instruction);
+      setWaitingMohamed(true);
+      assistantTextBufferRef.current = "";
+      
+      // ✅ PRIMER mensaje: crear el item
+      realtimeDcRef.current.send(
+        JSON.stringify({
+          type: "conversation.item.create",
+          item: {
+            type: "message",
+            role: "user",
+            content: [{ type: "input_text", text: instruction }],
+          },
+        })
+      );
+      console.log("✅ conversation.item.create enviado");
+      
+      // ✅ SEGUNDO mensaje: FORZAR respuesta CON instructions
+      realtimeDcRef.current.send(
+        JSON.stringify({
+          type: "response.create",
+          response: { 
+            modalities: ["audio", "text"],
+            instructions: instruction // ✅ ESTO ES CLAVE
+          },
+        })
+      );
+      console.log("✅ response.create enviado con instructions");
+      
+      return true;
+    } catch (error) {
+      console.error("❌ Error en askMohamedToSpeak:", error);
+      return false;
+    }
+  };
 
   // ✅ CAMBIO #2: flushPendingAutomation - AHORA ENVÍA DIRECTO SIN VERIFICAR assistantBusyRef
   const flushPendingAutomation = async (retries = 0) => {
@@ -879,7 +884,9 @@ const askMohamedToSpeak = async (instruction: string) => {
   };
 
 const maybeSendIntroToMohamed = async () => {
-  await askMohamedToSpeak(voiceTexts.initialVoice);
+  await askMohamedToSpeak(
+   "ابدأ أنت الكلام الآن مباشرة. تكلم بالدارجة المغربية فقط. قل: السلام عليكم، أنا محمد من GestoriaCitaIA. غادي نطرح عليك أسئلة قصيرة باش نراجع الملف ديالك. السؤال الأول: واش نتا دابا فإسبانيا؟"
+  );
 };
 
   const stopListening = () => {
@@ -922,15 +929,15 @@ const maybeSendIntroToMohamed = async () => {
     try {
       isConnectingRef.current = true;
       setWaitingMohamed(true);
- const sessionRes = await fetch(`/api/realtime-session?ts=${Date.now()}`, {
+    const sessionRes = await fetch(`/api/realtime-session?ts=${Date.now()}`, {
   method: "POST",
   headers: {
     "Content-Type": "application/json",
     "Cache-Control": "no-cache",
   },
+ body: JSON.stringify({ assistant: "mohamed" }),
 });
-
-const sessionData = await sessionRes.json();
+      const sessionData = await sessionRes.json();
       if (!sessionRes.ok) {
         throw new Error(sessionData?.error || "Error creando sesión realtime");
       }
@@ -974,29 +981,19 @@ const sessionData = await sessionRes.json();
         isConnectingRef.current = false;
         setIsListening(true);
         setWaitingMohamed(false);
-dc.send(
-  JSON.stringify({
-    type: "session.update",
-    session: {
-      instructions: `
-تكلم بالدارجة المغربية فقط.
-اسمك محمد من خيستوريا سيتا AI.
-أنت خبير فالتسوية الجماعية 2026 والهجرة في إسبانيا.
-سارة فقط للمواعيد.
-تكلم بجمل قصيرة وواضحة.
-ما تستعملش الإسبانية إلا إذا طلبها العميل.
-جاوب بثقة وبأسلوب مغربي طبيعي.
-إلا بدأ الحوار، رحب بالعميل وابدأ بالسؤال الأول مباشرة.
-      `,
-      turn_detection: {
-        type: "server_vad",
-        threshold: 0.75,
-        prefix_padding_ms: 300,
-        silence_duration_ms: 800,
-      },
-    },
-  })
-);
+        dc.send(
+          JSON.stringify({
+            type: "session.update",
+            session: {
+              turn_detection: {
+                type: "server_vad",
+                threshold: 0.75,
+                prefix_padding_ms: 300,
+                silence_duration_ms: 800,
+              },
+            },
+          })
+        );
         const capturedPending = pendingAutomationPromptRef.current;
         if (capturedPending) {
           pendingAutomationPromptRef.current = null;
@@ -1011,7 +1008,6 @@ dc.send(
         }, 500);
       };
       dc.onmessage = (event) => {
-        console.log("Realtime MSG:", event.data);
         try {
           const msg = JSON.parse(event.data);
           const userTranscript =
@@ -1032,28 +1028,17 @@ dc.send(
               pushUserMessage(transcript);
             }
           }
-    if (
-  (msg.type === "response.output_text.delta" ||
-    msg.type === "response.output_audio_transcript.delta") &&
-  typeof msg.delta === "string"
-)
+          if (
+            msg.type === "response.output_text.delta" &&
+            typeof msg.delta === "string"
+          ) {
             assistantTextBufferRef.current += msg.delta;
           }
           if (
-   if (
-  msg.type === "response.output_text.done" ||
-  msg.type === "response.output_audio_transcript.done"
-) {
-  const finalText =
-    msg.text ||
-    msg.transcript ||
-    msg?.item?.content?.[0]?.transcript ||
-    "";
-
-  if (typeof finalText === "string" && finalText.trim()) {
-    assistantTextBufferRef.current = finalText.trim();
-  }
-}
+            msg.type === "response.output_text.done" &&
+            typeof msg.text === "string" &&
+            msg.text.trim()
+          ) {
             assistantTextBufferRef.current = msg.text.trim();
           }
           if (msg.type === "response.created") {
@@ -1619,10 +1604,9 @@ lastUserTranscriptRef.current = "";
     }
   };
 
-const goToSara = () => {
-  window.location.href = "/buscar-citas";
-};
-
+  const goToSara = () => {
+    window.location.href = "/buscar-citas";
+  };
 const handleConfirmFinal = async () => {
   try {
     const res = await fetch("/api/generate-expediente-pdf", {
@@ -1924,6 +1908,48 @@ function FieldSelect({
   onChange: (value: string) => void;
   options: { value: string; label: string }[];
 }) {
+  const handleConfirmFinal = async () => {
+  try {
+    const res = await fetch("/api/generate-expediente-pdf", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        nombre: leadForm.nombre,
+        telefono: leadForm.telefono,
+        correo_electronico: "",
+        nie_pasaporte: leadForm.niePasaporte,
+        ciudad: leadForm.ciudad,
+        nacionalidad: leadForm.nacionalidad,
+        fecha_llegada: leadForm.fechaLlegada,
+        cumple_5_meses: leadForm.cumple5Meses,
+        asilo: leadForm.asilo,
+        penales: leadForm.penales,
+        tramite: "Regularización 2026",
+        estado_expediente: "Completo",
+        observaciones: "Expediente generado automáticamente por Mohamed.",
+      }),
+    });
+
+    if (!res.ok) {
+      throw new Error("No se pudo generar PDF");
+    }
+
+    const blob = await res.blob();
+    const url = window.URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "expediente-final.pdf";
+    a.click();
+
+    window.open("https://wa.me/34644403740", "_blank");
+  } catch (error) {
+    console.error(error);
+    alert("Error generando expediente final");
+  }
+};
   return (
     <select
       value={value}
