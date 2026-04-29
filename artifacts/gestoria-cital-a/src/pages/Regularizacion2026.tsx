@@ -1698,7 +1698,7 @@ lastUserTranscriptRef.current = "";
   };
 const handleConfirmFinal = async () => {
   try {
-const res = await fetch("/api/generate-expediente-report", {
+    const res = await fetch("/api/generate-expediente-report", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -1706,34 +1706,28 @@ const res = await fetch("/api/generate-expediente-report", {
       body: JSON.stringify({
         nombre: leadForm.nombre,
         telefono: leadForm.telefono,
-        correo_electronico: "",
-        nie_pasaporte: leadForm.niePasaporte,
         ciudad: leadForm.ciudad,
         nacionalidad: leadForm.nacionalidad,
         fecha_llegada: leadForm.fechaLlegada,
         cumple_5_meses: leadForm.cumple5Meses,
-        asilo: leadForm.asilo,
-        penales: leadForm.penales,
-        tramite: "Regularización 2026",
-        estado_expediente: "Completo",
-        observaciones: "Expediente generado automáticamente por Mohamed.",
+        nie_pasaporte: leadForm.niePasaporte,
+        documents,
       }),
     });
 
-    if (!res.ok) throw new Error("PDF error");
+    const text = await res.text();
 
-    const blob = await res.blob();
-    const url = window.URL.createObjectURL(blob);
+    if (!res.ok) {
+      throw new Error(text);
+    }
 
-    const a = document.createElement("a");
-    a.href = url;
-   a.download = "reporte-final.txt";
-    a.click();
+    const msg = encodeURIComponent(text);
+    window.open(`https://wa.me/34644403740?text=${msg}`, "_blank");
 
-    window.open("https://wa.me/34644403740", "_blank");
+    alert("تم تجهيز التقرير وإرساله للواتساب");
   } catch (error) {
     console.error(error);
-    alert("Error generando PDF final");
+    alert("وقع مشكل فالتقرير النهائي");
   }
 };
   const latestAgentMessage =
