@@ -1698,7 +1698,7 @@ lastUserTranscriptRef.current = "";
   };
 const handleConfirmFinal = async () => {
   try {
-    const res = await fetch("/api/generate-expediente-pdf", {
+const res = await fetch("/api/generate-expediente-report", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -1727,7 +1727,7 @@ const handleConfirmFinal = async () => {
 
     const a = document.createElement("a");
     a.href = url;
-    a.download = "expediente-final.pdf";
+   a.download = "reporte-final.txt";
     a.click();
 
     window.open("https://wa.me/34644403740", "_blank");
@@ -1892,9 +1892,16 @@ const handleConfirmFinal = async () => {
               <div className="border-t border-white/10 p-3">
     <button
   onClick={handleGeneralUpload}
-  disabled={generalUploading || !leadSaved || !formConfirmed || !documentsUnlocked}
+ disabled={
+  generalUploading ||
+  !leadSaved ||
+  !formConfirmed ||
+  !documentsUnlocked ||
+  !generalDocsEnabled
+}
   className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary hover:bg-primary/90 disabled:opacity-60 text-primary-foreground font-bold text-xs px-4 py-3 transition-colors"
   type="button"
+      
 >
   {generalUploading ? (
     <>
@@ -1932,7 +1939,11 @@ const handleConfirmFinal = async () => {
 
   <button
   onClick={handleConfirmFinal}
-   disabled={!allReady || !confirmUnlocked}
+   disabled={
+  generalUploading ||
+  !leadSaved ||
+  !generalDocsEnabled
+}
     className="w-full rounded-xl bg-primary hover:bg-primary/90 disabled:opacity-60 text-white py-4 font-bold transition-colors"
     type="button"
   >
@@ -2034,6 +2045,8 @@ function FieldSelect({
     a.click();
 
     window.open("https://wa.me/34644403740", "_blank");
+    setConfirmUnlocked(false);
+alert("تم تحليل الملف وتجهيز التقرير النهائي.");
   } catch (error) {
     console.error(error);
     alert("Error generando expediente final");
