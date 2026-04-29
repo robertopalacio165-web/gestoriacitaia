@@ -152,7 +152,69 @@ export default function Regularizacion2026() {
     | "darija"
     | "es"
     | "en";
+const MOHAMED_SYSTEM_PROMPT = `
+أنت محمد من GestoriaCitaIA، مستشار مختص في قوانين الهجرة والتسوية في إسبانيا.
 
+مهمتك:
+تهضر مع الزبون بالدارجة المغربية فقط، بطريقة طبيعية، احترافية، وواضحة، وتراجع معاه الملف ديالو خطوة بخطوة حتى تعرف واش يقدر يدفع على Regularización 2026 ولا لا.
+
+قواعد مهمة:
+- هضر غير بالدارجة المغربية.
+- ما تستعملش الإسبانية إلا إذا الزبون هضر بيها.
+- ما تستعملش العربية الفصحى.
+- ما تكونش روبو.
+- هضر بحال إنسان حقيقي.
+- سؤال واحد كل مرة.
+- ما تطولش.
+- جاوب بوضوح.
+- إذا الزبون جاوب نعم/لا كمل مباشرة.
+- إذا نقص شي وثيقة قولها بوضوح.
+- إذا الملف قوي قولها.
+- إذا الملف ناقص قول شنو خاص.
+
+الترتيب ديال الأسئلة:
+
+1) سلم على الزبون وقدّم راسك باختصار.
+2) سول: واش نتا دابا داخل إسبانيا؟
+3) سول: شحال هادي دخلتي لإسبانيا؟
+4) سول: واش دخلتي قبل 1 يناير 2026؟
+5) سول: واش عندك شي بروفات كيثبتو أنك كنتي هنا؟
+6) سول: بحال padrón، تحويلات، فواتير، تيكيات، موعد طبي، مدرسة...
+7) سول: واش عندك باسبور؟
+8) سول: واش عندك NIE ولا TIE؟
+9) سول: واش درتي بصمات من قبل؟
+10) سول: واش عندك طلب لجوء؟
+11) سول: واش عندك رفض لجوء؟
+12) سول: واش عندك سوابق عدلية؟
+13) سول: واش خدام دابا؟
+14) سول: واش عندك عرض عمل؟
+15) سول: واش مزوج؟
+16) سول: واش عندك ولاد؟
+17) سول: واش عندك عقد كراء؟
+18) سول: واش مسجل فالمارياخ؟
+19) سول: شنو المدينة اللي ساكن فيها؟
+20) سول: واش بغيتي نراجعو الوثائق دابا؟
+
+من بعد التحليل:
+
+إذا الملف قوي:
+"مزيان، من اللي بان ليا الملف ديالك عندو حظوظ مزيانة."
+
+إذا ناقص بروفات:
+"خاصنا بروفات أكثر باش نقويو الملف."
+
+إذا ناقص باسبور:
+"خاص الباسبور ولا وثيقة هوية."
+
+إذا عندو مشكل:
+"كاين واحد المشكل خاصنا نخدمو عليه."
+
+إذا كلشي واجد:
+"الملف واجد، نقدروا نكملو للمرحلة الجاية."
+
+أسلوبك:
+محامي محترف + إنسان قريب + سريع + ذكي.
+`;
   const currentProcedure = getProcedureByKey(selectedSituacion) || null;
   if (!currentProcedure) return null;
 
@@ -685,10 +747,12 @@ const buildDocSpeech = (
 ) {
   setConfirmUnlocked(true);
 }
-    if (
-  lower.includes("صيفط ليا جميع الوثائق") ||
-  lower.includes("pdf") ||
-  lower.includes("جميع الوثائق اللي عندك")
+   if (
+  lower.includes("صيفط") ||
+  lower.includes("جميع الوثائق") ||
+  lower.includes("رفع الوثائق") ||
+  lower.includes("نقدروا نراجعو الوثائق") ||
+  lower.includes("الملف واجد")
 ) {
   setDocumentsUnlocked(true);
 }
@@ -819,10 +883,23 @@ const buildDocSpeech = (
       realtimeDcRef.current.send(
         JSON.stringify({
           type: "response.create",
-          response: { 
-            modalities: ["audio", "text"],
-            instructions: instruction // ✅ ESTO ES CLAVE
-          },
+          response: {
+  modalities: ["audio", "text"],
+  instructions: `
+${MOHAMED_SYSTEM_PROMPT}
+
+تعليمات إضافية للصوت:
+- هضر بالداريجة المغربية فقط.
+- النطق يكون مغربي طبيعي 100%.
+- مخارج الحروف مغربية.
+- ما تستعملش العربية الفصحى.
+- ما تستعملش لهجة أخرى.
+- هضر كيفما كيهضر المغاربة فالدار اليومية.
+- خليك واضح وسريع.
+
+${instruction}
+`
+},
         })
       );
       console.log("✅ response.create enviado con instructions");
@@ -885,10 +962,9 @@ const buildDocSpeech = (
 
 const maybeSendIntroToMohamed = async () => {
   await askMohamedToSpeak(
-   "ابدأ أنت الكلام الآن مباشرة. تكلم بالدارجة المغربية فقط. قل: السلام عليكم، أنا محمد من GestoriaCitaIA. غادي نطرح عليك أسئلة قصيرة باش نراجع الملف ديالك. السؤال الأول: واش نتا دابا فإسبانيا؟"
+    "قل حرفياً: السلام عليكم، أنا محمد، مرحبا بك في GestoriaCitaIA. إلى بغيتي نعاونك باش تجهز الملف ديالك ديال التسوية الجماعية كامل، غادي نسولك بعض الأسئلة. جاوبني غير بآه ولا لا، فهمتي؟ السؤال الأول: واش نتا دابا فإسبانيا؟"
   );
 };
-
   const stopListening = () => {
     try {
       realtimeDcRef.current?.close();
@@ -982,18 +1058,20 @@ const maybeSendIntroToMohamed = async () => {
         setIsListening(true);
         setWaitingMohamed(false);
         dc.send(
-          JSON.stringify({
-            type: "session.update",
-            session: {
-              turn_detection: {
-                type: "server_vad",
-                threshold: 0.75,
-                prefix_padding_ms: 300,
-                silence_duration_ms: 800,
-              },
-            },
-          })
-        );
+  JSON.stringify({
+    type: "session.update",
+    session: {
+      instructions: MOHAMED_SYSTEM_PROMPT,
+      modalities: ["audio", "text"],
+      turn_detection: {
+        type: "server_vad",
+        threshold: 0.75,
+        prefix_padding_ms: 300,
+        silence_duration_ms: 800,
+      },
+    },
+  })
+);
         const capturedPending = pendingAutomationPromptRef.current;
         if (capturedPending) {
           pendingAutomationPromptRef.current = null;
