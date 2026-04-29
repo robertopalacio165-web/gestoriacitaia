@@ -1610,9 +1610,11 @@ lastUserTranscriptRef.current = "";
     }
   };
 
-  const goToSara = () => {
-    window.location.href = "/buscar-citas";
-  };
+const goToSara = () => {
+  window.location.href = "/buscar-citas";
+};
+
+const handleConfirmFinal = async () => {
   try {
     const res = await fetch("/api/generate-expediente-pdf", {
       method: "POST",
