@@ -883,7 +883,7 @@ const buildDocSpeech = (
       realtimeDcRef.current.send(
         JSON.stringify({
           type: "response.create",
-          response: {
+         response: {
   modalities: ["audio", "text"],
   instructions: `
 ${MOHAMED_SYSTEM_PROMPT}
@@ -894,12 +894,11 @@ ${MOHAMED_SYSTEM_PROMPT}
 - مخارج الحروف مغربية.
 - ما تستعملش العربية الفصحى.
 - ما تستعملش لهجة أخرى.
-- هضر كيفما كيهضر المغاربة فالدار اليومية.
-- خليك واضح وسريع.
+- هضر كيفما كيهضر المغاربة.
 
-${instruction}
-`
+${instruction}`
 },
+
         })
       );
       console.log("✅ response.create enviado con instructions");
