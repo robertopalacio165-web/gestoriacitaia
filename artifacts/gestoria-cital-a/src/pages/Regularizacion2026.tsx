@@ -1914,13 +1914,6 @@ function FieldSelect({
   onChange: (value: string) => void;
   options: { value: string; label: string }[];
 }) {
-  const handleConfirmFinal = async () => {
-  try {
-    const res = await fetch("/api/generate-expediente-pdf", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
       body: JSON.stringify({
         nombre: leadForm.nombre,
         telefono: leadForm.telefono,
