@@ -292,7 +292,7 @@ function OfficialBrowserBox({
                   </div>
                 </div>
               )}
-            </div>
+  
 
             {hasRealAppointment && (
               <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4">
