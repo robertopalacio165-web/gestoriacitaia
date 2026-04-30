@@ -1665,20 +1665,29 @@ if (hasPassport && hasStayProof && daysSpan >= 150) {
 
       // 🔊 Mohamed FINAL
       await speakFromAutomation(finalMessage);
+      await fetch("https://hook.eu1.make.com/y81z7tmhileez8wv63l7wj5wrh2bqp51, {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    telefono: leadForm.telefono,
+    nombre: leadForm.nombre,
+    mensaje: finalMessage,
+  }),
+});
 setTimeout(async () => {
-  const whatsappMessage = `
-دابا شفت الملف ديالك كامل ووجدت لك التقييم القانوني ديالك.
+ const whatsappMessage = `
+مزيان، شفت الملف ديالك كامل وراجعت جميع الوثائق ديالك.
 
-حضرت لك ملف كامل فيه:
-- جميع الوثائق اللي صيفطتي
-- واش مقبولين ولا لا
-- شنو خاصك تزيد
-- تحليل ديال 5 شهور
-- التقييم النهائي ديالك
+دابا حضرت لك تقرير كامل فيه:
+- شنو مقبول ✅
+- شنو خاصو مراجعة ⚠️
+- شنو ناقص ❌
 
-غادي نصيفط لك الملف ديالك دابا فالواتساب مع PDF فيه كلشي.
+وصيفطت ليك النتيجة كاملة فـ واتساب ديالك دابا 📲
 
-تسنى المساج ديالي فواتساب دابا.
+شوف المساج غادي تلقى فيه كلشي واضح.
 `;
 
   await speakFromAutomation(whatsappMessage);
