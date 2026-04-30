@@ -1779,7 +1779,7 @@ disabled={false}
   </h3>
 
   <button
-  onClick={handleConfirmFinal}
+onClick={() => alert("OK")}
    disabled={false}
     className="w-full rounded-xl bg-primary hover:bg-primary/90 disabled:opacity-60 text-white py-4 font-bold transition-colors"
     type="button"
