@@ -1665,9 +1665,9 @@ if (hasPassport && hasStayProof && daysSpan >= 150) {
 
       // 🔊 Mohamed FINAL
       await speakFromAutomation(finalMessage);
-      setTimeout(async () => {
+setTimeout(async () => {
   const whatsappMessage = `
-  دابا شفت الملف ديالك كامل ووجدت لك التقييم القانوني ديالك.
+دابا شفت الملف ديالك كامل ووجدت لك التقييم القانوني ديالك.
 
 حضرت لك ملف كامل فيه:
 - جميع الوثائق اللي صيفطتي
@@ -1683,7 +1683,6 @@ if (hasPassport && hasStayProof && daysSpan >= 150) {
 
   await speakFromAutomation(whatsappMessage);
 }, 3000);
-
       alert("✅ Documentos analizados correctamente");
     } catch (err) {
       console.error(err);
