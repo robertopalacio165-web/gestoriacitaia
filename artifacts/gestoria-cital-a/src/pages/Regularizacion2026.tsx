@@ -1526,7 +1526,7 @@ lastUserTranscriptRef.current = "";
   // ✅ CAMBIO #3: handleGeneralUpload con setTimeout para speakExactText
   const handleGeneralUpload = async () => {
     console.log("CLICK WORKING");
-    if (!leadSaved || !formConfirmed) {
+  if (!leadSaved && !formConfirmed) {
       pushAgentMessage("عافاك عمر الفورمولار الأول ودير تأكيد، ومن بعد صيفط ليا الوثائق.");
       toast({
         title: "Primero confirma el formulario",
@@ -1536,7 +1536,9 @@ lastUserTranscriptRef.current = "";
       return;
     }
     try {
+      console.log("OPENING FILE PICKER...");
       const input = document.createElement("input");
+
       document.body.appendChild(input);
       input.type = "file";
       input.accept = "image/*,application/pdf";
