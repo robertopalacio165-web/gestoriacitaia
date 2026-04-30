@@ -1669,6 +1669,11 @@ lastUserTranscriptRef.current = "";
                 description: result.summary || ui.uploadSuccessDesc,
               });
               await maybeSendCompletionMessage(updatedDocs);
+              setDocumentsUploaded(true);
+
+setTimeout(() => {
+  setDocumentsVerified(true);
+}, 1500);
             } catch (err: any) {
               console.error(err);
               toast({
@@ -1734,15 +1739,7 @@ const handleConfirmFinal = async () => {
   const latestAgentMessage =
     [...voiceHistory].reverse().find((msg) => msg.from === "agent")?.text ||
     voiceTexts.initialVoice;
-const handleDocumentsUpload = () => {
-  alert("UPLOAD خدم");
 
-  setDocumentsUploaded(true);
-
-  setTimeout(() => {
-    setDocumentsVerified(true);
-  }, 1500);
-};
 useEffect(() => {
   if (documentsUploaded && documentsVerified) {
 
@@ -1786,10 +1783,14 @@ ${missing}
 
     setFinalReport(report);
 
-    setVoiceHistory(prev => [
-      ...prev,
-      { from: "agent", text: report }
-    ]);
+ setVoiceHistory(prev => [
+  ...prev,
+  { from: "agent", text: report }
+]);
+
+setTimeout(() => {
+  speakExactText(report);
+}, 400);
   }
 }, [documentsUploaded, documentsVerified]);
   
