@@ -99,7 +99,40 @@ function slugifyFileName(name: string) {
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/[^a-zA-Z0-9._-]/g, "_");
 }
+function extractDatesFromResult(result) {
+  const dates = [];
 
+  const fields = [
+    ...(result?.visible_fields || []),
+    result?.summary || "",
+  ].join(" ");
+
+  const regex = /\b(20\d{2})[-\/](\d{1,2})[-\/](\d{1,2})\b/g;
+
+  let match;
+  while ((match = regex.exec(fields)) !== null) {
+    const date = new Date(`${match[1]}-${match[2]}-${match[3]}`);
+    if (!isNaN(date.getTime())) {
+      dates.push(date);
+    }
+  }
+
+  return dates;
+}
+
+function calculateMonthsSpan(allDates) {
+  if (allDates.length < 2) return 0;
+
+  const sorted = allDates.sort((a, b) => a.getTime() - b.getTime());
+
+  const first = sorted[0];
+  const last = sorted[sorted.length - 1];
+
+  const diffMs = last.getTime() - first.getTime();
+  const diffDays = diffMs / (1000 * 60 * 60 * 24);
+
+  return diffDays;
+}
 export default function Regularizacion2026() {
   const [selectedSituacion] = useState("regularizacion_2026_laboral");
   const [muted, setMuted] = useState(false);
@@ -1554,6 +1587,7 @@ const handleGeneralUpload = () => {
       );
 
       let results = [];
+      let allDates = [];
 
       for (const file of files) {
         const safeName = `${Date.now()}_${file.name}`;
@@ -1570,6 +1604,9 @@ const handleGeneralUpload = () => {
 
         // 🧠 ANALIZAR DOCUMENTO
         const result = await verifyDocument(file);
+const dates = extractDatesFromResult(result);
+allDates.push(...dates);
+        
 
         results.push({
           fileName: file.name,
@@ -1605,21 +1642,26 @@ const handleGeneralUpload = () => {
         }
       }
 
-      let finalMessage = "";
+      const daysSpan = calculateMonthsSpan(allDates);
 
-      if (hasPassport && hasStayProof) {
-        finalMessage =
-          "مزيان بزاف. الملف ديالك باين فيه شروط مزيانة. نقدروا نكملو للمرحلة الجاية.";
-      } else if (!hasPassport) {
-        finalMessage =
-          "كاين مشكل. خاصنا الباسبور ولا NIE باش نكملو الملف.";
-      } else if (!hasStayProof) {
-        finalMessage =
-          "خاصنا بروفات ديال 5 شهور باش نقويو الملف ديالك.";
-      } else {
-        finalMessage =
-          "الملف ديالك خاصو شوية مراجعة قبل ما نكملو.";
-      }
+let finalMessage = "";
+
+if (hasPassport && hasStayProof && daysSpan >= 150) {
+  finalMessage =
+    "ممتاز. من خلال الوثائق، كاين أكثر من 5 شهور ديال البقاء. الملف ديالك قوي وتقدر تدفع.";
+} else if (!hasPassport) {
+  finalMessage =
+    "كاين مشكل. خاص الباسبور ولا NIE باش نكملو الملف.";
+} else if (!hasStayProof) {
+  finalMessage =
+    "خاصنا بروفات ديال البقاء فإسبانيا باش نكملو الملف.";
+} else if (daysSpan < 150) {
+  finalMessage =
+    "البروفات اللي عندك ما كتكملش 5 شهور. خاصنا وثائق أكثر باش نقويو الملف.";
+} else {
+  finalMessage =
+    "الملف ديالك خاصو مراجعة إضافية قبل القرار النهائي.";
+}
 
       // 🔊 Mohamed FINAL
       await speakFromAutomation(finalMessage);
