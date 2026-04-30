@@ -472,6 +472,7 @@ export default function BuscarCitas() {
         { value: "trabajo", label: "Autorización de Trabajo" },
         { value: "arraigo", label: "Arraigo Social / Laboral / Familiar" },
         { value: "familiar", label: "Reagrupación Familiar" },
+        { value: "regularizacion", label: "Regularización extraordinaria 2026 (تسوية جماعية)" },
       ] as TramiteItem[],
       docsByTramite: {
         tie: [
@@ -1093,9 +1094,58 @@ export default function BuscarCitas() {
     }, 150);
   };
 
-  const handleAceptar = () => {
-    if (!selectedTramite) return;
+const handleAceptar = async () => {
+  if (!selectedTramite) return;
 
+  if (
+    !formData.fullName.trim() ||
+    !formData.phone.trim() ||
+    !formData.city.trim()
+  ) {
+    toast({
+      title: "Faltan datos",
+      description: "Nombre, teléfono y ciudad obligatorios",
+      variant: "destructive",
+    });
+    return;
+  }
+
+  try {
+    // 🟢 1. ناخدو اليوزر
+    const { data: sessionData } = await supabase.auth.getSession();
+    const user = sessionData?.session?.user;
+
+    // 🟢 2. نسجلو الطلب فـ Supabase
+    const { error } = await supabase.from("appointments").insert([
+      {
+        user_id: user?.id || null,
+        appointment_type: selectedTramite,
+        office_city: formData.city,
+        status: "searching",
+        customer_name: formData.fullName,
+        customer_phone: formData.phone,
+        procedure_key: selectedTramite,
+        notes: `Cliente: ${formData.fullName} - ${formData.phone}`,
+      },
+    ]);
+
+    if (error) throw error;
+
+    // 🟢 3. نصيفطو ل Make (Webhook)
+    await fetch("https://PUT_YOUR_WEBHOOK_HERE", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        name: formData.fullName,
+        phone: formData.phone,
+        tramite: selectedTramite,
+        city: formData.city,
+      }),
+    });
+
+    // 🟢 4. نخلي النظام القديم يخدم (search cita)
     scheduleMutation.mutate(
       { type: selectedTramite },
       {
@@ -1112,7 +1162,7 @@ export default function BuscarCitas() {
             toast({
               title: "Sin cita real todavía",
               description:
-                "Todavía no ha llegado una cita real. No se mostrará ninguna confirmación falsa.",
+                "Estamos buscando tu cita. Te avisaremos por WhatsApp.",
             });
             return;
           }
@@ -1148,7 +1198,22 @@ export default function BuscarCitas() {
         },
       }
     );
-  };
+
+    // 🟢 5. رسالة Sara
+    pushAgentMessage(
+      "Perfecto. Ya estamos buscando tu cita. Te avisaremos por WhatsApp en menos de 24h."
+    );
+
+  } catch (error) {
+    console.error(error);
+
+    toast({
+      title: "Error",
+      description: "No se pudo guardar el cliente",
+      variant: "destructive",
+    });
+  }
+};
 
   const handleConfirm = () => {
     if (
