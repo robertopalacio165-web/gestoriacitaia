@@ -1735,6 +1735,8 @@ const handleConfirmFinal = async () => {
     [...voiceHistory].reverse().find((msg) => msg.from === "agent")?.text ||
     voiceTexts.initialVoice;
 const handleDocumentsUpload = () => {
+  alert("UPLOAD خدم");
+
   setDocumentsUploaded(true);
 
   setTimeout(() => {
