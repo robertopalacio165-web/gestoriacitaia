@@ -1529,7 +1529,6 @@ lastUserTranscriptRef.current = "";
 
   // ✅ CAMBIO #3: handleGeneralUpload con setTimeout para speakExactText
   const handleGeneralUpload = async () => {
-    alert("CLICK خدام");
     if (!leadSaved || !formConfirmed) {
       pushAgentMessage("عافاك عمر الفورمولار الأول ودير تأكيد، ومن بعد صيفط ليا الوثائق.");
       toast({
