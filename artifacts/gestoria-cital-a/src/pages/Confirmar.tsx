@@ -29,41 +29,36 @@ export default function Confirmar() {
     !!params.date &&
     !!params.time;
 
-  const handleConfirm = async () => {
-    if (!hasRealData) return;
+const handleConfirm = async () => {
+  if (!hasRealData) return;
 
-    try {
-      setLoading(true);
-      setError("");
+  try {
+    setLoading(true);
 
-      const res = await fetch("/api/create-checkout-session", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          token: params.token,
-          appointment_id: params.appointmentId,
-        }),
-      });
+    await fetch("/api/confirm-cita", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        token: params.token,
+        appointment_id: params.appointmentId,
+        full_name: params.fullName,
+        tramite: params.tramite,
+        city: params.city,
+        office: params.office,
+        date: params.date,
+        time: params.time,
+        phone: "CLIENT_PHONE_HERE", // دابا مؤقت، من بعد نجيبو من الفورم
+      }),
+    });
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || "Error en el pago");
-      }
-
-      if (data.url) {
-        window.location.href = data.url;
-      } else {
-        throw new Error("No se pudo iniciar el pago");
-      }
-    } catch (err: any) {
-      console.error(err);
-      setError("وقع مشكل، عاود حاول من بعد");
-      setLoading(false);
-    }
-  };
+    // redirect بسيط
+    setLocation("/panel");
+  } catch (err) {
+    console.error(err);
+  }
+};
 
   return (
     <div className="min-h-screen bg-[#f6f7fb] px-4 py-8">
