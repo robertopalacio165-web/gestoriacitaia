@@ -120,6 +120,10 @@ export default function Regularizacion2026() {
   const [formConfirmed, setFormConfirmed] = useState(false);
   const [confirmUnlocked, setConfirmUnlocked] = useState(false);
   const [pendingAutomationPrompt, setPendingAutomationPrompt] = useState("");
+  
+  const [documentsUploaded, setDocumentsUploaded] = useState(false);
+const [documentsVerified, setDocumentsVerified] = useState(false);
+const [finalReport, setFinalReport] = useState("");
 
   const [leadForm, setLeadForm] = useState<LeadFormState>({
     nombre: "",
@@ -1730,7 +1734,63 @@ const handleConfirmFinal = async () => {
   const latestAgentMessage =
     [...voiceHistory].reverse().find((msg) => msg.from === "agent")?.text ||
     voiceTexts.initialVoice;
+const handleDocumentsUpload = () => {
+  setDocumentsUploaded(true);
 
+  setTimeout(() => {
+    setDocumentsVerified(true);
+  }, 1500);
+};
+useEffect(() => {
+  if (documentsUploaded && documentsVerified) {
+
+    const okDocs = progressCards.filter(d => d.estado === "ok");
+    const warnDocs = progressCards.filter(d => d.estado !== "ok");
+
+    let score = 0;
+
+    if (okDocs.length >= 4) score += 40;
+    if (okDocs.some(d => d.nombre.includes("pasaporte"))) score += 20;
+    if (okDocs.some(d => d.nombre.includes("empadron"))) score += 20;
+    if (okDocs.length >= 6) score += 20;
+
+    let level = "ضعيف ❌";
+    if (score >= 70) level = "قوي ✅";
+    else if (score >= 40) level = "متوسط ⚠️";
+
+    const accepted = okDocs.length
+      ? okDocs.map(d => `✔️ ${d.nombre}`).join("\n")
+      : "ما بان حتى وثيقة مقبولة";
+
+    const missing = warnDocs.length
+      ? warnDocs.map(d => `⚠️ ${d.nombre}`).join("\n")
+      : "ما كاين حتى مشكل";
+
+    const report = `
+واخا، سمعتني مزيان 👌
+
+أنا دابا فيريفيت لك جميع الوثائق ديالك وحدة بوحدة 👇
+
+📎 الوثائق المقبولة:
+${accepted}
+
+⚠️ الوثائق اللي خاصها تصحيح ولا ناقصة:
+${missing}
+
+📊 التقييم ديال الملف ديالك: ${level}
+
+دابا ورّي على زر CONFIRM 👇
+`;
+
+    setFinalReport(report);
+
+    setVoiceHistory(prev => [
+      ...prev,
+      { from: "agent", text: report }
+    ]);
+  }
+}, [documentsUploaded, documentsVerified]);
+  
   return (
     <div className="min-h-screen bg-background text-foreground relative flex flex-col">
       <div
