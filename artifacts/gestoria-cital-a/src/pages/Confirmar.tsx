@@ -1,8 +1,10 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useLocation } from "wouter";
 
 export default function Confirmar() {
   const [, setLocation] = useLocation();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const params = useMemo(() => {
     const url = new URL(window.location.href);
@@ -27,22 +29,40 @@ export default function Confirmar() {
     !!params.date &&
     !!params.time;
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     if (!hasRealData) return;
 
-    const qs = new URLSearchParams();
+    try {
+      setLoading(true);
+      setError("");
 
-    qs.set("token", params.token);
-    qs.set("appointment_id", params.appointmentId);
+      const res = await fetch("/api/create-checkout-session", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          token: params.token,
+          appointment_id: params.appointmentId,
+        }),
+      });
 
-    if (params.fullName) qs.set("full_name", params.fullName);
-    if (params.tramite) qs.set("tramite", params.tramite);
-    if (params.city) qs.set("city", params.city);
-    if (params.office) qs.set("office", params.office);
-    if (params.date) qs.set("date", params.date);
-    if (params.time) qs.set("time", params.time);
+      const data = await res.json();
 
-    setLocation(`/buscar-citas?${qs.toString()}`);
+      if (!res.ok) {
+        throw new Error(data.error || "Error en el pago");
+      }
+
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error("No se pudo iniciar el pago");
+      }
+    } catch (err: any) {
+      console.error(err);
+      setError("وقع مشكل، عاود حاول من بعد");
+      setLoading(false);
+    }
   };
 
   return (
@@ -68,80 +88,38 @@ export default function Confirmar() {
               </div>
 
               <div className="grid gap-4 md:grid-cols-2">
-                <div className="rounded-xl border border-slate-200 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                    Nombre
-                  </p>
-                  <p className="mt-1 text-base font-medium text-slate-900">
-                    {params.fullName || "No disponible"}
-                  </p>
-                </div>
-
-                <div className="rounded-xl border border-slate-200 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                    Trámite
-                  </p>
-                  <p className="mt-1 text-base font-medium text-slate-900">
-                    {params.tramite}
-                  </p>
-                </div>
-
-                <div className="rounded-xl border border-slate-200 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                    Ciudad
-                  </p>
-                  <p className="mt-1 text-base font-medium text-slate-900">
-                    {params.city || "No disponible"}
-                  </p>
-                </div>
-
-                <div className="rounded-xl border border-slate-200 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                    Oficina
-                  </p>
-                  <p className="mt-1 text-base font-medium text-slate-900">
-                    {params.office}
-                  </p>
-                </div>
-
-                <div className="rounded-xl border border-slate-200 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                    Fecha
-                  </p>
-                  <p className="mt-1 text-base font-medium text-slate-900">
-                    {params.date}
-                  </p>
-                </div>
-
-                <div className="rounded-xl border border-slate-200 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                    Hora
-                  </p>
-                  <p className="mt-1 text-base font-medium text-slate-900">
-                    {params.time}
-                  </p>
-                </div>
+                <Box label="Nombre" value={params.fullName || "No disponible"} />
+                <Box label="Trámite" value={params.tramite} />
+                <Box label="Ciudad" value={params.city || "No disponible"} />
+                <Box label="Oficina" value={params.office} />
+                <Box label="Fecha" value={params.date} />
+                <Box label="Hora" value={params.time} />
               </div>
 
               <div className="mt-6 rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4">
                 <p className="text-sm font-semibold text-slate-700">
-                  Datos técnicos del enlace
+                  Datos técnicos
                 </p>
-                <p className="mt-2 break-all text-sm text-slate-600">
+                <p className="mt-2 text-sm text-slate-600 break-all">
                   token: {params.token}
                 </p>
-                <p className="mt-1 break-all text-sm text-slate-600">
+                <p className="text-sm text-slate-600 break-all">
                   appointment_id: {params.appointmentId}
                 </p>
               </div>
 
+              {error && (
+                <div className="mt-4 text-sm text-red-600">{error}</div>
+              )}
+
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                 <button
                   type="button"
-                  className="inline-flex items-center justify-center rounded-xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700"
+                  disabled={loading}
+                  className="inline-flex items-center justify-center rounded-xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50"
                   onClick={handleConfirm}
                 >
-                  Confirmar cita ahora
+                  {loading ? "جارٍ التوجيه للدفع..." : "Confirmar y pagar"}
                 </button>
 
                 <button
@@ -156,37 +134,32 @@ export default function Confirmar() {
           ) : (
             <>
               <div className="mb-6 rounded-xl bg-amber-50 p-4 text-amber-800">
-                <p className="font-semibold">Enlace incompleto o no real</p>
+                <p className="font-semibold">Enlace inválido</p>
                 <p className="mt-1 text-sm">
-                  Este enlace no trae una cita real completa. No se puede confirmar.
+                  Este enlace no contiene una cita completa.
                 </p>
               </div>
 
-              <div className="mt-6 rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4">
-                <p className="text-sm font-semibold text-slate-700">
-                  Datos del enlace
-                </p>
-                <p className="mt-2 break-all text-sm text-slate-600">
-                  token: {params.token || "vacío"}
-                </p>
-                <p className="mt-1 break-all text-sm text-slate-600">
-                  appointment_id: {params.appointmentId || "vacío"}
-                </p>
-              </div>
-
-              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                <button
-                  type="button"
-                  className="inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
-                  onClick={() => setLocation("/panel")}
-                >
-                  Volver al panel
-                </button>
-              </div>
+              <button
+                type="button"
+                className="mt-4 rounded-xl border px-5 py-3"
+                onClick={() => setLocation("/panel")}
+              >
+                Volver
+              </button>
             </>
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+function Box({ label, value }: any) {
+  return (
+    <div className="rounded-xl border border-slate-200 p-4">
+      <p className="text-xs font-semibold uppercase text-slate-500">{label}</p>
+      <p className="mt-1 text-base font-medium text-slate-900">{value}</p>
     </div>
   );
 }
