@@ -66,6 +66,7 @@ type ClientFormData = {
   phone: string;
   nie: string;
   city: string;
+  province: string;
 };
 
 function OfficialBrowserBox({
@@ -195,53 +196,34 @@ function OfficialBrowserBox({
 
             <div className="rounded-2xl border border-gray-200 bg-white p-4 sm:p-5">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">
-                    Nombre completo
-                  </label>
-                  <input
-                    className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-primary/40"
-                    value={formData.fullName}
-                    onChange={(e) => onFormChange("fullName", e.target.value)}
-                    placeholder="Ejemplo: Mourad Mouna"
-                  />
-                </div>
 
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">
-                    Teléfono
-                  </label>
-                  <input
-                    className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-primary/40"
-                    value={formData.phone}
-                    onChange={(e) => onFormChange("phone", e.target.value)}
-                    placeholder="+34644403748"
-                  />
-                </div>
+  {/* CITY */}
+  <div>
+    <label className="block text-xs font-bold text-gray-700 mb-1">
+      Ciudad
+    </label>
+    <input
+      className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm"
+      value={formData.city}
+      onChange={(e) => onFormChange("city", e.target.value)}
+      placeholder="Madrid"
+    />
+  </div>
 
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">
-                    NIE / Pasaporte
-                  </label>
-                  <input
-                    className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-primary/40"
-                    value={formData.nie}
-                    onChange={(e) => onFormChange("nie", e.target.value)}
-                    placeholder="X1234567A"
-                  />
-                </div>
+  {/* PROVINCE */}
+  <div>
+    <label className="block text-xs font-bold text-gray-700 mb-1">
+      Provincia
+    </label>
+    <input
+      className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm"
+      value={formData.province}
+      onChange={(e) => onFormChange("province", e.target.value)}
+      placeholder="Madrid"
+    />
+  </div>
 
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">
-                    Ciudad
-                  </label>
-                  <input
-                    className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-primary/40"
-                    value={formData.city}
-                    onChange={(e) => onFormChange("city", e.target.value)}
-                    placeholder="Madrid"
-                  />
-                </div>
+</div>
 
                 <div className="sm:col-span-2">
                   <label className="block text-xs font-bold text-gray-700 mb-1">
@@ -413,12 +395,13 @@ export default function BuscarCitas() {
   const [appointmentData, setAppointmentData] =
     useState<AppointmentResult | null>(null);
   const [profileLoading, setProfileLoading] = useState(true);
-  const [formData, setFormData] = useState<ClientFormData>({
-    fullName: "",
-    phone: "",
-    nie: "",
-    city: "",
-  });
+const [formData, setFormData] = useState<ClientFormData>({
+  fullName: "",
+  phone: "",
+  nie: "",
+  city: "",
+  province: "",
+});
   const [formReady, setFormReady] = useState(false);
   const [voiceSupported, setVoiceSupported] = useState(true);
   const [isListening, setIsListening] = useState(false);
@@ -446,17 +429,22 @@ export default function BuscarCitas() {
   const { toast } = useToast();
   const scheduleMutation = useScheduleAppointment();
 
-  const voiceTexts = useMemo(
-    () => ({
-      initialVoice:
-        "السلام، مرحبا بيك فـ GestoriaCitaIA. إلا بغيتي نشدّو ليك موعد، عمر ليا الفورمولار، ومن بعد أنا غادي نكمل معاك الهضرة.",
-      savedLeadReply:
-        "مزيان. دابا عندنا المعلومات ديالك. منين تفتح شي cita غادي نعلموك عاجل فـ WhatsApp.",
-      foundMsg: "لقينا ليك cita حقيقية. دخل بسرعة باش تأكدها.",
-      confirmMsg: "شكرا على الثقة فـ GestoriaCitaIA. تم تأكيد الموعد ديالك.",
-    }),
-    []
-  );
+ const voiceTexts = useMemo(
+  () => ({
+    initialVoice:
+      "السلام عليكم مرحبا بك في هيستوريا إي آي أنا سارة غادي نعاونك باش تلقا موعد في أقرب وقت عمر ليا الفورمولار ومن بعد كليك على confirm",
+
+    savedLeadReply:
+      "مزيان دابا توصلنا بالمعلومة ديالك غادي نبدأ نقلب لك على موعد 24 ساعة على 24 وغادي نصيفط لك واتساب إلا بان الموعد",
+
+    foundMsg:
+      "لقينا لك السيطا ديالك دابا دخل بسرعة وكليكي على confirm باش ما تطيرش عليك",
+
+    confirmMsg:
+      "مبروك عليك تأكدات السيطا ديالك شكرا على الثقة ديالك في هيستوريا إي آي",
+  }),
+  []
+);
 
   const ui = useMemo(() => {
     return {
@@ -1055,7 +1043,7 @@ export default function BuscarCitas() {
     if (
       !formData.fullName.trim() ||
       !formData.phone.trim() ||
-      !formData.city.trim()
+      !formData.city.trim() || !formData.province.trim()
     ) {
       toast({
         title: ui.missingTitle,
@@ -1121,6 +1109,7 @@ const handleAceptar = async () => {
         user_id: user?.id || null,
         appointment_type: selectedTramite,
         office_city: formData.city,
+        office_province: formData.province,
         status: "searching",
         customer_name: formData.fullName,
         customer_phone: formData.phone,
@@ -1142,6 +1131,7 @@ const handleAceptar = async () => {
         phone: formData.phone,
         tramite: selectedTramite,
         city: formData.city,
+province: formData.province,
       }),
     });
 
