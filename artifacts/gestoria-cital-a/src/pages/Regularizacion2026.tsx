@@ -1571,7 +1571,7 @@ input.multiple = true;
  };
 
 input.click();
-
+};
   const latestAgentMessage =
     [...voiceHistory].reverse().find((msg) => msg.from === "agent")?.text ||
     voiceTexts.initialVoice;
