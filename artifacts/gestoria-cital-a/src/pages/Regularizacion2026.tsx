@@ -1527,50 +1527,118 @@ lastUserTranscriptRef.current = "";
 const handleGeneralUpload = () => {
   console.log("CLICK WORKING");
 
-const input = document.createElement("input");
-input.type = "file";
-input.accept = "image/*,application/pdf";
-input.multiple = true;
-    input.onchange = async () => {
-      const files = Array.from(input.files || []);
-      if (!files.length) return;
+  const input = document.createElement("input");
+  input.type = "file";
+  input.accept = "image/*,application/pdf";
+  input.multiple = true;
 
-      setGeneralUploading(true);
-      
-      try {
-        const {
-          data: { user },
-          error,
-        } = await supabase.auth.getUser();
+  input.onchange = async () => {
+    const files = Array.from(input.files || []);
+    if (!files.length) return;
 
-        if (error || !user?.id) {
-          throw new Error("Usuario no conectado");
-        }
+    setGeneralUploading(true);
 
-        for (const file of files) {
-          const safeName = `${Date.now()}_${file.name}`;
-          const storagePath = `${user.id}/regularizacion_2026/${safeName}`;
+    try {
+      const {
+        data: { user },
+        error,
+      } = await supabase.auth.getUser();
 
-          const { error: uploadError } = await supabase.storage
-            .from("user-documents")
-            .upload(storagePath, file, { upsert: true });
-
-          if (uploadError) throw uploadError;
-
-          console.log("✅ SUBIDO:", file.name);
-        }
-
-        alert("✅ Documentos subidos correctamente");
-      } catch (err) {
-        console.error(err);
-        alert("❌ Error subiendo archivos");
-      } finally {
-        setGeneralUploading(false);
+      if (error || !user?.id) {
+        throw new Error("Usuario no conectado");
       }
-      
- };
 
-input.click();
+      // 🔊 Mohamed habla antes de analizar
+      await speakFromAutomation(
+        "مزيان، توصلت بالوثائق ديالك. دابا غادي نحللهم واحد بشوية، صبر معايا."
+      );
+
+      let results = [];
+
+      for (const file of files) {
+        const safeName = `${Date.now()}_${file.name}`;
+        const storagePath = `${user.id}/regularizacion_2026/${safeName}`;
+
+        // 📤 SUBIR
+        const { error: uploadError } = await supabase.storage
+          .from("user-documents")
+          .upload(storagePath, file, { upsert: true });
+
+        if (uploadError) throw uploadError;
+
+        console.log("✅ SUBIDO:", file.name);
+
+        // 🧠 ANALIZAR DOCUMENTO
+        const result = await verifyDocument(file);
+
+        results.push({
+          fileName: file.name,
+          result,
+        });
+
+        // 🔊 Mohamed explica cada documento
+        const speech = buildDocSpeech(file.name, result, "ok");
+        await speakFromAutomation(speech);
+      }
+
+      // 🧠 RESUMEN FINAL INTELIGENTE
+      let hasPassport = false;
+      let hasStayProof = false;
+      let validDocs = 0;
+
+      for (const r of results) {
+        const type = (r.result?.document_type || "").toLowerCase();
+
+        if (type.includes("passport") || type.includes("nie")) {
+          hasPassport = true;
+        }
+
+        if (
+          type.includes("empadronamiento") ||
+          type.includes("stay_proof")
+        ) {
+          hasStayProof = true;
+        }
+
+        if (r.result?.final_verdict === "approved") {
+          validDocs++;
+        }
+      }
+
+      let finalMessage = "";
+
+      if (hasPassport && hasStayProof) {
+        finalMessage =
+          "مزيان بزاف. الملف ديالك باين فيه شروط مزيانة. نقدروا نكملو للمرحلة الجاية.";
+      } else if (!hasPassport) {
+        finalMessage =
+          "كاين مشكل. خاصنا الباسبور ولا NIE باش نكملو الملف.";
+      } else if (!hasStayProof) {
+        finalMessage =
+          "خاصنا بروفات ديال 5 شهور باش نقويو الملف ديالك.";
+      } else {
+        finalMessage =
+          "الملف ديالك خاصو شوية مراجعة قبل ما نكملو.";
+      }
+
+      // 🔊 Mohamed FINAL
+      await speakFromAutomation(finalMessage);
+
+      alert("✅ Documentos analizados correctamente");
+    } catch (err) {
+      console.error(err);
+
+      await speakFromAutomation(
+        "وقع مشكل وأنا كنحلل الوثائق. عاود حاول مرة أخرى."
+      );
+
+      alert("❌ Error subiendo archivos");
+    } finally {
+      setGeneralUploading(false);
+    }
+  };
+
+  input.click();
 };
   const latestAgentMessage =
     [...voiceHistory].reverse().find((msg) => msg.from === "agent")?.text ||
