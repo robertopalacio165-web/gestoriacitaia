@@ -1665,6 +1665,24 @@ if (hasPassport && hasStayProof && daysSpan >= 150) {
 
       // 🔊 Mohamed FINAL
       await speakFromAutomation(finalMessage);
+      setTimeout(async () => {
+  const whatsappMessage = `
+  دابا شفت الملف ديالك كامل ووجدت لك التقييم القانوني ديالك.
+
+حضرت لك ملف كامل فيه:
+- جميع الوثائق اللي صيفطتي
+- واش مقبولين ولا لا
+- شنو خاصك تزيد
+- تحليل ديال 5 شهور
+- التقييم النهائي ديالك
+
+غادي نصيفط لك الملف ديالك دابا فالواتساب مع PDF فيه كلشي.
+
+تسنى المساج ديالي فواتساب دابا.
+`;
+
+  await speakFromAutomation(whatsappMessage);
+}, 3000);
 
       alert("✅ Documentos analizados correctamente");
     } catch (err) {
