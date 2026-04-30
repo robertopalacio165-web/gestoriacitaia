@@ -1524,29 +1524,19 @@ lastUserTranscriptRef.current = "";
   };
 
   // ✅ CAMBIO #3: handleGeneralUpload con setTimeout para speakExactText
-const handleGeneralUpload = async () => {
+const handleGeneralUpload = () => {
   console.log("CLICK WORKING");
 
-  if (!leadSaved && !formConfirmed) {
-    pushAgentMessage("Primero completa el formulario.");
-    return;
-  }
-
-  try {
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = "image/*,application/pdf";
-    input.multiple = true;
-
-    // 🔥 IMPORTANTE: esto abre el selector
-    input.click();
-
+const input = document.createElement("input");
+input.type = "file";
+input.accept = "image/*,application/pdf";
+input.multiple = true;
     input.onchange = async () => {
       const files = Array.from(input.files || []);
       if (!files.length) return;
 
       setGeneralUploading(true);
-
+      
       try {
         const {
           data: { user },
@@ -1577,12 +1567,11 @@ const handleGeneralUpload = async () => {
       } finally {
         setGeneralUploading(false);
       }
-    };
-  } catch (error) {
-    console.error(error);
-    alert("❌ Error general");
-  }
-};
+      
+ };
+
+input.click();
+
   const latestAgentMessage =
     [...voiceHistory].reverse().find((msg) => msg.from === "agent")?.text ||
     voiceTexts.initialVoice;
