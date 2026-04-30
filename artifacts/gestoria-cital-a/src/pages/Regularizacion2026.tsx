@@ -1529,6 +1529,7 @@ lastUserTranscriptRef.current = "";
 
   // ✅ CAMBIO #3: handleGeneralUpload con setTimeout para speakExactText
   const handleGeneralUpload = async () => {
+    alert("CLICK خدام");
     if (!leadSaved || !formConfirmed) {
       pushAgentMessage("عافاك عمر الفورمولار الأول ودير تأكيد، ومن بعد صيفط ليا الوثائق.");
       toast({
@@ -1539,11 +1540,15 @@ lastUserTranscriptRef.current = "";
       return;
     }
     try {
-      const input = document.createElement("input");
-      input.type = "file";
-      input.accept = "image/*,application/pdf";
-      input.multiple = true;
-      input.onchange = async () => {
+     const input = document.createElement("input");
+input.setAttribute("type", "file");
+input.setAttribute("accept", "image/*,application/pdf");
+input.setAttribute("multiple", "true");
+
+document.body.appendChild(input);
+
+input.onchange = async () => {
+document.body.removeChild(input);
         const files = Array.from(input.files || []);
         if (!files.length) return;
         setGeneralUploading(true);
