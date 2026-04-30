@@ -114,7 +114,7 @@ export default function Regularizacion2026() {
   const [generalDocsEnabled, setGeneralDocsEnabled] = useState(false);
   const [savingForm, setSavingForm] = useState(false);
   const [waitingForDocument, setWaitingForDocument] = useState(false);
-  const [documentsUnlocked, setDocumentsUnlocked] = useState(false);
+ const [documentsUnlocked, setDocumentsUnlocked] = useState(true);
   const [authChecked, setAuthChecked] = useState(false);
   const [currentUserId, setCurrentUserId] = useState("");
   const [formConfirmed, setFormConfirmed] = useState(false);
@@ -1946,7 +1946,7 @@ setTimeout(() => {
               <div className="border-t border-white/10 p-3">
  <button
   onClick={handleGeneralUpload}
-  disabled={generalUploading}
+  disabled={false}
   className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary hover:bg-primary/90 disabled:opacity-60 text-primary-foreground font-bold text-xs px-4 py-3 transition-colors"
   type="button"
       
