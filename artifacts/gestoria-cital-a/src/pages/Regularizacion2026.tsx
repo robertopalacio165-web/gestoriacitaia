@@ -1525,6 +1525,7 @@ lastUserTranscriptRef.current = "";
 
   // ✅ CAMBIO #3: handleGeneralUpload con setTimeout para speakExactText
   const handleGeneralUpload = async () => {
+    console.log("CLICK WORKING");
     if (!leadSaved || !formConfirmed) {
       pushAgentMessage("عافاك عمر الفورمولار الأول ودير تأكيد، ومن بعد صيفط ليا الوثائق.");
       toast({
@@ -1886,7 +1887,7 @@ const handleConfirmFinal = async () => {
               <div className="border-t border-white/10 p-3">
     <button
   onClick={handleGeneralUpload}
-disabled={generalUploading}
+disabled={false}
   className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary hover:bg-primary/90 disabled:opacity-60 text-primary-foreground font-bold text-xs px-4 py-3 transition-colors"
   type="button"
       
