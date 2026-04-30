@@ -1537,6 +1537,7 @@ lastUserTranscriptRef.current = "";
     }
     try {
       const input = document.createElement("input");
+      document.body.appendChild(input);
       input.type = "file";
       input.accept = "image/*,application/pdf";
       input.multiple = true;
