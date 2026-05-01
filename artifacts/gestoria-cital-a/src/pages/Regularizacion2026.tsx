@@ -1602,6 +1602,11 @@ const handleGeneralUpload = () => {
 
         console.log("✅ SUBIDO:", file.name);
 
+        if (!(file instanceof File)) {
+  console.error("❌ No es archivo válido:", file);
+  continue;
+}
+
         // 🧠 ANALIZAR DOCUMENTO
         const result = await verifyDocument(file);
 const dates = extractDatesFromResult(result);
