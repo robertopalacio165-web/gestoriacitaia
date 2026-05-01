@@ -134,7 +134,10 @@ function calculateMonthsSpan(allDates) {
   return diffDays;
 }
 export default function Regularizacion2026() {
-  const [selectedSituacion] = useState("regularizacion_2026_laboral");
+  const goToSara = () => {
+  window.location.href = "/sara";
+};
+const [selectedSituacion] = useState("regularizacion_2026");
   const [muted, setMuted] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [voiceSupported, setVoiceSupported] = useState(true);
@@ -250,7 +253,13 @@ const MOHAMED_SYSTEM_PROMPT = `
 محامي محترف + إنسان قريب + سريع + ذكي.
 `;
   const currentProcedure = getProcedureByKey(selectedSituacion) || null;
-  if (!currentProcedure) return null;
+if (!currentProcedure) {
+  return (
+    <div style={{ color: "white", padding: 20 }}>
+      ERROR: procedure no encontrado
+    </div>
+  );
+}
 
 const voiceTexts = useMemo(
   () => ({
