@@ -1904,7 +1904,21 @@ disabled={false}
   </h3>
 
   <button
-onClick={() => alert("OK")}
+onClick={async () => {
+  await fetch("https://hook.eu1.make.com/v817z7tmhileez8wv6317wj5wrh2bqp5l", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      telefono: "34644403748",
+      nombre: "Test",
+      mensaje: "📁 Confirmación desde botón",
+    }),
+  });
+
+  alert("✅ WhatsApp enviado");
+}}
    disabled={false}
     className="w-full rounded-xl bg-primary hover:bg-primary/90 disabled:opacity-60 text-white py-4 font-bold transition-colors"
     type="button"
