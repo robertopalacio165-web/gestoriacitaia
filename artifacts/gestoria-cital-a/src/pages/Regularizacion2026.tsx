@@ -134,10 +134,7 @@ function calculateMonthsSpan(allDates) {
   return diffDays;
 }
 export default function Regularizacion2026() {
-  const goToSara = () => {
-  window.location.href = "/sara";
-};
-const [selectedSituacion] = useState("regularizacion_2026");
+  const [selectedSituacion] = useState("regularizacion_2026_laboral");
   const [muted, setMuted] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [voiceSupported, setVoiceSupported] = useState(true);
@@ -253,13 +250,7 @@ const MOHAMED_SYSTEM_PROMPT = `
 محامي محترف + إنسان قريب + سريع + ذكي.
 `;
   const currentProcedure = getProcedureByKey(selectedSituacion) || null;
-if (!currentProcedure) {
-  return (
-    <div style={{ color: "white", padding: 20 }}>
-      ERROR: procedure no encontrado
-    </div>
-  );
-}
+  if (!currentProcedure) return null;
 
 const voiceTexts = useMemo(
   () => ({
@@ -1564,11 +1555,7 @@ lastUserTranscriptRef.current = "";
       );
     }
   };
-const [analysisResult, setAnalysisResult] = useState({
-  hasPassport: false,
-  hasStayProof: false,
-  daysSpan: 0,
-});
+
   // ✅ CAMBIO #3: handleGeneralUpload con setTimeout para speakExactText
 const handleGeneralUpload = () => {
   console.log("CLICK WORKING");
@@ -1615,81 +1602,8 @@ const handleGeneralUpload = () => {
 
         console.log("✅ SUBIDO:", file.name);
 
-        if (!(file instanceof File)) {
-  console.error("❌ No es archivo válido:", file);
-  continue;
-}
-
         // 🧠 ANALIZAR DOCUMENTO
-    // 🔥 convertir archivo a base64 limpio
-const toBase64Clean = (file: File) =>
-  new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-
-    reader.onload = () => {
-      const result = reader.result as string;
-      const base64 = result.split(",")[1];
-      resolve(base64);
-    };
-
-    reader.onerror = reject;
-  });
-
-const base64 = await toBase64Clean(file);
-
-const response = await fetch("/api/verify-document", {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json",
-  },
-  body: JSON.stringify({
-    fileBase64: base64,
-    fileName: file.name,
-    mimeType: file.type,
-    lang: "darija",
-    expectedDocumentType: "auto",
-  }),
-});
-
-const data = await response.json();
-const result = data.result;
-        // 🔥 decidir estado del documento
-let estado: DocStatus = "missing";
-
-if (result.final_verdict === "approved") estado = "ok";
-else if (result.final_verdict === "review") estado = "warn";
-else estado = "missing";
-
-// 🔥 actualizar docs
-setDocs((prev) =>
-  prev.map((doc) => {
-    if (!doc.archivo) {
-      return {
-        ...doc,
-        archivo: file.name,
-        estado,
-        detectedType: result.document_type,
-        uploadedAt: new Date().toISOString(),
-      };
-    }
-    return doc;
-  })
-);
-
-// 🔥 Mohamed habla como abogado
-const resumen = buildDocSpeech(file.name, result, estado);
-
-await speakFromAutomation(`
-قل للعميل بشكل احترافي:
-
-${resumen}
-
-ومن بعد قول:
-
-دابا غادي نكمل نراجع باقي الوثائق ديالك.
-إلى كان شي نقص غادي نقولك بالضبط شنو خاص باش نقويو الملف.
-`);
+        const result = await verifyDocument(file);
 const dates = extractDatesFromResult(result);
 allDates.push(...dates);
         
@@ -1729,11 +1643,7 @@ allDates.push(...dates);
       }
 
       const daysSpan = calculateMonthsSpan(allDates);
-setAnalysisResult({
-  hasPassport,
-  hasStayProof,
-  daysSpan,
-});
+
 let finalMessage = "";
 
 if (hasPassport && hasStayProof && daysSpan >= 150) {
@@ -1755,58 +1665,48 @@ if (hasPassport && hasStayProof && daysSpan >= 150) {
 
       // 🔊 Mohamed FINAL
       await speakFromAutomation(finalMessage);
-} catch (err) {
-  console.error(err);
-} finally {
-  setGeneralUploading(false);
-}
+      await fetch("https://hook.eu1.make.com/y81z7tmhileez8wv63l7wj5wrh2bqp51, {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    telefono: leadForm.telefono,
+    nombre: leadForm.nombre,
+    mensaje: finalMessage,
+  }),
+});
+setTimeout(async () => {
+ const whatsappMessage = `
+مزيان، شفت الملف ديالك كامل وراجعت جميع الوثائق ديالك.
 
-  input.click();
-};
-    
-    const sendToWhatsApp = async () => {
-  try {
-    const resumenFinal = `
-📁 GestoriaCitaIA - Resultado del análisis
+دابا حضرت لك تقرير كامل فيه:
+- شنو مقبول ✅
+- شنو خاصو مراجعة ⚠️
+- شنو ناقص ❌
 
-👤 Nombre: ${leadForm.nombre}
-📞 Teléfono: ${leadForm.telefono}
+وصيفطت ليك النتيجة كاملة فـ واتساب ديالك دابا 📲
 
-${ 
-  analysisResult.hasPassport &&
-  analysisResult.hasStayProof &&
-  analysisResult.daysSpan >= 150
-    ? "✅ الملف قوي ومتوفر على الشروط الأساسية."
-    : analysisResult.hasPassport && !analysisResult.hasStayProof
-    ? "⚠️ الملف متوسط، خاص تعزيز بروفات الإقامة."
-    : !analysisResult.hasPassport
-    ? "❌ الملف ناقص من ناحية وثيقة الهوية."
-    : "⚠️ الملف يحتاج مراجعة إضافية."
-}
-
-📌 النتائج:
-- الباسبور: ${analysisResult.hasPassport ? "✅" : "❌"}
-- البروفات: ${analysisResult.hasStayProof ? "✅" : "❌"}
-- الأيام: ${analysisResult.daysSpan}
-
-GestoriaCitaIA ✔
+شوف المساج غادي تلقى فيه كلشي واضح.
 `;
 
-    await fetch("https://hook.eu1.make.com/8l7z7tmhileez8wv6317wj5wrh2bqp51", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        telefono: leadForm.telefono,
-        mensaje: resumenFinal,
-      }),
-    });
+  await speakFromAutomation(whatsappMessage);
+}, 3000);
+      alert("✅ Documentos analizados correctamente");
+    } catch (err) {
+      console.error(err);
 
-    alert("✅ WhatsApp enviado correctamente");
-  } catch (err) {
-    alert("❌ Error enviando WhatsApp");
-  }
+      await speakFromAutomation(
+        "وقع مشكل وأنا كنحلل الوثائق. عاود حاول مرة أخرى."
+      );
+
+      alert("❌ Error subiendo archivos");
+    } finally {
+      setGeneralUploading(false);
+    }
+  };
+
+  input.click();
 };
   const latestAgentMessage =
     [...voiceHistory].reverse().find((msg) => msg.from === "agent")?.text ||
@@ -2004,34 +1904,13 @@ disabled={false}
   </h3>
 
   <button
-onClick={async () => {
-  await fetch("https://hook.eu1.make.com/v817z7tmhileez8wv6317wj5wrh2bqp5l", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      telefono: "34644403748",
-      nombre: "Test",
-      mensaje: "📁 Confirmación desde botón",
-    }),
-  });
-
-  alert("✅ WhatsApp enviado");
-}}
+onClick={() => alert("OK")}
    disabled={false}
     className="w-full rounded-xl bg-primary hover:bg-primary/90 disabled:opacity-60 text-white py-4 font-bold transition-colors"
     type="button"
   >
     ✅ Confirmar
-</button> 
-      <button
-  onClick={sendToWhatsApp}
-  className="w-full rounded-xl bg-primary hover:bg-primary/90 disabled:opacity-60 text-white py-4 font-bold mt-3"
-  type="button"
->
-  📲 Mandar WhatsApp
-</button> 
+  </button>
 </div>
             {allReady && (
               <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4">
@@ -2106,4 +1985,3 @@ function FieldSelect({
     </select>
   );
 }
- } 
