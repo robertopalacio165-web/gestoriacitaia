@@ -1763,23 +1763,22 @@ if (hasPassport && hasStayProof && daysSpan >= 150) {
 👤 Nombre: ${leadForm.nombre}
 📞 Teléfono: ${leadForm.telefono}
 
-📊 تقييم الملف:
-analysisResult.hasPassport &&
-analysisResult.hasStayProof &&
-analysisResult.daysSpan >= 150
-${
+${ 
+  analysisResult.hasPassport &&
+  analysisResult.hasStayProof &&
+  analysisResult.daysSpan >= 150
     ? "✅ الملف قوي ومتوفر على الشروط الأساسية."
-    : hasPassport && !hasStayProof
+    : analysisResult.hasPassport && !analysisResult.hasStayProof
     ? "⚠️ الملف متوسط، خاص تعزيز بروفات الإقامة."
-    : !hasPassport
+    : !analysisResult.hasPassport
     ? "❌ الملف ناقص من ناحية وثيقة الهوية."
     : "⚠️ الملف يحتاج مراجعة إضافية."
 }
 
 📌 النتائج:
-- الباسبور: ${hasPassport ? "✅" : "❌"}
-- البروفات: ${hasStayProof ? "✅" : "❌"}
-- الأيام: ${daysSpan}
+- الباسبور: ${analysisResult.hasPassport ? "✅" : "❌"}
+- البروفات: ${analysisResult.hasStayProof ? "✅" : "❌"}
+- الأيام: ${analysisResult.daysSpan}
 
 GestoriaCitaIA ✔
 `;
