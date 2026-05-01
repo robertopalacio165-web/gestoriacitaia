@@ -1738,11 +1738,15 @@ if (hasPassport && hasStayProof && daysSpan >= 150) {
 
       // 🔊 Mohamed FINAL
       await speakFromAutomation(finalMessage);
-
+} catch (err) {
+  console.error(err);
+} finally {
+  setGeneralUploading(false);
+}
 
   input.click();
 };
-    }
+    
     const sendToWhatsApp = async () => {
   try {
     const resumenFinal = `
