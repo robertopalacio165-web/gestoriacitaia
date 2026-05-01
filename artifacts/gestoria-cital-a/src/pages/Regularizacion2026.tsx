@@ -1555,7 +1555,11 @@ lastUserTranscriptRef.current = "";
       );
     }
   };
-
+const [analysisResult, setAnalysisResult] = useState({
+  hasPassport: false,
+  hasStayProof: false,
+  daysSpan: 0,
+});
   // ✅ CAMBIO #3: handleGeneralUpload con setTimeout para speakExactText
 const handleGeneralUpload = () => {
   console.log("CLICK WORKING");
@@ -1716,7 +1720,11 @@ allDates.push(...dates);
       }
 
       const daysSpan = calculateMonthsSpan(allDates);
-
+setAnalysisResult({
+  hasPassport,
+  hasStayProof,
+  daysSpan,
+});
 let finalMessage = "";
 
 if (hasPassport && hasStayProof && daysSpan >= 150) {
@@ -1756,9 +1764,10 @@ if (hasPassport && hasStayProof && daysSpan >= 150) {
 📞 Teléfono: ${leadForm.telefono}
 
 📊 تقييم الملف:
-
+analysisResult.hasPassport &&
+analysisResult.hasStayProof &&
+analysisResult.daysSpan >= 150
 ${
-  hasPassport && hasStayProof && daysSpan >= 150
     ? "✅ الملف قوي ومتوفر على الشروط الأساسية."
     : hasPassport && !hasStayProof
     ? "⚠️ الملف متوسط، خاص تعزيز بروفات الإقامة."
