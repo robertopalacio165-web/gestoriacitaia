@@ -1608,7 +1608,75 @@ const handleGeneralUpload = () => {
 }
 
         // 🧠 ANALIZAR DOCUMENTO
-        const result = await verifyDocument(file);
+    // 🔥 convertir archivo a base64 limpio
+const toBase64Clean = (file: File) =>
+  new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+
+    reader.onload = () => {
+      const result = reader.result as string;
+      const base64 = result.split(",")[1];
+      resolve(base64);
+    };
+
+    reader.onerror = reject;
+  });
+
+const base64 = await toBase64Clean(file);
+
+const response = await fetch("/api/verify-document", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    fileBase64: base64,
+    fileName: file.name,
+    mimeType: file.type,
+    lang: "darija",
+    expectedDocumentType: "auto",
+  }),
+});
+
+const data = await response.json();
+const result = data.result;
+        // 🔥 decidir estado del documento
+let estado: DocStatus = "missing";
+
+if (result.final_verdict === "approved") estado = "ok";
+else if (result.final_verdict === "review") estado = "warn";
+else estado = "missing";
+
+// 🔥 actualizar docs
+setDocs((prev) =>
+  prev.map((doc) => {
+    if (!doc.archivo) {
+      return {
+        ...doc,
+        archivo: file.name,
+        estado,
+        detectedType: result.document_type,
+        uploadedAt: new Date().toISOString(),
+      };
+    }
+    return doc;
+  })
+);
+
+// 🔥 Mohamed habla como abogado
+const resumen = buildDocSpeech(file.name, result, estado);
+
+await speakFromAutomation(`
+قل للعميل بشكل احترافي:
+
+${resumen}
+
+ومن بعد قول:
+
+دابا غادي نكمل نراجع باقي الوثائق ديالك.
+إلى كان شي نقص غادي نقولك بالضبط شنو خاص باش نقويو الملف.
+`);
 const dates = extractDatesFromResult(result);
 allDates.push(...dates);
         
@@ -1670,32 +1738,75 @@ if (hasPassport && hasStayProof && daysSpan >= 150) {
 
       // 🔊 Mohamed FINAL
       await speakFromAutomation(finalMessage);
-      await fetch("https://hook.eu1.make.com/v817z7tmhileez8wv6317wj5wrh2bqp5l", {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json"
-  },
-  body: JSON.stringify({
-    telefono: "34644403748",
-    nombre: "Test",
-    mensaje: "Confirmación desde botón"
-  })
-});
-setTimeout(async () => {
- const whatsappMessage = `
-مزيان، شفت الملف ديالك كامل وراجعت جميع الوثائق ديالك.
+const sendToWhatsApp = async () => {
+  try {
+    const resumenFinal = `
+📁 GestoriaCitaIA - Resultado del análisis
 
-دابا حضرت لك تقرير كامل فيه:
-- شنو مقبول ✅
-- شنو خاصو مراجعة ⚠️
-- شنو ناقص ❌
+👤 Nombre: ${leadForm.nombre}
+📞 Teléfono: ${leadForm.telefono}
 
-وصيفطت ليك النتيجة كاملة فـ واتساب ديالك دابا 📲
+📊 تقييم الملف:
 
-شوف المساج غادي تلقى فيه كلشي واضح.
+${
+  hasPassport && hasStayProof && daysSpan >= 150
+    ? "✅ الملف قوي ومتوفر على الشروط الأساسية."
+    : hasPassport && !hasStayProof
+    ? "⚠️ الملف متوسط، خاص تعزيز بروفات الإقامة."
+    : !hasPassport
+    ? "❌ الملف ناقص من ناحية وثيقة الهوية."
+    : "⚠️ الملف يحتاج مراجعة إضافية."
+}
+
+📌 نتائج التحقق:
+
+- الباسبور / NIE: ${hasPassport ? "✅ صالح ومتوفر" : "❌ ناقص أو غير واضح"}
+- بروفات الإقامة: ${hasStayProof ? "✅ متوفرة" : "❌ غير كافية"}
+- مدة التواجد: ${daysSpan} يوم
+
+📎 تحليل الوثائق:
+- تم التحقق من صحة الوثائق
+- تم تحديد المقبول وغير المقبول
+- تم تحليل التواريخ
+
+📅 شرط 5 شهور:
+${
+  daysSpan >= 150
+    ? "✅ متحقق"
+    : "❌ غير متحقق"
+}
+
+📝 ملاحظات:
+- هذا تقييم فقط وليس قرار رسمي
+- الهدف معرفة قوة الملف
+
+📌 الخلاصة:
+${
+  hasPassport && hasStayProof && daysSpan >= 150
+    ? "ملفك قوي ويمكن التقديم به."
+    : "خاصك تكمل أو تحسن الوثائق قبل التقديم."
+}
+
+GestoriaCitaIA ✔
 `;
 
-  await speakFromAutomation(whatsappMessage);
+    await fetch("https://hook.eu1.make.com/8l7z7tmhileez8wv6317wj5wrh2bqp51", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        telefono: leadForm.telefono,
+        mensaje: resumenFinal,
+      }),
+    });
+
+    alert("✅ WhatsApp enviado correctamente");
+  } catch (err) {
+    alert("❌ Error enviando WhatsApp");
+  }
+};
+      
 }, 3000);
       alert("✅ Documentos analizados correctamente");
     } catch (err) {
@@ -1929,7 +2040,14 @@ onClick={async () => {
     type="button"
   >
     ✅ Confirmar
-  </button>
+</button> 
+      <button
+  onClick={sendToWhatsApp}
+  className="w-full rounded-xl bg-primary hover:bg-primary/90 disabled:opacity-60 text-white py-4 font-bold mt-3"
+  type="button"
+>
+  📲 Mandar WhatsApp
+</button> 
 </div>
             {allReady && (
               <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4">
