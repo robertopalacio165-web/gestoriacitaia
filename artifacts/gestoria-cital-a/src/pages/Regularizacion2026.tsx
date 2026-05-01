@@ -1807,7 +1807,6 @@ GestoriaCitaIA ✔
   }
 };
       
-}, 3000);
       alert("✅ Documentos analizados correctamente");
     } catch (err) {
       console.error(err);
