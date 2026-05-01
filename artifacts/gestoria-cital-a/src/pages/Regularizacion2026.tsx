@@ -1738,7 +1738,12 @@ if (hasPassport && hasStayProof && daysSpan >= 150) {
 
       // 🔊 Mohamed FINAL
       await speakFromAutomation(finalMessage);
-const sendToWhatsApp = async () => {
+
+
+  input.click();
+};
+    }
+    const sendToWhatsApp = async () => {
   try {
     const resumenFinal = `
 📁 GestoriaCitaIA - Resultado del análisis
@@ -1758,34 +1763,10 @@ ${
     : "⚠️ الملف يحتاج مراجعة إضافية."
 }
 
-📌 نتائج التحقق:
-
-- الباسبور / NIE: ${hasPassport ? "✅ صالح ومتوفر" : "❌ ناقص أو غير واضح"}
-- بروفات الإقامة: ${hasStayProof ? "✅ متوفرة" : "❌ غير كافية"}
-- مدة التواجد: ${daysSpan} يوم
-
-📎 تحليل الوثائق:
-- تم التحقق من صحة الوثائق
-- تم تحديد المقبول وغير المقبول
-- تم تحليل التواريخ
-
-📅 شرط 5 شهور:
-${
-  daysSpan >= 150
-    ? "✅ متحقق"
-    : "❌ غير متحقق"
-}
-
-📝 ملاحظات:
-- هذا تقييم فقط وليس قرار رسمي
-- الهدف معرفة قوة الملف
-
-📌 الخلاصة:
-${
-  hasPassport && hasStayProof && daysSpan >= 150
-    ? "ملفك قوي ويمكن التقديم به."
-    : "خاصك تكمل أو تحسن الوثائق قبل التقديم."
-}
+📌 النتائج:
+- الباسبور: ${hasPassport ? "✅" : "❌"}
+- البروفات: ${hasStayProof ? "✅" : "❌"}
+- الأيام: ${daysSpan}
 
 GestoriaCitaIA ✔
 `;
@@ -1805,23 +1786,6 @@ GestoriaCitaIA ✔
   } catch (err) {
     alert("❌ Error enviando WhatsApp");
   }
-};
-      
-      alert("✅ Documentos analizados correctamente");
-    } catch (err) {
-      console.error(err);
-
-      await speakFromAutomation(
-        "وقع مشكل وأنا كنحلل الوثائق. عاود حاول مرة أخرى."
-      );
-
-      alert("❌ Error subiendo archivos");
-    } finally {
-      setGeneralUploading(false);
-    }
-  };
-
-  input.click();
 };
   const latestAgentMessage =
     [...voiceHistory].reverse().find((msg) => msg.from === "agent")?.text ||
