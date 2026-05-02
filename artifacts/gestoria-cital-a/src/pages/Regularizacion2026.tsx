@@ -107,6 +107,7 @@ export default function Regularizacion2026() {
   const [voiceSupported, setVoiceSupported] = useState(true);
   const [leadSaved, setLeadSaved] = useState(false);
   const [generalUploading, setGeneralUploading] = useState(false);
+  const [workflowStep, setWorkflowStep] = useState("idle");
   const [completionMessageSent, setCompletionMessageSent] = useState(false);
   const [voiceHistory, setVoiceHistory] = useState<ChatMsg[]>([]);
   const [lastUserTranscript, setLastUserTranscript] = useState("");
@@ -1549,10 +1550,8 @@ const handleGeneralUpload = () => {
       }
 
       // 🔊 Mohamed habla antes de analizar
-      await speakFromAutomation(
-        "مزيان، توصلت بالوثائق ديالك. دابا غادي نحللهم واحد بشوية، صبر معايا."
-      );
-
+      
+setWorkflowStep("waiting_confirm");
       let results = [];
 
       for (const file of files) {
@@ -1576,10 +1575,7 @@ const result = await verifyDocument({ file });
           result,
         });
 
-        // 🔊 Mohamed explica cada documento
-        const speech = buildDocSpeech(file.name, result, "ok");
-        await speakFromAutomation(speech);
-      }
+// ❌ ما تهضرش هنا
 
       // 🧠 RESUMEN FINAL INTELIGENTE
       let hasPassport = false;
@@ -1640,6 +1636,56 @@ const result = await verifyDocument({ file });
 
   input.click();
 };
+
+
+const handleVerifyAll = async () => {
+  if (!docs.length) {
+    await speakFromAutomation("مازال ما توصلتش بالوثائق ديالك.");
+    return;
+  }
+
+  await speakFromAutomation("مزيان. دابا غادي نحلل الملف ديالك كامل، صبر معايا شوية.");
+
+  let hasPassport = false;
+  let stayDates: string[] = [];
+
+  for (const doc of docs) {
+    const r = doc as any;
+
+    const type = (r.detectedType || "").toLowerCase();
+
+    if (type.includes("passport") || type.includes("nie")) {
+      hasPassport = true;
+    }
+
+    if (r.document_date) {
+      stayDates.push(r.document_date);
+    }
+  }
+
+  stayDates.sort();
+
+  let months = new Set(
+    stayDates.map((d) => new Date(d).getMonth())
+  );
+
+  let has5Months = months.size >= 5;
+
+  let finalMessage = "";
+
+  if (!hasPassport) {
+    finalMessage = "كاين مشكل. خاصنا الباسبور ولا NIE باش نكملو الملف.";
+  } else if (!has5Months) {
+    finalMessage =
+      "الملف ديالك ناقص. خاصنا 5 شهور متتابعين باش نقويو الملف.";
+  } else {
+    finalMessage =
+      "مزيان بزاف. الملف ديالك قوي وعندو حظوظ كبيرة فالتسوية.";
+  }
+
+  await speakFromAutomation(finalMessage);
+};
+  
   const latestAgentMessage =
     [...voiceHistory].reverse().find((msg) => msg.from === "agent")?.text ||
     voiceTexts.initialVoice;
@@ -1835,14 +1881,16 @@ disabled={false}
     Confirmación rápida
   </h3>
 
-  <button
-onClick={() => alert("OK")}
-   disabled={false}
-    className="w-full rounded-xl bg-primary hover:bg-primary/90 disabled:opacity-60 text-white py-4 font-bold transition-colors"
-    type="button"
-  >
-    ✅ Confirmar
-  </button>
+<button
+  onClick={handleVerifyAll}
+  disabled={generalUploading}
+  className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-sm px-4 py-3 transition-colors"
+  type="button"
+>
+  {safeLang === "darija" && "تحليل الوثائق"}
+  {safeLang === "es" && "Verificar documentos"}
+  {safeLang === "en" && "Verify documents"}
+</button>
 </div>
             {allReady && (
               <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4">
