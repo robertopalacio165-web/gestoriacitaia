@@ -58,10 +58,10 @@ type VerifyParams = {
 function fileToBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     // ✅ الحماية (هذا هو الإصلاح)
-    if (!file || !(file instanceof Blob)) {
-      reject(new Error("Invalid file - not a Blob"));
-      return;
-    }
+  if (!file) {
+  reject(new Error("Invalid file"));
+  return;
+}
 
     const reader = new FileReader();
 
