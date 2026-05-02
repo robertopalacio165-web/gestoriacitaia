@@ -1538,100 +1538,49 @@ const handleGeneralUpload = () => {
     if (!files.length) return;
 
     setGeneralUploading(true);
+try {
 
-    try {
-      const {
-        data: { user },
-        error,
-      } = await supabase.auth.getUser();
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
 
-      if (error || !user?.id) {
-        throw new Error("Usuario no conectado");
-      }
+  if (error || !user?.id) {
+    throw new Error("Usuario no conectado");
+  }
 
-      // 🔊 Mohamed habla antes de analizar
-      
-setWorkflowStep("waiting_confirm");
-      let results = [];
+  setWorkflowStep("waiting_confirm");
 
-      for (const file of files) {
-        const safeName = `${Date.now()}_${file.name}`;
-        const storagePath = `${user.id}/regularizacion_2026/${safeName}`;
+  let results = [];
 
-        // 📤 SUBIR
-        const { error: uploadError } = await supabase.storage
-          .from("user-documents")
-          .upload(storagePath, file, { upsert: true });
+  for (const file of files) {
+    const safeName = `${Date.now()}_${file.name}`;
+    const storagePath = `${user.id}/regularizacion_2026/${safeName}`;
 
-        if (uploadError) throw uploadError;
+    await supabase.storage
+      .from("user-documents")
+      .upload(storagePath, file, { upsert: true });
 
-        console.log("✅ SUBIDO:", file.name);
+    const result = await verifyDocument({ file });
 
-        // 🧠 ANALIZAR DOCUMENTO
-const result = await verifyDocument({ file });
+    results.push({
+      fileName: file.name,
+      result,
+    });
+  }
 
-        results.push({
-          fileName: file.name,
-          result,
-        });
+  alert("✅ Documentos analizados correctamente");
 
-// ❌ ما تهضرش هنا
+} catch (err) {
 
-      // 🧠 RESUMEN FINAL INTELIGENTE
-      let hasPassport = false;
-      let hasStayProof = false;
-      let validDocs = 0;
+  console.error(err);
 
-      for (const r of results) {
-        const type = (r.result?.document_type || "").toLowerCase();
+} finally {
 
-        if (type.includes("passport") || type.includes("nie")) {
-          hasPassport = true;
-        }
+  setGeneralUploading(false);
 
-        if (
-          type.includes("empadronamiento") ||
-          type.includes("stay_proof")
-        ) {
-          hasStayProof = true;
-        }
-
-        if (r.result?.final_verdict === "approved") {
-          validDocs++;
-        }
-      }
-
-      let finalMessage = "";
-
-      if (hasPassport && hasStayProof) {
-        finalMessage =
-          "مزيان بزاف. الملف ديالك باين فيه شروط مزيانة. نقدروا نكملو للمرحلة الجاية.";
-      } else if (!hasPassport) {
-        finalMessage =
-          "كاين مشكل. خاصنا الباسبور ولا NIE باش نكملو الملف.";
-      } else if (!hasStayProof) {
-        finalMessage =
-          "خاصنا بروفات ديال 5 شهور باش نقويو الملف ديالك.";
-      } else {
-        finalMessage =
-          "الملف ديالك خاصو شوية مراجعة قبل ما نكملو.";
-      }
-
-      // 🔊 Mohamed FINAL
-      await speakFromAutomation(finalMessage);
-
-      alert("✅ Documentos analizados correctamente");
-    } catch (err) {
-      console.error(err);
-
-      await speakFromAutomation(
-        "وقع مشكل وأنا كنحلل الوثائق. عاود حاول مرة أخرى."
-      );
-
-      alert("❌ Error subiendo archivos");
-    } finally {
-      setGeneralUploading(false);
-    }
+}
+   
   };
 
   input.click();
