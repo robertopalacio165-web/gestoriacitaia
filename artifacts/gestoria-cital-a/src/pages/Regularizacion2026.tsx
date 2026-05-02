@@ -1295,7 +1295,7 @@ const sdpRes = await fetch(
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
       
-      const sdpRes = await fetch("https://api.openai.com/v1/realtime/calls", {
+   const sdpRes = await fetch("https://api.openai.com/v1/realtime/calls?model=gpt-4o-realtime", {
         method: "POST",
         body: offer.sdp,
         headers: {
