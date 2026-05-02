@@ -576,6 +576,12 @@ export default async function handler(req: any, res: any) {
 
   try {
     const body = req.body || {};
+    // 🔥 TRIGGER ديال verification
+if (body.type === "verification_result") {
+  return res.status(200).json({
+    reply: body.message || "تحليل الوثائق واجد",
+  });
+}
     const message = typeof body.message === "string" ? body.message.trim() : "";
     const assistant =
       typeof body.assistant === "string"
