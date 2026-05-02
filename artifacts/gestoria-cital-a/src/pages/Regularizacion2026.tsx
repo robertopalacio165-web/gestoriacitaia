@@ -1172,7 +1172,6 @@ const sdpRes = await fetch(
     headers: {
       Authorization: `Bearer ${ephemeralKey}`,
       "Content-Type": "application/sdp",
-      "OpenAI-Beta": "realtime=v1",
     },
     body: offer.sdp,
   }
