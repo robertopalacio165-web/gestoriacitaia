@@ -1176,13 +1176,7 @@ lastUserTranscriptRef.current = "";
     body: offer.sdp,
   }
 );
-        method: "POST",
-        body: offer.sdp,
-        headers: {
-          Authorization: `Bearer ${ephemeralKey}`,
-          "Content-Type": "application/sdp",
-        },
-      });
+        
       if (!sdpRes.ok) {
         const errText = await sdpRes.text();
         throw new Error(errText || "Error negociando WebRTC con OpenAI");
