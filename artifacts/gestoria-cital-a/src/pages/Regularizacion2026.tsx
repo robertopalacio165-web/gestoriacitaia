@@ -1016,14 +1016,17 @@ const maybeSendIntroToMohamed = async () => {
     try {
       isConnectingRef.current = true;
       setWaitingMohamed(true);
-    const sessionRes = await fetch(`/api/realtime-session?ts=${Date.now()}`, {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json",
-    "Cache-Control": "no-cache",
-  },
- body: JSON.stringify({ assistant: "mohamed" }),
-});
+    const sessionRes = await fetch(
+  `/api/realtime-session?ts=${Date.now()}`,
+  {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Cache-Control": "no-cache",
+    },
+    body: JSON.stringify({ assistant: "mohamed" }),
+  }
+);
       const sessionData = await sessionRes.json();
       if (!sessionRes.ok) {
         throw new Error(sessionData?.error || "Error creando sesión realtime");
