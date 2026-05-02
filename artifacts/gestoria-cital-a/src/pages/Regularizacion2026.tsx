@@ -1162,7 +1162,17 @@ lastUserTranscriptRef.current = "";
       };
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
-      const sdpRes = await fetch("https://api.openai.com/v1/realtime/calls", {
+    const sdpRes = await fetch(
+  "https://api.openai.com/v1/realtime/calls?model=gpt-4o-realtime-preview",
+  {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${ephemeralKey}`,
+      "Content-Type": "application/sdp",
+    },
+    body: offer.sdp,
+  }
+);
         method: "POST",
         body: offer.sdp,
         headers: {
@@ -1554,6 +1564,7 @@ const handleGeneralUpload = () => {
       );
 
       let results = [];
+      let speeches: string[] = [];
 
       for (const file of files) {
         const safeName = `${Date.now()}_${file.name}`;
@@ -1578,9 +1589,11 @@ const handleGeneralUpload = () => {
 
         // 🔊 Mohamed explica cada documento
         const speech = buildDocSpeech(file.name, result, "ok");
-        await speakFromAutomation(speech);
+speeches.push(speech);
       }
-
+if (speeches.length > 0) {
+  await speakFromAutomation(speeches.join(" "));
+}
       // 🧠 RESUMEN FINAL INTELIGENTE
       let hasPassport = false;
       let hasStayProof = false;
