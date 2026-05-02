@@ -1937,3 +1937,4 @@ function FieldSelect({
     </select>
   );
 }
+export default Regularizacion2026;
