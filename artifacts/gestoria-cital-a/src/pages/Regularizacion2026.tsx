@@ -1569,7 +1569,7 @@ const handleGeneralUpload = () => {
         console.log("✅ SUBIDO:", file.name);
 
         // 🧠 ANALIZAR DOCUMENTO
-        const result = await verifyDocument(file);
+const result = await verifyDocument(file);
 
         results.push({
           fileName: file.name,
