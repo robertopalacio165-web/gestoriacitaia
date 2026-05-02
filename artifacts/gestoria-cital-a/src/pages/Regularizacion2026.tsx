@@ -1618,21 +1618,44 @@ const handleVerifyAll = async () => {
     stayDates.map((d) => new Date(d).getMonth())
   );
 
-  let has5Months = months.size >= 5;
+const handleVerifyAll = async () => {
+  try {
+    setGeneralUploading(true);
 
-  let finalMessage = "";
+    console.log("🚀 START VERIFY ALL");
 
-  if (!hasPassport) {
-    finalMessage = "كاين مشكل. خاصنا الباسبور ولا NIE باش نكملو الملف.";
-  } else if (!has5Months) {
-    finalMessage =
-      "الملف ديالك ناقص. خاصنا 5 شهور متتابعين باش نقويو الملف.";
-  } else {
-    finalMessage =
-      "مزيان بزاف. الملف ديالك قوي وعندو حظوظ كبيرة فالتسوية.";
+    await speakFromAutomation("دابا غادي نحلل الوثائق ديالك، صبر معايا شوية.");
+
+    if (!results || results.length === 0) {
+      await speakFromAutomation("ما لقيتش حتى وثيقة باش نحلل.");
+      return;
+    }
+
+    const summary = results
+      .map((r: any) => {
+        if (r.result?.status === "valid") {
+          return `📄 ${r.fileName}: مقبولة`;
+        }
+        if (r.result?.status === "review") {
+          return `📄 ${r.fileName}: خاصها مراجعة`;
+        }
+        return `📄 ${r.fileName}: مرفوضة`;
+      })
+      .join("\n");
+
+    await speakFromAutomation(
+      `حللت الوثائق ديالك:\n${summary}\nدابا نقدر نقول ليك الحالة العامة ديال الملف ديالك.`
+    );
+
+  } catch (err) {
+    console.error(err);
+
+    await speakFromAutomation(
+      "وقع مشكل وأنا كنحلل الوثائق، عاود حاول."
+    );
+  } finally {
+    setGeneralUploading(false);
   }
-
-  await speakFromAutomation(finalMessage);
 };
   
   const latestAgentMessage =
