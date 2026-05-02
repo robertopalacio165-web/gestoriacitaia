@@ -1586,75 +1586,54 @@ try {
   input.click();
 };
 
-
-const handleVerifyAll = async () => {
-  if (!docs.length) {
-    await speakFromAutomation("مازال ما توصلتش بالوثائق ديالك.");
-    return;
-  }
-
-  await speakFromAutomation("مزيان. دابا غادي نحلل الملف ديالك كامل، صبر معايا شوية.");
-
-  let hasPassport = false;
-  let stayDates: string[] = [];
-
-  for (const doc of docs) {
-    const r = doc as any;
-
-    const type = (r.detectedType || "").toLowerCase();
-
-    if (type.includes("passport") || type.includes("nie")) {
-      hasPassport = true;
-    }
-
-    if (r.document_date) {
-      stayDates.push(r.document_date);
-    }
-  }
-
-  stayDates.sort();
-
-  let months = new Set(
-    stayDates.map((d) => new Date(d).getMonth())
-  );
-
 const handleVerifyAll = async () => {
   try {
-    setGeneralUploading(true);
-
-    console.log("🚀 START VERIFY ALL");
-
-    await speakFromAutomation("دابا غادي نحلل الوثائق ديالك، صبر معايا شوية.");
-
-    if (!results || results.length === 0) {
-      await speakFromAutomation("ما لقيتش حتى وثيقة باش نحلل.");
+    if (!docs.length) {
+      await speakFromAutomation("مازال ما توصلتش بالوثائق ديالك.");
       return;
     }
 
-    const summary = results
-      .map((r: any) => {
-        if (r.result?.status === "valid") {
-          return `📄 ${r.fileName}: مقبولة`;
-        }
-        if (r.result?.status === "review") {
-          return `📄 ${r.fileName}: خاصها مراجعة`;
-        }
-        return `📄 ${r.fileName}: مرفوضة`;
-      })
-      .join("\n");
+    await speakFromAutomation("مزيان. دابا غادي نحلل الملف ديالك كامل، صبر معايا شوية.");
 
-    await speakFromAutomation(
-      `حللت الوثائق ديالك:\n${summary}\nدابا نقدر نقول ليك الحالة العامة ديال الملف ديالك.`
+    let hasPassport = false;
+    let stayDates: string[] = [];
+
+    for (const doc of docs) {
+      const r = doc as any;
+      const type = (r.detectedType || "").toLowerCase();
+
+      if (type.includes("passport") || type.includes("nie")) {
+        hasPassport = true;
+      }
+
+      if (r.document_date) {
+        stayDates.push(r.document_date);
+      }
+    }
+
+    stayDates.sort();
+
+    const months = new Set(
+      stayDates.map((d) => new Date(d).getMonth())
     );
+
+    const has5Months = months.size >= 5;
+
+    let finalMessage = "";
+
+    if (!hasPassport) {
+      finalMessage = "خاصك الباسبور ولا NIE باش نكملو الملف.";
+    } else if (!has5Months) {
+      finalMessage = "خاصنا 5 شهور ديال البروفات.";
+    } else {
+      finalMessage = "مزيان، الملف ديالك قوي.";
+    }
+
+    await speakFromAutomation(finalMessage);
 
   } catch (err) {
     console.error(err);
-
-    await speakFromAutomation(
-      "وقع مشكل وأنا كنحلل الوثائق، عاود حاول."
-    );
-  } finally {
-    setGeneralUploading(false);
+    await speakFromAutomation("وقع مشكل وأنا كنحلل الوثائق، عاود حاول.");
   }
 };
   
@@ -1937,4 +1916,3 @@ function FieldSelect({
     </select>
   );
 }
-export default Regularizacion2026;
