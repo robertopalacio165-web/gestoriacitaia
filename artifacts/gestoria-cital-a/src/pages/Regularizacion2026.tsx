@@ -1016,17 +1016,14 @@ const maybeSendIntroToMohamed = async () => {
     try {
       isConnectingRef.current = true;
       setWaitingMohamed(true);
-    const sessionRes = await fetch(
-  `/api/realtime-session?ts=${Date.now()}`,
-  {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Cache-Control": "no-cache",
-    },
-    body: JSON.stringify({ assistant: "mohamed" }),
-  }
-);
+    const sessionRes = await fetch(`/api/realtime-session?ts=${Date.now()}`, {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "Cache-Control": "no-cache",
+  },
+ body: JSON.stringify({ assistant: "mohamed" }),
+});
       const sessionData = await sessionRes.json();
       if (!sessionRes.ok) {
         throw new Error(sessionData?.error || "Error creando sesión realtime");
@@ -1165,18 +1162,14 @@ lastUserTranscriptRef.current = "";
       };
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
-const sdpRes = await fetch(
-  "https://api.openai.com/v1/realtime/calls?model=gpt-4o-realtime-preview",
-  {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${ephemeralKey}`,
-      "Content-Type": "application/sdp",
-    },
-    body: offer.sdp,
-  }
-);
-        
+      const sdpRes = await fetch("https://api.openai.com/v1/realtime/calls", {
+        method: "POST",
+        body: offer.sdp,
+        headers: {
+          Authorization: `Bearer ${ephemeralKey}`,
+          "Content-Type": "application/sdp",
+        },
+      });
       if (!sdpRes.ok) {
         const errText = await sdpRes.text();
         throw new Error(errText || "Error negociando WebRTC con OpenAI");
@@ -1295,14 +1288,14 @@ const sdpRes = await fetch(
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
       
- const sdpRes = await fetch("https://api.openai.com/v1/realtime/calls?model=gpt-4o-realtime", {
-  method: "POST",
-  headers: {
-    Authorization: `Bearer ${ephemeralKey}`,
-    "Content-Type": "application/sdp",
-  },
-  body: offer.sdp,
-});
+      const sdpRes = await fetch("https://api.openai.com/v1/realtime/calls", {
+        method: "POST",
+        body: offer.sdp,
+        headers: {
+          Authorization: `Bearer ${ephemeralKey}`,
+          "Content-Type": "application/sdp",
+        },
+      });
 
       if (!sdpRes.ok) throw new Error("Error en SDP");
 
@@ -1561,7 +1554,6 @@ const handleGeneralUpload = () => {
       );
 
       let results = [];
-      let speeches: string[] = [];
 
       for (const file of files) {
         const safeName = `${Date.now()}_${file.name}`;
@@ -1586,11 +1578,9 @@ const handleGeneralUpload = () => {
 
         // 🔊 Mohamed explica cada documento
         const speech = buildDocSpeech(file.name, result, "ok");
-speeches.push(speech);
+        await speakFromAutomation(speech);
       }
-if (speeches.length > 0) {
-  await speakFromAutomation(speeches.join(" "));
-}
+
       // 🧠 RESUMEN FINAL INTELIGENTE
       let hasPassport = false;
       let hasStayProof = false;
