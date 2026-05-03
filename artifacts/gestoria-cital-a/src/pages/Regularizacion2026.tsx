@@ -123,6 +123,8 @@ export default function Regularizacion2026() {
   const [confirmUnlocked, setConfirmUnlocked] = useState(false);
   const [pendingAutomationPrompt, setPendingAutomationPrompt] = useState("");
   const [phone, setPhone] = useState("");
+  const [phase, setPhase] = useState<"mohamed" | "userQuestions" | "upload">("mohamed");
+const [userQuestionsCount, setUserQuestionsCount] = useState(0);
 
   const [leadForm, setLeadForm] = useState<LeadFormState>({
     nombre: "",
@@ -797,6 +799,31 @@ const buildDocSpeech = (
     pushAgentMessage(text);
     const lower = text.toLowerCase();
     if (
+if (
+  lower.includes("نوبتك") ||
+  lower.includes("سولني") ||
+  lower.includes("سولني 4") ||
+  lower.includes("سولني أربعة") ||
+  lower.includes("ask me") ||
+  lower.includes("hazme preguntas") ||
+  lower.includes("preguntas")
+) {
+  console.log("🔥 دخلنا مرحلة userQuestions");
+
+  setPhase("userQuestions");
+  setUserQuestionsCount(0);
+}
+
+   if (
+  lower.includes("السؤال التاسع عشر") ||
+  lower.includes("19")
+) {
+  console.log("🔥 نهاية 19 سؤال → userQuestions");
+
+  setPhase("userQuestions");
+  setUserQuestionsCount(0);
+} 
+    if (
   lower.includes("زر الوثائق") ||
   lower.includes("صيفط") ||
   lower.includes("رفع الوثائق") ||
@@ -1290,8 +1317,31 @@ GestoriaCitaIA
             if (transcript !== lastUserTranscriptRef.current) {
               lastUserTranscriptRef.current = transcript;
               setLastUserTranscript(transcript);
-              pushUserMessage(transcript);
-            }
+           pushUserMessage(transcript);
+
+// 👇 زيد هاد الجزء مباشرة
+if (phase === "userQuestions") {
+  setUserQuestionsCount((prev) => {
+    const next = prev + 1;
+
+    if (next >= 4) {
+      console.log("🔥 وصلنا لـ 4 أسئلة");
+
+      setPhase("upload");
+
+      // محمد يهضر
+      speakExactText(
+        "دابا صيفط الوثائق ديالك كاملين، صور ولا PDF. ومن بعد ضغط على زر Verify documentos."
+      );
+
+      // نحل الزر
+      setDocumentsUnlocked(true);
+      setStep("upload");
+    }
+
+    return next;
+  });
+}
           }
           if (
             msg.type === "response.output_text.delta" &&
