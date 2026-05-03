@@ -1084,7 +1084,24 @@ const questions = [
       setWaitingMohamed(false);
     }
   };
+const handleSendWhatsApp = () => {
+  if (!phone || phone.trim().length < 6) {
+    alert("دخل رقم الهاتف صحيح");
+    return;
+  }
 
+  // تنظيف الرقم (نحيد المسافات)
+  const cleanPhone = phone.trim().replace(/\s+/g, "");
+
+  // الرسالة اللي غادي توصّل
+  const message = encodeURIComponent(
+    "سلام 👋\n\nهذا هو الملف ديالك ديال التسوية الجماعية 2026.\n\nغادي توصلك التفاصيل + PDF إن شاء الله.\n\nشكراً على الثقة ديالك فـ GestoriaCitaIA 🙏"
+  );
+
+  // فتح واتساب
+  const url = `https://wa.me/${cleanPhone}?text=${message}`;
+  window.open(url, "_blank");
+};
   const startListening = async () => {
     if (!voiceSupported) {
       toast({
@@ -1166,6 +1183,8 @@ const questions = [
     },
   })
 );
+
+     
         const capturedPending = pendingAutomationPromptRef.current;
         if (capturedPending) {
           pendingAutomationPromptRef.current = null;
