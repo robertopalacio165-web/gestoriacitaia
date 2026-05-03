@@ -133,6 +133,7 @@ export default function Regularizacion2026() {
     asilo: "",
     penales: "",
   });
+  const [step, setStep] = useState<"questions" | "upload" | "verify" | "done">("questions");
 
   const { t, lang } = useLang();
   const { toast } = useToast();
@@ -223,7 +224,7 @@ const MOHAMED_SYSTEM_PROMPT = `
 const voiceTexts = useMemo(
   () => ({
     initialVoice:
-      "السلام عليكم، أنا محمد من GestoriaCitaIA. غادي نراجع معاك الملف ديال التسوية الجماعية خطوة بخطوة. جاوبني غير بآه ولا لا. السؤال الأول: واش نتا دابا فإسبانيا؟",
+ "السلام عليكم، أنا محمد مرحبا بك في GestoriaCitaIA. إلا بغيتي نعاونك باش تverify الملف ديالك ديال التسوية الجماعية، تبع معايا الخطوات. غنسولك 4 أسئلة وجاوبني غير بآه ولا لا. السؤال الأول: واش نتا دابا فإسبانيا؟",
 
     voiceBlocked:
       "ضغط على الميكروفون باش نبداو.",
@@ -767,19 +768,27 @@ const buildDocSpeech = (
 ) {
   setDocumentsUnlocked(true);
 }
-    const asksForDocument =
-      lower.includes("صيفط") ||
-      lower.includes("الوثيقة") ||
-      lower.includes("الباسبور") ||
-      lower.includes("passport") ||
-      lower.includes("nie") ||
-      lower.includes("pdf") ||
-      lower.includes("empadronamiento") ||
-      lower.includes("padrón") ||
-      lower.includes("padron") ||
-      lower.includes("pruebas") ||
-      lower.includes("بروفات");
-    setWaitingForDocument(asksForDocument);
+    if (
+  lower.includes("صيفط") ||
+  lower.includes("الوثائق") ||
+  lower.includes("upload") ||
+  lower.includes("documentos")
+) {
+  setStep("upload");
+  setDocumentsUnlocked(true);
+}
+    if (
+  lower.includes("السؤال الرابع") ||
+  lower.includes("جاوبتي على 4") ||
+  lower.includes("كملنا الأسئلة")
+) {
+  speakExactText(
+    "دابا إلا عندك الوثائق ديالك مصورين مزيان ولا PDF، صيفطهم ليا. ضغط على زر Documentos وصيفطهم كاملين، ومن بعد ضغط على Verify documentos."
+  );
+  setStep("upload");
+  setDocumentsUnlocked(true);
+}
+   
   };
 
   const saveFullStateToSupabase = async (nextDocs?: StoredDocItem[]) => {
@@ -1588,52 +1597,94 @@ try {
 
 const handleVerifyAll = async () => {
   try {
+    setGeneralUploading(true);
+
     if (!docs.length) {
-      await speakFromAutomation("مازال ما توصلتش بالوثائق ديالك.");
+      await speakExactText("مازال ما توصلتش بالوثائق ديالك.");
       return;
     }
 
-    await speakFromAutomation("مزيان. دابا غادي نحلل الملف ديالك كامل، صبر معايا شوية.");
+    let explanation = "دابا غادي نشرح ليك الملف ديالك:\n\n";
 
     let hasPassport = false;
     let stayDates: string[] = [];
 
     for (const doc of docs) {
-      const r = doc as any;
-      const type = (r.detectedType || "").toLowerCase();
+      const name = doc.nombre || "وثيقة";
+      const status = doc.estado;
+      const type = (doc.detectedType || "").toLowerCase();
 
+      // 📄 شرح كل وثيقة
+      if (status === "ok") {
+        explanation += `📄 ${name}: مقبولة و واضحة.\n`;
+      } else if (status === "warn") {
+        explanation += `📄 ${name}: خاصها مراجعة.\n`;
+      } else {
+        explanation += `📄 ${name}: ناقصة أو غير واضحة.\n`;
+      }
+
+      // 🪪 passport / NIE
       if (type.includes("passport") || type.includes("nie")) {
         hasPassport = true;
       }
 
-      if (r.document_date) {
-        stayDates.push(r.document_date);
+      // 📅 التواريخ
+      if ((doc as any).document_date) {
+        stayDates.push((doc as any).document_date);
       }
     }
 
+    // 📊 حساب الشهور
     stayDates.sort();
-
     const months = new Set(
       stayDates.map((d) => new Date(d).getMonth())
     );
 
-    const has5Months = months.size >= 5;
+    const hasMonths = months.size >= 5;
 
-    let finalMessage = "";
+    explanation += "\n📊 النتيجة:\n";
 
     if (!hasPassport) {
-      finalMessage = "خاصك الباسبور ولا NIE باش نكملو الملف.";
-    } else if (!has5Months) {
-      finalMessage = "خاصنا 5 شهور ديال البروفات.";
+      explanation += "❌ ما عندكش باسبور أو NIE.\n";
     } else {
-      finalMessage = "مزيان، الملف ديالك قوي.";
+      explanation += "✅ وثيقة الهوية مزيانة.\n";
     }
 
-    await speakFromAutomation(finalMessage);
+    if (!hasMonths) {
+      explanation += "❌ ما كملتيش 5 شهور ديال البقاء.\n";
+    } else {
+      explanation += "✅ عندك 5 شهور ديال البقاء.\n";
+    }
+
+    // 🧠 الحكم النهائي
+    let finalVerdict = "";
+
+    if (hasPassport && hasMonths) {
+      finalVerdict = "🎯 الملف ديالك قوي وتقدر تدفع.";
+    } else {
+      finalVerdict = "⚠️ الملف خاصو تكملة.";
+    }
+
+    explanation += `\n${finalVerdict}`;
+
+    // 🔊 محمد يهضر كامل
+    await speakExactText(explanation);
+
+    // 🔥 من بعد ما يكمل → يقولو دير واتساب
+    setTimeout(() => {
+      speakExactText(
+        "إلا بغيتي نصيفط لك التقرير كامل PDF، دخل رقمك لتحت وغادي توصلك فالواتساب."
+      );
+    }, 2000);
 
   } catch (err) {
     console.error(err);
-    await speakFromAutomation("وقع مشكل وأنا كنحلل الوثائق، عاود حاول.");
+
+    await speakExactText(
+      "وقع مشكل وأنا كنحلل الوثائق، عاود حاول."
+    );
+  } finally {
+    setGeneralUploading(false);
   }
 };
   
