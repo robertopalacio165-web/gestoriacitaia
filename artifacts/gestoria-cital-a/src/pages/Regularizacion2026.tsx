@@ -2006,9 +2006,9 @@ const fullSpeech = `
                 )}
               </div>
               <div className="border-t border-white/10 p-3">
-    <button
+ <button
   onClick={handleGeneralUpload}
-disabled={false}
+  disabled={!documentsUnlocked}
   className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary hover:bg-primary/90 disabled:opacity-60 text-primary-foreground font-bold text-xs px-4 py-3 transition-colors"
   type="button"
       
@@ -2049,7 +2049,7 @@ disabled={false}
 
 <button
   onClick={handleVerifyAll}
-  disabled={generalUploading}
+  disabled={!documentsUnlocked || generalUploading}
   className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-sm px-4 py-3 transition-colors"
   type="button"
 >
@@ -2077,12 +2077,19 @@ disabled={false}
     className="w-full bg-transparent outline-none text-white placeholder:text-white/40 text-sm"
   />
 </div>
-  <button
-    onClick={handleSendWhatsApp}
- className="w-full flex items-center justify-center gap-3 rounded-2xl px-5 py-4 text-white font-bold text-base shadow-lg transition-all duration-300 bg-gradient-to-r from-green-500 via-emerald-500 to-green-400 hover:scale-[1.03] hover:shadow-green-500/40"
-  >
-    إرسال عبر WhatsApp
-  </button>
+ <button
+  onClick={handleSendWhatsApp}
+  disabled={!confirmUnlocked}
+  className={`w-full flex items-center justify-center gap-3 rounded-2xl px-5 py-4 text-white font-bold text-base shadow-lg transition-all duration-300 
+  ${
+    confirmUnlocked
+      ? "bg-gradient-to-r from-green-500 via-emerald-500 to-green-400 hover:scale-[1.03]"
+      : "bg-gray-600 opacity-50 cursor-not-allowed"
+  }`}
+  type="button"
+>
+  إرسال عبر WhatsApp
+</button>
 </div>
 
        
