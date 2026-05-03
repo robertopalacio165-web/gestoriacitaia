@@ -110,6 +110,7 @@ export default function Regularizacion2026() {
   const [workflowStep, setWorkflowStep] = useState("idle");
   const [completionMessageSent, setCompletionMessageSent] = useState(false);
   const [voiceHistory, setVoiceHistory] = useState<ChatMsg[]>([]);
+  const [currentStep, setCurrentStep] = useState(0);
   const [lastUserTranscript, setLastUserTranscript] = useState("");
   const [waitingMohamed, setWaitingMohamed] = useState(false);
   const [generalDocsEnabled, setGeneralDocsEnabled] = useState(false);
@@ -169,7 +170,18 @@ const MOHAMED_SYSTEM_PROMPT = `
 - جمل قصيرة.
 - سؤال واحد كل مرة.
 - منين يجاوب الزبون كمل مباشرة.
+- خاصك تفهم جميع طرق الجواب ديال الكليان.
+- اعتبر هاد الكلمات كلها "نعم":
+آه، اه، إييه، اييه، نعم، yes، si، واخا، ok، عندي، كاين، عندي هادي، عندي هدا، عندي الباسبور، عندي الوثائق.
+- اعتبر هاد الكلمات كلها "لا":
+لا، no، non، ما عنديش، ماعنديش، ما كاينش، ماكانش، ما عنديش هادي، ما عنديش الباسبور.
 
+- إلا جاوب الكليان بأي شكل مفهوم (حتى جملة طويلة)، خاصك تفهم واش الجواب نعم ولا لا وكمل للسؤال التالي مباشرة.
+
+- ممنوع تعاود نفس السؤال إلا إذا الكليان طلب منك:
+"عاود"، "ما سمعتكش"، "عاود السؤال"، "ما فهمتش".
+
+- إلا طلب الكليان تعاود السؤال، عاود نفس السؤال فقط بلا ما تزيد والو.
 🎤 البداية:
 
 السلام عليكم، أنا محمد مرحبا بك فـ GestoriaCitaIA.
@@ -257,7 +269,7 @@ const MOHAMED_SYSTEM_PROMPT = `
 const voiceTexts = useMemo(
   () => ({
     initialVoice:
- "السلام عليكم، أنا محمد مرحبا بك في GestoriaCitaIA. إلا بغيتي نعاونك باش تverify الملف ديالك ديال التسوية الجماعية، تبع معايا الخطوات. غنسولك 4 أسئلة وجاوبني غير بآه ولا لا. السؤال الأول: واش نتا دابا فإسبانيا؟",
+ "السلام عليكم، أنا محمد مرحبا بك في jestoriaCitaIA. إلا بغيتي نعاونك باش تverify الملف ديالك ديال التسوية الجماعية، تبع معايا الخطوات. غنسولك بعض الأسئلة وجاوبني غير بآه ولا لا. السؤال الأول: واش نتا دابا فإسبانيا؟",
 
     voiceBlocked:
       "ضغط على الميكروفون باش نبداو.",
@@ -411,6 +423,10 @@ const voiceTexts = useMemo(
     () => `gestoriacitaia_mohamed_lead_saved_${selectedSituacion}`,
     [selectedSituacion]
   );
+  const stepStorageKey = useMemo(
+  () => `gestoriacitaia_mohamed_step_${selectedSituacion}`,
+  [selectedSituacion]
+);
   const docsStorageKey = useMemo(
     () => `gestoriacitaia_mohamed_docs_${selectedSituacion}`,
     [selectedSituacion]
@@ -543,6 +559,11 @@ const voiceTexts = useMemo(
           setDocs(parsedDocs);
         }
       }
+    const rawStep = localStorage.getItem(stepStorageKey);
+if (rawStep) {
+  setCurrentStep(parseInt(rawStep));
+}
+      
     } catch (error) {
       console.error("Error cargando estado de Mohamed:", error);
     }
@@ -985,10 +1006,9 @@ const buildDocSpeech = (
       realtimeDcRef.current.send(
         JSON.stringify({
           type: "response.create",
-          response: { 
-            modalities: ["audio", "text"],
-            instructions: prompt 
-          },
+          response: {
+  modalities: ["audio", "text"]
+}
         })
       );
       console.log("✅ response.create enviado - Mohamed DEBERÍA hablar");
@@ -1002,8 +1022,37 @@ const buildDocSpeech = (
     }
   };
 
-const maybeSendIntroToMohamed = async () => { await askMohamedToSpeak("السلام عليكم أنا محمد مرحبا بك في GestoriaCitaIA. إلا بغيتي نعاونك باش نراجع الملف ديالك ديال التسوية الجماعية، تبع معايا. غنسولك 4 أسئلة وجاوبني غير بآه ولا لا. السؤال الأول: واش نتا دابا فإسبانيا؟"); };
+const questions = [
+  "واش دخلتي لإسبانيا قبل من واحد يناير 2026؟",
+  "واش بقيتي في إسبانيا لمدة ديال خمسة أشهر متتالية؟ وشنو هي أول مدينة سكنتي فيها في إسبانيا؟",
+  "واش عندك الباسبور والبطاقة الوطنية المغربية ولا photocopie منهم؟",
+  "واش عندك شهادة السكنة ولا شي وثيقة فيها الاسم والتاريخ؟",
+  "واش عندك tarjeta sanitaria؟",
+  "واش عندك شي وثيقة من المستشفى فيها الاسم والتاريخ؟",
+  "واش عندك شي ورقة ديال الدواء فيها الاسم والتاريخ؟",
+  "واش عندك رقم هاتف مسجل باسمك؟",
+  "واش عندك بطاقة ديال النقل فيها الاسم والتاريخ؟",
+  "واش خدمتي وعندك إثبات؟",
+  "واش عندك شهادة من جمعية؟",
+  "واش عندك السوابق العدلية مترجمة؟",
+  "واش شدوك البوليس؟",
+  "واش عندك expulsion؟",
+  "واش مشيتي للكوميسارية؟",
+  "واش عندك فيزا؟",
+  "واش درتي لجوء؟",
+  "عطيني رقم الواتساب ديالك.",
+  "واش عندك شي سؤال؟"
+];
 
+const maybeSendIntroToMohamed = async () => {
+  if (currentStep === 0) {
+    await askMohamedToSpeak(
+      "السلام عليكم، أنا محمد مرحبا بك فـ GestoriaCitaIA. جاوبني غير بآه ولا لا."
+    );
+  }
+
+  await askMohamedToSpeak(questions[currentStep]);
+};
 
   const stopListening = () => {
     try {
