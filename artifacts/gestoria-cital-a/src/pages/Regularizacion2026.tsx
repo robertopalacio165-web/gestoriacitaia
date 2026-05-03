@@ -1084,7 +1084,6 @@ const questions = [
       setWaitingMohamed(false);
     }
   };
-const handleSendWhatsApp = () => {
 const handleSendWhatsApp = async () => {
   try {
     if (!phone || phone.trim().length < 6) {
@@ -1845,7 +1844,7 @@ const fullSpeech = `
 
     // 🔊 هنا محمد غادي يهضر بصوت حقيقي
     await speakFromAutomation(fullSpeech);
-setAssistantText(fullSpeech);
+
   } catch (err) {
     console.error(err);
 
@@ -2082,6 +2081,7 @@ disabled={false}
   />
 </div>
   <button
+    onClick={handleSendWhatsApp}
  className="w-full flex items-center justify-center gap-3 rounded-2xl px-5 py-4 text-white font-bold text-base shadow-lg transition-all duration-300 bg-gradient-to-r from-green-500 via-emerald-500 to-green-400 hover:scale-[1.03] hover:shadow-green-500/40"
   >
     إرسال عبر WhatsApp
