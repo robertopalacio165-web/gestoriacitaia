@@ -1971,6 +1971,41 @@ disabled={false}
   {safeLang === "es" && "Verificar documentos"}
   {safeLang === "en" && "Verify documents"}
 </button>
+<div style={{ marginTop: 20 }}>
+  <input
+    type="tel"
+    placeholder="+34 600 000 000"
+    value={phone}
+    onChange={(e) => setPhone(e.target.value)}
+    style={{
+      width: "100%",
+      padding: "12px",
+      borderRadius: "10px",
+      border: "1px solid #ccc",
+      marginBottom: "10px",
+      fontSize: "16px"
+    }}
+  />
+
+  <button
+    onClick={handleSendWhatsApp}
+    style={{
+      width: "100%",
+      padding: "14px",
+      borderRadius: "12px",
+      backgroundColor: "#25D366",
+      color: "white",
+      fontWeight: "bold",
+      fontSize: "16px",
+      border: "none",
+      cursor: "pointer"
+    }}
+  >
+    إرسال عبر WhatsApp
+  </button>
+</div>
+
+       
 </div>
             {allReady && (
               <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4">
