@@ -982,7 +982,7 @@ const finalText = brainData.reply || instruction;
   };
 
 const maybeSendIntroToMohamed = async () => {
-askMohamedToSpeak(`
+await askMohamedToSpeak(
 السلام عليكم، أنا محمد مرحبا بك في GestoriaCitaIA.
 
 إلا بغيتي نعاونك باش تverify الملف ديالك ديال التسوية الجماعية،
