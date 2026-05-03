@@ -823,15 +823,7 @@ const buildDocSpeech = (
 ) {
   setDocumentsUnlocked(true);
 }
-    if (
-  lower.includes("صيفط") ||
-  lower.includes("الوثائق") ||
-  lower.includes("upload") ||
-  lower.includes("documentos")
-) {
-  setStep("upload");
-  setDocumentsUnlocked(true);
-}
+   
     if (
   lower.includes("السؤال الرابع") ||
   lower.includes("جاوبتي على 4") ||
