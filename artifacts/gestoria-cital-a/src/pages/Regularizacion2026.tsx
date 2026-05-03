@@ -798,7 +798,7 @@ const buildDocSpeech = (
     if (text === lastAssistantTextRef.current) return;
     pushAgentMessage(text);
     const lower = text.toLowerCase();
-    if (
+    
 if (
   lower.includes("نوبتك") ||
   lower.includes("سولني") ||
