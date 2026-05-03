@@ -804,7 +804,14 @@ const buildDocSpeech = (
 ) {
   setGeneralDocsEnabled(true);
 }
-
+if (
+  lower.includes("الوثائق") ||
+  lower.includes("documentos") ||
+  lower.includes("pdf")
+) {
+  setStep("upload");
+  setDocumentsUnlocked(true);
+}
     if (
   lower.includes("الملف ديالك واجد") ||
   lower.includes("مراجع") ||
@@ -954,7 +961,12 @@ const buildDocSpeech = (
           type: "response.create",
  response: {
   modalities: ["audio", "text"],
-  instructions: finalText
+  instructions: finalText,
+
+  audio: {
+    voice: "alloy",
+    speaking_rate: 1.15
+  }
 },
         })
       );
@@ -998,10 +1010,16 @@ const buildDocSpeech = (
       
       realtimeDcRef.current.send(
         JSON.stringify({
-          type: "response.create",
-          response: {
-  modalities: ["audio", "text"]
-}
+      type: "response.create",
+response: {
+  modalities: ["audio", "text"],
+
+  audio: {
+    voice: "alloy",
+    speaking_rate: 1.15
+  }
+}   
+
         })
       );
       console.log("✅ response.create enviado - Mohamed DEBERÍA hablar");
@@ -1223,15 +1241,16 @@ GestoriaCitaIA
         isConnectingRef.current = false;
         setIsListening(true);
         setWaitingMohamed(false);
-        dc.send(
+   dc.send(
   JSON.stringify({
     type: "session.update",
     session: {
       instructions: MOHAMED_SYSTEM_PROMPT,
       modalities: ["audio", "text"],
+      voice: "alloy",
       turn_detection: {
         type: "server_vad",
-        threshold: 0.75,
+     threshold: 0.5,
         prefix_padding_ms: 300,
         silence_duration_ms: 800,
       },
@@ -1423,10 +1442,17 @@ lastUserTranscriptRef.current = "";
           },
         }));
         
-        dc.send(JSON.stringify({
-          type: "response.create",
-          response: { modalities: ["audio", "text"] },
-        }));
+       dc.send(JSON.stringify({
+  type: "response.create",
+  response: {
+    modalities: ["audio", "text"],
+
+    audio: {
+      voice: "alloy",
+      speaking_rate: 1.15
+    }
+  }
+}));
       };
 
       dc.onmessage = (event) => {
