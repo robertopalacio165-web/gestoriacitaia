@@ -907,19 +907,7 @@ const buildDocSpeech = (
   const askMohamedToSpeak = async (instruction: string) => {
     try {
      const finalText = instruction;
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json",
-  },
-  body: JSON.stringify({
-    lang: "darija",
-    userMessage: instruction,
-    documents: docs,
-  }),
-});
-
-const brainData = await brainRes.json();
-const finalText = brainData.reply || instruction;
+  
       if (!realtimeDcRef.current) {
         console.error("❌ No hay data channel en askMohamedToSpeak");
         return false;
