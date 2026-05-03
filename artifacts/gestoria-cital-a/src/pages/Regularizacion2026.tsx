@@ -1044,8 +1044,19 @@ const questions = [
   "واش عندك شي سؤال؟"
 ];
 
-const maybeSendIntroToMohamed = async () => {};
-  
+  const maybeSendIntroToMohamed = async () => {
+  if (!realtimeDcRef.current) return;
+
+  realtimeDcRef.current.send(
+    JSON.stringify({
+      type: "response.create",
+      response: {
+        modalities: ["audio", "text"],
+        instructions: "start"
+      },
+    })
+  );
+};
 
   const stopListening = () => {
     try {
