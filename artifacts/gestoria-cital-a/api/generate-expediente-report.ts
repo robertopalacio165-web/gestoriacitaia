@@ -24,50 +24,59 @@ export default async function handler(
       documents = [],
     } = body;
 
+    const docsOk = documents.filter((d: any) => d.estado === "ok");
+    const docsBad = documents.filter((d: any) => d.estado !== "ok");
+
+    const accepted = docsOk.length
+      ? docsOk.map((d: any, i: number) => `${i + 1}. ${d.nombre} ✅`).join("\n")
+      : "ما كايناش";
+
+    const rejected = docsBad.length
+      ? docsBad.map((d: any, i: number) => `${i + 1}. ${d.nombre} ⚠️`).join("\n")
+      : "ما كايناش";
+
+    const verdict =
+      cumple_5_meses === "yes" && docsOk.length >= 3
+        ? "الملف ديالك قوي 💪"
+        : "الملف ديالك خاصو تقوية ⚠️";
+
     const report = `
-📁 GestoriaCitaIA - Reporte Final
+👋 سلام ${nombre || ""}
 
-👤 الاسم: ${nombre || "-"}
-📞 الهاتف: ${telefono || "-"}
-📍 المدينة: ${ciudad || "-"}
-🌍 الجنسية: ${nacionalidad || "-"}
-📅 تاريخ الدخول: ${fecha_llegada || "-"}
+📁 هذا التقييم ديال الملف ديالك:
 
-📌 5 شهور:
-${cumple_5_meses === "yes" ? "✅ نعم" : "❌ لا"}
+📊 الحالة:
+${verdict}
 
-📎 عدد الوثائق:
-${documents.length}
+📆 5 شهور:
+${cumple_5_meses === "yes" ? "✅ مكمل" : "❌ خاصك تكمل"}
 
-شكراً على الثقة ديالك فـ GestoriaCitaIA
+📎 الوثائق المقبولة:
+${accepted}
+
+⚠️ الوثائق اللي خاصها تصحيح:
+${rejected}
+
+📄 هادي الوثيقة (Lettre de motivación) اللي غادي تقوي الملف ديالك بزاف:
+👇
+https://gestoriacitaia.com/api/generate-expediente-pdf?nombre=${encodeURIComponent(
+      nombre || ""
+    )}
+
+📌 ضروري تضيفها فالملف ديالك حيث كتعاون بزاف فالتسوية الجماعية.
+
+🙏 توكل على الله، وشكراً على الثقة ديالك فـ GestoriaCitaIA
+
+🎁 عرض خاص:
+إلى دخلتي 3 ديال الناس بهاد الكود:
+
+👉 CITA2026
+
+وغادي تربح شهر فابور 🔥
 `.trim();
 
-    const token = "EAAX4uaZASSO0BRQsskoERLKcofZAIDtX9WZAQCiC5TdLNWPfeZBPqnLH4P9ZBzlhaV3kBZBa8u88aujoVfMVV5BrSC5FeZCVYR1kbg31A7qLZBPEZC9FU4YXomxjAZARXjUV9EJngZCcEovMoswU7ZBqZB4OxqDj8ZAYRj7fA6nV1NhtgukOEXFCr7Aey6ZAjFE516Clp0Ez3yTQQiZCSZB9k07gwDEpC4neL4tQxyFZC9ZCb3aa3yqzx226FWZClKqa0Rl2rgtFSAZANgQZAZAZAfIXInAtasY82Xg7NjtKAwZDZD";
-
-    const response = await fetch(
-      "https://graph.facebook.com/v20.0/1121390731046153/messages",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          messaging_product: "whatsapp",
-          to: "34644403748",
-          type: "text",
-          text: {
-            body: report,
-          },
-        }),
-      }
-    );
-
-    const data = await response.json();
-
     return res.status(200).json({
-      ok: true,
-      whatsapp: data,
+      report,
     });
   } catch (error: any) {
     return res.status(500).json({
