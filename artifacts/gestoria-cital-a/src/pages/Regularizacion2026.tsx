@@ -1595,12 +1595,12 @@ try {
   input.click();
 };
 
-const handleVerifyAll = async () => {
+  const handleVerifyAll = async () => {
   try {
     setGeneralUploading(true);
 
     if (!docs.length) {
-      await speakExactText("مازال ما توصلتش بالوثائق ديالك.");
+      await speakFromAutomation("مازال ما توصلتش بالوثائق ديالك.");
       return;
     }
 
@@ -1614,21 +1614,19 @@ const handleVerifyAll = async () => {
       const status = doc.estado;
       const type = (doc.detectedType || "").toLowerCase();
 
-      // 📄 شرح كل وثيقة
+      // 📄 شرح الوثائق
       if (status === "ok") {
-        explanation += `📄 ${name}: مقبولة و واضحة.\n`;
+        explanation += `${name} مقبولة و واضحة. `;
       } else if (status === "warn") {
-        explanation += `📄 ${name}: خاصها مراجعة.\n`;
+        explanation += `${name} خاصها مراجعة. `;
       } else {
-        explanation += `📄 ${name}: ناقصة أو غير واضحة.\n`;
+        explanation += `${name} ناقصة أو غير واضحة. `;
       }
 
-      // 🪪 passport / NIE
       if (type.includes("passport") || type.includes("nie")) {
         hasPassport = true;
       }
 
-      // 📅 التواريخ
       if ((doc as any).document_date) {
         stayDates.push((doc as any).document_date);
       }
@@ -1642,52 +1640,50 @@ const handleVerifyAll = async () => {
 
     const hasMonths = months.size >= 5;
 
-    explanation += "\n📊 النتيجة:\n";
+    explanation += "\n";
 
     if (!hasPassport) {
-      explanation += "❌ ما عندكش باسبور أو NIE.\n";
+      explanation += "ما عندكش باسبور أو NIE. ";
     } else {
-      explanation += "✅ وثيقة الهوية مزيانة.\n";
+      explanation += "وثيقة الهوية مزيانة. ";
     }
 
     if (!hasMonths) {
-      explanation += "❌ ما كملتيش 5 شهور ديال البقاء.\n";
+      explanation += "ما كملتيش 5 شهور ديال البقاء. ";
     } else {
-      explanation += "✅ عندك 5 شهور ديال البقاء.\n";
+      explanation += "عندك 5 شهور ديال البقاء. ";
     }
 
     // 🧠 الحكم النهائي
     let finalVerdict = "";
 
     if (hasPassport && hasMonths) {
-      finalVerdict = "🎯 الملف ديالك قوي وتقدر تدفع.";
+      finalVerdict = "الملف ديالك قوي وتقدر تدفع.";
     } else {
-      finalVerdict = "⚠️ الملف خاصو تكملة.";
+      finalVerdict = "الملف خاصو تكملة.";
     }
 
-    explanation += `\n${finalVerdict}`;
+    const fullSpeech = `
+${explanation}
 
-    // 🔊 محمد يهضر كامل
-    await speakExactText(explanation);
+${finalVerdict}
 
-    // 🔥 من بعد ما يكمل → يقولو دير واتساب
-    setTimeout(() => {
-      speakExactText(
-        "إلا بغيتي نصيفط لك التقرير كامل PDF، دخل رقمك لتحت وغادي توصلك فالواتساب."
-      );
-    }, 2000);
+دابا إلا بغيتي نصيفط لك التقرير كامل PDF، دخل رقمك لتحت وورك على mandar WhatsApp وغادي توصلك النتيجة.
+`;
+
+    // 🔊 هنا محمد غادي يهضر بصوت حقيقي
+    await speakFromAutomation(fullSpeech);
 
   } catch (err) {
     console.error(err);
 
-    await speakExactText(
+    await speakFromAutomation(
       "وقع مشكل وأنا كنحلل الوثائق، عاود حاول."
     );
   } finally {
     setGeneralUploading(false);
   }
 };
-  
   const latestAgentMessage =
     [...voiceHistory].reverse().find((msg) => msg.from === "agent")?.text ||
     voiceTexts.initialVoice;
