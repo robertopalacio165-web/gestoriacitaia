@@ -983,7 +983,7 @@ const finalText = brainData.reply || instruction;
 
 const maybeSendIntroToMohamed = async () => { await askMohamedToSpeak("السلام عليكم أنا محمد مرحبا بك في GestoriaCitaIA. إلا بغيتي نعاونك باش نراجع الملف ديالك ديال التسوية الجماعية، تبع معايا. غنسولك 4 أسئلة وجاوبني غير بآه ولا لا. السؤال الأول: واش نتا دابا فإسبانيا؟"); };
 
-};
+
   const stopListening = () => {
     try {
       realtimeDcRef.current?.close();
