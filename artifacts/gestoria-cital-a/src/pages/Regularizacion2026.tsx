@@ -1102,8 +1102,8 @@ const handleSendWhatsApp = async () => {
         telefono: phone,
         ciudad: leadForm?.ciudad,
         nacionalidad: leadForm?.nacionalidad,
-        fecha_llegada: leadForm?.fecha_llegada,
-        cumple_5_meses: cumple5Meses ? "yes" : "no",
+  fecha_llegada: leadForm?.fechaLlegada,
+ cumple_5_meses: leadForm.cumple5Meses === "yes" ? "yes" : "no",
         documents: docs,
       }),
     });
