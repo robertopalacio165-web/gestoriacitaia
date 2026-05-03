@@ -123,8 +123,6 @@ export default function Regularizacion2026() {
   const [confirmUnlocked, setConfirmUnlocked] = useState(false);
   const [pendingAutomationPrompt, setPendingAutomationPrompt] = useState("");
   const [phone, setPhone] = useState("");
-  const [phase, setPhase] = useState<"mohamed" | "userQuestions" | "upload">("mohamed");
-const [userQuestionsCount, setUserQuestionsCount] = useState(0);
 
   const [leadForm, setLeadForm] = useState<LeadFormState>({
     nombre: "",
@@ -798,31 +796,6 @@ const buildDocSpeech = (
     if (text === lastAssistantTextRef.current) return;
     pushAgentMessage(text);
     const lower = text.toLowerCase();
-    
-if (
-  lower.includes("نوبتك") ||
-  lower.includes("سولني") ||
-  lower.includes("سولني 4") ||
-  lower.includes("سولني أربعة") ||
-  lower.includes("ask me") ||
-  lower.includes("hazme preguntas") ||
-  lower.includes("preguntas")
-) {
-  console.log("🔥 دخلنا مرحلة userQuestions");
-
-  setPhase("userQuestions");
-  setUserQuestionsCount(0);
-}
-
-   if (
-  lower.includes("السؤال التاسع عشر") ||
-  lower.includes("19")
-) {
-  console.log("🔥 نهاية 19 سؤال → userQuestions");
-
-  setPhase("userQuestions");
-  setUserQuestionsCount(0);
-} 
     if (
   lower.includes("زر الوثائق") ||
   lower.includes("صيفط") ||
@@ -831,14 +804,7 @@ if (
 ) {
   setGeneralDocsEnabled(true);
 }
-if (
-  lower.includes("الوثائق") ||
-  lower.includes("documentos") ||
-  lower.includes("pdf")
-) {
-  setStep("upload");
-  setDocumentsUnlocked(true);
-}
+
     if (
   lower.includes("الملف ديالك واجد") ||
   lower.includes("مراجع") ||
@@ -988,12 +954,7 @@ if (
           type: "response.create",
  response: {
   modalities: ["audio", "text"],
-  instructions: finalText,
-
-  audio: {
-    voice: "alloy",
-    speaking_rate: 1.15
-  }
+  instructions: finalText
 },
         })
       );
@@ -1037,16 +998,10 @@ if (
       
       realtimeDcRef.current.send(
         JSON.stringify({
-      type: "response.create",
-response: {
-  modalities: ["audio", "text"],
-
-  audio: {
-    voice: "alloy",
-    speaking_rate: 1.15
-  }
-}   
-
+          type: "response.create",
+          response: {
+  modalities: ["audio", "text"]
+}
         })
       );
       console.log("✅ response.create enviado - Mohamed DEBERÍA hablar");
@@ -1268,16 +1223,15 @@ GestoriaCitaIA
         isConnectingRef.current = false;
         setIsListening(true);
         setWaitingMohamed(false);
-   dc.send(
+        dc.send(
   JSON.stringify({
     type: "session.update",
     session: {
       instructions: MOHAMED_SYSTEM_PROMPT,
       modalities: ["audio", "text"],
-      voice: "alloy",
       turn_detection: {
         type: "server_vad",
-     threshold: 0.5,
+        threshold: 0.75,
         prefix_padding_ms: 300,
         silence_duration_ms: 800,
       },
@@ -1299,90 +1253,58 @@ GestoriaCitaIA
           void maybeSendIntroToMohamed();
         }, 500);
       };
-  dc.onmessage = (event) => {
-  try {
-    const msg = JSON.parse(event.data);
-
-    const userTranscript =
-      msg?.transcript ||
-      msg?.item?.transcript ||
-      msg?.item?.content?.[0]?.transcript ||
-      "";
-
-    if (
-      (msg.type === "conversation.item.input_audio_transcription.completed" ||
-        msg.type === "input_audio_buffer.transcription.completed") &&
-      typeof userTranscript === "string" &&
-      userTranscript.trim()
-    ) {
-      const transcript = userTranscript.trim();
-
-      if (transcript !== lastUserTranscriptRef.current) {
-        lastUserTranscriptRef.current = transcript;
-        setLastUserTranscript(transcript);
-        pushUserMessage(transcript);
-
-        // 👇 userQuestions logic
-        if (phase === "userQuestions") {
-          setUserQuestionsCount((prev) => {
-            const next = prev + 1;
-
-            if (next >= 4) {
-              console.log("🔥 وصلنا لـ 4 أسئلة");
-
-              setPhase("upload");
-
-              speakExactText(
-                "دابا صيفط الوثائق ديالك كاملين، صور ولا PDF. ومن بعد ضغط على زر Verify documentos."
-              );
-
-              setDocumentsUnlocked(true);
-              setStep("upload");
+      dc.onmessage = (event) => {
+        try {
+          const msg = JSON.parse(event.data);
+          const userTranscript =
+            msg?.transcript ||
+            msg?.item?.transcript ||
+            msg?.item?.content?.[0]?.transcript ||
+            "";
+          if (
+            (msg.type === "conversation.item.input_audio_transcription.completed" ||
+              msg.type === "input_audio_buffer.transcription.completed") &&
+            typeof userTranscript === "string" &&
+            userTranscript.trim()
+          ) {
+            const transcript = userTranscript.trim();
+            if (transcript !== lastUserTranscriptRef.current) {
+              lastUserTranscriptRef.current = transcript;
+              setLastUserTranscript(transcript);
+              pushUserMessage(transcript);
             }
-
-            return next;
-          });
+          }
+          if (
+            msg.type === "response.output_text.delta" &&
+            typeof msg.delta === "string"
+          ) {
+            assistantTextBufferRef.current += msg.delta;
+          }
+          if (
+            msg.type === "response.output_text.done" &&
+            typeof msg.text === "string" &&
+            msg.text.trim()
+          ) {
+            assistantTextBufferRef.current = msg.text.trim();
+          }
+          if (msg.type === "response.created") {
+            assistantBusyRef.current = true;
+            setWaitingMohamed(true);
+          }
+          if (msg.type === "response.done") {
+            assistantBusyRef.current = false;
+            finalizeAssistantBuffer();
+            setWaitingMohamed(false);
+            pendingAutomationPromptRef.current = null;
+            setPendingAutomationPrompt("");
+            setTimeout(() => {
+              void flushPendingAutomation();
+            }, 150);
+          }
+        } catch (err) {
+          console.error("Realtime event parse error:", err);
         }
-      }
-    }
-
-    if (
-      msg.type === "response.output_text.delta" &&
-      typeof msg.delta === "string"
-    ) {
-      assistantTextBufferRef.current += msg.delta;
-    }
-
-    if (
-      msg.type === "response.output_text.done" &&
-      typeof msg.text === "string" &&
-      msg.text.trim()
-    ) {
-      assistantTextBufferRef.current = msg.text.trim();
-    }
-
-    if (msg.type === "response.created") {
-      assistantBusyRef.current = true;
-      setWaitingMohamed(true);
-    }
-
-    if (msg.type === "response.done") {
-      assistantBusyRef.current = false;
-      finalizeAssistantBuffer();
-      setWaitingMohamed(false);
-
-      pendingAutomationPromptRef.current = null;
-      setPendingAutomationPrompt("");
-
-      setTimeout(() => {
-        void flushPendingAutomation();
-      }, 150);
-    }
-
-  } catch (err) {
-    console.error("Realtime event parse error:", err);
-  }
-};
+      };
       dc.onerror = (err) => {
         console.error("Realtime data channel error:", err);
       };
@@ -1501,17 +1423,10 @@ lastUserTranscriptRef.current = "";
           },
         }));
         
-       dc.send(JSON.stringify({
-  type: "response.create",
-  response: {
-    modalities: ["audio", "text"],
-
-    audio: {
-      voice: "alloy",
-      speaking_rate: 1.15
-    }
-  }
-}));
+        dc.send(JSON.stringify({
+          type: "response.create",
+          response: { modalities: ["audio", "text"] },
+        }));
       };
 
       dc.onmessage = (event) => {
