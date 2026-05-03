@@ -1834,9 +1834,6 @@ ${finalVerdict}
 
     // 🔊 هنا محمد غادي يهضر بصوت حقيقي
     await speakFromAutomation(fullSpeech);
-setTimeout(() => {
-  handleSendWhatsApp();
-}, 1200);
 setAssistantText(fullSpeech);
   } catch (err) {
     console.error(err);
