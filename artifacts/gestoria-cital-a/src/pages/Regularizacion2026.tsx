@@ -1992,34 +1992,27 @@ disabled={false}
   {safeLang === "en" && "Verify documents"}
 </button>
 <div style={{ marginTop: 20 }}>
+
+<div className="w-full flex items-center gap-3 bg-white/5 border border-white/10 rounded-2xl px-4 py-3 shadow-inner">
+  
+  <span className="text-green-400 text-lg">📱</span>
+
   <input
     type="tel"
-    placeholder="+34 600 000 000"
     value={phone}
     onChange={(e) => setPhone(e.target.value)}
-    style={{
-      width: "100%",
-      padding: "12px",
-      borderRadius: "10px",
-      border: "1px solid #ccc",
-      marginBottom: "10px",
-      fontSize: "16px"
-    }}
+    placeholder={
+      safeLang === "darija"
+        ? "+34 600000000"
+        : safeLang === "es"
+        ? "+34 600000000"
+        : "+34 600000000"
+    }
+    className="w-full bg-transparent outline-none text-white placeholder:text-white/40 text-sm"
   />
-
+</div>
   <button
-    onClick={handleSendWhatsApp}
-    style={{
-      width: "100%",
-      padding: "14px",
-      borderRadius: "12px",
-      backgroundColor: "#25D366",
-      color: "white",
-      fontWeight: "bold",
-      fontSize: "16px",
-      border: "none",
-      cursor: "pointer"
-    }}
+ className="w-full flex items-center justify-center gap-3 rounded-2xl px-5 py-4 text-white font-bold text-base shadow-lg transition-all duration-300 bg-gradient-to-r from-green-500 via-emerald-500 to-green-400 hover:scale-[1.03] hover:shadow-green-500/40"
   >
     إرسال عبر WhatsApp
   </button>
