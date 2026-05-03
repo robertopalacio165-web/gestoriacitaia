@@ -1044,15 +1044,8 @@ const questions = [
   "واش عندك شي سؤال؟"
 ];
 
-const maybeSendIntroToMohamed = async () => {
-  if (currentStep === 0) {
-    await askMohamedToSpeak(
-      "السلام عليكم، أنا محمد مرحبا بك فـ GestoriaCitaIA. جاوبني غير بآه ولا لا."
-    );
-  }
-
-  await askMohamedToSpeak(questions[currentStep]);
-};
+const maybeSendIntroToMohamed = async () => {};
+  
 
   const stopListening = () => {
     try {
