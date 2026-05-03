@@ -1085,42 +1085,59 @@ const questions = [
     }
   };
 const handleSendWhatsApp = () => {
- const handleSendWhatsApp = async () => {
+const handleSendWhatsApp = async () => {
   try {
     if (!phone || phone.trim().length < 6) {
       alert("دخل رقم الهاتف صحيح");
       return;
     }
 
-    // 1. نطلب report من السيرفر
-    const res = await fetch("/api/generate-expediente-report", {
+    // 1. نصيفط البيانات باش نصاوب PDF
+    const res = await fetch("/api/generate-expediente-pdf", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
         nombre: leadForm?.nombre,
-        telefono: phone,
-        ciudad: leadForm?.ciudad,
         nacionalidad: leadForm?.nacionalidad,
-        fecha_llegada: leadForm?.fecha_llegada,
-       cumple_5_meses: leadForm?.cumple5Meses ? "yes" : "no",
-        documents: docs,
+        ciudad: leadForm?.ciudad,
       }),
     });
 
     const data = await res.json();
 
+    // 2. نصاوب link وهمي (دابا مؤقت)
+    const pdfLink = "📄 PDF جاهز (غادي نطوروه من بعد)";
+
+    // 3. الرسالة الاحترافية
+    const message = encodeURIComponent(`
+سلام ${leadForm?.nombre || ""} 👋
+
+📊 هذا هو التقييم ديال الملف ديالك:
+
+${latestAgentMessage}
+
+📄 هادي هي الوثيقة اللي غادي تبدل الملف ديالك وتخليه قوي:
+${pdfLink}
+
+📌 نصيحتي:
+زيد هاد الوثيقة للملف ديالك باش تزيد الحظوظ ديالك فالتسوية الجماعية.
+
+🙏 شكراً على الثقة ديالك فـ GestoriaCitaIA
+
+🎁 إلى دخلتي 3 ديال الناس بهد الرابط ديالك، تقدر تربح شهر فابور.
+`);
+
+    // 4. تنظيف النمرة
     const cleanPhone = phone.trim().replace(/\s+/g, "");
 
-    // 2. فتح واتساب بالرسالة الجاهزة
-    const url = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(
-      data.report
-    )}`;
-
+    // 5. فتح واتساب
+    const url = `https://wa.me/${cleanPhone}?text=${message}`;
     window.open(url, "_blank");
+
   } catch (error) {
-    console.error("WhatsApp error:", error);
+    console.error(error);
     alert("وقع مشكل، حاول مرة أخرى");
   }
 };
