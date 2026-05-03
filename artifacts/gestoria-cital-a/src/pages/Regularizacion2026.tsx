@@ -981,18 +981,19 @@ const finalText = brainData.reply || instruction;
     }
   };
 
+
 const maybeSendIntroToMohamed = async () => {
-await askMohamedToSpeak(
-السلام عليكم، أنا محمد مرحبا بك في GestoriaCitaIA.
+  await askMohamedToSpeak(`
+السلام عليكم أنا محمد مرحبا بك في GestoriaCitaIA.
 
-إلا بغيتي نعاونك باش تverify الملف ديالك ديال التسوية الجماعية،
-تبع معايا الخطوات.
+إلا بغيتي نعاونك باش تverify الملف ديالك ديال التسوية الجماعية، تبع معايا.
 
-غنسولك بعض الأسئلة وجاوبني غير بآه ولا لا.
+غنسولك 4 أسئلة وجاوبني غير بآه ولا لا.
 
 السؤال الأول:
-واش دخلتي لإسبانيا قبل من واحد يناير 2026؟
-`);
+واش نتا دابا فإسبانيا؟
+  `);
+};
 };
   const stopListening = () => {
     try {
