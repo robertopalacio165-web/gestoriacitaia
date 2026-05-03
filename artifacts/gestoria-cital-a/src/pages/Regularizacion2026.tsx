@@ -1299,81 +1299,90 @@ GestoriaCitaIA
           void maybeSendIntroToMohamed();
         }, 500);
       };
-      dc.onmessage = (event) => {
-        try {
-          const msg = JSON.parse(event.data);
-          const userTranscript =
-            msg?.transcript ||
-            msg?.item?.transcript ||
-            msg?.item?.content?.[0]?.transcript ||
-            "";
-          if (
-            (msg.type === "conversation.item.input_audio_transcription.completed" ||
-              msg.type === "input_audio_buffer.transcription.completed") &&
-            typeof userTranscript === "string" &&
-            userTranscript.trim()
-          ) {
-            const transcript = userTranscript.trim();
-            if (transcript !== lastUserTranscriptRef.current) {
-              lastUserTranscriptRef.current = transcript;
-              setLastUserTranscript(transcript);
-           pushUserMessage(transcript);
+  dc.onmessage = (event) => {
+  try {
+    const msg = JSON.parse(event.data);
 
-// 👇 زيد هاد الجزء مباشرة
-if (phase === "userQuestions") {
-  setUserQuestionsCount((prev) => {
-    const next = prev + 1;
+    const userTranscript =
+      msg?.transcript ||
+      msg?.item?.transcript ||
+      msg?.item?.content?.[0]?.transcript ||
+      "";
 
-    if (next >= 4) {
-      console.log("🔥 وصلنا لـ 4 أسئلة");
+    if (
+      (msg.type === "conversation.item.input_audio_transcription.completed" ||
+        msg.type === "input_audio_buffer.transcription.completed") &&
+      typeof userTranscript === "string" &&
+      userTranscript.trim()
+    ) {
+      const transcript = userTranscript.trim();
 
-      setPhase("upload");
+      if (transcript !== lastUserTranscriptRef.current) {
+        lastUserTranscriptRef.current = transcript;
+        setLastUserTranscript(transcript);
+        pushUserMessage(transcript);
 
-      // محمد يهضر
-      speakExactText(
-        "دابا صيفط الوثائق ديالك كاملين، صور ولا PDF. ومن بعد ضغط على زر Verify documentos."
-      );
+        // 👇 userQuestions logic
+        if (phase === "userQuestions") {
+          setUserQuestionsCount((prev) => {
+            const next = prev + 1;
 
-      // نحل الزر
-      setDocumentsUnlocked(true);
-      setStep("upload");
+            if (next >= 4) {
+              console.log("🔥 وصلنا لـ 4 أسئلة");
+
+              setPhase("upload");
+
+              speakExactText(
+                "دابا صيفط الوثائق ديالك كاملين، صور ولا PDF. ومن بعد ضغط على زر Verify documentos."
+              );
+
+              setDocumentsUnlocked(true);
+              setStep("upload");
+            }
+
+            return next;
+          });
+        }
+      }
     }
 
-    return next;
-  });
-}
-          }
-          if (
-            msg.type === "response.output_text.delta" &&
-            typeof msg.delta === "string"
-          ) {
-            assistantTextBufferRef.current += msg.delta;
-          }
-          if (
-            msg.type === "response.output_text.done" &&
-            typeof msg.text === "string" &&
-            msg.text.trim()
-          ) {
-            assistantTextBufferRef.current = msg.text.trim();
-          }
-          if (msg.type === "response.created") {
-            assistantBusyRef.current = true;
-            setWaitingMohamed(true);
-          }
-          if (msg.type === "response.done") {
-            assistantBusyRef.current = false;
-            finalizeAssistantBuffer();
-            setWaitingMohamed(false);
-            pendingAutomationPromptRef.current = null;
-            setPendingAutomationPrompt("");
-            setTimeout(() => {
-              void flushPendingAutomation();
-            }, 150);
-          
-        } catch (err) {
-          console.error("Realtime event parse error:", err);
-        }
-      };
+    if (
+      msg.type === "response.output_text.delta" &&
+      typeof msg.delta === "string"
+    ) {
+      assistantTextBufferRef.current += msg.delta;
+    }
+
+    if (
+      msg.type === "response.output_text.done" &&
+      typeof msg.text === "string" &&
+      msg.text.trim()
+    ) {
+      assistantTextBufferRef.current = msg.text.trim();
+    }
+
+    if (msg.type === "response.created") {
+      assistantBusyRef.current = true;
+      setWaitingMohamed(true);
+    }
+
+    if (msg.type === "response.done") {
+      assistantBusyRef.current = false;
+      finalizeAssistantBuffer();
+      setWaitingMohamed(false);
+
+      pendingAutomationPromptRef.current = null;
+      setPendingAutomationPrompt("");
+
+      setTimeout(() => {
+        void flushPendingAutomation();
+      }, 150);
+    }
+
+  } catch (err) {
+    console.error("Realtime event parse error:", err);
+  }
+};
       dc.onerror = (err) => {
         console.error("Realtime data channel error:", err);
       };
