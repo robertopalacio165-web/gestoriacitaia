@@ -1,4 +1,5 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
+import { Buffer } from "buffer";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== "POST") {
@@ -24,31 +25,28 @@ Yo, ${nombre || "________________"}, de nacionalidad ${nacionalidad || "________
 
 Que me encuentro en España con el objetivo de integrarme plenamente en la sociedad, trabajar de manera legal y contribuir activamente al desarrollo económico y social del país.
 
-Quiero manifestar mi profundo agradecimiento al Gobierno de España y a su presidente Pedro Sánchez por la oportunidad que se está brindando a las personas en situación irregular a través del proceso de regularización.
+Quiero expresar mi agradecimiento al Gobierno de España y al presidente Pedro Sánchez por esta oportunidad de regularización.
 
-Mi intención es poder trabajar, cotizar a la Seguridad Social, respetar las leyes españolas y construir una vida estable y digna.
+Mi intención es trabajar, cotizar, respetar las leyes y construir una vida digna en España.
 
-Deseo formarme, mejorar mis competencias y aportar valor a la sociedad española, dejando de ser una carga para convertirme en una persona productiva.
-
-Por todo ello, solicito se tenga en consideración mi situación para acceder al proceso de regularización.
+Solicito se tenga en cuenta mi situación para acceder a la regularización.
 
 Atentamente,
 
 ${nombre || "________________"}
-
 `;
 
-    // نحولو ل Base64 باش نرجعوه للفرونت
-    const pdfBase64 = Buffer.from(content, "utf-8").toString("base64");
+    const buffer = Buffer.from(content, "utf-8");
 
-    return res.status(200).json({
-      ok: true,
-      pdf: pdfBase64,
-    });
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename=expediente_${nombre || "cliente"}.pdf`
+    );
+
+    return res.status(200).send(buffer);
 
   } catch (error: any) {
-    return res.status(500).json({
-      error: error.message,
-    });
+    return res.status(500).send(error.message);
   }
 }
