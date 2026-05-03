@@ -122,6 +122,7 @@ export default function Regularizacion2026() {
   const [formConfirmed, setFormConfirmed] = useState(false);
   const [confirmUnlocked, setConfirmUnlocked] = useState(false);
   const [pendingAutomationPrompt, setPendingAutomationPrompt] = useState("");
+  const [phone, setPhone] = useState("");
 
   const [leadForm, setLeadForm] = useState<LeadFormState>({
     nombre: "",
