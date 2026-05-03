@@ -1,101 +1,57 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
+import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 
-export default async function handler(
-  req: VercelRequest,
-  res: VercelResponse
-) {
-  if (req.method !== "POST") {
-    return res.status(405).send("Method Not Allowed");
-  }
-
+export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
-    const body =
-      typeof req.body === "string"
-        ? JSON.parse(req.body || "{}")
-        : req.body || {};
+    const { nombre = "NOMBRE APELLIDO" } = req.query;
 
-    const {
-      nombre,
-      telefono,
-      ciudad,
-      nacionalidad,
-      fecha_llegada,
-      cumple_5_meses,
-      nie_pasaporte,
-      documents = [],
-    } = body;
+    const pdfDoc = await PDFDocument.create();
+    const page = pdfDoc.addPage([595, 842]); // A4
 
-    const docsOk = Array.isArray(documents)
-      ? documents.filter((d: any) => d?.estado === "ok")
-      : [];
+    const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
 
-    const docsWarn = Array.isArray(documents)
-      ? documents.filter((d: any) => d?.estado !== "ok")
-      : [];
+    const text = `
+A la atención de la Administración Pública Española,
 
-    let score = 0;
+Yo, ${nombre}, manifiesto mi firme voluntad de regularizar mi situación administrativa en España y de integrarme plenamente en la sociedad.
 
-    if (cumple_5_meses === "yes") score += 40;
-    if (nie_pasaporte) score += 20;
-    if (docsOk.length >= 3) score += 25;
-    if (ciudad) score += 5;
-    if (fecha_llegada) score += 10;
+Quisiera expresar mi sincero agradecimiento a las instituciones del Estado español por las oportunidades que se están promoviendo para facilitar la regularización y la inclusión de personas en situación administrativa irregular. Estas iniciativas representan una vía real hacia la estabilidad, la dignidad y la participación activa en la vida social y económica del país.
 
-    let nivel = "ضعيف ❌";
-    if (score >= 75) nivel = "قوي ✅";
-    else if (score >= 50) nivel = "متوسط ⚠️";
+Mi objetivo es desarrollar un proyecto de vida honesto y responsable en España: acceder al empleo de forma legal, cotizar a la Seguridad Social, cumplir con todas las obligaciones fiscales y contribuir positivamente al crecimiento y bienestar de la sociedad española.
 
-    const acceptedText =
-      docsOk.length > 0
-        ? docsOk.map((d: any, i: number) => `${i + 1}. ${d.nombre} ✅`).join("\n")
-        : "ما كايناش وثائق مقبولة حالياً";
+Asimismo, me comprometo a continuar formándome, mejorar mis competencias profesionales y adaptarme plenamente a los valores y normas de convivencia, con el propósito de aportar valor a la comunidad que me ha abierto sus puertas.
 
-    const rejectedText =
-      docsWarn.length > 0
-        ? docsWarn.map((d: any, i: number) => `${i + 1}. ${d.nombre} ⚠️`).join("\n")
-        : "ما كايناش";
+Esta oportunidad de regularización supone para mí un punto de inflexión que permitirá transformar mi situación actual en un futuro estable, productivo y alineado con los principios de legalidad y responsabilidad.
 
-    const report = `
-📁 GestoriaCitaIA - Reporte Final
+Por todo lo expuesto, solicito respetuosamente que se tenga en consideración mi caso y se valore favorablemente mi proceso de regularización.
 
-👤 الاسم: ${nombre || "-"}
-📞 الهاتف: ${telefono || "-"}
-📍 المدينة: ${ciudad || "-"}
-🌍 الجنسية: ${nacionalidad || "-"}
-📅 تاريخ الدخول: ${fecha_llegada || "-"}
+Agradezco de antemano la atención prestada.
 
-📊 تقييم الملف: ${nivel}
-📈 النقطة: ${score}/100
+Atentamente,
 
-🪪 هوية:
-${nie_pasaporte ? "✅ متوفرة" : "❌ ناقصة"}
-
-📌 5 شهور:
-${cumple_5_meses === "yes" ? "✅ متوفرة" : "❌ غير مؤكدة"}
-
-📎 الوثائق المقبولة:
-${acceptedText}
-
-⚠️ وثائق تحتاج مراجعة:
-${rejectedText}
-
-📝 الخلاصة:
-${
-  score >= 75
-    ? "الملف باين قوي وعندو حظوظ مزيانة."
-    : score >= 50
-    ? "الملف متوسط، خاصنا نقويوه بوثائق أكثر."
-    : "الملف ضعيف حالياً، خاص نزيدو بروفات ووثائق."
-}
-
-شكراً على الثقة ديالك فـ GestoriaCitaIA
+${nombre}
 `;
 
-    res.setHeader("Content-Type", "text/plain; charset=utf-8");
-    return res.status(200).send(report.trim());
-  } catch (error: any) {
-    return res.status(500).send(
-      error?.message || "Server Error"
+    page.drawText(text, {
+      x: 50,
+      y: 780,
+      size: 11,
+      font,
+      lineHeight: 16,
+      maxWidth: 500,
+      color: rgb(0, 0, 0),
+    });
+
+    const pdfBytes = await pdfDoc.save();
+
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader(
+      "Content-Disposition",
+      "inline; filename=lettre_motivacion.pdf"
     );
+
+    return res.status(200).send(Buffer.from(pdfBytes));
+  } catch (error: any) {
+    return res.status(500).send("Error generating PDF");
   }
 }
