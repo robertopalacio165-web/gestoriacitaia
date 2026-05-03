@@ -1085,22 +1085,45 @@ const questions = [
     }
   };
 const handleSendWhatsApp = () => {
-  if (!phone || phone.trim().length < 6) {
-    alert("دخل رقم الهاتف صحيح");
-    return;
+ const handleSendWhatsApp = async () => {
+  try {
+    if (!phone || phone.trim().length < 6) {
+      alert("دخل رقم الهاتف صحيح");
+      return;
+    }
+
+    // 1. نطلب report من السيرفر
+    const res = await fetch("/api/generate-expediente-report", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        nombre: leadForm?.nombre,
+        telefono: phone,
+        ciudad: leadForm?.ciudad,
+        nacionalidad: leadForm?.nacionalidad,
+        fecha_llegada: leadForm?.fecha_llegada,
+       cumple_5_meses: leadForm?.cumple5Meses ? "yes" : "no",
+        documents: docs,
+      }),
+    });
+
+    const data = await res.json();
+
+    const cleanPhone = phone.trim().replace(/\s+/g, "");
+
+    // 2. فتح واتساب بالرسالة الجاهزة
+    const url = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(
+      data.report
+    )}`;
+
+    window.open(url, "_blank");
+  } catch (error) {
+    console.error("WhatsApp error:", error);
+    alert("وقع مشكل، حاول مرة أخرى");
   }
-
-  // تنظيف الرقم (نحيد المسافات)
-  const cleanPhone = phone.trim().replace(/\s+/g, "");
-
-  // الرسالة اللي غادي توصّل
-  const message = encodeURIComponent(
-    "سلام 👋\n\nهذا هو الملف ديالك ديال التسوية الجماعية 2026.\n\nغادي توصلك التفاصيل + PDF إن شاء الله.\n\nشكراً على الثقة ديالك فـ GestoriaCitaIA 🙏"
-  );
-
-  // فتح واتساب
-  const url = `https://wa.me/${cleanPhone}?text=${message}`;
-  window.open(url, "_blank");
+};
 };
   const startListening = async () => {
     if (!voiceSupported) {
@@ -1775,6 +1798,9 @@ ${finalVerdict}
 
     // 🔊 هنا محمد غادي يهضر بصوت حقيقي
     await speakFromAutomation(fullSpeech);
+setTimeout(() => {
+  handleSendWhatsApp();
+}, 1200);
 setAssistantText(fullSpeech);
   } catch (err) {
     console.error(err);
