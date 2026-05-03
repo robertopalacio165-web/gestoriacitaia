@@ -1092,55 +1092,74 @@ const handleSendWhatsApp = async () => {
       return;
     }
 
-    // 1. نصيفط البيانات باش نصاوب PDF
-    const res = await fetch("/api/generate-expediente-pdf", {
+    // 1. نجيب التقرير
+    const res = await fetch("/api/generate-expediente-report", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
         nombre: leadForm?.nombre,
-        nacionalidad: leadForm?.nacionalidad,
+        telefono: phone,
         ciudad: leadForm?.ciudad,
+        nacionalidad: leadForm?.nacionalidad,
+        fecha_llegada: leadForm?.fecha_llegada,
+        cumple_5_meses: cumple5Meses ? "yes" : "no",
+        documents: docs,
       }),
     });
 
     const data = await res.json();
 
-    // 2. نصاوب link وهمي (دابا مؤقت)
-    const pdfLink = "📄 PDF جاهز (غادي نطوروه من بعد)";
+    // 2. رابط PDF
+    const pdfUrl = `${window.location.origin}/api/generate-expediente-pdf?nombre=${encodeURIComponent(
+      leadForm?.nombre || ""
+    )}&nacionalidad=${encodeURIComponent(
+      leadForm?.nacionalidad || ""
+    )}&ciudad=${encodeURIComponent(
+      leadForm?.ciudad || ""
+    )}&fecha_llegada=${encodeURIComponent(
+      leadForm?.fecha_llegada || ""
+    )}`;
 
-    // 3. الرسالة الاحترافية
+    // 3. تنظيف الرقم
+    const cleanPhone = phone.trim().replace(/\s+/g, "");
+
+    // 4. رسالة واتساب احترافية
     const message = encodeURIComponent(`
-سلام ${leadForm?.nombre || ""} 👋
+👋 سلام ${leadForm?.nombre || ""}
 
-📊 هذا هو التقييم ديال الملف ديالك:
+📊 هذا تحليل الملف ديالك:
 
-${latestAgentMessage}
+${data.report}
 
-📄 هادي هي الوثيقة اللي غادي تبدل الملف ديالك وتخليه قوي:
-${pdfLink}
+━━━━━━━━━━━━━━━
 
-📌 نصيحتي:
-زيد هاد الوثيقة للملف ديالك باش تزيد الحظوظ ديالك فالتسوية الجماعية.
+📄 هادي هي الوثيقة المهمة (Motivación):
+${pdfUrl}
+
+⚠️ هاد الوثيقة مهمة بزاف وغادي تقوي الملف ديالك.
+ضيفها مع الدوسي ديالك.
+
+━━━━━━━━━━━━━━━
+
+🎁 إلا دخلتي 3 صحاب بهاد الكود ديالك:
+GH-2026
+
+غادي تربح شهر مجاني 🎉
+
+━━━━━━━━━━━━━━━
 
 🙏 شكراً على الثقة ديالك فـ GestoriaCitaIA
-
-🎁 إلى دخلتي 3 ديال الناس بهد الرابط ديالك، تقدر تربح شهر فابور.
 `);
-
-    // 4. تنظيف النمرة
-    const cleanPhone = phone.trim().replace(/\s+/g, "");
 
     // 5. فتح واتساب
     const url = `https://wa.me/${cleanPhone}?text=${message}`;
     window.open(url, "_blank");
-
   } catch (error) {
-    console.error(error);
+    console.error("WhatsApp error:", error);
     alert("وقع مشكل، حاول مرة أخرى");
   }
-};
 };
   const startListening = async () => {
     if (!voiceSupported) {
