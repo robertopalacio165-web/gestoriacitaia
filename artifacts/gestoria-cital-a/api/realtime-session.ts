@@ -198,33 +198,34 @@ export default async function handler(
         : buildMohamedInstructions();
 
     const voice =
-      assistant === "sara"
-        ? "marin"
-        : "alloy";
+  assistant === "sara"
+    ? "nova"
+    : "verse";
 
     const payload = {
       session: {
         type: "realtime",
         model: "gpt-realtime",
         instructions,
-        audio: {
-          input: {
-            turn_detection: {
-              type: "server_vad",
-              threshold: 0.85,
-              prefix_padding_ms: 500,
-              silence_duration_ms: 900,
-              create_response: true,
-              interrupt_response: false,
-            },
-            transcription: {
-              model: "gpt-4o-mini-transcribe",
-            },
-          },
-          output: {
-            voice,
-          },
-        },
+      audio: {
+  input: {
+    turn_detection: {
+      type: "server_vad",
+      threshold: 0.85,
+      prefix_padding_ms: 500,
+      silence_duration_ms: 900,
+      create_response: true,
+      interrupt_response: false,
+    },
+    transcription: {
+      model: "gpt-4o-mini-transcribe",
+    },
+  },
+  output: {
+    voice,
+    speed: 0.92
+  },
+},
       },
     };
 
