@@ -1167,69 +1167,77 @@ GestoriaCitaIA
           void maybeSendIntroToMohamed();
         }, 500);
       };
-      dc.onmessage = (event) => {
-        try {
-          const msg = JSON.parse(event.data);
-          const userTranscript =
-            msg?.transcript ||
-            msg?.item?.transcript ||
-            msg?.item?.content?.[0]?.transcript ||
-            "";
-          if (
-            (msg.type === "conversation.item.input_audio_transcription.completed" ||
-              msg.type === "input_audio_buffer.transcription.completed") &&
-            typeof userTranscript === "string" &&
-            userTranscript.trim()
-          ) {
-            const transcript = userTranscript.trim();
-            if (transcript !== lastUserTranscriptRef.current) {
-              lastUserTranscriptRef.current = transcript;
-              setLastUserTranscript(transcript);
-              pushUserMessage(transcript);
-              // 🧠 رد ذكي حسب الجواب
-const answer = transcript.toLowerCase();
+ dc.onmessage = (event) => {
+  try {
+    const msg = JSON.parse(event.data);
 
-if (answer.includes("نعم") || answer.includes("yes")) {
-  speakExactText("مزيان، هادي نقطة قوية فصالحك 👍");
-} else if (answer.includes("لا") || answer.includes("no")) {
-  speakExactText("ماشي مشكل، كاين حلول أخرى نقدر نعوضو بها 👍");
-}
-              handleQuestionFlow();
-            }
-   
+    const userTranscript =
+      msg?.transcript ||
+      msg?.item?.transcript ||
+      msg?.item?.content?.[0]?.transcript ||
+      "";
 
-          
-          if (
-            msg.type === "response.output_text.delta" &&
-            typeof msg.delta === "string"
-          ) {
-            assistantTextBufferRef.current += msg.delta;
-          }
-          if (
-            msg.type === "response.output_text.done" &&
-            typeof msg.text === "string" &&
-            msg.text.trim()
-          ) {
-            assistantTextBufferRef.current = msg.text.trim();
-          }
-          if (msg.type === "response.created") {
-            assistantBusyRef.current = true;
-            setWaitingMohamed(true);
-          }
-          if (msg.type === "response.done") {
-            assistantBusyRef.current = false;
-            finalizeAssistantBuffer();
-            setWaitingMohamed(false);
-            pendingAutomationPromptRef.current = null;
-            setPendingAutomationPrompt("");
-            setTimeout(() => {
-              void flushPendingAutomation();
+    if (
+      (msg.type === "conversation.item.input_audio_transcription.completed" ||
+        msg.type === "input_audio_buffer.transcription.completed") &&
+      typeof userTranscript === "string" &&
+      userTranscript.trim()
+    ) {
+      const transcript = userTranscript.trim();
 
-          
-        } catch (err) {
-          console.error("Realtime event parse error:", err);
+      if (transcript !== lastUserTranscriptRef.current) {
+        lastUserTranscriptRef.current = transcript;
+        setLastUserTranscript(transcript);
+        pushUserMessage(transcript);
+
+        const answer = transcript.toLowerCase();
+
+        if (answer.includes("نعم") || answer.includes("yes")) {
+          speakExactText("مزيان، هادي نقطة قوية فصالحك 👍");
+        } else if (answer.includes("لا") || answer.includes("no")) {
+          speakExactText("ماشي مشكل، كاين حلول أخرى 👍");
         }
-      };
+
+        handleQuestionFlow();
+      }
+    }
+
+    if (
+      msg.type === "response.output_text.delta" &&
+      typeof msg.delta === "string"
+    ) {
+      assistantTextBufferRef.current += msg.delta;
+    }
+
+    if (
+      msg.type === "response.output_text.done" &&
+      typeof msg.text === "string" &&
+      msg.text.trim()
+    ) {
+      assistantTextBufferRef.current = msg.text.trim();
+    }
+
+    if (msg.type === "response.created") {
+      assistantBusyRef.current = true;
+      setWaitingMohamed(true);
+    }
+
+    if (msg.type === "response.done") {
+      assistantBusyRef.current = false;
+      finalizeAssistantBuffer();
+      setWaitingMohamed(false);
+      pendingAutomationPromptRef.current = null;
+      setPendingAutomationPrompt("");
+
+      setTimeout(() => {
+        void flushPendingAutomation();
+      }, 150);
+    }
+
+  } catch (err) {
+    console.error("Realtime event parse error:", err);
+  }
+};
       dc.onerror = (err) => {
         console.error("Realtime data channel error:", err);
       };
