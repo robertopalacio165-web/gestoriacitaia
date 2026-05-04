@@ -588,7 +588,10 @@ const handleQuestionFlow = () => {
     setQuestionIndex((prev) => prev + 1);
     return;
   }
-
+// 💰 وقف الأسئلة + فتح Stripe
+setQuestionsDone(true);
+console.log("💰 SHOW STRIPE HERE");
+return;
   if (questionIndex === 18) {
     setQuestionsDone(true);
     setQuestionIndex(19);
@@ -596,7 +599,56 @@ const handleQuestionFlow = () => {
     console.log("💰 هنا خاص الدفع");
     return;
   }
+const handleQuestionFlow = () => {
 
+  // 🟢 الأسئلة قبل الدفع (0 حتى 3)
+  if (questionIndex < 3) {
+    setQuestionIndex((prev) => prev + 1);
+    return;
+  }
+
+  // 💰 هنا توقف وطلب الدفع
+  if (questionIndex === 3) {
+
+    speakExactText(`
+مزيان، من خلال الأجوبة ديالك بان ليا بللي الملف ديالك غادي يكون مقبول إن شاء الله ✅
+
+ولكن باش نعطيك التحليل الدقيق ونوجد ليك الملف ديالك كامل، ونصيفطو ليك فـ WhatsApp مع واحد الوثيقة مهمة بزاف اللي غادي تقوي الملف ديالك وتخليه يكون مقبول بنسبة كبيرة،
+
+خاصني نكمل معاك باقي الأسئلة ونراجع الحالة ديالك مزيان.
+
+هاد الخدمة فيها:
+✔️ تحليل كامل للملف  
+✔️ التحقق من الوثائق ديالك  
+✔️ وثيقة رسمية تزيدها فالملف ديالك  
+
+الثمن غير 12€ 💶
+
+ورك على الزر ديال الأداء، ونكملو مباشرة معاك.
+    `);
+
+    setQuestionsDone(true);
+
+    // 🔥 هنا خرج button ديال Stripe
+    console.log("💰 SHOW STRIPE BUTTON");
+
+    return;
+  }
+
+  // 🔵 من بعد الدفع (تكمل)
+  if (questionIndex >= 4 && questionIndex < questions.length) {
+    setQuestionIndex((prev) => prev + 1);
+    return;
+  }
+
+  // ✅ النهاية
+  setClientQuestionsDone(true);
+  setDocumentsUnlocked(true);
+  setConfirmUnlocked(true);
+  setStep("upload");
+
+};
+  
   // 4 أسئلة ديال الكليان
   if (questionsDone && clientQuestionIndex < 3) {
     setClientQuestionIndex((prev) => prev + 1);
@@ -1137,6 +1189,14 @@ GestoriaCitaIA
               lastUserTranscriptRef.current = transcript;
               setLastUserTranscript(transcript);
               pushUserMessage(transcript);
+              // 🧠 رد ذكي حسب الجواب
+const answer = transcript.toLowerCase();
+
+if (answer.includes("نعم") || answer.includes("yes")) {
+  speakExactText("مزيان، هادي نقطة قوية فصالحك 👍");
+} else if (answer.includes("لا") || answer.includes("no")) {
+  speakExactText("ماشي مشكل، كاين حلول أخرى نقدر نعوضو بها 👍");
+}
               handleQuestionFlow();
             }
    
@@ -1362,6 +1422,11 @@ lastUserTranscriptRef.current = "";
       });
       return;
     }
+const savedIndex = localStorage.getItem("questionIndex");
+if (savedIndex) {
+  setQuestionIndex(parseInt(savedIndex));
+}
+    
     if (!currentUserId) {
       toast({
         title: "Sesión no detectada",
