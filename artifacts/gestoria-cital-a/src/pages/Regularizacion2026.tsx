@@ -113,7 +113,6 @@ export default function Regularizacion2026() {
   const [currentStep, setCurrentStep] = useState(0);
   const [lastUserTranscript, setLastUserTranscript] = useState("");
   const [waitingMohamed, setWaitingMohamed] = useState(false);
-  const [generalDocsEnabled, setGeneralDocsEnabled] = useState(false);
   const [savingForm, setSavingForm] = useState(false);
   const [waitingForDocument, setWaitingForDocument] = useState(false);
   const [documentsUnlocked, setDocumentsUnlocked] = useState(false);
@@ -669,20 +668,6 @@ const buildDocSpeech = (
     if (text === "..." || text === "…") return;
     if (text === lastAssistantTextRef.current) return;
     pushAgentMessage(text);
-
-    
-   if (
-  lower.includes("صيفط") ||
-  lower.includes("جميع الوثائق") ||
-  lower.includes("رفع الوثائق") ||
-  lower.includes("نقدروا نراجعو الوثائق") ||
-  lower.includes("الملف واجد")
-) {
-  setDocumentsUnlocked(true);
-}
-   
-  
-
    
   };
 
@@ -1121,19 +1106,18 @@ GestoriaCitaIA
               setLastUserTranscript(transcript);
               pushUserMessage(transcript);
             }
-            if (questionsDone && clientQCount < 4) {
-              if (questionsDone && clientQCount === 3) {
-  setTimeout(() => {
-    setDocumentsUnlocked(true);
-    setConfirmUnlocked(true);
-    setStep("upload");
-  }, 500);
-}
+         if (questionsDone && clientQCount < 4) {
   setClientQCount((prev) => {
     const next = prev + 1;
 
     if (next === 4) {
       setClientQuestionsDone(true);
+
+      setTimeout(() => {
+        setDocumentsUnlocked(true);
+        setConfirmUnlocked(true);
+        setStep("upload");
+      }, 300);
     }
 
     return next;
@@ -1874,7 +1858,7 @@ const fullSpeech = `
               <div className="border-t border-white/10 p-3">
  <button
   onClick={handleGeneralUpload}
- disabled={!clientQuestionsDone}
+disabled={!documentsUnlocked}
   className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary hover:bg-primary/90 disabled:opacity-60 text-primary-foreground font-bold text-xs px-4 py-3 transition-colors"
   type="button"
       
@@ -1945,7 +1929,7 @@ const fullSpeech = `
 </div>
  <button
   onClick={handleSendWhatsApp}
-disabled={!clientQuestionsDone}
+disabled={!confirmUnlocked}
   className={`w-full flex items-center justify-center gap-3 rounded-2xl px-5 py-4 text-white font-bold text-base shadow-lg transition-all duration-300 
   ${
     confirmUnlocked
