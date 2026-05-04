@@ -1204,7 +1204,7 @@ if (answer.includes("نعم") || answer.includes("yes")) {
     return next;
   });
 
-          }
+          
           if (
             msg.type === "response.output_text.delta" &&
             typeof msg.delta === "string"
