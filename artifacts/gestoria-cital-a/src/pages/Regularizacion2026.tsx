@@ -582,15 +582,7 @@ if (rawStep) {
   const progressOk = progressCards.filter((item) => item.estado === "ok").length;
   const progressTotal = progressCards.length;
   const allReady = finalFileStatus === "ok";
-const handleQuestionFlow = () => {
 
-  if (questionIndex === 18) {
-    setQuestionsDone(true);
-    setQuestionIndex(19);
-
-    console.log("💰 هنا خاص الدفع");
-    return;
-  }
 
 const handleQuestionFlow = () => {
 
