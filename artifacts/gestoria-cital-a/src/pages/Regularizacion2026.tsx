@@ -163,7 +163,7 @@ const [clientQuestionIndex, setClientQuestionIndex] = useState(0);
 
   const currentProcedure = getProcedureByKey(selectedSituacion) || null;
   if (!currentProcedure) return null;
-const MOHAMED_SYSTEM_PROMPT = buildMohamedInstructions();
+
 const voiceTexts = useMemo(() => ({
   initialVoice: "",
   passportVerified: "",
@@ -583,15 +583,7 @@ if (rawStep) {
   const progressTotal = progressCards.length;
   const allReady = finalFileStatus === "ok";
 const handleQuestionFlow = () => {
-  // 19 سؤال ديال محمد
-  if (questionIndex < 18) {
-    setQuestionIndex((prev) => prev + 1);
-    return;
-  }
-// 💰 وقف الأسئلة + فتح Stripe
-setQuestionsDone(true);
-console.log("💰 SHOW STRIPE HERE");
-return;
+
   if (questionIndex === 18) {
     setQuestionsDone(true);
     setQuestionIndex(19);
@@ -600,7 +592,7 @@ return;
     return;
   }
 
- const handleQuestionFlow = () => {
+ 
 
   // 🟢 قبل الدفع (0 → 3)
   if (questionIndex < 3) {
@@ -951,7 +943,7 @@ const questions = [
   "واش عندك شي سؤال؟"
 ];
 
-  const maybeSendIntroToMohamed = async () => {
+ const maybeSendIntroToMohamed = async () => {
   if (!realtimeDcRef.current) return;
 
   realtimeDcRef.current.send(
@@ -959,7 +951,14 @@ const questions = [
       type: "response.create",
       response: {
         modalities: ["audio", "text"],
-        instructions: "start"
+        instructions: `
+السلام عليكم، أنا محمد مرحبا بك فـ GestoriaCitaIA.
+
+جاوبني غير بآه ولا لا.
+
+السؤال الأول:
+واش دخلتي لإسبانيا قبل من واحد يناير 2026؟
+        `
       },
     })
   );
