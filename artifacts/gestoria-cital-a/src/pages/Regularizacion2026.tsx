@@ -124,8 +124,9 @@ export default function Regularizacion2026() {
   const [phone, setPhone] = useState("");
   const [questionsDone, setQuestionsDone] = useState(false);
 const [clientQuestionsDone, setClientQuestionsDone] = useState(false);
-  
-const [clientQCount, setClientQCount] = useState(0);
+  const [questionIndex, setQuestionIndex] = useState(0);
+const [clientQuestionIndex, setClientQuestionIndex] = useState(0);
+
   const [leadForm, setLeadForm] = useState<LeadFormState>({
     nombre: "",
     telefono: "",
@@ -581,7 +582,37 @@ if (rawStep) {
   const progressOk = progressCards.filter((item) => item.estado === "ok").length;
   const progressTotal = progressCards.length;
   const allReady = finalFileStatus === "ok";
+const handleQuestionFlow = () => {
+  // 19 سؤال ديال محمد
+  if (questionIndex < 18) {
+    setQuestionIndex((prev) => prev + 1);
+ } else if (questionIndex === 18) {
+  setQuestionsDone(true);
+  setQuestionIndex(19);
 
+  // 🔥 هنا دير Stripe popup
+  console.log("💰 هنا خاص الدفع");
+}
+    setQuestionsDone(true);
+    setQuestionIndex(19);
+  }
+
+  // 4 أسئلة ديال الكليان
+  if (questionsDone && clientQuestionIndex < 3) {
+    setClientQuestionIndex((prev) => prev + 1);
+  }
+
+  // النهاية
+  if (questionsDone && clientQuestionIndex === 3) {
+    setClientQuestionsDone(true);
+
+    setDocumentsUnlocked(true);
+    setConfirmUnlocked(true);
+    setStep("upload");
+
+    console.log("✅ FLOW كامل تسالا");
+  }
+};
   const updateLeadForm = (field: keyof LeadFormState, value: string) => {
     setLeadForm((prev) => ({ ...prev, [field]: value }));
   };
@@ -1105,20 +1136,9 @@ GestoriaCitaIA
               lastUserTranscriptRef.current = transcript;
               setLastUserTranscript(transcript);
               pushUserMessage(transcript);
+              handleQuestionFlow();
             }
-         if (questionsDone && clientQCount < 4) {
-  setClientQCount((prev) => {
-    const next = prev + 1;
-
-    if (next === 4) {
-      setClientQuestionsDone(true);
-
-      setTimeout(() => {
-        setDocumentsUnlocked(true);
-        setConfirmUnlocked(true);
-        setStep("upload");
-      }, 300);
-    }
+   
 
     return next;
   });
