@@ -592,69 +592,53 @@ const handleQuestionFlow = () => {
     return;
   }
 
- 
+const handleQuestionFlow = () => {
 
-  // 🟢 قبل الدفع (0 → 3)
-  if (questionIndex < 3) {
+  // 🟢 الأسئلة الأربعة (0 → 3)
+  if (questionIndex < 4) {
     setQuestionIndex((prev) => prev + 1);
     return;
   }
 
-  // 💰 فالسؤال الرابع → الدفع
-  if (questionIndex === 3) {
-
+  // 💰 من بعد السؤال الرابع → الدفع
+  if (questionIndex === 4) {
     speakExactText(`
 مزيان، من خلال الأجوبة ديالك بان ليا بللي الملف ديالك غادي يكون مقبول إن شاء الله ✅
 
-ولكن باش نعطيك التحليل الدقيق ونوجد ليك الملف ديالك كامل، ونصيفطو ليك فـ WhatsApp مع واحد الوثيقة مهمة بزاف اللي غادي تقوي الملف ديالك،
+باش نعطيك تحليل دقيق ونوجد ليك الملف كامل:
 
-خاصني نكمل معاك باقي الأسئلة.
-
-هاد الخدمة فيها:
 ✔️ تحليل كامل  
 ✔️ التحقق من الوثائق  
-✔️ وثيقة رسمية  
+✔️ وثيقة PDF  
 
 الثمن غير 12€ 💶
 
-ورك على الزر ديال الأداء ونكملو مباشرة.
+ورك على زر الأداء ونكملو مباشرة.
     `);
 
     setQuestionsDone(true);
     console.log("💰 SHOW STRIPE BUTTON");
-
     return;
   }
 
   // 🔵 من بعد الدفع
-  if (questionIndex >= 4 && questionIndex < questions.length) {
-    setQuestionIndex((prev) => prev + 1);
-    return;
-  }
-
-  // ✅ النهاية
-  setClientQuestionsDone(true);
-  setDocumentsUnlocked(true);
-  setConfirmUnlocked(true);
-  setStep("upload");
-}; 
-  // 4 أسئلة ديال الكليان
   if (questionsDone && clientQuestionIndex < 3) {
     setClientQuestionIndex((prev) => prev + 1);
     return;
   }
 
-  // النهاية
+  // ✅ النهاية
   if (questionsDone && clientQuestionIndex === 3) {
     setClientQuestionsDone(true);
-
     setDocumentsUnlocked(true);
     setConfirmUnlocked(true);
     setStep("upload");
 
     console.log("✅ FLOW كامل تسالا");
+    return;
   }
 };
+
   const updateLeadForm = (field: keyof LeadFormState, value: string) => {
     setLeadForm((prev) => ({ ...prev, [field]: value }));
   };
