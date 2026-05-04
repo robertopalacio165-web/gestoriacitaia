@@ -586,20 +586,21 @@ const handleQuestionFlow = () => {
   // 19 سؤال ديال محمد
   if (questionIndex < 18) {
     setQuestionIndex((prev) => prev + 1);
- } else if (questionIndex === 18) {
-  setQuestionsDone(true);
-  setQuestionIndex(19);
+    return;
+  }
 
-  // 🔥 هنا دير Stripe popup
-  console.log("💰 هنا خاص الدفع");
-}
+  if (questionIndex === 18) {
     setQuestionsDone(true);
     setQuestionIndex(19);
+
+    console.log("💰 هنا خاص الدفع");
+    return;
   }
 
   // 4 أسئلة ديال الكليان
   if (questionsDone && clientQuestionIndex < 3) {
     setClientQuestionIndex((prev) => prev + 1);
+    return;
   }
 
   // النهاية
