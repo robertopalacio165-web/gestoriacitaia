@@ -599,43 +599,42 @@ return;
     console.log("💰 هنا خاص الدفع");
     return;
   }
-const handleQuestionFlow = () => {
 
-  // 🟢 الأسئلة قبل الدفع (0 حتى 3)
+ const handleQuestionFlow = () => {
+
+  // 🟢 قبل الدفع (0 → 3)
   if (questionIndex < 3) {
     setQuestionIndex((prev) => prev + 1);
     return;
   }
 
-  // 💰 هنا توقف وطلب الدفع
+  // 💰 فالسؤال الرابع → الدفع
   if (questionIndex === 3) {
 
     speakExactText(`
 مزيان، من خلال الأجوبة ديالك بان ليا بللي الملف ديالك غادي يكون مقبول إن شاء الله ✅
 
-ولكن باش نعطيك التحليل الدقيق ونوجد ليك الملف ديالك كامل، ونصيفطو ليك فـ WhatsApp مع واحد الوثيقة مهمة بزاف اللي غادي تقوي الملف ديالك وتخليه يكون مقبول بنسبة كبيرة،
+ولكن باش نعطيك التحليل الدقيق ونوجد ليك الملف ديالك كامل، ونصيفطو ليك فـ WhatsApp مع واحد الوثيقة مهمة بزاف اللي غادي تقوي الملف ديالك،
 
-خاصني نكمل معاك باقي الأسئلة ونراجع الحالة ديالك مزيان.
+خاصني نكمل معاك باقي الأسئلة.
 
 هاد الخدمة فيها:
-✔️ تحليل كامل للملف  
-✔️ التحقق من الوثائق ديالك  
-✔️ وثيقة رسمية تزيدها فالملف ديالك  
+✔️ تحليل كامل  
+✔️ التحقق من الوثائق  
+✔️ وثيقة رسمية  
 
 الثمن غير 12€ 💶
 
-ورك على الزر ديال الأداء، ونكملو مباشرة معاك.
+ورك على الزر ديال الأداء ونكملو مباشرة.
     `);
 
     setQuestionsDone(true);
-
-    // 🔥 هنا خرج button ديال Stripe
     console.log("💰 SHOW STRIPE BUTTON");
 
     return;
   }
 
-  // 🔵 من بعد الدفع (تكمل)
+  // 🔵 من بعد الدفع
   if (questionIndex >= 4 && questionIndex < questions.length) {
     setQuestionIndex((prev) => prev + 1);
     return;
@@ -646,9 +645,7 @@ const handleQuestionFlow = () => {
   setDocumentsUnlocked(true);
   setConfirmUnlocked(true);
   setStep("upload");
-
-};
-  
+}; 
   // 4 أسئلة ديال الكليان
   if (questionsDone && clientQuestionIndex < 3) {
     setClientQuestionIndex((prev) => prev + 1);
@@ -1200,9 +1197,6 @@ if (answer.includes("نعم") || answer.includes("yes")) {
               handleQuestionFlow();
             }
    
-
-    return next;
-  });
 
           
           if (
