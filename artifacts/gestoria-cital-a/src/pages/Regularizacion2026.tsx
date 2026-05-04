@@ -1224,7 +1224,7 @@ if (answer.includes("نعم") || answer.includes("yes")) {
             setPendingAutomationPrompt("");
             setTimeout(() => {
               void flushPendingAutomation();
-            }, 150);
+
           }
         } catch (err) {
           console.error("Realtime event parse error:", err);
