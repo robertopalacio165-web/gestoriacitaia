@@ -123,7 +123,10 @@ export default function Regularizacion2026() {
   const [confirmUnlocked, setConfirmUnlocked] = useState(false);
   const [pendingAutomationPrompt, setPendingAutomationPrompt] = useState("");
   const [phone, setPhone] = useState("");
-
+  const [questionsDone, setQuestionsDone] = useState(false);
+const [clientQuestionsDone, setClientQuestionsDone] = useState(false);
+  
+const [clientQCount, setClientQCount] = useState(0);
   const [leadForm, setLeadForm] = useState<LeadFormState>({
     nombre: "",
     telefono: "",
@@ -666,25 +669,8 @@ const buildDocSpeech = (
     if (text === "..." || text === "…") return;
     if (text === lastAssistantTextRef.current) return;
     pushAgentMessage(text);
-    const lower = text.toLowerCase();
-    if (
-  lower.includes("زر الوثائق") ||
-  lower.includes("صيفط") ||
-  lower.includes("رفع الوثائق") ||
-  lower.includes("subir documentos")
-) {
-  setGeneralDocsEnabled(true);
-}
 
-    if (
-  lower.includes("الملف ديالك واجد") ||
-  lower.includes("مراجع") ||
-  lower.includes("قوي") ||
-  lower.includes("ضعيف") ||
-  lower.includes("normal")
-) {
-  setConfirmUnlocked(true);
-}
+    
    if (
   lower.includes("صيفط") ||
   lower.includes("جميع الوثائق") ||
@@ -695,18 +681,8 @@ const buildDocSpeech = (
   setDocumentsUnlocked(true);
 }
    
-    if (
-  lower.includes("السؤال الرابع") ||
-  lower.includes("جاوبتي على 4") ||
-  lower.includes("كملنا الأسئلة")
-) {
-if (text.includes("السؤال الرابع")) {
-  setDocumentsUnlocked(true);
-  setStep("upload");
-}
-  setStep("upload");
-  setDocumentsUnlocked(true);
-}
+  
+
    
   };
 
@@ -1145,6 +1121,24 @@ GestoriaCitaIA
               setLastUserTranscript(transcript);
               pushUserMessage(transcript);
             }
+            if (questionsDone && clientQCount < 4) {
+              if (questionsDone && clientQCount === 3) {
+  setTimeout(() => {
+    setDocumentsUnlocked(true);
+    setConfirmUnlocked(true);
+    setStep("upload");
+  }, 500);
+}
+  setClientQCount((prev) => {
+    const next = prev + 1;
+
+    if (next === 4) {
+      setClientQuestionsDone(true);
+    }
+
+    return next;
+  });
+}
           }
           if (
             msg.type === "response.output_text.delta" &&
@@ -1880,7 +1874,7 @@ const fullSpeech = `
               <div className="border-t border-white/10 p-3">
  <button
   onClick={handleGeneralUpload}
-  disabled={!documentsUnlocked}
+ disabled={!clientQuestionsDone}
   className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary hover:bg-primary/90 disabled:opacity-60 text-primary-foreground font-bold text-xs px-4 py-3 transition-colors"
   type="button"
       
@@ -1951,7 +1945,7 @@ const fullSpeech = `
 </div>
  <button
   onClick={handleSendWhatsApp}
-  disabled={!confirmUnlocked}
+disabled={!clientQuestionsDone}
   className={`w-full flex items-center justify-center gap-3 rounded-2xl px-5 py-4 text-white font-bold text-base shadow-lg transition-all duration-300 
   ${
     confirmUnlocked
