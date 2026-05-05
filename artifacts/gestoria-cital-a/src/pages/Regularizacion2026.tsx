@@ -77,14 +77,7 @@ function buildInitialDocs(procedureKey: string): StoredDocItem[] {
     storagePath: "",
   }));
 }
-const handlePayment = () => {
-  console.log("💳 PAYMENT CLICKED");
 
-  // مؤقتاً باش ما يطيحش السيستيم
-  alert("الدفع غادي يدار هنا");
-
-  // من بعد تقدر تربط Stripe هنا
-};
 function normalizeDocType(value?: string) {
   return (value || "").trim().toLowerCase();
 }
@@ -106,21 +99,7 @@ function slugifyFileName(name: string) {
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/[^a-zA-Z0-9._-]/g, "_");
 }
-const MOHAMED_SYSTEM_PROMPT = `
-أنت محمد من GestoriaCitaIA.
 
-هضر غير بالدارجة المغربية.
-سول غير سؤال واحد فكل مرة.
-ما تدوزش للسؤال التالي حتى يجاوب المستخدم.
-
-منين توصل للسؤال الرابع:
-وقف ومتسول حتى سؤال آخر.
-
-قول بالضبط:
-"باش نكمل معاك ونحلل الملف ديالك مزيان خاصك تخلص 12 أورو. ورك على زر الأداء."
-
-ومن بعد سكت حتى يخلص.
-`;
 export default function Regularizacion2026() {
   const [selectedSituacion] = useState("regularizacion_2026_laboral");
   const [muted, setMuted] = useState(false);
@@ -147,7 +126,6 @@ export default function Regularizacion2026() {
 const [clientQuestionsDone, setClientQuestionsDone] = useState(false);
   const [questionIndex, setQuestionIndex] = useState(0);
 const [clientQuestionIndex, setClientQuestionIndex] = useState(0);
-  const [showPayment, setShowPayment] = useState(false);
 
   const [leadForm, setLeadForm] = useState<LeadFormState>({
     nombre: "",
@@ -607,12 +585,15 @@ if (rawStep) {
 
 
 const handleQuestionFlow = () => {
-  console.log("📊 questionIndex:", questionIndex);
 
-  // 💰 السؤال الرابع
-  if (questionIndex === 3 && !questionsDone) {
-    console.log("💰 SHOW PAYMENT");
+  // 🟢 الأسئلة الأربعة (0 → 3)
+  if (questionIndex < 4) {
+    setQuestionIndex((prev) => prev + 1);
+    return;
+  }
 
+  // 💰 من بعد السؤال الرابع → الدفع
+  if (questionIndex === 4) {
     speakExactText(`
 مزيان، من خلال الأجوبة ديالك بان ليا بللي الملف ديالك غادي يكون مقبول إن شاء الله ✅
 
@@ -628,13 +609,7 @@ const handleQuestionFlow = () => {
     `);
 
     setQuestionsDone(true);
-    setShowPayment(true);
-    return;
-  }
-
-  // 🟢 الأسئلة
-  if (questionIndex < 3) {
-    setQuestionIndex((prev) => prev + 1);
+    console.log("💰 SHOW STRIPE BUTTON");
     return;
   }
 
@@ -1197,8 +1172,9 @@ GestoriaCitaIA
         } else if (answer.includes("لا") || answer.includes("no")) {
           speakExactText("ماشي مشكل، كاين حلول أخرى 👍");
         }
-handleQuestionFlow();
-  }
+
+        handleQuestionFlow();
+      }
     }
 
     if (
@@ -1221,21 +1197,21 @@ handleQuestionFlow();
       setWaitingMohamed(true);
     }
 
-  if (msg.type === "response.done") {
-  assistantBusyRef.current = false;
-  finalizeAssistantBuffer();
-  setWaitingMohamed(false);
-  pendingAutomationPromptRef.current = null;
-  setPendingAutomationPrompt("");
+    if (msg.type === "response.done") {
+      assistantBusyRef.current = false;
+      finalizeAssistantBuffer();
+      setWaitingMohamed(false);
+      pendingAutomationPromptRef.current = null;
+      setPendingAutomationPrompt("");
 
-  setTimeout(() => {
-    void flushPendingAutomation();
-  }, 150);
-} 
+      setTimeout(() => {
+        void flushPendingAutomation();
+      }, 150);
+    }
 
-} catch (err) {
-  console.error("Realtime event parse error:", err);
-}  
+  } catch (err) {
+    console.error("Realtime event parse error:", err);
+  }
 };
       dc.onerror = (err) => {
         console.error("Realtime data channel error:", err);
@@ -1360,84 +1336,108 @@ lastUserTranscriptRef.current = "";
           response: { modalities: ["audio", "text"] },
         }));
       };
-dc.onmessage = (event) => {
-  try {
-    const msg = JSON.parse(event.data);
 
-    const userTranscript =
-      msg?.transcript ||
-      msg?.item?.transcript ||
-      msg?.item?.content?.[0]?.transcript ||
-      "";
+      dc.onmessage = (event) => {
+        try {
+          const msg = JSON.parse(event.data);
+          if (msg.type === "response.done") {
+            console.log("✅ Respuesta completada - Cerrando en 2s");
+            setTimeout(() => {
+              dc.close();
+              pc.close();
+            }, 2000);
+          }
+        } catch (e) {}
+      };
 
-    // 🟢 USER SPEECH
-    if (
-      (msg.type === "conversation.item.input_audio_transcription.completed" ||
-        msg.type === "input_audio_buffer.transcription.completed") &&
-      typeof userTranscript === "string" &&
-      userTranscript.trim()
-    ) {
-      const transcript = userTranscript.trim();
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+      
+      const sdpRes = await fetch("https://api.openai.com/v1/realtime/calls", {
+        method: "POST",
+        body: offer.sdp,
+        headers: {
+          Authorization: `Bearer ${ephemeralKey}`,
+          "Content-Type": "application/sdp",
+        },
+      });
 
-      if (transcript !== lastUserTranscriptRef.current) {
-        lastUserTranscriptRef.current = transcript;
-        setLastUserTranscript(transcript);
-        pushUserMessage(transcript);
+      if (!sdpRes.ok) throw new Error("Error en SDP");
 
-        const answer = transcript.toLowerCase();
+      const answerSdp = await sdpRes.text();
+      await pc.setRemoteDescription({ type: "answer", sdp: answerSdp });
+      
+      console.log("✅ Conexión WebRTC establecida");
 
-        if (answer.includes("نعم") || answer.includes("yes")) {
-          speakExactText("مزيان، هادي نقطة قوية فصالحك 👍");
-        } else if (answer.includes("لا") || answer.includes("no")) {
-          speakExactText("ماشي مشكل، كاين حلول أخرى 👍");
-        }
-
-        handleQuestionFlow();
-      }
+    } catch (error) {
+      console.error("❌ Error en speakFromAutomation:", error);
+      pushAgentMessage(instruction);
     }
+  };
 
-    // 🟡 STREAM TEXT
-    if (
-      msg.type === "response.output_text.delta" &&
-      typeof msg.delta === "string"
-    ) {
-      assistantTextBufferRef.current += msg.delta;
+  useEffect(() => {
+    if (remoteAudioRef.current) {
+      remoteAudioRef.current.volume = muted ? 0 : 1;
+      remoteAudioRef.current.muted = false;
     }
+  }, [muted]);
 
-    // 🟡 FINAL TEXT
-    if (
-      msg.type === "response.output_text.done" &&
-      typeof msg.text === "string" &&
-      msg.text.trim()
-    ) {
-      assistantTextBufferRef.current = msg.text.trim();
+  const handleSaveLeadForm = async () => {
+    if (!leadFormReady) {
+      toast({
+        title: ui.missingTitle,
+        description: ui.missingDesc,
+        variant: "destructive",
+      });
+      return;
     }
-
-    // 🔵 START
-    if (msg.type === "response.created") {
-      assistantBusyRef.current = true;
-      setWaitingMohamed(true);
+    if (!authChecked) {
+      toast({
+        title: "Espera",
+        description: "Estamos comprobando tu sesión.",
+        variant: "destructive",
+      });
+      return;
     }
-
-    // 🔴 END
-    if (msg.type === "response.done") {
-      assistantBusyRef.current = false;
-      finalizeAssistantBuffer();
-      setWaitingMohamed(false);
-      pendingAutomationPromptRef.current = null;
-      setPendingAutomationPrompt("");
-
-      setTimeout(() => {
-        void flushPendingAutomation();
-      }, 150);
-    }
-  } catch (err) {
-    console.error("Realtime event parse error:", err);
-  }
-};
-   
-
+const savedIndex = localStorage.getItem("questionIndex");
+if (savedIndex) {
+  setQuestionIndex(parseInt(savedIndex));
+}
     
+    if (!currentUserId) {
+      toast({
+        title: "Sesión no detectada",
+        description: "Debes entrar con Google antes de confirmar.",
+        variant: "destructive",
+      });
+      pushAgentMessage("عافاك دخل بحسابك أولاً، ومن بعد عاود دير تأكيد باش نكملو.");
+      return;
+    }
+    try {
+      setSavingForm(true);
+      await saveFullStateToSupabase();
+      setLeadSaved(true);
+      setFormConfirmed(true);
+      const savedMessage = buildSavedFormSpeech();
+      toast({
+        title: ui.saveLeadTitle,
+        description: "Se han guardado los datos correctamente.",
+      });
+      // ✅ CAMBIO #2: setTimeout para asegurar que Mohamed hable después de guardar
+      setTimeout(() => {
+        void speakExactText(savedMessage);
+      }, 500);
+    } catch (error: any) {
+      console.error("Error guardando formulario Mohamed:", error);
+      toast({
+        title: "Error guardando formulario",
+        description: error?.message || "No se pudo guardar en Supabase",
+        variant: "destructive",
+      });
+      pushAgentMessage("وقع مشكل فحفظ المعطيات. عافاك عاود دير تأكيد مرة أخرى.");
+    } finally {
+      setSavingForm(false);
+    }
   };
 
   const getBestDocMatch = (
@@ -1942,15 +1942,6 @@ disabled={!documentsUnlocked}
     </>
   )}
 </button>
-
-   {showPayment && (
-  <button
-    onClick={handlePayment}
-    className="w-full mt-3 bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-xl"
-  >
-    💳 خلص دابا 12€
-  </button>
-)}             
 
 {!documentsUnlocked && (
   <p className="mt-2 text-[10px] text-amber-300 text-center">
