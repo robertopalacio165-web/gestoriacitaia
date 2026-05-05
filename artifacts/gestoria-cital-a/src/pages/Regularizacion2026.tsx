@@ -101,6 +101,27 @@ function slugifyFileName(name: string) {
 }
 
 export default function Regularizacion2026() {
+
+  // ✅ الرجوع من Stripe وكمل السؤال 5
+  useEffect(() => {
+    const paid = localStorage.getItem("paid");
+
+    if (paid === "true") {
+      console.log("✅ CLIENT PAID");
+
+      localStorage.removeItem("paid");
+
+      setShowStripe(false);
+
+      // يرجع للسؤال 5
+      setQuestionIndex(4);
+
+      setTimeout(() => {
+        speakExactText("مزيان، توصلنا بالأداء ديالك. دابا نكملو. السؤال الخامس: واش عندك tarjeta sanitaria؟");
+      }, 800);
+    }
+  }, []);
+
   const handleStripePayment = async () => {
   try {
  const res = await fetch("/api/create-checkout-session", {
@@ -116,7 +137,6 @@ export default function Regularizacion2026() {
     const data = await res.json();
 
     if (data.url) {
-   localStorage.setItem("paid", "true");
 window.location.href = data.url;
     } else {
       alert("❌ Stripe فيه مشكل");
@@ -625,17 +645,24 @@ if (next === 4) {
 باش نعطيك تحليل دقيق ونوجد ليك الملف كامل:
 
 ✔️ تحليل كامل  
-✔️  100 fi 100 التحقق من الوثائق  
-✔️  الوتيقة المعجزة لي غادي تعونك بزاف
+✔️ 100 fi 100 التحقق من الوثائق  
+✔️ الوثيقة المعجزة لي غادي تعونك بزاف  
 
-غير بطناشر أورو 
+غير ب 12 أورو  
 
 ورك على زر الأداء ونكملو مباشرة.`;
 
+  // 🎤 محمد يهضر
   speakExactText(PAYMENT_TEXT);
 
-  setQuestionsDone(true);
+  // 💳 هنا كيتحل Stripe مباشرة
+  setShowStripe(true);
 
+  // ⛔ نوقف الصوت
+  stopListening();
+
+  setQuestionsDone(true);
+localStorage.setItem("questionIndex", "4");
   return prev;
 }
 
@@ -1218,20 +1245,7 @@ if (msg.type === "response.done") {
   // 👇 خد النص ديال محمد
   const finalText = assistantTextBufferRef.current.trim();
 
-  // 💳 STRIPE TRIGGER (دابا صحيح)
-  if (
-    finalText &&
-    finalText.includes("بطناشر أورو") &&
-    !showStripe
-  ) {
-    console.log("💳 STRIPE TRIGGERED");
-
-    setShowStripe(true);
-
-    // ⛔ وقف الصوت
-    stopListening();
-  }
-
+ 
   if (finalText) {
     lastAssistantTextRef.current = finalText;
   }
