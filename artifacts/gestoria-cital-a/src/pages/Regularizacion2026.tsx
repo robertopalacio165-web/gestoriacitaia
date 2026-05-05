@@ -103,14 +103,21 @@ function slugifyFileName(name: string) {
 export default function Regularizacion2026() {
   const handleStripePayment = async () => {
   try {
-    const res = await fetch("/api/create-checkout-session", {
-      method: "POST",
-    });
+ const res = await fetch("/api/create-checkout-session", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    productType: "regularizacion",
+  }),
+});
 
     const data = await res.json();
 
     if (data.url) {
-      window.location.href = data.url;
+   localStorage.setItem("paid", "true");
+window.location.href = data.url;
     } else {
       alert("❌ Stripe فيه مشكل");
     }
@@ -603,42 +610,38 @@ if (rawStep) {
   const progressTotal = progressCards.length;
   const allReady = finalFileStatus === "ok";
 
+
 const handleQuestionFlow = () => {
   setQuestionIndex((prev) => {
     const next = prev + 1;
 
     console.log("NEXT:", next);
 
-    // ❌ ما تدير حتى حاجة حتى نوصلو للسؤال 4
-    if (next !== 4) {
-      return next;
-    }
+    // 👇 غير وصلنا للسؤال 4
+if (next === 4) {
 
-    // ✅ هنا فقط فالسؤال الرابع
-    speakExactText(`
-مزيان، من خلال الأجوبة ديالك بان ليا بللي الملف ديالك غادي يكون مقبول إن شاء الله ✅
+  const PAYMENT_TEXT = `مزيان، من خلال الأجوبة ديالك بان ليا بللي الملف ديالك غادي يكون مقبول إن شاء الله ✅
 
 باش نعطيك تحليل دقيق ونوجد ليك الملف كامل:
 
 ✔️ تحليل كامل  
-✔️ التحقق من الوثائق  
-✔️ وثيقة PDF  
+✔️  100 fi 100 التحقق من الوثائق  
+✔️  الوتيقة المعجزة لي غادي تعونك بزاف
 
-الثمن غير بطناشر أورو 💶
+غير بطناشر أورو 
 
-ورك على زر الأداء ونكملو مباشرة.
-    `);
+ورك على زر الأداء ونكملو مباشرة.`;
 
-    // ⏳ نخلي محمد يكمل الهضرة عاد يبان البوطون
-   setTimeout(() => {
-  setShowStripe(true);
-}, 3000);
-    setQuestionsDone(true);
+  speakExactText(PAYMENT_TEXT);
+
+  setQuestionsDone(true);
+
+  return prev;
+}
 
     return next;
   });
 };
-
 
   const updateLeadForm = (field: keyof LeadFormState, value: string) => {
     setLeadForm((prev) => ({ ...prev, [field]: value }));
@@ -1209,6 +1212,19 @@ console.log("🔥 QUESTION FLOW TRIGGERED");
     }
 
 if (msg.type === "response.done") {
+  // 💳 TRIGGER STRIPE EXACT
+if (
+  finalText &&
+  finalText.includes("بطناشر أورو") &&
+  !showStripe
+) {
+  console.log("💳 STRIPE TRIGGERED");
+
+  setShowStripe(true);
+
+  // ⛔ وقف الصوت + الأسئلة
+  stopListening();
+}
   assistantBusyRef.current = false;
 
   // 👇 مهم: نحفظو النص الأخير ديال محمد
@@ -1219,18 +1235,6 @@ if (msg.type === "response.done") {
 
   finalizeAssistantBuffer();
   setWaitingMohamed(false);
-
-  // 💳 هنا السحر: إلا قال "بطناشر أورو"
-  if (
-    lastAssistantTextRef.current &&
-    lastAssistantTextRef.current.includes("بطناشر") &&
-    lastAssistantTextRef.current.includes("أورو") &&
-    !showStripe
-  ) {
-    console.log("💳 STRIPE TRIGGERED (بطناشر أورو)");
-    setShowStripe(true);
-    setQuestionsDone(true);
-  }
 
   pendingAutomationPromptRef.current = null;
   setPendingAutomationPrompt("");
