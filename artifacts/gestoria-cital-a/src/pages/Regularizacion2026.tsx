@@ -1228,21 +1228,21 @@ setTimeout(() => {
       setWaitingMohamed(true);
     }
 
-    if (msg.type === "response.done") {
-      assistantBusyRef.current = false;
-      finalizeAssistantBuffer();
-      setWaitingMohamed(false);
-      pendingAutomationPromptRef.current = null;
-      setPendingAutomationPrompt("");
+  if (msg.type === "response.done") {
+  assistantBusyRef.current = false;
+  finalizeAssistantBuffer();
+  setWaitingMohamed(false);
+  pendingAutomationPromptRef.current = null;
+  setPendingAutomationPrompt("");
 
-      setTimeout(() => {
-        void flushPendingAutomation();
-      }, 150);
-    }
-
-  } catch (err) {
-    console.error("Realtime event parse error:", err);
-  }
+  setTimeout(() => {
+    void flushPendingAutomation();
+  }, 150);
+} 
+} 
+} catch (err) {
+  console.error("Realtime event parse error:", err);
+}  
 };
       dc.onerror = (err) => {
         console.error("Realtime data channel error:", err);
