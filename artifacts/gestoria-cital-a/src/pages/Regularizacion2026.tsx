@@ -126,6 +126,7 @@ export default function Regularizacion2026() {
 const [clientQuestionsDone, setClientQuestionsDone] = useState(false);
   const [questionIndex, setQuestionIndex] = useState(0);
 const [clientQuestionIndex, setClientQuestionIndex] = useState(0);
+  const [showStripe, setShowStripe] = useState(false);
 
   const [leadForm, setLeadForm] = useState<LeadFormState>({
     nombre: "",
@@ -609,7 +610,7 @@ const handleQuestionFlow = () => {
     `);
 
     setQuestionsDone(true);
-    console.log("💰 SHOW STRIPE BUTTON");
+setShowStripe(true);
     return;
   }
 
@@ -2024,7 +2025,48 @@ disabled={!confirmUnlocked}
           </div>
         </div>
         <audio ref={remoteAudioRef} autoPlay playsInline className="hidden" />
+        {showStripe && (
+  <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+    
+    <div className="bg-white rounded-2xl p-6 w-[90%] max-w-md text-center shadow-2xl">
+      
+      <h2 className="text-lg font-bold mb-3">
+        ⚡ كمل العملية ديالك
+      </h2>
+
+      <p className="text-sm mb-5">
+        باش نكملو الملف ديالك خاصك تدير الأداء دابا
+      </p>
+
+      <button
+        onClick={async () => {
+          const res = await fetch("/api/create-checkout-session", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              productType: "regularizacion",
+            }),
+          });
+
+          const data = await res.json();
+
+          if (data.url) {
+            window.location.href = data.url;
+          }
+        }}
+        className="w-full bg-green-500 hover:bg-green-600 text-white py-3 rounded-xl font-bold text-lg"
+      >
+        💳 أداء 12€
+      </button>
+
+    </div>
+
+  </div>
+)}
       </main>
+      
     </div>
   );
 }
