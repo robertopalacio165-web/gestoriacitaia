@@ -1118,18 +1118,7 @@ GestoriaCitaIA
   JSON.stringify({
     type: "session.update",
     session: {
-  instructions: `
-أنت محمد من GestoriaCitaIA.
-هضر غير بالدارجة المغربية.
-سول سؤال واحد كل مرة.
-بدا مباشرة بهاد الجملة:
-
-السلام عليكم، أنا محمد مرحبا بك فـ GestoriaCitaIA.
-جاوبني غير بآه ولا لا.
-
-السؤال الأول:
-واش دخلتي لإسبانيا قبل من واحد يناير 2026؟
-`,
+      instructions: MOHAMED_SYSTEM_PROMPT,
       modalities: ["audio", "text"],
       turn_detection: {
         type: "server_vad",
