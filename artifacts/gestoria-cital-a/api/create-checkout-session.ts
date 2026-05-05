@@ -10,24 +10,19 @@ export default async function handler(req: any, res: any) {
   }
 
   try {
-    const { productType } = req.body;
+    const { productType } = req.body || {};
 
-    let amount = 999; // default 9.99€
+    let amount = 1200; // 12€
     let name = "Servicio";
 
-    // 🎯 هنا الفرق: تختار الثمن حسب الخدمة
-    if (productType === "cita") {
-      amount = 999; // 9.99€
-      name = "Reserva de cita";
-    }
-
     if (productType === "regularizacion") {
-      amount = 1299; // 12.99€
+      amount = 1200;
       name = "Regularización 2026 - Mohamed";
     }
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
+      mode: "payment",
 
       line_items: [
         {
@@ -42,19 +37,14 @@ export default async function handler(req: any, res: any) {
         },
       ],
 
-      mode: "payment",
-
-      success_url: `${process.env.NEXT_PUBLIC_URL}/regularizacion?success=true`,
-      cancel_url: `${process.env.NEXT_PUBLIC_URL}/regularizacion?cancel=true`,
-
-      metadata: {
-        productType,
-      },
+      success_url: `${process.env.NEXT_PUBLIC_URL}/success`,
+      cancel_url: `${process.env.NEXT_PUBLIC_URL}/cancel`,
     });
 
-    res.json({ url: session.url });
+    res.status(200).json({ url: session.url });
+
   } catch (err) {
-    console.error(err);
+    console.error("Stripe error:", err);
     res.status(500).json({ error: "Stripe error" });
   }
 }
