@@ -1360,97 +1360,83 @@ lastUserTranscriptRef.current = "";
           response: { modalities: ["audio", "text"] },
         }));
       };
+dc.onmessage = (event) => {
+  try {
+    const msg = JSON.parse(event.data);
 
-      dc.onmessage = (event) => {
-        try {
-          const msg = JSON.parse(event.data);
-          if (msg.type === "response.done") {
-            console.log("✅ Respuesta completada - Cerrando en 2s");
-            setTimeout(() => {
-              dc.close();
-              pc.close();
-            }, 2000);
-          }
-        } catch (e) {}
-      };
+    const userTranscript =
+      msg?.transcript ||
+      msg?.item?.transcript ||
+      msg?.item?.content?.[0]?.transcript ||
+      "";
 
-      const offer = await pc.createOffer();
-      await pc.setLocalDescription(offer);
-      
-      const sdpRes = await fetch("https://api.openai.com/v1/realtime/calls", {
-        method: "POST",
-        body: offer.sdp,
-        headers: {
-          Authorization: `Bearer ${ephemeralKey}`,
-          "Content-Type": "application/sdp",
-        },
-      });
+    // 🟢 USER SPEECH
+    if (
+      (msg.type === "conversation.item.input_audio_transcription.completed" ||
+        msg.type === "input_audio_buffer.transcription.completed") &&
+      typeof userTranscript === "string" &&
+      userTranscript.trim()
+    ) {
+      const transcript = userTranscript.trim();
 
-      if (!sdpRes.ok) throw new Error("Error en SDP");
+      if (transcript !== lastUserTranscriptRef.current) {
+        lastUserTranscriptRef.current = transcript;
+        setLastUserTranscript(transcript);
+        pushUserMessage(transcript);
 
-      const answerSdp = await sdpRes.text();
-      await pc.setRemoteDescription({ type: "answer", sdp: answerSdp });
-      
-      console.log("✅ Conexión WebRTC establecida");
+        const answer = transcript.toLowerCase();
 
-    } catch (error) {
-      console.error("❌ Error en speakFromAutomation:", error);
-      pushAgentMessage(instruction);
+        if (answer.includes("نعم") || answer.includes("yes")) {
+          speakExactText("مزيان، هادي نقطة قوية فصالحك 👍");
+        } else if (answer.includes("لا") || answer.includes("no")) {
+          speakExactText("ماشي مشكل، كاين حلول أخرى 👍");
+        }
+
+        handleQuestionFlow();
+      }
     }
-  };
 
-  useEffect(() => {
-    if (remoteAudioRef.current) {
-      remoteAudioRef.current.volume = muted ? 0 : 1;
-      remoteAudioRef.current.muted = false;
+    // 🟡 STREAM TEXT
+    if (
+      msg.type === "response.output_text.delta" &&
+      typeof msg.delta === "string"
+    ) {
+      assistantTextBufferRef.current += msg.delta;
     }
-  }, [muted]);
 
-  const handleSaveLeadForm = async () => {
-    if (!leadFormReady) {
-      toast({
-        title: ui.missingTitle,
-        description: ui.missingDesc,
-        variant: "destructive",
-      });
-      return;
+    // 🟡 FINAL TEXT
+    if (
+      msg.type === "response.output_text.done" &&
+      typeof msg.text === "string" &&
+      msg.text.trim()
+    ) {
+      assistantTextBufferRef.current = msg.text.trim();
     }
-    if (!authChecked) {
-      toast({
-        title: "Espera",
-        description: "Estamos comprobando tu sesión.",
-        variant: "destructive",
-      });
-      return;
+
+    // 🔵 START
+    if (msg.type === "response.created") {
+      assistantBusyRef.current = true;
+      setWaitingMohamed(true);
     }
-const savedIndex = localStorage.getItem("questionIndex");
-if (savedIndex) {
-  setQuestionIndex(parseInt(savedIndex));
-}
-    
-    if (!currentUserId) {
-      toast({
-        title: "Sesión no detectada",
-        description: "Debes entrar con Google antes de confirmar.",
-        variant: "destructive",
-      });
-      pushAgentMessage("عافاك دخل بحسابك أولاً، ومن بعد عاود دير تأكيد باش نكملو.");
-      return;
-    }
-    try {
-      setSavingForm(true);
-      await saveFullStateToSupabase();
-      setLeadSaved(true);
-      setFormConfirmed(true);
-      const savedMessage = buildSavedFormSpeech();
-      toast({
-        title: ui.saveLeadTitle,
-        description: "Se han guardado los datos correctamente.",
-      });
-      // ✅ CAMBIO #2: setTimeout para asegurar que Mohamed hable después de guardar
+
+    // 🔴 END
+    if (msg.type === "response.done") {
+      assistantBusyRef.current = false;
+      finalizeAssistantBuffer();
+      setWaitingMohamed(false);
+      pendingAutomationPromptRef.current = null;
+      setPendingAutomationPrompt("");
+
       setTimeout(() => {
-        void speakExactText(savedMessage);
-      }, 500);
+        void flushPendingAutomation();
+      }, 150);
+    }
+
+  } catch (err) {
+    console.error("Realtime event parse error:", err);
+  }
+};
+   
     } catch (error: any) {
       console.error("Error guardando formulario Mohamed:", error);
       toast({
