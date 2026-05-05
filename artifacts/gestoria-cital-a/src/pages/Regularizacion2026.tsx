@@ -77,7 +77,14 @@ function buildInitialDocs(procedureKey: string): StoredDocItem[] {
     storagePath: "",
   }));
 }
+const handlePayment = () => {
+  console.log("💳 PAYMENT CLICKED");
 
+  // مؤقتاً باش ما يطيحش السيستيم
+  alert("الدفع غادي يدار هنا");
+
+  // من بعد تقدر تربط Stripe هنا
+};
 function normalizeDocType(value?: string) {
   return (value || "").trim().toLowerCase();
 }
@@ -1192,21 +1199,7 @@ GestoriaCitaIA
         }
 handleQuestionFlow();
 
-// 🔥 ناخدو القيمة الجديدة ديال index
-setTimeout(() => {
-  setQuestionIndex((prev) => {
-    console.log("⏱ NEW questionIndex:", prev);
 
-    if (prev >= 4) {
-      console.log("💰 FORCING PAYMENT BUTTON");
-      setShowPayment(true);
-    }
-
-    return prev;
-  });
-}, 500);
- 
-    }
 
     if (
       msg.type === "response.output_text.delta" &&
