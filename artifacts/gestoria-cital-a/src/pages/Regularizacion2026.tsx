@@ -1198,8 +1198,8 @@ GestoriaCitaIA
           speakExactText("ماشي مشكل، كاين حلول أخرى 👍");
         }
 handleQuestionFlow();
-
-
+  }
+    }
 
     if (
       msg.type === "response.output_text.delta" &&
