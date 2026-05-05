@@ -587,14 +587,13 @@ if (rawStep) {
 
 const handleQuestionFlow = () => {
 
-  // 🟢 الأسئلة الأربعة (0 → 3)
-  if (questionIndex < 4) {
-    setQuestionIndex((prev) => prev + 1);
-    return;
-  }
+  const next = questionIndex + 1;
+  setQuestionIndex(next);
 
-  // 💰 من بعد السؤال الرابع → الدفع
-  if (questionIndex === 4) {
+  console.log("NEXT:", next);
+
+  // 💰 وصلنا للسؤال الرابع
+  if (next === 4) {
     speakExactText(`
 مزيان، من خلال الأجوبة ديالك بان ليا بللي الملف ديالك غادي يكون مقبول إن شاء الله ✅
 
@@ -609,8 +608,9 @@ const handleQuestionFlow = () => {
 ورك على زر الأداء ونكملو مباشرة.
     `);
 
-setShowStripe(true);
-setQuestionsDone(true);
+    setShowStripe(true);
+    setQuestionsDone(true);
+
     console.log("💰 SHOW STRIPE BUTTON");
     return;
   }
@@ -1174,7 +1174,7 @@ GestoriaCitaIA
         } else if (answer.includes("لا") || answer.includes("no")) {
           speakExactText("ماشي مشكل، كاين حلول أخرى 👍");
         }
-
+console.log("🔥 QUESTION FLOW TRIGGERED");
         handleQuestionFlow();
       }
     }
