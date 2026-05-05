@@ -588,14 +588,14 @@ if (rawStep) {
 const handleQuestionFlow = () => {
 
   // 🟢 الأسئلة الأربعة (0 → 3)
-  if (questionIndex < 4) {
+if (questionIndex < 3)
     setQuestionIndex((prev) => prev + 1);
     return;
   }
 
   // 💰 من بعد السؤال الرابع → الدفع
-  if (questionIndex === 3) {
-    speakExactText(`
+if (questionIndex === 3) {
+  speakExactText(`
 مزيان، من خلال الأجوبة ديالك بان ليا بللي الملف ديالك غادي يكون مقبول إن شاء الله ✅
 
 باش نعطيك تحليل دقيق ونوجد ليك الملف كامل:
@@ -607,12 +607,15 @@ const handleQuestionFlow = () => {
 الثمن غير 12€ 💶
 
 ورك على زر الأداء ونكملو مباشرة.
-    `);
+  `);
 
-    setQuestionsDone(true);
-setShowStripe(true);
-    return;
-  }
+  setShowStripe(true); // 🔥 هادي المهمة
+  setQuestionsDone(true);
+
+  console.log("🔥 STRIPE SHOULD SHOW");
+
+  return;
+}
 
   // 🔵 من بعد الدفع
   if (questionsDone && clientQuestionIndex < 3) {
