@@ -96,7 +96,7 @@ function getStatusLabel(
 function slugifyFileName(name: string) {
   return name
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")f
+    .replace(/[\u0300-\u036f]/g, "")
     .replace(/[^a-zA-Z0-9._-]/g, "_");
 }
 
