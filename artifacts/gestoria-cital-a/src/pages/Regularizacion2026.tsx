@@ -584,17 +584,15 @@ if (rawStep) {
   const progressTotal = progressCards.length;
   const allReady = finalFileStatus === "ok";
 
-
 const handleQuestionFlow = () => {
+  setQuestionIndex((prev) => {
+    const next = prev + 1;
 
-  const next = questionIndex + 1;
-  setQuestionIndex(next);
+    console.log("NEXT:", next);
 
-  console.log("NEXT:", next);
-
-  // 💰 وصلنا للسؤال الرابع
-  if (next === 4) {
-    speakExactText(`
+    // 💰 ملي نوصلو للسؤال الرابع
+    if (next === 4) {
+      speakExactText(`
 مزيان، من خلال الأجوبة ديالك بان ليا بللي الملف ديالك غادي يكون مقبول إن شاء الله ✅
 
 باش نعطيك تحليل دقيق ونوجد ليك الملف كامل:
@@ -603,35 +601,36 @@ const handleQuestionFlow = () => {
 ✔️ التحقق من الوثائق  
 ✔️ وثيقة PDF  
 
-الثمن غير 12€ 💶
+الثمن غير بطناشر أورو 💶
 
 ورك على زر الأداء ونكملو مباشرة.
-    `);
+      `);
 
-    setShowStripe(true);
-    setQuestionsDone(true);
+      setShowStripe(true);
+      setQuestionsDone(true);
 
-    console.log("💰 SHOW STRIPE BUTTON");
-    return;
-  }
+      console.log("💰 SHOW STRIPE NOW");
+    }
 
-  // 🔵 من بعد الدفع
-  if (questionsDone && clientQuestionIndex < 3) {
-    setClientQuestionIndex((prev) => prev + 1);
-    return;
-  }
+    // 🔵 من بعد الدفع
+    if (questionsDone && clientQuestionIndex < 3) {
+      setClientQuestionIndex((prevClient) => prevClient + 1);
+    }
 
-  // ✅ النهاية
-  if (questionsDone && clientQuestionIndex === 3) {
-    setClientQuestionsDone(true);
-    setDocumentsUnlocked(true);
-    setConfirmUnlocked(true);
-    setStep("upload");
+    // ✅ النهاية
+    if (questionsDone && clientQuestionIndex === 3) {
+      setClientQuestionsDone(true);
+      setDocumentsUnlocked(true);
+      setConfirmUnlocked(true);
+      setStep("upload");
 
-    console.log("✅ FLOW كامل تسالا");
-    return;
-  }
+      console.log("✅ FLOW كامل تسالا");
+    }
+
+    return next;
+  });
 };
+
 
   const updateLeadForm = (field: keyof LeadFormState, value: string) => {
     setLeadForm((prev) => ({ ...prev, [field]: value }));
@@ -1118,7 +1117,7 @@ GestoriaCitaIA
   JSON.stringify({
     type: "session.update",
     session: {
-      instructions: MOHAMED_SYSTEM_PROMPT,
+instructions: "أنت محمد، مساعد ذكي متخصص في الهجرة، تجاوب باختصار وبالدارجة"
       modalities: ["audio", "text"],
       turn_detection: {
         type: "server_vad",
