@@ -12,7 +12,7 @@ export default async function handler(req: any, res: any) {
   try {
     const { productType } = req.body || {};
 
-    let amount = 1200;
+    let amount = 1200; // 12€
     let name = "Servicio";
 
     if (productType === "regularizacion") {
@@ -37,8 +37,14 @@ export default async function handler(req: any, res: any) {
         },
       ],
 
-      success_url: `${process.env.NEXT_PUBLIC_URL}/regularizacion-2026?success=true`,
-      cancel_url: `${process.env.NEXT_PUBLIC_URL}/regularizacion-2026?cancel=true`,
+      // ✅ هنا أهم حاجة (الرجوع)
+      success_url: `${process.env.NEXT_PUBLIC_URL}/regularizacion-2026?paid=true`,
+      cancel_url: `${process.env.NEXT_PUBLIC_URL}/regularizacion-2026?canceled=true`,
+
+      // ✅ optional tracking
+      metadata: {
+        productType: productType || "unknown",
+      },
     });
 
     return res.status(200).json({ url: session.url });
