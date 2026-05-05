@@ -652,17 +652,17 @@ if (next === 4) {
 
 ورك على زر الأداء ونكملو مباشرة.`;
 
-  // 🎤 محمد يهضر
+  // 🎤 خليه يهضر أولاً
   speakExactText(PAYMENT_TEXT);
 
-  // 💳 هنا كيتحل Stripe مباشرة
-  setShowStripe(true);
-
-  // ⛔ نوقف الصوت
-  stopListening();
+  // ⏳ عطيه الوقت يهضر (مهم)
+  setTimeout(() => {
+    setShowStripe(true);
+  }, 3000);
 
   setQuestionsDone(true);
-localStorage.setItem("questionIndex", "4");
+  localStorage.setItem("questionIndex", "4");
+
   return prev;
 }
 
