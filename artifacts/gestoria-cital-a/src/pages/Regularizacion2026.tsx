@@ -594,7 +594,7 @@ const handleQuestionFlow = () => {
   }
 
   // 💰 من بعد السؤال الرابع → الدفع
-  if (questionIndex === 4) {
+  if (questionIndex === 3) {
     speakExactText(`
 مزيان، من خلال الأجوبة ديالك بان ليا بللي الملف ديالك غادي يكون مقبول إن شاء الله ✅
 
@@ -1117,7 +1117,7 @@ GestoriaCitaIA
   JSON.stringify({
     type: "session.update",
     session: {
-      instructions: MOHAMED_SYSTEM_PROMPT,
+   instructions: "أنت محمد، هضر غير بالدارجة، وسول سؤال واحد كل مرة",
       modalities: ["audio", "text"],
       turn_detection: {
         type: "server_vad",
