@@ -5,6 +5,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 });
 
 export default async function handler(req: any, res: any) {
+  // غير POST
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
@@ -12,6 +13,7 @@ export default async function handler(req: any, res: any) {
   try {
     const { productType } = req.body || {};
 
+    // 💰 الثمن
     let amount = 1200; // 12€
     let name = "Servicio";
 
@@ -20,6 +22,11 @@ export default async function handler(req: any, res: any) {
       name = "Regularización 2026 - Mohamed";
     }
 
+    // 🔗 الرابط ديال الموقع (مهم)
+    const baseUrl =
+      process.env.NEXT_PUBLIC_URL || "http://localhost:5173";
+
+    // 🧾 إنشاء session
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       payment_method_types: ["card"],
@@ -37,20 +44,24 @@ export default async function handler(req: any, res: any) {
         },
       ],
 
-      // ✅ هنا أهم حاجة (الرجوع)
-      success_url: `${process.env.NEXT_PUBLIC_URL}/regularizacion-2026?paid=true`,
-      cancel_url: `${process.env.NEXT_PUBLIC_URL}/regularizacion-2026?canceled=true`,
+      // ✅ هنا الرجوع بعد الأداء
+      success_url: `${baseUrl}/regularizacion-2026?paid=true`,
+      cancel_url: `${baseUrl}/regularizacion-2026?canceled=true`,
 
-      // ✅ optional tracking
+      // 📊 معلومات إضافية
       metadata: {
         productType: productType || "unknown",
       },
     });
 
-    return res.status(200).json({ url: session.url });
+    // 🔁 رجع الرابط للفرونت
+    return res.status(200).json({
+      url: session.url,
+    });
 
   } catch (err: any) {
     console.error("❌ STRIPE ERROR FULL:", err);
+
     return res.status(500).json({
       error: err.message || "Stripe error",
     });
