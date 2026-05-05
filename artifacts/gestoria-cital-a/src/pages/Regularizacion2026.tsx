@@ -1436,15 +1436,7 @@ dc.onmessage = (event) => {
   }
 };
    
-    } catch (error: any) {
-      console.error("Error guardando formulario Mohamed:", error);
-      toast({
-        title: "Error guardando formulario",
-        description: error?.message || "No se pudo guardar en Supabase",
-        variant: "destructive",
-      });
-      pushAgentMessage("وقع مشكل فحفظ المعطيات. عافاك عاود دير تأكيد مرة أخرى.");
-    } finally {
+  
       setSavingForm(false);
     }
   };
