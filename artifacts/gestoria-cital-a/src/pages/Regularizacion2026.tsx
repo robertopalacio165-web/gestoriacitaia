@@ -1199,17 +1199,37 @@ console.log("🔥 QUESTION FLOW TRIGGERED");
       setWaitingMohamed(true);
     }
 
-    if (msg.type === "response.done") {
-      assistantBusyRef.current = false;
-      finalizeAssistantBuffer();
-      setWaitingMohamed(false);
-      pendingAutomationPromptRef.current = null;
-      setPendingAutomationPrompt("");
+if (msg.type === "response.done") {
+  assistantBusyRef.current = false;
 
-      setTimeout(() => {
-        void flushPendingAutomation();
-      }, 150);
-    }
+  // 👇 مهم: نحفظو النص الأخير ديال محمد
+  const finalText = assistantTextBufferRef.current.trim();
+  if (finalText) {
+    lastAssistantTextRef.current = finalText;
+  }
+
+  finalizeAssistantBuffer();
+  setWaitingMohamed(false);
+
+  // 💳 هنا السحر: إلا قال "بطناشر أورو"
+  if (
+    lastAssistantTextRef.current &&
+    lastAssistantTextRef.current.includes("بطناشر") &&
+    lastAssistantTextRef.current.includes("أورو") &&
+    !showStripe
+  ) {
+    console.log("💳 STRIPE TRIGGERED (بطناشر أورو)");
+    setShowStripe(true);
+    setQuestionsDone(true);
+  }
+
+  pendingAutomationPromptRef.current = null;
+  setPendingAutomationPrompt("");
+
+  setTimeout(() => {
+    void flushPendingAutomation();
+  }, 150);
+}
 
   } catch (err) {
     console.error("Realtime event parse error:", err);
