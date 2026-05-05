@@ -637,38 +637,7 @@ const handleQuestionFlow = () => {
 
     console.log("NEXT:", next);
 
-    // 👇 غير وصلنا للسؤال 4
-if (next === 4) {
 
-  const PAYMENT_TEXT = `مزيان، من خلال الأجوبة ديالك بان ليا بللي الملف ديالك غادي يكون مقبول إن شاء الله ✅
-
-باش نعطيك تحليل دقيق ونوجد ليك الملف كامل:
-
-✔️ تحليل كامل  
-✔️ 100 fi 100 التحقق من الوثائق  
-✔️ الوثيقة المعجزة لي غادي تعونك بزاف  
-
-غير ب 12 أورو  
-
-ورك على زر الأداء ونكملو مباشرة.`;
-
-  // 🎤 خليه يهضر أولاً
-  speakExactText(PAYMENT_TEXT);
-
-  // ⏳ عطيه الوقت يهضر (مهم)
-  setTimeout(() => {
-    setShowStripe(true);
-  }, 3000);
-
-  setQuestionsDone(true);
-  localStorage.setItem("questionIndex", "4");
-
-  return prev;
-}
-
-    return next;
-  });
-};
 
   const updateLeadForm = (field: keyof LeadFormState, value: string) => {
     setLeadForm((prev) => ({ ...prev, [field]: value }));
@@ -1211,8 +1180,38 @@ dc.send(
         } else if (answer.includes("لا") || answer.includes("no")) {
           speakExactText("ماشي مشكل، كاين حلول أخرى 👍");
         }
-        setTimeout(() => {
+setTimeout(() => {
+
+  // 🎯 إلا كنا فالسؤال 4
+  if (questionIndex === 3) {
+
+    const PAYMENT_TEXT = `مزيان 👌  
+دابا الملف ديالك باين مزيان وعندك فرصة كبيرة إن شاء الله ✅
+
+باش نكملو معاك ونحققو الوثائق ديالك بشكل دقيق:
+
+✔️ تحليل كامل  
+✔️ التحقق من الوثائق 100%  
+✔️ وثيقة مهمة غادي تعاونك بزاف  
+
+غير ب 12 أورو  
+
+إلى بغيتي نكملو، دير الأداء ونكمل معاك مباشرة.`;
+
+    // 🎤 محمد يهضر
+    speakExactText(PAYMENT_TEXT);
+
+    // ⏳ من بعد ما يكمل الهضرة
+    setTimeout(() => {
+      setShowStripe(true);
+    }, 5000);
+
+    return;
+  }
+
+  // ✅ باقي الأسئلة يخدمو عادي
   handleQuestionFlow();
+
 }, 2000);
 console.log("🔥 QUESTION FLOW TRIGGERED");
       }
