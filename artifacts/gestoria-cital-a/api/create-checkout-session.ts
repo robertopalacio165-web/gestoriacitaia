@@ -1,6 +1,6 @@
 import Stripe from "stripe";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2024-06-20",
 });
 
@@ -12,7 +12,7 @@ export default async function handler(req: any, res: any) {
   try {
     const { productType } = req.body || {};
 
-    let amount = 1200; // 12€
+    let amount = 1200;
     let name = "Servicio";
 
     if (productType === "regularizacion") {
@@ -21,30 +21,32 @@ export default async function handler(req: any, res: any) {
     }
 
     const session = await stripe.checkout.sessions.create({
-      payment_method_types: ["card"],
       mode: "payment",
+      payment_method_types: ["card"],
 
       line_items: [
         {
           price_data: {
             currency: "eur",
-            product_data: {
-              name: name,
-            },
             unit_amount: amount,
+            product_data: {
+              name,
+            },
           },
           quantity: 1,
         },
       ],
 
-      success_url: `${process.env.NEXT_PUBLIC_URL}/success`,
-      cancel_url: `${process.env.NEXT_PUBLIC_URL}/cancel`,
+      success_url: `${process.env.NEXT_PUBLIC_URL}/regularizacion-2026?success=true`,
+      cancel_url: `${process.env.NEXT_PUBLIC_URL}/regularizacion-2026?cancel=true`,
     });
 
-    res.status(200).json({ url: session.url });
+    return res.status(200).json({ url: session.url });
 
-  } catch (err) {
-    console.error("Stripe error:", err);
-    res.status(500).json({ error: "Stripe error" });
+  } catch (err: any) {
+    console.error("❌ STRIPE ERROR FULL:", err);
+    return res.status(500).json({
+      error: err.message || "Stripe error",
+    });
   }
 }
