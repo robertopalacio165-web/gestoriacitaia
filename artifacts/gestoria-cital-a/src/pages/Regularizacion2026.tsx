@@ -101,16 +101,10 @@ function slugifyFileName(name: string) {
 }
 
 export default function Regularizacion2026() {
-const handleStripePayment = async () => {
+  const handleStripePayment = async () => {
   try {
     const res = await fetch("/api/create-checkout-session", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        productType: "regularizacion",
-      }),
     });
 
     const data = await res.json();
@@ -636,7 +630,9 @@ const handleQuestionFlow = () => {
     `);
 
     // ⏳ نخلي محمد يكمل الهضرة عاد يبان البوطون
-
+   setTimeout(() => {
+  setShowStripe(true);
+}, 3000);
     setQuestionsDone(true);
 
     return next;
@@ -1225,20 +1221,16 @@ if (msg.type === "response.done") {
   setWaitingMohamed(false);
 
   // 💳 هنا السحر: إلا قال "بطناشر أورو"
-if (
-  lastAssistantTextRef.current &&
-  lastAssistantTextRef.current.includes("بطناشر") &&
-  lastAssistantTextRef.current.includes("أورو") &&
-  !showStripe
-) {
-  console.log("💳 STRIPE TRIGGERED FINAL");
-
-  setTimeout(() => {
+  if (
+    lastAssistantTextRef.current &&
+    lastAssistantTextRef.current.includes("بطناشر") &&
+    lastAssistantTextRef.current.includes("أورو") &&
+    !showStripe
+  ) {
+    console.log("💳 STRIPE TRIGGERED (بطناشر أورو)");
     setShowStripe(true);
-  }, 800);
-
-  setQuestionsDone(true);
-}
+    setQuestionsDone(true);
+  }
 
   pendingAutomationPromptRef.current = null;
   setPendingAutomationPrompt("");
