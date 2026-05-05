@@ -1113,11 +1113,11 @@ GestoriaCitaIA
         isConnectingRef.current = false;
         setIsListening(true);
         setWaitingMohamed(false);
-        dc.send(
+dc.send(
   JSON.stringify({
     type: "session.update",
     session: {
-instructions: "أنت محمد، مساعد ذكي متخصص في الهجرة، تجاوب باختصار وبالدارجة"
+      instructions: "أنت محمد، مساعد ذكي متخصص في الهجرة تجاوب باختصار وبالدارجة",
       modalities: ["audio", "text"],
       turn_detection: {
         type: "server_vad",
