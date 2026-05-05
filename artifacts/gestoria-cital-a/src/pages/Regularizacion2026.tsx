@@ -126,6 +126,7 @@ export default function Regularizacion2026() {
 const [clientQuestionsDone, setClientQuestionsDone] = useState(false);
   const [questionIndex, setQuestionIndex] = useState(0);
 const [clientQuestionIndex, setClientQuestionIndex] = useState(0);
+  const [showPayment, setShowPayment] = useState(false);
 
   const [leadForm, setLeadForm] = useState<LeadFormState>({
     nombre: "",
@@ -593,8 +594,9 @@ const handleQuestionFlow = () => {
   }
 
   // 💰 من بعد السؤال الرابع → الدفع
-  if (questionIndex === 4) {
-    speakExactText(`
+if (questionIndex === 4) {
+
+  speakExactText(`
 مزيان، من خلال الأجوبة ديالك بان ليا بللي الملف ديالك غادي يكون مقبول إن شاء الله ✅
 
 باش نعطيك تحليل دقيق ونوجد ليك الملف كامل:
@@ -606,12 +608,15 @@ const handleQuestionFlow = () => {
 الثمن غير 12€ 💶
 
 ورك على زر الأداء ونكملو مباشرة.
-    `);
+  `);
 
-    setQuestionsDone(true);
-    console.log("💰 SHOW STRIPE BUTTON");
-    return;
-  }
+  setQuestionsDone(true);
+
+  // 🔥 هنا غادي نفعّلو زر الدفع
+  setShowPayment(true);
+
+  return;
+}
 
   // 🔵 من بعد الدفع
   if (questionsDone && clientQuestionIndex < 3) {
@@ -1942,6 +1947,15 @@ disabled={!documentsUnlocked}
     </>
   )}
 </button>
+
+   {showPayment && (
+  <button
+    onClick={handlePayment}
+    className="w-full mt-3 bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-xl"
+  >
+    💳 خلص دابا 12€
+  </button>
+)}             
 
 {!documentsUnlocked && (
   <p className="mt-2 text-[10px] text-amber-300 text-center">
