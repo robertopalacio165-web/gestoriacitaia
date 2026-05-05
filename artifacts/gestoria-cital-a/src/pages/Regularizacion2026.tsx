@@ -1212,23 +1212,26 @@ console.log("🔥 QUESTION FLOW TRIGGERED");
     }
 
 if (msg.type === "response.done") {
-  // 💳 TRIGGER STRIPE EXACT
-if (
-  finalText &&
-  finalText.includes("بطناشر أورو") &&
-  !showStripe
-) {
-  console.log("💳 STRIPE TRIGGERED");
 
-  setShowStripe(true);
-
-  // ⛔ وقف الصوت + الأسئلة
-  stopListening();
-}
   assistantBusyRef.current = false;
 
-  // 👇 مهم: نحفظو النص الأخير ديال محمد
+  // 👇 خد النص ديال محمد
   const finalText = assistantTextBufferRef.current.trim();
+
+  // 💳 STRIPE TRIGGER (دابا صحيح)
+  if (
+    finalText &&
+    finalText.includes("بطناشر أورو") &&
+    !showStripe
+  ) {
+    console.log("💳 STRIPE TRIGGERED");
+
+    setShowStripe(true);
+
+    // ⛔ وقف الصوت
+    stopListening();
+  }
+
   if (finalText) {
     lastAssistantTextRef.current = finalText;
   }
