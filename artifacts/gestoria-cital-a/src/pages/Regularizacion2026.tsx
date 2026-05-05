@@ -101,6 +101,25 @@ function slugifyFileName(name: string) {
 }
 
 export default function Regularizacion2026() {
+  const handleStripePayment = async () => {
+  try {
+    const res = await fetch("/api/create-checkout-session", {
+      method: "POST",
+    });
+
+    const data = await res.json();
+
+    if (data.url) {
+      window.location.href = data.url;
+    } else {
+      alert("❌ Stripe فيه مشكل");
+    }
+
+  } catch (err) {
+    console.error(err);
+    alert("❌ خطأ فالكونكسيون");
+  }
+};
   const [selectedSituacion] = useState("regularizacion_2026_laboral");
   const [muted, setMuted] = useState(false);
   const [isListening, setIsListening] = useState(false);
@@ -590,9 +609,13 @@ const handleQuestionFlow = () => {
 
     console.log("NEXT:", next);
 
-    // 💰 ملي نوصلو للسؤال الرابع
-    if (next === 4) {
-      speakExactText(`
+    // ❌ ما تدير حتى حاجة حتى نوصلو للسؤال 4
+    if (next !== 4) {
+      return next;
+    }
+
+    // ✅ هنا فقط فالسؤال الرابع
+    speakExactText(`
 مزيان، من خلال الأجوبة ديالك بان ليا بللي الملف ديالك غادي يكون مقبول إن شاء الله ✅
 
 باش نعطيك تحليل دقيق ونوجد ليك الملف كامل:
@@ -604,28 +627,13 @@ const handleQuestionFlow = () => {
 الثمن غير بطناشر أورو 💶
 
 ورك على زر الأداء ونكملو مباشرة.
-      `);
+    `);
 
-      setShowStripe(true);
-      setQuestionsDone(true);
-
-      console.log("💰 SHOW STRIPE NOW");
-    }
-
-    // 🔵 من بعد الدفع
-    if (questionsDone && clientQuestionIndex < 3) {
-      setClientQuestionIndex((prevClient) => prevClient + 1);
-    }
-
-    // ✅ النهاية
-    if (questionsDone && clientQuestionIndex === 3) {
-      setClientQuestionsDone(true);
-      setDocumentsUnlocked(true);
-      setConfirmUnlocked(true);
-      setStep("upload");
-
-      console.log("✅ FLOW كامل تسالا");
-    }
+    // ⏳ نخلي محمد يكمل الهضرة عاد يبان البوطون
+   setTimeout(() => {
+  setShowStripe(true);
+}, 3000);
+    setQuestionsDone(true);
 
     return next;
   });
@@ -1989,26 +1997,15 @@ disabled={!documentsUnlocked}
     zIndex: 9999
   }}>
     <button
-      onClick={async () => {
-        const res = await fetch("/api/create-checkout-session", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ productType: "regularizacion" }),
-        });
-
-        const data = await res.json();
-        window.location.href = data.url;
-      }}
-      style={{
-        background: "#22c55e",
-        color: "white",
-        fontSize: "20px",
-        padding: "20px 40px",
-        borderRadius: "15px",
-        fontWeight: "bold"
-      }}
-    >
-      💳 خلص دابا 12€
+      onClick={handleStripePayment}
+  className="w-full max-w-xs mx-auto flex items-center justify-center gap-3 
+  bg-gradient-to-r from-emerald-500 to-green-600 
+  hover:from-emerald-600 hover:to-green-700
+  text-white font-bold text-lg 
+  px-6 py-4 rounded-2xl shadow-xl 
+  transition-all duration-300 hover:scale-105"
+>
+  💳 أداء 12€
     </button>
   </div>
 )}
