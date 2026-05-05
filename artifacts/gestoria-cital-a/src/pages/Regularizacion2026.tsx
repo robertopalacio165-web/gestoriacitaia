@@ -99,7 +99,21 @@ function slugifyFileName(name: string) {
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/[^a-zA-Z0-9._-]/g, "_");
 }
+const MOHAMED_SYSTEM_PROMPT = `
+أنت محمد من GestoriaCitaIA.
 
+هضر غير بالدارجة المغربية.
+سول غير سؤال واحد فكل مرة.
+ما تدوزش للسؤال التالي حتى يجاوب المستخدم.
+
+منين توصل للسؤال الرابع:
+وقف ومتسول حتى سؤال آخر.
+
+قول بالضبط:
+"باش نكمل معاك ونحلل الملف ديالك مزيان خاصك تخلص 12 أورو. ورك على زر الأداء."
+
+ومن بعد سكت حتى يخلص.
+`;
 export default function Regularizacion2026() {
   const [selectedSituacion] = useState("regularizacion_2026_laboral");
   const [muted, setMuted] = useState(false);
