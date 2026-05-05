@@ -126,7 +126,6 @@ export default function Regularizacion2026() {
 const [clientQuestionsDone, setClientQuestionsDone] = useState(false);
   const [questionIndex, setQuestionIndex] = useState(0);
 const [clientQuestionIndex, setClientQuestionIndex] = useState(0);
-  const [showStripe, setShowStripe] = useState(false);
 
   const [leadForm, setLeadForm] = useState<LeadFormState>({
     nombre: "",
@@ -588,14 +587,14 @@ if (rawStep) {
 const handleQuestionFlow = () => {
 
   // 🟢 الأسئلة الأربعة (0 → 3)
-if (questionIndex < 3)
+  if (questionIndex < 4) {
     setQuestionIndex((prev) => prev + 1);
     return;
   }
 
   // 💰 من بعد السؤال الرابع → الدفع
-if (questionIndex === 3) {
-  speakExactText(`
+  if (questionIndex === 4) {
+    speakExactText(`
 مزيان، من خلال الأجوبة ديالك بان ليا بللي الملف ديالك غادي يكون مقبول إن شاء الله ✅
 
 باش نعطيك تحليل دقيق ونوجد ليك الملف كامل:
@@ -607,15 +606,12 @@ if (questionIndex === 3) {
 الثمن غير 12€ 💶
 
 ورك على زر الأداء ونكملو مباشرة.
-  `);
+    `);
 
-  setShowStripe(true); // 🔥 هادي المهمة
-  setQuestionsDone(true);
-
-  console.log("🔥 STRIPE SHOULD SHOW");
-
-  return;
-}
+    setQuestionsDone(true);
+    console.log("💰 SHOW STRIPE BUTTON");
+    return;
+  }
 
   // 🔵 من بعد الدفع
   if (questionsDone && clientQuestionIndex < 3) {
@@ -1120,7 +1116,7 @@ GestoriaCitaIA
   JSON.stringify({
     type: "session.update",
     session: {
-   instructions: "أنت محمد، هضر غير بالدارجة، وسول سؤال واحد كل مرة",
+      instructions: MOHAMED_SYSTEM_PROMPT,
       modalities: ["audio", "text"],
       turn_detection: {
         type: "server_vad",
@@ -2028,51 +2024,10 @@ disabled={!confirmUnlocked}
           </div>
         </div>
         <audio ref={remoteAudioRef} autoPlay playsInline className="hidden" />
-        {showStripe && (
-  <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-    
-    <div className="bg-white rounded-2xl p-6 w-[90%] max-w-md text-center shadow-2xl">
-      
-      <h2 className="text-lg font-bold mb-3">
-        ⚡ كمل العملية ديالك
-      </h2>
-
-      <p className="text-sm mb-5">
-        باش نكملو الملف ديالك خاصك تدير الأداء دابا
-      </p>
-
-      <button
-        onClick={async () => {
-          const res = await fetch("/api/create-checkout-session", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              productType: "regularizacion",
-            }),
-          });
-
-          const data = await res.json();
-
-          if (data.url) {
-            window.location.href = data.url;
-          }
-        }}
-        className="w-full bg-green-500 hover:bg-green-600 text-white py-3 rounded-xl font-bold text-lg"
-      >
-        💳 أداء 12€
-      </button>
-
-    </div>
-
-  </div>
-)}
       </main>
-      
     </div>
   );
-
+}
 
 function FieldLabel({ label }: { label: string }) {
   return (
