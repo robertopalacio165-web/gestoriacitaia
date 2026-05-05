@@ -10,7 +10,21 @@ export default async function handler(req: any, res: any) {
   }
 
   try {
-    const { token, appointment_id } = req.body;
+    const { productType } = req.body;
+
+    let amount = 999; // default 9.99€
+    let name = "Servicio";
+
+    // 🎯 هنا الفرق: تختار الثمن حسب الخدمة
+    if (productType === "cita") {
+      amount = 999; // 9.99€
+      name = "Reserva de cita";
+    }
+
+    if (productType === "regularizacion") {
+      amount = 1299; // 12.99€
+      name = "Regularización 2026 - Mohamed";
+    }
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
@@ -20,9 +34,9 @@ export default async function handler(req: any, res: any) {
           price_data: {
             currency: "eur",
             product_data: {
-              name: "Reserva de cita extranjería",
+              name: name,
             },
-            unit_amount: 3000, // 30€
+            unit_amount: amount,
           },
           quantity: 1,
         },
@@ -30,12 +44,11 @@ export default async function handler(req: any, res: any) {
 
       mode: "payment",
 
-      success_url: `${process.env.NEXT_PUBLIC_URL}/checkout-success?token=${token}&appointment_id=${appointment_id}`,
-      cancel_url: `${process.env.NEXT_PUBLIC_URL}/confirmar`,
+      success_url: `${process.env.NEXT_PUBLIC_URL}/regularizacion?success=true`,
+      cancel_url: `${process.env.NEXT_PUBLIC_URL}/regularizacion?cancel=true`,
 
       metadata: {
-        token,
-        appointment_id,
+        productType,
       },
     });
 
