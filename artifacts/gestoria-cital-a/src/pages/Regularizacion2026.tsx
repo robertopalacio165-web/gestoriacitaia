@@ -96,7 +96,7 @@ function getStatusLabel(
 function slugifyFileName(name: string) {
   return name
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[\u0300-\u036f]/g, "")f
     .replace(/[^a-zA-Z0-9._-]/g, "_");
 }
 
@@ -126,6 +126,7 @@ export default function Regularizacion2026() {
 const [clientQuestionsDone, setClientQuestionsDone] = useState(false);
   const [questionIndex, setQuestionIndex] = useState(0);
 const [clientQuestionIndex, setClientQuestionIndex] = useState(0);
+  const [showStripe, setShowStripe] = useState(false);
 
   const [leadForm, setLeadForm] = useState<LeadFormState>({
     nombre: "",
@@ -608,7 +609,8 @@ const handleQuestionFlow = () => {
 ورك على زر الأداء ونكملو مباشرة.
     `);
 
-    setQuestionsDone(true);
+setShowStripe(true);
+setQuestionsDone(true);
     console.log("💰 SHOW STRIPE BUTTON");
     return;
   }
@@ -1954,7 +1956,45 @@ disabled={!documentsUnlocked}
               </div>
             </div>
           </div>
+          {showStripe && (
+  <div style={{
+    position: "fixed",
+    top: 0,
+    left: 0,
+    width: "100%",
+    height: "100%",
+    background: "rgba(0,0,0,0.8)",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 9999
+  }}>
+    <button
+      onClick={async () => {
+        const res = await fetch("/api/create-checkout-session", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ productType: "regularizacion" }),
+        });
+
+        const data = await res.json();
+        window.location.href = data.url;
+      }}
+      style={{
+        background: "#22c55e",
+        color: "white",
+        fontSize: "20px",
+        padding: "20px 40px",
+        borderRadius: "15px",
+        fontWeight: "bold"
+      }}
+    >
+      💳 خلص دابا 12€
+    </button>
+  </div>
+)}
           <div className="flex flex-col gap-4">
+            
      <div className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-xl">
   <h3 className="text-lg font-bold text-white mb-3">
     Confirmación rápida
