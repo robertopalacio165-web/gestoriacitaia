@@ -639,7 +639,7 @@ const handleQuestionFlow = () => {
     console.log("NEXT:", next);
 
     // ✅ وصلنا لمرحلة الأداء
-    if (next === 4) {
+    if (next === 5) {
 
       const PAYMENT_TEXT = `
 مزيان، من خلال الأجوبة ديالك بان ليا بللي الملف ديالك غادي يكون مقبول إن شاء الله ✅
@@ -656,14 +656,14 @@ const handleQuestionFlow = () => {
 `;
 
       // 🎤 محمد يهضر
-     pushAgentMessage(PAYMENT_TEXT);
+      speakExactText(PAYMENT_TEXT);
 setTimeout(() => {
 
   console.log("💳 SHOW STRIPE");
 
   setShowStripe(true);
 
-}, 1500);
+}, 9000);
       setQuestionsDone(true);
 
       localStorage.setItem("questionIndex", "5");
@@ -978,7 +978,9 @@ const questions = [
 
 جاوبني غير بآه ولا لا.
 
-        
+السؤال الأول:
+واش دخلتي لإسبانيا قبل من واحد يناير 2026؟
+        `
       },
     })
   );
@@ -1004,9 +1006,6 @@ const questions = [
       dcOpenedRef.current = false;
       introAlreadySentRef.current = false;
       assistantBusyRef.current = false;
-      console.log("✅ RESPONSE DONE");
-console.log("FINAL TEXT:", assistantTextBufferRef.current);
-console.log("SHOW STRIPE STATE:", showStripe);
       isConnectingRef.current = false;
       setIsListening(false);
       setWaitingMohamed(false);
@@ -1039,15 +1038,15 @@ const handleSendWhatsApp = async () => {
     const data = await res.json();
 
     // 2. رابط PDF
-const pdfUrl = `${window.location.origin}/api/generate-expediente-pdf?nombre=${encodeURIComponent(
-  leadForm?.nombre || ""
-)}&nacionalidad=${encodeURIComponent(
-  leadForm?.nacionalidad || ""
-)}&ciudad=${encodeURIComponent(
-  leadForm?.ciudad || ""
-)}&fecha_llegada=${encodeURIComponent(
-  leadForm?.fechaLlegada || ""
-)}`;
+    const pdfUrl = `${window.location.origin}/api/generate-expediente-pdf?nombre=${encodeURIComponent(
+      leadForm?.nombre || ""
+    )}&nacionalidad=${encodeURIComponent(
+      leadForm?.nacionalidad || ""
+    )}&ciudad=${encodeURIComponent(
+      leadForm?.ciudad || ""
+    )}&fecha_llegada=${encodeURIComponent(
+      leadForm?.fecha_llegada || ""
+    )}`;
 
     // 3. تنظيف الرقم
     const cleanPhone = phone.trim().replace(/\s+/g, "");
@@ -1185,15 +1184,9 @@ dc.send(
           }, 400);
           return;
         }
-   setTimeout(() => {
-
-  void maybeSendIntroToMohamed();
-
-  setTimeout(() => {
-    speakExactText(questions[0]);
-  }, 1200);
-
-}, 500);
+        setTimeout(() => {
+          void maybeSendIntroToMohamed();
+        }, 500);
       };
 dc.onmessage = (event) => {
   try {
@@ -1244,67 +1237,69 @@ if (
 
   const liveText = assistantTextBufferRef.current;
 
-  if (
-    liveText.includes("ورك على زر الأداء") ||
-    liveText.includes("زر الأداء") ||
-    liveText.includes("12 أورو")
-  ) {
-
-    if (!showStripe) {
-
-      console.log("💳 SHOW STRIPE NOW");
-
-      setShowStripe(true);
-
-      setTimeout(() => {
-        stopListening();
-      }, 500);
-
-    }
-  }
-}
-
-// ✅ سددنا if الأولى هنا
-
-if (
-  msg.type === "response.output_text.done" &&
-  typeof msg.text === "string" &&
-  msg.text.trim()
+  // ✅ محمد وصل لهضرة الأداء
+ if (
+  liveText.includes("ورك على زر الأداء") ||
+  liveText.includes("زر الأداء") ||
+  liveText.includes("12 أورو")
 ) {
 
-  assistantTextBufferRef.current = msg.text.trim();
+  if (!showStripe) {
 
-}
+    console.log("💳 SHOW STRIPE NOW");
 
-if (msg.type === "response.created") {
+    // ✅ أول حاجة: بين الزر
+    setShowStripe(true);
 
-  assistantBusyRef.current = true;
-  setWaitingMohamed(true);
+    // ✅ من بعد: حبس الميكروفون
+    setTimeout(() => {
+      stopListening();
+    }, 500);
 
-}
-
-if (msg.type === "response.done") {
-
-  assistantBusyRef.current = false;
-
-  const finalText = assistantTextBufferRef.current.trim();
-
-  if (finalText) {
-    lastAssistantTextRef.current = finalText;
   }
-
-  finalizeAssistantBuffer();
-
-  setWaitingMohamed(false);
-
-  pendingAutomationPromptRef.current = null;
-  setPendingAutomationPrompt("");
-
-  setTimeout(() => {
-    void flushPendingAutomation();
-  }, 150);
-
 }
+
+    if (
+      msg.type === "response.output_text.done" &&
+      typeof msg.text === "string" &&
+      msg.text.trim()
+    ) {
+
+      assistantTextBufferRef.current = msg.text.trim();
+
+    }
+
+    if (msg.type === "response.created") {
+
+      assistantBusyRef.current = true;
+      setWaitingMohamed(true);
+
+    }
+
+    if (msg.type === "response.done") {
+
+      assistantBusyRef.current = false;
+
+      const finalText = assistantTextBufferRef.current.trim();
+
+      
+
+      if (finalText) {
+        lastAssistantTextRef.current = finalText;
+      }
+
+      finalizeAssistantBuffer();
+
+      setWaitingMohamed(false);
+
+      pendingAutomationPromptRef.current = null;
+      setPendingAutomationPrompt("");
+
+      setTimeout(() => {
+        void flushPendingAutomation();
+      }, 150);
+
+    }
 
   } catch (err) {
 
