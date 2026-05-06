@@ -831,53 +831,46 @@ const buildDocSpeech = (
     }
   };
 
-  // ✅ CAMBIO #2: flushPendingAutomation - AHORA ENVÍA DIRECTO SIN VERIFICAR assistantBusyRef
-  const flushPendingAutomation = async (retries = 0) => {
-    const prompt = pendingAutomationPromptRef.current;
-    if (!prompt) return;
-    if (!realtimeDcRef.current) {
-      console.error("❌ No hay data channel");
-      return;
-    }
-    if (realtimeDcRef.current.readyState !== "open") {
-      console.error("❌ Data channel no está abierto:", realtimeDcRef.current.readyState);
-      return;
-    }
-    
-    console.log("🚀 ENVIANDO DIRECTAMENTE (sin verificar busy):", prompt);
-    
-    // ✅ ENVÍO DIRECTO SIN VERIFICAR assistantBusyRef
-    try {
-      realtimeDcRef.current.send(
-        JSON.stringify({
-          type: "conversation.item.create",
-          item: {
-            type: "message",
-            role: "user",
-            content: [{ type: "input_text", text: prompt }],
-          },
-        })
-      );
-      console.log("✅ Item creado, enviando response.create...");
-      
-      realtimeDcRef.current.send(
-        JSON.stringify({
-          type: "response.create",
-          response: {
-  modalities: ["audio", "text"]
-}
-        })
-      );
-      console.log("✅ response.create enviado - Mohamed DEBERÍA hablar");
-      
-      // Limpiar después de enviar
-      pendingAutomationPromptRef.current = null;
-      setPendingAutomationPrompt("");
-      setWaitingMohamed(false);
-    } catch (error) {
-      console.error("❌ Error enviando:", error);
-    }
-  };
+ const flushPendingAutomation = async (retries = 0) => {
+  const prompt = pendingAutomationPromptRef.current;
+
+  // 🛑 BLOQUEO TOTAL
+  if (!prompt) return;
+
+  // 🛑 EVITAR DOBLE ENVÍO
+  pendingAutomationPromptRef.current = null;
+
+  if (!realtimeDcRef.current) return;
+  if (realtimeDcRef.current.readyState !== "open") return;
+
+  console.log("🚀 ENVIANDO UNA SOLA VEZ:", prompt);
+
+  try {
+    realtimeDcRef.current.send(
+      JSON.stringify({
+        type: "conversation.item.create",
+        item: {
+          type: "message",
+          role: "user",
+          content: [{ type: "input_text", text: prompt }],
+        },
+      })
+    );
+
+    realtimeDcRef.current.send(
+      JSON.stringify({
+        type: "response.create",
+        response: {
+          modalities: ["audio", "text"],
+        },
+      })
+    );
+
+    setWaitingMohamed(false);
+  } catch (error) {
+    console.error("❌ Error enviando:", error);
+  }
+};
 
 
   const stopListening = () => {
@@ -1134,26 +1127,33 @@ console.log("🔥 QUESTION FLOW TRIGGERED");
       assistantBusyRef.current = true;
       setWaitingMohamed(true);
     }
-
 if (msg.type === "response.done") {
 
   assistantBusyRef.current = false;
 
-  const finalText = assistantTextBufferRef.current.trim();
+  let finalText = assistantTextBufferRef.current.trim();
+
+  // 🔥 FIX CLAVE: intentar sacar texto directamente del mensaje
+  if (!finalText && msg.response?.output?.length) {
+    try {
+      finalText =
+        msg.response.output[0]?.content?.[0]?.text || "";
+    } catch (e) {
+      console.log("fallback error");
+    }
+  }
 
   console.log("FINAL TEXT:", finalText);
 
-  // ✅ normalization (باش نحيد الرموز)
-  const normalizedText = finalText
-    .replace(/[^\u0600-\u06FF\s]/g, "")
-    .trim();
+  // 🔥 DEBUG FORZADO
+  console.log("DEBUG 1");
+  console.log("DEBUG 2");
+  console.log("DEBUG 3");
+  console.log("DEBUG 4");
 
-  // 💳 STRIPE TRIGGER
-  if (
-    normalizedText.includes("زر الأداء") ||
-    normalizedText.includes("ورك")
-  ) {
-    console.log("💳 STRIPE TRIGGERED");
+  // 💳 STRIPE TRIGGER (TEMPORAL FORZADO)
+  if (finalText.length > 5) {
+    console.log("💳 STRIPE FORZADO");
     setShowStripe(true);
     stopListening();
   }
@@ -1168,11 +1168,6 @@ if (msg.type === "response.done") {
   pendingAutomationPromptRef.current = null;
   setPendingAutomationPrompt("");
 
-  setTimeout(() => {
-    void flushPendingAutomation();
-  }, 150);
-
-} // ✅ مهم بزاف
 
   } catch (err) {
     console.error("Realtime event parse error:", err);
@@ -1228,12 +1223,7 @@ lastUserTranscriptRef.current = "";
     pendingAutomationPromptRef.current = text;
     setPendingAutomationPrompt(text);
     
-    // ✅ Espera 300ms y DISPARA flush SIEMPRE
-    setTimeout(() => {
-      console.log("⚡ Forzando flushPendingAutomation...");
-      void flushPendingAutomation();
-    }, 300);
-  };
+  
 
   const speakFromAutomation = async (instruction: string) => {
     if (!instruction.trim()) return;
