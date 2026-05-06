@@ -629,31 +629,28 @@ if (rawStep) {
   const progressOk = progressCards.filter((item) => item.estado === "ok").length;
   const progressTotal = progressCards.length;
   const allReady = finalFileStatus === "ok";
+const askingQuestionRef = useRef(false);
 
-const handleQuestionFlow = () => {
+const handleQuestionFlow = async () => {
 
-  setQuestionIndex((prev) => {
+  // ✅ منع التكرار
+  if (askingQuestionRef.current) return;
 
-    const next = prev + 1;
+  askingQuestionRef.current = true;
 
-    console.log("NEXT:", next);
+  const next = questionIndex + 1;
 
-    // ✅ جيب السؤال اللي جاي
-    const nextQuestion = questions[next];
+  console.log("NEXT QUESTION:", next);
 
-    // ✅ قول السؤال
-    if (nextQuestion) {
+  // ✅ حفظ السؤال الحالي
+  setQuestionIndex(next);
 
-      speakExactText(nextQuestion);
+  localStorage.setItem("questionIndex", String(next));
 
-    }
+  // ✅ مرحلة Stripe
+  if (next === 4) {
 
-    // ✅ من بعد السؤال الرابع يبان الأداء
-    if (next === 4) {
-
-      setTimeout(() => {
-
-        const PAYMENT_TEXT = `
+    const PAYMENT_TEXT = `
 مزيان، من خلال الأجوبة ديالك بان ليا بللي الملف ديالك غادي يكون مقبول إن شاء الله ✅
 
 باش نعطيك تحليل دقيق ونوجد ليك الملف كامل:
@@ -667,23 +664,32 @@ const handleQuestionFlow = () => {
 ورك على زر الأداء ونكملو مباشرة.
 `;
 
-        speakExactText(PAYMENT_TEXT);
+    await speakExactText(PAYMENT_TEXT);
 
-        setTimeout(() => {
+    setTimeout(() => {
+      setShowStripe(true);
+    }, 1500);
 
-          setShowStripe(true);
+    askingQuestionRef.current = false;
 
-        }, 12000);
+    return;
+  }
 
-      }, 5000);
+  // ✅ السؤال الموالي
+  const nextQuestion = questions[next];
 
-    }
+  if (nextQuestion) {
 
-    return next;
+    await speakExactText(nextQuestion);
 
-  });
+  }
 
+  // ✅ مهم بزاف
+  setTimeout(() => {
+    askingQuestionRef.current = false;
+  }, 2500);
 };
+
   const updateLeadForm = (field: keyof LeadFormState, value: string) => {
     setLeadForm((prev) => ({ ...prev, [field]: value }));
   };
@@ -1221,9 +1227,7 @@ dc.onmessage = (event) => {
         const answer = transcript.toLowerCase();
 
 
-        setTimeout(() => {
-          handleQuestionFlow();
-        }, 2000);
+    await handleQuestionFlow();
 
       }
     }
