@@ -978,9 +978,7 @@ const questions = [
 
 جاوبني غير بآه ولا لا.
 
-السؤال الأول:
-واش دخلتي لإسبانيا قبل من واحد يناير 2026؟
-        `
+        
       },
     })
   );
@@ -1187,9 +1185,15 @@ dc.send(
           }, 400);
           return;
         }
-        setTimeout(() => {
-          void maybeSendIntroToMohamed();
-        }, 500);
+   setTimeout(() => {
+
+  void maybeSendIntroToMohamed();
+
+  setTimeout(() => {
+    speakExactText(questions[0]);
+  }, 1200);
+
+}, 500);
       };
 dc.onmessage = (event) => {
   try {
