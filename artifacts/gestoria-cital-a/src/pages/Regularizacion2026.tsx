@@ -631,14 +631,18 @@ if (rawStep) {
   const allReady = finalFileStatus === "ok";
 
 const handleQuestionFlow = () => {
+
   setQuestionIndex((prev) => {
+
     const next = prev + 1;
 
     console.log("NEXT:", next);
 
+    // ✅ وصلنا لمرحلة الأداء
     if (next === 5) {
 
-      const PAYMENT_TEXT = `مزيان، من خلال الأجوبة ديالك بان ليا بللي الملف ديالك غادي يكون مقبول إن شاء الله ✅
+      const PAYMENT_TEXT = `
+مزيان، من خلال الأجوبة ديالك بان ليا بللي الملف ديالك غادي يكون مقبول إن شاء الله ✅
 
 باش نعطيك تحليل دقيق ونوجد ليك الملف كامل:
 
@@ -648,11 +652,23 @@ const handleQuestionFlow = () => {
 
 غير ب 12 أورو
 
-ورك على زر الأداء ونكملو مباشرة.`;
+ورك على زر الأداء ونكملو مباشرة.
+`;
 
       // 🎤 محمد يهضر
       speakExactText(PAYMENT_TEXT);
-// 💳 إظهار Stripe مباشرة مع هضرة محمد
+
+      // ✅ نخليو محمد يكمل الهضرة كاملة
+      setTimeout(() => {
+
+        console.log("💳 SHOW STRIPE AFTER SPEECH");
+
+  
+
+        // ✅ نحبسو الميكرو
+        stopListening();
+
+      }, 12000); // 12 ثواني تقريباً حتى يكمل محمد
 
       setQuestionsDone(true);
 
@@ -662,9 +678,10 @@ const handleQuestionFlow = () => {
     }
 
     return next;
-  });
-};
 
+  });
+
+};
 
   const updateLeadForm = (field: keyof LeadFormState, value: string) => {
     setLeadForm((prev) => ({ ...prev, [field]: value }));
@@ -1238,7 +1255,7 @@ if (
 
       console.log("💳 SHOW STRIPE NOW");
 
-      setShowStripe(true);
+
 
       // ✅ يوقف الميكرو مباشرة
       stopListening();
