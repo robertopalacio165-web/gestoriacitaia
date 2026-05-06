@@ -1199,11 +1199,7 @@ if (
 
   const liveText = assistantTextBufferRef.current;
 
-  if (
-    liveText.includes("ورك على زر الأداء") ||
-    liveText.includes("زر الأداء") ||
-    liveText.includes("12 أورو")
-  ) {
+  
 
     if (!showStripe) {
 
@@ -1243,7 +1239,21 @@ if (msg.type === "response.done") {
   assistantBusyRef.current = false;
 
   const finalText = assistantTextBufferRef.current.trim();
+// ✅ إظهار Stripe بعد الجملة النهائية
+if (
+  finalText.includes("ورك على زر الأداء") ||
+  finalText.includes("زر الأداء ونكملو مباشرة")
+) {
 
+  console.log("💳 FINAL STRIPE SHOW");
+
+  setShowStripe(true);
+
+  stopListening();
+
+  setIsListening(false);
+
+}
   if (finalText) {
     lastAssistantTextRef.current = finalText;
   }
