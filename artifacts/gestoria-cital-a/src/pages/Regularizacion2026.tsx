@@ -101,27 +101,6 @@ function slugifyFileName(name: string) {
 }
 
 export default function Regularizacion2026() {
-
-  // ✅ الرجوع من Stripe وكمل السؤال 5
-  useEffect(() => {
-    const paid = localStorage.getItem("paid");
-
-    if (paid === "true") {
-      console.log("✅ CLIENT PAID");
-
-      localStorage.removeItem("paid");
-
-      setShowStripe(false);
-
-      // يرجع للسؤال 5
-      setQuestionIndex(4);
-
-      setTimeout(() => {
-        speakExactText("مزيان، توصلنا بالأداء ديالك. دابا نكملو. السؤال الخامس: واش عندك tarjeta sanitaria؟");
-      }, 800);
-    }
-  }, []);
-
   const handleStripePayment = async () => {
   try {
  const res = await fetch("/api/create-checkout-session", {
@@ -137,6 +116,7 @@ export default function Regularizacion2026() {
     const data = await res.json();
 
     if (data.url) {
+   localStorage.setItem("paid", "true");
 window.location.href = data.url;
     } else {
       alert("❌ Stripe فيه مشكل");
@@ -637,7 +617,31 @@ const handleQuestionFlow = () => {
 
     console.log("NEXT:", next);
 
+    // 👇 غير وصلنا للسؤال 4
+if (next === 4) {
 
+  const PAYMENT_TEXT = `مزيان، من خلال الأجوبة ديالك بان ليا بللي الملف ديالك غادي يكون مقبول إن شاء الله ✅
+
+باش نعطيك تحليل دقيق ونوجد ليك الملف كامل:
+
+✔️ تحليل كامل  
+✔️  100 fi 100 التحقق من الوثائق  
+✔️  الوتيقة المعجزة لي غادي تعونك بزاف
+
+غير بطناشر أورو 
+
+ورك على زر الأداء ونكملو مباشرة.`;
+
+  speakExactText(PAYMENT_TEXT);
+
+  setQuestionsDone(true);
+
+  return prev;
+}
+
+    return next;
+  });
+};
 
   const updateLeadForm = (field: keyof LeadFormState, value: string) => {
     setLeadForm((prev) => ({ ...prev, [field]: value }));
@@ -1180,38 +1184,8 @@ dc.send(
         } else if (answer.includes("لا") || answer.includes("no")) {
           speakExactText("ماشي مشكل، كاين حلول أخرى 👍");
         }
-setTimeout(() => {
-
-  // 🎯 إلا كنا فالسؤال 4
-  if (questionIndex === 3) {
-
-    const PAYMENT_TEXT = `مزيان 👌  
-دابا الملف ديالك باين مزيان وعندك فرصة كبيرة إن شاء الله ✅
-
-باش نكملو معاك ونحققو الوثائق ديالك بشكل دقيق:
-
-✔️ تحليل كامل  
-✔️ التحقق من الوثائق 100%  
-✔️ وثيقة مهمة غادي تعاونك بزاف  
-
-غير ب 12 أورو  
-
-إلى بغيتي نكملو، دير الأداء ونكمل معاك مباشرة.`;
-
-    // 🎤 محمد يهضر
-    speakExactText(PAYMENT_TEXT);
-
-    // ⏳ من بعد ما يكمل الهضرة
-    setTimeout(() => {
-      setShowStripe(true);
-    }, 5000);
-
-    return;
-  }
-
-  // ✅ باقي الأسئلة يخدمو عادي
+        setTimeout(() => {
   handleQuestionFlow();
-
 }, 2000);
 console.log("🔥 QUESTION FLOW TRIGGERED");
       }
@@ -1244,7 +1218,20 @@ if (msg.type === "response.done") {
   // 👇 خد النص ديال محمد
   const finalText = assistantTextBufferRef.current.trim();
 
- 
+  // 💳 STRIPE TRIGGER (دابا صحيح)
+  if (
+    finalText &&
+    finalText.includes("بطناشر أورو") &&
+    !showStripe
+  ) {
+    console.log("💳 STRIPE TRIGGERED");
+
+    setShowStripe(true);
+
+    // ⛔ وقف الصوت
+    stopListening();
+  }
+
   if (finalText) {
     lastAssistantTextRef.current = finalText;
   }
