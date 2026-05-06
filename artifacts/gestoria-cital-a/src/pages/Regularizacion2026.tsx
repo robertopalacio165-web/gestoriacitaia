@@ -655,15 +655,19 @@ if (next === 5) {
   speakExactText(PAYMENT_TEXT);
 
   // ⏳ نستناو حتى يكمل الهضرة
-  setTimeout(() => {
+setTimeout(() => {
 
-    // 💳 يبان Stripe
-    setShowStripe(true);
+  // 💳 يبان Stripe
+  setShowStripe(true);
 
-    // ⛔ نوقف الميكروفون
-    stopListening();
+}, 14000);
 
-  }, 12000);
+// ⏳ نحبسو الصوت من بعد ما يكمل محمد
+setTimeout(() => {
+
+  stopListening();
+
+}, 18000);
 
   setQuestionsDone(true);
 
