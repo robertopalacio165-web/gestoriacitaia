@@ -865,55 +865,7 @@ const buildDocSpeech = (
     return user.id;
   };
 
-  // ✅ CAMBIO #1: askMohamedToSpeak - AHORA ENVÍA instructions EN response.create
-  const askMohamedToSpeak = async (instruction: string) => {
-    try {
-     const finalText = instruction;
   
-      if (!realtimeDcRef.current) {
-        console.error("❌ No hay data channel en askMohamedToSpeak");
-        return false;
-      }
-      if (realtimeDcRef.current.readyState !== "open") {
-        console.error("❌ Data channel no está open:", realtimeDcRef.current.readyState);
-        return false;
-      }
-      
-      console.log("🎤 askMohamedToSpeak llamado:", instruction);
-      setWaitingMohamed(true);
-      assistantTextBufferRef.current = "";
-      
-      // ✅ PRIMER mensaje: crear el item
-      realtimeDcRef.current.send(
-        JSON.stringify({
-          type: "conversation.item.create",
-          item: {
-            type: "message",
-            role: "user",
-            content: [{ type: "input_text", text: finalText }],
-          },
-        })
-      );
-      console.log("✅ conversation.item.create enviado");
-      
-      // ✅ SEGUNDO mensaje: FORZAR respuesta CON instructions
-      realtimeDcRef.current.send(
-        JSON.stringify({
-          type: "response.create",
- response: {
-  modalities: ["audio", "text"],
-  instructions: finalText
-},
-        })
-      );
-      console.log("✅ response.create enviado con instructions");
-      
-      return true;
-    } catch (error) {
-      console.error("❌ Error en askMohamedToSpeak:", error);
-      return false;
-    }
-  };
 
   // ✅ CAMBIO #2: flushPendingAutomation - AHORA ENVÍA DIRECTO SIN VERIFICAR assistantBusyRef
   const flushPendingAutomation = async (retries = 0) => {
@@ -1180,13 +1132,26 @@ dc.send(
   JSON.stringify({
     type: "session.update",
     session: {
-      instructions: "أنت محمد، مساعد ذكي متخصص في الهجرة تجاوب باختصار وبالدارجة",
       modalities: ["audio", "text"],
+
+      instructions: `
+أنت محمد.
+
+ممنوع تجاوب من راسك.
+ممنوع تعاود الأسئلة.
+ممنوع تهضر حتى يوصلك response.create.
+
+جاوب غير بالنص اللي يوصلك.
+دوي بالدارجة المغربية فقط.
+      `,
+
       turn_detection: {
         type: "server_vad",
-        threshold: 0.75,
-        prefix_padding_ms: 300,
-        silence_duration_ms: 800,
+        create_response: false,
+        interrupt_response: true,
+        threshold: 0.82,
+        prefix_padding_ms: 200,
+        silence_duration_ms: 600,
       },
     },
   })
@@ -1232,9 +1197,9 @@ dc.onmessage = async (event) => {
         pushUserMessage(transcript);
 
         const answer = transcript.toLowerCase();
-
-
-    await handleQuestionFlow();
+if (assistantBusyRef.current) {
+  return;
+}
 
       }
     }
@@ -1357,21 +1322,16 @@ lastUserTranscriptRef.current = "";
     }
   };
 
-  const speakExactText = async (text: string) => {
-    if (!text.trim()) return;
-    
-    console.log("🔊 speakExactText llamado:", text);
-    pushAgentMessage(text);
-    
-    pendingAutomationPromptRef.current = text;
-    setPendingAutomationPrompt(text);
-    
-    // ✅ Espera 300ms y DISPARA flush SIEMPRE
-    setTimeout(() => {
-      console.log("⚡ Forzando flushPendingAutomation...");
-      void flushPendingAutomation();
-    }, 300);
-  };
+ const speakExactText = async (text: string) => {
+
+  if (!text.trim()) return;
+
+  pushAgentMessage(text);
+
+  await speakRealtime(text);
+
+  setWaitingMohamed(false);
+};
 
   const speakFromAutomation = async (instruction: string) => {
     if (!instruction.trim()) return;
