@@ -655,14 +655,21 @@ if (next === 4) {
   // 🎤 محمد يهضر
   speakExactText(PAYMENT_TEXT);
 
-  // 💳 هنا كيتحل Stripe مباشرة
-  setShowStripe(true);
+  // ⏳ نستناو حتى يكمل محمد الهضرة
+  setTimeout(() => {
 
-  // ⛔ نوقف الصوت
-  stopListening();
+    // 💳 دابا يبان Stripe
+    setShowStripe(true);
+
+    // ⛔ نوقف الميكروفون
+    stopListening();
+
+  }, 12000);
 
   setQuestionsDone(true);
-localStorage.setItem("questionIndex", "4");
+
+  localStorage.setItem("questionIndex", "4");
+
   return prev;
 }
 
