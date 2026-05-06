@@ -107,6 +107,7 @@ export default function Regularizacion2026() {
     const paid = localStorage.getItem("paid");
 
     if (paid === "true") {
+      stripeTriggeredRef.current = false;
       console.log("✅ CLIENT PAID");
 
       localStorage.removeItem("paid");
@@ -173,6 +174,7 @@ const [clientQuestionsDone, setClientQuestionsDone] = useState(false);
   const [questionIndex, setQuestionIndex] = useState(0);
 const [clientQuestionIndex, setClientQuestionIndex] = useState(0);
   const [showStripe, setShowStripe] = useState(false);
+  const stripeTriggeredRef = useRef(false);
 
   const [leadForm, setLeadForm] = useState<LeadFormState>({
     nombre: "",
@@ -647,22 +649,12 @@ const handleQuestionFlow = async () => {
 
   localStorage.setItem("questionIndex", String(next));
 
-  // ✅ السؤال الرابع = Stripe
   if (next === 4) {
 
-    // ❌ وقف محمد
-    stopListening();
+  askingQuestionRef.current = false;
 
-    // ❌ حيد الميكروفون
-    setIsListening(false);
-
-    // ✅ خرج Stripe مباشرة
-    setShowStripe(true);
-
-    askingQuestionRef.current = false;
-
-    return;
-  }
+  return;
+}
 
   const nextQuestion = questions[next];
 
@@ -1197,20 +1189,26 @@ if (
 
   assistantTextBufferRef.current += msg.delta;
 
-  const liveText = assistantTextBufferRef.current;
+  const liveText =
+    assistantTextBufferRef.current.toLowerCase();
 
-  if (!showStripe) {
+  // ✅ مرة وحدة فقط
+  if (
+    !stripeTriggeredRef.current &&
+    (
+      liveText.includes("زر الأداء") ||
+      liveText.includes("الأداء")
+    )
+  ) {
 
-    console.log("💳 SHOW STRIPE NOW");
+    stripeTriggeredRef.current = true;
 
+    console.log("💳 STRIPE BUTTON SHOW");
+
+    // ✅ إظهار البوتون مباشرة
     setShowStripe(true);
 
-    setTimeout(() => {
-      stopListening();
-    }, 500);
-
   }
-
 }
 
 // ✅ سددنا if الأولى هنا
@@ -1237,22 +1235,6 @@ if (msg.type === "response.done") {
   assistantBusyRef.current = false;
 
   const finalText = assistantTextBufferRef.current.trim();
-
-  // ✅ إظهار Stripe بعد الجملة النهائية
-  if (
-    finalText.includes("ورك على زر الأداء") ||
-    finalText.includes("زر الأداء ونكملو مباشرة")
-  ) {
-
-    console.log("💳 FINAL STRIPE SHOW");
-
-    setShowStripe(true);
-
-    stopListening();
-
-    setIsListening(false);
-
-  }
 
   if (finalText) {
     lastAssistantTextRef.current = finalText;
@@ -1962,8 +1944,8 @@ const fullSpeech = `
                     {ui.listening}
                   </p>
                 )}
-                <motion.div
-  initial={{ opacity: 0, y: 15 }}
+            <motion.div
+  initial={false}
   animate={{
     opacity: showStripe ? 1 : 0,
     y: showStripe ? 0 : 15,
