@@ -653,7 +653,7 @@ const handleQuestionFlow = () => {
       // 🎤 محمد يهضر
       speakExactText(PAYMENT_TEXT);
 // 💳 إظهار Stripe مباشرة مع هضرة محمد
-setShowStripe(true);
+
       setQuestionsDone(true);
 
       localStorage.setItem("questionIndex", "5");
@@ -1223,16 +1223,7 @@ console.log("🔥 QUESTION FLOW TRIGGERED");
 
   const liveText = assistantTextBufferRef.current;
 
-  // 💳 منين محمد يوصل للهضرة ديال الأداء
-  if (
-    liveText.includes("زر الأداء") ||
-    liveText.includes("الأداء") ||
-    liveText.includes("12 أورو")
-  ) {
-
-   setShowStripe(true);
-
-  }
+ 
 }
 
     if (
@@ -1249,6 +1240,37 @@ console.log("🔥 QUESTION FLOW TRIGGERED");
     }
 
 if (msg.type === "response.done") {
+
+  assistantBusyRef.current = false;
+
+  const finalText = assistantTextBufferRef.current.trim();
+
+  // ✅ ملي محمد يسالي الهضرة كاملة
+  if (
+    finalText.includes("ورك على زر الأداء") ||
+    finalText.includes("12 أورو")
+  ) {
+
+    setShowStripe(true);
+
+    // 🎤 يقطع الميكرو مباشرة
+    stopListening();
+  }
+
+  if (finalText) {
+    lastAssistantTextRef.current = finalText;
+  }
+
+  finalizeAssistantBuffer();
+  setWaitingMohamed(false);
+
+  pendingAutomationPromptRef.current = null;
+  setPendingAutomationPrompt("");
+
+  setTimeout(() => {
+    void flushPendingAutomation();
+  }, 150);
+}
 
   assistantBusyRef.current = false;
 
