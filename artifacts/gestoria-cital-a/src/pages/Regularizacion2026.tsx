@@ -1199,7 +1199,7 @@ dc.send(
           void maybeSendIntroToMohamed();
         }, 500);
       };
-dc.onmessage = (event) => {
+dc.onmessage = async (event) => {
   try {
     const msg = JSON.parse(event.data);
 
