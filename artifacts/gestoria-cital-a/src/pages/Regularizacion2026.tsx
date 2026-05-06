@@ -637,8 +637,7 @@ const handleQuestionFlow = () => {
 
     console.log("NEXT:", next);
 
-    // 👇 غير وصلنا للسؤال 4
-if (next === 4) {
+if (next === 5) {
 
   const PAYMENT_TEXT = `مزيان، من خلال الأجوبة ديالك بان ليا بللي الملف ديالك غادي يكون مقبول إن شاء الله ✅
 
@@ -655,10 +654,10 @@ if (next === 4) {
   // 🎤 محمد يهضر
   speakExactText(PAYMENT_TEXT);
 
-  // ⏳ نستناو حتى يكمل محمد الهضرة
+  // ⏳ نستناو حتى يكمل الهضرة
   setTimeout(() => {
 
-    // 💳 دابا يبان Stripe
+    // 💳 يبان Stripe
     setShowStripe(true);
 
     // ⛔ نوقف الميكروفون
@@ -668,7 +667,7 @@ if (next === 4) {
 
   setQuestionsDone(true);
 
-  localStorage.setItem("questionIndex", "4");
+  localStorage.setItem("questionIndex", "5");
 
   return prev;
 }
