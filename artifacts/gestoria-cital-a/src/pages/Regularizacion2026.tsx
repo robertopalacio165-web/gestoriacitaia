@@ -1239,21 +1239,23 @@ if (msg.type === "response.done") {
   assistantBusyRef.current = false;
 
   const finalText = assistantTextBufferRef.current.trim();
-// ✅ إظهار Stripe بعد الجملة النهائية
-if (
-  finalText.includes("ورك على زر الأداء") ||
-  finalText.includes("زر الأداء ونكملو مباشرة")
-) {
 
-  console.log("💳 FINAL STRIPE SHOW");
+  // ✅ إظهار Stripe بعد الجملة النهائية
+  if (
+    finalText.includes("ورك على زر الأداء") ||
+    finalText.includes("زر الأداء ونكملو مباشرة")
+  ) {
 
-  setShowStripe(true);
+    console.log("💳 FINAL STRIPE SHOW");
 
-  stopListening();
+    setShowStripe(true);
 
-  setIsListening(false);
+    stopListening();
 
-}
+    setIsListening(false);
+
+  }
+
   if (finalText) {
     lastAssistantTextRef.current = finalText;
   }
