@@ -630,7 +630,52 @@ if (rawStep) {
   const progressTotal = progressCards.length;
   const allReady = finalFileStatus === "ok";
 
+const handleQuestionFlow = () => {
 
+  setQuestionIndex((prev) => {
+
+    const next = prev + 1;
+
+    console.log("NEXT:", next);
+
+    // ✅ وصلنا لمرحلة الأداء
+    if (next === 5) {
+
+      const PAYMENT_TEXT = `
+مزيان، من خلال الأجوبة ديالك بان ليا بللي الملف ديالك غادي يكون مقبول إن شاء الله ✅
+
+باش نعطيك تحليل دقيق ونوجد ليك الملف كامل:
+
+✔️ تحليل كامل
+✔️ 100 fi 100 التحقق من الوثائق
+✔️ الوثيقة المعجزة لي غادي تعونك بزاف
+
+غير ب 12 أورو
+
+ورك على زر الأداء ونكملو مباشرة.
+`;
+
+      // 🎤 محمد يهضر
+      speakExactText(PAYMENT_TEXT);
+setTimeout(() => {
+
+  console.log("💳 SHOW STRIPE");
+
+  setShowStripe(true);
+
+}, 9000);
+      setQuestionsDone(true);
+
+      localStorage.setItem("questionIndex", "5");
+
+      return prev;
+    }
+
+    return next;
+
+  });
+
+};
 
   const updateLeadForm = (field: keyof LeadFormState, value: string) => {
     setLeadForm((prev) => ({ ...prev, [field]: value }));
@@ -920,42 +965,26 @@ const questions = [
   "واش عندك شي سؤال؟"
 ];
 
- realtimeDcRef.current.send(
-  JSON.stringify({
-    type: "conversation.item.create",
-    item: {
-      type: "message",
-      role: "user",
-      content: [
-        {
-          type: "input_text",
-          text: `
-أنت محمد، مختص فالهجرة.
+ const maybeSendIntroToMohamed = async () => {
+  if (!realtimeDcRef.current) return;
 
-تكلم بالدارجة المغربية فقط.
+  realtimeDcRef.current.send(
+    JSON.stringify({
+      type: "response.create",
+      response: {
+        modalities: ["audio", "text"],
+        instructions: `
+السلام عليكم، أنا محمد مرحبا بك فـ GestoriaCitaIA.
 
-سول العميل سؤال واحد فقط كل مرة.
+جاوبني غير بآه ولا لا.
 
-جاوب باختصار.
-
-ابدأ الآن بالسؤال الأول:
-
-واش دخلتي لإسبانيا قبل من 1 يناير 2026؟
-          `,
-        },
-      ],
-    },
-  })
-);
-
-realtimeDcRef.current.send(
-  JSON.stringify({
-    type: "response.create",
-    response: {
-      modalities: ["audio", "text"]
-    },
-  })
-);
+السؤال الأول:
+واش دخلتي لإسبانيا قبل من واحد يناير 2026؟
+        `
+      },
+    })
+  );
+};
 
   const stopListening = () => {
     try {
@@ -1169,47 +1198,63 @@ dc.onmessage = (event) => {
       msg?.item?.content?.[0]?.transcript ||
       "";
 
- if (
-  (msg.type === "conversation.item.input_audio_transcription.completed" ||
-    msg.type === "input_audio_buffer.transcription.completed") &&
-  typeof userTranscript === "string" &&
-  userTranscript.trim()
-) {
+    if (
+      (msg.type === "conversation.item.input_audio_transcription.completed" ||
+        msg.type === "input_audio_buffer.transcription.completed") &&
+      typeof userTranscript === "string" &&
+      userTranscript.trim()
+    ) {
 
-  const transcript = userTranscript.trim();
+      const transcript = userTranscript.trim();
 
-  if (transcript !== lastUserTranscriptRef.current) {
+      if (transcript !== lastUserTranscriptRef.current) {
 
-    lastUserTranscriptRef.current = transcript;
+        lastUserTranscriptRef.current = transcript;
+        setLastUserTranscript(transcript);
+        pushUserMessage(transcript);
 
-    setLastUserTranscript(transcript);
+        const answer = transcript.toLowerCase();
 
-    pushUserMessage(transcript);
-
-    // ✅ نحسب غير عدد الأجوبة
-    setQuestionIndex((prev) => {
-
-      const next = prev + 1;
-
-      console.log("QUESTION:", next);
-
-      // ✅ السؤال الرابع → أظهر Stripe
-      if (next === 4) {
+        if (answer.includes("نعم") || answer.includes("yes")) {
+          speakExactText("مزيان، هادي نقطة قوية فصالحك 👍");
+        } else if (answer.includes("لا") || answer.includes("no")) {
+          speakExactText("ماشي مشكل، كاين حلول أخرى 👍");
+        }
 
         setTimeout(() => {
-
-          setShowStripe(true);
-
-        }, 1000);
+          handleQuestionFlow();
+        }, 2000);
 
       }
+    }
 
-      return next;
+if (
+  msg.type === "response.output_text.delta" &&
+  typeof msg.delta === "string"
+) {
 
-    });
+  assistantTextBufferRef.current += msg.delta;
 
+  const liveText = assistantTextBufferRef.current;
+
+  if (
+    liveText.includes("ورك على زر الأداء") ||
+    liveText.includes("زر الأداء") ||
+    liveText.includes("12 أورو")
+  ) {
+
+    if (!showStripe) {
+
+      console.log("💳 SHOW STRIPE NOW");
+
+      setShowStripe(true);
+
+      setTimeout(() => {
+        stopListening();
+      }, 500);
+
+    }
   }
-
 }
 
 // ✅ سددنا if الأولى هنا
