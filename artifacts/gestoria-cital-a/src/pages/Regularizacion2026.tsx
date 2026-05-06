@@ -1238,18 +1238,24 @@ if (
   const liveText = assistantTextBufferRef.current;
 
   // ✅ محمد وصل لهضرة الأداء
-  if (
-    liveText.includes("ورك على زر الأداء") ||
-    liveText.includes("زر الأداء") ||
-    liveText.includes("12 أورو")
-  ) {
+ if (
+  liveText.includes("ورك على زر الأداء") ||
+  liveText.includes("زر الأداء") ||
+  liveText.includes("12 أورو")
+) {
 
-    // ✅ ما يعاودش يخرج مرتين
-    if (!showStripe) {
+  if (!showStripe) {
 
-      console.log("💳 SHOW STRIPE NOW");
-  setShowStripe(true);
-    }
+    console.log("💳 SHOW STRIPE NOW");
+
+    // ✅ أول حاجة: بين الزر
+    setShowStripe(true);
+
+    // ✅ من بعد: حبس الميكروفون
+    setTimeout(() => {
+      stopListening();
+    }, 500);
+
   }
 }
 
