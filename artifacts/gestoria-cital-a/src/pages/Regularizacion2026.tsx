@@ -639,7 +639,7 @@ const handleQuestionFlow = () => {
     console.log("NEXT:", next);
 
     // ✅ وصلنا لمرحلة الأداء
-    if (next === 4) {
+if (next >= 4) {
 
       const PAYMENT_TEXT = `
 مزيان، من خلال الأجوبة ديالك بان ليا بللي الملف ديالك غادي يكون مقبول إن شاء الله ✅
@@ -658,15 +658,13 @@ const handleQuestionFlow = () => {
       console.log(PAYMENT_TEXT);
       speakExactText(PAYMENT_TEXT);
       
+setShowStripe(true);
+
 setTimeout(() => {
-
-  console.log("💳 SHOW PAYMENT BUTTON");
-
-  setShowStripe(true);
 
   stopListening();
 
-},13000 );
+}, 1000);
 
 
       setQuestionsDone(true);
