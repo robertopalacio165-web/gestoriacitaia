@@ -101,6 +101,27 @@ function slugifyFileName(name: string) {
 }
 
 export default function Regularizacion2026() {
+
+  // ✅ الرجوع من Stripe وكمل السؤال 5
+  useEffect(() => {
+    const paid = localStorage.getItem("paid");
+
+    if (paid === "true") {
+      console.log("✅ CLIENT PAID");
+
+      localStorage.removeItem("paid");
+
+      setShowStripe(false);
+
+      // يرجع للسؤال 5
+      setQuestionIndex(4);
+
+      setTimeout(() => {
+        speakExactText("مزيان، توصلنا بالأداء ديالك. دابا نكملو. السؤال الخامس: واش عندك tarjeta sanitaria؟");
+      }, 800);
+    }
+  }, []);
+
   const handleStripePayment = async () => {
   try {
  const res = await fetch("/api/create-checkout-session", {
@@ -116,7 +137,6 @@ export default function Regularizacion2026() {
     const data = await res.json();
 
     if (data.url) {
-   localStorage.setItem("paid", "true");
 window.location.href = data.url;
     } else {
       alert("❌ Stripe فيه مشكل");
@@ -153,6 +173,7 @@ const [clientQuestionsDone, setClientQuestionsDone] = useState(false);
   const [questionIndex, setQuestionIndex] = useState(0);
 const [clientQuestionIndex, setClientQuestionIndex] = useState(0);
   const [showStripe, setShowStripe] = useState(false);
+  const [waitingForStripe, setWaitingForStripe] = useState(false);
 
   const [leadForm, setLeadForm] = useState<LeadFormState>({
     nombre: "",
@@ -611,6 +632,12 @@ if (rawStep) {
   const allReady = finalFileStatus === "ok";
 
 
+const handleQuestionFlow = () => {
+  setQuestionIndex((prev) => {
+    const next = prev + 1;
+
+    console.log("NEXT:", next);
+
 
 
   const updateLeadForm = (field: keyof LeadFormState, value: string) => {
@@ -625,7 +652,9 @@ if (rawStep) {
     ]);
     lastAssistantTextRef.current = text;
   };
-
+if (next === 4) {
+  setWaitingForStripe(true);
+}
   const pushUserMessage = (text: string) => {
     if (!text?.trim()) return;
     setVoiceHistory((prev) => [
@@ -831,47 +860,96 @@ const buildDocSpeech = (
     }
   };
 
- const flushPendingAutomation = async (retries = 0) => {
-  const prompt = pendingAutomationPromptRef.current;
+  // ✅ CAMBIO #2: flushPendingAutomation - AHORA ENVÍA DIRECTO SIN VERIFICAR assistantBusyRef
+  const flushPendingAutomation = async (retries = 0) => {
+    const prompt = pendingAutomationPromptRef.current;
+    if (!prompt) return;
+    if (!realtimeDcRef.current) {
+      console.error("❌ No hay data channel");
+      return;
+    }
+    if (realtimeDcRef.current.readyState !== "open") {
+      console.error("❌ Data channel no está abierto:", realtimeDcRef.current.readyState);
+      return;
+    }
+    
+    console.log("🚀 ENVIANDO DIRECTAMENTE (sin verificar busy):", prompt);
+    
+    // ✅ ENVÍO DIRECTO SIN VERIFICAR assistantBusyRef
+    try {
+      realtimeDcRef.current.send(
+        JSON.stringify({
+          type: "conversation.item.create",
+          item: {
+            type: "message",
+            role: "user",
+            content: [{ type: "input_text", text: prompt }],
+          },
+        })
+      );
+      console.log("✅ Item creado, enviando response.create...");
+      
+      realtimeDcRef.current.send(
+        JSON.stringify({
+          type: "response.create",
+          response: {
+  modalities: ["audio", "text"]
+}
+        })
+      );
+      console.log("✅ response.create enviado - Mohamed DEBERÍA hablar");
+      
+      // Limpiar después de enviar
+      pendingAutomationPromptRef.current = null;
+      setPendingAutomationPrompt("");
+      setWaitingMohamed(false);
+    } catch (error) {
+      console.error("❌ Error enviando:", error);
+    }
+  };
 
-  // 🛑 BLOQUEO TOTAL
-  if (!prompt) return;
+const questions = [
+  "واش دخلتي لإسبانيا قبل من واحد يناير 2026؟",
+  "واش بقيتي في إسبانيا لمدة ديال خمسة أشهر متتالية؟ وشنو هي أول مدينة سكنتي فيها في إسبانيا؟",
+  "واش عندك الباسبور والبطاقة الوطنية المغربية ولا photocopie منهم؟",
+  "واش عندك شهادة السكنة ولا شي وثيقة فيها الاسم والتاريخ؟",
+  "واش عندك tarjeta sanitaria؟",
+  "واش عندك شي وثيقة من المستشفى فيها الاسم والتاريخ؟",
+  "واش عندك شي ورقة ديال الدواء فيها الاسم والتاريخ؟",
+  "واش عندك رقم هاتف مسجل باسمك؟",
+  "واش عندك بطاقة ديال النقل فيها الاسم والتاريخ؟",
+  "واش خدمتي وعندك إثبات؟",
+  "واش عندك شهادة من جمعية؟",
+  "واش عندك السوابق العدلية مترجمة؟",
+  "واش شدوك البوليس؟",
+  "واش عندك expulsion؟",
+  "واش مشيتي للكوميسارية؟",
+  "واش عندك فيزا؟",
+  "واش درتي لجوء؟",
+  "عطيني رقم الواتساب ديالك.",
+  "واش عندك شي سؤال؟"
+];
 
-  // 🛑 EVITAR DOBLE ENVÍO
-  pendingAutomationPromptRef.current = null;
-
+ const maybeSendIntroToMohamed = async () => {
   if (!realtimeDcRef.current) return;
-  if (realtimeDcRef.current.readyState !== "open") return;
 
-  console.log("🚀 ENVIANDO UNA SOLA VEZ:", prompt);
+  realtimeDcRef.current.send(
+    JSON.stringify({
+      type: "response.create",
+      response: {
+        modalities: ["audio", "text"],
+        instructions: `
+السلام عليكم، أنا محمد مرحبا بك فـ GestoriaCitaIA.
 
-  try {
-    realtimeDcRef.current.send(
-      JSON.stringify({
-        type: "conversation.item.create",
-        item: {
-          type: "message",
-          role: "user",
-          content: [{ type: "input_text", text: prompt }],
-        },
-      })
-    );
+جاوبني غير بآه ولا لا.
 
-    realtimeDcRef.current.send(
-      JSON.stringify({
-        type: "response.create",
-        response: {
-          modalities: ["audio", "text"],
-        },
-      })
-    );
-
-    setWaitingMohamed(false);
-  } catch (error) {
-    console.error("❌ Error enviando:", error);
-  }
+السؤال الأول:
+واش دخلتي لإسبانيا قبل من واحد يناير 2026؟
+        `
+      },
+    })
+  );
 };
-
 
   const stopListening = () => {
     try {
@@ -1071,7 +1149,9 @@ dc.send(
           }, 400);
           return;
         }
-       
+        setTimeout(() => {
+          void maybeSendIntroToMohamed();
+        }, 500);
       };
  dc.onmessage = (event) => {
   try {
@@ -1098,18 +1178,19 @@ dc.send(
 
         const answer = transcript.toLowerCase();
 
-if (!assistantBusyRef.current) {
-  if (answer.includes("نعم") || answer.includes("yes")) {
-    await speakExactText("مزيان، هادي نقطة قوية فصالحك 👍");
-  } else if (answer.includes("لا") || answer.includes("no")) {
-    await speakExactText("ماشي مشكل، كاين حلول أخرى 👍");
-  }
-}
+        if (answer.includes("نعم") || answer.includes("yes")) {
           speakExactText("مزيان، هادي نقطة قوية فصالحك 👍");
         } else if (answer.includes("لا") || answer.includes("no")) {
           speakExactText("ماشي مشكل، كاين حلول أخرى 👍");
         }
+setTimeout(() => {
 
+ 
+
+  // ✅ باقي الأسئلة يخدمو عادي
+  handleQuestionFlow();
+
+}, 2000);
 console.log("🔥 QUESTION FLOW TRIGGERED");
       }
     }
@@ -1133,47 +1214,55 @@ console.log("🔥 QUESTION FLOW TRIGGERED");
       assistantBusyRef.current = true;
       setWaitingMohamed(true);
     }
+
 if (msg.type === "response.done") {
 
   assistantBusyRef.current = false;
 
-  let finalText = assistantTextBufferRef.current.trim();
-
-  // 🔥 FIX CLAVE: intentar sacar texto directamente del mensaje
-  if (!finalText && msg.response?.output?.length) {
-    try {
-      finalText =
-        msg.response.output[0]?.content?.[0]?.text || "";
-    } catch (e) {
-      console.log("fallback error");
-    }
-  }
-
-  console.log("FINAL TEXT:", finalText);
-
-  // 🔥 DEBUG FORZADO
-  console.log("DEBUG 1");
-  console.log("DEBUG 2");
-  console.log("DEBUG 3");
-  console.log("DEBUG 4");
-
-  // 💳 STRIPE TRIGGER (TEMPORAL FORZADO)
-  if (finalText.length > 5) {
-    console.log("💳 STRIPE FORZADO");
-    setShowStripe(true);
-    stopListening();
-  }
-
-  assistantTextBufferRef.current = "";
-  setWaitingMohamed(false);
+  const finalText = assistantTextBufferRef.current.trim();
 
   if (finalText) {
     lastAssistantTextRef.current = finalText;
   }
 
+  finalizeAssistantBuffer();
+  setWaitingMohamed(false);
+
   pendingAutomationPromptRef.current = null;
   setPendingAutomationPrompt("");
 
+  // 🎯 هنا الشرط ديال Stripe
+  if (waitingForStripe && finalText.includes("12")) {
+    console.log("💰 SHOW STRIPE NOW");
+    setShowStripe(true);
+    setWaitingForStripe(false);
+  }
+
+  setTimeout(() => {
+    void flushPendingAutomation();
+  }, 150);
+}
+
+  assistantBusyRef.current = false;
+
+  // 👇 خد النص ديال محمد
+  const finalText = assistantTextBufferRef.current.trim();
+
+ 
+  if (finalText) {
+    lastAssistantTextRef.current = finalText;
+  }
+
+  finalizeAssistantBuffer();
+  setWaitingMohamed(false);
+
+  pendingAutomationPromptRef.current = null;
+  setPendingAutomationPrompt("");
+
+  setTimeout(() => {
+    void flushPendingAutomation();
+  }, 150);
+}
 
   } catch (err) {
     console.error("Realtime event parse error:", err);
@@ -1221,19 +1310,20 @@ lastUserTranscriptRef.current = "";
   };
 
   const speakExactText = async (text: string) => {
-  if (!text.trim()) return;
-
-  console.log("🔊 speakExactText llamado:", text);
-
-  pushAgentMessage(text);
-
-  pendingAutomationPromptRef.current = text;
-  setPendingAutomationPrompt(text);
-
-  // ✅ SOLO enviar UNA vez
-  await flushPendingAutomation();
-};
-  
+    if (!text.trim()) return;
+    
+    console.log("🔊 speakExactText llamado:", text);
+    pushAgentMessage(text);
+    
+    pendingAutomationPromptRef.current = text;
+    setPendingAutomationPrompt(text);
+    
+    // ✅ Espera 300ms y DISPARA flush SIEMPRE
+    setTimeout(() => {
+      console.log("⚡ Forzando flushPendingAutomation...");
+      void flushPendingAutomation();
+    }, 300);
+  };
 
   const speakFromAutomation = async (instruction: string) => {
     if (!instruction.trim()) return;
@@ -1302,16 +1392,18 @@ lastUserTranscriptRef.current = "";
         }));
       };
 
-     dc.onmessage = (event) => {
-  try {
-    const msg = JSON.parse(event.data);
-
-    if (msg.type === "response.done") {
-      console.log("✅ response done");
-    }
-
-  } catch (e) {}
-}; 
+      dc.onmessage = (event) => {
+        try {
+          const msg = JSON.parse(event.data);
+          if (msg.type === "response.done") {
+            console.log("✅ Respuesta completada - Cerrando en 2s");
+            setTimeout(() => {
+              dc.close();
+              pc.close();
+            }, 2000);
+          }
+        } catch (e) {}
+      };
 
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
