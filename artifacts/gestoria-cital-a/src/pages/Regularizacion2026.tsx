@@ -1213,12 +1213,26 @@ console.log("🔥 QUESTION FLOW TRIGGERED");
       }
     }
 
-    if (
-      msg.type === "response.output_text.delta" &&
-      typeof msg.delta === "string"
-    ) {
-      assistantTextBufferRef.current += msg.delta;
-    }
+   if (
+  msg.type === "response.output_text.delta" &&
+  typeof msg.delta === "string"
+) {
+
+  assistantTextBufferRef.current += msg.delta;
+
+  const liveText = assistantTextBufferRef.current;
+
+  // 💳 منين محمد يوصل للهضرة ديال الأداء
+  if (
+    liveText.includes("زر الأداء") ||
+    liveText.includes("الأداء") ||
+    liveText.includes("12 أورو")
+  ) {
+
+
+
+  }
+}
 
     if (
       msg.type === "response.output_text.done" &&
@@ -1255,19 +1269,7 @@ if (msg.type === "response.done") {
     void flushPendingAutomation();
   }, 150);
 }
-// ✅ منين يسالي محمد الهضرة كاملة
-if (
-  assistantTextBufferRef.current.includes("ورك على زر الأداء")
-) {
 
-  // 💳 دابا فقط يبان Stripe
-  setShowStripe(true);
-
-  // ⏳ نخلي الصوت يكمل شوية
-  setTimeout(() => {
-    stopListening();
-  }, 1500);
-}
   } catch (err) {
     console.error("Realtime event parse error:", err);
   }
