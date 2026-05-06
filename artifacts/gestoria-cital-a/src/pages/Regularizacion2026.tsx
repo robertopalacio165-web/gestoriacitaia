@@ -631,12 +631,19 @@ if (rawStep) {
   const progressTotal = progressCards.length;
   const allReady = finalFileStatus === "ok";
 
-
 const handleQuestionFlow = () => {
   setQuestionIndex((prev) => {
     const next = prev + 1;
 
     console.log("NEXT:", next);
+
+    if (next === 4) {
+      setWaitingForStripe(true);
+    }
+
+    return next;
+  });
+};
 
 
 
