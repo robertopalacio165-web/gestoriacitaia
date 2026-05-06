@@ -638,7 +638,7 @@ const handleQuestionFlow = () => {
 
     console.log("NEXT:", next);
 
-    // ✅ وصلنا لمرحلة الأداء
+    // ✅ مرحلة الأداء
     if (next === 4) {
 
       const PAYMENT_TEXT = `
@@ -647,28 +647,32 @@ const handleQuestionFlow = () => {
 باش نعطيك تحليل دقيق ونوجد ليك الملف كامل:
 
 ✔️ تحليل كامل
-✔️ 100 fi 100 التحقق من الوثائق
-✔️ الوثيقة المعجزة لي غادي تعونك بزاف
+✔️ التحقق من الوثائق
+✔️ الوثيقة المهمة
 
 غير ب 12 أورو
 
 ورك على زر الأداء ونكملو مباشرة.
 `;
 
-      // 🎤 محمد يهضر
       speakExactText(PAYMENT_TEXT);
-setTimeout(() => {
 
-  console.log("💳 SHOW STRIPE");
+      setTimeout(() => {
 
-  setShowStripe(true);
+        setShowStripe(true);
 
-}, 12000);
-      setQuestionsDone(true);
-
-      localStorage.setItem("questionIndex", "5");
+      }, 12000);
 
       return prev;
+    }
+
+    // ✅ الأسئلة العادية
+    const nextQuestion = questions[next];
+
+    if (nextQuestion) {
+
+      speakExactText(nextQuestion);
+
     }
 
     return next;
@@ -676,7 +680,6 @@ setTimeout(() => {
   });
 
 };
-
   const updateLeadForm = (field: keyof LeadFormState, value: string) => {
     setLeadForm((prev) => ({ ...prev, [field]: value }));
   };
@@ -976,7 +979,6 @@ const questions = [
         instructions: `
 السلام عليكم، أنا محمد مرحبا بك فـ GestoriaCitaIA.
 
-جاوبني غير بآه ولا لا.
 
 السؤال الأول:
 واش دخلتي لإسبانيا قبل من واحد يناير 2026؟
@@ -1215,11 +1217,6 @@ dc.onmessage = (event) => {
 
         const answer = transcript.toLowerCase();
 
-        if (answer.includes("نعم") || answer.includes("yes")) {
-          speakExactText("مزيان، هادي نقطة قوية فصالحك 👍");
-        } else if (answer.includes("لا") || answer.includes("no")) {
-          speakExactText("ماشي مشكل، كاين حلول أخرى 👍");
-        }
 
         setTimeout(() => {
           handleQuestionFlow();
