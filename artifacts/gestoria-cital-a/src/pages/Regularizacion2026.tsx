@@ -1098,7 +1098,13 @@ dc.send(
 
         const answer = transcript.toLowerCase();
 
-        if (answer.includes("نعم") || answer.includes("yes")) {
+if (!assistantBusyRef.current) {
+  if (answer.includes("نعم") || answer.includes("yes")) {
+    await speakExactText("مزيان، هادي نقطة قوية فصالحك 👍");
+  } else if (answer.includes("لا") || answer.includes("no")) {
+    await speakExactText("ماشي مشكل، كاين حلول أخرى 👍");
+  }
+}
           speakExactText("مزيان، هادي نقطة قوية فصالحك 👍");
         } else if (answer.includes("لا") || answer.includes("no")) {
           speakExactText("ماشي مشكل، كاين حلول أخرى 👍");
@@ -1215,14 +1221,18 @@ lastUserTranscriptRef.current = "";
   };
 
   const speakExactText = async (text: string) => {
-    if (!text.trim()) return;
-    
-    console.log("🔊 speakExactText llamado:", text);
-    pushAgentMessage(text);
-    
-    pendingAutomationPromptRef.current = text;
-    setPendingAutomationPrompt(text);
-    
+  if (!text.trim()) return;
+
+  console.log("🔊 speakExactText llamado:", text);
+
+  pushAgentMessage(text);
+
+  pendingAutomationPromptRef.current = text;
+  setPendingAutomationPrompt(text);
+
+  // ✅ SOLO enviar UNA vez
+  await flushPendingAutomation();
+};
   
 
   const speakFromAutomation = async (instruction: string) => {
