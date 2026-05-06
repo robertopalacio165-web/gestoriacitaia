@@ -1039,15 +1039,15 @@ const handleSendWhatsApp = async () => {
     const data = await res.json();
 
     // 2. رابط PDF
-    const pdfUrl = `${window.location.origin}/api/generate-expediente-pdf?nombre=${encodeURIComponent(
-      leadForm?.nombre || ""
-    )}&nacionalidad=${encodeURIComponent(
-      leadForm?.nacionalidad || ""
-    )}&ciudad=${encodeURIComponent(
-      leadForm?.ciudad || ""
-    )}&fecha_llegada=${encodeURIComponent(
-     leadForm?.fechaLlegada || ""
-    )}`;
+ const pdfUrl = `${window.location.origin}/api/generate-expediente-pdf?nombre=${encodeURIComponent(
+  leadForm?.nombre || ""
+)}&nacionalidad=${encodeURIComponent(
+  leadForm?.nacionalidad || ""
+)}&ciudad=${encodeURIComponent(
+  leadForm?.ciudad || ""
+)}&fecha_llegada=${encodeURIComponent(
+  leadForm?.fechaLlegada || ""
+)}`;
 
     // 3. تنظيف الرقم
     const cleanPhone = phone.trim().replace(/\s+/g, "");
