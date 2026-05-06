@@ -1046,7 +1046,7 @@ const handleSendWhatsApp = async () => {
     )}&ciudad=${encodeURIComponent(
       leadForm?.ciudad || ""
     )}&fecha_llegada=${encodeURIComponent(
-      leadForm?.fecha_llegada || ""
+     leadForm?.fechaLlegada || ""
     )}`;
 
     // 3. تنظيف الرقم
