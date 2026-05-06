@@ -1177,7 +1177,7 @@ dc.send(
           void maybeSendIntroToMohamed();
         }, 500);
       };
- dc.onmessage = (event) => {
+dc.onmessage = (event) => {
   try {
     const msg = JSON.parse(event.data);
 
@@ -1193,9 +1193,11 @@ dc.send(
       typeof userTranscript === "string" &&
       userTranscript.trim()
     ) {
+
       const transcript = userTranscript.trim();
 
       if (transcript !== lastUserTranscriptRef.current) {
+
         lastUserTranscriptRef.current = transcript;
         setLastUserTranscript(transcript);
         pushUserMessage(transcript);
@@ -1207,94 +1209,79 @@ dc.send(
         } else if (answer.includes("لا") || answer.includes("no")) {
           speakExactText("ماشي مشكل، كاين حلول أخرى 👍");
         }
+
         setTimeout(() => {
-  handleQuestionFlow();
-}, 2000);
-console.log("🔥 QUESTION FLOW TRIGGERED");
+          handleQuestionFlow();
+        }, 2000);
+
       }
     }
 
-  if (
-  msg.type === "response.output_text.delta" &&
-  typeof msg.delta === "string"
-) {
+    if (
+      msg.type === "response.output_text.delta" &&
+      typeof msg.delta === "string"
+    ) {
 
-  assistantTextBufferRef.current += msg.delta;
+      assistantTextBufferRef.current += msg.delta;
 
-  const liveText = assistantTextBufferRef.current;
-
- 
-}
+    }
 
     if (
       msg.type === "response.output_text.done" &&
       typeof msg.text === "string" &&
       msg.text.trim()
     ) {
+
       assistantTextBufferRef.current = msg.text.trim();
+
     }
 
     if (msg.type === "response.created") {
+
       assistantBusyRef.current = true;
       setWaitingMohamed(true);
+
     }
 
-if (msg.type === "response.done") {
+    if (msg.type === "response.done") {
 
-  assistantBusyRef.current = false;
+      assistantBusyRef.current = false;
 
-  const finalText = assistantTextBufferRef.current.trim();
+      const finalText = assistantTextBufferRef.current.trim();
 
-  // ✅ ملي محمد يسالي الهضرة كاملة
-  if (
-    finalText.includes("ورك على زر الأداء") ||
-    finalText.includes("12 أورو")
-  ) {
+      // ✅ هنا يخرج Stripe بعد ما يسالي محمد
+      if (
+        finalText.includes("ورك على زر الأداء") ||
+        finalText.includes("12 أورو")
+      ) {
 
-    setShowStripe(true);
+        setShowStripe(true);
 
-    // 🎤 يقطع الميكرو مباشرة
-    stopListening();
-  }
+        stopListening();
 
-  if (finalText) {
-    lastAssistantTextRef.current = finalText;
-  }
+      }
 
-  finalizeAssistantBuffer();
-  setWaitingMohamed(false);
+      if (finalText) {
+        lastAssistantTextRef.current = finalText;
+      }
 
-  pendingAutomationPromptRef.current = null;
-  setPendingAutomationPrompt("");
+      finalizeAssistantBuffer();
 
-  setTimeout(() => {
-    void flushPendingAutomation();
-  }, 150);
-}
+      setWaitingMohamed(false);
 
-  assistantBusyRef.current = false;
+      pendingAutomationPromptRef.current = null;
+      setPendingAutomationPrompt("");
 
-  // 👇 خد النص ديال محمد
-  const finalText = assistantTextBufferRef.current.trim();
+      setTimeout(() => {
+        void flushPendingAutomation();
+      }, 150);
 
- 
-  if (finalText) {
-    lastAssistantTextRef.current = finalText;
-  }
-
-  finalizeAssistantBuffer();
-  setWaitingMohamed(false);
-
-  pendingAutomationPromptRef.current = null;
-  setPendingAutomationPrompt("");
-
-  setTimeout(() => {
-    void flushPendingAutomation();
-  }, 150);
-}
+    }
 
   } catch (err) {
+
     console.error("Realtime event parse error:", err);
+
   }
 };
       dc.onerror = (err) => {
