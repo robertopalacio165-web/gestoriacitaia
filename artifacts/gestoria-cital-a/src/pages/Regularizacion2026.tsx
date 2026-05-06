@@ -631,23 +631,26 @@ if (rawStep) {
   const allReady = finalFileStatus === "ok";
 const askingQuestionRef = useRef(false);
 
+const questionIndexRef = useRef(0);
+
 const handleQuestionFlow = async () => {
 
-  // ✅ منع التكرار
   if (askingQuestionRef.current) return;
 
   askingQuestionRef.current = true;
 
-  const next = questionIndex + 1;
+  // ✅ نستعمل ref ماشي state
+  questionIndexRef.current += 1;
 
-  console.log("NEXT QUESTION:", next);
+  const next = questionIndexRef.current;
 
-  // ✅ حفظ السؤال الحالي
+  console.log("NEXT:", next);
+
   setQuestionIndex(next);
 
   localStorage.setItem("questionIndex", String(next));
 
-  // ✅ مرحلة Stripe
+  // ✅ stripe
   if (next === 4) {
 
     const PAYMENT_TEXT = `
@@ -668,26 +671,30 @@ const handleQuestionFlow = async () => {
 
     setTimeout(() => {
       setShowStripe(true);
-    }, 1500);
+    }, 1000);
 
     askingQuestionRef.current = false;
 
     return;
   }
 
-  // ✅ السؤال الموالي
   const nextQuestion = questions[next];
 
   if (nextQuestion) {
 
+    // ✅ وقف realtime assistant باش ما يهضرش بوحدو
+    assistantBusyRef.current = true;
+
     await speakExactText(nextQuestion);
 
+    setTimeout(() => {
+      assistantBusyRef.current = false;
+    }, 3000);
   }
 
-  // ✅ مهم بزاف
   setTimeout(() => {
     askingQuestionRef.current = false;
-  }, 2500);
+  }, 2000);
 };
 
   const updateLeadForm = (field: keyof LeadFormState, value: string) => {
@@ -1477,7 +1484,20 @@ lastUserTranscriptRef.current = "";
       remoteAudioRef.current.muted = false;
     }
   }, [muted]);
+useEffect(() => {
 
+  const saved = localStorage.getItem("questionIndex");
+
+  if (saved) {
+
+    questionIndexRef.current = parseInt(saved);
+
+    setQuestionIndex(parseInt(saved));
+  }
+
+}, []);
+
+const handleSaveLeadForm = async () => {
   const handleSaveLeadForm = async () => {
     if (!leadFormReady) {
       toast({
