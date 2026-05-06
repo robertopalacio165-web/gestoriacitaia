@@ -652,7 +652,7 @@ const handleQuestionFlow = async () => {
 
   localStorage.setItem("questionIndex", String(next));
 
-  if (next === 4) {
+if (next === 3)
 
   askingQuestionRef.current = false;
 
@@ -1212,24 +1212,7 @@ if (
 
 // ✅ دوز للسؤال اللي من بعد
 await handleQuestionFlow();
-  stripeTriggeredRef.current = true;
 
-  setShowStripe(true);
-
-  setDocumentsUnlocked(true);
-
-  assistantBusyRef.current = true;
-
-  await speakRealtime(
-    "مزيان. دابا غادي نعمل verify للملف ديالك. ورݣ على زر الأداء باش نكملو التحليل. السؤال الخامس: واش عندك شي وثيقة من المستشفى فيها الاسم والتاريخ؟"
-  );
-
-  setTimeout(() => {
-    assistantBusyRef.current = false;
-  }, 4000);
-
-  return;
-}
       if (transcript !== lastUserTranscriptRef.current) {
 
         lastUserTranscriptRef.current = transcript;
