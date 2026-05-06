@@ -121,22 +121,23 @@ export default function Regularizacion2026() {
       }, 800);
     }
   }, []);
-const handleStripePayment = async () => {
+
+  const handleStripePayment = async () => {
   try {
-    const res = await fetch("/api/create-checkout-session", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        productType: "regularizacion",
-      }),
-    });
+ const res = await fetch("/api/create-checkout-session", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    productType: "regularizacion",
+  }),
+});
 
     const data = await res.json();
 
     if (data.url) {
-      window.location.href = data.url;
+window.location.href = data.url;
     } else {
       alert("❌ Stripe فيه مشكل");
     }
@@ -146,7 +147,6 @@ const handleStripePayment = async () => {
     alert("❌ خطأ فالكونكسيون");
   }
 };
-  
   const [selectedSituacion] = useState("regularizacion_2026_laboral");
   const [muted, setMuted] = useState(false);
   const [isListening, setIsListening] = useState(false);
@@ -631,19 +631,12 @@ if (rawStep) {
   const progressTotal = progressCards.length;
   const allReady = finalFileStatus === "ok";
 
+
 const handleQuestionFlow = () => {
   setQuestionIndex((prev) => {
     const next = prev + 1;
 
     console.log("NEXT:", next);
-
-    if (next === 4) {
-      setWaitingForStripe(true);
-    }
-
-    return next;
-  });
-};
 
 
 
