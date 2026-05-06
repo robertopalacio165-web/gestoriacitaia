@@ -1171,28 +1171,8 @@ if (msg.type === "response.done") {
   setTimeout(() => {
     void flushPendingAutomation();
   }, 150);
-}
- 
 
-
-  console.log("💳 STRIPE TRIGGERED");
-  setShowStripe(true);
-  stopListening();
-}
-
-  if (finalText) {
-    lastAssistantTextRef.current = finalText;
-  }
-
-
-  setWaitingMohamed(false);
-
-  pendingAutomationPromptRef.current = null;
-  setPendingAutomationPrompt("");
-
-  setTimeout(() => {
-    void flushPendingAutomation();
-  }, 150);
+} // ✅ مهم بزاف
 
   } catch (err) {
     console.error("Realtime event parse error:", err);
