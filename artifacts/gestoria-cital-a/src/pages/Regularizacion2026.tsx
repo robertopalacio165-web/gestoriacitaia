@@ -1134,33 +1134,30 @@ console.log("🔥 QUESTION FLOW TRIGGERED");
       assistantBusyRef.current = true;
       setWaitingMohamed(true);
     }
-
 if (msg.type === "response.done") {
 
   assistantBusyRef.current = false;
 
- const finalText =
-  (msg.response?.output?.[0]?.content?.[0]?.text) ||
-  assistantTextBufferRef.current ||
-  "";
+  // 🔥 النص الحقيقي من buffer
+  const finalText = assistantTextBufferRef.current.trim();
+
   console.log("FINAL TEXT:", finalText);
 
-if (
-  finalText &&
-  finalText.includes("ورك على زر الأداء ونكملو مباشرة") &&
-  !showStripe
-) {
-  console.log("💳 STRIPE TRIGGERED");
-  setShowStripe(true);
-  stopListening();
+  // 💳 TRIGGER
+  if (
+    finalText.includes("زر الأداء") ||
+    finalText.includes("ورك")
+  ) {
+    console.log("💳 STRIPE TRIGGERED");
+    setShowStripe(true);
+    stopListening();
+  }
+
+  // تنظيف
+  assistantTextBufferRef.current = "";
+  setWaitingMohamed(false);
 }
 
-  // 👇 زيدها هنا بالضبط
-  console.log("FINAL TEXT:", finalText);
-
-  // 💳 STRIPE TRIGGER
-// 💳 STRIPE TRIGGER (نسخة قوية)
-const normalizedText = finalText
   .replace(/[^\u0600-\u06FF\s]/g, "") // نحيد الرموز
   .trim();
 
@@ -1181,7 +1178,7 @@ if (
     lastAssistantTextRef.current = finalText;
   }
 
-  finalizeAssistantBuffer();
+
   setWaitingMohamed(false);
 
   pendingAutomationPromptRef.current = null;
