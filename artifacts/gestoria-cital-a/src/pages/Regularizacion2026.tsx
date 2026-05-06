@@ -1217,14 +1217,35 @@ dc.onmessage = (event) => {
       }
     }
 
-    if (
-      msg.type === "response.output_text.delta" &&
-      typeof msg.delta === "string"
-    ) {
+if (
+  msg.type === "response.output_text.delta" &&
+  typeof msg.delta === "string"
+) {
 
-      assistantTextBufferRef.current += msg.delta;
+  assistantTextBufferRef.current += msg.delta;
+
+  const liveText = assistantTextBufferRef.current;
+
+  // ✅ محمد وصل لهضرة الأداء
+  if (
+    liveText.includes("ورك على زر الأداء") ||
+    liveText.includes("زر الأداء") ||
+    liveText.includes("12 أورو")
+  ) {
+
+    // ✅ ما يعاودش يخرج مرتين
+    if (!showStripe) {
+
+      console.log("💳 SHOW STRIPE NOW");
+
+      setShowStripe(true);
+
+      // ✅ يوقف الميكرو مباشرة
+      stopListening();
 
     }
+  }
+}
 
     if (
       msg.type === "response.output_text.done" &&
@@ -1249,17 +1270,7 @@ dc.onmessage = (event) => {
 
       const finalText = assistantTextBufferRef.current.trim();
 
-      // ✅ هنا يخرج Stripe بعد ما يسالي محمد
-      if (
-        finalText.includes("ورك على زر الأداء") ||
-        finalText.includes("12 أورو")
-      ) {
-
-        setShowStripe(true);
-
-        stopListening();
-
-      }
+      
 
       if (finalText) {
         lastAssistantTextRef.current = finalText;
