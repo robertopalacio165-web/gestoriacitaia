@@ -639,7 +639,7 @@ const handleQuestionFlow = () => {
     console.log("NEXT:", next);
 
     // ✅ مرحلة الأداء
-    if (next === 4) {
+    if (next ===  5) {
 
       const PAYMENT_TEXT = `
 مزيان، من خلال الأجوبة ديالك بان ليا بللي الملف ديالك غادي يكون مقبول إن شاء الله ✅
