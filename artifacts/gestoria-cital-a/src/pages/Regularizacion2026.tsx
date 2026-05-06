@@ -115,11 +115,14 @@ export default function Regularizacion2026() {
       setShowStripe(false);
 
       // يرجع للسؤال 5
-      setQuestionIndex(4);
+  setQuestionIndex(5);
+
+questionIndexRef.current = 5;
+      await startListening();
 
       setTimeout(() => {
         speakExactText("مزيان، توصلنا بالأداء ديالك. دابا نكملو. السؤال الخامس: واش عندك tarjeta sanitaria؟");
-      }, 800);
+}, 1200);
     }
   }, []);
 
@@ -1168,6 +1171,65 @@ dc.onmessage = async (event) => {
 
       const transcript = userTranscript.trim();
 
+// ✅ منع التكرار
+if (assistantBusyRef.current) {
+  return;
+}
+
+// ✅ منع إعادة نفس الجواب
+if (transcript === lastUserTranscriptRef.current) {
+  return;
+}
+
+lastUserTranscriptRef.current = transcript;
+
+setLastUserTranscript(transcript);
+
+pushUserMessage(transcript);
+
+// ✅ السؤال الرابع = Stripe
+if (
+  questionIndexRef.current === 4 &&
+  !stripeTriggeredRef.current
+) {
+
+  stripeTriggeredRef.current = true;
+
+  setShowStripe(true);
+
+  setDocumentsUnlocked(true);
+
+  assistantBusyRef.current = false;
+
+  stopListening();
+
+  pushAgentMessage(
+    "دابا ورݣ على زر الأداء باش نكملو التحليل."
+  );
+
+  return;
+}
+
+// ✅ دوز للسؤال اللي من بعد
+await handleQuestionFlow();
+  stripeTriggeredRef.current = true;
+
+  setShowStripe(true);
+
+  setDocumentsUnlocked(true);
+
+  assistantBusyRef.current = true;
+
+  await speakRealtime(
+    "مزيان. دابا غادي نعمل verify للملف ديالك. ورݣ على زر الأداء باش نكملو التحليل. السؤال الخامس: واش عندك شي وثيقة من المستشفى فيها الاسم والتاريخ؟"
+  );
+
+  setTimeout(() => {
+    assistantBusyRef.current = false;
+  }, 4000);
+
+  return;
+}
       if (transcript !== lastUserTranscriptRef.current) {
 
         lastUserTranscriptRef.current = transcript;
@@ -1192,24 +1254,7 @@ if (
   const liveText =
     assistantTextBufferRef.current.toLowerCase();
 
-  // ✅ مرة وحدة فقط
-  if (
-    !stripeTriggeredRef.current &&
-    (
-      liveText.includes("زر الأداء") ||
-      liveText.includes("الأداء")
-    )
-  ) {
-
-    stripeTriggeredRef.current = true;
-
-    console.log("💳 STRIPE BUTTON SHOW");
-
-    // ✅ إظهار البوتون مباشرة
-    setShowStripe(true);
-
-  }
-}
+ 
 
 // ✅ سددنا if الأولى هنا
 
