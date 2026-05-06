@@ -1039,7 +1039,7 @@ const handleSendWhatsApp = async () => {
     const data = await res.json();
 
     // 2. رابط PDF
- const pdfUrl = `${window.location.origin}/api/generate-expediente-pdf?nombre=${encodeURIComponent(
+const pdfUrl = `${window.location.origin}/api/generate-expediente-pdf?nombre=${encodeURIComponent(
   leadForm?.nombre || ""
 )}&nacionalidad=${encodeURIComponent(
   leadForm?.nacionalidad || ""
