@@ -639,7 +639,7 @@ const handleQuestionFlow = () => {
     console.log("NEXT:", next);
 
     // ✅ وصلنا لمرحلة الأداء
-    if (next === 5) {
+    if (next === 4) {
 
       const PAYMENT_TEXT = `
 مزيان، من خلال الأجوبة ديالك بان ليا بللي الملف ديالك غادي يكون مقبول إن شاء الله ✅
@@ -656,14 +656,14 @@ const handleQuestionFlow = () => {
 `;
 
       // 🎤 محمد يهضر
-      speakExactText(PAYMENT_TEXT);
+     pushAgentMessage(PAYMENT_TEXT);
 setTimeout(() => {
 
   console.log("💳 SHOW STRIPE");
 
   setShowStripe(true);
 
-}, 9000);
+}, 1500);
       setQuestionsDone(true);
 
       localStorage.setItem("questionIndex", "5");
@@ -1006,6 +1006,9 @@ const questions = [
       dcOpenedRef.current = false;
       introAlreadySentRef.current = false;
       assistantBusyRef.current = false;
+      console.log("✅ RESPONSE DONE");
+console.log("FINAL TEXT:", assistantTextBufferRef.current);
+console.log("SHOW STRIPE STATE:", showStripe);
       isConnectingRef.current = false;
       setIsListening(false);
       setWaitingMohamed(false);
