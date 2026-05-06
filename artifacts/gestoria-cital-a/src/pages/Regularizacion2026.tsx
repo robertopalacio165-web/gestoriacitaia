@@ -630,15 +630,33 @@ if (rawStep) {
   const progressTotal = progressCards.length;
   const allReady = finalFileStatus === "ok";
 
+
 const handleQuestionFlow = () => {
+
   setQuestionIndex((prev) => {
-    const next = prev + 1;
 
-    console.log("NEXT:", next);
+    // السؤال 1
+    if (prev === 0) {
+      speakExactText(questions[1]);
+      return 1;
+    }
 
-if (next === 5) {
+    // السؤال 2
+    if (prev === 1) {
+      speakExactText(questions[2]);
+      return 2;
+    }
 
-  const PAYMENT_TEXT = `مزيان، من خلال الأجوبة ديالك بان ليا بللي الملف ديالك غادي يكون مقبول إن شاء الله ✅
+    // السؤال 3
+    if (prev === 2) {
+      speakExactText(questions[3]);
+      return 3;
+    }
+
+    // السؤال 4 → مرحلة الأداء
+    if (prev === 3) {
+
+      const PAYMENT_TEXT = `مزيان، من خلال الأجوبة ديالك بان ليا بللي الملف ديالك غادي يكون مقبول إن شاء الله ✅
 
 باش نعطيك تحليل دقيق ونوجد ليك الملف كامل:
 
@@ -650,19 +668,18 @@ if (next === 5) {
 
 ورك على زر الأداء ونكملو مباشرة.`;
 
-  speakExactText(PAYMENT_TEXT);
+      speakExactText(PAYMENT_TEXT);
 
-  setQuestionsDone(true);
+      setQuestionsDone(true);
 
-  localStorage.setItem("questionIndex", "5");
+      return 4;
+    }
 
-  return prev;
-}
+    return prev;
 
-    return next;
   });
-};
 
+};
 
   const updateLeadForm = (field: keyof LeadFormState, value: string) => {
     setLeadForm((prev) => ({ ...prev, [field]: value }));
