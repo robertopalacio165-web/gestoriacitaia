@@ -1158,8 +1158,7 @@ if (msg.type === "response.done") {
   setWaitingMohamed(false);
 }
 
-  .replace(/[^\u0600-\u06FF\s]/g, "") // نحيد الرموز
-  .trim();
+ 
 
 if (
   normalizedText &&
