@@ -1237,69 +1237,67 @@ if (
 
   const liveText = assistantTextBufferRef.current;
 
-  // ✅ محمد وصل لهضرة الأداء
- if (
-  liveText.includes("ورك على زر الأداء") ||
-  liveText.includes("زر الأداء") ||
-  liveText.includes("12 أورو")
-) {
+  if (
+    liveText.includes("ورك على زر الأداء") ||
+    liveText.includes("زر الأداء") ||
+    liveText.includes("12 أورو")
+  ) {
 
-  if (!showStripe) {
+    if (!showStripe) {
 
-    console.log("💳 SHOW STRIPE NOW");
+      console.log("💳 SHOW STRIPE NOW");
 
-    // ✅ أول حاجة: بين الزر
-    setShowStripe(true);
+      setShowStripe(true);
 
-    // ✅ من بعد: حبس الميكروفون
-    setTimeout(() => {
-      stopListening();
-    }, 500);
+      setTimeout(() => {
+        stopListening();
+      }, 500);
 
+    }
   }
 }
 
-    if (
-      msg.type === "response.output_text.done" &&
-      typeof msg.text === "string" &&
-      msg.text.trim()
-    ) {
+// ✅ سددنا if الأولى هنا
 
-      assistantTextBufferRef.current = msg.text.trim();
+if (
+  msg.type === "response.output_text.done" &&
+  typeof msg.text === "string" &&
+  msg.text.trim()
+) {
 
-    }
+  assistantTextBufferRef.current = msg.text.trim();
 
-    if (msg.type === "response.created") {
+}
 
-      assistantBusyRef.current = true;
-      setWaitingMohamed(true);
+if (msg.type === "response.created") {
 
-    }
+  assistantBusyRef.current = true;
+  setWaitingMohamed(true);
 
-    if (msg.type === "response.done") {
+}
 
-      assistantBusyRef.current = false;
+if (msg.type === "response.done") {
 
-      const finalText = assistantTextBufferRef.current.trim();
+  assistantBusyRef.current = false;
 
-      
+  const finalText = assistantTextBufferRef.current.trim();
 
-      if (finalText) {
-        lastAssistantTextRef.current = finalText;
-      }
+  if (finalText) {
+    lastAssistantTextRef.current = finalText;
+  }
 
-      finalizeAssistantBuffer();
+  finalizeAssistantBuffer();
 
-      setWaitingMohamed(false);
+  setWaitingMohamed(false);
 
-      pendingAutomationPromptRef.current = null;
-      setPendingAutomationPrompt("");
+  pendingAutomationPromptRef.current = null;
+  setPendingAutomationPrompt("");
 
-      setTimeout(() => {
-        void flushPendingAutomation();
-      }, 150);
+  setTimeout(() => {
+    void flushPendingAutomation();
+  }, 150);
 
-    }
+}
 
   } catch (err) {
 
