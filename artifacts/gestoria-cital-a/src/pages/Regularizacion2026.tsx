@@ -173,6 +173,7 @@ const [clientQuestionsDone, setClientQuestionsDone] = useState(false);
   const [questionIndex, setQuestionIndex] = useState(0);
 const [clientQuestionIndex, setClientQuestionIndex] = useState(0);
   const [showStripe, setShowStripe] = useState(false);
+  const [waitingForStripe, setWaitingForStripe] = useState(false);
 
   const [leadForm, setLeadForm] = useState<LeadFormState>({
     nombre: "",
@@ -651,7 +652,9 @@ const handleQuestionFlow = () => {
     ]);
     lastAssistantTextRef.current = text;
   };
-
+if (next === 4) {
+  setWaitingForStripe(true);
+}
   const pushUserMessage = (text: string) => {
     if (!text?.trim()) return;
     setVoiceHistory((prev) => [
@@ -1182,32 +1185,7 @@ dc.send(
         }
 setTimeout(() => {
 
-  // 🎯 إلا كنا فالسؤال 4
-  if (questionIndex === 3) {
-
-    const PAYMENT_TEXT = `مزيان 👌  
-دابا الملف ديالك باين مزيان وعندك فرصة كبيرة إن شاء الله ✅
-
-باش نكملو معاك ونحققو الوثائق ديالك بشكل دقيق:
-
-✔️ تحليل كامل  
-✔️ التحقق من الوثائق 100%  
-✔️ وثيقة مهمة غادي تعاونك بزاف  
-
-غير ب 12 أورو  
-
-إلى بغيتي نكملو، دير الأداء ونكمل معاك مباشرة.`;
-
-    // 🎤 محمد يهضر
-    speakExactText(PAYMENT_TEXT);
-
-    // ⏳ من بعد ما يكمل الهضرة
-    setTimeout(() => {
-      setShowStripe(true);
-    }, 5000);
-
-    return;
-  }
+ 
 
   // ✅ باقي الأسئلة يخدمو عادي
   handleQuestionFlow();
@@ -1238,6 +1216,32 @@ console.log("🔥 QUESTION FLOW TRIGGERED");
     }
 
 if (msg.type === "response.done") {
+
+  assistantBusyRef.current = false;
+
+  const finalText = assistantTextBufferRef.current.trim();
+
+  if (finalText) {
+    lastAssistantTextRef.current = finalText;
+  }
+
+  finalizeAssistantBuffer();
+  setWaitingMohamed(false);
+
+  pendingAutomationPromptRef.current = null;
+  setPendingAutomationPrompt("");
+
+  // 🎯 هنا الشرط ديال Stripe
+  if (waitingForStripe && finalText.includes("12")) {
+    console.log("💰 SHOW STRIPE NOW");
+    setShowStripe(true);
+    setWaitingForStripe(false);
+  }
+
+  setTimeout(() => {
+    void flushPendingAutomation();
+  }, 150);
+}
 
   assistantBusyRef.current = false;
 
