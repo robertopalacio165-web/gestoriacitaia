@@ -879,29 +879,6 @@ const buildDocSpeech = (
     }
   };
 
-const questions = [
-  "واش دخلتي لإسبانيا قبل من واحد يناير 2026؟",
-  "واش بقيتي في إسبانيا لمدة ديال خمسة أشهر متتالية؟ وشنو هي أول مدينة سكنتي فيها في إسبانيا؟",
-  "واش عندك الباسبور والبطاقة الوطنية المغربية ولا photocopie منهم؟",
-  "واش عندك شهادة السكنة ولا شي وثيقة فيها الاسم والتاريخ؟",
-  "واش عندك tarjeta sanitaria؟",
-  "واش عندك شي وثيقة من المستشفى فيها الاسم والتاريخ؟",
-  "واش عندك شي ورقة ديال الدواء فيها الاسم والتاريخ؟",
-  "واش عندك رقم هاتف مسجل باسمك؟",
-  "واش عندك بطاقة ديال النقل فيها الاسم والتاريخ؟",
-  "واش خدمتي وعندك إثبات؟",
-  "واش عندك شهادة من جمعية؟",
-  "واش عندك السوابق العدلية مترجمة؟",
-  "واش شدوك البوليس؟",
-  "واش عندك expulsion؟",
-  "واش مشيتي للكوميسارية؟",
-  "واش عندك فيزا؟",
-  "واش درتي لجوء؟",
-  "عطيني رقم الواتساب ديالك.",
-  "واش عندك شي سؤال؟"
-];
-
- 
 
   const stopListening = () => {
     try {
@@ -1162,7 +1139,21 @@ if (msg.type === "response.done") {
 
   assistantBusyRef.current = false;
 
-  const finalText = assistantTextBufferRef.current.trim();
+ const finalText =
+  (msg.response?.output?.[0]?.content?.[0]?.text) ||
+  assistantTextBufferRef.current ||
+  "";
+  console.log("FINAL TEXT:", finalText);
+
+if (
+  finalText &&
+  finalText.includes("ورك على زر الأداء ونكملو مباشرة") &&
+  !showStripe
+) {
+  console.log("💳 STRIPE TRIGGERED");
+  setShowStripe(true);
+  stopListening();
+}
 
   // 👇 زيدها هنا بالضبط
   console.log("FINAL TEXT:", finalText);
