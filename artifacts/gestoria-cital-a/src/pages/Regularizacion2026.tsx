@@ -630,40 +630,39 @@ if (rawStep) {
   const progressTotal = progressCards.length;
   const allReady = finalFileStatus === "ok";
 
-
 const handleQuestionFlow = () => {
   setQuestionIndex((prev) => {
     const next = prev + 1;
 
     console.log("NEXT:", next);
 
-if (next === 5) {
+    if (next === 5) {
 
-  const PAYMENT_TEXT = `مزيان، من خلال الأجوبة ديالك بان ليا بللي الملف ديالك غادي يكون مقبول إن شاء الله ✅
+      const PAYMENT_TEXT = `مزيان، من خلال الأجوبة ديالك بان ليا بللي الملف ديالك غادي يكون مقبول إن شاء الله ✅
 
 باش نعطيك تحليل دقيق ونوجد ليك الملف كامل:
 
-✔️ تحليل كامل  
-✔️ 100 fi 100 التحقق من الوثائق  
-✔️ الوثيقة المعجزة لي غادي تعونك بزاف  
+✔️ تحليل كامل
+✔️ 100 fi 100 التحقق من الوثائق
+✔️ الوثيقة المعجزة لي غادي تعونك بزاف
 
-غير ب 12 أورو  
+غير ب 12 أورو
 
 ورك على زر الأداء ونكملو مباشرة.`;
 
-  // 🎤 محمد يهضر
-  speakExactText(PAYMENT_TEXT);
+      // 🎤 محمد يهضر
+      speakExactText(PAYMENT_TEXT);
 
+      setQuestionsDone(true);
 
-  setQuestionsDone(true);
+      localStorage.setItem("questionIndex", "5");
 
-  localStorage.setItem("questionIndex", "5");
-
-  return prev;
-}
+      return prev;
+    }
 
     return next;
-
+  });
+};
 
 
   const updateLeadForm = (field: keyof LeadFormState, value: string) => {
