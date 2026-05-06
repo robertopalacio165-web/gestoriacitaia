@@ -666,7 +666,7 @@ setTimeout(() => {
 
   stopListening();
 
-}, 11500);
+},13000 );
 
 
       setQuestionsDone(true);
@@ -1241,27 +1241,7 @@ if (
 
   assistantTextBufferRef.current += msg.delta;
 
-  const liveText = assistantTextBufferRef.current;
-
-  if (
-    liveText.includes("ورك على زر الأداء") ||
-    liveText.includes("زر الأداء") ||
-    liveText.includes("12 أورو")
-  ) {
-
-    if (!showStripe) {
-
-      console.log("💳 SHOW STRIPE NOW");
-
-      setShowStripe(true);
-
-      setTimeout(() => {
-        stopListening();
-      }, 500);
-
-    }
-  }
-}
+  
 
 // ✅ سددنا if الأولى هنا
 
