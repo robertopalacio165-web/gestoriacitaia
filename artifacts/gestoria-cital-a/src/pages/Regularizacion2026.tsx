@@ -657,19 +657,13 @@ const handleQuestionFlow = () => {
 
       // 🎤 محمد يهضر
       speakExactText(PAYMENT_TEXT);
+setTimeout(() => {
 
-      // ✅ نخليو محمد يكمل الهضرة كاملة
-      setTimeout(() => {
+  console.log("💳 SHOW STRIPE");
 
-        console.log("💳 SHOW STRIPE AFTER SPEECH");
+  setShowStripe(true);
 
-  
-
-        // ✅ نحبسو الميكرو
-        stopListening();
-
-      }, 12000); // 12 ثواني تقريباً حتى يكمل محمد
-
+}, 9000);
       setQuestionsDone(true);
 
       localStorage.setItem("questionIndex", "5");
@@ -1254,12 +1248,7 @@ if (
     if (!showStripe) {
 
       console.log("💳 SHOW STRIPE NOW");
-
-
-
-      // ✅ يوقف الميكرو مباشرة
-      stopListening();
-
+  setShowStripe(true);
     }
   }
 }
@@ -1990,6 +1979,51 @@ const fullSpeech = `
                     {ui.listening}
                   </p>
                 )}
+                <motion.div
+  initial={{ opacity: 0, y: 15 }}
+  animate={{
+    opacity: showStripe ? 1 : 0,
+    y: showStripe ? 0 : 15,
+    height: showStripe ? "auto" : 0,
+  }}
+  transition={{ duration: 0.4 }}
+  className="overflow-hidden"
+>
+
+  <button
+    onClick={handleStripePayment}
+    type="button"
+    className="
+      mt-3
+      w-full
+      flex
+      items-center
+      justify-center
+      gap-3
+      rounded-2xl
+      px-5
+      py-4
+      text-white
+      font-bold
+      text-lg
+      shadow-2xl
+      transition-all
+      duration-300
+      bg-gradient-to-r
+      from-emerald-500
+      via-green-500
+      to-emerald-600
+      hover:scale-[1.02]
+      hover:from-emerald-600
+      hover:to-green-700
+      border
+      border-white/10
+    "
+  >
+    💳 أداء وتحليل الملف — 12€
+  </button>
+
+</motion.div>
               </div>
               <div className="p-4 space-y-4">
                 <div>
@@ -2053,32 +2087,7 @@ disabled={!documentsUnlocked}
               </div>
             </div>
           </div>
-          {showStripe && (
-  <div style={{
-    position: "fixed",
-    top: 0,
-    left: 0,
-    width: "100%",
-    height: "100%",
-    background: "rgba(0,0,0,0.8)",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    zIndex: 9999
-  }}>
-    <button
-      onClick={handleStripePayment}
-  className="w-full max-w-xs mx-auto flex items-center justify-center gap-3 
-  bg-gradient-to-r from-emerald-500 to-green-600 
-  hover:from-emerald-600 hover:to-green-700
-  text-white font-bold text-lg 
-  px-6 py-4 rounded-2xl shadow-xl 
-  transition-all duration-300 hover:scale-105"
->
-  💳 أداء 12€
-    </button>
-  </div>
-)}
+   
           <div className="flex flex-col gap-4">
             
      <div className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-xl">
