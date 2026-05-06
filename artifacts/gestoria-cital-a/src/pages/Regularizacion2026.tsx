@@ -1133,9 +1133,7 @@ dc.send(
         } else if (answer.includes("لا") || answer.includes("no")) {
           speakExactText("ماشي مشكل، كاين حلول أخرى 👍");
         }
-        setTimeout(() => {
-  handleQuestionFlow();
-}, 2000);
+
 console.log("🔥 QUESTION FLOW TRIGGERED");
       }
     }
