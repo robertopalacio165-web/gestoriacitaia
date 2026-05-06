@@ -639,39 +639,25 @@ const handleQuestionFlow = async () => {
 
   askingQuestionRef.current = true;
 
-  // ✅ نستعمل ref ماشي state
   questionIndexRef.current += 1;
 
   const next = questionIndexRef.current;
-
-  console.log("NEXT:", next);
 
   setQuestionIndex(next);
 
   localStorage.setItem("questionIndex", String(next));
 
-  // ✅ stripe
+  // ✅ السؤال الرابع = Stripe
   if (next === 4) {
 
-    const PAYMENT_TEXT = `
-مزيان، من خلال الأجوبة ديالك بان ليا بللي الملف ديالك غادي يكون مقبول إن شاء الله ✅
+    // ❌ وقف محمد
+    stopListening();
 
-باش نعطيك تحليل دقيق ونوجد ليك الملف كامل:
+    // ❌ حيد الميكروفون
+    setIsListening(false);
 
-✔️ تحليل كامل
-✔️ التحقق من الوثائق
-✔️ الوثيقة المهمة
-
-غير ب 12 أورو
-
-ورك على زر الأداء ونكملو مباشرة.
-`;
-
-    await speakExactText(PAYMENT_TEXT);
-
-    setTimeout(() => {
-      setShowStripe(true);
-    }, 1000);
+    // ✅ خرج Stripe مباشرة
+    setShowStripe(true);
 
     askingQuestionRef.current = false;
 
@@ -682,10 +668,10 @@ const handleQuestionFlow = async () => {
 
   if (nextQuestion) {
 
-    // ✅ وقف realtime assistant باش ما يهضرش بوحدو
     assistantBusyRef.current = true;
 
-    await speakExactText(nextQuestion);
+    // ✅ ما تبانش فالتكست
+    await speakRealtime(nextQuestion);
 
     setTimeout(() => {
       assistantBusyRef.current = false;
@@ -694,7 +680,7 @@ const handleQuestionFlow = async () => {
 
   setTimeout(() => {
     askingQuestionRef.current = false;
-  }, 2000);
+  }, 1500);
 };
 
   const updateLeadForm = (field: keyof LeadFormState, value: string) => {
