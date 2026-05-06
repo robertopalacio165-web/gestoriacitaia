@@ -1214,7 +1214,10 @@ console.log("🔥 QUESTION FLOW TRIGGERED");
       }
     }
 
-  
+  if (
+  msg.type === "response.output_text.delta" &&
+  typeof msg.delta === "string"
+) {
 
   assistantTextBufferRef.current += msg.delta;
 
@@ -1227,7 +1230,7 @@ console.log("🔥 QUESTION FLOW TRIGGERED");
     liveText.includes("12 أورو")
   ) {
 
-
+   setShowStripe(true);
 
   }
 }
