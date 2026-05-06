@@ -630,56 +630,41 @@ if (rawStep) {
   const progressTotal = progressCards.length;
   const allReady = finalFileStatus === "ok";
 
-
 const handleQuestionFlow = () => {
-
   setQuestionIndex((prev) => {
+    const next = prev + 1;
 
-    // السؤال 1
-    if (prev === 0) {
-      speakExactText(questions[1]);
-      return 1;
-    }
+    console.log("NEXT:", next);
 
-    // السؤال 2
-    if (prev === 1) {
-      speakExactText(questions[2]);
-      return 2;
-    }
-
-    // السؤال 3
-    if (prev === 2) {
-      speakExactText(questions[3]);
-      return 3;
-    }
-
-    // السؤال 4 → مرحلة الأداء
-    if (prev === 3) {
+    if (next === 5) {
 
       const PAYMENT_TEXT = `مزيان، من خلال الأجوبة ديالك بان ليا بللي الملف ديالك غادي يكون مقبول إن شاء الله ✅
 
 باش نعطيك تحليل دقيق ونوجد ليك الملف كامل:
 
 ✔️ تحليل كامل
-✔️ التحقق من الوثائق 100 fi 100
-✔️ الوثيقة المعجزة لي غادي تعاونك بزاف
+✔️ 100 fi 100 التحقق من الوثائق
+✔️ الوثيقة المعجزة لي غادي تعونك بزاف
 
 غير ب 12 أورو
 
 ورك على زر الأداء ونكملو مباشرة.`;
 
+      // 🎤 محمد يهضر
       speakExactText(PAYMENT_TEXT);
-
+// 💳 إظهار Stripe مباشرة مع هضرة محمد
+setShowStripe(true);
       setQuestionsDone(true);
 
-      return 4;
+      localStorage.setItem("questionIndex", "5");
+
+      return prev;
     }
 
-    return prev;
-
+    return next;
   });
-
 };
+
 
   const updateLeadForm = (field: keyof LeadFormState, value: string) => {
     setLeadForm((prev) => ({ ...prev, [field]: value }));
@@ -1222,24 +1207,14 @@ dc.send(
         } else if (answer.includes("لا") || answer.includes("no")) {
           speakExactText("ماشي مشكل، كاين حلول أخرى 👍");
         }
-   setTimeout(() => {
-
-  // ❌ إذا وصلنا لمرحلة الأداء ما نزيدوش سؤال جديد
-  if (questionIndex >= 4) {
-    return;
-  }
-
+        setTimeout(() => {
   handleQuestionFlow();
-
 }, 2000);
 console.log("🔥 QUESTION FLOW TRIGGERED");
       }
     }
 
-  if (
-  msg.type === "response.output_text.delta" &&
-  typeof msg.delta === "string"
-) {
+  
 
   assistantTextBufferRef.current += msg.delta;
 
@@ -1252,7 +1227,7 @@ console.log("🔥 QUESTION FLOW TRIGGERED");
     liveText.includes("12 أورو")
   ) {
 
-   setShowStripe(true);
+
 
   }
 }
