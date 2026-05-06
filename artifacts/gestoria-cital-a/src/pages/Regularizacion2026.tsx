@@ -654,8 +654,6 @@ if (next === 5) {
   // 🎤 محمد يهضر
   speakExactText(PAYMENT_TEXT);
 
-  // ⏳ نستناو حتى يكمل الهضرة
-setTimeout(() => {
 
   setQuestionsDone(true);
 
@@ -665,8 +663,8 @@ setTimeout(() => {
 }
 
     return next;
-  });
-};
+
+
 
   const updateLeadForm = (field: keyof LeadFormState, value: string) => {
     setLeadForm((prev) => ({ ...prev, [field]: value }));
