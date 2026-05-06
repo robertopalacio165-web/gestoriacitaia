@@ -611,37 +611,7 @@ if (rawStep) {
   const allReady = finalFileStatus === "ok";
 
 
-const handleQuestionFlow = () => {
-  setQuestionIndex((prev) => {
-    const next = prev + 1;
 
-    console.log("NEXT:", next);
-
-    // 👇 غير وصلنا للسؤال 4
-if (next === 4) {
-
-  const PAYMENT_TEXT = `مزيان، من خلال الأجوبة ديالك بان ليا بللي الملف ديالك غادي يكون مقبول إن شاء الله ✅
-
-باش نعطيك تحليل دقيق ونوجد ليك الملف كامل:
-
-✔️ تحليل كامل  
-✔️  100 fi 100 التحقق من الوثائق  
-✔️  الوتيقة المعجزة لي غادي تعونك بزاف
-
-غير بطناشر أورو 
-
-ورك على زر الأداء ونكملو مباشرة.`;
-
-  speakExactText(PAYMENT_TEXT);
-
-  setQuestionsDone(true);
-
-  return prev;
-}
-
-    return next;
-  });
-};
 
   const updateLeadForm = (field: keyof LeadFormState, value: string) => {
     setLeadForm((prev) => ({ ...prev, [field]: value }));
@@ -931,26 +901,7 @@ const questions = [
   "واش عندك شي سؤال؟"
 ];
 
- const maybeSendIntroToMohamed = async () => {
-  if (!realtimeDcRef.current) return;
-
-  realtimeDcRef.current.send(
-    JSON.stringify({
-      type: "response.create",
-      response: {
-        modalities: ["audio", "text"],
-        instructions: `
-السلام عليكم، أنا محمد مرحبا بك فـ GestoriaCitaIA.
-
-جاوبني غير بآه ولا لا.
-
-السؤال الأول:
-واش دخلتي لإسبانيا قبل من واحد يناير 2026؟
-        `
-      },
-    })
-  );
-};
+ 
 
   const stopListening = () => {
     try {
@@ -1150,9 +1101,7 @@ dc.send(
           }, 400);
           return;
         }
-        setTimeout(() => {
-          void maybeSendIntroToMohamed();
-        }, 500);
+       
       };
  dc.onmessage = (event) => {
   try {
