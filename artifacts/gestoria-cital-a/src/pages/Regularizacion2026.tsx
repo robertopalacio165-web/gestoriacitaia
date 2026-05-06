@@ -1199,20 +1199,18 @@ if (
 
   const liveText = assistantTextBufferRef.current;
 
-  
+  if (!showStripe) {
 
-    if (!showStripe) {
+    console.log("💳 SHOW STRIPE NOW");
 
-      console.log("💳 SHOW STRIPE NOW");
+    setShowStripe(true);
 
-      setShowStripe(true);
+    setTimeout(() => {
+      stopListening();
+    }, 500);
 
-      setTimeout(() => {
-        stopListening();
-      }, 500);
-
-    }
   }
+
 }
 
 // ✅ سددنا if الأولى هنا
