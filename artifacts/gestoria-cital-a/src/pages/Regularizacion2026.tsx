@@ -638,10 +638,22 @@ const handleQuestionFlow = () => {
 
     console.log("NEXT:", next);
 
-    // ✅ مرحلة الأداء
-    if (next ===  4) {
+    // ✅ جيب السؤال اللي جاي
+    const nextQuestion = questions[next];
 
-      const PAYMENT_TEXT = `
+    // ✅ قول السؤال
+    if (nextQuestion) {
+
+      speakExactText(nextQuestion);
+
+    }
+
+    // ✅ من بعد السؤال الرابع يبان الأداء
+    if (next === 4) {
+
+      setTimeout(() => {
+
+        const PAYMENT_TEXT = `
 مزيان، من خلال الأجوبة ديالك بان ليا بللي الملف ديالك غادي يكون مقبول إن شاء الله ✅
 
 باش نعطيك تحليل دقيق ونوجد ليك الملف كامل:
@@ -655,23 +667,15 @@ const handleQuestionFlow = () => {
 ورك على زر الأداء ونكملو مباشرة.
 `;
 
-      speakExactText(PAYMENT_TEXT);
+        speakExactText(PAYMENT_TEXT);
 
-      setTimeout(() => {
+        setTimeout(() => {
 
-        setShowStripe(true);
+          setShowStripe(true);
 
-      }, 12000);
+        }, 12000);
 
-      return prev;
-    }
-
-    // ✅ الأسئلة العادية
-    const nextQuestion = questions[next];
-
-    if (nextQuestion) {
-
-      speakExactText(nextQuestion);
+      }, 5000);
 
     }
 
