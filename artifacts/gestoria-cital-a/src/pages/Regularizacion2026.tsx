@@ -652,7 +652,8 @@ const handleQuestionFlow = () => {
 
       // 🎤 محمد يهضر
       speakExactText(PAYMENT_TEXT);
-
+// 💳 إظهار Stripe مباشرة مع هضرة محمد
+setShowStripe(true);
       setQuestionsDone(true);
 
       localStorage.setItem("questionIndex", "5");
@@ -1213,10 +1214,7 @@ console.log("🔥 QUESTION FLOW TRIGGERED");
       }
     }
 
-   if (
-  msg.type === "response.output_text.delta" &&
-  typeof msg.delta === "string"
-) {
+  
 
   assistantTextBufferRef.current += msg.delta;
 
