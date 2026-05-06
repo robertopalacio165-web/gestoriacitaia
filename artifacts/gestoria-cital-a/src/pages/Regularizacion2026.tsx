@@ -1162,22 +1162,29 @@ if (msg.type === "response.done") {
 
   assistantBusyRef.current = false;
 
-  // 👇 خد النص ديال محمد
   const finalText = assistantTextBufferRef.current.trim();
 
-  // 💳 STRIPE TRIGGER (دابا صحيح)
-  if (
-    finalText &&
-    finalText.includes("بطناشر أورو") &&
-    !showStripe
-  ) {
-    console.log("💳 STRIPE TRIGGERED");
+  // 👇 زيدها هنا بالضبط
+  console.log("FINAL TEXT:", finalText);
 
-    setShowStripe(true);
+  // 💳 STRIPE TRIGGER
+// 💳 STRIPE TRIGGER (نسخة قوية)
+const normalizedText = finalText
+  .replace(/[^\u0600-\u06FF\s]/g, "") // نحيد الرموز
+  .trim();
 
-    // ⛔ وقف الصوت
-    stopListening();
-  }
+if (
+  normalizedText &&
+  (
+    normalizedText.includes("ورك على زر الأداء ونكملو مباشرة") ||
+    normalizedText.includes("زر الأداء")
+  ) &&
+  !showStripe
+) {
+  console.log("💳 STRIPE TRIGGERED");
+  setShowStripe(true);
+  stopListening();
+}
 
   if (finalText) {
     lastAssistantTextRef.current = finalText;
@@ -1193,7 +1200,6 @@ if (msg.type === "response.done") {
     void flushPendingAutomation();
   }, 150);
 }
-
   } catch (err) {
     console.error("Realtime event parse error:", err);
   }
@@ -1322,18 +1328,16 @@ lastUserTranscriptRef.current = "";
         }));
       };
 
-      dc.onmessage = (event) => {
-        try {
-          const msg = JSON.parse(event.data);
-          if (msg.type === "response.done") {
-            console.log("✅ Respuesta completada - Cerrando en 2s");
-            setTimeout(() => {
-              dc.close();
-              pc.close();
-            }, 2000);
-          }
-        } catch (e) {}
-      };
+     dc.onmessage = (event) => {
+  try {
+    const msg = JSON.parse(event.data);
+
+    if (msg.type === "response.done") {
+      console.log("✅ response done");
+    }
+
+  } catch (e) {}
+}; 
 
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
