@@ -1497,7 +1497,6 @@ useEffect(() => {
 
 }, []);
 
-const handleSaveLeadForm = async () => {
   const handleSaveLeadForm = async () => {
     if (!leadFormReady) {
       toast({
