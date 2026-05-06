@@ -1,12 +1,9 @@
-import Stripe from "stripe"; 
+import Stripe from "stripe";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-apiVersion: "2024-06-20", 
-});
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
 export default async function handler(req: any, res: any) {
- 
-  // ✅ غير POST
+
   if (req.method !== "POST") {
     return res.status(405).json({
       error: "Method not allowed",
@@ -15,7 +12,8 @@ export default async function handler(req: any, res: any) {
 
   try {
 
-    // ✅ حل مشكل Vercel body
+    console.log("KEY EXISTS:", !!process.env.STRIPE_SECRET_KEY);
+
     let body = req.body;
 
     if (typeof body === "string") {
@@ -24,7 +22,6 @@ export default async function handler(req: any, res: any) {
 
     const { productType } = body || {};
 
-    // 💰 الثمن
     let amount = 1200;
     let name = "Servicio";
 
@@ -33,12 +30,10 @@ export default async function handler(req: any, res: any) {
       name = "Regularización 2026 - Mohamed";
     }
 
-    // 🌍 رابط الموقع
     const baseUrl =
       process.env.NEXT_PUBLIC_URL ||
-      "http://localhost:5173";
+      "https://gestoriacitaia.com";
 
-    // ✅ إنشاء Stripe Checkout
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
 
@@ -60,10 +55,8 @@ export default async function handler(req: any, res: any) {
         },
       ],
 
-      // ✅ من بعد الأداء
       success_url: `${baseUrl}/regularizacion-2026?paid=true`,
 
-      // ❌ إلا خرج
       cancel_url: `${baseUrl}/regularizacion-2026?canceled=true`,
 
       metadata: {
@@ -71,7 +64,6 @@ export default async function handler(req: any, res: any) {
       },
     });
 
-    // ✅ رجع الرابط
     return res.status(200).json({
       url: session.url,
     });
@@ -81,7 +73,7 @@ export default async function handler(req: any, res: any) {
     console.error("❌ STRIPE ERROR FULL:", err);
 
     return res.status(500).json({
-      error: err.message || "Stripe error",
+      error: err?.message || "Stripe error",
     });
   }
 }
