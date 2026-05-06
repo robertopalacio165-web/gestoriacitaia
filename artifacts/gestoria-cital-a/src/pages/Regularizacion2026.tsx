@@ -1134,40 +1134,47 @@ console.log("🔥 QUESTION FLOW TRIGGERED");
       assistantBusyRef.current = true;
       setWaitingMohamed(true);
     }
+
 if (msg.type === "response.done") {
 
   assistantBusyRef.current = false;
 
-  // 🔥 النص الحقيقي من buffer
   const finalText = assistantTextBufferRef.current.trim();
 
   console.log("FINAL TEXT:", finalText);
 
-  // 💳 TRIGGER
+  // ✅ normalization (باش نحيد الرموز)
+  const normalizedText = finalText
+    .replace(/[^\u0600-\u06FF\s]/g, "")
+    .trim();
+
+  // 💳 STRIPE TRIGGER
   if (
-    finalText.includes("زر الأداء") ||
-    finalText.includes("ورك")
+    normalizedText.includes("زر الأداء") ||
+    normalizedText.includes("ورك")
   ) {
     console.log("💳 STRIPE TRIGGERED");
     setShowStripe(true);
     stopListening();
   }
 
-  // تنظيف
   assistantTextBufferRef.current = "";
   setWaitingMohamed(false);
-}
 
+  if (finalText) {
+    lastAssistantTextRef.current = finalText;
+  }
+
+  pendingAutomationPromptRef.current = null;
+  setPendingAutomationPrompt("");
+
+  setTimeout(() => {
+    void flushPendingAutomation();
+  }, 150);
+}
  
 
-if (
-  normalizedText &&
-  (
-    normalizedText.includes("ورك على زر الأداء ونكملو مباشرة") ||
-    normalizedText.includes("زر الأداء")
-  ) &&
-  !showStripe
-) {
+
   console.log("💳 STRIPE TRIGGERED");
   setShowStripe(true);
   stopListening();
