@@ -173,7 +173,6 @@ const [clientQuestionsDone, setClientQuestionsDone] = useState(false);
   const [questionIndex, setQuestionIndex] = useState(0);
 const [clientQuestionIndex, setClientQuestionIndex] = useState(0);
   const [showStripe, setShowStripe] = useState(false);
-  const [waitingForStripe, setWaitingForStripe] = useState(false);
 
   const [leadForm, setLeadForm] = useState<LeadFormState>({
     nombre: "",
@@ -638,7 +637,38 @@ const handleQuestionFlow = () => {
 
     console.log("NEXT:", next);
 
+    // 👇 غير وصلنا للسؤال 4
+if (next === 4) {
 
+  const PAYMENT_TEXT = `مزيان، من خلال الأجوبة ديالك بان ليا بللي الملف ديالك غادي يكون مقبول إن شاء الله ✅
+
+باش نعطيك تحليل دقيق ونوجد ليك الملف كامل:
+
+✔️ تحليل كامل  
+✔️ 100 fi 100 التحقق من الوثائق  
+✔️ الوثيقة المعجزة لي غادي تعونك بزاف  
+
+غير ب 12 أورو  
+
+ورك على زر الأداء ونكملو مباشرة.`;
+
+  // 🎤 محمد يهضر
+  speakExactText(PAYMENT_TEXT);
+
+  // 💳 هنا كيتحل Stripe مباشرة
+  setShowStripe(true);
+
+  // ⛔ نوقف الصوت
+  stopListening();
+
+  setQuestionsDone(true);
+localStorage.setItem("questionIndex", "4");
+  return prev;
+}
+
+    return next;
+  });
+};
 
   const updateLeadForm = (field: keyof LeadFormState, value: string) => {
     setLeadForm((prev) => ({ ...prev, [field]: value }));
@@ -652,9 +682,7 @@ const handleQuestionFlow = () => {
     ]);
     lastAssistantTextRef.current = text;
   };
-if (next === 4) {
-  setWaitingForStripe(true);
-}
+
   const pushUserMessage = (text: string) => {
     if (!text?.trim()) return;
     setVoiceHistory((prev) => [
@@ -1183,13 +1211,8 @@ dc.send(
         } else if (answer.includes("لا") || answer.includes("no")) {
           speakExactText("ماشي مشكل، كاين حلول أخرى 👍");
         }
-setTimeout(() => {
-
- 
-
-  // ✅ باقي الأسئلة يخدمو عادي
+        setTimeout(() => {
   handleQuestionFlow();
-
 }, 2000);
 console.log("🔥 QUESTION FLOW TRIGGERED");
       }
@@ -1216,32 +1239,6 @@ console.log("🔥 QUESTION FLOW TRIGGERED");
     }
 
 if (msg.type === "response.done") {
-
-  assistantBusyRef.current = false;
-
-  const finalText = assistantTextBufferRef.current.trim();
-
-  if (finalText) {
-    lastAssistantTextRef.current = finalText;
-  }
-
-  finalizeAssistantBuffer();
-  setWaitingMohamed(false);
-
-  pendingAutomationPromptRef.current = null;
-  setPendingAutomationPrompt("");
-
-  // 🎯 هنا الشرط ديال Stripe
-  if (waitingForStripe && finalText.includes("12")) {
-    console.log("💰 SHOW STRIPE NOW");
-    setShowStripe(true);
-    setWaitingForStripe(false);
-  }
-
-  setTimeout(() => {
-    void flushPendingAutomation();
-  }, 150);
-}
 
   assistantBusyRef.current = false;
 
