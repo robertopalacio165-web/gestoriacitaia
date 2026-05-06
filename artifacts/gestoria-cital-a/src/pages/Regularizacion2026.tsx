@@ -639,7 +639,7 @@ const handleQuestionFlow = () => {
     console.log("NEXT:", next);
 
     // ✅ وصلنا لمرحلة الأداء
-    if (next === 5) {
+    if (next === 4) {
 
       const PAYMENT_TEXT = `
 مزيان، من خلال الأجوبة ديالك بان ليا بللي الملف ديالك غادي يكون مقبول إن شاء الله ✅
@@ -653,20 +653,25 @@ const handleQuestionFlow = () => {
 غير ب 12 أورو
 
 ورك على زر الأداء ونكملو مباشرة.
-`;
+`; 
 
-      // 🎤 محمد يهضر
+      console.log(PAYMENT_TEXT);
       speakExactText(PAYMENT_TEXT);
+      
 setTimeout(() => {
 
-  console.log("💳 SHOW STRIPE");
+  console.log("💳 SHOW PAYMENT BUTTON");
 
   setShowStripe(true);
 
-}, 9000);
+  stopListening();
+
+}, 11500);
+
+
       setQuestionsDone(true);
 
-      localStorage.setItem("questionIndex", "5");
+      localStorage.setItem("questionIndex", "4");
 
       return prev;
     }
