@@ -672,7 +672,7 @@ if (next >= 5) {
 
     stopListening();
 
-  }, 13000);
+}, 25000);
 
   setQuestionsDone(true);
 
