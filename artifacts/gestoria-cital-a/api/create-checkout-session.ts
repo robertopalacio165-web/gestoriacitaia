@@ -1,42 +1,23 @@
 import Stripe from "stripe";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
+export const runtime = "nodejs";
+
+const stripe = new Stripe(
+  process.env.STRIPE_SECRET_KEY as string,
+  {
+    apiVersion: "2025-03-31.basil",
+  }
+);
 
 export async function POST(req: Request) {
 
   try {
 
-    console.log("🚀 STRIPE API HIT");
-
-    console.log(
-      "✅ SECRET EXISTS:",
-      !!process.env.STRIPE_SECRET_KEY
-    );
+    console.log("🚀 API START");
 
     const body = await req.json();
 
-    console.log("📦 BODY:", body);
-
-    const { productType } = body || {};
-
-    let amount = 1200;
-
-    let name = "Servicio";
-
-    if (productType === "regularizacion") {
-
-      amount = 1200;
-
-      name = "Regularización 2026 - Mohamed";
-    }
-
-    const baseUrl =
-      process.env.NEXT_PUBLIC_URL ||
-      "https://gestoriacitaia.com";
-
-    console.log("🌍 BASE URL:", baseUrl);
-
-    console.log("💳 CREATING STRIPE SESSION...");
+    console.log("BODY:", body);
 
     const session = await stripe.checkout.sessions.create({
 
@@ -48,10 +29,10 @@ export async function POST(req: Request) {
 
             currency: "eur",
 
-            unit_amount: amount,
+            unit_amount: 1200,
 
             product_data: {
-              name,
+              name: "Regularización 2026 - Mohamed",
             },
           },
 
@@ -60,29 +41,25 @@ export async function POST(req: Request) {
       ],
 
       success_url:
-        `${baseUrl}/regularizacion-2026?paid=true`,
+        "https://gestoriacitaia.com/regularizacion-2026?paid=true",
 
       cancel_url:
-        `${baseUrl}/regularizacion-2026?canceled=true`,
-
-      metadata: {
-        productType: productType || "unknown",
-      },
+        "https://gestoriacitaia.com/regularizacion-2026?canceled=true",
     });
 
-    console.log("✅ SESSION CREATED:", session.id);
+    console.log("SESSION:", session.id);
 
     return Response.json({
       url: session.url,
     });
 
-  } catch (err: any) {
+  } catch (error: any) {
 
-    console.error("❌ STRIPE FULL ERROR:", err);
+    console.error("STRIPE ERROR:", error);
 
     return Response.json(
       {
-        error: err?.message || "Stripe error",
+        error: String(error),
       },
       {
         status: 500,
