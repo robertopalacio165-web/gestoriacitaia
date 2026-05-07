@@ -171,6 +171,7 @@ window.location.href = data.url;
   const [questionsDone, setQuestionsDone] = useState(false);
 const [clientQuestionsDone, setClientQuestionsDone] = useState(false);
   const [questionIndex, setQuestionIndex] = useState(0);
+  const questionFlowLockedRef = useRef(false);
 const [clientQuestionIndex, setClientQuestionIndex] = useState(0);
   const [showStripe, setShowStripe] = useState(false);
   const [paymentRequired, setPaymentRequired] = useState(false);
@@ -632,7 +633,13 @@ if (rawStep) {
   const allReady = finalFileStatus === "ok";
 
 const handleQuestionFlow = () => {
+ if (questionFlowLockedRef.current) return;
 
+  questionFlowLockedRef.current = true;
+
+  setTimeout(() => {
+    questionFlowLockedRef.current = false;
+  }, 4000);
   setQuestionIndex((prev) => {
 
     const next = prev + 1;
