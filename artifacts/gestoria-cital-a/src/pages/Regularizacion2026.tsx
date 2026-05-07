@@ -641,7 +641,7 @@ const handleQuestionFlow = () => {
 
     // ✅ وصلنا لمرحلة الأداء
 if (next >= 5) {
-
+questionFlowLockedRef.current = true;
   const PAYMENT_TEXT = `
 مزيان، من خلال الأجوبة ديالك بان ليا بللي الملف ديالك غادي يكون مقبول إن شاء الله ✅
 
@@ -661,7 +661,11 @@ if (next >= 5) {
   setShowStripe(true);
 
   setPaymentRequired(true);
+setIsListening(false);
 
+assistantBusyRef.current = true;
+
+pendingAutomationPromptRef.current = null;
   setTimeout(() => {
 
     speakExactText(PAYMENT_TEXT);
@@ -1173,7 +1177,30 @@ dc.send(
   JSON.stringify({
     type: "session.update",
     session: {
-      instructions: "أنت محمد، مساعد ذكي متخصص في الهجرة تجاوب باختصار وبالدارجة",
+    instructions: `
+أنت محمد من GestoriaCitaIA.
+
+ممنوع تبدأ الحوار من جديد.
+ممنوع تقول:
+"غنعاود من الأول"
+أو
+"أنا محمد"
+أو
+"مرحبا"
+إلا فالبداية الأولى فقط.
+
+ممنوع تعاود أي سؤال سبق تسول.
+
+جاوب فقط بالجملة المطلوبة.
+
+إلا كان السؤال الحالي هو:
+"واش دخلتي لإسبانيا قبل من واحد يناير 2026؟"
+
+فلا تقل أي مقدمة أخرى.
+
+تكلم فقط بالدارجة المغربية.
+وباختصار.
+`,
       modalities: ["audio", "text"],
       turn_detection: {
         type: "server_vad",
