@@ -112,7 +112,7 @@ export default function Regularizacion2026() {
       localStorage.removeItem("paid");
 
       setShowStripe(false);
-
+setPaymentRequired(false);
       // يرجع للسؤال 5
       setQuestionIndex(4);
 
@@ -173,6 +173,7 @@ const [clientQuestionsDone, setClientQuestionsDone] = useState(false);
   const [questionIndex, setQuestionIndex] = useState(0);
 const [clientQuestionIndex, setClientQuestionIndex] = useState(0);
   const [showStripe, setShowStripe] = useState(false);
+  const [paymentRequired, setPaymentRequired] = useState(false);
 
   const [leadForm, setLeadForm] = useState<LeadFormState>({
     nombre: "",
@@ -639,7 +640,7 @@ const handleQuestionFlow = () => {
     console.log("NEXT:", next);
 
     // ✅ وصلنا لمرحلة الأداء
-if (next >= 4) {
+if (next >= 5)
 
       const PAYMENT_TEXT = `
 مزيان، من خلال الأجوبة ديالك بان ليا بللي الملف ديالك غادي يكون مقبول إن شاء الله ✅
@@ -658,7 +659,7 @@ if (next >= 4) {
  console.log("SHOWING STRIPE BUTTON");
 
 setShowStripe(true);
-
+setPaymentRequired(true);
 setTimeout(() => {
 
   speakExactText(PAYMENT_TEXT);
@@ -1825,7 +1826,13 @@ const fullSpeech = `
               </div>
               <div className="absolute bottom-3 left-0 right-0 flex justify-center">
                 <button
-                  onClick={isListening ? stopListening : startListening}
+            onClick={() => {
+
+  if (paymentRequired) return;
+
+  isListening ? stopListening() : startListening();
+
+}}
                   className={`w-12 h-12 rounded-full border flex items-center justify-center backdrop-blur-md transition-colors ${
                     isListening
                       ? "bg-destructive/80 border-destructive"
@@ -1845,7 +1852,7 @@ const fullSpeech = `
               <div className="p-4 border-b border-white/10">
                 <button
                   onClick={isListening ? stopListening : startListening}
-                  disabled={!voiceSupported}
+            disabled={!voiceSupported || paymentRequired}
                   className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary hover:bg-primary/90 disabled:opacity-50 text-primary-foreground font-bold text-sm px-4 py-3 transition-colors"
                   type="button"
                 >
