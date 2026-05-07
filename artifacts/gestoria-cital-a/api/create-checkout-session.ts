@@ -39,7 +39,10 @@ export default async function handler(req: any, res: any) {
       url: session.url,
     });
   } catch (error: any) {
+    console.error("STRIPE FULL ERROR:");
     console.error(error);
+    console.error(error?.message);
+    console.error(error?.stack);
 
     return res.status(500).json({
       error: error.message,
