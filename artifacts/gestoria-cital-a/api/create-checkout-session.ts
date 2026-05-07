@@ -1,32 +1,32 @@
 import Stripe from "stripe";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
 
-export default async function handler(req: any, res: any) {
-
-  if (req.method !== "POST") {
-    return res.status(405).json({
-      error: "Method not allowed",
-    });
-  }
+export async function POST(req: Request) {
 
   try {
 
-    console.log("KEY EXISTS:", !!process.env.STRIPE_SECRET_KEY);
+    console.log("🚀 STRIPE API HIT");
 
-    let body = req.body;
+    console.log(
+      "✅ SECRET EXISTS:",
+      !!process.env.STRIPE_SECRET_KEY
+    );
 
-    if (typeof body === "string") {
-      body = JSON.parse(body);
-    }
+    const body = await req.json();
+
+    console.log("📦 BODY:", body);
 
     const { productType } = body || {};
 
     let amount = 1200;
+
     let name = "Servicio";
 
     if (productType === "regularizacion") {
+
       amount = 1200;
+
       name = "Regularización 2026 - Mohamed";
     }
 
@@ -34,14 +34,18 @@ export default async function handler(req: any, res: any) {
       process.env.NEXT_PUBLIC_URL ||
       "https://gestoriacitaia.com";
 
-    const session = await stripe.checkout.sessions.create({
-      mode: "payment",
+    console.log("🌍 BASE URL:", baseUrl);
 
-      payment_method_types: ["card"],
+    console.log("💳 CREATING STRIPE SESSION...");
+
+    const session = await stripe.checkout.sessions.create({
+
+      mode: "payment",
 
       line_items: [
         {
           price_data: {
+
             currency: "eur",
 
             unit_amount: amount,
@@ -55,25 +59,34 @@ export default async function handler(req: any, res: any) {
         },
       ],
 
-      success_url: `${baseUrl}/regularizacion-2026?paid=true`,
+      success_url:
+        `${baseUrl}/regularizacion-2026?paid=true`,
 
-      cancel_url: `${baseUrl}/regularizacion-2026?canceled=true`,
+      cancel_url:
+        `${baseUrl}/regularizacion-2026?canceled=true`,
 
       metadata: {
         productType: productType || "unknown",
       },
     });
 
-    return res.status(200).json({
+    console.log("✅ SESSION CREATED:", session.id);
+
+    return Response.json({
       url: session.url,
     });
 
   } catch (err: any) {
 
-    console.error("❌ STRIPE ERROR FULL:", err);
+    console.error("❌ STRIPE FULL ERROR:", err);
 
-    return res.status(500).json({
-      error: err?.message || "Stripe error",
-    });
+    return Response.json(
+      {
+        error: err?.message || "Stripe error",
+      },
+      {
+        status: 500,
+      }
+    );
   }
 }
