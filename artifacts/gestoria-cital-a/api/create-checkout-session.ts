@@ -2,67 +2,52 @@ import Stripe from "stripe";
 
 export const runtime = "nodejs";
 
-const stripe = new Stripe(
-  process.env.STRIPE_SECRET_KEY as string,
-  {
-    apiVersion: "2025-03-31.basil",
-  }
-);
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
+  apiVersion: "2025-03-31.basil",
+});
 
 export async function POST(req: Request) {
-
   try {
-
-    console.log("🚀 API START");
-
     const body = await req.json();
 
-    console.log("BODY:", body);
+    const amount = Number(body.amount || 12);
 
     const session = await stripe.checkout.sessions.create({
-
+      payment_method_types: ["card"],
       mode: "payment",
 
       line_items: [
         {
           price_data: {
-
             currency: "eur",
-
-            unit_amount: 1200,
-
             product_data: {
-              name: "Regularización 2026 - Mohamed",
+              name: "Análisis de expediente",
             },
+            unit_amount: amount * 100,
           },
-
           quantity: 1,
         },
       ],
 
-      success_url:
-        "https://gestoriacitaia.com/regularizacion-2026?paid=true",
-
-      cancel_url:
-        "https://gestoriacitaia.com/regularizacion-2026?canceled=true",
+      success_url: `${process.env.NEXT_PUBLIC_URL}/success`,
+      cancel_url: `${process.env.NEXT_PUBLIC_URL}/cancel`,
     });
-
-    console.log("SESSION:", session.id);
 
     return Response.json({
       url: session.url,
     });
-
   } catch (error: any) {
-
     console.error("STRIPE ERROR:", error);
 
-    return Response.json(
-      {
-        error: String(error),
-      },
+    return new Response(
+      JSON.stringify({
+        error: error.message,
+      }),
       {
         status: 500,
+        headers: {
+          "Content-Type": "application/json",
+        },
       }
     );
   }
