@@ -655,16 +655,21 @@ if (next >= 4) {
 ورك على زر الأداء ونكملو مباشرة.
 `; 
 
-      console.log(PAYMENT_TEXT);
-      speakExactText(PAYMENT_TEXT);
-      
+ console.log("SHOWING STRIPE BUTTON");
+
 setShowStripe(true);
+
+setTimeout(() => {
+
+  speakExactText(PAYMENT_TEXT);
+
+}, 300);
 
 setTimeout(() => {
 
   stopListening();
 
-}, 1000);
+}, 13000);
 
 
       setQuestionsDone(true);
@@ -1214,7 +1219,7 @@ dc.onmessage = (event) => {
 
         lastUserTranscriptRef.current = transcript;
         setLastUserTranscript(transcript);
-        if (assistantBusyRef.current) return;
+      
         pushUserMessage(transcript);
 
         const answer = transcript.toLowerCase();
@@ -1224,7 +1229,7 @@ dc.onmessage = (event) => {
         } else if (answer.includes("لا") || answer.includes("no")) {
           speakExactText("ماشي مشكل، كاين حلول أخرى 👍");
         }
-
+console.log("QUESTION FLOW RUNNING");
         setTimeout(() => {
           handleQuestionFlow();
         }, 2000);
