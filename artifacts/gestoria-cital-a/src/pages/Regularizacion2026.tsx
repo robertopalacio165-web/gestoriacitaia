@@ -103,24 +103,39 @@ function slugifyFileName(name: string) {
 export default function Regularizacion2026() {
 
   // ✅ الرجوع من Stripe وكمل السؤال 5
-  useEffect(() => {
-    const paid = localStorage.getItem("paid");
+ useEffect(() => {
 
-    if (paid === "true") {
-      console.log("✅ CLIENT PAID");
+  const params = new URLSearchParams(window.location.search);
 
-      localStorage.removeItem("paid");
+  const paid = params.get("paid");
 
-      setShowStripe(false);
-setPaymentRequired(false);
-      // يرجع للسؤال 5
-      setQuestionIndex(4);
+  if (paid === "true") {
 
-      setTimeout(() => {
-        speakExactText("مزيان، توصلنا بالأداء ديالك. دابا نكملو. السؤال الخامس: واش عندك tarjeta sanitaria؟");
-      }, 800);
-    }
-  }, []);
+    console.log("✅ CLIENT PAID");
+
+    setShowStripe(false);
+
+    setPaymentRequired(false);
+
+    questionFlowLockedRef.current = false;
+
+    setTimeout(() => {
+
+      startListening();
+
+    }, 1000);
+
+    setTimeout(() => {
+
+      speakExactText(
+        "مزيان، توصلنا بالأداء ديالك. دابا نكملو. السؤال الخامس: واش عندك tarjeta sanitaria؟"
+      );
+
+    }, 4000);
+
+  }
+
+}, []);
 
   const handleStripePayment = async () => {
   try {
