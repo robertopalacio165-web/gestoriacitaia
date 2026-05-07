@@ -171,7 +171,6 @@ window.location.href = data.url;
   const [questionsDone, setQuestionsDone] = useState(false);
 const [clientQuestionsDone, setClientQuestionsDone] = useState(false);
   const [questionIndex, setQuestionIndex] = useState(0);
-  const questionFlowLockedRef = useRef(false);
 const [clientQuestionIndex, setClientQuestionIndex] = useState(0);
   const [showStripe, setShowStripe] = useState(false);
   const [paymentRequired, setPaymentRequired] = useState(false);
@@ -633,13 +632,7 @@ if (rawStep) {
   const allReady = finalFileStatus === "ok";
 
 const handleQuestionFlow = () => {
- if (questionFlowLockedRef.current) return;
 
-  questionFlowLockedRef.current = true;
-
-  setTimeout(() => {
-    questionFlowLockedRef.current = false;
-  }, 4000);
   setQuestionIndex((prev) => {
 
     const next = prev + 1;
@@ -649,19 +642,16 @@ const handleQuestionFlow = () => {
     // ✅ وصلنا لمرحلة الأداء
 if (next >= 5) {
 
-const PAYMENT_TEXT_1 = `
-مزيان، من خلال الأجوبة ديالك بان ليا بللي الملف ديالك غادي يكون مقبول إن شاء الله.
+  const PAYMENT_TEXT = `
+مزيان، من خلال الأجوبة ديالك بان ليا بللي الملف ديالك غادي يكون مقبول إن شاء الله ✅
 
 باش نعطيك تحليل دقيق ونوجد ليك الملف كامل:
 
-تحليل كامل.
-التحقق من الوثائق مية فالمية.
-`;
+✔️ تحليل كامل
+✔️ 100 fi 100 التحقق من الوثائق
+✔️ الوثيقة المعجزة لي غادي تعونك بزاف
 
-const PAYMENT_TEXT_2 = `
-وزيد عليها الوثيقة المعجزة لي غادي تعاونك بزاف.
-
-هاد الخدمة كاملة غير ب12 أورو.
+غير ب 12 أورو
 
 ورك على زر الأداء ونكملو مباشرة.
 `;
@@ -674,13 +664,7 @@ const PAYMENT_TEXT_2 = `
 
   setTimeout(() => {
 
- speakExactText(PAYMENT_TEXT_1);
-
-setTimeout(() => {
-
-  speakExactText(PAYMENT_TEXT_2);
-
-}, 7000);
+    speakExactText(PAYMENT_TEXT);
 
   }, 300);
 
