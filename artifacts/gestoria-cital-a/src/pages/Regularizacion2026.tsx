@@ -108,7 +108,7 @@ export default function Regularizacion2026() {
   const params = new URLSearchParams(window.location.search);
 
   const paid = params.get("paid");
-
+(window as any).paid = paid;
   if (paid === "true") {
 
     console.log("✅ CLIENT PAID");
@@ -1238,9 +1238,15 @@ dc.send(
           }, 400);
           return;
         }
-        setTimeout(() => {
-          void maybeSendIntroToMohamed();
-        }, 500);
+     if (!(window as any).paid) {
+
+  setTimeout(() => {
+
+    void maybeSendIntroToMohamed();
+
+  }, 500);
+
+}  
       };
 dc.onmessage = (event) => {
   try {
