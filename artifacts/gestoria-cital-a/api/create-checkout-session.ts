@@ -16,42 +16,30 @@ export default async function handler(req: any, res: any) {
 
     const { amount } = req.body;
 
-    const session = await stripe.checkout.sessions.create({
+const session = await stripe.checkout.sessions.create({
+  payment_method_types: ["card"],
+  mode: "payment",
 
-      payment_method_types: ["card"],
+  phone_number_collection: {
+    enabled: true,
+  },
 
-      mode: "payment",
-
-      // ❌ حيد SMS verification
-      phone_number_collection: {
-        enabled: false,
-      },
-
-      // ❌ ما ينشئش Link account
-      customer_creation: "if_required",
-
-      // ✅ checkout مباشر
-      billing_address_collection: "auto",
-
-      line_items: [
-        {
-          price_data: {
-            currency: "eur",
-            product_data: {
-              name: "Análisis de expediente",
-            },
-
-            unit_amount: (amount || 12) * 100,
-          },
-
-          quantity: 1,
+  line_items: [
+    {
+      price_data: {
+        currency: "eur",
+        product_data: {
+          name: "Análisis de expediente",
         },
-      ],
+        unit_amount: (amount || 12) * 100,
+      },
+      quantity: 1,
+    },
+  ],
 
-      success_url: `${process.env.NEXT_PUBLIC_URL}/success`,
-
-      cancel_url: `${process.env.NEXT_PUBLIC_URL}/cancel`,
-    });
+  success_url: `${process.env.NEXT_PUBLIC_URL}/success`,
+  cancel_url: `${process.env.NEXT_PUBLIC_URL}/cancel`,
+});
 
     return res.status(200).json({
       url: session.url,
