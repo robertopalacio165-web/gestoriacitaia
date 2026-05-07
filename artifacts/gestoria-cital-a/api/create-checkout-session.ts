@@ -37,7 +37,7 @@ const session = await stripe.checkout.sessions.create({
     },
   ],
 
-  success_url: `${process.env.NEXT_PUBLIC_URL}/success`,
+success_url: `${process.env.NEXT_PUBLIC_URL}?paid=true`,
   cancel_url: `${process.env.NEXT_PUBLIC_URL}/cancel`,
 });
 
