@@ -640,9 +640,9 @@ const handleQuestionFlow = () => {
     console.log("NEXT:", next);
 
     // ✅ وصلنا لمرحلة الأداء
-if (next >= 5)
+if (next >= 5) {
 
-      const PAYMENT_TEXT = `
+  const PAYMENT_TEXT = `
 مزيان، من خلال الأجوبة ديالك بان ليا بللي الملف ديالك غادي يكون مقبول إن شاء الله ✅
 
 باش نعطيك تحليل دقيق ونوجد ليك الملف كامل:
@@ -654,31 +654,33 @@ if (next >= 5)
 غير ب 12 أورو
 
 ورك على زر الأداء ونكملو مباشرة.
-`; 
+`;
 
- console.log("SHOWING STRIPE BUTTON");
+  console.log("SHOWING STRIPE BUTTON");
 
-setShowStripe(true);
-setPaymentRequired(true);
-setTimeout(() => {
+  setShowStripe(true);
 
-  speakExactText(PAYMENT_TEXT);
+  setPaymentRequired(true);
 
-}, 300);
+  setTimeout(() => {
 
-setTimeout(() => {
+    speakExactText(PAYMENT_TEXT);
 
-  stopListening();
+  }, 300);
 
-}, 13000);
+  setTimeout(() => {
 
+    stopListening();
 
-      setQuestionsDone(true);
+  }, 13000);
 
-      localStorage.setItem("questionIndex", "4");
+  setQuestionsDone(true);
 
-      return prev;
-    }
+  localStorage.setItem("questionIndex", "4");
+
+  return prev;
+
+}
 
     return next;
 
