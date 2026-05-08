@@ -1271,7 +1271,13 @@ if (
 ) {
 
   const transcript = userTranscript.trim();
+const lowerTranscript = transcript.toLowerCase();
 
+const isNameAnswer =
+  questionIndex === 1 &&
+  lowerTranscript.length > 1 &&
+  !lowerTranscript.includes("آه") &&
+  !lowerTranscript.includes("لا");
   if (transcript !== lastUserTranscriptRef.current) {
 
     lastUserTranscriptRef.current = transcript;
@@ -1282,11 +1288,11 @@ if (
 
     console.log("✅ USER SAID:", transcript);
 
-    if (!questionFlowLockedRef.current) {
+if (!questionFlowLockedRef.current && !isNameAnswer) {
 
-      handleQuestionFlow();
+  handleQuestionFlow();
 
-    }
+}
 
   }
 
