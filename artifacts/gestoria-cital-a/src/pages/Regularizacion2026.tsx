@@ -652,77 +652,62 @@ if (rawStep) {
 
 const handleQuestionFlow = () => {
 
+  if (questionFlowLockedRef.current) return;
+
   setQuestionIndex((prev) => {
 
     const next = prev + 1;
 
     console.log("NEXT:", next);
-  if (next >= 15) {
 
-  setDocumentsUnlocked(true);
+    // السؤال الرابع -> يخرج Stripe
+    if (next === 5 && !paymentDoneRef.current) {
 
-  setConfirmUnlocked(true);
+      questionFlowLockedRef.current = true;
 
-}
-
-
-
-  
-// ✅ وصلنا لمرحلة الأداء
-if (next === 6 && !paymentDoneRef.current) {
-
-  questionFlowLockedRef.current = true;
-
-  const PAYMENT_TEXT = `
+      const PAYMENT_TEXT = `
 مزيان، من خلال الأجوبة ديالك بان ليا بللي الملف ديالك غادي يكون مقبول إن شاء الله ✅
 
 باش نعطيك تحليل دقيق ونوجد ليك الملف كامل:
+
+✔️ تحليل كامل
+✔️ 100 fi 100 التحقق من الوثائق
+✔️ الوثيقة المهمة اللي غادي تعزز الملف ديالك بزاف
 
 غير ب 12 أورو
 
 ورك على زر الأداء ونكملو مباشرة.
 `;
 
-  console.log("SHOWING STRIPE BUTTON");
+      console.log("SHOWING STRIPE BUTTON");
 
-  setPaymentRequired(true);
+      setPaymentRequired(true);
 
-  assistantBusyRef.current = true;
+      assistantBusyRef.current = true;
 
-  pendingAutomationPromptRef.current = null;
+      pendingAutomationPromptRef.current = null;
 
-  setTimeout(() => {
+      setTimeout(() => {
+        speakExactText(PAYMENT_TEXT);
+      }, 300);
 
-    speakExactText(PAYMENT_TEXT);
+      setTimeout(() => {
 
-  }, 300);
+        setShowStripe(true);
 
-  setTimeout(() => {
+        setIsListening(false);
 
-    setShowStripe(true);
+        stopListening();
 
-    setIsListening(false);
+      }, 17000);
 
-    stopListening();
+      setQuestionsDone(true);
 
-  }, 17000);
+      return next;
+    }
 
-  setTimeout(() => {
-
-    stopListening();
-
-  }, 25000);
-
-  setQuestionsDone(true);
-
-  return next;
-
-}
-
-return next;
-
-});
-
+    return next;
+  });
 };
 
   const updateLeadForm = (field: keyof LeadFormState, value: string) => {
@@ -1281,7 +1266,8 @@ if (
     msg.type === "input_audio_buffer.transcription.completed"
   ) &&
   typeof userTranscript === "string" &&
-  userTranscript.trim()
+  userTranscript.trim() &&
+  userTranscript.trim().length > 1
 ) {
 
   const transcript = userTranscript.trim();
@@ -1313,7 +1299,7 @@ if (
 
   assistantTextBufferRef.current += msg.delta;
 
-} // ✅ تسدات if الأولى هنا
+}
 
 if (
   msg.type === "response.output_text.done" &&
