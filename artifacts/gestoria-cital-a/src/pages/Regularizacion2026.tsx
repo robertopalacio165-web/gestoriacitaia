@@ -674,19 +674,29 @@ questionFlowLockedRef.current = true;
 
   console.log("SHOWING STRIPE BUTTON");
 
-  setShowStripe(true);
+setPaymentRequired(true);
 
-  setPaymentRequired(true);
-setIsListening(false);
-stopListening();
 assistantBusyRef.current = true;
 
 pendingAutomationPromptRef.current = null;
-  setTimeout(() => {
 
-    speakExactText(PAYMENT_TEXT);
+setTimeout(() => {
 
-  }, 300);
+  speakExactText(PAYMENT_TEXT);
+
+}, 300);
+
+// ✅ popup يخرج غير من بعد ما يكمل محمد الهضرة
+
+setTimeout(() => {
+
+  setShowStripe(true);
+
+  setIsListening(false);
+
+  stopListening();
+
+}, 17000);
 
   setTimeout(() => {
 
