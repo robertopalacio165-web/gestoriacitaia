@@ -663,7 +663,7 @@ const handleQuestionFlow = () => {
 
   
 // ✅ وصلنا لمرحلة الأداء
-if (next === 6 && !paymentDoneRef.current) {
+if (next === 7 && !paymentDoneRef.current) {
 
   questionFlowLockedRef.current = true;
 
