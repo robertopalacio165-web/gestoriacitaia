@@ -128,10 +128,9 @@ paymentDoneRef.current = true;
 
     setTimeout(() => {
 setQuestionIndex(6);
-
-speakExactText(
-  "مزيان، توصلنا بالأداء ديالك. دابا نكملو. السؤال السادس: واش عمرك مشيتي للصبيطار؟ واش عندك شي ورقة فيها سميتك والتاريخ؟"
-);
+      speakExactText(
+        "مزيان، توصلنا بالأداء ديالك. دابا نكملو. السؤال الخامس: واش عندك tarjeta sanitaria؟"
+      );
 
     }, 4000);
 
@@ -189,7 +188,6 @@ window.location.href = data.url;
 const [clientQuestionsDone, setClientQuestionsDone] = useState(false);
   const [questionIndex, setQuestionIndex] = useState(0);
   const questionFlowLockedRef = useRef(false);
-  const nameCapturedRef = useRef(false);
   const paymentDoneRef = useRef(false);
 const [clientQuestionIndex, setClientQuestionIndex] = useState(0);
   const [showStripe, setShowStripe] = useState(false);
@@ -538,14 +536,7 @@ if (rawStep) {
       console.error("Error guardando docs:", error);
     }
   }, [docs, docsStorageKey]);
-useEffect(() => {
 
-  localStorage.setItem(
-    "questionIndex",
-    questionIndex.toString()
-  );
-
-}, [questionIndex]);
   useEffect(() => {
     try {
       const raw = localStorage.getItem(historyStorageKey);
@@ -660,79 +651,74 @@ useEffect(() => {
 
 const handleQuestionFlow = () => {
 
-  if (questionFlowLockedRef.current) return;
-
   setQuestionIndex((prev) => {
 
     const next = prev + 1;
 
     console.log("NEXT:", next);
+  
 
-    // فتح الأزرار
-    if (next >= 13) {
 
-      setDocumentsUnlocked(true);
 
-      setConfirmUnlocked(true);
+  
+// ✅ وصلنا لمرحلة الأداء
+if (next === 5 && !paymentDoneRef.current) {
 
-      console.log("✅ BUTTONS UNLOCKED");
+  questionFlowLockedRef.current = true;
 
-    }
-
-    // Stripe
-    if (next === 5 && !paymentDoneRef.current) {
-
-      questionFlowLockedRef.current = true;
-
-      const PAYMENT_TEXT = `
+  const PAYMENT_TEXT = `
 مزيان، من خلال الأجوبة ديالك بان ليا بللي الملف ديالك غادي يكون مقبول إن شاء الله ✅
 
 باش نعطيك تحليل دقيق ونوجد ليك الملف كامل:
 
 ✔️ تحليل كامل
-✔️ التحقق من الوثائق
-✔️ الوثيقة المهمة
+✔️ 100 fi 100 التحقق من الوثائق
+✔️ الوثيقة المعجزة لي غادي تعونك بزاف
 
 غير ب 12 أورو
 
 ورك على زر الأداء ونكملو مباشرة.
 `;
 
-      console.log("SHOWING STRIPE BUTTON");
+  console.log("SHOWING STRIPE BUTTON");
 
-      setPaymentRequired(true);
+  setPaymentRequired(true);
 
-      assistantBusyRef.current = true;
+  assistantBusyRef.current = true;
 
-      setTimeout(() => {
-        speakExactText(PAYMENT_TEXT);
-      }, 300);
+  pendingAutomationPromptRef.current = null;
 
-      setTimeout(() => {
+  setTimeout(() => {
 
-        setShowStripe(true);
+    speakExactText(PAYMENT_TEXT);
 
-        setIsListening(false);
+  }, 300);
 
-        stopListening();
+  setTimeout(() => {
 
-      }, 23000);
+    setShowStripe(true);
 
-      return next;
-    }
+    setIsListening(false);
 
-    // باقي الأسئلة
-    if (questions[next]) {
+    stopListening();
 
-      setTimeout(() => {
+  }, 17000);
 
-        speakExactText(questions[next]);
+  setTimeout(() => {
 
-      }, 400);
+    stopListening();
 
-    }
+  }, 25000);
+
+  setQuestionsDone(true);
+
+  return next;
+
+}
+
 
     return next;
+
   });
 
 };
@@ -1293,70 +1279,30 @@ if (
     msg.type === "input_audio_buffer.transcription.completed"
   ) &&
   typeof userTranscript === "string" &&
-  userTranscript.trim() &&
-  userTranscript.trim().length > 1
+  userTranscript.trim()
 ) {
 
- const transcript = userTranscript.trim();
+  const transcript = userTranscript.trim();
 
-lastUserTranscriptRef.current = transcript;
+  if (transcript !== lastUserTranscriptRef.current) {
 
-setLastUserTranscript(transcript);
+    lastUserTranscriptRef.current = transcript;
 
-pushUserMessage(transcript);
+    setLastUserTranscript(transcript);
 
-console.log("✅ USER SAID:", transcript);
+    pushUserMessage(transcript);
 
-const lowerTranscript = transcript.toLowerCase();
-const isGreeting =
-  questionIndex === 0 &&
-  (
-    lowerTranscript.includes("آه") ||
-    lowerTranscript.includes("اه") ||
-    lowerTranscript.includes("yes") ||
-    lowerTranscript.includes("oui")
-  );
+    console.log("✅ USER SAID:", transcript);
 
-const isNameAnswer =
-  questionIndex === -1 &&
-  lowerTranscript.length > 1;
+    if (!questionFlowLockedRef.current) {
 
-if (!questionFlowLockedRef.current) {
+      handleQuestionFlow();
 
-  // أول جواب: محمد يسول على الاسم
-  if (isGreeting) {
-  setQuestionIndex(1);
-    setTimeout(() => {
-      speakExactText("شنو سميتك؟");
-    }, 400);
-
-    return;
-  }
-
-  // جواب الاسم
-if (isNameAnswer) {
-
-  console.log("NEXT: 1");
-
-  setQuestionIndex(1);
-
-  setTimeout(() => {
-
-    speakExactText(questions[0]);
-
-  }, 400);
-
-  return;
-}
-
-  // باقي الأسئلة
-  handleQuestionFlow();
-
-}
+    }
 
   }
 
-
+}
 
 if (
   msg.type === "response.output_text.delta" &&
@@ -1365,7 +1311,7 @@ if (
 
   assistantTextBufferRef.current += msg.delta;
 
-}
+} // ✅ تسدات if الأولى هنا
 
 if (
   msg.type === "response.output_text.done" &&
@@ -1401,7 +1347,9 @@ if (msg.type === "response.done") {
   pendingAutomationPromptRef.current = null;
   setPendingAutomationPrompt("");
 
-
+  setTimeout(() => {
+    void flushPendingAutomation();
+  }, 150);
 
 }
 
@@ -1776,30 +1724,14 @@ try {
       const type = (doc.detectedType || "").toLowerCase();
 
       // 📄 شرح الوثائق
-   const speech = buildDocSpeech(name, {
-  full_name: (doc as any).full_name,
-  document_number: (doc as any).document_number,
-  birth_date: (doc as any).birth_date,
-  expiry_date: (doc as any).expiry_date,
-  image_quality: {
-    blurred: false,
-  },
-  fraud_risk: "low",
-  final_verdict:
-    status === "ok"
-      ? "approved"
-      : status === "warn"
-      ? "review"
-      : "rejected",
-  verification_score:
-    status === "ok"
-      ? 95
-      : status === "warn"
-      ? 60
-      : 20,
-});
+      if (status === "ok") {
+        explanation += `${name} مقبولة و واضحة. `;
+      } else if (status === "warn") {
+        explanation += `${name} خاصها مراجعة. `;
+      } else {
+        explanation += `${name} ناقصة أو غير واضحة. `;
+      }
 
-explanation += speech + " ";
       if (type.includes("passport") || type.includes("nie")) {
         hasPassport = true;
       }
