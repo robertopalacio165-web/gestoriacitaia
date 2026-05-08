@@ -709,7 +709,7 @@ if (next === 1) {
 
         stopListening();
 
-}, 10000);
+}, 20000);
 
 // ❌ ما نفتحوش الوثائق هنا
 setQuestionsDone(false);
