@@ -657,7 +657,17 @@ const handleQuestionFlow = () => {
   setQuestionIndex((prev) => {
 
     const next = prev + 1;
+// ✅ بعد أول جواب سول على الاسم بلا NEXT جديد
+if (next === 1) {
 
+  setTimeout(() => {
+
+    speakExactText(NAME_QUESTION);
+
+  }, 400);
+
+  return next;
+}
     console.log("NEXT:", next);
 
     // السؤال الرابع -> يخرج Stripe
@@ -701,11 +711,19 @@ const handleQuestionFlow = () => {
 
       }, 17000);
 
-      setQuestionsDone(true);
+// ❌ ما نفتحوش الوثائق هنا
+setQuestionsDone(false);
 
       return next;
     }
+// ✅ فتح الوثائق فالسؤال 13
+if (next >= 13) {
 
+  setDocumentsUnlocked(true);
+
+  setConfirmUnlocked(true);
+
+}
     return next;
   });
 };
@@ -975,7 +993,8 @@ const buildDocSpeech = (
       console.error("❌ Error enviando:", error);
     }
   };
-
+const NAME_QUESTION =
+  "شنو سميتك؟";
 const questions = [
   "واش دخلتي لإسبانيا قبل من واحد يناير 2026؟",
   "واش بقيتي في إسبانيا لمدة ديال خمسة أشهر متتالية؟ وشنو هي أول مدينة سكنتي فيها في إسبانيا؟",
@@ -1282,11 +1301,39 @@ if (
 
     console.log("✅ USER SAID:", transcript);
 
-    if (!questionFlowLockedRef.current) {
+const lowerTranscript = transcript.toLowerCase().trim();
 
-      handleQuestionFlow();
+// ✅ الاسم ما يتحسبش فـ NEXT
+const isOnlyNameStep =
+  questionIndex === 1 &&
+  lowerTranscript.length > 1 &&
+  !lowerTranscript.includes("نعم") &&
+  !lowerTranscript.includes("لا") &&
+  !lowerTranscript.includes("اه") &&
+  !lowerTranscript.includes("آه");
 
-    }
+if (isOnlyNameStep) {
+
+  console.log("👤 USER NAME ONLY:", transcript);
+
+  setTimeout(() => {
+
+    speakExactText(
+      "مزيان. السؤال الثاني: واش بقيتي في إسبانيا لمدة ديال خمسة أشهر متتالية؟ وشنو هي أول مدينة سكنتي فيها؟"
+    );
+
+  }, 500);
+
+  setQuestionIndex(2);
+
+  return;
+}
+
+if (!questionFlowLockedRef.current) {
+
+  handleQuestionFlow();
+
+}
 
   }
 
