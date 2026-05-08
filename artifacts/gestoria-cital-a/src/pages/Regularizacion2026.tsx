@@ -1329,7 +1329,28 @@ if (isOnlyNameStep) {
   return;
 }
 
-if (!questionFlowLockedRef.current) {
+// ❌ ما نحسبوش الاسم والبداية
+const ignoredTexts = [
+  "شنو سميتك",
+  "سميتي",
+  "شنو سميتك؟",
+  "إييه",
+  "eh",
+  "eh.",
+  "okay",
+  "ok"
+];
+
+const normalized = transcript.toLowerCase().trim();
+
+// ✅ غير الأسئلة الحقيقية يتحسبو
+const shouldCountQuestion =
+  !ignoredTexts.some(t => normalized.includes(t));
+
+if (
+  shouldCountQuestion &&
+  !questionFlowLockedRef.current
+) {
 
   handleQuestionFlow();
 
