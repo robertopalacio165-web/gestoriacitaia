@@ -1268,7 +1268,7 @@ if (
   typeof userTranscript === "string" &&
   userTranscript.trim() &&
   userTranscript.trim().length > 1
-)
+) {
 
   const transcript = userTranscript.trim();
 
@@ -1299,7 +1299,7 @@ if (
 
   assistantTextBufferRef.current += msg.delta;
 
-} // ✅ تسدات if الأولى هنا
+}
 
 if (
   msg.type === "response.output_text.done" &&
