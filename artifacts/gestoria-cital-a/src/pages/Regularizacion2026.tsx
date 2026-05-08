@@ -1322,20 +1322,20 @@ const isNameAnswer =
 
 if (!questionFlowLockedRef.current && !assistantBusyRef.current) {
 
-  // أول جواب: غير نحركو للسؤال ديال الاسم
+  // أول جواب: محمد يسول على الاسم
   if (isGreeting) {
+  setQuestionIndex(1);
+    setTimeout(() => {
+      speakExactText("شنو سميتك؟");
+    }, 400);
 
-setQuestionIndex(2);
-
-setTimeout(() => {
-  speakExactText(questions[1]);
-}, 400);
-
-return;
+    return;
   }
 
-  // جواب الاسم ما يتحسبش سؤال
+  // جواب الاسم
   if (isNameAnswer) {
+
+    setQuestionIndex(1);
 
     setTimeout(() => {
       speakExactText(questions[0]);
@@ -1344,7 +1344,7 @@ return;
     return;
   }
 
-  // من هنا تبدا الأسئلة الحقيقية
+  // باقي الأسئلة
   handleQuestionFlow();
 
 }
