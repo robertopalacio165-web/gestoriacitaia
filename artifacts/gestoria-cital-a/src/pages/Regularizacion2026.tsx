@@ -171,8 +171,6 @@ if (paid === "true") {
 
     }, 4000);
 
-  }
-
 }, []);
 
   const handleStripePayment = async () => {
