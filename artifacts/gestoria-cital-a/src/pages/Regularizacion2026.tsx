@@ -656,7 +656,19 @@ const handleQuestionFlow = () => {
 
   setQuestionIndex((prev) => {
 
-    const next = prev + 1;
+let next = prev + 1;
+
+const cleanedTranscript = transcript.trim().toLowerCase();
+
+const isNameAnswer =
+  prev === 1 &&
+  cleanedTranscript.length > 1 &&
+  !cleanedTranscript.includes("آه") &&
+  !cleanedTranscript.includes("لا");
+
+if (isNameAnswer) {
+  next = prev;
+}
 
     console.log("NEXT:", next);
 
