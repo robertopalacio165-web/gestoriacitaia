@@ -663,7 +663,7 @@ const handleQuestionFlow = () => {
 
   
 // ✅ وصلنا لمرحلة الأداء
-if (next === 6 && !paymentDoneRef.current)
+if (next === 6 && !paymentDoneRef.current) {
 
   questionFlowLockedRef.current = true;
 
@@ -717,10 +717,9 @@ if (next === 6 && !paymentDoneRef.current)
 
 }
 
+return next;
 
-    return next;
-
-  });
+});
 
 };
 
