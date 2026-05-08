@@ -112,7 +112,8 @@ export default function Regularizacion2026() {
   if (paid === "true") {
 
     console.log("✅ CLIENT PAID");
-
+paymentDoneRef.current = true;
+    
     setShowStripe(false);
 
     setPaymentRequired(false);
@@ -187,6 +188,7 @@ window.location.href = data.url;
 const [clientQuestionsDone, setClientQuestionsDone] = useState(false);
   const [questionIndex, setQuestionIndex] = useState(0);
   const questionFlowLockedRef = useRef(false);
+  const paymentDoneRef = useRef(false);
 const [clientQuestionIndex, setClientQuestionIndex] = useState(0);
   const [showStripe, setShowStripe] = useState(false);
   const [paymentRequired, setPaymentRequired] = useState(false);
@@ -654,9 +656,17 @@ const handleQuestionFlow = () => {
     const next = prev + 1;
 
     console.log("NEXT:", next);
+    // ✅ منع إعادة الأسئلة بعد الأداء
+if (paymentDoneRef.current && prev < 5) {
+
+  console.log("🛑 PAYMENT ALREADY DONE");
+
+  return prev;
+
+}
 
     // ✅ وصلنا لمرحلة الأداء
-if (next >= 5) {
+if (next >= 5 && !paymentDoneRef.current) {
 questionFlowLockedRef.current = true;
   const PAYMENT_TEXT = `
 مزيان، من خلال الأجوبة ديالك بان ليا بللي الملف ديالك غادي يكون مقبول إن شاء الله ✅
