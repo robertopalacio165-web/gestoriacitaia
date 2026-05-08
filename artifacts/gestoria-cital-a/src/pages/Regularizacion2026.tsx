@@ -1318,7 +1318,7 @@ const isGreeting =
   );
 
 const isNameAnswer =
-  questionIndex === 1 &&
+  questionIndex === -1 &&
   lowerTranscript.length > 1;
 
 if (!questionFlowLockedRef.current) {
@@ -1338,11 +1338,11 @@ if (isNameAnswer) {
 
   console.log("NEXT: 1");
 
-  setQuestionIndex(2);
+  setQuestionIndex(1);
 
   setTimeout(() => {
 
-    speakExactText(questions[1]);
+    speakExactText(questions[0]);
 
   }, 400);
 
