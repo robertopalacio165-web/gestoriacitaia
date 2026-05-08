@@ -286,9 +286,9 @@ export default async function handler(
         ? buildSaraInstructions()
         : buildMohamedInstructions();
 
-    const voice =
+  const voice =
   assistant === "sara"
-    ? "nova"
+    ? "cedar"
     : "verse";
 
     const payload = {
