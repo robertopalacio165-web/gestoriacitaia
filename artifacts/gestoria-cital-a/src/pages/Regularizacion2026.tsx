@@ -538,7 +538,14 @@ if (rawStep) {
       console.error("Error guardando docs:", error);
     }
   }, [docs, docsStorageKey]);
+useEffect(() => {
 
+  localStorage.setItem(
+    "questionIndex",
+    questionIndex.toString()
+  );
+
+}, [questionIndex]);
   useEffect(() => {
     try {
       const raw = localStorage.getItem(historyStorageKey);
@@ -676,7 +683,16 @@ if (isNameAnswer) {
 }
 
     console.log("NEXT:", next);
+// ✅ فتح الأزرار ابتداء من السؤال 13
+if (next >= 13) {
 
+  setDocumentsUnlocked(true);
+
+  setConfirmUnlocked(true);
+
+  console.log("✅ BUTTONS UNLOCKED");
+
+}
     // السؤال الرابع -> يخرج Stripe
     if (next === 5 && !paymentDoneRef.current) {
 
@@ -1303,8 +1319,11 @@ const isNameAnswer =
     pushUserMessage(transcript);
 
     console.log("✅ USER SAID:", transcript);
-
-if (!questionFlowLockedRef.current && !isNameAnswer) {
+if (
+  !questionFlowLockedRef.current &&
+  !isNameAnswer &&
+  !assistantBusyRef.current
+) {
 
   handleQuestionFlow();
 
@@ -1357,9 +1376,7 @@ if (msg.type === "response.done") {
   pendingAutomationPromptRef.current = null;
   setPendingAutomationPrompt("");
 
-  setTimeout(() => {
-    void flushPendingAutomation();
-  }, 150);
+
 
 }
 
