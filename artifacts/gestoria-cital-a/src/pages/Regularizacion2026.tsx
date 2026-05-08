@@ -109,7 +109,45 @@ export default function Regularizacion2026() {
 
   const paid = params.get("paid");
 (window as any).paid = paid;
-  if (paid === "true") {
+if (paid === "true") {
+
+  console.log("✅ CLIENT PAID");
+
+  // ✅ علّم باللي خلص
+  (window as any).paid = true;
+
+  // ✅ حبّس popup
+  setShowStripe(false);
+
+  // ✅ حلّ الميكرو
+  setPaymentRequired(false);
+
+  // ✅ رجّع flow
+  questionFlowLockedRef.current = false;
+
+  // ✅ رجّع السؤال 5
+  setQuestionIndex(4);
+
+  // ✅ خزنو
+  localStorage.setItem("questionIndex", "4");
+
+  // ✅ رجّع realtime
+  setTimeout(() => {
+
+    startListening();
+
+  }, 1000);
+
+  // ✅ محمد يكمل مباشرة
+  setTimeout(() => {
+
+    speakExactText(
+      "مزيان، توصلنا بالأداء ديالك. دابا نكملو مباشرة. السؤال الخامس: واش عندك tarjeta sanitaria؟"
+    );
+
+  }, 4000);
+
+}
 
     console.log("✅ CLIENT PAID");
 
@@ -1248,7 +1286,7 @@ dc.send(
           }, 400);
           return;
         }
-     if (!(window as any).paid) {
+  if (!(window as any).paid && questionIndex === 0) {
 
   setTimeout(() => {
 
@@ -1354,19 +1392,34 @@ if (msg.type === "response.done") {
 
   }
 };
-      dc.onerror = (err) => {
-        console.error("Realtime data channel error:", err);
-      };
-      dc.onclose = () => {
-        dcOpenedRef.current = false;
-        isConnectingRef.current = false;
-        assistantBusyRef.current = false;
-        setIsListening(false);
-        stopListening();
-        assistantTextBufferRef.current = "";
-lastAssistantTextRef.current = "";
-lastUserTranscriptRef.current = "";
-      };
+    dc.onerror = (err) => {
+
+  console.log("🟠 DataChannel ERROR:", err);
+
+};
+     dc.onclose = () => {
+
+  console.log("🔴 DataChannel CLOSED");
+
+  dcOpenedRef.current = false;
+
+  assistantBusyRef.current = false;
+
+  isConnectingRef.current = false;
+
+  setIsListening(false);
+
+  setWaitingMohamed(false);
+
+  assistantTextBufferRef.current = "";
+
+  lastAssistantTextRef.current = "";
+
+  lastUserTranscriptRef.current = "";
+
+  // ❌ ممنوع stopListening هنا
+  // حيث كيعاود يسد الاتصال مرة أخرى
+};
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
       const sdpRes = await fetch("https://api.openai.com/v1/realtime/calls", {
