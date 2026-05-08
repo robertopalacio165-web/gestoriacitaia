@@ -127,7 +127,7 @@ paymentDoneRef.current = true;
     }, 1000);
 
     setTimeout(() => {
-
+setQuestionIndex(6);
       speakExactText(
         "مزيان، توصلنا بالأداء ديالك. دابا نكملو. السؤال الخامس: واش عندك tarjeta sanitaria؟"
       );
@@ -656,18 +656,16 @@ const handleQuestionFlow = () => {
     const next = prev + 1;
 
     console.log("NEXT:", next);
-    // ✅ منع إعادة الأسئلة بعد الأداء
-if (paymentDoneRef.current && prev < 5) {
+  
 
-  console.log("🛑 PAYMENT ALREADY DONE");
 
-  return prev;
 
-}
+  
+// ✅ وصلنا لمرحلة الأداء
+if (next === 5 && !paymentDoneRef.current) {
 
-    // ✅ وصلنا لمرحلة الأداء
-if (next >= 5 && !paymentDoneRef.current) {
-questionFlowLockedRef.current = true;
+  questionFlowLockedRef.current = true;
+
   const PAYMENT_TEXT = `
 مزيان، من خلال الأجوبة ديالك بان ليا بللي الملف ديالك غادي يكون مقبول إن شاء الله ✅
 
@@ -684,43 +682,40 @@ questionFlowLockedRef.current = true;
 
   console.log("SHOWING STRIPE BUTTON");
 
-setPaymentRequired(true);
+  setPaymentRequired(true);
 
-assistantBusyRef.current = true;
+  assistantBusyRef.current = true;
 
-pendingAutomationPromptRef.current = null;
+  pendingAutomationPromptRef.current = null;
 
-setTimeout(() => {
+  setTimeout(() => {
 
-  speakExactText(PAYMENT_TEXT);
+    speakExactText(PAYMENT_TEXT);
 
-}, 300);
+  }, 300);
 
-// ✅ popup يخرج غير من بعد ما يكمل محمد الهضرة
+  setTimeout(() => {
 
-setTimeout(() => {
+    setShowStripe(true);
 
-  setShowStripe(true);
+    setIsListening(false);
 
-  setIsListening(false);
+    stopListening();
 
-  stopListening();
-
-}, 17000);
+  }, 17000);
 
   setTimeout(() => {
 
     stopListening();
 
-}, 25000);
+  }, 25000);
 
   setQuestionsDone(true);
 
-  localStorage.setItem("questionIndex", "4");
-
-  return prev;
+  return next;
 
 }
+
 
     return next;
 
