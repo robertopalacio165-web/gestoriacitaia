@@ -657,7 +657,13 @@ const handleQuestionFlow = () => {
     const next = prev + 1;
 
     console.log("NEXT:", next);
-  
+  if (next >= 15) {
+
+  setDocumentsUnlocked(true);
+
+  setConfirmUnlocked(true);
+
+}
 
 
 
@@ -671,10 +677,6 @@ if (next === 6 && !paymentDoneRef.current) {
 مزيان، من خلال الأجوبة ديالك بان ليا بللي الملف ديالك غادي يكون مقبول إن شاء الله ✅
 
 باش نعطيك تحليل دقيق ونوجد ليك الملف كامل:
-
-✔️ تحليل كامل
-✔️ 100 fi 100 التحقق من الوثائق
-✔️ الوثيقة المعجزة لي غادي تعونك بزاف
 
 غير ب 12 أورو
 
@@ -1724,14 +1726,30 @@ try {
       const type = (doc.detectedType || "").toLowerCase();
 
       // 📄 شرح الوثائق
-      if (status === "ok") {
-        explanation += `${name} مقبولة و واضحة. `;
-      } else if (status === "warn") {
-        explanation += `${name} خاصها مراجعة. `;
-      } else {
-        explanation += `${name} ناقصة أو غير واضحة. `;
-      }
+   const speech = buildDocSpeech(name, {
+  full_name: (doc as any).full_name,
+  document_number: (doc as any).document_number,
+  birth_date: (doc as any).birth_date,
+  expiry_date: (doc as any).expiry_date,
+  image_quality: {
+    blurred: false,
+  },
+  fraud_risk: "low",
+  final_verdict:
+    status === "ok"
+      ? "approved"
+      : status === "warn"
+      ? "review"
+      : "rejected",
+  verification_score:
+    status === "ok"
+      ? 95
+      : status === "warn"
+      ? 60
+      : 20,
+});
 
+explanation += speech + " ";
       if (type.includes("passport") || type.includes("nie")) {
         hasPassport = true;
       }
