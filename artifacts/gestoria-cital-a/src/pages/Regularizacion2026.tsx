@@ -670,24 +670,12 @@ const cleanedTranscript = lastUserTranscriptRef.current
   ?.trim()
   .toLowerCase() || "";
 
-
-const isNameAnswer =
-  questionIndex === 1 &&
-  !nameCapturedRef.current &&
-  cleanedTranscript.length > 2 &&
-  !cleanedTranscript.includes("آه") &&
-  !cleanedTranscript.includes("نعم") &&
-  !cleanedTranscript.includes("لا");
-
-if (isNameAnswer) {
-  nameCapturedRef.current = true;
-
+if (next === 1) {
   setTimeout(() => {
-    speakExactText(questions[questionIndex]);
-  }, 300);
-
-  return prev;
+    speakExactText("شنو سميتك؟");
+  }, 500);
 }
+
     console.log("NEXT:", next);
 // ✅ فتح الأزرار ابتداء من السؤال 13
 if (next >= 13) {
