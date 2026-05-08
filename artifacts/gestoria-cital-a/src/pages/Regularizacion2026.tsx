@@ -1041,7 +1041,17 @@ const questions = [
   "عطيني رقم الواتساب ديالك.",
   "واش عندك شي سؤال؟"
 ];
+const askCurrentQuestion = async (index: number) => {
 
+  const q = questions[index];
+
+  if (!q) return;
+
+  console.log("🎯 ASKING QUESTION:", index, q);
+
+  await speakExactText(q);
+
+};
  const maybeSendIntroToMohamed = async () => {
   if (!realtimeDcRef.current) return;
 
@@ -1325,11 +1335,25 @@ if (
 
     console.log("✅ USER SAID:", transcript);
 
-    if (!questionFlowLockedRef.current) {
+pushUserMessage(transcript);
 
-      handleQuestionFlow();
+console.log("✅ USER SAID:", transcript);
 
-    }
+if (!questionFlowLockedRef.current) {
+
+  setQuestionIndex((prev) => {
+
+    const next = prev + 1;
+
+    console.log("➡️ NEXT QUESTION:", next);
+
+    askCurrentQuestion(next);
+
+    return next;
+
+  });
+
+}
 
   }
 
