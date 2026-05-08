@@ -189,6 +189,7 @@ window.location.href = data.url;
 const [clientQuestionsDone, setClientQuestionsDone] = useState(false);
   const [questionIndex, setQuestionIndex] = useState(0);
   const questionFlowLockedRef = useRef(false);
+  const nameCapturedRef = useRef(false);
   const paymentDoneRef = useRef(false);
 const [clientQuestionIndex, setClientQuestionIndex] = useState(0);
   const [showStripe, setShowStripe] = useState(false);
@@ -664,12 +665,14 @@ const cleanedTranscript = lastUserTranscriptRef.current
 
 const isNameAnswer =
   prev === 1 &&
+  !nameCapturedRef.current &&
   cleanedTranscript.length > 1 &&
   !cleanedTranscript.includes("آه") &&
   !cleanedTranscript.includes("لا");
 
 if (isNameAnswer) {
-  next = prev;
+  nameCapturedRef.current = true;
+  return prev;
 }
 
     console.log("NEXT:", next);
