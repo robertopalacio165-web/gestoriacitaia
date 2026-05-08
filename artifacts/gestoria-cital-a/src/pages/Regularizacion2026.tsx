@@ -127,7 +127,7 @@ paymentDoneRef.current = true;
     }, 1000);
 
     setTimeout(() => {
-setQuestionIndex(7);
+setQuestionIndex(6);
 
 speakExactText(
   "مزيان، توصلنا بالأداء ديالك. دابا نكملو. السؤال السادس: واش عمرك مشيتي للصبيطار؟ واش عندك شي ورقة فيها سميتك والتاريخ؟"
@@ -715,8 +715,7 @@ if (isNameAnswer) {
         setIsListening(false);
 
         stopListening();
-
-      }, 17000);
+}, 23000);
 
       setQuestionsDone(true);
 
