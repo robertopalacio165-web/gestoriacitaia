@@ -1343,7 +1343,7 @@ if (!questionFlowLockedRef.current && !assistantBusyRef.current) {
 
   }
 
-}
+
 
 if (
   msg.type === "response.output_text.delta" &&
