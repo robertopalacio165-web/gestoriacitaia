@@ -658,7 +658,9 @@ const handleQuestionFlow = () => {
 
 let next = prev + 1;
 
-const cleanedTranscript = transcript.trim().toLowerCase();
+const cleanedTranscript = lastUserTranscriptRef.current
+  ?.trim()
+  .toLowerCase() || "";
 
 const isNameAnswer =
   prev === 1 &&
