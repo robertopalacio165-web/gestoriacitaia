@@ -663,7 +663,7 @@ const handleQuestionFlow = () => {
 
   
 // ✅ وصلنا لمرحلة الأداء
-if (next === 7 && !paymentDoneRef.current) {
+if (next === 6 && !paymentDoneRef.current) {
 
   questionFlowLockedRef.current = true;
 
@@ -671,10 +671,6 @@ if (next === 7 && !paymentDoneRef.current) {
 مزيان، من خلال الأجوبة ديالك بان ليا بللي الملف ديالك غادي يكون مقبول إن شاء الله ✅
 
 باش نعطيك تحليل دقيق ونوجد ليك الملف كامل:
-
-✔️ تحليل كامل
-✔️ 100 fi 100 التحقق من الوثائق
-✔️ الوثيقة المعجزة لي غادي تعونك بزاف
 
 غير ب 12 أورو
 
