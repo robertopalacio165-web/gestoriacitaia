@@ -1321,7 +1321,7 @@ const isNameAnswer =
   questionIndex === 1 &&
   lowerTranscript.length > 1;
 
-if (!questionFlowLockedRef.current && !assistantBusyRef.current) {
+if (!questionFlowLockedRef.current) {
 
   // أول جواب: محمد يسول على الاسم
   if (isGreeting) {
