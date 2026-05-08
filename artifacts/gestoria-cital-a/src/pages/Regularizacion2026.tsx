@@ -664,30 +664,22 @@ const handleQuestionFlow = () => {
 
   setQuestionIndex((prev) => {
 
-let next = prev + 1;
-
-const cleanedTranscript = lastUserTranscriptRef.current
-  ?.trim()
-  .toLowerCase() || "";
-
-if (next === 1) {
-  setTimeout(() => {
-    speakExactText("شنو سميتك؟");
-  }, 500);
-}
+    const next = prev + 1;
 
     console.log("NEXT:", next);
-// ✅ فتح الأزرار ابتداء من السؤال 13
-if (next >= 13) {
 
-  setDocumentsUnlocked(true);
+    // فتح الأزرار
+    if (next >= 13) {
 
-  setConfirmUnlocked(true);
+      setDocumentsUnlocked(true);
 
-  console.log("✅ BUTTONS UNLOCKED");
+      setConfirmUnlocked(true);
 
-}
-    // السؤال الرابع -> يخرج Stripe
+      console.log("✅ BUTTONS UNLOCKED");
+
+    }
+
+    // Stripe
     if (next === 5 && !paymentDoneRef.current) {
 
       questionFlowLockedRef.current = true;
@@ -698,8 +690,8 @@ if (next >= 13) {
 باش نعطيك تحليل دقيق ونوجد ليك الملف كامل:
 
 ✔️ تحليل كامل
-✔️ 100 fi 100 التحقق من الوثائق
-✔️ الوثيقة المهمة اللي غادي تعزز الملف ديالك بزاف
+✔️ التحقق من الوثائق
+✔️ الوثيقة المهمة
 
 غير ب 12 أورو
 
@@ -712,8 +704,6 @@ if (next >= 13) {
 
       assistantBusyRef.current = true;
 
-      pendingAutomationPromptRef.current = null;
-
       setTimeout(() => {
         speakExactText(PAYMENT_TEXT);
       }, 300);
@@ -725,15 +715,26 @@ if (next >= 13) {
         setIsListening(false);
 
         stopListening();
-}, 23000);
 
-      setQuestionsDone(true);
+      }, 23000);
 
       return next;
     }
 
+    // باقي الأسئلة
+    if (questions[next]) {
+
+      setTimeout(() => {
+
+        speakExactText(questions[next]);
+
+      }, 400);
+
+    }
+
     return next;
   });
+
 };
 
   const updateLeadForm = (field: keyof LeadFormState, value: string) => {
@@ -1333,16 +1334,20 @@ if (!questionFlowLockedRef.current && !assistantBusyRef.current) {
   }
 
   // جواب الاسم
-  if (isNameAnswer) {
+if (isNameAnswer) {
 
-    setQuestionIndex(1);
+  console.log("NEXT: 1");
 
-    setTimeout(() => {
-      speakExactText(questions[0]);
-    }, 400);
+  setQuestionIndex(2);
 
-    return;
-  }
+  setTimeout(() => {
+
+    speakExactText(questions[1]);
+
+  }, 400);
+
+  return;
+}
 
   // باقي الأسئلة
   handleQuestionFlow();
