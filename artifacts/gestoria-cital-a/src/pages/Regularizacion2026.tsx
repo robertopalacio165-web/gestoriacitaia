@@ -1296,9 +1296,17 @@ if (
   userTranscript.trim().length > 1
 ) {
 
-  const transcript = userTranscript.trim();
-const lowerTranscript = transcript.toLowerCase();
+ const transcript = userTranscript.trim();
 
+lastUserTranscriptRef.current = transcript;
+
+setLastUserTranscript(transcript);
+
+pushUserMessage(transcript);
+
+console.log("✅ USER SAID:", transcript);
+
+const lowerTranscript = transcript.toLowerCase();
 const isGreeting =
   questionIndex === 0 &&
   (
@@ -1317,13 +1325,13 @@ if (!questionFlowLockedRef.current && !assistantBusyRef.current) {
   // أول جواب: غير نحركو للسؤال ديال الاسم
   if (isGreeting) {
 
-    setQuestionIndex(1);
+setQuestionIndex(2);
 
-    setTimeout(() => {
-      speakExactText("شنو سميتك؟");
-    }, 400);
+setTimeout(() => {
+  speakExactText(questions[1]);
+}, 400);
 
-    return;
+return;
   }
 
   // جواب الاسم ما يتحسبش سؤال
