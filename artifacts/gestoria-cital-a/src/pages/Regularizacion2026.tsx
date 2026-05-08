@@ -127,10 +127,11 @@ paymentDoneRef.current = true;
     }, 1000);
 
     setTimeout(() => {
-setQuestionIndex(6);
-      speakExactText(
-        "مزيان، توصلنا بالأداء ديالك. دابا نكملو. السؤال الخامس: واش عندك tarjeta sanitaria؟"
-      );
+setQuestionIndex(7);
+
+speakExactText(
+  "مزيان، توصلنا بالأداء ديالك. دابا نكملو. السؤال السادس: واش عمرك مشيتي للصبيطار؟ واش عندك شي ورقة فيها سميتك والتاريخ؟"
+);
 
     }, 4000);
 
@@ -662,7 +663,7 @@ const handleQuestionFlow = () => {
 
   
 // ✅ وصلنا لمرحلة الأداء
-if (next === 5 && !paymentDoneRef.current) {
+if (next === 6 && !paymentDoneRef.current)
 
   questionFlowLockedRef.current = true;
 
