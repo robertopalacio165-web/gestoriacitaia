@@ -1299,26 +1299,44 @@ if (
   const transcript = userTranscript.trim();
 const lowerTranscript = transcript.toLowerCase();
 
+const isGreeting =
+  questionIndex === 0 &&
+  (
+    lowerTranscript.includes("آه") ||
+    lowerTranscript.includes("اه") ||
+    lowerTranscript.includes("yes") ||
+    lowerTranscript.includes("oui")
+  );
+
 const isNameAnswer =
   questionIndex === 1 &&
-  lowerTranscript.length > 1 &&
-  !lowerTranscript.includes("آه") &&
-  !lowerTranscript.includes("لا");
-  if (transcript !== lastUserTranscriptRef.current) {
+  lowerTranscript.length > 1;
 
-    lastUserTranscriptRef.current = transcript;
+if (!questionFlowLockedRef.current && !assistantBusyRef.current) {
 
-    setLastUserTranscript(transcript);
+  // أول جواب: غير نحركو للسؤال ديال الاسم
+  if (isGreeting) {
 
-    pushUserMessage(transcript);
+    setQuestionIndex(1);
 
-    console.log("✅ USER SAID:", transcript);
-if (
-  !questionFlowLockedRef.current &&
-  !isNameAnswer &&
-  !assistantBusyRef.current
-) {
+    setTimeout(() => {
+      speakExactText("شنو سميتك؟");
+    }, 400);
 
+    return;
+  }
+
+  // جواب الاسم ما يتحسبش سؤال
+  if (isNameAnswer) {
+
+    setTimeout(() => {
+      speakExactText(questions[0]);
+    }, 400);
+
+    return;
+  }
+
+  // من هنا تبدا الأسئلة الحقيقية
   handleQuestionFlow();
 
 }
