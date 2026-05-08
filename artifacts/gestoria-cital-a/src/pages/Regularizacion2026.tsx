@@ -1344,7 +1344,7 @@ if (
 
   assistantTextBufferRef.current += msg.delta;
 
-} // ✅ تسدات if الأولى هنا
+}  
 
 if (
   msg.type === "response.output_text.done" &&
