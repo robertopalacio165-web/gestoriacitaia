@@ -678,7 +678,7 @@ questionFlowLockedRef.current = true;
 
   setPaymentRequired(true);
 setIsListening(false);
-
+stopListening();
 assistantBusyRef.current = true;
 
 pendingAutomationPromptRef.current = null;
@@ -1258,36 +1258,36 @@ dc.onmessage = (event) => {
       msg?.item?.content?.[0]?.transcript ||
       "";
 
-    if (
-      (msg.type === "conversation.item.input_audio_transcription.completed" ||
-        msg.type === "input_audio_buffer.transcription.completed") &&
-      typeof userTranscript === "string" &&
-      userTranscript.trim()
-    ) {
+if (
+  (
+    msg.type === "conversation.item.input_audio_transcription.completed" ||
+    msg.type === "input_audio_buffer.transcription.completed"
+  ) &&
+  typeof userTranscript === "string" &&
+  userTranscript.trim()
+) {
 
-      const transcript = userTranscript.trim();
+  const transcript = userTranscript.trim();
 
-      if (transcript !== lastUserTranscriptRef.current) {
+  if (transcript !== lastUserTranscriptRef.current) {
 
-        lastUserTranscriptRef.current = transcript;
-        setLastUserTranscript(transcript);
-      
-        pushUserMessage(transcript);
+    lastUserTranscriptRef.current = transcript;
 
-        const answer = transcript.toLowerCase();
+    setLastUserTranscript(transcript);
 
-        if (answer.includes("نعم") || answer.includes("yes")) {
-          speakExactText("مزيان، هادي نقطة قوية فصالحك 👍");
-        } else if (answer.includes("لا") || answer.includes("no")) {
-          speakExactText("ماشي مشكل، كاين حلول أخرى 👍");
-        }
-console.log("QUESTION FLOW RUNNING");
-        setTimeout(() => {
-          handleQuestionFlow();
-        }, 2000);
+    pushUserMessage(transcript);
 
-      }
+    console.log("✅ USER SAID:", transcript);
+
+    if (!questionFlowLockedRef.current) {
+
+      handleQuestionFlow();
+
     }
+
+  }
+
+}
 
 if (
   msg.type === "response.output_text.delta" &&
@@ -1352,6 +1352,7 @@ if (msg.type === "response.done") {
         isConnectingRef.current = false;
         assistantBusyRef.current = false;
         setIsListening(false);
+        stopListening();
         assistantTextBufferRef.current = "";
 lastAssistantTextRef.current = "";
 lastUserTranscriptRef.current = "";
@@ -1385,24 +1386,25 @@ lastUserTranscriptRef.current = "";
     }
   };
 
-  const speakExactText = async (text: string) => {
-    if (!text.trim()) return;
-    
-    console.log("🔊 speakExactText llamado:", text);
-    pushAgentMessage(text);
-    
-    pendingAutomationPromptRef.current = text;
-    setPendingAutomationPrompt(text);
-    
-    // ✅ Espera 300ms y DISPARA flush SIEMPRE
-    setTimeout(() => {
-      console.log("⚡ Forzando flushPendingAutomation...");
-      void flushPendingAutomation();
-    }, 300);
-  };
+const speakExactText = async (text: string) => {
+  if (!text.trim()) return;
 
- const speakFromAutomation = async () => {
-  return;
+  console.log("🔊 REALTIME ONLY:", text);
+
+  pendingAutomationPromptRef.current = text;
+
+  setPendingAutomationPrompt(text);
+
+  setTimeout(() => {
+    void flushPendingAutomation();
+  }, 300);
+};
+const speakFromAutomation = async (text: string) => {
+
+  if (!text?.trim()) return;
+
+  await speakExactText(text);
+
 };
 
 
@@ -1929,51 +1931,46 @@ const fullSpeech = `
                     {ui.listening}
                   </p>
                 )}
-                <motion.div
-  initial={{ opacity: 0, y: 15 }}
-  animate={{
-    opacity: showStripe ? 1 : 0,
-    y: showStripe ? 0 : 15,
-    height: showStripe ? "auto" : 0,
-  }}
-  transition={{ duration: 0.4 }}
-  className="overflow-hidden"
->
+       {showStripe && (
 
-  <button
-    onClick={handleStripePayment}
-    type="button"
-    className="
-      mt-3
-      w-full
-      flex
-      items-center
-      justify-center
-      gap-3
-      rounded-2xl
-      px-5
-      py-4
-      text-white
-      font-bold
-      text-lg
-      shadow-2xl
-      transition-all
-      duration-300
-      bg-gradient-to-r
-      from-emerald-500
-      via-green-500
-      to-emerald-600
-      hover:scale-[1.02]
-      hover:from-emerald-600
-      hover:to-green-700
-      border
-      border-white/10
-    "
-  >
-    💳 أداء وتحليل الملف — 12€
-  </button>
+  <div className="fixed inset-0 z-[99999] bg-black/90 backdrop-blur-md flex items-center justify-center px-6">
 
-</motion.div>
+    <div className="w-full max-w-md rounded-3xl bg-zinc-950 border border-white/10 p-6 text-center shadow-2xl">
+
+      <h2 className="text-2xl font-bold text-white mb-4">
+        ✅ الملف ديالك مؤهل
+      </h2>
+
+      <p className="text-white/70 text-sm leading-relaxed mb-6">
+        باش نكملو التحليل الكامل ونوجدولك الوثائق المهمة،
+        خاصك تكمل الأداء دابا.
+      </p>
+
+      <button
+        onClick={handleStripePayment}
+        type="button"
+        className="
+          w-full
+          rounded-2xl
+          py-4
+          text-lg
+          font-bold
+          text-white
+          bg-gradient-to-r
+          from-emerald-500
+          to-green-600
+          hover:scale-[1.02]
+          transition-all
+        "
+      >
+        💳 الأداء الآن — 12€
+      </button>
+
+    </div>
+
+  </div>
+
+)}
               </div>
               <div className="p-4 space-y-4">
                 <div>
