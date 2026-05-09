@@ -732,6 +732,23 @@ if (next >= 12) {
 
   setConfirmUnlocked(true);
 
+  // 🔥 وقف الميكروفون
+  stopListening();
+
+  setIsListening(false);
+
+  // 🔥 محمد يطلب الوثائق
+  setTimeout(() => {
+
+    speakExactText(`
+دابا خاصك ترفع جميع الوثائق اللي عندك.
+
+من بعد ما تسالي رفع الوثائق كاملة،
+ورك على زر التحقق من الوثائق باش نراجعهم ليك كاملين.
+    `);
+
+  }, 1000);
+
 }
     return next;
   });
@@ -1741,7 +1758,10 @@ const handleGeneralUpload = () => {
   const input = document.createElement("input");
   input.type = "file";
   input.accept = "image/*,application/pdf";
-  input.multiple = true;
+input.multiple = true;
+
+input.setAttribute("capture", "environment");
+  
 
   input.onchange = async () => {
     const files = Array.from(input.files || []);
@@ -1995,7 +2015,12 @@ if (
   console.log("✅ VERIFY SPEECH START");
 
   await speakFromAutomation(fullSpeech);
+// 🔥 رجع الميكروفون يخدم
+setTimeout(() => {
 
+  startListening();
+
+}, 4000);
 } else {
 
   console.error("❌ REALTIME STILL CLOSED");
@@ -2094,7 +2119,7 @@ if (
                 <button
             onClick={() => {
 
-  if (paymentRequired) return;
+if (paymentRequired || documentsUnlocked) return;
 
   isListening ? stopListening() : startListening();
 
