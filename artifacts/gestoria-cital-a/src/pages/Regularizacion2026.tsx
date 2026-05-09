@@ -37,6 +37,14 @@ type StoredDocItem = {
   expectedType?: string;
   detectedType?: string;
   note?: string;
+  full_name?: string;
+document_number?: string;
+birth_date?: string;
+expiry_date?: string;
+verification_score?: number;
+fraud_risk?: string;
+final_verdict?: string;
+document_date?: string;
   uploadedAt?: string;
   storagePath?: string;
 };
@@ -1735,12 +1743,72 @@ try {
       .from("user-documents")
       .upload(storagePath, file, { upsert: true });
 
-    const result = await verifyDocument({ file });
+  const result = await verifyDocument({ file });
 
-    results.push({
-      fileName: file.name,
-      result,
-    });
+// ✅ نلقاو الوثيقة المناسبة
+const matchedDoc = getBestDocMatch(
+  result,
+  docs,
+  file.name
+);
+
+if (matchedDoc) {
+
+  setDocs((prev) =>
+    prev.map((doc) => {
+
+      if (doc.id !== matchedDoc.id) return doc;
+
+      return {
+        ...doc,
+
+        archivo: file.name,
+
+        estado:
+          result.final_verdict === "approved"
+            ? "ok"
+            : result.final_verdict === "review"
+            ? "warn"
+            : "missing",
+
+        detectedType:
+          result.document_type || "",
+
+        // ✅ المعلومات الحقيقية
+        full_name:
+          result.full_name || "",
+
+        document_number:
+          result.document_number || "",
+
+        birth_date:
+          result.birth_date || "",
+
+        expiry_date:
+          result.expiry_date || "",
+
+        verification_score:
+          result.verification_score || 0,
+
+        fraud_risk:
+          result.fraud_risk || "low",
+
+        final_verdict:
+          result.final_verdict || "review",
+
+        document_date:
+          result.document_date || "",
+      };
+
+    })
+  );
+
+}
+
+results.push({
+  fileName: file.name,
+  result,
+});
   }
 
   alert("✅ Documentos analizados correctamente");
@@ -1874,7 +1942,37 @@ const fullSpeech = `
 `;
 
     // 🔊 هنا محمد غادي يهضر بصوت حقيقي
-    await speakFromAutomation(fullSpeech);
+    // ✅ نتأكدو realtime مفتوح
+if (
+  !realtimeDcRef.current ||
+  realtimeDcRef.current.readyState !== "open"
+) {
+
+  console.log("⚠️ REALTIME CLOSED - RECONNECTING");
+
+  await startListening();
+
+  // نستناو يفتح
+  await new Promise((resolve) =>
+    setTimeout(resolve, 3500)
+  );
+}
+
+// ✅ نتأكدو مرة أخرى
+if (
+  realtimeDcRef.current &&
+  realtimeDcRef.current.readyState === "open"
+) {
+
+  console.log("✅ VERIFY SPEECH START");
+
+  await speakFromAutomation(fullSpeech);
+
+} else {
+
+  console.error("❌ REALTIME STILL CLOSED");
+
+}
 
   } catch (err) {
     console.error(err);
