@@ -1347,95 +1347,12 @@ const normalized = transcript.toLowerCase().trim();
 const shouldCountQuestion =
   !ignoredTexts.some(t => normalized.includes(t));
 
-function isAnswerValidForQuestion(
-  transcript: string,
-  index: number
-) {
-
-  const answer = transcript.toLowerCase().trim();
-
-  // ❌ كلمات ما خاصهاش تدير NEXT
-  const ignoredTexts = [
-    "شنو سميتك",
-    "سميتي",
-    "شنو سميتك؟",
-    "إييه",
-    "eh",
-    "okay",
-    "ok",
-    "هههه",
-    "ههه"
-  ];
-
-  if (
-    ignoredTexts.some(t => answer.includes(t))
-  ) {
-    return false;
-  }
-
-  // ✅ خاص يكون جواب حقيقي
-  const validAnswers = [
-    "نعم",
-    "لا",
-    "اه",
-    "آه",
-    "yes",
-    "no",
-    "عندي",
-    "ما عنديش",
-    "passport",
-    "pasaporte",
-    "nie",
-    "tie",
-    "فوتوكوبي",
-    "photocopie",
-    "بطاقة",
-    "الكارت",
-    "الفيزا",
-    "اللجوء"
-  ];
-
-  const hasValidWord = validAnswers.some(word =>
-    answer.includes(word)
-  );
-
-  // ✅ سؤال الاسم
-  if (index === 1) {
-
-    return (
-      answer.length > 1 &&
-      !hasValidWord
-    );
-
-  }
-
-  // ✅ باقي الأسئلة
-  return hasValidWord;
-
-}
-
 if (
   shouldCountQuestion &&
   !questionFlowLockedRef.current
 ) {
 
-  const valid =
-    isAnswerValidForQuestion(
-      transcript,
-      questionIndex
-    );
-
-  if (valid) {
-
-    console.log("✅ VALID ANSWER");
-
-    handleQuestionFlow();
-
-  } else {
-
-    console.log("⛔ ANSWER IGNORED");
-
-  }
+  handleQuestionFlow();
 
 }
 
