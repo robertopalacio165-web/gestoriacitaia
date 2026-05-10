@@ -8,9 +8,9 @@ import {
   Settings,
   Mic,
   MicOff,
-  RefreshCw,
-  Shield,f
-  Bell,
+RefreshCw,
+Shield,
+Bell, 
   CheckCircle2,
   ExternalLink,
   Volume2,
