@@ -79,6 +79,8 @@ type ClientFormData = {
 };
 
 function OfficialBrowserBox({
+  language,
+  avatarImage,
   avatarImage,
   title,
   url,
@@ -106,6 +108,8 @@ function OfficialBrowserBox({
   onFormSubmit,
   formReady,
 }: {
+}: {
+  language: string;
   avatarImage: string;
   title: string;
   url: string;
@@ -617,227 +621,297 @@ const [formData, setFormData] = useState<ClientFormData>({
 );
 
   const ui = useMemo(() => {
-    return {
-      const isDarija = language === "ma";
-const isEnglish = language === "en";
-      tramites: [
+  const isDarija = language === "ma";
+  const isEnglish = language === "en";
+
+  return {
+    tramites: [
+      {
+        value: "tie",
+        label: isDarija
+          ? "تجديد البطاقة"
+          : isEnglish
+          ? "TIE renewal"
+          : "Renovación TIE",
+      },
+
+      {
+        value: "regreso",
+        label: isDarija
+          ? "رخصة الرجوع"
+          : isEnglish
+          ? "Return authorization"
+          : "Autorización de Regreso",
+      },
+
+      {
+        value: "nie",
+        label: isDarija
+          ? "رقم NIE"
+          : isEnglish
+          ? "NIE Number"
+          : "Certificados y Asignación NIE",
+      },
+
+      {
+        value: "ue",
+        label: isDarija
+          ? "أوراق الاتحاد الأوروبي"
+          : isEnglish
+          ? "EU Certificates"
+          : "Certificados UE",
+      },
+
+      {
+        value: "estudiantes",
+        label: isDarija
+          ? "أوراق الطلبة"
+          : isEnglish
+          ? "Students"
+          : "Estudiantes",
+      },
+
+      {
+        value: "trabajo",
+        label: isDarija
+          ? "رخصة العمل"
+          : isEnglish
+          ? "Work permit"
+          : "Autorización de Trabajo",
+      },
+
+      {
+        value: "arraigo",
+        label: isDarija
+          ? "أوراق التسوية"
+          : isEnglish
+          ? "Regularization"
+          : "Arraigo Social / Laboral / Familiar",
+      },
+
+      {
+        value: "familiar",
+        label: isDarija
+          ? "التجمع العائلي"
+          : isEnglish
+          ? "Family reunification"
+          : "Reagrupación Familiar",
+      },
+
+      {
+        value: "regularizacion",
+        label: isDarija
+          ? "التسوية الجماعية"
+          : isEnglish
+          ? "Mass regularization"
+          : "Regularización extraordinaria 2026",
+      },
+    ] as TramiteItem[],
+
+    docsByTramite: {
+      tie: [
+        { nombre: "Pasaporte o NIE vigente", estado: "ok" as DocState },
+        { nombre: "Empadronamiento actual", estado: "ok" as DocState },
+      ],
+    } as Record<string, DocItem[]>,
+
+    formsByTramite: {
+      tie: [
         {
-          value: "tie",
-          label: "Renovación de Tarjeta de Identidad de Extranjero (TIE)",
+          nombre: "Formulario EX-17",
+          codigo: "EX-17",
+          url: "https://example.com",
         },
-        { value: "regreso", label: "Autorización de Regreso" },
-        { value: "nie", label: "Certificados y Asignación NIE" },
-        { value: "ue", label: "Certificados UE" },
-        { value: "estudiantes", label: "Estudiantes" },
-        { value: "trabajo", label: "Autorización de Trabajo" },
-        { value: "arraigo", label: "Arraigo Social / Laboral / Familiar" },
-        { value: "familiar", label: "Reagrupación Familiar" },
-        { value: "regularizacion", label: "Regularización extraordinaria 2026 (تسوية جماعية)" },
-      ] as TramiteItem[],
-      docsByTramite: {
-        tie: [
-          { nombre: "Pasaporte o NIE vigente", estado: "ok" as DocState },
-          { nombre: "Empadronamiento actual", estado: "ok" as DocState },
-          {
-            nombre: "Tarjeta TIE caducada o próxima a caducar",
-            estado: "ok" as DocState,
-          },
-          { nombre: "Fotografías recientes (2)", estado: "ok" as DocState },
-          { nombre: "Formulario EX-17", estado: "warn" as DocState },
-        ],
-        regreso: [
-          { nombre: "Pasaporte vigente", estado: "ok" as DocState },
-          { nombre: "TIE vigente", estado: "ok" as DocState },
-          { nombre: "Justificación del viaje", estado: "warn" as DocState },
-        ],
-        nie: [
-          { nombre: "Pasaporte vigente", estado: "ok" as DocState },
-          {
-            nombre: "Justificación solicitud NIE",
-            estado: "warn" as DocState,
-          },
-          { nombre: "Formulario EX-15", estado: "missing" as DocState },
-          { nombre: "Fotografías recientes (2)", estado: "ok" as DocState },
-        ],
-        ue: [
-          { nombre: "Pasaporte UE vigente", estado: "ok" as DocState },
-          { nombre: "Empadronamiento", estado: "ok" as DocState },
-          { nombre: "Formulario EU", estado: "warn" as DocState },
-        ],
-        estudiantes: [
-          { nombre: "Pasaporte vigente", estado: "ok" as DocState },
-          {
-            nombre: "Carta de admisión universitaria",
-            estado: "warn" as DocState,
-          },
-          { nombre: "Seguro médico", estado: "ok" as DocState },
-          {
-            nombre: "Justificante económico",
-            estado: "missing" as DocState,
-          },
-        ],
-        trabajo: [
-          { nombre: "Pasaporte vigente", estado: "ok" as DocState },
-          { nombre: "Contrato de trabajo", estado: "warn" as DocState },
-          {
-            nombre: "Alta en Seguridad Social",
-            estado: "missing" as DocState,
-          },
-          { nombre: "Formulario EX-07", estado: "missing" as DocState },
-        ],
-        arraigo: [
-          { nombre: "Pasaporte vigente", estado: "ok" as DocState },
-          { nombre: "Empadronamiento (3 años)", estado: "ok" as DocState },
-          {
-            nombre: "Certificado antecedentes penales",
-            estado: "warn" as DocState,
-          },
-          { nombre: "Formulario EX-10", estado: "missing" as DocState },
-        ],
-        familiar: [
-          { nombre: "Pasaporte vigente", estado: "ok" as DocState },
-          {
-            nombre: "Certificado familiar UE/español",
-            estado: "ok" as DocState,
-          },
-          {
-            nombre: "Libro de familia / acta matrimonial",
-            estado: "warn" as DocState,
-          },
-          { nombre: "Formulario EX-19", estado: "missing" as DocState },
-        ],
-      } as Record<string, DocItem[]>,
-      formsByTramite: {
-        tie: [
-          {
-            nombre: "Renovación de Tarjeta de Identidad (TIE)",
-            codigo: "EX-17",
-            url: "https://extranjeros.inclusion.gob.es/ficheros/Modelos_solicitudes/mod_solicitudes2/17-Formulario_TIE.pdf",
-          },
-        ],
-        regreso: [
-          {
-            nombre: "Autorización de Regreso",
-            codigo: "EX-13",
-            url: "https://extranjeros.inclusion.gob.es/ficheros/Modelos_solicitudes/mod_solicitudes2/13-Autorizacion_de_regreso.pdf",
-          },
-        ],
-        nie: [
-          {
-            nombre: "Asignación número de identidad extranjero",
-            codigo: "EX-15",
-            url: "https://extranjeros.inclusion.gob.es/ficheros/Modelos_solicitudes/mod_solicitudes2/15-Solicitud_NIE.pdf",
-          },
-        ],
-        ue: [
-          {
-            nombre: "Registro de ciudadano UE",
-            codigo: "EU",
-            url: "https://extranjeros.inclusion.gob.es/ficheros/Modelos_solicitudes/mod_solicitudes2/EU-Cert_registro_ciudadano_UE.pdf",
-          },
-        ],
-        estudiantes: [
-          {
-            nombre: "Estancia por estudios",
-            codigo: "EX-01",
-            url: "https://extranjeros.inclusion.gob.es/ficheros/Modelos_solicitudes/mod_solicitudes2/01-Formulario_estancia_estudios.pdf",
-          },
-        ],
-        trabajo: [
-          {
-            nombre: "Autorización de trabajo",
-            codigo: "EX-07",
-            url: "https://extranjeros.inclusion.gob.es/ficheros/Modelos_solicitudes/mod_solicitudes2/07-Autorizacion_residencia_trabajo.pdf",
-          },
-        ],
-        arraigo: [
-          {
-            nombre: "Arraigo Social / Laboral",
-            codigo: "EX-10",
-            url: "https://extranjeros.inclusion.gob.es/ficheros/Modelos_solicitudes/mod_solicitudes2/10-Arraigo_social_laboral.pdf",
-          },
-        ],
-        familiar: [
-          {
-            nombre: "Reagrupación Familiar",
-            codigo: "EX-02",
-            url: "https://extranjeros.inclusion.gob.es/ficheros/Modelos_solicitudes/mod_solicitudes2/02-Reagrupacion_familiar.pdf",
-          },
-        ],
-      } as Record<string, FormItem[]>,
-   online: isDarija
-  ? "أونلاين"
-  : isEnglish
-  ? "Online"
-  : "En línea",
-  agentRole: isDarija
-  ? "مساعدة المواعيد"
-  : isEnglish
-  ? "Appointments Assistant"
-  : "Asesora de Citas",
+      ],
+    } as Record<string, FormItem[]>,
+
+    online: isDarija
+      ? "أونلاين"
+      : isEnglish
+      ? "Online"
+      : "En línea",
+
+    agentRole: isDarija
+      ? "مساعدة المواعيد"
+      : isEnglish
+      ? "Appointments Assistant"
+      : "Asesora de Citas",
+
     procedurePlaceholder: isDarija
-  ? "اختار نوع السيتا"
-  : isEnglish
-  ? "Select appointment type"
-  : "Seleccione el trámite entre los relacionados",
-  loadingUserData: isDarija
-  ? "جاري تحميل المعلومات..."
-  : isEnglish
-  ? "Loading user data..."
-  : "Cargando datos del usuario...",
-      govSmall: "extranjería:",
-      govTitle: "CITA PREVIA",
-      govLine1: "COMISARÍA GENERAL",
-      govLine2: "DE EXTRANJERÍA",
-      govLine3: "E INMIGRACIÓN",
-   confirmTitle: isDarija
-  ? "تم تأكيد الموعد!"
-  : isEnglish
-  ? "APPOINTMENT CONFIRMED!"
-  : "¡CITA CONFIRMADA!",
-date: isDarija
-  ? "التاريخ"
-  : isEnglish
-  ? "Date"
-  : "Fecha",
+      ? "اختار نوع السيتا"
+      : isEnglish
+      ? "Select appointment type"
+      : "Seleccione el trámite entre los relacionados",
+
+    loadingUserData: isDarija
+      ? "جاري تحميل المعلومات..."
+      : isEnglish
+      ? "Loading user data..."
+      : "Cargando datos del usuario...",
+
+    govSmall: "extranjería:",
+    govTitle: "CITA PREVIA",
+    govLine1: "COMISARÍA GENERAL",
+    govLine2: "DE EXTRANJERÍA",
+    govLine3: "E INMIGRACIÓN",
+
+    confirmTitle: isDarija
+      ? "تم تأكيد الموعد!"
+      : isEnglish
+      ? "APPOINTMENT CONFIRMED!"
+      : "¡CITA CONFIRMADA!",
+
+    date: isDarija
+      ? "التاريخ"
+      : isEnglish
+      ? "Date"
+      : "Fecha",
+
     time: isDarija
-  ? "الوقت"
-  : isEnglish
-  ? "Time"
-  : "Hora",
-   office: isDarija
-  ? "المكتب"
-  : isEnglish
-  ? "Office"
-  : "Oficina",
-   appointmentNumber: isDarija
-  ? "رقم الموعد"
-  : isEnglish
-  ? "Appointment Number"
-  : "Nº Cita",
-      reservationSaved: "Reserva guardada correctamente",
-      sourceLabel: "Fuente oficial",
-      foundSuccessTitle: "¡Cita encontrada!",
-      foundSuccessDesc: "Ahora confirma para continuar.",
-      foundErrorTitle: "Error al buscar cita",
-      foundErrorDesc: "No se pudo buscar la cita en este momento.",
-      confirmSuccessTitle: "¡Cita confirmada!",
-      confirmSuccessDesc: "La reserva ha quedado registrada correctamente.",
-      procedureShort: "Trámite",
-      openOfficialSite: "Abrir sede oficial",
-      downloadPdf: "Descargar PDF",
-      voiceButton: "Hablar con Sara",
-      stopButton: "Parar micrófono",
-      latestReply: "Última respuesta de Sara",
-      yourVoice: "Tu última respuesta por voz",
-      listening: "Sara te está escuchando ahora...",
-      saveTitle: "Datos guardados",
-      saveDesc: "Sara ya puede continuar contigo.",
-      missingTitle: "Faltan datos",
-      missingDesc: "Rellena nombre, teléfono y ciudad antes de continuar.",
-      openRealtimeError: "Este navegador no soporta audio. Usa Chrome moderno.",
-    };
-  }, []);
+      ? "الوقت"
+      : isEnglish
+      ? "Time"
+      : "Hora",
+
+    office: isDarija
+      ? "المكتب"
+      : isEnglish
+      ? "Office"
+      : "Oficina",
+
+    appointmentNumber: isDarija
+      ? "رقم الموعد"
+      : isEnglish
+      ? "Appointment Number"
+      : "Nº Cita",
+
+    reservationSaved: isDarija
+      ? "تم حفظ الحجز"
+      : isEnglish
+      ? "Reservation saved"
+      : "Reserva guardada correctamente",
+
+    sourceLabel: isDarija
+      ? "المصدر الرسمي"
+      : isEnglish
+      ? "Official source"
+      : "Fuente oficial",
+
+    foundSuccessTitle: isDarija
+      ? "لقينا الموعد!"
+      : isEnglish
+      ? "Appointment found!"
+      : "¡Cita encontrada!",
+
+    foundSuccessDesc: isDarija
+      ? "أكد الموعد دابا"
+      : isEnglish
+      ? "Confirm now to continue."
+      : "Ahora confirma para continuar.",
+
+    foundErrorTitle: isDarija
+      ? "خطأ"
+      : isEnglish
+      ? "Error"
+      : "Error al buscar cita",
+
+    foundErrorDesc: isDarija
+      ? "ما قدرناش نلقاو الموعد"
+      : isEnglish
+      ? "Could not search appointment."
+      : "No se pudo buscar la cita en este momento.",
+
+    confirmSuccessTitle: isDarija
+      ? "تم تأكيد الموعد"
+      : isEnglish
+      ? "Appointment confirmed!"
+      : "¡Cita confirmada!",
+
+    confirmSuccessDesc: isDarija
+      ? "تم حفظ الحجز"
+      : isEnglish
+      ? "Reservation saved correctly."
+      : "La reserva ha quedado registrada correctamente.",
+
+    procedureShort: isDarija
+      ? "النوع"
+      : isEnglish
+      ? "Procedure"
+      : "Trámite",
+
+    openOfficialSite: isDarija
+      ? "فتح الموقع الرسمي"
+      : isEnglish
+      ? "Open official website"
+      : "Abrir sede oficial",
+
+    downloadPdf: isDarija
+      ? "تحميل PDF"
+      : isEnglish
+      ? "Download PDF"
+      : "Descargar PDF",
+
+    voiceButton: isDarija
+      ? "تكلم مع سارة"
+      : isEnglish
+      ? "Talk with Sara"
+      : "Hablar con Sara",
+
+    stopButton: isDarija
+      ? "وقف الميكرو"
+      : isEnglish
+      ? "Stop microphone"
+      : "Parar micrófono",
+
+    latestReply: isDarija
+      ? "آخر رد من سارة"
+      : isEnglish
+      ? "Latest Sara reply"
+      : "Última respuesta de Sara",
+
+    yourVoice: isDarija
+      ? "آخر كلام ديالك"
+      : isEnglish
+      ? "Your latest voice"
+      : "Tu última respuesta por voz",
+
+    listening: isDarija
+      ? "سارة كتسمع ليك..."
+      : isEnglish
+      ? "Sara is listening..."
+      : "Sara te está escuchando ahora...",
+
+    saveTitle: isDarija
+      ? "تم حفظ المعلومات"
+      : isEnglish
+      ? "Data saved"
+      : "Datos guardados",
+
+    saveDesc: isDarija
+      ? "سارة غادي تكمل معاك"
+      : isEnglish
+      ? "Sara can continue now."
+      : "Sara ya puede continuar contigo.",
+
+    missingTitle: isDarija
+      ? "معلومات ناقصة"
+      : isEnglish
+      ? "Missing data"
+      : "Faltan datos",
+
+    missingDesc: isDarija
+      ? "دخل الاسم والهاتف والمدينة"
+      : isEnglish
+      ? "Fill name, phone and city."
+      : "Rellena nombre, teléfono y ciudad antes de continuar.",
+
+    openRealtimeError: isDarija
+      ? "المتصفح ما كيدعمش الصوت"
+      : isEnglish
+      ? "Browser does not support audio."
+      : "Este navegador no soporta audio. Usa Chrome moderno.",
+  };
+}, [language]);
 
   const TRAMITES = ui.tramites;
 
@@ -1704,6 +1778,7 @@ province: formData.province,
           </motion.div>
 
           <OfficialBrowserBox
+            language={language}
             avatarImage={`${import.meta.env.BASE_URL}images/avatar-sara.png`}
             title={
               cameFromConfirmationLink
