@@ -108,7 +108,8 @@ function OfficialBrowserBox({
   onFormSubmit,
   formReady,
 }: {
-}: {
+
+
   language: string;
   avatarImage: string;
   title: string;
@@ -136,7 +137,7 @@ function OfficialBrowserBox({
   onFormChange: (field: keyof ClientFormData, value: string) => void;
   onFormSubmit: () => void;
   formReady: boolean;
-}) {
+}
   const formIntro =
     "Si necesitas una cita, rellena tus datos y elige el tipo de cita. Después Sara continuará contigo y te avisará por WhatsApp cuando exista una cita real.";
 
