@@ -198,6 +198,7 @@ const [clientQuestionsDone, setClientQuestionsDone] = useState(false);
   const [questionIndex, setQuestionIndex] = useState(0);
   const questionFlowLockedRef = useRef(false);
   const paymentDoneRef = useRef(false);
+  const lastProcessedTranscriptRef = useRef("");
 const [clientQuestionIndex, setClientQuestionIndex] = useState(0);
   const [showStripe, setShowStripe] = useState(false);
   const [paymentRequired, setPaymentRequired] = useState(false);
@@ -727,7 +728,7 @@ setQuestionsDone(false);
 
       return next;
     }
-if (next >= 12) {
+if (next === 12)
 
   setDocumentsUnlocked(true);
 
@@ -1344,7 +1345,15 @@ if (
 ) {
 
   const transcript = userTranscript.trim();
+const normalized = transcript.toLowerCase().trim();
 
+const validAnswer =
+  normalized.length > 1 &&
+  !normalized.includes("شنو سميتك") &&
+  !normalized.includes("سميتي") &&
+  !normalized.includes("eh") &&
+  !normalized.includes("okay") &&
+  !normalized.includes("ok");
   if (transcript !== lastUserTranscriptRef.current) {
 
     lastUserTranscriptRef.current = transcript;
@@ -1378,7 +1387,7 @@ if (isOnlyNameStep) {
 
   }, 500);
 
-  setQuestionIndex(2);
+
 
   return;
 }
@@ -1392,7 +1401,16 @@ const ignoredTexts = [
   "eh",
   "eh.",
   "okay",
-  "ok"
+  "ok",
+  "hm",
+  "hmm",
+  "mmm",
+  "آه",
+  "اه",
+  "هه",
+  "...",
+  ".",
+  ".."
 ];
 
 const normalized = transcript.toLowerCase().trim();
@@ -1400,7 +1418,6 @@ const normalized = transcript.toLowerCase().trim();
 // ✅ غير الأسئلة الحقيقية يتحسبو
 const shouldCountQuestion =
   !ignoredTexts.some(t => normalized.includes(t));
-
 if (
   shouldCountQuestion &&
   !questionFlowLockedRef.current
