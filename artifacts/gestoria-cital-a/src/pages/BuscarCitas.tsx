@@ -78,9 +78,35 @@ type ClientFormData = {
   preferredOffice: string;
 };
 
-
 function OfficialBrowserBox({
-
+  language,
+  avatarImage,
+  title,
+  url,
+  selectedTramiteLabel,
+  profileLoading,
+  ui,
+  confirmed,
+  appointmentData,
+  finalDate,
+  finalTime,
+  finalOffice,
+  finalLocator,
+  finalPdfUrl,
+  hasRealAppointment,
+  onRefresh,
+  onOpenOfficial,
+  onSelectTramite,
+  tramites,
+  selectedTramite,
+  onAceptar,
+  isPending,
+  cameFromConfirmationLink,
+  formData,
+  onFormChange,
+  onFormSubmit,
+  formReady,
+}: {
   language: string;
   avatarImage: string;
   title: string;
@@ -105,10 +131,14 @@ function OfficialBrowserBox({
   isPending: boolean;
   cameFromConfirmationLink: boolean;
   formData: ClientFormData;
-  onFormChange: (field: keyof ClientFormData, value: string) => void;
+  onFormChange: (
+    field: keyof ClientFormData,
+    value: string
+  ) => void;
   onFormSubmit: () => void;
   formReady: boolean;
 }) {
+
   const formIntro =
     "Si necesitas una cita, rellena tus datos y elige el tipo de cita. Después Sara continuará contigo y te avisará por WhatsApp cuando exista una cita real.";
 
