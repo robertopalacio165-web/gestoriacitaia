@@ -698,7 +698,8 @@ if (next === 1) {
 
 ورك على زر الأداء ونكملو مباشرة.
 `;
-
+pushAgentMessage(PAYMENT_TEXT);
+      
       console.log("SHOWING STRIPE BUTTON");
 
       setPaymentRequired(true);
@@ -721,14 +722,14 @@ if (next === 1) {
 
   stopListening();
 
-}, 14000);
+}, 2500);
 
 // ❌ ما نفتحوش الوثائق هنا
 setQuestionsDone(false);
 
       return next;
     }
-if (next === 12)
+if (next === 12) {
 
   setDocumentsUnlocked(true);
 
@@ -1345,7 +1346,7 @@ if (
 ) {
 
   const transcript = userTranscript.trim();
-const normalized = transcript.toLowerCase().trim();
+
 
 const validAnswer =
   normalized.length > 1 &&
