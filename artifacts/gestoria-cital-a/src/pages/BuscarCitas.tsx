@@ -64,9 +64,18 @@ type AppointmentResult = {
 type ClientFormData = {
   fullName: string;
   phone: string;
+  email: string;
+
   nie: string;
+  passport: string;
+
+  nationality: string;
+  birthYear: string;
+
   city: string;
   province: string;
+
+  preferredOffice: string;
 };
 
 function OfficialBrowserBox({
@@ -196,7 +205,118 @@ function OfficialBrowserBox({
 
             <div className="rounded-2xl border border-gray-200 bg-white p-4 sm:p-5">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+{/* FULL NAME */}
+<div>
+  <label className="block text-xs font-bold text-gray-700 mb-1">
+    Nombre completo
+  </label>
 
+  <input
+    className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm"
+    value={formData.fullName}
+    onChange={(e) => onFormChange("fullName", e.target.value)}
+    placeholder="Mohamed Amrani"
+  />
+</div>
+
+{/* PHONE */}
+<div>
+  <label className="block text-xs font-bold text-gray-700 mb-1">
+    Teléfono
+  </label>
+
+  <input
+    className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm"
+    value={formData.phone}
+    onChange={(e) => onFormChange("phone", e.target.value)}
+    placeholder="+34 600 000 000"
+  />
+</div>
+
+{/* EMAIL */}
+<div>
+  <label className="block text-xs font-bold text-gray-700 mb-1">
+    Email
+  </label>
+
+  <input
+    type="email"
+    className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm"
+    value={formData.email}
+    onChange={(e) => onFormChange("email", e.target.value)}
+    placeholder="cliente@gmail.com"
+  />
+</div>
+
+{/* NIE */}
+<div>
+  <label className="block text-xs font-bold text-gray-700 mb-1">
+    NIE
+  </label>
+
+  <input
+    className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm"
+    value={formData.nie}
+    onChange={(e) => onFormChange("nie", e.target.value)}
+    placeholder="Y1234567X"
+  />
+</div>
+
+{/* PASSPORT */}
+<div>
+  <label className="block text-xs font-bold text-gray-700 mb-1">
+    Pasaporte
+  </label>
+
+  <input
+    className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm"
+    value={formData.passport}
+    onChange={(e) => onFormChange("passport", e.target.value)}
+    placeholder="AA123456"
+  />
+</div>
+
+{/* NATIONALITY */}
+<div>
+  <label className="block text-xs font-bold text-gray-700 mb-1">
+    Nacionalidad
+  </label>
+
+  <input
+    className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm"
+    value={formData.nationality}
+    onChange={(e) => onFormChange("nationality", e.target.value)}
+    placeholder="Marruecos"
+  />
+</div>
+
+{/* BIRTH YEAR */}
+<div>
+  <label className="block text-xs font-bold text-gray-700 mb-1">
+    Año nacimiento
+  </label>
+
+  <input
+    className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm"
+    value={formData.birthYear}
+    onChange={(e) => onFormChange("birthYear", e.target.value)}
+    placeholder="1998"
+  />
+</div>
+
+{/* PREFERRED OFFICE */}
+<div>
+  <label className="block text-xs font-bold text-gray-700 mb-1">
+    Oficina preferida
+  </label>
+
+  <input
+    className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm"
+    value={formData.preferredOffice}
+    onChange={(e) => onFormChange("preferredOffice", e.target.value)}
+    placeholder="Aluche"
+  />
+</div>
   {/* CITY */}
   <div>
     <label className="block text-xs font-bold text-gray-700 mb-1">
@@ -398,9 +518,18 @@ export default function BuscarCitas() {
 const [formData, setFormData] = useState<ClientFormData>({
   fullName: "",
   phone: "",
+  email: "",
+
   nie: "",
+  passport: "",
+
+  nationality: "",
+  birthYear: "",
+
   city: "",
   province: "",
+
+  preferredOffice: "",
 });
   const [formReady, setFormReady] = useState(false);
   const [voiceSupported, setVoiceSupported] = useState(true);
