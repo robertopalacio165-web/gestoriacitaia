@@ -625,7 +625,7 @@ const [formData, setFormData] = useState<ClientFormData>({
   const isDarija = language === "ma";
   const isEnglish = language === "en";
 
-  return {
+return ({
     tramites: [
       {
         value: "tie",
@@ -911,7 +911,7 @@ const [formData, setFormData] = useState<ClientFormData>({
       : isEnglish
       ? "Browser does not support audio."
       : "Este navegador no soporta audio. Usa Chrome moderno.",
-  };
+  });
 }, [language]);
 
   const TRAMITES = ui.tramites;
