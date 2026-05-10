@@ -135,7 +135,7 @@ paymentDoneRef.current = true;
     }, 1000);
 
     setTimeout(() => {
-setQuestionIndex(7);
+setQuestionIndex(5);
 
 speakExactText(
   "مزيان، توصلنا بالأداء ديالك. دابا نكملو. السؤال السادس: واش عمرك مشيتي للصبيطار؟ واش عندك شي ورقة فيها سميتك والتاريخ؟"
@@ -246,6 +246,7 @@ const voiceTexts = useMemo(() => ({
   uploadWarn: "",
   uploadUnknown: "",
   mohamedFinal: "",
+  realtimeError: "وقع مشكل فالصوت المباشر",
 }), []);
 
   const ui = useMemo(() => {
@@ -2143,7 +2144,7 @@ if (paymentRequired || documentsUnlocked) return;
               <div className="p-4 border-b border-white/10">
                 <button
                   onClick={isListening ? stopListening : startListening}
-            disabled={!voiceSupported || paymentRequired}
+          disabled={!voiceSupported || (paymentRequired && !paymentDoneRef.current)}
                   className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary hover:bg-primary/90 disabled:opacity-50 text-primary-foreground font-bold text-sm px-4 py-3 transition-colors"
                   type="button"
                 >
