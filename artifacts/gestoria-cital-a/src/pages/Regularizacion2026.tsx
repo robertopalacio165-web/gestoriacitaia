@@ -1366,7 +1366,7 @@ const validAnswer =
     console.log("✅ USER SAID:", transcript);
 
 const lowerTranscript = transcript.toLowerCase().trim();
-
+const normalized = lowerTranscript;
 // ✅ الاسم ما يتحسبش فـ NEXT
 const isOnlyNameStep =
   questionIndex === 1 &&
