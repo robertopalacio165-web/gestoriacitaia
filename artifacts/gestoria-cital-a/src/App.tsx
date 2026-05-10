@@ -14,6 +14,7 @@ import CheckoutSuccess from "@/pages/CheckoutSuccess";
 import CheckoutCancel from "@/pages/CheckoutCancel";
 import AuthCallback from "@/pages/AuthCallback";
 import Confirmar from "@/pages/Confirmar";
+import KhalidExtranjeria from "@/pages/KhalidExtranjeria";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -32,6 +33,7 @@ function Router() {
       <Route path="/panel" component={Panel} />
       <Route path="/buscar-citas" component={BuscarCitas} />
       <Route path="/regularizacion-2026" component={Regularizacion2026} />
+      <Route path="/khalid-extranjeria" component={KhalidExtranjeria} />
       <Route path="/aviso-legal" component={AvisoLegal} />
       <Route path="/privacidad" component={Privacidad} />
       <Route path="/cookies" component={CookiesPage} />
