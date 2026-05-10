@@ -78,37 +78,8 @@ type ClientFormData = {
   preferredOffice: string;
 };
 
-function OfficialBrowserBox({
-  language,
-  avatarImage,
-  avatarImage,
-  title,
-  url,
-  selectedTramiteLabel,
-  profileLoading,
-  ui,
-  confirmed,
-  appointmentData,
-  finalDate,
-  finalTime,
-  finalOffice,
-  finalLocator,
-  finalPdfUrl,
-  hasRealAppointment,
-  onRefresh,
-  onOpenOfficial,
-  onSelectTramite,
-  tramites,
-  selectedTramite,
-  onAceptar,
-  isPending,
-  cameFromConfirmationLink,
-  formData,
-  onFormChange,
-  onFormSubmit,
-  formReady,
-}: {
 
+function OfficialBrowserBox({
 
   language: string;
   avatarImage: string;
@@ -625,7 +596,7 @@ const [formData, setFormData] = useState<ClientFormData>({
   const isDarija = language === "ma";
   const isEnglish = language === "en";
 
-return ({
+return {
     tramites: [
       {
         value: "tie",
@@ -911,7 +882,7 @@ return ({
       : isEnglish
       ? "Browser does not support audio."
       : "Este navegador no soporta audio. Usa Chrome moderno.",
-  });
+};
 }, [language]);
 
   const TRAMITES = ui.tramites;
