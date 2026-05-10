@@ -207,9 +207,13 @@ function OfficialBrowserBox({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
 {/* FULL NAME */}
 <div>
-  <label className="block text-xs font-bold text-gray-700 mb-1">
-    Nombre completo
-  </label>
+ <label className="block text-xs font-bold text-gray-700 mb-1">
+  {language === "ma"
+    ? "الاسم الكامل"
+    : language === "en"
+    ? "Full name"
+    : "Nombre completo"}
+</label>
 
   <input
     className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm"
@@ -221,9 +225,13 @@ function OfficialBrowserBox({
 
 {/* PHONE */}
 <div>
-  <label className="block text-xs font-bold text-gray-700 mb-1">
-    Teléfono
-  </label>
+ <label className="block text-xs font-bold text-gray-700 mb-1">
+  {language === "ma"
+    ? "رقم الهاتف"
+    : language === "en"
+    ? "Phone number"
+    : "Teléfono"}
+</label>
 
   <input
     className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm"
@@ -235,9 +243,13 @@ function OfficialBrowserBox({
 
 {/* EMAIL */}
 <div>
-  <label className="block text-xs font-bold text-gray-700 mb-1">
-    Email
-  </label>
+<label className="block text-xs font-bold text-gray-700 mb-1">
+  {language === "ma"
+    ? "البريد الإلكتروني"
+    : language === "en"
+    ? "Email"
+    : "Email"}
+</label>
 
   <input
     type="email"
@@ -264,9 +276,13 @@ function OfficialBrowserBox({
 
 {/* PASSPORT */}
 <div>
-  <label className="block text-xs font-bold text-gray-700 mb-1">
-    Pasaporte
-  </label>
+<label className="block text-xs font-bold text-gray-700 mb-1">
+  {language === "ma"
+    ? "الباسبور"
+    : language === "en"
+    ? "Passport"
+    : "Pasaporte"}
+</label>
 
   <input
     className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm"
@@ -278,9 +294,13 @@ function OfficialBrowserBox({
 
 {/* NATIONALITY */}
 <div>
-  <label className="block text-xs font-bold text-gray-700 mb-1">
-    Nacionalidad
-  </label>
+<label className="block text-xs font-bold text-gray-700 mb-1">
+  {language === "ma"
+    ? "الجنسية"
+    : language === "en"
+    ? "Nationality"
+    : "Nacionalidad"}
+</label>
 
   <input
     className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm"
@@ -292,9 +312,13 @@ function OfficialBrowserBox({
 
 {/* BIRTH YEAR */}
 <div>
-  <label className="block text-xs font-bold text-gray-700 mb-1">
-    Año nacimiento
-  </label>
+<label className="block text-xs font-bold text-gray-700 mb-1">
+  {language === "ma"
+    ? "سنة الازدياد"
+    : language === "en"
+    ? "Birth year"
+    : "Año nacimiento"}
+</label>
 
   <input
     className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm"
@@ -306,9 +330,13 @@ function OfficialBrowserBox({
 
 {/* PREFERRED OFFICE */}
 <div>
-  <label className="block text-xs font-bold text-gray-700 mb-1">
-    Oficina preferida
-  </label>
+ <label className="block text-xs font-bold text-gray-700 mb-1">
+  {language === "ma"
+    ? "المكتب المفضل"
+    : language === "en"
+    ? "Preferred office"
+    : "Oficina preferida"}
+</label>
 
   <input
     className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm"
@@ -320,8 +348,12 @@ function OfficialBrowserBox({
   {/* CITY */}
   <div>
     <label className="block text-xs font-bold text-gray-700 mb-1">
-      Ciudad
-    </label>
+  {language === "ma"
+    ? "المدينة"
+    : language === "en"
+    ? "City"
+    : "Ciudad"}
+</label>
     <input
       className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm"
       value={formData.city}
@@ -332,9 +364,13 @@ function OfficialBrowserBox({
 
   {/* PROVINCE */}
   <div>
-    <label className="block text-xs font-bold text-gray-700 mb-1">
-      Provincia
-    </label>
+  <label className="block text-xs font-bold text-gray-700 mb-1">
+  {language === "ma"
+    ? "المقاطعة"
+    : language === "en"
+    ? "Province"
+    : "Provincia"}
+</label>
     <input
       className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm"
       value={formData.province}
@@ -346,9 +382,13 @@ function OfficialBrowserBox({
 </div>
 
                 <div className="sm:col-span-2">
-                  <label className="block text-xs font-bold text-gray-700 mb-1">
-                    Tipo de cita
-                  </label>
+              <label className="block text-xs font-bold text-gray-700 mb-1">
+  {language === "ma"
+    ? "نوع السيتا"
+    : language === "en"
+    ? "Appointment type"
+    : "Tipo de cita"}
+</label>
                   <select
                     className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-primary/40"
                     value={selectedTramite}
@@ -504,6 +544,7 @@ function OfficialBrowserBox({
 }
 
 export default function BuscarCitas() {
+  const { language } = useLang();
   const [location] = useLocation();
   const [selectedTramite, setSelectedTramite] = useState("tie");
   const [step, setStep] = useState(0);
@@ -577,6 +618,8 @@ const [formData, setFormData] = useState<ClientFormData>({
 
   const ui = useMemo(() => {
     return {
+      const isDarija = language === "ma";
+const isEnglish = language === "en";
       tramites: [
         {
           value: "tie",
@@ -722,20 +765,56 @@ const [formData, setFormData] = useState<ClientFormData>({
           },
         ],
       } as Record<string, FormItem[]>,
-      online: "En línea",
-      agentRole: "Asesora de Citas",
-      procedurePlaceholder: "Seleccione el trámite entre los relacionados",
-      loadingUserData: "Cargando datos del usuario...",
+   online: isDarija
+  ? "أونلاين"
+  : isEnglish
+  ? "Online"
+  : "En línea",
+  agentRole: isDarija
+  ? "مساعدة المواعيد"
+  : isEnglish
+  ? "Appointments Assistant"
+  : "Asesora de Citas",
+    procedurePlaceholder: isDarija
+  ? "اختار نوع السيتا"
+  : isEnglish
+  ? "Select appointment type"
+  : "Seleccione el trámite entre los relacionados",
+  loadingUserData: isDarija
+  ? "جاري تحميل المعلومات..."
+  : isEnglish
+  ? "Loading user data..."
+  : "Cargando datos del usuario...",
       govSmall: "extranjería:",
       govTitle: "CITA PREVIA",
       govLine1: "COMISARÍA GENERAL",
       govLine2: "DE EXTRANJERÍA",
       govLine3: "E INMIGRACIÓN",
-      confirmTitle: "¡CITA CONFIRMADA!",
-      date: "Fecha",
-      time: "Hora",
-      office: "Oficina",
-      appointmentNumber: "Nº Cita",
+   confirmTitle: isDarija
+  ? "تم تأكيد الموعد!"
+  : isEnglish
+  ? "APPOINTMENT CONFIRMED!"
+  : "¡CITA CONFIRMADA!",
+date: isDarija
+  ? "التاريخ"
+  : isEnglish
+  ? "Date"
+  : "Fecha",
+    time: isDarija
+  ? "الوقت"
+  : isEnglish
+  ? "Time"
+  : "Hora",
+   office: isDarija
+  ? "المكتب"
+  : isEnglish
+  ? "Office"
+  : "Oficina",
+   appointmentNumber: isDarija
+  ? "رقم الموعد"
+  : isEnglish
+  ? "Appointment Number"
+  : "Nº Cita",
       reservationSaved: "Reserva guardada correctamente",
       sourceLabel: "Fuente oficial",
       foundSuccessTitle: "¡Cita encontrada!",
