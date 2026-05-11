@@ -712,17 +712,24 @@ pushAgentMessage(PAYMENT_TEXT);
         speakExactText(PAYMENT_TEXT);
       }, 300);
 
-    setTimeout(() => {
+   const stripeWatcher = setInterval(() => {
 
-  console.log("✅ SHOW STRIPE NOW");
+  // Mohamed terminó de hablar
+  if (!assistantBusyRef.current) {
 
-  setShowStripe(true);
+    clearInterval(stripeWatcher);
 
-  setIsListening(false);
+    console.log("✅ MOHAMED FINISHED TALKING");
 
-  stopListening();
+    setShowStripe(true);
 
-}, 2500);
+    stopListening();
+
+    setIsListening(false);
+
+  }
+
+}, 300);
 
 // ❌ ما نفتحوش الوثائق هنا
 setQuestionsDone(false);
@@ -1295,12 +1302,12 @@ dc.send(
 وباختصار.
 `,
       modalities: ["audio", "text"],
-      turn_detection: {
-        type: "server_vad",
-        threshold: 0.75,
-        prefix_padding_ms: 300,
-        silence_duration_ms: 800,
-      },
+   turn_detection: {
+  type: "server_vad",
+  threshold: 0.92,
+  prefix_padding_ms: 500,
+  silence_duration_ms: 1400,
+},
     },
   })
 );
@@ -1388,38 +1395,34 @@ if (isOnlyNameStep) {
 }
 
 // ❌ ما نحسبوش الاسم والبداية
-const ignoredTexts = [
-  "شنو سميتك",
-  "سميتي",
-  "شنو سميتك؟",
-  "إييه",
-  "eh",
-  "eh.",
-  "okay",
-  "ok",
-  "hm",
-  "hmm",
-  "mmm",
-  "آه",
+const validAnswers = [
+  "نعم",
+  "لا",
   "اه",
-  "هه",
-  "...",
-  ".",
-  ".."
+  "آه",
+  "ايييه",
+  "ايوه",
+  "oui",
+  "non",
+  "si",
+  "no",
+  "kayna",
+  "makaynach",
+  "عندي",
+  "ما عنديش"
 ];
+const cleanAnswer = normalized
+  .replace(/[.,!?¿؟]/g, "")
+  .trim();
 
-
-
-// ✅ غير الأسئلة الحقيقية يتحسبو
 const shouldCountQuestion =
-  !ignoredTexts.some(t => normalized.includes(t));
+  validAnswers.includes(cleanAnswer);
+
 if (
   shouldCountQuestion &&
   !questionFlowLockedRef.current
 ) {
-
   handleQuestionFlow();
-
 }
 
   }
