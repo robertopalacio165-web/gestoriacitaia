@@ -448,7 +448,7 @@ export default async function handler(
 
 const voice =
   assistant === "sara"
-    ? "alloy"
+    ? "shimmer"
     : assistant === "khalid"
     ? "verse"
     : "verse";
