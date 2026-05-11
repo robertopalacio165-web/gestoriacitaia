@@ -456,7 +456,7 @@ const voice =
     const payload = {
       session: {
         type: "realtime",
-        model: "gpt-realtime",
+  model: "gpt-4o-realtime-preview",
         instructions,
       audio: {
   input: {
@@ -493,7 +493,7 @@ const voice =
     );
 
     const data = await response.json();
-
+console.log("OPENAI REALTIME RESPONSE:", data);
     return res.status(200).json(data);
   } catch (error: any) {
     return res.status(500).json({
