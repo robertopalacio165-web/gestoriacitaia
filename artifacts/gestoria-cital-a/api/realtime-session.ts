@@ -448,14 +448,14 @@ export default async function handler(
 
 const voice =
   assistant === "sara"
-    ? "nova"
+    ? "alloy"
     : assistant === "khalid"
     ? "verse"
     : "verse";
 const payload = {
   session: {
     type: "realtime",
-    model: "gpt-4o-realtime-preview",
+model: "gpt-realtime",
     instructions,
 
     audio: {
