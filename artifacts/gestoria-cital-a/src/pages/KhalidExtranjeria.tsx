@@ -89,7 +89,7 @@ const EPHEMERAL_KEY =
       await pc.setLocalDescription(offer);
 
       const baseUrl =
-  "https://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview";
+  "https://api.openai.com/v1/realtime?model=gpt-realtime"
 
 const sdpResponse = await fetch(
   baseUrl,
