@@ -453,32 +453,35 @@ const voice =
     ? "verse"
     : "verse";
 
-    const payload = {
-      session: {
-        type: "realtime",
-  model: "gpt-4o-realtime-preview",
-        instructions,
-      audio: {
-  input: {
-    turn_detection: {
-      type: "server_vad",
-      threshold: 0.85,
-      prefix_padding_ms: 500,
-      silence_duration_ms: 900,
-      create_response: true,
-      interrupt_response: false,
-    },
-    transcription: {
-      model: "gpt-4o-mini-transcribe",
+const payload = {
+  session: {
+    type: "realtime",
+    model: "gpt-4o-realtime-preview",
+    instructions,
+
+    audio: {
+      input: {
+        turn_detection: {
+          type: "server_vad",
+          threshold: 0.85,
+          prefix_padding_ms: 500,
+          silence_duration_ms: 900,
+          create_response: true,
+          interrupt_response: false,
+        },
+
+        transcription: {
+          model: "gpt-4o-mini-transcribe",
+        },
+      },
+
+      output: {
+        voice,
+        speed: 1.05,
+      },
     },
   },
- output: {
-  voice,
- speed: 1.05
-}
-},
-      },
-    };
+};
 
     const response = await fetch(
       "https://api.openai.com/v1/realtime/client_secrets",
@@ -493,7 +496,8 @@ const voice =
     );
 
     const data = await response.json();
-console.log("OPENAI REALTIME RESPONSE:", data);
+console.log("STATUS:", response.status);
+console.log("OPENAI REALTIME RESPONSE:", JSON.stringify(data, null, 2));
     return res.status(200).json(data);
   } catch (error: any) {
     return res.status(500).json({
