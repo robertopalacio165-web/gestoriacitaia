@@ -91,22 +91,18 @@ const EPHEMERAL_KEY =
       const baseUrl =
   "https://api.openai.com/v1/realtime?model=gpt-realtime"
 
-const sdpResponse = await fetch(
-  baseUrl,
-        {
-          method: "POST",
-          body: offer.sdp,
-          headers: {
-            Authorization: `Bearer ${EPHEMERAL_KEY}`,
-            "Content-Type": "application/sdp",
-          },
-        }
-      );
+const sdpText = await sdpResponse.text();
 
-      const answer = {
-        type: "answer",
-        sdp: await sdpResponse.text(),
-      };
+console.log("SDP STATUS:", sdpResponse.status);
+console.log("SDP RESPONSE:", sdpText);
+
+if (!sdpResponse.ok) {
+  throw new Error(sdpText);
+}
+   const answer = {
+  type: "answer",
+  sdp: sdpText,
+};
 
       await pc.setRemoteDescription(
         answer as any
