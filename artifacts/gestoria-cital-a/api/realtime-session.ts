@@ -453,24 +453,26 @@ const voice =
     ? "verse"
     : "verse";
 const payload = {
-  model: "gpt-4o-realtime-preview",
-  voice,
+  session: {
+    type: "realtime",
+    model: "gpt-4o-realtime-preview",
+    instructions,
 
-  instructions,
+    audio: {
+      input: {
+        turn_detection: {
+          type: "server_vad",
+          threshold: 0.85,
+          prefix_padding_ms: 500,
+          silence_duration_ms: 900,
+          create_response: true,
+          interrupt_response: false,
+        },
 
-  input_audio_transcription: {
-    model: "gpt-4o-mini-transcribe",
-  },
-
-  turn_detection: {
-    type: "server_vad",
-    threshold: 0.85,
-    prefix_padding_ms: 500,
-    silence_duration_ms: 900,
-    create_response: true,
-    interrupt_response: false,
-  },
-};
+        transcription: {
+          model: "gpt-4o-mini-transcribe",
+        },
+      },
 
       output: {
         voice,
