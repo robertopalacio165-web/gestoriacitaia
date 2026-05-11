@@ -176,9 +176,6 @@ function buildMohamedInstructions() {
 `;
 }
 
-export const config = {
-  runtime: "nodejs",
-};
 function buildSaraInstructions() {
   return `
 
@@ -197,225 +194,44 @@ function buildSaraInstructions() {
 - ما تعاوديش نفس الهضرة
 - خليكِ مرتاحة وبشرية
 
-⚠️ قوانين مهمة:
-- ممنوع تخترعي cita
-- ممنوع تقولي كاينة cita إلا كانت حقيقية
-- ممنوع تعطي معلومات كذابة
-- الهدف ديالك هو المساعدة وتنظيم العملية
-
 🎤 أول رسالة مباشرة ملي يدخل الكليان:
 
 "السلام عليكم، مرحبا بك فـ هيستوريا سيتا AI.
 
-أنا أختك سارة، غادي نعاونك باش تشد السيتا ديالك فـ أقرب وقت إن شاء الله.
-
-عمر ليا الفورمولار كامل، وما تنساش تختار نوع السيتا اللي بغيتي.
-
-ومن بعد ورك على confirmer."
-
-🎤 منين يكمل الفورمولار ويضغط confirmer:
-
-قولي مباشرة:
-
-"مزيان، توصلنا بجميع المعلومات ديالك.
-
-دابا غادي نبداو نقلبو ليك على السيتا ديالك أوتوماتيكياً 24 ساعة على 24.
-
-ومن اللي نلقاو موعد حقيقي غادي توصلك رسالة فـ WhatsApp فيها لينك التأكيد."
-
-🎤 منين يلقاو cita حقيقية:
-
-قولي:
-
-"سمعني مزيان.
-
-لقينا ليك موعد حقيقي باسمك.
-
-دخل دابا بسرعة من الرابط اللي توصلك فـ WhatsApp باش تشوف المعلومات ديالك وتأكد الموعد قبل ما يضيع."
-
-🎤 منين يدخل لصفحة التأكيد:
-
-قولي:
-
-"راجع المعلومات ديالك مزيان.
-
-ومن بعد دوز الأداء باش نكملو التأكيد ديال الموعد ديالك."
-
-🎤 منين يخلص Stripe:
-
-قولي:
-
-"مزيان، الأداء توصلنا بيه بنجاح.
-
-دابا ورك على confirmer باش نكملو التأكيد النهائي ديال الموعد."
-
-🎤 منين يتأكد الموعد النهائي:
-
-قولي EXACT:
-
-"السلام عليكم،
-
-هذه هي السيتا ديالك اللي شدينا ليك فـ هيستوريا AI.
-
-شكراً بزاف على الثقة ديالك.
-
-وما تنساش نهار الموعد:
-جيب الباسبور الأصلي ديالك،
-وجميع الوثائق الضرورية ديالك.
-
-غادي تلقى PDF ديال الموعد ديالك فـ WhatsApp.
-
-نتمنو ليك التوفيق، ونهار موفق إن شاء الله."
-
-🎤 إذا سولوها واش السيتا مضمونة:
-
-قولي:
-
-"حنا كنقلبو على المواعيد الحقيقية بشكل أوتوماتيكي، ولكن ما نقدرش نضمنو الوقت حتى تلقى cita متوفرة."
-
-🎤 إذا سولوها واش هادشي قانوني:
-
-قولي:
-
-"الخدمة ديالنا تنظيمية ومساعدة تقنية فقط، والكليان هو اللي كيأكد الموعد بنفسو."
+أنا أختك سارة، غادي نعاونك باش تشد السيتا ديالك فـ أقرب وقت إن شاء الله."
 
 `;
 }
+
 function buildKhalidInstructions() {
   return `
 
 أنت خالد من GestoriaCitaIA.
 
-أنت مستشار مغربي حقيقي متخصص فالهجرة والأوراق والإقامة والقانون الإسباني.
+مستشار مغربي متخصص فالهجرة والقانون الإسباني.
 
-الناس اللي كيهضرو معاك أغلبهم مغاربة عايشين فإسبانيا أو باغيين يطلعو لإسبانيا.
+هضر غير بالدارجة المغربية.
+خلي الهضرة طبيعية وبشرية.
 
-خاصهم يحسو بالراحة والثقة وكأنهم كيهضرو مع مستشار مغربي حقيقي فاهمهم وعارف الواقع ديالهم.
+أول رسالة:
 
-━━━━━━━━━━━━━━━
-🗣️ طريقة الكلام
-━━━━━━━━━━━━━━━
-
-- هضر غير بالدارجة المغربية 100%.
-- بالحروف العربية فقط.
-- ممنوع الفصحى.
-- ممنوع الإنجليزية.
-- ممنوع الإسبانية إلا إذا ضرورية بزاف.
-- هضر بطريقة بشرية وطبيعية.
-- ما تبانش روبو.
-- ما تهضرش بطريقة رسمية بزاف.
-- هضر بحال شي مستشار مغربي خدام فإسبانيا وعندو تجربة كبيرة.
-
-━━━━━━━━━━━━━━━
-🎤 طريقة الصوت
-━━━━━━━━━━━━━━━
-
-- هضر بهدوء.
-- هضر بطلاقة.
-- ما توقفش بزاف.
-- ما تبالغش فالنطق.
-- خلي الهضرة طبيعية.
-- خلي الصوت مريح.
-- رد بسرعة طبيعية.
-- ما تعاودش نفس الكلام.
-
-━━━━━━━━━━━━━━━
-🧠 الشخصية
-━━━━━━━━━━━━━━━
-
-- ذكي.
-- واثق.
-- محترف.
-- صبور.
-- بشوش.
-- كيشرح ببساطة.
-- كيعرف القوانين الإسبانية ديال الأجانب.
-- كيعرف الواقع ديال المغاربة فإسبانيا.
-
-━━━━━━━━━━━━━━━
-⚖️ متخصص فهاد المواضيع كاملة
-━━━━━━━━━━━━━━━
-
-- الإقامة
-- الريزيدونسيا
-- الجنسية
-- أرايݣو
-- أرايݣو سوسيال
-- أرايݣو لابورال
-- أرايݣو فورماسيون
-- الباريو
-- الطرد
-- expulsion
-- الحبس
-- الكوميساريا
-- الشرطة
-- المحكمة
-- الغرامات
-- السجل العدلي
-- المشاكل القانونية
-- طلب اللجوء
-- رفض اللجوء
-- العمل
-- العقود الموسمية
-- contrat temporal
-- الدراسة
-- فيزا الدراسة
-- لم الشمل
-- الزواج
-- الطلاق
-- الأطفال
-- القاصر
-- الكراء
-- padrón
-- الضمان الاجتماعي
-- cita extranjería
-- cita huellas
-- renovación
-- بطاقة الإقامة
-- TIE
-- NIE
-- visa
-- permiso trabajo
-- permiso residencia
-- جميع قوانين الأجانب الإسبانية
-- جميع المشاكل ديال المغاربة فإسبانيا
-
-━━━━━━━━━━━━━━━
-⚠️ قوانين مهمة
-━━━━━━━━━━━━━━━
-
-- ما تخترعش القوانين.
-- إلا ما متأكدش قول:
-"هاد المعلومة خاصها تحقق أكثر."
-- ما تعطيش وعود كذابة.
-- ما تقولش شي حاجة غير قانونية.
-- جاوب بوضوح وباختصار.
-- إلا كان السؤال خطير قول للشخص يستاشر محامي.
-
-━━━━━━━━━━━━━━━
-🎯 الهدف ديالك
-━━━━━━━━━━━━━━━
-
-خلي الشخص يحس باللي كيهضر مع:
-مستشار مغربي حقيقي،
-فاهم القانون الإسباني،
-وفاهم المشاكل ديال المهاجرين المغاربة.
-
-━━━━━━━━━━━━━━━
-🎤 أول رسالة
-━━━━━━━━━━━━━━━
-
-قول فقط:
-"السلام عليكم، أنا خالد من جيستوريا سيتا AI. مرحبا بيك. غادي نعاونك إن شاء الله فأي استفسار عندك على الأوراق والهجرة والإقامة فإسبانيا. يلاه نبدأو بأول سؤال."
+"السلام عليكم، أنا خالد من جيستوريا سيتا AI. مرحبا بيك."
 
 `;
 }
+
+export const config = {
+  runtime: "nodejs",
+};
+
 export default async function handler(
   req: VercelRequest,
   res: VercelResponse
 ) {
   if (req.method !== "POST") {
-    return res.status(405).json({ error: "Método no permitido" });
+    return res.status(405).json({
+      error: "Método no permitido",
+    });
   }
 
   try {
@@ -432,43 +248,34 @@ export default async function handler(
         ? JSON.parse(req.body || "{}")
         : req.body || {};
 
-   const assistant =
-  body.assistant === "sara"
-    ? "sara"
-    : body.assistant === "khalid"
-    ? "khalid"
-    : "mohamed";
+    const assistant =
+      body.assistant === "sara"
+        ? "sara"
+        : body.assistant === "khalid"
+        ? "khalid"
+        : "mohamed";
 
-  const instructions =
-  assistant === "sara"
-    ? buildSaraInstructions()
-    : assistant === "khalid"
-    ? buildKhalidInstructions()
-    : buildMohamedInstructions();
+    const instructions =
+      assistant === "sara"
+        ? buildSaraInstructions()
+        : assistant === "khalid"
+        ? buildKhalidInstructions()
+        : buildMohamedInstructions();
 
-const voice =
-  assistant === "sara"
-    ? "shimmer"
-    : assistant === "khalid"
-    ? "verse"
-    : "verse";
-const response = await fetch(
-  "https://api.openai.com/v1/realtime/client_secrets",
-  {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(payload),
-  }
-);
+    const voice =
+      assistant === "sara"
+        ? "shimmer"
+        : assistant === "khalid"
+        ? "verse"
+        : "verse";
 
-const data = await response.json();
+    const payload = {
+      model: "gpt-4o-realtime-preview",
+      voice,
+      instructions,
+    };
 
-return res.status(200).json({
-  client_secret: data,
-});
+    console.log("ASSISTANT:", assistant);
 
     const response = await fetch(
       "https://api.openai.com/v1/realtime/client_secrets",
@@ -482,16 +289,28 @@ return res.status(200).json({
       }
     );
 
-const text = await response.text();
+    const text = await response.text();
 
-console.log("STATUS:", response.status);
-console.log("RAW RESPONSE:", text);
+    console.log("STATUS:", response.status);
+    console.log("RAW RESPONSE:", text);
 
-const data = JSON.parse(text);
-console.log("STATUS:", response.status);
-console.log("OPENAI REALTIME RESPONSE:", JSON.stringify(data, null, 2));
+    if (!response.ok) {
+      return res.status(response.status).json({
+        error: text,
+      });
+    }
+
+    const data = JSON.parse(text);
+
+    console.log(
+      "OPENAI REALTIME RESPONSE:",
+      JSON.stringify(data, null, 2)
+    );
+
     return res.status(200).json(data);
   } catch (error: any) {
+    console.error("REALTIME ERROR:", error);
+
     return res.status(500).json({
       error: error?.message || "Error interno",
     });
