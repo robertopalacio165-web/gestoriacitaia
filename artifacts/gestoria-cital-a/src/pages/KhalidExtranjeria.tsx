@@ -8,6 +8,7 @@ import {
   Volume2,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useLang } from "@/contexts/LanguageContext";
 
 export default function KhalidExtranjeria() {
   const { toast } = useToast();
@@ -96,7 +97,7 @@ export default function KhalidExtranjeria() {
       });
     }
   };
-
+const { t } = useLang();
   const stopConversation = () => {
     setIsListening(false);
 
@@ -133,7 +134,7 @@ export default function KhalidExtranjeria() {
               </h2>
 
               <p className="text-gray-300 text-sm">
-                Especialista en Extranjería
+          {t("Especialista en Extranjería")}
               </p>
             </div>
 
@@ -159,12 +160,12 @@ export default function KhalidExtranjeria() {
               {isListening ? (
                 <>
                   <MicOff size={24} />
-                  Finalizar conversación
+           {t("Finalizar conversación")}
                 </>
               ) : (
                 <>
                   <Mic size={24} />
-                  Hablar con Khalid
+             {t("Hablar con Khalid")}
                 </>
               )}
             </motion.button>
