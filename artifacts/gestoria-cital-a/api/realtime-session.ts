@@ -455,8 +455,9 @@ const voice =
 const payload = {
   session: {
     type: "realtime",
-model: "gpt-realtime",
+    model: "gpt-realtime",
     instructions,
+    voice,
 
     audio: {
       input: {
@@ -472,11 +473,6 @@ model: "gpt-realtime",
         transcription: {
           model: "gpt-4o-mini-transcribe",
         },
-      },
-
-      output: {
-        voice,
-        speed: 1.05,
       },
     },
   },
