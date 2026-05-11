@@ -82,12 +82,76 @@ export default function KhalidExtranjeria() {
         title: "Khalid conectado",
         description: "Realtime activo",
       });
+const tokenResponse = await fetch(
+  "/api/realtime-session",
+  {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      assistant: "khalid",
+    }),
+  }
+);
 
-      /*
-      هنا خليه نفس realtime ديال Mohammed
-      انسخ نفس الكود realtime/session/webRTC
-      اللي عندك ف Mohammed
-      */
+const data = await tokenResponse.json();
+
+const EPHEMERAL_KEY =
+  data.client_secret.value;
+
+const pc = new RTCPeerConnection();
+
+realtimeRef.current = pc;
+
+const audioEl = document.createElement("audio");
+
+audioEl.autoplay = true;
+
+pc.ontrack = (e) => {
+  audioEl.srcObject = e.streams[0];
+};
+
+const mediaStream =
+  await navigator.mediaDevices.getUserMedia({
+    audio: true,
+  });
+
+mediaStream.getTracks().forEach((track) => {
+  pc.addTrack(track, mediaStream);
+});
+
+const dc = pc.createDataChannel("oai-events");
+
+const offer = await pc.createOffer();
+
+await pc.setLocalDescription(offer);
+
+const baseUrl =
+  "https://api.openai.com/v1/realtime";
+
+const model =
+  "gpt-realtime";
+
+const sdpResponse = await fetch(
+  `${baseUrl}?model=${model}`,
+  {
+    method: "POST",
+    body: offer.sdp,
+    headers: {
+      Authorization: `Bearer ${EPHEMERAL_KEY}`,
+      "Content-Type": "application/sdp",
+    },
+  }
+);
+
+const answer = {
+  type: "answer",
+  sdp: await sdpResponse.text(),
+};
+
+await pc.setRemoteDescription(answer as any);
+   
     } catch (error) {
       console.error(error);
 
@@ -102,7 +166,8 @@ const { t } = useLang();
     setIsListening(false);
 
     if (realtimeRef.current) {
-      realtimeRef.current.close?.();
+realtimeRef.current?.close?.();
+realtimeRef.current = null;
     }
   };
 
@@ -118,7 +183,7 @@ const { t } = useLang();
         >
           <div className="relative">
             <img
-              src="/khalid-extranjeria.jpg"
+          src="/images/khalid-extranjeria.png"
               alt="Khalid"
               className="w-full h-[340px] object-cover"
             />
