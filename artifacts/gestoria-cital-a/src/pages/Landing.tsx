@@ -261,13 +261,16 @@ export default function Landing() {
               {t("hero_btn_citas")} <ArrowRight className="w-4 h-4 ml-1" />
             </Button>
 
-            <Button
-              variant="outline"
-              className="w-full sm:w-auto rounded-full px-6 border-white/15 hover:bg-white/5 min-h-[52px]"
-              onClick={() => goWithGoogleAuth("/panel")}
-            >
-              {t("hero_btn2")}
-            </Button>
+<Button
+  className="w-full sm:w-auto rounded-full px-7 py-3 min-h-[52px]
+  bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500
+  hover:scale-[1.02] transition-all duration-300
+  text-black font-bold shadow-xl shadow-orange-500/30 border-0"
+  onClick={() => goWithGoogleAuth("/khalid-extranjeria")}
+>
+  Consulta con Khalid
+  <ArrowRight className="w-4 h-4 ml-1" />
+</Button>
           </div>
 
           <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
