@@ -269,11 +269,14 @@ export default async function handler(
         ? "verse"
         : "verse";
 
-    const payload = {
-      model: "gpt-4o-realtime-preview",
-      voice,
-      instructions,
-    };
+const payload = {
+  session: {
+    type: "realtime",
+    model: "gpt-4o-realtime-preview",
+    voice: voice,
+    instructions: instructions,
+  },
+};
 
     console.log("ASSISTANT:", assistant);
 
