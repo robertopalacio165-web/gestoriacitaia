@@ -47,9 +47,11 @@ export default function KhalidExtranjeria() {
       );
 
       const data = await tokenResponse.json();
-
-      const EPHEMERAL_KEY =
-        data.client_secret.value;
+console.log(data);
+const EPHEMERAL_KEY =
+  data?.client_secret?.value ||
+  data?.value ||
+  data?.clientSecret;
 
       const pc = new RTCPeerConnection();
 
