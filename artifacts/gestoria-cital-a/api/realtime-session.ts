@@ -494,7 +494,12 @@ const payload = {
       }
     );
 
-    const data = await response.json();
+const text = await response.text();
+
+console.log("STATUS:", response.status);
+console.log("RAW RESPONSE:", text);
+
+const data = JSON.parse(text);
 console.log("STATUS:", response.status);
 console.log("OPENAI REALTIME RESPONSE:", JSON.stringify(data, null, 2));
     return res.status(200).json(data);
