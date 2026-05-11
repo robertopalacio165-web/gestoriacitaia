@@ -452,31 +452,23 @@ const voice =
     : assistant === "khalid"
     ? "verse"
     : "verse";
-const payload = {
-  session: {
-    type: "realtime",
-    model: "gpt-realtime",
-    instructions,
-    voice,
-
-    audio: {
-      input: {
-        turn_detection: {
-          type: "server_vad",
-          threshold: 0.85,
-          prefix_padding_ms: 500,
-          silence_duration_ms: 900,
-          create_response: true,
-          interrupt_response: false,
-        },
-
-        transcription: {
-          model: "gpt-4o-mini-transcribe",
-        },
-      },
+const response = await fetch(
+  "https://api.openai.com/v1/realtime/client_secrets",
+  {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
     },
-  },
-};
+    body: JSON.stringify(payload),
+  }
+);
+
+const data = await response.json();
+
+return res.status(200).json({
+  client_secret: data,
+});
 
     const response = await fetch(
       "https://api.openai.com/v1/realtime/client_secrets",
