@@ -452,28 +452,25 @@ const voice =
     : assistant === "khalid"
     ? "verse"
     : "verse";
-
 const payload = {
-  session: {
-    type: "realtime",
-    model: "gpt-4o-realtime-preview",
-    instructions,
+  model: "gpt-4o-realtime-preview",
+  voice,
 
-    audio: {
-      input: {
-        turn_detection: {
-          type: "server_vad",
-          threshold: 0.85,
-          prefix_padding_ms: 500,
-          silence_duration_ms: 900,
-          create_response: true,
-          interrupt_response: false,
-        },
+  instructions,
 
-        transcription: {
-          model: "gpt-4o-mini-transcribe",
-        },
-      },
+  input_audio_transcription: {
+    model: "gpt-4o-mini-transcribe",
+  },
+
+  turn_detection: {
+    type: "server_vad",
+    threshold: 0.85,
+    prefix_padding_ms: 500,
+    silence_duration_ms: 900,
+    create_response: true,
+    interrupt_response: false,
+  },
+};
 
       output: {
         voice,
