@@ -196,6 +196,15 @@ window.location.href = data.url;
   const [questionsDone, setQuestionsDone] = useState(false);
 const [clientQuestionsDone, setClientQuestionsDone] = useState(false);
   const [questionIndex, setQuestionIndex] = useState(0);
+  
+  useEffect(() => {
+
+  localStorage.setItem(
+    "questionIndex",
+    questionIndex.toString()
+  );
+
+}, [questionIndex]);
   const questionFlowLockedRef = useRef(false);
   const paymentDoneRef = useRef(false);
   const lastProcessedTranscriptRef = useRef("");
@@ -663,10 +672,11 @@ if (rawStep) {
 const handleQuestionFlow = () => {
 
   if (questionFlowLockedRef.current) return;
-
+console.log("QUESTION CURRENT:", questionIndex);
   setQuestionIndex((prev) => {
 
     const next = prev + 1;
+    console.log("QUESTION NEXT:", next);
 // ✅ بعد أول جواب سول على الاسم بلا NEXT جديد
 if (next === 1) {
 
@@ -736,18 +746,14 @@ setQuestionsDone(false);
 
       return next;
     }
-if (next === 12) {
+if (next >= questions.length - 1) {
 
   setDocumentsUnlocked(true);
 
   setConfirmUnlocked(true);
 
-  // 🔥 وقف الميكروفون
-  stopListening();
+  setQuestionsDone(true);
 
-  setIsListening(false);
-
-  // 🔥 محمد يطلب الوثائق
   setTimeout(() => {
 
     speakExactText(`
@@ -1416,7 +1422,9 @@ const cleanAnswer = normalized
   .trim();
 
 const shouldCountQuestion =
-  validAnswers.includes(cleanAnswer);
+  validAnswers.some(word =>
+    cleanAnswer.includes(word)
+  );
 
 if (
   shouldCountQuestion &&
