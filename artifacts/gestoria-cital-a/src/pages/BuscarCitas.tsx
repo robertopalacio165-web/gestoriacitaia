@@ -1169,7 +1169,8 @@ return {
         throw new Error(sessionData?.error || "Error creando sesión realtime");
       }
 
-      const ephemeralKey = sessionData?.value || "";
+const ephemeralKey =
+  sessionData?.client_secret?.value || "";
 
       if (!ephemeralKey) {
         throw new Error("No llegó client secret desde /api/realtime-session");
