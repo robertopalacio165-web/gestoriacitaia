@@ -47,11 +47,17 @@ export default function KhalidExtranjeria() {
       );
 
       const data = await tokenResponse.json();
-console.log(data);
-const EPHEMERAL_KEY =
-  data?.client_secret?.value ||
-  data?.value ||
-  data?.clientSecret;
+
+      console.log("TOKEN RESPONSE:", data);
+
+      const EPHEMERAL_KEY =
+        data?.client_secret?.value ||
+        data?.value ||
+        data?.clientSecret;
+
+      if (!EPHEMERAL_KEY) {
+        throw new Error("No ephemeral key");
+      }
 
       const pc = new RTCPeerConnection();
 
@@ -89,20 +95,41 @@ const EPHEMERAL_KEY =
       await pc.setLocalDescription(offer);
 
       const baseUrl =
-  "https://api.openai.com/v1/realtime?model=gpt-realtime"
+        "https://api.openai.com/v1/realtime?model=gpt-realtime";
 
-const sdpText = await sdpResponse.text();
+      const sdpResponse = await fetch(
+        baseUrl,
+        {
+          method: "POST",
+          body: offer.sdp,
+          headers: {
+            Authorization: `Bearer ${EPHEMERAL_KEY}`,
+            "Content-Type": "application/sdp",
+          },
+        }
+      );
 
-console.log("SDP STATUS:", sdpResponse.status);
-console.log("SDP RESPONSE:", sdpText);
+      const sdpText =
+        await sdpResponse.text();
 
-if (!sdpResponse.ok) {
-  throw new Error(sdpText);
-}
-   const answer = {
-  type: "answer",
-  sdp: sdpText,
-};
+      console.log(
+        "SDP STATUS:",
+        sdpResponse.status
+      );
+
+      console.log(
+        "SDP RESPONSE:",
+        sdpText
+      );
+
+      if (!sdpResponse.ok) {
+        throw new Error(sdpText);
+      }
+
+      const answer = {
+        type: "answer",
+        sdp: sdpText,
+      };
 
       await pc.setRemoteDescription(
         answer as any
