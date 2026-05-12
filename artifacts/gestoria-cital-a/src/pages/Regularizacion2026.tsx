@@ -1378,7 +1378,7 @@ if (
 
     console.log("✅ USER SAID:", transcript);
 // ✅ FIRST CLIENT MESSAGE → INTRO + STRIPE
-const lowerTranscript = transcript.toLowerCase().trim();
+
 if (
   !paymentDoneRef.current &&
   (
