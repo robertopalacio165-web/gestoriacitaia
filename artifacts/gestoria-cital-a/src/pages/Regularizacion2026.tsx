@@ -1469,7 +1469,7 @@ if (currentQuestion === 4) {
 
     stopListening();
 
-  }, 8000);
+  }, 20000);
 
   return;
 
