@@ -1306,11 +1306,14 @@ dc.send(
 وباختصار.
 `,
       modalities: ["audio", "text"],
+      input_audio_transcription: {
+  model: "gpt-4o-mini-transcribe",
+},
 turn_detection: {
   type: "server_vad",
-  threshold: 0.75,
-  prefix_padding_ms: 500,
-  silence_duration_ms: 1400,
+  threshold: 0.45,
+  prefix_padding_ms: 900,
+  silence_duration_ms: 2600,
 },
     },
   })
