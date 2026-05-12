@@ -1460,7 +1460,6 @@ if (msg.type === "response.created") {
 
 }
 
-
 if (msg.type === "response.done") {
 
   assistantBusyRef.current = false;
@@ -1484,13 +1483,14 @@ if (msg.type === "response.done") {
 
 }
 
+      }
+    }
+
   } catch (err) {
 
     console.error("Realtime event parse error:", err);
 
   }
-
-};
 
   
   dc.onerror = (err) => {
