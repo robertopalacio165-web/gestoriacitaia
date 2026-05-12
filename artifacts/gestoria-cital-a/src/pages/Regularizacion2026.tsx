@@ -1470,7 +1470,7 @@ if (currentQuestion === 4) {
 
     stopListening();
 
-  }, 20000);
+  }, 20100);
 
   return;
 
