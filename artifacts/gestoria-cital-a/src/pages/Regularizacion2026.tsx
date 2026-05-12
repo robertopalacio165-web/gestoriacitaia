@@ -1475,46 +1475,7 @@ if (currentQuestion === 4) {
 
 }
 
-        if (currentQuestion === 4) {
-
-          questionFlowLockedRef.current = true;
-
-          setQuestionIndex(5);
-
-          questionIndexRef.current = 5;
-
-          localStorage.setItem("questionIndex", "5");
-
-          const PAYMENT_TEXT = `
-مزيان، من خلال الأجوبة ديالك بان ليا بللي الملف ديالك غادي يكون مقبول إن شاء الله.
-
-باش نعطيك تحليل دقيق ونوجد ليك الملف كامل:
-
-التحقق الكامل من الوثائق.
-والوثيقة المهمة اللي غادي تعزز الملف ديالك بزاف.
-
-غير ب 12 أورو.
-
-ورك على زر الأداء ونكملو مباشرة.
-`;
-
-          pushAgentMessage(PAYMENT_TEXT);
-
-          speakExactText(PAYMENT_TEXT);
-
-          setTimeout(() => {
-
-            setShowStripe(true);
-
-            setPaymentRequired(true);
-
-            stopListening();
-
-          }, 12000);
-
-          return;
-
-        }
+   
 
       }
 
