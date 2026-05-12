@@ -1326,9 +1326,10 @@ if (
     msg.type === "conversation.item.input_audio_transcription.completed" ||
     msg.type === "input_audio_buffer.transcription.completed"
   ) &&
-  typeof userTranscript === "string" &&
-  userTranscript.trim() &&
-  userTranscript.trim().length > 1
+typeof userTranscript === "string" &&
+userTranscript &&
+userTranscript.trim &&
+userTranscript.trim().length > 1
 ) {
 
   if (mohamedTalkingRef.current) {
@@ -1339,7 +1340,7 @@ if (
 
   }
 
-  const transcript = userTranscript.trim();
+  const transcript = String(userTranscript || "").trim();
 
       const isAssistantEcho =
         transcript.includes("مزيان") ||
