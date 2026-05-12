@@ -229,7 +229,7 @@ useEffect(() => {
 const [clientQuestionIndex, setClientQuestionIndex] = useState(0);
   const [showStripe, setShowStripe] = useState(false);
   const [paymentRequired, setPaymentRequired] = useState(false);
-
+const [conversationStep, setConversationStep] = useState(0);
   const [leadForm, setLeadForm] = useState<LeadFormState>({
     nombre: "",
     telefono: "",
@@ -687,119 +687,7 @@ if (rawStep) {
   const progressTotal = progressCards.length;
   const allReady = finalFileStatus === "ok";
 
-const handleQuestionFlow = () => {
 
-  // منع التكرار
-  if (processingQuestionRef.current) return;
-
-  processingQuestionRef.current = true;
-
-  // إذا Stripe واقف الأسئلة
-  if (questionFlowLockedRef.current) {
-
-    processingQuestionRef.current = false;
-
-    return;
-  }
-
-  console.log("QUESTION CURRENT:", questionIndex);
-
-  setQuestionIndex((prev) => {
-
-    const next = prev + 1;
-
-    console.log("QUESTION NEXT:", next);
-
-    // السؤال الأول
-    if (next === 1) {
-
-      setTimeout(() => {
-
-       speakExactText(PAYMENT_TEXT);
-
-      }, 400);
-
-      setTimeout(() => {
-
-        processingQuestionRef.current = false;
-
-      }, 1200);
-
-      return next;
-    }
-
-    // Stripe
-if (next === 1 && !paymentDoneRef.current) {
-      questionFlowLockedRef.current = true;
-
-      const PAYMENT_TEXT = `
-مزيان، من خلال الأجوبة ديالك باين باللي الملف ديالك عندو فرصة مزيانة فالتسوية الجماعية.
-
-دابا خاص غير الأداء باش نكملو التحليل الكامل ديال الملف ونوجدولك الوثائق المهمة.
-`;
-
-      pushAgentMessage(PAYMENT_TEXT);
-
-      setPaymentRequired(true);
-
-      setTimeout(() => {
-
-        speakExactText(PAYMENT_TEXT);
-
-      }, 300);
-
-      setTimeout(() => {
-
-        setShowStripe(true);
-
-        stopListening();
-
-        setIsListening(false);
-
-      }, 2500);
-
-      setTimeout(() => {
-
-        processingQuestionRef.current = false;
-
-      }, 1200);
-
-      return next;
-    }
-
-    // باقي الأسئلة
-    const nextQuestion = questions[next - 1];
-
-    if (nextQuestion) {
-
-      setTimeout(() => {
-
-        speakExactText(nextQuestion);
-
-      }, 500);
-    }
-
-    // فتح الوثائق بعد السؤال 12
-    if (next >= 12) {
-
-      setDocumentsUnlocked(true);
-
-      setConfirmUnlocked(true);
-
-      setQuestionsDone(true);
-    }
-
-    setTimeout(() => {
-
-      processingQuestionRef.current = false;
-
-    }, 1200);
-
-    return next;
-
-  });
-
-};
   const updateLeadForm = (field: keyof LeadFormState, value: string) => {
     setLeadForm((prev) => ({ ...prev, [field]: value }));
   };
@@ -1418,7 +1306,7 @@ const lowerTranscript = transcript.toLowerCase().trim();
 const normalized = lowerTranscript;
 // ✅ الاسم ما يتحسبش فـ NEXT
 const isOnlyNameStep =
-  questionIndex === 0 &&
+  conversationStep === 1 &&
   !clientQuestionsDone &&
   lowerTranscript.length > 1 &&
   !lowerTranscript.includes("نعم") &&
@@ -1426,7 +1314,7 @@ const isOnlyNameStep =
   !lowerTranscript.includes("اه") &&
   !lowerTranscript.includes("آه");
 if (isOnlyNameStep) {
-  setQuestionIndex(1);
+
 
   console.log("👤 USER NAME ONLY:", transcript);
   setClientQuestionsDone(true);
@@ -1464,39 +1352,111 @@ const cleanAnswer = normalized
   .replace(/[.,!?¿؟]/g, "")
   .trim();
 
-const greetings = [
-  "سلام",
-  "salam",
-  "slm",
-  "hola",
-  "hello",
-  "bonjour",
-  "hey"
-];
-console.log("COUNTING QUESTION...");
-console.log("CURRENT INDEX:", questionIndex);
-const shouldCountQuestion =
-  !greetings.includes(cleanAnswer) &&
-  (
-    cleanAnswer === "نعم" ||
-    cleanAnswer === "لا" ||
-    cleanAnswer === "اه" ||
-    cleanAnswer === "آه" ||
-    cleanAnswer === "oui" ||
-    cleanAnswer === "non" ||
-    cleanAnswer === "si" ||
-    cleanAnswer === "no" ||
-    cleanAnswer === "عندي" ||
-    cleanAnswer === "ما عنديش"
-  );
 
-if (
-  shouldCountQuestion &&
-  !questionFlowLockedRef.current
-) {
-setTimeout(() => {
-  handleQuestionFlow();
-}, 100);
+if (!questionFlowLockedRef.current) {
+
+  // STEP 0
+  if (conversationStep === 0) {
+
+    setConversationStep(1);
+
+    setTimeout(() => {
+
+      speakExactText("مزيان. قولي شنو سميتك؟");
+
+    }, 400);
+
+    return;
+  }
+
+  // STEP 1
+  if (conversationStep === 1) {
+
+    setConversationStep(2);
+
+    setTimeout(() => {
+
+      speakExactText(
+        "واش بقيتي فإسبانيا خمسة شهور متتالية؟ وشنو هي أول مدينة سكنتي فيها؟"
+      );
+
+    }, 400);
+
+    return;
+  }
+
+  // STEP 2
+  if (conversationStep === 2) {
+
+    setConversationStep(3);
+
+    setTimeout(() => {
+
+      speakExactText(
+        "واش عندك باسبور مغربي ولا كارت ناسيونال ولا فوتوكوبي ديالهم؟"
+      );
+
+    }, 400);
+
+    return;
+  }
+
+  // STEP 3
+  if (conversationStep === 3) {
+
+    setConversationStep(4);
+
+    setTimeout(() => {
+
+      speakExactText(
+        "واش عندك شي ورقة فيها سميتك والتاريخ؟ بحال شهادة السكنى ولا ورقة ديال الطبيب ولا الصبيطار ولا الكراء؟"
+      );
+
+    }, 400);
+
+    return;
+  }
+
+  // STEP 4 → STRIPE
+  if (conversationStep === 4) {
+
+    questionFlowLockedRef.current = true;
+
+    const PAYMENT_TEXT = `
+مزيان، من خلال الأجوبة ديالك بان ليا بللي الملف ديالك غادي يكون مقبول إن شاء الله.
+
+باش نعطيك تحليل دقيق ونوجد ليك الملف كامل:
+
+التحقق الكامل من الوثائق.
+والوثيقة المهمة اللي غادي تعزز الملف ديالك بزاف.
+
+غير ب 12 أورو.
+
+ورك على زر الأداء ونكملو مباشرة.
+`;
+
+    pushAgentMessage(PAYMENT_TEXT);
+
+    setTimeout(() => {
+
+      speakExactText(PAYMENT_TEXT);
+
+    }, 500);
+
+    setTimeout(() => {
+
+      setShowStripe(true);
+
+      setPaymentRequired(true);
+
+      stopListening();
+
+    }, 3500);
+
+    return;
+  }
+}
+
 }
 
   }
