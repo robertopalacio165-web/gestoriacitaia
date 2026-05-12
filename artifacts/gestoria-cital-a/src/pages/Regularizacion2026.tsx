@@ -726,7 +726,6 @@ if (questionFlowLockedRef.current) {
 
       return next;
     }
-
     // Stripe
 // Stripe
     // Stripe
@@ -765,12 +764,8 @@ if (next === 5 && !paymentDoneRef.current) {
   }, 1200);
 
   return next;
-
-
   });
-
 };
-
 
   const updateLeadForm = (field: keyof LeadFormState, value: string) => {
     setLeadForm((prev) => ({ ...prev, [field]: value }));
