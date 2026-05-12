@@ -135,11 +135,11 @@ paymentDoneRef.current = true;
     }, 1000);
 
     setTimeout(() => {
-setQuestionIndex(5);
-questionIndexRef.current = 5;
+setQuestionIndex(6);
+questionIndexRef.current = 6;
 localStorage.setItem(
   "questionIndex",
-  "5"
+  "6"
 );
 
 speakExactText(
@@ -201,6 +201,7 @@ window.location.href = data.url;
   const [questionsDone, setQuestionsDone] = useState(false);
 const [clientQuestionsDone, setClientQuestionsDone] = useState(false);
 const [questionIndex, setQuestionIndex] = useState(() => {
+  const mohamedTalkingRef = useRef(false);
 
   const saved = localStorage.getItem("questionIndex");
 
@@ -244,7 +245,7 @@ useEffect(() => {
 
 
   // ✅ Desbloquear sistema completo después pregunta 12
-  if (questionIndex >= 12) {
+ if (questionIndex >= 10) {
 
     setDocumentsUnlocked(true);
 
@@ -1322,6 +1323,10 @@ dc.onmessage = (event) => {
 
     if (
       (msg.type === "conversation.item.input_audio_transcription.completed" ||
+       if (mohamedTalkingRef.current) {
+  console.log("⛔ Mohamed todavía está hablando");
+  return;
+}
         msg.type === "input_audio_buffer.transcription.completed") &&
       typeof userTranscript === "string" &&
       userTranscript.trim() &&
@@ -1493,7 +1498,8 @@ if (currentQuestion === 4) {
 
     if (msg.type === "response.created") {
 
-      assistantBusyRef.current = true;
+ assistantBusyRef.current = true;
+mohamedTalkingRef.current = true;
       setWaitingMohamed(true);
 
     }
@@ -1516,9 +1522,7 @@ if (currentQuestion === 4) {
 
       setPendingAutomationPrompt("");
 
-      setTimeout(() => {
-        void flushPendingAutomation();
-      }, 150);
+    
 
     }
 
