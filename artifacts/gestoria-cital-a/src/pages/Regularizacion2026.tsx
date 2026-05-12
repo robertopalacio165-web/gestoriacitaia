@@ -1527,17 +1527,15 @@ if (msg.type === "response.done") {
   lastUserTranscriptRef.current = "";
   pendingAutomationPromptRef.current = null;
   setPendingAutomationPrompt("");
-
-  // ✅ Mostrar Stripe SOLO después del primer audio de Mohamed
-  if (!introAlreadySentRef.current && !(window as any).paid) {
-    introAlreadySentRef.current = true;
-
-    // Pequeño delay para asegurar que Mohamed terminó de hablar
-    setTimeout(() => {
-      setShowStripe(true);
-      setPaymentRequired(true);
-    }, 500); // 500ms después del intro
-  }
+// ✅ Mostrar Stripe SOLO después del primer audio de Mohamed
+if (!introAlreadySentRef.current && !(window as any).paid) {
+  introAlreadySentRef.current = true;
+  setTimeout(() => {
+    setShowStripe(true);
+    setPaymentRequired(true);
+  }, 500); // 0.5 segundos después de que Mohamed hable
+}
+  
 
   // Seguir con cualquier automation pendiente
   setTimeout(() => {
@@ -2259,46 +2257,7 @@ if (paymentRequired || documentsUnlocked) return;
                     {ui.listening}
                   </p>
                 )}
-       {showStripe && (
 
-  <div className="fixed inset-0 z-[99999] bg-black/90 backdrop-blur-md flex items-center justify-center px-6">
-
-    <div className="w-full max-w-md rounded-3xl bg-zinc-950 border border-white/10 p-6 text-center shadow-2xl">
-
-      <h2 className="text-2xl font-bold text-white mb-4">
-        ✅ الملف ديالك مؤهل
-      </h2>
-
-      <p className="text-white/70 text-sm leading-relaxed mb-6">
-        باش نكملو التحليل الكامل ونوجدولك الوثائق المهمة،
-        خاصك تكمل الأداء دابا.
-      </p>
-
-      <button
-        onClick={handleStripePayment}
-        type="button"
-        className="
-          w-full
-          rounded-2xl
-          py-4
-          text-lg
-          font-bold
-          text-white
-          bg-gradient-to-r
-          from-emerald-500
-          to-green-600
-          hover:scale-[1.02]
-          transition-all
-        "
-      >
-        💳 الأداء الآن — 12€
-      </button>
-
-    </div>
-
-  </div>
-
-)}
               </div>
               <div className="p-4 space-y-4">
                 <div>
