@@ -1093,7 +1093,7 @@ const maybeSendIntroToMohamed = async () => {
 
     stopListening();
 
-  }, 3500);
+  }, 12000);
 };
 
 
