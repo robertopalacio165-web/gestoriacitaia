@@ -10,7 +10,7 @@ import {
   ArrowRight,
   Bell,
   Volume2,
-  VolumeX,
+  VolumeX, 
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { verifyDocument, type VerifyDocumentResult } from "@/lib/verifyDocument";
