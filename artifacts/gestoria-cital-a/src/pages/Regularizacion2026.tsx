@@ -1292,23 +1292,14 @@ dc.onopen = async () => {
     }));
 
 if (!introAlreadySentRef.current && !(window as any).paid) {
-
   introAlreadySentRef.current = true;
 
-setTimeout(() => {
-  speakExactText(
-    "السلام عليكم، أنا محمد. قبل ما نبدا التحليل الكامل خاص الأداء."
-  );
-
-  // Mostrar Stripe sin detener el micro
   setTimeout(() => {
-    setShowStripe(true);
-    setPaymentRequired(true);
-    // NO llamar a stopListening()
-  }, 4000);
-
-}, 2000);
-
+    speakExactText(
+      "السلام عليكم، أنا محمد. قبل ما نبدا التحليل الكامل خاص الأداء."
+    );
+    // ✅ No tocar Stripe ni setPaymentRequired aquí
+  }, 2000);
 }
 
     // ✅ AUTOMATION pendiente
@@ -1440,6 +1431,7 @@ const speakFromAutomation = async (text: string) => {
     }
   }, [muted]);
 
+  
   const handleSaveLeadForm = async () => {
     if (!leadFormReady) {
       toast({
@@ -1461,7 +1453,18 @@ const savedIndex = localStorage.getItem("questionIndex");
 if (savedIndex) {
   setQuestionIndex(parseInt(savedIndex));
 }
-    
+
+    // Mostrar Stripe después de la intro sin cerrar el micro
+useEffect(() => {
+  if (introAlreadySentRef.current && !(window as any).paid) {
+    const timeout = setTimeout(() => {
+      setShowStripe(true);
+      setPaymentRequired(true);
+    }, 1000); // 1 segundo después de hablar
+
+    return () => clearTimeout(timeout);
+  }
+}, [introAlreadySentRef.current]);
     if (!currentUserId) {
       toast({
         title: "Sesión no detectada",
