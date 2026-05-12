@@ -122,7 +122,7 @@ useEffect(() => {
 
   if (paid === "true") {
 
-    console.log("✅ CLIENT PAID");
+
 
     paymentDoneRef.current = true;
 
@@ -222,7 +222,7 @@ const goNextQuestion = (nextText: string) => {
       next.toString()
     );
 
-    console.log("✅ NEXT QUESTION:", next);
+
 
     return next;
   });
@@ -512,7 +512,7 @@ const voiceTexts = useMemo(() => ({
             proactiveMessage = `توصلت بـ ${docName}. غادي نراجعو دابا ونشوف واش كلشي مزيان.`;
           }
           setTimeout(() => {
-          console.log("doc received");
+   
           }, 1500);
         }
       )
@@ -916,7 +916,7 @@ if (typeof result.verification_score === "number") {
         return false;
       }
       
-      console.log("🎤 askMohamedToSpeak llamado:", instruction);
+   
       setWaitingMohamed(true);
       assistantTextBufferRef.current = "";
       
@@ -931,7 +931,7 @@ if (typeof result.verification_score === "number") {
           },
         })
       );
-      console.log("✅ conversation.item.create enviado");
+  
       
       // ✅ SEGUNDO mensaje: FORZAR respuesta CON instructions
       realtimeDcRef.current.send(
@@ -943,8 +943,7 @@ if (typeof result.verification_score === "number") {
 },
         })
       );
-      console.log("✅ response.create enviado con instructions");
-      
+ 
       return true;
     } catch (error) {
       console.error("❌ Error en askMohamedToSpeak:", error);
@@ -965,7 +964,7 @@ if (typeof result.verification_score === "number") {
       return;
     }
     
-    console.log("🚀 ENVIANDO DIRECTAMENTE (sin verificar busy):", prompt);
+  
     
     // ✅ ENVÍO DIRECTO SIN VERIFICAR assistantBusyRef
     try {
@@ -979,7 +978,7 @@ if (typeof result.verification_score === "number") {
           },
         })
       );
-      console.log("✅ Item creado, enviando response.create...");
+   
       
       realtimeDcRef.current.send(
         JSON.stringify({
@@ -989,7 +988,7 @@ if (typeof result.verification_score === "number") {
 }
         })
       );
-      console.log("✅ response.create enviado - Mohamed DEBERÍA hablar");
+   
       
       // Limpiar después de enviar
       pendingAutomationPromptRef.current = null;
@@ -1002,6 +1001,19 @@ lastAssistantTextRef.current = "";
 lastUserTranscriptRef.current = "";
 
 processingQuestionRef.current = false;
+      if (
+  !(window as any).paid &&
+  !showStripe
+) {
+
+  setShowStripe(true);
+
+  setPaymentRequired(true);
+
+  stopListening();
+
+  return;
+}
     } catch (error) {
       console.error("❌ Error enviando:", error);
     }
@@ -1349,7 +1361,7 @@ dc.onmessage = (event) => {
         transcript.includes("محمد");
 
       if (isAssistantEcho) {
-        console.log("⛔ ASSISTANT ECHO BLOCKED");
+  
         return;
       }
 
@@ -1361,7 +1373,7 @@ dc.onmessage = (event) => {
 
         pushUserMessage(transcript);
 
-        console.log("✅ USER SAID:", transcript);
+     
 
         const lowerTranscript = transcript.toLowerCase().trim();
 
@@ -1375,7 +1387,6 @@ dc.onmessage = (event) => {
 
           const currentQuestion = questionIndex;
 
-          console.log("🔥 CURRENT QUESTION:", currentQuestion);
 
           // PREGUNTA 0
         // PREGUNTA 0
@@ -1530,7 +1541,7 @@ lastUserTranscriptRef.current = "";
 const speakExactText = async (text: string) => {
   if (!text.trim()) return;
 
-  console.log("🔊 REALTIME ONLY:", text);
+
 
   pendingAutomationPromptRef.current = text;
 
@@ -1770,7 +1781,7 @@ if (savedIndex) {
 
   // ✅ CAMBIO #3: handleGeneralUpload con setTimeout para speakExactText
 const handleGeneralUpload = () => {
-  console.log("CLICK WORKING");
+
 
   const input = document.createElement("input");
   input.type = "file";
@@ -2013,7 +2024,7 @@ if (
   realtimeDcRef.current.readyState !== "open"
 ) {
 
-  console.log("⚠️ REALTIME CLOSED - RECONNECTING");
+
 
   await startListening();
 
@@ -2029,7 +2040,7 @@ if (
   realtimeDcRef.current.readyState === "open"
 ) {
 
-  console.log("✅ VERIFY SPEECH START");
+
 
   await speakFromAutomation(fullSpeech);
 // 🔥 رجع الميكروفون يخدم
