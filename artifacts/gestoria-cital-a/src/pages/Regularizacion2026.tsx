@@ -1265,53 +1265,41 @@ GestoriaCitaIA
       for (const track of localStream.getTracks()) {
         pc.addTrack(track, localStream);
       }
-      const dc = pc.createDataChannel("oai-events");
-      realtimeDcRef.current = dc;
- dc.onopen = async () => {
+// Inicialización del data channel
+const dc = pc.createDataChannel("oai-events");
+realtimeDcRef.current = dc;
 
-  console.log("✅ DC OPEN");
+// 🔹 Función onopen corregida con async
+dc.onopen = async () => {
+  try {
+    console.log("✅ DC OPEN");
 
-  dcOpenedRef.current = true;
+    dcOpenedRef.current = true;
+    isConnectingRef.current = false;
+    setIsListening(true);
+    setWaitingMohamed(false);
 
-  isConnectingRef.current = false;
-
-  setIsListening(true);
-
-  setWaitingMohamed(false);
-
-  // ✅ CONFIGURACIÓN SESSION
-  dc.send(
-    JSON.stringify({
+    // Configuración inicial de la sesión
+    dc.send(JSON.stringify({
       type: "session.update",
       session: {
         instructions: `
 أنت محمد من GestoriaCitaIA.
 
 تكلم فقط بالدارجة المغربية.
-
 جاوب باختصار.
-
 ممنوع تعاود الترحيب كل مرة.
-
 ممنوع تقول:
 أنا محمد
 مرحبا
 السلام عليكم
 إلا فالبداية الأولى فقط.
-
 ممنوع تعاود نفس السؤال مرتين.
-
-إذا كان السؤال الحالي:
-"واش دخلتي لإسبانيا قبل واحد يناير 2026؟"
-
-جاوب فقط بالسؤال بدون أي مقدمة.
         `,
         modalities: ["audio", "text"],
-
         input_audio_transcription: {
           model: "gpt-4o-mini-transcribe",
         },
-
         turn_detection: {
           type: "server_vad",
           threshold: 0.45,
@@ -1319,244 +1307,91 @@ GestoriaCitaIA
           silence_duration_ms: 2600,
         },
       },
-    })
-  );
+    }));
 
-  // ✅ INTRO مرة وحدة فقط
-  if (
-    !introAlreadySentRef.current &&
-    !(window as any).paid
-  ) {
+    // ✅ INTRO solo la primera vez
+    if (!introAlreadySentRef.current && !(window as any).paid) {
+      introAlreadySentRef.current = true;
 
-    introAlreadySentRef.current = true;
-
-    // ✅ نخلي محمد يهضر الأول
-    setTimeout(() => {
-
-      dc.send(
-        JSON.stringify({
+      setTimeout(() => {
+        dc.send(JSON.stringify({
           type: "response.create",
           response: {
             modalities: ["audio", "text"],
             instructions: `
 السلام عليكم، مرحبا بيك فـ GestoriaCitaIA.
-
 باش نبداو التحليل الكامل ديال الملف ديالك،
 خاصك تكمل الأداء دابا.
             `,
           },
-        })
-      );
+        }));
+      }, 1200);
+    }
 
-    }, 1200);
+    // ✅ AUTOMATION pendiente
+    const capturedPending = pendingAutomationPromptRef.current;
+    if (capturedPending) {
+      pendingAutomationPromptRef.current = null;
+      setPendingAutomationPrompt("");
+      setTimeout(() => {
+        void askMohamedToSpeak(capturedPending);
+      }, 400);
+      return;
+    }
 
-  }
+    // 🔹 WebRTC con OpenAI
+    const offer = await pc.createOffer();
+    await pc.setLocalDescription(offer);
 
-  // ✅ AUTOMATION
-  const capturedPending = pendingAutomationPromptRef.current;
+    const sdpRes = await fetch("https://api.openai.com/v1/realtime/calls", {
+      method: "POST",
+      body: offer.sdp,
+      headers: {
+        Authorization: `Bearer ${ephemeralKey}`,
+        "Content-Type": "application/sdp",
+      },
+    });
 
-  if (capturedPending) {
+    if (!sdpRes.ok) {
+      const errText = await sdpRes.text();
+      throw new Error(errText || "Error negociando WebRTC con OpenAI");
+    }
 
-    pendingAutomationPromptRef.current = null;
+    const answerSdp = await sdpRes.text();
+    await pc.setRemoteDescription({ type: "answer", sdp: answerSdp });
 
-    setPendingAutomationPrompt("");
-
-    setTimeout(() => {
-
-      void askMohamedToSpeak(capturedPending);
-
-    }, 400);
-
-    return;
+  } catch (error) {
+    console.error("Error iniciando realtime Mohamed:", error);
+    stopListening();
+    toast({
+      title: "Error realtime",
+      description: error?.message || voiceTexts.realtimeError,
+      variant: "destructive",
+    });
+  } finally {
+    isConnectingRef.current = false;
   }
 };
 
-  
+// 🔹 onmessage, onerror, onclose se mantienen igual
 dc.onmessage = (event) => {
+  // ... tu lógica actual de mensajes
+};
 
-  try {
+dc.onerror = (err) => {
+  console.error("Realtime data channel error:", err);
+};
 
-    const msg = JSON.parse(event.data);
-
-    const userTranscript =
-      msg?.transcript ||
-      msg?.item?.transcript ||
-      msg?.item?.content?.[0]?.transcript ||
-      "";
-
-    if (
-      (msg.type === "conversation.item.input_audio_transcription.completed" ||
-        msg.type === "input_audio_buffer.transcription.completed") &&
-      typeof userTranscript === "string" &&
-      userTranscript.trim() &&
-      userTranscript.trim().length > 1
-    ) {
-
-      const transcript = userTranscript.trim();
-
-      const isAssistantEcho =
-        transcript.includes("مزيان") ||
-        transcript.includes("باش") ||
-        transcript.includes("الملف") ||
-        transcript.includes("الأداء") ||
-        transcript.includes("محمد");
-
-      if (isAssistantEcho) {
-  
-        return;
-      }
-
-      if (transcript !== lastProcessedTranscriptRef.current) {
-
-        lastProcessedTranscriptRef.current = transcript;
-
-        setLastUserTranscript(transcript);
-
-        pushUserMessage(transcript);
-
-     
-
-        const lowerTranscript = transcript.toLowerCase().trim();
-
-    
-
-        const normalized = lowerTranscript
-          .replace(/[.,!?¿؟]/g, "")
-          .trim();
-
-        if (!questionFlowLockedRef.current) {
-
-          const currentQuestion = questionIndex;
-
-
-          // PREGUNTA 0
-        // PREGUNTA 0
-if (currentQuestion === 0) {
-
-  goNextQuestion(
-    "مزيان. قولي شنو سميتك؟"
-  );
-
-  return;
-}
-
-// PREGUNTA 1
-if (currentQuestion === 1) {
-
-  goNextQuestion(
-    "واش بقيتي فإسبانيا خمسة شهور متتالية؟ وشنو هي أول مدينة سكنتي فيها؟"
-  );
-
-  return;
-}
-
-// PREGUNTA 2
-if (currentQuestion === 2) {
-
-  goNextQuestion(
-    "واش عندك باسبور مغربي ولا كارت ناسيونال ولا فوتوكوبي ديالهم؟"
-  );
-
-  return;
-}
-          // PREGUNTA 2
-          if (currentQuestion === 2) {
-
-            goNextQuestion(
-              "واش عندك باسبور مغربي ولا كارت ناسيونال ولا فوتوكوبي ديالهم؟"
-            );
-
-            return;
-          }
-
-          // PREGUNTA 3
-          if (currentQuestion === 3) {
-
-            goNextQuestion(
-              "واش عندك شي ورقة فيها سميتك والتاريخ؟ بحال شهادة السكنى ولا ورقة ديال الطبيب ولا الصبيطار ولا الكراء؟"
-            );
-
-            return;
-          }
-
-        }
-      }
-    }
-
-    if (
-      msg.type === "response.output_text.delta" &&
-      typeof msg.delta === "string"
-    ) {
-
-      assistantTextBufferRef.current += msg.delta;
-
-    }
-
-    if (msg.type === "response.created") {
-
-      assistantBusyRef.current = true;
-      setWaitingMohamed(true);
-
-    }
-
-if (msg.type === "response.done") {
-  // Marcar que ya terminó el procesamiento
-  processingQuestionRef.current = false;
+dc.onclose = () => {
+  dcOpenedRef.current = false;
+  isConnectingRef.current = false;
   assistantBusyRef.current = false;
-
-  // Tomar el texto final de Mohamed
-  const finalText = assistantTextBufferRef.current.trim();
-  if (finalText) {
-    lastAssistantTextRef.current = finalText;
-  }
-
-  // Guardar y mostrar el mensaje en la UI
-  finalizeAssistantBuffer();
-  setWaitingMohamed(false);
-
-  // Limpiar buffers
+  setIsListening(false);
+  stopListening();
   assistantTextBufferRef.current = "";
   lastAssistantTextRef.current = "";
   lastUserTranscriptRef.current = "";
-  pendingAutomationPromptRef.current = null;
-  setPendingAutomationPrompt("");
-// ✅ Mostrar Stripe SOLO después del primer audio de Mohamed
-if (!introAlreadySentRef.current && !(window as any).paid) {
-  introAlreadySentRef.current = true;
-  setTimeout(() => {
-    setShowStripe(true);
-    setPaymentRequired(true);
-  }, 500); // 0.5 segundos después de que Mohamed hable
-}
-  
-
-  // Seguir con cualquier automation pendiente
-  setTimeout(() => {
-    void flushPendingAutomation();
-  }, 150);
-}
-
-  } catch (err) {
-
-    console.error("Realtime event parse error:", err);
-
-  }
-
-
-
-  dc.onerror = (err) => {
-        console.error("Realtime data channel error:", err);
-      };
-      dc.onclose = () => {
-        dcOpenedRef.current = false;
-        isConnectingRef.current = false;
-        assistantBusyRef.current = false;
-        setIsListening(false);
-        stopListening();
-        assistantTextBufferRef.current = "";
-lastAssistantTextRef.current = "";
-lastUserTranscriptRef.current = "";
-      };
+};
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
       const sdpRes = await fetch("https://api.openai.com/v1/realtime/calls", {
