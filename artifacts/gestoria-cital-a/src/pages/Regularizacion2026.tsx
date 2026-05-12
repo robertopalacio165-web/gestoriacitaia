@@ -1353,10 +1353,9 @@ dc.onmessage = (event) => {
         console.log("✅ USER SAID:", transcript);
 
         const lowerTranscript = transcript.toLowerCase().trim();
-
-        const isOnlyNameStep =
-          questionIndexRef.current === 1 &&
-          !clientQuestionsDone &&
+const isOnlyNameStep =
+  questionIndexRef.current === 1 &&
+  !leadForm.nombre &&
           lowerTranscript.length > 1 &&
           !lowerTranscript.includes("نعم") &&
           !lowerTranscript.includes("لا") &&
@@ -1368,7 +1367,8 @@ dc.onmessage = (event) => {
           console.log("👤 USER NAME ONLY:", transcript);
 
           setClientQuestionsDone(true);
-
+setQuestionIndex(2);
+questionIndexRef.current = 2;
           setTimeout(() => {
 
             speakExactText(
