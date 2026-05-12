@@ -764,7 +764,8 @@ if (next === 5 && !paymentDoneRef.current) {
   }, 1200);
 
   return next;
-  });
+}
+
 };
 
   const updateLeadForm = (field: keyof LeadFormState, value: string) => {
