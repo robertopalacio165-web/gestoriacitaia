@@ -1517,7 +1517,7 @@ if (currentQuestion === 4) {
       }, 150);
 
     }
-
+  };
   } catch (err) {
 
     console.error("Realtime event parse error:", err);
