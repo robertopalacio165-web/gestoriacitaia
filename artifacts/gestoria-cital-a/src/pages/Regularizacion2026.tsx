@@ -1355,7 +1355,7 @@ dc.onmessage = (event) => {
         const lowerTranscript = transcript.toLowerCase().trim();
 
     const isOnlyNameStep =
-  questionIndex === 1 &&
+  questionIndexRef.current === 1 &&
           !clientQuestionsDone &&
           lowerTranscript.length > 1 &&
           !lowerTranscript.includes("نعم") &&
@@ -1380,18 +1380,72 @@ dc.onmessage = (event) => {
           return;
         }
 
-        const normalized = lowerTranscript
-          .replace(/[.,!?¿؟]/g, "")
-          .trim();
+  const normalized = lowerTranscript
+  .replace(/[.,!?¿؟]/g, "")
+  .trim()
+  .toLowerCase();
 
-        if (!questionFlowLockedRef.current) {
+        if (questionFlowLockedRef.current) {
 
+  console.log("🔒 FLOW LOCKED");
+
+  return;
+
+}
+const validAnswers = [
+  "نعم",
+  "لا",
+  "اه",
+  "آه",
+  "ايييه",
+  "اييه",
+  "oui",
+  "non",
+  "yes",
+  "no",
+  "سمي",
+  "اسمي",
+];
+
+const looksLikeGreeting =
+  normalized.includes("سلام") ||
+  normalized.includes("hello") ||
+  normalized.includes("hi") ||
+  normalized.includes("الو");
+
+if (looksLikeGreeting) {
+  console.log("👋 GREETING IGNORED");
+  return;
+}
  const currentQuestion = questionIndexRef.current;
 
           console.log("🔥 CURRENT QUESTION:", currentQuestion);
-if (questionFlowLockedRef.current) {
-  console.log("🔒 FLOW LOCKED");
+
+          const hasValidContent =
+  normalized.length > 1;
+
+if (!hasValidContent) {
+  console.log("⛔ EMPTY ANSWER");
   return;
+}
+        const isShortAnswer =
+  normalized.split(" ").length <= 2;
+
+const isValidShortAnswer =
+  validAnswers.some((a) =>
+    normalized.includes(a)
+  );
+
+if (
+  currentQuestion !== 1 &&
+  isShortAnswer &&
+  !isValidShortAnswer
+) {
+
+  console.log("⛔ INVALID SHORT ANSWER");
+
+  return;
+
 }
           // PREGUNTA 0
           if (currentQuestion === 0) {
