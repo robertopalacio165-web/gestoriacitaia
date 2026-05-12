@@ -1311,9 +1311,9 @@ dc.send(
 وباختصار.
 `,
       modalities: ["audio", "text"],
-   turn_detection: {
+turn_detection: {
   type: "server_vad",
-threshold: 0.75
+  threshold: 0.75,
   prefix_padding_ms: 500,
   silence_duration_ms: 1400,
 },
