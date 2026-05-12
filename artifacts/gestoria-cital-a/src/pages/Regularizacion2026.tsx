@@ -135,11 +135,11 @@ paymentDoneRef.current = true;
     }, 1000);
 
     setTimeout(() => {
-setQuestionIndex(6);
-questionIndexRef.current = 6;
+setQuestionIndex(5);
+
 localStorage.setItem(
   "questionIndex",
-  "6"
+  "5"
 );
 
 speakExactText(
@@ -200,28 +200,14 @@ window.location.href = data.url;
   const [phone, setPhone] = useState("");
   const [questionsDone, setQuestionsDone] = useState(false);
 const [clientQuestionsDone, setClientQuestionsDone] = useState(false);
-const [questionIndex, setQuestionIndex] = useState(() => {
+const [questionIndex, setQuestionIndex] = useState(0);
 
-
-  const saved = localStorage.getItem("questionIndex");
-
-  return saved ? parseInt(saved) : 0;
-
-});
-
-const questionIndexRef = useRef(questionIndex);
-  
-useEffect(() => {
-
-  questionIndexRef.current = questionIndex;
-
-}, [questionIndex]);
 const goNextQuestion = (nextText: string) => {
 
   setQuestionIndex((prev) => {
 
     const next = prev + 1;
-questionIndexRef.current = next;
+
     localStorage.setItem(
       "questionIndex",
       next.toString()
@@ -245,7 +231,7 @@ useEffect(() => {
 
 
   // ✅ Desbloquear sistema completo después pregunta 12
- if (questionIndex >= 10) {
+  if (questionIndex >= 12) {
 
     setDocumentsUnlocked(true);
 
@@ -270,17 +256,6 @@ useEffect(() => {
   const lastProcessedTranscriptRef = useRef("");
 const [clientQuestionIndex, setClientQuestionIndex] = useState(0);
   const [showStripe, setShowStripe] = useState(false);
-  useEffect(() => {
-
-  console.log("QUESTION INDEX =", questionIndex);
-
-}, [questionIndex]);
-
-useEffect(() => {
-
-  console.log("SHOW STRIPE =", showStripe);
-
-}, [showStripe]);
   const [paymentRequired, setPaymentRequired] = useState(false);
 const [step, setStep] = useState(0);
   const [leadForm, setLeadForm] = useState<LeadFormState>({
@@ -311,7 +286,6 @@ const [workflowStepState, setWorkflowStepState] = useState<"questions" | "upload
   const pendingAutomationPromptRef = useRef<string | null>(null);
   const isConnectingRef = useRef(false);
   const assistantBusyRef = useRef(false);
-  const mohamedTalkingRef = useRef(false);
 
   const safeLang = (lang === "darija" || lang === "en" ? lang : "es") as
     | "darija"
@@ -1321,26 +1295,16 @@ dc.onmessage = (event) => {
       msg?.item?.transcript ||
       msg?.item?.content?.[0]?.transcript ||
       "";
-if (
-  (
-    msg.type === "conversation.item.input_audio_transcription.completed" ||
-    msg.type === "input_audio_buffer.transcription.completed"
-  ) &&
-typeof userTranscript === "string" &&
-userTranscript &&
-userTranscript.trim &&
-userTranscript.trim().length > 1
-) {
 
-  if (mohamedTalkingRef.current) {
+    if (
+      (msg.type === "conversation.item.input_audio_transcription.completed" ||
+        msg.type === "input_audio_buffer.transcription.completed") &&
+      typeof userTranscript === "string" &&
+      userTranscript.trim() &&
+      userTranscript.trim().length > 1
+    ) {
 
-    console.log("⛔ Mohamed todavía hablando");
-
-    return;
-
-  }
-
-  const transcript = String(userTranscript || "").trim();
+      const transcript = userTranscript.trim();
 
       const isAssistantEcho =
         transcript.includes("مزيان") ||
@@ -1365,22 +1329,22 @@ userTranscript.trim().length > 1
         console.log("✅ USER SAID:", transcript);
 
         const lowerTranscript = transcript.toLowerCase().trim();
-const isOnlyNameStep =
-  questionIndexRef.current === 1 &&
-  !leadForm.nombre &&
-  (lowerTranscript || "").length > 1 &&
-  !lowerTranscript.includes("نعم") &&
-  !lowerTranscript.includes("لا") &&
-  !lowerTranscript.includes("اه") &&
-  !lowerTranscript.includes("آه");
+
+    const isOnlyNameStep =
+  questionIndex === 1 &&
+          !clientQuestionsDone &&
+          lowerTranscript.length > 1 &&
+          !lowerTranscript.includes("نعم") &&
+          !lowerTranscript.includes("لا") &&
+          !lowerTranscript.includes("اه") &&
+          !lowerTranscript.includes("آه");
 
         if (isOnlyNameStep) {
 
           console.log("👤 USER NAME ONLY:", transcript);
 
           setClientQuestionsDone(true);
-setQuestionIndex(2);
-questionIndexRef.current = 2;
+
           setTimeout(() => {
 
             speakExactText(
@@ -1394,104 +1358,92 @@ questionIndexRef.current = 2;
 
         const normalized = lowerTranscript
           .replace(/[.,!?¿؟]/g, "")
-          .trim()
-          .toLowerCase();
+          .trim();
 
-        if (questionFlowLockedRef.current) {
+        if (!questionFlowLockedRef.current) {
 
-          console.log("🔒 FLOW LOCKED");
+          const currentQuestion = questionIndex;
 
-          return;
+          console.log("🔥 CURRENT QUESTION:", currentQuestion);
 
-        }
+          // PREGUNTA 0
+          if (currentQuestion === 0) {
 
-        const currentQuestion = questionIndexRef.current;
+            goNextQuestion("مزيان. قولي شنو سميتك؟");
 
-        questionIndexRef.current = currentQuestion;
+            return;
+          }
 
-        console.log("🔥 CURRENT QUESTION:", currentQuestion);
+          // PREGUNTA 1
+          if (currentQuestion === 1) {
 
-      if (currentQuestion === 0) {
+            goNextQuestion(
+              "واش بقيتي فإسبانيا خمسة شهور متتالية؟ وشنو هي أول مدينة سكنتي فيها؟"
+            );
 
-  setQuestionIndex(1);
-  questionIndexRef.current = 1;
+            return;
+          }
 
-  speakExactText("مزيان. قولي شنو سميتك؟");
+          // PREGUNTA 2
+          if (currentQuestion === 2) {
 
-  return;
+            goNextQuestion(
+              "واش عندك باسبور مغربي ولا كارت ناسيونال ولا فوتوكوبي ديالهم؟"
+            );
 
-}
+            return;
+          }
 
-if (currentQuestion === 1) {
+          // PREGUNTA 3
+          if (currentQuestion === 3) {
 
-  setQuestionIndex(2);
-  questionIndexRef.current = 2;
+            goNextQuestion(
+              "واش عندك شي ورقة فيها سميتك والتاريخ؟ بحال شهادة السكنى ولا ورقة ديال الطبيب ولا الصبيطار ولا الكراء؟"
+            );
 
-  speakExactText(
-    "واش بقيتي فإسبانيا خمسة شهور متتالية؟ وشنو هي أول مدينة سكنتي فيها؟"
-  );
+            return;
+          }
 
-  return;
+          // PREGUNTA 4 → STRIPE
+          if (currentQuestion === 4) {
 
-}
+            questionFlowLockedRef.current = true;
 
-if (currentQuestion === 2) {
-
-  setQuestionIndex(3);
-  questionIndexRef.current = 3;
-
-  speakExactText(
-    "واش عندك باسبور مغربي ولا كارت ناسيونال ولا فوتوكوبي ديالهم؟"
-  );
-
-  return;
-
-}
-
-if (currentQuestion === 3) {
-
-  speakExactText(
-    "واش عندك شي ورقة فيها سميتك والتاريخ؟ بحال شهادة السكنى ولا ورقة ديال الطبيب ولا الصبيطار ولا الكراء؟"
-  );
-
-  setQuestionIndex(4);
-
-  questionIndexRef.current = 4;
-
-  return;
-
-}
-
-if (currentQuestion === 4) {
-
-  questionFlowLockedRef.current = true;
-
-  const PAYMENT_TEXT = `
+            const PAYMENT_TEXT = `
 مزيان، من خلال الأجوبة ديالك بان ليا بللي الملف ديالك غادي يكون مقبول إن شاء الله.
 
+باش نعطيك تحليل دقيق ونوجد ليك الملف كامل:
+
+التحقق الكامل من الوثائق.
+والوثيقة المهمة اللي غادي تعزز الملف ديالك بزاف.
+
 غير ب 12 أورو.
+
+ورك على زر الأداء ونكملو مباشرة.
 `;
 
-  speakExactText(PAYMENT_TEXT);
+            pushAgentMessage(PAYMENT_TEXT);
 
-  setTimeout(() => {
+            setTimeout(() => {
 
-    setShowStripe(true);
+              speakExactText(PAYMENT_TEXT);
 
-    setPaymentRequired(true);
+            }, 500);
 
-    stopListening();
+            setTimeout(() => {
 
-  }, 20100);
+              setShowStripe(true);
 
-  return;
+              setPaymentRequired(true);
 
-}
+              stopListening();
 
-   
+            }, 3500);
 
+            return;
+          }
+        }
       }
-
     }
 
     if (
@@ -1505,14 +1457,13 @@ if (currentQuestion === 4) {
 
     if (msg.type === "response.created") {
 
- assistantBusyRef.current = true;
-mohamedTalkingRef.current = true;
+      assistantBusyRef.current = true;
       setWaitingMohamed(true);
 
     }
 
     if (msg.type === "response.done") {
- mohamedTalkingRef.current = false;
+
       assistantBusyRef.current = false;
 
       const finalText = assistantTextBufferRef.current.trim();
@@ -1529,7 +1480,9 @@ mohamedTalkingRef.current = true;
 
       setPendingAutomationPrompt("");
 
-    
+      setTimeout(() => {
+        void flushPendingAutomation();
+      }, 150);
 
     }
 
