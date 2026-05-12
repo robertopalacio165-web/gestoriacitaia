@@ -1503,12 +1503,18 @@ if (msg.type === "response.done") {
     void flushPendingAutomation();
   }, 150);
 
-}catch (err) {
-
-  console.error("Realtime event parse error:", err);
-
 }
-      dc.onerror = (err) => {
+
+  } catch (err) {
+
+    console.error("Realtime event parse error:", err);
+
+  }
+
+};
+
+  
+  dc.onerror = (err) => {
         console.error("Realtime data channel error:", err);
       };
       dc.onclose = () => {
