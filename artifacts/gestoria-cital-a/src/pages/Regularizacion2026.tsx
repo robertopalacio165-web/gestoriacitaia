@@ -1364,11 +1364,17 @@ setTimeout(() => {
 dc.onmessage = (event) => {
   // ... tu lógica actual de mensajes
 };
+dc.onerror = (err: any) => {
 
-dc.onerror = (err) => {
+  if (
+    err?.error?.message?.includes("User-Initiated Abort")
+  ) {
+    return;
+  }
+
   console.error("Realtime data channel error:", err);
-};
 
+};
 dc.onclose = () => {
   dcOpenedRef.current = false;
   isConnectingRef.current = false;
