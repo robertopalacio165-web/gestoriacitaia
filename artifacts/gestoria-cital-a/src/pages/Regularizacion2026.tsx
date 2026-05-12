@@ -1438,9 +1438,10 @@ const isValidShortAnswer =
 
 if (
   currentQuestion !== 1 &&
+  currentQuestion !== 4 &&
   isShortAnswer &&
   !isValidShortAnswer
-) {
+)
 
   console.log("⛔ INVALID SHORT ANSWER");
 
