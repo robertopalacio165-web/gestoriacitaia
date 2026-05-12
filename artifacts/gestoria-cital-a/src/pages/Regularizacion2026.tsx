@@ -1396,10 +1396,7 @@ if (
   console.log("🚀 START INTRO");
 
   maybeSendIntroToMohamed();
-  realtimeLocalStreamRef.current
-  ?.getAudioTracks()
-  .forEach(track => track.enabled = false);
-questionFlowLockedRef.current = true;
+
 const introText = `
 السلام عليكم، أنا محمد من هيستوريا سيطا AI. مرحبا بك.
 
@@ -1423,13 +1420,9 @@ setTimeout(() => {
 
   setPaymentRequired(true);
 
-  setTimeout(() => {
+  stopListening();
 
-    stopListening();
-
-    setIsListening(false);
-
-  }, 500);
+  setIsListening(false);
 
 }, estimatedMs);
 
@@ -2088,9 +2081,7 @@ if (
   console.log("⚠️ REALTIME CLOSED - RECONNECTING");
 
   await startListening();
-realtimeLocalStreamRef.current
-  ?.getAudioTracks()
-  .forEach(track => track.enabled = true);
+
   // نستناو يفتح
   await new Promise((resolve) =>
     setTimeout(resolve, 3500)
