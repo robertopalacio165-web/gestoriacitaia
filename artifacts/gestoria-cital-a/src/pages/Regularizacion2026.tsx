@@ -256,6 +256,13 @@ useEffect(() => {
   const lastProcessedTranscriptRef = useRef("");
 const [clientQuestionIndex, setClientQuestionIndex] = useState(0);
   const [showStripe, setShowStripe] = useState(false);
+  useEffect(() => {
+
+  console.log("QUESTION INDEX =", questionIndex);
+
+}, [questionIndex]);
+
+console.log("SHOW STRIPE =", showStripe);
   const [paymentRequired, setPaymentRequired] = useState(false);
 const [step, setStep] = useState(0);
   const [leadForm, setLeadForm] = useState<LeadFormState>({
@@ -1405,7 +1412,7 @@ dc.onmessage = (event) => {
           }
 
           // PREGUNTA 4 → STRIPE
-          if (currentQuestion === 4) {
+    if (currentQuestion >= 4 && !paymentDoneRef.current) {
 
             questionFlowLockedRef.current = true;
 
@@ -1430,15 +1437,19 @@ dc.onmessage = (event) => {
 
             }, 500);
 
-            setTimeout(() => {
+            console.log("🔥 SHOWING STRIPE BUTTON");
 
-              setShowStripe(true);
+setShowStripe(true);
 
-              setPaymentRequired(true);
+setPaymentRequired(true);
 
-              stopListening();
+console.log("🔥 STRIPE STATE TRUE");
 
-            }, 3500);
+setTimeout(() => {
+
+  stopListening();
+
+}, 1000);
 
             return;
           }
