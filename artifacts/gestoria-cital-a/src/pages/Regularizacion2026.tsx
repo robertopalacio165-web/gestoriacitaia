@@ -1047,7 +1047,7 @@ if (typeof result.verification_score === "number") {
 const NAME_QUESTION =
   "مزيان. قولي شنو سميتك؟";
 
-const questions = [
+
 
  const questions = [
 
