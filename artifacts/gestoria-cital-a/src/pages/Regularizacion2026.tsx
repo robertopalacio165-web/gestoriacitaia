@@ -728,7 +728,7 @@ if (questionFlowLockedRef.current) {
     }
 
     // Stripe
-    if (next === 4 && !paymentDoneRef.current) {
+if (next === 3 && !paymentDoneRef.current)
 
       questionFlowLockedRef.current = true;
 
@@ -1321,7 +1321,7 @@ dc.send(
       modalities: ["audio", "text"],
    turn_detection: {
   type: "server_vad",
-  threshold: 0.92,
+threshold: 0.75
   prefix_padding_ms: 500,
   silence_duration_ms: 1400,
 },
@@ -1353,7 +1353,6 @@ dc.onmessage = (event) => {
   try {
     const msg = JSON.parse(event.data);
 
-    const userTranscript =
       msg?.transcript ||
       msg?.item?.transcript ||
       msg?.item?.content?.[0]?.transcript ||
@@ -1370,7 +1369,17 @@ if (
 ) {
 
   const transcript = userTranscript.trim();
+const isAssistantEcho =
+  transcript.includes("مزيان") ||
+  transcript.includes("باش") ||
+  transcript.includes("الملف") ||
+  transcript.includes("الأداء") ||
+  transcript.includes("محمد");
 
+if (isAssistantEcho) {
+  console.log("⛔ ASSISTANT ECHO BLOCKED");
+  return;
+}
 
 
   if (transcript !== lastUserTranscriptRef.current) {
@@ -1432,16 +1441,30 @@ const cleanAnswer = normalized
   .replace(/[.,!?¿؟]/g, "")
   .trim();
 
-const shouldCountQuestion =
-  cleanAnswer === "نعم" ||
-  cleanAnswer === "لا" ||
-  cleanAnswer === "اه" ||
-  cleanAnswer === "آه" ||
-  cleanAnswer === "oui" ||
-  cleanAnswer === "non" ||
-  cleanAnswer === "si" ||
-  cleanAnswer === "no";
+const greetings = [
+  "سلام",
+  "salam",
+  "slm",
+  "hola",
+  "hello",
+  "bonjour",
+  "hey"
+];
 
+const shouldCountQuestion =
+  !greetings.includes(cleanAnswer) &&
+  (
+    cleanAnswer === "نعم" ||
+    cleanAnswer === "لا" ||
+    cleanAnswer === "اه" ||
+    cleanAnswer === "آه" ||
+    cleanAnswer === "oui" ||
+    cleanAnswer === "non" ||
+    cleanAnswer === "si" ||
+    cleanAnswer === "no" ||
+    cleanAnswer === "عندي" ||
+    cleanAnswer === "ما عنديش"
+  );
 
 if (
   shouldCountQuestion &&
