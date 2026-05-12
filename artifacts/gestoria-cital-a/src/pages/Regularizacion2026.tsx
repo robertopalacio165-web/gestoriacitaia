@@ -201,7 +201,7 @@ window.location.href = data.url;
   const [questionsDone, setQuestionsDone] = useState(false);
 const [clientQuestionsDone, setClientQuestionsDone] = useState(false);
 const [questionIndex, setQuestionIndex] = useState(() => {
-  const mohamedTalkingRef = useRef(false);
+
 
   const saved = localStorage.getItem("questionIndex");
 
