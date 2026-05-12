@@ -1412,11 +1412,14 @@ dc.onmessage = (event) => {
             goNextQuestion(
               "واش عندك شي ورقة فيها سميتك والتاريخ؟ بحال شهادة السكنى ولا ورقة ديال الطبيب ولا الصبيطار ولا الكراء؟"
             );
-
+setQuestionIndex(4);
             return;
           }
 
           // PREGUNTA 4 → STRIPE
+          console.log("🔥 CHECK STRIPE");
+console.log("CURRENT QUESTION =", currentQuestion);
+console.log("PAYMENT DONE =", paymentDoneRef.current);
   if (currentQuestion === 4 && !paymentDoneRef.current) {
 
             questionFlowLockedRef.current = true;
