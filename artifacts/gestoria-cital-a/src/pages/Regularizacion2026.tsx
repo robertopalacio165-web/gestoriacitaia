@@ -1476,7 +1476,7 @@ if (currentQuestion === 4) {
 
 }
         
-    
+ }   
 
     if (
       msg.type === "response.output_text.delta" &&
