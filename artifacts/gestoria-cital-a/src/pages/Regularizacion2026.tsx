@@ -311,6 +311,7 @@ const [workflowStepState, setWorkflowStepState] = useState<"questions" | "upload
   const pendingAutomationPromptRef = useRef<string | null>(null);
   const isConnectingRef = useRef(false);
   const assistantBusyRef = useRef(false);
+  const mohamedTalkingRef = useRef(false);
 
   const safeLang = (lang === "darija" || lang === "en" ? lang : "es") as
     | "darija"
@@ -1510,7 +1511,7 @@ mohamedTalkingRef.current = true;
     }
 
     if (msg.type === "response.done") {
-
+ mohamedTalkingRef.current = false;
       assistantBusyRef.current = false;
 
       const finalText = assistantTextBufferRef.current.trim();
