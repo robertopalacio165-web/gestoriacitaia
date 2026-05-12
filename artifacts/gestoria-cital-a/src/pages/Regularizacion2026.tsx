@@ -1377,7 +1377,32 @@ if (
     pushUserMessage(transcript);
 
     console.log("✅ USER SAID:", transcript);
+// ✅ FIRST CLIENT MESSAGE → INTRO + STRIPE
 
+if (
+  !paymentDoneRef.current &&
+  (
+    lowerTranscript.includes("سلام") ||
+    lowerTranscript.includes("salam") ||
+    lowerTranscript.includes("hola") ||
+    lowerTranscript.includes("hello")
+  )
+) {
+
+  console.log("🚀 START INTRO");
+
+  maybeSendIntroToMohamed();
+
+  setTimeout(() => {
+
+    setShowStripe(true);
+
+    setPaymentRequired(true);
+
+  }, 6000);
+
+  return;
+}
 const lowerTranscript = transcript.toLowerCase().trim();
 const normalized = lowerTranscript;
 // ✅ الاسم ما يتحسبش فـ NEXT
