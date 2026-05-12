@@ -201,13 +201,14 @@ window.location.href = data.url;
   const [questionsDone, setQuestionsDone] = useState(false);
 const [clientQuestionsDone, setClientQuestionsDone] = useState(false);
 const [questionIndex, setQuestionIndex] = useState(0);
+  const questionIndexRef = useRef(0);
 
 const goNextQuestion = (nextText: string) => {
 
   setQuestionIndex((prev) => {
 
     const next = prev + 1;
-
+questionIndexRef.current = next;
     localStorage.setItem(
       "questionIndex",
       next.toString()
@@ -1369,7 +1370,7 @@ dc.onmessage = (event) => {
 
         if (!questionFlowLockedRef.current) {
 
-          const currentQuestion = questionIndex;
+ const currentQuestion = questionIndexRef.current;
 
           console.log("🔥 CURRENT QUESTION:", currentQuestion);
 
