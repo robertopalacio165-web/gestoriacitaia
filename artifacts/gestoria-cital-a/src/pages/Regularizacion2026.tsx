@@ -1371,7 +1371,7 @@ GestoriaCitaIA
   }
 };
 
-      };
+  
 dc.onmessage = (event) => {
 
   try {
