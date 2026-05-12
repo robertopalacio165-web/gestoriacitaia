@@ -1438,12 +1438,13 @@ if (currentQuestion === 2) {
 
 if (currentQuestion === 3) {
 
-  setQuestionIndex(4);
-  questionIndexRef.current = 4;
-
   speakExactText(
     "واش عندك شي ورقة فيها سميتك والتاريخ؟ بحال شهادة السكنى ولا ورقة ديال الطبيب ولا الصبيطار ولا الكراء؟"
   );
+
+  setQuestionIndex(4);
+
+  questionIndexRef.current = 4;
 
   return;
 
