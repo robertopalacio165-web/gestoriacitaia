@@ -1418,7 +1418,8 @@ const lowerTranscript = transcript.toLowerCase().trim();
 const normalized = lowerTranscript;
 // ✅ الاسم ما يتحسبش فـ NEXT
 const isOnlyNameStep =
-  questionIndex === 1 &&
+  questionIndex === 0 &&
+  !lastUserTranscriptRef.current &&
   lowerTranscript.length > 1 &&
   !lowerTranscript.includes("نعم") &&
   !lowerTranscript.includes("لا") &&
