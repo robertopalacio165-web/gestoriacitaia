@@ -263,7 +263,11 @@ const [clientQuestionIndex, setClientQuestionIndex] = useState(0);
 
 }, [questionIndex]);
 
-console.log("SHOW STRIPE =", showStripe);
+useEffect(() => {
+
+  console.log("SHOW STRIPE =", showStripe);
+
+}, [showStripe]);
   const [paymentRequired, setPaymentRequired] = useState(false);
 const [step, setStep] = useState(0);
   const [leadForm, setLeadForm] = useState<LeadFormState>({
