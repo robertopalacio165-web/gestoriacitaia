@@ -1508,9 +1508,7 @@ if (msg.type === "response.done") {
 }
 
 // ✅ ESTA LLAVE FALTABA
-}
-
-catch (err) {
+} catch (err) {
 
   console.error("Realtime event parse error:", err);
 
