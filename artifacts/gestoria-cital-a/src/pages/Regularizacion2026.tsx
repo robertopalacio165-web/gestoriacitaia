@@ -1396,7 +1396,7 @@ if (
   console.log("🚀 START INTRO");
 
   maybeSendIntroToMohamed();
-
+questionFlowLockedRef.current = true;
 const introText = `
 السلام عليكم، أنا محمد من هيستوريا سيطا AI. مرحبا بك.
 
@@ -1415,7 +1415,8 @@ const estimatedMs =
 setTimeout(() => {
 
   console.log("✅ INTRO FINISHED");
-
+stopListening();
+setIsListening(false);
   setShowStripe(true);
 
   setPaymentRequired(true);
