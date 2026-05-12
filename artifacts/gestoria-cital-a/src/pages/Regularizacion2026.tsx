@@ -1399,43 +1399,81 @@ dc.onmessage = (event) => {
 
         console.log("🔥 CURRENT QUESTION:", currentQuestion);
 
-        if (currentQuestion === 0) {
+      if (currentQuestion === 0) {
 
-          goNextQuestion("مزيان. قولي شنو سميتك؟");
+  setQuestionIndex(1);
+  questionIndexRef.current = 1;
 
-          return;
+  speakExactText("مزيان. قولي شنو سميتك؟");
 
-        }
+  return;
 
-        if (currentQuestion === 1) {
+}
 
-          goNextQuestion(
-            "واش بقيتي فإسبانيا خمسة شهور متتالية؟ وشنو هي أول مدينة سكنتي فيها؟"
-          );
+if (currentQuestion === 1) {
 
-          return;
+  setQuestionIndex(2);
+  questionIndexRef.current = 2;
 
-        }
+  speakExactText(
+    "واش بقيتي فإسبانيا خمسة شهور متتالية؟ وشنو هي أول مدينة سكنتي فيها؟"
+  );
 
-        if (currentQuestion === 2) {
+  return;
 
-          goNextQuestion(
-            "واش عندك باسبور مغربي ولا كارت ناسيونال ولا فوتوكوبي ديالهم؟"
-          );
+}
 
-          return;
+if (currentQuestion === 2) {
 
-        }
+  setQuestionIndex(3);
+  questionIndexRef.current = 3;
 
-        if (currentQuestion === 3) {
+  speakExactText(
+    "واش عندك باسبور مغربي ولا كارت ناسيونال ولا فوتوكوبي ديالهم؟"
+  );
 
-          goNextQuestion(
-            "واش عندك شي ورقة فيها سميتك والتاريخ؟ بحال شهادة السكنى ولا ورقة ديال الطبيب ولا الصبيطار ولا الكراء؟"
-          );
+  return;
 
-          return;
+}
 
-        }
+if (currentQuestion === 3) {
+
+  setQuestionIndex(4);
+  questionIndexRef.current = 4;
+
+  speakExactText(
+    "واش عندك شي ورقة فيها سميتك والتاريخ؟ بحال شهادة السكنى ولا ورقة ديال الطبيب ولا الصبيطار ولا الكراء؟"
+  );
+
+  return;
+
+}
+
+if (currentQuestion === 4) {
+
+  questionFlowLockedRef.current = true;
+
+  const PAYMENT_TEXT = `
+مزيان، من خلال الأجوبة ديالك بان ليا بللي الملف ديالك غادي يكون مقبول إن شاء الله.
+
+غير ب 12 أورو.
+`;
+
+  speakExactText(PAYMENT_TEXT);
+
+  setTimeout(() => {
+
+    setShowStripe(true);
+
+    setPaymentRequired(true);
+
+    stopListening();
+
+  }, 8000);
+
+  return;
+
+}
 
         if (currentQuestion === 4) {
 
