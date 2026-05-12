@@ -10,7 +10,7 @@ import {
   ArrowRight,
   Bell,
   Volume2,
-  VolumeX, 
+  VolumeX,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { verifyDocument, type VerifyDocumentResult } from "@/lib/verifyDocument";
@@ -110,36 +110,23 @@ function slugifyFileName(name: string) {
 
 export default function Regularizacion2026() {
 
-
-// ✅ الرجوع من Stripe
-useEffect(() => {
+  // ✅ الرجوع من Stripe وكمل السؤال 5
+ useEffect(() => {
 
   const params = new URLSearchParams(window.location.search);
 
   const paid = params.get("paid");
-
-  (window as any).paid = paid === "true";
-
+(window as any).paid = paid;
   if (paid === "true") {
 
-
-
-    paymentDoneRef.current = true;
-
+    console.log("✅ CLIENT PAID");
+paymentDoneRef.current = true;
+    
     setShowStripe(false);
 
     setPaymentRequired(false);
 
     questionFlowLockedRef.current = false;
-
-    const nextIndex = 0;
-
-    setQuestionIndex(nextIndex);
-
-    localStorage.setItem(
-      "questionIndex",
-      nextIndex.toString()
-    );
 
     setTimeout(() => {
 
@@ -148,18 +135,17 @@ useEffect(() => {
     }, 1000);
 
     setTimeout(() => {
+setQuestionIndex(5);
 
-      speakExactText(
-        "مزيان، توصلنا بالأداء ديالك. دابا نبداو بالأسئلة. واش دخلتي لإسبانيا قبل واحد يناير 2026؟"
-      );
+speakExactText(
+  "مزيان، توصلنا بالأداء ديالك. دابا نكملو. السؤال السادس: واش عمرك مشيتي للصبيطار؟ واش عندك شي ورقة فيها سميتك والتاريخ؟"
+);
 
     }, 4000);
 
   }
 
 }, []);
-
-
 
   const handleStripePayment = async () => {
   try {
@@ -209,50 +195,8 @@ window.location.href = data.url;
   const [phone, setPhone] = useState("");
   const [questionsDone, setQuestionsDone] = useState(false);
 const [clientQuestionsDone, setClientQuestionsDone] = useState(false);
-const [questionIndex, setQuestionIndex] = useState(0);
-
-
-
-const goNextQuestion = (nextText: string) => {
-
-  setQuestionIndex((prev) => {
-
-    const next = prev + 1;
-
-    localStorage.setItem(
-      "questionIndex",
-      next.toString()
-    );
-
-
-
-    return next;
-  });
-
-  setTimeout(() => {
-
-    speakExactText(nextText);
-
-  }, 400);
-};
-  // ✅ CONTROL CENTRAL PROFESIONAL
-
-useEffect(() => {
-
-
-
-  // ✅ Desbloquear sistema completo después pregunta 12
-  if (questionIndex >= 12) {
-
-    setDocumentsUnlocked(true);
-
-    setConfirmUnlocked(true);
-
-    setQuestionsDone(true);
-
-  }
-
-}, [questionIndex]);
+  const [questionIndex, setQuestionIndex] = useState(0);
+  
   useEffect(() => {
 
   localStorage.setItem(
@@ -262,13 +206,12 @@ useEffect(() => {
 
 }, [questionIndex]);
   const questionFlowLockedRef = useRef(false);
-  const processingQuestionRef = useRef(false);
   const paymentDoneRef = useRef(false);
   const lastProcessedTranscriptRef = useRef("");
 const [clientQuestionIndex, setClientQuestionIndex] = useState(0);
   const [showStripe, setShowStripe] = useState(false);
   const [paymentRequired, setPaymentRequired] = useState(false);
-const [step, setStep] = useState(0);
+
   const [leadForm, setLeadForm] = useState<LeadFormState>({
     nombre: "",
     telefono: "",
@@ -280,8 +223,8 @@ const [step, setStep] = useState(0);
     asilo: "",
     penales: "",
   });
- 
-const [workflowStepState, setWorkflowStepState] = useState<"questions" | "upload" | "verify" | "done">("questions");
+  const [step, setStep] = useState<"questions" | "upload" | "verify" | "done">("questions");
+
   const { t, lang } = useLang();
   const { toast } = useToast();
 
@@ -514,7 +457,7 @@ const voiceTexts = useMemo(() => ({
             proactiveMessage = `توصلت بـ ${docName}. غادي نراجعو دابا ونشوف واش كلشي مزيان.`;
           }
           setTimeout(() => {
-   
+          console.log("doc received");
           }, 1500);
         }
       )
@@ -726,6 +669,106 @@ if (rawStep) {
   const progressTotal = progressCards.length;
   const allReady = finalFileStatus === "ok";
 
+const handleQuestionFlow = () => {
+
+  if (questionFlowLockedRef.current) return;
+console.log("QUESTION CURRENT:", questionIndex);
+  setQuestionIndex((prev) => {
+
+    const next = prev + 1;
+    console.log("QUESTION NEXT:", next);
+// ✅ بعد أول جواب سول على الاسم بلا NEXT جديد
+if (next === 1) {
+
+  setTimeout(() => {
+
+    speakExactText(NAME_QUESTION);
+
+  }, 400);
+
+  return next;
+}
+    console.log("NEXT:", next);
+
+    // السؤال الرابع -> يخرج Stripe
+    if (next === 5 && !paymentDoneRef.current) {
+
+      questionFlowLockedRef.current = true;
+
+      const PAYMENT_TEXT = `
+مزيان، من خلال الأجوبة ديالك بان ليا بللي الملف ديالك غادي يكون مقبول إن شاء الله ✅
+
+باش نعطيك تحليل دقيق ونوجد ليك الملف كامل:
+
+✔️ تحليل كامل
+✔️ 100 fi 100 التحقق من الوثائق
+✔️ الوثيقة المهمة اللي غادي تعزز الملف ديالك بزاف
+
+غير ب 12 أورو
+
+ورك على زر الأداء ونكملو مباشرة.
+`;
+pushAgentMessage(PAYMENT_TEXT);
+      
+      console.log("SHOWING STRIPE BUTTON");
+
+      setPaymentRequired(true);
+
+      assistantBusyRef.current = true;
+
+      pendingAutomationPromptRef.current = null;
+
+      setTimeout(() => {
+        speakExactText(PAYMENT_TEXT);
+      }, 300);
+
+   const stripeWatcher = setInterval(() => {
+
+  // Mohamed terminó de hablar
+  if (!assistantBusyRef.current) {
+
+    clearInterval(stripeWatcher);
+
+    console.log("✅ MOHAMED FINISHED TALKING");
+
+    setShowStripe(true);
+
+    stopListening();
+
+    setIsListening(false);
+
+  }
+
+}, 300);
+
+// ❌ ما نفتحوش الوثائق هنا
+setQuestionsDone(false);
+
+      return next;
+    }
+if (next >= questions.length - 1) {
+
+  setDocumentsUnlocked(true);
+
+  setConfirmUnlocked(true);
+
+  setQuestionsDone(true);
+
+  setTimeout(() => {
+
+    speakExactText(`
+دابا خاصك ترفع جميع الوثائق اللي عندك.
+
+من بعد ما تسالي رفع الوثائق كاملة،
+ورك على زر التحقق من الوثائق باش نراجعهم ليك كاملين.
+    `);
+
+  }, 1000);
+
+}
+    return next;
+  });
+};
 
   const updateLeadForm = (field: keyof LeadFormState, value: string) => {
     setLeadForm((prev) => ({ ...prev, [field]: value }));
@@ -918,7 +961,7 @@ if (typeof result.verification_score === "number") {
         return false;
       }
       
-   
+      console.log("🎤 askMohamedToSpeak llamado:", instruction);
       setWaitingMohamed(true);
       assistantTextBufferRef.current = "";
       
@@ -933,7 +976,7 @@ if (typeof result.verification_score === "number") {
           },
         })
       );
-  
+      console.log("✅ conversation.item.create enviado");
       
       // ✅ SEGUNDO mensaje: FORZAR respuesta CON instructions
       realtimeDcRef.current.send(
@@ -945,7 +988,8 @@ if (typeof result.verification_score === "number") {
 },
         })
       );
- 
+      console.log("✅ response.create enviado con instructions");
+      
       return true;
     } catch (error) {
       console.error("❌ Error en askMohamedToSpeak:", error);
@@ -966,7 +1010,7 @@ if (typeof result.verification_score === "number") {
       return;
     }
     
-  
+    console.log("🚀 ENVIANDO DIRECTAMENTE (sin verificar busy):", prompt);
     
     // ✅ ENVÍO DIRECTO SIN VERIFICAR assistantBusyRef
     try {
@@ -980,7 +1024,7 @@ if (typeof result.verification_score === "number") {
           },
         })
       );
-   
+      console.log("✅ Item creado, enviando response.create...");
       
       realtimeDcRef.current.send(
         JSON.stringify({
@@ -990,39 +1034,12 @@ if (typeof result.verification_score === "number") {
 }
         })
       );
-   
+      console.log("✅ response.create enviado - Mohamed DEBERÍA hablar");
       
       // Limpiar después de enviar
       pendingAutomationPromptRef.current = null;
       setPendingAutomationPrompt("");
       setWaitingMohamed(false);
-      if (
-  !(window as any).paid &&
-  !introAlreadySentRef.current
-) {
-
-  introAlreadySentRef.current = true;
-
-  setTimeout(() => {
-
-    maybeSendIntroToMohamed();
-
-  }, 1000);
-
-}
-      assistantTextBufferRef.current = "";
-
-lastAssistantTextRef.current = "";
-
-lastUserTranscriptRef.current = "";
-
-processingQuestionRef.current = false;
-      if (
-  !(window as any).paid &&
-  !showStripe
-) {
-
-}
     } catch (error) {
       console.error("❌ Error enviando:", error);
     }
@@ -1070,15 +1087,25 @@ const questions = [
 
 ];
 
+ const maybeSendIntroToMohamed = async () => {
+  if (!realtimeDcRef.current) return;
 
+  realtimeDcRef.current.send(
+    JSON.stringify({
+      type: "response.create",
+      response: {
+        modalities: ["audio", "text"],
+        instructions: `
+السلام عليكم، أنا محمد من GestoriaCitaIA. مرحبا بك.
 
+غادي نطرح عليك شوية ديال الأسئلة، وجاوبني غير بآه ولا لا.
 
-
-
-  // ✅ من بعد يخرج Stripe مباشرة
-
-
- 
+واش دخلتي لإسبانيا قبل واحد يناير 2026؟
+        `
+      },
+    })
+  );
+};
 
   const stopListening = () => {
     try {
@@ -1209,8 +1236,6 @@ GestoriaCitaIA
  body: JSON.stringify({ assistant: "mohamed" }),
 });
       const sessionData = await sessionRes.json();
-
-
       if (!sessionRes.ok) {
         throw new Error(sessionData?.error || "Error creando sesión realtime");
       }
@@ -1247,131 +1272,239 @@ GestoriaCitaIA
       for (const track of localStream.getTracks()) {
         pc.addTrack(track, localStream);
       }
-// Inicialización del data channel
-const dc = pc.createDataChannel("oai-events");
-realtimeDcRef.current = dc;
-
-// 🔹 Función onopen corregida con async
-dc.onopen = async () => {
-  try {
-    console.log("✅ DC OPEN");
-
-    dcOpenedRef.current = true;
-    isConnectingRef.current = false;
-    setIsListening(true);
-    setWaitingMohamed(false);
-
-    // Configuración inicial de la sesión
-    dc.send(JSON.stringify({
-      type: "session.update",
-      session: {
-        instructions: `
+      const dc = pc.createDataChannel("oai-events");
+      realtimeDcRef.current = dc;
+      dc.onopen = async () => {
+        dcOpenedRef.current = true;
+        isConnectingRef.current = false;
+        setIsListening(true);
+        setWaitingMohamed(false);
+dc.send(
+  JSON.stringify({
+    type: "session.update",
+    session: {
+    instructions: `
 أنت محمد من GestoriaCitaIA.
 
-تكلم فقط بالدارجة المغربية.
-جاوب باختصار.
-ممنوع تعاود الترحيب كل مرة.
+ممنوع تبدأ الحوار من جديد.
 ممنوع تقول:
-أنا محمد
-مرحبا
-السلام عليكم
+"غنعاود من الأول"
+أو
+"أنا محمد"
+أو
+"مرحبا"
 إلا فالبداية الأولى فقط.
-ممنوع تعاود نفس السؤال مرتين.
-        `,
-        modalities: ["audio", "text"],
-        input_audio_transcription: {
-          model: "gpt-4o-mini-transcribe",
-        },
-        turn_detection: {
-          type: "server_vad",
-          threshold: 0.45,
-          prefix_padding_ms: 900,
-          silence_duration_ms: 2600,
-        },
-      },
-    }));
 
-if (!introAlreadySentRef.current && !(window as any).paid) {
-  introAlreadySentRef.current = true;
+ممنوع تعاود أي سؤال سبق تسول.
+
+جاوب فقط بالجملة المطلوبة.
+
+إلا كان السؤال الحالي هو:
+"واش دخلتي لإسبانيا قبل من واحد يناير 2026؟"
+
+فلا تقل أي مقدمة أخرى.
+
+تكلم فقط بالدارجة المغربية.
+وباختصار.
+`,
+      modalities: ["audio", "text"],
+   turn_detection: {
+  type: "server_vad",
+  threshold: 0.92,
+  prefix_padding_ms: 500,
+  silence_duration_ms: 1400,
+},
+    },
+  })
+);
+
+     
+        const capturedPending = pendingAutomationPromptRef.current;
+        if (capturedPending) {
+          pendingAutomationPromptRef.current = null;
+          setPendingAutomationPrompt("");
+          setTimeout(() => {
+            void askMohamedToSpeak(capturedPending);
+          }, 400);
+          return;
+        }
+     if (!(window as any).paid) {
 
   setTimeout(() => {
+
+    void maybeSendIntroToMohamed();
+
+  }, 500);
+
+}  
+      };
+dc.onmessage = (event) => {
+  try {
+    const msg = JSON.parse(event.data);
+
+    const userTranscript =
+      msg?.transcript ||
+      msg?.item?.transcript ||
+      msg?.item?.content?.[0]?.transcript ||
+      "";
+
+if (
+  (
+    msg.type === "conversation.item.input_audio_transcription.completed" ||
+    msg.type === "input_audio_buffer.transcription.completed"
+  ) &&
+  typeof userTranscript === "string" &&
+  userTranscript.trim() &&
+  userTranscript.trim().length > 1
+) {
+
+  const transcript = userTranscript.trim();
+
+
+
+  if (transcript !== lastUserTranscriptRef.current) {
+
+    lastUserTranscriptRef.current = transcript;
+
+    setLastUserTranscript(transcript);
+
+    pushUserMessage(transcript);
+
+    console.log("✅ USER SAID:", transcript);
+
+const lowerTranscript = transcript.toLowerCase().trim();
+const normalized = lowerTranscript;
+// ✅ الاسم ما يتحسبش فـ NEXT
+const isOnlyNameStep =
+  questionIndex === 1 &&
+  lowerTranscript.length > 1 &&
+  !lowerTranscript.includes("نعم") &&
+  !lowerTranscript.includes("لا") &&
+  !lowerTranscript.includes("اه") &&
+  !lowerTranscript.includes("آه");
+
+if (isOnlyNameStep) {
+
+  console.log("👤 USER NAME ONLY:", transcript);
+
+  setTimeout(() => {
+
     speakExactText(
-      "السلام عليكم، أنا محمد. قبل ما نبدا التحليل الكامل خاص الأداء."
+   "مزيان. واش بقيتي في إسبانيا لمدة ديال خمسة أشهر متتالية؟ وشنو هي أول مدينة سكنتي فيها؟"
     );
-    // ✅ No tocar Stripe ni setPaymentRequired aquí
-  }, 2000);
+
+  }, 500);
+
+
+
+  return;
 }
 
-    // ✅ AUTOMATION pendiente
-    const capturedPending = pendingAutomationPromptRef.current;
-    if (capturedPending) {
-      pendingAutomationPromptRef.current = null;
-      setPendingAutomationPrompt("");
-      setTimeout(() => {
-        void askMohamedToSpeak(capturedPending);
-      }, 400);
-      return;
-    }
+// ❌ ما نحسبوش الاسم والبداية
+const validAnswers = [
+  "نعم",
+  "لا",
+  "اه",
+  "آه",
+  "ايييه",
+  "ايوه",
+  "oui",
+  "non",
+  "si",
+  "no",
+  "kayna",
+  "makaynach",
+  "عندي",
+  "ما عنديش"
+];
+const cleanAnswer = normalized
+  .replace(/[.,!?¿؟]/g, "")
+  .trim();
 
-    // 🔹 WebRTC con OpenAI
-    const offer = await pc.createOffer();
-    await pc.setLocalDescription(offer);
+const shouldCountQuestion =
+  validAnswers.some(word =>
+    cleanAnswer.includes(word)
+  );
 
-    const sdpRes = await fetch("https://api.openai.com/v1/realtime/calls", {
-      method: "POST",
-      body: offer.sdp,
-      headers: {
-        Authorization: `Bearer ${ephemeralKey}`,
-        "Content-Type": "application/sdp",
-      },
-    });
+if (
+  shouldCountQuestion &&
+  !questionFlowLockedRef.current
+) {
+  handleQuestionFlow();
+}
 
-    if (!sdpRes.ok) {
-      const errText = await sdpRes.text();
-      throw new Error(errText || "Error negociando WebRTC con OpenAI");
-    }
-
-    const answerSdp = await sdpRes.text();
-    await pc.setRemoteDescription({ type: "answer", sdp: answerSdp });
-
-  } catch (error) {
-    console.error("Error iniciando realtime Mohamed:", error);
-    stopListening();
-    toast({
-      title: "Error realtime",
-      description: error?.message || voiceTexts.realtimeError,
-      variant: "destructive",
-    });
-  } finally {
-    isConnectingRef.current = false;
-  }
-};
-
-// 🔹 onmessage, onerror, onclose se mantienen igual
-dc.onmessage = (event) => {
-  // ... tu lógica actual de mensajes
-};
-dc.onerror = (err: any) => {
-
-  if (
-    err?.error?.message?.includes("User-Initiated Abort")
-  ) {
-    return;
   }
 
-  console.error("Realtime data channel error:", err);
+}
 
-};
-dc.onclose = () => {
-  dcOpenedRef.current = false;
-  isConnectingRef.current = false;
+if (
+  msg.type === "response.output_text.delta" &&
+  typeof msg.delta === "string"
+) {
+
+  assistantTextBufferRef.current += msg.delta;
+
+}
+
+if (
+  msg.type === "response.output_text.done" &&
+  typeof msg.text === "string" &&
+  msg.text.trim()
+) {
+
+  assistantTextBufferRef.current = msg.text.trim();
+
+}
+
+if (msg.type === "response.created") {
+
+  assistantBusyRef.current = true;
+  setWaitingMohamed(true);
+
+}
+
+if (msg.type === "response.done") {
+
   assistantBusyRef.current = false;
-  setIsListening(false);
-  stopListening();
-  assistantTextBufferRef.current = "";
-  lastAssistantTextRef.current = "";
-  lastUserTranscriptRef.current = "";
+
+  const finalText = assistantTextBufferRef.current.trim();
+
+  if (finalText) {
+    lastAssistantTextRef.current = finalText;
+  }
+
+  finalizeAssistantBuffer();
+
+  setWaitingMohamed(false);
+
+  pendingAutomationPromptRef.current = null;
+  setPendingAutomationPrompt("");
+
+  setTimeout(() => {
+    void flushPendingAutomation();
+  }, 150);
+
+}
+
+  } catch (err) {
+
+    console.error("Realtime event parse error:", err);
+
+  }
 };
+      dc.onerror = (err) => {
+        console.error("Realtime data channel error:", err);
+      };
+      dc.onclose = () => {
+        dcOpenedRef.current = false;
+        isConnectingRef.current = false;
+        assistantBusyRef.current = false;
+        setIsListening(false);
+        stopListening();
+        assistantTextBufferRef.current = "";
+lastAssistantTextRef.current = "";
+lastUserTranscriptRef.current = "";
+      };
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
       const sdpRes = await fetch("https://api.openai.com/v1/realtime/calls", {
@@ -1404,7 +1537,7 @@ dc.onclose = () => {
 const speakExactText = async (text: string) => {
   if (!text.trim()) return;
 
-
+  console.log("🔊 REALTIME ONLY:", text);
 
   pendingAutomationPromptRef.current = text;
 
@@ -1431,7 +1564,6 @@ const speakFromAutomation = async (text: string) => {
     }
   }, [muted]);
 
-  
   const handleSaveLeadForm = async () => {
     if (!leadFormReady) {
       toast({
@@ -1453,18 +1585,7 @@ const savedIndex = localStorage.getItem("questionIndex");
 if (savedIndex) {
   setQuestionIndex(parseInt(savedIndex));
 }
-
-    // Mostrar Stripe después de la intro sin cerrar el micro
-useEffect(() => {
-  if (introAlreadySentRef.current && !(window as any).paid) {
-    const timeout = setTimeout(() => {
-      setShowStripe(true);
-      setPaymentRequired(true);
-    }, 1000); // 1 segundo después de hablar
-
-    return () => clearTimeout(timeout);
-  }
-}, [introAlreadySentRef.current]);
+    
     if (!currentUserId) {
       toast({
         title: "Sesión no detectada",
@@ -1656,7 +1777,7 @@ useEffect(() => {
 
   // ✅ CAMBIO #3: handleGeneralUpload con setTimeout para speakExactText
 const handleGeneralUpload = () => {
-
+  console.log("CLICK WORKING");
 
   const input = document.createElement("input");
   input.type = "file";
@@ -1899,7 +2020,7 @@ if (
   realtimeDcRef.current.readyState !== "open"
 ) {
 
-
+  console.log("⚠️ REALTIME CLOSED - RECONNECTING");
 
   await startListening();
 
@@ -1915,7 +2036,7 @@ if (
   realtimeDcRef.current.readyState === "open"
 ) {
 
-
+  console.log("✅ VERIFY SPEECH START");
 
   await speakFromAutomation(fullSpeech);
 // 🔥 رجع الميكروفون يخدم
@@ -2025,16 +2146,11 @@ setTimeout(() => {
               </div>
               <div className="absolute bottom-3 left-0 right-0 flex justify-center">
                 <button
-onClick={() => {
+            onClick={() => {
 
-  if (paymentRequired && !(window as any).paid) {
-    setShowStripe(true);
-    return;
-  }
+if (paymentRequired || documentsUnlocked) return;
 
-  isListening
-    ? stopListening()
-    : startListening();
+  isListening ? stopListening() : startListening();
 
 }}
                   className={`w-12 h-12 rounded-full border flex items-center justify-center backdrop-blur-md transition-colors ${
@@ -2056,7 +2172,7 @@ onClick={() => {
               <div className="p-4 border-b border-white/10">
                 <button
                   onClick={isListening ? stopListening : startListening}
-     disabled={!voiceSupported}
+          disabled={!voiceSupported || (paymentRequired && !paymentDoneRef.current)}
                   className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary hover:bg-primary/90 disabled:opacity-50 text-primary-foreground font-bold text-sm px-4 py-3 transition-colors"
                   type="button"
                 >
@@ -2082,7 +2198,46 @@ onClick={() => {
                     {ui.listening}
                   </p>
                 )}
+       {showStripe && (
 
+  <div className="fixed inset-0 z-[99999] bg-black/90 backdrop-blur-md flex items-center justify-center px-6">
+
+    <div className="w-full max-w-md rounded-3xl bg-zinc-950 border border-white/10 p-6 text-center shadow-2xl">
+
+      <h2 className="text-2xl font-bold text-white mb-4">
+        ✅ الملف ديالك مؤهل
+      </h2>
+
+      <p className="text-white/70 text-sm leading-relaxed mb-6">
+        باش نكملو التحليل الكامل ونوجدولك الوثائق المهمة،
+        خاصك تكمل الأداء دابا.
+      </p>
+
+      <button
+        onClick={handleStripePayment}
+        type="button"
+        className="
+          w-full
+          rounded-2xl
+          py-4
+          text-lg
+          font-bold
+          text-white
+          bg-gradient-to-r
+          from-emerald-500
+          to-green-600
+          hover:scale-[1.02]
+          transition-all
+        "
+      >
+        💳 الأداء الآن — 12€
+      </button>
+
+    </div>
+
+  </div>
+
+)}
               </div>
               <div className="p-4 space-y-4">
                 <div>
