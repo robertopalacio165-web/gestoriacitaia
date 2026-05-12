@@ -689,18 +689,18 @@ if (rawStep) {
 
 const handleQuestionFlow = () => {
 
-  // ✅ هنا بالضبط
+  // منع التكرار
   if (processingQuestionRef.current) return;
 
   processingQuestionRef.current = true;
 
-if (questionFlowLockedRef.current) {
+  // إذا Stripe واقف الأسئلة
+  if (questionFlowLockedRef.current) {
 
-  processingQuestionRef.current = false;
+    processingQuestionRef.current = false;
 
-  return;
-
-}
+    return;
+  }
 
   console.log("QUESTION CURRENT:", questionIndex);
 
@@ -719,55 +719,88 @@ if (questionFlowLockedRef.current) {
 
       }, 400);
 
-      // ✅ هنا قبل return
       setTimeout(() => {
+
         processingQuestionRef.current = false;
+
       }, 1200);
 
       return next;
     }
-    // Stripe
-// Stripe
-    // Stripe
-if (next === 5 && !paymentDoneRef.current) {
 
-  questionFlowLockedRef.current = true;
+    // Stripe
+    if (next === 5 && !paymentDoneRef.current) {
 
-  const PAYMENT_TEXT = `
-مزيان، من خلال الأجوبة ديالك...
+      questionFlowLockedRef.current = true;
+
+      const PAYMENT_TEXT = `
+مزيان، من خلال الأجوبة ديالك باين باللي الملف ديالك عندو فرصة مزيانة فالتسوية الجماعية.
+
+دابا خاص غير الأداء باش نكملو التحليل الكامل ديال الملف ونوجدولك الوثائق المهمة.
 `;
 
-  pushAgentMessage(PAYMENT_TEXT);
+      pushAgentMessage(PAYMENT_TEXT);
 
-  setPaymentRequired(true);
+      setPaymentRequired(true);
 
-  setTimeout(() => {
+      setTimeout(() => {
 
-    speakExactText(PAYMENT_TEXT);
+        speakExactText(PAYMENT_TEXT);
 
-  }, 300);
+      }, 300);
 
-  setTimeout(() => {
+      setTimeout(() => {
 
-    setShowStripe(true);
+        setShowStripe(true);
 
-    stopListening();
+        stopListening();
 
-    setIsListening(false);
+        setIsListening(false);
 
-  }, 2500);
+      }, 2500);
 
-  setTimeout(() => {
+      setTimeout(() => {
 
-    processingQuestionRef.current = false;
+        processingQuestionRef.current = false;
 
-  }, 1200);
+      }, 1200);
 
-  return next;
-}
+      return next;
+    }
 
+    // باقي الأسئلة
+    const nextQuestion = questions[next - 1];
 
+    if (nextQuestion) {
 
+      setTimeout(() => {
+
+        speakExactText(nextQuestion);
+
+      }, 500);
+    }
+
+    // فتح الوثائق بعد السؤال 12
+    if (next >= 12) {
+
+      setDocumentsUnlocked(true);
+
+      setConfirmUnlocked(true);
+
+      setQuestionsDone(true);
+    }
+
+    setTimeout(() => {
+
+      processingQuestionRef.current = false;
+
+    }, 1200);
+
+    return next;
+
+  });
+
+};
   const updateLeadForm = (field: keyof LeadFormState, value: string) => {
     setLeadForm((prev) => ({ ...prev, [field]: value }));
   };
