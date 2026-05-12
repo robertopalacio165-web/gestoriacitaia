@@ -1392,113 +1392,60 @@ dc.onmessage = (event) => {
   return;
 
 }
-const validAnswers = [
-  "نعم",
-  "لا",
-  "اه",
-  "آه",
-  "ايييه",
-  "اييه",
-  "oui",
-  "non",
-  "yes",
-  "no",
-  "سمي",
-  "اسمي",
-];
 
-const looksLikeGreeting =
-  normalized.includes("سلام") ||
-  normalized.includes("hello") ||
-  normalized.includes("hi") ||
-  normalized.includes("الو");
-
-if (looksLikeGreeting) {
-  console.log("👋 GREETING IGNORED");
-  return;
-}
  const currentQuestion = questionIndexRef.current;
 questionIndexRef.current = currentQuestion;
           console.log("🔥 CURRENT QUESTION:", currentQuestion);
 
-          const hasValidContent =
-  normalized.length > 1;
+ if (currentQuestion === 0) {
 
-if (!hasValidContent) {
-  console.log("⛔ EMPTY ANSWER");
+  goNextQuestion("مزيان. قولي شنو سميتك؟");
+
   return;
-}
-        const isShortAnswer =
-  normalized.split(" ").length <= 2;
 
-const isValidShortAnswer =
-  validAnswers.some((a) =>
-    normalized.includes(a)
+}
+
+if (currentQuestion === 1) {
+
+  goNextQuestion(
+    "واش بقيتي فإسبانيا خمسة شهور متتالية؟ وشنو هي أول مدينة سكنتي فيها؟"
   );
 
-if (
-  currentQuestion !== 1 &&
-  currentQuestion !== 4 &&
-  isShortAnswer &&
-  !isValidShortAnswer
-)
+  return;
 
-  console.log("⛔ INVALID SHORT ANSWER");
+}
+
+if (currentQuestion === 2) {
+
+  goNextQuestion(
+    "واش عندك باسبور مغربي ولا كارت ناسيونال ولا فوتوكوبي ديالهم؟"
+  );
 
   return;
 
 }
-          // PREGUNTA 0
-          if (currentQuestion === 0) {
 
-            goNextQuestion("مزيان. قولي شنو سميتك؟");
+if (currentQuestion === 3) {
 
-            return;
-          }
+  goNextQuestion(
+    "واش عندك شي ورقة فيها سميتك والتاريخ؟ بحال شهادة السكنى ولا ورقة ديال الطبيب ولا الصبيطار ولا الكراء؟"
+  );
 
-          // PREGUNTA 1
-          if (currentQuestion === 1) {
+  return;
 
-            goNextQuestion(
-              "واش بقيتي فإسبانيا خمسة شهور متتالية؟ وشنو هي أول مدينة سكنتي فيها؟"
-            );
+}
 
-            return;
-          }
+if (currentQuestion === 4) {
 
-          // PREGUNTA 2
-          if (currentQuestion === 2) {
+  questionFlowLockedRef.current = true;
 
-            goNextQuestion(
-              "واش عندك باسبور مغربي ولا كارت ناسيونال ولا فوتوكوبي ديالهم؟"
-            );
+  setQuestionIndex(5);
 
-            return;
-          }
+  questionIndexRef.current = 5;
 
-          // PREGUNTA 3
-          if (currentQuestion === 3) {
+  localStorage.setItem("questionIndex", "5");
 
-            goNextQuestion(
-              "واش عندك شي ورقة فيها سميتك والتاريخ؟ بحال شهادة السكنى ولا ورقة ديال الطبيب ولا الصبيطار ولا الكراء؟"
-            );
-
-            return;
-          }
-
-          // PREGUNTA 4 → STRIPE
-          console.log("🔥 CHECK STRIPE");
-console.log("CURRENT QUESTION =", currentQuestion);
-console.log("PAYMENT DONE =", paymentDoneRef.current);
-if (
-  currentQuestion === 4 &&
-  !paymentDoneRef.current &&
-  !questionFlowLockedRef.current
-)
-
-            questionFlowLockedRef.current = true;
-
-            const PAYMENT_TEXT = `
+  const PAYMENT_TEXT = `
 مزيان، من خلال الأجوبة ديالك بان ليا بللي الملف ديالك غادي يكون مقبول إن شاء الله.
 
 باش نعطيك تحليل دقيق ونوجد ليك الملف كامل:
@@ -1511,25 +1458,23 @@ if (
 ورك على زر الأداء ونكملو مباشرة.
 `;
 
-            pushAgentMessage(PAYMENT_TEXT);
-speakExactText(PAYMENT_TEXT);
-setTimeout(() => {
+  pushAgentMessage(PAYMENT_TEXT);
 
-  console.log("🔥 SHOWING STRIPE BUTTON");
+  speakExactText(PAYMENT_TEXT);
 
-  setShowStripe(true);
+  setTimeout(() => {
 
-  setPaymentRequired(true);
+    setShowStripe(true);
 
-  console.log("🔥 STRIPE STATE TRUE");
+    setPaymentRequired(true);
 
-  stopListening();
+    stopListening();
 
-}, 20000);
-return;
+  }, 12000);
 
-     
-          }
+  return;
+
+}
         
     
 
