@@ -1295,20 +1295,19 @@ if (!introAlreadySentRef.current && !(window as any).paid) {
 
   introAlreadySentRef.current = true;
 
+setTimeout(() => {
+  speakExactText(
+    "السلام عليكم، أنا محمد. قبل ما نبدا التحليل الكامل خاص الأداء."
+  );
+
+  // Mostrar Stripe sin detener el micro
   setTimeout(() => {
+    setShowStripe(true);
+    setPaymentRequired(true);
+    // NO llamar a stopListening()
+  }, 4000);
 
-    speakExactText(
-      "السلام عليكم، أنا محمد. قبل ما نبدا التحليل الكامل خاص الأداء."
-    );
-
-    setTimeout(() => {
-
-setShowStripe(true);
-setPaymentRequired(true);
- 
-    }, 4000);
-
-  }, 2000);
+}, 2000);
 
 }
 
