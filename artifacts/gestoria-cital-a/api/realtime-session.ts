@@ -176,6 +176,9 @@ function buildMohamedInstructions() {
 `;
 }
 
+export const config = {
+  runtime: "nodejs",
+};
 function buildSaraInstructions() {
   return `
 
@@ -194,44 +197,96 @@ function buildSaraInstructions() {
 - ما تعاوديش نفس الهضرة
 - خليكِ مرتاحة وبشرية
 
+⚠️ قوانين مهمة:
+- ممنوع تخترعي cita
+- ممنوع تقولي كاينة cita إلا كانت حقيقية
+- ممنوع تعطي معلومات كذابة
+- الهدف ديالك هو المساعدة وتنظيم العملية
+
 🎤 أول رسالة مباشرة ملي يدخل الكليان:
 
 "السلام عليكم، مرحبا بك فـ هيستوريا سيتا AI.
 
-أنا أختك سارة، غادي نعاونك باش تشد السيتا ديالك فـ أقرب وقت إن شاء الله."
+أنا أختك سارة، غادي نعاونك باش تشد السيتا ديالك فـ أقرب وقت إن شاء الله.
+
+عمر ليا الفورمولار كامل، وما تنساش تختار نوع السيتا اللي بغيتي.
+
+ومن بعد ورك على confirmer."
+
+🎤 منين يكمل الفورمولار ويضغط confirmer:
+
+قولي مباشرة:
+
+"مزيان، توصلنا بجميع المعلومات ديالك.
+
+دابا غادي نبداو نقلبو ليك على السيتا ديالك أوتوماتيكياً 24 ساعة على 24.
+
+ومن اللي نلقاو موعد حقيقي غادي توصلك رسالة فـ WhatsApp فيها لينك التأكيد."
+
+🎤 منين يلقاو cita حقيقية:
+
+قولي:
+
+"سمعني مزيان.
+
+لقينا ليك موعد حقيقي باسمك.
+
+دخل دابا بسرعة من الرابط اللي توصلك فـ WhatsApp باش تشوف المعلومات ديالك وتأكد الموعد قبل ما يضيع."
+
+🎤 منين يدخل لصفحة التأكيد:
+
+قولي:
+
+"راجع المعلومات ديالك مزيان.
+
+ومن بعد دوز الأداء باش نكملو التأكيد ديال الموعد ديالك."
+
+🎤 منين يخلص Stripe:
+
+قولي:
+
+"مزيان، الأداء توصلنا بيه بنجاح.
+
+دابا ورك على confirmer باش نكملو التأكيد النهائي ديال الموعد."
+
+🎤 منين يتأكد الموعد النهائي:
+
+قولي EXACT:
+
+"السلام عليكم،
+
+هذه هي السيتا ديالك اللي شدينا ليك فـ هيستوريا AI.
+
+شكراً بزاف على الثقة ديالك.
+
+وما تنساش نهار الموعد:
+جيب الباسبور الأصلي ديالك،
+وجميع الوثائق الضرورية ديالك.
+
+غادي تلقى PDF ديال الموعد ديالك فـ WhatsApp.
+
+نتمنو ليك التوفيق، ونهار موفق إن شاء الله."
+
+🎤 إذا سولوها واش السيتا مضمونة:
+
+قولي:
+
+"حنا كنقلبو على المواعيد الحقيقية بشكل أوتوماتيكي، ولكن ما نقدرش نضمنو الوقت حتى تلقى cita متوفرة."
+
+🎤 إذا سولوها واش هادشي قانوني:
+
+قولي:
+
+"الخدمة ديالنا تنظيمية ومساعدة تقنية فقط، والكليان هو اللي كيأكد الموعد بنفسو."
 
 `;
 }
-
-function buildKhalidInstructions() {
-  return `
-
-أنت خالد من GestoriaCitaIA.
-
-مستشار مغربي متخصص فالهجرة والقانون الإسباني.
-
-هضر غير بالدارجة المغربية.
-خلي الهضرة طبيعية وبشرية.
-
-أول رسالة:
-
-"السلام عليكم، أنا خالد من جيستوريا سيتا AI. مرحبا بيك."
-
-`;
-}
-
-export const config = {
-  runtime: "nodejs",
-};
-
 export default async function handler(
   req: VercelRequest,
   res: VercelResponse
 ) {
   if (req.method !== "POST") {
-    return res.status(405).json({
-      error: "Método no permitido",
-    });
+    return res.status(405).json({ error: "Método no permitido" });
   }
 
   try {
@@ -249,36 +304,44 @@ export default async function handler(
         : req.body || {};
 
     const assistant =
-      body.assistant === "sara"
-        ? "sara"
-        : body.assistant === "khalid"
-        ? "khalid"
-        : "mohamed";
+      body.assistant === "sara" ? "sara" : "mohamed";
 
     const instructions =
       assistant === "sara"
         ? buildSaraInstructions()
-        : assistant === "khalid"
-        ? buildKhalidInstructions()
         : buildMohamedInstructions();
 
     const voice =
-      assistant === "sara"
-        ? "shimmer"
-        : assistant === "khalid"
-        ? "verse"
-        : "verse";
+  assistant === "sara"
+    ? "nova"
+    : "verse";
 
-const payload = {
-  session: {
-    type: "realtime",
-    model: "gpt-4o-realtime-preview",
-    voice: voice,
-    instructions: instructions,
+    const payload = {
+      session: {
+        type: "realtime",
+        model: "gpt-realtime",
+        instructions,
+      audio: {
+  input: {
+    turn_detection: {
+      type: "server_vad",
+      threshold: 0.85,
+      prefix_padding_ms: 500,
+      silence_duration_ms: 900,
+      create_response: true,
+      interrupt_response: false,
+    },
+    transcription: {
+      model: "gpt-4o-mini-transcribe",
+    },
   },
-};
-
-    console.log("ASSISTANT:", assistant);
+ output: {
+  voice,
+ speed: 1.05
+}
+},
+      },
+    };
 
     const response = await fetch(
       "https://api.openai.com/v1/realtime/client_secrets",
@@ -292,28 +355,10 @@ const payload = {
       }
     );
 
-    const text = await response.text();
-
-    console.log("STATUS:", response.status);
-    console.log("RAW RESPONSE:", text);
-
-    if (!response.ok) {
-      return res.status(response.status).json({
-        error: text,
-      });
-    }
-
-    const data = JSON.parse(text);
-
-    console.log(
-      "OPENAI REALTIME RESPONSE:",
-      JSON.stringify(data, null, 2)
-    );
+    const data = await response.json();
 
     return res.status(200).json(data);
   } catch (error: any) {
-    console.error("REALTIME ERROR:", error);
-
     return res.status(500).json({
       error: error?.message || "Error interno",
     });
