@@ -1071,30 +1071,12 @@ const questions = [
 ];
 
 
-// ✅ INTRO فقط مرة وحدة
-const maybeSendIntroToMohamed = async () => {
 
-  if (!realtimeDcRef.current) return;
 
-  if ((window as any).paid) return;
 
-  realtimeDcRef.current.send(
-    JSON.stringify({
-      type: "response.create",
-      response: {
-        modalities: ["audio", "text"],
-        instructions: `
-السلام عليكم، مرحبا بيك فـ GestoriaCitaIA.
-
-باش نبداو التحليل الكامل ديال الملف ديالك،
-خاصك تكمل الأداء دابا.
-        `
-      },
-    })
-  );
 
   // ✅ من بعد يخرج Stripe مباشرة
-  setTimeout(() => {
+
 
  
 
