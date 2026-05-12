@@ -715,7 +715,7 @@ const handleQuestionFlow = () => {
 
       setTimeout(() => {
 
-        speakExactText(NAME_QUESTION);
+       speakExactText(PAYMENT_TEXT);
 
       }, 400);
 
@@ -729,7 +729,7 @@ const handleQuestionFlow = () => {
     }
 
     // Stripe
-if (next === 2 && !paymentDoneRef.current) {
+if (next === 1 && !paymentDoneRef.current) {
       questionFlowLockedRef.current = true;
 
       const PAYMENT_TEXT = `
