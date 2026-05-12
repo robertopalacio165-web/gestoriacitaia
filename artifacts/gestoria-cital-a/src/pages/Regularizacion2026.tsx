@@ -1397,25 +1397,34 @@ if (
 
   maybeSendIntroToMohamed();
 
-const waitIntroFinish = setInterval(() => {
+const introText = `
+السلام عليكم، أنا محمد من هيستوريا سيطا AI. مرحبا بك.
 
-  if (!assistantBusyRef.current) {
+غادي نطرح عليك شوية ديال الأسئلة وغادي تجاوبني غير بآه ولا لا.
 
-    clearInterval(waitIntroFinish);
+وملي غادي نسالي الأسئلة، غادي نراجع ليك الوثائق ديالك كاملين باش نشوف واش مقبولين ولا لا، واش صالحين ولا لا، وغادي نعطيك حتى وثيقة مهمة غادي تعزز الملف ديالك فالتسوية الجماعية.
 
-    console.log("✅ INTRO FINISHED");
+وزيد عليها، غادي نخليك تسولني حتى 4 أسئلة وغنجاوبك على جميع التساؤلات ديالك أوكي؟
 
-    setShowStripe(true);
+ولكن قبل، خاصك تكمل الأداء ديالك عاد باش نبداو.
+`;
 
-    setPaymentRequired(true);
+const estimatedMs =
+  Math.max(introText.length * 85, 12000);
 
-    stopListening();
+setTimeout(() => {
 
-    setIsListening(false);
+  console.log("✅ INTRO FINISHED");
 
-  }
+  setShowStripe(true);
 
-}, 300);
+  setPaymentRequired(true);
+
+  stopListening();
+
+  setIsListening(false);
+
+}, estimatedMs);
 
   return;
 }
