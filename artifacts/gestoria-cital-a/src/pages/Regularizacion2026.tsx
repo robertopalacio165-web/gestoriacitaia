@@ -1228,6 +1228,8 @@ GestoriaCitaIA
  body: JSON.stringify({ assistant: "mohamed" }),
 });
       const sessionData = await sessionRes.json();
+      console.log("sessionRes.ok:", sessionRes.ok);
+console.log("sessionData:", sessionData);
       if (!sessionRes.ok) {
         throw new Error(sessionData?.error || "Error creando sesión realtime");
       }
@@ -1267,12 +1269,14 @@ GestoriaCitaIA
       const dc = pc.createDataChannel("oai-events");
       realtimeDcRef.current = dc;
       dc.onopen = async () => {
+        console.log("✅ DC OPEN");
         dcOpenedRef.current = true;
         isConnectingRef.current = false;
         setIsListening(true);
         setWaitingMohamed(false);
 dc.send(
   JSON.stringify({
+    console.log("✅ INTRO ENVIADO");
     type: "session.update",
     session: {
     instructions: `
@@ -1323,7 +1327,7 @@ turn_detection: {
 
       };
 dc.onmessage = (event) => {
-
+console.log("📩 EVENT:", event.data);
   try {
 
     const msg = JSON.parse(event.data);
