@@ -1451,8 +1451,7 @@ setTimeout(() => {
 
   stopListening();
 
-}, 14000);
-
+}, 22000);
 return;
 
      
