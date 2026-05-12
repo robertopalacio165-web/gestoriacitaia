@@ -1309,24 +1309,27 @@ dc.onopen = async () => {
       },
     }));
 
-    // ✅ INTRO solo la primera vez
-    if (!introAlreadySentRef.current && !(window as any).paid) {
-      introAlreadySentRef.current = true;
+if (!introAlreadySentRef.current && !(window as any).paid) {
 
-      setTimeout(() => {
-        dc.send(JSON.stringify({
-          type: "response.create",
-          response: {
-            modalities: ["audio", "text"],
-            instructions: `
-السلام عليكم، مرحبا بيك فـ GestoriaCitaIA.
-باش نبداو التحليل الكامل ديال الملف ديالك،
-خاصك تكمل الأداء دابا.
-            `,
-          },
-        }));
-      }, 1200);
-    }
+  introAlreadySentRef.current = true;
+
+  setTimeout(() => {
+
+    speakExactText(
+      "السلام عليكم، أنا محمد. قبل ما نبدا التحليل الكامل خاص الأداء."
+    );
+
+    setTimeout(() => {
+
+    setShowStripe(true);
+setPaymentRequired(true);
+stopListening();
+
+    }, 4000);
+
+  }, 2000);
+
+}
 
     // ✅ AUTOMATION pendiente
     const capturedPending = pendingAutomationPromptRef.current;
@@ -2033,11 +2036,16 @@ setTimeout(() => {
               </div>
               <div className="absolute bottom-3 left-0 right-0 flex justify-center">
                 <button
-            onClick={() => {
+onClick={() => {
 
-if (paymentRequired || documentsUnlocked) return;
+  if (paymentRequired && !(window as any).paid) {
+    setShowStripe(true);
+    return;
+  }
 
-  isListening ? stopListening() : startListening();
+  isListening
+    ? stopListening()
+    : startListening();
 
 }}
                   className={`w-12 h-12 rounded-full border flex items-center justify-center backdrop-blur-md transition-colors ${
@@ -2059,7 +2067,7 @@ if (paymentRequired || documentsUnlocked) return;
               <div className="p-4 border-b border-white/10">
                 <button
                   onClick={isListening ? stopListening : startListening}
-          disabled={!voiceSupported || (paymentRequired && !paymentDoneRef.current)}
+     disabled={!voiceSupported}
                   className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary hover:bg-primary/90 disabled:opacity-50 text-primary-foreground font-bold text-sm px-4 py-3 transition-colors"
                   type="button"
                 >
