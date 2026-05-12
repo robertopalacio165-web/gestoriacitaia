@@ -1418,7 +1418,7 @@ if (looksLikeGreeting) {
   return;
 }
  const currentQuestion = questionIndexRef.current;
-
+questionIndexRef.current = currentQuestion;
           console.log("🔥 CURRENT QUESTION:", currentQuestion);
 
           const hasValidContent =
@@ -1489,7 +1489,11 @@ if (
           console.log("🔥 CHECK STRIPE");
 console.log("CURRENT QUESTION =", currentQuestion);
 console.log("PAYMENT DONE =", paymentDoneRef.current);
-  if (currentQuestion === 4 && !paymentDoneRef.current) {
+if (
+  currentQuestion === 4 &&
+  !paymentDoneRef.current &&
+  !questionFlowLockedRef.current
+)
 
             questionFlowLockedRef.current = true;
 
