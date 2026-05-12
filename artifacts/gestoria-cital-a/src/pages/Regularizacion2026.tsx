@@ -1542,7 +1542,7 @@ if (!introAlreadySentRef.current && !(window as any).paid) {
 
   }
 
-};
+
 
   dc.onerror = (err) => {
         console.error("Realtime data channel error:", err);
