@@ -1296,121 +1296,120 @@ dc.onmessage = (event) => {
       msg?.item?.content?.[0]?.transcript ||
       "";
 
-  if (
-  (msg.type === "conversation.item.input_audio_transcription.completed" ||
-    msg.type === "input_audio_buffer.transcription.completed") &&
-  typeof userTranscript === "string" &&
-  userTranscript.trim() &&
-  userTranscript.trim().length > 1
-) {
+    if (
+      (msg.type === "conversation.item.input_audio_transcription.completed" ||
+        msg.type === "input_audio_buffer.transcription.completed") &&
+      typeof userTranscript === "string" &&
+      userTranscript.trim() &&
+      userTranscript.trim().length > 1
+    ) {
 
-  const transcript = userTranscript.trim();
+      const transcript = userTranscript.trim();
 
-  const isAssistantEcho =
-    transcript.includes("مزيان") ||
-    transcript.includes("باش") ||
-    transcript.includes("الملف") ||
-    transcript.includes("الأداء") ||
-    transcript.includes("محمد");
+      const isAssistantEcho =
+        transcript.includes("مزيان") ||
+        transcript.includes("باش") ||
+        transcript.includes("الملف") ||
+        transcript.includes("الأداء") ||
+        transcript.includes("محمد");
 
-  if (isAssistantEcho) {
-    console.log("⛔ ASSISTANT ECHO BLOCKED");
-    return;
-  }
+      if (isAssistantEcho) {
+        console.log("⛔ ASSISTANT ECHO BLOCKED");
+        return;
+      }
 
-  if (transcript !== lastProcessedTranscriptRef.current) {
+      if (transcript !== lastProcessedTranscriptRef.current) {
 
-    lastProcessedTranscriptRef.current = transcript;
+        lastProcessedTranscriptRef.current = transcript;
 
-    setLastUserTranscript(transcript);
+        setLastUserTranscript(transcript);
 
-    pushUserMessage(transcript);
+        pushUserMessage(transcript);
 
-    console.log("✅ USER SAID:", transcript);
+        console.log("✅ USER SAID:", transcript);
 
-    const lowerTranscript = transcript.toLowerCase().trim();
-    const normalized = lowerTranscript;
+        const lowerTranscript = transcript.toLowerCase().trim();
 
     const isOnlyNameStep =
-      conversationStep === 1 &&
-      !clientQuestionsDone &&
-      lowerTranscript.length > 1 &&
-      !lowerTranscript.includes("نعم") &&
-      !lowerTranscript.includes("لا") &&
-      !lowerTranscript.includes("اه") &&
-      !lowerTranscript.includes("آه");
+  questionIndex === 1 &&
+          !clientQuestionsDone &&
+          lowerTranscript.length > 1 &&
+          !lowerTranscript.includes("نعم") &&
+          !lowerTranscript.includes("لا") &&
+          !lowerTranscript.includes("اه") &&
+          !lowerTranscript.includes("آه");
 
-    if (isOnlyNameStep) {
+        if (isOnlyNameStep) {
 
-      console.log("👤 USER NAME ONLY:", transcript);
+          console.log("👤 USER NAME ONLY:", transcript);
 
-      setClientQuestionsDone(true);
+          setClientQuestionsDone(true);
 
-      setTimeout(() => {
+          setTimeout(() => {
 
-        speakExactText(
-          "مزيان. واش بقيتي في إسبانيا لمدة ديال خمسة أشهر متتالية؟ وشنو هي أول مدينة سكنتي فيها؟"
-        );
+            speakExactText(
+              "مزيان. واش بقيتي في إسبانيا لمدة ديال خمسة أشهر متتالية؟ وشنو هي أول مدينة سكنتي فيها؟"
+            );
 
-      }, 500);
+          }, 500);
 
-      return;
-    }
+          return;
+        }
 
-    const cleanAnswer = normalized
-      .replace(/[.,!?¿؟]/g, "")
-      .trim();
+        const normalized = lowerTranscript
+          .replace(/[.,!?¿؟]/g, "")
+          .trim();
 
-  
+        if (!questionFlowLockedRef.current) {
 
- if (!questionFlowLockedRef.current) {
+          const currentQuestion = questionIndex;
 
-  const currentQuestion = questionIndex;
-console.log("🔥 CURRENT QUESTION:", currentQuestion);
-  // PREGUNTA 0
-  if (currentQuestion === 0) {
+          console.log("🔥 CURRENT QUESTION:", currentQuestion);
 
-    goNextQuestion("مزيان. قولي شنو سميتك؟");
+          // PREGUNTA 0
+          if (currentQuestion === 0) {
 
-    return;
-  }
+            goNextQuestion("مزيان. قولي شنو سميتك؟");
 
-  // PREGUNTA 1
-  if (currentQuestion === 1) {
+            return;
+          }
 
-    goNextQuestion(
-      "واش بقيتي فإسبانيا خمسة شهور متتالية؟ وشنو هي أول مدينة سكنتي فيها؟"
-    );
+          // PREGUNTA 1
+          if (currentQuestion === 1) {
 
-    return;
-  }
+            goNextQuestion(
+              "واش بقيتي فإسبانيا خمسة شهور متتالية؟ وشنو هي أول مدينة سكنتي فيها؟"
+            );
 
-  // PREGUNTA 2
-  if (currentQuestion === 2) {
+            return;
+          }
 
-    goNextQuestion(
-      "واش عندك باسبور مغربي ولا كارت ناسيونال ولا فوتوكوبي ديالهم؟"
-    );
+          // PREGUNTA 2
+          if (currentQuestion === 2) {
 
-    return;
-  }
+            goNextQuestion(
+              "واش عندك باسبور مغربي ولا كارت ناسيونال ولا فوتوكوبي ديالهم؟"
+            );
 
-  // PREGUNTA 3
-  if (currentQuestion === 3) {
+            return;
+          }
 
-    goNextQuestion(
-      "واش عندك شي ورقة فيها سميتك والتاريخ؟ بحال شهادة السكنى ولا ورقة ديال الطبيب ولا الصبيطار ولا الكراء؟"
-    );
+          // PREGUNTA 3
+          if (currentQuestion === 3) {
 
-    return;
-  }
+            goNextQuestion(
+              "واش عندك شي ورقة فيها سميتك والتاريخ؟ بحال شهادة السكنى ولا ورقة ديال الطبيب ولا الصبيطار ولا الكراء؟"
+            );
 
-  // PREGUNTA 4 → STRIPE
-  if (currentQuestion === 4) {
+            return;
+          }
 
-    questionFlowLockedRef.current = true;
+          // PREGUNTA 4 → STRIPE
+          if (currentQuestion === 4) {
 
-    const PAYMENT_TEXT = `
+            questionFlowLockedRef.current = true;
+
+            const PAYMENT_TEXT = `
 مزيان، من خلال الأجوبة ديالك بان ليا بللي الملف ديالك غادي يكون مقبول إن شاء الله.
 
 باش نعطيك تحليل دقيق ونوجد ليك الملف كامل:
@@ -1423,72 +1422,78 @@ console.log("🔥 CURRENT QUESTION:", currentQuestion);
 ورك على زر الأداء ونكملو مباشرة.
 `;
 
-    pushAgentMessage(PAYMENT_TEXT);
+            pushAgentMessage(PAYMENT_TEXT);
 
-    setTimeout(() => {
+            setTimeout(() => {
 
-      speakExactText(PAYMENT_TEXT);
+              speakExactText(PAYMENT_TEXT);
 
-    }, 500);
+            }, 500);
 
-    setTimeout(() => {
+            setTimeout(() => {
 
-      setShowStripe(true);
+              setShowStripe(true);
 
-      setPaymentRequired(true);
+              setPaymentRequired(true);
 
-      stopListening();
+              stopListening();
 
-    }, 3500);
+            }, 3500);
 
-    return;
+            return;
+          }
+        }
+      }
+    }
+
+    if (
+      msg.type === "response.output_text.delta" &&
+      typeof msg.delta === "string"
+    ) {
+
+      assistantTextBufferRef.current += msg.delta;
+
+    }
+
+    if (msg.type === "response.created") {
+
+      assistantBusyRef.current = true;
+      setWaitingMohamed(true);
+
+    }
+
+    if (msg.type === "response.done") {
+
+      assistantBusyRef.current = false;
+
+      const finalText = assistantTextBufferRef.current.trim();
+
+      if (finalText) {
+        lastAssistantTextRef.current = finalText;
+      }
+
+      finalizeAssistantBuffer();
+
+      setWaitingMohamed(false);
+
+      pendingAutomationPromptRef.current = null;
+
+      setPendingAutomationPrompt("");
+
+      setTimeout(() => {
+        void flushPendingAutomation();
+      }, 150);
+
+    }
+
+  } catch (err) {
+
+    console.error("Realtime event parse error:", err);
+
   }
-}
 
-if (
-  msg.type === "response.output_text.delta" &&
-  typeof msg.delta === "string"
-) {
+};
 
-  assistantTextBufferRef.current += msg.delta;
-
-}
-if (msg.type === "response.created") {
-
-  assistantBusyRef.current = true;
-  setWaitingMohamed(true);
-
-}
-
-if (msg.type === "response.done") {
-
-  assistantBusyRef.current = false;
-
-  const finalText = assistantTextBufferRef.current.trim();
-
-  if (finalText) {
-    lastAssistantTextRef.current = finalText;
-  }
-
-  finalizeAssistantBuffer();
-
-  setWaitingMohamed(false);
-
-  pendingAutomationPromptRef.current = null;
-  setPendingAutomationPrompt("");
-
-  setTimeout(() => {
-    void flushPendingAutomation();
-  }, 150);
-
-}
-
-} catch (err) {
-
-  console.error("Realtime event parse error:", err);
-
-}
-  
   dc.onerror = (err) => {
         console.error("Realtime data channel error:", err);
       };
