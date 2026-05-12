@@ -1022,13 +1022,6 @@ processingQuestionRef.current = false;
   !showStripe
 ) {
 
-  setShowStripe(true);
-
-  setPaymentRequired(true);
-
-  stopListening();
-
-  return;
 }
     } catch (error) {
       console.error("❌ Error enviando:", error);
