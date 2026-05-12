@@ -1274,9 +1274,11 @@ console.log("sessionData:", sessionData);
         isConnectingRef.current = false;
         setIsListening(true);
         setWaitingMohamed(false);
+    console.log("✅ INTRO ENVIADO");
+        
 dc.send(
   JSON.stringify({
-    console.log("✅ INTRO ENVIADO");
+ 
     type: "session.update",
     session: {
     instructions: `
