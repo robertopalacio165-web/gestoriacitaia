@@ -210,6 +210,8 @@ window.location.href = data.url;
   const [questionsDone, setQuestionsDone] = useState(false);
 const [clientQuestionsDone, setClientQuestionsDone] = useState(false);
 const [questionIndex, setQuestionIndex] = useState(0);
+  const introAlreadySentRef = useRef(false);
+const waitingForStripeRef = useRef(false);
 
 const goNextQuestion = (nextText: string) => {
 
@@ -1318,18 +1320,7 @@ turn_detection: {
           }, 400);
           return;
         }
-  if (
-  !(window as any).paid &&
-  questionIndex === 0
-) {
 
-  setTimeout(() => {
-
-    void maybeSendIntroToMohamed();
-
-  }, 500);
-
-}
       };
 dc.onmessage = (event) => {
 
@@ -1471,6 +1462,46 @@ processingQuestionRef.current = false;
       finalizeAssistantBuffer();
 
       setWaitingMohamed(false);
+      // ✅ INTRO AUTOMÁTICO SOLO UNA VEZ
+if (
+  !introAlreadySentRef.current &&
+  !(window as any).paid
+) {
+
+  introAlreadySentRef.current = true;
+
+  const introText = `
+السلام عليكم، مرحبا بيك فـ GestoriaCitaIA.
+
+باش نبداو التحليل الكامل ديال الملف ديالك،
+خاصك تكمل الأداء دابا.
+`;
+
+  dc.send(
+    JSON.stringify({
+      type: "response.create",
+      response: {
+        modalities: ["audio", "text"],
+        instructions: introText,
+      },
+    })
+  );
+
+  // ✅ Stripe يخرج من بعد ما يسالي محمد
+  waitingForStripeRef.current = true;
+
+  setTimeout(() => {
+
+    setShowStripe(true);
+
+    setPaymentRequired(true);
+
+    waitingForStripeRef.current = false;
+
+    // ❌ ممنوع stopListening هنا
+
+  }, 12000);
+}
 assistantTextBufferRef.current = "";
 
 lastAssistantTextRef.current = "";
