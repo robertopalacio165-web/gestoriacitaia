@@ -1457,12 +1457,6 @@ if (!questionFlowLockedRef.current) {
   }
 }
 
-}
-
-  }
-
-}
-
 if (
   msg.type === "response.output_text.delta" &&
   typeof msg.delta === "string"
