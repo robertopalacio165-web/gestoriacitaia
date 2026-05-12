@@ -1517,14 +1517,14 @@ if (currentQuestion === 4) {
       }, 150);
 
     }
-  
+   }
   } catch (err) {
 
     console.error("Realtime event parse error:", err);
 
   }
 
-  }
+  
 
   dc.onerror = (err) => {
         console.error("Realtime data channel error:", err);
