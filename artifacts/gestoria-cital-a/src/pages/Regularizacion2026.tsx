@@ -1334,7 +1334,7 @@ dc.send(
           }, 400);
           return;
         }
-     if (!(window as any).paid) {
+    if (!(window as any).paid) {
 
   setTimeout(() => {
 
@@ -1342,7 +1342,7 @@ dc.send(
 
   }, 500);
 
-}  
+}
       };
 dc.onmessage = (event) => {
   try {
@@ -1379,6 +1379,10 @@ if (
     console.log("✅ USER SAID:", transcript);
 // ✅ FIRST CLIENT MESSAGE → INTRO + STRIPE
 
+const lowerTranscript = transcript.toLowerCase().trim();
+
+const normalized = lowerTranscript;
+
 if (
   !paymentDoneRef.current &&
   (
@@ -1403,6 +1407,8 @@ if (
 
   return;
 }
+
+
 const lowerTranscript = transcript.toLowerCase().trim();
 const normalized = lowerTranscript;
 // ✅ الاسم ما يتحسبش فـ NEXT
