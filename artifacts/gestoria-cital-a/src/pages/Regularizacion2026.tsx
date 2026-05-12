@@ -1417,7 +1417,7 @@ dc.onmessage = (event) => {
           }
 
           // PREGUNTA 4 → STRIPE
-  if (currentQuestion === 5 && !paymentDoneRef.current) {
+  if (currentQuestion === 4 && !paymentDoneRef.current) {
 
             questionFlowLockedRef.current = true;
 
@@ -1435,7 +1435,7 @@ dc.onmessage = (event) => {
 `;
 
             pushAgentMessage(PAYMENT_TEXT);
-
+speakExactText(PAYMENT_TEXT);
 setTimeout(() => {
 
   console.log("🔥 SHOWING STRIPE BUTTON");
