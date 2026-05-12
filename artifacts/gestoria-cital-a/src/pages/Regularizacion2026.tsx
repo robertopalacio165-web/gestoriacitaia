@@ -1268,7 +1268,7 @@ dc.onmessage = (event) => {
       msg?.item?.content?.[0]?.transcript ||
       "";
 
-   if (
+  if (
   (msg.type === "conversation.item.input_audio_transcription.completed" ||
     msg.type === "input_audio_buffer.transcription.completed") &&
   typeof userTranscript === "string" &&
@@ -1277,150 +1277,132 @@ dc.onmessage = (event) => {
 ) {
 
   const transcript = userTranscript.trim();
-const isAssistantEcho =
-  transcript.includes("مزيان") ||
-  transcript.includes("باش") ||
-  transcript.includes("الملف") ||
-  transcript.includes("الأداء") ||
-  transcript.includes("محمد");
 
-if (isAssistantEcho) {
-  console.log("⛔ ASSISTANT ECHO BLOCKED");
-  return;
-}
+  const isAssistantEcho =
+    transcript.includes("مزيان") ||
+    transcript.includes("باش") ||
+    transcript.includes("الملف") ||
+    transcript.includes("الأداء") ||
+    transcript.includes("محمد");
 
-if (transcript !== lastProcessedTranscriptRef.current) {
+  if (isAssistantEcho) {
+    console.log("⛔ ASSISTANT ECHO BLOCKED");
+    return;
+  }
 
-  lastProcessedTranscriptRef.current = transcript;
+  if (transcript !== lastProcessedTranscriptRef.current) {
 
-  setLastUserTranscript(transcript);
+    lastProcessedTranscriptRef.current = transcript;
 
-  pushUserMessage(transcript);
- 
+    setLastUserTranscript(transcript);
+
+    pushUserMessage(transcript);
 
     console.log("✅ USER SAID:", transcript);
 
-const lowerTranscript = transcript.toLowerCase().trim();
-const normalized = lowerTranscript;
-// ✅ الاسم ما يتحسبش فـ NEXT
-const isOnlyNameStep =
-  conversationStep === 1 &&
-  !clientQuestionsDone &&
-  lowerTranscript.length > 1 &&
-  !lowerTranscript.includes("نعم") &&
-  !lowerTranscript.includes("لا") &&
-  !lowerTranscript.includes("اه") &&
-  !lowerTranscript.includes("آه");
-if (isOnlyNameStep) {
+    const lowerTranscript = transcript.toLowerCase().trim();
+    const normalized = lowerTranscript;
 
+    const isOnlyNameStep =
+      conversationStep === 1 &&
+      !clientQuestionsDone &&
+      lowerTranscript.length > 1 &&
+      !lowerTranscript.includes("نعم") &&
+      !lowerTranscript.includes("لا") &&
+      !lowerTranscript.includes("اه") &&
+      !lowerTranscript.includes("آه");
 
-  console.log("👤 USER NAME ONLY:", transcript);
-  setClientQuestionsDone(true);
-  setTimeout(() => {
+    if (isOnlyNameStep) {
 
-    speakExactText(
-   "مزيان. واش بقيتي في إسبانيا لمدة ديال خمسة أشهر متتالية؟ وشنو هي أول مدينة سكنتي فيها؟"
-    );
+      console.log("👤 USER NAME ONLY:", transcript);
 
-  }, 500);
+      setClientQuestionsDone(true);
 
+      setTimeout(() => {
 
+        speakExactText(
+          "مزيان. واش بقيتي في إسبانيا لمدة ديال خمسة أشهر متتالية؟ وشنو هي أول مدينة سكنتي فيها؟"
+        );
 
-  return;
-}
+      }, 500);
 
-// ❌ ما نحسبوش الاسم والبداية
-const validAnswers = [
-  "نعم",
-  "لا",
-  "اه",
-  "آه",
-  "ايييه",
-  "ايوه",
-  "oui",
-  "non",
-  "si",
-  "no",
-  "kayna",
-  "makaynach",
-  "عندي",
-  "ما عنديش"
-];
-const cleanAnswer = normalized
-  .replace(/[.,!?¿؟]/g, "")
-  .trim();
+      return;
+    }
 
+    const cleanAnswer = normalized
+      .replace(/[.,!?¿؟]/g, "")
+      .trim();
 
-if (!questionFlowLockedRef.current) {
+    if (!questionFlowLockedRef.current) {
 
-  // STEP 0
-  if (conversationStep === 0) {
+      // STEP 0
+      if (conversationStep === 0) {
 
-    setConversationStep(1);
+        setConversationStep(1);
 
-    setTimeout(() => {
+        setTimeout(() => {
 
-      speakExactText("مزيان. قولي شنو سميتك؟");
+          speakExactText("مزيان. قولي شنو سميتك؟");
 
-    }, 400);
+        }, 400);
 
-    return;
-  }
+        return;
+      }
 
-  // STEP 1
-  if (conversationStep === 1) {
+      // STEP 1
+      if (conversationStep === 1) {
 
-    setConversationStep(2);
+        setConversationStep(2);
 
-    setTimeout(() => {
+        setTimeout(() => {
 
-      speakExactText(
-        "واش بقيتي فإسبانيا خمسة شهور متتالية؟ وشنو هي أول مدينة سكنتي فيها؟"
-      );
+          speakExactText(
+            "واش بقيتي فإسبانيا خمسة شهور متتالية؟ وشنو هي أول مدينة سكنتي فيها؟"
+          );
 
-    }, 400);
+        }, 400);
 
-    return;
-  }
+        return;
+      }
 
-  // STEP 2
-  if (conversationStep === 2) {
+      // STEP 2
+      if (conversationStep === 2) {
 
-    setConversationStep(3);
+        setConversationStep(3);
 
-    setTimeout(() => {
+        setTimeout(() => {
 
-      speakExactText(
-        "واش عندك باسبور مغربي ولا كارت ناسيونال ولا فوتوكوبي ديالهم؟"
-      );
+          speakExactText(
+            "واش عندك باسبور مغربي ولا كارت ناسيونال ولا فوتوكوبي ديالهم؟"
+          );
 
-    }, 400);
+        }, 400);
 
-    return;
-  }
+        return;
+      }
 
-  // STEP 3
-  if (conversationStep === 3) {
+      // STEP 3
+      if (conversationStep === 3) {
 
-    setConversationStep(4);
+        setConversationStep(4);
 
-    setTimeout(() => {
+        setTimeout(() => {
 
-      speakExactText(
-        "واش عندك شي ورقة فيها سميتك والتاريخ؟ بحال شهادة السكنى ولا ورقة ديال الطبيب ولا الصبيطار ولا الكراء؟"
-      );
+          speakExactText(
+            "واش عندك شي ورقة فيها سميتك والتاريخ؟ بحال شهادة السكنى ولا ورقة ديال الطبيب ولا الصبيطار ولا الكراء؟"
+          );
 
-    }, 400);
+        }, 400);
 
-    return;
-  }
+        return;
+      }
 
-  // STEP 4 → STRIPE
-  if (conversationStep === 4) {
+      // STEP 4 → STRIPE
+      if (conversationStep === 4) {
 
-    questionFlowLockedRef.current = true;
+        questionFlowLockedRef.current = true;
 
-    const PAYMENT_TEXT = `
+        const PAYMENT_TEXT = `
 مزيان، من خلال الأجوبة ديالك بان ليا بللي الملف ديالك غادي يكون مقبول إن شاء الله.
 
 باش نعطيك تحليل دقيق ونوجد ليك الملف كامل:
@@ -1433,25 +1415,27 @@ if (!questionFlowLockedRef.current) {
 ورك على زر الأداء ونكملو مباشرة.
 `;
 
-    pushAgentMessage(PAYMENT_TEXT);
+        pushAgentMessage(PAYMENT_TEXT);
 
-    setTimeout(() => {
+        setTimeout(() => {
 
-      speakExactText(PAYMENT_TEXT);
+          speakExactText(PAYMENT_TEXT);
 
-    }, 500);
+        }, 500);
 
-    setTimeout(() => {
+        setTimeout(() => {
 
-      setShowStripe(true);
+          setShowStripe(true);
 
-      setPaymentRequired(true);
+          setPaymentRequired(true);
 
-      stopListening();
+          stopListening();
 
-    }, 3500);
+        }, 3500);
 
-    return;
+        return;
+      }
+    }
   }
 }
 
@@ -1463,17 +1447,6 @@ if (
   assistantTextBufferRef.current += msg.delta;
 
 }
-
-if (
-  msg.type === "response.output_text.done" &&
-  typeof msg.text === "string" &&
-  msg.text.trim()
-) {
-
-  assistantTextBufferRef.current = msg.text.trim();
-
-}
-
 if (msg.type === "response.created") {
 
   assistantBusyRef.current = true;
