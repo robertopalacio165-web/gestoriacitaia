@@ -1368,11 +1368,11 @@ userTranscript.trim().length > 1
 const isOnlyNameStep =
   questionIndexRef.current === 1 &&
   !leadForm.nombre &&
-          lowerTranscript.length > 1 &&
-          !lowerTranscript.includes("نعم") &&
-          !lowerTranscript.includes("لا") &&
-          !lowerTranscript.includes("اه") &&
-          !lowerTranscript.includes("آه");
+  (lowerTranscript || "").length > 1 &&
+  !lowerTranscript.includes("نعم") &&
+  !lowerTranscript.includes("لا") &&
+  !lowerTranscript.includes("اه") &&
+  !lowerTranscript.includes("آه");
 
         if (isOnlyNameStep) {
 
