@@ -1483,6 +1483,7 @@ if (msg.type === "response.created") {
 
 }
 
+
 if (msg.type === "response.done") {
 
   assistantBusyRef.current = false;
@@ -1506,6 +1507,14 @@ if (msg.type === "response.done") {
 
 }
 
+// ✅ ESTA LLAVE FALTABA
+}
+
+catch (err) {
+
+  console.error("Realtime event parse error:", err);
+
+}
 } catch (err) {
 
   console.error("Realtime event parse error:", err);
