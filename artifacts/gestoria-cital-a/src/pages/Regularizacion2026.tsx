@@ -1397,13 +1397,25 @@ if (
 
   maybeSendIntroToMohamed();
 
-  setTimeout(() => {
+const waitIntroFinish = setInterval(() => {
+
+  if (!assistantBusyRef.current) {
+
+    clearInterval(waitIntroFinish);
+
+    console.log("✅ INTRO FINISHED");
 
     setShowStripe(true);
 
     setPaymentRequired(true);
 
-  }, 6000);
+    stopListening();
+
+    setIsListening(false);
+
+  }
+
+}, 300);
 
   return;
 }
