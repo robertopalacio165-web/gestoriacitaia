@@ -136,7 +136,7 @@ paymentDoneRef.current = true;
 
     setTimeout(() => {
 setQuestionIndex(5);
-
+questionIndexRef.current = 5;
 localStorage.setItem(
   "questionIndex",
   "5"
@@ -200,9 +200,21 @@ window.location.href = data.url;
   const [phone, setPhone] = useState("");
   const [questionsDone, setQuestionsDone] = useState(false);
 const [clientQuestionsDone, setClientQuestionsDone] = useState(false);
-const [questionIndex, setQuestionIndex] = useState(0);
-  const questionIndexRef = useRef(0);
+const [questionIndex, setQuestionIndex] = useState(() => {
 
+  const saved = localStorage.getItem("questionIndex");
+
+  return saved ? parseInt(saved) : 0;
+
+});
+
+const questionIndexRef = useRef(questionIndex);
+  
+useEffect(() => {
+
+  questionIndexRef.current = questionIndex;
+
+}, [questionIndex]);
 const goNextQuestion = (nextText: string) => {
 
   setQuestionIndex((prev) => {
@@ -1377,7 +1389,10 @@ dc.onmessage = (event) => {
  const currentQuestion = questionIndexRef.current;
 
           console.log("🔥 CURRENT QUESTION:", currentQuestion);
-
+if (questionFlowLockedRef.current) {
+  console.log("🔒 FLOW LOCKED");
+  return;
+}
           // PREGUNTA 0
           if (currentQuestion === 0) {
 
@@ -1412,7 +1427,7 @@ dc.onmessage = (event) => {
             goNextQuestion(
               "واش عندك شي ورقة فيها سميتك والتاريخ؟ بحال شهادة السكنى ولا ورقة ديال الطبيب ولا الصبيطار ولا الكراء؟"
             );
-setQuestionIndex(4);
+
             return;
           }
 
