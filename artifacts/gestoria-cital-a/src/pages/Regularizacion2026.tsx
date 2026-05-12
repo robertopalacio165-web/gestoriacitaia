@@ -135,7 +135,12 @@ paymentDoneRef.current = true;
     }, 1000);
 
     setTimeout(() => {
-setQuestionIndex(4);
+setQuestionIndex(5);
+
+localStorage.setItem(
+  "questionIndex",
+  "5"
+);
 
 speakExactText(
   "مزيان، توصلنا بالأداء ديالك. دابا نكملو. السؤال السادس: واش عمرك مشيتي للصبيطار؟ واش عندك شي ورقة فيها سميتك والتاريخ؟"
@@ -195,7 +200,30 @@ window.location.href = data.url;
   const [phone, setPhone] = useState("");
   const [questionsDone, setQuestionsDone] = useState(false);
 const [clientQuestionsDone, setClientQuestionsDone] = useState(false);
-  const [questionIndex, setQuestionIndex] = useState(0);
+const [questionIndex, setQuestionIndex] = useState(0);
+
+const goNextQuestion = (nextText: string) => {
+
+  setQuestionIndex((prev) => {
+
+    const next = prev + 1;
+
+    localStorage.setItem(
+      "questionIndex",
+      next.toString()
+    );
+
+    console.log("✅ NEXT QUESTION:", next);
+
+    return next;
+  });
+
+  setTimeout(() => {
+
+    speakExactText(nextText);
+
+  }, 400);
+};
   // ✅ CONTROL CENTRAL PROFESIONAL
 
 useEffect(() => {
@@ -229,7 +257,7 @@ useEffect(() => {
 const [clientQuestionIndex, setClientQuestionIndex] = useState(0);
   const [showStripe, setShowStripe] = useState(false);
   const [paymentRequired, setPaymentRequired] = useState(false);
-const [conversationStep, setConversationStep] = useState(0);
+const [step, setStep] = useState(0);
   const [leadForm, setLeadForm] = useState<LeadFormState>({
     nombre: "",
     telefono: "",
@@ -241,8 +269,8 @@ const [conversationStep, setConversationStep] = useState(0);
     asilo: "",
     penales: "",
   });
-  const [step, setStep] = useState<"questions" | "upload" | "verify" | "done">("questions");
-
+ 
+const [workflowStepState, setWorkflowStepState] = useState<"questions" | "upload" | "verify" | "done">("questions");
   const { t, lang } = useLang();
   const { toast } = useToast();
 
@@ -1333,76 +1361,56 @@ dc.onmessage = (event) => {
       .replace(/[.,!?¿؟]/g, "")
       .trim();
 
-    if (!questionFlowLockedRef.current) {
+  
 
-      // STEP 0
-      if (conversationStep === 0) {
+ if (!questionFlowLockedRef.current) {
 
-        setConversationStep(1);
+  const currentQuestion = questionIndex;
+console.log("🔥 CURRENT QUESTION:", currentQuestion);
+  // PREGUNTA 0
+  if (currentQuestion === 0) {
 
-        setTimeout(() => {
+    goNextQuestion("مزيان. قولي شنو سميتك؟");
 
-          speakExactText("مزيان. قولي شنو سميتك؟");
+    return;
+  }
 
-        }, 400);
+  // PREGUNTA 1
+  if (currentQuestion === 1) {
 
-        return;
-      }
+    goNextQuestion(
+      "واش بقيتي فإسبانيا خمسة شهور متتالية؟ وشنو هي أول مدينة سكنتي فيها؟"
+    );
 
-      // STEP 1
-      if (conversationStep === 1) {
+    return;
+  }
 
-        setConversationStep(2);
+  // PREGUNTA 2
+  if (currentQuestion === 2) {
 
-        setTimeout(() => {
+    goNextQuestion(
+      "واش عندك باسبور مغربي ولا كارت ناسيونال ولا فوتوكوبي ديالهم؟"
+    );
 
-          speakExactText(
-            "واش بقيتي فإسبانيا خمسة شهور متتالية؟ وشنو هي أول مدينة سكنتي فيها؟"
-          );
+    return;
+  }
 
-        }, 400);
+  // PREGUNTA 3
+  if (currentQuestion === 3) {
 
-        return;
-      }
+    goNextQuestion(
+      "واش عندك شي ورقة فيها سميتك والتاريخ؟ بحال شهادة السكنى ولا ورقة ديال الطبيب ولا الصبيطار ولا الكراء؟"
+    );
 
-      // STEP 2
-      if (conversationStep === 2) {
+    return;
+  }
 
-        setConversationStep(3);
+  // PREGUNTA 4 → STRIPE
+  if (currentQuestion === 4) {
 
-        setTimeout(() => {
+    questionFlowLockedRef.current = true;
 
-          speakExactText(
-            "واش عندك باسبور مغربي ولا كارت ناسيونال ولا فوتوكوبي ديالهم؟"
-          );
-
-        }, 400);
-
-        return;
-      }
-
-      // STEP 3
-      if (conversationStep === 3) {
-
-        setConversationStep(4);
-
-        setTimeout(() => {
-
-          speakExactText(
-            "واش عندك شي ورقة فيها سميتك والتاريخ؟ بحال شهادة السكنى ولا ورقة ديال الطبيب ولا الصبيطار ولا الكراء؟"
-          );
-
-        }, 400);
-
-        return;
-      }
-
-      // STEP 4 → STRIPE
-      if (conversationStep === 4) {
-
-        questionFlowLockedRef.current = true;
-
-        const PAYMENT_TEXT = `
+    const PAYMENT_TEXT = `
 مزيان، من خلال الأجوبة ديالك بان ليا بللي الملف ديالك غادي يكون مقبول إن شاء الله.
 
 باش نعطيك تحليل دقيق ونوجد ليك الملف كامل:
@@ -1415,27 +1423,25 @@ dc.onmessage = (event) => {
 ورك على زر الأداء ونكملو مباشرة.
 `;
 
-        pushAgentMessage(PAYMENT_TEXT);
+    pushAgentMessage(PAYMENT_TEXT);
 
-        setTimeout(() => {
+    setTimeout(() => {
 
-          speakExactText(PAYMENT_TEXT);
+      speakExactText(PAYMENT_TEXT);
 
-        }, 500);
+    }, 500);
 
-        setTimeout(() => {
+    setTimeout(() => {
 
-          setShowStripe(true);
+      setShowStripe(true);
 
-          setPaymentRequired(true);
+      setPaymentRequired(true);
 
-          stopListening();
+      stopListening();
 
-        }, 3500);
+    }, 3500);
 
-        return;
-      }
-    }
+    return;
   }
 }
 
