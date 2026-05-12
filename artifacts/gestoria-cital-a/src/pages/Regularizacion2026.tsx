@@ -1303,10 +1303,12 @@ if (!introAlreadySentRef.current && !(window as any).paid) {
 
     setTimeout(() => {
 
-    setShowStripe(true);
+setShowStripe(true);
 setPaymentRequired(true);
-stopListening();
 
+setTimeout(() => {
+  stopListening();
+}, 2500); 
     }, 4000);
 
   }, 2000);
