@@ -729,8 +729,7 @@ const handleQuestionFlow = () => {
     }
 
     // Stripe
-    if (next === 5 && !paymentDoneRef.current) {
-
+if (next === 4 && !paymentDoneRef.current) {
       questionFlowLockedRef.current = true;
 
       const PAYMENT_TEXT = `
@@ -1473,7 +1472,8 @@ const greetings = [
   "bonjour",
   "hey"
 ];
-
+console.log("COUNTING QUESTION...");
+console.log("CURRENT INDEX:", questionIndex);
 const shouldCountQuestion =
   !greetings.includes(cleanAnswer) &&
   (
@@ -1493,7 +1493,9 @@ if (
   shouldCountQuestion &&
   !questionFlowLockedRef.current
 ) {
+setTimeout(() => {
   handleQuestionFlow();
+}, 100);
 }
 
   }
