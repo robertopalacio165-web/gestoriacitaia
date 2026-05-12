@@ -996,6 +996,20 @@ if (typeof result.verification_score === "number") {
       pendingAutomationPromptRef.current = null;
       setPendingAutomationPrompt("");
       setWaitingMohamed(false);
+      if (
+  !(window as any).paid &&
+  !introAlreadySentRef.current
+) {
+
+  introAlreadySentRef.current = true;
+
+  setTimeout(() => {
+
+    maybeSendIntroToMohamed();
+
+  }, 1000);
+
+}
       assistantTextBufferRef.current = "";
 
 lastAssistantTextRef.current = "";
@@ -1228,8 +1242,8 @@ GestoriaCitaIA
  body: JSON.stringify({ assistant: "mohamed" }),
 });
       const sessionData = await sessionRes.json();
-      console.log("sessionRes.ok:", sessionRes.ok);
-console.log("sessionData:", sessionData);
+
+
       if (!sessionRes.ok) {
         throw new Error(sessionData?.error || "Error creando sesión realtime");
       }
@@ -1269,12 +1283,12 @@ console.log("sessionData:", sessionData);
       const dc = pc.createDataChannel("oai-events");
       realtimeDcRef.current = dc;
       dc.onopen = async () => {
-        console.log("✅ DC OPEN");
+   
         dcOpenedRef.current = true;
         isConnectingRef.current = false;
         setIsListening(true);
         setWaitingMohamed(false);
-    console.log("✅ INTRO ENVIADO");
+ 
         
 dc.send(
   JSON.stringify({
@@ -1332,7 +1346,7 @@ turn_detection: {
 
       };
 dc.onmessage = (event) => {
-console.log("📩 EVENT:", event.data);
+
   try {
 
     const msg = JSON.parse(event.data);
@@ -1471,46 +1485,7 @@ processingQuestionRef.current = false;
       finalizeAssistantBuffer();
 
       setWaitingMohamed(false);
-      // ✅ INTRO AUTOMÁTICO SOLO UNA VEZ
-if (
-  !introAlreadySentRef.current &&
-  !(window as any).paid
-) {
-
-  introAlreadySentRef.current = true;
-
-  const introText = `
-السلام عليكم، مرحبا بيك فـ GestoriaCitaIA.
-
-باش نبداو التحليل الكامل ديال الملف ديالك،
-خاصك تكمل الأداء دابا.
-`;
-
-  dc.send(
-    JSON.stringify({
-      type: "response.create",
-      response: {
-        modalities: ["audio", "text"],
-        instructions: introText,
-      },
-    })
-  );
-
-  // ✅ Stripe يخرج من بعد ما يسالي محمد
-  waitingForStripeRef.current = true;
-
-  setTimeout(() => {
-
-    setShowStripe(true);
-
-    setPaymentRequired(true);
-
-    waitingForStripeRef.current = false;
-
-    // ❌ ممنوع stopListening هنا
-
-  }, 12000);
-}
+  
 assistantTextBufferRef.current = "";
 
 lastAssistantTextRef.current = "";
