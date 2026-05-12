@@ -1403,14 +1403,14 @@ if (isAssistantEcho) {
   return;
 }
 
+if (transcript !== lastProcessedTranscriptRef.current) {
 
-  if (transcript !== lastUserTranscriptRef.current) {
+  lastProcessedTranscriptRef.current = transcript;
 
-    lastUserTranscriptRef.current = transcript;
+  setLastUserTranscript(transcript);
 
-    setLastUserTranscript(transcript);
-
-    pushUserMessage(transcript);
+  pushUserMessage(transcript);
+ 
 
     console.log("✅ USER SAID:", transcript);
 
@@ -1419,17 +1419,16 @@ const normalized = lowerTranscript;
 // ✅ الاسم ما يتحسبش فـ NEXT
 const isOnlyNameStep =
   questionIndex === 0 &&
-  !lastUserTranscriptRef.current &&
+  !clientQuestionsDone &&
   lowerTranscript.length > 1 &&
   !lowerTranscript.includes("نعم") &&
   !lowerTranscript.includes("لا") &&
   !lowerTranscript.includes("اه") &&
   !lowerTranscript.includes("آه");
-
 if (isOnlyNameStep) {
 
   console.log("👤 USER NAME ONLY:", transcript);
-
+  setClientQuestionsDone(true);
   setTimeout(() => {
 
     speakExactText(
