@@ -1417,7 +1417,7 @@ dc.onmessage = (event) => {
           }
 
           // PREGUNTA 4 → STRIPE
-    if (currentQuestion >= 4 && !paymentDoneRef.current) {
+  if (currentQuestion === 5 && !paymentDoneRef.current) {
 
             questionFlowLockedRef.current = true;
 
@@ -1436,27 +1436,23 @@ dc.onmessage = (event) => {
 
             pushAgentMessage(PAYMENT_TEXT);
 
-            setTimeout(() => {
-
-              speakExactText(PAYMENT_TEXT);
-
-            }, 500);
-
-            console.log("🔥 SHOWING STRIPE BUTTON");
-
-setShowStripe(true);
-
-setPaymentRequired(true);
-
-console.log("🔥 STRIPE STATE TRUE");
-
 setTimeout(() => {
+
+  console.log("🔥 SHOWING STRIPE BUTTON");
+
+  setShowStripe(true);
+
+  setPaymentRequired(true);
+
+  console.log("🔥 STRIPE STATE TRUE");
 
   stopListening();
 
-}, 1000);
+}, 14000);
 
-            return;
+return;
+
+     
           }
         }
       }
