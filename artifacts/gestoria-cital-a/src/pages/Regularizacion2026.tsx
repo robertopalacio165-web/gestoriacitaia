@@ -210,8 +210,8 @@ window.location.href = data.url;
   const [questionsDone, setQuestionsDone] = useState(false);
 const [clientQuestionsDone, setClientQuestionsDone] = useState(false);
 const [questionIndex, setQuestionIndex] = useState(0);
-  const introAlreadySentRef = useRef(false);
-const waitingForStripeRef = useRef(false);
+
+
 
 const goNextQuestion = (nextText: string) => {
 
