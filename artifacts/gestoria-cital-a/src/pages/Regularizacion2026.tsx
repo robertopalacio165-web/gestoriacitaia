@@ -1524,7 +1524,7 @@ if (currentQuestion === 4) {
 
   }
 
-};
+
 
   dc.onerror = (err) => {
         console.error("Realtime data channel error:", err);
