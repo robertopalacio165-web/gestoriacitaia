@@ -1103,15 +1103,7 @@ const maybeSendIntroToMohamed = async () => {
   // ✅ من بعد يخرج Stripe مباشرة
   setTimeout(() => {
 
-    setShowStripe(true);
-
-    setPaymentRequired(true);
-
-    stopListening();
-
-  }, 12000);
-};
-
+ 
 
   const stopListening = () => {
     try {
@@ -1282,67 +1274,109 @@ GestoriaCitaIA
       }
       const dc = pc.createDataChannel("oai-events");
       realtimeDcRef.current = dc;
-      dc.onopen = async () => {
-   
-        dcOpenedRef.current = true;
-        isConnectingRef.current = false;
-        setIsListening(true);
-        setWaitingMohamed(false);
- 
-        
-dc.send(
-  JSON.stringify({
- 
-    type: "session.update",
-    session: {
-    instructions: `
+ dc.onopen = async () => {
+
+  console.log("✅ DC OPEN");
+
+  dcOpenedRef.current = true;
+
+  isConnectingRef.current = false;
+
+  setIsListening(true);
+
+  setWaitingMohamed(false);
+
+  // ✅ CONFIGURACIÓN SESSION
+  dc.send(
+    JSON.stringify({
+      type: "session.update",
+      session: {
+        instructions: `
 أنت محمد من GestoriaCitaIA.
 
-ممنوع تبدأ الحوار من جديد.
+تكلم فقط بالدارجة المغربية.
+
+جاوب باختصار.
+
+ممنوع تعاود الترحيب كل مرة.
+
 ممنوع تقول:
-"غنعاود من الأول"
-أو
-"أنا محمد"
-أو
-"مرحبا"
+أنا محمد
+مرحبا
+السلام عليكم
 إلا فالبداية الأولى فقط.
 
-ممنوع تعاود أي سؤال سبق تسول.
+ممنوع تعاود نفس السؤال مرتين.
 
-جاوب فقط بالجملة المطلوبة.
+إذا كان السؤال الحالي:
+"واش دخلتي لإسبانيا قبل واحد يناير 2026؟"
 
-إلا كان السؤال الحالي هو:
-"واش دخلتي لإسبانيا قبل من واحد يناير 2026؟"
+جاوب فقط بالسؤال بدون أي مقدمة.
+        `,
+        modalities: ["audio", "text"],
 
-فلا تقل أي مقدمة أخرى.
+        input_audio_transcription: {
+          model: "gpt-4o-mini-transcribe",
+        },
 
-تكلم فقط بالدارجة المغربية.
-وباختصار.
-`,
-      modalities: ["audio", "text"],
-      input_audio_transcription: {
-  model: "gpt-4o-mini-transcribe",
-},
-turn_detection: {
-  type: "server_vad",
-  threshold: 0.45,
-  prefix_padding_ms: 900,
-  silence_duration_ms: 2600,
-},
-    },
-  })
-);
+        turn_detection: {
+          type: "server_vad",
+          threshold: 0.45,
+          prefix_padding_ms: 900,
+          silence_duration_ms: 2600,
+        },
+      },
+    })
+  );
 
-     
-        const capturedPending = pendingAutomationPromptRef.current;
-        if (capturedPending) {
-          pendingAutomationPromptRef.current = null;
-          setPendingAutomationPrompt("");
-          setTimeout(() => {
-            void askMohamedToSpeak(capturedPending);
-          }, 400);
-          return;
-        }
+  // ✅ INTRO مرة وحدة فقط
+  if (
+    !introAlreadySentRef.current &&
+    !(window as any).paid
+  ) {
+
+    introAlreadySentRef.current = true;
+
+    // ✅ نخلي محمد يهضر الأول
+    setTimeout(() => {
+
+      dc.send(
+        JSON.stringify({
+          type: "response.create",
+          response: {
+            modalities: ["audio", "text"],
+            instructions: `
+السلام عليكم، مرحبا بيك فـ GestoriaCitaIA.
+
+باش نبداو التحليل الكامل ديال الملف ديالك،
+خاصك تكمل الأداء دابا.
+            `,
+          },
+        })
+      );
+
+    }, 1200);
+
+  }
+
+  // ✅ AUTOMATION
+  const capturedPending = pendingAutomationPromptRef.current;
+
+  if (capturedPending) {
+
+    pendingAutomationPromptRef.current = null;
+
+    setPendingAutomationPrompt("");
+
+    setTimeout(() => {
+
+      void askMohamedToSpeak(capturedPending);
+
+    }, 400);
+
+    return;
+  }
+};
 
       };
 dc.onmessage = (event) => {
@@ -1472,36 +1506,44 @@ if (currentQuestion === 2) {
 
     }
 
-    if (msg.type === "response.done") {
-processingQuestionRef.current = false;
-      assistantBusyRef.current = false;
+if (msg.type === "response.done") {
+  // Marcar que ya terminó el procesamiento
+  processingQuestionRef.current = false;
+  assistantBusyRef.current = false;
 
-      const finalText = assistantTextBufferRef.current.trim();
+  // Tomar el texto final de Mohamed
+  const finalText = assistantTextBufferRef.current.trim();
+  if (finalText) {
+    lastAssistantTextRef.current = finalText;
+  }
 
-      if (finalText) {
-        lastAssistantTextRef.current = finalText;
-      }
+  // Guardar y mostrar el mensaje en la UI
+  finalizeAssistantBuffer();
+  setWaitingMohamed(false);
 
-      finalizeAssistantBuffer();
+  // Limpiar buffers
+  assistantTextBufferRef.current = "";
+  lastAssistantTextRef.current = "";
+  lastUserTranscriptRef.current = "";
+  pendingAutomationPromptRef.current = null;
+  setPendingAutomationPrompt("");
 
-      setWaitingMohamed(false);
-  
-assistantTextBufferRef.current = "";
+  // ✅ Mostrar Stripe SOLO después del primer audio de Mohamed
+  if (!introAlreadySentRef.current && !(window as any).paid) {
+    introAlreadySentRef.current = true;
 
-lastAssistantTextRef.current = "";
+    // Pequeño delay para asegurar que Mohamed terminó de hablar
+    setTimeout(() => {
+      setShowStripe(true);
+      setPaymentRequired(true);
+    }, 500); // 500ms después del intro
+  }
 
-lastUserTranscriptRef.current = "";
-
-processingQuestionRef.current = false;
-      pendingAutomationPromptRef.current = null;
-
-      setPendingAutomationPrompt("");
-
-      setTimeout(() => {
-        void flushPendingAutomation();
-      }, 150);
-
-    }
+  // Seguir con cualquier automation pendiente
+  setTimeout(() => {
+    void flushPendingAutomation();
+  }, 150);
+}
 
   } catch (err) {
 
