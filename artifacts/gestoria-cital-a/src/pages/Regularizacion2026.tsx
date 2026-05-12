@@ -1268,15 +1268,13 @@ dc.onmessage = (event) => {
       msg?.item?.content?.[0]?.transcript ||
       "";
 
-    if (
-      (
-        msg.type === "conversation.item.input_audio_transcription.completed" ||
-        msg.type === "input_audio_buffer.transcription.completed"
-      ) &&
-      typeof userTranscript === "string" &&
-      userTranscript.trim() &&
-      userTranscript.trim().length > 1
-    ) {
+   if (
+  (msg.type === "conversation.item.input_audio_transcription.completed" ||
+    msg.type === "input_audio_buffer.transcription.completed") &&
+  typeof userTranscript === "string" &&
+  userTranscript.trim() &&
+  userTranscript.trim().length > 1
+) {
 
   const transcript = userTranscript.trim();
 const isAssistantEcho =
