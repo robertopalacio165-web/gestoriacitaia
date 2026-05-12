@@ -1354,8 +1354,8 @@ dc.onmessage = (event) => {
 
         const lowerTranscript = transcript.toLowerCase().trim();
 
-    const isOnlyNameStep =
-  questionIndexRef.current === 1 &&
+        const isOnlyNameStep =
+          questionIndexRef.current === 1 &&
           !clientQuestionsDone &&
           lowerTranscript.length > 1 &&
           !lowerTranscript.includes("نعم") &&
@@ -1380,72 +1380,74 @@ dc.onmessage = (event) => {
           return;
         }
 
-  const normalized = lowerTranscript
-  .replace(/[.,!?¿؟]/g, "")
-  .trim()
-  .toLowerCase();
+        const normalized = lowerTranscript
+          .replace(/[.,!?¿؟]/g, "")
+          .trim()
+          .toLowerCase();
 
         if (questionFlowLockedRef.current) {
 
-  console.log("🔒 FLOW LOCKED");
+          console.log("🔒 FLOW LOCKED");
 
-  return;
+          return;
 
-}
+        }
 
- const currentQuestion = questionIndexRef.current;
-questionIndexRef.current = currentQuestion;
-          console.log("🔥 CURRENT QUESTION:", currentQuestion);
+        const currentQuestion = questionIndexRef.current;
 
- if (currentQuestion === 0) {
+        questionIndexRef.current = currentQuestion;
 
-  goNextQuestion("مزيان. قولي شنو سميتك؟");
+        console.log("🔥 CURRENT QUESTION:", currentQuestion);
 
-  return;
+        if (currentQuestion === 0) {
 
-}
+          goNextQuestion("مزيان. قولي شنو سميتك؟");
 
-if (currentQuestion === 1) {
+          return;
 
-  goNextQuestion(
-    "واش بقيتي فإسبانيا خمسة شهور متتالية؟ وشنو هي أول مدينة سكنتي فيها؟"
-  );
+        }
 
-  return;
+        if (currentQuestion === 1) {
 
-}
+          goNextQuestion(
+            "واش بقيتي فإسبانيا خمسة شهور متتالية؟ وشنو هي أول مدينة سكنتي فيها؟"
+          );
 
-if (currentQuestion === 2) {
+          return;
 
-  goNextQuestion(
-    "واش عندك باسبور مغربي ولا كارت ناسيونال ولا فوتوكوبي ديالهم؟"
-  );
+        }
 
-  return;
+        if (currentQuestion === 2) {
 
-}
+          goNextQuestion(
+            "واش عندك باسبور مغربي ولا كارت ناسيونال ولا فوتوكوبي ديالهم؟"
+          );
 
-if (currentQuestion === 3) {
+          return;
 
-  goNextQuestion(
-    "واش عندك شي ورقة فيها سميتك والتاريخ؟ بحال شهادة السكنى ولا ورقة ديال الطبيب ولا الصبيطار ولا الكراء؟"
-  );
+        }
 
-  return;
+        if (currentQuestion === 3) {
 
-}
+          goNextQuestion(
+            "واش عندك شي ورقة فيها سميتك والتاريخ؟ بحال شهادة السكنى ولا ورقة ديال الطبيب ولا الصبيطار ولا الكراء؟"
+          );
 
-if (currentQuestion === 4) {
+          return;
 
-  questionFlowLockedRef.current = true;
+        }
 
-  setQuestionIndex(5);
+        if (currentQuestion === 4) {
 
-  questionIndexRef.current = 5;
+          questionFlowLockedRef.current = true;
 
-  localStorage.setItem("questionIndex", "5");
+          setQuestionIndex(5);
 
-  const PAYMENT_TEXT = `
+          questionIndexRef.current = 5;
+
+          localStorage.setItem("questionIndex", "5");
+
+          const PAYMENT_TEXT = `
 مزيان، من خلال الأجوبة ديالك بان ليا بللي الملف ديالك غادي يكون مقبول إن شاء الله.
 
 باش نعطيك تحليل دقيق ونوجد ليك الملف كامل:
@@ -1458,25 +1460,27 @@ if (currentQuestion === 4) {
 ورك على زر الأداء ونكملو مباشرة.
 `;
 
-  pushAgentMessage(PAYMENT_TEXT);
+          pushAgentMessage(PAYMENT_TEXT);
 
-  speakExactText(PAYMENT_TEXT);
+          speakExactText(PAYMENT_TEXT);
 
-  setTimeout(() => {
+          setTimeout(() => {
 
-    setShowStripe(true);
+            setShowStripe(true);
 
-    setPaymentRequired(true);
+            setPaymentRequired(true);
 
-    stopListening();
+            stopListening();
 
-  }, 12000);
+          }, 12000);
 
-  return;
+          return;
 
-}
-        
- }   
+        }
+
+      }
+
+    }
 
     if (
       msg.type === "response.output_text.delta" &&
