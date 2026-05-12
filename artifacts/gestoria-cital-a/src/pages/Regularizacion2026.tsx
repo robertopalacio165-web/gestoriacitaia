@@ -1320,20 +1320,25 @@ dc.onmessage = (event) => {
       msg?.item?.transcript ||
       msg?.item?.content?.[0]?.transcript ||
       "";
+if (
+  (
+    msg.type === "conversation.item.input_audio_transcription.completed" ||
+    msg.type === "input_audio_buffer.transcription.completed"
+  ) &&
+  typeof userTranscript === "string" &&
+  userTranscript.trim() &&
+  userTranscript.trim().length > 1
+) {
 
-    if (
-      (msg.type === "conversation.item.input_audio_transcription.completed" ||
-       if (mohamedTalkingRef.current) {
-  console.log("⛔ Mohamed todavía está hablando");
-  return;
-}
-        msg.type === "input_audio_buffer.transcription.completed") &&
-      typeof userTranscript === "string" &&
-      userTranscript.trim() &&
-      userTranscript.trim().length > 1
-    ) {
+  if (mohamedTalkingRef.current) {
 
-      const transcript = userTranscript.trim();
+    console.log("⛔ Mohamed todavía hablando");
+
+    return;
+
+  }
+
+  const transcript = userTranscript.trim();
 
       const isAssistantEcho =
         transcript.includes("مزيان") ||
