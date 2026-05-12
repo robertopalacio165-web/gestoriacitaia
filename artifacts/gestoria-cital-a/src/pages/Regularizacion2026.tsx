@@ -766,13 +766,28 @@ if (next === 3 && !paymentDoneRef.current) {
   }, 300);
 
   // ✅ هنا قبل return
-  setTimeout(() => {
-    processingQuestionRef.current = false;
-  }, 1200);
+      // باقي الأسئلة
+    const nextQuestion = questions[next - 1];
 
-  return next;
-}
+    if (nextQuestion) {
 
+      setTimeout(() => {
+
+        speakExactText(nextQuestion);
+
+      }, 500);
+
+    }
+
+    setTimeout(() => {
+      processingQuestionRef.current = false;
+    }, 1200);
+
+    return next;
+
+  });
+
+};
   const updateLeadForm = (field: keyof LeadFormState, value: string) => {
     setLeadForm((prev) => ({ ...prev, [field]: value }));
   };
