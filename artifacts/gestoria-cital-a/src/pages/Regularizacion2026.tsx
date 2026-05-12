@@ -730,67 +730,42 @@ if (questionFlowLockedRef.current) {
     // Stripe
 // Stripe
     // Stripe
-    if (next === 3 && !paymentDoneRef.current) {
+if (next === 5 && !paymentDoneRef.current) {
 
-      questionFlowLockedRef.current = true;
+  questionFlowLockedRef.current = true;
 
-      const PAYMENT_TEXT = `
+  const PAYMENT_TEXT = `
 مزيان، من خلال الأجوبة ديالك...
 `;
 
-      pushAgentMessage(PAYMENT_TEXT);
+  pushAgentMessage(PAYMENT_TEXT);
 
-      setPaymentRequired(true);
+  setPaymentRequired(true);
 
-      assistantBusyRef.current = true;
+  setTimeout(() => {
 
-      pendingAutomationPromptRef.current = null;
+    speakExactText(PAYMENT_TEXT);
 
-      setTimeout(() => {
-        speakExactText(PAYMENT_TEXT);
-      }, 300);
+  }, 300);
 
-      const stripeWatcher = setInterval(() => {
+  setTimeout(() => {
 
-        if (!assistantBusyRef.current) {
+    setShowStripe(true);
 
-          clearInterval(stripeWatcher);
+    stopListening();
 
-          setShowStripe(true);
+    setIsListening(false);
 
-          stopListening();
+  }, 2500);
 
-          setIsListening(false);
+  setTimeout(() => {
 
-        }
+    processingQuestionRef.current = false;
 
-      }, 300);
+  }, 1200);
 
-      setTimeout(() => {
-        processingQuestionRef.current = false;
-      }, 1200);
+  return next;
 
-      return next;
-    }
-
-    // باقي الأسئلة
-    const nextQuestion = questions[next - 1];
-
-    if (nextQuestion) {
-
-      setTimeout(() => {
-
-        speakExactText(nextQuestion);
-
-      }, 500);
-
-    }
-
-    setTimeout(() => {
-      processingQuestionRef.current = false;
-    }, 1200);
-
-    return next;
 
   });
 
@@ -1366,23 +1341,26 @@ turn_detection: {
 }  
       };
 dc.onmessage = (event) => {
+
   try {
+
     const msg = JSON.parse(event.data);
 
+    const userTranscript =
       msg?.transcript ||
       msg?.item?.transcript ||
       msg?.item?.content?.[0]?.transcript ||
       "";
 
-if (
-  (
-    msg.type === "conversation.item.input_audio_transcription.completed" ||
-    msg.type === "input_audio_buffer.transcription.completed"
-  ) &&
-  typeof userTranscript === "string" &&
-  userTranscript.trim() &&
-  userTranscript.trim().length > 1
-) {
+    if (
+      (
+        msg.type === "conversation.item.input_audio_transcription.completed" ||
+        msg.type === "input_audio_buffer.transcription.completed"
+      ) &&
+      typeof userTranscript === "string" &&
+      userTranscript.trim() &&
+      userTranscript.trim().length > 1
+    ) {
 
   const transcript = userTranscript.trim();
 const isAssistantEcho =
