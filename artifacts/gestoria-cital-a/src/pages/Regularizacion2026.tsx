@@ -1087,7 +1087,7 @@ const NAME_QUESTION =
 
 ];
 
-];
+
 
  const maybeSendIntroToMohamed = async () => {
   if (!realtimeDcRef.current) return;
