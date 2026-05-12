@@ -729,7 +729,7 @@ const handleQuestionFlow = () => {
     }
 
     // Stripe
-if (next === 4 && !paymentDoneRef.current) {
+if (next === 2 && !paymentDoneRef.current) {
       questionFlowLockedRef.current = true;
 
       const PAYMENT_TEXT = `
