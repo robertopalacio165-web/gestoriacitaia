@@ -135,7 +135,7 @@ paymentDoneRef.current = true;
     }, 1000);
 
     setTimeout(() => {
-setQuestionIndex(5);
+setQuestionIndex(4);
 
 speakExactText(
   "مزيان، توصلنا بالأداء ديالك. دابا نكملو. السؤال السادس: واش عمرك مشيتي للصبيطار؟ واش عندك شي ورقة فيها سميتك والتاريخ؟"
@@ -196,7 +196,24 @@ window.location.href = data.url;
   const [questionsDone, setQuestionsDone] = useState(false);
 const [clientQuestionsDone, setClientQuestionsDone] = useState(false);
   const [questionIndex, setQuestionIndex] = useState(0);
-  
+  // ✅ CONTROL CENTRAL PROFESIONAL
+
+useEffect(() => {
+
+
+
+  // ✅ Desbloquear sistema completo después pregunta 12
+  if (questionIndex >= 12) {
+
+    setDocumentsUnlocked(true);
+
+    setConfirmUnlocked(true);
+
+    setQuestionsDone(true);
+
+  }
+
+}, [questionIndex]);
   useEffect(() => {
 
   localStorage.setItem(
@@ -206,6 +223,7 @@ const [clientQuestionsDone, setClientQuestionsDone] = useState(false);
 
 }, [questionIndex]);
   const questionFlowLockedRef = useRef(false);
+  const processingQuestionRef = useRef(false);
   const paymentDoneRef = useRef(false);
   const lastProcessedTranscriptRef = useRef("");
 const [clientQuestionIndex, setClientQuestionIndex] = useState(0);
@@ -671,46 +689,54 @@ if (rawStep) {
 
 const handleQuestionFlow = () => {
 
-  if (questionFlowLockedRef.current) return;
-console.log("QUESTION CURRENT:", questionIndex);
+  // ✅ هنا بالضبط
+  if (processingQuestionRef.current) return;
+
+  processingQuestionRef.current = true;
+
+if (questionFlowLockedRef.current) {
+
+  processingQuestionRef.current = false;
+
+  return;
+
+}
+
+  console.log("QUESTION CURRENT:", questionIndex);
+
   setQuestionIndex((prev) => {
 
     const next = prev + 1;
+
     console.log("QUESTION NEXT:", next);
-// ✅ بعد أول جواب سول على الاسم بلا NEXT جديد
-if (next === 1) {
 
-  setTimeout(() => {
+    // السؤال الأول
+    if (next === 1) {
 
-    speakExactText(NAME_QUESTION);
+      setTimeout(() => {
 
-  }, 400);
+        speakExactText(NAME_QUESTION);
 
-  return next;
-}
-    console.log("NEXT:", next);
+      }, 400);
 
-    // السؤال الرابع -> يخرج Stripe
-    if (next === 5 && !paymentDoneRef.current) {
+      // ✅ هنا قبل return
+      setTimeout(() => {
+        processingQuestionRef.current = false;
+      }, 1200);
+
+      return next;
+    }
+
+    // Stripe
+    if (next === 4 && !paymentDoneRef.current) {
 
       questionFlowLockedRef.current = true;
 
       const PAYMENT_TEXT = `
-مزيان، من خلال الأجوبة ديالك بان ليا بللي الملف ديالك غادي يكون مقبول إن شاء الله ✅
-
-باش نعطيك تحليل دقيق ونوجد ليك الملف كامل:
-
-✔️ تحليل كامل
-✔️ 100 fi 100 التحقق من الوثائق
-✔️ الوثيقة المهمة اللي غادي تعزز الملف ديالك بزاف
-
-غير ب 12 أورو
-
-ورك على زر الأداء ونكملو مباشرة.
+مزيان، من خلال الأجوبة ديالك...
 `;
-pushAgentMessage(PAYMENT_TEXT);
-      
-      console.log("SHOWING STRIPE BUTTON");
+
+      pushAgentMessage(PAYMENT_TEXT);
 
       setPaymentRequired(true);
 
@@ -722,50 +748,35 @@ pushAgentMessage(PAYMENT_TEXT);
         speakExactText(PAYMENT_TEXT);
       }, 300);
 
-   const stripeWatcher = setInterval(() => {
+      const stripeWatcher = setInterval(() => {
 
-  // Mohamed terminó de hablar
-  if (!assistantBusyRef.current) {
+        if (!assistantBusyRef.current) {
 
-    clearInterval(stripeWatcher);
+          clearInterval(stripeWatcher);
 
-    console.log("✅ MOHAMED FINISHED TALKING");
+          setShowStripe(true);
 
-    setShowStripe(true);
+          stopListening();
 
-    stopListening();
+          setIsListening(false);
 
-    setIsListening(false);
+        }
 
-  }
+      }, 300);
 
-}, 300);
-
-// ❌ ما نفتحوش الوثائق هنا
-setQuestionsDone(false);
+      // ✅ هنا قبل return
+      setTimeout(() => {
+        processingQuestionRef.current = false;
+      }, 1200);
 
       return next;
     }
-if (next >= questions.length - 1) {
 
-  setDocumentsUnlocked(true);
+    // ✅ هنا أيضا قبل return النهائي
+    setTimeout(() => {
+      processingQuestionRef.current = false;
+    }, 1200);
 
-  setConfirmUnlocked(true);
-
-  setQuestionsDone(true);
-
-  setTimeout(() => {
-
-    speakExactText(`
-دابا خاصك ترفع جميع الوثائق اللي عندك.
-
-من بعد ما تسالي رفع الوثائق كاملة،
-ورك على زر التحقق من الوثائق باش نراجعهم ليك كاملين.
-    `);
-
-  }, 1000);
-
-}
     return next;
   });
 };
@@ -1422,9 +1433,15 @@ const cleanAnswer = normalized
   .trim();
 
 const shouldCountQuestion =
-  validAnswers.some(word =>
-    cleanAnswer.includes(word)
-  );
+  cleanAnswer === "نعم" ||
+  cleanAnswer === "لا" ||
+  cleanAnswer === "اه" ||
+  cleanAnswer === "آه" ||
+  cleanAnswer === "oui" ||
+  cleanAnswer === "non" ||
+  cleanAnswer === "si" ||
+  cleanAnswer === "no";
+
 
 if (
   shouldCountQuestion &&
