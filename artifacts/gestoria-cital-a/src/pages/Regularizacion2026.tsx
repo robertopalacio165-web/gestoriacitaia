@@ -1426,6 +1426,7 @@ const isOnlyNameStep =
   !lowerTranscript.includes("اه") &&
   !lowerTranscript.includes("آه");
 if (isOnlyNameStep) {
+  setQuestionIndex(1);
 
   console.log("👤 USER NAME ONLY:", transcript);
   setClientQuestionsDone(true);
