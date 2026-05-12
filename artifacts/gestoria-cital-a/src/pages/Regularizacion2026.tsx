@@ -729,44 +729,51 @@ if (questionFlowLockedRef.current) {
 
     // Stripe
 // Stripe
-if (next === 3 && !paymentDoneRef.current) {
+    // Stripe
+    if (next === 3 && !paymentDoneRef.current) {
 
-  questionFlowLockedRef.current = true;
+      questionFlowLockedRef.current = true;
 
-  const PAYMENT_TEXT = `
+      const PAYMENT_TEXT = `
 مزيان، من خلال الأجوبة ديالك...
 `;
 
-  pushAgentMessage(PAYMENT_TEXT);
+      pushAgentMessage(PAYMENT_TEXT);
 
-  setPaymentRequired(true);
+      setPaymentRequired(true);
 
-  assistantBusyRef.current = true;
+      assistantBusyRef.current = true;
 
-  pendingAutomationPromptRef.current = null;
+      pendingAutomationPromptRef.current = null;
 
-  setTimeout(() => {
-    speakExactText(PAYMENT_TEXT);
-  }, 300);
+      setTimeout(() => {
+        speakExactText(PAYMENT_TEXT);
+      }, 300);
 
-  const stripeWatcher = setInterval(() => {
+      const stripeWatcher = setInterval(() => {
 
-    if (!assistantBusyRef.current) {
+        if (!assistantBusyRef.current) {
 
-      clearInterval(stripeWatcher);
+          clearInterval(stripeWatcher);
 
-      setShowStripe(true);
+          setShowStripe(true);
 
-      stopListening();
+          stopListening();
 
-      setIsListening(false);
+          setIsListening(false);
 
+        }
+
+      }, 300);
+
+      setTimeout(() => {
+        processingQuestionRef.current = false;
+      }, 1200);
+
+      return next;
     }
 
-  }, 300);
-
-  // ✅ هنا قبل return
-      // باقي الأسئلة
+    // باقي الأسئلة
     const nextQuestion = questions[next - 1];
 
     if (nextQuestion) {
@@ -785,9 +792,11 @@ if (next === 3 && !paymentDoneRef.current) {
 
     return next;
 
- 
+  });
 
 };
+
+
   const updateLeadForm = (field: keyof LeadFormState, value: string) => {
     setLeadForm((prev) => ({ ...prev, [field]: value }));
   };
