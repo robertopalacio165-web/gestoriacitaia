@@ -1504,7 +1504,8 @@ if (msg.type === "response.done") {
   }, 150);
 
 }
-} catch (err) {
+
+catch (err) {
 
   console.error("Realtime event parse error:", err);
 
