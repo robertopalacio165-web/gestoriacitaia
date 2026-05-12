@@ -1504,7 +1504,7 @@ if (msg.type === "response.done") {
     void flushPendingAutomation();
   }, 150);
 
-}
+
 
   } catch (err) {
 
