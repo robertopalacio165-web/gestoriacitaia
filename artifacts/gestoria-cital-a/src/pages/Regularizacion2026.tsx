@@ -110,23 +110,36 @@ function slugifyFileName(name: string) {
 
 export default function Regularizacion2026() {
 
-  // ✅ الرجوع من Stripe وكمل السؤال 5
- useEffect(() => {
+
+// ✅ الرجوع من Stripe
+useEffect(() => {
 
   const params = new URLSearchParams(window.location.search);
 
   const paid = params.get("paid");
-(window as any).paid = paid;
+
+  (window as any).paid = paid === "true";
+
   if (paid === "true") {
 
     console.log("✅ CLIENT PAID");
-paymentDoneRef.current = true;
-    
+
+    paymentDoneRef.current = true;
+
     setShowStripe(false);
 
     setPaymentRequired(false);
 
     questionFlowLockedRef.current = false;
+
+    const nextIndex = 0;
+
+    setQuestionIndex(nextIndex);
+
+    localStorage.setItem(
+      "questionIndex",
+      nextIndex.toString()
+    );
 
     setTimeout(() => {
 
@@ -135,22 +148,18 @@ paymentDoneRef.current = true;
     }, 1000);
 
     setTimeout(() => {
-setQuestionIndex(5);
 
-localStorage.setItem(
-  "questionIndex",
-  "5"
-);
-
-speakExactText(
-  "مزيان، توصلنا بالأداء ديالك. دابا نكملو. السؤال السادس: واش عمرك مشيتي للصبيطار؟ واش عندك شي ورقة فيها سميتك والتاريخ؟"
-);
+      speakExactText(
+        "مزيان، توصلنا بالأداء ديالك. دابا نبداو بالأسئلة. واش دخلتي لإسبانيا قبل واحد يناير 2026؟"
+      );
 
     }, 4000);
 
   }
 
 }, []);
+
+
 
   const handleStripePayment = async () => {
   try {
@@ -986,6 +995,13 @@ if (typeof result.verification_score === "number") {
       pendingAutomationPromptRef.current = null;
       setPendingAutomationPrompt("");
       setWaitingMohamed(false);
+      assistantTextBufferRef.current = "";
+
+lastAssistantTextRef.current = "";
+
+lastUserTranscriptRef.current = "";
+
+processingQuestionRef.current = false;
     } catch (error) {
       console.error("❌ Error enviando:", error);
     }
@@ -1033,8 +1049,13 @@ const questions = [
 
 ];
 
- const maybeSendIntroToMohamed = async () => {
+
+// ✅ INTRO فقط مرة وحدة
+const maybeSendIntroToMohamed = async () => {
+
   if (!realtimeDcRef.current) return;
+
+  if ((window as any).paid) return;
 
   realtimeDcRef.current.send(
     JSON.stringify({
@@ -1042,16 +1063,27 @@ const questions = [
       response: {
         modalities: ["audio", "text"],
         instructions: `
-السلام عليكم، أنا محمد من GestoriaCitaIA. مرحبا بك.
+السلام عليكم، مرحبا بيك فـ GestoriaCitaIA.
 
-غادي نطرح عليك شوية ديال الأسئلة، وجاوبني غير بآه ولا لا.
-
-واش دخلتي لإسبانيا قبل واحد يناير 2026؟
+باش نبداو التحليل الكامل ديال الملف ديالك،
+خاصك تكمل الأداء دابا.
         `
       },
     })
   );
+
+  // ✅ من بعد يخرج Stripe مباشرة
+  setTimeout(() => {
+
+    setShowStripe(true);
+
+    setPaymentRequired(true);
+
+    stopListening();
+
+  }, 3500);
 };
+
 
   const stopListening = () => {
     try {
@@ -1274,7 +1306,10 @@ turn_detection: {
           }, 400);
           return;
         }
-     if (!(window as any).paid) {
+  if (
+  !(window as any).paid &&
+  questionIndex === 0
+) {
 
   setTimeout(() => {
 
@@ -1282,7 +1317,7 @@ turn_detection: {
 
   }, 500);
 
-}  
+}
       };
 dc.onmessage = (event) => {
 
@@ -1330,31 +1365,7 @@ dc.onmessage = (event) => {
 
         const lowerTranscript = transcript.toLowerCase().trim();
 
-    const isOnlyNameStep =
-  questionIndex === 1 &&
-          !clientQuestionsDone &&
-          lowerTranscript.length > 1 &&
-          !lowerTranscript.includes("نعم") &&
-          !lowerTranscript.includes("لا") &&
-          !lowerTranscript.includes("اه") &&
-          !lowerTranscript.includes("آه");
-
-        if (isOnlyNameStep) {
-
-          console.log("👤 USER NAME ONLY:", transcript);
-
-          setClientQuestionsDone(true);
-
-          setTimeout(() => {
-
-            speakExactText(
-              "مزيان. واش بقيتي في إسبانيا لمدة ديال خمسة أشهر متتالية؟ وشنو هي أول مدينة سكنتي فيها؟"
-            );
-
-          }, 500);
-
-          return;
-        }
+    
 
         const normalized = lowerTranscript
           .replace(/[.,!?¿؟]/g, "")
@@ -1367,23 +1378,35 @@ dc.onmessage = (event) => {
           console.log("🔥 CURRENT QUESTION:", currentQuestion);
 
           // PREGUNTA 0
-          if (currentQuestion === 0) {
+        // PREGUNTA 0
+if (currentQuestion === 0) {
 
-            goNextQuestion("مزيان. قولي شنو سميتك؟");
+  goNextQuestion(
+    "مزيان. قولي شنو سميتك؟"
+  );
 
-            return;
-          }
+  return;
+}
 
-          // PREGUNTA 1
-          if (currentQuestion === 1) {
+// PREGUNTA 1
+if (currentQuestion === 1) {
 
-            goNextQuestion(
-              "واش بقيتي فإسبانيا خمسة شهور متتالية؟ وشنو هي أول مدينة سكنتي فيها؟"
-            );
+  goNextQuestion(
+    "واش بقيتي فإسبانيا خمسة شهور متتالية؟ وشنو هي أول مدينة سكنتي فيها؟"
+  );
 
-            return;
-          }
+  return;
+}
 
+// PREGUNTA 2
+if (currentQuestion === 2) {
+
+  goNextQuestion(
+    "واش عندك باسبور مغربي ولا كارت ناسيونال ولا فوتوكوبي ديالهم؟"
+  );
+
+  return;
+}
           // PREGUNTA 2
           if (currentQuestion === 2) {
 
@@ -1404,44 +1427,6 @@ dc.onmessage = (event) => {
             return;
           }
 
-          // PREGUNTA 4 → STRIPE
-          if (currentQuestion === 4) {
-
-            questionFlowLockedRef.current = true;
-
-            const PAYMENT_TEXT = `
-مزيان، من خلال الأجوبة ديالك بان ليا بللي الملف ديالك غادي يكون مقبول إن شاء الله.
-
-باش نعطيك تحليل دقيق ونوجد ليك الملف كامل:
-
-التحقق الكامل من الوثائق.
-والوثيقة المهمة اللي غادي تعزز الملف ديالك بزاف.
-
-غير ب 12 أورو.
-
-ورك على زر الأداء ونكملو مباشرة.
-`;
-
-            pushAgentMessage(PAYMENT_TEXT);
-
-            setTimeout(() => {
-
-              speakExactText(PAYMENT_TEXT);
-
-            }, 500);
-
-            setTimeout(() => {
-
-              setShowStripe(true);
-
-              setPaymentRequired(true);
-
-              stopListening();
-
-            }, 3500);
-
-            return;
-          }
         }
       }
     }
@@ -1463,7 +1448,7 @@ dc.onmessage = (event) => {
     }
 
     if (msg.type === "response.done") {
-
+processingQuestionRef.current = false;
       assistantBusyRef.current = false;
 
       const finalText = assistantTextBufferRef.current.trim();
@@ -1475,7 +1460,13 @@ dc.onmessage = (event) => {
       finalizeAssistantBuffer();
 
       setWaitingMohamed(false);
+assistantTextBufferRef.current = "";
 
+lastAssistantTextRef.current = "";
+
+lastUserTranscriptRef.current = "";
+
+processingQuestionRef.current = false;
       pendingAutomationPromptRef.current = null;
 
       setPendingAutomationPrompt("");
