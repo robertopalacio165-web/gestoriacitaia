@@ -117,45 +117,47 @@ export default function Regularizacion2026() {
 
   const paid = params.get("paid");
 (window as any).paid = paid;
-  if (paid === "true") {
+if (paid === "true") {
 
-    console.log("✅ CLIENT PAID");
-paymentDoneRef.current = true;
-    
-    setShowStripe(false);
+  console.log("✅ CLIENT PAID");
 
-    setPaymentRequired(false);
+  paymentDoneRef.current = true;
 
-    questionFlowLockedRef.current = false;
+  setShowStripe(false);
 
-stopListening();
+  setPaymentRequired(false);
 
-setTimeout(() => {
+  questionFlowLockedRef.current = false;
 
-  startListening();
+  stopListening();
 
-}, 1500);
+  setTimeout(() => {
 
-    setTimeout(() => {
+    startListening();
 
-setQuestionIndex(0);
+  }, 1500);
 
-setDocumentsUnlocked(true);
+  setQuestionIndex(0);
 
-setConfirmUnlocked(true);
+  setDocumentsUnlocked(true);
 
-setQuestionsDone(true);
+  setConfirmUnlocked(true);
 
-setTimeout(() => {
+  setQuestionsDone(true);
 
-  speakExactText(
-    "مزيان. قولي شنو سميتك؟"
-  );
+  setShowStripe(false);
 
-}, 1200);
+  setPaymentRequired(false);
 
+  setTimeout(() => {
 
-  
+    speakExactText(
+      "مزيان. قولي شنو سميتك؟"
+    );
+
+  }, 1200);
+
+}
 
 }, []);
 
