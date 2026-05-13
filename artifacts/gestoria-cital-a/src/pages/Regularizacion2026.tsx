@@ -137,13 +137,23 @@ setTimeout(() => {
 }, 1500);
 
     setTimeout(() => {
+
 setQuestionIndex(0);
 
-speakExactText(
-  "مزيان، توصلنا بالأداء ديالك. دابا نكملو. السؤال السادس: واش عمرك مشيتي للصبيطار؟ واش عندك شي ورقة فيها سميتك والتاريخ؟"
-);
+setDocumentsUnlocked(true);
 
-    }, 4000);
+setConfirmUnlocked(true);
+
+setQuestionsDone(true);
+
+setTimeout(() => {
+
+  speakExactText(
+    "مزيان. قولي شنو سميتك؟"
+  );
+
+}, 1200);
+
 
   }
 
@@ -1277,9 +1287,14 @@ GestoriaCitaIA
         },
       });
       realtimeLocalStreamRef.current = localStream;
-      for (const track of localStream.getTracks()) {
-        pc.addTrack(track, localStream);
-      }
+      const senderRef = useRef<RTCRtpSender | null>(null);
+     for (const track of localStream.getTracks()) {
+
+  const sender = pc.addTrack(track, localStream);
+
+  senderRef.current = sender;
+
+}
       const dc = pc.createDataChannel("oai-events");
       realtimeDcRef.current = dc;
       dc.onopen = async () => {
@@ -1491,9 +1506,15 @@ const cleanAnswer = normalized
   .trim();
 
 const shouldCountQuestion =
-  validAnswers.some(word =>
-    cleanAnswer.includes(word)
-  );
+
+  validAnswers.some(word => {
+
+    return (
+      cleanAnswer === word ||
+      cleanAnswer.startsWith(word + " ")
+    );
+
+  });
 
 if (
   paymentDoneRef.current &&
@@ -1527,17 +1548,18 @@ if (
 
 if (msg.type === "response.created") {
 // 🎤 سد الميكروفون ملي محمد كيهضر
-  realtimeLocalStreamRef.current
-    ?.getAudioTracks()
-    .forEach((track) => {
-      track.enabled = false;
-    });
+ 
 
   assistantBusyRef.current = true;
 
  setWaitingMohamed(true);
+// 🔇 قطع الميكرو الحقيقي
+if (senderRef.current) {
 
+  senderRef.current.replaceTrack(null);
 }
+}
+
 
     if (msg.type === "response.done") {
   assistantBusyRef.current = false;
@@ -1550,13 +1572,21 @@ if (msg.type === "response.created") {
 
   finalizeAssistantBuffer();
 // 🎤 فتح الميكروفون بعد ما يسالي محمد
-realtimeLocalStreamRef.current
-  ?.getAudioTracks()
-  .forEach((track) => {
-    track.enabled = true;
-  });
-  setWaitingMohamed(false);
+// 🎤 رجع الميكرو الحقيقي
+const audioTrack =
+  realtimeLocalStreamRef.current
+    ?.getAudioTracks?.()[0];
 
+if (
+  senderRef.current &&
+  audioTrack
+) {
+
+  senderRef.current.replaceTrack(audioTrack);
+
+}
+
+setWaitingMohamed(false);
   pendingAutomationPromptRef.current = null;
   setPendingAutomationPrompt("");
 
