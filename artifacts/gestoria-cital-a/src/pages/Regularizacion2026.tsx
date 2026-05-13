@@ -129,7 +129,11 @@ paymentDoneRef.current = true;
     questionFlowLockedRef.current = false;
 
     setTimeout(() => {
-
+realtimeLocalStreamRef.current
+  ?.getAudioTracks()
+  .forEach((track) => {
+    track.enabled = true;
+  });
       startListening();
 
     }, 1000);
@@ -1396,7 +1400,11 @@ if (
   console.log("🚀 START INTRO");
 
   maybeSendIntroToMohamed();
-
+realtimeLocalStreamRef.current
+  ?.getAudioTracks()
+  .forEach((track) => {
+    track.enabled = false;
+  });
 const introText = `
 السلام عليكم، أنا محمد من هيستوريا سيطا AI. مرحبا بك.
 
