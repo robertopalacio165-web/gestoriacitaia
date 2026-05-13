@@ -228,7 +228,7 @@ dc.onmessage = (event) => {
       await pc.setLocalDescription(offer);
 
       const baseUrl =
-        "https://api.openai.com/v1/realtime?model=gpt-realtime";
+     "https://api.openai.com/v1/realtime/calls";
 
       const sdpResponse = await fetch(
         baseUrl,
