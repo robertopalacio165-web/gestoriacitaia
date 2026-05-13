@@ -179,7 +179,7 @@ try {
 } catch (err) {
 
   console.error("PDF ERROR:", err);
-
+}
 }
   setShowStripe(false);
 
