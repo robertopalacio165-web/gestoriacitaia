@@ -167,14 +167,14 @@ try {
 
   const pdfData = await pdfRes.json();
 
-  if (pdfData?.pdfBase64) {
+if (pdfData?.pdfUrl) {
 
-    localStorage.setItem(
-      "generated_pdf_base64",
-      pdfData.pdfBase64
-    );
+  localStorage.setItem(
+    "generated_pdf_url",
+    pdfData.pdfUrl
+  );
 
-  }
+}
 
 } catch (err) {
 
@@ -1229,12 +1229,10 @@ const handleSendWhatsApp = async () => {
 
     // 3. تنظيف الرقم
     const cleanPhone = phone.trim().replace(/\s+/g, "");
-const generatedPdfBase64 =
-  localStorage.getItem("generated_pdf_base64") || "";
 
-const pdfLink = generatedPdfBase64
-  ? `data:application/pdf;base64,${generatedPdfBase64}`
-  : "";
+const pdfLink =
+  localStorage.getItem("generated_pdf_url") || "";
+
     // 4. رسالة واتساب احترافية
 const message = encodeURIComponent(`
 👋 سلام ${leadForm?.nombre || ""}
