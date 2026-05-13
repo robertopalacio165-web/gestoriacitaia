@@ -20,7 +20,18 @@ export default function KhalidExtranjeria() {
   const [showPayment, setShowPayment] = useState(false);
 
   const realtimeRef = useRef<any>(null);
+const remoteAudioRef = useRef<HTMLAudioElement | null>(null);
+const realtimePcRef = useRef<RTCPeerConnection | null>(null);
+const realtimeDcRef = useRef<RTCDataChannel | null>(null);
+const realtimeLocalStreamRef = useRef<MediaStream | null>(null);
 
+const assistantBusyRef = useRef(false);
+const lastUserTranscriptRef = useRef("");
+const lastAssistantTextRef = useRef("");
+
+const [waitingKhalid, setWaitingKhalid] = useState(false);
+const [lastTranscript, setLastTranscript] = useState("");
+const [lastReply, setLastReply] = useState("");
   useEffect(() => {
     if (messagesCount >= 2) {
       setShowPayment(true);
@@ -60,11 +71,16 @@ export default function KhalidExtranjeria() {
       }
 
       const pc = new RTCPeerConnection();
-
+realtimePcRef.current = pc;
       realtimeRef.current = pc;
 
-      const audioEl =
-        document.createElement("audio");
+      const audioEl = document.createElement("audio");
+
+audioEl.autoplay = true;
+
+audioEl.playsInline = true;
+
+remoteAudioRef.current = audioEl;
 
       audioEl.autoplay = true;
 
@@ -76,20 +92,137 @@ export default function KhalidExtranjeria() {
         await navigator.mediaDevices.getUserMedia({
           audio: true,
         });
+realtimeLocalStreamRef.current = mediaStream;
 
-      mediaStream
-        .getTracks()
-        .forEach((track) => {
-          pc.addTrack(track, mediaStream);
-        });
-
+mediaStream
+  .getTracks()
+  .forEach((track) => {
+    pc.addTrack(track, mediaStream);
+  });
+     
       const dc =
         pc.createDataChannel("oai-events");
 
-      dc.addEventListener("open", () => {
-        console.log("Realtime conectado");
-      });
+     dc.addEventListener("open", () => {
 
+  console.log("Realtime conectado");
+
+  dc.send(
+    JSON.stringify({
+      type: "session.update",
+      session: {
+        instructions: `
+أنت خالد من GestoriaCitaIA.
+
+تكلم فقط بالدارجة المغربية.
+
+أنت خبير فالهجرة والقانون فإسبانيا.
+
+جاوب فقط على السؤال اللي سولاك المستخدم.
+
+الجواب يكون قصير وواضح وطبيعي.
+
+ممنوع تعاود السؤال.
+
+ممنوع تهضر بزاف.
+
+إذا قال المستخدم "سلام" أو "مرحبا"
+قول:
+
+السلام عليكم، أنا خالد من GestoriaCitaIA.
+سولني أي سؤال على الهجرة أو الإقامة أو الأوراق فإسبانيا وإن شاء الله نجاوبك.
+`,
+        modalities: ["audio", "text"],
+        turn_detection: {
+          type: "server_vad",
+          threshold: 0.9,
+          prefix_padding_ms: 300,
+          silence_duration_ms: 1200,
+        },
+      },
+    })
+  );
+
+  // 🎤 خالد يهضر مباشرة
+  dc.send(
+    JSON.stringify({
+      type: "response.create",
+      response: {
+        modalities: ["audio", "text"],
+        instructions:
+          "قول: السلام عليكم، أنا خالد من GestoriaCitaIA. سولني أي سؤال على الهجرة فإسبانيا.",
+      },
+    })
+  );
+
+});
+dc.onmessage = (event) => {
+  try {
+
+    const msg = JSON.parse(event.data);
+
+    // 🧠 كلام خالد
+    if (
+      msg.type === "response.output_text.delta" &&
+      typeof msg.delta === "string"
+    ) {
+
+      setLastReply((prev) => prev + msg.delta);
+
+    }
+
+    // 🎤 كلام المستخدم
+    const transcript =
+      msg?.transcript ||
+      msg?.item?.transcript ||
+      msg?.item?.content?.[0]?.transcript ||
+      "";
+
+    if (
+      (
+        msg.type === "conversation.item.input_audio_transcription.completed" ||
+        msg.type === "input_audio_buffer.transcription.completed"
+      ) &&
+      transcript &&
+      transcript !== lastUserTranscriptRef.current
+    ) {
+
+      lastUserTranscriptRef.current = transcript;
+
+      setLastTranscript(transcript);
+
+      console.log("USER:", transcript);
+
+    }
+
+    // 🤖 خالد بدا يهضر
+    if (msg.type === "response.created") {
+
+      assistantBusyRef.current = true;
+
+      setWaitingKhalid(true);
+
+      setLastReply("");
+
+    }
+
+    // ✅ خالد سالى
+    if (msg.type === "response.done") {
+
+      assistantBusyRef.current = false;
+
+      setWaitingKhalid(false);
+
+      console.log("KHALID DONE");
+
+    }
+
+  } catch (err) {
+
+    console.error(err);
+
+  }
+};
       const offer = await pc.createOffer();
 
       await pc.setLocalDescription(offer);
