@@ -137,7 +137,7 @@ setTimeout(() => {
 }, 1500);
 
     setTimeout(() => {
-setQuestionIndex(5);
+setQuestionIndex(0);
 
 speakExactText(
   "مزيان، توصلنا بالأداء ديالك. دابا نكملو. السؤال السادس: واش عمرك مشيتي للصبيطار؟ واش عندك شي ورقة فيها سميتك والتاريخ؟"
@@ -1526,14 +1526,20 @@ if (
 }
 
 if (msg.type === "response.created") {
+// 🎤 سد الميكروفون ملي محمد كيهضر
+  realtimeLocalStreamRef.current
+    ?.getAudioTracks()
+    .forEach((track) => {
+      track.enabled = false;
+    });
 
   assistantBusyRef.current = true;
-  setWaitingMohamed(true);
+
+ setWaitingMohamed(true);
 
 }
 
-if (msg.type === "response.done") {
-
+    if (msg.type === "response.done") {
   assistantBusyRef.current = false;
 
   const finalText = assistantTextBufferRef.current.trim();
@@ -1543,11 +1549,17 @@ if (msg.type === "response.done") {
   }
 
   finalizeAssistantBuffer();
-
+// 🎤 فتح الميكروفون بعد ما يسالي محمد
+realtimeLocalStreamRef.current
+  ?.getAudioTracks()
+  .forEach((track) => {
+    track.enabled = true;
+  });
   setWaitingMohamed(false);
 
   pendingAutomationPromptRef.current = null;
   setPendingAutomationPrompt("");
+
 
   setTimeout(() => {
     void flushPendingAutomation();
