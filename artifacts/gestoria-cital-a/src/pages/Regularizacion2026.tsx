@@ -112,7 +112,7 @@ export default function Regularizacion2026() {
 
   // ✅ الرجوع من Stripe وكمل السؤال 5
  useEffect(() => {
-
+const handlePaidFlow = async () => {
   const params = new URLSearchParams(window.location.search);
 
   const paid = params.get("paid");
@@ -193,8 +193,10 @@ try {
 
   }, 1200);
 
-}
 
+};
+
+handlePaidFlow();
 }, []);
 
   const handleStripePayment = async () => {
