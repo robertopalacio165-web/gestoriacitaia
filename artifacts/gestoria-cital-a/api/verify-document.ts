@@ -15,7 +15,13 @@ type VerifyDocumentType =
   | "personal_photo"
   | "other"
   | "unknown";
-
+| "hospital_document"
+| "rental_contract"
+| "utility_bill"
+| "transport_ticket"
+| "work_document"
+| "tax_document"
+| "bank_document"
 type StayProofStrength = "strong" | "medium" | "weak" | "none";
 type RecommendedBucket =
   | "identity_document"
@@ -112,6 +118,33 @@ function normalizeDocumentType(value?: string | null): VerifyDocumentType {
   ) {
     return "stay_proof";
   }
+  if (v === "hospital_document" || v.includes("hospital") || v.includes("médico")) {
+  return "hospital_document";
+}
+
+if (v === "rental_contract" || v.includes("alquiler") || v.includes("contrato")) {
+  return "rental_contract";
+}
+
+if (v === "utility_bill" || v.includes("electricidad") || v.includes("agua")) {
+  return "utility_bill";
+}
+
+if (v === "transport_ticket" || v.includes("ticket")) {
+  return "transport_ticket";
+}
+
+if (v === "work_document" || v.includes("trabajo") || v.includes("nomina")) {
+  return "work_document";
+}
+
+if (v === "tax_document" || v.includes("agencia tributaria")) {
+  return "tax_document";
+}
+
+if (v === "bank_document" || v.includes("banco")) {
+  return "bank_document";
+}
   if (v === "photo") return "photo";
   if (v === "personal_photo") return "personal_photo";
   if (v === "supporting_document") return "supporting_document";
@@ -259,33 +292,155 @@ function inferUsableForRegularizacion(
 }
 
 function buildSystemPrompt(lang: VerifyDocumentLang, expectedType?: string | null) {
-  return `
-You are a strict document verification assistant for GestoriaCitaIA.
+return `
+You are Mohamed, the elite AI immigration document analyst for GestoriaCitaIA Spain.
 
-Your job:
-- Analyze ONE uploaded image or PDF.
-- Classify the document.
-- Extract visible fields only.
-- Do not invent missing data.
-- Return ONLY valid JSON.
+Your mission is to perform REAL immigration-grade analysis for Spanish regularization processes.
+
+You analyze ONE uploaded image or PDF document.
+
+CRITICAL RULES:
+- NEVER invent information.
+- NEVER hallucinate fields.
+- ONLY use visible OCR text and visible document data.
+- If uncertain, say uncertain.
+- Return ONLY pure valid JSON.
 - No markdown.
-- No explanation outside the JSON.
+- No explanations outside JSON.
 
-Allowed document_type values:
-passport, nie, tie, empadronamiento, criminal_record, official_form, stay_proof, supporting_document, personal_photo, photo, other, unknown
+You are specialized in:
+- Spanish immigration
+- Regularizacion 2026
+- arraigo
+- proof of stay in Spain
+- identity validation
+- fraud detection
+- OCR verification
+- document consistency
 
-Rules:
-- If it is a passport, classify as passport.
-- If it is NIE, classify as nie.
-- If it is TIE/residence card, classify as tie.
-- If it is padrón / empadronamiento / certificado histórico de empadronamiento, classify as empadronamiento.
-- If it is proof of stay in Spain such as invoice, ticket, cita médica, receta, payroll, justificante, classify as stay_proof.
-- If it is antecedentes penales, classify as criminal_record.
-- If it is an EX form / official immigration form, classify as official_form.
-- If it is just a personal portrait, classify as personal_photo.
-- If unclear, classify as unknown.
+You must detect EXACT document type.
 
-You must return this JSON schema:
+POSSIBLE DOCUMENT TYPES:
+- passport
+- nie
+- tie
+- empadronamiento
+- criminal_record
+- official_form
+- stay_proof
+- supporting_document
+- personal_photo
+- photo
+- hospital_document
+- rental_contract
+- utility_bill
+- transport_ticket
+- work_document
+- tax_document
+- bank_document
+- unknown
+
+VERY IMPORTANT ANALYSIS:
+
+1. Detect if the document is REALISTIC or suspicious.
+
+2. Detect image manipulation:
+- edited text
+- fake screenshots
+- inconsistent fonts
+- cropped areas
+- AI generated look
+- duplicated patterns
+- suspicious blur
+
+3. Detect if the document helps prove stay in Spain.
+
+4. Detect if the document can help prove:
+- 3 months in Spain
+- 5 months in Spain
+- long stay
+- address linkage
+- identity linkage
+
+5. Extract ALL visible dates.
+
+6. Compare dates with current year.
+
+7. Detect if the document is expired.
+
+8. Detect if the document belongs to the same person.
+
+9. Detect if this is useful for Regularizacion 2026.
+
+10. Determine strength:
+- strong
+- medium
+- weak
+- useless
+
+11. If it is:
+- passport
+- NIE
+- TIE
+- empadronamiento
+- hospital paper
+- rental paper
+- work paper
+- invoice
+- ticket
+- bank transfer
+- school paper
+- tax paper
+
+You MUST explicitly identify it.
+
+12. For stay proof:
+Calculate approximate proof duration if possible.
+
+Examples:
+- "document suggests 6+ months presence"
+- "document only proves one isolated date"
+- "multiple dates detected"
+- "insufficient permanence proof"
+
+13. OCR VALIDATION:
+Use OCR text heavily.
+If OCR text and image conflict -> warning.
+
+14. Fraud score logic:
+- low
+- medium
+- high
+
+15. Verification score:
+0 to 100.
+
+16. final_verdict:
+- approved
+- review
+- rejected
+
+17. date_logic_ok:
+false if dates impossible.
+
+18. name_match:
+true if same visible person identity.
+false if inconsistent names.
+null if impossible.
+
+19. usable_for_regularizacion_2026:
+true only if realistically useful.
+
+20. recommended_bucket:
+- identity_document
+- stay_proof
+- official_form
+- supporting_document
+- personal_photo
+- other
+
+Return EXACT JSON schema:
+
 {
   "status": "valid" | "review" | "invalid",
   "document_type": "string",
@@ -313,23 +468,33 @@ You must return this JSON schema:
     "multiple_documents": boolean
   },
   "summary": "string",
+  "fraud_risk": "low" | "medium" | "high",
+  "verification_score": number,
+  "final_verdict": "approved" | "review" | "rejected",
+  "is_expired": boolean,
+  "name_match": true | false | null,
+  "date_logic_ok": boolean,
   "is_stay_proof": boolean,
   "stay_proof_strength": "strong" | "medium" | "weak" | "none",
   "document_date": "string or null",
   "person_name_visible": boolean,
   "linked_to_client": true | false | null,
-  "usable_for_regularizacion_2026": true | false,
+  "usable_for_regularizacion_2026": boolean,
   "recommended_bucket": "identity_document" | "stay_proof" | "official_form" | "supporting_document" | "personal_photo" | "other",
   "stay_proof_reason": "string"
 }
 
-Important:
-- expected_document_type is: ${expectedType || "auto"}
-- summary must be in ${
-    lang === "darija" ? "Moroccan Darija written in Arabic script" : lang === "en" ? "English" : "Spanish"
-  }.
-- If image quality is poor, mark status as review or invalid.
-- If major details are unreadable, do not invent them.
+LANGUAGE RULE:
+summary must be written in ${
+  lang === "darija"
+    ? "Moroccan Darija using Arabic script"
+    : lang === "en"
+    ? "English"
+    : "Spanish"
+}.
+
+Expected document type:
+${expectedType || "auto"}
 `.trim();
 }
 
@@ -412,7 +577,25 @@ const isExpired =
   new Date(asNullableString(raw?.expiry_date) as string).getTime() < Date.now();
 
 let score = 100;
+if (warnings.some(w => w.toLowerCase().includes("fake"))) {
+  score -= 50;
+}
 
+if (warnings.some(w => w.toLowerCase().includes("edited"))) {
+  score -= 40;
+}
+
+if (warnings.some(w => w.toLowerCase().includes("manipulated"))) {
+  score -= 50;
+}
+
+if (warnings.some(w => w.toLowerCase().includes("inconsistent"))) {
+  score -= 30;
+}
+
+if (warnings.some(w => w.toLowerCase().includes("ocr conflict"))) {
+  score -= 35;
+}
 if (status === "review") score -= 20;
 if (status === "invalid") score -= 60;
 if (imageQuality.blurred) score -= 15;
