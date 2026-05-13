@@ -131,7 +131,7 @@ if (paid === "true") {
 
   stopListening();
 
-  setTimeout(() => {
+setTimeout(async () => {
 
     startListening();
 
