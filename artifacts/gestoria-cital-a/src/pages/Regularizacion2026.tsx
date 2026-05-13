@@ -144,7 +144,43 @@ if (paid === "true") {
   setConfirmUnlocked(true);
 
   setQuestionsDone(true);
+try {
 
+  const pdfRes = await fetch("/api/generate-expediente-pdf", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      nombre: leadForm.nombre,
+      nacionalidad: leadForm.nacionalidad,
+      ciudad: leadForm.ciudad,
+      fecha_llegada: leadForm.fechaLlegada,
+      tiempo_espana: "5 meses o más",
+      profesion: "Trabajador",
+      situacion_actual: "Proceso de regularización en España",
+      objetivo: "Regularizar situación administrativa",
+      idiomas: "Español, Árabe",
+      familia: "Información no especificada",
+    }),
+  });
+
+  const pdfData = await pdfRes.json();
+
+  if (pdfData?.pdfBase64) {
+
+    localStorage.setItem(
+      "generated_pdf_base64",
+      pdfData.pdfBase64
+    );
+
+  }
+
+} catch (err) {
+
+  console.error("PDF ERROR:", err);
+
+}
   setShowStripe(false);
 
   setPaymentRequired(false);
@@ -1191,7 +1227,12 @@ const handleSendWhatsApp = async () => {
 
     // 3. تنظيف الرقم
     const cleanPhone = phone.trim().replace(/\s+/g, "");
+const generatedPdfBase64 =
+  localStorage.getItem("generated_pdf_base64") || "";
 
+const pdfLink = generatedPdfBase64
+  ? `data:application/pdf;base64,${generatedPdfBase64}`
+  : "";
     // 4. رسالة واتساب احترافية
 const message = encodeURIComponent(`
 👋 سلام ${leadForm?.nombre || ""}
@@ -1205,7 +1246,7 @@ ${data.report.replace(/https?:\/\/[^\s]+/g, "").trim()}
 ━━━━━━━━━━━━━━━
 
 📩 الوثيقة المهمة (Motivación):
-${pdfUrl}
+${pdfLink || pdfUrl}
 
 ━━━━━━━━━━━━━━━
 
@@ -2033,27 +2074,28 @@ results.push({
       const type = (doc.detectedType || "").toLowerCase();
 
       // 📄 شرح الوثائق
-   const speech = buildDocSpeech(name, {
+const speech = buildDocSpeech(name, {
   full_name: (doc as any).full_name,
+
   document_number: (doc as any).document_number,
+
   birth_date: (doc as any).birth_date,
+
   expiry_date: (doc as any).expiry_date,
+
   image_quality: {
-    blurred: false,
+    blurred:
+      (doc as any).verification_score < 55,
   },
-  fraud_risk: "low",
+
+  fraud_risk:
+    (doc as any).fraud_risk || "medium",
+
   final_verdict:
-    status === "ok"
-      ? "approved"
-      : status === "warn"
-      ? "review"
-      : "rejected",
+    (doc as any).final_verdict || "review",
+
   verification_score:
-    status === "ok"
-      ? 95
-      : status === "warn"
-      ? 60
-      : 20,
+    (doc as any).verification_score || 0,
 });
 
 explanation += speech + " ";
