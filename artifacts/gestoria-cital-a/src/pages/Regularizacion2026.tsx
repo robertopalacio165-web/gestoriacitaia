@@ -128,15 +128,13 @@ paymentDoneRef.current = true;
 
     questionFlowLockedRef.current = false;
 
-    setTimeout(() => {
-realtimeLocalStreamRef.current
-  ?.getAudioTracks()
-  .forEach((track) => {
-    track.enabled = true;
-  });
-      startListening();
+stopListening();
 
-    }, 1000);
+setTimeout(() => {
+
+  startListening();
+
+}, 1500);
 
     setTimeout(() => {
 setQuestionIndex(5);
@@ -1397,14 +1395,19 @@ if (
   )
 ) {
 
-  console.log("🚀 START INTRO");
+ 
+console.log("🚀 START INTRO");
 
-  maybeSendIntroToMohamed();
+maybeSendIntroToMohamed();
+
 realtimeLocalStreamRef.current
-  ?.getAudioTracks()
+  ?.getTracks()
   .forEach((track) => {
-    track.enabled = false;
+    track.stop();
   });
+
+questionFlowLockedRef.current = true;
+ 
 const introText = `
 السلام عليكم، أنا محمد من هيستوريا سيطا AI. مرحبا بك.
 
