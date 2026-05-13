@@ -182,7 +182,14 @@ ${nombre}
       "attachment; filename=Informe_Integracion.pdf"
     );
 
-    return res.send(Buffer.from(pdfBytes));
+ const base64Pdf = Buffer.from(pdfBytes).toString("base64");
+
+return res.status(200).json({
+  ok: true,
+  fileName: "Informe_Integracion.pdf",
+  mimeType: "application/pdf",
+  pdfBase64: base64Pdf,
+});
   } catch (error: any) {
     console.error(error);
 
