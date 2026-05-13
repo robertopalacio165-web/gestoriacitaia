@@ -290,7 +290,7 @@ const [clientQuestionIndex, setClientQuestionIndex] = useState(0);
   const pendingAutomationPromptRef = useRef<string | null>(null);
   const isConnectingRef = useRef(false);
   const assistantBusyRef = useRef(false);
-
+const senderRef = useRef<RTCRtpSender | null>(null);
   const safeLang = (lang === "darija" || lang === "en" ? lang : "es") as
     | "darija"
     | "es"
@@ -1330,7 +1330,7 @@ GestoriaCitaIA
         },
       });
       realtimeLocalStreamRef.current = localStream;
-      const senderRef = useRef<RTCRtpSender | null>(null);
+   
      for (const track of localStream.getTracks()) {
 
   const sender = pc.addTrack(track, localStream);
