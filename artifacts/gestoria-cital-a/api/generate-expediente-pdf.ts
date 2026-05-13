@@ -1,6 +1,10 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
+import { createClient } from "@supabase/supabase-js";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
-
+const supabase = createClient(
+  process.env.VITE_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 function wrapText(
   text: string,
   maxLength: number = 85
@@ -181,15 +185,32 @@ ${nombre}
       "Content-Disposition",
       "attachment; filename=Informe_Integracion.pdf"
     );
+const fileName = `expediente_${Date.now()}.pdf`;
 
- const base64Pdf = Buffer.from(pdfBytes).toString("base64");
+const { error: uploadError } = await supabase.storage
+  .from("pdfs")
+  .upload(fileName, pdfBytes, {
+    contentType: "application/pdf",
+    upsert: true,
+  });
+
+if (uploadError) {
+  console.error(uploadError);
+
+  return res.status(500).json({
+    error: "UPLOAD_FAILED",
+  });
+}
+
+const { data: publicUrlData } = supabase.storage
+  .from("pdfs")
+  .getPublicUrl(fileName);
 
 return res.status(200).json({
   ok: true,
-  fileName: "Informe_Integracion.pdf",
-  mimeType: "application/pdf",
-  pdfBase64: base64Pdf,
+  pdfUrl: publicUrlData.publicUrl,
 });
+
   } catch (error: any) {
     console.error(error);
 
