@@ -1,6 +1,32 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 
+function wrapText(
+  text: string,
+  maxLength: number = 85
+): string[] {
+  const words = text.split(" ");
+  const lines: string[] = [];
+  let currentLine = "";
+
+  for (const word of words) {
+    const testLine = currentLine + word + " ";
+
+    if (testLine.length > maxLength) {
+      lines.push(currentLine.trim());
+      currentLine = word + " ";
+    } else {
+      currentLine = testLine;
+    }
+  }
+
+  if (currentLine.trim()) {
+    lines.push(currentLine.trim());
+  }
+
+  return lines;
+}
+
 export default async function handler(
   req: VercelRequest,
   res: VercelResponse
@@ -20,70 +46,146 @@ export default async function handler(
       nacionalidad = "",
       ciudad = "",
       fecha_llegada = "",
+      tiempo_espana = "",
+      profesion = "",
+      situacion_actual = "",
+      objetivo = "",
+      idiomas = "",
+      familia = "",
     } = body;
 
-    // 📄 إنشاء PDF
+    // 📄 Crear PDF
     const pdfDoc = await PDFDocument.create();
+
     const page = pdfDoc.addPage([595, 842]); // A4
 
     const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+    const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
     const { width, height } = page.getSize();
 
+    const margin = 50;
+    let y = height - 60;
+
+    // 🎨 Título
+    page.drawText(
+      "INFORME PERSONAL DE INTEGRACIÓN Y COMPROMISO SOCIAL",
+      {
+        x: margin,
+        y,
+        size: 18,
+        font: boldFont,
+        color: rgb(0, 0.45, 0.2),
+      }
+    );
+
+    y -= 40;
+
+    // 📄 Fecha
+    page.drawText(
+      `Fecha: ${new Date().toLocaleDateString("es-ES")}`,
+      {
+        x: margin,
+        y,
+        size: 10,
+        font,
+        color: rgb(0.3, 0.3, 0.3),
+      }
+    );
+
+    y -= 30;
+
+    // 🧠 Texto dinámico profesional
     const text = `
 A LA ATENCIÓN DE LAS AUTORIDADES COMPETENTES
 
-Yo, ${nombre}, de nacionalidad ${nacionalidad}, actualmente residente en ${ciudad}, expongo respetuosamente lo siguiente:
+Yo, ${nombre}, de nacionalidad ${nacionalidad}, actualmente residente en ${ciudad}, presento este informe personal de integración y compromiso social con el máximo respeto hacia las autoridades españolas.
 
-Desde mi llegada a España el ${fecha_llegada}, he intentado integrarme de manera activa en la sociedad española. A pesar de no disponer actualmente de una autorización de residencia, mi intención siempre ha sido vivir de forma digna, respetar las leyes y contribuir positivamente al país.
+Desde mi llegada a España el ${fecha_llegada}, he realizado esfuerzos constantes para integrarme de manera positiva dentro de la sociedad española. Durante este tiempo he intentado construir una vida estable, basada en el respeto, la convivencia y la voluntad de avanzar honestamente.
 
-Deseo expresar mi agradecimiento al Gobierno de España y a su Presidente, Pedro Sánchez, por las oportunidades que se están abriendo para la regularización de personas en situación administrativa irregular.
+Actualmente mi situación es la siguiente:
 
-España es un país que me ha dado la oportunidad de soñar con un futuro mejor. Mi objetivo es poder trabajar legalmente, cotizar en la Seguridad Social, formarme profesionalmente y aportar valor a la sociedad.
+${situacion_actual}
 
-Actualmente me encuentro en una situación vulnerable, ya que sin documentación no puedo acceder plenamente al mercado laboral ni desarrollar una vida estable. Sin embargo, tengo plena disposición para trabajar, aprender y adaptarme.
+A pesar de las dificultades derivadas de mi situación administrativa, nunca he perdido la esperanza de poder regularizar mi situación y formar parte activa del desarrollo económico y social de España.
 
-Solicito que se valore mi situación con humanidad y justicia, y que se me brinde la oportunidad de regularizar mi situación administrativa.
+Mi intención es trabajar legalmente como ${profesion}, cotizar en la Seguridad Social, respetar las leyes y contribuir positivamente al país que me ha dado una oportunidad de futuro.
 
-Estoy comprometido con integrarme, respetar las normas, y contribuir al crecimiento económico y social de España.
+Durante mi estancia en España he desarrollado vínculos sociales y personales importantes. También he realizado esfuerzos de adaptación cultural y lingüística, especialmente en los siguientes idiomas:
 
-Agradezco profundamente la atención prestada.
+${idiomas}
+
+Situación familiar y entorno personal:
+
+${familia}
+
+Mi principal objetivo es:
+
+${objetivo}
+
+Deseo expresar mi sincero agradecimiento por las oportunidades de regularización que permiten a muchas personas salir de la precariedad y avanzar hacia una vida digna, estable y legal.
+
+España representa para mí un país de convivencia, esfuerzo y oportunidades. Mi compromiso es continuar integrándome plenamente, aportar mediante el trabajo y actuar siempre desde el respeto hacia las normas y valores de la sociedad española.
+
+Solicito humildemente que mi situación sea valorada con humanidad, justicia y consideración.
+
+Agradezco profundamente el tiempo y la atención prestada.
 
 Atentamente,
 
 ${nombre}
 `;
 
-    // ✍️ كتابة النص في الصفحة
-    const fontSize = 11;
-    const margin = 50;
-    let y = height - margin;
+    // ✍️ Dividir texto automáticamente
+    const paragraphs = text.split("\n");
 
-    const lines = text.split("\n");
+    for (const paragraph of paragraphs) {
+      const lines = wrapText(paragraph, 85);
 
-    for (const line of lines) {
-      page.drawText(line, {
-        x: margin,
-        y,
-        size: fontSize,
-        font,
-        color: rgb(0, 0, 0),
-      });
-      y -= 16;
+      for (const line of lines) {
+        if (y < 70) {
+          const newPage = pdfDoc.addPage([595, 842]);
+          y = 780;
+
+          newPage.drawText(line, {
+            x: margin,
+            y,
+            size: 11,
+            font,
+            color: rgb(0, 0, 0),
+          });
+
+          y -= 18;
+        } else {
+          page.drawText(line, {
+            x: margin,
+            y,
+            size: 11,
+            font,
+            color: rgb(0, 0, 0),
+          });
+
+          y -= 18;
+        }
+      }
+
+      y -= 10;
     }
 
-    // 📦 حفظ PDF
+    // 📦 Guardar PDF
     const pdfBytes = await pdfDoc.save();
 
     res.setHeader("Content-Type", "application/pdf");
+
     res.setHeader(
       "Content-Disposition",
-      "attachment; filename=motivacion.pdf"
+      "attachment; filename=Informe_Integracion.pdf"
     );
 
     return res.send(Buffer.from(pdfBytes));
   } catch (error: any) {
     console.error(error);
+
     return res.status(500).send("Error generating PDF");
   }
 }
