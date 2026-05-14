@@ -35,6 +35,8 @@ const lastAssistantTextRef = useRef("");
 const [waitingKhalid, setWaitingKhalid] = useState(false);
 const [lastTranscript, setLastTranscript] = useState("");
 const [lastReply, setLastReply] = useState("");
+  const isPaid =
+  localStorage.getItem("khalid_paid") === "true";
   useEffect(() => {
 
   const params =
