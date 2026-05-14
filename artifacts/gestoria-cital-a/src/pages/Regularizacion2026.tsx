@@ -2479,15 +2479,15 @@ disabled={!confirmUnlocked}
   );
 }
 
-function FieldLabel({ label }: { label: string }) {
+const FieldLabel = ({ label }: { label: string }) => {
   return (
     <label className="block text-[12px] font-semibold text-slate-600 mb-1">
       {label}
     </label>
   );
-}
+};
 
-function FieldInput({
+const FieldInput = ({
   value,
   onChange,
   placeholder,
@@ -2495,7 +2495,7 @@ function FieldInput({
   value: string;
   onChange: (value: string) => void;
   placeholder: string;
-}) {
+}) => {
   return (
     <input
       value={value}
