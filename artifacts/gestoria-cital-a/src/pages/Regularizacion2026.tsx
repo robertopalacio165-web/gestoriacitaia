@@ -2329,33 +2329,45 @@ setTimeout(() => {
 
 )}
               </div>
-          {paymentDoneRef.current && (
-              <div className="p-4 space-y-4">
-                <div>
-                  )}
-                  <p className="text-[11px] text-white/50 mb-1">{ui.latestReply}</p>
-                  <div className="rounded-xl bg-white/5 border border-white/10 px-3 py-3 text-sm text-white/90 leading-relaxed">
-                    {latestAgentMessage}
-                  </div>
-                </div>
-                {lastUserTranscript ? (
-                  <div>
-                    <p className="text-[11px] text-white/50 mb-1">{ui.yourVoice}</p>
-                    <div className="rounded-xl bg-primary/10 border border-primary/20 px-3 py-3 text-sm text-white leading-relaxed">
-                      {lastUserTranscript}
-                    </div>
-                  </div>
-                ) : null}
-                {waitingMohamed && (
-                  <div className="rounded-xl bg-white/5 border border-white/10 px-3 py-3 text-sm text-white/70">
-                    ...
-                  </div>
-                )}
-                {waitingForDocument && !generalUploading && (
-                  <div className="rounded-xl bg-amber-500/10 border border-amber-400/20 px-3 py-3 text-sm text-amber-200">
-                    Mohamed está esperando el documento que te pidió.
-                  </div>
-                )}
+     {paymentDoneRef.current && (
+  <div className="p-4 space-y-4">
+
+    <div>
+      <p className="text-[11px] text-white/50 mb-1">
+        {ui.latestReply}
+      </p>
+
+      <div className="rounded-xl bg-white/5 border border-white/10 px-3 py-3 text-sm text-white/90 leading-relaxed">
+        {latestAgentMessage}
+      </div>
+    </div>
+
+    {lastUserTranscript ? (
+      <div>
+        <p className="text-[11px] text-white/50 mb-1">
+          {ui.yourVoice}
+        </p>
+
+        <div className="rounded-xl bg-primary/10 border border-primary/20 px-3 py-3 text-sm text-white leading-relaxed">
+          {lastUserTranscript}
+        </div>
+      </div>
+    ) : null}
+
+    {waitingMohamed && (
+      <div className="rounded-xl bg-white/5 border border-white/10 px-3 py-3 text-sm text-white/70">
+        ...
+      </div>
+    )}
+
+    {waitingForDocument && !generalUploading && (
+      <div className="rounded-xl bg-amber-500/10 border border-amber-400/20 px-3 py-3 text-sm text-amber-200">
+        Mohamed está esperando el documento que te pidió.
+      </div>
+    )}
+
+  </div>
+)}
               </div>
            {paymentDoneRef.current && (
 <div className="border-t border-white/10 p-3">
