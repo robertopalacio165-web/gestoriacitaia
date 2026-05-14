@@ -421,7 +421,7 @@ if (msg.type === "response.done") {
                 {t("Especialista en Extranjería")}
               </p>
             </div>
-{isPaid && (
+
             <div className="absolute bottom-5 left-5">
               <div className="w-16 h-16 rounded-full bg-black/50 backdrop-blur-md border border-white/10 flex items-center justify-center">
                 <Mic size={26} />
@@ -430,9 +430,17 @@ if (msg.type === "response.done") {
           </div>
 )}
           <div className="p-4">
+
+            {isPaid && (
             <motion.button
               whileTap={{ scale: 0.96 }}
-           onClick={() => {
+         
+disabled={
+    answeredOnce &&
+    localStorage.getItem("khalid_paid") !== "true"
+  }
+
+  onClick={() => {
 
   const isPremium =
     localStorage.getItem("khalid_paid") === "true";
@@ -456,10 +464,7 @@ if (msg.type === "response.done") {
 
 }}
               {isPaid && (
-             disabled={
-  answeredOnce &&
-  localStorage.getItem("khalid_paid") !== "true"
-} 
+  
               className={`w-full h-14 rounded-2xl font-bold text-lg transition-all flex items-center justify-center gap-3 ${
                 isListening
                   ? "bg-red-500 hover:bg-red-600"
