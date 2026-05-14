@@ -417,7 +417,90 @@ dc.onmessage = (event) => {
                 </>
               )}
             </motion.button>
+<motion.div
+  initial={{ opacity: 0, y: 20 }}
+  animate={{ opacity: 1, y: 0 }}
+  className="mt-5"
+>
+  <div className="relative overflow-hidden rounded-3xl border border-yellow-500/30 bg-gradient-to-br from-[#1a1200] via-[#0b0b0b] to-[#1a1200] p-5 shadow-[0_0_40px_rgba(255,200,0,0.15)]">
 
+    <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_top_right,#facc15,transparent_40%)]" />
+
+    <div className="relative z-10">
+
+      <div className="flex items-center justify-between mb-4">
+
+        <div className="flex items-center gap-3">
+
+          <div className="w-11 h-11 rounded-2xl bg-yellow-500/20 flex items-center justify-center text-xl">
+            🔒
+          </div>
+
+          <div>
+            <h3 className="text-2xl font-extrabold text-white leading-none">
+              Desbloquea a Khalid
+            </h3>
+
+            <div className="mt-1 inline-flex items-center rounded-full bg-yellow-500 px-2 py-1 text-[10px] font-bold text-black">
+              PREMIUM
+            </div>
+          </div>
+
+        </div>
+
+        <div className="text-right">
+          <div className="text-5xl font-black text-yellow-400 leading-none">
+            11,99€
+          </div>
+
+          <div className="text-xs text-yellow-200 mt-1">
+            Acceso completo
+          </div>
+        </div>
+
+      </div>
+
+      <p className="text-gray-300 text-sm leading-relaxed mb-6">
+        Acceso ilimitado a todas las respuestas y asesoría personalizada
+        con Khalid IA.
+      </p>
+
+      <button
+        onClick={() => {
+          window.location.href = "/checkout-khalid";
+        }}
+        className="w-full h-14 rounded-2xl bg-gradient-to-r from-yellow-400 to-yellow-600 text-black font-extrabold text-lg shadow-xl hover:scale-[1.02] transition-all"
+      >
+        🔓 Desbloquear ahora
+      </button>
+
+      <div className="mt-5 flex items-center justify-center gap-2 text-sm text-gray-400">
+        <span>🔐 Pago seguro con Stripe</span>
+      </div>
+
+      <div className="mt-4 flex items-center justify-center gap-3 flex-wrap">
+
+        <div className="h-11 px-4 rounded-2xl bg-white flex items-center justify-center text-blue-700 font-black text-sm shadow-lg">
+          VISA
+        </div>
+
+        <div className="h-11 px-4 rounded-2xl bg-white flex items-center justify-center text-red-500 font-black text-sm shadow-lg">
+          Mastercard
+        </div>
+
+        <div className="h-11 px-4 rounded-2xl bg-white flex items-center justify-center text-black font-black text-sm shadow-lg">
+           Pay
+        </div>
+
+        <div className="h-11 px-4 rounded-2xl bg-white flex items-center justify-center text-black font-black text-sm shadow-lg">
+          G Pay
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+</motion.div>
             <div className="mt-5 rounded-2xl border border-[#1e293b] bg-[#0b1325] p-4">
               <div className="flex items-center gap-2 mb-2">
                 <Shield
@@ -437,94 +520,7 @@ dc.onmessage = (event) => {
                 con inmigración.
               </p>
             </div>
-(
-  <motion.div
-    initial={{ opacity: 0, y: 20 }}
-    animate={{ opacity: 1, y: 0 }}
-    className="mt-5"
-  >
-    <div className="relative overflow-hidden rounded-3xl border border-yellow-500/30 bg-gradient-to-br from-[#1a1200] via-[#0b0b0b] to-[#1a1200] p-5 shadow-[0_0_40px_rgba(255,200,0,0.15)]">
 
-      <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_top_right,#facc15,transparent_40%)]" />
-
-      <div className="relative z-10">
-
-        <div className="flex items-center justify-between mb-4">
-
-          <div>
-            <div className="flex items-center gap-2">
-              <div className="w-10 h-10 rounded-xl bg-yellow-500/20 flex items-center justify-center">
-                🔒
-              </div>
-
-              <div>
-                <h3 className="text-xl font-bold text-white">
-                  Desbloquea a Khalid
-                </h3>
-
-                <p className="text-yellow-400 text-sm font-medium">
-                  PREMIUM
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="text-right">
-            <div className="text-4xl font-extrabold text-yellow-400">
-              11,99€
-            </div>
-
-            <div className="text-xs text-gray-400">
-              Acceso completo
-            </div>
-          </div>
-
-        </div>
-
-        <p className="text-gray-300 text-sm leading-relaxed mb-5">
-          Acceso ilimitado a todas las respuestas,
-          ayuda personalizada y consultas privadas
-          con Khalid IA.
-        </p>
-
-        <button
-          onClick={() => {
-            window.location.href =
-              "/checkout-khalid";
-          }}
-          className="w-full h-14 rounded-2xl bg-gradient-to-r from-yellow-400 to-yellow-600 text-black font-bold text-lg shadow-xl hover:scale-[1.02] transition-all"
-        >
-          🔓 Desbloquear ahora
-        </button>
-
-        <div className="mt-5 flex items-center justify-center gap-2 text-sm text-gray-400">
-          <span>🔐 Pago seguro con Stripe</span>
-        </div>
-
-        <div className="mt-4 flex items-center justify-center gap-3 flex-wrap">
-
-          <div className="px-3 py-2 rounded-xl bg-white text-black text-sm font-bold">
-            VISA
-          </div>
-
-          <div className="px-3 py-2 rounded-xl bg-white text-black text-sm font-bold">
-            Mastercard
-          </div>
-
-          <div className="px-3 py-2 rounded-xl bg-white text-black text-sm font-bold">
-            Apple Pay
-          </div>
-
-          <div className="px-3 py-2 rounded-xl bg-white text-black text-sm font-bold">
-            Google Pay
-          </div>
-
-        </div>
-
-      </div>
-    </div>
-  </motion.div>
-)
    
           </div>
         </motion.div>
