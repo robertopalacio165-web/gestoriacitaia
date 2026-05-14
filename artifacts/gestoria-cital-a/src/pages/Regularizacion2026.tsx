@@ -2328,7 +2328,7 @@ setTimeout(() => {
 </div>
 
 )}
-              </div>
+              
      {paymentDoneRef.current && (
   <div className="p-4 space-y-4">
 
@@ -2368,7 +2368,7 @@ setTimeout(() => {
 
   </div>
 )}
-              </div>
+             
            {paymentDoneRef.current && (
 <div className="border-t border-white/10 p-3">
  <button
@@ -2407,7 +2407,7 @@ disabled={!documentsUnlocked}
       )}
             </div>
           </div>
-   )}
+   
           <div className="flex flex-col gap-4">
             {paymentDoneRef.current && (
      <div className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-xl">
