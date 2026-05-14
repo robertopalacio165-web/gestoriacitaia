@@ -1046,52 +1046,69 @@ if (typeof result.verification_score === "number") {
   };
 
   // ✅ CAMBIO #2: flushPendingAutomation - AHORA ENVÍA DIRECTO SIN VERIFICAR assistantBusyRef
-  const flushPendingAutomation = async (retries = 0) => {
-    const prompt = pendingAutomationPromptRef.current;
-    if (!prompt) return;
-    if (!realtimeDcRef.current) {
-      console.error("❌ No hay data channel");
-      return;
-    }
-    if (realtimeDcRef.current.readyState !== "open") {
-      console.error("❌ Data channel no está abierto:", realtimeDcRef.current.readyState);
-      return;
-    }
-    
-    console.log("🚀 ENVIANDO DIRECTAMENTE (sin verificar busy):", prompt);
-    
-    // ✅ ENVÍO DIRECTO SIN VERIFICAR assistantBusyRef
-    try {
-      realtimeDcRef.current.send(
-        JSON.stringify({
-          type: "conversation.item.create",
-          item: {
-            type: "message",
-            role: "user",
-            content: [{ type: "input_text", text: prompt }],
-          },
-        })
-      );
-      console.log("✅ Item creado, enviando response.create...");
-      
-      realtimeDcRef.current.send(
-        JSON.stringify({
-          type: "response.create",
-          response: {
-  modalities: ["audio", "text"]
-}
-        })
-      );
-      console.log("✅ response.create enviado - Mohamed DEBERÍA hablar");
-      
-      // Limpiar después de enviar
-      pendingAutomationPromptRef.current = null;
-      setPendingAutomationPrompt("");
-      setWaitingMohamed(false);
-    } catch (error) {
-      console.error("❌ Error enviando:", error);
-    }
-  };
+const flushPendingAutomation = async () => {
+
+  const prompt = pendingAutomationPromptRef.current;
+
+  if (!prompt?.trim()) return;
+
+  if (!realtimeDcRef.current) return;
+
+  if (realtimeDcRef.current.readyState !== "open") return;
+
+  // ❌ إذا محمد مازال كيهضر ما نبعتو والو
+  if (assistantBusyRef.current) {
+
+    console.log("⏳ Mohamed still talking...");
+    return;
+
+  }
+
+  console.log("🚀 SENDING TO MOHAMED:", prompt);
+
+  try {
+
+    assistantBusyRef.current = true;
+
+    realtimeDcRef.current.send(
+      JSON.stringify({
+        type: "conversation.item.create",
+        item: {
+          type: "message",
+          role: "user",
+          content: [
+            {
+              type: "input_text",
+              text: prompt,
+            },
+          ],
+        },
+      })
+    );
+
+    realtimeDcRef.current.send(
+      JSON.stringify({
+        type: "response.create",
+        response: {
+          modalities: ["audio", "text"],
+        },
+      })
+    );
+
+    // ✅ نمسحو البرومبت مباشرة
+    pendingAutomationPromptRef.current = null;
+
+    setPendingAutomationPrompt("");
+
+  } catch (error) {
+
+    console.error("❌ flush error:", error);
+
+    assistantBusyRef.current = false;
+
+  }
+
+};
 const NAME_QUESTION =
   "مزيان. قولي شنو سميتك؟";
 
@@ -1450,60 +1467,12 @@ if (
 
     pushUserMessage(transcript);
 
-    console.log("✅ USER SAID:", transcript);
-// ✅ FIRST CLIENT MESSAGE → INTRO + STRIPE
 
-const lowerTranscript = transcript.toLowerCase().trim();
+
+const lowerTranscript =
+  transcript.toLowerCase().trim();
 
 const normalized = lowerTranscript;
-
-
- 
-console.log("🚀 START INTRO");
-
-maybeSendIntroToMohamed();
-
-realtimeLocalStreamRef.current
-  ?.getTracks()
-  .forEach((track) => {
-    track.stop();
-  });
-
-questionFlowLockedRef.current = true;
- 
-const introText = `
-السلام عليكم، أنا محمد من هيستوريا سيطا AI. مرحبا بك.
-
-غادي نطرح عليك شوية ديال الأسئلة وغادي تجاوبني غير بآه ولا لا.
-
-وملي غادي نسالي الأسئلة، غادي نراجع ليك الوثائق ديالك كاملين باش نشوف واش مقبولين ولا لا، واش صالحين ولا لا، وغادي نعطيك حتى وثيقة مهمة غادي تعزز الملف ديالك فالتسوية الجماعية.
-
-وزيد عليها، غادي نخليك تسولني حتى 4 أسئلة وغنجاوبك على جميع التساؤلات ديالك أوكي؟
-
-ولكن قبل، خاصك تكمل الأداء ديالك عاد باش نبداو.
-`;
-
-const estimatedMs =
-  Math.max(introText.length * 85, 12000);
-
-setTimeout(() => {
-
-  console.log("✅ INTRO FINISHED");
-
-  setShowStripe(true);
-
-  setPaymentRequired(true);
-
-  stopListening();
-
-  setIsListening(false);
-
-}, estimatedMs);
-
-  return;
-}
-
-
 
 
 // ✅ الاسم ما يتحسبش فـ NEXT
@@ -1526,8 +1495,6 @@ if (isOnlyNameStep) {
     );
 
   }, 500);
-
-
 
   return;
 }
@@ -1572,7 +1539,7 @@ if (
   handleQuestionFlow();
 }
   }
-
+}
 
 
 if (
@@ -2405,8 +2372,8 @@ disabled={!documentsUnlocked}
                 </p>
               </div>
       )}
-            </div>
-          </div>
+
+       
    
      <div className="flex flex-col gap-4">
 {/* RIGHT PANEL */}
@@ -2496,10 +2463,16 @@ disabled={!confirmUnlocked}
   )}     
 
      
-          </div>
-        </div>
-      {/* END RIGHT PANEL */}
-        <audio ref={remoteAudioRef} autoPlay playsInline className="hidden" />
+              </div>
+
+        {/* END RIGHT PANEL */}
+
+        <audio
+          ref={remoteAudioRef}
+          autoPlay
+          playsInline
+          className="hidden"
+        />
       </main>
     </div>
   );
