@@ -20,6 +20,7 @@ export default function KhalidExtranjeria() {
   const [showPayment, setShowPayment] = useState(false);
 const [paymentEnabled, setPaymentEnabled] = useState(false);
 const [answeredOnce, setAnsweredOnce] = useState(false);
+  const [userAskedQuestion, setUserAskedQuestion] = useState(false);
   const realtimeRef = useRef<any>(null);
 const remoteAudioRef = useRef<HTMLAudioElement | null>(null);
 const realtimePcRef = useRef<RTCPeerConnection | null>(null);
@@ -236,7 +237,7 @@ dc.onmessage = (event) => {
       setLastTranscript(transcript);
 
       console.log("USER:", transcript);
-
+setUserAskedQuestion(true);
     }
 
     // 🤖 خالد بدا يهضر
@@ -251,7 +252,7 @@ dc.onmessage = (event) => {
     }
 
     // ✅ خالد سالى
- if (msg.type === "response.done") {
+if (msg.type === "response.done") {
 
   assistantBusyRef.current = false;
 
@@ -259,7 +260,14 @@ dc.onmessage = (event) => {
 
   console.log("KHALID DONE");
 
-  if (!answeredOnce) {
+  const isPremium =
+    localStorage.getItem("khalid_paid") === "true";
+
+  if (
+    userAskedQuestion &&
+    !answeredOnce &&
+    !isPremium
+  ) {
 
     setAnsweredOnce(true);
 
@@ -412,11 +420,33 @@ dc.onmessage = (event) => {
           <div className="p-4">
             <motion.button
               whileTap={{ scale: 0.96 }}
-              onClick={
-                isListening
-                  ? stopConversation
-                  : startConversation
-              }
+           onClick={() => {
+
+  const isPremium =
+    localStorage.getItem("khalid_paid") === "true";
+
+  if (
+    answeredOnce &&
+    !isPremium
+  ) {
+    return;
+  }
+
+  if (isListening) {
+
+    stopConversation();
+
+  } else {
+
+    startConversation();
+
+  }
+
+}}
+             disabled={
+  answeredOnce &&
+  localStorage.getItem("khalid_paid") !== "true"
+} 
               className={`w-full h-14 rounded-2xl font-bold text-lg transition-all flex items-center justify-center gap-3 ${
                 isListening
                   ? "bg-red-500 hover:bg-red-600"
