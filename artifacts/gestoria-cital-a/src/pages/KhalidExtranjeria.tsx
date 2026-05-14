@@ -18,7 +18,8 @@ export default function KhalidExtranjeria() {
   const [isListening, setIsListening] = useState(false);
   const [messagesCount, setMessagesCount] = useState(0);
   const [showPayment, setShowPayment] = useState(false);
-
+const [paymentEnabled, setPaymentEnabled] = useState(false);
+const [answeredOnce, setAnsweredOnce] = useState(false);
   const realtimeRef = useRef<any>(null);
 const remoteAudioRef = useRef<HTMLAudioElement | null>(null);
 const realtimePcRef = useRef<RTCPeerConnection | null>(null);
@@ -156,8 +157,13 @@ mediaStream
 
 أنت خبير فالهجرة والقانون فإسبانيا.
 
-جاوب فقط على السؤال اللي سولاك المستخدم.
+جاوب فقط مرة وحدة.
 
+من بعد أول جواب قول مباشرة:
+
+"دابا إلا بغيتي نكمل معاك خاصك تضغط على الزر وتخلص."
+
+ومن بعد سكت وما تجاوبش مرة أخرى.
 الجواب يكون قصير وواضح وطبيعي.
 
 ممنوع تعاود السؤال.
@@ -245,15 +251,27 @@ dc.onmessage = (event) => {
     }
 
     // ✅ خالد سالى
-    if (msg.type === "response.done") {
+ if (msg.type === "response.done") {
 
-      assistantBusyRef.current = false;
+  assistantBusyRef.current = false;
 
-      setWaitingKhalid(false);
+  setWaitingKhalid(false);
 
-      console.log("KHALID DONE");
+  console.log("KHALID DONE");
 
-    }
+  if (!answeredOnce) {
+
+    setAnsweredOnce(true);
+
+    setPaymentEnabled(true);
+
+    setShowPayment(true);
+
+    stopConversation();
+
+  }
+
+}
 
   } catch (err) {
 
@@ -463,7 +481,12 @@ dc.onmessage = (event) => {
 </p>
 
 <button
+  disabled={!paymentEnabled}
   onClick={async () => {
+
+    if (!paymentEnabled) {
+      return;
+    }
 
     try {
 
@@ -489,7 +512,11 @@ dc.onmessage = (event) => {
     }
 
   }}
-  className="w-full h-10 rounded-xl bg-gradient-to-b from-yellow-300 to-yellow-500 border border-yellow-200/40 text-black font-extrabold text-sm shadow-[0_8px_25px_rgba(255,200,0,0.35)] transition-all"
+  className={`w-full h-10 rounded-xl text-black font-extrabold text-sm transition-all ${
+    paymentEnabled
+      ? "bg-gradient-to-b from-yellow-300 to-yellow-500 border border-yellow-200/40 shadow-[0_8px_25px_rgba(255,200,0,0.35)]"
+      : "bg-gray-600 opacity-50 cursor-not-allowed"
+  }`}
 >
   🔓 Desbloquear ahora
 </button>
