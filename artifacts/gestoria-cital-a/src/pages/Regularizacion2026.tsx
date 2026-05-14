@@ -129,7 +129,13 @@ if (paid === "true") {
 
   questionFlowLockedRef.current = false;
 
- 
+  stopListening();
+
+setTimeout(async () => {
+
+    startListening();
+
+  }, 1500);
 
   setQuestionIndex(0);
 
@@ -239,8 +245,6 @@ window.location.href = data.url;
   const [confirmUnlocked, setConfirmUnlocked] = useState(false);
   const [pendingAutomationPrompt, setPendingAutomationPrompt] = useState("");
   const [phone, setPhone] = useState("");
-  const [clientNombre, setClientNombre] = useState("");
-const [clientApellido, setClientApellido] = useState("");
   const [questionsDone, setQuestionsDone] = useState(false);
 const [clientQuestionsDone, setClientQuestionsDone] = useState(false);
   const [questionIndex, setQuestionIndex] = useState(0);
@@ -1046,69 +1050,52 @@ if (typeof result.verification_score === "number") {
   };
 
   // ✅ CAMBIO #2: flushPendingAutomation - AHORA ENVÍA DIRECTO SIN VERIFICAR assistantBusyRef
-const flushPendingAutomation = async () => {
-
-  const prompt = pendingAutomationPromptRef.current;
-
-  if (!prompt?.trim()) return;
-
-  if (!realtimeDcRef.current) return;
-
-  if (realtimeDcRef.current.readyState !== "open") return;
-
-  // ❌ إذا محمد مازال كيهضر ما نبعتو والو
-  if (assistantBusyRef.current) {
-
-    console.log("⏳ Mohamed still talking...");
-    return;
-
-  }
-
-  console.log("🚀 SENDING TO MOHAMED:", prompt);
-
-  try {
-
-    assistantBusyRef.current = true;
-
-    realtimeDcRef.current.send(
-      JSON.stringify({
-        type: "conversation.item.create",
-        item: {
-          type: "message",
-          role: "user",
-          content: [
-            {
-              type: "input_text",
-              text: prompt,
-            },
-          ],
-        },
-      })
-    );
-
-    realtimeDcRef.current.send(
-      JSON.stringify({
-        type: "response.create",
-        response: {
-          modalities: ["audio", "text"],
-        },
-      })
-    );
-
-    // ✅ نمسحو البرومبت مباشرة
-    pendingAutomationPromptRef.current = null;
-
-    setPendingAutomationPrompt("");
-
-  } catch (error) {
-
-    console.error("❌ flush error:", error);
-
-    assistantBusyRef.current = false;
-
-  }
-
-};
+  const flushPendingAutomation = async (retries = 0) => {
+    const prompt = pendingAutomationPromptRef.current;
+    if (!prompt) return;
+    if (!realtimeDcRef.current) {
+      console.error("❌ No hay data channel");
+      return;
+    }
+    if (realtimeDcRef.current.readyState !== "open") {
+      console.error("❌ Data channel no está abierto:", realtimeDcRef.current.readyState);
+      return;
+    }
+    
+    console.log("🚀 ENVIANDO DIRECTAMENTE (sin verificar busy):", prompt);
+    
+    // ✅ ENVÍO DIRECTO SIN VERIFICAR assistantBusyRef
+    try {
+      realtimeDcRef.current.send(
+        JSON.stringify({
+          type: "conversation.item.create",
+          item: {
+            type: "message",
+            role: "user",
+            content: [{ type: "input_text", text: prompt }],
+          },
+        })
+      );
+      console.log("✅ Item creado, enviando response.create...");
+      
+      realtimeDcRef.current.send(
+        JSON.stringify({
+          type: "response.create",
+          response: {
+  modalities: ["audio", "text"]
+}
+        })
+      );
+      console.log("✅ response.create enviado - Mohamed DEBERÍA hablar");
+      
+      // Limpiar después de enviar
+      pendingAutomationPromptRef.current = null;
+      setPendingAutomationPrompt("");
+      setWaitingMohamed(false);
+    } catch (error) {
+      console.error("❌ Error enviando:", error);
+    }
+  };
 const NAME_QUESTION =
   "مزيان. قولي شنو سميتك؟";
 
@@ -1217,7 +1204,7 @@ const handleSendWhatsApp = async () => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-      nombre: `${clientNombre} ${clientApellido}`,
+        nombre: leadForm?.nombre,
         telefono: phone,
         ciudad: leadForm?.ciudad,
         nacionalidad: leadForm?.nacionalidad,
@@ -1230,15 +1217,15 @@ const handleSendWhatsApp = async () => {
     const data = await res.json();
 
     // 2. رابط PDF
-const pdfUrl = `${window.location.origin}/api/generate-expediente-pdf?nombre=${encodeURIComponent(
-  leadForm?.nombre || ""
-)}&nacionalidad=${encodeURIComponent(
-  leadForm?.nacionalidad || ""
-)}&ciudad=${encodeURIComponent(
-  leadForm?.ciudad || ""
-)}&fecha_llegada=${encodeURIComponent(
-  leadForm?.fechaLlegada || ""
-)}`;
+    const pdfUrl = `${window.location.origin}/api/generate-expediente-pdf?nombre=${encodeURIComponent(
+      leadForm?.nombre || ""
+    )}&nacionalidad=${encodeURIComponent(
+      leadForm?.nacionalidad || ""
+    )}&ciudad=${encodeURIComponent(
+      leadForm?.ciudad || ""
+    )}&fecha_llegada=${encodeURIComponent(
+      leadForm?.fecha_llegada || ""
+    )}`;
 
     // 3. تنظيف الرقم
     const cleanPhone = phone.trim().replace(/\s+/g, "");
@@ -1407,31 +1394,13 @@ dc.send(
           }, 400);
           return;
         }
- if (!(window as any).paid) {
+    if (!(window as any).paid) {
 
   setTimeout(() => {
 
     void maybeSendIntroToMohamed();
 
   }, 500);
-
-} else {
-
-  setTimeout(() => {
-
-    speakExactText(`
-السلام عليكم.
-
-أنا محمد من GestoriaCitaIA.
-
-غادي نبدا معاك مباشرة فمراجعة الملف ديالك.
-
-السؤال الأول:
-
-واش دخلتي لإسبانيا قبل واحد يناير 2026؟
-    `);
-
-  }, 1200);
 
 }
       };
@@ -1467,12 +1436,69 @@ if (
 
     pushUserMessage(transcript);
 
+    console.log("✅ USER SAID:", transcript);
+// ✅ FIRST CLIENT MESSAGE → INTRO + STRIPE
 
-
-const lowerTranscript =
-  transcript.toLowerCase().trim();
+const lowerTranscript = transcript.toLowerCase().trim();
 
 const normalized = lowerTranscript;
+
+if (
+  !paymentDoneRef.current &&
+  (
+    lowerTranscript.includes("سلام") ||
+    lowerTranscript.includes("salam") ||
+    lowerTranscript.includes("hola") ||
+    lowerTranscript.includes("hello")
+  )
+) {
+
+ 
+console.log("🚀 START INTRO");
+
+maybeSendIntroToMohamed();
+
+realtimeLocalStreamRef.current
+  ?.getTracks()
+  .forEach((track) => {
+    track.stop();
+  });
+
+questionFlowLockedRef.current = true;
+ 
+const introText = `
+السلام عليكم، أنا محمد من هيستوريا سيطا AI. مرحبا بك.
+
+غادي نطرح عليك شوية ديال الأسئلة وغادي تجاوبني غير بآه ولا لا.
+
+وملي غادي نسالي الأسئلة، غادي نراجع ليك الوثائق ديالك كاملين باش نشوف واش مقبولين ولا لا، واش صالحين ولا لا، وغادي نعطيك حتى وثيقة مهمة غادي تعزز الملف ديالك فالتسوية الجماعية.
+
+وزيد عليها، غادي نخليك تسولني حتى 4 أسئلة وغنجاوبك على جميع التساؤلات ديالك أوكي؟
+
+ولكن قبل، خاصك تكمل الأداء ديالك عاد باش نبداو.
+`;
+
+const estimatedMs =
+  Math.max(introText.length * 85, 12000);
+
+setTimeout(() => {
+
+  console.log("✅ INTRO FINISHED");
+
+  setShowStripe(true);
+
+  setPaymentRequired(true);
+
+  stopListening();
+
+  setIsListening(false);
+
+}, estimatedMs);
+
+  return;
+}
+
+
 
 
 // ✅ الاسم ما يتحسبش فـ NEXT
@@ -1495,6 +1521,8 @@ if (isOnlyNameStep) {
     );
 
   }, 500);
+
+
 
   return;
 }
@@ -1539,8 +1567,8 @@ if (
   handleQuestionFlow();
 }
   }
-}
 
+}
 
 if (
   msg.type === "response.output_text.delta" &&
@@ -2222,122 +2250,177 @@ setTimeout(() => {
         </div>
         <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 grid grid-cols-1 lg:grid-cols-[380px_minmax(0,1fr)] gap-4">
           <div className="flex flex-col gap-3">
-        {!paymentDoneRef.current ? (
+            <div
+              className="relative rounded-2xl overflow-hidden border border-primary/20 shadow-[0_0_30px_-5px_hsl(var(--primary)/0.25)] bg-black"
+              style={{ height: "260px" }}
+            >
+              <img
+                src={`${import.meta.env.BASE_URL}images/avatar-mohamed.png`}
+                alt="Mohamed"
+                className="w-full h-full object-cover object-top"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+              <div className="absolute top-3 left-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/60 border border-white/10 backdrop-blur-md">
+                <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                <span className="text-xs font-medium text-white">{ui.online}</span>
+              </div>
+              <div className="absolute top-3 right-3 flex items-center gap-2">
+                <div className="relative w-7 h-7 rounded-full bg-black/50 backdrop-blur-md border border-white/10 flex items-center justify-center">
+                  <Bell className="w-3.5 h-3.5 text-white" />
+                  <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-amber-500 rounded-full text-[8px] text-white flex items-center justify-center font-bold">
+                    !
+                  </span>
+                </div>
+                <button
+                  onClick={() => setMuted(!muted)}
+                  className="w-8 h-8 rounded-full bg-black/50 border border-white/10 flex items-center justify-center"
+                  type="button"
+                >
+                  {muted ? (
+                    <VolumeX className="w-4 h-4 text-white" />
+                  ) : (
+                    <Volume2 className="w-4 h-4 text-white" />
+                  )}
+                </button>
+              </div>
+              {!muted && (
+                <div className="absolute bottom-14 left-4 flex items-end gap-0.5 h-5">
+                  {[3, 6, 4, 8, 5, 7, 3].map((h, i) => (
+                    <motion.div
+                      key={i}
+                      className="w-1 bg-primary rounded-full"
+                      animate={{ height: [`${h}px`, `${h * 2}px`, `${h}px`] }}
+                      transition={{ duration: 0.5, repeat: Infinity, delay: i * 0.07 }}
+                    />
+                  ))}
+                </div>
+              )}
+              <div className="absolute bottom-12 right-3 text-right">
+                <p className="text-white font-bold text-sm drop-shadow-lg">Mohamed</p>
+                <p className="text-white/70 text-[11px] drop-shadow-lg">{ui.role}</p>
+              </div>
+              <div className="absolute bottom-3 left-0 right-0 flex justify-center">
+                <button
+            onClick={() => {
 
-<div
-  className="relative rounded-2xl overflow-hidden border border-primary/20 shadow-[0_0_30px_-5px_hsl(var(--primary)/0.25)] bg-black"
-  style={{ height: "260px" }}
->
+if (paymentRequired || documentsUnlocked) return;
 
-  <video
-    autoPlay
-    muted
-    loop
-    playsInline
-    poster={`${import.meta.env.BASE_URL}images/avatar-mohamed.png`}
-    className="w-full h-full object-cover object-top"
-  >
-    <source
-      src="/videos/mohamed-extranjeria.mp4"
-      type="video/mp4"
-    />
-  </video>
+  isListening ? stopListening() : startListening();
 
-  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+}}
+                  className={`w-12 h-12 rounded-full border flex items-center justify-center backdrop-blur-md transition-colors ${
+                    isListening
+                      ? "bg-destructive/80 border-destructive"
+                      : "bg-black/50 border-white/20 hover:bg-black/70"
+                  }`}
+                  type="button"
+                >
+                  {isListening ? (
+                    <MicOff className="w-5 h-5 text-white" />
+                  ) : (
+                    <Mic className="w-5 h-5 text-white" />
+                  )}
+                </button>
+              </div>
+            </div>
+            <div className="glass-panel-heavy border border-white/10 rounded-2xl overflow-hidden">
+              <div className="p-4 border-b border-white/10">
+                <button
+                  onClick={isListening ? stopListening : startListening}
+          disabled={!voiceSupported || (paymentRequired && !paymentDoneRef.current)}
+                  className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary hover:bg-primary/90 disabled:opacity-50 text-primary-foreground font-bold text-sm px-4 py-3 transition-colors"
+                  type="button"
+                >
+                  {isListening ? (
+                    <>
+                      <MicOff className="w-4 h-4" />
+                      {ui.stopButton}
+                    </>
+                  ) : (
+                    <>
+                      <Mic className="w-4 h-4" />
+                      {ui.voiceButton}
+                    </>
+                  )}
+                </button>
+                {!voiceSupported && (
+                  <p className="mt-2 text-xs text-red-400 text-center">
+                    {ui.micNotSupported}
+                  </p>
+                )}
+                {isListening && (
+                  <p className="mt-2 text-xs text-primary text-center">
+                    {ui.listening}
+                  </p>
+                )}
+       {showStripe && (
 
-</div>
+  <div className="fixed inset-0 z-[99999] bg-black/90 backdrop-blur-md flex items-center justify-center px-6">
 
-) : (
+    <div className="w-full max-w-md rounded-3xl bg-zinc-950 border border-white/10 p-6 text-center shadow-2xl">
 
-<div
-  className="relative rounded-2xl overflow-hidden border border-primary/20 shadow-[0_0_30px_-5px_hsl(var(--primary)/0.25)] bg-black"
-  style={{ height: "260px" }}
->
+      <h2 className="text-2xl font-bold text-white mb-4">
+        ✅ الملف ديالك مؤهل
+      </h2>
 
-  <img
-    src="/images/avatar-mohamed.png"
-    className="w-full h-full object-cover object-top"
-  />
-
-  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-
-  <div className="absolute top-3 left-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/60 border border-white/10 backdrop-blur-md">
-    <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-    <span className="text-xs font-medium text-white">
-      En línea
-    </span>
-  </div>
-
-  <div className="absolute bottom-3 left-0 right-0 flex justify-center">
-    <button
-      onClick={() => {
-
-        isListening
-          ? stopListening()
-          : startListening();
-
-      }}
-      className={`w-12 h-12 rounded-full border flex items-center justify-center backdrop-blur-md transition-colors ${
-        isListening
-          ? "bg-destructive/80 border-destructive"
-          : "bg-black/50 border-white/20 hover:bg-black/70"
-      }`}
-      type="button"
-    >
-      {isListening ? (
-        <MicOff className="w-5 h-5 text-white" />
-      ) : (
-        <Mic className="w-5 h-5 text-white" />
-      )}
-    </button>
-  </div>
-
-</div>
-
-)}
-              
-     {paymentDoneRef.current && (
-  <div className="p-4 space-y-4">
-
-    <div>
-      <p className="text-[11px] text-white/50 mb-1">
-        {ui.latestReply}
+      <p className="text-white/70 text-sm leading-relaxed mb-6">
+        باش نكملو التحليل الكامل ونوجدولك الوثائق المهمة،
+        خاصك تكمل الأداء دابا.
       </p>
 
-      <div className="rounded-xl bg-white/5 border border-white/10 px-3 py-3 text-sm text-white/90 leading-relaxed">
-        {latestAgentMessage}
-      </div>
+      <button
+        onClick={handleStripePayment}
+        type="button"
+        className="
+          w-full
+          rounded-2xl
+          py-4
+          text-lg
+          font-bold
+          text-white
+          bg-gradient-to-r
+          from-emerald-500
+          to-green-600
+          hover:scale-[1.02]
+          transition-all
+        "
+      >
+        💳 الأداء الآن — 12€
+      </button>
+
     </div>
 
-    {lastUserTranscript ? (
-      <div>
-        <p className="text-[11px] text-white/50 mb-1">
-          {ui.yourVoice}
-        </p>
-
-        <div className="rounded-xl bg-primary/10 border border-primary/20 px-3 py-3 text-sm text-white leading-relaxed">
-          {lastUserTranscript}
-        </div>
-      </div>
-    ) : null}
-
-    {waitingMohamed && (
-      <div className="rounded-xl bg-white/5 border border-white/10 px-3 py-3 text-sm text-white/70">
-        ...
-      </div>
-    )}
-
-    {waitingForDocument && !generalUploading && (
-      <div className="rounded-xl bg-amber-500/10 border border-amber-400/20 px-3 py-3 text-sm text-amber-200">
-        Mohamed está esperando el documento que te pidió.
-      </div>
-    )}
-
   </div>
+
 )}
-             
-           {paymentDoneRef.current && (
-<div className="border-t border-white/10 p-3">
+              </div>
+              <div className="p-4 space-y-4">
+                <div>
+                  <p className="text-[11px] text-white/50 mb-1">{ui.latestReply}</p>
+                  <div className="rounded-xl bg-white/5 border border-white/10 px-3 py-3 text-sm text-white/90 leading-relaxed">
+                    {latestAgentMessage}
+                  </div>
+                </div>
+                {lastUserTranscript ? (
+                  <div>
+                    <p className="text-[11px] text-white/50 mb-1">{ui.yourVoice}</p>
+                    <div className="rounded-xl bg-primary/10 border border-primary/20 px-3 py-3 text-sm text-white leading-relaxed">
+                      {lastUserTranscript}
+                    </div>
+                  </div>
+                ) : null}
+                {waitingMohamed && (
+                  <div className="rounded-xl bg-white/5 border border-white/10 px-3 py-3 text-sm text-white/70">
+                    ...
+                  </div>
+                )}
+                {waitingForDocument && !generalUploading && (
+                  <div className="rounded-xl bg-amber-500/10 border border-amber-400/20 px-3 py-3 text-sm text-amber-200">
+                    Mohamed está esperando el documento que te pidió.
+                  </div>
+                )}
+              </div>
+              <div className="border-t border-white/10 p-3">
  <button
   onClick={handleGeneralUpload}
 disabled={!documentsUnlocked}
@@ -2371,18 +2454,14 @@ disabled={!documentsUnlocked}
                   {ui.uploadGeneralDesc}
                 </p>
               </div>
-      )}
-
-       
+            </div>
+          </div>
    
-     <div className="flex flex-col gap-4">
-{/* RIGHT PANEL */}
-            {paymentDoneRef.current && (
+          <div className="flex flex-col gap-4">
+            
      <div className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-xl">
   <h3 className="text-lg font-bold text-white mb-3">
-
     Confirmación rápida
-    
   </h3>
 
 <button
@@ -2395,37 +2474,7 @@ disabled={!documentsUnlocked}
   {safeLang === "es" && "Verificar documentos"}
   {safeLang === "en" && "Verify documents"}
 </button>
-<div className="space-y-3 mb-4">
-
-  <div className="w-full flex items-center gap-3 bg-white/5 border border-white/10 rounded-2xl px-4 py-3 shadow-inner">
-
-    <span className="text-yellow-400 text-lg">👤</span>
-
-    <input
-      type="text"
-      value={clientNombre}
-      onChange={(e) => setClientNombre(e.target.value)}
-      placeholder="Nombre"
-      className="w-full bg-transparent outline-none text-white placeholder:text-white/40 text-sm"
-    />
-
-  </div>
-
-  <div className="w-full flex items-center gap-3 bg-white/5 border border-white/10 rounded-2xl px-4 py-3 shadow-inner">
-
-    <span className="text-yellow-400 text-lg">🪪</span>
-
-    <input
-      type="text"
-      value={clientApellido}
-      onChange={(e) => setClientApellido(e.target.value)}
-      placeholder="Apellido"
-      className="w-full bg-transparent outline-none text-white placeholder:text-white/40 text-sm"
-    />
-
-  </div>
-
-</div>
+<div style={{ marginTop: 20 }}>
 
 <div className="w-full flex items-center gap-3 bg-white/5 border border-white/10 rounded-2xl px-4 py-3 shadow-inner">
   
@@ -2458,36 +2507,28 @@ disabled={!confirmUnlocked}
 >
   إرسال عبر WhatsApp
 </button>
-
 </div>
 
-)}
-
+       
 </div>
-
-</div>
-
-{/* END RIGHT PANEL */}
-              <audio
-          ref={remoteAudioRef}
-          autoPlay
-          playsInline
-          className="hidden"
-        />
+     
+          </div>
+        </div>
+        <audio ref={remoteAudioRef} autoPlay playsInline className="hidden" />
       </main>
     </div>
   );
 }
 
-const FieldLabel = ({ label }: { label: string }) => {
+function FieldLabel({ label }: { label: string }) {
   return (
     <label className="block text-[12px] font-semibold text-slate-600 mb-1">
       {label}
     </label>
   );
-};
+}
 
-const FieldInput = ({
+function FieldInput({
   value,
   onChange,
   placeholder,
@@ -2495,7 +2536,7 @@ const FieldInput = ({
   value: string;
   onChange: (value: string) => void;
   placeholder: string;
-}) => {
+}) {
   return (
     <input
       value={value}
