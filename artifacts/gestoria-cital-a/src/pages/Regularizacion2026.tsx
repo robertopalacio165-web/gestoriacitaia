@@ -2553,7 +2553,7 @@ setTimeout(() => {
          </div>
   </div>
 </div>
-</div>
+
 )}
 
 <audio
