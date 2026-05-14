@@ -1213,15 +1213,15 @@ const handleSendWhatsApp = async () => {
     const data = await res.json();
 
     // 2. رابط PDF
-    const pdfUrl = `${window.location.origin}/api/generate-expediente-pdf?nombre=${encodeURIComponent(
-      leadForm?.nombre || ""
-    )}&nacionalidad=${encodeURIComponent(
-      leadForm?.nacionalidad || ""
-    )}&ciudad=${encodeURIComponent(
-      leadForm?.ciudad || ""
-    )}&fecha_llegada=${encodeURIComponent(
-      leadForm?.fecha_llegada || ""
-    )}`;
+const pdfUrl = `${window.location.origin}/api/generate-expediente-pdf?nombre=${encodeURIComponent(
+  leadForm?.nombre || ""
+)}&nacionalidad=${encodeURIComponent(
+  leadForm?.nacionalidad || ""
+)}&ciudad=${encodeURIComponent(
+  leadForm?.ciudad || ""
+)}&fecha_llegada=${encodeURIComponent(
+  leadForm?.fechaLlegada || ""
+)}`;
 
     // 3. تنظيف الرقم
     const cleanPhone = phone.trim().replace(/\s+/g, "");
@@ -2408,7 +2408,8 @@ disabled={!documentsUnlocked}
             </div>
           </div>
    
-          <div className="flex flex-col gap-4">
+     <div className="flex flex-col gap-4">
+{/* RIGHT PANEL */}
             {paymentDoneRef.current && (
      <div className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-xl">
   <h3 className="text-lg font-bold text-white mb-3">
@@ -2497,6 +2498,7 @@ disabled={!confirmUnlocked}
      
           </div>
         </div>
+      {/* END RIGHT PANEL */}
         <audio ref={remoteAudioRef} autoPlay playsInline className="hidden" />
       </main>
     </div>
