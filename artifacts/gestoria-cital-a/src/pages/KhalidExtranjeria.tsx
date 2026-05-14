@@ -33,7 +33,27 @@ const [waitingKhalid, setWaitingKhalid] = useState(false);
 const [lastTranscript, setLastTranscript] = useState("");
 const [lastReply, setLastReply] = useState("");
   useEffect(() => {
-   useEffect(() => {
+
+  const params =
+    new URLSearchParams(window.location.search);
+
+  const paid =
+    params.get("paid");
+
+  if (paid === "true") {
+
+    localStorage.setItem(
+      "khalid_paid",
+      "true"
+    );
+
+    setShowPayment(false);
+
+  }
+
+}, []);
+
+useEffect(() => {
 
   if (
     lastReply.includes("سولني أي سؤال") ||
@@ -41,14 +61,20 @@ const [lastReply, setLastReply] = useState("");
     lastReply.includes("الإقامة")
   ) {
 
-    setShowPayment(true);
+    const isPremium =
+      localStorage.getItem("khalid_paid") === "true";
 
-    stopConversation();
+    if (!isPremium) {
+
+      setShowPayment(true);
+
+      stopConversation();
+
+    }
 
   }
 
 }, [lastReply]);
-  }, [messagesCount]);
 
   const startConversation = async () => {
     try {
