@@ -21,6 +21,7 @@ export default function KhalidExtranjeria() {
 const [paymentEnabled, setPaymentEnabled] = useState(false);
 const [answeredOnce, setAnsweredOnce] = useState(false);
   const [userAskedQuestion, setUserAskedQuestion] = useState(false);
+  const [freeQuestionUsed, setFreeQuestionUsed] = useState(false);
   const realtimeRef = useRef<any>(null);
 const remoteAudioRef = useRef<HTMLAudioElement | null>(null);
 const realtimePcRef = useRef<RTCPeerConnection | null>(null);
@@ -162,7 +163,7 @@ mediaStream
 
 من بعد أول جواب قول مباشرة:
 
-"دابا إلا بغيتي نكمل معاك خاصك تضغط على الزر وتخلص."
+"إلى بغيتي نكمل معاك، ضغط على زر الأداء وخلّص."
 
 ومن بعد سكت وما تجاوبش مرة أخرى.
 الجواب يكون قصير وواضح وطبيعي.
@@ -207,14 +208,33 @@ dc.onmessage = (event) => {
     const msg = JSON.parse(event.data);
 
     // 🧠 كلام خالد
-    if (
-      msg.type === "response.output_text.delta" &&
-      typeof msg.delta === "string"
-    ) {
+  if (
+  msg.type === "response.output_text.delta" &&
+  typeof msg.delta === "string"
+) {
 
-      setLastReply((prev) => prev + msg.delta);
+  setLastReply((prev) => prev + msg.delta);
 
-    }
+  const isPremium =
+    localStorage.getItem("khalid_paid") === "true";
+
+  if (
+    userAskedQuestion &&
+    !freeQuestionUsed &&
+    !isPremium
+  ) {
+
+    setFreeQuestionUsed(true);
+
+    setPaymentEnabled(true);
+
+    setShowPayment(true);
+
+    stopConversation();
+
+  }
+
+}
 
     // 🎤 كلام المستخدم
     const transcript =
@@ -259,25 +279,6 @@ if (msg.type === "response.done") {
   setWaitingKhalid(false);
 
   console.log("KHALID DONE");
-
-  const isPremium =
-    localStorage.getItem("khalid_paid") === "true";
-
-  if (
-    userAskedQuestion &&
-    !answeredOnce &&
-    !isPremium
-  ) {
-
-    setAnsweredOnce(true);
-
-    setPaymentEnabled(true);
-
-    setShowPayment(true);
-
-    stopConversation();
-
-  }
 
 }
 
