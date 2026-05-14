@@ -2458,16 +2458,17 @@ disabled={!confirmUnlocked}
 >
   إرسال عبر WhatsApp
 </button>
+
 </div>
 
-  )}     
+)}
 
-     
-              </div>
+</div>
 
-        {/* END RIGHT PANEL */}
+</div>
 
-        <audio
+{/* END RIGHT PANEL */}
+              <audio
           ref={remoteAudioRef}
           autoPlay
           playsInline
