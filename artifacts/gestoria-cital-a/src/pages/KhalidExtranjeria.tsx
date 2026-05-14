@@ -437,7 +437,7 @@ dc.onmessage = (event) => {
                 con inmigración.
               </p>
             </div>
-{showPayment && (
+(
   <motion.div
     initial={{ opacity: 0, y: 20 }}
     animate={{ opacity: 1, y: 0 }}
@@ -524,7 +524,7 @@ dc.onmessage = (event) => {
       </div>
     </div>
   </motion.div>
-)}
+)
    
           </div>
         </motion.div>
