@@ -428,61 +428,61 @@ if (msg.type === "response.done") {
               </div>
             </div>
           </div>
-)}
           <div className="p-4">
 
             {isPaid && (
-            <motion.button
-              whileTap={{ scale: 0.96 }}
-         
-disabled={
+     <motion.button
+  whileTap={{ scale: 0.96 }}
+
+  disabled={
     answeredOnce &&
     localStorage.getItem("khalid_paid") !== "true"
   }
 
   onClick={() => {
 
-  const isPremium =
-    localStorage.getItem("khalid_paid") === "true";
+    const isPremium =
+      localStorage.getItem("khalid_paid") === "true";
 
-  if (
-    answeredOnce &&
-    !isPremium
-  ) {
-    return;
-  }
+    if (
+      answeredOnce &&
+      !isPremium
+    ) {
+      return;
+    }
 
-  if (isListening) {
+    if (isListening) {
 
-    stopConversation();
+      stopConversation();
 
-  } else {
+    } else {
 
-    startConversation();
+      startConversation();
 
-  }
+    }
 
-}}
-              {isPaid && (
-  
-              className={`w-full h-14 rounded-2xl font-bold text-lg transition-all flex items-center justify-center gap-3 ${
-                isListening
-                  ? "bg-red-500 hover:bg-red-600"
-                  : "bg-green-500 hover:bg-green-600"
-              }`}
-            >
-              {isListening ? (
-                <>
-                  <MicOff size={22} />
-                  {t("Finalizar conversación")}
-                </>
-              ) : (
-                <>
-                  <Mic size={22} />
-                  {t("Hablar con Khalid")}
-                </>
-              )}
-            </motion.button>
+  }}
+
+  className={`w-full h-14 rounded-2xl font-bold text-lg transition-all flex items-center justify-center gap-3 ${
+    isListening
+      ? "bg-red-500 hover:bg-red-600"
+      : "bg-green-500 hover:bg-green-600"
+  }`}
+>
+
+  {isListening ? (
+    <>
+      <MicOff size={22} />
+      {t("Finalizar conversación")}
+    </>
+  ) : (
+    <>
+      <Mic size={22} />
+      {t("Hablar con Khalid")}
+    </>
+  )}
+
+</motion.button>
             )}
             {!isPaid && (
 <motion.div
