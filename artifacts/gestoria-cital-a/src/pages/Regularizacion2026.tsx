@@ -2491,8 +2491,7 @@ setTimeout(() => {
 
 </div>   
    
-    {paidAccess && (
-<div className="flex flex-col gap-4">
+    
             
    {paidAccess && (
   <div className="flex flex-col gap-4">
