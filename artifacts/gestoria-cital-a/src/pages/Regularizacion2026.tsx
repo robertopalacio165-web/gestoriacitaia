@@ -2550,13 +2550,17 @@ setTimeout(() => {
           إرسال عبر WhatsApp
         </button>
 
-      </div>
-
-    </div>
-
+         </div>
   </div>
+</div>
 )}
-        <audio ref={remoteAudioRef} autoPlay playsInline className="hidden" />
+
+<audio
+  ref={remoteAudioRef}
+  autoPlay
+  playsInline
+  className="hidden"
+/>
       </main>
     </div>
   );
