@@ -2493,7 +2493,7 @@ setTimeout(() => {
    
     
             
-   {paidAccess && (
+ {paidAccess && (
   <div className="flex flex-col gap-4">
 
     <div className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-xl">
@@ -2523,13 +2523,7 @@ setTimeout(() => {
             type="tel"
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
-            placeholder={
-              safeLang === "darija"
-                ? "+34 600000000"
-                : safeLang === "es"
-                ? "+34 600000000"
-                : "+34 600000000"
-            }
+            placeholder="+34 600000000"
             className="w-full bg-transparent outline-none text-white placeholder:text-white/40 text-sm"
           />
 
@@ -2549,10 +2543,11 @@ setTimeout(() => {
           إرسال عبر WhatsApp
         </button>
 
-         </div>
-  </div>
-</div>
+      </div>
 
+    </div>
+
+  </div>
 )}
 
 <audio
