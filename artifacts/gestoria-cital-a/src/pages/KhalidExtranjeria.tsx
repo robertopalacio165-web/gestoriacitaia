@@ -348,7 +348,7 @@ dc.onmessage = (event) => {
         <motion.div
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
-          className="rounded-3xl overflow-hidden border border-[#1e293b] bg-[#071224] shadow-2xl"
+          className="rounded-2xl overflow-hidden border border-[#1e293b] bg-[#071224] shadow-2xl"
         >
           <div className="relative">
             <img
@@ -391,7 +391,7 @@ dc.onmessage = (event) => {
             </div>
           </div>
 
-          <div className="p-5">
+          <div className="p-4">
             <motion.button
               whileTap={{ scale: 0.96 }}
               onClick={
@@ -422,7 +422,7 @@ dc.onmessage = (event) => {
   animate={{ opacity: 1, y: 0 }}
   className="mt-5"
 >
-  <div className="relative overflow-hidden rounded-3xl border border-yellow-500/30 bg-gradient-to-br from-[#1a1200] via-[#0b0b0b] to-[#1a1200] p-5 shadow-[0_0_40px_rgba(255,200,0,0.15)]">
+  <div className="relative overflow-hidden rounded-3xl border border-yellow-500/30 bg-gradient-to-br from-[#1a1200] via-[#0b0b0b] to-[#1a1200] p-5 shadow-[0_0_40px_rgba(255,200,0,0.15)] max-w-full">
 
     <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_top_right,#facc15,transparent_40%)]" />
 
@@ -449,7 +449,7 @@ dc.onmessage = (event) => {
         </div>
 
         <div className="text-right">
-          <div className="text-5xl font-black text-yellow-400 leading-none">
+          <div className="text-3xl font-black text-yellow-400 leading-none">
             11,99€
           </div>
 
