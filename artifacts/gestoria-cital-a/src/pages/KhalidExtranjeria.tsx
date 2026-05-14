@@ -18,7 +18,7 @@ export default function KhalidExtranjeria() {
   const [isListening, setIsListening] = useState(false);
   const [messagesCount, setMessagesCount] = useState(0);
   const [showPayment, setShowPayment] = useState(false);
-const [paymentEnabled, setPaymentEnabled] = useState(false);
+const [paymentEnabled, setPaymentEnabled] = useState(true);
 const [answeredOnce, setAnsweredOnce] = useState(false);
   const [userAskedQuestion, setUserAskedQuestion] = useState(false);
   const [freeQuestionUsed, setFreeQuestionUsed] = useState(false);
