@@ -2547,6 +2547,7 @@ disabled={!confirmUnlocked}
 
   </div>
 )}
+       </div>
         <audio ref={remoteAudioRef} autoPlay playsInline className="hidden" />
       </main>
     </div>
