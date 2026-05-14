@@ -31,7 +31,7 @@ const session = await stripe.checkout.sessions.create({
         product_data: {
           name: "Análisis de expediente",
         },
-        unit_amount: (amount || 12) * 100,
+      unit_amount: 1499,
       },
       quantity: 1,
     },
