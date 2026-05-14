@@ -32,7 +32,7 @@ export default async function handler(req: any, res: any) {
               name: "Khalid IA Premium",
             },
 
-            unit_amount: 799,
+     unit_amount: 1199,
           },
 
           quantity: 1,
