@@ -1,10 +1,16 @@
 import Stripe from "stripe";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
-  apiVersion: "2024-06-20",
-});
+const stripe = new Stripe(
+  process.env.STRIPE_SECRET_KEY as string,
+  {
+    apiVersion: "2024-06-20",
+  }
+);
 
-export default async function handler(req: any, res: any) {
+export default async function handler(
+  req: any,
+  res: any
+) {
 
   if (req.method !== "POST") {
     return res.status(405).json({
@@ -14,37 +20,43 @@ export default async function handler(req: any, res: any) {
 
   try {
 
-    const session = await stripe.checkout.sessions.create({
-      payment_method_types: ["card"],
+    const session =
+      await stripe.checkout.sessions.create({
 
-      mode: "payment",
+        payment_method_types: ["card"],
 
-      phone_number_collection: {
-        enabled: true,
-      },
+        mode: "payment",
 
-      line_items: [
-        {
-          price_data: {
-            currency: "eur",
+        customer_creation: "if_required",
 
-            product_data: {
-              name: "Khalid IA Premium",
+        phone_number_collection: {
+          enabled: true,
+        },
+
+        billing_address_collection: "auto",
+
+        line_items: [
+          {
+            price_data: {
+              currency: "eur",
+
+              product_data: {
+                name: "Khalid IA Premium",
+              },
+
+              unit_amount: 1199,
             },
 
-     unit_amount: 1199,
+            quantity: 1,
           },
+        ],
 
-          quantity: 1,
-        },
-      ],
+        success_url:
+          `${process.env.NEXT_PUBLIC_URL}/khalid-extranjeria?paid=true`,
 
-      success_url:
-        `${process.env.NEXT_PUBLIC_URL}/khalid-extranjeria?paid=true`,
-
-      cancel_url:
-        `${process.env.NEXT_PUBLIC_URL}/khalid-extranjeria`,
-    });
+        cancel_url:
+          `${process.env.NEXT_PUBLIC_URL}/khalid-extranjeria`,
+      });
 
     return res.status(200).json({
       url: session.url,
