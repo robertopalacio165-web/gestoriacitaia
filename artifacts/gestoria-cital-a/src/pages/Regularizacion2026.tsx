@@ -2428,6 +2428,7 @@ if (paymentRequired || documentsUnlocked) return;
                   </div>
                 )}
               </div>
+              {paymentDoneRef.current && (
               <div className="border-t border-white/10 p-3">
  <button
   onClick={handleGeneralUpload}
@@ -2517,7 +2518,7 @@ disabled={!confirmUnlocked}
 </button>
 </div>
 
-       
+    )}   
 </div>
      
           </div>
