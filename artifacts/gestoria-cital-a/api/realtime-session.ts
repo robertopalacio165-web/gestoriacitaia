@@ -450,14 +450,19 @@ export default async function handler(
         ? JSON.parse(req.body || "{}")
         : req.body || {};
 
-    const assistant =
-      body.assistant === "sara" ? "sara" : "mohamed";
+  const assistant =
+  body.assistant === "sara"
+    ? "sara"
+    : body.assistant === "khalid"
+    ? "khalid"
+    : "mohamed";
 
-    const instructions =
-      assistant === "sara"
-        ? buildSaraInstructions()
-        : buildMohamedInstructions();
-
+  const instructions =
+  assistant === "sara"
+    ? buildSaraInstructions()
+    : assistant === "khalid"
+    ? buildKhalidInstructions()
+    : buildMohamedInstructions();
    const voice =
   assistant === "sara"
     ? "nova"
