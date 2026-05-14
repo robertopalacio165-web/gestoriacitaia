@@ -2543,10 +2543,6 @@ disabled={!confirmUnlocked}
   إرسال عبر WhatsApp
 </button>
 </div>
-
-       
-</div>
-     
                </div>
     </div>
   </div>
