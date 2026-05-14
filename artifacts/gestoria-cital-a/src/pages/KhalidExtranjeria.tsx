@@ -462,10 +462,32 @@ dc.onmessage = (event) => {
         Acceso ilimitado a respuestas y asesoría personalizada.
       </p>
 
-      <button
-        onClick={() => {
-          window.location.href = "/checkout-khalid";
-        }}
+    onClick={async () => {
+
+  try {
+
+    const response = await fetch(
+      "/api/create-checkout-khalid",
+      {
+        method: "POST",
+      }
+    );
+
+    const data = await response.json();
+
+    if (data?.url) {
+
+      window.location.href = data.url;
+
+    }
+
+  } catch (err) {
+
+    console.error(err);
+
+  }
+
+}}
 className="w-full h-10 rounded-xl bg-gradient-to-b from-yellow-300 to-yellow-500 border border-yellow-200/40 text-black font-extrabold text-sm shadow-[0_8px_25px_rgba(255,200,0,0.35)] transition-all"
               >
         🔓 Desbloquear ahora
