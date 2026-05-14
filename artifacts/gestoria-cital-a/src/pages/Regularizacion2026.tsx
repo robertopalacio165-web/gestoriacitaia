@@ -2254,11 +2254,19 @@ setTimeout(() => {
               className="relative rounded-2xl overflow-hidden border border-primary/20 shadow-[0_0_30px_-5px_hsl(var(--primary)/0.25)] bg-black"
               style={{ height: "260px" }}
             >
-              <img
-                src={`${import.meta.env.BASE_URL}images/avatar-mohamed.png`}
-                alt="Mohamed"
-                className="w-full h-full object-cover object-top"
-              />
+            <video
+  autoPlay
+  muted
+  loop
+  playsInline
+  poster={`${import.meta.env.BASE_URL}images/avatar-mohamed.png`}
+  className="w-full h-full object-cover"
+>
+  <source
+    src="/mohamed-extranjeria.mp4.mp4"
+    type="video/mp4"
+  />
+</video>
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
               <div className="absolute top-3 left-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/60 border border-white/10 backdrop-blur-md">
                 <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
