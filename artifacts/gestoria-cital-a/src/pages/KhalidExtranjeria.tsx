@@ -422,7 +422,7 @@ dc.onmessage = (event) => {
   animate={{ opacity: 1, y: 0 }}
   className="mt-5"
 >
-  <div className="rounded-2xl border border-yellow-500/20 bg-[#0b0b0b] p-4">
+  <div className="rounded-2xl border border-yellow-500/20 bg-[#0b0b0b] p-3 mx-2">
 
     <div className="flex items-start justify-between mb-3">
 
@@ -445,18 +445,18 @@ dc.onmessage = (event) => {
       </div>
 
       <div className="text-right">
-        <div className="text-2xl font-black text-yellow-400 leading-none">
+        <div className="text-xl font-black text-yellow-400 leading-none">
           11,99€
         </div>
 
-        <div className="text-[11px] text-yellow-200 mt-1">
+        <div className="text-[10px] text-yellow-200 mt-1">
           Acceso completo
         </div>
       </div>
 
     </div>
 
-    <p className="text-gray-300 text-sm leading-relaxed mb-4">
+    <p className="text-gray-300 text-xs leading-relaxed mb-3">
       Acceso ilimitado a todas las respuestas y asesoría personalizada
       con Khalid IA.
     </p>
@@ -465,30 +465,30 @@ dc.onmessage = (event) => {
       onClick={() => {
         window.location.href = "/checkout-khalid";
       }}
-      className="w-full h-12 rounded-xl bg-gradient-to-r from-yellow-400 to-yellow-600 text-black font-bold text-base shadow-xl transition-all"
+      className="w-full h-11 rounded-xl bg-gradient-to-r from-yellow-400 to-yellow-600 text-black font-bold text-base shadow-xl transition-all"
     >
       🔓 Desbloquear ahora
     </button>
 
-    <div className="mt-4 flex items-center justify-center gap-2 text-xs text-gray-400">
+    <div className="mt-3 flex items-center justify-center gap-2 text-[11px] text-gray-400">
       <span>🔐 Pago seguro con Stripe</span>
     </div>
 
     <div className="mt-3 flex items-center justify-center gap-2 flex-wrap">
 
-      <div className="h-9 px-3 rounded-xl bg-white flex items-center justify-center text-blue-700 font-black text-xs">
+      <div className="h-8 px-3 rounded-xl bg-white flex items-center justify-center text-blue-700 font-black text-[11px]">
         VISA
       </div>
 
-      <div className="h-9 px-3 rounded-xl bg-white flex items-center justify-center text-red-500 font-black text-xs">
+      <div className="h-8 px-3 rounded-xl bg-white flex items-center justify-center text-red-500 font-black text-[11px]">
         Mastercard
       </div>
 
-      <div className="h-9 px-3 rounded-xl bg-white flex items-center justify-center text-black font-black text-xs">
+      <div className="h-8 px-3 rounded-xl bg-white flex items-center justify-center text-black font-black text-[11px]">
          Pay
       </div>
 
-      <div className="h-9 px-3 rounded-xl bg-white flex items-center justify-center text-black font-black text-xs">
+      <div className="h-8 px-3 rounded-xl bg-white flex items-center justify-center text-black font-black text-[11px]">
         G Pay
       </div>
 
