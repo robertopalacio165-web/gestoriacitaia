@@ -155,7 +155,7 @@ try {
       nombre: leadForm.nombre,
       nacionalidad: leadForm.nacionalidad,
       ciudad: leadForm.ciudad,
-    fecha_llegada: leadForm?.fechaLlegada,
+      fecha_llegada: leadForm.fechaLlegada,
       tiempo_espana: "5 meses o más",
       profesion: "Trabajador",
       situacion_actual: "Proceso de regularización en España",
