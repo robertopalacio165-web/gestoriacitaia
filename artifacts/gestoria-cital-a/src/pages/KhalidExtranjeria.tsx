@@ -459,39 +459,40 @@ dc.onmessage = (event) => {
       </div>
 
       <p className="text-gray-300 text-xs leading-relaxed mb-3">
-        Acceso ilimitado a respuestas y asesoría personalizada.
-      </p>
+  Acceso ilimitado a respuestas y asesoría personalizada.
+</p>
 
-    onClick={async () => {
+<button
+  onClick={async () => {
 
-  try {
+    try {
 
-    const response = await fetch(
-      "/api/create-checkout-khalid",
-      {
-        method: "POST",
+      const response = await fetch(
+        "/api/create-checkout-khalid",
+        {
+          method: "POST",
+        }
+      );
+
+      const data = await response.json();
+
+      if (data?.url) {
+
+        window.location.href = data.url;
+
       }
-    );
 
-    const data = await response.json();
+    } catch (err) {
 
-    if (data?.url) {
-
-      window.location.href = data.url;
+      console.error(err);
 
     }
 
-  } catch (err) {
-
-    console.error(err);
-
-  }
-
-}}
-className="w-full h-10 rounded-xl bg-gradient-to-b from-yellow-300 to-yellow-500 border border-yellow-200/40 text-black font-extrabold text-sm shadow-[0_8px_25px_rgba(255,200,0,0.35)] transition-all"
-              >
-        🔓 Desbloquear ahora
-      </button>
+  }}
+  className="w-full h-10 rounded-xl bg-gradient-to-b from-yellow-300 to-yellow-500 border border-yellow-200/40 text-black font-extrabold text-sm shadow-[0_8px_25px_rgba(255,200,0,0.35)] transition-all"
+>
+  🔓 Desbloquear ahora
+</button>
 
       <div className="mt-3 flex items-center justify-center gap-2 text-[10px] text-gray-400">
         <span>🔐 Pago seguro con Stripe</span>
