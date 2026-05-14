@@ -466,8 +466,8 @@ dc.onmessage = (event) => {
         onClick={() => {
           window.location.href = "/checkout-khalid";
         }}
-        className="w-full h-10 rounded-xl bg-gradient-to-r from-yellow-400 to-yellow-600 text-black font-extrabold text-sm shadow-xl transition-all"
-      >
+className="w-full h-10 rounded-xl bg-gradient-to-b from-yellow-300 to-yellow-500 border border-yellow-200/40 text-black font-extrabold text-sm shadow-[0_8px_25px_rgba(255,200,0,0.35)] transition-all"
+              >
         🔓 Desbloquear ahora
       </button>
 
