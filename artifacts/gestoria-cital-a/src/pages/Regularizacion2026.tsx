@@ -2275,9 +2275,8 @@ setTimeout(() => {
           </div>
         </div>
         <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 grid grid-cols-1 lg:grid-cols-[380px_minmax(0,1fr)] gap-4">
-          <div className="flex flex-col gap-3">
-            <div
-              <div
+ <div className="flex flex-col gap-3">
+ <div
   className="relative rounded-2xl overflow-hidden border border-primary/20 shadow-[0_0_30px_-5px_hsl(var(--primary)/0.25)] bg-black"
   style={{ height: "260px" }}
 >
