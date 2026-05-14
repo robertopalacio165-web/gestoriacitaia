@@ -33,9 +33,21 @@ const [waitingKhalid, setWaitingKhalid] = useState(false);
 const [lastTranscript, setLastTranscript] = useState("");
 const [lastReply, setLastReply] = useState("");
   useEffect(() => {
-    if (messagesCount >= 2) {
-      setShowPayment(true);
-    }
+   useEffect(() => {
+
+  if (
+    lastReply.includes("سولني أي سؤال") ||
+    lastReply.includes("الهجرة") ||
+    lastReply.includes("الإقامة")
+  ) {
+
+    setShowPayment(true);
+
+    stopConversation();
+
+  }
+
+}, [lastReply]);
   }, [messagesCount]);
 
   const startConversation = async () => {
