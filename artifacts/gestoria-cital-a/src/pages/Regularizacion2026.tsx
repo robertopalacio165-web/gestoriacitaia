@@ -1573,7 +1573,7 @@ if (
 }
   }
 
-}
+
 
 if (
   msg.type === "response.output_text.delta" &&
