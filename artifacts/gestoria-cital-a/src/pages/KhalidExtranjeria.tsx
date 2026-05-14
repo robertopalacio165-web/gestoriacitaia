@@ -378,11 +378,22 @@ if (msg.type === "response.done") {
           className="rounded-2xl overflow-hidden border border-[#1e293b] bg-[#071224] shadow-2xl"
         >
           <div className="relative">
-            <img
-              src={`${import.meta.env.BASE_URL}images/khalid-extranjeria.png`}
-              alt="Khalid"
-         className="w-full h-[260px] object-cover"
-            />
+            
+          <video
+  autoPlay
+  muted
+  loop
+  playsInline
+            poster={`${import.meta.env.BASE_URL}images/khalid-extranjeria.png`}
+  className="w-full h-[260px] object-cover"
+>
+
+  <source
+    src="/videoskhalid-placeholder.mp4.mp4"
+    type="video/mp4"
+  />
+
+</video>
 
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
 
@@ -410,14 +421,14 @@ if (msg.type === "response.done") {
                 {t("Especialista en Extranjería")}
               </p>
             </div>
-
+{isPaid && (
             <div className="absolute bottom-5 left-5">
               <div className="w-16 h-16 rounded-full bg-black/50 backdrop-blur-md border border-white/10 flex items-center justify-center">
                 <Mic size={26} />
               </div>
             </div>
           </div>
-
+)}
           <div className="p-4">
             <motion.button
               whileTap={{ scale: 0.96 }}
@@ -444,6 +455,7 @@ if (msg.type === "response.done") {
   }
 
 }}
+              {isPaid && (
              disabled={
   answeredOnce &&
   localStorage.getItem("khalid_paid") !== "true"
@@ -466,6 +478,8 @@ if (msg.type === "response.done") {
                 </>
               )}
             </motion.button>
+            )}
+            {!isPaid && (
 <motion.div
   initial={{ opacity: 0, y: 20 }}
   animate={{ opacity: 1, y: 0 }}
@@ -579,6 +593,7 @@ if (msg.type === "response.done") {
     </div>
   </div>
 </motion.div>
+          )}
             <div className="mt-5 rounded-2xl border border-[#1e293b] bg-[#0b1325] p-4">
               <div className="flex items-center gap-2 mb-2">
                 <Shield
