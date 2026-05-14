@@ -2491,78 +2491,67 @@ setTimeout(() => {
 
 </div>   
    
-    
+    {paidAccess && (
+<div className="flex flex-col gap-4">
             
- {paidAccess && (
-  <div className="flex flex-col gap-4">
+     <div className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-xl">
+  <h3 className="text-lg font-bold text-white mb-3">
+    Confirmación rápida
+  </h3>
 
-    <div className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-xl">
+<button
+  onClick={handleVerifyAll}
+  disabled={!documentsUnlocked || generalUploading}
+  className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-sm px-4 py-3 transition-colors"
+  type="button"
+>
+  {safeLang === "darija" && "تحليل الوثائق"}
+  {safeLang === "es" && "Verificar documentos"}
+  {safeLang === "en" && "Verify documents"}
+</button>
+<div style={{ marginTop: 20 }}>
 
-      <h3 className="text-lg font-bold text-white mb-3">
-        Confirmación rápida
-      </h3>
+<div className="w-full flex items-center gap-3 bg-white/5 border border-white/10 rounded-2xl px-4 py-3 shadow-inner">
+  
+  <span className="text-green-400 text-lg">📱</span>
 
-      <button
-        onClick={handleVerifyAll}
-        disabled={!documentsUnlocked || generalUploading}
-        className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-sm px-4 py-3 transition-colors"
-        type="button"
-      >
-        {safeLang === "darija" && "تحليل الوثائق"}
-        {safeLang === "es" && "Verificar documentos"}
-        {safeLang === "en" && "Verify documents"}
-      </button>
+  <input
+    type="tel"
+    value={phone}
+    onChange={(e) => setPhone(e.target.value)}
+    placeholder={
+      safeLang === "darija"
+        ? "+34 600000000"
+        : safeLang === "es"
+        ? "+34 600000000"
+        : "+34 600000000"
+    }
+    className="w-full bg-transparent outline-none text-white placeholder:text-white/40 text-sm"
+  />
+</div>
+ <button
+  onClick={handleSendWhatsApp}
+disabled={!confirmUnlocked}
+  className={`w-full flex items-center justify-center gap-3 rounded-2xl px-5 py-4 text-white font-bold text-base shadow-lg transition-all duration-300 
+  ${
+    confirmUnlocked
+      ? "bg-gradient-to-r from-green-500 via-emerald-500 to-green-400 hover:scale-[1.03]"
+      : "bg-gray-600 opacity-50 cursor-not-allowed"
+  }`}
+  type="button"
+>
+  إرسال عبر WhatsApp
+</button>
 
-      <div style={{ marginTop: 20 }}>
-
-        <div className="w-full flex items-center gap-3 bg-white/5 border border-white/10 rounded-2xl px-4 py-3 shadow-inner">
-
-          <span className="text-green-400 text-lg">📱</span>
-
-          <input
-            type="tel"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            placeholder="+34 600000000"
-            className="w-full bg-transparent outline-none text-white placeholder:text-white/40 text-sm"
-          />
-
-        </div>
-
-        <button
-          onClick={handleSendWhatsApp}
-          disabled={!confirmUnlocked}
-          className={`w-full flex items-center justify-center gap-3 rounded-2xl px-5 py-4 text-white font-bold text-base shadow-lg transition-all duration-300 
-          ${
-            confirmUnlocked
-              ? "bg-gradient-to-r from-green-500 via-emerald-500 to-green-400 hover:scale-[1.03]"
-              : "bg-gray-600 opacity-50 cursor-not-allowed"
-          }`}
-          type="button"
-        >
-          إرسال عبر WhatsApp
-        </button>
-
-      </div>
-
-    </div>
+   
 
   </div>
 )}
-
-<audio
-  ref={remoteAudioRef}
-  autoPlay
-  playsInline
-  className="hidden"
-/>
-
-</div>
-</main>
-</div>
-);
+        <audio ref={remoteAudioRef} autoPlay playsInline className="hidden" />
+      </main>
+    </div>
+  );
 }
-
 
 function FieldLabel({ label }: { label: string }) {
   return (
