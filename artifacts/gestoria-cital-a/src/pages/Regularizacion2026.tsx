@@ -114,27 +114,10 @@ export default function Regularizacion2026() {
  useEffect(() => {
 const handlePaidFlow = async () => {
   const params = new URLSearchParams(window.location.search);
-const alreadyPaid =
-  localStorage.getItem("mohamed_paid");
 
-if (alreadyPaid === "true") {
-
-  setPaidAccess(true);
-
-  setShowStripe(false);
-
-  setPaymentRequired(false);
-
-}
   const paid = params.get("paid");
 (window as any).paid = paid;
 if (paid === "true") {
-  localStorage.setItem(
-  "mohamed_paid",
-  "true"
-);
-
-setPaidAccess(true);
 
   console.log("✅ CLIENT PAID");
 
@@ -160,13 +143,7 @@ setTimeout(async () => {
 
   setConfirmUnlocked(true);
 
-
-setTimeout(() => {
-
-  startListening();
-
-}, 1200);
-  
+  setQuestionsDone(true);
 try {
 
   const pdfRes = await fetch("/api/generate-expediente-pdf", {
@@ -285,9 +262,6 @@ const [clientQuestionsDone, setClientQuestionsDone] = useState(false);
   const lastProcessedTranscriptRef = useRef("");
 const [clientQuestionIndex, setClientQuestionIndex] = useState(0);
   const [showStripe, setShowStripe] = useState(false);
-  const [paidAccess, setPaidAccess] = useState(false);
-  const isPremium =
-  localStorage.getItem("mohamed_paid") === "true";
   const [paymentRequired, setPaymentRequired] = useState(false);
 
   const [leadForm, setLeadForm] = useState<LeadFormState>({
@@ -830,7 +804,7 @@ if (next >= questions.length - 1) {
 
   setConfirmUnlocked(true);
 
-  
+  setQuestionsDone(true);
 
   setTimeout(() => {
 
@@ -2275,224 +2249,215 @@ setTimeout(() => {
           </div>
         </div>
         <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 grid grid-cols-1 lg:grid-cols-[380px_minmax(0,1fr)] gap-4">
- <div className="flex flex-col gap-3">
- <div
-  className="relative rounded-2xl overflow-hidden border border-primary/20 shadow-[0_0_30px_-5px_hsl(var(--primary)/0.25)] bg-black"
-  style={{ height: "260px" }}
->
+          <div className="flex flex-col gap-3">
+            <div
+              className="relative rounded-2xl overflow-hidden border border-primary/20 shadow-[0_0_30px_-5px_hsl(var(--primary)/0.25)] bg-black"
+              style={{ height: "260px" }}
+            >
+              <img
+                src={`${import.meta.env.BASE_URL}images/avatar-mohamed.png`}
+                alt="Mohamed"
+                className="w-full h-full object-cover object-top"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+              <div className="absolute top-3 left-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/60 border border-white/10 backdrop-blur-md">
+                <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                <span className="text-xs font-medium text-white">{ui.online}</span>
+              </div>
+              <div className="absolute top-3 right-3 flex items-center gap-2">
+                <div className="relative w-7 h-7 rounded-full bg-black/50 backdrop-blur-md border border-white/10 flex items-center justify-center">
+                  <Bell className="w-3.5 h-3.5 text-white" />
+                  <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-amber-500 rounded-full text-[8px] text-white flex items-center justify-center font-bold">
+                    !
+                  </span>
+                </div>
+                <button
+                  onClick={() => setMuted(!muted)}
+                  className="w-8 h-8 rounded-full bg-black/50 border border-white/10 flex items-center justify-center"
+                  type="button"
+                >
+                  {muted ? (
+                    <VolumeX className="w-4 h-4 text-white" />
+                  ) : (
+                    <Volume2 className="w-4 h-4 text-white" />
+                  )}
+                </button>
+              </div>
+              {!muted && (
+                <div className="absolute bottom-14 left-4 flex items-end gap-0.5 h-5">
+                  {[3, 6, 4, 8, 5, 7, 3].map((h, i) => (
+                    <motion.div
+                      key={i}
+                      className="w-1 bg-primary rounded-full"
+                      animate={{ height: [`${h}px`, `${h * 2}px`, `${h}px`] }}
+                      transition={{ duration: 0.5, repeat: Infinity, delay: i * 0.07 }}
+                    />
+                  ))}
+                </div>
+              )}
+              <div className="absolute bottom-12 right-3 text-right">
+                <p className="text-white font-bold text-sm drop-shadow-lg">Mohamed</p>
+                <p className="text-white/70 text-[11px] drop-shadow-lg">{ui.role}</p>
+              </div>
+              <div className="absolute bottom-3 left-0 right-0 flex justify-center">
+                <button
+            onClick={() => {
 
-{!isPremium && !paidAccess ? (
+if (paymentRequired || documentsUnlocked) return;
 
-    <video
-      src={`${import.meta.env.BASE_URL}mohamed-extranjeria.mp4.mp4`}
-      autoPlay
-      muted
-      loop
-      playsInline
-      className="w-full h-full object-cover"
-    />
+  isListening ? stopListening() : startListening();
 
-  ) : (
-
-    <img
-      src={`${import.meta.env.BASE_URL}images/avatar-mohamed.png`}
-      alt="Mohamed"
-      className="w-full h-full object-cover object-top"
-    />
-
-  )}
-
-  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-
-  <div className="absolute top-3 left-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/60 border border-white/10 backdrop-blur-md">
-    <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-
-    <span className="text-xs font-medium text-white">
-      {ui.online}
-    </span>
-  </div>
-
-  <div className="absolute top-3 right-3 flex items-center gap-2">
-
-    <button
-      onClick={() => setMuted(!muted)}
-      className="w-8 h-8 rounded-full bg-black/50 border border-white/10 flex items-center justify-center"
-      type="button"
-    >
-      {muted ? (
-        <VolumeX className="w-4 h-4 text-white" />
-      ) : (
-        <Volume2 className="w-4 h-4 text-white" />
-      )}
-    </button>
-
-  </div>
-
-  {paidAccess && (
-
-    <div className="absolute bottom-3 left-0 right-0 flex justify-center">
-
-      <button
-        onClick={() => {
-
-          if (paymentRequired || documentsUnlocked) return;
-
-          isListening ? stopListening() : startListening();
-
-        }}
-        className={`w-12 h-12 rounded-full border flex items-center justify-center backdrop-blur-md transition-colors ${
-          isListening
-            ? "bg-destructive/80 border-destructive"
-            : "bg-black/50 border-white/20 hover:bg-black/70"
-        }`}
-        type="button"
-      >
-        {isListening ? (
-          <MicOff className="w-5 h-5 text-white" />
-        ) : (
-          <Mic className="w-5 h-5 text-white" />
-        )}
-      </button>
-
-    </div>
-
-  )}
-
-  <div className="absolute bottom-12 right-3 text-right">
-
-    <p className="text-white font-bold text-sm drop-shadow-lg">
-      Mohamed
-    </p>
-
-    <p className="text-white/70 text-[11px] drop-shadow-lg">
-      {ui.role}
-    </p>
-
-  </div>
-
-</div>
-         <div className="p-4">
-
-{paidAccess && (
-
-<button
-  onClick={isListening ? stopListening : startListening}
-  disabled={!voiceSupported}
-  className={`w-full h-14 rounded-2xl font-bold text-lg transition-all flex items-center justify-center gap-3 ${
-    isListening
-      ? "bg-red-500 hover:bg-red-600"
-      : "bg-green-500 hover:bg-green-600"
-  }`}
->
-
-  {isListening ? (
-    <>
-      <MicOff size={22} />
-      Finalizar conversación
-    </>
-  ) : (
-    <>
-      <Mic size={22} />
-      Hablar con Mohamed
-    </>
-  )}
-
-</button>
-
-)}
-
-{!isPremium && !paidAccess && (
-
-<div className="mt-3">
-
-  <div className="relative overflow-hidden rounded-2xl border border-yellow-500/30 bg-gradient-to-br from-[#1a1200] via-[#0b0b0b] to-[#1a1200] p-3">
-
-    <div className="relative z-10">
-
-      <div className="flex items-start justify-between mb-2">
-
-        <div className="flex items-center gap-2">
-
-          <div className="w-9 h-9 rounded-xl bg-yellow-500/20 flex items-center justify-center text-sm">
-            🔒
-          </div>
-
-          <div>
-
-            <h3 className="text-lg font-bold text-white leading-tight">
-              Desbloquea a Mohamed
-            </h3>
-
-            <div className="mt-1 inline-flex items-center rounded-full bg-yellow-500 px-2 py-[2px] text-[9px] font-bold text-black">
-              PREMIUM
+}}
+                  className={`w-12 h-12 rounded-full border flex items-center justify-center backdrop-blur-md transition-colors ${
+                    isListening
+                      ? "bg-destructive/80 border-destructive"
+                      : "bg-black/50 border-white/20 hover:bg-black/70"
+                  }`}
+                  type="button"
+                >
+                  {isListening ? (
+                    <MicOff className="w-5 h-5 text-white" />
+                  ) : (
+                    <Mic className="w-5 h-5 text-white" />
+                  )}
+                </button>
+              </div>
             </div>
+            <div className="glass-panel-heavy border border-white/10 rounded-2xl overflow-hidden">
+              <div className="p-4 border-b border-white/10">
+                <button
+                  onClick={isListening ? stopListening : startListening}
+          disabled={!voiceSupported || (paymentRequired && !paymentDoneRef.current)}
+                  className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary hover:bg-primary/90 disabled:opacity-50 text-primary-foreground font-bold text-sm px-4 py-3 transition-colors"
+                  type="button"
+                >
+                  {isListening ? (
+                    <>
+                      <MicOff className="w-4 h-4" />
+                      {ui.stopButton}
+                    </>
+                  ) : (
+                    <>
+                      <Mic className="w-4 h-4" />
+                      {ui.voiceButton}
+                    </>
+                  )}
+                </button>
+                {!voiceSupported && (
+                  <p className="mt-2 text-xs text-red-400 text-center">
+                    {ui.micNotSupported}
+                  </p>
+                )}
+                {isListening && (
+                  <p className="mt-2 text-xs text-primary text-center">
+                    {ui.listening}
+                  </p>
+                )}
+       {showStripe && (
 
-          </div>
+  <div className="fixed inset-0 z-[99999] bg-black/90 backdrop-blur-md flex items-center justify-center px-6">
 
-        </div>
+    <div className="w-full max-w-md rounded-3xl bg-zinc-950 border border-white/10 p-6 text-center shadow-2xl">
 
-        <div className="text-right">
+      <h2 className="text-2xl font-bold text-white mb-4">
+        ✅ الملف ديالك مؤهل
+      </h2>
 
-          <div className="text-xl font-black text-yellow-400 leading-none">
-            14,99€
-          </div>
-
-          <div className="text-[10px] text-yellow-200 mt-1">
-            Acceso completo
-          </div>
-
-        </div>
-
-      </div>
-
-      <p className="text-gray-300 text-xs leading-relaxed mb-3">
-        Acceso completo al análisis de documentos,
-        regularización 2026 y asesoría personalizada.
+      <p className="text-white/70 text-sm leading-relaxed mb-6">
+        باش نكملو التحليل الكامل ونوجدولك الوثائق المهمة،
+        خاصك تكمل الأداء دابا.
       </p>
 
       <button
         onClick={handleStripePayment}
-        className="w-full h-10 rounded-xl text-black font-extrabold text-sm transition-all bg-gradient-to-b from-yellow-300 to-yellow-500 border border-yellow-200/40 shadow-[0_8px_25px_rgba(255,200,0,0.35)]"
+        type="button"
+        className="
+          w-full
+          rounded-2xl
+          py-4
+          text-lg
+          font-bold
+          text-white
+          bg-gradient-to-r
+          from-emerald-500
+          to-green-600
+          hover:scale-[1.02]
+          transition-all
+        "
       >
-        🔓 Desbloquear ahora
+        💳 الأداء الآن — 12€
       </button>
-
-      <div className="mt-3 flex items-center justify-center gap-2 text-[10px] text-gray-400">
-        <span>🔐 Pago seguro con Stripe</span>
-      </div>
-
-      <div className="mt-2 flex items-center justify-center gap-2 flex-wrap">
-
-        <div className="h-8 px-2 rounded-lg bg-white flex items-center justify-center text-blue-700 font-black text-[10px]">
-          VISA
-        </div>
-
-        <div className="h-8 px-2 rounded-lg bg-white flex items-center justify-center text-red-500 font-black text-[10px]">
-          Mastercard
-        </div>
-
-        <div className="h-8 px-2 rounded-lg bg-white flex items-center justify-center text-black font-black text-[10px]">
-           Pay
-        </div>
-
-        <div className="h-8 px-2 rounded-lg bg-white flex items-center justify-center text-black font-black text-[10px]">
-          G Pay
-        </div>
-
-      </div>
 
     </div>
 
   </div>
 
-</div>
-
 )}
+              </div>
+              <div className="p-4 space-y-4">
+                <div>
+                  <p className="text-[11px] text-white/50 mb-1">{ui.latestReply}</p>
+                  <div className="rounded-xl bg-white/5 border border-white/10 px-3 py-3 text-sm text-white/90 leading-relaxed">
+                    {latestAgentMessage}
+                  </div>
+                </div>
+                {lastUserTranscript ? (
+                  <div>
+                    <p className="text-[11px] text-white/50 mb-1">{ui.yourVoice}</p>
+                    <div className="rounded-xl bg-primary/10 border border-primary/20 px-3 py-3 text-sm text-white leading-relaxed">
+                      {lastUserTranscript}
+                    </div>
+                  </div>
+                ) : null}
+                {waitingMohamed && (
+                  <div className="rounded-xl bg-white/5 border border-white/10 px-3 py-3 text-sm text-white/70">
+                    ...
+                  </div>
+                )}
+                {waitingForDocument && !generalUploading && (
+                  <div className="rounded-xl bg-amber-500/10 border border-amber-400/20 px-3 py-3 text-sm text-amber-200">
+                    Mohamed está esperando el documento que te pidió.
+                  </div>
+                )}
+              </div>
+              <div className="border-t border-white/10 p-3">
+ <button
+  onClick={handleGeneralUpload}
+disabled={!documentsUnlocked}
+  className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary hover:bg-primary/90 disabled:opacity-60 text-primary-foreground font-bold text-xs px-4 py-3 transition-colors"
+  type="button"
+      
+>
+  {generalUploading ? (
+    <>
+      <motion.div
+        className="w-3.5 h-3.5 border border-primary-foreground border-t-transparent rounded-full"
+        animate={{ rotate: 360 }}
+        transition={{ duration: 0.7, repeat: Infinity, ease: "linear" }}
+      />
+      {ui.uploading}
+    </>
+  ) : (
+    <>
+      <Upload className="w-4 h-4" />
+      {ui.uploadGeneral}
+    </>
+  )}
+</button>
 
-</div>   
+{!documentsUnlocked && (
+  <p className="mt-2 text-[10px] text-amber-300 text-center">
+    كمل مع محمد الأسئلة باش يتحل رفع الوثائق
+  </p>
+)}
+                <p className="mt-2 text-[10px] text-white/50 text-center">
+                  {ui.uploadGeneralDesc}
+                </p>
+              </div>
+            </div>
+          </div>
    
-    {paidAccess && (
-<div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-4">
             
      <div className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-xl">
   <h3 className="text-lg font-bold text-white mb-3">
@@ -2542,11 +2507,13 @@ disabled={!confirmUnlocked}
 >
   إرسال عبر WhatsApp
 </button>
+</div>
 
-   
-
-  </div>
-)}
+       
+</div>
+     
+          </div>
+        </div>
         <audio ref={remoteAudioRef} autoPlay playsInline className="hidden" />
       </main>
     </div>
