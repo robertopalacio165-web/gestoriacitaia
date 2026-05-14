@@ -2553,6 +2553,7 @@ setTimeout(() => {
          </div>
   </div>
 </div>
+</div>
 )}
 
 <audio
@@ -2561,10 +2562,13 @@ setTimeout(() => {
   playsInline
   className="hidden"
 />
-      </main>
-    </div>
-  );
+
+</div>
+</main>
+</div>
+);
 }
+
 
 function FieldLabel({ label }: { label: string }) {
   return (
