@@ -420,24 +420,24 @@ dc.onmessage = (event) => {
 <motion.div
   initial={{ opacity: 0, y: 20 }}
   animate={{ opacity: 1, y: 0 }}
-  className="mt-5"
+  className="mt-4"
 >
-  <div className="rounded-2xl border border-yellow-500/20 bg-[#0b0b0b] p-3 mx-2">
+  <div className="rounded-2xl border border-yellow-500/20 bg-[#0b0b0b] px-3 py-2 mx-2">
 
-    <div className="flex items-start justify-between mb-3">
+    <div className="flex items-center justify-between mb-2">
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2">
 
-        <div className="w-10 h-10 rounded-xl bg-yellow-500/20 flex items-center justify-center text-lg">
+        <div className="w-9 h-9 rounded-xl bg-yellow-500/20 flex items-center justify-center text-sm">
           🔒
         </div>
 
         <div>
-          <h3 className="text-lg font-bold text-white leading-tight">
+          <h3 className="text-base font-bold text-white leading-tight">
             Desbloquea a Khalid
           </h3>
 
-          <div className="mt-1 inline-flex items-center rounded-full bg-yellow-500 px-2 py-1 text-[10px] font-bold text-black">
+          <div className="mt-1 inline-flex items-center rounded-full bg-yellow-500 px-2 py-[2px] text-[9px] font-bold text-black">
             PREMIUM
           </div>
         </div>
@@ -456,7 +456,7 @@ dc.onmessage = (event) => {
 
     </div>
 
-    <p className="text-gray-300 text-xs leading-relaxed mb-3">
+    <p className="text-gray-300 text-[11px] leading-snug mb-2">
       Acceso ilimitado a todas las respuestas y asesoría personalizada
       con Khalid IA.
     </p>
@@ -465,30 +465,30 @@ dc.onmessage = (event) => {
       onClick={() => {
         window.location.href = "/checkout-khalid";
       }}
-      className="w-full h-11 rounded-xl bg-gradient-to-r from-yellow-400 to-yellow-600 text-black font-bold text-base shadow-xl transition-all"
+      className="w-full h-10 rounded-xl bg-gradient-to-r from-yellow-400 to-yellow-600 text-black font-bold text-sm shadow-xl transition-all"
     >
       🔓 Desbloquear ahora
     </button>
 
-    <div className="mt-3 flex items-center justify-center gap-2 text-[11px] text-gray-400">
+    <div className="mt-2 flex items-center justify-center gap-2 text-[10px] text-gray-400">
       <span>🔐 Pago seguro con Stripe</span>
     </div>
 
-    <div className="mt-3 flex items-center justify-center gap-2 flex-wrap">
+    <div className="mt-2 flex items-center justify-center gap-2 flex-wrap">
 
-      <div className="h-8 px-3 rounded-xl bg-white flex items-center justify-center text-blue-700 font-black text-[11px]">
+      <div className="h-7 px-2 rounded-lg bg-white flex items-center justify-center text-blue-700 font-black text-[10px]">
         VISA
       </div>
 
-      <div className="h-8 px-3 rounded-xl bg-white flex items-center justify-center text-red-500 font-black text-[11px]">
+      <div className="h-7 px-2 rounded-lg bg-white flex items-center justify-center text-red-500 font-black text-[10px]">
         Mastercard
       </div>
 
-      <div className="h-8 px-3 rounded-xl bg-white flex items-center justify-center text-black font-black text-[11px]">
+      <div className="h-7 px-2 rounded-lg bg-white flex items-center justify-center text-black font-black text-[10px]">
          Pay
       </div>
 
-      <div className="h-8 px-3 rounded-xl bg-white flex items-center justify-center text-black font-black text-[11px]">
+      <div className="h-7 px-2 rounded-lg bg-white flex items-center justify-center text-black font-black text-[10px]">
         G Pay
       </div>
 
