@@ -2295,12 +2295,12 @@ setTimeout(() => {
  
 
           </div>
-<div className="max-w-md mx-auto mt-4">
+<div className="mt-3">
 
 {/* ✅ ANTES DEL PAGO */}
 {!paymentCompleted && (
 
-  <div className="p-4 space-y-4">
+ <div className="p-3">
 
   <div className="relative overflow-hidden rounded-2xl border border-yellow-500/30 bg-gradient-to-br from-[#1a1200] via-[#0b0b0b] to-[#1a1200] p-3">
 
@@ -2363,7 +2363,7 @@ setTimeout(() => {
 
     </div>
 
-    <div className="rounded-3xl border border-white/10 bg-white/5 p-4">
+    <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
 
       <div className="flex items-center gap-2 mb-3">
 
