@@ -2249,7 +2249,7 @@ setTimeout(() => {
             <p className="text-xs text-muted-foreground">{currentProcedure.name}</p>
           </div>
         </div>
-        <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 grid grid-cols-1 lg:grid-cols-[380px_minmax(0,1fr)] gap-4">
+    <div className="max-w-md mx-auto px-4">
         <div className="max-w-md mx-auto">
   <motion.div
     initial={{ opacity: 0, y: 15 }}
@@ -2388,19 +2388,18 @@ setTimeout(() => {
 )}
 
 {/* ✅ DESPUÉS DEL PAGO */}
-{paymentCompleted && (
-
-  <>
   
+{paymentCompleted && (
+  <>
     {/* AQUÍ SEGUIRÁ TODO TU REALTIME ACTUAL */}
-    
   </>
-
 )}
 
 </div>
 
-        <audio ref={remoteAudioRef} autoPlay playsInline className="hidden" />
+</div>
+
+<audio ref={remoteAudioRef} autoPlay playsInline className="hidden" />
       </main>
     </div>
   );
