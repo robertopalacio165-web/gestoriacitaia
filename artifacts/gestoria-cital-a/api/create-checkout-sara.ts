@@ -14,6 +14,11 @@ export default async function handler(req: any, res: any) {
 
   try {
 
+    const {
+      appointment_id,
+      token,
+    } = req.body;
+
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
 
@@ -25,7 +30,7 @@ export default async function handler(req: any, res: any) {
             currency: "eur",
 
             product_data: {
-              name: "Cita con Sara",
+              name: "Reserva cita Sara",
             },
 
             unit_amount: 1399,
@@ -35,9 +40,11 @@ export default async function handler(req: any, res: any) {
         },
       ],
 
-      success_url: `${process.env.NEXT_PUBLIC_URL}/sara?paid=true`,
+      success_url:
+`${process.env.NEXT_PUBLIC_URL}/buscar-citas?paid=true&appointment_id=${appointment_id}&token=${token}`,
 
-      cancel_url: `${process.env.NEXT_PUBLIC_URL}/cancel`,
+      cancel_url:
+`${process.env.NEXT_PUBLIC_URL}/cancel`,
     });
 
     return res.status(200).json({
