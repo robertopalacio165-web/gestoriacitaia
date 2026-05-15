@@ -2264,7 +2264,7 @@ setTimeout(() => {
         loop
         playsInline
         poster={`${import.meta.env.BASE_URL}images/avatar-mohamed.png`}
-        className="w-full h-[260px] object-cover"
+    className="w-full h-[205px] object-cover"
       >
         <source
           src="/mohamed-extranjeria.mp4.mp4"
@@ -2295,15 +2295,14 @@ setTimeout(() => {
  
 
           </div>
-<div className="mt-3">
+<div className="mt-2 max-w-md mx-auto">
 
 {/* ✅ ANTES DEL PAGO */}
 {!paymentCompleted && (
 
  <div className="p-3">
 
-  <div className="relative overflow-hidden rounded-2xl border border-yellow-500/30 bg-gradient-to-br from-[#1a1200] via-[#0b0b0b] to-[#1a1200] p-3">
-
+<div className="relative overflow-hidden rounded-2xl border border-yellow-500/30 bg-gradient-to-br from-[#1a1200] via-[#0b0b0b] to-[#1a1200] p-2.5 max-w-[430px] mx-auto">
       <div className="flex items-center justify-between mb-3">
 
         <div>
@@ -2328,7 +2327,7 @@ setTimeout(() => {
 
       </div>
 
-      <p className="text-white/70 text-sm leading-relaxed mb-4">
+ <p className="text-white/70 text-[13px] leading-relaxed mb-3">
         Acceso ilimitado a Mohamed IA, videollamada realtime,
         análisis de documentos y generación automática del expediente.
       </p>
@@ -2336,8 +2335,9 @@ setTimeout(() => {
       <button
         onClick={handleStripePayment}
         type="button"
-      className="w-full h-10 rounded-xl text-black font-extrabold text-sm transition-all bg-gradient-to-b from-yellow-300 to-yellow-500 border border-yellow-200/40 shadow-[0_8px_25px_rgba(255,200,0,0.35)]"
-      >
+  className="w-full h-9 rounded-xl text-black font-extrabold text-[13px] transition-all bg-gradient-to-b from-yellow-300 to-yellow-500 border border-yellow-200/40 shadow-[0_8px_25px_rgba(255,200,0,0.35)]"
+
+        >
         🔓 Desbloquear ahora
       </button>
 
