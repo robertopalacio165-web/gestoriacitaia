@@ -35,26 +35,29 @@ const handleConfirm = async () => {
   try {
     setLoading(true);
 
-    await fetch("/api/confirm-cita", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        token: params.token,
-        appointment_id: params.appointmentId,
-        full_name: params.fullName,
-        tramite: params.tramite,
-        city: params.city,
-        office: params.office,
-        date: params.date,
-        time: params.time,
-        phone: "CLIENT_PHONE_HERE", // دابا مؤقت، من بعد نجيبو من الفورم
-      }),
-    });
+const stripeRes = await fetch(
+  "/api/create-checkout-sara",
+  {
+    method: "POST",
 
-    // redirect بسيط
-    setLocation("/panel");
+    headers: {
+      "Content-Type": "application/json",
+    },
+
+    body: JSON.stringify({
+      appointment_id: params.appointmentId,
+      token: params.token,
+    }),
+  }
+);
+
+const stripeData = await stripeRes.json();
+
+if (stripeData.url) {
+
+  window.location.href = stripeData.url;
+
+}
   } catch (err) {
     console.error(err);
   }
