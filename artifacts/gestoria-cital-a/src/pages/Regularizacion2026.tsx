@@ -2293,7 +2293,7 @@ setTimeout(() => {
   </motion.div>
 </div>
  
-            </div>
+
           </div>
 <div className="max-w-md mx-auto mt-4">
 
