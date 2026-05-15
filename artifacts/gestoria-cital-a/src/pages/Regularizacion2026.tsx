@@ -2383,16 +2383,37 @@ setTimeout(() => {
 
     </div>
 
-
-
 )}
 
 {/* ✅ DESPUÉS DEL PAGO */}
   
 {paymentCompleted && (
-  <>
-    {/* AQUÍ SEGUIRÁ TODO TU REALTIME ACTUAL */}
-  </>
+
+<div className="space-y-4">
+
+  <button
+    onClick={isListening ? stopListening : startListening}
+    className="w-full h-12 rounded-2xl bg-green-500 text-white font-bold"
+  >
+    {isListening ? "Parar Mohamed" : "Hablar con Mohamed"}
+  </button>
+
+  <button
+    onClick={handleGeneralUpload}
+    className="w-full h-12 rounded-2xl bg-blue-500 text-white font-bold"
+  >
+    Subir documentos
+  </button>
+
+  <button
+    onClick={handleVerifyAll}
+    className="w-full h-12 rounded-2xl bg-yellow-500 text-black font-bold"
+  >
+    Verificar documentos
+  </button>
+
+</div>
+
 )}
 
 
