@@ -1491,39 +1491,62 @@ province: formData.province,
   }
 };
 
-  const handleConfirm = () => {
-    if (
-      !appointmentData?.locator ||
-      !appointmentData?.date ||
-      !appointmentData?.time ||
-      !appointmentData?.office
-    ) {
-      toast({
-        title: "No hay cita real",
-        description: "No puedes confirmar una cita inventada o incompleta.",
-        variant: "destructive",
-      });
-      return;
+ const handleConfirm = async () => {
+
+  if (
+    !appointmentData?.locator ||
+    !appointmentData?.date ||
+    !appointmentData?.time ||
+    !appointmentData?.office
+  ) {
+    toast({
+      title: "No hay cita real",
+      description: "No puedes confirmar una cita inventada o incompleta.",
+      variant: "destructive",
+    });
+
+    return;
+  }
+
+  try {
+
+    const res = await fetch(
+      "/api/create-checkout-sara",
+      {
+        method: "POST",
+
+        headers: {
+          "Content-Type": "application/json",
+        },
+
+        body: JSON.stringify({
+          appointment_id: urlParams.appointmentId,
+          token: urlParams.token,
+        }),
+      }
+    );
+
+    const data = await res.json();
+
+    if (data.url) {
+
+      window.location.href = data.url;
+
     }
 
-    setConfirmed(true);
-    pushAgentMessage(voiceTexts.confirmMsg);
+  } catch (err) {
 
-    setTimeout(() => {
-      if (
-        realtimeDcRef.current &&
-        realtimeDcRef.current.readyState === "open" &&
-        realtimePcRef.current?.remoteDescription
-      ) {
-        sendSaraSpokenMessage(voiceTexts.confirmMsg);
-      }
-    }, 150);
+    console.error(err);
 
     toast({
-      title: ui.confirmSuccessTitle,
-      description: ui.confirmSuccessDesc,
+      title: "Error Stripe",
+      description: "No se pudo abrir el pago",
+      variant: "destructive",
     });
-  };
+
+  }
+
+};
 
   const finalLocator = appointmentData?.locator || "";
   const finalDate = appointmentData?.date || "";
