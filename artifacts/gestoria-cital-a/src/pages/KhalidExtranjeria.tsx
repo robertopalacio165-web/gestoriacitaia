@@ -364,7 +364,7 @@ if (msg.type === "response.done") {
       <Navbar />
 
       <div className="max-w-md mx-auto px-4 pt-5 pb-20">
- <div className="hidden">
+<div className="mb-3">
           <h1 className="text-3xl font-bold">
             Khalid
           </h1>
