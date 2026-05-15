@@ -2485,9 +2485,7 @@ if (paymentRequired || documentsUnlocked) return;
           </div>
 
 
-            
-        </div>
-        </div>
+   
 )}
         <audio ref={remoteAudioRef} autoPlay playsInline className="hidden" />
       </main>
