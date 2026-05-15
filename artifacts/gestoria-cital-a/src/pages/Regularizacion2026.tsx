@@ -2289,13 +2289,7 @@ setTimeout(() => {
   </button>
 </div>
 
-<button
-  onClick={handleStripePayment}
-  type="button"
-  className="w-full h-10 rounded-xl text-black font-extrabold text-sm transition-all bg-gradient-to-b from-yellow-300 to-yellow-500 border border-yellow-200/40 shadow-[0_8px_25px_rgba(255,200,0,0.35)]"
->
-  🔓 Desbloquear ahora
-</button>
+
       <div className="absolute top-4 left-4 bg-black/60 backdrop-blur-md border border-green-500/30 px-3 py-1 rounded-full flex items-center gap-2 text-sm">
         <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
         En línea
@@ -2357,7 +2351,7 @@ setTimeout(() => {
      <button
   onClick={handleStripePayment}
   type="button"
-className="w-[92%] mx-auto flex items-center justify-center h-9 rounded-full text-black font-extrabold text-[14px] bg-gradient-to-b from-[#ffe27a] via-[#ffd400] to-[#ffbf00] border border-[#fff3b0] shadow-[0_6px_18px_rgba(255,215,0,0.40)]"
+className="w-[84%] mx-auto flex items-center justify-center h-8 rounded-full text-black font-extrabold text-[13px] bg-gradient-to-b from-[#ffe27a] via-[#ffd400] to-[#ffbf00] border border-[#fff3b0] shadow-[0_4px_14px_rgba(255,215,0,0.35)]"
        >
   🔓 Desbloquear ahora
 </button>
