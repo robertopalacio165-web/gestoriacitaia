@@ -29,9 +29,7 @@ export default async function handler(
 
         customer_creation: "if_required",
 
-        phone_number_collection: {
-          enabled: true,
-        },
+       
 
         billing_address_collection: "auto",
 
