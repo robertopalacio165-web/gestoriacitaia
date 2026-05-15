@@ -2264,7 +2264,7 @@ setTimeout(() => {
         loop
         playsInline
         poster={`${import.meta.env.BASE_URL}images/avatar-mohamed.png`}
-        className="w-full h-[220px] object-cover"
+        className="w-full h-[260px] object-cover"
       >
         <source
           src="/mohamed-extranjeria.mp4.mp4"
@@ -2300,7 +2300,7 @@ setTimeout(() => {
 {/* ✅ ANTES DEL PAGO */}
 {!paymentCompleted && (
 
-
+ <div className="p-3">
 
   <div className="relative overflow-hidden rounded-2xl border border-yellow-500/30 bg-gradient-to-br from-[#1a1200] via-[#0b0b0b] to-[#1a1200] p-3">
 
@@ -2383,38 +2383,16 @@ setTimeout(() => {
 
     </div>
 
+  </div>
+
 )}
 
 {/* ✅ DESPUÉS DEL PAGO */}
   
 {paymentCompleted && (
- 
-
-<div className="space-y-4">
-
-  <button
-    onClick={isListening ? stopListening : startListening}
-    className="w-full h-12 rounded-2xl bg-green-500 text-white font-bold"
-  >
-    {isListening ? "Parar Mohamed" : "Hablar con Mohamed"}
-  </button>
-
-  <button
-    onClick={handleGeneralUpload}
-    className="w-full h-12 rounded-2xl bg-blue-500 text-white font-bold"
-  >
-    Subir documentos
-  </button>
-
-  <button
-    onClick={handleVerifyAll}
-    className="w-full h-12 rounded-2xl bg-yellow-500 text-black font-bold"
-  >
-    Verificar documentos
-  </button>
-
-</div>
-
+  <>
+    {/* AQUÍ SEGUIRÁ TODO TU REALTIME ACTUAL */}
+  </>
 )}
 
 
