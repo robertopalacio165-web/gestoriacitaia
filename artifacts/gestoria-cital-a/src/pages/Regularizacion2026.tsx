@@ -2252,7 +2252,7 @@ setTimeout(() => {
           <div className="flex flex-col gap-3">
             <div
               className="relative rounded-2xl overflow-hidden border border-primary/20 shadow-[0_0_30px_-5px_hsl(var(--primary)/0.25)] bg-black"
-              style={{ height: "260px" }}
+     style={{ height: "300px" }}
             >
             <video
   autoPlay
@@ -2357,7 +2357,7 @@ if (paymentRequired || documentsUnlocked) return;
 
         <div className="text-right">
           <p className="text-yellow-400 font-extrabold text-3xl">
-            12€
+    14,99€
           </p>
 
           <p className="text-white/60 text-xs">
@@ -2487,6 +2487,7 @@ if (paymentRequired || documentsUnlocked) return;
     className="w-full bg-transparent outline-none text-white placeholder:text-white/40 text-sm"
   />
 </div>
+  {paymentDoneRef.current && (
  <button
   onClick={handleSendWhatsApp}
 disabled={!confirmUnlocked}
