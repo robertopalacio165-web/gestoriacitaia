@@ -2424,19 +2424,12 @@ if (paymentRequired || documentsUnlocked) return;
 
 )}
 
-{/* ✅ DESPUÉS DEL PAGO */}
-{paymentCompleted && (
 
-  <>
-  
-    {/* AQUÍ SEGUIRÁ TODO TU REALTIME ACTUAL */}
-    
-  </>
-
-)}
 
 </div>
-          <div className="flex flex-col gap-4">
+        {paymentCompleted && (
+  <div className="flex flex-col gap-4">
+    
             
      <div className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-xl">
   <h3 className="text-lg font-bold text-white mb-3">
@@ -2494,6 +2487,8 @@ if (paymentRequired || documentsUnlocked) return;
 
             
         </div>
+        </div>
+)}
         <audio ref={remoteAudioRef} autoPlay playsInline className="hidden" />
       </main>
     </div>
