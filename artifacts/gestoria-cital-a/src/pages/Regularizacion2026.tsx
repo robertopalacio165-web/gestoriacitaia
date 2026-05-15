@@ -2252,15 +2252,15 @@ setTimeout(() => {
           <div className="flex flex-col gap-3">
             <div
               className="relative rounded-2xl overflow-hidden border border-primary/20 shadow-[0_0_30px_-5px_hsl(var(--primary)/0.25)] bg-black"
-     style={{ height: "300px" }}
+   className="relative rounded-2xl overflow-hidden border border-[#1e293b] bg-[#071224] shadow-2xl"
             >
-            <video
+     <video
   autoPlay
   muted
   loop
   playsInline
   poster={`${import.meta.env.BASE_URL}images/avatar-mohamed.png`}
-  className="w-full h-full object-cover"
+  className="w-full h-[260px] object-cover"
 >
   <source
     src="/mohamed-extranjeria.mp4.mp4"
@@ -2341,7 +2341,7 @@ if (paymentRequired || documentsUnlocked) return;
 
   <div className="p-4 space-y-4">
 
-    <div className="rounded-3xl border border-yellow-500/30 bg-gradient-to-b from-[#1a1405] to-[#0b0b0b] p-4">
+  <div className="relative overflow-hidden rounded-2xl border border-yellow-500/30 bg-gradient-to-br from-[#1a1200] via-[#0b0b0b] to-[#1a1200] p-3">
 
       <div className="flex items-center justify-between mb-3">
 
@@ -2356,7 +2356,7 @@ if (paymentRequired || documentsUnlocked) return;
         </div>
 
         <div className="text-right">
-          <p className="text-yellow-400 font-extrabold text-3xl">
+  <p className="text-xl font-black text-yellow-400 leading-none">
     14,99€
           </p>
 
@@ -2375,40 +2375,28 @@ if (paymentRequired || documentsUnlocked) return;
       <button
         onClick={handleStripePayment}
         type="button"
-        className="
-          w-full
-          rounded-2xl
-          py-4
-          text-lg
-          font-bold
-          text-black
-          bg-gradient-to-r
-          from-yellow-400
-          to-amber-500
-          hover:scale-[1.02]
-          transition-all
-        "
+      className="w-full h-10 rounded-xl text-black font-extrabold text-sm transition-all bg-gradient-to-b from-yellow-300 to-yellow-500 border border-yellow-200/40 shadow-[0_8px_25px_rgba(255,200,0,0.35)]"
       >
         🔓 Desbloquear ahora
       </button>
 
       <div className="flex items-center justify-center gap-2 mt-4 flex-wrap">
 
-        <div className="px-3 py-2 rounded-full bg-white text-black text-[11px] font-bold">
-          VISA
-        </div>
+   <div className="h-8 px-2 rounded-lg bg-white flex items-center justify-center text-blue-700 font-black text-[10px]">
+  VISA
+</div>
 
-        <div className="px-3 py-2 rounded-full bg-white text-black text-[11px] font-bold">
-          Mastercard
-        </div>
+<div className="h-8 px-2 rounded-lg bg-white flex items-center justify-center text-red-500 font-black text-[10px]">
+  Mastercard
+</div>
 
-        <div className="px-3 py-2 rounded-full bg-white text-black text-[11px] font-bold">
-          Apple Pay
-        </div>
+<div className="h-8 px-2 rounded-lg bg-white flex items-center justify-center text-black font-black text-[10px]">
+   Pay
+</div>
 
-        <div className="px-3 py-2 rounded-full bg-white text-black text-[11px] font-bold">
-          Google Pay
-        </div>
+<div className="h-8 px-2 rounded-lg bg-white flex items-center justify-center text-black font-black text-[10px]">
+  G Pay
+</div>
 
       </div>
 
