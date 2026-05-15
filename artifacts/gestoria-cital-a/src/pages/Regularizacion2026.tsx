@@ -2290,10 +2290,11 @@ setTimeout(() => {
 </div>
 
 <button
+  onClick={handleStripePayment}
   type="button"
-  className="absolute bottom-4 left-4 w-20 h-20 rounded-full bg-black/55 backdrop-blur-md border border-white/10 flex items-center justify-center text-white shadow-2xl"
+  className="w-full h-10 rounded-xl text-black font-extrabold text-sm transition-all bg-gradient-to-b from-yellow-300 to-yellow-500 border border-yellow-200/40 shadow-[0_8px_25px_rgba(255,200,0,0.35)]"
 >
-  <Mic className="w-10 h-10" />
+  🔓 Desbloquear ahora
 </button>
       <div className="absolute top-4 left-4 bg-black/60 backdrop-blur-md border border-green-500/30 px-3 py-1 rounded-full flex items-center gap-2 text-sm">
         <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
@@ -2323,7 +2324,7 @@ setTimeout(() => {
 
  <div className="p-3">
 
-<div className="relative overflow-hidden rounded-2xl border border-yellow-500/30 bg-gradient-to-br from-[#1a1200] via-[#0b0b0b] to-[#1a1200] p-2.5 max-w-[430px] mx-auto">
+<div className="relative overflow-hidden rounded-2xl border border-yellow-500/30 bg-gradient-to-br from-[#1a1200] via-[#0b0b0b] to-[#1a1200] p-3 max-w-[430px] mx-auto">
       <div className="flex items-center justify-between mb-3">
 
         <div>
@@ -2353,13 +2354,13 @@ setTimeout(() => {
         análisis de documentos y generación automática del expediente.
       </p>
 
-      <button
-        onClick={handleStripePayment}
-        type="button"
-className="w-full h-[50px] rounded-full text-black font-extrabold text-[16px] transition-all bg-gradient-to-b from-yellow-300 to-yellow-500 border border-yellow-200/40 shadow-[0_8px_25px_rgba(255,200,0,0.35)] mt-4"
-        >
-        🔓 Desbloquear ahora
-      </button>
+     <button
+  onClick={handleStripePayment}
+  type="button"
+className="w-full h-11 rounded-xl text-black font-extrabold text-sm transition-all bg-gradient-to-b from-[#ffe27a] via-[#ffd400] to-[#ffbf00] border border-[#fff3b0] shadow-[0_10px_30px_rgba(255,215,0,0.55)] hover:scale-[1.01]" animate-pulse
+       >
+  🔓 Desbloquear ahora
+</button>
 
       <div className="flex items-center justify-center gap-2 mt-4 flex-wrap">
 
