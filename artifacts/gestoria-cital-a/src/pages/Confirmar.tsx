@@ -213,10 +213,3 @@ function Box({ label, value }: any) {
     </div>
   );
 }
-```
-
-Después guarda el archivo y abre:
-
-```txt
-https://gestoriacitaia.com/confirmar?token=abc123&appointment_id=999&full_name=Mohamed&tramite=TIE&city=Madrid&office=Aluche&date=20-06-2026&time=09:30
-```
