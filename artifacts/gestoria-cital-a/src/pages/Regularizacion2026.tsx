@@ -2264,7 +2264,7 @@ setTimeout(() => {
         loop
         playsInline
         poster={`${import.meta.env.BASE_URL}images/avatar-mohamed.png`}
-    className="w-full h-[205px] object-cover"
+   className="w-full h-[270px] object-cover"
       >
         <source
           src="/mohamed-extranjeria.mp4.mp4"
@@ -2273,7 +2273,28 @@ setTimeout(() => {
       </video>
 
       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+<div className="absolute top-4 right-4 flex items-center gap-2">
+  <button
+    type="button"
+    className="w-11 h-11 rounded-full bg-black/45 backdrop-blur-md flex items-center justify-center text-white border border-white/10"
+  >
+    <Bell className="w-5 h-5" />
+  </button>
 
+  <button
+    type="button"
+    className="w-11 h-11 rounded-full bg-black/45 backdrop-blur-md flex items-center justify-center text-white border border-white/10"
+  >
+    <Volume2 className="w-5 h-5" />
+  </button>
+</div>
+
+<button
+  type="button"
+  className="absolute bottom-4 left-4 w-20 h-20 rounded-full bg-black/55 backdrop-blur-md border border-white/10 flex items-center justify-center text-white shadow-2xl"
+>
+  <Mic className="w-10 h-10" />
+</button>
       <div className="absolute top-4 left-4 bg-black/60 backdrop-blur-md border border-green-500/30 px-3 py-1 rounded-full flex items-center gap-2 text-sm">
         <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
         En línea
@@ -2335,8 +2356,7 @@ setTimeout(() => {
       <button
         onClick={handleStripePayment}
         type="button"
-  className="w-full h-9 rounded-xl text-black font-extrabold text-[13px] transition-all bg-gradient-to-b from-yellow-300 to-yellow-500 border border-yellow-200/40 shadow-[0_8px_25px_rgba(255,200,0,0.35)]"
-
+className="w-full h-[50px] rounded-full text-black font-extrabold text-[16px] transition-all bg-gradient-to-b from-yellow-300 to-yellow-500 border border-yellow-200/40 shadow-[0_8px_25px_rgba(255,200,0,0.35)] mt-4"
         >
         🔓 Desbloquear ahora
       </button>
