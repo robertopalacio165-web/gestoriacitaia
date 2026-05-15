@@ -1,6 +1,7 @@
 
 import { useMemo, useState } from "react";
 import { useLocation } from "wouter";
+import { Lock } from "lucide-react";
 
 export default function Confirmar() {
   const [, setLocation] = useLocation();
@@ -125,7 +126,7 @@ export default function Confirmar() {
 
                       <div className="mt-2 flex items-end gap-2">
                         <span className=" text-3xl font-black text-white">
-                          13,99€
+                 13,99 €
                         </span>
                       </div>
                     </div>
@@ -149,17 +150,19 @@ export default function Confirmar() {
                 )}
 
                 <div className="mt-6 flex flex-col sm:flex-row gap-3">
-                  <button
-                    type="button"
-                    disabled={loading}
-                    className="flex-1 inline-flex items-center justify-center rounded-2xl bg-emerald-500 px-6 py-4 text-base font-bold text-white transition hover:bg-emerald-400 disabled:opacity-50 shadow-[0_0_30px_rgba(16,185,129,0.35)]"
-                    onClick={handleConfirm}
-                  >
-                    {loading
-                      ? "Redirigiendo a Stripe..."
-                      : "Confirmar y pagar"}
-                  </button>
+               
+<button
+  type="button"
+  disabled={loading}
+  className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-500 px-6 py-4 text-base font-bold text-white transition hover:bg-emerald-400 disabled:opacity-50 shadow-[0_0_40px_rgba(16,185,129,0.45)]"
+  onClick={handleConfirm}
+>
+  <Lock className="w-5 h-5" />
 
+  {loading
+    ? "Redirigiendo a Stripe..."
+    : "Confirmar y pagar"}
+</button>
                   <button
                     type="button"
                     className="inline-flex items-center justify-center rounded-2xl border border-white/10 bg-white/5 px-6 py-4 text-base font-semibold text-slate-200 transition hover:bg-white/10"
