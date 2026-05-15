@@ -122,7 +122,7 @@ if (paid === "true") {
   console.log("✅ CLIENT PAID");
 
   paymentDoneRef.current = true;
-
+setPaymentCompleted(true);
   setShowStripe(false);
 
   setPaymentRequired(false);
@@ -259,6 +259,7 @@ const [clientQuestionsDone, setClientQuestionsDone] = useState(false);
 }, [questionIndex]);
   const questionFlowLockedRef = useRef(false);
   const paymentDoneRef = useRef(false);
+  const [paymentCompleted, setPaymentCompleted] = useState(false);
   const lastProcessedTranscriptRef = useRef("");
 const [clientQuestionIndex, setClientQuestionIndex] = useState(0);
   const [showStripe, setShowStripe] = useState(false);
@@ -2250,10 +2251,7 @@ setTimeout(() => {
         </div>
         <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 grid grid-cols-1 lg:grid-cols-[380px_minmax(0,1fr)] gap-4">
           <div className="flex flex-col gap-3">
-            <div
-              className="relative rounded-2xl overflow-hidden border border-primary/20 shadow-[0_0_30px_-5px_hsl(var(--primary)/0.25)] bg-black"
-   className="relative rounded-2xl overflow-hidden border border-[#1e293b] bg-[#071224] shadow-2xl"
-            >
+           <div className="rounded-2xl overflow-hidden border border-[#1e293b] bg-[#071224] shadow-2xl">
      <video
   autoPlay
   muted
@@ -2337,7 +2335,7 @@ if (paymentRequired || documentsUnlocked) return;
    <div className="glass-panel-heavy border border-white/10 rounded-2xl overflow-hidden">
 
 {/* ✅ ANTES DEL PAGO */}
-{!paymentDoneRef.current && (
+{!paymentCompleted && (
 
   <div className="p-4 space-y-4">
 
@@ -2427,7 +2425,7 @@ if (paymentRequired || documentsUnlocked) return;
 )}
 
 {/* ✅ DESPUÉS DEL PAGO */}
-{paymentDoneRef.current && (
+{paymentCompleted && (
 
   <>
   
@@ -2475,7 +2473,7 @@ if (paymentRequired || documentsUnlocked) return;
     className="w-full bg-transparent outline-none text-white placeholder:text-white/40 text-sm"
   />
 </div>
-{paymentDoneRef.current && (
+{paymentCompleted && (
   <button
     onClick={handleSendWhatsApp}
     disabled={!confirmUnlocked}
