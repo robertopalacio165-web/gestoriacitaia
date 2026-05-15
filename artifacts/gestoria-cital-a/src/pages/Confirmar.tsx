@@ -90,7 +90,7 @@ export default function Confirmar() {
         <div className="rounded-3xl border border-white/10 bg-white/5 backdrop-blur-2xl shadow-[0_0_80px_rgba(0,0,0,0.45)] overflow-hidden">
           {hasRealData ? (
             <>
-              <div className="border-b border-white/10 px-6 py-5 flex items-center justify-between">
+              <div className="border-b border-white/10 px-4 py-4  flex items-center justify-between">
                 <div>
                   <p className="text-sm text-slate-400">
                     Estado de la reserva
@@ -106,7 +106,7 @@ export default function Confirmar() {
                 </div>
               </div>
 
-              <div className="p-6 grid gap-4 md:grid-cols-2">
+           <div className="p-4 grid grid-cols-2 gap-3">
                 <Box label="Nombre" value={params.fullName || "No disponible"} />
                 <Box label="Trámite" value={params.tramite} />
                 <Box label="Ciudad" value={params.city || "No disponible"} />
@@ -124,7 +124,7 @@ export default function Confirmar() {
                       </p>
 
                       <div className="mt-2 flex items-end gap-2">
-                        <span className="text-5xl font-black text-white">
+                        <span className=" text-3xl font-black text-white">
                           13,99€
                         </span>
                       </div>
@@ -202,12 +202,12 @@ export default function Confirmar() {
 
 function Box({ label, value }: any) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-black/20 p-5 backdrop-blur-xl">
-      <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
+    <div className="rounded-2xl border border-white/10 bg-black/20 p-4 backdrop-blur-xl min-w-0">
+      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 truncate">
         {label}
       </p>
 
-      <p className="mt-3 text-xl font-semibold text-white break-words">
+      <p className="mt-2 text-lg font-semibold text-white break-words leading-tight">
         {value}
       </p>
     </div>
