@@ -2357,12 +2357,12 @@ setTimeout(() => {
      <button
   onClick={handleStripePayment}
   type="button"
-className="w-full h-11 rounded-xl text-black font-extrabold text-sm transition-all bg-gradient-to-b from-[#ffe27a] via-[#ffd400] to-[#ffbf00] border border-[#fff3b0] shadow-[0_10px_30px_rgba(255,215,0,0.55)] hover:scale-[1.01]" animate-pulse
+className="w-[92%] mx-auto flex items-center justify-center h-9 rounded-full text-black font-extrabold text-[14px] bg-gradient-to-b from-[#ffe27a] via-[#ffd400] to-[#ffbf00] border border-[#fff3b0] shadow-[0_6px_18px_rgba(255,215,0,0.40)]"
        >
   🔓 Desbloquear ahora
 </button>
 
-      <div className="flex items-center justify-center gap-2 mt-4 flex-wrap">
+  <div className="mt-2 flex items-center justify-center gap-2 flex-wrap">
 
    <div className="h-8 px-2 rounded-lg bg-white flex items-center justify-center text-blue-700 font-black text-[10px]">
   VISA
