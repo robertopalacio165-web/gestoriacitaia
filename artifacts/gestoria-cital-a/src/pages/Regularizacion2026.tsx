@@ -2331,49 +2331,45 @@ if (paymentRequired || documentsUnlocked) return;
                 </button>
               </div>
             </div>
-            <div className="glass-panel-heavy border border-white/10 rounded-2xl overflow-hidden">
-              <div className="p-4 border-b border-white/10">
-                <button
-                  onClick={isListening ? stopListening : startListening}
-          disabled={!voiceSupported || (paymentRequired && !paymentDoneRef.current)}
-                  className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary hover:bg-primary/90 disabled:opacity-50 text-primary-foreground font-bold text-sm px-4 py-3 transition-colors"
-                  type="button"
-                >
-                  {isListening ? (
-                    <>
-                      <MicOff className="w-4 h-4" />
-                      {ui.stopButton}
-                    </>
-                  ) : (
-                    <>
-                      <Mic className="w-4 h-4" />
-                      {ui.voiceButton}
-                    </>
-                  )}
-                </button>
-                {!voiceSupported && (
-                  <p className="mt-2 text-xs text-red-400 text-center">
-                    {ui.micNotSupported}
-                  </p>
-                )}
-                {isListening && (
-                  <p className="mt-2 text-xs text-primary text-center">
-                    {ui.listening}
-                  </p>
-                )}
-       {showStripe && (
+ 
+            </div>
+          </div>
+   <div className="glass-panel-heavy border border-white/10 rounded-2xl overflow-hidden">
 
-  <div className="fixed inset-0 z-[99999] bg-black/90 backdrop-blur-md flex items-center justify-center px-6">
+{/* ✅ ANTES DEL PAGO */}
+{!paymentDoneRef.current && (
 
-    <div className="w-full max-w-md rounded-3xl bg-zinc-950 border border-white/10 p-6 text-center shadow-2xl">
+  <div className="p-4 space-y-4">
 
-      <h2 className="text-2xl font-bold text-white mb-4">
-        ✅ الملف ديالك مؤهل
-      </h2>
+    <div className="rounded-3xl border border-yellow-500/30 bg-gradient-to-b from-[#1a1405] to-[#0b0b0b] p-4">
 
-      <p className="text-white/70 text-sm leading-relaxed mb-6">
-        باش نكملو التحليل الكامل ونوجدولك الوثائق المهمة،
-        خاصك تكمل الأداء دابا.
+      <div className="flex items-center justify-between mb-3">
+
+        <div>
+          <p className="text-white font-bold text-lg">
+            Desbloquea a Mohamed
+          </p>
+
+          <span className="inline-flex mt-1 px-2 py-1 rounded-full bg-yellow-500 text-black text-[10px] font-bold">
+            PREMIUM
+          </span>
+        </div>
+
+        <div className="text-right">
+          <p className="text-yellow-400 font-extrabold text-3xl">
+            12€
+          </p>
+
+          <p className="text-white/60 text-xs">
+            Acceso completo
+          </p>
+        </div>
+
+      </div>
+
+      <p className="text-white/70 text-sm leading-relaxed mb-4">
+        Acceso ilimitado a Mohamed IA, videollamada realtime,
+        análisis de documentos y generación automática del expediente.
       </p>
 
       <button
@@ -2385,86 +2381,75 @@ if (paymentRequired || documentsUnlocked) return;
           py-4
           text-lg
           font-bold
-          text-white
+          text-black
           bg-gradient-to-r
-          from-emerald-500
-          to-green-600
+          from-yellow-400
+          to-amber-500
           hover:scale-[1.02]
           transition-all
         "
       >
-        💳 الأداء الآن — 12€
+        🔓 Desbloquear ahora
       </button>
+
+      <div className="flex items-center justify-center gap-2 mt-4 flex-wrap">
+
+        <div className="px-3 py-2 rounded-full bg-white text-black text-[11px] font-bold">
+          VISA
+        </div>
+
+        <div className="px-3 py-2 rounded-full bg-white text-black text-[11px] font-bold">
+          Mastercard
+        </div>
+
+        <div className="px-3 py-2 rounded-full bg-white text-black text-[11px] font-bold">
+          Apple Pay
+        </div>
+
+        <div className="px-3 py-2 rounded-full bg-white text-black text-[11px] font-bold">
+          Google Pay
+        </div>
+
+      </div>
+
+    </div>
+
+    <div className="rounded-3xl border border-white/10 bg-white/5 p-4">
+
+      <div className="flex items-center gap-2 mb-3">
+
+        <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+
+        <p className="text-white font-bold">
+          Mohamed IA
+        </p>
+
+      </div>
+
+      <p className="text-white/80 text-sm leading-relaxed">
+        Especialista profesional en extranjería española para marroquíes en España.
+        Pregunta sobre residencia, papeles, policía, nacionalidad, arraigo,
+        trabajo, estudios y cualquier problema legal relacionado con inmigración.
+      </p>
 
     </div>
 
   </div>
 
 )}
-              </div>
-              <div className="p-4 space-y-4">
-                <div>
-                  <p className="text-[11px] text-white/50 mb-1">{ui.latestReply}</p>
-                  <div className="rounded-xl bg-white/5 border border-white/10 px-3 py-3 text-sm text-white/90 leading-relaxed">
-                    {latestAgentMessage}
-                  </div>
-                </div>
-                {lastUserTranscript ? (
-                  <div>
-                    <p className="text-[11px] text-white/50 mb-1">{ui.yourVoice}</p>
-                    <div className="rounded-xl bg-primary/10 border border-primary/20 px-3 py-3 text-sm text-white leading-relaxed">
-                      {lastUserTranscript}
-                    </div>
-                  </div>
-                ) : null}
-                {waitingMohamed && (
-                  <div className="rounded-xl bg-white/5 border border-white/10 px-3 py-3 text-sm text-white/70">
-                    ...
-                  </div>
-                )}
-                {waitingForDocument && !generalUploading && (
-                  <div className="rounded-xl bg-amber-500/10 border border-amber-400/20 px-3 py-3 text-sm text-amber-200">
-                    Mohamed está esperando el documento que te pidió.
-                  </div>
-                )}
-              </div>
-              <div className="border-t border-white/10 p-3">
- <button
-  onClick={handleGeneralUpload}
-disabled={!documentsUnlocked}
-  className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary hover:bg-primary/90 disabled:opacity-60 text-primary-foreground font-bold text-xs px-4 py-3 transition-colors"
-  type="button"
-      
->
-  {generalUploading ? (
-    <>
-      <motion.div
-        className="w-3.5 h-3.5 border border-primary-foreground border-t-transparent rounded-full"
-        animate={{ rotate: 360 }}
-        transition={{ duration: 0.7, repeat: Infinity, ease: "linear" }}
-      />
-      {ui.uploading}
-    </>
-  ) : (
-    <>
-      <Upload className="w-4 h-4" />
-      {ui.uploadGeneral}
-    </>
-  )}
-</button>
 
-{!documentsUnlocked && (
-  <p className="mt-2 text-[10px] text-amber-300 text-center">
-    كمل مع محمد الأسئلة باش يتحل رفع الوثائق
-  </p>
+{/* ✅ DESPUÉS DEL PAGO */}
+{paymentDoneRef.current && (
+
+  <>
+  
+    {/* AQUÍ SEGUIRÁ TODO TU REALTIME ACTUAL */}
+    
+  </>
+
 )}
-                <p className="mt-2 text-[10px] text-white/50 text-center">
-                  {ui.uploadGeneralDesc}
-                </p>
-              </div>
-            </div>
-          </div>
-   
+
+</div>
           <div className="flex flex-col gap-4">
             
      <div className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-xl">
