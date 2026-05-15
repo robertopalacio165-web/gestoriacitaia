@@ -2250,89 +2250,52 @@ setTimeout(() => {
           </div>
         </div>
         <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 grid grid-cols-1 lg:grid-cols-[380px_minmax(0,1fr)] gap-4">
-          <div className="flex flex-col gap-3">
-           <div className="rounded-2xl overflow-hidden border border-[#1e293b] bg-[#071224] shadow-2xl">
-     <video
-  autoPlay
-  muted
-  loop
-  playsInline
-  poster={`${import.meta.env.BASE_URL}images/avatar-mohamed.png`}
-  className="w-full h-[260px] object-cover"
->
-  <source
-    src="/mohamed-extranjeria.mp4.mp4"
-    type="video/mp4"
-  />
-</video>
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-              <div className="absolute top-3 left-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/60 border border-white/10 backdrop-blur-md">
-                <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                <span className="text-xs font-medium text-white">{ui.online}</span>
-              </div>
-              <div className="absolute top-3 right-3 flex items-center gap-2">
-                <div className="relative w-7 h-7 rounded-full bg-black/50 backdrop-blur-md border border-white/10 flex items-center justify-center">
-                  <Bell className="w-3.5 h-3.5 text-white" />
-                  <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-amber-500 rounded-full text-[8px] text-white flex items-center justify-center font-bold">
-                    !
-                  </span>
-                </div>
-                <button
-                  onClick={() => setMuted(!muted)}
-                  className="w-8 h-8 rounded-full bg-black/50 border border-white/10 flex items-center justify-center"
-                  type="button"
-                >
-                  {muted ? (
-                    <VolumeX className="w-4 h-4 text-white" />
-                  ) : (
-                    <Volume2 className="w-4 h-4 text-white" />
-                  )}
-                </button>
-              </div>
-              {!muted && (
-                <div className="absolute bottom-14 left-4 flex items-end gap-0.5 h-5">
-                  {[3, 6, 4, 8, 5, 7, 3].map((h, i) => (
-                    <motion.div
-                      key={i}
-                      className="w-1 bg-primary rounded-full"
-                      animate={{ height: [`${h}px`, `${h * 2}px`, `${h}px`] }}
-                      transition={{ duration: 0.5, repeat: Infinity, delay: i * 0.07 }}
-                    />
-                  ))}
-                </div>
-              )}
-              <div className="absolute bottom-12 right-3 text-right">
-                <p className="text-white font-bold text-sm drop-shadow-lg">Mohamed</p>
-                <p className="text-white/70 text-[11px] drop-shadow-lg">{ui.role}</p>
-              </div>
-              <div className="absolute bottom-3 left-0 right-0 flex justify-center">
-                <button
-            onClick={() => {
+        <div className="max-w-md mx-auto">
+  <motion.div
+    initial={{ opacity: 0, y: 15 }}
+    animate={{ opacity: 1, y: 0 }}
+    className="rounded-2xl overflow-hidden border border-[#1e293b] bg-[#071224] shadow-2xl"
+  >
+    <div className="relative">
 
-if (paymentRequired || documentsUnlocked) return;
+      <video
+        autoPlay
+        muted
+        loop
+        playsInline
+        poster={`${import.meta.env.BASE_URL}images/avatar-mohamed.png`}
+        className="w-full h-[260px] object-cover"
+      >
+        <source
+          src="/mohamed-extranjeria.mp4.mp4"
+          type="video/mp4"
+        />
+      </video>
 
-  isListening ? stopListening() : startListening();
+      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
 
-}}
-                  className={`w-12 h-12 rounded-full border flex items-center justify-center backdrop-blur-md transition-colors ${
-                    isListening
-                      ? "bg-destructive/80 border-destructive"
-                      : "bg-black/50 border-white/20 hover:bg-black/70"
-                  }`}
-                  type="button"
-                >
-                  {isListening ? (
-                    <MicOff className="w-5 h-5 text-white" />
-                  ) : (
-                    <Mic className="w-5 h-5 text-white" />
-                  )}
-                </button>
-              </div>
-            </div>
+      <div className="absolute top-4 left-4 bg-black/60 backdrop-blur-md border border-green-500/30 px-3 py-1 rounded-full flex items-center gap-2 text-sm">
+        <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+        En línea
+      </div>
+
+      <div className="absolute bottom-5 right-4 text-right">
+        <h2 className="text-2xl font-bold text-white">
+          Mohamed
+        </h2>
+
+        <p className="text-sm text-gray-200">
+          Especialista en Extranjería
+        </p>
+      </div>
+
+    </div>
+  </motion.div>
+</div>
  
             </div>
           </div>
-   <div className="glass-panel-heavy border border-white/10 rounded-2xl overflow-hidden">
+<div className="max-w-md mx-auto mt-4">
 
 {/* ✅ ANTES DEL PAGO */}
 {!paymentCompleted && (
@@ -2436,64 +2399,7 @@ if (paymentRequired || documentsUnlocked) return;
 )}
 
 </div>
-          <div className="flex flex-col gap-4">
-            
-     <div className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-xl">
-  <h3 className="text-lg font-bold text-white mb-3">
-    Confirmación rápida
-  </h3>
 
-<button
-  onClick={handleVerifyAll}
-  disabled={!documentsUnlocked || generalUploading}
-  className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-sm px-4 py-3 transition-colors"
-  type="button"
->
-  {safeLang === "darija" && "تحليل الوثائق"}
-  {safeLang === "es" && "Verificar documentos"}
-  {safeLang === "en" && "Verify documents"}
-</button>
-<div style={{ marginTop: 20 }}>
-
-<div className="w-full flex items-center gap-3 bg-white/5 border border-white/10 rounded-2xl px-4 py-3 shadow-inner">
-  
-  <span className="text-green-400 text-lg">📱</span>
-
-  <input
-    type="tel"
-    value={phone}
-    onChange={(e) => setPhone(e.target.value)}
-    placeholder={
-      safeLang === "darija"
-        ? "+34 600000000"
-        : safeLang === "es"
-        ? "+34 600000000"
-        : "+34 600000000"
-    }
-    className="w-full bg-transparent outline-none text-white placeholder:text-white/40 text-sm"
-  />
-</div>
-{paymentCompleted && (
-  <button
-    onClick={handleSendWhatsApp}
-    disabled={!confirmUnlocked}
-    className={`w-full flex items-center justify-center gap-3 rounded-2xl px-5 py-4 text-white font-bold text-base shadow-lg transition-all duration-300 
-    ${
-      confirmUnlocked
-        ? "bg-gradient-to-r from-green-500 via-emerald-500 to-green-400 hover:scale-[1.03]"
-        : "bg-gray-600 opacity-50 cursor-not-allowed"
-    }`}
-    type="button"
-  >
-    إرسال عبر WhatsApp
-  </button>
-)}
-</div>
-          </div>
-
-
-            
-        </div>
         <audio ref={remoteAudioRef} autoPlay playsInline className="hidden" />
       </main>
     </div>
