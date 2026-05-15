@@ -1,6 +1,4 @@
-# Reemplaza TODO el archivo `src/pages/Confirmar.tsx` por este código completo
 
-```tsx
 import { useMemo, useState } from "react";
 import { useLocation } from "wouter";
 
