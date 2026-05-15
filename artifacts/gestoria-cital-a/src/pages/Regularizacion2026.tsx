@@ -2487,20 +2487,21 @@ if (paymentRequired || documentsUnlocked) return;
     className="w-full bg-transparent outline-none text-white placeholder:text-white/40 text-sm"
   />
 </div>
-  {paymentDoneRef.current && (
- <button
-  onClick={handleSendWhatsApp}
-disabled={!confirmUnlocked}
-  className={`w-full flex items-center justify-center gap-3 rounded-2xl px-5 py-4 text-white font-bold text-base shadow-lg transition-all duration-300 
-  ${
-    confirmUnlocked
-      ? "bg-gradient-to-r from-green-500 via-emerald-500 to-green-400 hover:scale-[1.03]"
-      : "bg-gray-600 opacity-50 cursor-not-allowed"
-  }`}
-  type="button"
->
-  إرسال عبر WhatsApp
-</button>
+{paymentDoneRef.current && (
+  <button
+    onClick={handleSendWhatsApp}
+    disabled={!confirmUnlocked}
+    className={`w-full flex items-center justify-center gap-3 rounded-2xl px-5 py-4 text-white font-bold text-base shadow-lg transition-all duration-300 
+    ${
+      confirmUnlocked
+        ? "bg-gradient-to-r from-green-500 via-emerald-500 to-green-400 hover:scale-[1.03]"
+        : "bg-gray-600 opacity-50 cursor-not-allowed"
+    }`}
+    type="button"
+  >
+    إرسال عبر WhatsApp
+  </button>
+)}
 </div>
           </div>
 
