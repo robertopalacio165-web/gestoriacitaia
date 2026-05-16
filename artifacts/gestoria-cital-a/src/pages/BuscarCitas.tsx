@@ -411,52 +411,42 @@ function OfficialBrowserBox({
                 </div>
               </div>
 
-              <div className="mt-4 flex flex-col sm:flex-row gap-3">
-                <button
-                  type="button"
-                  onClick={onFormSubmit}
-                  className="inline-flex items-center justify-center rounded-xl bg-[#003366] text-white px-5 py-3 text-sm font-bold hover:bg-[#002244] transition-colors"
-                >
-                  Guardar datos y continuar con Sara
-                </button>
+   <div className="mt-4 flex flex-col gap-3">
+  <div className="flex flex-col gap-2 w-full">
+    <span className="text-center text-[11px] font-bold uppercase tracking-wider text-yellow-500">
+      Reserva inicial • 5€
+    </span>
 
-                <button
-                  type="button"
-                  onClick={onOpenOfficial}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-300 bg-white px-5 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
-                >
-                  <ExternalLink className="w-4 h-4" />
-                  {ui.openOfficialSite}
-                </button>
-              </div>
+    <span className="text-center text-[12px] text-gray-400">
+      Sara empezará a buscar tu cita automáticamente
+    </span>
 
-              {profileLoading && (
-                <p className="mt-3 text-[11px] text-gray-400">{ui.loadingUserData}</p>
-              )}
+    <button
+      type="button"
+      onClick={onFormSubmit}
+      className="inline-flex w-full items-center justify-center rounded-2xl bg-gradient-to-r from-yellow-400 via-yellow-500 to-amber-500 px-5 py-4 text-sm font-black text-black shadow-[0_0_25px_rgba(255,215,0,0.35)] transition-all hover:scale-[1.02] hover:shadow-[0_0_35px_rgba(255,215,0,0.55)]"
+    >
+      🔐 Reservar y empezar búsqueda
+    </button>
 
-              {formReady && (
-                <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4">
-                  <p className="text-sm font-semibold text-emerald-800">
-                    {savedText}
-                  </p>
+    <div className="flex items-center justify-center gap-2 text-[10px] text-gray-500">
+      <span>Visa</span>
+      <span>•</span>
+      <span>Mastercard</span>
+      <span>•</span>
+      <span>Apple Pay</span>
+    </div>
+  </div>
 
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    <div className="inline-flex items-center rounded-xl border border-emerald-300 bg-white px-3 py-2 text-xs text-gray-700">
-                      {selectedTramiteLabel}
-                    </div>
-
-                    <button
-                      onClick={onAceptar}
-                      disabled={isPending || !selectedTramite}
-                      className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 text-white text-sm font-bold px-5 py-2.5 hover:bg-emerald-700 transition-colors disabled:opacity-50"
-                      type="button"
-                    >
-                      {isPending && (
-                        <RefreshCw className="w-4 h-4 animate-spin" />
-                      )}
-                      Empezar búsqueda de cita
-                    </button>
-                  </div>
+  <button
+    type="button"
+    onClick={onOpenOfficial}
+    className="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-300 bg-white px-5 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+  >
+    <ExternalLink className="w-4 h-4" />
+    {ui.openOfficialSite}
+  </button>
+</div>
                 </div>
               )}
   
