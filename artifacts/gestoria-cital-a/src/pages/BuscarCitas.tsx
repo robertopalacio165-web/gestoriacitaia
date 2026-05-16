@@ -174,7 +174,7 @@ className="flex-1 flex flex-col overflow-hidden bg-transparent"
         {!confirmed ? (
           <>
      
-          <div className="rounded-[24px] border border-emerald-500/40 bg-[#07111f] p-4 mb-4 flex items-center gap-4
+       <div className="rounded-[24px] border border-emerald-500/40 bg-[#07111f] p-4 mb-4 flex items-center gap-4">
             <div className="shrink-0">
     <div className="w-14 h-14 rounded-full border border-emerald-500/30 bg-emerald-500/10 flex items-center justify-center">
       <svg
