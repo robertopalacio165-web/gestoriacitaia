@@ -2014,15 +2014,7 @@ province: formData.province,
 
     </div>
 
-  </div>
-
-</div>
-    
-        </div>
-            <div className="px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-[10px] text-white/60">
-              © 2026 GestoriaCitaIA
-            </div>
-          </div>
+     
         <audio ref={remoteAudioRef} autoPlay playsInline className="hidden" />
       </main>
     </div>
