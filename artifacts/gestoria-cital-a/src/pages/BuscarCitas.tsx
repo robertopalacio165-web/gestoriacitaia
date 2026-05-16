@@ -174,10 +174,8 @@ className="flex-1 flex flex-col overflow-hidden bg-transparent"
         {!confirmed ? (
           <>
      
-          
-<div className="rounded-[28px] border border-emerald-500/40 bg-[#07111f] p-6 mb-5 shadow-[0_0_30px_rgba(16,185,129,0.08)]">
-
-  <div className="flex justify-center mb-4">
+          <div className="rounded-[24px] border border-emerald-500/40 bg-[#07111f] p-4 mb-4 flex items-center gap-4
+            <div className="shrink-0">
     <div className="w-14 h-14 rounded-full border border-emerald-500/30 bg-emerald-500/10 flex items-center justify-center">
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -195,13 +193,11 @@ className="flex-1 flex flex-col overflow-hidden bg-transparent"
       </svg>
     </div>
   </div>
-
-  <h3 className="text-center text-white text-[28px] font-semibold mb-3">
-    Aquí aparecerán los mensajes de Sara
+<h3 className="text-white text-[18px] font-semibold mb-1">
+        Aquí aparecerán los mensajes de Sara
   </h3>
-
-  <p className="text-center text-white/70 text-[18px] leading-relaxed">
-    Te avisaremos aquí cuando haya novedades
+<p className="text-white/70 text-[13px] leading-relaxed">
+      Te avisaremos aquí cuando haya novedades
     <br />
     sobre tu cita.
   </p>
@@ -217,15 +213,14 @@ className="flex-1 flex flex-col overflow-hidden bg-transparent"
   Después Sara continuará contigo y te avisará por WhatsApp
   cuando exista una cita real.
 </p>
-<div className="w-full">
-<div className="space-y-4 mb-6">
-
+<div className="w-full mt-10 pt-6 border-t border-yellow-500/20">
+<div className="grid grid-cols-2 gap-3 mb-6">
   <input
     type="text"
     placeholder="Nombre completo"
     value={formData.fullName}
     onChange={(e) => onFormChange("fullName", e.target.value)}
-    className="w-full rounded-2xl border border-yellow-500/30 bg-black/40 px-4 py-3 text-white placeholder:text-white/30 focus:outline-none focus:border-yellow-400"
+ className="col-span-1 w-full rounded-2xl border border-yellow-500/30 bg-black/40 px-4 py-3 text-white placeholder:text-white/30 focus:outline-none focus:border-yellow-400"
   />
 
   <input
@@ -267,8 +262,8 @@ className="flex-1 flex flex-col overflow-hidden bg-transparent"
   ))}
 </select>
 </div>
-<div className="flex items-start justify-between mb-4 pt-2">
-      <div>
+<div className="flex items-start justify-between mb-4">
+  <div>
    <p className="text-white text-[15px] font-bold">
   {language === "ma"
     ? "حجز الموعد"
