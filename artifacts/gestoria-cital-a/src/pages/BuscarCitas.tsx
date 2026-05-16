@@ -412,60 +412,40 @@ function OfficialBrowserBox({
               </div>
 
    <div className="mt-4 flex flex-col gap-3">
-<div className="w-full rounded-3xl border border-yellow-500/30 bg-black p-4 shadow-[0_0_25px_rgba(255,215,0,0.15)]">
+  <div className="flex flex-col gap-2 w-full">
+    <span className="text-center text-[11px] font-bold uppercase tracking-wider text-yellow-500">
+      Reserva inicial • 5€
+    </span>
 
-  <div className="flex items-start justify-between mb-2">
-    <div>
-      <p className="text-white text-[18px] font-bold">
-        Reserva tu cita
-      </p>
+    <span className="text-center text-[12px] text-gray-400">
+      Sara empezará a buscar tu cita automáticamente
+    </span>
 
-      <span className="inline-flex mt-1 rounded-full bg-yellow-500 px-2 py-0.5 text-[10px] font-bold text-black uppercase">
-        Premium
-      </span>
-    </div>
+    <button
+      type="button"
+      onClick={onFormSubmit}
+      className="inline-flex w-full items-center justify-center rounded-2xl bg-gradient-to-r from-yellow-400 via-yellow-500 to-amber-500 px-5 py-4 text-sm font-black text-black shadow-[0_0_25px_rgba(255,215,0,0.35)] transition-all hover:scale-[1.02] hover:shadow-[0_0_35px_rgba(255,215,0,0.55)]"
+    >
+      🔐 Reservar y empezar búsqueda
+    </button>
 
-    <div className="text-right">
-      <p className="text-yellow-400 text-[26px] font-black">
-        5€
-      </p>
-
-      <p className="text-[10px] text-yellow-200">
-        Reserva inicial
-      </p>
+    <div className="flex items-center justify-center gap-2 text-[10px] text-gray-500">
+      <span>Visa</span>
+      <span>•</span>
+      <span>Mastercard</span>
+      <span>•</span>
+      <span>Apple Pay</span>
     </div>
   </div>
-
-  <p className="text-[13px] text-gray-300 leading-relaxed mb-4">
-    Sara empezará a buscar tu cita automáticamente
-  </p>
 
   <button
     type="button"
-    onClick={onFormSubmit}
-    className="w-full rounded-2xl bg-gradient-to-r from-yellow-400 via-yellow-500 to-amber-500 py-3 text-[15px] font-bold text-black shadow-[0_0_20px_rgba(255,215,0,0.35)] transition-all hover:scale-[1.01]"
+    onClick={onOpenOfficial}
+    className="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-300 bg-white px-5 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
   >
-    🔐 Reservar y empezar búsqueda
+    <ExternalLink className="w-4 h-4" />
+    {ui.openOfficialSite}
   </button>
-
-  <div className="mt-4 flex items-center justify-center gap-2 text-[10px] text-gray-400">
-    <span className="rounded-full bg-white px-2 py-1 text-[#1434CB] font-bold">
-      VISA
-    </span>
-
-    <span className="rounded-full bg-white px-2 py-1 text-[#EB001B] font-bold">
-      Mastercard
-    </span>
-
-    <span className="rounded-full bg-white px-2 py-1 text-black font-bold">F
-       Pay
-    </span>
-
-    <span className="rounded-full bg-white px-2 py-1 text-black font-bold">
-      G Pay
-    </span>
-  </div>
-
 </div>
               
   
@@ -553,7 +533,7 @@ function OfficialBrowserBox({
               ) : null}
             </div>
           </motion.div>
-      
+        )}
       </div>
     </motion.div>
   );
