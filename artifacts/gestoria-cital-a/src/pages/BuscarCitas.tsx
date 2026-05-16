@@ -2003,7 +2003,7 @@ province: formData.province,
               </div>
             </motion.div>
           )}
-        </AnimatePresence>
+      
 
         <audio ref={remoteAudioRef} autoPlay playsInline className="hidden" />
       </main>
