@@ -457,7 +457,7 @@ function OfficialBrowserBox({
       Mastercard
     </span>
 
-    <span className="rounded-full bg-white px-2 py-1 text-black font-bold">
+    <span className="rounded-full bg-white px-2 py-1 text-black font-bold">F
        Pay
     </span>
 
@@ -553,7 +553,7 @@ function OfficialBrowserBox({
               ) : null}
             </div>
           </motion.div>
-        )}
+      
       </div>
     </motion.div>
   );
