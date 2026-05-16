@@ -448,7 +448,7 @@ function OfficialBrowserBox({
 </div>
 
 
-                </button>
+
 
                 <button
                   type="button"
