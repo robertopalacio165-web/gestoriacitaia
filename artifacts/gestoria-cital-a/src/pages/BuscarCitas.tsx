@@ -1772,7 +1772,7 @@ province: formData.province,
                   </div>
                 )}
               </div>
-            </div>
+
 
             <div className="glass-panel-heavy border border-primary/25 rounded-2xl rounded-tl-sm p-3 flex gap-3 shadow-lg relative overflow-hidden">
               <div className="relative shrink-0">
