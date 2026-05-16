@@ -460,12 +460,7 @@ active:scale-[0.99]
       <Shield className="w-3 h-3 text-yellow-400" />
 
       <span>
-        {language === "ma"
-          ? "دفع آمن عبر Stripe"
-          : language === "en"
-          ? "Secure payment with Stripe"
-      
-      </span>
+    <span></span>
     </div>
 
     <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
