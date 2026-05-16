@@ -206,8 +206,19 @@ className="flex-1 flex flex-col overflow-hidden bg-transparent"
   </p>
 
 </div> 
-
-<div className="mt-4 rounded-[30px] border border-yellow-500/40 bg-[#050505] p-5 shadow-[0_0_40px_rgba(255,215,0,0.08)]">
+<div className="
+mt-3
+mx-[-4px]
+rounded-[24px]
+border-2
+border-yellow-500/60
+bg-gradient-to-b
+from-[#0b0b0b]
+to-[#050505]
+px-3
+py-3
+shadow-[0_0_35px_rgba(255,200,0,0.18)]
+">
 <h2 className="text-yellow-400 text-[18px] sm:text-[20px] font-black leading-tight mb-2">
   Panel oficial integrado
 </h2>
@@ -441,8 +452,26 @@ shadow-[0_0_35px_rgba(255,200,0,0.18)]
    <button
   type="button"
   onClick={onFormSubmit}
-  className="w-full rounded-full bg-gradient-to-r from-yellow-400 via-yellow-500 to-amber-500 px-5 py-4 text-[16px] font-black text-black shadow-[0_0_35px_rgba(255,215,0,0.35)] transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_45px_rgba(255,215,0,0.45)]"
->
+className="
+w-full
+min-h-[56px]
+rounded-[20px]
+bg-gradient-to-r
+from-yellow-400
+via-yellow-500
+to-amber-500
+px-4
+py-2
+text-[15px]
+leading-tight
+font-black
+text-black
+shadow-[0_0_30px_rgba(255,215,0,0.35)]
+transition-all
+duration-300
+hover:scale-[1.01]
+"
+     >
   {language === "ma"
     ? "🔐 حجز وبدء البحث"
     : language === "en"
