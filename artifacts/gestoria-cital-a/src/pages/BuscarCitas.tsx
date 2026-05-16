@@ -174,135 +174,101 @@ className="flex-1 flex flex-col overflow-hidden bg-transparent"
         {!confirmed ? (
           <>
      
-     <div className="rounded-[24px] border border-emerald-500/40 bg-[#07111f] p-4 mb-5 flex items-center gap-4 min-h-[120px]">
+          
+<div className="rounded-[28px] border border-emerald-500/40 bg-[#07111f] p-6 mb-5 shadow-[0_0_30px_rgba(16,185,129,0.08)]">
 
-  <div className="shrink-0">
+  <div className="flex justify-center mb-4">
     <div className="w-14 h-14 rounded-full border border-emerald-500/30 bg-emerald-500/10 flex items-center justify-center">
       <svg
-  xmlns="http://www.w3.org/2000/svg"
-  className="w-8 h-8 text-emerald-400"
-  fill="none"
-  viewBox="0 0 24 24"
-  stroke="currentColor"
->
-  <path
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    strokeWidth={2}
-    d="M8 10h.01M12 10h.01M16 10h.01M9 16h6"
-  />
-</svg>
-
+        xmlns="http://www.w3.org/2000/svg"
+        className="w-8 h-8 text-emerald-400"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M8 10h.01M12 10h.01M16 10h.01M9 16h6"
+        />
+      </svg>
     </div>
   </div>
 
-  <div className="flex-1">
-<h3 className="text-white text-[18px] font-semibold mb-1">
-        Aquí aparecerán los mensajes de Sara
+  <h3 className="text-center text-white text-[28px] font-semibold mb-3">
+    Aquí aparecerán los mensajes de Sara
   </h3>
-<p className="text-white/70 text-[13px] leading-relaxed">
-      Te avisaremos aquí cuando haya novedades
+
+  <p className="text-center text-white/70 text-[18px] leading-relaxed">
+    Te avisaremos aquí cuando haya novedades
     <br />
     sobre tu cita.
   </p>
-  </div>
+
 </div>
-
-
-<div className="mt-5 rounded-[34px] border border-yellow-500/40 bg-[#050505] p-6 shadow-[0_0_45px_rgba(255,215,0,0.10)]">
-  <h2 className="text-yellow-400 text-[26px] sm:text-[34px]">
+<div className="mt-4 rounded-[30px] border border-yellow-500/40 bg-[#050505] p-5 shadow-[0_0_40px_rgba(255,215,0,0.08)]">
+  <h2 className="text-yellow-400 text-[34px] font-black leading-none mb-3">
   Panel oficial integrado
 </h2>
 
-<p className="text-white/80 text-[15px] sm:text-[18px]
+<p className="text-white/80 text-[18px] leading-relaxed mb-6">
   Si necesitas una cita, rellena tus datos y elige el tipo de cita.
   Después Sara continuará contigo y te avisará por WhatsApp
   cuando exista una cita real.
 </p>
-  <div className="w-full mt-10 pt-6 border-t border-yellow-500/20">
-<div className="grid grid-cols-2 gap-4 mb-6">
+<div className="w-full">
+<div className="space-y-4 mb-6">
 
-  <div className="col-span-1">
-    <label className="text-white text-[13px] font-medium mb-2 block">
-      Nombre completo
-    </label>
+  <input
+    type="text"
+    placeholder="Nombre completo"
+    value={formData.fullName}
+    onChange={(e) => onFormChange("fullName", e.target.value)}
+    className="w-full rounded-2xl border border-yellow-500/30 bg-black/40 px-4 py-3 text-white placeholder:text-white/30 focus:outline-none focus:border-yellow-400"
+  />
 
-    <input
-      type="text"
-      placeholder="Nombre completo"
-      value={formData.fullName}
-      onChange={(e) => onFormChange("fullName", e.target.value)}
-      className="w-full rounded-2xl border border-yellow-500/30 bg-black/40 px-4 py-4 text-[15px] text-white placeholder:text-white/30 focus:outline-none focus:border-yellow-400"
-    />
-  </div>
+  <input
+    type="text"
+    placeholder="Teléfono WhatsApp"
+    value={formData.phone}
+    onChange={(e) => onFormChange("phone", e.target.value)}
+    className="w-full rounded-2xl border border-yellow-500/30 bg-black/40 px-4 py-3 text-white placeholder:text-white/30 focus:outline-none focus:border-yellow-400"
+  />
 
-  <div className="col-span-1">
-    <label className="text-white text-[13px] font-medium mb-2 block">
-      Teléfono
-    </label>
+  <input
+    type="email"
+    placeholder="Correo electrónico"
+    value={formData.email}
+    onChange={(e) => onFormChange("email", e.target.value)}
+    className="w-full rounded-2xl border border-yellow-500/30 bg-black/40 px-4 py-3 text-white placeholder:text-white/30 focus:outline-none focus:border-yellow-400"
+  />
 
-    <input
-      type="text"
-      placeholder="Teléfono WhatsApp"
-      value={formData.phone}
-      onChange={(e) => onFormChange("phone", e.target.value)}
-      className="w-full rounded-2xl border border-yellow-500/30 bg-black/40 px-4 py-4 text-[15px] text-white placeholder:text-white/30 focus:outline-none focus:border-yellow-400"
-    />
-  </div>
-
-  <div className="col-span-1">
-    <label className="text-white text-[13px] font-medium mb-2 block">
-      Correo electrónico
-    </label>
-
-    <input
-      type="email"
-      placeholder="Correo electrónico"
-      value={formData.email}
-      onChange={(e) => onFormChange("email", e.target.value)}
-      className="w-full rounded-2xl border border-yellow-500/30 bg-black/40 px-4 py-4 text-[15px] text-white placeholder:text-white/30 focus:outline-none focus:border-yellow-400"
-    />
-  </div>
-
-  <div className="col-span-1">
-    <label className="text-white text-[13px] font-medium mb-2 block">
-      Ciudad
-    </label>
-
-    <input
-      type="text"
-      placeholder="Ciudad"
-      value={formData.city}
-      onChange={(e) => onFormChange("city", e.target.value)}
-      className="w-full rounded-2xl border border-yellow-500/30 bg-black/40 px-4 py-4 text-[15px] text-white placeholder:text-white/30 focus:outline-none focus:border-yellow-400"
-    />
-  </div>
-
-  <div className="col-span-2">
-    <label className="text-white text-[13px] font-medium mb-2 block">
-      Tipo de cita
-    </label>
-
-    <select
-      value={selectedTramite}
-      onChange={(e) => onSelectTramite(e.target.value)}
-      className="w-full rounded-2xl border border-yellow-500/30 bg-black/40 px-4 py-4 text-[15px] text-white focus:outline-none focus:border-yellow-400"
+  <input
+    type="text"
+    placeholder="Ciudad"
+    value={formData.city}
+    onChange={(e) => onFormChange("city", e.target.value)}
+    className="w-full rounded-2xl border border-yellow-500/30 bg-black/40 px-4 py-3 text-white placeholder:text-white/30 focus:outline-none focus:border-yellow-400"
+  />
+<select
+  value={selectedTramite}
+  onChange={(e) => onSelectTramite(e.target.value)}
+  className="w-full rounded-2xl border border-yellow-500/30 bg-black/40 px-4 py-3 text-white focus:outline-none focus:border-yellow-400"
+>
+  {tramites.map((tramite) => (
+    <option
+      key={tramite.value}
+      value={tramite.value}
+      className="bg-black text-white"
     >
-      {tramites.map((tramite) => (
-        <option
-          key={tramite.value}
-          value={tramite.value}
-          className="bg-black text-white"
-        >
-          {tramite.label}
-        </option>
-      ))}
-    </select>
-  </div>
-
+      {tramite.label}
+    </option>
+  ))}
+</select>
 </div>
-<div className="flex items-start justify-between mb-4">
-  <div>
+<div className="flex items-start justify-between mb-4 pt-2">
+      <div>
    <p className="text-white text-[15px] font-bold">
   {language === "ma"
     ? "حجز الموعد"
@@ -382,7 +348,7 @@ className="flex-1 flex flex-col overflow-hidden bg-transparent"
     </div>
 
   </div>
-
+</div>
   
 
             {hasRealAppointment && (
