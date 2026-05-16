@@ -428,12 +428,13 @@ const savedText =
 
     <div className="flex items-start justify-between mb-2">
       <div>
-        <p className="text-white text-[15px] font-bold">
-          {language === "ma"
-            ? "حجز الموعد"
-            : language === "en"
-            ? "Reserve your appointment"
-        </p>
+   <p className="text-white text-[15px] font-bold">
+  {language === "ma"
+    ? "حجز الموعد"
+    : language === "en"
+    ? "Reserve your appointment"
+    : "Reserva tu cita"}
+</p>
 
         <span className="inline-flex mt-1 rounded-full bg-yellow-500 px-2 py-0.5 text-[9px] font-bold uppercase text-black">
           Premium
