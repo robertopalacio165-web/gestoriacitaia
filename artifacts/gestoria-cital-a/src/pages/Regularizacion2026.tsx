@@ -2250,98 +2250,170 @@ setTimeout(() => {
           </div>
         </div>
     <div className="max-w-md mx-auto px-4">
-    {/* ✅ SOLO antes del pago */}
+        <div className="max-w-md mx-auto">
+  <motion.div
+    initial={{ opacity: 0, y: 15 }}
+    animate={{ opacity: 1, y: 0 }}
+    className="rounded-2xl overflow-hidden border border-[#1e293b] bg-[#071224] shadow-2xl"
+  >
+    <div className="relative">
+
+      <video
+        autoPlay
+        muted
+        loop
+        playsInline
+        poster={`${import.meta.env.BASE_URL}images/avatar-mohamed.png`}
+   className="w-full h-[270px] object-cover"
+      >
+        <source
+          src="/mohamed-extranjeria.mp4.mp4"
+          type="video/mp4"
+        />
+      </video>
+
+      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+<div className="absolute top-4 right-4 flex items-center gap-2">
+  <button
+    type="button"
+    className="w-11 h-11 rounded-full bg-black/45 backdrop-blur-md flex items-center justify-center text-white border border-white/10"
+  >
+    <Bell className="w-5 h-5" />
+  </button>
+
+  <button
+    type="button"
+    className="w-11 h-11 rounded-full bg-black/45 backdrop-blur-md flex items-center justify-center text-white border border-white/10"
+  >
+    <Volume2 className="w-5 h-5" />
+  </button>
+</div>
+
+
+      <div className="absolute top-4 left-4 bg-black/60 backdrop-blur-md border border-green-500/30 px-3 py-1 rounded-full flex items-center gap-2 text-sm">
+        <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+        En línea
+      </div>
+
+      <div className="absolute bottom-5 right-4 text-right">
+        <h2 className="text-2xl font-bold text-white">
+          Mohamed
+        </h2>
+
+        <p className="text-sm text-gray-200">
+          Especialista en Extranjería
+        </p>
+      </div>
+
+    </div>
+  </motion.div>
+</div>
+ 
+
+          </div>
+<div className="mt-2 max-w-md mx-auto">
+
+{/* ✅ ANTES DEL PAGO */}
 {!paymentCompleted && (
-  <div className="max-w-md mx-auto">
-    <motion.div
-      initial={{ opacity: 0, y: 15 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="rounded-2xl overflow-hidden border border-[#1e293b] bg-[#071224] shadow-2xl"
-    >
-      <div className="relative">
 
-        <video
-          autoPlay
-          muted
-          loop
-          playsInline
-          poster={`${import.meta.env.BASE_URL}images/avatar-mohamed.png`}
-          className="w-full h-[270px] object-cover"
-        >
-          <source
-            src="/mohamed-extranjeria.mp4.mp4"
-            type="video/mp4"
-          />
-        </video>
+ <div className="p-3">
 
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+<div className="relative overflow-hidden rounded-2xl border border-yellow-500/30 bg-gradient-to-br from-[#1a1200] via-[#0b0b0b] to-[#1a1200] p-3 max-w-[430px] mx-auto">
+      <div className="flex items-center justify-between mb-3">
 
-        <div className="absolute top-4 left-4 bg-black/60 backdrop-blur-md border border-green-500/30 px-3 py-1 rounded-full flex items-center gap-2 text-sm">
-          <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-          En línea
+        <div>
+          <p className="text-white font-bold text-lg">
+            Desbloquea a Mohamed
+          </p>
+
+          <span className="inline-flex mt-1 px-2 py-1 rounded-full bg-yellow-500 text-black text-[10px] font-bold">
+            PREMIUM
+          </span>
         </div>
 
-        <div className="absolute bottom-5 right-4 text-right">
-          <h2 className="text-2xl font-bold text-white">
-            Mohamed
-          </h2>
+        <div className="text-right">
+  <p className="text-xl font-black text-yellow-400 leading-none">
+    14,99€
+          </p>
 
-          <p className="text-sm text-gray-200">
-            Especialista en Extranjería
+          <p className="text-white/60 text-xs">
+            Acceso completo
           </p>
         </div>
 
       </div>
-    </motion.div>
+
+ <p className="text-white/70 text-[13px] leading-relaxed mb-3">
+        Acceso ilimitado a Mohamed IA, videollamada realtime,
+        análisis de documentos y generación automática del expediente.
+      </p>
+
+     <button
+  onClick={handleStripePayment}
+  type="button"
+className="w-[84%] mx-auto flex items-center justify-center h-8 rounded-full text-black font-extrabold text-[13px] bg-gradient-to-b from-[#ffe27a] via-[#ffd400] to-[#ffbf00] border border-[#fff3b0] shadow-[0_4px_14px_rgba(255,215,0,0.35)]"
+       >
+  🔓 Desbloquear ahora
+</button>
+
+  <div className="mt-2 flex items-center justify-center gap-2 flex-wrap">
+
+   <div className="h-8 px-2 rounded-lg bg-white flex items-center justify-center text-blue-700 font-black text-[10px]">
+  VISA
+</div>
+
+<div className="h-8 px-2 rounded-lg bg-white flex items-center justify-center text-red-500 font-black text-[10px]">
+  Mastercard
+</div>
+
+<div className="h-8 px-2 rounded-lg bg-white flex items-center justify-center text-black font-black text-[10px]">
+   Pay
+</div>
+
+<div className="h-8 px-2 rounded-lg bg-white flex items-center justify-center text-black font-black text-[10px]">
+  G Pay
+</div>
+
+      </div>
+
+    </div>
+
+    <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
+
+      <div className="flex items-center gap-2 mb-3">
+
+        <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+
+        <p className="text-white font-bold">
+          Mohamed IA
+        </p>
+
+      </div>
+
+      <p className="text-white/80 text-sm leading-relaxed">
+        Especialista profesional en extranjería española para marroquíes en España.
+        Pregunta sobre residencia, papeles, policía, nacionalidad, arraigo,
+        trabajo, estudios y cualquier problema legal relacionado con inmigración.
+      </p>
+
+    </div>
+
   </div>
+
 )}
- 
 
-          </div>
-
-
-
-
-
-
-</div>
-</div>
-
-<div className="mt-2 max-w-md mx-auto">
-
-{/* ✅ SOLO después del pago */}
+{/* ✅ DESPUÉS DEL PAGO */}
+  
 {paymentCompleted && (
-
-  <div className="mt-4 space-y-4">
-
-    <button
-      onClick={startListening}
-      className="w-full rounded-2xl bg-green-600 hover:bg-green-700 text-white py-4 font-bold"
-    >
-      🎤 Hablar con Mohamed
-    </button>
-
-    <button
-      onClick={handleGeneralUpload}
-      className="w-full rounded-2xl bg-blue-600 hover:bg-blue-700 text-white py-4 font-bold"
-    >
-      📄 Subir documentos
-    </button>
-
-    <button
-      onClick={handleVerifyAll}
-      className="w-full rounded-2xl bg-yellow-500 hover:bg-yellow-600 text-black py-4 font-bold"
-    >
-      ✅ Verificar documentos
-    </button>
-
-  </div>
-
+  <>
+    {/* AQUÍ SEGUIRÁ TODO TU REALTIME ACTUAL */}
+  </>
 )}
+
+
 
 </div>
 
-<audio ref={remoteAudioRef}
 <audio ref={remoteAudioRef} autoPlay playsInline className="hidden" />
       </main>
     </div>
