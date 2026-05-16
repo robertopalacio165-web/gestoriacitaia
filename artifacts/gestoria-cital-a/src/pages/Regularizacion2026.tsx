@@ -2298,13 +2298,20 @@ setTimeout(() => {
  
 
           </div>
+
+
+
+
+
+
+</div>
+</div>
+
 <div className="mt-2 max-w-md mx-auto">
 
-{/* ✅ ANTES DEL PAGO */}
-{!paymentCompleted && (
-  )}
-{/* ✅ DESPUÉS DEL PAGO */}
+{/* ✅ SOLO después del pago */}
 {paymentCompleted && (
+
   <div className="mt-4 space-y-4">
 
     <button
@@ -2329,105 +2336,12 @@ setTimeout(() => {
     </button>
 
   </div>
-)}
- <div className="p-3">
-
-<div className="relative overflow-hidden rounded-2xl border border-yellow-500/30 bg-gradient-to-br from-[#1a1200] via-[#0b0b0b] to-[#1a1200] p-3 max-w-[430px] mx-auto">
-      <div className="flex items-center justify-between mb-3">
-
-        <div>
-          <p className="text-white font-bold text-lg">
-            Desbloquea a Mohamed
-          </p>
-
-          <span className="inline-flex mt-1 px-2 py-1 rounded-full bg-yellow-500 text-black text-[10px] font-bold">
-            PREMIUM
-          </span>
-        </div>
-
-        <div className="text-right">
-  <p className="text-xl font-black text-yellow-400 leading-none">
-    14,99€
-          </p>
-
-          <p className="text-white/60 text-xs">
-            Acceso completo
-          </p>
-        </div>
-
-      </div>
-
- <p className="text-white/70 text-[13px] leading-relaxed mb-3">
-        Acceso ilimitado a Mohamed IA, videollamada realtime,
-        análisis de documentos y generación automática del expediente.
-      </p>
-
-     <button
-  onClick={handleStripePayment}
-  type="button"
-className="w-[84%] mx-auto flex items-center justify-center h-8 rounded-full text-black font-extrabold text-[13px] bg-gradient-to-b from-[#ffe27a] via-[#ffd400] to-[#ffbf00] border border-[#fff3b0] shadow-[0_4px_14px_rgba(255,215,0,0.35)]"
-       >
-  🔓 Desbloquear ahora
-</button>
-
-  <div className="mt-2 flex items-center justify-center gap-2 flex-wrap">
-
-   <div className="h-8 px-2 rounded-lg bg-white flex items-center justify-center text-blue-700 font-black text-[10px]">
-  VISA
-</div>
-
-<div className="h-8 px-2 rounded-lg bg-white flex items-center justify-center text-red-500 font-black text-[10px]">
-  Mastercard
-</div>
-
-<div className="h-8 px-2 rounded-lg bg-white flex items-center justify-center text-black font-black text-[10px]">
-   Pay
-</div>
-
-<div className="h-8 px-2 rounded-lg bg-white flex items-center justify-center text-black font-black text-[10px]">
-  G Pay
-</div>
-
-      </div>
-
-    </div>
-
-    <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
-
-      <div className="flex items-center gap-2 mb-3">
-
-        <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-
-        <p className="text-white font-bold">
-          Mohamed IA
-        </p>
-
-      </div>
-
-      <p className="text-white/80 text-sm leading-relaxed">
-        Especialista profesional en extranjería española para marroquíes en España.
-        Pregunta sobre residencia, papeles, policía, nacionalidad, arraigo,
-        trabajo, estudios y cualquier problema legal relacionado con inmigración.
-      </p>
-
-    </div>
-
-  </div>
 
 )}
 
-{/* ✅ DESPUÉS DEL PAGO */}
-  
-{paymentCompleted && (
-  <>
-    {/* AQUÍ SEGUIRÁ TODO TU REALTIME ACTUAL */}
-  </>
-)}
-
-
-
 </div>
 
+<audio ref={remoteAudioRef}
 <audio ref={remoteAudioRef} autoPlay playsInline className="hidden" />
       </main>
     </div>
