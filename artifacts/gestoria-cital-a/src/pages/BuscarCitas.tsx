@@ -166,32 +166,11 @@ const savedText =
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay: 0.15 }}
-      className="flex-1 flex flex-col rounded-2xl overflow-hidden border border-gray-300 shadow-2xl bg-white min-h-[400px]"
-    >
-      <div className="bg-[#f1f3f4] border-b border-gray-200 px-3 py-2 flex items-center gap-2 shrink-0">
-        <div className="flex items-center gap-1.5 bg-white rounded-full px-3 py-1.5 flex-1 border border-gray-200 shadow-sm min-w-0">
-          <Shield className="w-3 h-3 text-green-600 shrink-0" />
-          <span className="text-xs text-gray-600 font-medium truncate">{url}</span>
-        </div>
+className="flex-1 flex flex-col rounded-2xl overflow-hidden border border-gray-300 shadow-2xl bg-transparent min-h-[400px]"
+      >
+   
 
-        <button
-          className="w-7 h-7 flex items-center justify-center text-gray-500 hover:bg-gray-200 rounded shrink-0"
-          type="button"
-          onClick={onRefresh}
-        >
-          <RefreshCw className="w-3.5 h-3.5" />
-        </button>
-
-        <div className="w-6 h-6 rounded-full overflow-hidden border-2 border-primary shrink-0">
-          <img
-            src={avatarImage}
-            alt="Sara"
-            className="w-full h-full object-cover object-top"
-          />
-        </div>
-      </div>
-
-      <div className="flex-1 overflow-y-auto bg-white p-4 sm:p-6 text-black">
+   <div className="flex-1 overflow-y-auto bg-transparent p-4 sm:p-6 text-black">
         {!confirmed ? (
           <>
             <div className="flex items-center justify-center gap-3 mb-5 pb-4 border-b border-yellow-500/30">
