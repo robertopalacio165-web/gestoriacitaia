@@ -1793,39 +1793,7 @@ province: formData.province,
               </motion.button>
             )}
 
-            <div className="lg:hidden glass-panel-heavy border border-white/10 rounded-2xl py-2.5 px-4 flex items-center justify-between">
-              <button
-                onClick={() => {
-                  setShowDocs(true);
-                  setShowForms(false);
-                }}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-colors ${
-                  showDocs
-                    ? "bg-primary/20 border-primary/40 text-primary"
-                    : "bg-white/5 border-white/10 text-white/80"
-                }`}
-                type="button"
-              >
-                <FileText className="w-4 h-4 text-primary" />
-                Documentos
-              </button>
-
-              <button
-                onClick={() => {
-                  setShowForms(true);
-                  setShowDocs(false);
-                }}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-colors ${
-                  showForms
-                    ? "bg-secondary/20 border-secondary/40 text-secondary"
-                    : "bg-white/5 border-white/10 text-white/80"
-                }`}
-                type="button"
-              >
-                <Settings className="w-4 h-4 text-secondary" />
-                Formularios
-              </button>
-            </div>
+        
           </motion.div>
 
           <OfficialBrowserBox
