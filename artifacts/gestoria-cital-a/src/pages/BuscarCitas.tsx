@@ -416,7 +416,7 @@ function OfficialBrowserBox({
 
     <div className="flex items-start justify-between mb-3">
       <div>
-        <p className="text-white text-[18px] font-bold">
+        <p className="text-white text-[16px] font-bold">
           Reserva tu cita
         </p>
 
@@ -426,7 +426,7 @@ function OfficialBrowserBox({
       </div>
 
       <div className="text-right">
-        <p className="text-yellow-400 text-[26px] font-black leading-none">
+        <p className="text-yellow-400 text-[22px] font-black leading-none">
           5€
         </p>
 
@@ -443,7 +443,7 @@ function OfficialBrowserBox({
     <button
       type="button"
       onClick={onFormSubmit}
-      className="w-full rounded-full bg-gradient-to-r from-yellow-400 via-yellow-500 to-amber-500 px-5 py-4 text-[18px] font-black text-black shadow-[0_0_30px_rgba(255,215,0,0.35)] transition-all hover:scale-[1.01]"
+ className="w-full rounded-full bg-gradient-to-r from-yellow-400 via-yellow-500 to-amber-500 px-4 py-3 text-[15px]  font-black text-black shadow-[0_0_30px_rgba(255,215,0,0.35)] transition-all hover:scale-[1.01]"
     >
       🔐 Reservar y empezar búsqueda
     </button>
