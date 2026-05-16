@@ -1993,8 +1993,13 @@ province: formData.province,
           )}
         </AnimatePresence>
 
-        <audio ref={remoteAudioRef} autoPlay playsInline className="hidden" />
-      </main>
-    </div>
-  );
-}
+       </motion.div>
+)}
+</AnimatePresence>
+
+<audio
+  ref={remoteAudioRef}
+  autoPlay
+  playsInline
+  className="hidden"
+/>
