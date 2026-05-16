@@ -1523,61 +1523,7 @@ province: formData.province,
               </div>
             </div>
 
-            <div className="glass-panel-heavy border border-white/10 rounded-2xl overflow-hidden">
-              <div className="p-4 border-b border-white/10">
-                <button
-                  onClick={isListening ? stopListening : startListening}
-                  disabled={!voiceSupported}
-                  className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary hover:bg-primary/90 disabled:opacity-50 text-primary-foreground font-bold text-sm px-4 py-3 transition-colors"
-                  type="button"
-                >
-                  {isListening ? (
-                    <>
-                      <MicOff className="w-4 h-4" />
-                      {ui.stopButton}
-                    </>
-                  ) : (
-                    <>
-                      <Mic className="w-4 h-4" />
-                      {ui.voiceButton}
-                    </>
-                  )}
-                </button>
-
-                {!voiceSupported && (
-                  <p className="mt-2 text-xs text-red-400 text-center">
-                    {ui.openRealtimeError}
-                  </p>
-                )}
-
-                {isListening && (
-                  <p className="mt-2 text-xs text-primary text-center">
-                    {ui.listening}
-                  </p>
-                )}
-              </div>
-
-              <div className="p-4 space-y-4">
-             
-
-                {lastUserTranscript ? (
-                  <div>
-                    <p className="text-[11px] text-white/50 mb-1">
-                      {ui.yourVoice}
-                    </p>
-                    <div className="rounded-xl bg-primary/10 border border-primary/20 px-3 py-3 text-sm text-white leading-relaxed">
-                      {lastUserTranscript}
-                    </div>
-                  </div>
-                ) : null}
-
-                {waitingSara && (
-                  <div className="rounded-xl bg-white/5 border border-white/10 px-3 py-3 text-sm text-white/70">
-                    ...
-                  </div>
-                )}
-              </div>
-            </div>
+         
 
        
             {step === 2 && !confirmed && hasRealAppointment && (
