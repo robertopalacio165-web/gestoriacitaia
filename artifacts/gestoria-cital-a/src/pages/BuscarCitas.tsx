@@ -166,31 +166,14 @@ const savedText =
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay: 0.15 }}
-className="flex-1 flex flex-col rounded-2xl overflow-hidden border border-gray-300 shadow-2xl bg-transparent min-h-[400px]"
+className="flex-1 flex flex-col overflow-hidden bg-transparent"
       >
    
 
    <div className="flex-1 overflow-y-auto bg-transparent p-4 sm:p-6 text-black">
         {!confirmed ? (
           <>
-            <div className="flex items-center justify-center gap-3 mb-5 pb-4 border-b border-yellow-500/30">
-
-  <div className="text-center">
-    <p className="text-[10px] uppercase tracking-wide text-gray-400">
-      extranjería
-    </p>
-
-    <h2 className="text-[#003366] font-black text-[24px] leading-none">
-      CITA PREVIA
-    </h2>
-  </div>
-
-  <img
-    src="https://upload.wikimedia.org/wikipedia/commons/9/9a/Flag_of_Spain.svg"
-    alt="España"
-    className="w-16 rounded-md border border-yellow-500/30 shadow-sm"
-  />
-</div>
+     
           
 
 
