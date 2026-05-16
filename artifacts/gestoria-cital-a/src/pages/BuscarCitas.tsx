@@ -2014,10 +2014,6 @@ province: formData.province,
 </div>
 </div>
 
-  </div>
-
-
-
 <audio
   ref={remoteAudioRef}
   autoPlay
