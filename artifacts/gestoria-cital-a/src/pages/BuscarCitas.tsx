@@ -493,7 +493,7 @@ className="flex-1 flex flex-col overflow-hidden bg-transparent"
                 <p className="text-sm text-gray-700">Localizador: {finalLocator}</p>
               </div>
             )}
-          </>
+      
         ) : (
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
@@ -562,7 +562,7 @@ className="flex-1 flex flex-col overflow-hidden bg-transparent"
               ) : null}
             </div>
           </motion.div>
-        )}
+        
       </div>
     </motion.div>
   );
