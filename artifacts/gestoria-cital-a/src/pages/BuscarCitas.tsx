@@ -2008,15 +2008,24 @@ province: formData.province,
         Mastercard
       </div>
 
-      <div className="bg-white rounded-full px-3 py-1 text-xs font-bold text-black">
-        Apple Pay
-      </div>
+     <div className="bg-white rounded-full px-3 py-1 text-xs font-bold text-black">
+  Apple Pay
+</div>
 
     </div>
+
+  </div>
+
 </div>
-     </div>
-        <audio ref={remoteAudioRef} autoPlay playsInline className="hidden" />
-      </main>
-    </div>
-  );
+
+<audio
+  ref={remoteAudioRef}
+  autoPlay
+  playsInline
+  className="hidden"
+/>
+
+</main>
+
+);
 }
