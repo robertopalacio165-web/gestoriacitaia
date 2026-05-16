@@ -220,7 +220,7 @@ className="flex-1 flex flex-col overflow-hidden bg-transparent"
   cuando exista una cita real.
 </p>
 <div className="w-full mt-10 pt-6 border-t border-yellow-500/20">
-<div className="grid grid-cols-2 gap-4 mb-6">
+  <div className="grid grid-cols-2 gap-4 mb-6">
   <input
     type="text"
 
