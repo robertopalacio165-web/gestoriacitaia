@@ -2011,7 +2011,7 @@ province: formData.province,
   <div className="bg-white rounded-full px-3 py-1 text-xs font-bold text-black">
     Apple Pay
   </div>
-
+</div>
 </div>
 
   </div>
