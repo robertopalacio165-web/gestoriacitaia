@@ -1723,27 +1723,39 @@ province: formData.province,
               </div>
             </div>
 
-       <div className="rounded-3xl border border-yellow-500/40 bg-black p-5 shadow-[0_0_30px_rgba(255,215,0,0.10)]">
-  <div className="flex flex-col items-center justify-center text-center">
+            <div className="glass-panel-heavy border border-white/10 rounded-2xl overflow-hidden">
+              <div className="p-4 border-b border-white/10">
+                <button
+                  onClick={isListening ? stopListening : startListening}
+                  disabled={!voiceSupported}
+                  className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary hover:bg-primary/90 disabled:opacity-50 text-primary-foreground font-bold text-sm px-4 py-3 transition-colors"
+                  type="button"
+                >
+                  {isListening ? (
+                    <>
+                      <MicOff className="w-4 h-4" />
+                      {ui.stopButton}
+                    </>
+                  ) : (
+                    <>
+                      <Mic className="w-4 h-4" />
+                      {ui.voiceButton}
+                    </>
+                  )}
+                </button>
 
-    <div className="w-14 h-14 rounded-full bg-green-500/10 border border-green-500/30 flex items-center justify-center mb-4">
-      <Bell className="w-7 h-7 text-green-400" />
-    </div>
+                {!voiceSupported && (
+                  <p className="mt-2 text-xs text-red-400 text-center">
+                    {ui.openRealtimeError}
+                  </p>
+                )}
 
-    <h3 className="text-white text-[20px] font-bold mb-2">
-      {language === "ma"
-        ? "رسائل سارة"
-        : language === "en"
-        ? "Sara messages"
-        : "Mensajes de Sara"}
-    </h3>
-
-    <p className="text-gray-400 text-sm leading-relaxed max-w-[280px]">
-      {latestAgentMessage}
-    </p>
-
-  </div>
-</div>
+                {isListening && (
+                  <p className="mt-2 text-xs text-primary text-center">
+                    {ui.listening}
+                  </p>
+                )}
+              </div>
 
               <div className="p-4 space-y-4">
                 <div>
@@ -1772,7 +1784,7 @@ province: formData.province,
                   </div>
                 )}
               </div>
-
+            </div>
 
             <div className="glass-panel-heavy border border-primary/25 rounded-2xl rounded-tl-sm p-3 flex gap-3 shadow-lg relative overflow-hidden">
               <div className="relative shrink-0">
@@ -1805,22 +1817,40 @@ province: formData.province,
               </motion.button>
             )}
 
+            <div className="lg:hidden glass-panel-heavy border border-white/10 rounded-2xl py-2.5 px-4 flex items-center justify-between">
+              <button
+                onClick={() => {
+                  setShowDocs(true);
+                  setShowForms(false);
+                }}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-colors ${
+                  showDocs
+                    ? "bg-primary/20 border-primary/40 text-primary"
+                    : "bg-white/5 border-white/10 text-white/80"
+                }`}
+                type="button"
+              >
+                <FileText className="w-4 h-4 text-primary" />
+                Documentos
+              </button>
 
-
-    <h3 className="text-white text-[20px] font-bold mb-2">
-      {language === "ma"
-        ? "رسائل سارة"
-        : language === "en"
-        ? "Sara messages"
-        : "Mensajes de Sara"}
-    </h3>
-
-    <p className="text-gray-400 text-sm leading-relaxed max-w-[280px]">
-      {latestAgentMessage}
-    </p>
-
-  </div>
-</div> 
+              <button
+                onClick={() => {
+                  setShowForms(true);
+                  setShowDocs(false);
+                }}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-colors ${
+                  showForms
+                    ? "bg-secondary/20 border-secondary/40 text-secondary"
+                    : "bg-white/5 border-white/10 text-white/80"
+                }`}
+                type="button"
+              >
+                <Settings className="w-4 h-4 text-secondary" />
+                Formularios
+              </button>
+            </div>
+          </motion.div>
 
           <OfficialBrowserBox
             language={language}
