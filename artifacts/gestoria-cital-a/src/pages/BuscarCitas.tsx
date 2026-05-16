@@ -1851,179 +1851,219 @@ province: formData.province,
               </button>
             </div>
           </motion.div>
-<div className="flex-1 max-w-md mx-auto w-full">
 
-  {/* MENSAJES */}
-  <div className="mt-4 rounded-[28px] border border-yellow-500/30 bg-[#050816] p-4 shadow-[0_0_30px_rgba(255,215,0,0.08)]">
+          <OfficialBrowserBox
+            language={language}
+            avatarImage={`${import.meta.env.BASE_URL}images/avatar-sara.png`}
+            title={
+              cameFromConfirmationLink
+                ? "Confirmación de cita con Sara"
+                : "Panel oficial integrado"
+            }
+            url={officialUrl}
+            selectedTramiteLabel={selectedTramiteLabel}
+            profileLoading={profileLoading}
+            ui={ui}
+            confirmed={confirmed}
+            appointmentData={appointmentData}
+            finalDate={finalDate}
+            finalTime={finalTime}
+            finalOffice={finalOffice}
+            finalLocator={finalLocator}
+            finalPdfUrl={finalPdfUrl}
+            hasRealAppointment={hasRealAppointment}
+            onRefresh={() => {
+              toast({
+                title: "Panel actualizado",
+              });
+            }}
+            onOpenOfficial={() => {
+              window.open(
+                "https://icp.administracionelectronica.gob.es/icpplus/index.html",
+                "_blank",
+                "noopener,noreferrer"
+              );
+            }}
+            onSelectTramite={handleTramiteClick}
+            tramites={TRAMITES}
+            selectedTramite={selectedTramite}
+            onAceptar={handleAceptar}
+            isPending={scheduleMutation.isPending}
+            cameFromConfirmationLink={cameFromConfirmationLink}
+            formData={formData}
+            onFormChange={handleFormChange}
+            onFormSubmit={handleFormSubmit}
+            formReady={formReady}
+          />
+        </div>
 
-    <div className="flex items-center gap-2 mb-3">
-      <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-      <p className="text-green-400 text-sm font-bold">
-        Sara conectada
-      </p>
+        <div className="hidden lg:block sticky bottom-0 z-30 glass-panel-heavy border-t border-white/10 py-3">
+          <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setShowDocs(true);
+                  setShowForms(false);
+                }}
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold border transition-colors ${
+                  showDocs
+                    ? "bg-primary/20 border-primary/40 text-primary"
+                    : "bg-white/5 border-white/10 text-white/80 hover:bg-white/10"
+                }`}
+                type="button"
+              >
+                <FileText className="w-4 h-4 text-primary" />
+                Documentos
+              </button>
+
+              <button
+                onClick={() => {
+                  setShowForms(true);
+                  setShowDocs(false);
+                }}
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold border transition-colors ${
+                  showForms
+                    ? "bg-secondary/20 border-secondary/40 text-secondary"
+                    : "bg-white/5 border-white/10 text-white/80 hover:bg-white/10"
+                }`}
+                type="button"
+              >
+                <Settings className="w-4 h-4 text-secondary" />
+                Formularios
+              </button>
+            </div>
+
+            <div className="px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-[10px] text-white/60">
+              © 2026 GestoriaCitaIA
+            </div>
+          </div>
+        </div>
+
+        <AnimatePresence>
+          {showDocs && (
+            <motion.div
+              initial={{ opacity: 0, y: 40 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 40 }}
+              className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 w-full max-w-md px-4"
+            >
+              <div
+                className="rounded-2xl border border-white/15 shadow-2xl overflow-hidden"
+                style={{ background: "#1a2236" }}
+              >
+                <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
+                  <div className="flex items-center gap-2">
+                    <FileText className="w-4 h-4 text-primary" />
+                    <span className="font-bold text-sm text-white">
+                      Documentos requeridos
+                    </span>
+                  </div>
+
+                  <button
+                    onClick={() => setShowDocs(false)}
+                    className="w-6 h-6 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/60 text-xs"
+                    type="button"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                <div className="px-5 py-4 space-y-2.5 max-h-72 overflow-y-auto">
+                  {docsForSelectedTramite.map((doc, i) => (
+                    <div key={i} className="flex items-center gap-3">
+                      <span
+                        className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 text-xs font-bold ${
+                          doc.estado === "ok"
+                            ? "bg-green-500/20 text-green-400"
+                            : doc.estado === "warn"
+                            ? "bg-yellow-500/20 text-yellow-400"
+                            : "bg-red-500/20 text-red-400"
+                        }`}
+                      >
+                        {doc.estado === "ok"
+                          ? "✓"
+                          : doc.estado === "warn"
+                          ? "!"
+                          : "✗"}
+                      </span>
+
+                      <span className="text-sm text-white/90">{doc.nombre}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <AnimatePresence>
+          {showForms && (
+            <motion.div
+              initial={{ opacity: 0, y: 40 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 40 }}
+              className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 w-full max-w-md px-4"
+            >
+              <div
+                className="rounded-2xl border border-white/15 shadow-2xl overflow-hidden"
+                style={{ background: "#1a2236" }}
+              >
+                <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
+                  <div className="flex items-center gap-2">
+                    <Settings className="w-4 h-4 text-secondary" />
+                    <span className="font-bold text-sm text-white">
+                      Formularios oficiales
+                    </span>
+                  </div>
+
+                  <button
+                    onClick={() => setShowForms(false)}
+                    className="w-6 h-6 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/60 text-xs"
+                    type="button"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                <div className="px-5 py-4 space-y-3">
+                  {formsForSelectedTramite.map((form, i) => (
+                    <a
+                      key={i}
+                      href={form.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-3 p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-colors group"
+                    >
+                      <div className="w-9 h-9 rounded-lg bg-primary/15 border border-primary/30 flex items-center justify-center shrink-0">
+                        <FileText className="w-4 h-4 text-primary" />
+                      </div>
+
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-bold text-primary">
+                          {form.codigo}
+                        </p>
+                        <p className="text-sm text-white/80 truncate">
+                          {form.nombre}
+                        </p>
+                      </div>
+
+                      <span className="text-[10px] font-semibold text-white/40 group-hover:text-primary transition-colors shrink-0">
+                        PDF ↓
+                      </span>
+                    </a>
+                  ))}
+
+                  <p className="text-[10px] text-white/30 text-center pt-1">
+                    {ui.sourceLabel}
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <audio ref={remoteAudioRef} autoPlay playsInline className="hidden" />
+      </main>
     </div>
-
-    <div className="rounded-2xl bg-[#0b1020] border border-yellow-500/20 p-4">
-      <p className="text-white text-sm leading-relaxed">
-        {latestAgentMessage}
-      </p>
-    </div>
-
-    {lastUserTranscript && (
-      <div className="rounded-2xl bg-black border border-white/10 p-4 mt-3">
-        <p className="text-gray-300 text-sm">
-          {lastUserTranscript}
-        </p>
-      </div>
-    )}
-
-  </div>
-
-  {/* FORMULARIO */}
-  <div className="mt-4 rounded-[28px] border border-yellow-500/30 bg-[#050816] p-5 shadow-[0_0_30px_rgba(255,215,0,0.08)]">
-
-    <h2 className="text-yellow-400 font-black text-[24px] mb-2">
-      Panel oficial integrado
-    </h2>
-
-    <p className="text-gray-400 text-sm mb-5">
-      Rellena tus datos y Sara continuará contigo automáticamente.
-    </p>
-
-    <div className="grid grid-cols-2 gap-3">
-
-      <input
-        className="bg-black border border-yellow-500/20 rounded-2xl px-4 py-3 text-white text-sm"
-        placeholder="Nombre completo"
-        value={formData.fullName}
-        onChange={(e) => handleFormChange("fullName", e.target.value)}
-      />
-
-      <input
-        className="bg-black border border-yellow-500/20 rounded-2xl px-4 py-3 text-white text-sm"
-        placeholder="Teléfono"
-        value={formData.phone}
-        onChange={(e) => handleFormChange("phone", e.target.value)}
-      />
-
-      <input
-        className="bg-black border border-yellow-500/20 rounded-2xl px-4 py-3 text-white text-sm"
-        placeholder="Email"
-        value={formData.email}
-        onChange={(e) => handleFormChange("email", e.target.value)}
-      />
-
-      <input
-        className="bg-black border border-yellow-500/20 rounded-2xl px-4 py-3 text-white text-sm"
-        placeholder="NIE"
-        value={formData.nie}
-        onChange={(e) => handleFormChange("nie", e.target.value)}
-      />
-
-      <input
-        className="bg-black border border-yellow-500/20 rounded-2xl px-4 py-3 text-white text-sm"
-        placeholder="Pasaporte"
-        value={formData.passport}
-        onChange={(e) => handleFormChange("passport", e.target.value)}
-      />
-
-      <input
-        className="bg-black border border-yellow-500/20 rounded-2xl px-4 py-3 text-white text-sm"
-        placeholder="Nacionalidad"
-        value={formData.nationality}
-        onChange={(e) => handleFormChange("nationality", e.target.value)}
-      />
-
-      <input
-        className="bg-black border border-yellow-500/20 rounded-2xl px-4 py-3 text-white text-sm"
-        placeholder="Ciudad"
-        value={formData.city}
-        onChange={(e) => handleFormChange("city", e.target.value)}
-      />
-
-      <input
-        className="bg-black border border-yellow-500/20 rounded-2xl px-4 py-3 text-white text-sm"
-        placeholder="Provincia"
-        value={formData.province}
-        onChange={(e) => handleFormChange("province", e.target.value)}
-      />
-
-    </div>
-
-    <select
-      className="w-full mt-3 bg-black border border-yellow-500/20 rounded-2xl px-4 py-3 text-white text-sm"
-      value={selectedTramite}
-      onChange={(e) => handleTramiteClick(e.target.value)}
-    >
-      {TRAMITES.map((item) => (
-        <option key={item.value} value={item.value}>
-          {item.label}
-        </option>
-      ))}
-    </select>
-
-  </div>
-
-  {/* PAGO */}
-  <div className="mt-4 rounded-[28px] border border-yellow-500/30 bg-black p-5 shadow-[0_0_30px_rgba(255,215,0,0.12)]">
-
-    <div className="flex items-start justify-between">
-
-      <div>
-        <h3 className="text-yellow-400 font-black text-[28px]">
-          Reserva tu cita
-        </h3>
-
-        <p className="text-gray-400 text-sm mt-1">
-          Sara empezará automáticamente la búsqueda
-        </p>
-      </div>
-
-      <div className="text-right">
-        <p className="text-yellow-400 font-black text-[38px] leading-none">
-          5€
-        </p>
-
-        <p className="text-yellow-300 text-xs">
-          Reserva inicial
-        </p>
-      </div>
-
-    </div>
-
-    <button
-      onClick={handleFormSubmit}
-      className="w-full mt-5 rounded-2xl bg-gradient-to-r from-yellow-400 to-yellow-600 py-4 text-black font-black text-lg shadow-[0_0_25px_rgba(255,215,0,0.3)]"
-    >
-      🔐 RESERVAR Y EMPEZAR BÚSQUEDA
-    </button>
-<div className="flex justify-center gap-2 mt-4">
-
-  <div className="bg-white rounded-full px-3 py-1 text-xs font-bold text-blue-700">
-    VISA
-  </div>
-
-  <div className="bg-white rounded-full px-3 py-1 text-xs font-bold text-red-600">
-    Mastercard
-  </div>
-
-  <div className="bg-white rounded-full px-3 py-1 text-xs font-bold text-black">
-    Apple Pay
-  </div>
-
-</div>
-
-</div>
-
-</div>
-
-<audio
-  ref={remoteAudioRef}
-  autoPlay
-  playsInline
-  className="hidden"
-/>
-
-</main>
   );
 }
