@@ -389,6 +389,17 @@ className="flex-1 flex flex-col overflow-hidden bg-transparent"
 
   </div>
 </div>
+  <div className="
+mt-4
+rounded-[28px]
+border-2
+border-yellow-500
+bg-gradient-to-b
+from-[#0b0b0b]
+to-[#050505]
+p-4
+shadow-[0_0_35px_rgba(255,200,0,0.18)]
+">
 <div className="flex items-start justify-between mb-4 pt-2">
       <div>
    <p className="text-white text-[15px] font-bold">
@@ -470,7 +481,7 @@ className="flex-1 flex flex-col overflow-hidden bg-transparent"
     </div>
 
   </div>
-
+</div>
   
 
             {hasRealAppointment && (
