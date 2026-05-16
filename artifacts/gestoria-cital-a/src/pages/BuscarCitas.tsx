@@ -212,12 +212,7 @@ const savedText =
     className="w-16 rounded-md border border-yellow-500/30 shadow-sm"
   />
 </div>
-            <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 mb-4">
-              <p className="text-sm font-semibold text-[#003366] mb-2">{title}</p>
-              <p className="text-xs text-gray-700 leading-relaxed">
-                {cameFromConfirmationLink ? confirmationIntro : formIntro}
-              </p>
-            </div>
+          
 
 
     <div className="mt-4">
