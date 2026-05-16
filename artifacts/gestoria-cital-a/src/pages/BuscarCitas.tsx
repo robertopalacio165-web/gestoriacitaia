@@ -1779,24 +1779,7 @@ province: formData.province,
               </div>
             </div>
 
-            <div className="glass-panel-heavy border border-primary/25 rounded-2xl rounded-tl-sm p-3 flex gap-3 shadow-lg relative overflow-hidden">
-              <div className="relative shrink-0">
-                <img
-                  src={`${import.meta.env.BASE_URL}images/avatar-sara.png`}
-                  className="w-9 h-9 rounded-full object-cover object-top border border-primary/40"
-                  alt="Sara"
-                />
-              </div>
-
-              <div className="flex-1 min-w-0">
-                <p className="text-[11px] text-white/90 leading-relaxed">
-                  {formReady
-                    ? `Hola, soy Sara. Voy a ayudarte con «${selectedTramiteLabel}» paso a paso.`
-                    : "Hola, soy Sara. Primero rellena tus datos y luego seguimos."}
-                </p>
-              </div>
-            </div>
-
+       
             {step === 2 && !confirmed && hasRealAppointment && (
               <motion.button
                 initial={{ opacity: 0, y: 10 }}
