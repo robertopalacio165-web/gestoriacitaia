@@ -337,12 +337,12 @@ function OfficialBrowserBox({
 
 {/* PREFERRED OFFICE */}
 <div>
- <label className="block text-xs font-bold text-gray-700 mb-1">
+<label className="block text-xs font-bold text-gray-700 mb-1">
   {language === "ma"
-    ? "المكتب المفضل"
+    ? "المكتب لي بغيتي (اختياري)"
     : language === "en"
-    ? "Preferred office"
-    : "Oficina preferida"}
+    ? "Preferred office (optional)"
+    : "Oficina preferida (opcional)"}
 </label>
 
   <input
