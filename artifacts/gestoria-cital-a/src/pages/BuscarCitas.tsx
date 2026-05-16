@@ -218,8 +218,8 @@ className="flex-1 flex flex-col overflow-hidden bg-transparent"
 </p>
 <div className="w-full">
 
-<div className="grid grid-cols-2 gap-3 mb-5 max-[480px]:grid-cols-1">
-    <div>
+<div className="grid grid-cols-2 gap-2 mb-5">
+  <div>
       <label className="block text-white text-[13px] mb-2">
         {language === "ma"
           ? "الاسم الكامل"
@@ -359,8 +359,7 @@ className="flex-1 flex flex-col overflow-hidden bg-transparent"
         <option value="Málaga">Málaga</option>
       </select>
     </div>
-
-    <div className="sm:col-span-2">
+<div className="col-span-2">
       <label className="block text-white text-[13px] mb-2">
         {language === "ma"
           ? "نوع الموعد"
