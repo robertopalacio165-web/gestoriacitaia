@@ -218,8 +218,7 @@ className="flex-1 flex flex-col overflow-hidden bg-transparent"
 </p>
 <div className="w-full">
 
-  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
-
+<div className="grid grid-cols-2 gap-3 mb-5 max-[480px]:grid-cols-1">
     <div>
       <label className="block text-white text-[13px] mb-2">
         {language === "ma"
