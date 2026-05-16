@@ -2313,84 +2313,93 @@ setTimeout(() => {
           </div>
 <div className="mt-2 max-w-md mx-auto">
 
-{/* ✅ SOLO BLOQUE PAGO */}
+{/* ✅ ANTES DEL PAGO */}
 {!paymentCompleted && (
-  <div className="px-3 mt-3">
-    <div className="rounded-3xl border border-yellow-500/20 bg-[#050816] overflow-hidden shadow-[0_0_30px_rgba(255,180,0,0.08)]">
 
-      {/* TOP */}
-      <div className="px-5 pt-5 pb-3">
-        <div className="flex items-start justify-between gap-3">
+ <div className="p-3">
 
-          <div>
-            <div className="inline-flex items-center gap-2 px-2 py-1 rounded-full bg-yellow-500 text-black text-[10px] font-bold mb-3">
-              PREMIUM
-            </div>
+<div className="relative overflow-hidden rounded-2xl border border-yellow-500/30 bg-gradient-to-br from-[#1a1200] via-[#0b0b0b] to-[#1a1200] p-3 max-w-[430px] mx-auto">
+      <div className="flex items-center justify-between mb-3">
 
-            <h2 className="text-white text-[22px] font-extrabold leading-tight">
-              Reserva tu cita
-            </h2>
+        <div>
+          <p className="text-white font-bold text-lg">
+            Desbloquea a Mohamed
+          </p>
 
-            <p className="text-gray-400 text-sm mt-2 max-w-[220px] leading-relaxed">
-              Sara empezará a buscar tu cita automáticamente
-            </p>
-          </div>
-
-          <div className="text-right">
-            <div className="text-[42px] font-black leading-none text-yellow-400">
-              5€
-            </div>
-
-            <p className="text-yellow-300 text-[11px] font-semibold mt-1">
-              Reserva inicial
-            </p>
-          </div>
-
+          <span className="inline-flex mt-1 px-2 py-1 rounded-full bg-yellow-500 text-black text-[10px] font-bold">
+            PREMIUM
+          </span>
         </div>
-      </div>
 
-      {/* BOTÓN */}
-      <div className="px-5 pb-5">
+        <div className="text-right">
+  <p className="text-xl font-black text-yellow-400 leading-none">
+    14,99€
+          </p>
 
-        <button
-          onClick={handleStripePayment}
-          className="w-full h-[58px] rounded-full bg-gradient-to-r from-yellow-500 to-orange-400 text-black font-extrabold text-[18px] shadow-lg active:scale-[0.98] transition"
-        >
-          🔐 Reservar y empezar búsqueda
-        </button>
-
-        {/* STRIPE */}
-        <div className="mt-4 flex flex-col items-center">
-
-          <div className="flex items-center gap-2 text-[12px] text-gray-400">
-            <div className="w-2 h-2 rounded-full bg-yellow-400" />
-            Pago seguro con Stripe
-          </div>
-
-          <div className="flex items-center gap-2 mt-4 flex-wrap justify-center">
-
-            <div className="px-3 py-1 rounded-full bg-white text-[#1a1f71] text-[11px] font-bold">
-              VISA
-            </div>
-
-            <div className="px-3 py-1 rounded-full bg-white text-[#eb001b] text-[11px] font-bold">
-              Mastercard
-            </div>
-
-            <div className="px-3 py-1 rounded-full bg-white text-black text-[11px] font-bold">
-              Apple Pay
-            </div>
-
-            <div className="px-3 py-1 rounded-full bg-white text-black text-[11px] font-bold">
-              G Pay
-            </div>
-
-          </div>
+          <p className="text-white/60 text-xs">
+            Acceso completo
+          </p>
         </div>
 
       </div>
+
+ <p className="text-white/70 text-[13px] leading-relaxed mb-3">
+        Acceso ilimitado a Mohamed IA, videollamada realtime,
+        análisis de documentos y generación automática del expediente.
+      </p>
+
+     <button
+  onClick={handleStripePayment}
+  type="button"
+className="w-[84%] mx-auto flex items-center justify-center h-8 rounded-full text-black font-extrabold text-[13px] bg-gradient-to-b from-[#ffe27a] via-[#ffd400] to-[#ffbf00] border border-[#fff3b0] shadow-[0_4px_14px_rgba(255,215,0,0.35)]"
+       >
+  🔓 Desbloquear ahora
+</button>
+
+  <div className="mt-2 flex items-center justify-center gap-2 flex-wrap">
+
+   <div className="h-8 px-2 rounded-lg bg-white flex items-center justify-center text-blue-700 font-black text-[10px]">
+  VISA
+</div>
+
+<div className="h-8 px-2 rounded-lg bg-white flex items-center justify-center text-red-500 font-black text-[10px]">
+  Mastercard
+</div>
+
+<div className="h-8 px-2 rounded-lg bg-white flex items-center justify-center text-black font-black text-[10px]">
+   Pay
+</div>
+
+<div className="h-8 px-2 rounded-lg bg-white flex items-center justify-center text-black font-black text-[10px]">
+  G Pay
+</div>
+
+      </div>
+
     </div>
+
+    <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
+
+      <div className="flex items-center gap-2 mb-3">
+
+        <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+
+        <p className="text-white font-bold">
+          Mohamed IA
+        </p>
+
+      </div>
+
+      <p className="text-white/80 text-sm leading-relaxed">
+        Especialista profesional en extranjería española para marroquíes en España.
+        Pregunta sobre residencia, papeles, policía, nacionalidad, arraigo,
+        trabajo, estudios y cualquier problema legal relacionado con inmigración.
+      </p>
+
+    </div>
+
   </div>
+
 )}
 
 {/* ✅ DESPUÉS DEL PAGO */}
