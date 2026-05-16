@@ -1851,7 +1851,7 @@ province: formData.province,
               </button>
             </div>
           </motion.div>
-<div className="w-full max-w-[430px] mx-auto">
+
           <OfficialBrowserBox
             language={language}
             avatarImage={`${import.meta.env.BASE_URL}images/avatar-sara.png`}
@@ -1939,7 +1939,64 @@ province: formData.province,
           </div>
         </div>
 
-      
+        <AnimatePresence>
+          {showDocs && (
+            <motion.div
+              initial={{ opacity: 0, y: 40 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 40 }}
+              className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 w-full max-w-md px-4"
+            >
+              <div
+                className="rounded-2xl border border-white/15 shadow-2xl overflow-hidden"
+                style={{ background: "#1a2236" }}
+              >
+                <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
+                  <div className="flex items-center gap-2">
+                    <FileText className="w-4 h-4 text-primary" />
+                    <span className="font-bold text-sm text-white">
+                      Documentos requeridos
+                    </span>
+                  </div>
+
+                  <button
+                    onClick={() => setShowDocs(false)}
+                    className="w-6 h-6 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/60 text-xs"
+                    type="button"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                <div className="px-5 py-4 space-y-2.5 max-h-72 overflow-y-auto">
+                  {docsForSelectedTramite.map((doc, i) => (
+                    <div key={i} className="flex items-center gap-3">
+                      <span
+                        className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 text-xs font-bold ${
+                          doc.estado === "ok"
+                            ? "bg-green-500/20 text-green-400"
+                            : doc.estado === "warn"
+                            ? "bg-yellow-500/20 text-yellow-400"
+                            : "bg-red-500/20 text-red-400"
+                        }`}
+                      >
+                        {doc.estado === "ok"
+                          ? "✓"
+                          : doc.estado === "warn"
+                          ? "!"
+                          : "✗"}
+                      </span>
+
+                      <span className="text-sm text-white/90">{doc.nombre}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <AnimatePresence>
           {showForms && (
             <motion.div
               initial={{ opacity: 0, y: 40 }}
@@ -2002,11 +2059,11 @@ province: formData.province,
                 </div>
               </div>
             </motion.div>
-   
-      
-</main>
+          )}
+        </AnimatePresence>
+
         <audio ref={remoteAudioRef} autoPlay playsInline className="hidden" />
-
-
+      </main>
+    </div>
   );
 }
