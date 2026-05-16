@@ -140,14 +140,26 @@ function OfficialBrowserBox({
   formReady: boolean;
 }) {
 
-  const formIntro =
-    "Si necesitas una cita, rellena tus datos y elige el tipo de cita. Después Sara continuará contigo y te avisará por WhatsApp cuando exista una cita real.";
+const formIntro =
+  language === "ma"
+    ? "إلى كنتي باغي موعد عمر المعلومات ديالك واختار نوع السيتا ومن بعد سارة غادي تكمل معاك وتعلمك فالواتساب ملي يبان الموعد."
+    : language === "en"
+    ? "Fill in your information and choose the appointment type. Sara will continue with you and notify you on WhatsApp when an appointment appears."
+    : "Si necesitas una cita, rellena tus datos y elige el tipo de cita. Después Sara continuará contigo y te avisará por WhatsApp cuando exista una cita real.";
 
-  const confirmationIntro =
-    "Has llegado desde el enlace de confirmación. Revisa los datos y confirma solo si la cita es real.";
+const confirmationIntro =
+  language === "ma"
+    ? "دخلتي من رابط تأكيد الموعد. راجع المعلومات وأكد غير إلا كان الموعد حقيقي."
+    : language === "en"
+    ? "You arrived from the appointment confirmation link. Review the details and confirm only if the appointment is real."
+    : "Has llegado desde el enlace de confirmación. Revisa los datos y confirma solo si la cita es real.";
 
-  const savedText =
-    "Perfecto. Ya tenemos tus datos. En cuanto aparezca una cita real, te avisaremos por WhatsApp para entrar y confirmarla.";
+const savedText =
+  language === "ma"
+    ? "مزيان. دابا عندنا المعلومات ديالك. ملي يبان الموعد غادي نعلموك فالواتساب."
+    : language === "en"
+    ? "Perfect. We already have your information. When an appointment appears, we will notify you on WhatsApp."
+    : "Perfecto. Ya tenemos tus datos. En cuanto aparezca una cita real, te avisaremos por WhatsApp.";
 
   return (
     <motion.div
@@ -211,7 +223,7 @@ function OfficialBrowserBox({
             </div>
 
             <div className="rounded-2xl border border-gray-200 bg-white p-4 sm:p-5">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-3">
 {/* FULL NAME */}
 <div>
  <label className="block text-xs font-bold text-gray-700 mb-1">
@@ -411,68 +423,92 @@ function OfficialBrowserBox({
                 </div>
               </div>
 
-          <div className="mt-4">
-  <div className="w-full rounded-3xl border border-yellow-500/30 bg-black p-4 shadow-[0_0_25px_rgba(255,215,0,0.15)]">
+    <div className="mt-4">
+  <div className="w-full rounded-3xl border border-yellow-500/30 bg-black p-3 shadow-[0_0_20px_rgba(255,215,0,0.12)]">
 
-    <div className="flex items-start justify-between mb-3">
+    <div className="flex items-start justify-between mb-2">
       <div>
-        <p className="text-white text-[16px] font-bold">
-          Reserva tu cita
+        <p className="text-white text-[15px] font-bold">
+          {language === "ma"
+            ? "حجز الموعد"
+            : language === "en"
+            ? "Reserve your appointment"
         </p>
 
-        <span className="inline-flex mt-1 rounded-full bg-yellow-500 px-2 py-0.5 text-[10px] font-bold uppercase text-black">
+        <span className="inline-flex mt-1 rounded-full bg-yellow-500 px-2 py-0.5 text-[9px] font-bold uppercase text-black">
           Premium
         </span>
       </div>
 
       <div className="text-right">
-        <p className="text-yellow-400 text-[22px] font-black leading-none">
+        <p className="text-yellow-400 text-[20px] font-black leading-none">
           5€
         </p>
 
-        <p className="text-yellow-300 text-[13px] font-semibold">
-          Reserva inicial
+        <p className="text-yellow-300 text-[11px] font-semibold">
+    {language === "ma"
+  ? "الحجز الأول"
+  : language === "en"
+  ? "Initial reservation"
+  : "Reserva inicial"}
         </p>
       </div>
     </div>
 
-    <p className="text-gray-300 text-[13px] mb-4">
-      Sara empezará a buscar tu cita automáticamente
+    <p className="text-gray-300 text-[12px] mb-3 leading-snug">
+    {language === "ma"
+  ? "سارة غادي تبدا تقلب ليك على الموعد أوتوماتيكيا"
+  : language === "en"
+  ? "Sara will automatically start searching for your appointment"
+  : "Sara empezará a buscar tu cita automáticamente"}
+
     </p>
 
     <button
       type="button"
       onClick={onFormSubmit}
- className="w-full rounded-full bg-gradient-to-r from-yellow-400 via-yellow-500 to-amber-500 px-4 py-3 text-[15px]  font-black text-black shadow-[0_0_30px_rgba(255,215,0,0.35)] transition-all hover:scale-[1.01]"
+className="w-full rounded-full bg-gradient-to-r from-yellow-400 via-yellow-500 to-amber-500 px-3 py-2.5 text-[13px] font-black shadow-[0_0_20px_rgba(255,215,0,0.25)] transition-all hover:scale-[1.01]"
     >
-      🔐 Reservar y empezar búsqueda
+{language === "ma"
+  ? "🔐 حجز وبدء البحث"
+  : language === "en"
+  ? "🔐 Reserve and start search"
+  : "🔐 Reservar y empezar búsqueda"}
+
     </button>
 
-    <div className="mt-4 flex items-center justify-center gap-2 text-[12px] text-gray-300">
+    <div className="mt-3 flex items-center justify-center gap-2 text-[11px] text-gray-300">
       <Shield className="w-3 h-3 text-yellow-400" />
-      <span>Pago seguro con Stripe</span>
+
+      <span>
+        {language === "ma"
+          ? "دفع آمن عبر Stripe"
+          : language === "en"
+          ? "Secure payment with Stripe"
+          : "Pago seguro con Stripe"}
+      </span>
     </div>
 
-    <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
-      <span className="rounded-full bg-white px-3 py-1 text-[12px] font-bold text-[#1434CB]">
+    <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
+      <span className="rounded-full bg-white px-3 py-1 text-[11px] font-bold text-[#1434CB]">
         VISA
       </span>
 
-      <span className="rounded-full bg-white px-3 py-1 text-[12px] font-bold text-[#EB001B]">
+      <span className="rounded-full bg-white px-3 py-1 text-[11px] font-bold text-[#EB001B]">
         Mastercard
       </span>
 
-      <span className="rounded-full bg-white px-3 py-1 text-[12px] font-bold text-black">
+      <span className="rounded-full bg-white px-3 py-1 text-[11px] font-bold text-black">
          Pay
       </span>
 
-      <span className="rounded-full bg-white px-3 py-1 text-[12px] font-bold text-black">
+      <span className="rounded-full bg-white px-3 py-1 text-[11px] font-bold text-black">
         G Pay
       </span>
     </div>
 
   </div>
-</div>    
+</div>
   
 
             {hasRealAppointment && (
