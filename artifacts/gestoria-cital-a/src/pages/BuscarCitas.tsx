@@ -1998,21 +1998,21 @@ province: formData.province,
       🔐 RESERVAR Y EMPEZAR BÚSQUEDA
     </button>
 
-    <div className="flex justify-center gap-2 mt-4">
+   <div className="flex justify-center gap-2 mt-4">
 
-      <div className="bg-white rounded-full px-3 py-1 text-xs font-bold text-blue-700">
-        VISA
-      </div>
+  <div className="bg-white rounded-full px-3 py-1 text-xs font-bold text-blue-700">
+    VISA
+  </div>
 
-      <div className="bg-white rounded-full px-3 py-1 text-xs font-bold text-red-600">
-        Mastercard
-      </div>
+  <div className="bg-white rounded-full px-3 py-1 text-xs font-bold text-red-600">
+    Mastercard
+  </div>
 
-     <div className="bg-white rounded-full px-3 py-1 text-xs font-bold text-black">
-  Apple Pay
+  <div className="bg-white rounded-full px-3 py-1 text-xs font-bold text-black">
+    Apple Pay
+  </div>
+
 </div>
-
-    </div>
 
   </div>
 
@@ -2026,6 +2026,5 @@ province: formData.province,
 />
 
 </main>
-
-);
+  );
 }
