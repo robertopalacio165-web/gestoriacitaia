@@ -219,69 +219,87 @@ className="flex-1 flex flex-col overflow-hidden bg-transparent"
   Después Sara continuará contigo y te avisará por WhatsApp
   cuando exista una cita real.
 </p>
-<div className="w-full mt-10 pt-6 border-t border-yellow-500/20">
-  <div className="grid grid-cols-2 gap-4 mb-6">
-  <input
-    type="text"
+  <div className="w-full mt-10 pt-6 border-t border-yellow-500/20">
+<div className="grid grid-cols-2 gap-4 mb-6">
 
+  <div className="col-span-1">
     <label className="text-white text-[13px] font-medium mb-2 block">
-  Nombre completo
-</label>
-    placeholder="Nombre completo"
-    value={formData.fullName}
-    onChange={(e) => onFormChange("fullName", e.target.value)}
- className="col-span-1 w-full rounded-2xl border border-yellow-500/30 bg-black/40 px-4 py-4 text-white text-[15px] placeholder:text-white/30 focus:outline-none focus:border-yellow-400"
-  />
+      Nombre completo
+    </label>
 
+    <input
+      type="text"
+      placeholder="Nombre completo"
+      value={formData.fullName}
+      onChange={(e) => onFormChange("fullName", e.target.value)}
+      className="w-full rounded-2xl border border-yellow-500/30 bg-black/40 px-4 py-4 text-[15px] text-white placeholder:text-white/30 focus:outline-none focus:border-yellow-400"
+    />
+  </div>
 
-<label className="text-white text-[13px] font-medium mb-2 block">
-  Teléfono
-</label>
-<input
-  type="text"
-  placeholder="Teléfono WhatsApp"
-  value={formData.phone}
-  onChange={(e) => onFormChange("phone", e.target.value)}
-  className="col-span-1 w-full rounded-2xl border border-yellow-500/30 bg-black/40 px-4 py-4 text-[15px] text-white placeholder:text-white/30 focus:outline-none focus:border-yellow-400"
-/>
-<label className="text-white text-[13px] font-medium mb-2 block">
-  Correo electrónico
-</label>
-<input
-  type="email"
-  placeholder="Correo electrónico"
-  value={formData.email}
-  onChange={(e) => onFormChange("email", e.target.value)}
-  className="col-span-1 w-full rounded-2xl border border-yellow-500/30 bg-black/40 px-4 py-4 text-[15px] text-white placeholder:text-white/30 focus:outline-none focus:border-yellow-400"
-/>
-<label className="text-white text-[13px] font-medium mb-2 block">
-  Ciudad
-</label>
-<input
-  type="text"
-  placeholder="Ciudad"
-  value={formData.city}
-  onChange={(e) => onFormChange("city", e.target.value)}
-  className="col-span-1 w-full rounded-2xl border border-yellow-500/30 bg-black/40 px-4 py-4 text-[15px] text-white placeholder:text-white/30 focus:outline-none focus:border-yellow-400"
-/>
-<label className="text-white text-[13px] font-medium mb-2 block col-span-2">
-  Tipo de cita
-</label>
-<select
-  value={selectedTramite}
-  onChange={(e) => onSelectTramite(e.target.value)}
-  className="col-span-2 w-full rounded-2xl border border-yellow-500/30 bg-black/40 px-4 py-4 text-[15px] text-white focus:outline-none focus:border-yellow-400"
->
-  {tramites.map((tramite) => (
-    <option
-      key={tramite.value}
-      value={tramite.value}
-      className="bg-black text-white"
+  <div className="col-span-1">
+    <label className="text-white text-[13px] font-medium mb-2 block">
+      Teléfono
+    </label>
+
+    <input
+      type="text"
+      placeholder="Teléfono WhatsApp"
+      value={formData.phone}
+      onChange={(e) => onFormChange("phone", e.target.value)}
+      className="w-full rounded-2xl border border-yellow-500/30 bg-black/40 px-4 py-4 text-[15px] text-white placeholder:text-white/30 focus:outline-none focus:border-yellow-400"
+    />
+  </div>
+
+  <div className="col-span-1">
+    <label className="text-white text-[13px] font-medium mb-2 block">
+      Correo electrónico
+    </label>
+
+    <input
+      type="email"
+      placeholder="Correo electrónico"
+      value={formData.email}
+      onChange={(e) => onFormChange("email", e.target.value)}
+      className="w-full rounded-2xl border border-yellow-500/30 bg-black/40 px-4 py-4 text-[15px] text-white placeholder:text-white/30 focus:outline-none focus:border-yellow-400"
+    />
+  </div>
+
+  <div className="col-span-1">
+    <label className="text-white text-[13px] font-medium mb-2 block">
+      Ciudad
+    </label>
+
+    <input
+      type="text"
+      placeholder="Ciudad"
+      value={formData.city}
+      onChange={(e) => onFormChange("city", e.target.value)}
+      className="w-full rounded-2xl border border-yellow-500/30 bg-black/40 px-4 py-4 text-[15px] text-white placeholder:text-white/30 focus:outline-none focus:border-yellow-400"
+    />
+  </div>
+
+  <div className="col-span-2">
+    <label className="text-white text-[13px] font-medium mb-2 block">
+      Tipo de cita
+    </label>
+
+    <select
+      value={selectedTramite}
+      onChange={(e) => onSelectTramite(e.target.value)}
+      className="w-full rounded-2xl border border-yellow-500/30 bg-black/40 px-4 py-4 text-[15px] text-white focus:outline-none focus:border-yellow-400"
     >
-      {tramite.label}
-    </option>
-  ))}
-</select>
+      {tramites.map((tramite) => (
+        <option
+          key={tramite.value}
+          value={tramite.value}
+          className="bg-black text-white"
+        >
+          {tramite.label}
+        </option>
+      ))}
+    </select>
+  </div>
+
 </div>
 <div className="flex items-start justify-between mb-4">
   <div>
@@ -364,7 +382,7 @@ className="flex-1 flex flex-col overflow-hidden bg-transparent"
     </div>
 
   </div>
-</div>
+
   
 
             {hasRealAppointment && (
