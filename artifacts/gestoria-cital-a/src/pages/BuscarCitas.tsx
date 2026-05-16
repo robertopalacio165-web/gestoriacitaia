@@ -1705,21 +1705,7 @@ province: formData.province,
               </div>
 
               <div className="absolute bottom-3 left-0 right-0 flex items-center justify-center">
-                <button
-                  onClick={isListening ? stopListening : startListening}
-                  className={`w-12 h-12 rounded-full border flex items-center justify-center backdrop-blur-md transition-colors ${
-                    isListening
-                      ? "bg-destructive/80 border-destructive"
-                      : "bg-black/50 border-white/20 hover:bg-black/70"
-                  }`}
-                  type="button"
-                >
-                  {isListening ? (
-                    <MicOff className="w-5 h-5 text-white" />
-                  ) : (
-                    <Mic className="w-5 h-5 text-white" />
-                  )}
-                </button>
+             
               </div>
             </div>
 
@@ -1757,45 +1743,7 @@ province: formData.province,
                 )}
               </div>
 
-              <div className="p-4 space-y-4">
-             
-
-                {lastUserTranscript ? (
-                  <div>
-                    <p className="text-[11px] text-white/50 mb-1">
-                      {ui.yourVoice}
-                    </p>
-                    <div className="rounded-xl bg-primary/10 border border-primary/20 px-3 py-3 text-sm text-white leading-relaxed">
-                      {lastUserTranscript}
-                    </div>
-                  </div>
-                ) : null}
-
-                {waitingSara && (
-                  <div className="rounded-xl bg-white/5 border border-white/10 px-3 py-3 text-sm text-white/70">
-                    ...
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="glass-panel-heavy border border-primary/25 rounded-2xl rounded-tl-sm p-3 flex gap-3 shadow-lg relative overflow-hidden">
-              <div className="relative shrink-0">
-                <img
-                  src={`${import.meta.env.BASE_URL}images/avatar-sara.png`}
-                  className="w-9 h-9 rounded-full object-cover object-top border border-primary/40"
-                  alt="Sara"
-                />
-              </div>
-
-              <div className="flex-1 min-w-0">
-                <p className="text-[11px] text-white/90 leading-relaxed">
-                  {formReady
-                    ? `Hola, soy Sara. Voy a ayudarte con «${selectedTramiteLabel}» paso a paso.`
-                    : "Hola, soy Sara. Primero rellena tus datos y luego seguimos."}
-                </p>
-              </div>
-            </div>
+           
 
             {step === 2 && !confirmed && hasRealAppointment && (
               <motion.button
