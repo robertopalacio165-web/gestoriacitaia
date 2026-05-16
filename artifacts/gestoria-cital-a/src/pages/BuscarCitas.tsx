@@ -562,8 +562,6 @@ className="flex-1 flex flex-col overflow-hidden bg-transparent"
               ) : null}
             </div>
           </motion.div>
-        
-      </div>
     </motion.div>
   );
 }
