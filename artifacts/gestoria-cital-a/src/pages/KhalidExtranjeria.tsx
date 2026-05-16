@@ -379,113 +379,115 @@ if (msg.type === "response.done") {
           animate={{ opacity: 1, y: 0 }}
           className="rounded-2xl overflow-hidden border border-[#1e293b] bg-[#071224] shadow-2xl"
         >
-          <div className="relative">
-            
-          <video
-  autoPlay
-  muted
-  loop
-  playsInline
-            poster={`${import.meta.env.BASE_URL}images/khalid-extranjeria.png`}
-  className="w-full h-[260px] object-cover"
->
+  <div className="relative">
 
-  <source
-    src="/videoskhalid-placeholder.mp4.mp4"
-    type="video/mp4"
-  />
-
-</video>
-
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-
-            <div className="absolute top-4 left-4 bg-black/60 backdrop-blur-md border border-green-500/30 px-3 py-1 rounded-full flex items-center gap-2 text-sm">
-              <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-              En línea
-            </div>
-
-            <div className="absolute top-4 right-4 flex gap-2">
-              <div className="w-9 h-9 rounded-full bg-black/50 flex items-center justify-center">
-                <Bell size={16} />
-              </div>
-
-              <div className="w-9 h-9 rounded-full bg-black/50 flex items-center justify-center">
-                <Volume2 size={16} />
-              </div>
-            </div>
-
-            <div className="absolute bottom-5 right-4 text-right">
-              <h2 className="text-2xl font-bold">
-                Khalid
-              </h2>
-
-              <p className="text-sm text-gray-200">
-                {t("Especialista en Extranjería")}
-              </p>
-            </div>
-
-            <div className="absolute bottom-5 left-5">
-              <div className="w-16 h-16 rounded-full bg-black/50 backdrop-blur-md border border-white/10 flex items-center justify-center">
-                <Mic size={26} />
-              </div>
-            </div>
-          </div>
-          <div className="p-4">
-
-            {isPaid && (
-     <motion.button
-  whileTap={{ scale: 0.96 }}
-
-  disabled={
-    answeredOnce &&
-    localStorage.getItem("khalid_paid") !== "true"
-  }
-
-  onClick={() => {
-
-    const isPremium =
-      localStorage.getItem("khalid_paid") === "true";
-
-    if (
-      answeredOnce &&
-      !isPremium
-    ) {
-      return;
-    }
-
-    if (isListening) {
-
-      stopConversation();
-
-    } else {
-
-      startConversation();
-
-    }
-
-  }}
-
-  className={`w-full h-14 rounded-2xl font-bold text-lg transition-all flex items-center justify-center gap-3 ${
-    isListening
-      ? "bg-red-500 hover:bg-red-600"
-      : "bg-green-500 hover:bg-green-600"
-  }`}
->
-
-  {isListening ? (
+  {/* ✅ ANTES DEL PAGO = VIDEO */}
+  {!isPaid && (
     <>
-      <MicOff size={22} />
-      {t("Finalizar conversación")}
-    </>
-  ) : (
-    <>
-      <Mic size={22} />
-      {t("Hablar con Khalid")}
+      <video
+        autoPlay
+        muted
+        loop
+        playsInline
+        poster={`${import.meta.env.BASE_URL}images/khalid-extranjeria.png`}
+        className="w-full h-[260px] object-cover"
+      >
+        <source
+          src="/videoskhalid-placeholder.mp4.mp4"
+          type="video/mp4"
+        />
+      </video>
+
+      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+
+      <div className="absolute top-4 left-4 bg-black/60 backdrop-blur-md border border-green-500/30 px-3 py-1 rounded-full flex items-center gap-2 text-sm">
+        <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+        En línea
+      </div>
+
+      <div className="absolute top-4 right-4 flex gap-2">
+        <div className="w-9 h-9 rounded-full bg-black/50 flex items-center justify-center">
+          <Bell size={16} />
+        </div>
+
+        <div className="w-9 h-9 rounded-full bg-black/50 flex items-center justify-center">
+          <Volume2 size={16} />
+        </div>
+      </div>
+
+      <div className="absolute bottom-5 right-4 text-right">
+        <h2 className="text-2xl font-bold">
+          Khalid
+        </h2>
+
+        <p className="text-sm text-gray-200">
+          {t("Especialista en Extranjería")}
+        </p>
+      </div>
     </>
   )}
 
-</motion.button>
-            )}
+  {/* ✅ DESPUÉS DEL PAGO = FOTO REALTIME */}
+  {isPaid && (
+    <>
+      <img
+        src={`${import.meta.env.BASE_URL}images/khalid-extranjeria.png`}
+        alt="Khalid"
+        className="w-full h-[260px] object-cover"
+      />
+
+      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+
+      <div className="absolute top-4 left-4 bg-black/60 backdrop-blur-md border border-green-500/30 px-3 py-1 rounded-full flex items-center gap-2 text-sm">
+        <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+        Realtime activo
+      </div>
+
+      <div className="absolute bottom-5 right-4 text-right">
+        <h2 className="text-2xl font-bold">
+          Khalid
+        </h2>
+
+        <p className="text-sm text-gray-200">
+          Habla en tiempo real
+        </p>
+      </div>
+
+      {/* 🎤 BOTÓN MICRO ABAJO */}
+      <div className="absolute bottom-5 left-5">
+        <button
+          onClick={() => {
+
+            if (isListening) {
+
+              stopConversation();
+
+            } else {
+
+              startConversation();
+
+            }
+
+          }}
+          className={`w-16 h-16 rounded-full flex items-center justify-center border border-white/20 shadow-2xl transition-all ${
+            isListening
+              ? "bg-red-500"
+              : "bg-green-500"
+          }`}
+        >
+          {isListening ? (
+            <MicOff size={28} />
+          ) : (
+            <Mic size={28} />
+          )}
+        </button>
+      </div>
+    </>
+  )}
+
+</div>
+
+   
             {!isPaid && (
 <motion.div
   initial={{ opacity: 0, y: 20 }}
