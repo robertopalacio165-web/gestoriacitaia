@@ -1805,12 +1805,7 @@ province: formData.province,
               </motion.button>
             )}
 
-         <div className="rounded-3xl border border-yellow-500/40 bg-black p-5 shadow-[0_0_30px_rgba(255,215,0,0.10)] mt-4">
-  <div className="flex flex-col items-center justify-center text-center">
 
-    <div className="w-14 h-14 rounded-full bg-green-500/10 border border-green-500/30 flex items-center justify-center mb-4">
-      <Bell className="w-7 h-7 text-green-400" />
-    </div>
 
     <h3 className="text-white text-[20px] font-bold mb-2">
       {language === "ma"
