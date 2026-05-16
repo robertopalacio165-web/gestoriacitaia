@@ -447,7 +447,7 @@ function OfficialBrowserBox({
     {ui.openOfficialSite}
   </button>
 </div>
-              )}
+              
   
 
             {hasRealAppointment && (
