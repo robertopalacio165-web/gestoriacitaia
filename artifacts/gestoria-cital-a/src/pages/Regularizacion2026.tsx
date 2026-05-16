@@ -2250,64 +2250,51 @@ setTimeout(() => {
           </div>
         </div>
     <div className="max-w-md mx-auto px-4">
-        <div className="max-w-md mx-auto">
-  <motion.div
-    initial={{ opacity: 0, y: 15 }}
-    animate={{ opacity: 1, y: 0 }}
-    className="rounded-2xl overflow-hidden border border-[#1e293b] bg-[#071224] shadow-2xl"
-  >
-    <div className="relative">
+    {/* ✅ SOLO antes del pago */}
+{!paymentCompleted && (
+  <div className="max-w-md mx-auto">
+    <motion.div
+      initial={{ opacity: 0, y: 15 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="rounded-2xl overflow-hidden border border-[#1e293b] bg-[#071224] shadow-2xl"
+    >
+      <div className="relative">
 
-      <video
-        autoPlay
-        muted
-        loop
-        playsInline
-        poster={`${import.meta.env.BASE_URL}images/avatar-mohamed.png`}
-   className="w-full h-[270px] object-cover"
-      >
-        <source
-          src="/mohamed-extranjeria.mp4.mp4"
-          type="video/mp4"
-        />
-      </video>
+        <video
+          autoPlay
+          muted
+          loop
+          playsInline
+          poster={`${import.meta.env.BASE_URL}images/avatar-mohamed.png`}
+          className="w-full h-[270px] object-cover"
+        >
+          <source
+            src="/mohamed-extranjeria.mp4.mp4"
+            type="video/mp4"
+          />
+        </video>
 
-      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-<div className="absolute top-4 right-4 flex items-center gap-2">
-  <button
-    type="button"
-    className="w-11 h-11 rounded-full bg-black/45 backdrop-blur-md flex items-center justify-center text-white border border-white/10"
-  >
-    <Bell className="w-5 h-5" />
-  </button>
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
 
-  <button
-    type="button"
-    className="w-11 h-11 rounded-full bg-black/45 backdrop-blur-md flex items-center justify-center text-white border border-white/10"
-  >
-    <Volume2 className="w-5 h-5" />
-  </button>
-</div>
+        <div className="absolute top-4 left-4 bg-black/60 backdrop-blur-md border border-green-500/30 px-3 py-1 rounded-full flex items-center gap-2 text-sm">
+          <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+          En línea
+        </div>
 
+        <div className="absolute bottom-5 right-4 text-right">
+          <h2 className="text-2xl font-bold text-white">
+            Mohamed
+          </h2>
 
-      <div className="absolute top-4 left-4 bg-black/60 backdrop-blur-md border border-green-500/30 px-3 py-1 rounded-full flex items-center gap-2 text-sm">
-        <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-        En línea
+          <p className="text-sm text-gray-200">
+            Especialista en Extranjería
+          </p>
+        </div>
+
       </div>
-
-      <div className="absolute bottom-5 right-4 text-right">
-        <h2 className="text-2xl font-bold text-white">
-          Mohamed
-        </h2>
-
-        <p className="text-sm text-gray-200">
-          Especialista en Extranjería
-        </p>
-      </div>
-
-    </div>
-  </motion.div>
-</div>
+    </motion.div>
+  </div>
+)}
  
 
           </div>
@@ -2315,7 +2302,33 @@ setTimeout(() => {
 
 {/* ✅ ANTES DEL PAGO */}
 {!paymentCompleted && (
+{/* ✅ DESPUÉS DEL PAGO */}
+{paymentCompleted && (
+  <div className="mt-4 space-y-4">
 
+    <button
+      onClick={startListening}
+      className="w-full rounded-2xl bg-green-600 hover:bg-green-700 text-white py-4 font-bold"
+    >
+      🎤 Hablar con Mohamed
+    </button>
+
+    <button
+      onClick={handleGeneralUpload}
+      className="w-full rounded-2xl bg-blue-600 hover:bg-blue-700 text-white py-4 font-bold"
+    >
+      📄 Subir documentos
+    </button>
+
+    <button
+      onClick={handleVerifyAll}
+      className="w-full rounded-2xl bg-yellow-500 hover:bg-yellow-600 text-black py-4 font-bold"
+    >
+      ✅ Verificar documentos
+    </button>
+
+  </div>
+)}
  <div className="p-3">
 
 <div className="relative overflow-hidden rounded-2xl border border-yellow-500/30 bg-gradient-to-br from-[#1a1200] via-[#0b0b0b] to-[#1a1200] p-3 max-w-[430px] mx-auto">
