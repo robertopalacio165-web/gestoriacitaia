@@ -20,20 +20,20 @@ export default async function handler(
 
   try {
 
-    const session =
-      await stripe.checkout.sessions.create({
+   const session =
+  await stripe.checkout.sessions.create({
 
-        payment_method_types: ["card"],
+    payment_method_types: ["card"],
 
-        mode: "payment",
+    mode: "payment",
 
-        customer_creation: "if_required",
+    customer_creation: "never",
 
-       
+    phone_number_collection: {
+      enabled: false,
+    },
 
-        billing_address_collection: "auto",
-
-        line_items: [
+    line_items: [
           {
             price_data: {
               currency: "eur",
