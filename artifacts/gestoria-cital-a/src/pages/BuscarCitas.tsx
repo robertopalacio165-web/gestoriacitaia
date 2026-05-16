@@ -1758,14 +1758,7 @@ province: formData.province,
               </div>
 
               <div className="p-4 space-y-4">
-                <div>
-                  <p className="text-[11px] text-white/50 mb-1">
-                    {ui.latestReply}
-                  </p>
-                  <div className="rounded-xl bg-white/5 border border-white/10 px-3 py-3 text-sm text-white/90 leading-relaxed">
-                    {latestAgentMessage}
-                  </div>
-                </div>
+             
 
                 {lastUserTranscript ? (
                   <div>
