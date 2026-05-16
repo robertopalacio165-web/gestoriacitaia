@@ -2302,6 +2302,7 @@ setTimeout(() => {
 
 {/* ✅ ANTES DEL PAGO */}
 {!paymentCompleted && (
+  )}
 {/* ✅ DESPUÉS DEL PAGO */}
 {paymentCompleted && (
   <div className="mt-4 space-y-4">
