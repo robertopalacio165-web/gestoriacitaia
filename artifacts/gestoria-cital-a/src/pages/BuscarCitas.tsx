@@ -218,7 +218,8 @@ className="flex-1 flex flex-col overflow-hidden bg-transparent"
 </p>
 <div className="w-full">
 
-<div className="grid grid-cols-2 gap-3 mb-5">
+  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
+
     <div>
       <label className="block text-white text-[13px] mb-2">
         {language === "ma"
@@ -390,94 +391,89 @@ className="flex-1 flex flex-col overflow-hidden bg-transparent"
 
   </div>
 </div>
- 
-  <div className="mt-4 rounded-[30px] border border-yellow-500/40 bg-[#050505] p-4 shadow-[0_0_40px_rgba(255,215,0,0.08)]">
+<div className="flex items-start justify-between mb-4 pt-2">
+      <div>
+   <p className="text-white text-[15px] font-bold">
+  {language === "ma"
+    ? "حجز الموعد"
+    : language === "en"
+    ? "Reserve your appointment"
+    : "Reserva tu cita"}
+</p>
+<span className="inline-flex mt-1 rounded-full bg-gradient-to-r from-yellow-400 to-yellow-600 px-3 py-1 text-[10px] font-black uppercase tracking-wide text-black shadow-[0_0_15px_rgba(255,215,0,0.25)]">
+          Premium
+        </span>
+      </div>
 
-  <div className="flex items-start justify-between mb-4">
+      <div className="text-right">
+    <p className="text-yellow-400 text-[34px] font-black leading-none drop-shadow-[0_0_10px_rgba(255,215,0,0.35)]">
+          5€
+        </p>
 
-    <div>
-      <p className="text-white text-[15px] font-bold">
+        <p className="text-yellow-300 text-[11px] font-semibold">
+    {language === "ma"
+  ? "الحجز الأول"
+  : language === "en"
+  ? "Initial reservation"
+  : "Reserva inicial"}
+        </p>
+      </div>
+    </div>
+
+<p className="text-gray-300 text-[13px] mb-5 leading-relaxed">
+    {language === "ma"
+  ? "سارة غادي تبدا تقلب ليك على الموعد أوتوماتيكيا"
+  : language === "en"
+  ? "Sara will automatically start searching for your appointment"
+  : "Sara empezará a buscar tu cita automáticamente"}
+
+    </p>
+
+   <button
+  type="button"
+  onClick={onFormSubmit}
+  className="w-full rounded-full bg-gradient-to-r from-yellow-400 via-yellow-500 to-amber-500 px-5 py-4 text-[16px] font-black text-black shadow-[0_0_35px_rgba(255,215,0,0.35)] transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_45px_rgba(255,215,0,0.45)]"
+>
+  {language === "ma"
+    ? "🔐 حجز وبدء البحث"
+    : language === "en"
+    ? "🔐 Reserve and start search"
+    : "🔐 Reservar y empezar búsqueda"}
+</button>
+
+    <div className="mt-5 flex items-center justify-center gap-2 text-[11px] text-gray-300">
+      <Shield className="w-3 h-3 text-yellow-400" />
+
+      <span>
         {language === "ma"
-          ? "حجز الموعد"
+          ? "دفع آمن عبر Stripe"
           : language === "en"
-          ? "Reserve your appointment"
-          : "Reserva tu cita"}
-      </p>
-
-      <span className="inline-flex mt-1 rounded-full bg-gradient-to-r from-yellow-400 to-yellow-600 px-3 py-1 text-[10px] font-black uppercase tracking-wide text-black">
-        PREMIUM
+          ? "Secure payment with Stripe"
+          : "Pago seguro con Stripe"}
       </span>
     </div>
 
-    <div className="text-right">
-      <p className="text-yellow-400 text-[34px] font-black leading-none">
-        5€
-      </p>
+    <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
+      <span className="rounded-full bg-white px-3 py-1 text-[11px] font-bold text-[#1434CB]">
+        VISA
+      </span>
 
-      <p className="text-yellow-300 text-[11px] font-semibold">
-        {language === "ma"
-          ? "الحجز الأول"
-          : language === "en"
-          ? "Initial reservation"
-          : "Reserva inicial"}
-      </p>
+      <span className="rounded-full bg-white px-3 py-1 text-[11px] font-bold text-[#EB001B]">
+        Mastercard
+      </span>
+
+      <span className="rounded-full bg-white px-3 py-1 text-[11px] font-bold text-black">
+         Pay
+      </span>
+
+      <span className="rounded-full bg-white px-3 py-1 text-[11px] font-bold text-black">
+        G Pay
+      </span>
     </div>
 
   </div>
 
-  <p className="text-gray-300 text-[13px] mb-5 leading-relaxed">
-    {language === "ma"
-      ? "سارة غادي تبدا تقلب ليك على الموعد أوتوماتيكيا"
-      : language === "en"
-      ? "Sara will automatically start searching for your appointment"
-      : "Sara empezará a buscar tu cita automáticamente"}
-  </p>
-
-  <button
-    type="button"
-    onClick={onFormSubmit}
-    className="w-full rounded-full bg-gradient-to-r from-yellow-400 via-yellow-500 to-amber-500 px-5 py-4 text-[16px] font-black text-black shadow-[0_0_35px_rgba(255,215,0,0.35)] transition-all duration-300"
-  >
-    {language === "ma"
-      ? "🔐 حجز وبدء البحث"
-      : language === "en"
-      ? "🔐 Reserve and start search"
-      : "🔐 Reservar y empezar búsqueda"}
-  </button>
-
-  <div className="mt-5 flex items-center justify-center gap-2 text-[11px] text-gray-300">
-    <Shield className="w-3 h-3 text-yellow-400" />
-
-    <span>
-      {language === "ma"
-        ? "دفع آمن عبر Stripe"
-        : language === "en"
-        ? "Secure payment with Stripe"
-        : "Pago seguro con Stripe"}
-    </span>
-  </div>
-
-  <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
-
-    <span className="rounded-full bg-white px-3 py-1 text-[11px] font-bold text-[#1434CB]">
-      VISA
-    </span>
-
-    <span className="rounded-full bg-white px-3 py-1 text-[11px] font-bold text-[#EB001B]">
-      Mastercard
-    </span>
-
-    <span className="rounded-full bg-white px-3 py-1 text-[11px] font-bold text-black">
-       Pay
-    </span>
-
-    <span className="rounded-full bg-white px-3 py-1 text-[11px] font-bold text-black">
-      G Pay
-    </span>
-
-  </div>
-
-</div>
+  
 
             {hasRealAppointment && (
               <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4">
@@ -493,7 +489,7 @@ className="flex-1 flex flex-col overflow-hidden bg-transparent"
                 <p className="text-sm text-gray-700">Localizador: {finalLocator}</p>
               </div>
             )}
-      
+          </>
         ) : (
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
@@ -562,6 +558,8 @@ className="flex-1 flex flex-col overflow-hidden bg-transparent"
               ) : null}
             </div>
           </motion.div>
+        )}
+      </div>
     </motion.div>
   );
 }
