@@ -168,28 +168,7 @@ const savedText =
       transition={{ delay: 0.15 }}
       className="flex-1 flex flex-col rounded-2xl overflow-hidden border border-gray-300 shadow-2xl bg-white min-h-[400px]"
     >
-      <div className="bg-[#f1f3f4] border-b border-gray-200 px-3 py-2 flex items-center gap-2 shrink-0">
-        <div className="flex items-center gap-1.5 bg-white rounded-full px-3 py-1.5 flex-1 border border-gray-200 shadow-sm min-w-0">
-          <Shield className="w-3 h-3 text-green-600 shrink-0" />
-          <span className="text-xs text-gray-600 font-medium truncate">{url}</span>
-        </div>
-
-        <button
-          className="w-7 h-7 flex items-center justify-center text-gray-500 hover:bg-gray-200 rounded shrink-0"
-          type="button"
-          onClick={onRefresh}
-        >
-          <RefreshCw className="w-3.5 h-3.5" />
-        </button>
-
-        <div className="w-6 h-6 rounded-full overflow-hidden border-2 border-primary shrink-0">
-          <img
-            src={avatarImage}
-            alt="Sara"
-            className="w-full h-full object-cover object-top"
-          />
-        </div>
-      </div>
+ 
 
       <div className="flex-1 overflow-y-auto bg-white p-4 sm:p-6 text-black">
         {!confirmed ? (
@@ -1723,39 +1702,7 @@ province: formData.province,
               </div>
             </div>
 
-            <div className="glass-panel-heavy border border-white/10 rounded-2xl overflow-hidden">
-              <div className="p-4 border-b border-white/10">
-                <button
-                  onClick={isListening ? stopListening : startListening}
-                  disabled={!voiceSupported}
-                  className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary hover:bg-primary/90 disabled:opacity-50 text-primary-foreground font-bold text-sm px-4 py-3 transition-colors"
-                  type="button"
-                >
-                  {isListening ? (
-                    <>
-                      <MicOff className="w-4 h-4" />
-                      {ui.stopButton}
-                    </>
-                  ) : (
-                    <>
-                      <Mic className="w-4 h-4" />
-                      {ui.voiceButton}
-                    </>
-                  )}
-                </button>
-
-                {!voiceSupported && (
-                  <p className="mt-2 text-xs text-red-400 text-center">
-                    {ui.openRealtimeError}
-                  </p>
-                )}
-
-                {isListening && (
-                  <p className="mt-2 text-xs text-primary text-center">
-                    {ui.listening}
-                  </p>
-                )}
-              </div>
+         
 
               <div className="p-4 space-y-4">
                 <div>
@@ -1786,23 +1733,7 @@ province: formData.province,
               </div>
             </div>
 
-            <div className="glass-panel-heavy border border-primary/25 rounded-2xl rounded-tl-sm p-3 flex gap-3 shadow-lg relative overflow-hidden">
-              <div className="relative shrink-0">
-                <img
-                  src={`${import.meta.env.BASE_URL}images/avatar-sara.png`}
-                  className="w-9 h-9 rounded-full object-cover object-top border border-primary/40"
-                  alt="Sara"
-                />
-              </div>
-
-              <div className="flex-1 min-w-0">
-                <p className="text-[11px] text-white/90 leading-relaxed">
-                  {formReady
-                    ? `Hola, soy Sara. Voy a ayudarte con «${selectedTramiteLabel}» paso a paso.`
-                    : "Hola, soy Sara. Primero rellena tus datos y luego seguimos."}
-                </p>
-              </div>
-            </div>
+          
 
             {step === 2 && !confirmed && hasRealAppointment && (
               <motion.button
@@ -1817,7 +1748,7 @@ province: formData.province,
               </motion.button>
             )}
 
-            <div className="lg:hidden glass-panel-heavy border border-white/10 rounded-2xl py-2.5 px-4 flex items-center justify-between">
+       
               <button
                 onClick={() => {
                   setShowDocs(true);
@@ -1897,7 +1828,7 @@ province: formData.province,
           />
         </div>
 
-        <div className="hidden lg:block sticky bottom-0 z-30 glass-panel-heavy border-t border-white/10 py-3">
+   
           <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
             <div className="flex gap-3">
               <button
