@@ -174,14 +174,13 @@ className="flex-1 flex flex-col overflow-hidden bg-transparent"
         {!confirmed ? (
           <>
      
-          
-<div className="rounded-[28px] border border-emerald-500/40 bg-[#07111f] p-6 mb-5 shadow-[0_0_30px_rgba(16,185,129,0.08)]">
+         <div className="rounded-[26px] border border-emerald-500/40 bg-[#07111f] px-5 py-7 mb-5 shadow-[0_0_30px_rgba(16,185,129,0.08)]">
 
   <div className="flex justify-center mb-4">
-    <div className="w-14 h-14 rounded-full border border-emerald-500/30 bg-emerald-500/10 flex items-center justify-center">
+    <div className="w-12 h-12 rounded-full border border-emerald-500/30 bg-emerald-500/10 flex items-center justify-center">
       <svg
         xmlns="http://www.w3.org/2000/svg"
-        className="w-8 h-8 text-emerald-400"
+        className="w-7 h-7 text-emerald-400"
         fill="none"
         viewBox="0 0 24 24"
         stroke="currentColor"
@@ -196,76 +195,201 @@ className="flex-1 flex flex-col overflow-hidden bg-transparent"
     </div>
   </div>
 
-  <h3 className="text-center text-white text-[28px] font-semibold mb-3">
+  <h3 className="text-center text-white text-[18px] font-semibold leading-tight mb-3">
     Aquí aparecerán los mensajes de Sara
   </h3>
 
-  <p className="text-center text-white/70 text-[18px] leading-relaxed">
+  <p className="text-center text-white/70 text-[14px] leading-relaxed">
     Te avisaremos aquí cuando haya novedades
     <br />
     sobre tu cita.
   </p>
 
-</div>
+</div> 
+
 <div className="mt-4 rounded-[30px] border border-yellow-500/40 bg-[#050505] p-5 shadow-[0_0_40px_rgba(255,215,0,0.08)]">
-  <h2 className="text-yellow-400 text-[34px] font-black leading-none mb-3">
+<h2 className="text-yellow-400 text-[18px] sm:text-[20px] font-black leading-tight mb-2">
   Panel oficial integrado
 </h2>
-
-<p className="text-white/80 text-[18px] leading-relaxed mb-6">
+<p className="text-white/80 text-[13px] leading-relaxed mb-5">
   Si necesitas una cita, rellena tus datos y elige el tipo de cita.
   Después Sara continuará contigo y te avisará por WhatsApp
   cuando exista una cita real.
 </p>
 <div className="w-full">
-<div className="space-y-4 mb-6">
 
-  <input
-    type="text"
-    placeholder="Nombre completo"
-    value={formData.fullName}
-    onChange={(e) => onFormChange("fullName", e.target.value)}
-    className="w-full rounded-2xl border border-yellow-500/30 bg-black/40 px-4 py-3 text-white placeholder:text-white/30 focus:outline-none focus:border-yellow-400"
-  />
+  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
 
-  <input
-    type="text"
-    placeholder="Teléfono WhatsApp"
-    value={formData.phone}
-    onChange={(e) => onFormChange("phone", e.target.value)}
-    className="w-full rounded-2xl border border-yellow-500/30 bg-black/40 px-4 py-3 text-white placeholder:text-white/30 focus:outline-none focus:border-yellow-400"
-  />
+    <div>
+      <label className="block text-white text-[13px] mb-2">
+        {language === "ma"
+          ? "الاسم الكامل"
+          : language === "en"
+          ? "Full name"
+          : "Nombre completo"}
+      </label>
 
-  <input
-    type="email"
-    placeholder="Correo electrónico"
-    value={formData.email}
-    onChange={(e) => onFormChange("email", e.target.value)}
-    className="w-full rounded-2xl border border-yellow-500/30 bg-black/40 px-4 py-3 text-white placeholder:text-white/30 focus:outline-none focus:border-yellow-400"
-  />
+      <input
+        type="text"
+        placeholder={
+          language === "ma"
+            ? "دخل سميتك"
+            : language === "en"
+            ? "Your name"
+            : "Escribe tu nombre"
+        }
+        value={formData.fullName}
+        onChange={(e) =>
+          onFormChange("fullName", e.target.value)
+        }
+        className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-[14px] text-white placeholder:text-white/30 focus:outline-none focus:border-yellow-400"
+      />
+    </div>
 
-  <input
-    type="text"
-    placeholder="Ciudad"
-    value={formData.city}
-    onChange={(e) => onFormChange("city", e.target.value)}
-    className="w-full rounded-2xl border border-yellow-500/30 bg-black/40 px-4 py-3 text-white placeholder:text-white/30 focus:outline-none focus:border-yellow-400"
-  />
-<select
-  value={selectedTramite}
-  onChange={(e) => onSelectTramite(e.target.value)}
-  className="w-full rounded-2xl border border-yellow-500/30 bg-black/40 px-4 py-3 text-white focus:outline-none focus:border-yellow-400"
->
-  {tramites.map((tramite) => (
-    <option
-      key={tramite.value}
-      value={tramite.value}
-      className="bg-black text-white"
-    >
-      {tramite.label}
-    </option>
-  ))}
-</select>
+    <div>
+      <label className="block text-white text-[13px] mb-2">
+        {language === "ma"
+          ? "الهاتف"
+          : language === "en"
+          ? "Phone"
+          : "Teléfono"}
+      </label>
+
+      <input
+        type="text"
+        placeholder={
+          language === "ma"
+            ? "رقم الهاتف"
+            : language === "en"
+            ? "Phone number"
+            : "Tu teléfono"
+        }
+        value={formData.phone}
+        onChange={(e) =>
+          onFormChange("phone", e.target.value)
+        }
+        className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-[14px] text-white placeholder:text-white/30 focus:outline-none focus:border-yellow-400"
+      />
+    </div>
+
+    <div>
+      <label className="block text-white text-[13px] mb-2">
+        Email
+      </label>
+
+      <input
+        type="email"
+        placeholder="tu@email.com"
+        value={formData.email}
+        onChange={(e) =>
+          onFormChange("email", e.target.value)
+        }
+        className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-[14px] text-white placeholder:text-white/30 focus:outline-none focus:border-yellow-400"
+      />
+    </div>
+
+    <div>
+      <label className="block text-white text-[13px] mb-2">
+        NIE
+      </label>
+
+      <input
+        type="text"
+        placeholder="Y1234567X"
+        value={formData.nie}
+        onChange={(e) =>
+          onFormChange("nie", e.target.value)
+        }
+        className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-[14px] text-white placeholder:text-white/30 focus:outline-none focus:border-yellow-400"
+      />
+    </div>
+
+    <div>
+      <label className="block text-white text-[13px] mb-2">
+        {language === "ma"
+          ? "المدينة"
+          : language === "en"
+          ? "City"
+          : "Ciudad"}
+      </label>
+
+      <input
+        type="text"
+        placeholder={
+          language === "ma"
+            ? "المدينة"
+            : language === "en"
+            ? "City"
+            : "Tu ciudad"
+        }
+        value={formData.city}
+        onChange={(e) =>
+          onFormChange("city", e.target.value)
+        }
+        className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-[14px] text-white placeholder:text-white/30 focus:outline-none focus:border-yellow-400"
+      />
+    </div>
+
+    <div>
+      <label className="block text-white text-[13px] mb-2">
+        {language === "ma"
+          ? "المقاطعة"
+          : language === "en"
+          ? "Province"
+          : "Provincia"}
+      </label>
+
+      <select
+        value={formData.province}
+        onChange={(e) =>
+          onFormChange("province", e.target.value)
+        }
+        className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-[14px] text-white focus:outline-none focus:border-yellow-400"
+      >
+        <option value="">
+          {language === "ma"
+            ? "اختار"
+            : language === "en"
+            ? "Select"
+            : "Selecciona"}
+        </option>
+
+        <option value="Madrid">Madrid</option>
+        <option value="Barcelona">Barcelona</option>
+        <option value="Valencia">Valencia</option>
+        <option value="Málaga">Málaga</option>
+      </select>
+    </div>
+
+    <div className="sm:col-span-2">
+      <label className="block text-white text-[13px] mb-2">
+        {language === "ma"
+          ? "نوع الموعد"
+          : language === "en"
+          ? "Appointment type"
+          : "Tipo de cita"}
+      </label>
+
+      <select
+        value={selectedTramite}
+        onChange={(e) =>
+          onSelectTramite(e.target.value)
+        }
+        className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-[14px] text-white focus:outline-none focus:border-yellow-400"
+      >
+        {tramites.map((tramite) => (
+          <option
+            key={tramite.value}
+            value={tramite.value}
+            className="bg-[#060b16] text-white"
+          >
+            {tramite.label}
+          </option>
+        ))}
+      </select>
+    </div>
+
+  </div>
 </div>
 <div className="flex items-start justify-between mb-4 pt-2">
       <div>
