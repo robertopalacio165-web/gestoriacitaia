@@ -194,27 +194,24 @@ const savedText =
       <div className="flex-1 overflow-y-auto bg-white p-4 sm:p-6 text-black">
         {!confirmed ? (
           <>
-            <div className="flex items-center gap-3 mb-5 pb-4 border-b-2 border-gray-200">
-              <div className="flex items-center border border-gray-200 rounded overflow-hidden shrink-0">
-                <div className="w-7 h-12 bg-red-600" />
-                <div className="w-7 h-12 bg-yellow-400" />
-                <div className="w-7 h-12 bg-red-600" />
-              </div>
+            <div className="flex items-center justify-center gap-3 mb-5 pb-4 border-b border-yellow-500/30">
 
-              <div className="text-[9px] leading-tight text-gray-600 font-medium uppercase shrink-0">
-                <div>{ui.govLine1}</div>
-                <div>{ui.govLine2}</div>
-                <div>{ui.govLine3}</div>
-              </div>
+  <div className="text-center">
+    <p className="text-[10px] uppercase tracking-wide text-gray-400">
+      extranjería
+    </p>
 
-              <div className="ml-auto text-right shrink-0">
-                <div className="text-[10px] text-gray-500">{ui.govSmall}</div>
-                <div className="text-sm sm:text-base font-black text-[#003366]">
-                  {ui.govTitle}
-                </div>
-              </div>
-            </div>
+    <h2 className="text-[#003366] font-black text-[24px] leading-none">
+      CITA PREVIA
+    </h2>
+  </div>
 
+  <img
+    src="https://upload.wikimedia.org/wikipedia/commons/9/9a/Flag_of_Spain.svg"
+    alt="España"
+    className="w-16 rounded-md border border-yellow-500/30 shadow-sm"
+  />
+</div>
             <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 mb-4">
               <p className="text-sm font-semibold text-[#003366] mb-2">{title}</p>
               <p className="text-xs text-gray-700 leading-relaxed">
