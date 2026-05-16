@@ -472,7 +472,7 @@ className="flex-1 flex flex-col overflow-hidden bg-transparent"
     </div>
 
   </div>
-</div>
+
   
 
             {hasRealAppointment && (
