@@ -447,7 +447,6 @@ function OfficialBrowserBox({
     {ui.openOfficialSite}
   </button>
 </div>
-                </div>
               )}
   
 
