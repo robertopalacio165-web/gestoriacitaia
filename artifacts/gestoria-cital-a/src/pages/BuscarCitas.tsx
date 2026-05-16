@@ -430,25 +430,8 @@ className="flex-1 flex flex-col overflow-hidden bg-transparent"
    <button
   type="button"
   onClick={onFormSubmit}
-className="
-w-full
-h-14
-rounded-2xl
-border
-border-yellow-400/30
-bg-gradient-to-r
-from-yellow-400
-via-yellow-500
-to-amber-500
-text-black
-font-extrabold
-text-[15px]
-shadow-[0_0_25px_rgba(255,200,0,0.25)]
-transition-all
-hover:scale-[1.01]
-active:scale-[0.99]
-"
-     >
+  className="w-full rounded-full bg-gradient-to-r from-yellow-400 via-yellow-500 to-amber-500 px-5 py-4 text-[16px] font-black text-black shadow-[0_0_35px_rgba(255,215,0,0.35)] transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_45px_rgba(255,215,0,0.45)]"
+>
   {language === "ma"
     ? "🔐 حجز وبدء البحث"
     : language === "en"
@@ -460,7 +443,12 @@ active:scale-[0.99]
       <Shield className="w-3 h-3 text-yellow-400" />
 
       <span>
-    <span></span>
+        {language === "ma"
+          ? "دفع آمن عبر Stripe"
+          : language === "en"
+          ? "Secure payment with Stripe"
+          : "Pago seguro con Stripe"}
+      </span>
     </div>
 
     <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
@@ -1811,17 +1799,10 @@ province: formData.province,
               initial={{ opacity: 0, y: 40 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 40 }}
-className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 w-[98vw] max-w-[98vw] px-2"
-              >
+              className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 w-full max-w-md px-4"
+            >
               <div
-           className="
-rounded-[30px]
-border
-border-yellow-500/40
-shadow-[0_0_45px_rgba(255,200,0,0.18)]
-overflow-hidden
-bg-black
-"
+                className="rounded-2xl border border-white/15 shadow-2xl overflow-hidden"
                 style={{ background: "#1a2236" }}
               >
                 <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
