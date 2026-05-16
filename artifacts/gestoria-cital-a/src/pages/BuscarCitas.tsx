@@ -207,7 +207,7 @@ className="flex-1 flex flex-col overflow-hidden bg-transparent"
   </p>
   </div>
 </div>
-</div>
+
 <div className="mt-5 rounded-[34px] border border-yellow-500/40 bg-[#050505] p-6 shadow-[0_0_45px_rgba(255,215,0,0.10)]
 <h2 className="text-yellow-400 text-[26px] sm:text-[34px]
         Panel oficial integrado
