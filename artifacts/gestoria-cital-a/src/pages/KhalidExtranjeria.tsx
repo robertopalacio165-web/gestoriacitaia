@@ -22,6 +22,7 @@ const [paymentEnabled, setPaymentEnabled] = useState(true);
 const [answeredOnce, setAnsweredOnce] = useState(false);
   const [userAskedQuestion, setUserAskedQuestion] = useState(false);
   const [freeQuestionUsed, setFreeQuestionUsed] = useState(false);
+  const [isPaid, setIsPaid] = useState(false);
   const realtimeRef = useRef<any>(null);
 const remoteAudioRef = useRef<HTMLAudioElement | null>(null);
 const realtimePcRef = useRef<RTCPeerConnection | null>(null);
@@ -35,9 +36,16 @@ const lastAssistantTextRef = useRef("");
 const [waitingKhalid, setWaitingKhalid] = useState(false);
 const [lastTranscript, setLastTranscript] = useState("");
 const [lastReply, setLastReply] = useState("");
-  const isPaid =
-  localStorage.getItem("khalid_paid") === "true";
-  useEffect(() => {
+ 
+  
+useEffect(() => {
+
+  const savedPaid =
+    localStorage.getItem("khalid_paid");
+
+  if (savedPaid === "true") {
+    setIsPaid(true);
+  }
 
   const params =
     new URLSearchParams(window.location.search);
@@ -52,11 +60,14 @@ const [lastReply, setLastReply] = useState("");
       "true"
     );
 
+    setIsPaid(true);
+
     setShowPayment(false);
 
   }
 
 }, []);
+  
 
 useEffect(() => {
 
