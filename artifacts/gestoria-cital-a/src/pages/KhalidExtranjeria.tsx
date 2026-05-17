@@ -586,44 +586,50 @@ if (msg.type === "response.done") {
                   Khalid IA
                 </span>
               </div>
-              <div className="mt-4">
-  <motion.button
-    whileTap={{ scale: 0.96 }}
-    onClick={() => {
+              
+{isPaid && (
+  <div className="mt-4 mb-2">
 
-      if (isListening) {
+    <motion.button
+      whileTap={{ scale: 0.96 }}
 
-        stopConversation();
+      onClick={() => {
 
-      } else {
+        if (isListening) {
 
-        startConversation();
+          stopConversation();
 
-      }
+        } else {
 
-    }}
-    className={`w-full h-14 rounded-2xl flex items-center justify-center gap-3 shadow-2xl border border-white/20 font-bold text-xl transition-all ${
-      isListening
-        ? "bg-red-500"
-        : "bg-[#00E05A]"
-    }`}
-  >
+          startConversation();
 
-    {isListening ? (
-      <>
-        <MicOff size={24} />
-        Finalizar conversación
-      </>
-    ) : (
-      <>
-        <Mic size={24} />
-        Hablar con Khalid
-      </>
-    )}
+        }
 
-  </motion.button>
-</div>
+      }}
 
+      className={`w-full h-11 rounded-2xl flex items-center justify-center gap-3 shadow-2xl border border-white/20 font-semibold text-base transition-all ${
+        isListening
+          ? "bg-red-500"
+          : "bg-[#00E05A]"
+      }`}
+    >
+
+      {isListening ? (
+        <>
+          <MicOff size={22} />
+          Finalizar conversación
+        </>
+      ) : (
+        <>
+          <Mic size={22} />
+          Hablar con Khalid
+        </>
+      )}
+
+    </motion.button>
+
+  </div>
+)}
               <p className="text-sm leading-relaxed text-gray-300">
                 Especialista profesional en extranjería española para marroquíes en España.
                 Pregunta sobre residencia, papeles, policía, nacionalidad,
