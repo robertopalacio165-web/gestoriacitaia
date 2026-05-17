@@ -425,7 +425,20 @@ if (msg.type === "response.done") {
       Realtime activo
     </div>
 
+    <div className="absolute top-4 right-4 flex gap-2">
+
+      <div className="w-9 h-9 rounded-full bg-black/50 flex items-center justify-center">
+        <Bell size={16} />
+      </div>
+
+      <div className="w-9 h-9 rounded-full bg-black/50 flex items-center justify-center">
+        <Volume2 size={16} />
+      </div>
+
+    </div>
+
     <div className="absolute bottom-5 right-4 text-right">
+
       <h2 className="text-2xl font-bold">
         Khalid
       </h2>
@@ -433,9 +446,11 @@ if (msg.type === "response.done") {
       <p className="text-sm text-gray-200">
         Habla en tiempo real
       </p>
+
     </div>
 
     <div className="absolute bottom-5 left-5">
+
       <motion.button
         whileTap={{ scale: 0.96 }}
         onClick={() => {
@@ -457,12 +472,15 @@ if (msg.type === "response.done") {
             : "bg-green-500"
         }`}
       >
+
         {isListening ? (
           <MicOff size={28} />
         ) : (
           <Mic size={28} />
         )}
+
       </motion.button>
+
     </div>
 
   </div>
