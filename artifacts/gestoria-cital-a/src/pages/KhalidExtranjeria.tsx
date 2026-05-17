@@ -575,19 +575,7 @@ if (msg.type === "response.done") {
   </div>
 </motion.div>
           )}
-            <div className="mt-5 rounded-2xl border border-[#1e293b] bg-[#0b1325] p-4">s
-              <div className="flex items-center gap-2 mb-2">
-                <Shield
-                  className="text-green-400"
-                  size={18}
-                />
-
-                <span className="font-semibold">
-                  Khalid IA
-                </span>
-              </div>
-              
-{isPaid && (
+            {isPaid && (
   <div className="mt-4 mb-2">
 
     <motion.button
@@ -630,7 +618,19 @@ if (msg.type === "response.done") {
 
   </div>
 )}
-              <p className="text-sm leading-relaxed text-gray-300">
+            <div className="mt-5 rounded-2xl border border-[#1e293b] bg-[#0b1325] p-4">s
+              <div className="flex items-center gap-2 mb-2">
+                <Shield
+                  className="text-green-400"
+                  size={18}
+                />
+
+                <span className="font-semibold">
+                  Khalid IA
+                </span>
+              </div>
+              
+           <p className="text-sm leading-relaxed text-gray-300">
                 Especialista profesional en extranjería española para marroquíes en España.
                 Pregunta sobre residencia, papeles, policía, nacionalidad,
                 arraigo, trabajo, estudios y cualquier problema legal relacionado
