@@ -392,21 +392,82 @@ if (msg.type === "response.done") {
         >
           <div className="relative">
             
-          <video
-  autoPlay
-  muted
-  loop
-  playsInline
-            poster={`${import.meta.env.BASE_URL}images/khalid-extranjeria.png`}
-  className="w-full h-[260px] object-cover"
->
+ {!isPaid ? (
 
-  <source
-    src="/videoskhalid-placeholder.mp4.mp4"
-    type="video/mp4"
-  />
+  <video
+    autoPlay
+    muted
+    loop
+    playsInline
+    poster={`${import.meta.env.BASE_URL}images/khalid-extranjeria.png`}
+    className="w-full h-[260px] object-cover"
+  >
+    <source
+      src="/videoskhalid-placeholder.mp4.mp4"
+      type="video/mp4"
+    />
+  </video>
 
-</video>
+) : (
+
+  <div className="relative">
+
+    <img
+      src={`${import.meta.env.BASE_URL}images/khalid-extranjeria.png`}
+      alt="Khalid"
+      className="w-full h-[260px] object-cover"
+    />
+
+    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+
+    <div className="absolute top-4 left-4 bg-black/60 backdrop-blur-md border border-green-500/30 px-3 py-1 rounded-full flex items-center gap-2 text-sm">
+      <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+      Realtime activo
+    </div>
+
+    <div className="absolute bottom-5 right-4 text-right">
+      <h2 className="text-2xl font-bold">
+        Khalid
+      </h2>
+
+      <p className="text-sm text-gray-200">
+        Habla en tiempo real
+      </p>
+    </div>
+
+    <div className="absolute bottom-5 left-5">
+      <motion.button
+        whileTap={{ scale: 0.96 }}
+        onClick={() => {
+
+          if (isListening) {
+
+            stopConversation();
+
+          } else {
+
+            startConversation();
+
+          }
+
+        }}
+        className={`w-16 h-16 rounded-full border border-white/20 flex items-center justify-center shadow-2xl ${
+          isListening
+            ? "bg-red-500"
+            : "bg-green-500"
+        }`}
+      >
+        {isListening ? (
+          <MicOff size={28} />
+        ) : (
+          <Mic size={28} />
+        )}
+      </motion.button>
+    </div>
+
+  </div>
+
+)}
 
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
 
@@ -442,69 +503,7 @@ if (msg.type === "response.done") {
             </div>
           </div>
           <div className="p-4">
-{isPaid && (
-  <>
-    {/* ✅ FOTO REALTIME */}
-    <div className="relative mb-4 rounded-2xl overflow-hidden border border-[#1e293b]">
 
-      <img
-        src={`${import.meta.env.BASE_URL}images/khalid-extranjeria.png`}
-        alt="Khalid"
-        className="w-full h-[260px] object-cover"
-      />
-
-      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-
-      <div className="absolute top-4 left-4 bg-black/60 backdrop-blur-md border border-green-500/30 px-3 py-1 rounded-full flex items-center gap-2 text-sm">
-        <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-        Realtime activo
-      </div>
-
-      <div className="absolute bottom-5 right-4 text-right">
-        <h2 className="text-2xl font-bold">
-          Khalid
-        </h2>
-
-        <p className="text-sm text-gray-200">
-          Habla en tiempo real
-        </p>
-      </div>
-
-      {/* 🎤 MICRO */}
-      <div className="absolute bottom-5 left-5">
-        <motion.button
-          whileTap={{ scale: 0.96 }}
-
-          onClick={() => {
-
-            if (isListening) {
-
-              stopConversation();
-
-            } else {
-
-              startConversation();
-
-            }
-
-          }}
-
-          className={`w-16 h-16 rounded-full border border-white/20 flex items-center justify-center shadow-2xl ${
-            isListening
-              ? "bg-red-500"
-              : "bg-green-500"
-          }`}
-        >
-          {isListening ? (
-            <MicOff size={28} />
-          ) : (
-            <Mic size={28} />
-          )}
-        </motion.button>
-      </div>
-    </div>
-  </>
-)}
         
             {!isPaid && (
 <motion.div
