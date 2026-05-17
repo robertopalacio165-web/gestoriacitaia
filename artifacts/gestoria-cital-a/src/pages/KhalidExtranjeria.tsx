@@ -455,47 +455,7 @@ if (msg.type === "response.done") {
       Realtime activo
     </div>
 
- <div className="absolute bottom-5 left-1/2 -translate-x-1/2">
 
-  <motion.button
-    whileTap={{ scale: 0.96 }}
-
-    onClick={() => {
-
-      if (isListening) {
-
-        stopConversation();
-
-      } else {
-
-        startConversation();
-
-      }
-
-    }}
-
-    className={`h-14 px-8 rounded-2xl flex items-center justify-center gap-3 shadow-2xl border border-white/20 font-bold text-lg transition-all ${
-      isListening
-        ? "bg-red-500"
-        : "bg-green-500"
-    }`}
-  >
-
-    {isListening ? (
-      <>
-        <MicOff size={24} />
-        Finalizar conversación
-      </>
-    ) : (
-      <>
-        <Mic size={24} />
-        Hablar con Khalid
-      </>
-    )}
-
-  </motion.button>
-
-</div>
 
   </div>
 )}    
@@ -615,7 +575,7 @@ if (msg.type === "response.done") {
   </div>
 </motion.div>
           )}
-            <div className="mt-5 rounded-2xl border border-[#1e293b] bg-[#0b1325] p-4">
+            <div className="mt-5 rounded-2xl border border-[#1e293b] bg-[#0b1325] p-4">s
               <div className="flex items-center gap-2 mb-2">
                 <Shield
                   className="text-green-400"
@@ -626,6 +586,43 @@ if (msg.type === "response.done") {
                   Khalid IA
                 </span>
               </div>
+              <div className="mt-4">
+  <motion.button
+    whileTap={{ scale: 0.96 }}
+    onClick={() => {
+
+      if (isListening) {
+
+        stopConversation();
+
+      } else {
+
+        startConversation();
+
+      }
+
+    }}
+    className={`w-full h-14 rounded-2xl flex items-center justify-center gap-3 shadow-2xl border border-white/20 font-bold text-xl transition-all ${
+      isListening
+        ? "bg-red-500"
+        : "bg-[#00E05A]"
+    }`}
+  >
+
+    {isListening ? (
+      <>
+        <MicOff size={24} />
+        Finalizar conversación
+      </>
+    ) : (
+      <>
+        <Mic size={24} />
+        Hablar con Khalid
+      </>
+    )}
+
+  </motion.button>
+</div>
 
               <p className="text-sm leading-relaxed text-gray-300">
                 Especialista profesional en extranjería española para marroquíes en España.
