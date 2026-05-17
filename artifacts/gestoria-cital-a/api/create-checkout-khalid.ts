@@ -27,7 +27,7 @@ export default async function handler(
 
     mode: "payment",
 
-    customer_creation: "never",
+customer_creation: "if_required",
 
     phone_number_collection: {
       enabled: false,
