@@ -2311,9 +2311,7 @@ setTimeout(() => {
 </div>
  )}
 
-          </div>
-        {paymentCompleted && (
-<div className="mt-2 max-w-md mx-auto">
+        
 
 
 
