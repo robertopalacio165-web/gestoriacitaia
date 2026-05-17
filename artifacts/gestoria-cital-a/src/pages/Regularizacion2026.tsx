@@ -2308,9 +2308,11 @@ setTimeout(() => {
 
     </div>
   </motion.div>
-</div>
- )}
+    </div>
 
+  </div>
+
+)}
         
 
 
