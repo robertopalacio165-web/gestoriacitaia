@@ -409,11 +409,11 @@ if (msg.type === "response.done") {
 </video>
 )}
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+            <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-black/50 backdrop-blur-md px-4 py-1 rounded-full text-sm font-semibold text-white border border-white/10">
+  Llamada segura en directo
+</div>
 
-            <div className="absolute top-4 left-4 bg-black/60 backdrop-blur-md border border-green-500/30 px-3 py-1 rounded-full flex items-center gap-2 text-sm">
-              <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-              En línea
-            </div>
+           
 
             <div className="absolute top-4 right-4 flex gap-2">
               <div className="w-9 h-9 rounded-full bg-black/50 flex items-center justify-center">
@@ -450,10 +450,7 @@ if (msg.type === "response.done") {
 
     <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
 
-    <div className="absolute top-4 left-4 bg-black/60 backdrop-blur-md border border-green-500/30 px-3 py-1 rounded-full flex items-center gap-2 text-sm">
-      <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-      Realtime activo
-    </div>
+ 
 
 
 
