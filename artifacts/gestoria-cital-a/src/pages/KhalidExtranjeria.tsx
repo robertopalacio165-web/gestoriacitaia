@@ -391,7 +391,7 @@ if (msg.type === "response.done") {
           className="rounded-2xl overflow-hidden border border-[#1e293b] bg-[#071224] shadow-2xl"
         >
           <div className="relative">
-            
+            {!isPaid && (
           <video
   autoPlay
   muted
@@ -407,7 +407,7 @@ if (msg.type === "response.done") {
   />
 
 </video>
-
+)}
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
 
             <div className="absolute top-4 left-4 bg-black/60 backdrop-blur-md border border-green-500/30 px-3 py-1 rounded-full flex items-center gap-2 text-sm">
@@ -435,11 +435,7 @@ if (msg.type === "response.done") {
               </p>
             </div>
 
-            <div className="absolute bottom-5 left-5">
-              <div className="w-16 h-16 rounded-full bg-black/50 backdrop-blur-md border border-white/10 flex items-center justify-center">
-                <Mic size={26} />
-              </div>
-            </div>
+           
           </div>
           <div className="p-4">
 
@@ -459,39 +455,47 @@ if (msg.type === "response.done") {
       Realtime activo
     </div>
 
-    <div className="absolute bottom-5 left-5">
+ <div className="absolute bottom-5 left-1/2 -translate-x-1/2">
 
-      <motion.button
-        whileTap={{ scale: 0.96 }}
+  <motion.button
+    whileTap={{ scale: 0.96 }}
 
-        onClick={() => {
+    onClick={() => {
 
-          if (isListening) {
+      if (isListening) {
 
-            stopConversation();
+        stopConversation();
 
-          } else {
+      } else {
 
-            startConversation();
+        startConversation();
 
-          }
+      }
 
-        }}
+    }}
 
-        className={`w-16 h-16 rounded-full flex items-center justify-center shadow-2xl border border-white/20 ${
-          isListening
-            ? "bg-red-500"
-            : "bg-green-500"
-        }`}
-      >
-        {isListening ? (
-          <MicOff size={28} />
-        ) : (
-          <Mic size={28} />
-        )}
-      </motion.button>
+    className={`h-14 px-8 rounded-2xl flex items-center justify-center gap-3 shadow-2xl border border-white/20 font-bold text-lg transition-all ${
+      isListening
+        ? "bg-red-500"
+        : "bg-green-500"
+    }`}
+  >
 
-    </div>
+    {isListening ? (
+      <>
+        <MicOff size={24} />
+        Finalizar conversación
+      </>
+    ) : (
+      <>
+        <Mic size={24} />
+        Hablar con Khalid
+      </>
+    )}
+
+  </motion.button>
+
+</div>
 
   </div>
 )}    
