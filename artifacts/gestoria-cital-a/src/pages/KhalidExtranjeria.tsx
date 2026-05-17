@@ -39,7 +39,7 @@ const [lastReply, setLastReply] = useState("");
 
   useEffect(() => {
 
-  useEffect(() => {
+
 
   const savedPaid =
     localStorage.getItem("khalid_paid");
