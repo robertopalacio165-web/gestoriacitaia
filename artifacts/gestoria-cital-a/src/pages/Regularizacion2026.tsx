@@ -2317,7 +2317,7 @@ setTimeout(() => {
 
 
 
-{/* ✅ DESPUÉS DEL PAGO */}
+
   {paymentCompleted && (
 
 <div className="max-w-md mx-auto px-4">
