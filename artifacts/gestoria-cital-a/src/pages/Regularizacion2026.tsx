@@ -2316,41 +2316,83 @@ setTimeout(() => {
         
 
 
+{paymentCompleted && (
+  <div className="max-w-md mx-auto px-4">
 
+    <div className="relative mb-4 rounded-2xl overflow-hidden border border-[#1e293b] bg-[#071224]">
 
-  {paymentCompleted && (
+      <img
+        src={`${import.meta.env.BASE_URL}images/avatar-mohamed.png`}
+        alt="Mohamed"
+        className="w-full h-[270px] object-cover"
+      />
 
-<div className="max-w-md mx-auto px-4">
+      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
 
-  <div className="relative mb-4 rounded-2xl overflow-hidden border border-[#1e293b] bg-[#071224]">
+      <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-black/50 backdrop-blur-md px-4 py-1 rounded-full text-sm font-semibold text-white border border-white/10">
+        Consulta privada en directo
+      </div>
 
-    <img
-      src={`${import.meta.env.BASE_URL}images/avatar-mohamed.png`}
-      alt="Mohamed"
-      className="w-full h-[270px] object-cover"
-    />
+      <div className="absolute bottom-5 right-4 text-right">
+        <h2 className="text-2xl font-bold text-white">
+          Mohamed
+        </h2>
 
-    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+        <p className="text-sm text-gray-200">
+          Especialista en Extranjería
+        </p>
+      </div>
 
-    <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-black/50 backdrop-blur-md px-4 py-1 rounded-full text-sm font-semibold text-white border border-white/10">
-      Consulta privada en directo
     </div>
 
-    <div className="absolute bottom-5 right-4 text-right">
-      <h2 className="text-2xl font-bold text-white">
-        Mohamed
-      </h2>
+    <div className="space-y-3">
 
-      <p className="text-sm text-gray-200">
-        Especialista en Extranjería
-      </p>
+      <button
+        onClick={startListening}
+        className="w-full h-12 rounded-2xl bg-green-500 hover:bg-green-600 text-white font-bold transition"
+      >
+        Hablar con Mohamed
+      </button>
+
+      <button
+        onClick={handleVerifyAll}
+        className="w-full h-12 rounded-2xl bg-blue-500 hover:bg-blue-600 text-white font-bold transition"
+      >
+        Verificar documentos
+      </button>
+
+      <button
+        onClick={handleGeneralUpload}
+        className="w-full h-12 rounded-2xl bg-[#0b1325] border border-[#1e293b] text-white font-bold transition"
+      >
+        Subir documentos
+      </button>
+
+      <div className="flex gap-2">
+
+        <input
+          type="tel"
+          placeholder="Número WhatsApp"
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
+          className="flex-1 h-12 rounded-2xl bg-[#0b1325] border border-[#1e293b] px-4 text-white outline-none"
+        />
+
+        <button
+          onClick={handleSendWhatsApp}
+          className="px-5 rounded-2xl bg-green-600 hover:bg-green-700 text-white font-bold"
+        >
+          WhatsApp
+        </button>
+
+      </div>
+
     </div>
 
   </div>
-
-</div>
-
 )}
+
+
 
 function FieldSelect({
   value,
