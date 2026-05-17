@@ -22,7 +22,6 @@ const [paymentEnabled, setPaymentEnabled] = useState(true);
 const [answeredOnce, setAnsweredOnce] = useState(false);
   const [userAskedQuestion, setUserAskedQuestion] = useState(false);
   const [freeQuestionUsed, setFreeQuestionUsed] = useState(false);
-  const [isPaid, setIsPaid] = useState(false);
   const realtimeRef = useRef<any>(null);
 const remoteAudioRef = useRef<HTMLAudioElement | null>(null);
 const realtimePcRef = useRef<RTCPeerConnection | null>(null);
@@ -36,17 +35,9 @@ const lastAssistantTextRef = useRef("");
 const [waitingKhalid, setWaitingKhalid] = useState(false);
 const [lastTranscript, setLastTranscript] = useState("");
 const [lastReply, setLastReply] = useState("");
-
+  const isPaid =
+  localStorage.getItem("khalid_paid") === "true";
   useEffect(() => {
-
-
-
-  const savedPaid =
-    localStorage.getItem("khalid_paid");
-
-  if (savedPaid === "true") {
-    setIsPaid(true);
-  }
 
   const params =
     new URLSearchParams(window.location.search);
@@ -60,8 +51,6 @@ const [lastReply, setLastReply] = useState("");
       "khalid_paid",
       "true"
     );
-
-    setIsPaid(true);
 
     setShowPayment(false);
 
@@ -392,103 +381,119 @@ if (msg.type === "response.done") {
         >
           <div className="relative">
             
- {!isPaid ? (
+          <video
+  autoPlay
+  muted
+  loop
+  playsInline
+            poster={`${import.meta.env.BASE_URL}images/khalid-extranjeria.png`}
+  className="w-full h-[260px] object-cover"
+>
 
-  <video
-    autoPlay
-    muted
-    loop
-    playsInline
-    poster={`${import.meta.env.BASE_URL}images/khalid-extranjeria.png`}
-    className="w-full h-[260px] object-cover"
-  >
-    <source
-      src="/videoskhalid-placeholder.mp4.mp4"
-      type="video/mp4"
-    />
-  </video>
+  <source
+    src="/videoskhalid-placeholder.mp4.mp4"
+    type="video/mp4"
+  />
 
-) : (
+</video>
 
-  <div className="relative">
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
 
-    <img
-      src={`${import.meta.env.BASE_URL}images/khalid-extranjeria.png`}
-      alt="Khalid"
-      className="w-full h-[260px] object-cover"
-    />
+            <div className="absolute top-4 left-4 bg-black/60 backdrop-blur-md border border-green-500/30 px-3 py-1 rounded-full flex items-center gap-2 text-sm">
+              <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+              En línea
+            </div>
 
-    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+            <div className="absolute top-4 right-4 flex gap-2">
+              <div className="w-9 h-9 rounded-full bg-black/50 flex items-center justify-center">
+                <Bell size={16} />
+              </div>
 
-    <div className="absolute top-4 left-4 bg-black/60 backdrop-blur-md border border-green-500/30 px-3 py-1 rounded-full flex items-center gap-2 text-sm">
-      <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-      Realtime activo
-    </div>
+              <div className="w-9 h-9 rounded-full bg-black/50 flex items-center justify-center">
+                <Volume2 size={16} />
+              </div>
+            </div>
 
-    <div className="absolute top-4 right-4 flex gap-2">
+            <div className="absolute bottom-5 right-4 text-right">
+              <h2 className="text-2xl font-bold">
+                Khalid
+              </h2>
 
-      <div className="w-9 h-9 rounded-full bg-black/50 flex items-center justify-center">
-        <Bell size={16} />
-      </div>
+              <p className="text-sm text-gray-200">
+                {t("Especialista en Extranjería")}
+              </p>
+            </div>
 
-      <div className="w-9 h-9 rounded-full bg-black/50 flex items-center justify-center">
-        <Volume2 size={16} />
-      </div>
-
-    </div>
-
-    <div className="absolute bottom-5 right-4 text-right">
-
-      <h2 className="text-2xl font-bold">
-        Khalid
-      </h2>
-
-      <p className="text-sm text-gray-200">
-        Habla en tiempo real
-      </p>
-
-    </div>
-
-    <div className="absolute bottom-5 left-5">
-
-      <motion.button
-        whileTap={{ scale: 0.96 }}
-        onClick={() => {
-
-          if (isListening) {
-
-            stopConversation();
-
-          } else {
-
-            startConversation();
-
-          }
-
-        }}
-        className={`w-16 h-16 rounded-full border border-white/20 flex items-center justify-center shadow-2xl ${
-          isListening
-            ? "bg-red-500"
-            : "bg-green-500"
-        }`}
-      >
-
-        {isListening ? (
-          <MicOff size={28} />
-        ) : (
-          <Mic size={28} />
-        )}
-
-      </motion.button>
-
-    </div>
-
-  </div>
-
-)}
-
+            <div className="absolute bottom-5 left-5">
+              <div className="w-16 h-16 rounded-full bg-black/50 backdrop-blur-md border border-white/10 flex items-center justify-center">
+                <Mic size={26} />
+              </div>
+            </div>
+          </div>
           <div className="p-4">
+{isPaid && (
+  <>
+    {/* ✅ FOTO REALTIME */}
+    <div className="relative mb-4 rounded-2xl overflow-hidden border border-[#1e293b]">
 
+      <img
+        src={`${import.meta.env.BASE_URL}images/khalid-extranjeria.png`}
+        alt="Khalid"
+        className="w-full h-[260px] object-cover"
+      />
+
+      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+
+      <div className="absolute top-4 left-4 bg-black/60 backdrop-blur-md border border-green-500/30 px-3 py-1 rounded-full flex items-center gap-2 text-sm">
+        <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+        Realtime activo
+      </div>
+
+      <div className="absolute bottom-5 right-4 text-right">
+        <h2 className="text-2xl font-bold">
+          Khalid
+        </h2>
+
+        <p className="text-sm text-gray-200">
+          Habla en tiempo real
+        </p>
+      </div>
+
+      {/* 🎤 MICRO */}
+      <div className="absolute bottom-5 left-5">
+        <motion.button
+          whileTap={{ scale: 0.96 }}
+
+          onClick={() => {
+
+            if (isListening) {
+
+              stopConversation();
+
+            } else {
+
+              startConversation();
+
+            }
+
+          }}
+
+          className={`w-16 h-16 rounded-full border border-white/20 flex items-center justify-center shadow-2xl ${
+            isListening
+              ? "bg-red-500"
+              : "bg-green-500"
+          }`}
+        >
+          {isListening ? (
+            <MicOff size={28} />
+          ) : (
+            <Mic size={28} />
+          )}
+        </motion.button>
+      </div>
+    </div>
+  </>
+)}
         
             {!isPaid && (
 <motion.div
