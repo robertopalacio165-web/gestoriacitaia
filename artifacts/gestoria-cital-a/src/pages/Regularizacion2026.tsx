@@ -2352,8 +2352,6 @@ setTimeout(() => {
 
 )}
 
-}
-
 function FieldSelect({
   value,
   onChange,
