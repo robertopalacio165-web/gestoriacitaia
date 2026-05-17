@@ -2250,6 +2250,7 @@ setTimeout(() => {
           </div>
         </div>
     <div className="max-w-md mx-auto px-4">
+      {!paymentCompleted && (
         <div className="max-w-md mx-auto">
   <motion.div
     initial={{ opacity: 0, y: 15 }}
@@ -2308,143 +2309,49 @@ setTimeout(() => {
     </div>
   </motion.div>
 </div>
- 
+ )}
 
           </div>
+        {paymentCompleted && (
 <div className="mt-2 max-w-md mx-auto">
 
-{/* ✅ ANTES DEL PAGO */}
-{!paymentCompleted && (
 
- <div className="p-3">
 
-<div className="relative overflow-hidden rounded-2xl border border-yellow-500/30 bg-gradient-to-br from-[#1a1200] via-[#0b0b0b] to-[#1a1200] p-3 max-w-[430px] mx-auto">
-      <div className="flex items-center justify-between mb-3">
+{/* ✅ DESPUÉS DEL PAGO */}
+  {paymentCompleted && (
 
-        <div>
-          <p className="text-white font-bold text-lg">
-            Desbloquea a Mohamed
-          </p>
+<div className="max-w-md mx-auto px-4">
 
-          <span className="inline-flex mt-1 px-2 py-1 rounded-full bg-yellow-500 text-black text-[10px] font-bold">
-            PREMIUM
-          </span>
-        </div>
+  <div className="relative mb-4 rounded-2xl overflow-hidden border border-[#1e293b] bg-[#071224]">
 
-        <div className="text-right">
-  <p className="text-xl font-black text-yellow-400 leading-none">
-    14,99€
-          </p>
+    <img
+      src={`${import.meta.env.BASE_URL}images/avatar-mohamed.png`}
+      alt="Mohamed"
+      className="w-full h-[270px] object-cover"
+    />
 
-          <p className="text-white/60 text-xs">
-            Acceso completo
-          </p>
-        </div>
+    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
 
-      </div>
-
- <p className="text-white/70 text-[13px] leading-relaxed mb-3">
-        Acceso ilimitado a Mohamed IA, videollamada realtime,
-        análisis de documentos y generación automática del expediente.
-      </p>
-
-     <button
-  onClick={handleStripePayment}
-  type="button"
-className="w-[84%] mx-auto flex items-center justify-center h-8 rounded-full text-black font-extrabold text-[13px] bg-gradient-to-b from-[#ffe27a] via-[#ffd400] to-[#ffbf00] border border-[#fff3b0] shadow-[0_4px_14px_rgba(255,215,0,0.35)]"
-       >
-  🔓 Desbloquear ahora
-</button>
-
-  <div className="mt-2 flex items-center justify-center gap-2 flex-wrap">
-
-   <div className="h-8 px-2 rounded-lg bg-white flex items-center justify-center text-blue-700 font-black text-[10px]">
-  VISA
-</div>
-
-<div className="h-8 px-2 rounded-lg bg-white flex items-center justify-center text-red-500 font-black text-[10px]">
-  Mastercard
-</div>
-
-<div className="h-8 px-2 rounded-lg bg-white flex items-center justify-center text-black font-black text-[10px]">
-   Pay
-</div>
-
-<div className="h-8 px-2 rounded-lg bg-white flex items-center justify-center text-black font-black text-[10px]">
-  G Pay
-</div>
-
-      </div>
-
+    <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-black/50 backdrop-blur-md px-4 py-1 rounded-full text-sm font-semibold text-white border border-white/10">
+      Consulta privada en directo
     </div>
 
-    <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
+    <div className="absolute bottom-5 right-4 text-right">
+      <h2 className="text-2xl font-bold text-white">
+        Mohamed
+      </h2>
 
-      <div className="flex items-center gap-2 mb-3">
-
-        <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-
-        <p className="text-white font-bold">
-          Mohamed IA
-        </p>
-
-      </div>
-
-      <p className="text-white/80 text-sm leading-relaxed">
-        Especialista profesional en extranjería española para marroquíes en España.
-        Pregunta sobre residencia, papeles, policía, nacionalidad, arraigo,
-        trabajo, estudios y cualquier problema legal relacionado con inmigración.
+      <p className="text-sm text-gray-200">
+        Especialista en Extranjería
       </p>
-
     </div>
 
   </div>
 
-)}
-
-{/* ✅ DESPUÉS DEL PAGO */}
-  
-{paymentCompleted && (
-  <>
-    {/* AQUÍ SEGUIRÁ TODO TU REALTIME ACTUAL */}
-  </>
-)}
-
-
-
 </div>
 
-<audio ref={remoteAudioRef} autoPlay playsInline className="hidden" />
-      </main>
-    </div>
-  );
-}
+)}
 
-function FieldLabel({ label }: { label: string }) {
-  return (
-    <label className="block text-[12px] font-semibold text-slate-600 mb-1">
-      {label}
-    </label>
-  );
-}
-
-function FieldInput({
-  value,
-  onChange,
-  placeholder,
-}: {
-  value: string;
-  onChange: (value: string) => void;
-  placeholder: string;
-}) {
-  return (
-    <input
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      className="w-full rounded-[18px] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none focus:border-blue-400"
-      placeholder={placeholder}
-    />
-  );
 }
 
 function FieldSelect({
