@@ -144,6 +144,7 @@ setTimeout(async () => {
   setConfirmUnlocked(true);
 
   setQuestionsDone(true);
+  setStep("upload");
 try {
 
   const pdfRes = await fetch("/api/generate-expediente-pdf", {
@@ -2404,12 +2405,70 @@ className="w-[84%] mx-auto flex items-center justify-center h-8 rounded-full tex
 
 {/* ✅ DESPUÉS DEL PAGO */}
   
-{paymentCompleted && (
-  <>
-    {/* AQUÍ SEGUIRÁ TODO TU REALTIME ACTUAL */}
-  </>
-)}
 
+{paymentCompleted && (
+
+<div className="mt-4 space-y-4">
+
+  {/* MICRO VERDE */}
+  <button
+    onClick={isListening ? stopListening : startListening}
+    className="w-full h-14 rounded-2xl bg-green-500 hover:bg-green-400 transition-all text-white font-bold text-lg shadow-lg shadow-green-500/30 flex items-center justify-center gap-3"
+  >
+    {isListening ? (
+      <>
+        <MicOff className="w-6 h-6" />
+        Parar micrófono
+      </>
+    ) : (
+      <>
+        <Mic className="w-6 h-6" />
+        Hablar con Mohamed
+      </>
+    )}
+  </button>
+
+  {/* SUBIR DOCUMENTOS */}
+  <button
+    onClick={handleGeneralUpload}
+    disabled={generalUploading}
+    className="w-full h-14 rounded-2xl bg-[#111827] border border-[#1f2937] text-white font-semibold flex items-center justify-center gap-3"
+  >
+    <Upload className="w-5 h-5" />
+    {generalUploading ? "Subiendo..." : "Subir documentos"}
+  </button>
+
+  {/* VERIFY */}
+  <button
+    onClick={handleVerifyAll}
+    className="w-full h-14 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white font-bold"
+  >
+    Verify documentos
+  </button>
+
+  {/* WHATSAPP */}
+  <div className="space-y-3">
+
+    <input
+      type="tel"
+      value={phone}
+      onChange={(e) => setPhone(e.target.value)}
+      placeholder="Tu número WhatsApp"
+      className="w-full h-14 rounded-2xl bg-[#0f172a] border border-[#1e293b] px-4 text-white outline-none"
+    />
+
+    <button
+      onClick={handleSendWhatsApp}
+      className="w-full h-14 rounded-2xl bg-green-600 hover:bg-green-500 text-white font-bold"
+    >
+      Enviar por WhatsApp
+    </button>
+
+  </div>
+
+</div>
+
+)}
 
 
 </div>
