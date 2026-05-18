@@ -174,38 +174,7 @@ className="flex-1 flex flex-col overflow-hidden bg-transparent"
         {!confirmed ? (
           <>
      
-         <div className="rounded-[26px] border border-emerald-500/40 bg-[#07111f] px-5 py-7 mb-5 shadow-[0_0_30px_rgba(16,185,129,0.08)]">
-
-  <div className="flex justify-center mb-4">
-    <div className="w-12 h-12 rounded-full border border-emerald-500/30 bg-emerald-500/10 flex items-center justify-center">
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        className="w-7 h-7 text-emerald-400"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M8 10h.01M12 10h.01M16 10h.01M9 16h6"
-        />
-      </svg>
-    </div>
-  </div>
-
-  <h3 className="text-center text-white text-[18px] font-semibold leading-tight mb-3">
-    Aquí aparecerán los mensajes de Sara
-  </h3>
-
-  <p className="text-center text-white/70 text-[14px] leading-relaxed">
-    Te avisaremos aquí cuando haya novedades
-    <br />
-    sobre tu cita.
-  </p>
-
-</div> 
+        
 <div className="
 mt-3
 mx-[-4px]
@@ -529,6 +498,101 @@ hover:scale-[1.01]
             )}
           </>
         ) : (
+        <>
+  <div className="rounded-[26px] border border-emerald-500/40 bg-[#07111f] px-5 py-7 mb-5 shadow-[0_0_30px_rgba(16,185,129,0.08)]">
+
+    <div className="flex justify-center mb-4">
+      <div className="w-12 h-12 rounded-full border border-emerald-500/30 bg-emerald-500/10 flex items-center justify-center">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className="w-7 h-7 text-emerald-400"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M8 10h.01M12 10h.01M16 10h.01M9 16h6"
+          />
+        </svg>
+      </div>
+    </div>
+
+    <h3 className="text-center text-white text-[18px] font-semibold leading-tight mb-3">
+      Aquí aparecerán los mensajes de Sara
+    </h3>
+
+    <p className="text-center text-white/70 text-[14px] leading-relaxed">
+      Te avisaremos aquí cuando haya novedades
+      <br />
+      sobre tu cita.
+    </p>
+
+  </div>
+
+  <div className="rounded-[30px] overflow-hidden border border-yellow-500/30 bg-[#050816] shadow-[0_0_40px_rgba(255,200,0,0.10)]">
+
+    <div className="px-6 py-8 bg-[radial-gradient(circle_at_top,rgba(255,200,0,0.12),transparent_60%)]">
+
+      <div className="flex justify-center mb-5">
+        <img
+          src={`${import.meta.env.BASE_URL}images/spain-flag.png`}
+          alt="España"
+          className="w-16"
+        />
+      </div>
+
+      <h2 className="text-center text-[#f6d06f] text-[36px] leading-[42px] font-black mb-5">
+        Citas de Extranjería
+        <br />
+        con Confianza
+      </h2>
+
+      <p className="text-center text-white/75 text-[15px] leading-relaxed mb-8">
+        Te ayudamos a gestionar tu cita de extranjería de forma rápida,
+        segura y 100% online.
+      </p>
+
+      <div className="grid grid-cols-3 gap-3 text-center">
+
+        <div>
+          <Shield className="w-8 h-8 text-[#f6d06f] mx-auto mb-3" />
+          <p className="text-white/80 text-[13px] leading-snug">
+            Proceso
+            <br />
+            seguro
+          </p>
+        </div>
+
+        <div>
+          <Bell className="w-8 h-8 text-[#f6d06f] mx-auto mb-3" />
+          <p className="text-white/80 text-[13px] leading-snug">
+            Atención
+            <br />
+            a inmigrantes
+          </p>
+        </div>
+
+        <div>
+          <CheckCircle2 className="w-8 h-8 text-[#f6d06f] mx-auto mb-3" />
+          <p className="text-white/80 text-[13px] leading-snug">
+            Citas
+            <br />
+            garantizadas
+          </p>
+        </div>
+
+      </div>
+
+      <div className="mt-8 text-center text-[#f6d06f] text-[24px] font-bold">
+        “ Tu futuro comienza con una cita. ”
+      </div>
+
+    </div>
+  </div>
+</>
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
