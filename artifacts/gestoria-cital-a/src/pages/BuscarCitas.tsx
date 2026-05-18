@@ -142,9 +142,10 @@ function OfficialBrowserBox({
 
 const formIntro =
   language === "ma"
-    ? "إلى كنتي باغي موعد عمر المعلومات ديالك واختار نوع السيتا ومن بعد سارة غادي تكمل معاك وتعلمك فالواتساب ملي يبان الموعد."
+    ? "إلى كنتي باغي موعد عمر المعلومات ديالك واختار نوع اسبانيا ومن بعد سارة غادي تكمل معاك وتعلمك فاش يكون الموعد."
     : language === "en"
-? "Fill in your information and choose the appointment type. Sara will continue with you and notify you on WhatsApp when an appointment appears.";
+    ? "Fill in your information and choose the appointment type. Sara will continue with you and notify you on WhatsApp when an appointment appears."
+    : "Si necesitas una cita, rellena tus datos y elige el tipo de cita. Después Sara continuará contigo y te avisará por WhatsApp cuando exista una cita real.";
  
 const confirmationIntro =
   language === "ma"
