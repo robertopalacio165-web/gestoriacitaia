@@ -2446,8 +2446,8 @@ className="w-[84%] mx-auto flex items-center justify-center h-8 rounded-full tex
   {/* MICRO VERDE */}
 <button
   onClick={isListening ? stopListening : startListening}
-className={`w-[86%] mx-auto h-[56px] rounded-[22px] transition-all duration-300 flex items-center justify-center gap-3 text-[20px] font-semibold border shadow-xl ${
-    isListening
+className={`w-[84%] mx-auto h-[50px] rounded-[22px] transition-all duration-300 flex items-center justify-center gap-3 text-[20px] font-semibold border shadow-xl ${
+  isListening
       ? "bg-red-600 border-red-400 text-white shadow-red-500/40 animate-pulse"
       : "bg-gradient-to-r from-[#16a34a] to-[#22c55e] border-[#4ade80] text-white shadow-green-500/30"
   }`}
@@ -2518,15 +2518,15 @@ className={`w-[86%] mx-auto h-[56px] rounded-[22px] transition-all duration-300 
     value={phone}
     onChange={(e) => setPhone(e.target.value)}
     placeholder="Tu número WhatsApp"
-    className="flex-1 h-full bg-transparent px-4 text-white outline-none text-[16px]"
-  />
+className="w-[84%] mx-auto flex items-center h-[50px] rounded-[20px] border border-[#2a2a2a] overflow-hidden bg-[#050816]"
+    />
 
 </div>
 
  <button
   onClick={handleSendWhatsApp}
- className="w-[94%] mx-auto h-[56px] rounded-[20px] border border-[#c6922f] bg-gradient-to-r from-[#0b5f2a] to-[#16a34a] hover:scale-[1.01] transition-all text-white font-semibold text-[18px] shadow-lg shadow-green-900/30 flex items-center justify-center gap-3"
->
+className="w-[90%] mx-auto flex items-center h-[50px] rounded-2xl border border-[#2a2a2a] overflow-hidden bg-[#050816]"
+   >
   <svg
     xmlns="http://www.w3.org/2000/svg"
     className="w-5 h-5"
