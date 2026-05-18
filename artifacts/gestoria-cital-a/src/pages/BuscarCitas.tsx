@@ -145,8 +145,12 @@ const formIntro =
     ? "إلى كنتي باغي موعد عمر المعلومات ديالك واختار نوع السيتا ومن بعد سارة غادي تكمل معاك وتعلمك فالواتساب ملي يبان الموعد."
     : language === "en"
     ? "Fill in your information and choose the appointment type. Sara will continue with you and notify you on WhatsApp when an appointment appears."
-    : "Si necesitas una cita, rellena tus datos y elige el tipo de cita. Después Sara continuará contigo y te avisará por WhatsApp cuando exista una cita real.";
-
+ const formIntro =
+  language === "ma"
+    ? "..."
+    : language === "en"
+    ? "..."
+    : "...";
 const confirmationIntro =
   language === "ma"
     ? "دخلتي من رابط تأكيد الموعد. راجع المعلومات وأكد غير إلا كان الموعد حقيقي."
@@ -192,9 +196,7 @@ shadow-[0_0_35px_rgba(255,200,0,0.18)]
   Panel oficial integrado
 </h2>
 <p className="text-white/80 text-[13px] leading-relaxed mb-5">
-  Si necesitas una cita, rellena tus datos y elige el tipo de cita.
-  Después Sara continuará contigo y te avisará por WhatsApp
-  cuando exista una cita real.
+  {formIntro}
 </p>
 <div className="w-full">
 
@@ -1725,6 +1727,11 @@ province: formData.province,
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
 
               <div className="absolute top-3 left-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/60 border border-white/10 backdrop-blur-md">
+                <img
+  src={`${import.meta.env.BASE_URL}images/spain-gov.png`}
+  alt="España"
+  className="absolute top-3 right-20 w-10 h-7 object-cover rounded-[4px] border border-white/20 shadow-lg"
+/>
                 <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
                 <span className="text-xs font-medium text-white">
                   {ui.online}
@@ -1819,7 +1826,15 @@ province: formData.province,
             title={
               cameFromConfirmationLink
                 ? "Confirmación de cita con Sara"
-                : "Panel oficial integrado"
+           {language === "ma"
+  ? "لوحة المواعيد الرسمية"
+  : language === "en"
+  ? "Official appointment panel"
+{language === "ma"
+  ? "لوحة المواعيد الرسمية"
+  : language === "en"
+  ? "Official appointment panel"
+  : "Panel oficial integrado"}
             }
             url={officialUrl}
             selectedTramiteLabel={selectedTramiteLabel}
