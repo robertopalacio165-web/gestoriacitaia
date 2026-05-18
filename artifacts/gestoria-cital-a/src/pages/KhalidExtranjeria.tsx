@@ -464,9 +464,7 @@ if (realtimeLocalStreamRef.current) {
 </video>
 )}
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-            <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-black/50 backdrop-blur-md px-4 py-1 rounded-full text-sm font-semibold text-white border border-white/10">
-  Llamada segura en directo
-</div>
+            
 
            
 
