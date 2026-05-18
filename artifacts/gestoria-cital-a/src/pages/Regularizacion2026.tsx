@@ -2291,10 +2291,13 @@ className="w-full h-[270px] object-cover border-b border-[#c6922f]/40"
 </div>
 
 
-      <div className="absolute top-4 left-4 bg-black/70 backdrop-blur-xl border border-[#c6922f]/40 px-4 py-2 rounded-full flex items-center gap-2 text-sm shadow-lg"
- <div className="w-2.5 h-2.5 rounded-full bg-green-400 animate-pulse shadow-lg"></div>
-        En línea
-      </div>
+    <div className="absolute top-4 left-4 bg-black/70 backdrop-blur-xl border border-[#c6922f]/40 px-4 py-2 rounded-full flex items-center gap-2 text-sm shadow-lg">
+
+  <div className="w-2.5 h-2.5 rounded-full bg-green-400 animate-pulse shadow-lg"></div>
+
+  En línea
+
+</div>
 
       <div className="absolute bottom-5 right-4 text-right">
         <h2 className="text-[38px] font-extrabold text-white tracking-tight drop-shadow-[0_0_18px_rgba(255,255,255,0.2)]">
