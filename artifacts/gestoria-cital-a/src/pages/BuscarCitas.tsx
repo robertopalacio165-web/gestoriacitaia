@@ -144,13 +144,8 @@ const formIntro =
   language === "ma"
     ? "إلى كنتي باغي موعد عمر المعلومات ديالك واختار نوع السيتا ومن بعد سارة غادي تكمل معاك وتعلمك فالواتساب ملي يبان الموعد."
     : language === "en"
-    ? "Fill in your information and choose the appointment type. Sara will continue with you and notify you on WhatsApp when an appointment appears."
- const formIntro =
-  language === "ma"
-    ? "..."
-    : language === "en"
-    ? "..."
-    : "...";
+? "Fill in your information and choose the appointment type. Sara will continue with you and notify you on WhatsApp when an appointment appears.";
+ 
 const confirmationIntro =
   language === "ma"
     ? "دخلتي من رابط تأكيد الموعد. راجع المعلومات وأكد غير إلا كان الموعد حقيقي."
