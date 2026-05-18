@@ -2255,8 +2255,8 @@ setTimeout(() => {
   <motion.div
     initial={{ opacity: 0, y: 15 }}
     animate={{ opacity: 1, y: 0 }}
-    className="rounded-2xl overflow-hidden border border-[#1e293b] bg-[#071224] shadow-2xl"
-  >
+className="rounded-[28px] overflow-hidden border border-[#c6922f]/50 bg-gradient-to-b from-[#050816] to-black shadow-[0_0_40px_rgba(214,169,77,0.15)]"
+    >
     <div className="relative">
 
       <video
@@ -2265,8 +2265,8 @@ setTimeout(() => {
         loop
         playsInline
         poster={`${import.meta.env.BASE_URL}images/avatar-mohamed.png`}
-   className="w-full h-[270px] object-cover"
-      >
+className="w-full h-[270px] object-cover border-b border-[#c6922f]/40"
+        >
         <source
           src="/mohamed-extranjeria.mp4.mp4"
           type="video/mp4"
@@ -2291,17 +2291,17 @@ setTimeout(() => {
 </div>
 
 
-      <div className="absolute top-4 left-4 bg-black/60 backdrop-blur-md border border-green-500/30 px-3 py-1 rounded-full flex items-center gap-2 text-sm">
-        <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+      <div className="absolute top-4 left-4 bg-black/70 backdrop-blur-xl border border-[#c6922f]/40 px-4 py-2 rounded-full flex items-center gap-2 text-sm shadow-lg"
+        <div    className="w-2.5 h-2.5 rounded-full bg-green-400 animate-pulse shadow-[0_0_10px_#4ade80]" />
         En línea
       </div>
 
       <div className="absolute bottom-5 right-4 text-right">
-        <h2 className="text-2xl font-bold text-white">
+        <h2 className="text-[38px] font-extrabold text-white tracking-tight drop-shadow-[0_0_18px_rgba(255,255,255,0.2)]">
           Mohamed
         </h2>
 
-        <p className="text-sm text-gray-200">
+        <p className="text-[15px] text-[#d4a94d] font-medium tracking-wide">
           Especialista en Extranjería
         </p>
       </div>
@@ -2411,61 +2411,205 @@ className="w-[84%] mx-auto flex items-center justify-center h-8 rounded-full tex
 <div className="mt-4 space-y-4">
 
   {/* MICRO VERDE */}
-  <button
-    onClick={isListening ? stopListening : startListening}
-    className="w-full h-14 rounded-2xl bg-green-500 hover:bg-green-400 transition-all text-white font-bold text-lg shadow-lg shadow-green-500/30 flex items-center justify-center gap-3"
-  >
-    {isListening ? (
-      <>
-        <MicOff className="w-6 h-6" />
-        Parar micrófono
-      </>
-    ) : (
-      <>
-        <Mic className="w-6 h-6" />
-        Hablar con Mohamed
-      </>
-    )}
-  </button>
+<button
+  onClick={isListening ? stopListening : startListening}
+  className={`w-full h-[58px] rounded-[22px] transition-all duration-300 flex items-center justify-center gap-3 text-[20px] font-semibold border shadow-xl ${
+    isListening
+      ? "bg-red-600 border-red-400 text-white shadow-red-500/40 animate-pulse"
+      : "bg-gradient-to-r from-[#16a34a] to-[#22c55e] border-[#4ade80] text-white shadow-green-500/30"
+  }`}
+>
+  {isListening ? (
+    <>
+      <MicOff className="w-6 h-6" />
+      Mohamed escuchando...
+    </>
+  ) : (
+    <>
+      <Mic className="w-6 h-6" />
+      Hablar con Mohamed
+    </>
+  )}
+</button>
 
   {/* SUBIR DOCUMENTOS */}
-  <button
-    onClick={handleGeneralUpload}
-    disabled={generalUploading}
-    className="w-full h-14 rounded-2xl bg-[#111827] border border-[#1f2937] text-white font-semibold flex items-center justify-center gap-3"
-  >
-    <Upload className="w-5 h-5" />
-    {generalUploading ? "Subiendo..." : "Subir documentos"}
-  </button>
+<button
+  onClick={handleGeneralUpload}
+  disabled={generalUploading}
+  className="w-full h-[54px] rounded-[20px] border border-[#c6922f] bg-[#050816] hover:bg-[#0b1220] transition-all text-white font-medium text-[17px] flex items-center justify-center gap-3 shadow-lg"
+>
+  <Upload className="w-5 h-5 text-[#d4a94d]" />
+
+  {generalUploading
+    ? "Subiendo..."
+    : "Subir documentos"}
+</button>
 
   {/* VERIFY */}
-  <button
-    onClick={handleVerifyAll}
-    className="w-full h-14 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white font-bold"
+ <button
+  onClick={handleVerifyAll}
+  className="w-full h-[54px] rounded-[20px] border border-[#c6922f] bg-[#050816] hover:bg-[#0b1220] transition-all text-white font-medium text-[17px] flex items-center justify-center gap-3 shadow-lg"
+>
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    className="w-5 h-5 text-[#d4a94d]"
+    fill="none"
+    viewBox="0 0 24 24"
+    stroke="currentColor"
   >
-    Verify documentos
-  </button>
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M9 12l2 2 4-4"
+    />
+  </svg>
+
+  Verificar documentos
+</button>
 
   {/* WHATSAPP */}
   <div className="space-y-3">
 
-    <input
-      type="tel"
-      value={phone}
-      onChange={(e) => setPhone(e.target.value)}
-      placeholder="Tu número WhatsApp"
-      className="w-full h-14 rounded-2xl bg-[#0f172a] border border-[#1e293b] px-4 text-white outline-none"
-    />
+  <div className="flex items-center h-[56px] rounded-[20px] border border-[#3a3a3a] overflow-hidden bg-[#050816]">
 
-    <button
-      onClick={handleSendWhatsApp}
-      className="w-full h-14 rounded-2xl bg-green-600 hover:bg-green-500 text-white font-bold"
-    >
-      Enviar por WhatsApp
-    </button>
+  <div className="w-[58px] h-full flex items-center justify-center border-r border-[#3a3a3a] bg-black">
+    <img
+      src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg"
+      className="w-7 h-7"
+    />
+  </div>
+
+  <input
+    type="tel"
+    value={phone}
+    onChange={(e) => setPhone(e.target.value)}
+    placeholder="Tu número WhatsApp"
+    className="flex-1 h-full bg-transparent px-4 text-white outline-none text-[16px]"
+  />
+
+</div>
+
+ <button
+  onClick={handleSendWhatsApp}
+  className="w-full h-[56px] rounded-[20px] border border-[#c6922f] bg-gradient-to-r from-[#0b5f2a] to-[#16a34a] hover:scale-[1.01] transition-all text-white font-semibold text-[18px] shadow-lg shadow-green-900/30 flex items-center justify-center gap-3"
+>
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    className="w-5 h-5"
+    fill="none"
+    viewBox="0 0 24 24"
+    stroke="currentColor"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.868v4.264a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"
+    />
+  </svg>
+
+  Enviar por WhatsApp
+</button>
+
+  </div>
+{/* STATS PREMIUM */}
+
+<div className="rounded-[24px] border border-[#c6922f]/40 bg-[#050816] p-5 shadow-2xl mt-4">
+
+  <p className="text-center text-[#d4a94d] text-[15px] font-semibold mb-5">
+    Miles de personas ya han confiado en nosotros
+  </p>
+
+  <div className="grid grid-cols-4 gap-3">
+
+    <div className="text-center">
+      <p className="text-[#d4a94d] font-bold text-[22px]">
+        18.420+
+      </p>
+
+      <p className="text-white/70 text-[11px]">
+        Expedientes
+      </p>
+    </div>
+
+    <div className="text-center">
+      <p className="text-[#d4a94d] font-bold text-[22px]">
+        97%
+      </p>
+
+      <p className="text-white/70 text-[11px]">
+        Aprobados
+      </p>
+    </div>
+
+    <div className="text-center">
+      <p className="text-[#d4a94d] font-bold text-[22px]">
+        4 min
+      </p>
+
+      <p className="text-white/70 text-[11px]">
+        Respuesta
+      </p>
+    </div>
+
+    <div className="text-center">
+      <p className="text-[#d4a94d] font-bold text-[22px]">
+        100%
+      </p>
+
+      <p className="text-white/70 text-[11px]">
+        Atención
+      </p>
+    </div>
 
   </div>
 
+  <div className="mt-5 border border-[#c6922f]/30 rounded-[18px] p-3 bg-black/30 text-center">
+    <p className="text-[#d4a94d] font-semibold text-[14px]">
+      Primer sistema IA de extranjería en España
+    </p>
+  </div>
+
+  <div className="flex items-center justify-center gap-3 mt-5">
+
+    <div className="flex -space-x-2">
+
+      <img
+        src="https://i.pravatar.cc/60?img=1"
+        className="w-9 h-9 rounded-full border-2 border-black"
+      />
+
+      <img
+        src="https://i.pravatar.cc/60?img=2"
+        className="w-9 h-9 rounded-full border-2 border-black"
+      />
+
+      <img
+        src="https://i.pravatar.cc/60?img=3"
+        className="w-9 h-9 rounded-full border-2 border-black"
+      />
+
+      <img
+        src="https://i.pravatar.cc/60?img=4"
+        className="w-9 h-9 rounded-full border-2 border-black"
+      />
+
+    </div>
+
+    <div>
+      <p className="text-[#d4a94d] text-[18px] font-bold">
+        ★★★★★ 4.9/5
+      </p>
+
+      <p className="text-white/60 text-[12px]">
+        Basado en opiniones reales
+      </p>
+    </div>
+
+  </div>
+
+</div>
 </div>
 
 )}
