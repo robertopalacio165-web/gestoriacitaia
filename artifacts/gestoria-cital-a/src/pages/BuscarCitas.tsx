@@ -1819,19 +1819,15 @@ province: formData.province,
           <OfficialBrowserBox
             language={language}
             avatarImage={`${import.meta.env.BASE_URL}images/avatar-sara.png`}
-            title={
-              cameFromConfirmationLink
-                ? "Confirmación de cita con Sara"
-           {language === "ma"
-  ? "لوحة المواعيد الرسمية"
-  : language === "en"
-  ? "Official appointment panel"
-{language === "ma"
-  ? "لوحة المواعيد الرسمية"
-  : language === "en"
-  ? "Official appointment panel"
-  : "Panel oficial integrado"}
-            }
+        title={
+  cameFromConfirmationLink
+    ? "Confirmación de cita con Sara"
+    : language === "ma"
+    ? "لوحة المواعيد الرسمية"
+    : language === "en"
+    ? "Official appointment panel"
+    : "Panel oficial integrado"
+}
             url={officialUrl}
             selectedTramiteLabel={selectedTramiteLabel}
             profileLoading={profileLoading}
