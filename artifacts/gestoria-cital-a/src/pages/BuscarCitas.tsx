@@ -594,7 +594,7 @@ hover:scale-[1.01]
   </div>
 </>
 )
-:
+
 (
 <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
