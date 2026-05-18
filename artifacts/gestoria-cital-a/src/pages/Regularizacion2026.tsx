@@ -1376,11 +1376,13 @@ dc.send(
 وباختصار.
 `,
       modalities: ["audio", "text"],
-   turn_detection: {
+turn_detection: {
   type: "server_vad",
-  threshold: 0.92,
-  prefix_padding_ms: 500,
-  silence_duration_ms: 1400,
+  threshold: 0.98,
+  prefix_padding_ms: 300,
+  silence_duration_ms: 2200,
+  interrupt_response: false,
+  create_response: true
 },
     },
   })
@@ -1592,6 +1594,20 @@ if (
 }
 
 if (msg.type === "response.created") {
+  assistantBusyRef.current = true;
+
+setWaitingMohamed(true);
+
+// 🔇 cortar micro COMPLETAMENTE mientras Mohamed habla
+if (realtimeLocalStreamRef.current) {
+
+  realtimeLocalStreamRef.current
+    .getAudioTracks()
+    .forEach(track => {
+      track.enabled = false;
+    });
+
+}
 // 🎤 سد الميكروفون ملي محمد كيهضر
  
 
@@ -1608,6 +1624,16 @@ if (senderRef.current) {
 
     if (msg.type === "response.done") {
   assistantBusyRef.current = false;
+      // 🎤 reactivar micro SOLO cuando Mohamed termina
+if (realtimeLocalStreamRef.current) {
+
+  realtimeLocalStreamRef.current
+    .getAudioTracks()
+    .forEach(track => {
+      track.enabled = true;
+    });
+
+}
 
   const finalText = assistantTextBufferRef.current.trim();
 
@@ -2252,65 +2278,69 @@ setTimeout(() => {
         </div>
     <div className="max-w-md mx-auto px-4">
         <div className="max-w-md mx-auto">
-  <motion.div
-    initial={{ opacity: 0, y: 15 }}
-    animate={{ opacity: 1, y: 0 }}
-className="rounded-[28px] overflow-hidden border border-[#c6922f]/50 bg-gradient-to-b from-[#050816] to-black shadow-[0_0_40px_rgba(214,169,77,0.15)]"
+<motion.div
+  initial={{ opacity: 0, y: 15 }}
+  animate={{ opacity: 1, y: 0 }}
+  className="w-[86%] mx-auto rounded-[28px] overflow-hidden border border-[#c6922f]/50 bg-gradient-to-b from-[#050816] to-black shadow-[0_0_40px_rgba(214,169,77,0.15)]"
+>
+  <div className="relative">
+
+    <video
+      autoPlay
+      muted
+      loop
+      playsInline
+      poster={`${import.meta.env.BASE_URL}images/avatar-mohamed.png`}
+      className="w-full h-[250px] object-cover border-b border-[#c6922f]/40"
     >
-    <div className="relative">
+      <source
+        src="/mohamed-extranjeria.mp4.mp4"
+        type="video/mp4"
+      />
+    </video>
 
-      <video
-        autoPlay
-        muted
-        loop
-        playsInline
-        poster={`${import.meta.env.BASE_URL}images/avatar-mohamed.png`}
-className="w-[94%] mx-auto h-[270px] object-cover border-b border-[#c6922f]/40"
-        >
-        <source
-          src="/mohamed-extranjeria.mp4.mp4"
-          type="video/mp4"
-        />
-      </video>
+    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
 
-      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-<div className="absolute top-4 right-4 flex items-center gap-2">
-  <button
-    type="button"
-    className="w-11 h-11 rounded-full bg-black/45 backdrop-blur-md flex items-center justify-center text-white border border-white/10"
-  >
-    <Bell className="w-5 h-5" />
-  </button>
+    <div className="absolute top-4 right-4 flex items-center gap-2">
 
-  <button
-    type="button"
-    className="w-11 h-11 rounded-full bg-black/45 backdrop-blur-md flex items-center justify-center text-white border border-white/10"
-  >
-    <Volume2 className="w-5 h-5" />
-  </button>
-</div>
+      <button
+        type="button"
+        className="w-11 h-11 rounded-full bg-black/45 backdrop-blur-md flex items-center justify-center text-white border border-white/10"
+      >
+        <Bell className="w-5 h-5" />
+      </button>
 
+      <button
+        type="button"
+        className="w-11 h-11 rounded-full bg-black/45 backdrop-blur-md flex items-center justify-center text-white border border-white/10"
+      >
+        <Volume2 className="w-5 h-5" />
+      </button>
+
+    </div>
 
     <div className="absolute top-4 left-4 bg-black/70 backdrop-blur-xl border border-[#c6922f]/40 px-4 py-2 rounded-full flex items-center gap-2 text-sm shadow-lg">
 
-  <div className="w-2.5 h-2.5 rounded-full bg-green-400 animate-pulse shadow-lg"></div>
+      <div className="w-2.5 h-2.5 rounded-full bg-green-400 animate-pulse shadow-lg"></div>
 
-  En línea
-
-</div>
-
-      <div className="absolute bottom-5 right-4 text-right">
-        <h2 className="text-[38px] font-extrabold text-white tracking-tight drop-shadow-[0_0_18px_rgba(255,255,255,0.2)]">
-          Mohamed
-        </h2>
-
-        <p className="text-[15px] text-[#d4a94d] font-medium tracking-wide">
-          Especialista en Extranjería
-        </p>
-      </div>
+      En línea
 
     </div>
-  </motion.div>
+
+    <div className="absolute bottom-5 right-4 text-right">
+
+      <h2 className="text-[38px] font-extrabold text-white tracking-tight drop-shadow-[0_0_18px_rgba(255,255,255,0.2)]">
+        Mohamed
+      </h2>
+
+      <p className="text-[15px] text-[#d4a94d] font-medium tracking-wide">
+        Especialista en Extranjería
+      </p>
+
+    </div>
+
+  </div>
+</motion.div>
 </div>
  
 
@@ -2416,7 +2446,7 @@ className="w-[84%] mx-auto flex items-center justify-center h-8 rounded-full tex
   {/* MICRO VERDE */}
 <button
   onClick={isListening ? stopListening : startListening}
-  className={`w-full h-[58px] rounded-[22px] transition-all duration-300 flex items-center justify-center gap-3 text-[20px] font-semibold border shadow-xl ${
+className={`w-[86%] mx-auto h-[56px] rounded-[22px] transition-all duration-300 flex items-center justify-center gap-3 text-[20px] font-semibold border shadow-xl ${
     isListening
       ? "bg-red-600 border-red-400 text-white shadow-red-500/40 animate-pulse"
       : "bg-gradient-to-r from-[#16a34a] to-[#22c55e] border-[#4ade80] text-white shadow-green-500/30"
