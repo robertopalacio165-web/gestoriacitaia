@@ -2292,7 +2292,7 @@ className="w-full h-[270px] object-cover border-b border-[#c6922f]/40"
 
 
       <div className="absolute top-4 left-4 bg-black/70 backdrop-blur-xl border border-[#c6922f]/40 px-4 py-2 rounded-full flex items-center gap-2 text-sm shadow-lg"
-        <div    className="w-2.5 h-2.5 rounded-full bg-green-400 animate-pulse shadow-[0_0_10px_#4ade80]" />
+    <div className="w-2.5 h-2.5 rounded-full bg-green-400 animate-pulse shadow-lg" />
         En línea
       </div>
 
