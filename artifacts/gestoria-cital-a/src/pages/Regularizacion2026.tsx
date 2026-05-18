@@ -2265,7 +2265,7 @@ className="rounded-[28px] overflow-hidden border border-[#c6922f]/50 bg-gradient
         loop
         playsInline
         poster={`${import.meta.env.BASE_URL}images/avatar-mohamed.png`}
-className="w-[94%] h-[270px] object-cover border-b border-[#c6922f]/40"
+className="w-[94%] mx-auto h-[270px] object-cover border-b border-[#c6922f]/40"
         >
         <source
           src="/mohamed-extranjeria.mp4.mp4"
@@ -2439,7 +2439,7 @@ className="w-[84%] mx-auto flex items-center justify-center h-8 rounded-full tex
 <button
   onClick={handleGeneralUpload}
   disabled={generalUploading}
-  className="w-[94%] h-[54px] rounded-[20px] border border-[#c6922f] bg-[#050816] hover:bg-[#0b1220] transition-all text-white font-medium text-[17px] flex items-center justify-center gap-3 shadow-lg"
+  className="w-[94%] mx-auto h-[54px] rounded-[20px] border border-[#c6922f] bg-[#050816] hover:bg-[#0b1220] transition-all text-white font-medium text-[17px] flex items-center justify-center gap-3 shadow-lg"
 >
   <Upload className="w-5 h-5 text-[#d4a94d]" />
 
@@ -2451,7 +2451,7 @@ className="w-[84%] mx-auto flex items-center justify-center h-8 rounded-full tex
   {/* VERIFY */}
  <button
   onClick={handleVerifyAll}
- className="w-[94%] h-[54px] rounded-[20px] border border-[#c6922f] bg-[#050816] hover:bg-[#0b1220] transition-all text-white font-medium text-[17px] flex items-center justify-center gap-3 shadow-lg"
+ className="w-[94%] mx-auto h-[54px] rounded-[20px] border border-[#c6922f] bg-[#050816] hover:bg-[#0b1220] transition-all text-white font-medium text-[17px] flex items-center justify-center gap-3 shadow-lg"
 >
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -2495,7 +2495,7 @@ className="w-[84%] mx-auto flex items-center justify-center h-8 rounded-full tex
 
  <button
   onClick={handleSendWhatsApp}
- className="w-[94%] h-[56px] rounded-[20px] border border-[#c6922f] bg-gradient-to-r from-[#0b5f2a] to-[#16a34a] hover:scale-[1.01] transition-all text-white font-semibold text-[18px] shadow-lg shadow-green-900/30 flex items-center justify-center gap-3"
+ className="w-[94%] mx-auto h-[56px] rounded-[20px] border border-[#c6922f] bg-gradient-to-r from-[#0b5f2a] to-[#16a34a] hover:scale-[1.01] transition-all text-white font-semibold text-[18px] shadow-lg shadow-green-900/30 flex items-center justify-center gap-3"
 >
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -2647,7 +2647,7 @@ function FieldInput({
     <input
       value={value}
       onChange={(e) => onChange(e.target.value)}
-   className="w-[94%] rounded-[18px] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none focus:border-blue-400"
+   className="w-[94%]  mx-auto rounded-[18px] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none focus:border-blue-400"
       placeholder={placeholder}
     />
   );
@@ -2667,7 +2667,7 @@ function FieldSelect({
     <select
       value={value}
       onChange={(e) => onChange(e.target.value)}
-     className="w-[94%] rounded-[18px] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none focus:border-blue-400"
+     className="w-[94%] mx-auto rounded-[18px] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none focus:border-blue-400"
     >
       {options.map((opt) => (
         <option key={`${opt.value}-${opt.label}`} value={opt.value}>
