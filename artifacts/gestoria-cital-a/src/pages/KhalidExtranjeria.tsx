@@ -36,6 +36,7 @@ const lastAssistantTextRef = useRef("");
 const [waitingKhalid, setWaitingKhalid] = useState(false);
 const [lastTranscript, setLastTranscript] = useState("");
 const [lastReply, setLastReply] = useState("");
+  const [hasStartedConversation, setHasStartedConversation] = useState(false);
  
   
 useEffect(() => {
@@ -44,6 +45,14 @@ useEffect(() => {
     localStorage.getItem("khalid_paid");
 
   if (savedPaid === "true") {
+    const savedConversation =
+  localStorage.getItem("khalid_started");
+
+if (savedConversation === "true") {
+
+  setHasStartedConversation(true);
+
+}
     setIsPaid(true);
   }
 
@@ -193,16 +202,27 @@ mediaStream
 `,
         modalities: ["audio", "text"],
         turn_detection: {
-          type: "server_vad",
-          threshold: 0.9,
-          prefix_padding_ms: 300,
-          silence_duration_ms: 1200,
-        },
+  type: "server_vad",
+  threshold: 0.98,
+  prefix_padding_ms: 200,
+  silence_duration_ms: 2500,
+  interrupt_response: false,
+  create_response: true,
+},
       },
     })
   );
 
   // 🎤 خالد يهضر مباشرة
+if (!hasStartedConversation) {
+
+  localStorage.setItem(
+    "khalid_started",
+    "true"
+  );
+
+  setHasStartedConversation(true);
+
   dc.send(
     JSON.stringify({
       type: "response.create",
@@ -213,6 +233,21 @@ mediaStream
       },
     })
   );
+
+} else {
+
+  dc.send(
+    JSON.stringify({
+      type: "response.create",
+      response: {
+        modalities: ["audio", "text"],
+        instructions:
+          "قول: رجعتي. مرحبا بيك من جديد، نكملو منين وقفنا.",
+      },
+    })
+  );
+
+}
 
 });
 dc.onmessage = (event) => {
@@ -279,6 +314,16 @@ setUserAskedQuestion(true);
       assistantBusyRef.current = true;
 
       setWaitingKhalid(true);
+      // 🔇 apagar micro mientras Khalid habla
+if (realtimeLocalStreamRef.current) {
+
+  realtimeLocalStreamRef.current
+    .getAudioTracks()
+    .forEach(track => {
+      track.enabled = false;
+    });
+
+}
 
       setLastReply("");
 
@@ -290,6 +335,16 @@ if (msg.type === "response.done") {
   assistantBusyRef.current = false;
 
   setWaitingKhalid(false);
+  // 🎤 reactivar micro cuando Khalid termina
+if (realtimeLocalStreamRef.current) {
+
+  realtimeLocalStreamRef.current
+    .getAudioTracks()
+    .forEach(track => {
+      track.enabled = true;
+    });
+
+}
 
   console.log("KHALID DONE");
 
