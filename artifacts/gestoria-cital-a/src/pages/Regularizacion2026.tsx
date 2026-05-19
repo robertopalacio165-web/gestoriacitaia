@@ -2280,7 +2280,7 @@ setTimeout(() => {
       <motion.div
   initial={{ opacity: 0, y: 15 }}
   animate={{ opacity: 1, y: 0 }}
-className="rounded-[34px] overflow-hidden bg-gradient-to-b from-[#071120] to-black border border-[#f6c453]/20"
+className="rounded-[34px] overflow-hidden bg-gradient-to-b from-slate-950 to-black border border-yellow-500/20"
   
 >
   <div className="relative">
@@ -2291,7 +2291,7 @@ className="rounded-[34px] overflow-hidden bg-gradient-to-b from-[#071120] to-bla
       loop
       playsInline
       poster={`${import.meta.env.BASE_URL}images/avatar-mohamed.png`}
-className="w-full h-[270px] object-cover border-b border-[#f6c453]/10"
+className="w-full h-[270px] object-cover border-b border-yellow-500/10"
       
       >
       <source
@@ -2334,7 +2334,7 @@ className="w-full h-[270px] object-cover border-b border-[#f6c453]/10"
         Mohamed
       </h2>
 
-      <p className="text-[15px] text-[#d4a94d] font-medium tracking-wide">
+  <p className="text-[15px] text-yellow-400 font-medium tracking-wide">
         Especialista en Extranjería
       </p>
 
