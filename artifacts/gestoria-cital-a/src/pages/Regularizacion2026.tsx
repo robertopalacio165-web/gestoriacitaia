@@ -2277,7 +2277,7 @@ setTimeout(() => {
           </div>
         </div>
     <div className="max-w-md mx-auto px-4">
-        <div className="max-w-md mx-auto">
+      <div className="max-w-md mx-auto p-[2px] rounded-[34px] bg-gradient-to-b from-[#f6c453] via-[#d4a94d] to-[#8a6a16] shadow-[0_0_45px_rgba(255,215,0,0.22)]">
 <motion.div
   initial={{ opacity: 0, y: 15 }}
   animate={{ opacity: 1, y: 0 }}
