@@ -2330,7 +2330,7 @@ className="w-full h-[270px] object-cover border-b border-[#f6c453]/10"
 
     <div className="absolute bottom-5 right-4 text-right">
 
-      <h2 className="text-[38px] font-extrabold text-white tracking-tight drop-shadow-[0_0_18px_rgba(255,255,255,0.2)]">
+    <h2 className="text-[38px] font-extrabold text-white tracking-tight">
         Mohamed
       </h2>
 
