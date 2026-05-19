@@ -2528,7 +2528,7 @@ className="w-[84%] mx-auto flex items-center h-[50px] rounded-[20px] border bord
   </div>
 {/* STATS PREMIUM */}
 
-<div className="w-[92%] mx-auto rounded-[22px] border border-[#c6922f]/40 bg-[#050816] p-4 shadow-xl mt-2"
+<div className="w-[92%] mx-auto rounded-[22px] border border-[#c6922f]/40 bg-[#050816] p-4 shadow-xl mt-2">
 
   <p className="text-center text-[#d4a94d] text-[15px] font-semibold mb-5">
     Miles de personas ya han confiado en nosotros
