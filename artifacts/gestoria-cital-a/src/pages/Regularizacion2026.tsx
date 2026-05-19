@@ -2276,8 +2276,7 @@ setTimeout(() => {
             <p className="text-xs text-muted-foreground">{currentProcedure.name}</p>
           </div>
         </div>
-    <div className="max-w-md mx-auto px-4">
-<div className="max-w-md mx-auto p-[2px] rounded-[36px] bg-gradient-to-b from-[#f6c453] via-[#d4a94d] to-[#7a5b12] shadow-[0_0_45px_rgba(255,215,0,0.20)]">
+<div className="max-w-md mx-auto px-[3px] py-[3px] rounded-[38px] bg-gradient-to-b from-[#f6c453] via-[#d4a94d] to-[#7a5b12] shadow-[0_0_55px_rgba(255,215,0,0.22)]">
       <motion.div
   initial={{ opacity: 0, y: 15 }}
   animate={{ opacity: 1, y: 0 }}
