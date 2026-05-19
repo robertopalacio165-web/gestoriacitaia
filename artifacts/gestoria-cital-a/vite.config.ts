@@ -13,6 +13,11 @@ const basePath = process.env.BASE_PATH ?? "/";
 
 export default defineConfig({
   base: basePath,
+  server: {
+  headers: {
+    "Cache-Control": "no-store",
+  },
+},
   plugins: [
     react(),
     tailwindcss(),
