@@ -2281,7 +2281,7 @@ setTimeout(() => {
 <motion.div
   initial={{ opacity: 0, y: 15 }}
   animate={{ opacity: 1, y: 0 }}
-className="rounded-[32px] overflow-hidden border border-[#f6c453]/70 bg-gradient-to-b from-[#071120] to-black shadow-[0_0_55px_rgba(255,215,0,0.16)] p-[2px]"
+className="rounded-[32px] overflow-hidden border-2 border-[#f6c453] bg-gradient-to-b from-[#071120] to-black shadow-[0_0_55px_rgba(255,215,0,0.16)] p-[2px]"
   >
   <div className="relative">
 
@@ -2345,7 +2345,7 @@ className="w-full h-[270px] object-cover border-b border-[#c6922f]/40"
  
 
           </div>
-<div className="mt-2 max-w-md mx-auto p-[1.5px] rounded-[36px] bg-gradient-to-b from-[#f6c453] via-[#d4a94d] to-[#7a5c12] shadow-[0_0_60px_rgba(255,215,0,0.18)]">
+<div className="mt-2 max-w-md mx-auto">
 
 {/* ✅ ANTES DEL PAGO */}
 {!paymentCompleted && (
@@ -2440,7 +2440,7 @@ className="w-[92%] mx-auto flex items-center justify-center h-[52px] rounded-[20
   
 
 {paymentCompleted && (
-<div className="mt-2 max-w-md mx-auto p-[1.5px] rounded-[36px] bg-gradient-to-b from-[#f6c453] via-[#d4a94d] to-[#7a5c12] shadow-[0_0_60px_rgba(255,215,0,0.18)]">
+
 <div className="mt-5 space-y-5">
 
 {/* MICRO VERDE */}
@@ -2628,10 +2628,12 @@ className="flex-1 h-full bg-transparent px-4 text-white placeholder:text-white/4
   </div>
 
 </div>
-
-</motion.div>
 </div>
 
+)}
+
+
+</div>
 
 <audio ref={remoteAudioRef} autoPlay playsInline className="hidden" />
       </main>
