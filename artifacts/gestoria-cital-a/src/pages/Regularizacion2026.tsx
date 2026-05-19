@@ -2277,11 +2277,12 @@ setTimeout(() => {
           </div>
         </div>
     <div className="max-w-md mx-auto px-4">
-  <div className="max-w-md mx-auto rounded-[34px] border border-[#f6c453] bg-gradient-to-b from-[#071120] to-black shadow-[0_0_45px_rgba(255,215,0,0.18)] p-[2px]">
+  <div className="max-w-md mx-auto rounded-[34px] border border-[#d4a94d]/60 bg-gradient-to-b from-[#071120] to-black shadow-[0_0_25px_rgba(255,215,0,0.10)] overflow-hidden">
 <motion.div
   initial={{ opacity: 0, y: 15 }}
   animate={{ opacity: 1, y: 0 }}
-className="rounded-[32px] overflow-hidden border border-[#d4a94d]/70 bg-gradient-to-b from-[#071120] to-black"
+className="rounded-[32px] overflow-hidden bg-gradient-to-b from-[#071120] to-black"
+  
 >
   <div className="relative">
 
@@ -2291,7 +2292,8 @@ className="rounded-[32px] overflow-hidden border border-[#d4a94d]/70 bg-gradient
       loop
       playsInline
       poster={`${import.meta.env.BASE_URL}images/avatar-mohamed.png`}
-className="w-full h-[270px] object-cover border-b border-[#f6c453]/25"
+className="w-full h-[270px] object-cover border-b border-[#f6c453]/10"
+      
       >
       <source
         src="/mohamed-extranjeria.mp4.mp4"
