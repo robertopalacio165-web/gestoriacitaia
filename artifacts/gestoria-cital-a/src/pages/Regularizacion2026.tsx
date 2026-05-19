@@ -2277,11 +2277,11 @@ setTimeout(() => {
           </div>
         </div>
     <div className="max-w-md mx-auto px-4">
-  <div className="max-w-md mx-auto rounded-[34px] border border-[#d4a94d]/60 bg-gradient-to-b from-[#071120] to-black shadow-[0_0_25px_rgba(255,215,0,0.10)] overflow-hidden">
-<motion.div
+<div className="max-w-md mx-auto p-[2px] rounded-[36px] bg-gradient-to-b from-[#f6c453] via-[#d4a94d] to-[#7a5b12] shadow-[0_0_45px_rgba(255,215,0,0.20)]">
+      <motion.div
   initial={{ opacity: 0, y: 15 }}
   animate={{ opacity: 1, y: 0 }}
-className="rounded-[32px] overflow-hidden bg-gradient-to-b from-[#071120] to-black"
+className="rounded-[34px] overflow-hidden bg-gradient-to-b from-[#071120] to-black border border-[#f6c453]/20"
   
 >
   <div className="relative">
