@@ -313,114 +313,287 @@ const voiceTexts = useMemo(() => ({
   realtimeError: "وقع مشكل فالصوت المباشر",
 }), []);
 
-  const ui = useMemo(() => {
-    if (safeLang === "darija") {
-      return {
-        online: "متصل الآن",
-        role: "مختص فالهجرة",
-        voiceButton: "تكلم مع محمد",
-        stopButton: "وقف الميكروفون",
-        saveLeadButton: savingForm ? "كيتحفظ..." : "حفظ المعطيات والمتابعة مع محمد",
-        saveLeadTitle: "تحفظات المعطيات",
-        saveLeadDesc: "محمد يقدر دابا يبدا معاك بالصوت.",
-        formTitle: "لوحة رسمية مدمجة",
-        formDesc:
-          "عمر المعطيات الأساسية باش محمد يبدا يراجع الملف ديالك بالصوت.",
-        uploadGeneral: generalUploading ? "كيترفع..." : "رفع الوثائق",
-        uploadGeneralDesc:
-          "من هنا تقدر ترفع جميع الوثائق اللي طلب منك محمد، سواء كانت صورة أو PDF.",
-        uploading: "كيترفع...",
-        uploadSuccessTitle: "تقبلات الوثيقة",
-        uploadSuccessDesc: "راجعنا الوثيقة وربطناها مع الملف.",
-        uploadErrorTitle: "خطأ فالوثيقة",
-        uploadErrorDesc: "ما قدرناش نربط هاد الوثيقة مع الملف.",
-        missingTitle: "كاينين بيانات ناقصين",
-        missingDesc: "عمر الاسم والهاتف والمدينة قبل ما تكمل.",
-        listening: "محمد كيسمع ليك دابا...",
-        latestReply: "آخر جواب ديال محمد",
-        yourVoice: "آخر جواب ديالك بالصوت",
-        micNotSupported:
-          "هاد المتصفح ما كيدعمش الصوت المباشر. استعمل Chrome حديث.",
-        docStatusTitle: "حالة الملف ديالك",
-        docStatusDone: "جاهز",
-        docStatusReview: "مراجعة",
-        docStatusMissing: "ناقص",
-        docStepForm: "الفورمولار معمر",
-        docStepStayProof: "بروفات ديال 5 شهور",
-        docStepIdentity: "الباسبور أو NIE",
-        docStepFinal: "الملف النهائي واجد",
-        goSara: "المرور إلى سارة",
-        goSaraDesc: "إلى بغيتي تكمل بالموعد، سارة غادي تعاونك.",
-        labels: {
-          nombre: "الاسم الكامل",
-          telefono: "الهاتف",
-          niePasaporte: "NIE / الباسبور",
-          ciudad: "المدينة",
-          nacionalidad: "الجنسية",
-          fechaLlegada: "تاريخ الدخول لإسبانيا",
-          cumple5Meses: "واش عندك 5 شهور متواصلة؟",
-          asilo: "واش عندك طلب لجوء؟",
-          penales: "سوابق عدلية",
-          select: "اختر",
-          yes: "نعم",
-          no: "لا",
-          dontKnow: "ما عرفت",
-        },
-      };
-    }
+const ui = useMemo(() => {
+
+  // 🇲🇦 DARIJA
+  if (safeLang === "darija") {
     return {
-      online: "En línea",
-      role: "Especialista en Extranjería",
-      voiceButton: "Hablar con Mohamed",
-      stopButton: "Parar micrófono",
-      saveLeadButton: savingForm ? "Guardando..." : "Guardar datos y continuar con Mohamed",
-      saveLeadTitle: "Datos guardados",
-      saveLeadDesc: "Mohamed ya puede empezar contigo por voz.",
-      formTitle: "Panel oficial integrado",
+      online: "متصل الآن",
+      role: "مختص فالهجرة",
+      voiceButton: "تكلم مع محمد",
+      stopButton: "وقف الميكروفون",
+
+      saveLeadButton: savingForm
+        ? "كيتحفظ..."
+        : "حفظ المعطيات والمتابعة مع محمد",
+
+      saveLeadTitle: "تحفظات المعطيات",
+      saveLeadDesc: "محمد يقدر دابا يبدا معاك بالصوت.",
+
+      formTitle: "لوحة رسمية مدمجة",
+
       formDesc:
-        "Rellena los datos básicos para que Mohamed empiece a revisar tu caso por voz.",
-      uploadGeneral: generalUploading ? "Subiendo..." : "Subir documentos",
+        "عمر المعطيات الأساسية باش محمد يبدا يراجع الملف ديالك بالصوت.",
+
+      uploadGeneral: generalUploading
+        ? "كيترفع..."
+        : "رفع الوثائق",
+
       uploadGeneralDesc:
-        "Usa este botón para subir todos los documentos que te pida Mohamed, en foto o en PDF.",
-      uploading: "Subiendo...",
-      uploadSuccessTitle: "Documento recibido",
-      uploadSuccessDesc: "El documento se ha revisado y vinculado al expediente.",
-      uploadErrorTitle: "Error en documento",
-      uploadErrorDesc: "No se pudo vincular ese documento al expediente.",
-      missingTitle: "Faltan datos",
-      missingDesc: "Rellena nombre, teléfono y ciudad antes de continuar.",
-      listening: "Mohamed te está escuchando ahora...",
-      latestReply: "Última respuesta de Mohamed",
-      yourVoice: "Tu última respuesta por voz",
+        "من هنا تقدر ترفع جميع الوثائق اللي طلب منك محمد، سواء كانت صورة أو PDF.",
+
+      uploading: "كيترفع...",
+
+      uploadSuccessTitle: "تقبلات الوثيقة",
+
+      uploadSuccessDesc:
+        "راجعنا الوثيقة وربطناها مع الملف.",
+
+      uploadErrorTitle: "خطأ فالوثيقة",
+
+      uploadErrorDesc:
+        "ما قدرناش نربط هاد الوثيقة مع الملف.",
+
+      missingTitle: "كاينين بيانات ناقصين",
+
+      missingDesc:
+        "عمر الاسم والهاتف والمدينة قبل ما تكمل.",
+
+      listening: "محمد كيسمع ليك دابا...",
+
+      latestReply: "آخر جواب ديال محمد",
+
+      yourVoice: "آخر جواب ديالك بالصوت",
+
       micNotSupported:
-        "Este navegador no soporta voz en tiempo real. Usa Chrome moderno.",
-      docStatusTitle: "Estado de tu expediente",
-      docStatusDone: "Listo",
-      docStatusReview: "Revisar",
-      docStatusMissing: "Falta",
-      docStepForm: "Formulario completado",
-      docStepStayProof: "Pruebas de 5 meses",
-      docStepIdentity: "Pasaporte o NIE",
-      docStepFinal: "Expediente final listo",
-      goSara: "Ir con Sara",
-      goSaraDesc: "Si quieres seguir con la cita, Sara te ayuda.",
+        "هاد المتصفح ما كيدعمش الصوت المباشر. استعمل Chrome حديث.",
+
+      docStatusTitle: "حالة الملف ديالك",
+
+      docStatusDone: "جاهز",
+
+      docStatusReview: "مراجعة",
+
+      docStatusMissing: "ناقص",
+
+      docStepForm: "الفورمولار معمر",
+
+      docStepStayProof: "بروفات ديال 5 شهور",
+
+      docStepIdentity: "الباسبور أو NIE",
+
+      docStepFinal: "الملف النهائي واجد",
+
+      goSara: "المرور إلى سارة",
+
+      goSaraDesc:
+        "إلى بغيتي تكمل بالموعد، سارة غادي تعاونك.",
+
       labels: {
-        nombre: "Nombre completo",
-        telefono: "Teléfono",
-        niePasaporte: "NIE / Pasaporte",
-        ciudad: "Ciudad",
-        nacionalidad: "Nacionalidad",
-        fechaLlegada: "Fecha llegada a España",
-        cumple5Meses: "¿Cumples 5 meses continuos?",
-        asilo: "¿Tienes solicitud de asilo?",
-        penales: "Antecedentes penales",
-        select: "Selecciona",
-        yes: "Sí",
-        no: "No",
-        dontKnow: "No sé",
+        nombre: "الاسم الكامل",
+        telefono: "الهاتف",
+        niePasaporte: "NIE / الباسبور",
+        ciudad: "المدينة",
+        nacionalidad: "الجنسية",
+        fechaLlegada: "تاريخ الدخول لإسبانيا",
+        cumple5Meses: "واش عندك 5 شهور متواصلة؟",
+        asilo: "واش عندك طلب لجوء؟",
+        penales: "سوابق عدلية",
+        select: "اختر",
+        yes: "نعم",
+        no: "لا",
+        dontKnow: "ما عرفت",
       },
     };
-  }, [safeLang, savingForm, generalUploading]);
+  }
+
+  // 🇬🇧 ENGLISH
+  if (safeLang === "en") {
+    return {
+      online: "Online",
+      role: "Immigration Specialist",
+      voiceButton: "Talk with Mohamed",
+      stopButton: "Stop microphone",
+
+      saveLeadButton: savingForm
+        ? "Saving..."
+        : "Save data and continue with Mohamed",
+
+      saveLeadTitle: "Data saved",
+
+      saveLeadDesc:
+        "Mohamed can now start with you by voice.",
+
+      formTitle: "Integrated official panel",
+
+      formDesc:
+        "Fill in the basic information so Mohamed can review your case by voice.",
+
+      uploadGeneral: generalUploading
+        ? "Uploading..."
+        : "Upload documents",
+
+      uploadGeneralDesc:
+        "Use this button to upload all the documents Mohamed requests, as image or PDF.",
+
+      uploading: "Uploading...",
+
+      uploadSuccessTitle: "Document received",
+
+      uploadSuccessDesc:
+        "The document has been reviewed and linked to your file.",
+
+      uploadErrorTitle: "Document error",
+
+      uploadErrorDesc:
+        "The document could not be linked to your file.",
+
+      missingTitle: "Missing information",
+
+      missingDesc:
+        "Fill in name, phone and city before continuing.",
+
+      listening: "Mohamed is listening to you now...",
+
+      latestReply: "Mohamed's latest reply",
+
+      yourVoice: "Your latest voice reply",
+
+      micNotSupported:
+        "This browser does not support realtime voice. Use modern Chrome.",
+
+      docStatusTitle: "Your file status",
+
+      docStatusDone: "Ready",
+
+      docStatusReview: "Review",
+
+      docStatusMissing: "Missing",
+
+      docStepForm: "Form completed",
+
+      docStepStayProof: "5 months proof",
+
+      docStepIdentity: "Passport or NIE",
+
+      docStepFinal: "Final file ready",
+
+      goSara: "Go to Sara",
+
+      goSaraDesc:
+        "If you want to continue with the appointment, Sara will help you.",
+
+      labels: {
+        nombre: "Full name",
+        telefono: "Phone",
+        niePasaporte: "NIE / Passport",
+        ciudad: "City",
+        nacionalidad: "Nationality",
+        fechaLlegada: "Arrival date in Spain",
+        cumple5Meses: "Do you meet 5 continuous months?",
+        asilo: "Do you have asylum request?",
+        penales: "Criminal record",
+        select: "Select",
+        yes: "Yes",
+        no: "No",
+        dontKnow: "I don't know",
+      },
+    };
+  }
+
+  // 🇪🇸 SPANISH
+  return {
+    online: "En línea",
+    role: "Especialista en Extranjería",
+    voiceButton: "Hablar con Mohamed",
+    stopButton: "Parar micrófono",
+
+    saveLeadButton: savingForm
+      ? "Guardando..."
+      : "Guardar datos y continuar con Mohamed",
+
+    saveLeadTitle: "Datos guardados",
+
+    saveLeadDesc:
+      "Mohamed ya puede empezar contigo por voz.",
+
+    formTitle: "Panel oficial integrado",
+
+    formDesc:
+      "Rellena los datos básicos para que Mohamed empiece a revisar tu caso por voz.",
+
+    uploadGeneral: generalUploading
+      ? "Subiendo..."
+      : "Subir documentos",
+
+    uploadGeneralDesc:
+      "Usa este botón para subir todos los documentos que te pida Mohamed, en foto o en PDF.",
+
+    uploading: "Subiendo...",
+
+    uploadSuccessTitle: "Documento recibido",
+
+    uploadSuccessDesc:
+      "El documento se ha revisado y vinculado al expediente.",
+
+    uploadErrorTitle: "Error en documento",
+
+    uploadErrorDesc:
+      "No se pudo vincular ese documento al expediente.",
+
+    missingTitle: "Faltan datos",
+
+    missingDesc:
+      "Rellena nombre, teléfono y ciudad antes de continuar.",
+
+    listening: "Mohamed te está escuchando ahora...",
+
+    latestReply: "Última respuesta de Mohamed",
+
+    yourVoice: "Tu última respuesta por voz",
+
+    micNotSupported:
+      "Este navegador no soporta voz en tiempo real. Usa Chrome moderno.",
+
+    docStatusTitle: "Estado de tu expediente",
+
+    docStatusDone: "Listo",
+
+    docStatusReview: "Revisar",
+
+    docStatusMissing: "Falta",
+
+    docStepForm: "Formulario completado",
+
+    docStepStayProof: "Pruebas de 5 meses",
+
+    docStepIdentity: "Pasaporte o NIE",
+
+    docStepFinal: "Expediente final listo",
+
+    goSara: "Ir con Sara",
+
+    goSaraDesc:
+      "Si quieres seguir con la cita, Sara te ayuda.",
+
+    labels: {
+      nombre: "Nombre completo",
+      telefono: "Teléfono",
+      niePasaporte: "NIE / Pasaporte",
+      ciudad: "Ciudad",
+      nacionalidad: "Nacionalidad",
+      fechaLlegada: "Fecha llegada a España",
+      cumple5Meses: "¿Cumples 5 meses continuos?",
+      asilo: "¿Tienes solicitud de asilo?",
+      penales: "Antecedentes penales",
+      select: "Selecciona",
+      yes: "Sí",
+      no: "No",
+      dontKnow: "No sé",
+    },
+  };
+
+}, [safeLang, savingForm, generalUploading]);
 
   const [docs, setDocs] = useState<StoredDocItem[]>(
     buildInitialDocs(selectedSituacion)
