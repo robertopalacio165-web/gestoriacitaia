@@ -2435,7 +2435,7 @@ className="w-[84%] mx-auto flex items-center justify-center h-8 rounded-full tex
   </div>
 
 )}
-
+<div className="w-[92%] mx-auto rounded-[28px] border border-[#d4a94d] bg-gradient-to-b from-[#0b1020] to-black p-4 space-y-4 shadow-[0_0_35px_rgba(212,169,77,0.15)]">
 {/* ✅ DESPUÉS DEL PAGO */}
   
 
@@ -2446,11 +2446,11 @@ className="w-[84%] mx-auto flex items-center justify-center h-8 rounded-full tex
   {/* MICRO VERDE */}
 <button
   onClick={isListening ? stopListening : startListening}
-className={`w-[84%] mx-auto h-[50px] rounded-[22px] transition-all duration-300 flex items-center justify-center gap-3 text-[20px] font-semibold border shadow-xl ${
+className={`w-full h-[52px] rounded-[18px] transition-all duration-300 flex items-center justify-center gap-3 text-[16px] font-medium border shadow-md ${
   isListening
-      ? "bg-red-600 border-red-400 text-white shadow-red-500/40 animate-pulse"
-      : "bg-gradient-to-r from-[#16a34a] to-[#22c55e] border-[#4ade80] text-white shadow-green-500/30"
-  }`}
+    ? "bg-red-600 border-red-400 text-white shadow-red-500/30 animate-pulse"
+    : "bg-gradient-to-r from-[#16a34a] to-[#22c55e] border-[#4ade80] text-white shadow-green-500/20"
+}`}
 >
   {isListening ? (
     <>
@@ -2523,32 +2523,12 @@ className="w-[84%] mx-auto flex items-center h-[50px] rounded-[20px] border bord
 
 </div>
 
- <button
-  onClick={handleSendWhatsApp}
-className="w-[90%] mx-auto flex items-center h-[50px] rounded-2xl border border-[#2a2a2a] overflow-hidden bg-[#050816]"
-   >
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    className="w-5 h-5"
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.868v4.264a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"
-    />
-  </svg>
 
-  Enviar por WhatsApp
-</button>
 
   </div>
 {/* STATS PREMIUM */}
 
-<div className="rounded-[24px] border border-[#c6922f]/40 bg-[#050816] p-5 shadow-2xl mt-4">
+<div className="w-[92%] mx-auto rounded-[22px] border border-[#c6922f]/40 bg-[#050816] p-4 shadow-xl mt-2"
 
   <p className="text-center text-[#d4a94d] text-[15px] font-semibold mb-5">
     Miles de personas ya han confiado en nosotros
@@ -2644,7 +2624,7 @@ className="w-[90%] mx-auto flex items-center h-[50px] rounded-2xl border border-
 
 </div>
 </div>
-
+)}
 )}
 
 
