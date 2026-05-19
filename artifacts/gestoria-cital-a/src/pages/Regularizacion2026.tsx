@@ -2625,7 +2625,7 @@ className="w-[84%] mx-auto flex items-center h-[50px] rounded-[20px] border bord
 </div>
 </div>
 )}
-)}
+
 
 
 </div>
