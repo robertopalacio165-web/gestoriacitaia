@@ -36,6 +36,8 @@ const lastAssistantTextRef = useRef("");
 const [waitingKhalid, setWaitingKhalid] = useState(false);
 const [lastTranscript, setLastTranscript] = useState("");
 const [lastReply, setLastReply] = useState("");
+  const [smartAction, setSmartAction] =
+  useState<string | null>(null);
   const [hasStartedConversation, setHasStartedConversation] = useState(false);
  
   
@@ -306,6 +308,39 @@ dc.onmessage = (event) => {
 
       console.log("USER:", transcript);
 setUserAskedQuestion(true);
+      const lowerTranscript =
+  transcript.toLowerCase();
+
+// 📍 Oficina Madrid
+if (
+  lowerTranscript.includes("madrid") ||
+  lowerTranscript.includes("extranjeria madrid") ||
+  lowerTranscript.includes("عنوان") ||
+  lowerTranscript.includes("adresse")
+) {
+
+  setSmartAction("office_madrid");
+
+}
+
+// 👮 Policía
+else if (
+  lowerTranscript.includes("policia") ||
+  lowerTranscript.includes("tie")
+) {
+
+  setSmartAction("police");
+
+}
+
+// 📄 Arraigo
+else if (
+  lowerTranscript.includes("arraigo")
+) {
+
+  setSmartAction("arraigo");
+
+}
     }
 
     // 🤖 خالد بدا يهضر
@@ -690,6 +725,63 @@ if (realtimeLocalStreamRef.current) {
 
    
           </div>
+          {/* SMART ACTIONS PREMIUM */}
+{isPaid && smartAction === "office_madrid" && (
+
+<div className="mt-5 rounded-2xl border border-[#1e293b] bg-[#0b1325] p-4">
+
+  <div className="flex items-center gap-2 mb-3">
+    <span className="text-green-400 text-lg">✨</span>
+
+    <h3 className="font-bold text-white">
+      Acciones inteligentes
+    </h3>
+  </div>
+
+  <div className="rounded-2xl overflow-hidden border border-[#1e293b]">
+
+    <img
+      src="https://images.unsplash.com/photo-1528909514045-2fa4ac7a08ba?q=80&w=1200&auto=format&fit=crop"
+      className="w-full h-[170px] object-cover"
+    />
+
+    <div className="p-4">
+
+      <h4 className="text-xl font-bold mb-1">
+        Oficina Extranjería Madrid
+      </h4>
+
+      <p className="text-gray-400 text-sm">
+        Calle Silva 19 · Madrid
+      </p>
+
+      <div className="grid grid-cols-2 gap-2 mt-4">
+
+        <button className="h-11 rounded-xl bg-[#071224] border border-[#1e293b] text-sm">
+          📍 Google Maps
+        </button>
+
+        <button className="h-11 rounded-xl bg-[#071224] border border-[#1e293b] text-sm">
+          📅 Pedir cita
+        </button>
+
+        <button className="h-11 rounded-xl bg-[#071224] border border-[#1e293b] text-sm">
+          📄 Documentos
+        </button>
+
+        <button className="h-11 rounded-xl bg-[#071224] border border-[#1e293b] text-sm">
+          📞 Llamar
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+)}
         </motion.div>
       </div>
     </div>
