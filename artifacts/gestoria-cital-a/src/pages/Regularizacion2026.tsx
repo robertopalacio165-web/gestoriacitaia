@@ -2281,7 +2281,7 @@ setTimeout(() => {
 <motion.div
   initial={{ opacity: 0, y: 15 }}
   animate={{ opacity: 1, y: 0 }}
-className="rounded-[32px] overflow-hidden border border-[#f6c453]/60 bg-gradient-to-b from-[#071120] to-black shadow-[0_0_45px_rgba(255,215,0,0.12)]"
+className="rounded-[32px] overflow-hidden border-2 border-[#f6c453] bg-gradient-to-b from-[#071120] to-black shadow-[0_0_55px_rgba(255,215,0,0.16)] p-[2px]"
   >
   <div className="relative">
 
@@ -2446,7 +2446,7 @@ className="w-[92%] mx-auto flex items-center justify-center h-[52px] rounded-[20
 {/* MICRO VERDE */}
 <button
   onClick={isListening ? stopListening : startListening}
-className={`w-full mx-auto h-[58px] rounded-[20px] flex items-center justify-center gap-3 text-[16px] font-semibold border shadow-xl transition-all duration-300 ${
+className={`w-[92%] mx-auto h-[52px] rounded-[20px] flex items-center justify-center gap-3 text-[16px] font-semibold border shadow-xl transition-all duration-300 ${
   isListening
       ? "bg-red-600 border-red-400 text-white shadow-red-500/30 animate-pulse"
       : "bg-gradient-to-r from-[#16a34a] to-[#22c55e] border-[#4ade80] text-white shadow-green-500/20"
