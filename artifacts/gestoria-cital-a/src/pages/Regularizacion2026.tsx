@@ -2254,7 +2254,8 @@ setTimeout(() => {
     voiceTexts.initialVoice;
 
   return (
-    <div className="min-h-screen bg-background text-foreground relative flex flex-col">
+ <div className="min-h-screen bg-background text-foreground relative flex flex-col border-2 border-[#d4a017] rounded-[28px] shadow-[0_0_60px_rgba(255,200,0,0.25)] overflow-hidden">
+   <div className="absolute inset-0 rounded-[28px] border border-yellow-300/30 pointer-events-none shadow-[0_0_90px_rgba(255,215,0,0.18)]" />
       <div
         className="fixed inset-0 z-0 opacity-25 pointer-events-none"
         style={{
