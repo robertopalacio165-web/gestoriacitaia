@@ -2281,7 +2281,7 @@ setTimeout(() => {
 <motion.div
   initial={{ opacity: 0, y: 15 }}
   animate={{ opacity: 1, y: 0 }}
-className="rounded-[28px] overflow-hidden border border-[#c6922f]/50 bg-gradient-to-b from-[#050816] to-black shadow-[0_0_40px_rgba(214,169,77,0.15)]"
+className="rounded-[32px] overflow-hidden border border-[#f6c453]/60 bg-gradient-to-b from-[#071120] to-black shadow-[0_0_45px_rgba(255,215,0,0.12)]"
   >
   <div className="relative">
 
@@ -2385,7 +2385,7 @@ className="w-full h-[270px] object-cover border-b border-[#c6922f]/40"
      <button
   onClick={handleStripePayment}
   type="button"
-className="w-[84%] mx-auto flex items-center justify-center h-8 rounded-full text-black font-extrabold text-[13px] bg-gradient-to-b from-[#ffe27a] via-[#ffd400] to-[#ffbf00] border border-[#fff3b0] shadow-[0_4px_14px_rgba(255,215,0,0.35)]"
+className="w-[92%] mx-auto flex items-center justify-center h-[52px] rounded-[20px] text-white font-semibold text-[16px] bg-gradient-to-r from-[#16a34a] to-[#22c55e] border border-[#4ade80] shadow-[0_4px_14px_rgba(34,197,94,0.35)]"
        >
   🔓 Desbloquear ahora
 </button>
@@ -2441,35 +2441,41 @@ className="w-[84%] mx-auto flex items-center justify-center h-8 rounded-full tex
 
 {paymentCompleted && (
 
-<div className="mt-4 space-y-4">
+<div className="mt-5 space-y-5">
 
-  {/* MICRO VERDE */}
+{/* MICRO VERDE */}
 <button
   onClick={isListening ? stopListening : startListening}
-className={`w-[84%] mx-auto h-[54px] rounded-[20px] transition-all duration-300 flex items-center justify-center gap-3 text-[20px] font-semibold border shadow-xl ${
+className={`w-full mx-auto h-[58px] rounded-[20px] flex items-center justify-center gap-3 text-[16px] font-semibold border shadow-xl transition-all duration-300 ${
   isListening
-      ? "bg-red-600 border-red-400 text-white shadow-red-500/40 animate-pulse"
-      : "bg-gradient-to-r from-[#16a34a] to-[#22c55e] border-[#4ade80] text-white shadow-green-500/30"
+      ? "bg-red-600 border-red-400 text-white shadow-red-500/30 animate-pulse"
+      : "bg-gradient-to-r from-[#16a34a] to-[#22c55e] border-[#4ade80] text-white shadow-green-500/20"
   }`}
 >
   {isListening ? (
     <>
-      <MicOff className="w-6 h-6" />
+      <MicOff className="w-5 h-5" />
       Mohamed escuchando...
     </>
   ) : (
     <>
-      <Mic className="w-6 h-6" />
-      Hablar con Mohamed
+      <Mic className="w-5 h-5" />
+      {
+        safeLang === "darija"
+          ? "تكلم مع محمد"
+          : safeLang === "en"
+          ? "Talk with Mohamed"
+          : "Hablar con Mohamed"
+      }
     </>
   )}
 </button>
 
-  {/* SUBIR DOCUMENTOS */}
+{/* SUBIR DOCUMENTOS */}
 <button
   onClick={handleGeneralUpload}
   disabled={generalUploading}
-  className="w-[94%] mx-auto h-[54px] rounded-[20px] border border-[#c6922f] bg-[#050816] hover:bg-[#0b1220] transition-all text-white font-medium text-[17px] flex items-center justify-center gap-3 shadow-lg"
+  className="w-[92%] mx-auto h-[52px] rounded-[20px] border border-[#c6922f] bg-[#050816] hover:bg-[#0b1220] transition-all text-white font-medium text-[16px] flex items-center justify-center gap-3 shadow-lg"
 >
   <Upload className="w-5 h-5 text-[#d4a94d]" />
 
@@ -2478,10 +2484,10 @@ className={`w-[84%] mx-auto h-[54px] rounded-[20px] transition-all duration-300 
     : "Subir documentos"}
 </button>
 
-  {/* VERIFY */}
- <button
+{/* VERIFY */}
+<button
   onClick={handleVerifyAll}
- className="w-[94%] mx-auto h-[54px] rounded-[20px] border border-[#c6922f] bg-[#050816] hover:bg-[#0b1220] transition-all text-white font-medium text-[17px] flex items-center justify-center gap-3 shadow-lg"
+  className="w-[92%] mx-auto h-[52px] rounded-[20px] border border-[#c6922f] bg-[#050816] hover:bg-[#0b1220] transition-all text-white font-medium text-[16px] flex items-center justify-center gap-3 shadow-lg"
 >
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -2501,15 +2507,13 @@ className={`w-[84%] mx-auto h-[54px] rounded-[20px] transition-all duration-300 
   Verificar documentos
 </button>
 
-  {/* WHATSAPP */}
-  <div className="space-y-3">
+{/* WHATSAPP PREMIUM */}
+<div className="w-[92%] mx-auto h-[52px] rounded-[20px] border border-[#c6922f]/40 bg-[#050816] flex items-center overflow-hidden shadow-lg">
 
-  <div className="flex items-center h-[56px] rounded-[20px] border border-[#3a3a3a] overflow-hidden bg-[#050816]">
-
-  <div className="w-[58px] h-full flex items-center justify-center border-r border-[#3a3a3a] bg-black">
+  <div className="w-[58px] h-full flex items-center justify-center border-r border-[#c6922f]/30 bg-black">
     <img
       src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg"
-      className="w-7 h-7"
+      className="w-6 h-6"
     />
   </div>
 
@@ -2517,17 +2521,20 @@ className={`w-[84%] mx-auto h-[54px] rounded-[20px] transition-all duration-300 
     type="tel"
     value={phone}
     onChange={(e) => setPhone(e.target.value)}
-    placeholder="Tu número WhatsApp"
-className="w-[84%] mx-auto flex items-center h-[50px] rounded-[20px] border border-[#2a2a2a] overflow-hidden bg-[#050816]"
+    placeholder={
+      safeLang === "darija"
+        ? "رقم الواتساب"
+        : safeLang === "en"
+        ? "WhatsApp number"
+        : "Número WhatsApp"
+    }
+className="flex-1 h-full bg-transparent px-4 text-white placeholder:text-white/40 outline-none text-[16px]"
     />
 
-</div>
-
-  </div>
+</div> 
 {/* STATS PREMIUM */}
 
-<div className="rounded-[24px] border border-[#c6922f]/40 bg-[#050816] p-5 shadow-2xl mt-4">
-
+ border border-[#f6c453]/60 bg-gradient-to-b from-[#06111f] to-[#020617] p-5 shadow-[0_0_35px_rgba(255,215,0,0.10)] mt-4">
   <p className="text-center text-[#d4a94d] text-[15px] font-semibold mb-5">
     Miles de personas ya han confiado en nosotros
   </p>
