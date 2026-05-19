@@ -2628,7 +2628,7 @@ className="flex-1 h-full bg-transparent px-4 text-white placeholder:text-white/4
   </div>
 
 </div>
-</div>
+
 
 )}
 
