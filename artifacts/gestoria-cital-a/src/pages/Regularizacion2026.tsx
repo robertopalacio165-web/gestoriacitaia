@@ -313,287 +313,114 @@ const voiceTexts = useMemo(() => ({
   realtimeError: "وقع مشكل فالصوت المباشر",
 }), []);
 
-const ui = useMemo(() => {
-
-  // 🇲🇦 DARIJA
-  if (safeLang === "darija") {
+  const ui = useMemo(() => {
+    if (safeLang === "darija") {
+      return {
+        online: "متصل الآن",
+        role: "مختص فالهجرة",
+        voiceButton: "تكلم مع محمد",
+        stopButton: "وقف الميكروفون",
+        saveLeadButton: savingForm ? "كيتحفظ..." : "حفظ المعطيات والمتابعة مع محمد",
+        saveLeadTitle: "تحفظات المعطيات",
+        saveLeadDesc: "محمد يقدر دابا يبدا معاك بالصوت.",
+        formTitle: "لوحة رسمية مدمجة",
+        formDesc:
+          "عمر المعطيات الأساسية باش محمد يبدا يراجع الملف ديالك بالصوت.",
+        uploadGeneral: generalUploading ? "كيترفع..." : "رفع الوثائق",
+        uploadGeneralDesc:
+          "من هنا تقدر ترفع جميع الوثائق اللي طلب منك محمد، سواء كانت صورة أو PDF.",
+        uploading: "كيترفع...",
+        uploadSuccessTitle: "تقبلات الوثيقة",
+        uploadSuccessDesc: "راجعنا الوثيقة وربطناها مع الملف.",
+        uploadErrorTitle: "خطأ فالوثيقة",
+        uploadErrorDesc: "ما قدرناش نربط هاد الوثيقة مع الملف.",
+        missingTitle: "كاينين بيانات ناقصين",
+        missingDesc: "عمر الاسم والهاتف والمدينة قبل ما تكمل.",
+        listening: "محمد كيسمع ليك دابا...",
+        latestReply: "آخر جواب ديال محمد",
+        yourVoice: "آخر جواب ديالك بالصوت",
+        micNotSupported:
+          "هاد المتصفح ما كيدعمش الصوت المباشر. استعمل Chrome حديث.",
+        docStatusTitle: "حالة الملف ديالك",
+        docStatusDone: "جاهز",
+        docStatusReview: "مراجعة",
+        docStatusMissing: "ناقص",
+        docStepForm: "الفورمولار معمر",
+        docStepStayProof: "بروفات ديال 5 شهور",
+        docStepIdentity: "الباسبور أو NIE",
+        docStepFinal: "الملف النهائي واجد",
+        goSara: "المرور إلى سارة",
+        goSaraDesc: "إلى بغيتي تكمل بالموعد، سارة غادي تعاونك.",
+        labels: {
+          nombre: "الاسم الكامل",
+          telefono: "الهاتف",
+          niePasaporte: "NIE / الباسبور",
+          ciudad: "المدينة",
+          nacionalidad: "الجنسية",
+          fechaLlegada: "تاريخ الدخول لإسبانيا",
+          cumple5Meses: "واش عندك 5 شهور متواصلة؟",
+          asilo: "واش عندك طلب لجوء؟",
+          penales: "سوابق عدلية",
+          select: "اختر",
+          yes: "نعم",
+          no: "لا",
+          dontKnow: "ما عرفت",
+        },
+      };
+    }
     return {
-      online: "متصل الآن",
-      role: "مختص فالهجرة",
-      voiceButton: "تكلم مع محمد",
-      stopButton: "وقف الميكروفون",
-
-      saveLeadButton: savingForm
-        ? "كيتحفظ..."
-        : "حفظ المعطيات والمتابعة مع محمد",
-
-      saveLeadTitle: "تحفظات المعطيات",
-      saveLeadDesc: "محمد يقدر دابا يبدا معاك بالصوت.",
-
-      formTitle: "لوحة رسمية مدمجة",
-
+      online: "En línea",
+      role: "Especialista en Extranjería",
+      voiceButton: "Hablar con Mohamed",
+      stopButton: "Parar micrófono",
+      saveLeadButton: savingForm ? "Guardando..." : "Guardar datos y continuar con Mohamed",
+      saveLeadTitle: "Datos guardados",
+      saveLeadDesc: "Mohamed ya puede empezar contigo por voz.",
+      formTitle: "Panel oficial integrado",
       formDesc:
-        "عمر المعطيات الأساسية باش محمد يبدا يراجع الملف ديالك بالصوت.",
-
-      uploadGeneral: generalUploading
-        ? "كيترفع..."
-        : "رفع الوثائق",
-
+        "Rellena los datos básicos para que Mohamed empiece a revisar tu caso por voz.",
+      uploadGeneral: generalUploading ? "Subiendo..." : "Subir documentos",
       uploadGeneralDesc:
-        "من هنا تقدر ترفع جميع الوثائق اللي طلب منك محمد، سواء كانت صورة أو PDF.",
-
-      uploading: "كيترفع...",
-
-      uploadSuccessTitle: "تقبلات الوثيقة",
-
-      uploadSuccessDesc:
-        "راجعنا الوثيقة وربطناها مع الملف.",
-
-      uploadErrorTitle: "خطأ فالوثيقة",
-
-      uploadErrorDesc:
-        "ما قدرناش نربط هاد الوثيقة مع الملف.",
-
-      missingTitle: "كاينين بيانات ناقصين",
-
-      missingDesc:
-        "عمر الاسم والهاتف والمدينة قبل ما تكمل.",
-
-      listening: "محمد كيسمع ليك دابا...",
-
-      latestReply: "آخر جواب ديال محمد",
-
-      yourVoice: "آخر جواب ديالك بالصوت",
-
+        "Usa este botón para subir todos los documentos que te pida Mohamed, en foto o en PDF.",
+      uploading: "Subiendo...",
+      uploadSuccessTitle: "Documento recibido",
+      uploadSuccessDesc: "El documento se ha revisado y vinculado al expediente.",
+      uploadErrorTitle: "Error en documento",
+      uploadErrorDesc: "No se pudo vincular ese documento al expediente.",
+      missingTitle: "Faltan datos",
+      missingDesc: "Rellena nombre, teléfono y ciudad antes de continuar.",
+      listening: "Mohamed te está escuchando ahora...",
+      latestReply: "Última respuesta de Mohamed",
+      yourVoice: "Tu última respuesta por voz",
       micNotSupported:
-        "هاد المتصفح ما كيدعمش الصوت المباشر. استعمل Chrome حديث.",
-
-      docStatusTitle: "حالة الملف ديالك",
-
-      docStatusDone: "جاهز",
-
-      docStatusReview: "مراجعة",
-
-      docStatusMissing: "ناقص",
-
-      docStepForm: "الفورمولار معمر",
-
-      docStepStayProof: "بروفات ديال 5 شهور",
-
-      docStepIdentity: "الباسبور أو NIE",
-
-      docStepFinal: "الملف النهائي واجد",
-
-      goSara: "المرور إلى سارة",
-
-      goSaraDesc:
-        "إلى بغيتي تكمل بالموعد، سارة غادي تعاونك.",
-
+        "Este navegador no soporta voz en tiempo real. Usa Chrome moderno.",
+      docStatusTitle: "Estado de tu expediente",
+      docStatusDone: "Listo",
+      docStatusReview: "Revisar",
+      docStatusMissing: "Falta",
+      docStepForm: "Formulario completado",
+      docStepStayProof: "Pruebas de 5 meses",
+      docStepIdentity: "Pasaporte o NIE",
+      docStepFinal: "Expediente final listo",
+      goSara: "Ir con Sara",
+      goSaraDesc: "Si quieres seguir con la cita, Sara te ayuda.",
       labels: {
-        nombre: "الاسم الكامل",
-        telefono: "الهاتف",
-        niePasaporte: "NIE / الباسبور",
-        ciudad: "المدينة",
-        nacionalidad: "الجنسية",
-        fechaLlegada: "تاريخ الدخول لإسبانيا",
-        cumple5Meses: "واش عندك 5 شهور متواصلة؟",
-        asilo: "واش عندك طلب لجوء؟",
-        penales: "سوابق عدلية",
-        select: "اختر",
-        yes: "نعم",
-        no: "لا",
-        dontKnow: "ما عرفت",
-      },
-    };
-  }
-
-  // 🇬🇧 ENGLISH
-  if (safeLang === "en") {
-    return {
-      online: "Online",
-      role: "Immigration Specialist",
-      voiceButton: "Talk with Mohamed",
-      stopButton: "Stop microphone",
-
-      saveLeadButton: savingForm
-        ? "Saving..."
-        : "Save data and continue with Mohamed",
-
-      saveLeadTitle: "Data saved",
-
-      saveLeadDesc:
-        "Mohamed can now start with you by voice.",
-
-      formTitle: "Integrated official panel",
-
-      formDesc:
-        "Fill in the basic information so Mohamed can review your case by voice.",
-
-      uploadGeneral: generalUploading
-        ? "Uploading..."
-        : "Upload documents",
-
-      uploadGeneralDesc:
-        "Use this button to upload all the documents Mohamed requests, as image or PDF.",
-
-      uploading: "Uploading...",
-
-      uploadSuccessTitle: "Document received",
-
-      uploadSuccessDesc:
-        "The document has been reviewed and linked to your file.",
-
-      uploadErrorTitle: "Document error",
-
-      uploadErrorDesc:
-        "The document could not be linked to your file.",
-
-      missingTitle: "Missing information",
-
-      missingDesc:
-        "Fill in name, phone and city before continuing.",
-
-      listening: "Mohamed is listening to you now...",
-
-      latestReply: "Mohamed's latest reply",
-
-      yourVoice: "Your latest voice reply",
-
-      micNotSupported:
-        "This browser does not support realtime voice. Use modern Chrome.",
-
-      docStatusTitle: "Your file status",
-
-      docStatusDone: "Ready",
-
-      docStatusReview: "Review",
-
-      docStatusMissing: "Missing",
-
-      docStepForm: "Form completed",
-
-      docStepStayProof: "5 months proof",
-
-      docStepIdentity: "Passport or NIE",
-
-      docStepFinal: "Final file ready",
-
-      goSara: "Go to Sara",
-
-      goSaraDesc:
-        "If you want to continue with the appointment, Sara will help you.",
-
-      labels: {
-        nombre: "Full name",
-        telefono: "Phone",
-        niePasaporte: "NIE / Passport",
-        ciudad: "City",
-        nacionalidad: "Nationality",
-        fechaLlegada: "Arrival date in Spain",
-        cumple5Meses: "Do you meet 5 continuous months?",
-        asilo: "Do you have asylum request?",
-        penales: "Criminal record",
-        select: "Select",
-        yes: "Yes",
+        nombre: "Nombre completo",
+        telefono: "Teléfono",
+        niePasaporte: "NIE / Pasaporte",
+        ciudad: "Ciudad",
+        nacionalidad: "Nacionalidad",
+        fechaLlegada: "Fecha llegada a España",
+        cumple5Meses: "¿Cumples 5 meses continuos?",
+        asilo: "¿Tienes solicitud de asilo?",
+        penales: "Antecedentes penales",
+        select: "Selecciona",
+        yes: "Sí",
         no: "No",
-        dontKnow: "I don't know",
+        dontKnow: "No sé",
       },
     };
-  }
-
-  // 🇪🇸 SPANISH
-  return {
-    online: "En línea",
-    role: "Especialista en Extranjería",
-    voiceButton: "Hablar con Mohamed",
-    stopButton: "Parar micrófono",
-
-    saveLeadButton: savingForm
-      ? "Guardando..."
-      : "Guardar datos y continuar con Mohamed",
-
-    saveLeadTitle: "Datos guardados",
-
-    saveLeadDesc:
-      "Mohamed ya puede empezar contigo por voz.",
-
-    formTitle: "Panel oficial integrado",
-
-    formDesc:
-      "Rellena los datos básicos para que Mohamed empiece a revisar tu caso por voz.",
-
-    uploadGeneral: generalUploading
-      ? "Subiendo..."
-      : "Subir documentos",
-
-    uploadGeneralDesc:
-      "Usa este botón para subir todos los documentos que te pida Mohamed, en foto o en PDF.",
-
-    uploading: "Subiendo...",
-
-    uploadSuccessTitle: "Documento recibido",
-
-    uploadSuccessDesc:
-      "El documento se ha revisado y vinculado al expediente.",
-
-    uploadErrorTitle: "Error en documento",
-
-    uploadErrorDesc:
-      "No se pudo vincular ese documento al expediente.",
-
-    missingTitle: "Faltan datos",
-
-    missingDesc:
-      "Rellena nombre, teléfono y ciudad antes de continuar.",
-
-    listening: "Mohamed te está escuchando ahora...",
-
-    latestReply: "Última respuesta de Mohamed",
-
-    yourVoice: "Tu última respuesta por voz",
-
-    micNotSupported:
-      "Este navegador no soporta voz en tiempo real. Usa Chrome moderno.",
-
-    docStatusTitle: "Estado de tu expediente",
-
-    docStatusDone: "Listo",
-
-    docStatusReview: "Revisar",
-
-    docStatusMissing: "Falta",
-
-    docStepForm: "Formulario completado",
-
-    docStepStayProof: "Pruebas de 5 meses",
-
-    docStepIdentity: "Pasaporte o NIE",
-
-    docStepFinal: "Expediente final listo",
-
-    goSara: "Ir con Sara",
-
-    goSaraDesc:
-      "Si quieres seguir con la cita, Sara te ayuda.",
-
-    labels: {
-      nombre: "Nombre completo",
-      telefono: "Teléfono",
-      niePasaporte: "NIE / Pasaporte",
-      ciudad: "Ciudad",
-      nacionalidad: "Nacionalidad",
-      fechaLlegada: "Fecha llegada a España",
-      cumple5Meses: "¿Cumples 5 meses continuos?",
-      asilo: "¿Tienes solicitud de asilo?",
-      penales: "Antecedentes penales",
-      select: "Selecciona",
-      yes: "Sí",
-      no: "No",
-      dontKnow: "No sé",
-    },
-  };
-
-}, [safeLang, savingForm, generalUploading]);
+  }, [safeLang, savingForm, generalUploading]);
 
   const [docs, setDocs] = useState<StoredDocItem[]>(
     buildInitialDocs(selectedSituacion)
@@ -2496,13 +2323,7 @@ className="w-full h-[270px] object-cover border-b border-[#c6922f]/40"
 
       <div className="w-2.5 h-2.5 rounded-full bg-green-400 animate-pulse shadow-lg"></div>
 
-{
-safeLang === "darija"
-? "متصل الآن"
-: safeLang === "en"
-? "Online"
-: "En línea"
-}
+      En línea
 
     </div>
 
@@ -2513,13 +2334,7 @@ safeLang === "darija"
       </h2>
 
       <p className="text-[15px] text-[#d4a94d] font-medium tracking-wide">
-{
-safeLang === "darija"
-? "مختص فالهجرة"
-: safeLang === "en"
-? "Immigration Specialist"
-: "Especialista en Extranjería"
-}
+        Especialista en Extranjería
       </p>
 
     </div>
@@ -2542,21 +2357,11 @@ safeLang === "darija"
 
         <div>
           <p className="text-white font-bold text-lg">
-        {safeLang === "darija"
-  ? "فتح محمد"
-  : safeLang === "en"
-  ? "Unlock Mohamed"
-  : "Desbloquea a Mohamed"}
+            Desbloquea a Mohamed
           </p>
 
           <span className="inline-flex mt-1 px-2 py-1 rounded-full bg-yellow-500 text-black text-[10px] font-bold">
-   {
-safeLang === "darija"
-? "بريميوم"
-: safeLang === "en"
-? "PREMIUM"
-: "PREMIUM"
-}
+            PREMIUM
           </span>
         </div>
 
@@ -2566,24 +2371,15 @@ safeLang === "darija"
           </p>
 
           <p className="text-white/60 text-xs">
-         {safeLang === "darija"
-  ? "ولوج كامل"
-  : safeLang === "en"
-  ? "Full access"
-  : "Acceso completo"}
+            Acceso completo
           </p>
         </div>
 
       </div>
 
  <p className="text-white/70 text-[13px] leading-relaxed mb-3">
-   {
-safeLang === "darija"
-? "ولوج غير محدود لمحمد الذكاء الاصطناعي، مكالمة فيديو مباشرة، تحليل الوثائق وإنشاء الملف تلقائياً."
-: safeLang === "en"
-? "Unlimited access to Mohamed AI, realtime video call, document analysis and automatic file generation."
-: "Acceso ilimitado a Mohamed IA, videollamada realtime, análisis de documentos y generación automática del expediente."
-}
+        Acceso ilimitado a Mohamed IA, videollamada realtime,
+        análisis de documentos y generación automática del expediente.
       </p>
 
      <button
@@ -2591,11 +2387,7 @@ safeLang === "darija"
   type="button"
 className="w-[84%] mx-auto flex items-center justify-center h-8 rounded-full text-black font-extrabold text-[13px] bg-gradient-to-b from-[#ffe27a] via-[#ffd400] to-[#ffbf00] border border-[#fff3b0] shadow-[0_4px_14px_rgba(255,215,0,0.35)]"
        >
-  🔓 {safeLang === "darija"
-  ? "فتح الآن"
-  : safeLang === "en"
-  ? "Unlock now"
-  : "Desbloquear ahora"}
+  🔓 Desbloquear ahora
 </button>
 
   <div className="mt-2 flex items-center justify-center gap-2 flex-wrap">
@@ -2626,27 +2418,17 @@ className="w-[84%] mx-auto flex items-center justify-center h-8 rounded-full tex
 
         <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
 
- <p className="text-white font-bold">
-{
-safeLang === "darija"
-? "محمد الذكاء الاصطناعي"
-: safeLang === "en"
-? "Mohamed AI"
-: "Mohamed IA"
-}
-</p>
+        <p className="text-white font-bold">
+          Mohamed IA
+        </p>
 
       </div>
 
-   <p className="text-white/80 text-sm leading-relaxed">
-{
-safeLang === "darija"
-? "مختص محترف فالهجرة الإسبانية للمغاربة فإسبانيا. سول على الإقامة، الوثائق، الشرطة، الجنسية، العمل، الدراسة وأي مشكل قانوني متعلق بالهجرة."
-: safeLang === "en"
-? "Professional Spanish immigration specialist for Moroccans in Spain. Ask about residency, documents, police, nationality, work, studies, and any immigration legal issue."
-: "Especialista profesional en extranjería española para marroquíes en España. Pregunta sobre residencia, papeles, policía, nacionalidad, arraigo, trabajo, estudios y cualquier problema legal relacionado con inmigración."
-}
-</p>
+      <p className="text-white/80 text-sm leading-relaxed">
+        Especialista profesional en extranjería española para marroquíes en España.
+        Pregunta sobre residencia, papeles, policía, nacionalidad, arraigo,
+        trabajo, estudios y cualquier problema legal relacionado con inmigración.
+      </p>
 
     </div>
 
@@ -2664,7 +2446,7 @@ safeLang === "darija"
   {/* MICRO VERDE */}
 <button
   onClick={isListening ? stopListening : startListening}
-className={`w-full h-14 rounded-[22px] transition-all duration-300 flex items-center justify-center gap-3 text-[20px] font-semibold border shadow-xl ${
+className={`w-[84%] mx-auto h-[50px] rounded-[22px] transition-all duration-300 flex items-center justify-center gap-3 text-[20px] font-semibold border shadow-xl ${
   isListening
       ? "bg-red-600 border-red-400 text-white shadow-red-500/40 animate-pulse"
       : "bg-gradient-to-r from-[#16a34a] to-[#22c55e] border-[#4ade80] text-white shadow-green-500/30"
@@ -2678,13 +2460,7 @@ className={`w-full h-14 rounded-[22px] transition-all duration-300 flex items-ce
   ) : (
     <>
       <Mic className="w-6 h-6" />
-  {
-safeLang === "darija"
-? "تكلم مع محمد"
-: safeLang === "en"
-? "Talk with Mohamed"
-: "Hablar con Mohamed"
-}
+      Hablar con Mohamed
     </>
   )}
 </button>
@@ -2693,7 +2469,7 @@ safeLang === "darija"
 <button
   onClick={handleGeneralUpload}
   disabled={generalUploading}
-className="w-full h-14 rounded-[20px] border border-[#c6922f] bg-[#050816] hover:bg-[#0b1220] transition-all text-white font-medium text-[17px] flex items-center justify-center gap-3 shadow-lg"
+  className="w-[94%] mx-auto h-[54px] rounded-[20px] border border-[#c6922f] bg-[#050816] hover:bg-[#0b1220] transition-all text-white font-medium text-[17px] flex items-center justify-center gap-3 shadow-lg"
 >
   <Upload className="w-5 h-5 text-[#d4a94d]" />
 
@@ -2705,7 +2481,7 @@ className="w-full h-14 rounded-[20px] border border-[#c6922f] bg-[#050816] hover
   {/* VERIFY */}
  <button
   onClick={handleVerifyAll}
-className="w-full h-14 rounded-[20px] border border-[#c6922f] bg-[#050816] hover:bg-[#0b1220] transition-all text-white font-medium text-[17px] flex items-center justify-center gap-3 shadow-lg"
+ className="w-[94%] mx-auto h-[54px] rounded-[20px] border border-[#c6922f] bg-[#050816] hover:bg-[#0b1220] transition-all text-white font-medium text-[17px] flex items-center justify-center gap-3 shadow-lg"
 >
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -2724,19 +2500,7 @@ className="w-full h-14 rounded-[20px] border border-[#c6922f] bg-[#050816] hover
 
   Verificar documentos
 </button>
-<div
-  className="
-    rounded-[32px]
-    border
-    border-[#d4a94d]
-    bg-gradient-to-b
-    from-[#0b1020]
-    to-black
-    p-4
-    space-y-4
-    shadow-[0_0_40px_rgba(212,169,77,0.18)]
-  "
->
+
   {/* WHATSAPP */}
   <div className="space-y-3">
 
@@ -2754,14 +2518,14 @@ className="w-full h-14 rounded-[20px] border border-[#c6922f] bg-[#050816] hover
     value={phone}
     onChange={(e) => setPhone(e.target.value)}
     placeholder="Tu número WhatsApp"
-className="w-full h-14 px-4 rounded-[20px] border border-[#2a2a2a] overflow-hidden bg-[#050816]"
+className="w-[84%] mx-auto flex items-center h-[50px] rounded-[20px] border border-[#2a2a2a] overflow-hidden bg-[#050816]"
     />
 
 </div>
 
  <button
   onClick={handleSendWhatsApp}
-className="w-full h-14 rounded-2xl border border-[#2a2a2a] overflow-hidden bg-[#050816]"
+className="w-[90%] mx-auto flex items-center h-[50px] rounded-2xl border border-[#2a2a2a] overflow-hidden bg-[#050816]"
    >
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -2881,10 +2645,10 @@ className="w-full h-14 rounded-2xl border border-[#2a2a2a] overflow-hidden bg-[#
 </div>
 </div>
 
+)}
 
 
 </div>
-      )}
 
 <audio ref={remoteAudioRef} autoPlay playsInline className="hidden" />
       </main>
