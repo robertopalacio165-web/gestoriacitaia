@@ -2534,7 +2534,7 @@ className="flex-1 h-full bg-transparent px-4 text-white placeholder:text-white/4
 </div> 
 {/* STATS PREMIUM */}
 
- border border-[#f6c453]/60 bg-gradient-to-b from-[#06111f] to-[#020617] p-5 shadow-[0_0_35px_rgba(255,215,0,0.10)] mt-4">
+<div className="w-full rounded-[28px] border border-[#f6c453]/60 bg-gradient-to-b from-[#06111f] to-[#020617] p-5 shadow-[0_0_35px_rgba(255,215,0,0.10)] mt-4">
   <p className="text-center text-[#d4a94d] text-[15px] font-semibold mb-5">
     Miles de personas ya han confiado en nosotros
   </p>
