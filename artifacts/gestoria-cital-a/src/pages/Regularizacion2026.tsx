@@ -2276,11 +2276,12 @@ setTimeout(() => {
             <p className="text-xs text-muted-foreground">{currentProcedure.name}</p>
           </div>
         </div>
-<div className="max-w-md mx-auto px-[3px] py-[3px] rounded-[38px] bg-gradient-to-b from-[#f6c453] via-[#d4a94d] to-[#7a5b12] shadow-[0_0_55px_rgba(255,215,0,0.22)]">
+    <div className="max-w-md mx-auto px-4">
+<div className="max-w-md mx-auto p-[2px] rounded-[36px] bg-gradient-to-b from-[#ffd76a] via-[#c9971a] to-[#5c4304] shadow-[0_0_60px_rgba(255,200,0,0.35)]">
       <motion.div
   initial={{ opacity: 0, y: 15 }}
   animate={{ opacity: 1, y: 0 }}
-className="rounded-[34px] overflow-hidden bg-gradient-to-b from-slate-950 to-black border border-yellow-500/20"
+className="rounded-[34px] overflow-hidden bg-[radial-gradient(circle_at_top,#0f1b35_0%,#020817_55%,#000000_100%)] border border-[#f6c453]/30"
   
 >
   <div className="relative">
@@ -2291,7 +2292,7 @@ className="rounded-[34px] overflow-hidden bg-gradient-to-b from-slate-950 to-bla
       loop
       playsInline
       poster={`${import.meta.env.BASE_URL}images/avatar-mohamed.png`}
-className="w-full h-[270px] object-cover border-b border-yellow-500/10"
+className="w-full h-[270px] object-cover border-b border-[#f6c453]/10"
       
       >
       <source
@@ -2330,11 +2331,11 @@ className="w-full h-[270px] object-cover border-b border-yellow-500/10"
 
     <div className="absolute bottom-5 right-4 text-right">
 
-    <h2 className="text-[38px] font-extrabold text-white tracking-tight">
+      <h2 className="text-[38px] font-extrabold text-white tracking-tight drop-shadow-[0_0_18px_rgba(255,255,255,0.2)]">
         Mohamed
       </h2>
 
-  <p className="text-[15px] text-yellow-400 font-medium tracking-wide">
+      <p className="text-[15px] text-[#d4a94d] font-medium tracking-wide">
         Especialista en Extranjería
       </p>
 
