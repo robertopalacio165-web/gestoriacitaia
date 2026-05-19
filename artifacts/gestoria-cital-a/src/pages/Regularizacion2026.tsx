@@ -2664,7 +2664,7 @@ safeLang === "darija"
   {/* MICRO VERDE */}
 <button
   onClick={isListening ? stopListening : startListening}
-className={`w-[84%] mx-auto h-[50px] rounded-[22px] transition-all duration-300 flex items-center justify-center gap-3 text-[20px] font-semibold border shadow-xl ${
+className={`w-full h-14 rounded-[22px] transition-all duration-300 flex items-center justify-center gap-3 text-[20px] font-semibold border shadow-xl ${
   isListening
       ? "bg-red-600 border-red-400 text-white shadow-red-500/40 animate-pulse"
       : "bg-gradient-to-r from-[#16a34a] to-[#22c55e] border-[#4ade80] text-white shadow-green-500/30"
@@ -2693,7 +2693,7 @@ safeLang === "darija"
 <button
   onClick={handleGeneralUpload}
   disabled={generalUploading}
-  className="w-[94%] mx-auto h-[54px] rounded-[20px] border border-[#c6922f] bg-[#050816] hover:bg-[#0b1220] transition-all text-white font-medium text-[17px] flex items-center justify-center gap-3 shadow-lg"
+className="w-full h-14 rounded-[20px] border border-[#c6922f] bg-[#050816] hover:bg-[#0b1220] transition-all text-white font-medium text-[17px] flex items-center justify-center gap-3 shadow-lg"
 >
   <Upload className="w-5 h-5 text-[#d4a94d]" />
 
@@ -2705,7 +2705,7 @@ safeLang === "darija"
   {/* VERIFY */}
  <button
   onClick={handleVerifyAll}
- className="w-[94%] mx-auto h-[54px] rounded-[20px] border border-[#c6922f] bg-[#050816] hover:bg-[#0b1220] transition-all text-white font-medium text-[17px] flex items-center justify-center gap-3 shadow-lg"
+className="w-full h-14 rounded-[20px] border border-[#c6922f] bg-[#050816] hover:bg-[#0b1220] transition-all text-white font-medium text-[17px] flex items-center justify-center gap-3 shadow-lg"
 >
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -2724,7 +2724,19 @@ safeLang === "darija"
 
   Verificar documentos
 </button>
-
+<div
+  className="
+    rounded-[32px]
+    border
+    border-[#d4a94d]
+    bg-gradient-to-b
+    from-[#0b1020]
+    to-black
+    p-4
+    space-y-4
+    shadow-[0_0_40px_rgba(212,169,77,0.18)]
+  "
+>
   {/* WHATSAPP */}
   <div className="space-y-3">
 
@@ -2742,14 +2754,14 @@ safeLang === "darija"
     value={phone}
     onChange={(e) => setPhone(e.target.value)}
     placeholder="Tu número WhatsApp"
-className="w-[84%] mx-auto flex items-center h-[50px] rounded-[20px] border border-[#2a2a2a] overflow-hidden bg-[#050816]"
+className="w-full h-14 px-4 rounded-[20px] border border-[#2a2a2a] overflow-hidden bg-[#050816]"
     />
 
 </div>
 
  <button
   onClick={handleSendWhatsApp}
-className="w-[90%] mx-auto flex items-center h-[50px] rounded-2xl border border-[#2a2a2a] overflow-hidden bg-[#050816]"
+className="w-full h-14 rounded-2xl border border-[#2a2a2a] overflow-hidden bg-[#050816]"
    >
   <svg
     xmlns="http://www.w3.org/2000/svg"
