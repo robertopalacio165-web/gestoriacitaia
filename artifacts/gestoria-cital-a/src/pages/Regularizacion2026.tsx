@@ -2267,7 +2267,7 @@ className="fixed inset-0 z-0 opacity-25 pointer-events-none"
         }}
       />
       <Navbar />
-      <main className="flex-1 relative z-10 pt-6 pb-8">
+    <main className="flex-1 relative z-10 pt-0 pb-0">
         <div className="px-4 sm:px-6 py-3 max-w-7xl mx-auto w-full flex items-center justify-between">
           <div>
             <h1 className="text-xl font-display font-bold text-white flex items-center gap-2">
@@ -2280,8 +2280,8 @@ className="fixed inset-0 z-0 opacity-25 pointer-events-none"
             <p className="text-xs text-muted-foreground">{currentProcedure.name}</p>
           </div>
         </div>
-<div className="w-full max-w-[520px] mx-auto px-1">
-<div className="max-w-[520px] mx-auto p-[2px] rounded-[36px] bg-gradient-to-b from-[#ffd76a] via-[#c9971a] to-[#5c4304] shadow-[0_0_60px_rgba(255,200,0,0.35)]">
+<div className="w-full max-w-none mx-auto px-0">
+<div className="w-full mx-auto p-[2px] rounded-[36px] bg-gradient-to-b from-[#ffd76a] via-[#c9971a] to-[#5c4304] shadow-[0_0_60px_rgba(255,200,0,0.35)]">
  <motion.div
 initial={{ opacity: 0, y: 15 }}
 animate={{ opacity: 1, y: 0 }}
