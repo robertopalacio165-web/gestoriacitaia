@@ -9,9 +9,9 @@ import {
   Settings,
   Mic,
   MicOff,
-RefreshCw,
-Shield,
-Bell, 
+  RefreshCw,
+  Shield,
+  Bell,
   CheckCircle2,
   ExternalLink,
   Volume2,
@@ -66,16 +66,12 @@ type ClientFormData = {
   fullName: string;
   phone: string;
   email: string;
-
   nie: string;
   passport: string;
-
   nationality: string;
   birthYear: string;
-
   city: string;
   province: string;
-
   preferredOffice: string;
 };
 
@@ -132,535 +128,371 @@ function OfficialBrowserBox({
   isPending: boolean;
   cameFromConfirmationLink: boolean;
   formData: ClientFormData;
-  onFormChange: (
-    field: keyof ClientFormData,
-    value: string
-  ) => void;
+  onFormChange: (field: keyof ClientFormData, value: string) => void;
   onFormSubmit: () => void;
   formReady: boolean;
 }) {
+  const isMa = language === "ma";
+  const isEn = language === "en";
 
-const formIntro =
-  language === "ma"
-    ? "إلى كنتي باغي موعد عمر المعلومات ديالك واختار نوع اسبانيا ومن بعد سارة غادي تكمل معاك وتعلمك فاش يكون الموعد."
-    : language === "en"
+  const formIntro = isMa
+    ? "إلى كنتي باغي موعد عمر المعلومات ديالك واختار نوع الموعد ومن بعد سارة غادي تكمل معاك وتعلمك فاش يكون الموعد."
+    : isEn
     ? "Fill in your information and choose the appointment type. Sara will continue with you and notify you on WhatsApp when an appointment appears."
     : "Si necesitas una cita, rellena tus datos y elige el tipo de cita. Después Sara continuará contigo y te avisará por WhatsApp cuando exista una cita real.";
- 
-const confirmationIntro =
-  language === "ma"
-    ? "دخلتي من رابط تأكيد الموعد. راجع المعلومات وأكد غير إلا كان الموعد حقيقي."
-    : language === "en"
-    ? "You arrived from the appointment confirmation link. Review the details and confirm only if the appointment is real."
-    : "Has llegado desde el enlace de confirmación. Revisa los datos y confirma solo si la cita es real.";
 
-const savedText =
-  language === "ma"
-    ? "مزيان. دابا عندنا المعلومات ديالك. ملي يبان الموعد غادي نعلموك فالواتساب."
-    : language === "en"
-    ? "Perfect. We already have your information. When an appointment appears, we will notify you on WhatsApp."
-    : "Perfecto. Ya tenemos tus datos. En cuanto aparezca una cita real, te avisaremos por WhatsApp.";
+  const panelTitle = isMa
+    ? "اللوحة الرسمية"
+    : isEn
+    ? "Official integrated panel"
+    : "Panel oficial integrado";
 
   return (
     <motion.div
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay: 0.15 }}
-className="flex-1 flex flex-col overflow-hidden bg-transparent"
-      >
-   
-
-   <div className="flex-1 overflow-y-auto bg-transparent p-4 sm:p-6 text-black">
+      className="flex-1 flex flex-col overflow-hidden bg-transparent"
+    >
+      <div className="flex-1 overflow-y-auto bg-transparent p-4 sm:p-6 text-black">
         {!confirmed ? (
           <>
-     
-        
-<div className="
-mt-3
-mx-[-4px]
-rounded-[24px]
-border-2
-border-yellow-500/60
-bg-gradient-to-b
-from-[#0b0b0b]
-to-[#050505]
-px-3
-py-3
-shadow-[0_0_35px_rgba(255,200,0,0.18)]
-">
-<h2 className="text-yellow-400 text-[18px] sm:text-[20px] font-black leading-tight mb-2">
-  Panel oficial integrado
-</h2>
-<p className="text-white/80 text-[13px] leading-relaxed mb-5">
-  {formIntro}
-</p>
-<div className="w-full">
+            <div className="mt-3 mx-[-4px] rounded-[24px] border-2 border-yellow-500/60 bg-gradient-to-b from-[#0b0b0b] to-[#050505] px-3 py-3 shadow-[0_0_35px_rgba(255,200,0,0.18)]">
+              <h2 className="text-yellow-400 text-[18px] sm:text-[20px] font-black leading-tight mb-2">
+                {panelTitle}
+              </h2>
+              <p className="text-white/80 text-[13px] leading-relaxed mb-5">
+                {formIntro}
+              </p>
+              <div className="w-full">
+                <div className="grid grid-cols-2 gap-2 mb-5">
+                  {/* Nombre */}
+                  <div>
+                    <label className="block text-white text-[13px] mb-2">
+                      {isMa ? "الاسم الكامل" : isEn ? "Full name" : "Nombre completo"}
+                    </label>
+                    <input
+                      type="text"
+                      placeholder={isMa ? "دخل سميتك" : isEn ? "Your name" : "Escribe tu nombre"}
+                      value={formData.fullName}
+                      onChange={(e) => onFormChange("fullName", e.target.value)}
+                      className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-[14px] text-white placeholder:text-white/30 focus:outline-none focus:border-yellow-400"
+                    />
+                  </div>
 
-<div className="grid grid-cols-2 gap-2 mb-5">
-  <div>
-      <label className="block text-white text-[13px] mb-2">
-        {language === "ma"
-          ? "الاسم الكامل"
-          : language === "en"
-          ? "Full name"
-          : "Nombre completo"}
-      </label>
+                  {/* Teléfono */}
+                  <div>
+                    <label className="block text-white text-[13px] mb-2">
+                      {isMa ? "الهاتف" : isEn ? "Phone" : "Teléfono"}
+                    </label>
+                    <input
+                      type="text"
+                      placeholder={isMa ? "رقم الهاتف" : isEn ? "Phone number" : "Tu teléfono"}
+                      value={formData.phone}
+                      onChange={(e) => onFormChange("phone", e.target.value)}
+                      className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-[14px] text-white placeholder:text-white/30 focus:outline-none focus:border-yellow-400"
+                    />
+                  </div>
 
-      <input
-        type="text"
-        placeholder={
-          language === "ma"
-            ? "دخل سميتك"
-            : language === "en"
-            ? "Your name"
-            : "Escribe tu nombre"
-        }
-        value={formData.fullName}
-        onChange={(e) =>
-          onFormChange("fullName", e.target.value)
-        }
-        className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-[14px] text-white placeholder:text-white/30 focus:outline-none focus:border-yellow-400"
-      />
-    </div>
+                  {/* Email */}
+                  <div>
+                    <label className="block text-white text-[13px] mb-2">
+                      Email
+                    </label>
+                    <input
+                      type="email"
+                      placeholder="tu@email.com"
+                      value={formData.email}
+                      onChange={(e) => onFormChange("email", e.target.value)}
+                      className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-[14px] text-white placeholder:text-white/30 focus:outline-none focus:border-yellow-400"
+                    />
+                  </div>
 
-    <div>
-      <label className="block text-white text-[13px] mb-2">
-        {language === "ma"
-          ? "الهاتف"
-          : language === "en"
-          ? "Phone"
-          : "Teléfono"}
-      </label>
+                  {/* NIE */}
+                  <div>
+                    <label className="block text-white text-[13px] mb-2">
+                      NIE
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Y1234567X"
+                      value={formData.nie}
+                      onChange={(e) => onFormChange("nie", e.target.value)}
+                      className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-[14px] text-white placeholder:text-white/30 focus:outline-none focus:border-yellow-400"
+                    />
+                  </div>
 
-      <input
-        type="text"
-        placeholder={
-          language === "ma"
-            ? "رقم الهاتف"
-            : language === "en"
-            ? "Phone number"
-            : "Tu teléfono"
-        }
-        value={formData.phone}
-        onChange={(e) =>
-          onFormChange("phone", e.target.value)
-        }
-        className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-[14px] text-white placeholder:text-white/30 focus:outline-none focus:border-yellow-400"
-      />
-    </div>
+                  {/* Ciudad */}
+                  <div>
+                    <label className="block text-white text-[13px] mb-2">
+                      {isMa ? "المدينة" : isEn ? "City" : "Ciudad"}
+                    </label>
+                    <input
+                      type="text"
+                      placeholder={isMa ? "المدينة" : isEn ? "City" : "Tu ciudad"}
+                      value={formData.city}
+                      onChange={(e) => onFormChange("city", e.target.value)}
+                      className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-[14px] text-white placeholder:text-white/30 focus:outline-none focus:border-yellow-400"
+                    />
+                  </div>
 
-    <div>
-      <label className="block text-white text-[13px] mb-2">
-        Email
-      </label>
+                  {/* Provincia */}
+                  <div>
+                    <label className="block text-white text-[13px] mb-2">
+                      {isMa ? "المقاطعة" : isEn ? "Province" : "Provincia"}
+                    </label>
+                    <select
+                      value={formData.province}
+                      onChange={(e) => onFormChange("province", e.target.value)}
+                      className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-[14px] text-white focus:outline-none focus:border-yellow-400"
+                    >
+                      <option value="">
+                        {isMa ? "اختار" : isEn ? "Select" : "Selecciona"}
+                      </option>
+                      <option value="Madrid">Madrid</option>
+                      <option value="Barcelona">Barcelona</option>
+                      <option value="Valencia">Valencia</option>
+                      <option value="Málaga">Málaga</option>
+                    </select>
+                  </div>
 
-      <input
-        type="email"
-        placeholder="tu@email.com"
-        value={formData.email}
-        onChange={(e) =>
-          onFormChange("email", e.target.value)
-        }
-        className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-[14px] text-white placeholder:text-white/30 focus:outline-none focus:border-yellow-400"
-      />
-    </div>
+                  {/* Tipo de cita */}
+                  <div className="col-span-2">
+                    <label className="block text-white text-[13px] mb-2">
+                      {isMa ? "نوع الموعد" : isEn ? "Appointment type" : "Tipo de cita"}
+                    </label>
+                    <select
+                      value={selectedTramite}
+                      onChange={(e) => onSelectTramite(e.target.value)}
+                      className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-[14px] text-white focus:outline-none focus:border-yellow-400"
+                    >
+                      {tramites.map((tramite) => (
+                        <option
+                          key={tramite.value}
+                          value={tramite.value}
+                          className="bg-[#060b16] text-white"
+                        >
+                          {tramite.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
 
-    <div>
-      <label className="block text-white text-[13px] mb-2">
-        NIE
-      </label>
+              {/* Caja de reserva */}
+              <div className="mt-4 rounded-[28px] border-2 border-yellow-500 bg-gradient-to-b from-[#0b0b0b] to-[#050505] p-4 shadow-[0_0_35px_rgba(255,200,0,0.18)]">
+                <div className="flex items-start justify-between mb-4 pt-2">
+                  <div>
+                    <p className="text-white text-[15px] font-bold">
+                      {isMa ? "حجز الموعد" : isEn ? "Reserve your appointment" : "Reserva tu cita"}
+                    </p>
+                    <span className="inline-flex mt-1 rounded-full bg-gradient-to-r from-yellow-400 to-yellow-600 px-3 py-1 text-[10px] font-black uppercase tracking-wide text-black shadow-[0_0_15px_rgba(255,215,0,0.25)]">
+                      Premium
+                    </span>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-yellow-400 text-[34px] font-black leading-none drop-shadow-[0_0_10px_rgba(255,215,0,0.35)]">
+                      5€
+                    </p>
+                    <p className="text-yellow-300 text-[11px] font-semibold">
+                      {isMa ? "الحجز الأول" : isEn ? "Initial reservation" : "Reserva inicial"}
+                    </p>
+                  </div>
+                </div>
 
-      <input
-        type="text"
-        placeholder="Y1234567X"
-        value={formData.nie}
-        onChange={(e) =>
-          onFormChange("nie", e.target.value)
-        }
-        className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-[14px] text-white placeholder:text-white/30 focus:outline-none focus:border-yellow-400"
-      />
-    </div>
+                <p className="text-gray-300 text-[13px] mb-5 leading-relaxed">
+                  {isMa
+                    ? "سارة غادي تبدا تقلب ليك على الموعد أوتوماتيكيا"
+                    : isEn
+                    ? "Sara will automatically start searching for your appointment"
+                    : "Sara empezará a buscar tu cita automáticamente"}
+                </p>
 
-    <div>
-      <label className="block text-white text-[13px] mb-2">
-        {language === "ma"
-          ? "المدينة"
-          : language === "en"
-          ? "City"
-          : "Ciudad"}
-      </label>
+                <button
+                  type="button"
+                  onClick={onFormSubmit}
+                  className="w-full min-h-[56px] rounded-[20px] bg-gradient-to-r from-yellow-400 via-yellow-500 to-amber-500 px-4 py-2 text-[15px] leading-tight font-black text-black shadow-[0_0_30px_rgba(255,215,0,0.35)] transition-all duration-300 hover:scale-[1.01]"
+                >
+                  {isMa
+                    ? "🔐 حجز وبدء البحث"
+                    : isEn
+                    ? "🔐 Reserve and start search"
+                    : "🔐 Reservar y empezar búsqueda"}
+                </button>
 
-      <input
-        type="text"
-        placeholder={
-          language === "ma"
-            ? "المدينة"
-            : language === "en"
-            ? "City"
-            : "Tu ciudad"
-        }
-        value={formData.city}
-        onChange={(e) =>
-          onFormChange("city", e.target.value)
-        }
-        className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-[14px] text-white placeholder:text-white/30 focus:outline-none focus:border-yellow-400"
-      />
-    </div>
+                <div className="mt-5 flex items-center justify-center gap-2 text-[11px] text-gray-300">
+                  <Shield className="w-3 h-3 text-yellow-400" />
+                  <span>
+                    {isMa
+                      ? "دفع آمن عبر Stripe"
+                      : isEn
+                      ? "Secure payment with Stripe"
+                      : "Pago seguro con Stripe"}
+                  </span>
+                </div>
 
-    <div>
-      <label className="block text-white text-[13px] mb-2">
-        {language === "ma"
-          ? "المقاطعة"
-          : language === "en"
-          ? "Province"
-          : "Provincia"}
-      </label>
-
-      <select
-        value={formData.province}
-        onChange={(e) =>
-          onFormChange("province", e.target.value)
-        }
-        className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-[14px] text-white focus:outline-none focus:border-yellow-400"
-      >
-        <option value="">
-          {language === "ma"
-            ? "اختار"
-            : language === "en"
-            ? "Select"
-            : "Selecciona"}
-        </option>
-
-        <option value="Madrid">Madrid</option>
-        <option value="Barcelona">Barcelona</option>
-        <option value="Valencia">Valencia</option>
-        <option value="Málaga">Málaga</option>
-      </select>
-    </div>
-<div className="col-span-2">
-      <label className="block text-white text-[13px] mb-2">
-        {language === "ma"
-          ? "نوع الموعد"
-          : language === "en"
-          ? "Appointment type"
-          : "Tipo de cita"}
-      </label>
-
-      <select
-        value={selectedTramite}
-        onChange={(e) =>
-          onSelectTramite(e.target.value)
-        }
-        className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-[14px] text-white focus:outline-none focus:border-yellow-400"
-      >
-        {tramites.map((tramite) => (
-          <option
-            key={tramite.value}
-            value={tramite.value}
-            className="bg-[#060b16] text-white"
-          >
-            {tramite.label}
-          </option>
-        ))}
-      </select>
-    </div>
-
-  </div>
-</div>
-  <div className="
-mt-4
-rounded-[28px]
-border-2
-border-yellow-500
-bg-gradient-to-b
-from-[#0b0b0b]
-to-[#050505]
-p-4
-shadow-[0_0_35px_rgba(255,200,0,0.18)]
-">
-<div className="flex items-start justify-between mb-4 pt-2">
-      <div>
-   <p className="text-white text-[15px] font-bold">
-  {language === "ma"
-    ? "حجز الموعد"
-    : language === "en"
-    ? "Reserve your appointment"
-    : "Reserva tu cita"}
-</p>
-<span className="inline-flex mt-1 rounded-full bg-gradient-to-r from-yellow-400 to-yellow-600 px-3 py-1 text-[10px] font-black uppercase tracking-wide text-black shadow-[0_0_15px_rgba(255,215,0,0.25)]">
-          Premium
-        </span>
-      </div>
-
-      <div className="text-right">
-    <p className="text-yellow-400 text-[34px] font-black leading-none drop-shadow-[0_0_10px_rgba(255,215,0,0.35)]">
-          5€
-        </p>
-
-        <p className="text-yellow-300 text-[11px] font-semibold">
-    {language === "ma"
-  ? "الحجز الأول"
-  : language === "en"
-  ? "Initial reservation"
-  : "Reserva inicial"}
-        </p>
-      </div>
-    </div>
-
-<p className="text-gray-300 text-[13px] mb-5 leading-relaxed">
-    {language === "ma"
-  ? "سارة غادي تبدا تقلب ليك على الموعد أوتوماتيكيا"
-  : language === "en"
-  ? "Sara will automatically start searching for your appointment"
-  : "Sara empezará a buscar tu cita automáticamente"}
-
-    </p>
-
-   <button
-  type="button"
-  onClick={onFormSubmit}
-className="
-w-full
-min-h-[56px]
-rounded-[20px]
-bg-gradient-to-r
-from-yellow-400
-via-yellow-500
-to-amber-500
-px-4
-py-2
-text-[15px]
-leading-tight
-font-black
-text-black
-shadow-[0_0_30px_rgba(255,215,0,0.35)]
-transition-all
-duration-300
-hover:scale-[1.01]
-"
-     >
-  {language === "ma"
-    ? "🔐 حجز وبدء البحث"
-    : language === "en"
-    ? "🔐 Reserve and start search"
-    : "🔐 Reservar y empezar búsqueda"}
-</button>
-
-    <div className="mt-5 flex items-center justify-center gap-2 text-[11px] text-gray-300">
-      <Shield className="w-3 h-3 text-yellow-400" />
-
-      <span>
-        {language === "ma"
-          ? "دفع آمن عبر Stripe"
-          : language === "en"
-          ? "Secure payment with Stripe"
-          : "Pago seguro con Stripe"}
-      </span>
-    </div>
-
-    <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
-      <span className="rounded-full bg-white px-3 py-1 text-[11px] font-bold text-[#1434CB]">
-        VISA
-      </span>
-
-      <span className="rounded-full bg-white px-3 py-1 text-[11px] font-bold text-[#EB001B]">
-        Mastercard
-      </span>
-
-      <span className="rounded-full bg-white px-3 py-1 text-[11px] font-bold text-black">
-         Pay
-      </span>
-
-      <span className="rounded-full bg-white px-3 py-1 text-[11px] font-bold text-black">
-        G Pay
-      </span>
-    </div>
-
-  </div>
-</div>
-  
+                <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
+                  <span className="rounded-full bg-white px-3 py-1 text-[11px] font-bold text-[#1434CB]">VISA</span>
+                  <span className="rounded-full bg-white px-3 py-1 text-[11px] font-bold text-[#EB001B]">Mastercard</span>
+                  <span className="rounded-full bg-white px-3 py-1 text-[11px] font-bold text-black"> Pay</span>
+                  <span className="rounded-full bg-white px-3 py-1 text-[11px] font-bold text-black">G Pay</span>
+                </div>
+              </div>
+            </div>
 
             {hasRealAppointment && (
               <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4">
                 <p className="text-sm font-bold text-emerald-800">
-                  Cita real encontrada
+                  {isMa ? "لقينا الموعد الحقيقي" : isEn ? "Real appointment found" : "Cita real encontrada"}
                 </p>
                 <p className="mt-2 text-sm text-gray-700">
-                  Trámite: {appointmentData?.tramite || selectedTramiteLabel}
+                  {isMa ? "النوع" : isEn ? "Procedure" : "Trámite"}: {appointmentData?.tramite || selectedTramiteLabel}
                 </p>
-                <p className="text-sm text-gray-700">Fecha: {finalDate}</p>
-                <p className="text-sm text-gray-700">Hora: {finalTime}</p>
-                <p className="text-sm text-gray-700">Oficina: {finalOffice}</p>
-                <p className="text-sm text-gray-700">Localizador: {finalLocator}</p>
+                <p className="text-sm text-gray-700">{isMa ? "التاريخ" : isEn ? "Date" : "Fecha"}: {finalDate}</p>
+                <p className="text-sm text-gray-700">{isMa ? "الوقت" : isEn ? "Time" : "Hora"}: {finalTime}</p>
+                <p className="text-sm text-gray-700">{isMa ? "المكتب" : isEn ? "Office" : "Oficina"}: {finalOffice}</p>
+                <p className="text-sm text-gray-700">{isMa ? "رقم الموعد" : isEn ? "Locator" : "Localizador"}: {finalLocator}</p>
               </div>
             )}
           </>
         ) : (
-        <>
-  <div className="rounded-[26px] border border-emerald-500/40 bg-[#07111f] px-5 py-7 mb-5 shadow-[0_0_30px_rgba(16,185,129,0.08)]">
-
-    <div className="flex justify-center mb-4">
-      <div className="w-12 h-12 rounded-full border border-emerald-500/30 bg-emerald-500/10 flex items-center justify-center">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          className="w-7 h-7 text-emerald-400"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M8 10h.01M12 10h.01M16 10h.01M9 16h6"
-          />
-        </svg>
-      </div>
-    </div>
-
-    <h3 className="text-center text-white text-[18px] font-semibold leading-tight mb-3">
-      Aquí aparecerán los mensajes de Sara
-    </h3>
-
-    <p className="text-center text-white/70 text-[14px] leading-relaxed">
-      Te avisaremos aquí cuando haya novedades
-      <br />
-      sobre tu cita.
-    </p>
-
-  </div>
-
-  <div className="rounded-[30px] overflow-hidden border border-yellow-500/30 bg-[#050816] shadow-[0_0_40px_rgba(255,200,0,0.10)]">
-
-    <div className="px-6 py-8 bg-[radial-gradient(circle_at_top,rgba(255,200,0,0.12),transparent_60%)]">
-
-      <div className="flex justify-center mb-5">
-        <img
-          src={`${import.meta.env.BASE_URL}images/spain-flag.png`}
-          alt="España"
-          className="w-16"
-        />
-      </div>
-
-      <h2 className="text-center text-[#f6d06f] text-[36px] leading-[42px] font-black mb-5">
-        Citas de Extranjería
-        <br />
-        con Confianza
-      </h2>
-
-      <p className="text-center text-white/75 text-[15px] leading-relaxed mb-8">
-        Te ayudamos a gestionar tu cita de extranjería de forma rápida,
-        segura y 100% online.
-      </p>
-
-      <div className="grid grid-cols-3 gap-3 text-center">
-
-        <div>
-          <Shield className="w-8 h-8 text-[#f6d06f] mx-auto mb-3" />
-          <p className="text-white/80 text-[13px] leading-snug">
-            Proceso
-            <br />
-            seguro
-          </p>
-        </div>
-
-        <div>
-          <Bell className="w-8 h-8 text-[#f6d06f] mx-auto mb-3" />
-          <p className="text-white/80 text-[13px] leading-snug">
-            Atención
-            <br />
-            a inmigrantes
-          </p>
-        </div>
-
-        <div>
-          <CheckCircle2 className="w-8 h-8 text-[#f6d06f] mx-auto mb-3" />
-          <p className="text-white/80 text-[13px] leading-snug">
-            Citas
-            <br />
-            garantizadas
-          </p>
-        </div>
-
-      </div>
-
-      <div className="mt-8 text-center text-[#f6d06f] text-[24px] font-bold">
-        “ Tu futuro comienza con una cita. ”
-      </div>
-
-    </div>
-  </div>
-</>
-)
-
-(
-<motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="flex flex-col items-center text-center py-10 gap-5"
-          >
-            <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center">
-              <CheckCircle2 className="w-12 h-12 text-green-600" />
+          <>
+            <div className="rounded-[26px] border border-emerald-500/40 bg-[#07111f] px-5 py-7 mb-5 shadow-[0_0_30px_rgba(16,185,129,0.08)]">
+              <div className="flex justify-center mb-4">
+                <div className="w-12 h-12 rounded-full border border-emerald-500/30 bg-emerald-500/10 flex items-center justify-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-7 h-7 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16h6" />
+                  </svg>
+                </div>
+              </div>
+              <h3 className="text-center text-white text-[18px] font-semibold leading-tight mb-3">
+                {isMa
+                  ? "هنا غادي يجيو رسائل سارة"
+                  : isEn
+                  ? "Sara's messages will appear here"
+                  : "Aquí aparecerán los mensajes de Sara"}
+              </h3>
+              <p className="text-center text-white/70 text-[14px] leading-relaxed">
+                {isMa
+                  ? "غادي نخبروك هنا ملي يكون جديد على الموعد ديالك."
+                  : isEn
+                  ? "We will notify you here when there is news about your appointment."
+                  : "Te avisaremos aquí cuando haya novedades sobre tu cita."}
+              </p>
             </div>
 
-            <div>
-              <h2 className="text-xl font-black text-[#003366] mb-1">
-                {ui.confirmTitle}
-              </h2>
+            <div className="rounded-[30px] overflow-hidden border border-yellow-500/30 bg-[#050816] shadow-[0_0_40px_rgba(255,200,0,0.10)]">
+              <div className="px-6 py-8 bg-[radial-gradient(circle_at_top,rgba(255,200,0,0.12),transparent_60%)]">
+                <div className="flex justify-center mb-5">
+                  <img
+                    src={`${import.meta.env.BASE_URL}images/spain-flag.png`}
+                    alt="España"
+                    className="w-16"
+                  />
+                </div>
 
-              <div className="mt-4 bg-gray-50 border border-gray-200 rounded-xl p-4 text-left space-y-2">
-                <p className="text-sm">
-                  <span className="font-bold text-gray-500">
-                    {ui.procedureShort}:
-                  </span>{" "}
-                  <span className="text-gray-800">
-                    {appointmentData?.tramite || selectedTramiteLabel}
-                  </span>
+                <h2 className="text-center text-[#f6d06f] text-[36px] leading-[42px] font-black mb-5">
+                  {isMa
+                    ? "مواعيد الأجانب بثقة"
+                    : isEn
+                    ? "Immigration Appointments with Confidence"
+                    : "Citas de Extranjería con Confianza"}
+                </h2>
+
+                <p className="text-center text-white/75 text-[15px] leading-relaxed mb-8">
+                  {isMa
+                    ? "كنعاونوك تدير موعد الأجانب بطريقة سريعة وآمنة 100% أونلاين."
+                    : isEn
+                    ? "We help you manage your immigration appointment quickly, securely and 100% online."
+                    : "Te ayudamos a gestionar tu cita de extranjería de forma rápida, segura y 100% online."}
                 </p>
 
-                <p className="text-sm">
-                  <span className="font-bold text-gray-500">{ui.date}:</span>{" "}
-                  <span className="text-gray-800">{finalDate}</span>
-                </p>
+                <div className="grid grid-cols-3 gap-3 text-center">
+                  <div>
+                    <Shield className="w-8 h-8 text-[#f6d06f] mx-auto mb-3" />
+                    <p className="text-white/80 text-[13px] leading-snug">
+                      {isMa ? "عملية آمنة" : isEn ? "Secure process" : "Proceso seguro"}
+                    </p>
+                  </div>
+                  <div>
+                    <Bell className="w-8 h-8 text-[#f6d06f] mx-auto mb-3" />
+                    <p className="text-white/80 text-[13px] leading-snug">
+                      {isMa ? "مساعدة للمهاجرين" : isEn ? "Immigration support" : "Atención a inmigrantes"}
+                    </p>
+                  </div>
+                  <div>
+                    <CheckCircle2 className="w-8 h-8 text-[#f6d06f] mx-auto mb-3" />
+                    <p className="text-white/80 text-[13px] leading-snug">
+                      {isMa ? "مواعيد مضمونة" : isEn ? "Guaranteed appointments" : "Citas garantizadas"}
+                    </p>
+                  </div>
+                </div>
 
-                <p className="text-sm">
-                  <span className="font-bold text-gray-500">{ui.time}:</span>{" "}
-                  <span className="text-gray-800">{finalTime}</span>
-                </p>
-
-                <p className="text-sm">
-                  <span className="font-bold text-gray-500">{ui.office}:</span>{" "}
-                  <span className="text-gray-800">{finalOffice}</span>
-                </p>
-
-                <p className="text-sm">
-                  <span className="font-bold text-gray-500">
-                    {ui.appointmentNumber}:
-                  </span>{" "}
-                  <span className="font-mono text-green-700">{finalLocator}</span>
-                </p>
+                <div className="mt-8 text-center text-[#f6d06f] text-[24px] font-bold">
+                  {isMa
+                    ? "« مستقبلك كيبدا بموعد. »"
+                    : isEn
+                    ? "\" Your future starts with an appointment. \""
+                    : "\" Tu futuro comienza con una cita. \""}
+                </div>
               </div>
             </div>
 
-            <div className="flex flex-wrap gap-3 justify-center">
-              <div className="flex items-center gap-2 bg-primary/10 border border-primary/30 rounded-xl px-4 py-2 text-sm text-primary font-medium">
-                <CheckCircle2 className="w-4 h-4" />
-                {ui.reservationSaved}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="flex flex-col items-center text-center py-10 gap-5"
+            >
+              <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center">
+                <CheckCircle2 className="w-12 h-12 text-green-600" />
               </div>
-
-              {finalPdfUrl ? (
-                <a
-                  href={finalPdfUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 bg-[#003366] text-white rounded-xl px-4 py-2 text-sm font-bold hover:bg-[#002244] transition-colors"
-                >
-                  <FileText className="w-4 h-4" />
-                  {ui.downloadPdf}
-                </a>
-              ) : null}
-            </div>
-          </motion.div>
+              <div>
+                <h2 className="text-xl font-black text-[#003366] mb-1">
+                  {ui.confirmTitle}
+                </h2>
+                <div className="mt-4 bg-gray-50 border border-gray-200 rounded-xl p-4 text-left space-y-2">
+                  <p className="text-sm">
+                    <span className="font-bold text-gray-500">{ui.procedureShort}:</span>{" "}
+                    <span className="text-gray-800">{appointmentData?.tramite || selectedTramiteLabel}</span>
+                  </p>
+                  <p className="text-sm">
+                    <span className="font-bold text-gray-500">{ui.date}:</span>{" "}
+                    <span className="text-gray-800">{finalDate}</span>
+                  </p>
+                  <p className="text-sm">
+                    <span className="font-bold text-gray-500">{ui.time}:</span>{" "}
+                    <span className="text-gray-800">{finalTime}</span>
+                  </p>
+                  <p className="text-sm">
+                    <span className="font-bold text-gray-500">{ui.office}:</span>{" "}
+                    <span className="text-gray-800">{finalOffice}</span>
+                  </p>
+                  <p className="text-sm">
+                    <span className="font-bold text-gray-500">{ui.appointmentNumber}:</span>{" "}
+                    <span className="font-mono text-green-700">{finalLocator}</span>
+                  </p>
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-3 justify-center">
+                <div className="flex items-center gap-2 bg-primary/10 border border-primary/30 rounded-xl px-4 py-2 text-sm text-primary font-medium">
+                  <CheckCircle2 className="w-4 h-4" />
+                  {ui.reservationSaved}
+                </div>
+                {finalPdfUrl ? (
+                  <a
+                    href={finalPdfUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 bg-[#003366] text-white rounded-xl px-4 py-2 text-sm font-bold hover:bg-[#002244] transition-colors"
+                  >
+                    <FileText className="w-4 h-4" />
+                    {ui.downloadPdf}
+                  </a>
+                ) : null}
+              </div>
+            </motion.div>
+          </>
         )}
       </div>
     </motion.div>
@@ -668,7 +500,10 @@ hover:scale-[1.01]
 }
 
 export default function BuscarCitas() {
-  const { language } = useLang();
+  // ✅ CORRECCIÓN PRINCIPAL: usamos lang del contexto y mapeamos a "ma" para la lógica interna
+  const { lang } = useLang();
+  const language = lang === "darija" ? "ma" : lang;
+
   const [location] = useLocation();
   const [selectedTramite, setSelectedTramite] = useState("tie");
   const [step, setStep] = useState(0);
@@ -677,25 +512,20 @@ export default function BuscarCitas() {
   const [showDocs, setShowDocs] = useState(false);
   const [showForms, setShowForms] = useState(false);
   const [profile, setProfile] = useState<ProfileRow | null>(null);
-  const [appointmentData, setAppointmentData] =
-    useState<AppointmentResult | null>(null);
+  const [appointmentData, setAppointmentData] = useState<AppointmentResult | null>(null);
   const [profileLoading, setProfileLoading] = useState(true);
-const [formData, setFormData] = useState<ClientFormData>({
-  fullName: "",
-  phone: "",
-  email: "",
-
-  nie: "",
-  passport: "",
-
-  nationality: "",
-  birthYear: "",
-
-  city: "",
-  province: "",
-
-  preferredOffice: "",
-});
+  const [formData, setFormData] = useState<ClientFormData>({
+    fullName: "",
+    phone: "",
+    email: "",
+    nie: "",
+    passport: "",
+    nationality: "",
+    birthYear: "",
+    city: "",
+    province: "",
+    preferredOffice: "",
+  });
   const [formReady, setFormReady] = useState(false);
   const [voiceSupported, setVoiceSupported] = useState(true);
   const [isListening, setIsListening] = useState(false);
@@ -723,321 +553,203 @@ const [formData, setFormData] = useState<ClientFormData>({
   const { toast } = useToast();
   const scheduleMutation = useScheduleAppointment();
 
- const voiceTexts = useMemo(
-  () => ({
-    initialVoice:
-      "السلام عليكم مرحبا بك في هيستوريا إي آي أنا سارة غادي نعاونك باش تلقا موعد في أقرب وقت عمر ليا الفورمولار ومن بعد كليك على confirm",
+  const isMa = language === "ma";
+  const isEn = language === "en";
 
-    savedLeadReply:
-      "مزيان دابا توصلنا بالمعلومة ديالك غادي نبدأ نقلب لك على موعد 24 ساعة على 24 وغادي نصيفط لك واتساب إلا بان الموعد",
-
-    foundMsg:
-      "لقينا لك السيطا ديالك دابا دخل بسرعة وكليكي على confirm باش ما تطيرش عليك",
-
-    confirmMsg:
-      "مبروك عليك تأكدات السيطا ديالك شكرا على الثقة ديالك في هيستوريا إي آي",
-  }),
-  []
-);
+  const voiceTexts = useMemo(
+    () => ({
+      initialVoice:
+        "السلام عليكم مرحبا بك في هيستوريا إي آي أنا سارة غادي نعاونك باش تلقا موعد في أقرب وقت عمر ليا الفورمولار ومن بعد كليك على confirm",
+      savedLeadReply:
+        "مزيان دابا توصلنا بالمعلومة ديالك غادي نبدأ نقلب لك على موعد 24 ساعة على 24 وغادي نصيفط لك واتساب إلا بان الموعد",
+      foundMsg:
+        "لقينا لك السيطا ديالك دابا دخل بسرعة وكليكي على confirm باش ما تطيرش عليك",
+      confirmMsg:
+        "مبروك عليك تأكدات السيطا ديالك شكرا على الثقة ديالك في هيستوريا إي آي",
+    }),
+    []
+  );
 
   const ui = useMemo(() => {
-  const isDarija = language === "ma";
-  const isEnglish = language === "en";
-
-return {
-    tramites: [
-      {
-        value: "tie",
-        label: isDarija
-          ? "تجديد البطاقة"
-          : isEnglish
-          ? "TIE renewal"
-          : "Renovación TIE",
-      },
-
-      {
-        value: "regreso",
-        label: isDarija
-          ? "رخصة الرجوع"
-          : isEnglish
-          ? "Return authorization"
-          : "Autorización de Regreso",
-      },
-
-      {
-        value: "nie",
-        label: isDarija
-          ? "رقم NIE"
-          : isEnglish
-          ? "NIE Number"
-          : "Certificados y Asignación NIE",
-      },
-
-      {
-        value: "ue",
-        label: isDarija
-          ? "أوراق الاتحاد الأوروبي"
-          : isEnglish
-          ? "EU Certificates"
-          : "Certificados UE",
-      },
-
-      {
-        value: "estudiantes",
-        label: isDarija
-          ? "أوراق الطلبة"
-          : isEnglish
-          ? "Students"
-          : "Estudiantes",
-      },
-
-      {
-        value: "trabajo",
-        label: isDarija
-          ? "رخصة العمل"
-          : isEnglish
-          ? "Work permit"
-          : "Autorización de Trabajo",
-      },
-
-      {
-        value: "arraigo",
-        label: isDarija
-          ? "أوراق التسوية"
-          : isEnglish
-          ? "Regularization"
-          : "Arraigo Social / Laboral / Familiar",
-      },
-
-      {
-        value: "familiar",
-        label: isDarija
-          ? "التجمع العائلي"
-          : isEnglish
-          ? "Family reunification"
-          : "Reagrupación Familiar",
-      },
-
-      {
-        value: "regularizacion",
-        label: isDarija
-          ? "التسوية الجماعية"
-          : isEnglish
-          ? "Mass regularization"
-          : "Regularización extraordinaria 2026",
-      },
-    ] as TramiteItem[],
-
-    docsByTramite: {
-      tie: [
-        { nombre: "Pasaporte o NIE vigente", estado: "ok" as DocState },
-        { nombre: "Empadronamiento actual", estado: "ok" as DocState },
-      ],
-    } as Record<string, DocItem[]>,
-
-    formsByTramite: {
-      tie: [
+    return {
+      tramites: [
         {
-          nombre: "Formulario EX-17",
-          codigo: "EX-17",
-          url: "https://example.com",
+          value: "tie",
+          label: isMa ? "تجديد البطاقة" : isEn ? "TIE renewal" : "Renovación TIE",
         },
-      ],
-    } as Record<string, FormItem[]>,
+        {
+          value: "regreso",
+          label: isMa ? "رخصة الرجوع" : isEn ? "Return authorization" : "Autorización de Regreso",
+        },
+        {
+          value: "nie",
+          label: isMa ? "رقم NIE" : isEn ? "NIE Number" : "Certificados y Asignación NIE",
+        },
+        {
+          value: "ue",
+          label: isMa ? "أوراق الاتحاد الأوروبي" : isEn ? "EU Certificates" : "Certificados UE",
+        },
+        {
+          value: "estudiantes",
+          label: isMa ? "أوراق الطلبة" : isEn ? "Students" : "Estudiantes",
+        },
+        {
+          value: "trabajo",
+          label: isMa ? "رخصة العمل" : isEn ? "Work permit" : "Autorización de Trabajo",
+        },
+        {
+          value: "arraigo",
+          label: isMa ? "أوراق التسوية" : isEn ? "Regularization" : "Arraigo Social / Laboral / Familiar",
+        },
+        {
+          value: "familiar",
+          label: isMa ? "التجمع العائلي" : isEn ? "Family reunification" : "Reagrupación Familiar",
+        },
+        {
+          value: "regularizacion",
+          label: isMa ? "التسوية الجماعية" : isEn ? "Mass regularization" : "Regularización extraordinaria 2026",
+        },
+      ] as TramiteItem[],
 
-    online: isDarija
-      ? "أونلاين"
-      : isEnglish
-      ? "Online"
-      : "En línea",
+      docsByTramite: {
+        tie: [
+          { nombre: "Pasaporte o NIE vigente", estado: "ok" as DocState },
+          { nombre: "Empadronamiento actual", estado: "ok" as DocState },
+        ],
+      } as Record<string, DocItem[]>,
 
-    agentRole: isDarija
-      ? "مساعدة المواعيد"
-      : isEnglish
-      ? "Appointments Assistant"
-      : "Asesora de Citas",
+      formsByTramite: {
+        tie: [
+          { nombre: "Formulario EX-17", codigo: "EX-17", url: "https://example.com" },
+        ],
+      } as Record<string, FormItem[]>,
 
-    procedurePlaceholder: isDarija
-      ? "اختار نوع السيتا"
-      : isEnglish
-      ? "Select appointment type"
-      : "Seleccione el trámite entre los relacionados",
+      online: isMa ? "أونلاين" : isEn ? "Online" : "En línea",
 
-    loadingUserData: isDarija
-      ? "جاري تحميل المعلومات..."
-      : isEnglish
-      ? "Loading user data..."
-      : "Cargando datos del usuario...",
+      agentRole: isMa ? "مساعدة المواعيد" : isEn ? "Appointments Assistant" : "Asesora de Citas",
 
-    govSmall: "extranjería:",
-    govTitle: "CITA PREVIA",
-    govLine1: "COMISARÍA GENERAL",
-    govLine2: "DE EXTRANJERÍA",
-    govLine3: "E INMIGRACIÓN",
+      procedurePlaceholder: isMa
+        ? "اختار نوع السيتا"
+        : isEn
+        ? "Select appointment type"
+        : "Seleccione el trámite entre los relacionados",
 
-    confirmTitle: isDarija
-      ? "تم تأكيد الموعد!"
-      : isEnglish
-      ? "APPOINTMENT CONFIRMED!"
-      : "¡CITA CONFIRMADA!",
+      loadingUserData: isMa
+        ? "جاري تحميل المعلومات..."
+        : isEn
+        ? "Loading user data..."
+        : "Cargando datos del usuario...",
 
-    date: isDarija
-      ? "التاريخ"
-      : isEnglish
-      ? "Date"
-      : "Fecha",
+      govSmall: "extranjería:",
+      govTitle: "CITA PREVIA",
+      govLine1: "COMISARÍA GENERAL",
+      govLine2: "DE EXTRANJERÍA",
+      govLine3: "E INMIGRACIÓN",
 
-    time: isDarija
-      ? "الوقت"
-      : isEnglish
-      ? "Time"
-      : "Hora",
+      confirmTitle: isMa ? "تم تأكيد الموعد!" : isEn ? "APPOINTMENT CONFIRMED!" : "¡CITA CONFIRMADA!",
 
-    office: isDarija
-      ? "المكتب"
-      : isEnglish
-      ? "Office"
-      : "Oficina",
+      date: isMa ? "التاريخ" : isEn ? "Date" : "Fecha",
+      time: isMa ? "الوقت" : isEn ? "Time" : "Hora",
+      office: isMa ? "المكتب" : isEn ? "Office" : "Oficina",
+      appointmentNumber: isMa ? "رقم الموعد" : isEn ? "Appointment Number" : "Nº Cita",
 
-    appointmentNumber: isDarija
-      ? "رقم الموعد"
-      : isEnglish
-      ? "Appointment Number"
-      : "Nº Cita",
+      reservationSaved: isMa
+        ? "تم حفظ الحجز"
+        : isEn
+        ? "Reservation saved"
+        : "Reserva guardada correctamente",
 
-    reservationSaved: isDarija
-      ? "تم حفظ الحجز"
-      : isEnglish
-      ? "Reservation saved"
-      : "Reserva guardada correctamente",
+      sourceLabel: isMa ? "المصدر الرسمي" : isEn ? "Official source" : "Fuente oficial",
 
-    sourceLabel: isDarija
-      ? "المصدر الرسمي"
-      : isEnglish
-      ? "Official source"
-      : "Fuente oficial",
+      foundSuccessTitle: isMa ? "لقينا الموعد!" : isEn ? "Appointment found!" : "¡Cita encontrada!",
+      foundSuccessDesc: isMa ? "أكد الموعد دابا" : isEn ? "Confirm now to continue." : "Ahora confirma para continuar.",
+      foundErrorTitle: isMa ? "خطأ" : isEn ? "Error" : "Error al buscar cita",
+      foundErrorDesc: isMa ? "ما قدرناش نلقاو الموعد" : isEn ? "Could not search appointment." : "No se pudo buscar la cita en este momento.",
 
-    foundSuccessTitle: isDarija
-      ? "لقينا الموعد!"
-      : isEnglish
-      ? "Appointment found!"
-      : "¡Cita encontrada!",
+      confirmSuccessTitle: isMa ? "تم تأكيد الموعد" : isEn ? "Appointment confirmed!" : "¡Cita confirmada!",
+      confirmSuccessDesc: isMa
+        ? "تم حفظ الحجز"
+        : isEn
+        ? "Reservation saved correctly."
+        : "La reserva ha quedado registrada correctamente.",
 
-    foundSuccessDesc: isDarija
-      ? "أكد الموعد دابا"
-      : isEnglish
-      ? "Confirm now to continue."
-      : "Ahora confirma para continuar.",
+      procedureShort: isMa ? "النوع" : isEn ? "Procedure" : "Trámite",
 
-    foundErrorTitle: isDarija
-      ? "خطأ"
-      : isEnglish
-      ? "Error"
-      : "Error al buscar cita",
+      openOfficialSite: isMa ? "فتح الموقع الرسمي" : isEn ? "Open official website" : "Abrir sede oficial",
+      downloadPdf: isMa ? "تحميل PDF" : isEn ? "Download PDF" : "Descargar PDF",
 
-    foundErrorDesc: isDarija
-      ? "ما قدرناش نلقاو الموعد"
-      : isEnglish
-      ? "Could not search appointment."
-      : "No se pudo buscar la cita en este momento.",
+      voiceButton: isMa ? "تكلم مع سارة" : isEn ? "Talk with Sara" : "Hablar con Sara",
+      stopButton: isMa ? "وقف الميكرو" : isEn ? "Stop microphone" : "Parar micrófono",
 
-    confirmSuccessTitle: isDarija
-      ? "تم تأكيد الموعد"
-      : isEnglish
-      ? "Appointment confirmed!"
-      : "¡Cita confirmada!",
+      latestReply: isMa ? "آخر رد من سارة" : isEn ? "Latest Sara reply" : "Última respuesta de Sara",
+      yourVoice: isMa ? "آخر كلام ديالك" : isEn ? "Your latest voice" : "Tu última respuesta por voz",
+      listening: isMa ? "سارة كتسمع ليك..." : isEn ? "Sara is listening..." : "Sara te está escuchando ahora...",
 
-    confirmSuccessDesc: isDarija
-      ? "تم حفظ الحجز"
-      : isEnglish
-      ? "Reservation saved correctly."
-      : "La reserva ha quedado registrada correctamente.",
+      saveTitle: isMa ? "تم حفظ المعلومات" : isEn ? "Data saved" : "Datos guardados",
+      saveDesc: isMa ? "سارة غادي تكمل معاك" : isEn ? "Sara can continue now." : "Sara ya puede continuar contigo.",
 
-    procedureShort: isDarija
-      ? "النوع"
-      : isEnglish
-      ? "Procedure"
-      : "Trámite",
+      missingTitle: isMa ? "معلومات ناقصة" : isEn ? "Missing data" : "Faltan datos",
+      missingDesc: isMa
+        ? "دخل الاسم والهاتف والمدينة"
+        : isEn
+        ? "Fill name, phone and city."
+        : "Rellena nombre, teléfono y ciudad antes de continuar.",
 
-    openOfficialSite: isDarija
-      ? "فتح الموقع الرسمي"
-      : isEnglish
-      ? "Open official website"
-      : "Abrir sede oficial",
+      openRealtimeError: isMa
+        ? "المتصفح ما كيدعمش الصوت"
+        : isEn
+        ? "Browser does not support audio."
+        : "Este navegador no soporta audio. Usa Chrome moderno.",
 
-    downloadPdf: isDarija
-      ? "تحميل PDF"
-      : isEnglish
-      ? "Download PDF"
-      : "Descargar PDF",
+      // Textos del footer / barra de abajo
+      docsButton: isMa ? "الوثائق" : isEn ? "Documents" : "Documentos",
+      formsButton: isMa ? "الاستمارات" : isEn ? "Forms" : "Formularios",
+      docsRequiredTitle: isMa ? "الوثائق المطلوبة" : isEn ? "Required documents" : "Documentos requeridos",
+      formsOfficialTitle: isMa ? "الاستمارات الرسمية" : isEn ? "Official forms" : "Formularios oficiales",
 
-    voiceButton: isDarija
-      ? "تكلم مع سارة"
-      : isEnglish
-      ? "Talk with Sara"
-      : "Hablar con Sara",
+      // Título página
+      pageTitle: isMa ? "البحث على المواعيد" : isEn ? "Find appointments" : "Buscar citas",
+      pageTitleConfirm: isMa ? "سارة: تأكيد الموعد" : isEn ? "Sara: appointment confirmation" : "Sara: confirmación de cita",
 
-    stopButton: isDarija
-      ? "وقف الميكرو"
-      : isEnglish
-      ? "Stop microphone"
-      : "Parar micrófono",
+      // Mensaje Sara al guardar lead
+      agentSavedMsg: isMa
+        ? "مزيان. دابا كنقلبو على الموعد ديالك. غادي نخبروك فالواتساب في أقل من 24 ساعة."
+        : isEn
+        ? "Perfect. We are already looking for your appointment. We will notify you on WhatsApp within 24 hours."
+        : "Perfecto. Ya estamos buscando tu cita. Te avisaremos por WhatsApp en menos de 24h.",
 
-    latestReply: isDarija
-      ? "آخر رد من سارة"
-      : isEnglish
-      ? "Latest Sara reply"
-      : "Última respuesta de Sara",
+      // Confirmar cita botón
+      confirmBtn: isMa ? "تأكيد الموعد" : isEn ? "Confirm appointment" : "Confirmar cita",
 
-    yourVoice: isDarija
-      ? "آخر كلام ديالك"
-      : isEnglish
-      ? "Your latest voice"
-      : "Tu última respuesta por voz",
+      // Errores varios
+      noRealAppointmentTitle: isMa ? "ما كاين حتى موعد حقيقي" : isEn ? "No real appointment" : "No hay cita real",
+      noRealAppointmentDesc: isMa
+        ? "ما تقدرش تأكد موعد ناقص"
+        : isEn
+        ? "You cannot confirm an incomplete appointment."
+        : "No puedes confirmar una cita inventada o incompleta.",
 
-    listening: isDarija
-      ? "سارة كتسمع ليك..."
-      : isEnglish
-      ? "Sara is listening..."
-      : "Sara te está escuchando ahora...",
+      stripeErrorTitle: isMa ? "خطأ في الدفع" : isEn ? "Payment error" : "Error Stripe",
+      stripeErrorDesc: isMa ? "ما قدرناش نفتحو الدفع" : isEn ? "Could not open payment." : "No se pudo abrir el pago",
 
-    saveTitle: isDarija
-      ? "تم حفظ المعلومات"
-      : isEnglish
-      ? "Data saved"
-      : "Datos guardados",
+      saveErrorTitle: isMa ? "خطأ" : isEn ? "Error" : "Error",
+      saveErrorDesc: isMa ? "ما قدرناش نحفظو المعلومات" : isEn ? "Could not save data." : "No se pudo guardar el cliente",
 
-    saveDesc: isDarija
-      ? "سارة غادي تكمل معاك"
-      : isEnglish
-      ? "Sara can continue now."
-      : "Sara ya puede continuar contigo.",
+      panelUpdated: isMa ? "تحدث اللوحة" : isEn ? "Panel updated" : "Panel actualizado",
 
-    missingTitle: isDarija
-      ? "معلومات ناقصة"
-      : isEnglish
-      ? "Missing data"
-      : "Faltan datos",
-
-    missingDesc: isDarija
-      ? "دخل الاسم والهاتف والمدينة"
-      : isEnglish
-      ? "Fill name, phone and city."
-      : "Rellena nombre, teléfono y ciudad antes de continuar.",
-
-    openRealtimeError: isDarija
-      ? "المتصفح ما كيدعمش الصوت"
-      : isEnglish
-      ? "Browser does not support audio."
-      : "Este navegador no soporta audio. Usa Chrome moderno.",
-};
-}, [language]);
+      selectTramiteTitle: isMa ? "اختار نوع الموعد" : isEn ? "Select procedure" : "Selecciona trámite",
+      selectTramiteDesc: isMa
+        ? "اختار نوع الموعد قبل تكمل"
+        : isEn
+        ? "Choose the appointment type before continuing."
+        : "Elige el tipo de cita antes de continuar.",
+    };
+  }, [language]);
 
   const TRAMITES = ui.tramites;
 
   const selectedTramiteLabel =
-    TRAMITES.find((item) => item.value === selectedTramite)?.label ||
-    TRAMITES[0].label;
+    TRAMITES.find((item) => item.value === selectedTramite)?.label || TRAMITES[0].label;
 
   const voiceStorageKey = useMemo(() => {
     const userId = profile?.id || "guest";
@@ -1056,7 +768,6 @@ return {
       typeof window.RTCPeerConnection !== "undefined" &&
       typeof navigator !== "undefined" &&
       !!navigator.mediaDevices?.getUserMedia;
-
     setVoiceSupported(Boolean(supported));
   }, []);
 
@@ -1064,22 +775,18 @@ return {
     const loadProfile = async () => {
       try {
         setProfileLoading(true);
-
         const { data: sessionData } = await supabase.auth.getSession();
         const user = sessionData?.session?.user;
-
         if (!user?.id) {
           setProfile(null);
           setProfileLoading(false);
           return;
         }
-
         const { data, error } = await supabase
           .from("profiles")
           .select("id,email,full_name,phone,nie")
           .eq("id", user.id)
           .maybeSingle();
-
         if (error) {
           setProfile(null);
         } else {
@@ -1091,7 +798,6 @@ return {
         setProfileLoading(false);
       }
     };
-
     loadProfile();
   }, []);
 
@@ -1106,7 +812,6 @@ return {
 
   useEffect(() => {
     if (!voiceStorageKey) return;
-
     try {
       const raw = localStorage.getItem(voiceStorageKey);
       if (raw) {
@@ -1116,22 +821,9 @@ return {
           return;
         }
       }
-
-      setVoiceHistory([
-        {
-          from: "agent",
-          text: voiceTexts.initialVoice,
-          ts: Date.now(),
-        },
-      ]);
+      setVoiceHistory([{ from: "agent", text: voiceTexts.initialVoice, ts: Date.now() }]);
     } catch {
-      setVoiceHistory([
-        {
-          from: "agent",
-          text: voiceTexts.initialVoice,
-          ts: Date.now(),
-        },
-      ]);
+      setVoiceHistory([{ from: "agent", text: voiceTexts.initialVoice, ts: Date.now() }]);
     }
   }, [voiceStorageKey, voiceTexts.initialVoice]);
 
@@ -1142,43 +834,22 @@ return {
 
   const pushAgentMessage = (text: string) => {
     if (!text?.trim()) return;
-
-    setVoiceHistory((prev) => [
-      ...prev,
-      {
-        from: "agent",
-        text,
-        ts: Date.now(),
-      },
-    ]);
-
+    setVoiceHistory((prev) => [...prev, { from: "agent", text, ts: Date.now() }]);
     lastAssistantTextRef.current = text;
   };
 
   const pushUserMessage = (text: string) => {
     if (!text?.trim()) return;
-
-    setVoiceHistory((prev) => [
-      ...prev,
-      {
-        from: "user",
-        text,
-        ts: Date.now(),
-      },
-    ]);
-
+    setVoiceHistory((prev) => [...prev, { from: "user", text, ts: Date.now() }]);
     setLastUserTranscript(text);
   };
 
   const finalizeAssistantBuffer = () => {
     const text = assistantTextBufferRef.current.trim();
     if (!text) return;
-
     assistantTextBufferRef.current = "";
-
     if (text === "..." || text === "…") return;
     if (text === lastAssistantTextRef.current) return;
-
     pushAgentMessage(text);
   };
 
@@ -1186,10 +857,8 @@ return {
     if (!message.trim()) return;
     if (!realtimeDcRef.current || realtimeDcRef.current.readyState !== "open") return;
     if (!realtimePcRef.current || !realtimePcRef.current.remoteDescription) return;
-
     setWaitingSara(true);
     assistantTextBufferRef.current = "";
-
     realtimeDcRef.current.send(
       JSON.stringify({
         type: "conversation.item.create",
@@ -1205,14 +874,8 @@ return {
         },
       })
     );
-
     realtimeDcRef.current.send(
-      JSON.stringify({
-        type: "response.create",
-        response: {
-          modalities: ["audio", "text"],
-        },
-      })
+      JSON.stringify({ type: "response.create", response: { modalities: ["audio", "text"] } })
     );
   };
 
@@ -1222,11 +885,7 @@ return {
     setLastUserTranscript("");
     lastUserTranscriptRef.current = "";
     assistantTextBufferRef.current = "";
-
-    const firstMessage = formReady
-      ? voiceTexts.savedLeadReply
-      : voiceTexts.initialVoice;
-
+    const firstMessage = formReady ? voiceTexts.savedLeadReply : voiceTexts.initialVoice;
     sendSaraSpokenMessage(firstMessage);
   };
 
@@ -1234,15 +893,12 @@ return {
     try {
       realtimeDcRef.current?.close();
       realtimeDcRef.current = null;
-
       realtimePcRef.current?.close();
       realtimePcRef.current = null;
-
       if (realtimeLocalStreamRef.current) {
         realtimeLocalStreamRef.current.getTracks().forEach((track) => track.stop());
         realtimeLocalStreamRef.current = null;
       }
-
       if (remoteAudioRef.current) {
         remoteAudioRef.current.pause();
         remoteAudioRef.current.srcObject = null;
@@ -1257,92 +913,53 @@ return {
 
   const startListening = async () => {
     if (!voiceSupported) {
-      toast({
-        title: "Error",
-        description: ui.openRealtimeError,
-        variant: "destructive",
-      });
+      toast({ title: "Error", description: ui.openRealtimeError, variant: "destructive" });
       return;
     }
-
     try {
       stopListening();
       assistantTextBufferRef.current = "";
       setWaitingSara(true);
-
       const sessionRes = await fetch("/api/realtime-session", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          assistant: "sara",
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ assistant: "sara" }),
       });
-
       const sessionData = await sessionRes.json();
-
-      if (!sessionRes.ok) {
-        throw new Error(sessionData?.error || "Error creando sesión realtime");
-      }
-
-const ephemeralKey =
-  sessionData?.client_secret?.value || sessionData?.value || "";
-
-      if (!ephemeralKey) {
-        throw new Error("No llegó client secret desde /api/realtime-session");
-      }
+      if (!sessionRes.ok) throw new Error(sessionData?.error || "Error creando sesión realtime");
+      const ephemeralKey = sessionData?.client_secret?.value || sessionData?.value || "";
+      if (!ephemeralKey) throw new Error("No llegó client secret desde /api/realtime-session");
 
       const pc = new RTCPeerConnection();
       realtimePcRef.current = pc;
-
       pc.ontrack = (event) => {
         const [remoteStream] = event.streams;
-
         if (remoteStream && remoteAudioRef.current) {
           remoteAudioRef.current.srcObject = remoteStream;
           remoteAudioRef.current.autoplay = true;
           remoteAudioRef.current.playsInline = true;
           remoteAudioRef.current.muted = false;
           remoteAudioRef.current.volume = 1;
-
-          remoteAudioRef.current.play().catch((err) => {
-            console.error("Sara audio play error:", err);
-          });
+          remoteAudioRef.current.play().catch((err) => console.error("Sara audio play error:", err));
         }
       };
-
       const localStream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true,
-        },
+        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
       });
-
       realtimeLocalStreamRef.current = localStream;
-
-      for (const track of localStream.getTracks()) {
-        pc.addTrack(track, localStream);
-      }
+      for (const track of localStream.getTracks()) pc.addTrack(track, localStream);
 
       const dc = pc.createDataChannel("oai-events");
       realtimeDcRef.current = dc;
-
-      dc.onopen = () => {
-        shouldKickoffSaraRef.current = true;
-      };
-
+      dc.onopen = () => { shouldKickoffSaraRef.current = true; };
       dc.onmessage = (event) => {
         try {
           const msg = JSON.parse(event.data);
-
           const userTranscript =
             msg?.transcript ||
             msg?.item?.transcript ||
             msg?.item?.content?.[0]?.transcript ||
             "";
-
           if (
             (msg.type === "conversation.item.input_audio_transcription.completed" ||
               msg.type === "input_audio_buffer.transcription.completed") &&
@@ -1350,341 +967,173 @@ const ephemeralKey =
             userTranscript.trim()
           ) {
             const transcript = userTranscript.trim();
-
             if (transcript !== lastUserTranscriptRef.current) {
               lastUserTranscriptRef.current = transcript;
               pushUserMessage(transcript);
             }
           }
-
-          if (
-            msg.type === "response.output_text.delta" &&
-            typeof msg.delta === "string"
-          ) {
+          if (msg.type === "response.output_text.delta" && typeof msg.delta === "string") {
             assistantTextBufferRef.current += msg.delta;
           }
-
-          if (
-            msg.type === "response.output_text.done" &&
-            typeof msg.text === "string" &&
-            msg.text.trim()
-          ) {
+          if (msg.type === "response.output_text.done" && typeof msg.text === "string" && msg.text.trim()) {
             assistantTextBufferRef.current = msg.text.trim();
           }
-
-          if (msg.type === "response.done") {
-            finalizeAssistantBuffer();
-            setWaitingSara(false);
-          }
-
-          if (msg.type === "response.created") {
-            setWaitingSara(true);
-          }
+          if (msg.type === "response.done") { finalizeAssistantBuffer(); setWaitingSara(false); }
+          if (msg.type === "response.created") { setWaitingSara(true); }
         } catch (err) {
           console.error("Realtime Sara parse error:", err);
         }
       };
-
-      dc.onerror = (err) => {
-        console.error("Realtime Sara data channel error:", err);
-      };
+      dc.onerror = (err) => console.error("Realtime Sara data channel error:", err);
 
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
-
       const sdpRes = await fetch("https://api.openai.com/v1/realtime/calls", {
         method: "POST",
         body: offer.sdp,
-        headers: {
-          Authorization: `Bearer ${ephemeralKey}`,
-          "Content-Type": "application/sdp",
-        },
+        headers: { Authorization: `Bearer ${ephemeralKey}`, "Content-Type": "application/sdp" },
       });
-
       if (!sdpRes.ok) {
         const errText = await sdpRes.text();
         throw new Error(errText || "Error negociando WebRTC con OpenAI");
       }
-
       const answerSdp = await sdpRes.text();
-
-      await pc.setRemoteDescription({
-        type: "answer",
-        sdp: answerSdp,
-      });
-
+      await pc.setRemoteDescription({ type: "answer", sdp: answerSdp });
       if (shouldKickoffSaraRef.current) {
         shouldKickoffSaraRef.current = false;
-        setTimeout(() => {
-          kickoffSara();
-        }, 150);
+        setTimeout(() => kickoffSara(), 150);
       }
     } catch (error: any) {
       console.error("Error iniciando realtime Sara:", error);
       stopListening();
-
-      toast({
-        title: "Error realtime",
-        description: error?.message || "No se pudo iniciar Sara realtime",
-        variant: "destructive",
-      });
+      toast({ title: "Error realtime", description: error?.message || "No se pudo iniciar Sara realtime", variant: "destructive" });
     }
   };
 
   const handleFormChange = (field: keyof ClientFormData, value: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleTramiteClick = (value: string) => {
-    setSelectedTramite(value);
-  };
+  const handleTramiteClick = (value: string) => setSelectedTramite(value);
 
   const handleFormSubmit = () => {
-    if (
-      !formData.fullName.trim() ||
-      !formData.phone.trim() ||
-      !formData.city.trim() || !formData.province.trim()
-    ) {
-      toast({
-        title: ui.missingTitle,
-        description: ui.missingDesc,
-        variant: "destructive",
-      });
+    if (!formData.fullName.trim() || !formData.phone.trim() || !formData.city.trim() || !formData.province.trim()) {
+      toast({ title: ui.missingTitle, description: ui.missingDesc, variant: "destructive" });
       return;
     }
-
     if (!selectedTramite) {
-      toast({
-        title: "Selecciona trámite",
-        description: "Elige el tipo de cita antes de continuar.",
-        variant: "destructive",
-      });
+      toast({ title: ui.selectTramiteTitle, description: ui.selectTramiteDesc, variant: "destructive" });
       return;
     }
-
     setFormReady(true);
     setStep(1);
     pushAgentMessage(voiceTexts.savedLeadReply);
-
-    toast({
-      title: ui.saveTitle,
-      description: ui.saveDesc,
-    });
-
+    toast({ title: ui.saveTitle, description: ui.saveDesc });
     setTimeout(() => {
-      if (
-        realtimeDcRef.current &&
-        realtimeDcRef.current.readyState === "open" &&
-        realtimePcRef.current?.remoteDescription
-      ) {
+      if (realtimeDcRef.current && realtimeDcRef.current.readyState === "open" && realtimePcRef.current?.remoteDescription) {
         sendSaraSpokenMessage(voiceTexts.savedLeadReply);
       }
     }, 150);
   };
 
-const handleAceptar = async () => {
-  if (!selectedTramite) return;
-
-  if (
-    !formData.fullName.trim() ||
-    !formData.phone.trim() ||
-    !formData.city.trim()
-  ) {
-    toast({
-      title: "Faltan datos",
-      description: "Nombre, teléfono y ciudad obligatorios",
-      variant: "destructive",
-    });
-    return;
-  }
-
-  try {
-    // 🟢 1. ناخدو اليوزر
-    const { data: sessionData } = await supabase.auth.getSession();
-    const user = sessionData?.session?.user;
-
-    // 🟢 2. نسجلو الطلب فـ Supabase
-    const { error } = await supabase.from("appointments").insert([
-      {
-        user_id: user?.id || null,
-        appointment_type: selectedTramite,
-        office_city: formData.city,
-        office_province: formData.province,
-        status: "searching",
-        customer_name: formData.fullName,
-        customer_phone: formData.phone,
-        procedure_key: selectedTramite,
-        notes: `Cliente: ${formData.fullName} - ${formData.phone}`,
-      },
-    ]);
-
-    if (error) throw error;
-
-    // 🟢 3. نصيفطو ل Make (Webhook)
-    await fetch("https://PUT_YOUR_WEBHOOK_HERE", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        name: formData.fullName,
-        phone: formData.phone,
-        tramite: selectedTramite,
-        city: formData.city,
-province: formData.province,
-      }),
-    });
-
-    // 🟢 4. نخلي النظام القديم يخدم (search cita)
-    scheduleMutation.mutate(
-      { type: selectedTramite },
-      {
-        onSuccess: (result: unknown) => {
-          const data = (result as AppointmentResult | null) ?? null;
-
-          const hasReal =
-            !!data?.locator &&
-            !!data?.date &&
-            !!data?.time &&
-            !!data?.office;
-
-          if (!hasReal) {
-            toast({
-              title: "Sin cita real todavía",
-              description:
-                "Estamos buscando tu cita. Te avisaremos por WhatsApp.",
-            });
-            return;
-          }
-
-          setAppointmentData(data);
-          setStep(2);
-          pushAgentMessage(voiceTexts.foundMsg);
-
-          setTimeout(() => {
-            if (
-              realtimeDcRef.current &&
-              realtimeDcRef.current.readyState === "open" &&
-              realtimePcRef.current?.remoteDescription
-            ) {
-              sendSaraSpokenMessage(voiceTexts.foundMsg);
-            }
-          }, 150);
-
-          toast({
-            title: ui.foundSuccessTitle,
-            description: ui.foundSuccessDesc,
-          });
-        },
-        onError: (error: unknown) => {
-          const message =
-            error instanceof Error ? error.message : ui.foundErrorDesc;
-
-          toast({
-            title: ui.foundErrorTitle,
-            description: message,
-            variant: "destructive",
-          });
-        },
-      }
-    );
-
-    // 🟢 5. رسالة Sara
-    pushAgentMessage(
-      "Perfecto. Ya estamos buscando tu cita. Te avisaremos por WhatsApp en menos de 24h."
-    );
-
-  } catch (error) {
-    console.error(error);
-
-    toast({
-      title: "Error",
-      description: "No se pudo guardar el cliente",
-      variant: "destructive",
-    });
-  }
-};
-
- const handleConfirm = async () => {
-
-  if (
-    !appointmentData?.locator ||
-    !appointmentData?.date ||
-    !appointmentData?.time ||
-    !appointmentData?.office
-  ) {
-    toast({
-      title: "No hay cita real",
-      description: "No puedes confirmar una cita inventada o incompleta.",
-      variant: "destructive",
-    });
-
-    return;
-  }
-
-  try {
-
-    const res = await fetch(
-      "/api/create-checkout-sara",
-      {
-        method: "POST",
-
-        headers: {
-          "Content-Type": "application/json",
-        },
-
-        body: JSON.stringify({
-          appointment_id: urlParams.appointmentId,
-          token: urlParams.token,
-        }),
-      }
-    );
-
-    const data = await res.json();
-
-    if (data.url) {
-
-      window.location.href = data.url;
-
+  const handleAceptar = async () => {
+    if (!selectedTramite) return;
+    if (!formData.fullName.trim() || !formData.phone.trim() || !formData.city.trim()) {
+      toast({ title: ui.missingTitle, description: ui.missingDesc, variant: "destructive" });
+      return;
     }
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const user = sessionData?.session?.user;
+      const { error } = await supabase.from("appointments").insert([
+        {
+          user_id: user?.id || null,
+          appointment_type: selectedTramite,
+          office_city: formData.city,
+          office_province: formData.province,
+          status: "searching",
+          customer_name: formData.fullName,
+          customer_phone: formData.phone,
+          procedure_key: selectedTramite,
+          notes: `Cliente: ${formData.fullName} - ${formData.phone}`,
+        },
+      ]);
+      if (error) throw error;
 
-  } catch (err) {
+      await fetch("https://PUT_YOUR_WEBHOOK_HERE", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: formData.fullName,
+          phone: formData.phone,
+          tramite: selectedTramite,
+          city: formData.city,
+          province: formData.province,
+        }),
+      });
 
-    console.error(err);
+      scheduleMutation.mutate(
+        { type: selectedTramite },
+        {
+          onSuccess: (result: unknown) => {
+            const data = (result as AppointmentResult | null) ?? null;
+            const hasReal = !!data?.locator && !!data?.date && !!data?.time && !!data?.office;
+            if (!hasReal) {
+              toast({ title: ui.panelUpdated, description: ui.agentSavedMsg });
+              return;
+            }
+            setAppointmentData(data);
+            setStep(2);
+            pushAgentMessage(voiceTexts.foundMsg);
+            setTimeout(() => {
+              if (realtimeDcRef.current && realtimeDcRef.current.readyState === "open" && realtimePcRef.current?.remoteDescription) {
+                sendSaraSpokenMessage(voiceTexts.foundMsg);
+              }
+            }, 150);
+            toast({ title: ui.foundSuccessTitle, description: ui.foundSuccessDesc });
+          },
+          onError: (error: unknown) => {
+            const message = error instanceof Error ? error.message : ui.foundErrorDesc;
+            toast({ title: ui.foundErrorTitle, description: message, variant: "destructive" });
+          },
+        }
+      );
 
-    toast({
-      title: "Error Stripe",
-      description: "No se pudo abrir el pago",
-      variant: "destructive",
-    });
+      // ✅ Mensaje de Sara traducido
+      pushAgentMessage(ui.agentSavedMsg);
+    } catch (error) {
+      console.error(error);
+      toast({ title: ui.saveErrorTitle, description: ui.saveErrorDesc, variant: "destructive" });
+    }
+  };
 
-  }
-
-};
+  const handleConfirm = async () => {
+    if (!appointmentData?.locator || !appointmentData?.date || !appointmentData?.time || !appointmentData?.office) {
+      toast({ title: ui.noRealAppointmentTitle, description: ui.noRealAppointmentDesc, variant: "destructive" });
+      return;
+    }
+    try {
+      const res = await fetch("/api/create-checkout-sara", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ appointment_id: urlParams.appointmentId, token: urlParams.token }),
+      });
+      const data = await res.json();
+      if (data.url) window.location.href = data.url;
+    } catch (err) {
+      console.error(err);
+      toast({ title: ui.stripeErrorTitle, description: ui.stripeErrorDesc, variant: "destructive" });
+    }
+  };
 
   const finalLocator = appointmentData?.locator || "";
   const finalDate = appointmentData?.date || "";
   const finalTime = appointmentData?.time || "";
   const finalOffice = appointmentData?.office || "";
-  const finalPdfUrl =
-    appointmentData?.confirmation_pdf_url || appointmentData?.pdf_url || null;
-
-  const hasRealAppointment =
-    !!appointmentData?.locator &&
-    !!appointmentData?.date &&
-    !!appointmentData?.time &&
-    !!appointmentData?.office;
-
+  const finalPdfUrl = appointmentData?.confirmation_pdf_url || appointmentData?.pdf_url || null;
+  const hasRealAppointment = !!appointmentData?.locator && !!appointmentData?.date && !!appointmentData?.time && !!appointmentData?.office;
   const officialUrl = "icp.administracionelectronica.gob.es";
-  const cameFromConfirmationLink =
-    !!urlParams.appointmentId || !!urlParams.token;
-
-  const latestAgentMessage =
-    [...voiceHistory].reverse().find((msg) => msg.from === "agent")?.text ||
-    voiceTexts.initialVoice;
+  const cameFromConfirmationLink = !!urlParams.appointmentId || !!urlParams.token;
 
   return (
     <div className="min-h-screen bg-background text-foreground relative flex flex-col">
@@ -1699,10 +1148,9 @@ province: formData.province,
       <Navbar />
 
       <main className="flex-1 relative z-10 flex flex-col pt-16 pb-0">
+        {/* ✅ Título de página traducido */}
         <h1 className="text-xl font-display font-bold px-4 sm:px-6 py-3 max-w-7xl mx-auto w-full">
-          {cameFromConfirmationLink
-            ? "Sara: confirmación de cita"
-            : "Buscar citas"}
+          {cameFromConfirmationLink ? ui.pageTitleConfirm : ui.pageTitle}
         </h1>
 
         <div className="flex-1 flex flex-col lg:flex-row gap-4 px-4 sm:px-6 max-w-7xl mx-auto w-full pb-4">
@@ -1724,31 +1172,24 @@ province: formData.province,
 
               <div className="absolute top-3 left-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/60 border border-white/10 backdrop-blur-md">
                 <img
-  src={`${import.meta.env.BASE_URL}images/spain-gov.png`}
-  alt="España"
-  className="absolute top-3 right-20 w-10 h-7 object-cover rounded-[4px] border border-white/20 shadow-lg"
-/>
+                  src={`${import.meta.env.BASE_URL}images/spain-gov.png`}
+                  alt="España"
+                  className="absolute top-3 right-20 w-10 h-7 object-cover rounded-[4px] border border-white/20 shadow-lg"
+                />
                 <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                <span className="text-xs font-medium text-white">
-                  {ui.online}
-                </span>
+                <span className="text-xs font-medium text-white">{ui.online}</span>
               </div>
 
               <div className="absolute top-3 right-3 flex items-center gap-2">
                 <div className="w-7 h-7 rounded-full bg-black/50 backdrop-blur-md border border-white/10 flex items-center justify-center">
                   <Bell className="w-3.5 h-3.5 text-white" />
                 </div>
-
                 <button
                   onClick={() => setMuted(!muted)}
                   className="w-8 h-8 rounded-full bg-black/50 border border-white/10 flex items-center justify-center"
                   type="button"
                 >
-                  {muted ? (
-                    <VolumeX className="w-4 h-4 text-white" />
-                  ) : (
-                    <Volume2 className="w-4 h-4 text-white" />
-                  )}
+                  {muted ? <VolumeX className="w-4 h-4 text-white" /> : <Volume2 className="w-4 h-4 text-white" />}
                 </button>
               </div>
 
@@ -1759,23 +1200,15 @@ province: formData.province,
                       key={i}
                       className="w-1 bg-primary rounded-full"
                       animate={{ height: [`${h}px`, `${h * 2}px`, `${h}px`] }}
-                      transition={{
-                        duration: 0.5,
-                        repeat: Infinity,
-                        delay: i * 0.07,
-                      }}
+                      transition={{ duration: 0.5, repeat: Infinity, delay: i * 0.07 }}
                     />
                   ))}
                 </div>
               )}
 
               <div className="absolute bottom-14 right-3 text-right">
-                <p className="text-white font-bold text-sm drop-shadow-lg">
-                  Sara
-                </p>
-                <p className="text-white/70 text-xs drop-shadow-lg">
-                  {ui.agentRole}
-                </p>
+                <p className="text-white font-bold text-sm drop-shadow-lg">Sara</p>
+                <p className="text-white/70 text-xs drop-shadow-lg">{ui.agentRole}</p>
               </div>
 
               <div className="absolute bottom-3 left-0 right-0 flex items-center justify-center">
@@ -1788,18 +1221,11 @@ province: formData.province,
                   }`}
                   type="button"
                 >
-                  {isListening ? (
-                    <MicOff className="w-5 h-5 text-white" />
-                  ) : (
-                    <Mic className="w-5 h-5 text-white" />
-                  )}
+                  {isListening ? <MicOff className="w-5 h-5 text-white" /> : <Mic className="w-5 h-5 text-white" />}
                 </button>
               </div>
             </div>
 
-         
-
-       
             {step === 2 && !confirmed && hasRealAppointment && (
               <motion.button
                 initial={{ opacity: 0, y: 10 }}
@@ -1809,25 +1235,15 @@ province: formData.province,
                 type="button"
               >
                 <CheckCircle2 className="w-5 h-5" />
-                Confirmar cita
+                {ui.confirmBtn}
               </motion.button>
             )}
-
-        
           </motion.div>
 
           <OfficialBrowserBox
             language={language}
             avatarImage={`${import.meta.env.BASE_URL}images/avatar-sara.png`}
-        title={
-  cameFromConfirmationLink
-    ? "Confirmación de cita con Sara"
-    : language === "ma"
-    ? "لوحة المواعيد الرسمية"
-    : language === "en"
-    ? "Official appointment panel"
-    : "Panel oficial integrado"
-}
+            title={cameFromConfirmationLink ? ui.pageTitleConfirm : ui.pageTitle}
             url={officialUrl}
             selectedTramiteLabel={selectedTramiteLabel}
             profileLoading={profileLoading}
@@ -1840,17 +1256,9 @@ province: formData.province,
             finalLocator={finalLocator}
             finalPdfUrl={finalPdfUrl}
             hasRealAppointment={hasRealAppointment}
-            onRefresh={() => {
-              toast({
-                title: "Panel actualizado",
-              });
-            }}
+            onRefresh={() => toast({ title: ui.panelUpdated })}
             onOpenOfficial={() => {
-              window.open(
-                "https://icp.administracionelectronica.gob.es/icpplus/index.html",
-                "_blank",
-                "noopener,noreferrer"
-              );
+              window.open("https://icp.administracionelectronica.gob.es/icpplus/index.html", "_blank", "noopener,noreferrer");
             }}
             onSelectTramite={handleTramiteClick}
             tramites={TRAMITES}
@@ -1865,48 +1273,38 @@ province: formData.province,
           />
         </div>
 
+        {/* Barra inferior */}
         <div className="hidden lg:block sticky bottom-0 z-30 glass-panel-heavy border-t border-white/10 py-3">
           <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
             <div className="flex gap-3">
               <button
-                onClick={() => {
-                  setShowDocs(true);
-                  setShowForms(false);
-                }}
+                onClick={() => { setShowDocs(true); setShowForms(false); }}
                 className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold border transition-colors ${
-                  showDocs
-                    ? "bg-primary/20 border-primary/40 text-primary"
-                    : "bg-white/5 border-white/10 text-white/80 hover:bg-white/10"
+                  showDocs ? "bg-primary/20 border-primary/40 text-primary" : "bg-white/5 border-white/10 text-white/80 hover:bg-white/10"
                 }`}
                 type="button"
               >
                 <FileText className="w-4 h-4 text-primary" />
-                Documentos
+                {ui.docsButton}
               </button>
-
               <button
-                onClick={() => {
-                  setShowForms(true);
-                  setShowDocs(false);
-                }}
+                onClick={() => { setShowForms(true); setShowDocs(false); }}
                 className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold border transition-colors ${
-                  showForms
-                    ? "bg-secondary/20 border-secondary/40 text-secondary"
-                    : "bg-white/5 border-white/10 text-white/80 hover:bg-white/10"
+                  showForms ? "bg-secondary/20 border-secondary/40 text-secondary" : "bg-white/5 border-white/10 text-white/80 hover:bg-white/10"
                 }`}
                 type="button"
               >
                 <Settings className="w-4 h-4 text-secondary" />
-                Formularios
+                {ui.formsButton}
               </button>
             </div>
-
             <div className="px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-[10px] text-white/60">
               © 2026 GestoriaCitaIA
             </div>
           </div>
         </div>
 
+        {/* Panel documentos */}
         <AnimatePresence>
           {showDocs && (
             <motion.div
@@ -1915,46 +1313,20 @@ province: formData.province,
               exit={{ opacity: 0, y: 40 }}
               className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 w-full max-w-md px-4"
             >
-              <div
-                className="rounded-2xl border border-white/15 shadow-2xl overflow-hidden"
-                style={{ background: "#1a2236" }}
-              >
+              <div className="rounded-2xl border border-white/15 shadow-2xl overflow-hidden" style={{ background: "#1a2236" }}>
                 <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
                   <div className="flex items-center gap-2">
                     <FileText className="w-4 h-4 text-primary" />
-                    <span className="font-bold text-sm text-white">
-                      Documentos requeridos
-                    </span>
+                    <span className="font-bold text-sm text-white">{ui.docsRequiredTitle}</span>
                   </div>
-
-                  <button
-                    onClick={() => setShowDocs(false)}
-                    className="w-6 h-6 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/60 text-xs"
-                    type="button"
-                  >
-                    ✕
-                  </button>
+                  <button onClick={() => setShowDocs(false)} className="w-6 h-6 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/60 text-xs" type="button">✕</button>
                 </div>
-
                 <div className="px-5 py-4 space-y-2.5 max-h-72 overflow-y-auto">
                   {docsForSelectedTramite.map((doc, i) => (
                     <div key={i} className="flex items-center gap-3">
-                      <span
-                        className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 text-xs font-bold ${
-                          doc.estado === "ok"
-                            ? "bg-green-500/20 text-green-400"
-                            : doc.estado === "warn"
-                            ? "bg-yellow-500/20 text-yellow-400"
-                            : "bg-red-500/20 text-red-400"
-                        }`}
-                      >
-                        {doc.estado === "ok"
-                          ? "✓"
-                          : doc.estado === "warn"
-                          ? "!"
-                          : "✗"}
+                      <span className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 text-xs font-bold ${doc.estado === "ok" ? "bg-green-500/20 text-green-400" : doc.estado === "warn" ? "bg-yellow-500/20 text-yellow-400" : "bg-red-500/20 text-red-400"}`}>
+                        {doc.estado === "ok" ? "✓" : doc.estado === "warn" ? "!" : "✗"}
                       </span>
-
                       <span className="text-sm text-white/90">{doc.nombre}</span>
                     </div>
                   ))}
@@ -1964,6 +1336,7 @@ province: formData.province,
           )}
         </AnimatePresence>
 
+        {/* Panel formularios */}
         <AnimatePresence>
           {showForms && (
             <motion.div
@@ -1972,58 +1345,28 @@ province: formData.province,
               exit={{ opacity: 0, y: 40 }}
               className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 w-full max-w-md px-4"
             >
-              <div
-                className="rounded-2xl border border-white/15 shadow-2xl overflow-hidden"
-                style={{ background: "#1a2236" }}
-              >
+              <div className="rounded-2xl border border-white/15 shadow-2xl overflow-hidden" style={{ background: "#1a2236" }}>
                 <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
                   <div className="flex items-center gap-2">
                     <Settings className="w-4 h-4 text-secondary" />
-                    <span className="font-bold text-sm text-white">
-                      Formularios oficiales
-                    </span>
+                    <span className="font-bold text-sm text-white">{ui.formsOfficialTitle}</span>
                   </div>
-
-                  <button
-                    onClick={() => setShowForms(false)}
-                    className="w-6 h-6 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/60 text-xs"
-                    type="button"
-                  >
-                    ✕
-                  </button>
+                  <button onClick={() => setShowForms(false)} className="w-6 h-6 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/60 text-xs" type="button">✕</button>
                 </div>
-
                 <div className="px-5 py-4 space-y-3">
                   {formsForSelectedTramite.map((form, i) => (
-                    <a
-                      key={i}
-                      href={form.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-3 p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-colors group"
-                    >
+                    <a key={i} href={form.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-colors group">
                       <div className="w-9 h-9 rounded-lg bg-primary/15 border border-primary/30 flex items-center justify-center shrink-0">
                         <FileText className="w-4 h-4 text-primary" />
                       </div>
-
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs font-bold text-primary">
-                          {form.codigo}
-                        </p>
-                        <p className="text-sm text-white/80 truncate">
-                          {form.nombre}
-                        </p>
+                        <p className="text-xs font-bold text-primary">{form.codigo}</p>
+                        <p className="text-sm text-white/80 truncate">{form.nombre}</p>
                       </div>
-
-                      <span className="text-[10px] font-semibold text-white/40 group-hover:text-primary transition-colors shrink-0">
-                        PDF ↓
-                      </span>
+                      <span className="text-[10px] font-semibold text-white/40 group-hover:text-primary transition-colors shrink-0">PDF ↓</span>
                     </a>
                   ))}
-
-                  <p className="text-[10px] text-white/30 text-center pt-1">
-                    {ui.sourceLabel}
-                  </p>
+                  <p className="text-[10px] text-white/30 text-center pt-1">{ui.sourceLabel}</p>
                 </div>
               </div>
             </motion.div>
