@@ -2277,12 +2277,12 @@ setTimeout(() => {
           </div>
         </div>
     <div className="max-w-md mx-auto px-4">
-      <div className="max-w-md mx-auto p-[2px] rounded-[34px] bg-gradient-to-b from-[#f6c453] via-[#d4a94d] to-[#8a6a16] shadow-[0_0_45px_rgba(255,215,0,0.22)]">
+  <div className="max-w-md mx-auto rounded-[34px] border border-[#f6c453] bg-gradient-to-b from-[#071120] to-black shadow-[0_0_45px_rgba(255,215,0,0.18)] p-[2px]">
 <motion.div
   initial={{ opacity: 0, y: 15 }}
   animate={{ opacity: 1, y: 0 }}
-className="rounded-[32px] overflow-hidden border-2 border-[#f6c453] bg-gradient-to-b from-[#071120] to-black shadow-[0_0_55px_rgba(255,215,0,0.16)] p-[2px]"
-  >
+className="rounded-[32px] overflow-hidden border border-[#d4a94d]/70 bg-gradient-to-b from-[#071120] to-black"
+>
   <div className="relative">
 
     <video
@@ -2291,7 +2291,7 @@ className="rounded-[32px] overflow-hidden border-2 border-[#f6c453] bg-gradient-
       loop
       playsInline
       poster={`${import.meta.env.BASE_URL}images/avatar-mohamed.png`}
-className="w-full h-[270px] object-cover border-b border-[#c6922f]/40"
+className="w-full h-[270px] object-cover border-b border-[#f6c453]/25"
       >
       <source
         src="/mohamed-extranjeria.mp4.mp4"
