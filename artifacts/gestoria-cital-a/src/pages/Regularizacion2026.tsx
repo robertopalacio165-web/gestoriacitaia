@@ -2496,7 +2496,13 @@ className="w-full h-[270px] object-cover border-b border-[#c6922f]/40"
 
       <div className="w-2.5 h-2.5 rounded-full bg-green-400 animate-pulse shadow-lg"></div>
 
-      En línea
+{
+safeLang === "darija"
+? "متصل الآن"
+: safeLang === "en"
+? "Online"
+: "En línea"
+}
 
     </div>
 
@@ -2507,7 +2513,13 @@ className="w-full h-[270px] object-cover border-b border-[#c6922f]/40"
       </h2>
 
       <p className="text-[15px] text-[#d4a94d] font-medium tracking-wide">
-        Especialista en Extranjería
+{
+safeLang === "darija"
+? "مختص فالهجرة"
+: safeLang === "en"
+? "Immigration Specialist"
+: "Especialista en Extranjería"
+}
       </p>
 
     </div>
@@ -2530,11 +2542,21 @@ className="w-full h-[270px] object-cover border-b border-[#c6922f]/40"
 
         <div>
           <p className="text-white font-bold text-lg">
-            Desbloquea a Mohamed
+        {safeLang === "darija"
+  ? "فتح محمد"
+  : safeLang === "en"
+  ? "Unlock Mohamed"
+  : "Desbloquea a Mohamed"}
           </p>
 
           <span className="inline-flex mt-1 px-2 py-1 rounded-full bg-yellow-500 text-black text-[10px] font-bold">
-            PREMIUM
+   {
+safeLang === "darija"
+? "بريميوم"
+: safeLang === "en"
+? "PREMIUM"
+: "PREMIUM"
+}
           </span>
         </div>
 
@@ -2544,15 +2566,24 @@ className="w-full h-[270px] object-cover border-b border-[#c6922f]/40"
           </p>
 
           <p className="text-white/60 text-xs">
-            Acceso completo
+         {safeLang === "darija"
+  ? "ولوج كامل"
+  : safeLang === "en"
+  ? "Full access"
+  : "Acceso completo"}
           </p>
         </div>
 
       </div>
 
  <p className="text-white/70 text-[13px] leading-relaxed mb-3">
-        Acceso ilimitado a Mohamed IA, videollamada realtime,
-        análisis de documentos y generación automática del expediente.
+   {
+safeLang === "darija"
+? "ولوج غير محدود لمحمد الذكاء الاصطناعي، مكالمة فيديو مباشرة، تحليل الوثائق وإنشاء الملف تلقائياً."
+: safeLang === "en"
+? "Unlimited access to Mohamed AI, realtime video call, document analysis and automatic file generation."
+: "Acceso ilimitado a Mohamed IA, videollamada realtime, análisis de documentos y generación automática del expediente."
+}
       </p>
 
      <button
@@ -2560,7 +2591,11 @@ className="w-full h-[270px] object-cover border-b border-[#c6922f]/40"
   type="button"
 className="w-[84%] mx-auto flex items-center justify-center h-8 rounded-full text-black font-extrabold text-[13px] bg-gradient-to-b from-[#ffe27a] via-[#ffd400] to-[#ffbf00] border border-[#fff3b0] shadow-[0_4px_14px_rgba(255,215,0,0.35)]"
        >
-  🔓 Desbloquear ahora
+  🔓 {safeLang === "darija"
+  ? "فتح الآن"
+  : safeLang === "en"
+  ? "Unlock now"
+  : "Desbloquear ahora"}
 </button>
 
   <div className="mt-2 flex items-center justify-center gap-2 flex-wrap">
@@ -2591,17 +2626,27 @@ className="w-[84%] mx-auto flex items-center justify-center h-8 rounded-full tex
 
         <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
 
-        <p className="text-white font-bold">
-          Mohamed IA
-        </p>
+ <p className="text-white font-bold">
+{
+safeLang === "darija"
+? "محمد الذكاء الاصطناعي"
+: safeLang === "en"
+? "Mohamed AI"
+: "Mohamed IA"
+}
+</p>
 
       </div>
 
-      <p className="text-white/80 text-sm leading-relaxed">
-        Especialista profesional en extranjería española para marroquíes en España.
-        Pregunta sobre residencia, papeles, policía, nacionalidad, arraigo,
-        trabajo, estudios y cualquier problema legal relacionado con inmigración.
-      </p>
+   <p className="text-white/80 text-sm leading-relaxed">
+{
+safeLang === "darija"
+? "مختص محترف فالهجرة الإسبانية للمغاربة فإسبانيا. سول على الإقامة، الوثائق، الشرطة، الجنسية، العمل، الدراسة وأي مشكل قانوني متعلق بالهجرة."
+: safeLang === "en"
+? "Professional Spanish immigration specialist for Moroccans in Spain. Ask about residency, documents, police, nationality, work, studies, and any immigration legal issue."
+: "Especialista profesional en extranjería española para marroquíes en España. Pregunta sobre residencia, papeles, policía, nacionalidad, arraigo, trabajo, estudios y cualquier problema legal relacionado con inmigración."
+}
+</p>
 
     </div>
 
@@ -2633,7 +2678,13 @@ className={`w-[84%] mx-auto h-[50px] rounded-[22px] transition-all duration-300 
   ) : (
     <>
       <Mic className="w-6 h-6" />
-      Hablar con Mohamed
+  {
+safeLang === "darija"
+? "تكلم مع محمد"
+: safeLang === "en"
+? "Talk with Mohamed"
+: "Hablar con Mohamed"
+}
     </>
   )}
 </button>
