@@ -2253,18 +2253,21 @@ setTimeout(() => {
     [...voiceHistory].reverse().find((msg) => msg.from === "agent")?.text ||
     voiceTexts.initialVoice;
 
-  return (
- <div className="min-h-screen bg-background text-foreground relative flex flex-col border-2 border-[#d4a017] rounded-[28px] shadow-[0_0_60px_rgba(255,200,0,0.25)] overflow-hidden">
-   <div className="absolute inset-0 rounded-[28px] border border-yellow-300/30 pointer-events-none shadow-[0_0_90px_rgba(255,215,0,0.18)]" />
-      <div
-        className="fixed inset-0 z-0 opacity-25 pointer-events-none"
+return (
+
+<div className="min-h-screen bg-background text-foreground relative flex flex-col border-2 border-[#d4a017] rounded-[36px] shadow-[0_0_60px_rgba(255,200,0,0.25)] overflow-hidden">
+
+<div className="absolute inset-0 rounded-[36px] border border-yellow-300/30 pointer-events-none shadow-[0_0_90px_rgba(255,215,0,0.18)]" />
+
+<div
+className="fixed inset-0 z-0 opacity-25 pointer-events-none"
         style={{
           backgroundImage:
             "radial-gradient(ellipse 70% 40% at 30% 20%, rgba(34,197,94,0.1), transparent), radial-gradient(ellipse 60% 40% at 80% 80%, rgba(59,130,246,0.08), transparent)",
         }}
       />
       <Navbar />
-      <main className="flex-1 relative z-10 pt-16 pb-8">
+      <main className="flex-1 relative z-10 pt-6 pb-8">
         <div className="px-4 sm:px-6 py-3 max-w-7xl mx-auto w-full flex items-center justify-between">
           <div>
             <h1 className="text-xl font-display font-bold text-white flex items-center gap-2">
@@ -2277,8 +2280,8 @@ setTimeout(() => {
             <p className="text-xs text-muted-foreground">{currentProcedure.name}</p>
           </div>
         </div>
-    <div className="max-w-md mx-auto px-4">
-<div className="max-w-md mx-auto p-[2px] rounded-[36px] bg-gradient-to-b from-[#ffd76a] via-[#c9971a] to-[#5c4304] shadow-[0_0_60px_rgba(255,200,0,0.35)]">
+<div className="w-full max-w-[520px] mx-auto px-1">
+<div className="max-w-[520px] mx-auto p-[2px] rounded-[36px] bg-gradient-to-b from-[#ffd76a] via-[#c9971a] to-[#5c4304] shadow-[0_0_60px_rgba(255,200,0,0.35)]">
  <motion.div
 initial={{ opacity: 0, y: 15 }}
 animate={{ opacity: 1, y: 0 }}
@@ -2545,7 +2548,7 @@ className="flex-1 h-full bg-transparent px-4 text-white placeholder:text-white/4
 </div> 
 {/* STATS PREMIUM */}
 
-<div className="w-full rounded-[28px] border border-[#f6c453]/60 bg-gradient-to-b from-[#06111f] to-[#020617] p-5 shadow-[0_0_35px_rgba(255,215,0,0.10)] mt-4">
+<div className="w-full rounded-[36px]  border border-[#f6c453]/60 bg-gradient-to-b from-[#06111f] to-[#020617] p-5 shadow-[0_0_35px_rgba(255,215,0,0.10)] mt-4">
   <p className="text-center text-[#d4a94d] text-[15px] font-semibold mb-5">
     Miles de personas ya han confiado en nosotros
   </p>
