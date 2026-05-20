@@ -349,12 +349,11 @@ function OfficialBrowserBox({
 
     const data = await res.json();
 
-    if (data.url) {
+  if (data.url) {
 
-      window.location.href = data.url;
+  window.location.href = data.url + "?paid=1";
 
-    }
-
+}
   } catch (error) {
 
     console.error(error);
@@ -582,7 +581,9 @@ export default function BuscarCitas() {
     province: "",
     preferredOffice: "",
   });
-  const [formReady, setFormReady] = useState(false);
+const [formReady, setFormReady] = useState(
+  new URL(window.location.href).searchParams.get("paid") === "1"
+);
   const [voiceSupported, setVoiceSupported] = useState(true);
   const [isListening, setIsListening] = useState(false);
   const [waitingSara, setWaitingSara] = useState(false);
