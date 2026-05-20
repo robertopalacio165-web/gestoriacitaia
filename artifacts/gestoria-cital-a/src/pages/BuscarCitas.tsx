@@ -367,7 +367,7 @@ const saraPaid = localStorage.getItem("sara_paid") === "true";
   }
 
 }}
-           {!saraPaid ? (
+    {!saraPaid && (
                 <button
 type="button"
 
@@ -623,7 +623,7 @@ onClick={async () => {
                     <FileText className="w-4 h-4" />
                     {ui.downloadPdf}
                   </a>
-                ) : null}
+            )}
               </div>
             </motion.div>
           </>
