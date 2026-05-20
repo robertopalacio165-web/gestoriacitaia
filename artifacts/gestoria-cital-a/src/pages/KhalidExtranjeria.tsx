@@ -258,7 +258,10 @@ dc.onmessage = (event) => {
     const msg = JSON.parse(event.data);
 
     // 🧠 كلام خالد
-
+  if (
+  msg.type === "response.output_text.delta" &&
+  typeof msg.delta === "string"
+) {
 
   setLastReply((prev) => prev + msg.delta);
 const khalidText =
@@ -287,11 +290,21 @@ if (
 // 👮 Policía
 else if (
   khalidText.includes("policia") ||
+  khalidText.includes("policía") ||
   khalidText.includes("comisaria") ||
+  khalidText.includes("comisaría") ||
   khalidText.includes("tie")
 ) {
 
-  setSmartAction("police");
+  setSmartAction({
+    type: "police",
+    city: "Madrid",
+    name: "Comisaría Policía Nacional",
+    address: "Avenida de los Poblados",
+    phone: "091",
+    image:
+      "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=1200&auto=format&fit=crop"
+  });
 
 }
 
@@ -323,89 +336,7 @@ else if (
   }
 
 }
-// 🧠 كلام خالد
-if (
-  msg.type === "response.output_text.delta" &&
-  typeof msg.delta === "string"
-) {
 
-  setLastReply((prev) => prev + msg.delta);
-
-  const khalidText =
-    (
-      lastAssistantTextRef.current +
-      msg.delta
-    ).toLowerCase();
-
-  lastAssistantTextRef.current =
-    khalidText;
-
-  // 🏢 Oficina extranjería
-  if (
-    khalidText.includes("madrid") ||
-    khalidText.includes("barcelona") ||
-    khalidText.includes("valencia") ||
-    khalidText.includes("oficina") ||
-    khalidText.includes("extranjería") ||
-    khalidText.includes("extranjeria")
-  ) {
-
-    setSmartAction({
-      type: "office",
-      city: "Madrid",
-      name: "Oficina Extranjería Madrid Centro",
-      address: "Calle Silva 19",
-      phone: "912 73 90 39",
-      image:
-        "https://images.unsplash.com/photo-1528909514045-2fa4ac7a08ba?q=80&w=1200&auto=format&fit=crop"
-    });
-
-  }
-
-  // 👮 Policía
-  else if (
-    khalidText.includes("policia") ||
-    khalidText.includes("policía") ||
-    khalidText.includes("comisaria") ||
-    khalidText.includes("comisaría") ||
-    khalidText.includes("tie")
-  ) {
-
-    setSmartAction("police");
-
-  }
-
-  // 📄 Arraigo
-  else if (
-    khalidText.includes("arraigo") ||
-    khalidText.includes("residencia") ||
-    khalidText.includes("papeles")
-  ) {
-
-    setSmartAction("arraigo");
-
-  }
-
-  const isPremium =
-    localStorage.getItem("khalid_paid") === "true";
-
-  if (
-    userAskedQuestion &&
-    !freeQuestionUsed &&
-    !isPremium
-  ) {
-
-    setFreeQuestionUsed(true);
-
-    setPaymentEnabled(true);
-
-    setShowPayment(true);
-
-    stopConversation();
-
-  }
-
-}
     // 🎤 كلام المستخدم
     const transcript =
       msg?.transcript ||
@@ -472,51 +403,6 @@ if (realtimeLocalStreamRef.current) {
 }
 
   console.log("KHALID DONE");
-  const assistantTranscript =
-  msg?.response?.output?.[0]?.content?.[0]?.transcript
-    ?.toLowerCase?.() || "";
-
-console.log(
-  "KHALID SAID:",
-  assistantTranscript
-);
-
-// 📍 Oficina
-if (
-  assistantTranscript.includes("madrid") ||
-  assistantTranscript.includes("extranjería")
-) {
-
-  setSmartAction({
-    type: "office",
-    city: "Madrid",
-    name: "Oficina Extranjería Madrid Centro",
-    address: "Calle Silva 19",
-    phone: "912 73 90 39",
-    image:
-      "https://images.unsplash.com/photo-1528909514045-2fa4ac7a08ba?q=80&w=1200&auto=format&fit=crop"
-  });
-
-}
-
-// 👮 Policía
-else if (
-  assistantTranscript.includes("policía") ||
-  assistantTranscript.includes("comisaría") ||
-  assistantTranscript.includes("tie")
-) {
-
-  setSmartAction({
-    type: "police",
-    city: "Madrid",
-    name: "Comisaría Policía Nacional",
-    address: "Avenida de los Poblados",
-    phone: "091",
-    image:
-      "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=1200&auto=format&fit=crop"
-  });
-
-}
 
 }
 
@@ -838,7 +724,7 @@ else if (
 
   </div>
 )}
-            <div className="mt-5 rounded-2xl border border-[#1e293b] bg-[#0b1325] p-4">s
+       <div className="mt-5 rounded-2xl border border-[#1e293b] bg-[#0b1325] p-4">
               <div className="flex items-center gap-2 mb-2">
                 <Shield
                   className="text-green-400"
@@ -918,7 +804,8 @@ else if (
 
 )}
       {/* POLICE CARD */}
-{isPaid && smartAction === "police" && (
+{/* POLICE CARD */}
+{isPaid && smartAction?.type === "police" && (
 
 <div className="mt-5 rounded-2xl border border-[#1e293b] bg-[#0b1325] p-4">
 
@@ -933,21 +820,21 @@ else if (
   <div className="rounded-2xl overflow-hidden border border-[#1e293b]">
 
     <img
-      src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=1200&auto=format&fit=crop"
+      src={smartAction.image}
       className="w-full h-[170px] object-cover"
     />
 
     <div className="p-4">
 
       <h4 className="text-xl font-bold mb-1">
-        Policía · TIE
+        {smartAction.name}
       </h4>
 
       <p className="text-gray-400 text-sm">
-        Información de comisaría y citas
+        {smartAction.address} · {smartAction.city}
       </p>
 
-      <div className="grid grid-cols-2 gap-2 mt-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-4">
 
         <button className="h-11 rounded-xl bg-[#071224] border border-[#1e293b] text-sm">
           📍 Maps
@@ -973,7 +860,8 @@ else if (
 
 </div>
 
-)}    
+)}
+   
         </motion.div>
       </div>
     </div>
