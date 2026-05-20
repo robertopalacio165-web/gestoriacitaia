@@ -311,7 +311,63 @@ function OfficialBrowserBox({
 
                 <button
                   type="button"
-                  onClick={onFormSubmit}
+              onClick={async () => {
+
+  if (
+    !formData.fullName.trim() ||
+    !formData.phone.trim() ||
+    !formData.city.trim() ||
+    !formData.province.trim()
+  ) {
+    toast({
+      title: ui.missingTitle,
+      description: ui.missingDesc,
+      variant: "destructive",
+    });
+
+    return;
+  }
+
+  try {
+
+    const res = await fetch("/api/create-checkout-sara-inicial", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+
+      body: JSON.stringify({
+        fullName: formData.fullName,
+        phone: formData.phone,
+        email: formData.email,
+        nie: formData.nie,
+        city: formData.city,
+        province: formData.province,
+        tramite: selectedTramite,
+      }),
+    });
+
+    const data = await res.json();
+
+    if (data.url) {
+
+      window.location.href = data.url;
+
+    }
+
+  } catch (error) {
+
+    console.error(error);
+
+    toast({
+      title: ui.stripeErrorTitle,
+      description: ui.stripeErrorDesc,
+      variant: "destructive",
+    });
+
+  }
+
+}}
                   className="w-full min-h-[56px] rounded-[20px] bg-gradient-to-r from-yellow-400 via-yellow-500 to-amber-500 px-4 py-2 text-[15px] leading-tight font-black text-black shadow-[0_0_30px_rgba(255,215,0,0.35)] transition-all duration-300 hover:scale-[1.01]"
                 >
                   {isMa
