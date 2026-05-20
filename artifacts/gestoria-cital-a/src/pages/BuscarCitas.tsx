@@ -155,7 +155,7 @@ function OfficialBrowserBox({
       className="flex-1 flex flex-col overflow-hidden bg-transparent"
     >
       <div className="flex-1 overflow-y-auto bg-transparent p-4 sm:p-6 text-black">
-        {!confirmed ? (
+{!confirmed && !formReady ? (
           <>
             <div className="mt-3 mx-[-4px] rounded-[24px] border-2 border-yellow-500/60 bg-gradient-to-b from-[#0b0b0b] to-[#050505] px-3 py-3 shadow-[0_0_35px_rgba(255,200,0,0.18)]">
               <h2 className="text-yellow-400 text-[18px] sm:text-[20px] font-black leading-tight mb-2">
