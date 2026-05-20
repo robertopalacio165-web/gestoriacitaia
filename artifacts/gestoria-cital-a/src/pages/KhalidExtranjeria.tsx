@@ -258,10 +258,7 @@ dc.onmessage = (event) => {
     const msg = JSON.parse(event.data);
 
     // 🧠 كلام خالد
-  if (
-  msg.type === "response.output_text.delta" &&
-  typeof msg.delta === "string"
-) {
+
 
   setLastReply((prev) => prev + msg.delta);
 const khalidText =
@@ -393,6 +390,51 @@ if (realtimeLocalStreamRef.current) {
 }
 
   console.log("KHALID DONE");
+  const assistantTranscript =
+  msg?.response?.output?.[0]?.content?.[0]?.transcript
+    ?.toLowerCase?.() || "";
+
+console.log(
+  "KHALID SAID:",
+  assistantTranscript
+);
+
+// 📍 Oficina
+if (
+  assistantTranscript.includes("madrid") ||
+  assistantTranscript.includes("extranjería")
+) {
+
+  setSmartAction({
+    type: "office",
+    city: "Madrid",
+    name: "Oficina Extranjería Madrid Centro",
+    address: "Calle Silva 19",
+    phone: "912 73 90 39",
+    image:
+      "https://images.unsplash.com/photo-1528909514045-2fa4ac7a08ba?q=80&w=1200&auto=format&fit=crop"
+  });
+
+}
+
+// 👮 Policía
+else if (
+  assistantTranscript.includes("policía") ||
+  assistantTranscript.includes("comisaría") ||
+  assistantTranscript.includes("tie")
+) {
+
+  setSmartAction({
+    type: "police",
+    city: "Madrid",
+    name: "Comisaría Policía Nacional",
+    address: "Avenida de los Poblados",
+    phone: "091",
+    image:
+      "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=1200&auto=format&fit=crop"
+  });
+
+}
 
 }
 
