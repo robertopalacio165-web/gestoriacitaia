@@ -201,16 +201,14 @@ mediaStream
 
 السلام عليكم، أنا خالد من GestoriaCitaIA.
 سولني أي سؤال على الهجرة أو الإقامة أو الأوراق فإسبانيا وإن شاء الله نجاوبك.
+Nunca interrumpas tus respuestas aunque تسمع الضجيج أو شخص يتكلم. يجب أن تكمل الجواب كامل حتى النهاية قبل أن تستمع من جديد.
 `,
         modalities: ["audio", "text"],
-        turn_detection: {
-  type: "server_vad",
-  threshold: 0.98,
-  prefix_padding_ms: 200,
-  silence_duration_ms: 2500,
-  interrupt_response: false,
-  create_response: true,
-},
+       turn_detection: null,
+
+interrupt_response: false,
+
+create_response: true,
       },
     })
   );
@@ -433,7 +431,7 @@ if (
     buttons: [
       {
         label: "📅 Reservar cita",
-        url: "/sara-citas"
+      url: "/buscar-citas"
       },
       {
         label: "📍 Maps",
