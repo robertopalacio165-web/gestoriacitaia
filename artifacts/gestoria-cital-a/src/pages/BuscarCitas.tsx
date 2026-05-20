@@ -350,8 +350,8 @@ function OfficialBrowserBox({
     const data = await res.json();
 
   if (data.url) {
-
-  window.location.href = data.url + "?paid=1";
+localStorage.setItem("saraPaid", "1");
+window.location.href = data.url;
 
 }
   } catch (error) {
@@ -582,7 +582,7 @@ export default function BuscarCitas() {
     preferredOffice: "",
   });
 const [formReady, setFormReady] = useState(
-  new URL(window.location.href).searchParams.get("paid") === "1"
+  localStorage.getItem("saraPaid") === "1"
 );
   const [voiceSupported, setVoiceSupported] = useState(true);
   const [isListening, setIsListening] = useState(false);
