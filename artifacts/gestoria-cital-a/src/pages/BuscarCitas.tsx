@@ -383,7 +383,7 @@ className="w-full min-h-[56px] rounded-[20px] bg-gradient-to-r from-yellow-400 v
 
 </button>
 
-)}
+
     {!saraPaid && (
                 <button
 type="button"
