@@ -423,10 +423,10 @@ window.location.href = data.url;
               </div>
               <h3 className="text-center text-white text-[18px] font-semibold leading-tight mb-3">
                 {isMa
-                  ? "هنا غادي يجيو رسائل سارة"
-                  : isEn
-                  ? "Sara's messages will appear here"
-                  : "Aquí aparecerán los mensajes de Sara"}
+  ? "مبروك 🎉 بدينا نقلبو ليك على الموعد ديالك. إلى لقيناه غادي نعلموك فواتساب بشكل مستعجل خلال 24 ساعة."
+  : isEn
+  ? "Congratulations 🎉 We have started searching for your appointment. As soon as we find it, we will urgently notify you on WhatsApp within 24 hours."
+  : "Felicidades 🎉 Hemos empezado a buscar tu cita. En cuanto la tengamos te avisaremos urgentemente por WhatsApp en menos de 24 horas."}
               </h3>
               <p className="text-center text-white/70 text-[14px] leading-relaxed">
                 {isMa
@@ -442,8 +442,8 @@ window.location.href = data.url;
                 <div className="flex justify-center mb-5">
                   <img
                     src={`${import.meta.env.BASE_URL}images/spain-flag.png`}
-                    alt="España"
-                    className="w-16"
+              alt="España"
+               className="w-20 h-14 object-cover rounded-lg shadow-[0_0_15px_rgba(255,255,255,0.15)] border border-white/20"
                   />
                 </div>
 
@@ -499,53 +499,7 @@ window.location.href = data.url;
               animate={{ opacity: 1, scale: 1 }}
               className="flex flex-col items-center text-center py-10 gap-5"
             >
-              <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center">
-                <CheckCircle2 className="w-12 h-12 text-green-600" />
-              </div>
-              <div>
-                <h2 className="text-xl font-black text-[#003366] mb-1">
-                  {ui.confirmTitle}
-                </h2>
-                <div className="mt-4 bg-gray-50 border border-gray-200 rounded-xl p-4 text-left space-y-2">
-                  <p className="text-sm">
-                    <span className="font-bold text-gray-500">{ui.procedureShort}:</span>{" "}
-                    <span className="text-gray-800">{appointmentData?.tramite || selectedTramiteLabel}</span>
-                  </p>
-                  <p className="text-sm">
-                    <span className="font-bold text-gray-500">{ui.date}:</span>{" "}
-                    <span className="text-gray-800">{finalDate}</span>
-                  </p>
-                  <p className="text-sm">
-                    <span className="font-bold text-gray-500">{ui.time}:</span>{" "}
-                    <span className="text-gray-800">{finalTime}</span>
-                  </p>
-                  <p className="text-sm">
-                    <span className="font-bold text-gray-500">{ui.office}:</span>{" "}
-                    <span className="text-gray-800">{finalOffice}</span>
-                  </p>
-                  <p className="text-sm">
-                    <span className="font-bold text-gray-500">{ui.appointmentNumber}:</span>{" "}
-                    <span className="font-mono text-green-700">{finalLocator}</span>
-                  </p>
-                </div>
-              </div>
-              <div className="flex flex-wrap gap-3 justify-center">
-                <div className="flex items-center gap-2 bg-primary/10 border border-primary/30 rounded-xl px-4 py-2 text-sm text-primary font-medium">
-                  <CheckCircle2 className="w-4 h-4" />
-                  {ui.reservationSaved}
-                </div>
-                {finalPdfUrl ? (
-                  <a
-                    href={finalPdfUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 bg-[#003366] text-white rounded-xl px-4 py-2 text-sm font-bold hover:bg-[#002244] transition-colors"
-                  >
-                    <FileText className="w-4 h-4" />
-                    {ui.downloadPdf}
-                  </a>
-                ) : null}
-              </div>
+              
             </motion.div>
           </>
         )}
