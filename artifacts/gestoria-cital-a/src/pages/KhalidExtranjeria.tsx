@@ -496,7 +496,7 @@ else if (
     ]
   });
 
-}
+
 
   } catch (err) {
 
