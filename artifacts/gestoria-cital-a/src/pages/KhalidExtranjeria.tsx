@@ -323,7 +323,89 @@ else if (
   }
 
 }
+// 🧠 كلام خالد
+if (
+  msg.type === "response.output_text.delta" &&
+  typeof msg.delta === "string"
+) {
 
+  setLastReply((prev) => prev + msg.delta);
+
+  const khalidText =
+    (
+      lastAssistantTextRef.current +
+      msg.delta
+    ).toLowerCase();
+
+  lastAssistantTextRef.current =
+    khalidText;
+
+  // 🏢 Oficina extranjería
+  if (
+    khalidText.includes("madrid") ||
+    khalidText.includes("barcelona") ||
+    khalidText.includes("valencia") ||
+    khalidText.includes("oficina") ||
+    khalidText.includes("extranjería") ||
+    khalidText.includes("extranjeria")
+  ) {
+
+    setSmartAction({
+      type: "office",
+      city: "Madrid",
+      name: "Oficina Extranjería Madrid Centro",
+      address: "Calle Silva 19",
+      phone: "912 73 90 39",
+      image:
+        "https://images.unsplash.com/photo-1528909514045-2fa4ac7a08ba?q=80&w=1200&auto=format&fit=crop"
+    });
+
+  }
+
+  // 👮 Policía
+  else if (
+    khalidText.includes("policia") ||
+    khalidText.includes("policía") ||
+    khalidText.includes("comisaria") ||
+    khalidText.includes("comisaría") ||
+    khalidText.includes("tie")
+  ) {
+
+    setSmartAction("police");
+
+  }
+
+  // 📄 Arraigo
+  else if (
+    khalidText.includes("arraigo") ||
+    khalidText.includes("residencia") ||
+    khalidText.includes("papeles")
+  ) {
+
+    setSmartAction("arraigo");
+
+  }
+
+  const isPremium =
+    localStorage.getItem("khalid_paid") === "true";
+
+  if (
+    userAskedQuestion &&
+    !freeQuestionUsed &&
+    !isPremium
+  ) {
+
+    setFreeQuestionUsed(true);
+
+    setPaymentEnabled(true);
+
+    setShowPayment(true);
+
+    stopConversation();
+
+  }
+
+}
     // 🎤 كلام المستخدم
     const transcript =
       msg?.transcript ||
