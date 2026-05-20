@@ -2254,9 +2254,10 @@ setTimeout(() => {
     voiceTexts.initialVoice;
 
 return (
-<div className="bg-background text-foreground relative min-h-screen w-full">
 
-<div className="absolute inset-0 rounded-[36px] border border-yellow-300/30 pointer-events-none shadow-[0_0_90px_rgba(255,215,0,0.18)]" />
+<div className="min-h-screen p-[2px] rounded-[32px] bg-gradient-to-b from-[#ffd76a] via-[#c9971a] to-[#5c4304] shadow-[0_0_40px_rgba(255,200,0,0.20)]">
+
+<div className="bg-background text-foreground relative min-h-screen rounded-[30px] overflow-hidden">
 
 <div
 className="fixed inset-0 z-0 opacity-25 pointer-events-none"
@@ -2266,7 +2267,7 @@ className="fixed inset-0 z-0 opacity-25 pointer-events-none"
         }}
       />
       <Navbar />
-    <main className="flex-1 relative z-10 pt-0 pb-0">
+<main className="flex-1 relative z-10 pt-2 pb-6">
         <div className="px-4 sm:px-6 py-3 max-w-7xl mx-auto w-full flex items-center justify-between">
           <div>
             <h1 className="text-xl font-display font-bold text-white flex items-center gap-2">
@@ -2279,14 +2280,13 @@ className="fixed inset-0 z-0 opacity-25 pointer-events-none"
             <p className="text-xs text-muted-foreground">{currentProcedure.name}</p>
           </div>
         </div>
-<div className="w-full max-w-none mx-auto px-2 py-2">
-<div className="w-full min-h-screen mx-auto p-[2px] rounded-[36px] bg-gradient-to-b from-[#ffd76a] via-[#c9971a] to-[#5c4304] shadow-[0_0_60px_rgba(255,200,0,0.35)]">
+<div className="w-full max-w-none mx-auto px-1 py-1">
+
  <motion.div
 initial={{ opacity: 0, y: 15 }}
 animate={{ opacity: 1, y: 0 }}
 className="
-   min-h-screen
-rounded-[34px]
+rounded-[26px]
 overflow-hidden
 bg-[#020817]/92
 backdrop-blur-xl
@@ -2355,7 +2355,7 @@ className="w-full h-[270px] object-cover border-b border-[#f6c453]/10"
 
   </div>
 </motion.div>
-</div>
+
  
 
           </div>
@@ -2652,6 +2652,7 @@ className="flex-1 h-full bg-transparent px-4 text-white placeholder:text-white/4
 <audio ref={remoteAudioRef} autoPlay playsInline className="hidden" />
       </main>
     </div>
+  </div>
   );
 }
 
