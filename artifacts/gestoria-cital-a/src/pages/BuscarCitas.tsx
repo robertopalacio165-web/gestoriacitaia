@@ -368,6 +368,66 @@ const saraPaid = localStorage.getItem("sara_paid") === "true";
 
 }}
                   {!saraPaid && (
+                <button
+type="button"
+
+onClick={async () => {
+
+  if (
+    !formData.fullName.trim() ||
+    !formData.phone.trim() ||
+    !formData.city.trim() ||
+    !formData.province.trim()
+  ) {
+    toast({
+      title: ui.missingTitle,
+      description: ui.missingDesc,
+      variant: "destructive",
+    });
+    return;
+  }
+
+  try {
+
+    const res = await fetch("/api/create-checkout-sara-inicial", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+
+      body: JSON.stringify({
+        fullName: formData.fullName,
+        phone: formData.phone,
+        email: formData.email,
+        nie: formData.nie,
+        city: formData.city,
+        province: formData.province,
+        tramite: selectedTramite,
+      }),
+    });
+
+    const data = await res.json();
+
+    if (data.url) {
+
+      localStorage.setItem("sara_paid", "true");
+
+      window.location.href = data.url;
+    }
+
+  } catch (error) {
+
+    console.error(error);
+
+    toast({
+      title: "Stripe Error",
+      description: "No se pudo abrir el pago",
+      variant: "destructive",
+    });
+
+  }
+
+}}
                   className="w-full min-h-[56px] rounded-[20px] bg-gradient-to-r from-yellow-400 via-yellow-500 to-amber-500 px-4 py-2 text-[15px] leading-tight font-black text-black shadow-[0_0_30px_rgba(255,215,0,0.35)] transition-all duration-300 hover:scale-[1.01]"
                 >
                   {isMa
@@ -387,7 +447,7 @@ const saraPaid = localStorage.getItem("sara_paid") === "true";
 
   <p className="text-white text-[14px] leading-relaxed">
     Hemos empezado automáticamente la búsqueda de tu cita.
-    Quédate atento a tu WhatsApp 📲
+ Mantente atento a las próximas notificaciones de Sara.
     Te enviaremos un mensaje en cuanto encontremos una cita disponible.
   </p>
 
@@ -396,14 +456,14 @@ const saraPaid = localStorage.getItem("sara_paid") === "true";
     <p className="text-[#25D366] text-[14px] leading-relaxed">
       🇲🇦
       راه بدينا كنقلبو ليك على الموعد ديالك 🇪🇸
-      بقا متابع الواتساب ديالك مزيان،
+ خليك متابع الرسائل الجاية من سارة
       وغادي نصيفطو ليك رسالة مباشرة ملي نلقاو الموعد.
     </p>
 
     <p className="text-blue-300 text-[14px] leading-relaxed mt-4">
       🇬🇧
       We have started searching for your appointment automatically.
-      Please stay attentive to your WhatsApp.
+     Please stay attentive to Sara's upcoming notifications.
       We will contact you as soon as we find an available appointment.
     </p>
 
