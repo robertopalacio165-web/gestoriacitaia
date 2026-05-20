@@ -412,45 +412,89 @@ console.log(
   assistantTranscript
 );
 
-// 📍 Oficina
+const text =
+  assistantTranscript.toLowerCase();
+
+// 👮 POLICÍA / TIE
 if (
-  assistantTranscript.includes("madrid") ||
-  assistantTranscript.includes("extranjería") ||
-  assistantTranscript.includes("extranjeria")
+  text.includes("policia") ||
+  text.includes("policía") ||
+  text.includes("tie") ||
+  text.includes("huellas")
 ) {
 
   setSmartAction({
-    type: "office",
-    city: "Madrid",
-    name: "Oficina Extranjería Madrid Centro",
-    address: "Calle Silva 19",
-    phone: "912 73 90 39",
+    type: "link",
+    title: "Policía y TIE",
+    description:
+      "Citas, huellas y trámites TIE",
     image:
-      "https://images.unsplash.com/photo-1528909514045-2fa4ac7a08ba?q=80&w=1200&auto=format&fit=crop"
+      "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=1200&auto=format&fit=crop",
+    buttons: [
+      {
+        label: "📅 Reservar cita",
+        url: "/sara-citas"
+      },
+      {
+        label: "📍 Maps",
+        url:
+          "https://www.google.com/maps"
+      }
+    ]
   });
 
 }
 
-// 👮 Policía
+// 🏢 EXTRANJERÍA
 else if (
-  assistantTranscript.includes("policia") ||
-  assistantTranscript.includes("policía") ||
-  assistantTranscript.includes("comisaria") ||
-  assistantTranscript.includes("comisaría") ||
-  assistantTranscript.includes("tie")
+  text.includes("extranjeria") ||
+  text.includes("extranjería") ||
+  text.includes("residencia") ||
+  text.includes("arraigo")
 ) {
 
   setSmartAction({
-    type: "police",
-    city: "Madrid",
-    name: "Comisaría Policía Nacional",
-    address: "Avenida de los Poblados",
-    phone: "091",
+    type: "link",
+    title: "Oficina Extranjería",
+    description:
+      "Información y trámites de residencia",
     image:
-      "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=1200&auto=format&fit=crop"
+      "https://images.unsplash.com/photo-1528909514045-2fa4ac7a08ba?q=80&w=1200&auto=format&fit=crop",
+    buttons: [
+      {
+        label: "📅 Pedir cita",
+        url: "/sara-citas"
+      },
+      {
+        label: "📄 Información",
+        url:
+          "https://www.inclusion.gob.es/web/migraciones"
+      }
+    ]
   });
 
 }
+
+// 🇪🇸 NACIONALIDAD
+else if (
+  text.includes("nacionalidad")
+) {
+
+  setSmartAction({
+    type: "link",
+    title: "Nacionalidad Española",
+    description:
+      "Documentos y requisitos",
+    image:
+      "https://images.unsplash.com/photo-1521295121783-8a321d551ad2?q=80&w=1200&auto=format&fit=crop",
+    buttons: [
+      {
+        label: "📄 Ver requisitos",
+        url:
+          "https://www.mjusticia.gob.es"
+      }
+    ]
+  });
 
 }
 
@@ -794,8 +838,8 @@ else if (
 
    
           </div>
-          {/* SMART ACTIONS PREMIUM */}
-{isPaid && smartAction?.type === "office" && (
+{/* SMART ACTIONS */}
+{isPaid && smartAction?.type === "link" && (
 
 <div className="mt-5 rounded-2xl border border-[#1e293b] bg-[#0b1325] p-4">
 
@@ -803,65 +847,7 @@ else if (
     <span className="text-green-400 text-lg">✨</span>
 
     <h3 className="font-bold text-white">
-      Acciones inteligentes
-    </h3>
-  </div>
-
-  <div className="rounded-2xl overflow-hidden border border-[#1e293b]">
-
-    <img
-    src={smartAction.image}
-      className="w-full h-[170px] object-cover"
-    />
-
-    <div className="p-4">
-
-      <h4 className="text-xl font-bold mb-1">
-    {smartAction.name}
-      </h4>
-
-      <p className="text-gray-400 text-sm">
-  {smartAction.address} · {smartAction.city}
-      </p>
-
-      <div className="grid grid-cols-2 gap-2 mt-4">
-
-        <button className="h-11 rounded-xl bg-[#071224] border border-[#1e293b] text-sm">
-          📍 Google Maps
-        </button>
-
-        <button className="h-11 rounded-xl bg-[#071224] border border-[#1e293b] text-sm">
-          📅 Pedir cita
-        </button>
-
-        <button className="h-11 rounded-xl bg-[#071224] border border-[#1e293b] text-sm">
-          📄 Documentos
-        </button>
-
-        <button className="h-11 rounded-xl bg-[#071224] border border-[#1e293b] text-sm">
-          📞 Llamar
-        </button>
-
-      </div>
-
-    </div>
-
-  </div>
-
-</div>
-
-)}
-      {/* POLICE CARD */}
-{/* POLICE CARD */}
-{isPaid && smartAction?.type === "police" && (
-
-<div className="mt-5 rounded-2xl border border-[#1e293b] bg-[#0b1325] p-4">
-
-  <div className="flex items-center gap-2 mb-3">
-    <span className="text-blue-400 text-lg">👮</span>
-
-    <h3 className="font-bold text-white">
-      Comisaría recomendada
+      Acción recomendada
     </h3>
   </div>
 
@@ -869,36 +855,35 @@ else if (
 
     <img
       src={smartAction.image}
-      className="w-full h-[170px] object-cover"
+      className="w-full h-[180px] object-cover"
     />
 
     <div className="p-4">
 
       <h4 className="text-xl font-bold mb-1">
-        {smartAction.name}
+        {smartAction.title}
       </h4>
 
       <p className="text-gray-400 text-sm">
-        {smartAction.address} · {smartAction.city}
+        {smartAction.description}
       </p>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-4">
+      <div className="grid grid-cols-1 gap-2 mt-4">
 
-        <button className="h-11 rounded-xl bg-[#071224] border border-[#1e293b] text-sm">
-          📍 Maps
-        </button>
+        {smartAction.buttons?.map(
+          (button: any, index: number) => (
 
-        <button className="h-11 rounded-xl bg-[#071224] border border-[#1e293b] text-sm">
-          📅 Cita TIE
-        </button>
+          <a
+            key={index}
+            href={button.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="h-11 rounded-xl bg-[#071224] border border-[#1e293b] text-sm flex items-center justify-center"
+          >
+            {button.label}
+          </a>
 
-        <button className="h-11 rounded-xl bg-[#071224] border border-[#1e293b] text-sm">
-          📄 Requisitos
-        </button>
-
-        <button className="h-11 rounded-xl bg-[#071224] border border-[#1e293b] text-sm">
-          📞 Llamar
-        </button>
+        ))}
 
       </div>
 
@@ -909,6 +894,7 @@ else if (
 </div>
 
 )}
+  
    
         </motion.div>
       </div>
