@@ -133,6 +133,9 @@ function OfficialBrowserBox({
   formReady: boolean;
 }) {
   const isMa = language === "ma";
+  const paid =
+  typeof window !== "undefined" &&
+  new URLSearchParams(window.location.search).get("paid") === "true";
   const isEn = language === "en";
 
   const formIntro = isMa
@@ -164,6 +167,7 @@ function OfficialBrowserBox({
               <p className="text-white/80 text-[13px] leading-relaxed mb-5">
                 {formIntro}
               </p>
+              {!paid && (
               <div className="w-full">
                 <div className="grid grid-cols-2 gap-2 mb-5">
                   {/* Nombre */}
@@ -387,7 +391,43 @@ function OfficialBrowserBox({
                       : "Pago seguro con Stripe"}
                   </span>
                 </div>
+</div>
 
+)}
+
+{paid && (
+
+<div className="mt-6 rounded-[28px] border-2 border-yellow-500 bg-gradient-to-b from-[#0b0b0b] to-[#050505] p-6 shadow-[0_0_35px_rgba(255,200,0,0.18)]">
+
+  <div className="text-center">
+
+    <div className="text-[24px] mb-3">
+      ✅
+    </div>
+
+    <h2 className="text-yellow-400 text-[22px] font-black mb-4">
+      {isMa
+        ? "توصلنا بالدفع ديالك"
+        : isEn
+        ? "We received your payment"
+        : "Hemos recibido tu pago"}
+    </h2>
+
+    <p className="text-white/90 text-[14px] leading-relaxed">
+      {isMa
+        ? "دابا سارة غادي تبدا تقلب ليك على الموعد ديالك. بقا متابع الرسائل ديال سارة، وغادي نعلموك مباشرة ملي نلقاو موعد فهاد 24 ساعة الجاية."
+        : isEn
+        ? "Sara will now start searching for your appointment. Stay attentive to Sara's notifications. We will notify you within the next 24 hours when an appointment becomes available."
+        : "Sara empezará ahora a buscar tu cita. Mantente atento a las notificaciones de Sara. Te avisaremos dentro de las próximas 24 horas cuando encontremos una cita disponible."}
+    </p>
+
+  </div>
+
+</div>
+
+)}
+
+{hasRealAppointment && (
                 <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
                   <span className="rounded-full bg-white px-3 py-1 text-[11px] font-bold text-[#1434CB]">VISA</span>
                   <span className="rounded-full bg-white px-3 py-1 text-[11px] font-bold text-[#EB001B]">Mastercard</span>
