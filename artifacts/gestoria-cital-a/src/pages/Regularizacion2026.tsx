@@ -2254,8 +2254,7 @@ setTimeout(() => {
     voiceTexts.initialVoice;
 
 return (
-
-<div className="min-h-screen bg-background text-foreground relative flex flex-col border-2 border-[#d4a017] rounded-[36px] shadow-[0_0_60px_rgba(255,200,0,0.25)] overflow-hidden">
+<div className="bg-background text-foreground relative min-h-screen w-full">
 
 <div className="absolute inset-0 rounded-[36px] border border-yellow-300/30 pointer-events-none shadow-[0_0_90px_rgba(255,215,0,0.18)]" />
 
@@ -2280,12 +2279,13 @@ className="fixed inset-0 z-0 opacity-25 pointer-events-none"
             <p className="text-xs text-muted-foreground">{currentProcedure.name}</p>
           </div>
         </div>
-<div className="w-full max-w-none mx-auto px-0">
-<div className="w-full mx-auto p-[2px] rounded-[36px] bg-gradient-to-b from-[#ffd76a] via-[#c9971a] to-[#5c4304] shadow-[0_0_60px_rgba(255,200,0,0.35)]">
+<div className="w-full max-w-none mx-auto px-2 py-2">
+<div className="w-full min-h-screen mx-auto p-[2px] rounded-[36px] bg-gradient-to-b from-[#ffd76a] via-[#c9971a] to-[#5c4304] shadow-[0_0_60px_rgba(255,200,0,0.35)]">
  <motion.div
 initial={{ opacity: 0, y: 15 }}
 animate={{ opacity: 1, y: 0 }}
 className="
+   min-h-screen
 rounded-[34px]
 overflow-hidden
 bg-[#020817]/92
