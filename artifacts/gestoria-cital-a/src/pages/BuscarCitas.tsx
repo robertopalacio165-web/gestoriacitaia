@@ -427,15 +427,7 @@ function OfficialBrowserBox({
 
 )}
 
-{hasRealAppointment && (
-                <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
-                  <span className="rounded-full bg-white px-3 py-1 text-[11px] font-bold text-[#1434CB]">VISA</span>
-                  <span className="rounded-full bg-white px-3 py-1 text-[11px] font-bold text-[#EB001B]">Mastercard</span>
-                  <span className="rounded-full bg-white px-3 py-1 text-[11px] font-bold text-black"> Pay</span>
-                  <span className="rounded-full bg-white px-3 py-1 text-[11px] font-bold text-black">G Pay</span>
-                </div>
-              </div>
-            </div>
+
 
             {hasRealAppointment && (
               <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4">
