@@ -309,9 +309,12 @@ const saraPaid = localStorage.getItem("sara_paid") === "true";
                     : "Sara empezará a buscar tu cita automáticamente"}
                 </p>
 
-                <button
-                  type="button"
-            onClick={async () => {
+      {!saraPaid && (
+
+<button
+type="button"
+
+onClick={async () => {
 
   if (
     !formData.fullName.trim() ||
@@ -348,12 +351,13 @@ const saraPaid = localStorage.getItem("sara_paid") === "true";
 
     const data = await res.json();
 
- if (data.url) {
+    if (data.url) {
 
-  localStorage.setItem("sara_paid", "true");
+      localStorage.setItem("sara_paid", "true");
 
-  window.location.href = data.url;
-}
+      window.location.href = data.url;
+    }
+
   } catch (error) {
 
     console.error(error);
@@ -367,6 +371,19 @@ const saraPaid = localStorage.getItem("sara_paid") === "true";
   }
 
 }}
+
+className="w-full min-h-[56px] rounded-[20px] bg-gradient-to-r from-yellow-400 via-yellow-500 to-amber-500 px-4 py-2 text-[15px] leading-tight font-black text-black shadow-[0_0_30px_rgba(255,215,0,0.35)] transition-all duration-300 hover:scale-[1.01]"
+>
+
+  {isMa
+    ? "🔐 حجز وبدء البحث"
+    : isEn
+    ? "🔐 Reserve and start search"
+    : "🔐 Reservar y empezar búsqueda"}
+
+</button>
+
+)}
     {!saraPaid && (
                 <button
 type="button"
