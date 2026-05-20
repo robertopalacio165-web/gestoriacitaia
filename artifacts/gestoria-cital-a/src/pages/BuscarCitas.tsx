@@ -367,7 +367,7 @@ const saraPaid = localStorage.getItem("sara_paid") === "true";
   }
 
 }}
-                  {!saraPaid && (
+           {!saraPaid ? (
                 <button
 type="button"
 
@@ -410,24 +410,7 @@ onClick={async () => {
 
     if (data.url) {
 
-      localStorage.setItem("sara_paid", "true");
-
-      window.location.href = data.url;
-    }
-
-  } catch (error) {
-
-    console.error(error);
-
-    toast({
-      title: "Stripe Error",
-      description: "No se pudo abrir el pago",
-      variant: "destructive",
-    });
-
-  }
-
-}}
+ 
                   className="w-full min-h-[56px] rounded-[20px] bg-gradient-to-r from-yellow-400 via-yellow-500 to-amber-500 px-4 py-2 text-[15px] leading-tight font-black text-black shadow-[0_0_30px_rgba(255,215,0,0.35)] transition-all duration-300 hover:scale-[1.01]"
                 >
                   {isMa
