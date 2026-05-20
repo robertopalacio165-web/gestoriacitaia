@@ -146,7 +146,7 @@ function OfficialBrowserBox({
     : isEn
     ? "Official integrated panel"
     : "Panel oficial integrado";
-
+const saraPaid = localStorage.getItem("sara_paid") === "true";
   return (
     <motion.div
       initial={{ opacity: 0, x: 20 }}
@@ -311,7 +311,63 @@ function OfficialBrowserBox({
 
                 <button
                   type="button"
-                  onClick={onFormSubmit}
+            onClick={async () => {
+
+  if (
+    !formData.fullName.trim() ||
+    !formData.phone.trim() ||
+    !formData.city.trim() ||
+    !formData.province.trim()
+  ) {
+    toast({
+      title: ui.missingTitle,
+      description: ui.missingDesc,
+      variant: "destructive",
+    });
+    return;
+  }
+
+  try {
+
+    const res = await fetch("/api/create-checkout-sara-inicial", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+
+      body: JSON.stringify({
+        fullName: formData.fullName,
+        phone: formData.phone,
+        email: formData.email,
+        nie: formData.nie,
+        city: formData.city,
+        province: formData.province,
+        tramite: selectedTramite,
+      }),
+    });
+
+    const data = await res.json();
+
+ if (data.url) {
+
+  localStorage.setItem("sara_paid", "true");
+
+  window.location.href = data.url;
+}
+  } catch (error) {
+
+    console.error(error);
+
+    toast({
+      title: "Stripe Error",
+      description: "No se pudo abrir el pago",
+      variant: "destructive",
+    });
+
+  }
+
+}}
+                  {!saraPaid && (
                   className="w-full min-h-[56px] rounded-[20px] bg-gradient-to-r from-yellow-400 via-yellow-500 to-amber-500 px-4 py-2 text-[15px] leading-tight font-black text-black shadow-[0_0_30px_rgba(255,215,0,0.35)] transition-all duration-300 hover:scale-[1.01]"
                 >
                   {isMa
@@ -320,7 +376,42 @@ function OfficialBrowserBox({
                     ? "🔐 Reserve and start search"
                     : "🔐 Reservar y empezar búsqueda"}
                 </button>
+)}
+             {saraPaid && (
 
+<div className="mt-5 rounded-[24px] border border-yellow-500 bg-gradient-to-b from-[#0b1220] to-black p-5 text-center shadow-[0_0_35px_rgba(255,200,0,0.18)]">
+
+  <div className="text-yellow-400 text-[20px] font-bold mb-3">
+    ✅ Sara ya está buscando tu cita
+  </div>
+
+  <p className="text-white text-[14px] leading-relaxed">
+    Hemos empezado automáticamente la búsqueda de tu cita.
+    Quédate atento a tu WhatsApp 📲
+    Te enviaremos un mensaje en cuanto encontremos una cita disponible.
+  </p>
+
+  <div className="mt-4 border-t border-yellow-500/20 pt-4">
+
+    <p className="text-[#25D366] text-[14px] leading-relaxed">
+      🇲🇦
+      راه بدينا كنقلبو ليك على الموعد ديالك 🇪🇸
+      بقا متابع الواتساب ديالك مزيان،
+      وغادي نصيفطو ليك رسالة مباشرة ملي نلقاو الموعد.
+    </p>
+
+    <p className="text-blue-300 text-[14px] leading-relaxed mt-4">
+      🇬🇧
+      We have started searching for your appointment automatically.
+      Please stay attentive to your WhatsApp.
+      We will contact you as soon as we find an available appointment.
+    </p>
+
+  </div>
+
+</div>
+
+)} 
                 <div className="mt-5 flex items-center justify-center gap-2 text-[11px] text-gray-300">
                   <Shield className="w-3 h-3 text-yellow-400" />
                   <span>
