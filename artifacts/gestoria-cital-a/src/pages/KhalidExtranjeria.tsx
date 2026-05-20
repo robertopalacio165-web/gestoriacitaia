@@ -496,8 +496,8 @@ else if (
     ]
   });
 
-
-
+}
+}
   } catch (err) {
 
     console.error(err);
