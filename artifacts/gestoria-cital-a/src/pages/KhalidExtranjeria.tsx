@@ -38,7 +38,10 @@ const [lastTranscript, setLastTranscript] = useState("");
 const [lastReply, setLastReply] = useState("");
  const [smartAction, setSmartAction] =
   useState<any>(null);
-  const [hasStartedConversation, setHasStartedConversation] = useState(false);
+const [hasStartedConversation, setHasStartedConversation] =
+  useState(
+    localStorage.getItem("khalid_started") === "true"
+  );
  
   
 useEffect(() => {
