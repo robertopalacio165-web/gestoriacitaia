@@ -415,8 +415,8 @@ window.location.href = data.url;
           <>
             <div className="rounded-[26px] border border-emerald-500/40 bg-[#07111f] px-5 py-7 mb-5 shadow-[0_0_30px_rgba(16,185,129,0.08)]">
               <div className="flex justify-center mb-4">
-                <div className="w-12 h-12 rounded-full border border-emerald-500/30 bg-emerald-500/10 flex items-center justify-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="w-7 h-7 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div className="w-14 h-14 rounded-full border-2 border-emerald-400 bg-emerald-500/15 flex items-center justify-center shadow-[0_0_20px_rgba(16,185,129,0.35)]">
+          <CheckCircle2 className="w-8 h-8 text-emerald-400" />
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16h6" />
                   </svg>
                 </div>
@@ -441,7 +441,7 @@ window.location.href = data.url;
               <div className="px-6 py-8 bg-[radial-gradient(circle_at_top,rgba(255,200,0,0.12),transparent_60%)]">
                 <div className="flex justify-center mb-5">
                   <img
-                    src={`${import.meta.env.BASE_URL}images/spain-flag.png`}
+            src="https://upload.wikimedia.org/wikipedia/en/9/9a/Flag_of_Spain.svg"
               alt="España"
                className="w-20 h-14 object-cover rounded-lg shadow-[0_0_15px_rgba(255,255,255,0.15)] border border-white/20"
                   />
