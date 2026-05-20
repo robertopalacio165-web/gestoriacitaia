@@ -2257,7 +2257,7 @@ return (
 
 <div className="min-h-screen p-[2px] rounded-[32px] bg-gradient-to-b from-[#ffd76a] via-[#c9971a] to-[#5c4304] shadow-[0_0_40px_rgba(255,200,0,0.20)]">
 
-<div className="bg-background text-foreground relative min-h-screen rounded-[30px] overflow-hidden">
+<div className="w-full bg-background text-foreground relative min-h-screen rounded-[30px] overflow-hidden">
 
 <div
 className="fixed inset-0 z-0 opacity-25 pointer-events-none"
@@ -2268,7 +2268,7 @@ className="fixed inset-0 z-0 opacity-25 pointer-events-none"
       />
       <Navbar />
 <main className="flex-1 relative z-10 pt-2 pb-6">
-        <div className="px-4 sm:px-6 py-3 max-w-7xl mx-auto w-full flex items-center justify-between">
+   <div className="px-4 sm:px-6 py-3 w-full flex items-center justify-between">
           <div>
             <h1 className="text-xl font-display font-bold text-white flex items-center gap-2">
               {t("reg_title")}
@@ -2280,8 +2280,8 @@ className="fixed inset-0 z-0 opacity-25 pointer-events-none"
             <p className="text-xs text-muted-foreground">{currentProcedure.name}</p>
           </div>
         </div>
-<div className="w-full max-w-none mx-auto px-1 py-1">
 
+<div className="w-full px-1 py-1">
  <motion.div
 initial={{ opacity: 0, y: 15 }}
 animate={{ opacity: 1, y: 0 }}
