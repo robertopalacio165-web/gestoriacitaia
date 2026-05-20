@@ -2258,7 +2258,7 @@ return (
 <div className="min-h-screen p-[2px] rounded-[32px] bg-gradient-to-b from-[#ffd76a] via-[#c9971a] to-[#5c4304] shadow-[0_0_40px_rgba(255,200,0,0.20)]">
 
 <div className="w-full bg-background text-foreground relative min-h-screen rounded-[30px] overflow-hidden">
-
+<Navbar />
 <div
 className="fixed inset-0 z-0 opacity-25 pointer-events-none"
         style={{
@@ -2266,11 +2266,7 @@ className="fixed inset-0 z-0 opacity-25 pointer-events-none"
             "radial-gradient(ellipse 70% 40% at 30% 20%, rgba(34,197,94,0.1), transparent), radial-gradient(ellipse 60% 40% at 80% 80%, rgba(59,130,246,0.08), transparent)",
         }}
       />
-<div className="px-[2px] pt-[10px] pb-[2px]">
-  <div className="rounded-t-[28px] overflow-hidden">
-    <Navbar />
-  </div>
-</div>
+
 <main className="flex-1 relative z-10 pt-2 pb-6">
    <div className="px-4 sm:px-6 py-3 w-full flex items-center justify-between">
           <div>
