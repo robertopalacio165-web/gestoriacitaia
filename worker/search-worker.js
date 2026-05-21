@@ -35,194 +35,388 @@ async function runWorker() {
 
     console.log(client.customer_name);
 
-    /*
-    =========================
-    PLAYWRIGHT START
-    =========================
-    */
+    let browser;
 
-    const browser = await chromium.launch({
+    try {
 
-      headless: true,
+      /*
+      =========================
+      PLAYWRIGHT START
+      =========================
+      */
 
-      args: [
-        "--disable-blink-features=AutomationControlled",
-      ],
+      browser = await chromium.launch({
 
-    });
+        headless: true,
 
-    const page = await browser.newPage({
+        args: [
+          "--disable-blink-features=AutomationControlled",
+          "--no-sandbox",
+          "--disable-setuid-sandbox",
+        ],
 
-      viewport: {
-        width: 1280 + Math.floor(Math.random() * 100),
-        height: 720 + Math.floor(Math.random() * 100),
-      },
+      });
 
-      userAgent:
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125 Safari/537.36",
+      const page = await browser.newPage({
 
-    });
+        viewport: {
+          width: 1280 + Math.floor(Math.random() * 100),
+          height: 720 + Math.floor(Math.random() * 100),
+        },
 
-    await page.goto(
-      "https://icp.administracionelectronica.gob.es/icpplus/index.html"
-    );
+        userAgent:
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125 Safari/537.36",
 
-    console.log("✅ ICP opened");
+      });
 
-    /*
-    =========================
-    RANDOM DELAY
-    =========================
-    */
+      /*
+      =========================
+      OPEN ICP
+      =========================
+      */
 
-    await page.waitForTimeout(
-      2000 + Math.floor(Math.random() * 4000)
-    );
+      await page.goto(
+        "https://icp.administracionelectronica.gob.es/icpplus/index.html",
+        {
+          waitUntil: "domcontentloaded",
+          timeout: 60000,
+        }
+      );
 
-    /*
-    =========================
-    SELECT PROVINCIA
-    =========================
-    */
+      console.log("✅ ICP opened");
 
-    await page.selectOption(
-      'select[name="form"]',
-      {
-        label: "Barcelona",
+      /*
+      =========================
+      RANDOM DELAY
+      =========================
+      */
+
+      await page.waitForTimeout(
+        2000 + Math.floor(Math.random() * 4000)
+      );
+
+      /*
+      =========================
+      SELECT PROVINCIA
+      =========================
+      */
+
+      const provinceToSearch =
+        client.province || "Barcelona";
+
+      await page.selectOption(
+        'select[name="form"]',
+        {
+          label: provinceToSearch,
+        }
+      );
+
+      console.log("✅ Provincia selected");
+
+      await page.waitForTimeout(
+        1500 + Math.floor(Math.random() * 3000)
+      );
+
+      /*
+      =========================
+      CLICK ACEPTAR
+      =========================
+      */
+
+      await page.click("#btnAceptar");
+
+      console.log("✅ Accept clicked");
+
+      await page.waitForTimeout(
+        2000 + Math.floor(Math.random() * 3000)
+      );
+
+      /*
+      =========================
+      SELECT TRAMITE
+      =========================
+      */
+
+      await page.waitForSelector(
+        'select[name="tramiteGrupo[0]"]',
+        {
+          timeout: 30000,
+        }
+      );
+
+      await page.selectOption(
+        'select[name="tramiteGrupo[0]"]',
+        {
+          label: "POLICIA-TOMA DE HUELLA",
+        }
+      );
+
+      console.log("✅ Tramite selected");
+
+      await page.waitForTimeout(
+        1500 + Math.floor(Math.random() * 3000)
+      );
+
+      /*
+      =========================
+      CLICK ENTRAR
+      =========================
+      */
+
+      const buttons = await page.$$("input");
+
+      for (const btn of buttons) {
+
+        const value =
+          await btn.getAttribute("value");
+
+        if (
+          value &&
+          value.toLowerCase().includes("entrar")
+        ) {
+
+          await btn.click();
+
+          console.log("✅ Entrar clicked");
+
+          break;
+        }
       }
-    );
 
-    console.log("✅ Provincia selected");
+      await page.waitForTimeout(
+        3000 + Math.floor(Math.random() * 5000)
+      );
 
-    await page.waitForTimeout(
-      1500 + Math.floor(Math.random() * 3000)
-    );
+      /*
+      =========================
+      SCREENSHOT PROOF
+      =========================
+      */
 
-    /*
-    =========================
-    CLICK ACEPTAR
-    =========================
-    */
+      const screenshotName =
+        `proof-${Date.now()}.png`;
 
-    await page.click("#btnAceptar");
+      await page.screenshot({
+        path: screenshotName,
+        fullPage: true,
+      });
 
-    console.log("✅ Accept clicked");
+      console.log("📸 Screenshot saved");
 
-    await page.waitForTimeout(
-      1500 + Math.floor(Math.random() * 3000)
-    );
+      /*
+      =========================
+      REAL DETECTION
+      =========================
+      */
 
-    /*
-    =========================
-    SELECT TRAMITE
-    =========================
-    */
+      const content = await page.content();
 
-    await page.waitForSelector(
-      'select[name="tramiteGrupo[0]"]'
-    );
+      const hasNoAppointments =
+        content.includes(
+          "En este momento no hay citas disponibles"
+        );
 
-    await page.selectOption(
-      'select[name="tramiteGrupo[0]"]',
-      {
-        label: "POLICIA-TOMA DE HUELLA",
+      const hasError =
+        content.includes(
+          "No se pudo obtener información"
+        );
+
+      /*
+      =========================
+      REAL FOUND
+      =========================
+      */
+
+      if (!hasNoAppointments && !hasError) {
+
+        console.log("🔥 POSSIBLE REAL CITA FOUND");
+
+        const token =
+          Math.random()
+            .toString(36)
+            .substring(2, 12);
+
+        /*
+        =========================
+        SAVE APPOINTMENT
+        =========================
+        */
+
+        const { data: foundData } =
+          await supabase
+            .from("found_appointments")
+            .insert([
+              {
+                queue_id: client.id,
+
+                customer_name:
+                  client.customer_name,
+
+                customer_phone:
+                  client.customer_phone,
+
+                customer_email:
+                  client.customer_email,
+
+                tramite:
+                  client.tramite,
+
+                province:
+                  client.province,
+
+                city:
+                  client.city,
+
+                appointment_date:
+                  "PENDING",
+
+                appointment_hour:
+                  "PENDING",
+
+                office:
+                  "PENDING",
+
+                confirmation_token:
+                  token,
+
+                payment_status:
+                  "pending",
+
+                provider:
+                  "sara_worker",
+              },
+            ])
+            .select()
+            .single();
+
+        /*
+        =========================
+        UPDATE QUEUE
+        =========================
+        */
+
+        await supabase
+          .from("search_queue")
+          .update({
+            status: "found",
+            found: true,
+            last_check: new Date(),
+          })
+          .eq("id", client.id);
+
+        /*
+        =========================
+        CONFIRM LINK
+        =========================
+        */
+
+        const confirmLink =
+`${process.env.NEXT_PUBLIC_URL}/confirmar?token=${token}`;
+
+        console.log("🔗 Confirm Link:");
+        console.log(confirmLink);
+
+        /*
+        =========================
+        WHATSAPP READY
+        =========================
+        */
+
+        console.log("📲 WhatsApp ready");
+
+        /*
+        =========================
+        MAKE WEBHOOK
+        =========================
+        */
+
+        if (process.env.MAKE_WEBHOOK_FOUND) {
+
+          await fetch(
+            process.env.MAKE_WEBHOOK_FOUND,
+            {
+              method: "POST",
+
+              headers: {
+                "Content-Type":
+                  "application/json",
+              },
+
+              body: JSON.stringify({
+                type: "FOUND_CITA",
+
+                appointment:
+                  foundData,
+
+                confirmLink,
+
+                screenshot:
+                  screenshotName,
+              }),
+            }
+          );
+
+          console.log(
+            "✅ Webhook sent to Make"
+          );
+        }
+
+      } else {
+
+        console.log(
+          "❌ No citas disponibles"
+        );
+
+        /*
+        =========================
+        UPDATE LAST CHECK
+        =========================
+        */
+
+        await supabase
+          .from("search_queue")
+          .update({
+            last_check: new Date(),
+          })
+          .eq("id", client.id);
+
       }
-    );
 
-    console.log("✅ Tramite selected");
+      /*
+      =========================
+      CLOSE BROWSER
+      =========================
+      */
 
-    /*
-    =========================
-    WAIT
-    =========================
-    */
+      await browser.close();
 
-    await page.waitForTimeout(
-      3000 + Math.floor(Math.random() * 4000)
-    );
+      /*
+      =========================
+      RANDOM GLOBAL DELAY
+      =========================
+      */
 
-    /*
-    =========================
-    FAKE DETECTION
-    =========================
-    */
+      await new Promise((resolve) =>
+        setTimeout(
+          resolve,
+          5000 +
+            Math.floor(
+              Math.random() * 10000
+            )
+        )
+      );
 
-    const fakeFound = Math.random() > 0.7;
+    } catch (err) {
 
-    if (fakeFound) {
+      console.log("❌ Worker Error");
 
-      console.log("✅ Cita encontrada");
+      console.log(err);
 
-      const token =
-        Math.random().toString(36).substring(2, 12);
-
-      await supabase
-        .from("found_appointments")
-        .insert([
-          {
-            queue_id: client.id,
-
-            customer_name: client.customer_name,
-
-            customer_phone: client.customer_phone,
-
-            customer_email: client.customer_email,
-
-            tramite: client.tramite,
-
-            province: client.province,
-
-            city: client.city,
-
-            appointment_date: "28/05/2026",
-
-            appointment_hour: "09:30",
-
-            office: "Policía Madrid Centro",
-
-            confirmation_token: token,
-
-            payment_status: "pending",
-
-            provider: "sara_worker",
-          },
-        ]);
-
-      await supabase
-        .from("search_queue")
-        .update({
-          status: "found",
-        })
-        .eq("id", client.id);
-
-      console.log("📲 Ready for WhatsApp");
-
-    } else {
-
-      console.log("❌ No cita found");
+      if (browser) {
+        await browser.close();
+      }
 
     }
-
-    /*
-    =========================
-    CLOSE BROWSER
-    =========================
-    */
-
-    await browser.close();
-
-    /*
-    =========================
-    RANDOM GLOBAL DELAY
-    =========================
-    */
-
-    await new Promise((resolve) =>
-      setTimeout(
-        resolve,
-        5000 + Math.floor(Math.random() * 10000)
-      )
-    );
 
   }
 
