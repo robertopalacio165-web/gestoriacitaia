@@ -276,6 +276,21 @@ const translations: AllTranslations = {
     reg_agent_role: "Especialista en Extranjería",
     reg_payment_agent_message:
       "Para continuar con tu Regularización 2026 y presentar tu solicitud, activa tu plan.",
+    khalidDescription:
+  "Especialista profesional en extranjería española para marroquíes en España. Pregunta sobre residencia, papeles, policía, nacionalidad, arraigo, trabajo, estudios y cualquier problema legal relacionado con inmigración.",
+
+unlockKhalid: "Desbloquea a Khalid",
+
+premiumDescription:
+  "Acceso ilimitado a respuestas y asesoría personalizada.",
+
+unlockNow: "Desbloquear ahora",
+
+securePayment: "Pago seguro con Stripe",
+
+endConversation: "Finalizar conversación",
+
+talkToKhalid: "Hablar con Khalid",
   },
 
   en: {
@@ -452,6 +467,21 @@ const translations: AllTranslations = {
     buscar_subtitle: "Search for available appointments quickly",
     reg_title: "Regularization 2026",
     reg_sub: "Find out if you meet the requirements and prepare your case with AI support",
+    khalidDescription:
+  "Professional Spanish immigration specialist for Moroccans in Spain. Ask about residency, police, nationality, work, studies or any immigration legal issue.",
+
+unlockKhalid: "Unlock Khalid",
+
+premiumDescription:
+  "Unlimited access to answers and personalized assistance.",
+
+unlockNow: "Unlock now",
+
+securePayment: "Secure payment with Stripe",
+
+endConversation: "End conversation",
+
+talkToKhalid: "Talk to Khalid",
   },
 
   darija: {
@@ -628,6 +658,21 @@ const translations: AllTranslations = {
     buscar_subtitle: "قلب على المواعيد المتاحة بسرعة",
     reg_title: "التسوية 2026",
     reg_sub: "عرف واش فيك الشروط وجهز الملف ديالك بمساعدة الذكاء الاصطناعي",
+    khalidDescription:
+  "خبير فالهجرة والأوراق القانونية فإسبانيا للمغاربة. سول على الإقامة، البوليس، الجنسية، الخدمة، الدراسة وأي مشكل متعلق بالهجرة.",
+
+unlockKhalid: "فتح خالد",
+
+premiumDescription:
+  "ولوج كامل للأجوبة والمساعدة الخاصة.",
+
+unlockNow: "فتح الآن",
+
+securePayment: "دفع آمن عبر Stripe",
+
+endConversation: "إنهاء المحادثة",
+
+talkToKhalid: "تكلم مع خالد",
   },
 };
 
