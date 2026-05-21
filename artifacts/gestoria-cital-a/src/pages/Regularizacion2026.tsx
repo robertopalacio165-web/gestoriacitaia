@@ -2304,7 +2304,7 @@ relative
       loop
       playsInline
       poster={`${import.meta.env.BASE_URL}images/avatar-mohamed.png`}
-className="w-full h-[270px] object-cover border-b border-[#f6c453]/10"
+className="w-full h-[270px] md:h-[520px] object-cover md:object-contain bg-black border-b border-[#f6c453]/10"
       
       >
       <source
