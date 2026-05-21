@@ -578,7 +578,7 @@ else if (
     <div className="min-h-screen bg-[#020817] text-white">
       <Navbar />
 
-      <div className="max-w-md mx-auto px-4 pt-5 pb-20">
+   <div className="w-full max-w-[1100px] mx-auto px-4 pt-5 pb-20">
 <div className="mb-3">
           <h1 className="text-3xl font-bold">
             Khalid
@@ -843,7 +843,7 @@ else if (
     Miles de personas ya han confiado en nosotros
   </h3>
 
- <div className="grid grid-cols-4 gap-3">
+ <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
 
     <div className="rounded-[24px] border border-blue-500/20 bg-[#08111f] p-3 text-center" >
       <div className="text-3xl mb-2">👥</div>
