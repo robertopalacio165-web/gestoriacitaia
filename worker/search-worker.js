@@ -205,11 +205,96 @@ async function runWorker() {
 
       /*
       =========================
-      REAL DETECTION
+      PAGE CONTENT
       =========================
       */
 
       const content = await page.content();
+
+      /*
+      =========================
+      EXTRACTION
+      =========================
+      */
+
+      let extractedDate = "PENDING";
+
+      let extractedHour = "PENDING";
+
+      let extractedOffice = "PENDING";
+
+      try {
+
+        const bodyText =
+          await page.locator("body").innerText();
+
+        /*
+        DATE
+        */
+
+        const dateMatch =
+          bodyText.match(
+            /\b\d{2}\/\d{2}\/\d{4}\b/
+          );
+
+        if (dateMatch) {
+          extractedDate = dateMatch[0];
+        }
+
+        /*
+        HOUR
+        */
+
+        const hourMatch =
+          bodyText.match(
+            /\b\d{2}:\d{2}\b/
+          );
+
+        if (hourMatch) {
+          extractedHour = hourMatch[0];
+        }
+
+        /*
+        OFFICE
+        */
+
+        if (
+          bodyText.includes("POLICIA")
+        ) {
+
+          extractedOffice =
+            "POLICIA";
+
+        }
+
+        console.log(
+          "📅 Date:",
+          extractedDate
+        );
+
+        console.log(
+          "🕒 Hour:",
+          extractedHour
+        );
+
+        console.log(
+          "🏢 Office:",
+          extractedOffice
+        );
+
+      } catch (extractErr) {
+
+        console.log(
+          "❌ Extraction failed"
+        );
+
+      }
+
+      /*
+      =========================
+      DETECTION
+      =========================
+      */
 
       const hasNoAppointments =
         content.includes(
@@ -223,13 +308,15 @@ async function runWorker() {
 
       /*
       =========================
-      REAL FOUND
+      FOUND APPOINTMENT
       =========================
       */
 
       if (!hasNoAppointments && !hasError) {
 
-        console.log("🔥 POSSIBLE REAL CITA FOUND");
+        console.log(
+          "🔥 POSSIBLE REAL CITA FOUND"
+        );
 
         const token =
           Math.random()
@@ -237,9 +324,7 @@ async function runWorker() {
             .substring(2, 12);
 
         /*
-        =========================
         SAVE APPOINTMENT
-        =========================
         */
 
         const { data: foundData } =
@@ -268,13 +353,13 @@ async function runWorker() {
                   client.city,
 
                 appointment_date:
-                  "PENDING",
+                  extractedDate,
 
                 appointment_hour:
-                  "PENDING",
+                  extractedHour,
 
                 office:
-                  "PENDING",
+                  extractedOffice,
 
                 confirmation_token:
                   token,
@@ -290,9 +375,7 @@ async function runWorker() {
             .single();
 
         /*
-        =========================
         UPDATE QUEUE
-        =========================
         */
 
         await supabase
@@ -305,9 +388,7 @@ async function runWorker() {
           .eq("id", client.id);
 
         /*
-        =========================
         CONFIRM LINK
-        =========================
         */
 
         const confirmLink =
@@ -317,17 +398,13 @@ async function runWorker() {
         console.log(confirmLink);
 
         /*
-        =========================
         WHATSAPP READY
-        =========================
         */
 
         console.log("📲 WhatsApp ready");
 
         /*
-        =========================
         MAKE WEBHOOK
-        =========================
         */
 
         if (process.env.MAKE_WEBHOOK_FOUND) {
@@ -368,9 +445,7 @@ async function runWorker() {
         );
 
         /*
-        =========================
         UPDATE LAST CHECK
-        =========================
         */
 
         await supabase
