@@ -837,18 +837,18 @@ else if (
                 con inmigración.
               </p>
             </div>
-<div className="mt-5 rounded-[30px] border border-[#18314d] bg-gradient-to-b from-[#071224] to-[#020817] p-4 shadow-[0_0_30px_rgba(0,150,255,0.05)]">
+<div className="mt-5 rounded-[30px] border border-[#18314d] bg-gradient-to-b from-[#071224] to-[#020817] p-3 shadow-[0_0_20px_rgba(0,150,255,0.04)]">
 
-  <h3 className="text-center text-[#42ff87] font-black text-[18px] leading-tight mb-4">
+ <h3 className="text-center text-[#42ff87] font-black text-[15px] leading-tight mb-3">
     Miles de personas ya han confiado en nosotros
   </h3>
 
-  <div className="grid grid-cols-2 gap-3">
+ <div className="grid grid-cols-2 gap-2">
 
     <div className="rounded-2xl border border-green-500/20 bg-[#08111f] p-3 text-center">
       <div className="text-3xl mb-2">👥</div>
 
-      <div className="text-green-400 text-[34px] font-black leading-none">
+      <div className="text-green-400 text-[24px] font-black leading-none">
         18.420+
       </div>
 
@@ -860,7 +860,7 @@ else if (
     <div className="rounded-2xl border border-blue-500/20 bg-[#08111f] p-3 text-center">
       <div className="text-3xl mb-2">🛡️</div>
 
-      <div className="text-blue-400 text-[34px] font-black leading-none">
+      <div className="text-blue-400 text-[24px] font-black leading-none">
         97%
       </div>
 
@@ -872,7 +872,7 @@ else if (
     <div className="rounded-2xl border border-purple-500/20 bg-[#08111f] p-3 text-center">
       <div className="text-3xl mb-2">⏱️</div>
 
-      <div className="text-purple-400 text-[34px] font-black leading-none">
+      <div className="text-purple-400 text-[24px] font-black leading-none">
         4 min
       </div>
 
@@ -884,7 +884,7 @@ else if (
     <div className="rounded-2xl border border-yellow-500/20 bg-[#08111f] p-3 text-center">
       <div className="text-3xl mb-2">🎧</div>
 
-      <div className="text-yellow-400 text-[34px] font-black leading-none">
+      <div className="text-yellow-400 text-[24px] font-black leading-none">
         100%
       </div>
 
