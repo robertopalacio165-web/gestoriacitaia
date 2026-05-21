@@ -838,7 +838,7 @@ else if (
               </p>
             </div>
 <div className="mt-5 rounded-[34px] border border-[#1e3a5f] bg-gradient-to-b from-[#071224] via-[#04101d] to-[#020817] p-5 shadow-[0_0_50px_rgba(0,150,255,0.08)]"
-
+<div>
   <h3 className="text-center text-[#42ff87] font-black text-[23px] leading-tight mb-4">
     Miles de personas ya han confiado en nosotros
   </h3>
