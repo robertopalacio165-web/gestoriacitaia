@@ -429,12 +429,15 @@ if (
     title: "Policía y TIE",
     description:
       "Citas, huellas y trámites TIE",
-    image:
-      "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=1200&auto=format&fit=crop",
+image: `https://maps.googleapis.com/maps/api/staticmap?center=${
+  detectedCity || "Madrid"
+}&zoom=15&size=1200x600&maptype=roadmap&markers=color:blue|${
+  detectedCity || "Madrid"
+}`,
     buttons: [
       {
         label: "📅 Reservar cita",
-      url: "/buscar-citas"
+ url: "/sara-citas"
       },
       {
         label: "📍 Maps",
@@ -448,19 +451,64 @@ if (
 
 // 🏢 EXTRANJERÍA
 else if (
+
+  // 🌍 extranjería
   text.includes("extranjeria") ||
   text.includes("extranjería") ||
+  text.includes("inmigracion") ||
+  text.includes("inmigración") ||
   text.includes("residencia") ||
-  text.includes("arraigo")
-) {
+  text.includes("arraigo") ||
+  text.includes("asilo") ||
+  text.includes("refugio") ||
+  text.includes("visado") ||
+  text.includes("visa") ||
+  text.includes("estancia") ||
+  text.includes("permiso") ||
+  text.includes("renovacion") ||
+  text.includes("renovación") ||
+
+  // 📄 documentos
+  text.includes("nie") ||
+  text.includes("tie") ||
+  text.includes("huellas") ||
+  text.includes("pasaporte") ||
+  text.includes("dni") ||
+
+  // 👮 policía
+  text.includes("policia") ||
+  text.includes("policía") ||
+  text.includes("comisaria") ||
+  text.includes("comisaría") ||
+
+  // 📅 citas
+  text.includes("cita") ||
+  text.includes("citas") ||
+  text.includes("reserva") ||
+  text.includes("reservar") ||
+  text.includes("tramite") ||
+  text.includes("trámite") ||
+
+  // 🌐 webs
+  text.includes("pagina") ||
+  text.includes("página") ||
+  text.includes("web") ||
+  text.includes("sitio") ||
+  text.includes("link") ||
+  text.includes("url")
+
+)
 
   setSmartAction({
     type: "link",
     title: "Oficina Extranjería",
     description:
       "Información y trámites de residencia",
-    image:
-      "https://images.unsplash.com/photo-1528909514045-2fa4ac7a08ba?q=80&w=1200&auto=format&fit=crop",
+  image: `https://maps.googleapis.com/maps/api/staticmap?center=${
+  detectedCity || "Madrid"
+}&zoom=13&size=1200x600&maptype=roadmap&markers=color:red|${
+  detectedCity || "Madrid"
+}`,
     buttons: [
       {
         label: "📅 Pedir cita",
@@ -930,7 +978,7 @@ else if (
    
           </div>
 {/* SMART ACTIONS */}
-{isPaid && smartAction?.type === "link" && (
+{isPaid && smartAction && (
 
 <div className="mt-5 rounded-2xl border border-[#1e293b] bg-[#0b1325] p-4">
 
