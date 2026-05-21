@@ -2446,7 +2446,73 @@ className="w-[92%] mx-auto flex items-center justify-center h-[52px] rounded-[20
   </div>
 
 )}
+{/* STATS PREMIUM */}
 
+<div className="mt-5 rounded-[30px] border border-yellow-500/40 bg-[#071224] p-5 text-center">
+
+  <h3 className="text-yellow-400 font-bold text-lg mb-5">
+    Miles de personas ya han confiado en nosotros
+  </h3>
+
+  <div className="grid grid-cols-4 gap-3 mb-5">
+
+    <div>
+      <div className="text-yellow-400 text-2xl font-black">
+        100%
+      </div>
+
+      <div className="text-[11px] text-gray-400">
+        Atención
+      </div>
+    </div>
+
+    <div>
+      <div className="text-yellow-400 text-2xl font-black">
+        4 min
+      </div>
+
+      <div className="text-[11px] text-gray-400">
+        Respuesta
+      </div>
+    </div>
+
+    <div>
+      <div className="text-yellow-400 text-2xl font-black">
+        97%
+      </div>
+
+      <div className="text-[11px] text-gray-400">
+        Aprobados
+      </div>
+    </div>
+
+    <div>
+      <div className="text-yellow-400 text-2xl font-black">
+        +18.420
+      </div>
+
+      <div className="text-[11px] text-gray-400">
+        Expedientes
+      </div>
+    </div>
+
+  </div>
+
+  <div className="rounded-2xl border border-yellow-500/30 py-3 px-4 text-yellow-300 font-semibold text-sm">
+    Primer sistema IA de extranjería en España
+  </div>
+
+  <div className="mt-5 flex items-center justify-center gap-3">
+    <div className="text-yellow-400 font-black text-3xl">
+      4.9/5 ★★★★★
+    </div>
+  </div>
+
+  <div className="text-gray-400 text-sm mt-1">
+    Basado en opiniones reales
+  </div>
+
+</div>
 {/* ✅ DESPUÉS DEL PAGO */}
   
 
@@ -2544,78 +2610,6 @@ className="flex-1 h-full bg-transparent px-4 text-white placeholder:text-white/4
 
 </div> 
 <div className="mt-5 rounded-[30px] border border-yellow-500/40 bg-[#071224] p-5 text-center">
-
-  <h3 className="text-yellow-400 font-bold text-lg mb-5">
-    Miles de personas ya han confiado en nosotros
-  </h3>
-
-  <div className="grid grid-cols-4 gap-3 mb-5">
-
-    <div>
-      <div className="text-yellow-400 text-2xl font-black">
-        100%
-      </div>
-
-      <div className="text-[11px] text-gray-400">
-        Atención
-      </div>
-    </div>
-
-    <div>
-      <div className="text-yellow-400 text-2xl font-black">
-        min 4
-      </div>
-
-      <div className="text-[11px] text-gray-400">
-        Respuesta
-      </div>
-    </div>
-
-    <div>
-      <div className="text-yellow-400 text-2xl font-black">
-        97%
-      </div>
-
-      <div className="text-[11px] text-gray-400">
-        Aprobados
-      </div>
-    </div>
-
-    <div>
-      <div className="text-yellow-400 text-2xl font-black">
-        +18.420
-      </div>
-
-      <div className="text-[11px] text-gray-400">
-        Expedientes
-      </div>
-    </div>
-
-  </div>
-
-  <div className="rounded-2xl border border-yellow-500/30 py-3 px-4 text-yellow-300 font-semibold text-sm">
-
-    Primer sistema IA de extranjería en España
-
-  </div>
-
-  <div className="mt-5 flex items-center justify-center gap-3">
-
-    <div className="text-yellow-400 font-black text-3xl">
-      4.9/5 ★★★★★
-    </div>
-
-  </div>
-
-  <div className="text-gray-400 text-sm mt-1">
-    Basado en opiniones reales
-  </div>
-
-</div>
-</div>
-
-)}
-
 
 </div>
 
