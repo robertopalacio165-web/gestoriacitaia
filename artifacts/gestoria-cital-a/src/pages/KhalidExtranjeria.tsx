@@ -816,7 +816,104 @@ else if (
     </motion.button>
 
   </div>
+          
 )}
+    <div className="mt-4 rounded-2xl border border-green-500/40 bg-gradient-to-br from-[#06111f] via-[#071b2d] to-[#06111f] p-4 shadow-[0_0_25px_rgba(0,255,120,0.12)]">
+
+  <h3 className="text-[#4dff88] text-xl font-bold text-center mb-4">
+    Miles de personas ya han confiado en nosotros
+  </h3>
+
+  <div className="grid grid-cols-4 gap-2 mb-4">
+
+    <div className="rounded-2xl border border-white/10 bg-[#081222] p-3 text-center">
+      <div className="text-green-400 text-2xl font-black">
+        18K+
+      </div>
+
+      <div className="text-gray-400 text-[11px] mt-1">
+        Expedientes
+      </div>
+    </div>
+
+    <div className="rounded-2xl border border-white/10 bg-[#081222] p-3 text-center">
+      <div className="text-blue-400 text-2xl font-black">
+        97%
+      </div>
+
+      <div className="text-gray-400 text-[11px] mt-1">
+        Aprobados
+      </div>
+    </div>
+
+    <div className="rounded-2xl border border-white/10 bg-[#081222] p-3 text-center">
+      <div className="text-purple-400 text-2xl font-black">
+        4 min
+      </div>
+
+      <div className="text-gray-400 text-[11px] mt-1">
+        Respuesta
+      </div>
+    </div>
+
+    <div className="rounded-2xl border border-white/10 bg-[#081222] p-3 text-center">
+      <div className="text-yellow-400 text-2xl font-black">
+        100%
+      </div>
+
+      <div className="text-gray-400 text-[11px] mt-1">
+        Atención
+      </div>
+    </div>
+
+  </div>
+
+  <div className="rounded-2xl border border-yellow-500/40 bg-[#0b1325] py-4 px-3 text-center text-white font-bold text-lg">
+    🏆 Primer sistema IA de extranjería en España
+  </div>
+
+  <div className="mt-5 flex items-center justify-between gap-3">
+
+    <div>
+      <div className="text-green-400 text-4xl font-black leading-none">
+        4.9/5
+      </div>
+
+      <div className="text-yellow-400 text-2xl mt-1">
+        ★★★★★
+      </div>
+
+      <div className="text-gray-400 text-sm mt-2">
+        Basado en opiniones reales
+      </div>
+    </div>
+
+    <div className="flex -space-x-3">
+
+      <img
+        src="https://randomuser.me/api/portraits/men/32.jpg"
+        className="w-12 h-12 rounded-full border-2 border-[#06111f]"
+      />
+
+      <img
+        src="https://randomuser.me/api/portraits/women/44.jpg"
+        className="w-12 h-12 rounded-full border-2 border-[#06111f]"
+      />
+
+      <img
+        src="https://randomuser.me/api/portraits/men/75.jpg"
+        className="w-12 h-12 rounded-full border-2 border-[#06111f]"
+      />
+
+      <div className="w-12 h-12 rounded-full border-2 border-[#06111f] bg-[#111827] flex items-center justify-center text-sm font-bold">
+        +2K
+      </div>
+
+    </div>
+
+  </div>
+
+</div>        
        <div className="mt-5 rounded-2xl border border-[#1e293b] bg-[#0b1325] p-4">
               <div className="flex items-center gap-2 mb-2">
                 <Shield
