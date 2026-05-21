@@ -678,9 +678,9 @@ else if (
           </div>
 
           <div>
-            <h3 className="text-lg font-bold text-white leading-tight">
-              Desbloquea a Khalid
-            </h3>
+     <h3 className="text-lg font-bold text-white leading-tight">
+  {t("unlockKhalid")}
+</h3>
 
             <div className="mt-1 inline-flex items-center rounded-full bg-yellow-500 px-2 py-[2px] text-[9px] font-bold text-black">
               PREMIUM
@@ -702,7 +702,7 @@ else if (
       </div>
 
       <p className="text-gray-300 text-xs leading-relaxed mb-3">
-  Acceso ilimitado a respuestas y asesoría personalizada.
+{t("premiumDescription")}
 </p>
 
 <button
@@ -743,11 +743,11 @@ else if (
       : "bg-gray-600 opacity-50 cursor-not-allowed"
   }`}
 >
-  🔓 Desbloquear ahora
+ 🔓 {t("unlockNow")}
 </button>
 
       <div className="mt-3 flex items-center justify-center gap-2 text-[10px] text-gray-400">
-        <span>🔐 Pago seguro con Stripe</span>
+   <span>🔐 {t("securePayment")}</span>
       </div>
 
       <div className="mt-2 flex items-center justify-center gap-2 flex-wrap">
@@ -804,12 +804,12 @@ else if (
       {isListening ? (
         <>
           <MicOff size={22} />
-          Finalizar conversación
+      {t("endConversation")}
         </>
       ) : (
         <>
           <Mic size={22} />
-          Hablar con Khalid
+    {t("talkToKhalid")}
         </>
       )}
 
@@ -829,12 +829,9 @@ else if (
                 </span>
               </div>
               
-           <p className="text-sm leading-relaxed text-gray-300">
-                Especialista profesional en extranjería española para marroquíes en España.
-                Pregunta sobre residencia, papeles, policía, nacionalidad,
-                arraigo, trabajo, estudios y cualquier problema legal relacionado
-                con inmigración.
-              </p>
+       <p className="text-sm leading-relaxed text-gray-300">
+  {t("khalidDescription")}
+</p>
             </div>
 
    
