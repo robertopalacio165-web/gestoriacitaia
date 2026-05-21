@@ -433,7 +433,7 @@ window.location.href = data.url;
                   ? "We will notify you here when there is news about your appointment."
                   : "Te avisaremos aquí cuando haya novedades sobre tu cita."}
               </p>
-              </p>
+              
 
 <div className="mt-5 rounded-2xl border border-yellow-500/20 bg-yellow-500/10 p-4">
 
