@@ -2281,7 +2281,7 @@ className="fixed inset-0 z-0 opacity-25 pointer-events-none"
           </div>
         </div>
 
-<div className="w-full px-1 py-1">
+<div className="w-full max-w-[430px] mx-auto px-1 py-1">
  <motion.div
 initial={{ opacity: 0, y: 15 }}
 animate={{ opacity: 1, y: 0 }}
@@ -2304,7 +2304,7 @@ relative
       loop
       playsInline
       poster={`${import.meta.env.BASE_URL}images/avatar-mohamed.png`}
-className="w-full h-[270px] md:h-[520px] object-cover md:object-contain bg-black border-b border-[#f6c453]/10"
+className="w-full h-[270px] object-cover border-b border-[#f6c453]/10"
       
       >
       <source
