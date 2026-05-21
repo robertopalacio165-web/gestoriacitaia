@@ -843,9 +843,9 @@ else if (
     Miles de personas ya han confiado en nosotros
   </h3>
 
- <div className="grid grid-cols-2 gap-2">
+ <div className="grid grid-cols-4 gap-3">
 
-    <div className="rounded-2xl border border-green-500/20 bg-[#08111f] p-3 text-center">
+    <div className="rounded-[24px] border border-blue-500/20 bg-[#08111f] p-3 text-center" >
       <div className="text-3xl mb-2">👥</div>
 
       <div className="text-green-400 text-[24px] font-black leading-none">
@@ -869,7 +869,7 @@ else if (
       </div>
     </div>
 
-    <div className="rounded-2xl border border-purple-500/20 bg-[#08111f] p-3 text-center">
+    <div className="rounded-[24px] border border-purple-500/20 bg-[#08111f] p-3 text-center" >
       <div className="text-3xl mb-2">⏱️</div>
 
       <div className="text-purple-400 text-[24px] font-black leading-none">
@@ -881,7 +881,7 @@ else if (
       </div>
     </div>
 
-    <div className="rounded-2xl border border-yellow-500/20 bg-[#08111f] p-3 text-center">
+    <div className="rounded-[24px] border border-yellow-500/20 bg-[#08111f] p-3 text-center" >
       <div className="text-3xl mb-2">🎧</div>
 
       <div className="text-yellow-400 text-[24px] font-black leading-none">
