@@ -19,7 +19,16 @@ export default async function handler(req: any, res: any) {
       token,
     } = req.body;
 
+    const metadata = {
+      appointment_id,
+      token,
+      type: "SARA_CONFIRMATION",
+    };
+
     const session = await stripe.checkout.sessions.create({
+
+      metadata,
+
       payment_method_types: ["card"],
 
       mode: "payment",
