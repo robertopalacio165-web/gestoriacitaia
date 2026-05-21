@@ -908,7 +908,7 @@ else if (
 
 </div>
 
-</div>
+
             {isPaid && (
   <div className="mt-4 mb-2">
 
