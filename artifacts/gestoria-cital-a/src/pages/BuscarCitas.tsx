@@ -443,7 +443,7 @@ window.location.href = data.url;
   ? "Congratulations 🎉 We have started searching for your appointment. As soon as we find it, we will urgently notify you on WhatsApp within 24 hours."
   : "Felicidades 🎉 Hemos empezado a buscar tu cita. En cuanto la tengamos te avisaremos urgentemente por WhatsApp en menos de 24 horas."}
               </h3>
-              <p className="text-center text-white/70 text-[14px] leading-relaxed">
+      
                 <div className="mt-6 rounded-[24px] border border-yellow-500/30 bg-gradient-to-b from-yellow-500/10 to-yellow-500/5 p-5">
 
   <div className="flex items-center gap-3 mb-4">
@@ -504,7 +504,7 @@ window.location.href = data.url;
 
 </div>
 
-<p className="text-center text-white/70 text-[14px] leading-relaxed">
+
 
   {isMa
     ? "غادي نخبروك هنا ملي يكون جديد على الموعد ديالك."
@@ -512,7 +512,7 @@ window.location.href = data.url;
     ? "We will notify you here when there is news about your appointment."
     : "Te avisaremos aquí cuando haya novedades sobre tu cita."}
 
-</p>
+
             </div>
 
             <div className="rounded-[30px] overflow-hidden border border-yellow-500/30 bg-[#050816] shadow-[0_0_40px_rgba(255,200,0,0.10)]">
