@@ -678,9 +678,9 @@ else if (
           </div>
 
           <div>
-     <h3 className="text-lg font-bold text-white leading-tight">
-  {t("unlockKhalid")}
-</h3>
+            <h3 className="text-lg font-bold text-white leading-tight">
+              Desbloquea a Khalid
+            </h3>
 
             <div className="mt-1 inline-flex items-center rounded-full bg-yellow-500 px-2 py-[2px] text-[9px] font-bold text-black">
               PREMIUM
@@ -702,7 +702,7 @@ else if (
       </div>
 
       <p className="text-gray-300 text-xs leading-relaxed mb-3">
-{t("premiumDescription")}
+  Acceso ilimitado a respuestas y asesoría personalizada.
 </p>
 
 <button
@@ -743,11 +743,11 @@ else if (
       : "bg-gray-600 opacity-50 cursor-not-allowed"
   }`}
 >
- 🔓 {t("unlockNow")}
+  🔓 Desbloquear ahora
 </button>
 
       <div className="mt-3 flex items-center justify-center gap-2 text-[10px] text-gray-400">
-   <span>🔐 {t("securePayment")}</span>
+        <span>🔐 Pago seguro con Stripe</span>
       </div>
 
       <div className="mt-2 flex items-center justify-center gap-2 flex-wrap">
@@ -772,144 +772,8 @@ else if (
 
     </div>
   </div>
-
+</motion.div>
           )}
-  </motion.div>
-     <div className="mt-5 relative overflow-hidden rounded-[34px] border border-[#f6c453]/40 bg-gradient-to-b from-[#071224] via-[#05101f] to-[#020817] p-5 shadow-[0_0_40px_rgba(255,200,0,0.08)]">
-
-  {/* Glow fondo */}
-  <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,215,0,0.08),transparent_60%)]" />
-
-  <div className="relative z-10">
-
-    {/* Título */}
-    <h3 className="text-[#ffe27a] text-[24px] font-black text-center leading-tight mb-6">
-      Miles de personas ya han confiado en nosotros
-    </h3>
-
-    {/* Stats */}
-    <div className="grid grid-cols-2 gap-3 mb-5">
-
-      <div className="rounded-3xl border border-green-500/20 bg-[#08111f]/90 p-4 text-center">
-        <div className="w-14 h-14 mx-auto mb-3 rounded-full bg-green-500/10 flex items-center justify-center text-2xl">
-          👥
-        </div>
-
-        <div className="text-green-400 text-3xl font-black">
-          18.420+
-        </div>
-
-        <div className="text-gray-400 text-sm mt-1">
-          Expedientes
-        </div>
-      </div>
-
-      <div className="rounded-3xl border border-blue-500/20 bg-[#08111f]/90 p-4 text-center">
-        <div className="w-14 h-14 mx-auto mb-3 rounded-full bg-blue-500/10 flex items-center justify-center text-2xl">
-          🛡️
-        </div>
-
-        <div className="text-blue-400 text-3xl font-black">
-          97%
-        </div>
-
-        <div className="text-gray-400 text-sm mt-1">
-          Aprobados
-        </div>
-      </div>
-
-      <div className="rounded-3xl border border-purple-500/20 bg-[#08111f]/90 p-4 text-center">
-        <div className="w-14 h-14 mx-auto mb-3 rounded-full bg-purple-500/10 flex items-center justify-center text-2xl">
-          ⏱️
-        </div>
-
-        <div className="text-purple-400 text-3xl font-black">
-          4 min
-        </div>
-
-        <div className="text-gray-400 text-sm mt-1">
-          Respuesta
-        </div>
-      </div>
-
-      <div className="rounded-3xl border border-yellow-500/20 bg-[#08111f]/90 p-4 text-center">
-        <div className="w-14 h-14 mx-auto mb-3 rounded-full bg-yellow-500/10 flex items-center justify-center text-2xl">
-          🎧
-        </div>
-
-        <div className="text-yellow-400 text-3xl font-black">
-          100%
-        </div>
-
-        <div className="text-gray-400 text-sm mt-1">
-          Atención
-        </div>
-      </div>
-
-    </div>
-
-    {/* Barra premium */}
-    <div className="rounded-[24px] border border-[#f6c453]/40 bg-gradient-to-r from-[#1b1404] via-[#0b0f18] to-[#1b1404] py-4 px-5 text-center shadow-[0_0_25px_rgba(255,200,0,0.12)]">
-
-      <div className="flex items-center justify-center gap-2 text-[#ffd95e] font-bold text-[15px]">
-        ⭐ Primer sistema IA de extranjería en España
-      </div>
-
-    </div>
-
-    {/* Reviews */}
-    <div className="mt-6 flex items-center justify-between">
-
-      <div>
-        <div className="text-green-400 text-5xl font-black leading-none">
-          4.9/5
-        </div>
-
-        <div className="text-yellow-400 text-3xl mt-1">
-          ★★★★★
-        </div>
-
-        <div className="text-gray-400 text-sm mt-2">
-          Basado en opiniones reales
-        </div>
-      </div>
-
-      {/* Avatares */}
-      <div className="flex items-center -space-x-3">
-
-        <img
-          src="https://randomuser.me/api/portraits/men/32.jpg"
-          className="w-14 h-14 rounded-full border-2 border-[#071224] object-cover"
-        />
-
-        <img
-          src="https://randomuser.me/api/portraits/women/44.jpg"
-          className="w-14 h-14 rounded-full border-2 border-[#071224] object-cover"
-        />
-
-        <img
-          src="https://randomuser.me/api/portraits/men/51.jpg"
-          className="w-14 h-14 rounded-full border-2 border-[#071224] object-cover"
-        />
-
-        <img
-          src="https://randomuser.me/api/portraits/men/64.jpg"
-          className="w-14 h-14 rounded-full border-2 border-[#071224] object-cover"
-        />
-
-        <div className="w-14 h-14 rounded-full border-2 border-[#071224] bg-[#111827] flex items-center justify-center text-white font-bold text-sm">
-          +2K
-        </div>
-
-      </div>
-
-    </div>
-
-  </div>
-
-</div>
-
-
             {isPaid && (
   <div className="mt-4 mb-2">
 
@@ -940,12 +804,12 @@ else if (
       {isListening ? (
         <>
           <MicOff size={22} />
-      {t("endConversation")}
+          Finalizar conversación
         </>
       ) : (
         <>
           <Mic size={22} />
-    {t("talkToKhalid")}
+          Hablar con Khalid
         </>
       )}
 
@@ -965,9 +829,12 @@ else if (
                 </span>
               </div>
               
-       <p className="text-sm leading-relaxed text-gray-300">
-  {t("khalidDescription")}
-</p>
+           <p className="text-sm leading-relaxed text-gray-300">
+                Especialista profesional en extranjería española para marroquíes en España.
+                Pregunta sobre residencia, papeles, policía, nacionalidad,
+                arraigo, trabajo, estudios y cualquier problema legal relacionado
+                con inmigración.
+              </p>
             </div>
 
    
