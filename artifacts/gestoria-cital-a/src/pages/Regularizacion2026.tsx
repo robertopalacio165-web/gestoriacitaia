@@ -2336,8 +2336,8 @@ className="w-full h-[270px] object-cover border-b border-[#f6c453]/10"
     <div className="absolute top-4 left-4 bg-black/70 backdrop-blur-xl border border-[#c6922f]/40 px-4 py-2 rounded-full flex items-center gap-2 text-sm shadow-lg">
 
       <div className="w-2.5 h-2.5 rounded-full bg-green-400 animate-pulse shadow-lg"></div>
-
-      En línea
+{t("onlineNow")}
+ 
 
     </div>
 
@@ -2348,7 +2348,7 @@ className="w-full h-[270px] object-cover border-b border-[#f6c453]/10"
       </h2>
 
       <p className="text-[15px] text-[#d4a94d] font-medium tracking-wide">
-        Especialista en Extranjería
+    {t("mohamedRole")}
       </p>
 
     </div>
@@ -2371,7 +2371,7 @@ className="w-full h-[270px] object-cover border-b border-[#f6c453]/10"
 
         <div>
           <p className="text-white font-bold text-lg">
-            Desbloquea a Mohamed
+       {t("unlockMohamed")}
           </p>
 
           <span className="inline-flex mt-1 px-2 py-1 rounded-full bg-yellow-500 text-black text-[10px] font-bold">
@@ -2392,8 +2392,7 @@ className="w-full h-[270px] object-cover border-b border-[#f6c453]/10"
       </div>
 
  <p className="text-white/70 text-[13px] leading-relaxed mb-3">
-        Acceso ilimitado a Mohamed IA, videollamada realtime,
-        análisis de documentos y generación automática del expediente.
+   {t("mohamedPremium")}
       </p>
 
      <button
@@ -2401,7 +2400,7 @@ className="w-full h-[270px] object-cover border-b border-[#f6c453]/10"
   type="button"
 className="w-[92%] mx-auto flex items-center justify-center h-[52px] rounded-[20px] text-white font-semibold text-[16px] bg-gradient-to-r from-[#16a34a] to-[#22c55e] border border-[#4ade80] shadow-[0_4px_14px_rgba(34,197,94,0.35)]"
        >
-  🔓 Desbloquear ahora
+{t("unlockNow")}
 </button>
 
   <div className="mt-2 flex items-center justify-center gap-2 flex-wrap">
@@ -2439,9 +2438,7 @@ className="w-[92%] mx-auto flex items-center justify-center h-[52px] rounded-[20
       </div>
 
       <p className="text-white/80 text-sm leading-relaxed">
-        Especialista profesional en extranjería española para marroquíes en España.
-        Pregunta sobre residencia, papeles, policía, nacionalidad, arraigo,
-        trabajo, estudios y cualquier problema legal relacionado con inmigración.
+   {t("mohamedDescription")}
       </p>
 
     </div>
