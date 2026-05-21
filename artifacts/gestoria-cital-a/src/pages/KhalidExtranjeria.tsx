@@ -837,10 +837,10 @@ else if (
                 con inmigración.
               </p>
             </div>
-<div className="mt-4 rounded-2xl border border-green-500/30 bg-[#071224] p-3">
+  <div className="mt-4 rounded-2xl border border-green-500/30 bg-[#071224] p-3">
 
   <h3 className="text-green-400 text-lg font-bold text-center mb-3">
-    Miles de personas ya han confiado
+    {t("Miles de personas ya han confiado")}
   </h3>
 
   <div className="grid grid-cols-4 gap-2">
@@ -851,7 +851,7 @@ else if (
       </div>
 
       <div className="text-[10px] text-gray-400">
-        Expedientes
+        {t("Expedientes")}
       </div>
     </div>
 
@@ -861,7 +861,7 @@ else if (
       </div>
 
       <div className="text-[10px] text-gray-400">
-        Aprobados
+        {t("Aprobados")}
       </div>
     </div>
 
@@ -871,7 +871,7 @@ else if (
       </div>
 
       <div className="text-[10px] text-gray-400">
-        Respuesta
+        {t("Respuesta")}
       </div>
     </div>
 
@@ -881,14 +881,14 @@ else if (
       </div>
 
       <div className="text-[10px] text-gray-400">
-        Atención
+        {t("Atención")}
       </div>
     </div>
 
   </div>
 
   <div className="mt-3 rounded-xl border border-yellow-500/30 bg-[#0b1325] py-2 text-center text-sm font-bold text-white">
-    🏆 IA extranjería en España
+    🏆 {t("IA extranjería en España")}
   </div>
 
   <div className="mt-3 flex items-center justify-between">
@@ -928,7 +928,7 @@ else if (
 
   </div>
 
-</div>   
+</div>
    
           </div>
 {/* SMART ACTIONS */}
