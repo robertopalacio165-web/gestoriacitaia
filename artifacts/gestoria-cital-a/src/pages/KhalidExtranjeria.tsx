@@ -774,6 +774,7 @@ else if (
   </div>
 
           )}
+  </motion.div>
      <div className="mt-5 relative overflow-hidden rounded-[34px] border border-[#f6c453]/40 bg-gradient-to-b from-[#071224] via-[#05101f] to-[#020817] p-5 shadow-[0_0_40px_rgba(255,200,0,0.08)]">
 
   {/* Glow fondo */}
