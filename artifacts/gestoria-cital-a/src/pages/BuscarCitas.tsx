@@ -496,21 +496,23 @@ window.location.href = data.url;
 
   </div>
 
-  <div className="mt-5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 p-4">
+<div className="mt-5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 p-4">
 
-    <p className="text-emerald-300 text-sm font-bold leading-relaxed">
-      En cuanto Sara encuentre una cita oficial te avisaremos inmediatamente por WhatsApp.
-    </p>
+  <p className="text-emerald-300 text-sm font-bold leading-relaxed">
+    En cuanto Sara encuentre una cita oficial te avisaremos inmediatamente por WhatsApp.
+  </p>
 
-  </div>
+</div>
 
+<p className="text-center text-white/70 text-[14px] leading-relaxed">
 
-                {isMa
-                  ? "غادي نخبروك هنا ملي يكون جديد على الموعد ديالك."
-                  : isEn
-                  ? "We will notify you here when there is news about your appointment."
-                  : "Te avisaremos aquí cuando haya novedades sobre tu cita."}
-              </p>
+  {isMa
+    ? "غادي نخبروك هنا ملي يكون جديد على الموعد ديالك."
+    : isEn
+    ? "We will notify you here when there is news about your appointment."
+    : "Te avisaremos aquí cuando haya novedades sobre tu cita."}
+
+</p>
             </div>
 
             <div className="rounded-[30px] overflow-hidden border border-yellow-500/30 bg-[#050816] shadow-[0_0_40px_rgba(255,200,0,0.10)]">
