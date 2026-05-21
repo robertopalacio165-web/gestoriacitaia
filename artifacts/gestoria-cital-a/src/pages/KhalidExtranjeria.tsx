@@ -578,7 +578,7 @@ else if (
     <div className="min-h-screen bg-[#020817] text-white">
       <Navbar />
 
-   <div className="w-full max-w-[1100px] mx-auto px-4 pt-5 pb-20">
+  <div className="w-screen max-w-none px-2 pt-5 pb-20">
 <div className="mb-3">
           <h1 className="text-3xl font-bold">
             Khalid
