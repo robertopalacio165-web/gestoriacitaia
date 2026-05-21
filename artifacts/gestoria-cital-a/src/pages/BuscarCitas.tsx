@@ -433,6 +433,31 @@ window.location.href = data.url;
                   ? "We will notify you here when there is news about your appointment."
                   : "Te avisaremos aquí cuando haya novedades sobre tu cita."}
               </p>
+              </p>
+
+<div className="mt-5 rounded-2xl border border-yellow-500/20 bg-yellow-500/10 p-4">
+
+  <div className="flex items-center gap-2 mb-2">
+
+    <div className="w-2.5 h-2.5 rounded-full bg-yellow-400 animate-pulse" />
+
+    <p className="text-yellow-300 font-bold text-sm">
+      Sara buscando 24/24
+    </p>
+
+  </div>
+
+  <p className="text-white/70 text-xs leading-relaxed">
+
+    {isMa
+      ? "سارة دابا كتقلب ليك على موعد حقيقي وغادي توصلك رسالة فواتساب مباشرة ملي يبان الموعد."
+      : isEn
+      ? "Sara is now searching for a real appointment and you will receive a WhatsApp notification immediately when it appears."
+      : "Sara está buscando una cita real ahora mismo y recibirás una notificación por WhatsApp en cuanto aparezca una disponibilidad."}
+
+  </p>
+
+
             </div>
 
             <div className="rounded-[30px] overflow-hidden border border-yellow-500/30 bg-[#050816] shadow-[0_0_40px_rgba(255,200,0,0.10)]">
