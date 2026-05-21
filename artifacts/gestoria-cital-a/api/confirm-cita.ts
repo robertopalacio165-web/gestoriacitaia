@@ -1,70 +1,54 @@
+import type { VercelRequest, VercelResponse } from "@vercel/node";
+
 import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(
-  process.env.SUPABASE_URL!,
+  process.env.VITE_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-export default async function handler(req: any, res: any) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
-  }
+export default async function handler(
+  req: VercelRequest,
+  res: VercelResponse
+) {
 
   try {
-    const {
-      token,
-      appointment_id,
-      full_name,
-      phone,
-      tramite,
-      city,
-      office,
-      date,
-      time,
-    } = req.body;
 
-    // 1. نحفظ الكليان
-    const { data, error } = await supabase
-      .from("appointments")
-      .insert([
-        {
-          token,
-          appointment_id,
-          full_name,
-          phone,
-          tramite,
-          city,
-          office,
-          date,
-          time,
-          status: "searching",
-        },
-      ])
-      .select()
-      .single();
+    const { token } = req.query;
 
-    if (error) {
-      console.error(error);
-      return res.status(500).json({ error: "DB error" });
+    if (!token) {
+      return res.status(400).json({
+        error: "Missing token",
+      });
     }
 
-    // 2. نصيفط ل Make (WhatsApp)
-    await fetch(process.env.MAKE_WEBHOOK_SARA!, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        type: "NEW_SEARCH",
-        lead: data,
-        message:
-          "شكراً على الثقة ديالك 🙏\nدابا بدينا نقلبو ليك على cita ديالك، وغادي نعلموك فـ WhatsApp ملي نلقاوها.",
-      }),
+    const { data, error } = await supabase
+      .from("found_appointments")
+      .select("*")
+      .eq("confirmation_token", token)
+      .single();
+
+    if (error || !data) {
+
+      return res.status(404).json({
+        error: "Appointment not found",
+      });
+
+    }
+
+    return res.status(200).json({
+      success: true,
+      appointment: data,
     });
 
-    return res.json({ ok: true });
   } catch (err) {
+
     console.error(err);
-    return res.status(500).json({ error: "Server error" });
+
+    return res.status(500).json({
+      error: "Server error",
+    });
+
   }
+
 }
