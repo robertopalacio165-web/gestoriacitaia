@@ -2448,7 +2448,9 @@ className="w-[92%] mx-auto flex items-center justify-center h-[52px] rounded-[20
 )}
 
 {/* ✅ DESPUÉS DEL PAGO */}
-{(paymentCompleted || safeLang === "darija" || safeLang === "es" || safeLang === "en") && (
+  
+
+{paymentCompleted && (
 
 <div className="mt-5 space-y-5">
 
