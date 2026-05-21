@@ -42,16 +42,42 @@ async function runWorker() {
     */
 
     const browser = await chromium.launch({
+
       headless: true,
+
+      args: [
+        "--disable-blink-features=AutomationControlled",
+      ],
+
     });
 
-    const page = await browser.newPage();
+    const page = await browser.newPage({
+
+      viewport: {
+        width: 1280 + Math.floor(Math.random() * 100),
+        height: 720 + Math.floor(Math.random() * 100),
+      },
+
+      userAgent:
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125 Safari/537.36",
+
+    });
 
     await page.goto(
       "https://icp.administracionelectronica.gob.es/icpplus/index.html"
     );
 
     console.log("✅ ICP opened");
+
+    /*
+    =========================
+    RANDOM DELAY
+    =========================
+    */
+
+    await page.waitForTimeout(
+      2000 + Math.floor(Math.random() * 4000)
+    );
 
     /*
     =========================
@@ -68,6 +94,10 @@ async function runWorker() {
 
     console.log("✅ Provincia selected");
 
+    await page.waitForTimeout(
+      1500 + Math.floor(Math.random() * 3000)
+    );
+
     /*
     =========================
     CLICK ACEPTAR
@@ -77,6 +107,10 @@ async function runWorker() {
     await page.click("#btnAceptar");
 
     console.log("✅ Accept clicked");
+
+    await page.waitForTimeout(
+      1500 + Math.floor(Math.random() * 3000)
+    );
 
     /*
     =========================
@@ -103,7 +137,9 @@ async function runWorker() {
     =========================
     */
 
-    await page.waitForTimeout(3000);
+    await page.waitForTimeout(
+      3000 + Math.floor(Math.random() * 4000)
+    );
 
     /*
     =========================
@@ -147,6 +183,8 @@ async function runWorker() {
             confirmation_token: token,
 
             payment_status: "pending",
+
+            provider: "sara_worker",
           },
         ]);
 
@@ -172,6 +210,19 @@ async function runWorker() {
     */
 
     await browser.close();
+
+    /*
+    =========================
+    RANDOM GLOBAL DELAY
+    =========================
+    */
+
+    await new Promise((resolve) =>
+      setTimeout(
+        resolve,
+        5000 + Math.floor(Math.random() * 10000)
+      )
+    );
 
   }
 
