@@ -585,7 +585,7 @@ else if (
           </h1>
 
           <p className="text-gray-400 text-sm">
-            {t("Especialista en Extranjería")}
+      {t("agent_mo_role")}
           </p>
         </div>
 
@@ -678,31 +678,32 @@ else if (
           </div>
 
           <div>
-            <h3 className="text-lg font-bold text-white leading-tight">
-              Desbloquea a Khalid
-            </h3>
+     <h3 className="text-lg font-bold text-white leading-tight">
+  {t("unlockKhalid")}
+</h3>
 
-            <div className="mt-1 inline-flex items-center rounded-full bg-yellow-500 px-2 py-[2px] text-[9px] font-bold text-black">
-              PREMIUM
-            </div>
-          </div>
+<div className="mt-1 inline-flex items-center rounded-full bg-yellow-500 px-2 py-[2px] text-[9px] font-bold text-black">
+  PREMIUM
+</div>
 
-        </div>
+</div>
 
-        <div className="text-right">
-          <div className="text-xl font-black text-yellow-400 leading-none">
-            11,99€
-          </div>
+</div>
 
-          <div className="text-[10px] text-yellow-200 mt-1">
-            Acceso completo
-          </div>
-        </div>
+<div className="text-right">
+  <div className="text-xl font-black text-yellow-400 leading-none">
+    11,99€
+  </div>
 
-      </div>
+  <div className="text-[10px] text-yellow-200 mt-1">
+    {t("plan_std_f6")}
+  </div>
+</div>
 
-      <p className="text-gray-300 text-xs leading-relaxed mb-3">
-  Acceso ilimitado a respuestas y asesoría personalizada.
+</div>
+
+<p className="text-gray-300 text-xs leading-relaxed mb-3">
+  {t("premiumDescription")}
 </p>
 
 <button
@@ -743,11 +744,11 @@ else if (
       : "bg-gray-600 opacity-50 cursor-not-allowed"
   }`}
 >
-  🔓 Desbloquear ahora
+🔓 {t("unlockNow")}
 </button>
 
       <div className="mt-3 flex items-center justify-center gap-2 text-[10px] text-gray-400">
-        <span>🔐 Pago seguro con Stripe</span>
+  <span>🔐 {t("securePayment")}</span>
       </div>
 
       <div className="mt-2 flex items-center justify-center gap-2 flex-wrap">
@@ -804,12 +805,12 @@ else if (
       {isListening ? (
         <>
           <MicOff size={22} />
-          Finalizar conversación
+       {t("endConversation")}
         </>
       ) : (
         <>
           <Mic size={22} />
-          Hablar con Khalid
+      {t("talkToKhalid")}
         </>
       )}
 
@@ -825,22 +826,19 @@ else if (
                   size={18}
                 />
 
-                <span className="font-semibold">
-                  Khalid IA
-                </span>
+              <span className="font-semibold">
+  Khalid IA
+</span>
               </div>
               
            <p className="text-sm leading-relaxed text-gray-300">
-                Especialista profesional en extranjería española para marroquíes en España.
-                Pregunta sobre residencia, papeles, policía, nacionalidad,
-                arraigo, trabajo, estudios y cualquier problema legal relacionado
-                con inmigración.
+               {t("khalidDescription")}.
               </p>
             </div>
   <div className="mt-4 rounded-2xl border border-green-500/30 bg-[#071224] p-3">
 
   <h3 className="text-green-400 text-lg font-bold text-center mb-3">
-    {t("Miles de personas ya han confiado")}
+{t("hero_trust")}
   </h3>
 
   <div className="grid grid-cols-4 gap-2">
@@ -851,7 +849,7 @@ else if (
       </div>
 
       <div className="text-[10px] text-gray-400">
-        {t("Expedientes")}
+ {t("panel_stat_tramites")}
       </div>
     </div>
 
@@ -861,7 +859,7 @@ else if (
       </div>
 
       <div className="text-[10px] text-gray-400">
-        {t("Aprobados")}
+     {t("verified")}
       </div>
     </div>
 
@@ -871,7 +869,7 @@ else if (
       </div>
 
       <div className="text-[10px] text-gray-400">
-        {t("Respuesta")}
+{t("panel_continue")}
       </div>
     </div>
 
@@ -881,14 +879,14 @@ else if (
       </div>
 
       <div className="text-[10px] text-gray-400">
-        {t("Atención")}
+  {t("panel_action_ia")}
       </div>
     </div>
 
   </div>
 
   <div className="mt-3 rounded-xl border border-yellow-500/30 bg-[#0b1325] py-2 text-center text-sm font-bold text-white">
-    🏆 {t("IA extranjería en España")}
+  🏆 {t("reg_title")}
   </div>
 
   <div className="mt-3 flex items-center justify-between">
@@ -939,9 +937,9 @@ else if (
   <div className="flex items-center gap-2 mb-3">
     <span className="text-green-400 text-lg">✨</span>
 
-    <h3 className="font-bold text-white">
-      Acción recomendada
-    </h3>
+<h3 className="font-bold text-white">
+  {t("panel_quick_actions")}
+</h3>
   </div>
 
   <div className="rounded-2xl overflow-hidden border border-[#1e293b]">
@@ -957,9 +955,9 @@ else if (
         {smartAction.title}
       </h4>
 
-      <p className="text-gray-400 text-sm">
-        {smartAction.description}
-      </p>
+    <p className="text-gray-400 text-sm">
+  {t(smartAction.description)}
+</p>
 
       <div className="grid grid-cols-1 gap-2 mt-4">
 
@@ -973,7 +971,7 @@ else if (
             rel="noopener noreferrer"
             className="h-11 rounded-xl bg-[#071224] border border-[#1e293b] text-sm flex items-center justify-center"
           >
-            {button.label}
+{button.label}
           </a>
 
         ))}
