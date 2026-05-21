@@ -837,9 +837,9 @@ else if (
                 con inmigración.
               </p>
             </div>
-<div className="mt-5 rounded-[30px] border border-[#18314d] bg-gradient-to-b from-[#071224] to-[#020817] p-4 shadow-[0_0_30px_rgba(0,150,255,0.05)]">
+<div className="mt-5 rounded-[34px] border border-[#1e3a5f] bg-gradient-to-b from-[#071224] via-[#04101d] to-[#020817] p-5 shadow-[0_0_50px_rgba(0,150,255,0.08)]"
 
-  <h3 className="text-center text-[#42ff87] font-black text-[18px] leading-tight mb-4">
+  <h3 className="text-center text-[#42ff87] font-black text-[23px] leading-tight mb-4">
     Miles de personas ya han confiado en nosotros
   </h3>
 
@@ -902,7 +902,7 @@ else if (
   <div className="mt-5 flex items-center justify-between">
 
     <div>
-      <div className="text-green-400 text-4xl font-black leading-none">
+  <div className="text-green-400 text-5xl font-black leading-none">
         4.9/5
       </div>
 
@@ -919,21 +919,21 @@ else if (
 
       <img
         src="https://randomuser.me/api/portraits/men/32.jpg"
-        className="w-10 h-10 rounded-full border-2 border-[#071224]"
+    className="w-14 h-14 rounded-full border-2 border-[#071224]"
       />
 
       <img
         src="https://randomuser.me/api/portraits/women/44.jpg"
-        className="w-10 h-10 rounded-full border-2 border-[#071224]"
+   className="w-14 h-14 rounded-full border-2 border-[#071224]"
       />
 
       <img
         src="https://randomuser.me/api/portraits/men/51.jpg"
-        className="w-10 h-10 rounded-full border-2 border-[#071224]"
+    className="w-14 h-14 rounded-full border-2 border-[#071224]"
       />
+<div className="w-14 h-14 rounded-full bg-[#111827] border-2 border-[#071224] flex items-center justify-center text-white text-sm font-bold">
 
-      <div className="w-10 h-10 rounded-full bg-[#111827] border-2 border-[#071224] flex items-center justify-center text-white text-xs font-bold">
-        +2K
+      +2K
       </div>
 
     </div>
