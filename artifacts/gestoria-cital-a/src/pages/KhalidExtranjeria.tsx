@@ -415,7 +415,26 @@ console.log(
 
 const text =
   assistantTranscript.toLowerCase();
+const cities = [
+  "madrid",
+  "barcelona",
+  "valencia",
+  "sevilla",
+  "málaga",
+  "malaga",
+  "murcia",
+  "alicante",
+  "granada",
+  "bilbao",
+  "zaragoza",
+  "toledo",
+  "vigo"
+];
 
+const detectedCity =
+  cities.find(city =>
+    text.includes(city)
+  );
 // 👮 POLICÍA / TIE
 if (
   text.includes("policia") ||
