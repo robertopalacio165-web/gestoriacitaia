@@ -836,32 +836,22 @@ else if (
                 arraigo, trabajo, estudios y cualquier problema legal relacionado
                 con inmigración.
               </p>
-    
+            </div>
 <div className="mt-4 rounded-2xl border border-green-500/30 bg-[#071224] p-3">
 
   <h3 className="text-green-400 text-lg font-bold text-center mb-3">
-    {t("Miles de personas ya han confiado")}
+    Miles de personas ya han confiado
   </h3>
 
   <div className="grid grid-cols-4 gap-2">
 
     <div className="rounded-xl bg-[#0b1325] p-2 text-center">
-      <div className="text-yellow-400 text-xl font-black">
-        100%
+      <div className="text-green-400 text-xl font-black">
+        18K+
       </div>
 
       <div className="text-[10px] text-gray-400">
-        {t("Atención")}
-      </div>
-    </div>
-
-    <div className="rounded-xl bg-[#0b1325] p-2 text-center">
-      <div className="text-purple-400 text-xl font-black">
-        4m
-      </div>
-
-      <div className="text-[10px] text-gray-400">
-        {t("Respuesta")}
+        Expedientes
       </div>
     </div>
 
@@ -871,33 +861,49 @@ else if (
       </div>
 
       <div className="text-[10px] text-gray-400">
-        {t("Aprobados")}
+        Aprobados
       </div>
     </div>
 
     <div className="rounded-xl bg-[#0b1325] p-2 text-center">
-      <div className="text-green-400 text-xl font-black">
-        +18K
+      <div className="text-purple-400 text-xl font-black">
+        4m
       </div>
 
       <div className="text-[10px] text-gray-400">
-        {t("Expedientes")}
+        Respuesta
+      </div>
+    </div>
+
+    <div className="rounded-xl bg-[#0b1325] p-2 text-center">
+      <div className="text-yellow-400 text-xl font-black">
+        100%
+      </div>
+
+      <div className="text-[10px] text-gray-400">
+        Atención
       </div>
     </div>
 
   </div>
 
   <div className="mt-3 rounded-xl border border-yellow-500/30 bg-[#0b1325] py-2 text-center text-sm font-bold text-white">
-    🏆 {t("IA extranjería en España")}
+    🏆 IA extranjería en España
   </div>
 
   <div className="mt-3 flex items-center justify-between">
 
-    <div className="flex -space-x-2">
-
-      <div className="w-8 h-8 rounded-full bg-[#111827] flex items-center justify-center text-[10px] font-bold border border-[#071224]">
-        2K+
+    <div>
+      <div className="text-green-400 text-3xl font-black">
+        4.9/5
       </div>
+
+      <div className="text-yellow-400 text-sm">
+        ★★★★★
+      </div>
+    </div>
+
+    <div className="flex -space-x-2">
 
       <img
         src="https://randomuser.me/api/portraits/men/32.jpg"
@@ -914,23 +920,17 @@ else if (
         className="w-8 h-8 rounded-full border border-[#071224]"
       />
 
-    </div>
-
-    <div className="text-right">
-
-      <div className="text-green-400 text-3xl font-black">
-        4.9/5
-      </div>
-
-      <div className="text-yellow-400 text-sm">
-        ★★★★★
+      <div className="w-8 h-8 rounded-full bg-[#111827] flex items-center justify-center text-[10px] font-bold border border-[#071224]">
+        +2K
       </div>
 
     </div>
 
   </div>
 
-</div>
+</div>   
+   
+          </div>
 {/* SMART ACTIONS */}
 {isPaid && smartAction?.type === "link" && (
 
