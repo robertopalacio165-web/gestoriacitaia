@@ -291,6 +291,21 @@ securePayment: "Pago seguro con Stripe",
 endConversation: "Finalizar conversación",
 
 talkToKhalid: "Hablar con Khalid",
+    onlineNow: "En línea",
+
+mohamedRole: "Especialista en Extranjería",
+
+talkMohamed: "Hablar con Mohamed",
+
+stopMic: "Parar micrófono",
+
+unlockMohamed: "Desbloquea a Mohamed",
+
+mohamedPremium:
+  "Acceso ilimitado a Mohamed IA, videollamada realtime, análisis de documentos y generación automática del expediente.",
+
+mohamedDescription:
+  "Especialista profesional en extranjería española para marroquíes en España. Pregunta sobre residencia, papeles, policía, nacionalidad, arraigo, trabajo, estudios y cualquier problema legal relacionado con inmigración.",
   },
 
   en: {
@@ -482,6 +497,21 @@ securePayment: "Secure payment with Stripe",
 endConversation: "End conversation",
 
 talkToKhalid: "Talk to Khalid",
+    onlineNow: "Online",
+
+mohamedRole: "Immigration Specialist",
+
+talkMohamed: "Talk to Mohamed",
+
+stopMic: "Stop microphone",
+
+unlockMohamed: "Unlock Mohamed",
+
+mohamedPremium:
+  "Unlimited access to Mohamed AI, realtime video call, document analysis and automatic case generation.",
+
+mohamedDescription:
+  "Professional Spanish immigration specialist for Moroccans in Spain. Ask about residency, police, nationality, work, studies and immigration legal issues.",
   },
 
   darija: {
@@ -673,6 +703,21 @@ securePayment: "دفع آمن عبر Stripe",
 endConversation: "إنهاء المحادثة",
 
 talkToKhalid: "تكلم مع خالد",
+    onlineNow: "متصل الآن",
+
+mohamedRole: "مختص فالهجرة",
+
+talkMohamed: "تكلم مع محمد",
+
+stopMic: "وقف الميكروفون",
+
+unlockMohamed: "فتح محمد",
+
+mohamedPremium:
+  "ولوج كامل لمحمد الذكي، مكالمة مباشرة، تحليل الوثائق وتحضير الملف أوتوماتيكياً.",
+
+mohamedDescription:
+  "خبير فالهجرة والأوراق القانونية فإسبانيا للمغاربة. سول على الإقامة، البوليس، الجنسية، الخدمة، الدراسة وأي مشكل متعلق بالهجرة.",
   },
 };
 
