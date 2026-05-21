@@ -774,139 +774,117 @@ else if (
   </div>
 </motion.div>
           )}
-      
+            {isPaid && (
+  <div className="mt-4 mb-2">
 
- {/* Reviews + Stats */}
-<div className="mt-5 relative overflow-hidden rounded-[34px] border border-[#1e3a5f] bg-gradient-to-b from-[#071224] via-[#04101d] to-[#020817] p-5 shadow-[0_0_50px_rgba(0,150,255,0.08)]">
+    <motion.button
+      whileTap={{ scale: 0.96 }}
 
-  {/* Glow */}
-  <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(0,255,170,0.08),transparent_65%)]" />
+      onClick={() => {
 
-  <div className="relative z-10">
+        if (isListening) {
 
-    <h3 className="text-[#42ff87] font-black text-[23px] text-center leading-tight mb-6">
-      Miles de personas ya han confiado en nosotros
+          stopConversation();
+
+        } else {
+
+          startConversation();
+
+        }
+
+      }}
+
+      className={`w-full h-11 rounded-2xl flex items-center justify-center gap-3 shadow-2xl border border-white/20 font-semibold text-base transition-all ${
+        isListening
+          ? "bg-red-500"
+          : "bg-[#00E05A]"
+      }`}
+    >
+
+      {isListening ? (
+        <>
+          <MicOff size={22} />
+          Finalizar conversación
+        </>
+      ) : (
+        <>
+          <Mic size={22} />
+          Hablar con Khalid
+        </>
+      )}
+
+    </motion.button>
+
+  </div>
+)}
+       <div className="mt-5 rounded-2xl border border-[#1e293b] bg-[#0b1325] p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <Shield
+                  className="text-green-400"
+                  size={18}
+                />
+
+                <span className="font-semibold">
+                  Khalid IA
+                </span>
+              </div>
+              
+           <p className="text-sm leading-relaxed text-gray-300">
+                Especialista profesional en extranjería española para marroquíes en España.
+                Pregunta sobre residencia, papeles, policía, nacionalidad,
+                arraigo, trabajo, estudios y cualquier problema legal relacionado
+                con inmigración.
+              </p>
+            </div>
+
+   
+          </div>
+{/* SMART ACTIONS */}
+{isPaid && smartAction?.type === "link" && (
+
+<div className="mt-5 rounded-2xl border border-[#1e293b] bg-[#0b1325] p-4">
+
+  <div className="flex items-center gap-2 mb-3">
+    <span className="text-green-400 text-lg">✨</span>
+
+    <h3 className="font-bold text-white">
+      Acción recomendada
     </h3>
+  </div>
 
-    <div className="grid grid-cols-2 gap-3 mb-5">
+  <div className="rounded-2xl overflow-hidden border border-[#1e293b]">
 
-      <div className="rounded-[28px] border border-green-500/20 bg-[#08111f]/90 p-4 text-center">
+    <img
+      src={smartAction.image}
+      className="w-full h-[180px] object-cover"
+    />
 
-        <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-green-500/10 flex items-center justify-center text-2xl">
-          👥
-        </div>
+    <div className="p-4">
 
-        <div className="text-green-400 text-4xl font-black">
-          18.420+
-        </div>
+      <h4 className="text-xl font-bold mb-1">
+        {smartAction.title}
+      </h4>
 
-        <div className="text-gray-400 text-sm mt-1">
-          Expedientes
-        </div>
+      <p className="text-gray-400 text-sm">
+        {smartAction.description}
+      </p>
 
-      </div>
+      <div className="grid grid-cols-1 gap-2 mt-4">
 
-      <div className="rounded-[28px] border border-blue-500/20 bg-[#08111f]/90 p-4 text-center">
+        {smartAction.buttons?.map(
+          (button: any, index: number) => (
 
-        <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-blue-500/10 flex items-center justify-center text-2xl">
-          🛡️
-        </div>
+          <a
+            key={index}
+            href={button.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="h-11 rounded-xl bg-[#071224] border border-[#1e293b] text-sm flex items-center justify-center"
+          >
+            {button.label}
+          </a>
 
-        <div className="text-blue-400 text-4xl font-black">
-          97%
-        </div>
-
-        <div className="text-gray-400 text-sm mt-1">
-          Aprobados
-        </div>
-
-      </div>
-
-      <div className="rounded-[28px] border border-purple-500/20 bg-[#08111f]/90 p-4 text-center">
-
-        <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-purple-500/10 flex items-center justify-center text-2xl">
-          ⏱️
-        </div>
-
-        <div className="text-purple-400 text-4xl font-black">
-          4 min
-        </div>
-
-        <div className="text-gray-400 text-sm mt-1">
-          Respuesta
-        </div>
-
-      </div>
-
-      <div className="rounded-[28px] border border-yellow-500/20 bg-[#08111f]/90 p-4 text-center">
-
-        <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-yellow-500/10 flex items-center justify-center text-2xl">
-          🎧
-        </div>
-
-        <div className="text-yellow-400 text-4xl font-black">
-          100%
-        </div>
-
-        <div className="text-gray-400 text-sm mt-1">
-          Atención
-        </div>
-
-      </div>
-
-    </div>
-
-    <div className="rounded-[24px] border border-yellow-500/30 bg-gradient-to-r from-[#1b1404] via-[#0b0f18] to-[#1b1404] py-4 px-5 text-center shadow-[0_0_30px_rgba(255,200,0,0.12)]">
-
-      <div className="flex items-center justify-center gap-2 text-yellow-300 font-bold text-[15px] leading-tight">
-        ⭐ Primer sistema IA de extranjería en España
-      </div>
-
-    </div>
-
-    <div className="mt-6 flex items-center justify-between gap-3">
-
-      <div>
-
-        <div className="text-green-400 text-4xl font-black leading-none">
-          4.9/5
-        </div>
-
-        <div className="text-yellow-400 text-2xl mt-1">
-          ★★★★★
-        </div>
-
-        <div className="text-gray-400 text-xs mt-2 leading-tight">
-          Basado en opiniones reales
-        </div>
-
-      </div>
-
-      <div className="flex items-center -space-x-2">
-
-        <img
-          src="https://randomuser.me/api/portraits/men/32.jpg"
-          className="w-11 h-11 rounded-full border-2 border-[#071224] object-cover"
-        />
-
-        <img
-          src="https://randomuser.me/api/portraits/women/44.jpg"
-          className="w-11 h-11 rounded-full border-2 border-[#071224] object-cover"
-        />
-
-        <img
-          src="https://randomuser.me/api/portraits/men/51.jpg"
-          className="w-11 h-11 rounded-full border-2 border-[#071224] object-cover"
-        />
-
-        <img
-          src="https://randomuser.me/api/portraits/men/64.jpg"
-          className="w-11 h-11 rounded-full border-2 border-[#071224] object-cover"
-        />
-
-        <div className="w-11 h-11 rounded-full border-2 border-[#071224] bg-[#111827] flex items-center justify-center text-white font-bold text-xs">
-          +2K
-        </div>
+        ))}
 
       </div>
 
@@ -915,6 +893,9 @@ else if (
   </div>
 
 </div>
+
+)}
+  
    
         </motion.div>
       </div>
