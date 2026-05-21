@@ -2447,105 +2447,7 @@ className="w-[92%] mx-auto flex items-center justify-center h-[52px] rounded-[20
 
 )}
 
-{/* ✅ DESPUÉS DEL PAGO */}
-  
-
-{paymentCompleted && (
-
-<div className="mt-5 space-y-5">
-
-{/* MICRO VERDE */}
-<button
-  onClick={isListening ? stopListening : startListening}
-className={`w-[92%] mx-auto h-[52px] rounded-[20px] flex items-center justify-center gap-3 text-[16px] font-semibold border shadow-xl transition-all duration-300 ${
-  isListening
-      ? "bg-red-600 border-red-400 text-white shadow-red-500/30 animate-pulse"
-      : "bg-gradient-to-r from-[#16a34a] to-[#22c55e] border-[#4ade80] text-white shadow-green-500/20"
-  }`}
->
-  {isListening ? (
-    <>
-      <MicOff className="w-5 h-5" />
-      Mohamed escuchando...
-    </>
-  ) : (
-    <>
-      <Mic className="w-5 h-5" />
-      {
-        safeLang === "darija"
-          ? "تكلم مع محمد"
-          : safeLang === "en"
-          ? "Talk with Mohamed"
-          : "Hablar con Mohamed"
-      }
-    </>
-  )}
-</button>
-
-{/* SUBIR DOCUMENTOS */}
-<button
-  onClick={handleGeneralUpload}
-  disabled={generalUploading}
-  className="w-[92%] mx-auto h-[52px] rounded-[20px] border border-[#c6922f] bg-[#050816] hover:bg-[#0b1220] transition-all text-white font-medium text-[16px] flex items-center justify-center gap-3 shadow-lg"
->
-  <Upload className="w-5 h-5 text-[#d4a94d]" />
-
-  {generalUploading
-    ? "Subiendo..."
-    : "Subir documentos"}
-</button>
-
-{/* VERIFY */}
-<button
-  onClick={handleVerifyAll}
-  className="w-[92%] mx-auto h-[52px] rounded-[20px] border border-[#c6922f] bg-[#050816] hover:bg-[#0b1220] transition-all text-white font-medium text-[16px] flex items-center justify-center gap-3 shadow-lg"
->
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    className="w-5 h-5 text-[#d4a94d]"
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M9 12l2 2 4-4"
-    />
-  </svg>
-
-  Verificar documentos
-</button>
-
-{/* WHATSAPP PREMIUM */}
-<div className="w-[92%] mx-auto h-[52px] rounded-[20px] border border-[#c6922f]/40 bg-[#050816] flex items-center overflow-hidden shadow-lg">
-
-  <div className="w-[58px] h-full flex items-center justify-center border-r border-[#c6922f]/30 bg-black">
-    <img
-      src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg"
-      className="w-6 h-6"
-    />
-  </div>
-
-  <input
-    type="tel"
-    value={phone}
-    onChange={(e) => setPhone(e.target.value)}
-    placeholder={
-      safeLang === "darija"
-        ? "رقم الواتساب"
-        : safeLang === "en"
-        ? "WhatsApp number"
-        : "Número WhatsApp"
-    }
-className="flex-1 h-full bg-transparent px-4 text-white placeholder:text-white/40 outline-none text-[16px]"
-    />
-
-</div> 
-{/* STATS PREMIUM */}
-
-<div className="w-full rounded-[36px]  border border-[#f6c453]/60 bg-gradient-to-b from-[#06111f] to-[#020617] p-5 shadow-[0_0_35px_rgba(255,215,0,0.10)] mt-4">
+  <div className="w-full rounded-[36px]  border border-[#f6c453]/60 bg-gradient-to-b from-[#06111f] to-[#020617] p-5 shadow-[0_0_35px_rgba(255,215,0,0.10)] mt-4">
   <p className="text-center text-[#d4a94d] text-[15px] font-semibold mb-5">
     Miles de personas ya han confiado en nosotros
   </p>
@@ -2645,6 +2547,105 @@ className="flex-1 h-full bg-transparent px-4 text-white placeholder:text-white/4
 
 
 </div>
+{/* ✅ DESPUÉS DEL PAGO */}
+  
+
+{paymentCompleted && (
+
+<div className="mt-5 space-y-5">
+
+{/* MICRO VERDE */}
+<button
+  onClick={isListening ? stopListening : startListening}
+className={`w-[92%] mx-auto h-[52px] rounded-[20px] flex items-center justify-center gap-3 text-[16px] font-semibold border shadow-xl transition-all duration-300 ${
+  isListening
+      ? "bg-red-600 border-red-400 text-white shadow-red-500/30 animate-pulse"
+      : "bg-gradient-to-r from-[#16a34a] to-[#22c55e] border-[#4ade80] text-white shadow-green-500/20"
+  }`}
+>
+  {isListening ? (
+    <>
+      <MicOff className="w-5 h-5" />
+      Mohamed escuchando...
+    </>
+  ) : (
+    <>
+      <Mic className="w-5 h-5" />
+      {
+        safeLang === "darija"
+          ? "تكلم مع محمد"
+          : safeLang === "en"
+          ? "Talk with Mohamed"
+          : "Hablar con Mohamed"
+      }
+    </>
+  )}
+</button>
+
+{/* SUBIR DOCUMENTOS */}
+<button
+  onClick={handleGeneralUpload}
+  disabled={generalUploading}
+  className="w-[92%] mx-auto h-[52px] rounded-[20px] border border-[#c6922f] bg-[#050816] hover:bg-[#0b1220] transition-all text-white font-medium text-[16px] flex items-center justify-center gap-3 shadow-lg"
+>
+  <Upload className="w-5 h-5 text-[#d4a94d]" />
+
+  {generalUploading
+    ? "Subiendo..."
+    : "Subir documentos"}
+</button>
+
+{/* VERIFY */}
+<button
+  onClick={handleVerifyAll}
+  className="w-[92%] mx-auto h-[52px] rounded-[20px] border border-[#c6922f] bg-[#050816] hover:bg-[#0b1220] transition-all text-white font-medium text-[16px] flex items-center justify-center gap-3 shadow-lg"
+>
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    className="w-5 h-5 text-[#d4a94d]"
+    fill="none"
+    viewBox="0 0 24 24"
+    stroke="currentColor"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M9 12l2 2 4-4"
+    />
+  </svg>
+
+  Verificar documentos
+</button>
+
+{/* WHATSAPP PREMIUM */}
+<div className="w-[92%] mx-auto h-[52px] rounded-[20px] border border-[#c6922f]/40 bg-[#050816] flex items-center overflow-hidden shadow-lg">
+
+  <div className="w-[58px] h-full flex items-center justify-center border-r border-[#c6922f]/30 bg-black">
+    <img
+      src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg"
+      className="w-6 h-6"
+    />
+  </div>
+
+  <input
+    type="tel"
+    value={phone}
+    onChange={(e) => setPhone(e.target.value)}
+    placeholder={
+      safeLang === "darija"
+        ? "رقم الواتساب"
+        : safeLang === "en"
+        ? "WhatsApp number"
+        : "Número WhatsApp"
+    }
+className="flex-1 h-full bg-transparent px-4 text-white placeholder:text-white/40 outline-none text-[16px]"
+    />
+
+</div> 
+{/* STATS PREMIUM */}
+
+
 
 <audio ref={remoteAudioRef} autoPlay playsInline className="hidden" />
       </main>
