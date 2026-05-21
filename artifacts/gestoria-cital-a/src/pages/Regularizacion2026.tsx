@@ -2543,99 +2543,72 @@ className="flex-1 h-full bg-transparent px-4 text-white placeholder:text-white/4
     />
 
 </div> 
-{/* STATS PREMIUM */}
+<div className="mt-5 rounded-[30px] border border-yellow-500/40 bg-[#071224] p-5 text-center">
 
-<div className="w-full rounded-[36px]  border border-[#f6c453]/60 bg-gradient-to-b from-[#06111f] to-[#020617] p-5 shadow-[0_0_35px_rgba(255,215,0,0.10)] mt-4">
-  <p className="text-center text-[#d4a94d] text-[15px] font-semibold mb-5">
+  <h3 className="text-yellow-400 font-bold text-lg mb-5">
     Miles de personas ya han confiado en nosotros
-  </p>
+  </h3>
 
-  <div className="grid grid-cols-4 gap-3">
+  <div className="grid grid-cols-4 gap-3 mb-5">
 
-    <div className="text-center">
-      <p className="text-[#d4a94d] font-bold text-[22px]">
-        18.420+
-      </p>
-
-      <p className="text-white/70 text-[11px]">
-        Expedientes
-      </p>
-    </div>
-
-    <div className="text-center">
-      <p className="text-[#d4a94d] font-bold text-[22px]">
-        97%
-      </p>
-
-      <p className="text-white/70 text-[11px]">
-        Aprobados
-      </p>
-    </div>
-
-    <div className="text-center">
-      <p className="text-[#d4a94d] font-bold text-[22px]">
-        4 min
-      </p>
-
-      <p className="text-white/70 text-[11px]">
-        Respuesta
-      </p>
-    </div>
-
-    <div className="text-center">
-      <p className="text-[#d4a94d] font-bold text-[22px]">
+    <div>
+      <div className="text-yellow-400 text-2xl font-black">
         100%
-      </p>
+      </div>
 
-      <p className="text-white/70 text-[11px]">
+      <div className="text-[11px] text-gray-400">
         Atención
-      </p>
-    </div>
-
-  </div>
-
-  <div className="mt-5 border border-[#c6922f]/30 rounded-[18px] p-3 bg-black/30 text-center">
-    <p className="text-[#d4a94d] font-semibold text-[14px]">
-      Primer sistema IA de extranjería en España
-    </p>
-  </div>
-
-  <div className="flex items-center justify-center gap-3 mt-5">
-
-    <div className="flex -space-x-2">
-
-      <img
-        src="https://i.pravatar.cc/60?img=1"
-        className="w-9 h-9 rounded-full border-2 border-black"
-      />
-
-      <img
-        src="https://i.pravatar.cc/60?img=2"
-        className="w-9 h-9 rounded-full border-2 border-black"
-      />
-
-      <img
-        src="https://i.pravatar.cc/60?img=3"
-        className="w-9 h-9 rounded-full border-2 border-black"
-      />
-
-      <img
-        src="https://i.pravatar.cc/60?img=4"
-        className="w-9 h-9 rounded-full border-2 border-black"
-      />
-
+      </div>
     </div>
 
     <div>
-      <p className="text-[#d4a94d] text-[18px] font-bold">
-        ★★★★★ 4.9/5
-      </p>
+      <div className="text-yellow-400 text-2xl font-black">
+        min 4
+      </div>
 
-      <p className="text-white/60 text-[12px]">
-        Basado en opiniones reales
-      </p>
+      <div className="text-[11px] text-gray-400">
+        Respuesta
+      </div>
     </div>
 
+    <div>
+      <div className="text-yellow-400 text-2xl font-black">
+        97%
+      </div>
+
+      <div className="text-[11px] text-gray-400">
+        Aprobados
+      </div>
+    </div>
+
+    <div>
+      <div className="text-yellow-400 text-2xl font-black">
+        +18.420
+      </div>
+
+      <div className="text-[11px] text-gray-400">
+        Expedientes
+      </div>
+    </div>
+
+  </div>
+
+  <div className="rounded-2xl border border-yellow-500/30 py-3 px-4 text-yellow-300 font-semibold text-sm">
+
+    Primer sistema IA de extranjería en España
+
+  </div>
+
+  <div className="mt-5 flex items-center justify-center gap-3">
+
+    <div className="text-yellow-400 font-black text-3xl">
+      4.9/5 ★★★★★
+    </div>
+
+  </div>
+
+  <div className="text-gray-400 text-sm mt-1">
+    Basado en opiniones reales
   </div>
 
 </div>
