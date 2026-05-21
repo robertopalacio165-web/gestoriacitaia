@@ -861,51 +861,53 @@ else if (
 
     </div>
 
-    <div className="mt-6 flex items-center justify-between gap-3">
+  <div className="mt-6 flex items-center justify-between gap-3">
 
-      <div>
+  <div>
 
-        <div className="text-green-400 text-5xl font-black leading-none">
-          4.9/5
-        </div>
+    <div className="text-green-400 text-4xl font-black leading-none">
+      4.9/5
+    </div>
 
-        <div className="text-yellow-400 text-3xl mt-1">
-          ★★★★★
-        </div>
+    <div className="text-yellow-400 text-2xl mt-1">
+      ★★★★★
+    </div>
 
-        <div className="text-gray-400 text-sm mt-2">
-          Basado en opiniones reales
-        </div>
+    <div className="text-gray-400 text-xs mt-2 leading-tight">
+      Basado en opiniones reales
+    </div>
 
-      </div>
+  </div>
 
-      <div className="flex items-center -space-x-3">
+  <div className="flex items-center -space-x-2">
 
-        <img
-          src="https://randomuser.me/api/portraits/men/32.jpg"
-          className="w-14 h-14 rounded-full border-2 border-[#071224] object-cover"
-        />
+    <img
+      src="https://randomuser.me/api/portraits/men/32.jpg"
+      className="w-11 h-11 rounded-full border-2 border-[#071224] object-cover"
+    />
 
-        <img
-          src="https://randomuser.me/api/portraits/women/44.jpg"
-          className="w-14 h-14 rounded-full border-2 border-[#071224] object-cover"
-        />
+    <img
+      src="https://randomuser.me/api/portraits/women/44.jpg"
+      className="w-11 h-11 rounded-full border-2 border-[#071224] object-cover"
+    />
 
-        <img
-          src="https://randomuser.me/api/portraits/men/51.jpg"
-          className="w-14 h-14 rounded-full border-2 border-[#071224] object-cover"
-        />
+    <img
+      src="https://randomuser.me/api/portraits/men/51.jpg"
+      className="w-11 h-11 rounded-full border-2 border-[#071224] object-cover"
+    />
 
-        <img
-          src="https://randomuser.me/api/portraits/men/64.jpg"
-          className="w-14 h-14 rounded-full border-2 border-[#071224] object-cover"
-        />
+    <img
+      src="https://randomuser.me/api/portraits/men/64.jpg"
+      className="w-11 h-11 rounded-full border-2 border-[#071224] object-cover"
+    />
 
-        <div className="w-14 h-14 rounded-full border-2 border-[#071224] bg-[#111827] flex items-center justify-center text-white font-bold text-sm">
-          +2K
-        </div>
+    <div className="w-11 h-11 rounded-full border-2 border-[#071224] bg-[#111827] flex items-center justify-center text-white font-bold text-xs">
+      +2K
+    </div>
 
-      </div>
+  </div>
+
+</div>
 
     </div>
 
