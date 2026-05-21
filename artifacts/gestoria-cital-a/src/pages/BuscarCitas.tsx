@@ -351,23 +351,6 @@ function OfficialBrowserBox({
 
   if (data.url) {
 localStorage.setItem("saraPaid", "1");
-    await supabase.from("search_queue").insert([
-  {
-    customer_name: formData.fullName,
-
-    customer_phone: formData.phone,
-
-    customer_email: formData.email,
-
-    tramite: selectedTramite,
-
-    province: formData.province,
-
-    city: formData.city,
-
-    status: "waiting",
-  },
-]);
 window.location.href = data.url;
 
 }
@@ -443,76 +426,13 @@ window.location.href = data.url;
   ? "Congratulations 🎉 We have started searching for your appointment. As soon as we find it, we will urgently notify you on WhatsApp within 24 hours."
   : "Felicidades 🎉 Hemos empezado a buscar tu cita. En cuanto la tengamos te avisaremos urgentemente por WhatsApp en menos de 24 horas."}
               </h3>
-      
-                <div className="mt-6 rounded-[24px] border border-yellow-500/30 bg-gradient-to-b from-yellow-500/10 to-yellow-500/5 p-5">
-
-  <div className="flex items-center gap-3 mb-4">
-
-    <div className="w-3 h-3 rounded-full bg-yellow-400 animate-pulse" />
-
-    <p className="text-yellow-300 font-black text-sm">
-      Sara está buscando tu cita ahora mismo
-    </p>
-
-  </div>
-
-  <div className="space-y-3">
-
-    <div className="flex items-center justify-between rounded-xl bg-black/20 px-4 py-3 border border-white/5">
-
-      <span className="text-white/60 text-xs">
-        Provincia
-      </span>
-
-      <span className="text-white font-bold text-sm">
-        {formData.province}
-      </span>
-
-    </div>
-
-    <div className="flex items-center justify-between rounded-xl bg-black/20 px-4 py-3 border border-white/5">
-
-      <span className="text-white/60 text-xs">
-        Trámite
-      </span>
-
-      <span className="text-white font-bold text-sm">
-        {selectedTramiteLabel}
-      </span>
-
-    </div>
-
-    <div className="flex items-center justify-between rounded-xl bg-black/20 px-4 py-3 border border-white/5">
-
-      <span className="text-white/60 text-xs">
-        Estado
-      </span>
-
-      <span className="text-yellow-400 font-black text-sm">
-        BUSCANDO 24/24
-      </span>
-
-    </div>
-
-  </div>
-
-<div className="mt-5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 p-4">
-
-  <p className="text-emerald-300 text-sm font-bold leading-relaxed">
-    En cuanto Sara encuentre una cita oficial te avisaremos inmediatamente por WhatsApp.
-  </p>
-
-</div>
-
-
-
-  {isMa
-    ? "غادي نخبروك هنا ملي يكون جديد على الموعد ديالك."
-    : isEn
-    ? "We will notify you here when there is news about your appointment."
-    : "Te avisaremos aquí cuando haya novedades sobre tu cita."}
-
-
+              <p className="text-center text-white/70 text-[14px] leading-relaxed">
+                {isMa
+                  ? "غادي نخبروك هنا ملي يكون جديد على الموعد ديالك."
+                  : isEn
+                  ? "We will notify you here when there is news about your appointment."
+                  : "Te avisaremos aquí cuando haya novedades sobre tu cita."}
+              </p>
             </div>
 
             <div className="rounded-[30px] overflow-hidden border border-yellow-500/30 bg-[#050816] shadow-[0_0_40px_rgba(255,200,0,0.10)]">
