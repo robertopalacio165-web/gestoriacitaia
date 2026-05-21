@@ -837,80 +837,81 @@ else if (
                 con inmigración.
               </p>
             </div>
-<div className="mt-5 rounded-[30px] border border-[#18314d] bg-gradient-to-b from-[#071224] to-[#020817] p-4 shadow-[0_0_30px_rgba(0,150,255,0.05)]">
 
-  <h3 className="text-center text-[#42ff87] font-black text-[18px] leading-tight mb-4">
+<div className="mt-5 rounded-[30px] border border-[#18314d] bg-gradient-to-b from-[#071224] to-[#020817] p-3 shadow-[0_0_20px_rgba(0,150,255,0.04)]">
+
+  <h3 className="text-center text-[#42ff87] font-black text-[15px] leading-tight mb-3">
     Miles de personas ya han confiado en nosotros
   </h3>
 
-  <div className="grid grid-cols-2 gap-3">
+  <div className="grid grid-cols-2 gap-2">
 
-    <div className="rounded-2xl border border-green-500/20 bg-[#08111f] p-3 text-center">
-      <div className="text-3xl mb-2">👥</div>
+    <div className="rounded-[22px] border border-green-500/15 bg-[#08111f] p-2.5 text-center">
+      <div className="text-[24px] mb-1">👥</div>
 
-      <div className="text-green-400 text-[34px] font-black leading-none">
+      <div className="text-green-400 text-[24px] font-black leading-none">
         18.420+
       </div>
 
-      <div className="text-gray-400 text-xs mt-1">
+      <div className="text-gray-400 text-[11px] mt-1">
         Expedientes
       </div>
     </div>
 
-    <div className="rounded-2xl border border-blue-500/20 bg-[#08111f] p-3 text-center">
-      <div className="text-3xl mb-2">🛡️</div>
+    <div className="rounded-[22px] border border-blue-500/15 bg-[#08111f] p-2.5 text-center">
+      <div className="text-[24px] mb-1">🛡️</div>
 
-      <div className="text-blue-400 text-[34px] font-black leading-none">
+      <div className="text-blue-400 text-[24px] font-black leading-none">
         97%
       </div>
 
-      <div className="text-gray-400 text-xs mt-1">
+      <div className="text-gray-400 text-[11px] mt-1">
         Aprobados
       </div>
     </div>
 
-    <div className="rounded-2xl border border-purple-500/20 bg-[#08111f] p-3 text-center">
-      <div className="text-3xl mb-2">⏱️</div>
+    <div className="rounded-[22px] border border-purple-500/15 bg-[#08111f] p-2.5 text-center">
+      <div className="text-[24px] mb-1">⏱️</div>
 
-      <div className="text-purple-400 text-[34px] font-black leading-none">
+      <div className="text-purple-400 text-[24px] font-black leading-none">
         4 min
       </div>
 
-      <div className="text-gray-400 text-xs mt-1">
+      <div className="text-gray-400 text-[11px] mt-1">
         Respuesta
       </div>
     </div>
 
-    <div className="rounded-2xl border border-yellow-500/20 bg-[#08111f] p-3 text-center">
-      <div className="text-3xl mb-2">🎧</div>
+    <div className="rounded-[22px] border border-yellow-500/15 bg-[#08111f] p-2.5 text-center">
+      <div className="text-[24px] mb-1">🎧</div>
 
-      <div className="text-yellow-400 text-[34px] font-black leading-none">
+      <div className="text-yellow-400 text-[24px] font-black leading-none">
         100%
       </div>
 
-      <div className="text-gray-400 text-xs mt-1">
+      <div className="text-gray-400 text-[11px] mt-1">
         Atención
       </div>
     </div>
 
   </div>
 
-  <div className="mt-4 rounded-2xl border border-yellow-500/20 bg-[#0b1018] py-3 text-center text-yellow-300 font-bold text-sm">
+  <div className="mt-3 rounded-[20px] border border-yellow-500/20 bg-[#0b1018] py-2.5 px-2 text-center text-yellow-300 font-bold text-[12px]">
     ⭐ Primer sistema IA de extranjería en España
   </div>
 
-  <div className="mt-5 flex items-center justify-between">
+  <div className="mt-4 flex items-center justify-between gap-3">
 
     <div>
-      <div className="text-green-400 text-4xl font-black leading-none">
+      <div className="text-green-400 text-[42px] font-black leading-none">
         4.9/5
       </div>
 
-      <div className="text-yellow-400 text-xl mt-1">
+      <div className="text-yellow-400 text-[18px] mt-1 leading-none">
         ★★★★★
       </div>
 
-      <div className="text-gray-400 text-[11px] mt-1">
+      <div className="text-gray-400 text-[10px] mt-1">
         Basado en opiniones reales
       </div>
     </div>
@@ -919,20 +920,20 @@ else if (
 
       <img
         src="https://randomuser.me/api/portraits/men/32.jpg"
-        className="w-10 h-10 rounded-full border-2 border-[#071224]"
+        className="w-9 h-9 rounded-full border-2 border-[#071224]"
       />
 
       <img
         src="https://randomuser.me/api/portraits/women/44.jpg"
-        className="w-10 h-10 rounded-full border-2 border-[#071224]"
+        className="w-9 h-9 rounded-full border-2 border-[#071224]"
       />
 
       <img
         src="https://randomuser.me/api/portraits/men/51.jpg"
-        className="w-10 h-10 rounded-full border-2 border-[#071224]"
+        className="w-9 h-9 rounded-full border-2 border-[#071224]"
       />
 
-      <div className="w-10 h-10 rounded-full bg-[#111827] border-2 border-[#071224] flex items-center justify-center text-white text-xs font-bold">
+      <div className="w-9 h-9 rounded-full bg-[#111827] border-2 border-[#071224] flex items-center justify-center text-white text-[10px] font-bold">
         +2K
       </div>
 
@@ -941,9 +942,6 @@ else if (
   </div>
 
 </div>
-   
-          </div>
-
           
 {/* SMART ACTIONS */}
 {isPaid && smartAction?.type === "link" && (
