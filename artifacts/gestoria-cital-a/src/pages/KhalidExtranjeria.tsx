@@ -818,7 +818,26 @@ else if (
   </div>
           
 )}
-      <div className="mt-4 rounded-2xl border border-green-500/30 bg-[#071224] p-3">
+       <div className="mt-5 rounded-2xl border border-[#1e293b] bg-[#0b1325] p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <Shield
+                  className="text-green-400"
+                  size={18}
+                />
+
+                <span className="font-semibold">
+                  Khalid IA
+                </span>
+              </div>
+              
+           <p className="text-sm leading-relaxed text-gray-300">
+                Especialista profesional en extranjería española para marroquíes en España.
+                Pregunta sobre residencia, papeles, policía, nacionalidad,
+                arraigo, trabajo, estudios y cualquier problema legal relacionado
+                con inmigración.
+              </p>
+            </div>
+<div className="mt-4 rounded-2xl border border-green-500/30 bg-[#071224] p-3">
 
   <h3 className="text-green-400 text-lg font-bold text-center mb-3">
     Miles de personas ya han confiado
@@ -910,26 +929,6 @@ else if (
   </div>
 
 </div>   
-       <div className="mt-5 rounded-2xl border border-[#1e293b] bg-[#0b1325] p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <Shield
-                  className="text-green-400"
-                  size={18}
-                />
-
-                <span className="font-semibold">
-                  Khalid IA
-                </span>
-              </div>
-              
-           <p className="text-sm leading-relaxed text-gray-300">
-                Especialista profesional en extranjería española para marroquíes en España.
-                Pregunta sobre residencia, papeles, policía, nacionalidad,
-                arraigo, trabajo, estudios y cualquier problema legal relacionado
-                con inmigración.
-              </p>
-            </div>
-
    
           </div>
 {/* SMART ACTIONS */}
