@@ -2291,8 +2291,8 @@ overflow-hidden
 bg-[#020817]/92
 backdrop-blur-xl
 border-2
-border-[#f6c453]
-shadow-[0_0_25px_rgba(255,200,0,0.18)]
+border-white/10
+shadow-[0_10px_40px_rgba(0,0,0,0.45)]
 relative
 "
 >
@@ -2366,7 +2366,7 @@ className="w-full h-[270px] object-cover border-b border-[#f6c453]/10"
 
  <div className="p-3">
 
-<div className="relative overflow-hidden rounded-2xl border border-yellow-500/30 bg-gradient-to-br from-[#1a1200] via-[#0b0b0b] to-[#1a1200] p-3 max-w-[430px] mx-auto">
+<div className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-[#1a1200] via-[#0b0b0b] to-[#1a1200] p-3 max-w-[430px] mx-auto">
       <div className="flex items-center justify-between mb-3">
 
         <div>
