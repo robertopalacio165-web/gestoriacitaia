@@ -774,6 +774,144 @@ else if (
   </div>
 </motion.div>
           )}
+            <div className="mt-5 relative overflow-hidden rounded-[34px] border border-[#1e3a5f] bg-gradient-to-b from-[#071224] via-[#04101d] to-[#020817] p-5 shadow-[0_0_50px_rgba(0,150,255,0.08)]">
+
+  {/* Glow */}
+  <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(0,255,170,0.08),transparent_65%)]" />
+
+  <div className="relative z-10">
+
+    <h3 className="text-[#42ff87] font-black text-[23px] text-center leading-tight mb-6">
+      Miles de personas ya han confiado en nosotros
+    </h3>
+
+    <div className="grid grid-cols-2 gap-3 mb-5">
+
+      <div className="rounded-[28px] border border-green-500/20 bg-[#08111f]/90 p-4">
+
+        <div className="w-14 h-14 rounded-full bg-green-500/10 flex items-center justify-center text-3xl mb-4 mx-auto">
+          👥
+        </div>
+
+        <div className="text-green-400 text-center text-4xl font-black">
+          18.420+
+        </div>
+
+        <div className="text-center text-gray-400 text-sm mt-1">
+          Expedientes
+        </div>
+
+      </div>
+
+      <div className="rounded-[28px] border border-blue-500/20 bg-[#08111f]/90 p-4">
+
+        <div className="w-14 h-14 rounded-full bg-blue-500/10 flex items-center justify-center text-3xl mb-4 mx-auto">
+          🛡️
+        </div>
+
+        <div className="text-blue-400 text-center text-4xl font-black">
+          97%
+        </div>
+
+        <div className="text-center text-gray-400 text-sm mt-1">
+          Aprobados
+        </div>
+
+      </div>
+
+      <div className="rounded-[28px] border border-purple-500/20 bg-[#08111f]/90 p-4">
+
+        <div className="w-14 h-14 rounded-full bg-purple-500/10 flex items-center justify-center text-3xl mb-4 mx-auto">
+          ⏱️
+        </div>
+
+        <div className="text-purple-400 text-center text-4xl font-black">
+          4 min
+        </div>
+
+        <div className="text-center text-gray-400 text-sm mt-1">
+          Respuesta
+        </div>
+
+      </div>
+
+      <div className="rounded-[28px] border border-yellow-500/20 bg-[#08111f]/90 p-4">
+
+        <div className="w-14 h-14 rounded-full bg-yellow-500/10 flex items-center justify-center text-3xl mb-4 mx-auto">
+          🎧
+        </div>
+
+        <div className="text-yellow-400 text-center text-4xl font-black">
+          100%
+        </div>
+
+        <div className="text-center text-gray-400 text-sm mt-1">
+          Atención
+        </div>
+
+      </div>
+
+    </div>
+
+    <div className="rounded-[24px] border border-yellow-500/30 bg-gradient-to-r from-[#1b1404] via-[#0b0f18] to-[#1b1404] py-4 px-5 text-center shadow-[0_0_30px_rgba(255,200,0,0.12)]">
+
+      <div className="flex items-center justify-center gap-2 text-yellow-300 font-bold text-[16px]">
+        ⭐ Primer sistema IA de extranjería en España
+      </div>
+
+    </div>
+
+    <div className="mt-6 flex items-center justify-between gap-3">
+
+      <div>
+
+        <div className="text-green-400 text-5xl font-black leading-none">
+          4.9/5
+        </div>
+
+        <div className="text-yellow-400 text-3xl mt-1">
+          ★★★★★
+        </div>
+
+        <div className="text-gray-400 text-sm mt-2">
+          Basado en opiniones reales
+        </div>
+
+      </div>
+
+      <div className="flex items-center -space-x-3">
+
+        <img
+          src="https://randomuser.me/api/portraits/men/32.jpg"
+          className="w-14 h-14 rounded-full border-2 border-[#071224] object-cover"
+        />
+
+        <img
+          src="https://randomuser.me/api/portraits/women/44.jpg"
+          className="w-14 h-14 rounded-full border-2 border-[#071224] object-cover"
+        />
+
+        <img
+          src="https://randomuser.me/api/portraits/men/51.jpg"
+          className="w-14 h-14 rounded-full border-2 border-[#071224] object-cover"
+        />
+
+        <img
+          src="https://randomuser.me/api/portraits/men/64.jpg"
+          className="w-14 h-14 rounded-full border-2 border-[#071224] object-cover"
+        />
+
+        <div className="w-14 h-14 rounded-full border-2 border-[#071224] bg-[#111827] flex items-center justify-center text-white font-bold text-sm">
+          +2K
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
             {isPaid && (
   <div className="mt-4 mb-2">
 
