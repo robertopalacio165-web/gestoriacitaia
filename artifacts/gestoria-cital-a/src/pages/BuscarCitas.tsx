@@ -358,11 +358,7 @@ window.location.href = data.url;
 
     console.error(error);
 
-    toast({
-      title: ui.stripeErrorTitle,
-      description: ui.stripeErrorDesc,
-      variant: "destructive",
-    });
+ alert("Stripe error");
 
   }
 
