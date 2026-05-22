@@ -1,80 +1,280 @@
 import Stripe from "stripe";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
-  apiVersion: "2024-06-20",
-});
+import { buffer } from "micro";
 
-export default async function handler(req: any, res: any) {
+import { createClient } from "@supabase/supabase-js";
+
+const stripe = new Stripe(
+  process.env.STRIPE_SECRET_KEY as string,
+  {
+    apiVersion: "2024-06-20",
+  }
+);
+
+const supabase = createClient(
+  process.env.VITE_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
+
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};
+
+export default async function handler(
+  req: any,
+  res: any
+) {
 
   if (req.method !== "POST") {
-    return res.status(405).json({
-      error: "Method not allowed",
-    });
+
+    return res
+      .status(405)
+      .send("Method not allowed");
+
   }
 
   try {
 
-    const {
-      fullName,
-      phone,
-      email,
-      nie,
-      city,
-      province,
-      tramite,
-    } = req.body;
+    const sig =
+      req.headers["stripe-signature"];
 
-    const session = await stripe.checkout.sessions.create({
+    if (!sig) {
 
-      metadata: {
-        customer_name: fullName || "",
-        customer_phone: phone || "",
-        customer_email: email || "",
-        customer_nie: nie || "",
-        city: city || "",
-        province: province || "",
-        tramite: tramite || "",
-      },
+      return res
+        .status(400)
+        .send("No signature");
 
-      payment_method_types: ["card"],
+    }
 
-      mode: "payment",
+    const rawBody =
+      await buffer(req);
 
-      line_items: [
-        {
-          price_data: {
-            currency: "eur",
+    const event =
+      stripe.webhooks.constructEvent(
+        rawBody,
+        sig,
+        process.env
+          .STRIPE_WEBHOOK_SECRET as string
+      );
 
-            product_data: {
-              name: "Reserva inicial Sara",
-            },
+    if (
+      event.type ===
+      "checkout.session.completed"
+    ) {
 
-            unit_amount: 500,
-          },
+      const session: any =
+        event.data.object;
 
-          quantity: 1,
-        },
-      ],
+      const metadata =
+        session.metadata;
 
-      success_url:
-`${process.env.NEXT_PUBLIC_URL}/buscar-citas?paid=true`,
+      console.log("SESSION:");
+      console.log(session);
 
-      cancel_url:
-`${process.env.NEXT_PUBLIC_URL}/buscar-citas`,
+      console.log("METADATA:");
+      console.log(metadata);
 
-    });
+      /*
+      =====================================
+      SARA INITIAL PAYMENT
+      =====================================
+      */
+
+      if (
+        !metadata?.type ||
+        metadata?.type === "SARA_INITIAL"
+      ) {
+
+        console.log(
+          "🔥 Sara initial payment success"
+        );
+
+        /*
+        SAVE IN SUPABASE
+        */
+
+        const { error } =
+          await supabase
+            .from("sara_searches")
+            .insert([
+              {
+                customer_name:
+                  metadata.customer_name,
+
+                customer_phone:
+                  metadata.customer_phone,
+
+                customer_email:
+                  metadata.customer_email,
+
+                city:
+                  metadata.city,
+
+                province:
+                  metadata.province,
+
+                tramite:
+                  metadata.tramite,
+
+                status:
+                  "searching",
+              },
+            ]);
+
+        if (error) {
+
+          console.log(
+            "SUPABASE ERROR:"
+          );
+
+          console.log(error);
+
+        } else {
+
+          console.log(
+            "✅ Saved in Supabase"
+          );
+
+        }
+
+        /*
+        SEND TO MAKE
+        */
+
+        const makeRes =
+          await fetch(
+            process.env.MAKE_WEBHOOK_SARA as string,
+            {
+              method: "POST",
+
+              headers: {
+                "Content-Type":
+                  "application/json",
+              },
+
+              body: JSON.stringify({
+
+                customer_name:
+                  metadata.customer_name || "",
+
+                customer_phone:
+                  metadata.customer_phone || "",
+
+                customer_email:
+                  metadata.customer_email || "",
+
+                city:
+                  metadata.city || "",
+
+                province:
+                  metadata.province || "",
+
+                tramite:
+                  metadata.tramite || "",
+
+                paid: true,
+
+              }),
+            }
+          );
+
+        console.log(
+          "MAKE STATUS:",
+          makeRes.status
+        );
+
+        const makeText =
+          await makeRes.text();
+
+        console.log(
+          "MAKE RESPONSE:",
+          makeText
+        );
+
+      }
+
+      /*
+      =====================================
+      SARA CONFIRMATION PAYMENT
+      =====================================
+      */
+
+      if (
+        metadata?.type ===
+        "SARA_CONFIRMATION"
+      ) {
+
+        const appointmentId =
+          metadata.appointment_id;
+
+        await supabase
+          .from("found_appointments")
+          .update({
+            payment_status:
+              "paid",
+
+            confirmed: true,
+          })
+          .eq(
+            "id",
+            appointmentId
+          );
+
+        console.log(
+          "✅ Sara confirmation payment"
+        );
+
+      }
+
+      /*
+      =====================================
+      KHALID PAYMENTS
+      =====================================
+      */
+
+      if (
+        metadata?.type ===
+        "KHALID_PAYMENT"
+      ) {
+
+        console.log(
+          "✅ Khalid payment"
+        );
+
+      }
+
+      /*
+      =====================================
+      MOHAMED PAYMENTS
+      =====================================
+      */
+
+      if (
+        metadata?.type ===
+        "MOHAMED_PAYMENT"
+      ) {
+
+        console.log(
+          "✅ Mohamed payment"
+        );
+
+      }
+
+    }
 
     return res.status(200).json({
-      url: session.url,
+      received: true,
     });
 
-  } catch (error: any) {
+  } catch (err: any) {
 
-    console.error(error);
+    console.error(err);
 
-    return res.status(500).json({
-      error: error.message,
-    });
+    return res
+      .status(400)
+      .send(err.message);
 
   }
 
