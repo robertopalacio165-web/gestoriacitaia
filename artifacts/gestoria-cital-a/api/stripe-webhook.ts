@@ -28,9 +28,11 @@ export default async function handler(
 ) {
 
   if (req.method !== "POST") {
+
     return res
       .status(405)
       .send("Method not allowed");
+
   }
 
   try {
@@ -39,9 +41,11 @@ export default async function handler(
       req.headers["stripe-signature"];
 
     if (!sig) {
+
       return res
         .status(400)
         .send("No signature");
+
     }
 
     const rawBody =
@@ -84,10 +88,10 @@ export default async function handler(
       =====================================
       */
 
-    if (
-  !metadata?.type ||
-  metadata?.type === "SARA_INITIAL"
-)
+      if (
+        !metadata?.type ||
+        metadata?.type === "SARA_INITIAL"
+      ) {
 
         console.log(
           "🔥 Sara initial payment success"
@@ -159,22 +163,22 @@ export default async function handler(
               body: JSON.stringify({
 
                 customer_name:
-                  metadata.customer_name,
+                  metadata.customer_name || "",
 
                 customer_phone:
-                  metadata.customer_phone,
+                  metadata.customer_phone || "",
 
                 customer_email:
-                  metadata.customer_email,
+                  metadata.customer_email || "",
 
                 city:
-                  metadata.city,
+                  metadata.city || "",
 
                 province:
-                  metadata.province,
+                  metadata.province || "",
 
                 tramite:
-                  metadata.tramite,
+                  metadata.tramite || "",
 
                 paid: true,
 
