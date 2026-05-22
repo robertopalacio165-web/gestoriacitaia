@@ -330,8 +330,8 @@ function OfficialBrowserBox({
 
   try {
 
-  const supabaseRes = await fetch(
-  "https://replitgestoria.supabase.co/rest/v1/search_queue",
+ const supabaseRes = await fetch(
+  "https://psamprmdbecuarhmtyna.supabase.co/rest/v1/sara_searches",
   {
     method: "POST",
 
