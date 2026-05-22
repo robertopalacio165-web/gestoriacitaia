@@ -1,211 +1,91 @@
 import Stripe from "stripe";
 
-import { buffer } from "micro";
-
-import { createClient } from "@supabase/supabase-js";
-
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
   apiVersion: "2024-06-20",
 });
 
-const supabase = createClient(
-  process.env.VITE_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
-
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
-
 export default async function handler(req: any, res: any) {
 
   if (req.method !== "POST") {
-    return res.status(405).send("Method not allowed");
+    return res.status(405).json({
+      error: "Method not allowed",
+    });
   }
 
   try {
 
-    const sig = req.headers["stripe-signature"];
+    const {
+      fullName,
+      phone,
+      email,
+      nie,
+      city,
+      province,
+      tramite,
+    } = req.body;
 
-    if (!sig) {
-      return res.status(400).send("No signature");
-    }
+    // 🔥 إرسال lead إلى Make مباشرة
+    await fetch(
+      "https://hook.eu1.make.com/k7f36tb5x2lh9840o19a9timdtnvcnqi",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
 
-    const rawBody = await buffer(req);
-
-    const event = stripe.webhooks.constructEvent(
-      rawBody,
-      sig,
-      process.env.STRIPE_WEBHOOK_SECRET as string
+        body: JSON.stringify({
+          customer_name: fullName,
+          customer_phone: phone,
+          customer_email: email,
+          nie,
+          city,
+          province,
+          appointment_type: tramite,
+        }),
+      }
     );
 
-    /*
-    =====================================
-    PAYMENT COMPLETED
-    =====================================
-    */
+    // 🔥 Stripe checkout
+    const session = await stripe.checkout.sessions.create({
 
-    if (event.type === "checkout.session.completed") {
+      payment_method_types: ["card"],
 
-      const session: any = event.data.object;
+      mode: "payment",
 
-      const metadata = session.metadata;
+      line_items: [
+        {
+          price_data: {
+            currency: "eur",
 
-      /*
-      =====================================
-      SARA INITIAL PAYMENT
-      =====================================
-      */
-
-      if (metadata?.type === "SARA_INITIAL") {
-
-        console.log("🔥 Sara initial payment");
-
-        /*
-        SAVE IN SEARCH QUEUE
-        */
-
-        await supabase
-          .from("search_queue")
-          .insert([
-            {
-              customer_name:
-                metadata.customer_name,
-
-              customer_phone:
-                metadata.customer_phone,
-
-              customer_email:
-                metadata.customer_email,
-
-              province:
-                metadata.province,
-
-              city:
-                metadata.city,
-
-              tramite:
-                metadata.tramite,
-
-              status: "waiting",
-            },
-          ]);
-
-        console.log(
-          "✅ Added to search_queue"
-        );
-
-        /*
-        SEND WEBHOOK TO MAKE
-        */
-
-        await fetch(
-          "https://hook.eu1.make.com/k7f36tb5x2lh9840o19a9timdtnvcnqi",
-          {
-            method: "POST",
-
-            headers: {
-              "Content-Type":
-                "application/json",
+            product_data: {
+              name: "Reserva inicial Sara",
             },
 
-            body: JSON.stringify({
+            unit_amount: 500,
+          },
 
-              customer_name:
-                metadata.customer_name,
+          quantity: 1,
+        },
+      ],
 
-              customer_phone:
-                metadata.customer_phone,
+      success_url:
+`${process.env.NEXT_PUBLIC_URL}/buscar-citas?paid=true`,
 
-              customer_email:
-                metadata.customer_email,
-
-              province:
-                metadata.province,
-
-              city:
-                metadata.city,
-
-              tramite:
-                metadata.tramite,
-
-            }),
-          }
-        );
-
-        console.log(
-          "✅ Make webhook sent"
-        );
-
-      }
-
-      /*
-      =====================================
-      SARA CONFIRMATION PAYMENT
-      =====================================
-      */
-
-      if (metadata?.type === "SARA_CONFIRMATION") {
-
-        const appointmentId =
-          metadata.appointment_id;
-
-        await supabase
-          .from("found_appointments")
-          .update({
-            payment_status: "paid",
-            confirmed: true,
-          })
-          .eq("id", appointmentId);
-
-        console.log(
-          "✅ Sara confirmation paid"
-        );
-
-      }
-
-      /*
-      =====================================
-      KHALID PAYMENTS
-      =====================================
-      */
-
-      if (metadata?.type === "KHALID_PAYMENT") {
-
-        console.log(
-          "✅ Khalid payment"
-        );
-
-      }
-
-      /*
-      =====================================
-      MOHAMED PAYMENTS
-      =====================================
-      */
-
-      if (metadata?.type === "MOHAMED_PAYMENT") {
-
-        console.log(
-          "✅ Mohamed payment"
-        );
-
-      }
-
-    }
-
-    return res.status(200).json({
-      received: true,
+      cancel_url:
+`${process.env.NEXT_PUBLIC_URL}/buscar-citas`,
     });
 
-  } catch (err: any) {
+    return res.status(200).json({
+      url: session.url,
+    });
 
-    console.error(err);
+  } catch (error: any) {
 
-    return res.status(400).send(err.message);
+    console.error(error);
+
+    return res.status(500).json({
+      error: error.message,
+    });
 
   }
-
 }
