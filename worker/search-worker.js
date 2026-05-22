@@ -41,34 +41,27 @@ async function runWorker() {
 
       /*
       =========================
-      PLAYWRIGHT START
+      BRIGHT DATA CLOUD BROWSER
       =========================
       */
 
-   browser = await chromium.connectOverCDP(
-  "wss://brd-customer-hl_9084dec2-zone-scraping_browser1:6qhjhkbz8cwt@brd.superproxy.io:9222"
-);
+      browser = await chromium.connectOverCDP(
+        "wss://brd-customer-hl_9084dec2-zone-scraping_browser1:6qhjhkbz8cwt@brd.superproxy.io:9222"
+      );
 
-        headless: true,
+      const context =
+        browser.contexts()[0];
 
-        args: [
-          "--disable-blink-features=AutomationControlled",
-          "--no-sandbox",
-          "--disable-setuid-sandbox",
-        ],
+      const page =
+        context.pages()[0] ||
+        await context.newPage();
 
-      });
+      await page.setViewportSize({
+        width: 1280 +
+          Math.floor(Math.random() * 100),
 
-      const page = await browser.newPage({
-
-        viewport: {
-          width: 1280 + Math.floor(Math.random() * 100),
-          height: 720 + Math.floor(Math.random() * 100),
-        },
-
-        userAgent:
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125 Safari/537.36",
-
+        height: 720 +
+          Math.floor(Math.random() * 100),
       });
 
       /*
@@ -87,15 +80,7 @@ async function runWorker() {
 
       console.log("✅ ICP opened");
 
-      /*
-      =========================
-      RANDOM DELAY
-      =========================
-      */
-
-      await page.waitForTimeout(
-        2000 + Math.floor(Math.random() * 4000)
-      );
+      await page.waitForTimeout(4000);
 
       /*
       =========================
@@ -115,9 +100,7 @@ async function runWorker() {
 
       console.log("✅ Provincia selected");
 
-      await page.waitForTimeout(
-        1500 + Math.floor(Math.random() * 3000)
-      );
+      await page.waitForTimeout(3000);
 
       /*
       =========================
@@ -129,9 +112,7 @@ async function runWorker() {
 
       console.log("✅ Accept clicked");
 
-      await page.waitForTimeout(
-        2000 + Math.floor(Math.random() * 3000)
-      );
+      await page.waitForTimeout(4000);
 
       /*
       =========================
@@ -155,9 +136,7 @@ async function runWorker() {
 
       console.log("✅ Tramite selected");
 
-      await page.waitForTimeout(
-        1500 + Math.floor(Math.random() * 3000)
-      );
+      await page.waitForTimeout(3000);
 
       /*
       =========================
@@ -165,7 +144,8 @@ async function runWorker() {
       =========================
       */
 
-      const buttons = await page.$$("input");
+      const buttons =
+        await page.$$("input");
 
       for (const btn of buttons) {
 
@@ -185,13 +165,11 @@ async function runWorker() {
         }
       }
 
-      await page.waitForTimeout(
-        3000 + Math.floor(Math.random() * 5000)
-      );
+      await page.waitForTimeout(5000);
 
       /*
       =========================
-      SCREENSHOT PROOF
+      SCREENSHOT
       =========================
       */
 
@@ -207,117 +185,31 @@ async function runWorker() {
 
       /*
       =========================
-      PAGE CONTENT
-      =========================
-      */
-
-      const content = await page.content();
-
-      /*
-      =========================
       EXTRACTION
       =========================
       */
 
-      let extractedDate = "PENDING";
+      let extractedDate =
+        "28/05/2026";
 
-      let extractedHour = "PENDING";
+      let extractedHour =
+        "09:30";
 
-      let extractedOffice = "PENDING";
-
-      try {
-
-        const bodyText =
-          await page.locator("body").innerText();
-
-        /*
-        DATE
-        */
-
-        const dateMatch =
-          bodyText.match(
-            /\b\d{2}\/\d{2}\/\d{4}\b/
-          );
-
-        if (dateMatch) {
-          extractedDate = dateMatch[0];
-        }
-
-        /*
-        HOUR
-        */
-
-        const hourMatch =
-          bodyText.match(
-            /\b\d{2}:\d{2}\b/
-          );
-
-        if (hourMatch) {
-          extractedHour = hourMatch[0];
-        }
-
-        /*
-        OFFICE
-        */
-
-        if (
-          bodyText.includes("POLICIA")
-        ) {
-
-          extractedOffice =
-            "POLICIA";
-
-        }
-
-        console.log(
-          "📅 Date:",
-          extractedDate
-        );
-
-        console.log(
-          "🕒 Hour:",
-          extractedHour
-        );
-
-        console.log(
-          "🏢 Office:",
-          extractedOffice
-        );
-
-      } catch (extractErr) {
-
-        console.log(
-          "❌ Extraction failed"
-        );
-
-      }
+      let extractedOffice =
+        "Policía Barcelona";
 
       /*
       =========================
-      DETECTION
+      TEST MODE
       =========================
       */
 
-      const hasNoAppointments =
-        content.includes(
-          "En este momento no hay citas disponibles"
-        );
+      const fakeFound = true;
 
-      const hasError =
-        content.includes(
-          "No se pudo obtener información"
-        );
-
-      /*
-      =========================
-      FOUND APPOINTMENT
-      =========================
-      */
-
-      if (!hasNoAppointments && !hasError) {
+      if (fakeFound) {
 
         console.log(
-          "🔥 POSSIBLE REAL CITA FOUND"
+          "🔥 TEST CITA FOUND"
         );
 
         const token =
@@ -400,16 +292,12 @@ async function runWorker() {
         console.log(confirmLink);
 
         /*
-        WHATSAPP READY
+        SEND WEBHOOK TO MAKE
         */
 
-        console.log("📲 WhatsApp ready");
-
-        /*
-        MAKE WEBHOOK
-        */
-
-        if (process.env.MAKE_WEBHOOK_FOUND) {
+        if (
+          process.env.MAKE_WEBHOOK_FOUND
+        ) {
 
           await fetch(
             process.env.MAKE_WEBHOOK_FOUND,
@@ -422,65 +310,41 @@ async function runWorker() {
               },
 
               body: JSON.stringify({
-                type: "FOUND_CITA",
+                customer_phone:
+                  client.customer_phone,
 
-                appointment:
-                  foundData,
+                office:
+                  extractedOffice,
 
-                confirmLink,
+                appointment_date:
+                  extractedDate,
 
-                screenshot:
-                  screenshotName,
+                appointment_hour:
+                  extractedHour,
+
+                confirmation_link:
+                  confirmLink,
               }),
             }
           );
 
           console.log(
-            "✅ Webhook sent to Make"
+            "✅ Make webhook sent"
           );
         }
-
-      } else {
-
-        console.log(
-          "❌ No citas disponibles"
-        );
-
-        /*
-        UPDATE LAST CHECK
-        */
-
-        await supabase
-          .from("search_queue")
-          .update({
-            last_check: new Date(),
-          })
-          .eq("id", client.id);
 
       }
 
       /*
       =========================
-      CLOSE BROWSER
+      CLOSE
       =========================
       */
 
       await browser.close();
 
-      /*
-      =========================
-      RANDOM GLOBAL DELAY
-      =========================
-      */
-
       await new Promise((resolve) =>
-        setTimeout(
-          resolve,
-          5000 +
-            Math.floor(
-              Math.random() * 10000
-            )
-        )
+        setTimeout(resolve, 10000)
       );
 
     } catch (err) {
@@ -498,7 +362,8 @@ async function runWorker() {
   }
 
 }
- async function startLoop() {
+
+async function startLoop() {
 
   while (true) {
 
@@ -512,7 +377,9 @@ async function runWorker() {
 
     }
 
-    console.log("⏳ Waiting next cycle...");
+    console.log(
+      "⏳ Waiting next cycle..."
+    );
 
     await new Promise((resolve) =>
       setTimeout(resolve, 60000)
