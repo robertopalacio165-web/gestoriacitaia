@@ -24,29 +24,17 @@ export default async function handler(req: any, res: any) {
       tramite,
     } = req.body;
 
-    // 🔥 إرسال lead إلى Make مباشرة
-    await fetch(
-      "https://hook.eu1.make.com/k7f36tb5x2lh9840o19a9timdtnvcnqi",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-
-        body: JSON.stringify({
-          customer_name: fullName,
-          customer_phone: phone,
-          customer_email: email,
-          nie,
-          city,
-          province,
-          appointment_type: tramite,
-        }),
-      }
-    );
-
-    // 🔥 Stripe checkout
     const session = await stripe.checkout.sessions.create({
+
+      metadata: {
+        customer_name: fullName || "",
+        customer_phone: phone || "",
+        customer_email: email || "",
+        customer_nie: nie || "",
+        city: city || "",
+        province: province || "",
+        tramite: tramite || "",
+      },
 
       payment_method_types: ["card"],
 
@@ -73,6 +61,7 @@ export default async function handler(req: any, res: any) {
 
       cancel_url:
 `${process.env.NEXT_PUBLIC_URL}/buscar-citas`,
+
     });
 
     return res.status(200).json({
@@ -88,4 +77,5 @@ export default async function handler(req: any, res: any) {
     });
 
   }
+
 }
