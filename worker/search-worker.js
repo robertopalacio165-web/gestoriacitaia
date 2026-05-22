@@ -498,5 +498,28 @@ async function runWorker() {
   }
 
 }
+ async function startLoop() {
 
-runWorker();
+  while (true) {
+
+    try {
+
+      await runWorker();
+
+    } catch (err) {
+
+      console.log(err);
+
+    }
+
+    console.log("⏳ Waiting next cycle...");
+
+    await new Promise((resolve) =>
+      setTimeout(resolve, 60000)
+    );
+
+  }
+
+}
+
+startLoop();
