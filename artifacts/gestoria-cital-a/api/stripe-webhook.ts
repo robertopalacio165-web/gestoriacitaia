@@ -1,7 +1,5 @@
 import Stripe from "stripe";
 
-import { buffer } from "micro";
-
 import { createClient } from "@supabase/supabase-js";
 
 const stripe = new Stripe(
@@ -29,9 +27,9 @@ export default async function handler(
 
   if (req.method !== "POST") {
 
-    return res
-      .status(405)
-      .send("Method not allowed");
+    return res.status(405).json({
+      error: "Method not allowed",
+    });
 
   }
 
@@ -42,14 +40,32 @@ export default async function handler(
 
     if (!sig) {
 
-      return res
-        .status(400)
-        .send("No signature");
+      return res.status(400).json({
+        error: "No stripe signature",
+      });
 
     }
 
+    /*
+    =====================================
+    RAW BODY FOR VERCEL
+    =====================================
+    */
+
+    const chunks: Uint8Array[] = [];
+
+    for await (const chunk of req) {
+      chunks.push(chunk);
+    }
+
     const rawBody =
-      await buffer(req);
+      Buffer.concat(chunks);
+
+    /*
+    =====================================
+    STRIPE EVENT
+    =====================================
+    */
 
     const event =
       stripe.webhooks.constructEvent(
@@ -58,6 +74,11 @@ export default async function handler(
         process.env
           .STRIPE_WEBHOOK_SECRET as string
       );
+
+    console.log(
+      "✅ EVENT:",
+      event.type
+    );
 
     /*
     =====================================
@@ -74,12 +95,12 @@ export default async function handler(
         event.data.object;
 
       const metadata =
-        session.metadata;
+        session.metadata || {};
 
-      console.log("SESSION:");
-      console.log(session);
+      console.log(
+        "✅ PAYMENT SUCCESS"
+      );
 
-      console.log("METADATA:");
       console.log(metadata);
 
       /*
@@ -90,15 +111,12 @@ export default async function handler(
 
       if (
         !metadata?.type ||
-        metadata?.type === "SARA_INITIAL"
+        metadata?.type ===
+          "SARA_INITIAL"
       ) {
 
-        console.log(
-          "🔥 Sara initial payment success"
-        );
-
         /*
-        SAVE IN SUPABASE
+        SAVE TO SUPABASE
         */
 
         const { error } =
@@ -106,62 +124,6 @@ export default async function handler(
             .from("sara_searches")
             .insert([
               {
-                customer_name:
-                  metadata.customer_name,
-
-                customer_phone:
-                  metadata.customer_phone,
-
-                customer_email:
-                  metadata.customer_email,
-
-                city:
-                  metadata.city,
-
-                province:
-                  metadata.province,
-
-                tramite:
-                  metadata.tramite,
-
-                status:
-                  "searching",
-              },
-            ]);
-
-        if (error) {
-
-          console.log(
-            "SUPABASE ERROR:"
-          );
-
-          console.log(error);
-
-        } else {
-
-          console.log(
-            "✅ Saved in Supabase"
-          );
-
-        }
-
-        /*
-        SEND TO MAKE
-        */
-
-        const makeRes =
-          await fetch(
-            "https://hook.eu1.make.com/k7f36tb5x2lh9840o19a9timdtnvcnqi",
-            {
-              method: "POST",
-
-              headers: {
-                "Content-Type":
-                  "application/json",
-              },
-
-              body: JSON.stringify({
-
                 customer_name:
                   metadata.customer_name || "",
 
@@ -180,30 +142,90 @@ export default async function handler(
                 tramite:
                   metadata.tramite || "",
 
-                paid: true,
+                status:
+                  "searching",
+              },
+            ]);
 
-              }),
-            }
+        if (error) {
+
+          console.log(
+            "❌ SUPABASE ERROR"
           );
 
-        console.log(
-          "MAKE STATUS:",
-          makeRes.status
-        );
+          console.log(error);
 
-        const makeText =
-          await makeRes.text();
+        } else {
 
-        console.log(
-          "MAKE RESPONSE:",
-          makeText
-        );
+          console.log(
+            "✅ Saved in Supabase"
+          );
+
+        }
+
+        /*
+        SEND TO MAKE
+        */
+
+        try {
+
+          const makeResponse =
+            await fetch(
+              "https://hook.eu1.make.com/k7f36tb5x2lh9840o19a9timdtnvcnqi",
+              {
+                method: "POST",
+
+                headers: {
+                  "Content-Type":
+                    "application/json",
+                },
+
+                body: JSON.stringify({
+
+                  customer_name:
+                    metadata.customer_name || "",
+
+                  customer_phone:
+                    metadata.customer_phone || "",
+
+                  customer_email:
+                    metadata.customer_email || "",
+
+                  city:
+                    metadata.city || "",
+
+                  province:
+                    metadata.province || "",
+
+                  tramite:
+                    metadata.tramite || "",
+
+                  paid: true,
+
+                }),
+              }
+            );
+
+          console.log(
+            "✅ MAKE STATUS:",
+            makeResponse.status
+          );
+
+        } catch (makeErr) {
+
+          console.log(
+            "❌ MAKE ERROR"
+          );
+
+          console.log(makeErr);
+
+        }
 
       }
 
       /*
       =====================================
-      SARA CONFIRMATION PAYMENT
+      SARA CONFIRMATION
       =====================================
       */
 
@@ -211,9 +233,6 @@ export default async function handler(
         metadata?.type ===
         "SARA_CONFIRMATION"
       ) {
-
-        const appointmentId =
-          metadata.appointment_id;
 
         await supabase
           .from("found_appointments")
@@ -225,45 +244,11 @@ export default async function handler(
           })
           .eq(
             "id",
-            appointmentId
+            metadata.appointment_id
           );
 
         console.log(
-          "✅ Sara confirmation payment"
-        );
-
-      }
-
-      /*
-      =====================================
-      KHALID PAYMENTS
-      =====================================
-      */
-
-      if (
-        metadata?.type ===
-        "KHALID_PAYMENT"
-      ) {
-
-        console.log(
-          "✅ Khalid payment"
-        );
-
-      }
-
-      /*
-      =====================================
-      MOHAMED PAYMENTS
-      =====================================
-      */
-
-      if (
-        metadata?.type ===
-        "MOHAMED_PAYMENT"
-      ) {
-
-        console.log(
-          "✅ Mohamed payment"
+          "✅ Confirmation paid"
         );
 
       }
@@ -276,11 +261,17 @@ export default async function handler(
 
   } catch (err: any) {
 
-    console.error(err);
+    console.log(
+      "❌ WEBHOOK ERROR"
+    );
 
-    return res
-      .status(400)
-      .send(err.message);
+    console.log(err);
+
+    return res.status(400).json({
+      error:
+        err.message ||
+        "Webhook error",
+    });
 
   }
 
