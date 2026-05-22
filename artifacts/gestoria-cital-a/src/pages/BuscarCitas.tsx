@@ -330,24 +330,86 @@ function OfficialBrowserBox({
 
   try {
 
-    const res = await fetch("/api/create-checkout-sara-inicial", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+  const supabaseRes = await fetch(
+  "https://replitgestoria.supabase.co/rest/v1/search_queue",
+  {
+    method: "POST",
 
-      body: JSON.stringify({
-        fullName: formData.fullName,
-        phone: formData.phone,
-        email: formData.email,
-        nie: formData.nie,
-        city: formData.city,
-        province: formData.province,
-        tramite: selectedTramite,
-      }),
-    });
+    headers: {
+      "Content-Type": "application/json",
 
-    const data = await res.json();
+      apikey: "sb_publishable_7Gs8fXBZjo9VXc-38ryQQA_SrdwTu5N",
+
+     
+        Authorization: "Bearer sb_publishable_7Gs8fXBZjo9VXc-38ryQQA_SrdwTu5N",
+
+      Prefer: "return=representation",
+    },
+
+    body: JSON.stringify({
+      customer_name: formData.fullName,
+
+      customer_phone: formData.phone,
+
+      customer_email: formData.email,
+
+      tramite: selectedTramite,
+
+      province: formData.province,
+    }),
+  }
+);
+
+console.log(await supabaseRes.text());
+
+await fetch(
+  "https://hook.eu1.make.com/k7f36tb5x2lh9840o19a9timdtnvcnqi",
+  {
+    method: "POST",
+
+    headers: {
+      "Content-Type": "application/json",
+    },
+
+    body: JSON.stringify({
+      customer_name: formData.fullName,
+
+      customer_phone: formData.phone,
+
+      customer_email: formData.email,
+
+      tramite: selectedTramite,
+
+      province: formData.province,
+    }),
+  }
+);
+
+const res = await fetch("/api/create-checkout-sara-inicial", {
+  method: "POST",
+
+  headers: {
+    "Content-Type": "application/json",
+  },
+
+  body: JSON.stringify({
+    fullName: formData.fullName,
+
+    phone: formData.phone,
+
+    email: formData.email,
+
+    nie: formData.nie,
+
+    city: formData.city,
+
+    province: formData.province,
+
+    tramite: selectedTramite,
+  }),
+});
+
+const data = await res.json();
 
   if (data.url) {
 localStorage.setItem("saraPaid", "1");
