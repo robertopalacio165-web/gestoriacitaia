@@ -73,10 +73,10 @@ export default async function handler(
         session.metadata;
 
       console.log("SESSION:");
-console.log(session);
+      console.log(session);
 
-console.log("METADATA:");
-console.log(metadata);
+      console.log("METADATA:");
+      console.log(metadata);
 
       /*
       =====================================
@@ -94,79 +94,102 @@ console.log(metadata);
         SAVE IN SUPABASE
         */
 
-        await supabase
-          .from("sara_searches")
-          .insert([
-            {
-              customer_name:
-                metadata.customer_name,
+        const { error } =
+          await supabase
+            .from("sara_searches")
+            .insert([
+              {
+                customer_name:
+                  metadata.customer_name,
 
-              customer_phone:
-                metadata.customer_phone,
+                customer_phone:
+                  metadata.customer_phone,
 
-              customer_email:
-                metadata.customer_email,
+                customer_email:
+                  metadata.customer_email,
 
-              city:
-                metadata.city,
+                city:
+                  metadata.city,
 
-              province:
-                metadata.province,
+                province:
+                  metadata.province,
 
-              tramite:
-                metadata.tramite,
+                tramite:
+                  metadata.tramite,
 
-              status:
-                "searching",
-            },
-          ]);
+                status:
+                  "searching",
+              },
+            ]);
 
-        console.log(
-          "✅ Saved in Supabase"
-        );
+        if (error) {
+
+          console.log(
+            "SUPABASE ERROR:"
+          );
+
+          console.log(error);
+
+        } else {
+
+          console.log(
+            "✅ Saved in Supabase"
+          );
+
+        }
 
         /*
         SEND TO MAKE
         */
 
-        await fetch(
-          "https://hook.eu1.make.com/k7f36tb5x2lh9840o19a9timdtnvcnqi",
-          {
-            method: "POST",
+        const makeRes =
+          await fetch(
+            "https://hook.eu1.make.com/k7f36tb5x2lh9840o19a9timdtnvcnqi",
+            {
+              method: "POST",
 
-            headers: {
-              "Content-Type":
-                "application/json",
-            },
+              headers: {
+                "Content-Type":
+                  "application/json",
+              },
 
-            body: JSON.stringify({
+              body: JSON.stringify({
 
-              customer_name:
-                metadata.customer_name,
+                customer_name:
+                  metadata.customer_name,
 
-              customer_phone:
-                metadata.customer_phone,
+                customer_phone:
+                  metadata.customer_phone,
 
-              customer_email:
-                metadata.customer_email,
+                customer_email:
+                  metadata.customer_email,
 
-              city:
-                metadata.city,
+                city:
+                  metadata.city,
 
-              province:
-                metadata.province,
+                province:
+                  metadata.province,
 
-              tramite:
-                metadata.tramite,
+                tramite:
+                  metadata.tramite,
 
-              paid: true,
+                paid: true,
 
-            }),
-          }
-        );
+              }),
+            }
+          );
 
         console.log(
-          "✅ Make webhook sent"
+          "MAKE STATUS:",
+          makeRes.status
+        );
+
+        const makeText =
+          await makeRes.text();
+
+        console.log(
+          "MAKE RESPONSE:",
+          makeText
         );
 
       }
