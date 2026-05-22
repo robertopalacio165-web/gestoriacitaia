@@ -1,6 +1,6 @@
 const { createClient } = require("@supabase/supabase-js");
 
-const { chromium } = require("playwright");
+const { chromium } = require("playwright-core");
 
 const supabase = createClient(
   process.env.VITE_SUPABASE_URL,
@@ -45,7 +45,9 @@ async function runWorker() {
       =========================
       */
 
-      browser = await chromium.launch({
+   browser = await chromium.connectOverCDP(
+  "wss://brd-customer-hl_9084dec2-zone-scraping_browser1:6qhjhkbz8cwt@brd.superproxy.io:9222"
+);
 
         headless: true,
 
