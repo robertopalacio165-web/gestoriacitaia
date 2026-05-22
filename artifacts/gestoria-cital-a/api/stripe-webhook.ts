@@ -84,7 +84,10 @@ export default async function handler(
       =====================================
       */
 
-      if (!metadata?.type) {
+    if (
+  !metadata?.type ||
+  metadata?.type === "SARA_INITIAL"
+)
 
         console.log(
           "🔥 Sara initial payment success"
