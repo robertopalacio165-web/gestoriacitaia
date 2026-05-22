@@ -330,40 +330,6 @@ function OfficialBrowserBox({
 
   try {
 
- const supabaseRes = await fetch(
-  "https://psamprmdbecuarhmtyna.supabase.co/rest/v1/sara_searches",
-  {
-    method: "POST",
-
-    headers: {
-      "Content-Type": "application/json",
-
-      apikey: "sb_publishable_7Gs8fXBZjo9VXc-38ryQQA_SrdwTu5N",
-
-     
-        Authorization: "Bearer sb_publishable_7Gs8fXBZjo9VXc-38ryQQA_SrdwTu5N",
-
-      Prefer: "return=representation",
-    },
-
-    body: JSON.stringify({
-      customer_name: formData.fullName,
-
-      customer_phone: formData.phone,
-
-      customer_email: formData.email,
-
-      tramite: selectedTramite,
-
-      province: formData.province,
-    }),
-  }
-);
-
-console.log(await supabaseRes.text());
-
-
-
 const res = await fetch("/api/create-checkout-sara-inicial", {
   method: "POST",
 
