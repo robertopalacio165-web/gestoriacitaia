@@ -72,6 +72,12 @@ export default async function handler(
       const metadata =
         session.metadata;
 
+      console.log("SESSION:");
+console.log(session);
+
+console.log("METADATA:");
+console.log(metadata);
+
       /*
       =====================================
       SARA INITIAL PAYMENT
