@@ -4,9 +4,12 @@ import { buffer } from "micro";
 
 import { createClient } from "@supabase/supabase-js";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
-  apiVersion: "2024-06-20",
-});
+const stripe = new Stripe(
+  process.env.STRIPE_SECRET_KEY as string,
+  {
+    apiVersion: "2024-06-20",
+  }
+);
 
 const supabase = createClient(
   process.env.VITE_SUPABASE_URL!,
@@ -19,95 +22,213 @@ export const config = {
   },
 };
 
-export default async function handler(req: any, res: any) {
+export default async function handler(
+  req: any,
+  res: any
+) {
 
   if (req.method !== "POST") {
-    return res.status(405).send("Method not allowed");
+    return res
+      .status(405)
+      .send("Method not allowed");
   }
 
   try {
 
-    const sig = req.headers["stripe-signature"];
+    const sig =
+      req.headers["stripe-signature"];
 
     if (!sig) {
-      return res.status(400).send("No signature");
+      return res
+        .status(400)
+        .send("No signature");
     }
 
-    const rawBody = await buffer(req);
+    const rawBody =
+      await buffer(req);
 
-    const event = stripe.webhooks.constructEvent(
-      rawBody,
-      sig,
-      process.env.STRIPE_WEBHOOK_SECRET as string
-    );
+    const event =
+      stripe.webhooks.constructEvent(
+        rawBody,
+        sig,
+        process.env
+          .STRIPE_WEBHOOK_SECRET as string
+      );
 
-    if (event.type === "checkout.session.completed") {
+    /*
+    =====================================
+    PAYMENT SUCCESS
+    =====================================
+    */
 
-      const session: any = event.data.object;
+    if (
+      event.type ===
+      "checkout.session.completed"
+    ) {
 
-      const metadata = session.metadata;
+      const session: any =
+        event.data.object;
+
+      const metadata =
+        session.metadata;
 
       /*
-      =========================
-      SARA CONFIRMATION PAYMENT
-      =========================
+      =====================================
+      SARA INITIAL PAYMENT
+      =====================================
       */
 
-      if (metadata?.type === "SARA_CONFIRMATION") {
+      if (!metadata?.type) {
 
-        const appointmentId = metadata.appointment_id;
+        console.log(
+          "🔥 Sara initial payment success"
+        );
 
-        const token = metadata.token;
+        /*
+        SAVE IN SUPABASE
+        */
+
+        await supabase
+          .from("sara_searches")
+          .insert([
+            {
+              customer_name:
+                metadata.customer_name,
+
+              customer_phone:
+                metadata.customer_phone,
+
+              customer_email:
+                metadata.customer_email,
+
+              city:
+                metadata.city,
+
+              province:
+                metadata.province,
+
+              tramite:
+                metadata.tramite,
+
+              status:
+                "searching",
+            },
+          ]);
+
+        console.log(
+          "✅ Saved in Supabase"
+        );
+
+        /*
+        SEND TO MAKE
+        */
+
+        await fetch(
+          "https://hook.eu1.make.com/k7f36tb5x2lh9840o19a9timdtnvcnqi",
+          {
+            method: "POST",
+
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
+
+            body: JSON.stringify({
+
+              customer_name:
+                metadata.customer_name,
+
+              customer_phone:
+                metadata.customer_phone,
+
+              customer_email:
+                metadata.customer_email,
+
+              city:
+                metadata.city,
+
+              province:
+                metadata.province,
+
+              tramite:
+                metadata.tramite,
+
+              paid: true,
+
+            }),
+          }
+        );
+
+        console.log(
+          "✅ Make webhook sent"
+        );
+
+      }
+
+      /*
+      =====================================
+      SARA CONFIRMATION PAYMENT
+      =====================================
+      */
+
+      if (
+        metadata?.type ===
+        "SARA_CONFIRMATION"
+      ) {
+
+        const appointmentId =
+          metadata.appointment_id;
 
         await supabase
           .from("found_appointments")
           .update({
-            payment_status: "paid",
+            payment_status:
+              "paid",
+
             confirmed: true,
           })
-          .eq("id", appointmentId);
+          .eq(
+            "id",
+            appointmentId
+          );
 
-        console.log("✅ Sara payment confirmed:", appointmentId);
-
-        /*
-        هنا من بعد:
-        - Playwright booking
-        - ICP confirmation
-        - PDF generation
-        - WhatsApp final
-        */
+        console.log(
+          "✅ Sara confirmation payment"
+        );
 
       }
 
       /*
-      =========================
+      =====================================
       KHALID PAYMENTS
-      =========================
+      =====================================
       */
 
-      if (metadata?.type === "KHALID_PAYMENT") {
+      if (
+        metadata?.type ===
+        "KHALID_PAYMENT"
+      ) {
 
-        console.log("✅ Khalid payment");
-
-        /*
-        logic ديال Khalid
-        */
+        console.log(
+          "✅ Khalid payment"
+        );
 
       }
 
       /*
-      =========================
+      =====================================
       MOHAMED PAYMENTS
-      =========================
+      =====================================
       */
 
-      if (metadata?.type === "MOHAMED_PAYMENT") {
+      if (
+        metadata?.type ===
+        "MOHAMED_PAYMENT"
+      ) {
 
-        console.log("✅ Mohamed payment");
-
-        /*
-        logic ديال Mohamed
-        */
+        console.log(
+          "✅ Mohamed payment"
+        );
 
       }
 
@@ -121,7 +242,9 @@ export default async function handler(req: any, res: any) {
 
     console.error(err);
 
-    return res.status(400).send(err.message);
+    return res
+      .status(400)
+      .send(err.message);
 
   }
 
