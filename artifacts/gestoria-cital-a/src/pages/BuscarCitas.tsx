@@ -362,28 +362,7 @@ function OfficialBrowserBox({
 
 console.log(await supabaseRes.text());
 
-await fetch(
-  "https://hook.eu1.make.com/k7f36tb5x2lh9840o19a9timdtnvcnqi",
-  {
-    method: "POST",
 
-    headers: {
-      "Content-Type": "application/json",
-    },
-
-    body: JSON.stringify({
-      customer_name: formData.fullName,
-
-      customer_phone: formData.phone,
-
-      customer_email: formData.email,
-
-      tramite: selectedTramite,
-
-      province: formData.province,
-    }),
-  }
-);
 
 const res = await fetch("/api/create-checkout-sara-inicial", {
   method: "POST",
