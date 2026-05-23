@@ -6,18 +6,14 @@ import path from "path";
 const isReplit = process.env.REPL_ID !== undefined;
 const isProduction = process.env.NODE_ENV === "production";
 
-const rawPort = process.env.PORT ?? "5173";
+const rawPort = process.env.PORT ?? "4173";
 const port = Number(rawPort);
 
 const basePath = process.env.BASE_PATH ?? "/";
 
 export default defineConfig({
   base: basePath,
-  server: {
-  headers: {
-    "Cache-Control": "no-store",
-  },
-},
+
   plugins: [
     react(),
     tailwindcss(),
@@ -35,6 +31,7 @@ export default defineConfig({
         ]
       : []),
   ],
+
   resolve: {
     alias: {
       "@": path.resolve(import.meta.dirname, "src"),
@@ -42,19 +39,28 @@ export default defineConfig({
     },
     dedupe: ["react", "react-dom"],
   },
+
   root: path.resolve(import.meta.dirname),
+
   build: {
     outDir: path.resolve(import.meta.dirname, "dist"),
     emptyOutDir: true,
   },
+
   server: {
-    port,
     host: "0.0.0.0",
+    port,
     allowedHosts: true,
+
+    headers: {
+      "Cache-Control": "no-store",
+    },
+
     fs: {
       strict: true,
       deny: ["**/.*"],
     },
+
     proxy: {
       "/api": {
         target: `http://localhost:${process.env.API_SERVER_PORT ?? 8080}`,
@@ -62,9 +68,10 @@ export default defineConfig({
       },
     },
   },
+
   preview: {
-    port,
     host: "0.0.0.0",
+    port,
     allowedHosts: true,
   },
 });
