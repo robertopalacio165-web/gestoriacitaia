@@ -14,19 +14,31 @@ export default async function handler(
 
     /*
     =====================================
+    WORKER START
+    =====================================
+    */
+
+    console.log("🚀 Sara Worker Running...");
+
+    /*
+    =====================================
     GET ACTIVE SEARCHES
     =====================================
     */
 
-    const { data: searches } =
+    const { data: searches, error: searchesError } =
       await supabase
         .from("sara_searches")
         .select("*")
         .eq("status", "searching")
         .limit(5);
 
+    if (searchesError) {
+      throw searchesError;
+    }
+
     console.log(
-      "🔎 SEARCHES:",
+      "🔎 ACTIVE SEARCHES:",
       searches?.length || 0
     );
 
@@ -39,7 +51,7 @@ export default async function handler(
     for (const search of searches || []) {
 
       console.log(
-        "🚀 PROCESS:",
+        "🚀 PROCESSING:",
         search.customer_name
       );
 
@@ -49,142 +61,154 @@ export default async function handler(
       =====================================
       */
 
-      const { data: workerData } =
+      const { data: workerData, error: workerError } =
         await supabase.rpc(
           "assign_best_worker",
           {
-            city_input:
-              search.city,
+            city_input: search.city,
           }
         );
 
-      const workerName =
-        workerData;
+      if (workerError) {
+        console.log(workerError);
+        continue;
+      }
+
+      const workerName = workerData;
 
       console.log(
-        "👷 WORKER:",
+        "👷 ASSIGNED WORKER:",
         workerName
       );
 
       /*
       =====================================
-      SIMULATE FOUND APPOINTMENT
+      SIMULATE APPOINTMENT FOUND
       =====================================
       */
 
       const foundAppointment =
         Math.random() > 0.7;
 
-      if (foundAppointment) {
+      if (!foundAppointment) {
 
         console.log(
-          "🔥 APPOINTMENT FOUND"
+          "❌ NO APPOINTMENT FOUND"
         );
 
-        /*
-        CREATE HOLD
-        */
+        continue;
+      }
 
-        const { data: holdId } =
-          await supabase.rpc(
-            "create_reservation_hold",
-            {
-              search_uuid:
-                search.id,
+      console.log(
+        "🔥 APPOINTMENT FOUND"
+      );
 
-              city_input:
-                search.city,
+      /*
+      =====================================
+      CREATE HOLD LOCK
+      =====================================
+      */
 
-              worker_input:
-                workerName,
+      const {
+        data: holdId,
+        error: holdError
+      } = await supabase.rpc(
+        "create_reservation_hold",
+        {
+          search_uuid: search.id,
+          city_input: search.city,
+          worker_input: workerName,
+          customer_input: search.customer_name,
+          phone_input: search.customer_phone,
+          email_input: search.customer_email,
+          appointment_day: "2026-06-15",
+          appointment_hour: "09:30",
+        }
+      );
 
-              customer_input:
-                search.customer_name,
+      if (holdError) {
+        console.log(holdError);
+        continue;
+      }
 
-              phone_input:
-                search.customer_phone,
+      console.log(
+        "✅ HOLD CREATED:",
+        holdId
+      );
 
-              email_input:
-                search.customer_email,
+      /*
+      =====================================
+      SAVE FOUND APPOINTMENT
+      =====================================
+      */
 
-              appointment_day:
-                "2026-06-15",
-
-              appointment_hour:
-                "09:30",
-            }
-          );
-
-        console.log(
-          "✅ HOLD CREATED:",
-          holdId
-        );
-
-        /*
-        SAVE FOUND APPOINTMENT
-        */
-
+      const { error: foundError } =
         await supabase
           .from("found_appointments")
           .insert([
             {
-              search_id:
-                search.id,
-
-              city:
-                search.city,
-
-              worker_name:
-                workerName,
-
-              appointment_date:
-                "2026-06-15",
-
-              appointment_time:
-                "09:30",
-
-              customer_name:
-                search.customer_name,
-
-              customer_phone:
-                search.customer_phone,
-
-              customer_email:
-                search.customer_email,
-
-              reservation_status:
-                "hold_created",
+              search_id: search.id,
+              city: search.city,
+              worker_name: workerName,
+              appointment_date: "2026-06-15",
+              appointment_time: "09:30",
+              customer_name: search.customer_name,
+              customer_phone: search.customer_phone,
+              customer_email: search.customer_email,
+              reservation_status: "hold_created",
             },
           ]);
 
-        /*
-        UPDATE SEARCH STATUS
-        */
+      if (foundError) {
+        console.log(foundError);
+        continue;
+      }
 
+      /*
+      =====================================
+      UPDATE SEARCH STATUS
+      =====================================
+      */
+
+      const { error: updateError } =
         await supabase
           .from("sara_searches")
           .update({
-            status:
-              "appointment_found",
+            status: "appointment_found",
           })
-          .eq(
-            "id",
-            search.id
-          );
+          .eq("id", search.id);
 
+      if (updateError) {
+        console.log(updateError);
+        continue;
       }
+
+      console.log(
+        "✅ SEARCH UPDATED"
+      );
 
     }
 
+    /*
+    =====================================
+    SUCCESS RESPONSE
+    =====================================
+    */
+
     return res.status(200).json({
       success: true,
+      message: "Sara worker completed cycle"
     });
 
   } catch (err: any) {
 
-    console.log(err);
+    console.log(
+      "❌ WORKER ERROR:",
+      err
+    );
 
     return res.status(500).json({
+      success: false,
       error: err.message,
     });
 
