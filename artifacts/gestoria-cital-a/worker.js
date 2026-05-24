@@ -1,31 +1,48 @@
-import fetch from "node-fetch";
+const WORKER_URL =
+  "https://gestoriacitaia.com/api/railway-worker";
 
 async function runWorker() {
 
   try {
 
-    console.log("🚀 Sara Worker Running...");
-
-    const response = await fetch(
-      "https://grateful-spirit-production-6aee.up.railway.app/api/railway-worker"
+    console.log(
+      "🚀 Sara Worker Running..."
     );
 
-    const data = await response.json();
+    const response =
+      await fetch(
+        WORKER_URL,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type":
+              "application/json"
+          }
+        }
+      );
 
-    console.log("✅ Worker Response:", data);
+    const data =
+      await response.json();
+
+    console.log(
+      "✅ Worker Response:",
+      data
+    );
 
   } catch (err) {
 
-    console.log("❌ Worker Error:", err);
+    console.log(
+      "❌ Worker Error:",
+      err
+    );
 
   }
 
 }
 
-setInterval(() => {
-
-  runWorker();
-
-}, 30000);
-
 runWorker();
+
+setInterval(
+  runWorker,
+  30000
+);
