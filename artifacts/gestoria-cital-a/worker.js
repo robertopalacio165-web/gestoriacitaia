@@ -1,5 +1,5 @@
 const WORKER_URL =
-  "https://gestoriacitaia.com/api/railway-worker";
+  "https://gestoriacitaia-gestoria-cital-a1-lthu56e7b.vercel.app/api/railway-worker";
 
 async function runWorker() {
 
