@@ -28,7 +28,7 @@ export default async function handler(req, res) {
 
     /*
     =========================
-    GET SEARCHES
+    GET PRIORITY SEARCHES
     =========================
     */
 
@@ -37,6 +37,10 @@ export default async function handler(req, res) {
         .from("sara_searches")
         .select("*")
         .eq("reservation_status", "searching")
+        .order(
+          "priority_level",
+          { ascending: false }
+        )
         .limit(5);
 
     if (error) {
@@ -72,7 +76,14 @@ export default async function handler(req, res) {
         await supabase
           .from("sara_searches")
           .update({
-            reservation_status: "processing"
+            reservation_status:
+              "processing",
+
+            started_at:
+              new Date(),
+
+            last_worker_check:
+              new Date()
           })
           .eq("id", search.id);
 
@@ -85,15 +96,13 @@ export default async function handler(req, res) {
         const currentRetries =
           search.retry_count || 0;
 
-        console.log(
-          "🔁 RETRIES:",
-          currentRetries
-        );
-
-        if (currentRetries >= MAX_RETRIES) {
+        if (
+          currentRetries >=
+          MAX_RETRIES
+        ) {
 
           console.log(
-            "❌ MAX RETRIES REACHED"
+            "❌ MAX RETRIES"
           );
 
           await supabase
@@ -112,7 +121,7 @@ export default async function handler(req, res) {
 
         /*
         =========================
-        ASSIGN WORKER
+        ASSIGN BEST WORKER
         =========================
         */
 
@@ -120,7 +129,8 @@ export default async function handler(req, res) {
           await supabase.rpc(
             "assign_best_worker",
             {
-              city_input: search.city
+              city_input:
+                search.city
             }
           );
 
@@ -131,11 +141,26 @@ export default async function handler(req, res) {
 
         /*
         =========================
+        SAVE ASSIGNED WORKER
+        =========================
+        */
+
+        await supabase
+          .from("sara_searches")
+          .update({
+            assigned_worker:
+              workerName || "Sara AI"
+          })
+          .eq("id", search.id);
+
+        /*
+        =========================
         SIMULATE APPOINTMENT
         =========================
         */
 
-        const foundAppointment = true;
+        const foundAppointment =
+          true;
 
         if (!foundAppointment) {
 
@@ -279,10 +304,6 @@ export default async function handler(req, res) {
           continue;
         }
 
-        console.log(
-          "✅ APPOINTMENT SAVED"
-        );
-
         /*
         =========================
         COMPLETE SEARCH
@@ -297,7 +318,10 @@ export default async function handler(req, res) {
               "appointment_found",
 
             reservation_status:
-              "completed"
+              "completed",
+
+            completed_at:
+              new Date()
 
           })
           .eq("id", search.id);
