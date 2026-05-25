@@ -21,7 +21,7 @@ export default async function handler(req, res) {
       await supabase
         .from("sara_searches")
         .select("*")
-       .eq("reservation_status", "searching")
+        .eq("reservation_status", "searching")
         .limit(5);
 
     if (error) {
@@ -40,6 +40,27 @@ export default async function handler(req, res) {
     */
 
     for (const search of searches || []) {
+
+      /*
+      =========================
+      VALIDATE DATA
+      =========================
+      */
+
+      if (
+        !search.customer_name ||
+        !search.customer_phone ||
+        !search.customer_email ||
+        !search.city
+      ) {
+
+        console.log(
+          "❌ INVALID SEARCH:",
+          search.id
+        );
+
+        continue;
+      }
 
       console.log(
         "👤 CLIENT:",
@@ -67,11 +88,11 @@ export default async function handler(req, res) {
 
       /*
       =========================
-      SIMULATE APPOINTMENT
+      FORCE APPOINTMENT
       =========================
       */
 
-   const foundAppointment = true;
+      const foundAppointment = true;
 
       if (!foundAppointment) {
 
@@ -92,7 +113,7 @@ export default async function handler(req, res) {
       =========================
       */
 
-      const { data: holdId } =
+      const { data: holdId, error: holdError } =
         await supabase.rpc(
           "create_reservation_hold",
           {
@@ -122,8 +143,18 @@ export default async function handler(req, res) {
           }
         );
 
+      if (holdError) {
+
+        console.log(
+          "❌ HOLD ERROR:",
+          holdError
+        );
+
+        continue;
+      }
+
       console.log(
-        "✅ HOLD:",
+        "✅ HOLD CREATED:",
         holdId
       );
 
@@ -133,38 +164,65 @@ export default async function handler(req, res) {
       =========================
       */
 
-      await supabase
-        .from("found_appointments")
-        .insert([
-          {
-        queue_id:
-              search.id,
+      const { error: insertError } =
+        await supabase
+          .from("found_appointments")
+          .insert([
+            {
+              queue_id:
+                search.id,
 
-            city:
-              search.city,
+              customer_name:
+                search.customer_name,
 
-            worker_name:
-              workerName,
+              customer_phone:
+                search.customer_phone,
 
-            appointment_date:
-              "2026-06-15",
+              customer_email:
+                search.customer_email,
 
-        appointment_hour:
-              "09:30",
+              tramite:
+                search.tramite,
 
-            customer_name:
-              search.customer_name,
+              province:
+                search.province,
 
-            customer_phone:
-              search.customer_phone,
+              city:
+                search.city,
 
-            customer_email:
-              search.customer_email,
+              appointment_date:
+                "2026-06-15",
 
-            reservation_status:
-              "hold_created"
-          }
-        ]);
+              appointment_hour:
+                "09:30",
+
+              worker_name:
+                workerName,
+
+              reservation_status:
+                "hold_created",
+
+              payment_status:
+                "pending",
+
+              confirmed:
+                false
+            }
+          ]);
+
+      if (insertError) {
+
+        console.log(
+          "❌ INSERT ERROR:",
+          insertError
+        );
+
+        continue;
+      }
+
+      console.log(
+        "✅ APPOINTMENT SAVED"
+      );
 
       /*
       =========================
@@ -176,12 +234,19 @@ export default async function handler(req, res) {
         .from("sara_searches")
         .update({
           status:
-            "appointment_found"
+            "appointment_found",
+
+          reservation_status:
+            "hold_created"
         })
         .eq(
           "id",
           search.id
         );
+
+      console.log(
+        "✅ SEARCH UPDATED"
+      );
 
     }
 
