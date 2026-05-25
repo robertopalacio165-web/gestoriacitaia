@@ -149,7 +149,7 @@ export default async function handler(req, res) {
             appointment_date:
               "2026-06-15",
 
-            appointment_time:
+        appointment_hour:
               "09:30",
 
             customer_name:
