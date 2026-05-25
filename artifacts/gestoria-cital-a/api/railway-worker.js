@@ -71,8 +71,7 @@ export default async function handler(req, res) {
       =========================
       */
 
-      const foundAppointment =
-        Math.random() > 0.7;
+   const foundAppointment = true;
 
       if (!foundAppointment) {
 
