@@ -14,29 +14,212 @@ export default async function handler(req, res) {
     console.log("🚀 SARA WORKER STARTED");
 
     /*
-    =========================
+    ====================================
+    INTERNAL REASSIGNMENT ENGINE
+    ====================================
+    */
+
+    const now = new Date();
+
+    const { data: expiredAppointments } =
+      await supabase
+        .from("found_appointments")
+        .select("*")
+        .lt(
+          "expires_at",
+          now.toISOString()
+        )
+        .eq(
+          "payment_status",
+          "pending"
+        )
+        .eq(
+          "reassigned",
+          false
+        );
+
+    for (const appointment of expiredAppointments || []) {
+
+      console.log(
+        "♻️ REASSIGN:",
+        appointment.customer_name
+      );
+
+      /*
+      ====================================
+      FIND NEXT CLIENT
+      ====================================
+      */
+
+      const { data: nextClient } =
+        await supabase
+          .from("sara_searches")
+          .select("*")
+          .eq(
+            "reservation_status",
+            "searching"
+          )
+          .eq(
+            "city",
+            appointment.city
+          )
+          .eq(
+            "tramite",
+            appointment.tramite
+          )
+          .order(
+            "priority_level",
+            { ascending: false }
+          )
+          .limit(1)
+          .single();
+
+      if (!nextClient) {
+
+        console.log(
+          "❌ NO NEXT CLIENT"
+        );
+
+        continue;
+      }
+
+      /*
+      ====================================
+      CREATE NEW ASSIGNMENT
+      ====================================
+      */
+
+      await supabase
+        .from("found_appointments")
+        .insert([
+          {
+
+            queue_id:
+              nextClient.id,
+
+            customer_name:
+              nextClient.customer_name,
+
+            customer_phone:
+              nextClient.customer_phone,
+
+            customer_email:
+              nextClient.customer_email,
+
+            city:
+              appointment.city,
+
+            province:
+              nextClient.province,
+
+            tramite:
+              appointment.tramite,
+
+            worker_name:
+              "Sara AI",
+
+            appointment_date:
+              appointment.appointment_date,
+
+            appointment_hour:
+              appointment.appointment_hour,
+
+            office:
+              appointment.office,
+
+            payment_status:
+              "pending",
+
+            confirmed:
+              false,
+
+            reservation_status:
+              "reassigned",
+
+            expires_at:
+              new Date(
+                Date.now() + 5 * 60 * 1000
+              )
+          }
+        ]);
+
+      /*
+      ====================================
+      MARK OLD AS REASSIGNED
+      ====================================
+      */
+
+      await supabase
+        .from("found_appointments")
+        .update({
+          reassigned:
+            true,
+
+          reservation_status:
+            "reassigned_old"
+        })
+        .eq(
+          "id",
+          appointment.id
+        );
+
+      /*
+      ====================================
+      UPDATE CLIENT STATUS
+      ====================================
+      */
+
+      await supabase
+        .from("sara_searches")
+        .update({
+          reservation_status:
+            "completed",
+
+          status:
+            "appointment_found"
+        })
+        .eq(
+          "id",
+          nextClient.id
+        );
+
+      console.log(
+        "✅ REASSIGNED"
+      );
+
+    }
+
+    /*
+    ====================================
     RESET STUCK SEARCHES
-    =========================
+    ====================================
     */
 
     await supabase
       .from("sara_searches")
       .update({
-        reservation_status: "searching"
+        reservation_status:
+          "searching"
       })
-      .eq("reservation_status", "processing");
+      .eq(
+        "reservation_status",
+        "processing"
+      );
 
     /*
-    =========================
-    GET PRIORITY SEARCHES
-    =========================
+    ====================================
+    GET SEARCHES
+    ====================================
     */
 
     const { data: searches, error } =
       await supabase
         .from("sara_searches")
         .select("*")
-        .eq("reservation_status", "searching")
+        .eq(
+          "reservation_status",
+          "searching"
+        )
         .order(
           "priority_level",
           { ascending: false }
@@ -47,30 +230,20 @@ export default async function handler(req, res) {
       throw error;
     }
 
-    console.log(
-      "🔎 SEARCHES:",
-      searches?.length || 0
-    );
-
     /*
-    =========================
+    ====================================
     LOOP SEARCHES
-    =========================
+    ====================================
     */
 
     for (const search of searches || []) {
 
       try {
 
-        console.log(
-          "👤 CLIENT:",
-          search.customer_name
-        );
-
         /*
-        =========================
+        ====================================
         LOCK SEARCH
-        =========================
+        ====================================
         */
 
         await supabase
@@ -88,9 +261,9 @@ export default async function handler(req, res) {
           .eq("id", search.id);
 
         /*
-        =========================
-        RETRY COUNT
-        =========================
+        ====================================
+        RETRIES
+        ====================================
         */
 
         const currentRetries =
@@ -100,10 +273,6 @@ export default async function handler(req, res) {
           currentRetries >=
           MAX_RETRIES
         ) {
-
-          console.log(
-            "❌ MAX RETRIES"
-          );
 
           await supabase
             .from("sara_searches")
@@ -120,9 +289,9 @@ export default async function handler(req, res) {
         }
 
         /*
-        =========================
-        ASSIGN BEST WORKER
-        =========================
+        ====================================
+        ASSIGN WORKER
+        ====================================
         */
 
         const { data: workerName } =
@@ -134,29 +303,10 @@ export default async function handler(req, res) {
             }
           );
 
-        console.log(
-          "👷 WORKER:",
-          workerName
-        );
-
         /*
-        =========================
-        SAVE ASSIGNED WORKER
-        =========================
-        */
-
-        await supabase
-          .from("sara_searches")
-          .update({
-            assigned_worker:
-              workerName || "Sara AI"
-          })
-          .eq("id", search.id);
-
-        /*
-        =========================
-        SIMULATE APPOINTMENT
-        =========================
+        ====================================
+        APPOINTMENT FOUND
+        ====================================
         */
 
         const foundAppointment =
@@ -164,10 +314,6 @@ export default async function handler(req, res) {
 
         if (!foundAppointment) {
 
-          console.log(
-            "❌ NO APPOINTMENT"
-          );
-
           await supabase
             .from("sara_searches")
             .update({
@@ -182,132 +328,73 @@ export default async function handler(req, res) {
           continue;
         }
 
-        console.log(
-          "🔥 APPOINTMENT FOUND"
-        );
-
         /*
-        =========================
-        CREATE HOLD
-        =========================
+        ====================================
+        SAVE APPOINTMENT
+        ====================================
         */
 
-        const { data: holdId } =
-          await supabase.rpc(
-            "create_reservation_hold",
+        const expirationDate =
+          new Date(
+            Date.now() + 5 * 60 * 1000
+          );
+
+        await supabase
+          .from("found_appointments")
+          .insert([
             {
-              search_uuid:
+
+              queue_id:
                 search.id,
 
-              city_input:
-                search.city,
-
-              worker_input:
-                workerName || "Sara AI",
-
-              customer_input:
+              customer_name:
                 search.customer_name,
 
-              phone_input:
+              customer_phone:
                 search.customer_phone,
 
-              email_input:
+              customer_email:
                 search.customer_email,
 
-              appointment_day:
+              city:
+                search.city,
+
+              province:
+                search.province,
+
+              tramite:
+                search.tramite,
+
+              worker_name:
+                workerName || "Sara AI",
+
+              appointment_date:
                 "2026-06-15",
 
               appointment_hour:
-                "09:30"
-            }
-          );
+                "09:30",
 
-        console.log(
-          "✅ HOLD:",
-          holdId
-        );
+              office:
+                "Barcelona Oficina",
 
-        /*
-        =========================
-        SAVE APPOINTMENT
-        =========================
-        */
+              payment_status:
+                "pending",
 
-        const { error: insertError } =
-          await supabase
-            .from("found_appointments")
-            .insert([
-              {
+              confirmed:
+                false,
 
-                queue_id:
-                  search.id,
-
-                customer_name:
-                  search.customer_name,
-
-                customer_phone:
-                  search.customer_phone,
-
-                customer_email:
-                  search.customer_email,
-
-                city:
-                  search.city,
-
-                province:
-                  search.province,
-
-                tramite:
-                  search.tramite,
-
-                worker_name:
-                  workerName || "Sara AI",
-
-                appointment_date:
-                  "2026-06-15",
-
-                appointment_hour:
-                  "09:30",
-
-                office:
-                  "Barcelona Oficina",
-
-                payment_status:
-                  "pending",
-
-                confirmed:
-                  false,
-
-                reservation_status:
-                  "hold_created"
-              }
-            ]);
-
-        if (insertError) {
-
-          console.log(
-            "❌ INSERT ERROR:",
-            insertError
-          );
-
-          await supabase
-            .from("sara_searches")
-            .update({
               reservation_status:
-                "searching",
+                "hold_created",
 
-              retry_count:
-                currentRetries + 1
-            })
-            .eq("id", search.id);
-
-          continue;
-        }
+              expires_at:
+                expirationDate
+            }
+          ]);
 
         /*
-        =========================
+        ====================================
         COMPLETE SEARCH
-        =========================
+        ====================================
         */
 
         await supabase
@@ -325,10 +412,6 @@ export default async function handler(req, res) {
 
           })
           .eq("id", search.id);
-
-        console.log(
-          "🎉 COMPLETED"
-        );
 
       } catch (singleError) {
 
@@ -353,8 +436,7 @@ export default async function handler(req, res) {
     }
 
     return res.status(200).json({
-      success: true,
-      message: "Sara Worker Completed"
+      success: true
     });
 
   } catch (err) {
