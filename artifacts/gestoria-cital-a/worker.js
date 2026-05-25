@@ -1,5 +1,9 @@
-const WORKER_URL =
-  "https://gestoriacitaia-gestoria-cital-a1-lthu56e7b.vercel.app/api/railway-worker";
+import { createClient } from "@supabase/supabase-js";
+
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
+);
 
 async function runWorker() {
 
@@ -9,30 +13,166 @@ async function runWorker() {
       "🚀 Sara Worker Running..."
     );
 
-    const response =
-      await fetch(
-        WORKER_URL,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type":
-              "application/json"
-          }
-        }
+    /*
+    =========================
+    GET ACTIVE SEARCHES
+    =========================
+    */
+
+    const {
+      data: searches,
+      error
+    } = await supabase
+      .from("sara_searches")
+      .select("*")
+      .eq(
+        "reservation_status",
+        "searching"
+      )
+      .limit(5);
+
+    if (error) {
+
+      console.log(
+        "❌ SEARCH ERROR:",
+        error
       );
 
-    const data =
-      await response.json();
+      return;
+    }
 
     console.log(
-      "✅ Worker Response:",
-      data
+      "🔎 ACTIVE SEARCHES:",
+      searches?.length || 0
     );
+
+    /*
+    =========================
+    LOOP SEARCHES
+    =========================
+    */
+
+    for (const search of searches || []) {
+
+      console.log(
+        "👤 CLIENT:",
+        search.customer_name
+      );
+
+      /*
+      =========================
+      CREATE FOUND APPOINTMENT
+      =========================
+      */
+
+      const {
+        error: insertError
+      } = await supabase
+        .from("found_appointments")
+        .insert([
+          {
+
+            queue_id:
+              search.id,
+
+            customer_name:
+              search.customer_name,
+
+            customer_phone:
+              search.customer_phone,
+
+            customer_email:
+              search.customer_email,
+
+            city:
+              search.city,
+
+            province:
+              search.province,
+
+            tramite:
+              search.tramite,
+
+            appointment_date:
+              "2026-06-15",
+
+            appointment_hour:
+              "09:30",
+
+            office:
+              "Barcelona Oficina",
+
+            confirmation_token:
+              crypto.randomUUID(),
+
+            payment_status:
+              "pending",
+
+            confirmed:
+              false,
+
+            worker_name:
+              "Sara AI",
+
+            reservation_status:
+              "hold_created"
+          }
+        ]);
+
+      if (insertError) {
+
+        console.log(
+          "❌ INSERT ERROR:",
+          insertError
+        );
+
+        continue;
+      }
+
+      console.log(
+        "✅ APPOINTMENT SAVED"
+      );
+
+      /*
+      =========================
+      UPDATE SEARCH STATUS
+      =========================
+      */
+
+      const {
+        error: updateError
+      } = await supabase
+        .from("sara_searches")
+        .update({
+          status:
+            "appointment_found"
+        })
+        .eq(
+          "id",
+          search.id
+        );
+
+      if (updateError) {
+
+        console.log(
+          "❌ UPDATE ERROR:",
+          updateError
+        );
+
+      } else {
+
+        console.log(
+          "✅ STATUS UPDATED"
+        );
+
+      }
+
+    }
 
   } catch (err) {
 
     console.log(
-      "❌ Worker Error:",
+      "❌ WORKER ERROR:",
       err
     );
 
@@ -40,7 +180,19 @@ async function runWorker() {
 
 }
 
+/*
+=========================
+START WORKER
+=========================
+*/
+
 runWorker();
+
+/*
+=========================
+RUN EVERY 30 SECONDS
+=========================
+*/
 
 setInterval(
   runWorker,
