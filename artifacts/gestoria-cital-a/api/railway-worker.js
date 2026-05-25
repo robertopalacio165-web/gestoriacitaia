@@ -137,7 +137,7 @@ export default async function handler(req, res) {
         .from("found_appointments")
         .insert([
           {
-            search_id:
+        queue_id:
               search.id,
 
             city:
