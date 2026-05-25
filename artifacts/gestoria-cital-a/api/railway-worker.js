@@ -9,7 +9,7 @@ export default async function handler(req, res) {
 
   try {
 
-    console.log("🚀 Sara Worker Running...");
+    console.log("🚀 SARA WORKER STARTED");
 
     /*
     =========================
@@ -29,7 +29,7 @@ export default async function handler(req, res) {
     }
 
     console.log(
-      "🔎 ACTIVE SEARCHES:",
+      "🔎 SEARCHES FOUND:",
       searches?.length || 0
     );
 
@@ -41,222 +41,245 @@ export default async function handler(req, res) {
 
     for (const search of searches || []) {
 
-      /*
-      =========================
-      VALIDATE DATA
-      =========================
-      */
-
-      if (
-        !search.customer_name ||
-        !search.customer_phone ||
-        !search.customer_email ||
-        !search.city
-      ) {
+      try {
 
         console.log(
-          "❌ INVALID SEARCH:",
-          search.id
+          "👤 PROCESSING:",
+          search.customer_name
         );
 
-        continue;
-      }
+        /*
+        =========================
+        LOCK SEARCH
+        =========================
+        */
 
-      console.log(
-        "👤 CLIENT:",
-        search.customer_name
-      );
-
-      /*
-      =========================
-      ASSIGN WORKER
-      =========================
-      */
-
-      const { data: workerName } =
-        await supabase.rpc(
-          "assign_best_worker",
-          {
-            city_input: search.city
-          }
-        );
-
-      console.log(
-        "👷 WORKER:",
-        workerName
-      );
-
-      /*
-      =========================
-      FORCE APPOINTMENT
-      =========================
-      */
-
-      const foundAppointment = true;
-
-      if (!foundAppointment) {
-
-        console.log(
-          "❌ NO APPOINTMENT"
-        );
-
-        continue;
-      }
-
-      console.log(
-        "🔥 APPOINTMENT FOUND"
-      );
-
-      /*
-      =========================
-      CREATE HOLD
-      =========================
-      */
-
-      const { data: holdId, error: holdError } =
-        await supabase.rpc(
-          "create_reservation_hold",
-          {
-            search_uuid:
-              search.id,
-
-            city_input:
-              search.city,
-
-            worker_input:
-              workerName,
-
-            customer_input:
-              search.customer_name,
-
-            phone_input:
-              search.customer_phone,
-
-            email_input:
-              search.customer_email,
-
-            appointment_day:
-              "2026-06-15",
-
-            appointment_hour:
-              "09:30"
-          }
-        );
-
-      if (holdError) {
-
-        console.log(
-          "❌ HOLD ERROR:",
-          holdError
-        );
-
-        continue;
-      }
-
-      console.log(
-        "✅ HOLD CREATED:",
-        holdId
-      );
-
-      /*
-      =========================
-      SAVE APPOINTMENT
-      =========================
-      */
-
-      const { error: insertError } =
         await supabase
-          .from("found_appointments")
-          .insert([
+          .from("sara_searches")
+          .update({
+            reservation_status: "processing"
+          })
+          .eq("id", search.id);
+
+        /*
+        =========================
+        ASSIGN WORKER
+        =========================
+        */
+
+        const { data: workerName } =
+          await supabase.rpc(
+            "assign_best_worker",
             {
-              queue_id:
+              city_input: search.city
+            }
+          );
+
+        console.log(
+          "👷 WORKER:",
+          workerName
+        );
+
+        /*
+        =========================
+        SIMULATE APPOINTMENT
+        =========================
+        */
+
+        const foundAppointment = true;
+
+        if (!foundAppointment) {
+
+          console.log(
+            "❌ NO APPOINTMENT"
+          );
+
+          await supabase
+            .from("sara_searches")
+            .update({
+              reservation_status: "searching"
+            })
+            .eq("id", search.id);
+
+          continue;
+        }
+
+        console.log(
+          "🔥 APPOINTMENT FOUND"
+        );
+
+        /*
+        =========================
+        CREATE HOLD
+        =========================
+        */
+
+        const { data: holdId } =
+          await supabase.rpc(
+            "create_reservation_hold",
+            {
+              search_uuid:
                 search.id,
 
-              customer_name:
-                search.customer_name,
-
-              customer_phone:
-                search.customer_phone,
-
-              customer_email:
-                search.customer_email,
-
-              tramite:
-                search.tramite,
-
-              province:
-                search.province,
-
-              city:
+              city_input:
                 search.city,
 
-              appointment_date:
+              worker_input:
+                workerName || "Sara AI",
+
+              customer_input:
+                search.customer_name,
+
+              phone_input:
+                search.customer_phone,
+
+              email_input:
+                search.customer_email,
+
+              appointment_day:
                 "2026-06-15",
 
               appointment_hour:
-                "09:30",
-
-              worker_name:
-                workerName,
-
-              reservation_status:
-                "hold_created",
-
-              payment_status:
-                "pending",
-
-              confirmed:
-                false
+                "09:30"
             }
-          ]);
-
-      if (insertError) {
+          );
 
         console.log(
-          "❌ INSERT ERROR:",
-          insertError
+          "✅ HOLD CREATED:",
+          holdId
         );
 
-        continue;
+        /*
+        =========================
+        SAVE APPOINTMENT
+        =========================
+        */
+
+        const { error: insertError } =
+          await supabase
+            .from("found_appointments")
+            .insert([
+              {
+
+                queue_id:
+                  search.id,
+
+                customer_name:
+                  search.customer_name,
+
+                customer_phone:
+                  search.customer_phone,
+
+                customer_email:
+                  search.customer_email,
+
+                city:
+                  search.city,
+
+                province:
+                  search.province,
+
+                tramite:
+                  search.tramite,
+
+                worker_name:
+                  workerName || "Sara AI",
+
+                appointment_date:
+                  "2026-06-15",
+
+                appointment_hour:
+                  "09:30",
+
+                office:
+                  "Barcelona Oficina",
+
+                payment_status:
+                  "pending",
+
+                confirmed:
+                  false,
+
+                reservation_status:
+                  "hold_created"
+              }
+            ]);
+
+        if (insertError) {
+
+          console.log(
+            "❌ INSERT ERROR:",
+            insertError
+          );
+
+          await supabase
+            .from("sara_searches")
+            .update({
+              reservation_status: "failed"
+            })
+            .eq("id", search.id);
+
+          continue;
+        }
+
+        console.log(
+          "✅ APPOINTMENT SAVED"
+        );
+
+        /*
+        =========================
+        UPDATE SEARCH
+        =========================
+        */
+
+        await supabase
+          .from("sara_searches")
+          .update({
+            status:
+              "appointment_found",
+
+            reservation_status:
+              "completed"
+          })
+          .eq(
+            "id",
+            search.id
+          );
+
+        console.log(
+          "🎉 SEARCH COMPLETED"
+        );
+
+      } catch (singleError) {
+
+        console.log(
+          "❌ SEARCH ERROR:",
+          singleError
+        );
+
+        await supabase
+          .from("sara_searches")
+          .update({
+            reservation_status:
+              "failed"
+          })
+          .eq("id", search.id);
+
       }
-
-      console.log(
-        "✅ APPOINTMENT SAVED"
-      );
-
-      /*
-      =========================
-      UPDATE SEARCH
-      =========================
-      */
-
-      await supabase
-        .from("sara_searches")
-        .update({
-          status:
-            "appointment_found",
-
-          reservation_status:
-            "hold_created"
-        })
-        .eq(
-          "id",
-          search.id
-        );
-
-      console.log(
-        "✅ SEARCH UPDATED"
-      );
 
     }
 
     return res.status(200).json({
-      success: true
+      success: true,
+      message: "Sara Worker Completed"
     });
 
   } catch (err) {
 
-    console.log(err);
+    console.log(
+      "❌ GLOBAL ERROR:",
+      err
+    );
 
     return res.status(500).json({
       success: false,
