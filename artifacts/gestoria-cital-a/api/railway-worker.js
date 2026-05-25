@@ -5,11 +5,26 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
+const MAX_RETRIES = 3;
+
 export default async function handler(req, res) {
 
   try {
 
     console.log("🚀 SARA WORKER STARTED");
+
+    /*
+    =========================
+    RESET STUCK SEARCHES
+    =========================
+    */
+
+    await supabase
+      .from("sara_searches")
+      .update({
+        reservation_status: "searching"
+      })
+      .eq("reservation_status", "processing");
 
     /*
     =========================
@@ -29,7 +44,7 @@ export default async function handler(req, res) {
     }
 
     console.log(
-      "🔎 SEARCHES FOUND:",
+      "🔎 SEARCHES:",
       searches?.length || 0
     );
 
@@ -44,7 +59,7 @@ export default async function handler(req, res) {
       try {
 
         console.log(
-          "👤 PROCESSING:",
+          "👤 CLIENT:",
           search.customer_name
         );
 
@@ -60,6 +75,40 @@ export default async function handler(req, res) {
             reservation_status: "processing"
           })
           .eq("id", search.id);
+
+        /*
+        =========================
+        RETRY COUNT
+        =========================
+        */
+
+        const currentRetries =
+          search.retry_count || 0;
+
+        console.log(
+          "🔁 RETRIES:",
+          currentRetries
+        );
+
+        if (currentRetries >= MAX_RETRIES) {
+
+          console.log(
+            "❌ MAX RETRIES REACHED"
+          );
+
+          await supabase
+            .from("sara_searches")
+            .update({
+              reservation_status:
+                "failed",
+
+              status:
+                "max_retries"
+            })
+            .eq("id", search.id);
+
+          continue;
+        }
 
         /*
         =========================
@@ -97,7 +146,11 @@ export default async function handler(req, res) {
           await supabase
             .from("sara_searches")
             .update({
-              reservation_status: "searching"
+              reservation_status:
+                "searching",
+
+              retry_count:
+                currentRetries + 1
             })
             .eq("id", search.id);
 
@@ -145,7 +198,7 @@ export default async function handler(req, res) {
           );
 
         console.log(
-          "✅ HOLD CREATED:",
+          "✅ HOLD:",
           holdId
         );
 
@@ -215,7 +268,11 @@ export default async function handler(req, res) {
           await supabase
             .from("sara_searches")
             .update({
-              reservation_status: "failed"
+              reservation_status:
+                "searching",
+
+              retry_count:
+                currentRetries + 1
             })
             .eq("id", search.id);
 
@@ -228,26 +285,25 @@ export default async function handler(req, res) {
 
         /*
         =========================
-        UPDATE SEARCH
+        COMPLETE SEARCH
         =========================
         */
 
         await supabase
           .from("sara_searches")
           .update({
+
             status:
               "appointment_found",
 
             reservation_status:
               "completed"
+
           })
-          .eq(
-            "id",
-            search.id
-          );
+          .eq("id", search.id);
 
         console.log(
-          "🎉 SEARCH COMPLETED"
+          "🎉 COMPLETED"
         );
 
       } catch (singleError) {
@@ -261,7 +317,10 @@ export default async function handler(req, res) {
           .from("sara_searches")
           .update({
             reservation_status:
-              "failed"
+              "searching",
+
+            retry_count:
+              (search.retry_count || 0) + 1
           })
           .eq("id", search.id);
 
