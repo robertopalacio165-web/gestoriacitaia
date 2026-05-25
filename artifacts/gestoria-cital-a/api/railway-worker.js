@@ -21,7 +21,7 @@ export default async function handler(req, res) {
       await supabase
         .from("sara_searches")
         .select("*")
-        .eq("status", "searching")
+       .eq("reservation_status", "searching")
         .limit(5);
 
     if (error) {
