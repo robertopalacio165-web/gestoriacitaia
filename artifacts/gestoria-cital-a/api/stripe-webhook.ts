@@ -251,6 +251,73 @@ export default async function handler(
           "✅ Confirmation paid"
         );
 
+        /*
+        =====================================
+        SEND FINAL DATA TO MAKE
+        =====================================
+        */
+
+        try {
+
+          await fetch(
+            "https://hook.eu1.make.com/vxsuo8kk9mssjam4bu2yyjpdkonjf5x6",
+            {
+              method: "POST",
+
+              headers: {
+                "Content-Type":
+                  "application/json",
+              },
+
+              body: JSON.stringify({
+
+                appointment_id:
+                  metadata.appointment_id,
+
+                customer_name:
+                  metadata.customer_name || "",
+
+                customer_phone:
+                  metadata.customer_phone || "",
+
+                customer_email:
+                  metadata.customer_email || "",
+
+                city:
+                  metadata.city || "",
+
+                office:
+                  metadata.office || "",
+
+                appointment_date:
+                  metadata.appointment_date || "",
+
+                appointment_hour:
+                  metadata.appointment_hour || "",
+
+                tramite:
+                  metadata.tramite || "",
+
+                paid: true,
+
+              }),
+            }
+          );
+
+          console.log(
+            "✅ FINAL MAKE SENT"
+          );
+
+        } catch (makeError) {
+
+          console.log(
+            "❌ FINAL MAKE ERROR"
+          );
+
+          console.log(makeError);
+
+        }
+
       }
 
     }
