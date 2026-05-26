@@ -31,19 +31,44 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={Landing} />
+
       <Route path="/auth/callback" component={AuthCallback} />
+
       <Route path="/panel" component={Panel} />
+
       <Route path="/buscar-citas" component={BuscarCitas} />
-      <Route path="/regularizacion-2026" component={Regularizacion2026} />
-      <Route path="/khalid-extranjeria" component={KhalidExtranjeria} />
+
+      <Route
+        path="/regularizacion-2026"
+        component={Regularizacion2026}
+      />
+
+      <Route
+        path="/khalid-extranjeria"
+        component={KhalidExtranjeria}
+      />
+
       <Route path="/aviso-legal" component={AvisoLegal} />
+
       <Route path="/privacidad" component={Privacidad} />
+
       <Route path="/cookies" component={CookiesPage} />
-      <Route path="/checkout/success" component={CheckoutSuccess} />
-      <Route path="/checkout/cancelado" component={CheckoutCancel} />
+
+      <Route
+        path="/checkout/success"
+        component={CheckoutSuccess}
+      />
+
+      <Route
+        path="/checkout/cancelado"
+        component={CheckoutCancel}
+      />
 
       {/* CONFIRMAR CITA */}
-      <Route path="/confirmar-cita" component={Confirmar} />
+      <Route
+        path="/confirmar-cita"
+        component={Confirmar}
+      />
 
       {/* 404 */}
       <Route component={NotFound} />
@@ -56,7 +81,9 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <LanguageProvider>
         <div translate="no" className="notranslate">
-          <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+          <WouterRouter
+            base={import.meta.env.BASE_URL.replace(/\/$/, "")}
+          >
             <Router />
           </WouterRouter>
 
