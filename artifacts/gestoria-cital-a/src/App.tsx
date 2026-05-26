@@ -1,7 +1,9 @@
 import { Switch, Route, Router as WouterRouter } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+
 import { Toaster } from "@/components/ui/toaster";
 import { LanguageProvider } from "@/contexts/LanguageContext";
+
 import NotFound from "@/pages/not-found";
 import Landing from "@/pages/Landing";
 import Panel from "@/pages/Panel";
@@ -39,7 +41,11 @@ function Router() {
       <Route path="/cookies" component={CookiesPage} />
       <Route path="/checkout/success" component={CheckoutSuccess} />
       <Route path="/checkout/cancelado" component={CheckoutCancel} />
-<Route path="/confirmar-cita" component={Confirmar} />
+
+      {/* CONFIRMAR CITA */}
+      <Route path="/confirmar-cita" component={Confirmar} />
+
+      {/* 404 */}
       <Route component={NotFound} />
     </Switch>
   );
@@ -53,6 +59,7 @@ function App() {
           <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
             <Router />
           </WouterRouter>
+
           <Toaster />
         </div>
       </LanguageProvider>
