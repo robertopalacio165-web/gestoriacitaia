@@ -53,7 +53,7 @@ export default function Confirmar() {
 
           const response =
             await fetch(
-`/api/confirm-cita?token=${params.token}`
+              `/api/confirm-cita?token=${params.token}`
             );
 
           const data =
@@ -105,7 +105,13 @@ export default function Confirmar() {
 
         setError("");
 
-        const response =
+        /*
+        ============================
+        STRIPE
+        ============================
+        */
+
+        const stripeResponse =
           await fetch(
             "/api/create-checkout-sara",
             {
@@ -128,22 +134,77 @@ export default function Confirmar() {
             }
           );
 
-        const data =
-          await response.json();
+        const stripeData =
+          await stripeResponse.json();
 
-        if (!response.ok) {
+        if (!stripeResponse.ok) {
 
           throw new Error(
-            data?.error ||
+            stripeData?.error ||
             "Error Stripe"
           );
 
         }
 
-        if (data?.url) {
+        /*
+        ============================
+        FINAL WEBHOOK
+        ============================
+        */
+
+        await fetch(
+          "https://hook.eu1.make.com/vxsuo8kk9mssjam4bu2yyjpdkonjf5x6",
+          {
+            method: "POST",
+
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
+
+            body: JSON.stringify({
+
+              appointment_id:
+                appointment?.id,
+
+              customer_name:
+                appointment?.customer_name,
+
+              customer_phone:
+                appointment?.customer_phone,
+
+              city:
+                appointment?.city,
+
+              office:
+                appointment?.office,
+
+              appointment_date:
+                appointment?.appointment_date,
+
+              appointment_hour:
+                appointment?.appointment_hour,
+
+              tramite:
+                appointment?.tramite,
+
+              pdf_url:
+                appointment?.pdf_url,
+
+            }),
+          }
+        );
+
+        /*
+        ============================
+        REDIRECT STRIPE
+        ============================
+        */
+
+        if (stripeData?.url) {
 
           window.location.href =
-            data.url;
+            stripeData.url;
 
         }
 
