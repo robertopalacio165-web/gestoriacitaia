@@ -39,7 +39,7 @@ function Router() {
       <Route path="/cookies" component={CookiesPage} />
       <Route path="/checkout/success" component={CheckoutSuccess} />
       <Route path="/checkout/cancelado" component={CheckoutCancel} />
-      <Route path="/confirmar" component={Confirmar} />
+<Route path="/confirmar-cita" component={Confirmar} />
       <Route component={NotFound} />
     </Switch>
   );
