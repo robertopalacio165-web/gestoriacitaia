@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(
@@ -22,8 +23,6 @@ export default async function handler(req, res) {
     const now = new Date();
 
     const { data: expiredAppointments } =
-      const confirmationToken =
-  crypto.randomUUID();
       await supabase
         .from("found_appointments")
         .select("*")
@@ -91,6 +90,9 @@ export default async function handler(req, res) {
       ====================================
       */
 
+      const reassignedToken =
+        crypto.randomUUID();
+
       await supabase
         .from("found_appointments")
         .insert([
@@ -137,6 +139,9 @@ export default async function handler(req, res) {
 
             reservation_status:
               "reassigned",
+
+            confirmation_token:
+              reassignedToken,
 
             expires_at:
               new Date(
@@ -341,6 +346,9 @@ export default async function handler(req, res) {
             Date.now() + 5 * 60 * 1000
           );
 
+        const confirmationToken =
+          crypto.randomUUID();
+
         await supabase
           .from("found_appointments")
           .insert([
@@ -387,6 +395,9 @@ export default async function handler(req, res) {
 
               reservation_status:
                 "hold_created",
+
+              confirmation_token:
+                confirmationToken,
 
               expires_at:
                 expirationDate
