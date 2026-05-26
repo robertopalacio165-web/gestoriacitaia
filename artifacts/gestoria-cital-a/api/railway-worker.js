@@ -22,6 +22,8 @@ export default async function handler(req, res) {
     const now = new Date();
 
     const { data: expiredAppointments } =
+      const confirmationToken =
+  crypto.randomUUID();
       await supabase
         .from("found_appointments")
         .select("*")
