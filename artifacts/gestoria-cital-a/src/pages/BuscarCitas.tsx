@@ -442,18 +442,21 @@ window.location.href = data.url;
 
 <div className="mt-5 rounded-2xl border border-green-500/30 bg-green-500/10 p-4 text-center">
 
-  <h2 className="text-2xl font-bold text-green-400 mb-3">
-    🎉 ¡Cita confirmada!
-  </h2>
+<h2 className="text-2xl font-bold text-green-400 mb-3">
+  🎉 ¡Cita encontrada!
+</h2>
 
-  <p className="text-white">
-    Sara ha terminado correctamente el trámite.
-  </p>
+<p className="text-white">
+  Sara ha encontrado y confirmado correctamente tu cita oficial.
+</p>
 
-  <p className="text-green-300 mt-2">
-    ✅ PDF y datos enviados por WhatsApp
-  </p>
+<p className="text-green-300 mt-3">
+  ✅ PDF oficial enviado por WhatsApp
+</p>
 
+<p className="text-white/70 mt-2 text-sm">
+  💚 Gracias por confiar en Gestoría CitaIA
+</p>  
 </div>
 
 ) : (
