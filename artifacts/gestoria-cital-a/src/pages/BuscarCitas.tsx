@@ -422,6 +422,7 @@ window.location.href = data.url;
     <CheckCircle2 className="w-8 h-8 text-emerald-400" />
   </div>
 </div>
+              
               <h3 className="text-center text-white text-[18px] font-semibold leading-tight mb-3">
                 {isMa
   ? "مبروك 🎉 بدينا نقلبو ليك على الموعد ديالك. إلى لقيناه غادي نعلموك فواتساب بشكل مستعجل خلال 24 ساعة."
@@ -437,7 +438,25 @@ window.location.href = data.url;
                   : "Te avisaremos aquí cuando haya novedades sobre tu cita."}
               </p>
               
+{appointmentConfirmed ? (
 
+<div className="mt-5 rounded-2xl border border-green-500/30 bg-green-500/10 p-4 text-center">
+
+  <h2 className="text-2xl font-bold text-green-400 mb-3">
+    🎉 ¡Cita confirmada!
+  </h2>
+
+  <p className="text-white">
+    Sara ha terminado correctamente el trámite.
+  </p>
+
+  <p className="text-green-300 mt-2">
+    ✅ PDF y datos enviados por WhatsApp
+  </p>
+
+</div>
+
+) : (
 <div className="mt-5 rounded-2xl border border-yellow-500/20 bg-yellow-500/10 p-4">
 
   <div className="flex items-center gap-2 mb-2">
@@ -459,7 +478,7 @@ window.location.href = data.url;
       : "Sara está buscando una cita real ahora mismo y recibirás una notificación por WhatsApp en cuanto aparezca una disponibilidad."}
 
   </p>
-
+)}
 </div>
 
 </div>
@@ -536,6 +555,8 @@ window.location.href = data.url;
 }
 
 export default function BuscarCitas() {
+  const appointmentConfirmed =
+      new URLSearchParams(window.location.search).get("paid") === "true";
   // ✅ CORRECCIÓN PRINCIPAL: usamos lang del contexto y mapeamos a "ma" para la lógica interna
   const { lang } = useLang();
   const language = lang === "darija" ? "ma" : lang;
