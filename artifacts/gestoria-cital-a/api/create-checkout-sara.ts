@@ -49,9 +49,9 @@ export default async function handler(req: any, res: any) {
         },
       ],
 
-      success_url:
-`${process.env.NEXT_PUBLIC_URL}/buscar-citas?paid=true&appointment_id=${appointment_id}&token=${token}`,
-
+     success_url:
+`${process.env.NEXT_PUBLIC_URL}/buscar-citas?paid=true&success=true&appointment_id=${appointment_id}&token=${token}`,
+      
       cancel_url:
 `${process.env.NEXT_PUBLIC_URL}/cancel`,
     });
