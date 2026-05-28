@@ -481,7 +481,7 @@ window.location.href = data.url;
       : "Sara está buscando una cita real ahora mismo y recibirás una notificación por WhatsApp en cuanto aparezca una disponibilidad."}
 
   </p>
-)}
+
 </div>
 
 </div>
