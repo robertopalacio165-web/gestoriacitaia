@@ -485,7 +485,7 @@ window.location.href = data.url;
 </div>
 
 </div>
-
+) : (
             <div className="rounded-[30px] overflow-hidden border border-yellow-500/30 bg-[#050816] shadow-[0_0_40px_rgba(255,200,0,0.10)]">
               <div className="px-6 py-8 bg-[radial-gradient(circle_at_top,rgba(255,200,0,0.12),transparent_60%)]">
                 <div className="flex justify-center mb-5">
