@@ -544,7 +544,9 @@ export default function BuscarCitas() {
   const [selectedTramite, setSelectedTramite] = useState("tie");
   const [step, setStep] = useState(0);
   const [muted, setMuted] = useState(false);
-  const [confirmed, setConfirmed] = useState(false);
+const [confirmed, setConfirmed] = useState(
+  new URLSearchParams(window.location.search).get("success") === "true"
+);
   const [showDocs, setShowDocs] = useState(false);
   const [showForms, setShowForms] = useState(false);
   const [profile, setProfile] = useState<ProfileRow | null>(null);
