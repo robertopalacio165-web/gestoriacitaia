@@ -19,11 +19,19 @@ export default async function handler(req: any, res: any) {
       token,
     } = req.body;
 
-    const metadata = {
-      appointment_id,
-      token,
-      type: "SARA_CONFIRMATION",
-    };
+const metadata = {
+  appointment_id: appointment_id || "",
+  token: token || "",
+  customer_name: req.body.customer_name || "",
+  customer_phone: req.body.customer_phone || "",
+  customer_email: req.body.customer_email || "",
+  city: req.body.city || "",
+  office: req.body.office || "",
+  appointment_date: req.body.appointment_date || "",
+  appointment_hour: req.body.appointment_hour || "",
+  tramite: req.body.tramite || "",
+  type: "SARA_CONFIRMATION",
+};
 
     const session = await stripe.checkout.sessions.create({
 
