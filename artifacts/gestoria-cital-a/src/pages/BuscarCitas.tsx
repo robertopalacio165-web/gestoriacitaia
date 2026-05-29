@@ -1171,7 +1171,8 @@ const [formReady, setFormReady] = useState(
   appointment_hour: appointmentData?.time || "",
 
   tramite: selectedTramite,
-})
+}),
+});
       const data = await res.json();
       if (data.url) window.location.href = data.url;
     } catch (err) {
