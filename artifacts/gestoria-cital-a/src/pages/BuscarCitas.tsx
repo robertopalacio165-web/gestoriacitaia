@@ -438,6 +438,47 @@ window.location.href = data.url;
               </p>
               
 
+{confirmed && appointmentData ? (
+
+<div className="mt-5 rounded-2xl border border-green-500/20 bg-green-500/10 p-4">
+
+  <div className="flex items-center gap-2 mb-3">
+
+    <div className="w-2.5 h-2.5 rounded-full bg-green-400" />
+
+    <p className="text-green-300 font-bold text-sm">
+      ✅ CITA ENCONTRADA Y CONFIRMADA
+    </p>
+
+  </div>
+
+  <div className="space-y-2 text-white text-sm">
+
+    <p><strong>Oficina:</strong> {appointmentData.office}</p>
+
+    <p><strong>Fecha:</strong> {appointmentData.date}</p>
+
+    <p><strong>Hora:</strong> {appointmentData.time}</p>
+
+  </div>
+
+  {appointmentData.pdf_url && (
+
+    <a
+      href={appointmentData.pdf_url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="mt-4 inline-block bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg text-white font-bold"
+    >
+      Descargar PDF
+    </a>
+
+  )}
+
+</div>
+
+) : (
+
 <div className="mt-5 rounded-2xl border border-yellow-500/20 bg-yellow-500/10 p-4">
 
   <div className="flex items-center gap-2 mb-2">
@@ -451,18 +492,12 @@ window.location.href = data.url;
   </div>
 
   <p className="text-white/70 text-xs leading-relaxed">
-
-    {isMa
-      ? "سارة دابا كتقلب ليك على موعد حقيقي وغادي توصلك رسالة فواتساب مباشرة ملي يبان الموعد."
-      : isEn
-      ? "Sara is now searching for a real appointment and you will receive a WhatsApp notification immediately when it appears."
-      : "Sara está buscando una cita real ahora mismo y recibirás una notificación por WhatsApp en cuanto aparezca una disponibilidad."}
-
+    Sara está buscando una cita real ahora mismo y recibirás una notificación por WhatsApp en cuanto aparezca una disponibilidad.
   </p>
 
 </div>
 
-</div>
+)}
 
             <div className="rounded-[30px] overflow-hidden border border-yellow-500/30 bg-[#050816] shadow-[0_0_40px_rgba(255,200,0,0.10)]">
               <div className="px-6 py-8 bg-[radial-gradient(circle_at_top,rgba(255,200,0,0.12),transparent_60%)]">
@@ -547,6 +582,41 @@ export default function BuscarCitas() {
 const [confirmed, setConfirmed] = useState(
   new URLSearchParams(window.location.search).get("success") === "true"
 );
+ useEffect(() => {
+
+  const loadPaidAppointment = async () => {
+
+    const appointmentId =
+      new URLSearchParams(window.location.search)
+        .get("appointment_id");
+
+    if (!appointmentId) return;
+
+    const { data } = await supabase
+      .from("found_appointments")
+      .select("*")
+      .eq("id", appointmentId)
+      .single();
+
+    if (!data) return;
+
+    setAppointmentData({
+      office: data.office,
+      date: data.appointment_date,
+      time: data.appointment_hour,
+      locator: data.confirmation_token,
+      pdf_url: data.pdf_url,
+    });
+
+    if (data.status === "completed") {
+      setConfirmed(true);
+    }
+
+  };
+
+  loadPaidAppointment();
+
+}, []); 
   const [showDocs, setShowDocs] = useState(false);
   const [showForms, setShowForms] = useState(false);
   const [profile, setProfile] = useState<ProfileRow | null>(null);
