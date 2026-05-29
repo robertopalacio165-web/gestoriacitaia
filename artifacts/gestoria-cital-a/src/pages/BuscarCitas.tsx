@@ -155,7 +155,33 @@ function OfficialBrowserBox({
       className="flex-1 flex flex-col overflow-hidden bg-transparent"
     >
       <div className="flex-1 overflow-y-auto bg-transparent p-4 sm:p-6 text-black">
-{!confirmed && !formReady ? (
+{confirmed ? (
+
+<div className="rounded-[26px] border border-emerald-500/40 bg-[#07111f] px-6 py-8 text-center">
+
+  <h2 className="text-emerald-400 text-3xl font-black mb-4">
+    🎉 ¡CITA CONFIRMADA!
+  </h2>
+
+  <p className="text-white text-lg font-bold mb-4">
+    Muchas gracias por confiar en GestoriaCitaIA.
+  </p>
+
+  <p className="text-white/80">
+    Tu cita ha sido confirmada correctamente.
+  </p>
+
+  <p className="text-white/80 mt-2">
+    Sara ha finalizado su trabajo con éxito.
+  </p>
+
+  <p className="text-yellow-400 font-bold mt-4">
+    ✅ Reserva completada
+  </p>
+
+</div>
+
+) : !confirmed && !formReady ? (
           <>
             <div className="mt-3 mx-[-4px] rounded-[24px] border-2 border-yellow-500/60 bg-gradient-to-b from-[#0b0b0b] to-[#050505] px-3 py-3 shadow-[0_0_35px_rgba(255,200,0,0.18)]">
               <h2 className="text-yellow-400 text-[18px] sm:text-[20px] font-black leading-tight mb-2">
