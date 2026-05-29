@@ -234,18 +234,33 @@ export default async function handler(
         "SARA_CONFIRMATION"
       ) {
 
-        await supabase
-          .from("found_appointments")
-          .update({
-            payment_status:
-              "paid",
+      const updateResult =
+  await supabase
+    .from("found_appointments")
+    .update({
+      payment_status: "paid",
+      confirmed: true,
+    })
+    .eq(
+      "id",
+      metadata.appointment_id
+    )
+    .select();
 
-            confirmed: true,
-          })
-          .eq(
-            "id",
-            metadata.appointment_id
-          );
+console.log(
+  "APPOINTMENT ID:",
+  metadata.appointment_id
+);
+
+console.log(
+  "UPDATE RESULT:"
+);
+
+console.log(updateResult);
+
+console.log(
+  "✅ Confirmation paid"
+);
 
         console.log(
           "✅ Confirmation paid"
