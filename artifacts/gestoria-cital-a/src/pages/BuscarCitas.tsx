@@ -160,25 +160,52 @@ function OfficialBrowserBox({
 <div className="rounded-[26px] border border-emerald-500/40 bg-[#07111f] px-6 py-8 text-center">
 
   <h2 className="text-emerald-400 text-3xl font-black mb-4">
-    🎉 ¡CITA CONFIRMADA!
-  </h2>
+  {isMa
+    ? "🎉 مبروك! تأكد الموعد ديالك"
+    : isEn
+    ? "🎉 APPOINTMENT CONFIRMED!"
+    : "🎉 ¡CITA CONFIRMADA!"}
+</h2>
 
-  <p className="text-white text-lg font-bold mb-4">
-    Muchas gracias por confiar en GestoriaCitaIA.
-  </p>
+<p className="text-white text-lg font-bold mb-4">
+  {isMa
+    ? "شكراً بزاف على الثقة ديالك في GestoriaCitaIA."
+    : isEn
+    ? "Thank you for trusting GestoriaCitaIA."
+    : "Muchas gracias por confiar en GestoriaCitaIA."}
+</p>
 
-  <p className="text-white/80">
-    Tu cita ha sido confirmada correctamente.
-  </p>
+<p className="text-white/80">
+  {isMa
+    ? "تم تأكيد الموعد ديالك بنجاح."
+    : isEn
+    ? "Your appointment has been successfully confirmed."
+    : "Tu cita ha sido confirmada correctamente."}
+</p>
 
-  <p className="text-white/80 mt-2">
-    Sara ha finalizado su trabajo con éxito.
-  </p>
+<p className="text-white/80 mt-2">
+  {isMa
+    ? "سارة سالات الخدمة ديالها بنجاح."
+    : isEn
+    ? "Sara has successfully completed her work."
+    : "Sara ha finalizado su trabajo con éxito."}
+</p>
 
-  <p className="text-yellow-400 font-bold mt-4">
-    ✅ Reserva completada
-  </p>
+<p className="text-yellow-400 font-bold mt-4">
+  {isMa
+    ? "✅ العملية كملت بنجاح"
+    : isEn
+    ? "✅ Reservation completed"
+    : "✅ Reserva completada"}
+</p>
 
+<p className="text-white/70 mt-6">
+  {isMa
+    ? "نتمنّاو ليك التوفيق فالإجراء ديالك."
+    : isEn
+    ? "We wish you the best of luck with your procedure."
+    : "Te deseamos mucha suerte en tu trámite."}
+</p>
 </div>
 
 ) : !confirmed && !formReady ? (
