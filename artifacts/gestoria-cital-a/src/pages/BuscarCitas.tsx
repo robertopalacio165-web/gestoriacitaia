@@ -1156,8 +1156,22 @@ const [formReady, setFormReady] = useState(
       const res = await fetch("/api/create-checkout-sara", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ appointment_id: urlParams.appointmentId, token: urlParams.token }),
-      });
+       body: JSON.stringify({
+  appointment_id: urlParams.appointmentId,
+  token: urlParams.token,
+
+  customer_name: formData.fullName,
+  customer_phone: formData.phone,
+  customer_email: formData.email,
+
+  city: formData.city,
+
+  office: appointmentData?.office || "",
+  appointment_date: appointmentData?.date || "",
+  appointment_hour: appointmentData?.time || "",
+
+  tramite: selectedTramite,
+})
       const data = await res.json();
       if (data.url) window.location.href = data.url;
     } catch (err) {
