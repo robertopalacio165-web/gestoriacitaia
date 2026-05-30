@@ -218,7 +218,7 @@ function OfficialBrowserBox({
                 {formIntro}
               </p>
               <div className="w-full">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-5">
+         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 mb-5">
                   {/* Nombre */}
        <div className="col-span-1 md:col-span-1">
                     <label className="block text-white text-[13px] mb-2">
@@ -331,7 +331,7 @@ function OfficialBrowserBox({
                   </div>
 
                   {/* Tipo de cita */}
-                  <div className="col-span-2">
+             <div className="col-span-1 lg:col-span-2">
                     <label className="block text-white text-[13px] mb-2">
                       {isMa ? "نوع الموعد" : isEn ? "Appointment type" : "Tipo de cita"}
                     </label>
