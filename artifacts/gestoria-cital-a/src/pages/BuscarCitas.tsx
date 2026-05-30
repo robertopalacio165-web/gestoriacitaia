@@ -218,9 +218,9 @@ function OfficialBrowserBox({
                 {formIntro}
               </p>
               <div className="w-full">
-                <div className="grid grid-cols-2 gap-2 mb-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-5">
                   {/* Nombre */}
-                  <div>
+       <div className="col-span-1 md:col-span-1">
                     <label className="block text-white text-[13px] mb-2">
                       {isMa ? "الاسم الكامل" : isEn ? "Full name" : "Nombre completo"}
                     </label>
@@ -233,8 +233,8 @@ function OfficialBrowserBox({
                     />
                   </div>
 
-            {/* Teléfono internacional */}
-<div>
+{/* Teléfono internacional */}
+<div className="col-span-1 md:col-span-1">
   <label className="block text-white text-[13px] mb-2">
     {isMa ? "الهاتف" : isEn ? "Phone" : "Teléfono"}
   </label>
@@ -615,7 +615,7 @@ export default function BuscarCitas() {
   const language = lang === "darija" ? "ma" : lang;
 
   const [location] = useLocation();
-  const [selectedTramite, setSelectedTramite] = useState("tie");
+const [selectedTramite, setSelectedTramite] = useState("primera_tie");
   const [step, setStep] = useState(0);
   const [muted, setMuted] = useState(false);
 const [confirmed, setConfirmed] = useState(
@@ -686,44 +686,24 @@ const [formReady, setFormReady] = useState(
 
   const ui = useMemo(() => {
     return {
-      tramites: [
-        {
-          value: "tie",
-          label: isMa ? "تجديد البطاقة" : isEn ? "TIE renewal" : "Renovación TIE",
-        },
-        {
-          value: "regreso",
-          label: isMa ? "رخصة الرجوع" : isEn ? "Return authorization" : "Autorización de Regreso",
-        },
-        {
-          value: "nie",
-          label: isMa ? "رقم NIE" : isEn ? "NIE Number" : "Certificados y Asignación NIE",
-        },
-        {
-          value: "ue",
-          label: isMa ? "أوراق الاتحاد الأوروبي" : isEn ? "EU Certificates" : "Certificados UE",
-        },
-        {
-          value: "estudiantes",
-          label: isMa ? "أوراق الطلبة" : isEn ? "Students" : "Estudiantes",
-        },
-        {
-          value: "trabajo",
-          label: isMa ? "رخصة العمل" : isEn ? "Work permit" : "Autorización de Trabajo",
-        },
-        {
-          value: "arraigo",
-          label: isMa ? "أوراق التسوية" : isEn ? "Regularization" : "Arraigo Social / Laboral / Familiar",
-        },
-        {
-          value: "familiar",
-          label: isMa ? "التجمع العائلي" : isEn ? "Family reunification" : "Reagrupación Familiar",
-        },
-        {
-          value: "regularizacion",
-          label: isMa ? "التسوية الجماعية" : isEn ? "Mass regularization" : "Regularización extraordinaria 2026",
-        },
-      ] as TramiteItem[],
+    tramites: [
+  {
+    value: "primera_tie",
+    label: isMa
+      ? "أول بطاقة TIE - البصمات"
+      : isEn
+      ? "First TIE - Fingerprints"
+      : "Primera TIE (Toma de huellas)",
+  },
+  {
+    value: "renovacion_tie",
+    label: isMa
+      ? "تجديد TIE - البصمات"
+      : isEn
+      ? "TIE Renewal - Fingerprints"
+      : "Renovación TIE (Toma de huellas)",
+  },
+] as TramiteItem[],
 
       docsByTramite: {
         tie: [
