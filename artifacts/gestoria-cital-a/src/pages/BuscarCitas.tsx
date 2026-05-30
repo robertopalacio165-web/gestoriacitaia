@@ -282,7 +282,7 @@ function OfficialBrowserBox({
                     />
                   </div>
 
-                  {/* NIE */}
+                  {/* NIE / Pasaporte */}
                   <div>
                     <label className="block text-white text-[13px] mb-2">
                       NIE
@@ -367,7 +367,7 @@ function OfficialBrowserBox({
                   </div>
                   <div className="text-right">
                     <p className="text-yellow-400 text-[34px] font-black leading-none drop-shadow-[0_0_10px_rgba(255,215,0,0.35)]">
-                      5€
+                      10€
                     </p>
                     <p className="text-yellow-300 text-[11px] font-semibold">
                       {isMa ? "الحجز الأول" : isEn ? "Initial reservation" : "Reserva inicial"}
