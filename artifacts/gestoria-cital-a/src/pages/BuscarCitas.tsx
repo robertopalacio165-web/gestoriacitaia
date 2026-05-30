@@ -233,19 +233,40 @@ function OfficialBrowserBox({
                     />
                   </div>
 
-                  {/* Teléfono */}
-                  <div>
-                    <label className="block text-white text-[13px] mb-2">
-                      {isMa ? "الهاتف" : isEn ? "Phone" : "Teléfono"}
-                    </label>
-                    <input
-                      type="text"
-                      placeholder={isMa ? "رقم الهاتف" : isEn ? "Phone number" : "Tu teléfono"}
-                      value={formData.phone}
-                      onChange={(e) => onFormChange("phone", e.target.value)}
-                      className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-[14px] text-white placeholder:text-white/30 focus:outline-none focus:border-yellow-400"
-                    />
-                  </div>
+            {/* Teléfono internacional */}
+<div>
+  <label className="block text-white text-[13px] mb-2">
+    {isMa ? "الهاتف" : isEn ? "Phone" : "Teléfono"}
+  </label>
+
+  <div className="flex gap-2">
+
+    <select
+      className="w-[110px] h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-2 text-white"
+      defaultValue="+34"
+      id="countryCode"
+    >
+      <option value="+34">🇪🇸 +34</option>
+      <option value="+212">🇲🇦 +212</option>
+      <option value="+31">🇳🇱 +31</option>
+      <option value="+32">🇧🇪 +32</option>
+      <option value="+33">🇫🇷 +33</option>
+      <option value="+39">🇮🇹 +39</option>
+      <option value="+49">🇩🇪 +49</option>
+      <option value="+44">🇬🇧 +44</option>
+      <option value="+1">🇺🇸 +1</option>
+    </select>
+
+    <input
+      type="text"
+      placeholder="644403748"
+      value={formData.phone}
+      onChange={(e) => onFormChange("phone", e.target.value)}
+      className="flex-1 h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white"
+    />
+
+  </div>
+</div>
 
                   {/* Email */}
                   <div>
