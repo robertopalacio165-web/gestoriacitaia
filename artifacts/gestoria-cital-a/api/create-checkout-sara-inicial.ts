@@ -34,7 +34,12 @@ export default async function handler(
       province,
       tramite,
     } = body;
-
+    
+console.log("PHONE RECEIVED:");
+console.log(phone);
+console.log("BODY:");
+console.log(body);
+    
     const session =
       await stripe.checkout.sessions.create({
 
