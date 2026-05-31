@@ -259,7 +259,7 @@ function OfficialBrowserBox({
 
     <input
       type="text"
-      placeholder="644403748"
+      placeholder="34644403748"
       value={formData.phone}
       onChange={(e) => onFormChange("phone", e.target.value)}
       className="flex-1 h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white"
