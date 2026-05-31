@@ -243,7 +243,10 @@ function OfficialBrowserBox({
 
     <select
       className="w-[110px] h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-2 text-white"
-      defaultValue="+34"
+value={formData.preferredOffice}
+onChange={(e) =>
+  onFormChange("preferredOffice", e.target.value)
+}
       id="countryCode"
     >
       <option value="+34">🇪🇸 +34</option>
@@ -414,7 +417,7 @@ const res = await fetch("/api/create-checkout-sara-inicial", {
   body: JSON.stringify({
     fullName: formData.fullName,
 
-    phone: formData.phone,
+phone: `${formData.preferredOffice}${formData.phone}`,
 
     email: formData.email,
 
@@ -636,7 +639,7 @@ const [confirmed, setConfirmed] = useState(
     birthYear: "",
     city: "",
     province: "",
-    preferredOffice: "",
+   preferredOffice: "+34",
   });
 const [formReady, setFormReady] = useState(
   localStorage.getItem("saraPaid") === "1"
