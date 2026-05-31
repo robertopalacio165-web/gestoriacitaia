@@ -285,7 +285,7 @@ function OfficialBrowserBox({
                   {/* NIE / Pasaporte */}
                   <div>
                     <label className="block text-white text-[13px] mb-2">
-                       NIE / Pasaporte
+                {isMa ? "NIE / جواز السفر" : isEn ? "NIE / Passport" : "NIE / Pasaporte"}
                     </label>
                     <input
                       type="text"
