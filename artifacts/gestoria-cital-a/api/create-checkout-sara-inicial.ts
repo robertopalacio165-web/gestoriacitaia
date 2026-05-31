@@ -75,7 +75,7 @@ export default async function handler(
                   "Reserva inicial Sara",
               },
 
-              unit_amount: 500,
+          unit_amount: 1000,
             },
 
             quantity: 1,
