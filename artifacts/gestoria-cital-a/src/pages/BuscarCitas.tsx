@@ -417,6 +417,11 @@ const res = await fetch("/api/create-checkout-sara-inicial", {
   body: JSON.stringify({
     fullName: formData.fullName,
 
+console.log(
+  "TELEFONO COMPLETO:",
+  `${formData.preferredOffice}${formData.phone}`
+);
+
 phone: `${formData.preferredOffice}${formData.phone}`,
 
     email: formData.email,
