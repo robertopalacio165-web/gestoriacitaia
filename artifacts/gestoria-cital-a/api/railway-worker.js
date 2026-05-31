@@ -335,6 +335,24 @@ export default async function handler(req, res) {
           continue;
         }
 
+        const { data: existingAppointment } = await supabase
+  .from("found_appointments")
+  .select("id")
+  .eq("queue_id", search.id)
+  .limit(1);
+
+if (existingAppointment && existingAppointment.length > 0) {
+
+  await supabase
+    .from("sara_searches")
+    .update({
+      status: "appointment_found",
+      reservation_status: "completed"
+    })
+    .eq("id", search.id);
+
+  continue;
+}
         /*
         ====================================
         SAVE APPOINTMENT
