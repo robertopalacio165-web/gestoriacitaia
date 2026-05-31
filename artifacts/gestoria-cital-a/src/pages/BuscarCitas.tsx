@@ -695,14 +695,7 @@ const [formReady, setFormReady] = useState(
       ? "First TIE - Fingerprints"
       : "Primera TIE (Toma de huellas)",
   },
-  {
-    value: "renovacion_tie",
-    label: isMa
-      ? "تجديد TIE - البصمات"
-      : isEn
-      ? "TIE Renewal - Fingerprints"
-      : "Renovación TIE (Toma de huellas)",
-  },
+  
 ] as TramiteItem[],
 
       docsByTramite: {
