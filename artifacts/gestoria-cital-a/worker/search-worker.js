@@ -1,6 +1,5 @@
-const { createClient } = require("@supabase/supabase-js");
-
-const { chromium } = require("playwright-core");
+import { createClient } from "@supabase/supabase-js";
+import { chromium } from "playwright-core";
 
 const supabase = createClient(
   process.env.VITE_SUPABASE_URL,
