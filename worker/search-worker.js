@@ -182,7 +182,18 @@ async function runWorker() {
       });
 
       console.log("📸 Screenshot saved");
+await page.screenshot({
+  path: screenshotName,
+  fullPage: true,
+});
 
+console.log("📸 Screenshot saved");
+
+const pageContent = await page.textContent("body");
+
+console.log("========== PAGE CONTENT ==========");
+console.log(pageContent);
+console.log("=================================");
       /*
       =========================
       EXTRACTION
@@ -204,7 +215,7 @@ async function runWorker() {
       =========================
       */
 
-      const fakeFound = true;
+  const fakeFound = false;
 
       if (fakeFound) {
 
