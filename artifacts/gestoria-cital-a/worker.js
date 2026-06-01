@@ -59,23 +59,17 @@ async function runWorker() {
         search.customer_name
       );
 
-  // Sara NO crea citas falsas
+
+
+// Sara buscando citas reales
 
 console.log(
-  "⏳ Esperando citas reales de TIE..."
+  "🔍 Buscando citas reales..."
 );
 
-continue;
-
-      if (insertError) {
-
-        console.log(
-          "❌ INSERT ERROR:",
-          insertError
-        );
-
-        continue;
-      }
+     console.log(
+  "🔍 Buscando citas reales..."
+);
 
       console.log(
         "✅ APPOINTMENT SAVED"
