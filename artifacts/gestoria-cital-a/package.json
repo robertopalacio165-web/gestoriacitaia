@@ -10,7 +10,9 @@
   "start": "vite preview --host 0.0.0.0 --port ${PORT:-4173}",
   "worker": "node worker/search-worker.js",
   "typecheck": "tsc -p tsconfig.json --noEmit"
-}
+},
+
+
 
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
