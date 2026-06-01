@@ -109,119 +109,158 @@ export default async function handler(
       =====================================
       */
 
-      if (
-        !metadata?.type ||
-        metadata?.type ===
-          "SARA_INITIAL"
-      ) {
+   if (
+  !metadata?.type ||
+  metadata?.type === "SARA_INITIAL"
+) {
 
-        /*
-        SAVE TO SUPABASE
-        */
+  /*
+  =====================================
+  PREVENT DUPLICATES
+  =====================================
+  */
 
-        const { error } =
-          await supabase
-            .from("sara_searches")
-            .insert([
-              {
-                customer_name:
-                  metadata.customer_name || "",
+  const { data: existingSearch } =
+    await supabase
+      .from("sara_searches")
+      .select("id")
+      .eq(
+        "stripe_session_id",
+        session.id
+      )
+      .maybeSingle();
 
-                customer_phone:
-                  metadata.customer_phone || "",
+  if (existingSearch) {
 
-                customer_email:
-                  metadata.customer_email || "",
+    console.log(
+      "⚠️ SESSION ALREADY PROCESSED"
+    );
 
-                city:
-                  metadata.city || "",
+    return res.status(200).json({
+      received: true,
+    });
 
-                province:
-                  metadata.province || "",
+  }
 
-                tramite:
-                  metadata.tramite || "",
+  /*
+  =====================================
+  SAVE TO SUPABASE
+  =====================================
+  */
 
-                status:
-                  "searching",
-              },
-            ]);
+  const { error } =
+    await supabase
+      .from("sara_searches")
+      .insert([
+        {
 
-        if (error) {
+          stripe_session_id:
+            session.id,
 
-          console.log(
-            "❌ SUPABASE ERROR"
-          );
+          customer_name:
+            metadata.customer_name || "",
 
-          console.log(error);
+          customer_phone:
+            metadata.customer_phone || "",
 
-        } else {
+          customer_email:
+            metadata.customer_email || "",
 
-          console.log(
-            "✅ Saved in Supabase"
-          );
+          city:
+            metadata.city || "",
 
+          province:
+            metadata.province || "",
+
+          tramite:
+            metadata.tramite || "",
+
+          status:
+            "searching",
+
+          reservation_status:
+            "searching",
+
+        },
+      ]);
+
+  if (error) {
+
+    console.log(
+      "❌ SUPABASE ERROR"
+    );
+
+    console.log(error);
+
+  } else {
+
+    console.log(
+      "✅ Saved in Supabase"
+    );
+
+  }
+
+  /*
+  =====================================
+  SEND TO MAKE
+  =====================================
+  */
+
+  try {
+
+    const makeResponse =
+      await fetch(
+        "https://hook.eu1.make.com/k7f36tb5x2lh9840o19a9timdtnvcnqi",
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+
+          body: JSON.stringify({
+
+            customer_name:
+              metadata.customer_name || "",
+
+            customer_phone:
+              metadata.customer_phone || "",
+
+            customer_email:
+              metadata.customer_email || "",
+
+            city:
+              metadata.city || "",
+
+            province:
+              metadata.province || "",
+
+            tramite:
+              metadata.tramite || "",
+
+            paid: true,
+
+          }),
         }
+      );
 
-        /*
-        SEND TO MAKE
-        */
+    console.log(
+      "✅ MAKE STATUS:",
+      makeResponse.status
+    );
 
-        try {
+  } catch (makeErr) {
 
-          const makeResponse =
-            await fetch(
-              "https://hook.eu1.make.com/k7f36tb5x2lh9840o19a9timdtnvcnqi",
-              {
-                method: "POST",
+    console.log(
+      "❌ MAKE ERROR"
+    );
 
-                headers: {
-                  "Content-Type":
-                    "application/json",
-                },
+    console.log(makeErr);
 
-                body: JSON.stringify({
+  }
 
-                  customer_name:
-                    metadata.customer_name || "",
-
-                  customer_phone:
-                    metadata.customer_phone || "",
-
-                  customer_email:
-                    metadata.customer_email || "",
-
-                  city:
-                    metadata.city || "",
-
-                  province:
-                    metadata.province || "",
-
-                  tramite:
-                    metadata.tramite || "",
-
-                  paid: true,
-
-                }),
-              }
-            );
-
-          console.log(
-            "✅ MAKE STATUS:",
-            makeResponse.status
-          );
-
-        } catch (makeErr) {
-
-          console.log(
-            "❌ MAKE ERROR"
-          );
-
-          console.log(makeErr);
-
-        }
-
-      }
+}
 
       /*
       =====================================
