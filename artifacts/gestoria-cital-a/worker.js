@@ -59,65 +59,13 @@ async function runWorker() {
         search.customer_name
       );
 
-      /*
-      =========================
-      CREATE FOUND APPOINTMENT
-      =========================
-      */
+  // Sara NO crea citas falsas
 
-      const {
-        error: insertError
-      } = await supabase
-        .from("found_appointments")
-        .insert([
-          {
+console.log(
+  "⏳ Esperando citas reales de TIE..."
+);
 
-            queue_id:
-              search.id,
-
-            customer_name:
-              search.customer_name,
-
-            customer_phone:
-              search.customer_phone,
-
-            customer_email:
-              search.customer_email,
-
-            city:
-              search.city,
-
-            province:
-              search.province,
-
-            tramite:
-              search.tramite,
-
-            appointment_date:
-              "2026-06-15",
-
-            appointment_hour:
-              "09:30",
-
-            office:
-              "Barcelona Oficina",
-
-            confirmation_token:
-              crypto.randomUUID(),
-
-            payment_status:
-              "pending",
-
-            confirmed:
-              false,
-
-            worker_name:
-              "Sara AI",
-
-            reservation_status:
-              "hold_created"
-          }
-        ]);
+continue;
 
       if (insertError) {
 
