@@ -11,7 +11,7 @@ async function runWorker() {
   console.log("🔥 Sara Worker Started");
 
   const { data, error } = await supabase
-    .from("search_queue")
+ .from("sara_searches")
     .select("*")
     .eq("status", "waiting")
     .limit(5);
@@ -283,7 +283,7 @@ console.log("=================================");
         */
 
         await supabase
-          .from("search_queue")
+    .from("sara_searches")
           .update({
             status: "found",
             found: true,
