@@ -44,16 +44,11 @@ async function runWorker() {
       =========================
       */
 
-      browser = await chromium.connectOverCDP(
-        "wss://brd-customer-hl_9084dec2-zone-scraping_browser1:6qhjhkbz8cwt@brd.superproxy.io:9222"
-      );
+ browser = await chromium.launch({
+  headless: true
+});
 
-      const context =
-        browser.contexts()[0];
-
-      const page =
-        context.pages()[0] ||
-        await context.newPage();
+const page = await browser.newPage();
 
       await page.setViewportSize({
         width: 1280 +
