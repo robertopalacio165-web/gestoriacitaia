@@ -13,7 +13,7 @@ async function runWorker() {
   const { data, error } = await supabase
  .from("sara_searches")
     .select("*")
-    .eq("status", "waiting")
+ .eq("reservation_status", "searching")
     .limit(5);
 
   if (error) {
