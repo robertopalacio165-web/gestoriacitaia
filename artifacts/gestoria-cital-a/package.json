@@ -11,7 +11,7 @@
   "postinstall": "npx playwright install chromium",
   "worker": "node worker/search-worker.js",
   "typecheck": "tsc -p tsconfig.json --noEmit"
-}
+},
 
 
 
