@@ -1,5 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
-import { chromium } from "playwright-core";
+import { chromium } from "playwright";
 
 const supabase = createClient(
 process.env.SUPABASE_URL,
