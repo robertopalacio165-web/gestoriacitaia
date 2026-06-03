@@ -370,6 +370,8 @@ reassigned: false,
 
                 confirmation_link:
                   confirmLink,
+                official_url:
+  officialUrl,
               }),
             }
           );
