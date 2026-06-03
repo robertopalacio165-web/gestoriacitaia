@@ -16,8 +16,8 @@ const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
 console.log("URL LIMPIA =", SUPABASE_URL);
 
 const supabase = createClient(
-  SUPABASE_URL,
-  SUPABASE_KEY
+  "https://psamprmdbecuarhmtyna.supabase.co",
+  process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
 async function runWorker() {
