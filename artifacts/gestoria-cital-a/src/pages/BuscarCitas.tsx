@@ -414,21 +414,37 @@ const res = await fetch("/api/create-checkout-sara-inicial", {
     "Content-Type": "application/json",
   },
 
-  body: JSON.stringify({
-    fullName: formData.fullName,
+ body: JSON.stringify({
 
-phone: `${formData.preferredOffice}${formData.phone}`,
+  token: params.token,
 
-    email: formData.email,
+  appointment_id: appointment?.id,
 
-    nie: formData.nie,
+  customer_name:
+    appointment?.customer_name,
 
-    city: formData.city,
+  customer_phone:
+    appointment?.customer_phone,
 
-    province: formData.province,
+  customer_email:
+    appointment?.customer_email,
 
-    tramite: selectedTramite,
-  }),
+  city:
+    appointment?.city,
+
+  office:
+    appointment?.office,
+
+  appointment_date:
+    appointment?.appointment_date,
+
+  appointment_hour:
+    appointment?.appointment_hour,
+
+  tramite:
+    appointment?.tramite,
+
+}),
 });
 
 const data = await res.json();
