@@ -283,6 +283,15 @@ console.log("=================================");
 
                 payment_status:
                   "pending",
+                reservation_status: "reserved",
+
+expires_at: new Date(
+  Date.now() + 10 * 60 * 1000
+),
+
+expired: false,
+
+reassigned: false,
 
                 provider:
                   "sara_worker",
