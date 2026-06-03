@@ -3,7 +3,7 @@ import dotenv from "dotenv";
 dotenv.config({ path: ".env" });
 import { createClient } from "@supabase/supabase-js";
 import { chromium } from "playwright";
-console.log("SUPABASE_URL =", process.env.SUPABASE_URL);
+console.log(JSON.stringify(process.env.SUPABASE_URL));
 console.log("SERVICE_KEY =", !!process.env.SUPABASE_SERVICE_ROLE_KEY);
 const supabase = createClient(
 process.env.SUPABASE_URL,
