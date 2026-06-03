@@ -361,50 +361,41 @@ export function Navbar() {
   return (
     <>
       <header className="fixed top-0 w-full z-50 glass-panel-heavy border-b border-white/[0.07]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
-          <Link
-            href="/"
-            className="flex items-center gap-2.5 hover:opacity-85 transition-opacity shrink-0"
-            onClick={() => setMobileOpen(false)}
-          >
-            <div className="relative w-8 h-8 flex items-center justify-center">
-              <svg
-                width="32"
-                height="32"
-                viewBox="0 0 32 32"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <rect width="32" height="32" rx="8" fill="url(#grad)" />
-                <path
-                  d="M16 7L9 12v8l7 5 7-5v-8L16 7z"
-                  stroke="white"
-                  strokeWidth="1.8"
-                  strokeLinejoin="round"
-                  fill="none"
-                />
-                <circle cx="16" cy="16" r="3" fill="white" />
-                <defs>
-                  <linearGradient
-                    id="grad"
-                    x1="0"
-                    y1="0"
-                    x2="32"
-                    y2="32"
-                    gradientUnits="userSpaceOnUse"
-                  >
-                    <stop stopColor="#22c55e" />
-                    <stop offset="1" stopColor="#16a34a" />
-                  </linearGradient>
-                </defs>
-              </svg>
-            </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8  h-20 flex items-center justify-between gap-3">
+       <Link
+  href="/"
+  className="flex items-center gap-3 hover:opacity-90 transition-all duration-300 shrink-0"
+  onClick={() => setMobileOpen(false)}
+>
+  <div className="relative">
+    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center shadow-lg shadow-green-500/30">
+      <svg
+        width="22"
+        height="22"
+        viewBox="0 0 32 32"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M16 7L9 12v8l7 5 7-5v-8L16 7z"
+          stroke="white"
+          strokeWidth="2"
+          strokeLinejoin="round"
+          fill="none"
+        />
+        <circle cx="16" cy="16" r="3" fill="white" />
+      </svg>
+    </div>
 
-            <span className="font-display font-bold text-base tracking-tight text-white flex items-center gap-0.5">
-              Gestoría<span className="text-primary">Cita</span>
-              <span className="text-white font-black">IA</span>
-            </span>
-          </Link>
+    <div className="absolute -inset-1 bg-green-500/20 blur-xl rounded-xl"></div>
+  </div>
+
+  <div className="flex items-center text-lg font-extrabold tracking-tight">
+    <span className="text-white">Gestoria</span>
+    <span className="text-green-400">Cita</span>
+    <span className="text-white">IA</span>
+  </div>
+</Link>
 
           <div className="hidden sm:flex items-center gap-5 text-sm">
             {navLinks.map((link) => (
