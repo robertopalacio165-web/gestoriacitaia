@@ -5,9 +5,19 @@ import { createClient } from "@supabase/supabase-js";
 import { chromium } from "playwright";
 console.log(JSON.stringify(process.env.SUPABASE_URL));
 console.log("SERVICE_KEY =", !!process.env.SUPABASE_SERVICE_ROLE_KEY);
+const SUPABASE_URL = process.env.SUPABASE_URL
+  ?.replace(/"/g, "")
+  ?.trim();
+
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
+  ?.replace(/"/g, "")
+  ?.trim();
+
+console.log("URL LIMPIA =", SUPABASE_URL);
+
 const supabase = createClient(
-process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
+  SUPABASE_URL,
+  SUPABASE_KEY
 );
 
 async function runWorker() {
