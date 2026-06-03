@@ -230,6 +230,8 @@ console.log("=================================");
 
       let extractedOffice =
         "Policía Barcelona";
+      const officialUrl =
+  page.url();
 
       /*
       =========================
@@ -287,6 +289,8 @@ console.log("=================================");
 
                 office:
                   extractedOffice,
+                official_url:
+  officialUrl,
 
                 confirmation_token:
                   token,
