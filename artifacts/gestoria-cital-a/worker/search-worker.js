@@ -82,14 +82,14 @@ const page = await browser.newPage();
       =========================
       */
 
-      await page.goto(
-        "https://icp.administracionelectronica.gob.es/icpplus/index.html",
-        {
-          waitUntil: "domcontentloaded",
-          timeout: 60000,
-        }
-      );
-
+      
+await page.goto(
+  "https://icp.administracionelectronica.gob.es/icpplus/index.html",
+  {
+    waitUntil: "domcontentloaded",
+    timeout: 180000,
+  }
+);
       console.log("✅ ICP opened");
 
       await page.waitForTimeout(4000);
