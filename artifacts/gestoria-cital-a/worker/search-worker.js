@@ -23,6 +23,16 @@ const supabase = createClient(
 async function runWorker() {
 
   console.log("🔥 Sara Worker Started");
+  const now = new Date();
+
+await supabase
+  .from("found_appointments")
+  .update({
+    reservation_status: "expired",
+    expired: true,
+  })
+  .eq("reservation_status", "reserved")
+  .lt("expires_at", now.toISOString());
 
   const { data, error } = await supabase
  .from("sara_searches")
