@@ -1335,15 +1335,17 @@ export default function Panel() {
                       <CreditCard className="w-3 h-3" />
                       {t("panel_manage_plan" as never)}
                     </button>
-                    <button
-                      onClick={() => goWithGoogleAuth("/buscar-citas")}
-                      className="flex-1 py-1.5 rounded-lg bg-secondary/20 hover:bg-secondary/30 text-secondary text-xs font-semibold transition-colors flex items-center justify-center gap-1"
-                    >
-                      <Search className="w-3 h-3" />
-                      {t("panel_new_appt" as never)}
-                    </button>
+              
                   </div>
+<div className="rounded-xl bg-green-500/10 border border-green-500/20 p-4 text-center mt-3">
+  <p className="text-green-400 font-bold">
+    Sara está buscando tu cita
+  </p>
 
+  <p className="text-sm text-white/70 mt-2">
+    Te avisaremos automáticamente por WhatsApp cuando encontremos una cita disponible.
+  </p>
+</div>
                   <button
                     onClick={() =>
                       createBaseFormFromProfile("ex17", "Formulario EX-17")
@@ -1744,13 +1746,7 @@ export default function Panel() {
                 </div>
               ))}
 
-              <button
-                onClick={() => goWithGoogleAuth("/buscar-citas")}
-                className="w-full py-3 rounded-xl bg-primary hover:bg-primary/90 text-white text-xs font-bold transition-colors flex items-center justify-center gap-2 mt-2"
-              >
-                <Search className="w-4 h-4" />
-                {t("panel_new_appt_agent" as never)}
-              </button>
+            
             </div>
           )}
 
