@@ -663,18 +663,18 @@ else if (
         >
           <div className="relative">
             {!isPaid && (
-          <video
-  controls
+<video
+  autoPlay
   playsInline
-            poster={`${import.meta.env.BASE_URL}images/khalid-extranjeria.png`}
+  controls={false}
+  preload="auto"
   className="w-full h-[260px] object-cover"
+  poster={`${import.meta.env.BASE_URL}images/khalid-extranjeria.png`}
 >
-
   <source
     src="/khalid-presentacion.mp4"
     type="video/mp4"
   />
-
 </video>
 )}
            
