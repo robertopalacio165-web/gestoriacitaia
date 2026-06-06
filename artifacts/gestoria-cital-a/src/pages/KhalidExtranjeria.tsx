@@ -663,7 +663,7 @@ else if (
         >
           <div className="relative">
             {!isPaid && (
-          <video
+       
 <video
   controls
   playsInline
