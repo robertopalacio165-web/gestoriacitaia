@@ -664,14 +664,14 @@ else if (
           <div className="relative">
             {!isPaid && (
           <video
- <video
+
+<video
   autoPlay
   muted
   playsInline
-            poster={`${import.meta.env.BASE_URL}images/khalid-extranjeria.png`}
+  poster={`${import.meta.env.BASE_URL}images/khalid-extranjeria.png`}
   className="w-full h-[260px] object-cover"
 >
-
 <source
   src="/khalid-presentacion.mp4"
   type="video/mp4"
