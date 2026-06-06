@@ -1284,11 +1284,18 @@ const [formReady, setFormReady] = useState(
               className="relative rounded-2xl overflow-hidden border border-primary/20 shadow-[0_0_30px_-5px_hsl(var(--primary)/0.25)] bg-black"
               style={{ height: "280px" }}
             >
-              <img
-                src={`${import.meta.env.BASE_URL}images/avatar-sara.png`}
-                alt="Sara"
-                className="w-full h-full object-cover object-top"
-              />
+             <video
+  autoPlay
+  muted
+  loop
+  playsInline
+  className="w-full h-full object-cover object-top"
+>
+  <source
+    src="/sara-presentacion.mp4"
+    type="video/mp4"
+  />
+</video>
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
 
               <div className="absolute top-3 left-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/60 border border-white/10 backdrop-blur-md">
