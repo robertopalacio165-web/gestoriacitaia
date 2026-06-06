@@ -2283,15 +2283,9 @@ className="fixed inset-0 z-0 opacity-25 pointer-events-none"
 
 <div className="w-full px-1 py-1">
  <motion.div
-initial={{ opacity: 0, y: 15 }}
-animate={{ opacity: 1, y: 0 }}
-className="
-<motion.div
-className="
-rounded-[26px]
-overflow-hidden
-relative
-"
+  initial={{ opacity: 0, y: 15 }}
+  animate={{ opacity: 1, y: 0 }}
+  className="rounded-[26px] overflow-hidden relative"
 >
   <div className="relative">
 
