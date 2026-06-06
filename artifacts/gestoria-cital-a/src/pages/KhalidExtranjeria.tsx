@@ -664,9 +664,7 @@ else if (
           <div className="relative">
             {!isPaid && (
           <video
-  autoPlay
-  muted
-  loop
+  controls
   playsInline
             poster={`${import.meta.env.BASE_URL}images/khalid-extranjeria.png`}
   className="w-full h-[260px] object-cover"
