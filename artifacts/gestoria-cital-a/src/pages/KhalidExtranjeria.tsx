@@ -668,7 +668,7 @@ else if (
   playsInline
   controls={false}
   preload="auto"
-  className="w-full h-[260px] object-cover"
+className="w-full h-[270px] object-cover border-b border-[#f6c453]/10"
   poster={`${import.meta.env.BASE_URL}images/khalid-extranjeria.png`}
 >
   <source
@@ -676,6 +676,8 @@ else if (
     type="video/mp4"
   />
 </video>
+      
+<div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />    
 )}
            
             
