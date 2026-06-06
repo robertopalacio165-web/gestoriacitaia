@@ -2298,20 +2298,19 @@ relative
 >
   <div className="relative">
 
-    <video
-      autoPlay
-      muted
-      loop
-      playsInline
-      poster={`${import.meta.env.BASE_URL}images/avatar-mohamed.png`}
-className="w-full h-[270px] object-cover border-b border-[#f6c453]/10"
-      
-      >
-    <source
-  src="/soufiane-presentacion.mp4"
-  type="video/mp4"
-/>
-    </video>
+  <video
+  autoPlay
+  playsInline
+  controls={false}
+  preload="auto"
+  poster={`${import.meta.env.BASE_URL}images/avatar-mohamed.png`}
+  className="w-full h-[270px] object-cover border-b border-[#f6c453]/10"
+>
+  <source
+    src="/soufiane-presentacion.mp4"
+    type="video/mp4"
+  />
+</video>
 
     <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
 
