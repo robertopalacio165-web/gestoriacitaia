@@ -661,26 +661,28 @@ else if (
           animate={{ opacity: 1, y: 0 }}
           className="rounded-2xl overflow-hidden border border-[#1e293b] bg-[#071224] shadow-2xl"
         >
-          <div className="relative">
-            {!isPaid && (
-          <video
-  autoPlay
-  muted
-  loop
-  playsInline
-            poster={`${import.meta.env.BASE_URL}images/khalid-extranjeria.png`}
-  className="w-full h-[260px] object-cover"
->
+      
+        
+         <div className="relative">
 
-  <source
-    src="/videoskhalid-placeholder.mp4"
-    type="video/mp4"
-  />
+  {!isPaid && (
+    <video
+      controls
+      autoPlay
+      muted
+      playsInline
+      preload="metadata"
+      className="w-full h-[260px] object-cover"
+      poster="/images/khalid-extranjeria.png"
+    >
+      <source
+        src="/khalid-presentacion.mp4"
+        type="video/mp4"
+      />
+    </video>
+  )}
 
-</video>
-)}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-            
+</div>   
 
            
 
