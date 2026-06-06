@@ -677,7 +677,7 @@ className="w-full h-[270px] object-cover border-b border-[#f6c453]/10"
   />
 </video>
       
-<div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />    
+
 )}
            
             
