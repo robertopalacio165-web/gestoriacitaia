@@ -2314,43 +2314,20 @@ relative
 
     <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
 
-    <div className="absolute top-4 right-4 flex items-center gap-2">
+  
 
-      <button
-        type="button"
-        className="w-11 h-11 rounded-full bg-black/45 backdrop-blur-md flex items-center justify-center text-white border border-white/10"
-      >
-        <Bell className="w-5 h-5" />
-      </button>
 
-      <button
-        type="button"
-        className="w-11 h-11 rounded-full bg-black/45 backdrop-blur-md flex items-center justify-center text-white border border-white/10"
-      >
-        <Volume2 className="w-5 h-5" />
-      </button>
+ <div className="absolute bottom-5 right-4 text-right">
 
-    </div>
+  <h2 className="text-[38px] font-extrabold text-white tracking-tight ...">
+    Soufiane
+  </h2>
 
-    <div className="absolute top-4 left-4 bg-black/70 backdrop-blur-xl border border-[#c6922f]/40 px-4 py-2 rounded-full flex items-center gap-2 text-sm shadow-lg">
+  <p className="text-[15px] text-[#d4a94d] font-medium tracking-wide">
+    Experto en Regularización
+  </p>
 
-      <div className="w-2.5 h-2.5 rounded-full bg-green-400 animate-pulse shadow-lg"></div>
-
-      En línea
-
-    </div>
-
-    <div className="absolute bottom-5 right-4 text-right">
-
-      <h2 className="text-[38px] font-extrabold text-white tracking-tight drop-shadow-[0_0_18px_rgba(255,255,255,0.2)]">
-        Mohamed
-      </h2>
-
-      <p className="text-[15px] text-[#d4a94d] font-medium tracking-wide">
-        Especialista en Extranjería
-      </p>
-
-    </div>
+</div>  
 
   </div>
 </motion.div>
