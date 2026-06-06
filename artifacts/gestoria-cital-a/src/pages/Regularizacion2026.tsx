@@ -2255,7 +2255,7 @@ setTimeout(() => {
 
 return (
 
-<div className="min-h-screen p-[2px] rounded-[32px] bg-gradient-to-b from-[#ffd76a] via-[#c9971a] to-[#5c4304] shadow-[0_0_40px_rgba(255,200,0,0.20)]">
+<div className="min-h-screen">
 
 <div className="w-full bg-background text-foreground relative min-h-screen rounded-[30px] overflow-hidden">
 <Navbar />
@@ -2286,13 +2286,10 @@ className="fixed inset-0 z-0 opacity-25 pointer-events-none"
 initial={{ opacity: 0, y: 15 }}
 animate={{ opacity: 1, y: 0 }}
 className="
+<motion.div
+className="
 rounded-[26px]
 overflow-hidden
-bg-[#020817]/92
-backdrop-blur-xl
-border-2
-border-[#f6c453]
-shadow-[0_0_25px_rgba(255,200,0,0.18)]
 relative
 "
 >
@@ -2312,14 +2309,14 @@ relative
   />
 </video>
 
-    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+
 
   
 
 
  <div className="absolute bottom-5 right-4 text-right">
 
-  <h2 className="text-[38px] font-extrabold text-white tracking-tight ...">
+<h2 className="text-[22px] font-bold text-white">
     Soufiane
   </h2>
 
