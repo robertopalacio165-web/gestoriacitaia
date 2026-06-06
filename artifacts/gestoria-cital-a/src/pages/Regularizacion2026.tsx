@@ -2307,10 +2307,10 @@ relative
 className="w-full h-[270px] object-cover border-b border-[#f6c453]/10"
       
       >
-      <source
-        src="/mohamed-extranjeria.mp4.mp4"
-        type="video/mp4"
-      />
+    <source
+  src="/soufiane-presentacion.mp4"
+  type="video/mp4"
+/>
     </video>
 
     <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
