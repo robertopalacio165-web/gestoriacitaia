@@ -1284,11 +1284,11 @@ const [formReady, setFormReady] = useState(
               className="relative rounded-2xl overflow-hidden border border-primary/20 shadow-[0_0_30px_-5px_hsl(var(--primary)/0.25)] bg-black"
               style={{ height: "280px" }}
             >
-             <video
+      <video
   autoPlay
-  muted
-  loop
   playsInline
+  controls={false}
+  preload="auto"
   className="w-full h-full object-cover object-top"
 >
   <source
