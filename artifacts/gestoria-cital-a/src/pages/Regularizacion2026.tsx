@@ -2414,7 +2414,7 @@ className="w-[92%] mx-auto flex items-center justify-center h-[52px] rounded-[20
     </div>
 
   </div>
-</div>
+
 
 
 
