@@ -268,7 +268,7 @@ export default function Landing() {
   text-black font-bold shadow-xl shadow-orange-500/30 border-0"
   onClick={() => goWithGoogleAuth("/khalid-extranjeria")}
 >
-  Consulta con Khalid
+{t("hero_btn_khalid")}
   <ArrowRight className="w-4 h-4 ml-1" />
 </Button>
           </div>
