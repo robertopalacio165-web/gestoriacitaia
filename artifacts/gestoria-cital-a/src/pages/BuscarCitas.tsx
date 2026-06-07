@@ -1320,20 +1320,7 @@ const [formReady, setFormReady] = useState(
                 <p className="text-white/70 text-xs drop-shadow-lg">{ui.agentRole}</p>
               </div>
 
-              <div className="absolute bottom-3 left-0 right-0 flex items-center justify-center">
-                <button
-                  onClick={isListening ? stopListening : startListening}
-                  className={`w-12 h-12 rounded-full border flex items-center justify-center backdrop-blur-md transition-colors ${
-                    isListening
-                      ? "bg-destructive/80 border-destructive"
-                      : "bg-black/50 border-white/20 hover:bg-black/70"
-                  }`}
-                  type="button"
-                >
-                  {isListening ? <MicOff className="w-5 h-5 text-white" /> : <Mic className="w-5 h-5 text-white" />}
-                </button>
-              </div>
-            </div>
+        
 
             {step === 2 && !confirmed && hasRealAppointment && (
               <motion.button
