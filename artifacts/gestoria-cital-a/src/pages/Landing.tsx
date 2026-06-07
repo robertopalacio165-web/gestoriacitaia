@@ -294,18 +294,19 @@ export default function Landing() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
         >
-          <AgentCard
-            name="Mohamed"
-            role={tr("agent_mo_role", "Especialista en Extranjería")}
-            imagePath={`${import.meta.env.BASE_URL}images/avatar-mohamed.png`}
-            delay={0.1}
-          />
-          <AgentCard
-            name="Sara"
-            role={tr("agent_sara_role", "Buscar Citas · 24/7")}
-            imagePath={`${import.meta.env.BASE_URL}images/avatar-sara.png`}
-            delay={0.2}
-          />
+        <AgentCard
+  name="Soufiane"
+  role="Experto en Regularización"
+  imagePath={`${import.meta.env.BASE_URL}images/soufiane.png`}
+  delay={0.1}
+/>
+
+<AgentCard
+  name="Sara"
+  role="Buscar Citas · 24/7"
+  imagePath={`${import.meta.env.BASE_URL}images/sara.png`}
+  delay={0.2}
+/>
         </motion.div>
 
         <motion.div
