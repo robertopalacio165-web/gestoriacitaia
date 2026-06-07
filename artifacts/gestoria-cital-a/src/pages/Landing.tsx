@@ -251,7 +251,7 @@ export default function Landing() {
               className="w-full sm:w-auto rounded-full px-7 py-3 shadow-lg shadow-primary/30 bg-primary hover:bg-primary/90 text-base font-bold min-h-[52px]"
               onClick={() => goWithGoogleAuth("/regularizacion-2026")}
             >
-              {t("hero_btn1")} <ArrowRight className="w-4 h-4 ml-1" />
+       {t("hero_btn_citas")} <ArrowRight className="w-4 h-4 ml-1" />
             </Button>
 
             <Button
