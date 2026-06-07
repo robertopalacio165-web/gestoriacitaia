@@ -2417,6 +2417,55 @@ className="w-[92%] mx-auto flex items-center justify-center h-[52px] rounded-[20
 
 )}
 
+<div className="mt-4 rounded-2xl border border-green-500/20 bg-[#071326] p-4">
+
+  <h3 className="text-center text-green-400 font-bold text-lg mb-4">
+    Miles de personas ya usan GestoriaCitaIA
+  </h3>
+
+  <div className="grid grid-cols-4 gap-2 text-center">
+
+    <div>
+      <p className="text-green-400 text-2xl font-black">18K+</p>
+      <p className="text-white/60 text-xs">Trámites</p>
+    </div>
+
+    <div>
+      <p className="text-blue-400 text-2xl font-black">97%</p>
+      <p className="text-white/60 text-xs">Verificado</p>
+    </div>
+
+    <div>
+      <p className="text-purple-400 text-2xl font-black">4m</p>
+      <p className="text-white/60 text-xs">Continuar</p>
+    </div>
+
+    <div>
+      <p className="text-yellow-400 text-2xl font-black">100%</p>
+      <p className="text-white/60 text-xs">Asistente IA</p>
+    </div>
+
+  </div>
+
+  <div className="mt-4 rounded-full border border-yellow-500/30 py-2 text-center text-white font-bold">
+    🏆 Regularización 2026
+  </div>
+
+  <div className="flex items-end justify-between mt-4">
+
+    <div>
+      <p className="text-green-400 text-4xl font-black">4.9/5</p>
+      <p className="text-yellow-400">★★★★★</p>
+    </div>
+
+    <div className="text-white font-bold">
+      +2K
+    </div>
+
+  </div>
+
+</div>
+  
 {/* ✅ DESPUÉS DEL PAGO */}
   
 
