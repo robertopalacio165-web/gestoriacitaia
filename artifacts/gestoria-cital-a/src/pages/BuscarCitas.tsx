@@ -1298,28 +1298,10 @@ const [formReady, setFormReady] = useState(
 </video>
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
 
-              <div className="absolute top-3 left-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/60 border border-white/10 backdrop-blur-md">
-                <img
-                  src={`${import.meta.env.BASE_URL}images/spain-gov.png`}
-                  alt="España"
-                  className="absolute top-3 right-20 w-10 h-7 object-cover rounded-[4px] border border-white/20 shadow-lg"
-                />
-                <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                <span className="text-xs font-medium text-white">{ui.online}</span>
-              </div>
+              
 
               <div className="absolute top-3 right-3 flex items-center gap-2">
-                <div className="w-7 h-7 rounded-full bg-black/50 backdrop-blur-md border border-white/10 flex items-center justify-center">
-                  <Bell className="w-3.5 h-3.5 text-white" />
-                </div>
-                <button
-                  onClick={() => setMuted(!muted)}
-                  className="w-8 h-8 rounded-full bg-black/50 border border-white/10 flex items-center justify-center"
-                  type="button"
-                >
-                  {muted ? <VolumeX className="w-4 h-4 text-white" /> : <Volume2 className="w-4 h-4 text-white" />}
-                </button>
-              </div>
+           
 
               {!muted && (
                 <div className="absolute bottom-14 left-4 flex items-end gap-0.5 h-5">
