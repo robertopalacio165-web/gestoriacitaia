@@ -32,9 +32,9 @@ const translations: AllTranslations = {
     hero_title_2: "regularizarte en España",
     hero_sub:
       "Nuestro agente IA analiza tu situación, revisa tus documentos y te guía paso a paso de forma clara, rápida y segura.",
-    hero_btn1: "Empezar ahora",
+hero_btn1: "Regularización con Soufiane",
     hero_btn2: "Ir al panel",
-    hero_btn_citas: "Buscar citas",
+hero_btn_citas: "Citas con Sara",
     hero_trust: "Miles de personas ya usan GestoriaCitaIA",
 
     feat1: "Análisis rápido",
@@ -324,9 +324,9 @@ mohamedDescription:
     hero_title_2: "regularize your status in Spain",
     hero_sub:
       "Our AI agent analyzes your situation, reviews your documents, and guides you step by step clearly, quickly, and securely.",
-    hero_btn1: "Start now",
+hero_btn1: "Regularization with Soufiane",
     hero_btn2: "Go to panel",
-    hero_btn_citas: "Find appointments",
+ hero_btn_citas: "Appointments with Sara",
     hero_trust: "Thousands of people already use GestoriaCitaIA",
 
     feat1: "Fast analysis",
@@ -530,9 +530,9 @@ mohamedDescription:
     hero_title_2: "تسوي الوضعية ديالك فإسبانيا",
     hero_sub:
       "المساعد ديالنا كايحلل الحالة ديالك، كايشوف الوثائق ديالك، وكايوجهك مرحلة بمرحلة بطريقة واضحة وسريعة وآمنة.",
-    hero_btn1: "بدا دابا",
+hero_btn1: "التسوية مع سفيان",
     hero_btn2: "دخل للبانيل",
-    hero_btn_citas: "قلب على موعد",
+hero_btn_citas: "المواعيد مع سارة",
     hero_trust: "آلاف الناس كيستعملو GestoriaCitaIA",
 
     feat1: "تحليل سريع",
