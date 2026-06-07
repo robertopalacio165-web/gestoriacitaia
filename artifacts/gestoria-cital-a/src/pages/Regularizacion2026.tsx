@@ -2414,10 +2414,10 @@ className="w-[92%] mx-auto flex items-center justify-center h-[52px] rounded-[20
     </div>
 
   </div>
+</div>
 
-2414 </div>
 
-2416 </div>
+
 
 <div className="mt-4 rounded-2xl border border-green-500/20 bg-[#071326] p-4">
 
