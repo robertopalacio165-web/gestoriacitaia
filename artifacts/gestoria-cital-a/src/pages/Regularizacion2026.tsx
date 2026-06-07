@@ -2414,6 +2414,11 @@ className="w-[92%] mx-auto flex items-center justify-center h-[52px] rounded-[20
     </div>
 
   </div>
+
+2414 </div>
+
+2416 </div>
+
 <div className="mt-4 rounded-2xl border border-green-500/20 bg-[#071326] p-4">
 
   <h3 className="text-center text-green-400 font-bold text-lg mb-4">
@@ -2444,29 +2449,8 @@ className="w-[92%] mx-auto flex items-center justify-center h-[52px] rounded-[20
 
   </div>
 
-  <div className="mt-4 rounded-full border border-yellow-500/30 py-2 text-center text-white font-bold">
-    🏆 Regularización 2026
-  </div>
-
-  <div className="flex items-end justify-between mt-4">
-
-    <div>
-      <p className="text-green-400 text-4xl font-black">
-        4.9/5
-      </p>
-
-      <p className="text-yellow-400">
-        ★★★★★
-      </p>
-    </div>
-
-    <div className="text-white font-bold">
-      +2K
-    </div>
-
-  </div>
-
 </div>
+
 )}
 
 {/* ✅ DESPUÉS DEL PAGO */}
