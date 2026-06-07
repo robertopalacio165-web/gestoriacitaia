@@ -2289,8 +2289,10 @@ className="fixed inset-0 z-0 opacity-25 pointer-events-none"
 >
   <div className="relative">
 
-  <video
+
+<video
   autoPlay
+  muted
   playsInline
   controls={false}
   preload="auto"
@@ -2302,7 +2304,6 @@ className="fixed inset-0 z-0 opacity-25 pointer-events-none"
     type="video/mp4"
   />
 </video>
-
 
 
   
