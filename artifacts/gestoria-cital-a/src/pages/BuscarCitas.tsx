@@ -1300,8 +1300,7 @@ const [formReady, setFormReady] = useState(
 
               
 
-              <div className="absolute top-3 right-3 flex items-center gap-2">
-           
+              
 
               {!muted && (
                 <div className="absolute bottom-14 left-4 flex items-end gap-0.5 h-5">
