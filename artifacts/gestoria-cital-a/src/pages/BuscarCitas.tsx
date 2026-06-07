@@ -1321,7 +1321,7 @@ const [formReady, setFormReady] = useState(
               </div>
 
         
-
+</div>
             {step === 2 && !confirmed && hasRealAppointment && (
               <motion.button
                 initial={{ opacity: 0, y: 10 }}
