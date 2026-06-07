@@ -35,6 +35,7 @@ const translations: AllTranslations = {
 hero_btn1: "Regularización con Soufiane",
     hero_btn2: "Ir al panel",
 hero_btn_citas: "Citas con Sara",
+    hero_btn_khalid: "Consulta con Khalid",
     hero_trust: "Miles de personas ya usan GestoriaCitaIA",
 
     feat1: "Análisis rápido",
@@ -327,6 +328,7 @@ mohamedDescription:
 hero_btn1: "Regularization with Soufiane",
     hero_btn2: "Go to panel",
  hero_btn_citas: "Appointments with Sara",
+    hero_btn1: "Regularization with Soufiane",
     hero_trust: "Thousands of people already use GestoriaCitaIA",
 
     feat1: "Fast analysis",
@@ -533,6 +535,7 @@ mohamedDescription:
 hero_btn1: "التسوية مع سفيان",
     hero_btn2: "دخل للبانيل",
 hero_btn_citas: "المواعيد مع سارة",
+    hero_btn_khalid: "استشارة مع خالد",
     hero_trust: "آلاف الناس كيستعملو GestoriaCitaIA",
 
     feat1: "تحليل سريع",
