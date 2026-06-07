@@ -368,24 +368,11 @@ export function Navbar() {
   onClick={() => setMobileOpen(false)}
 >
   <div className="relative">
-    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center shadow-lg shadow-green-500/30">
-      <svg
-        width="22"
-        height="22"
-        viewBox="0 0 32 32"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <path
-          d="M16 7L9 12v8l7 5 7-5v-8L16 7z"
-          stroke="white"
-          strokeWidth="2"
-          strokeLinejoin="round"
-          fill="none"
-        />
-        <circle cx="16" cy="16" r="3" fill="white" />
-      </svg>
-    </div>
+<img
+  src={`${import.meta.env.BASE_URL}images/logo.png`}
+  alt="GestoriaCitaIA"
+  className="w-10 h-10 rounded-xl object-cover"
+/>
 
     <div className="absolute -inset-1 bg-green-500/20 blur-xl rounded-xl"></div>
   </div>
