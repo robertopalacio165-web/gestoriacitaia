@@ -684,16 +684,7 @@ className="w-full h-[270px] object-cover border-b border-[#f6c453]/10"
 
            
 
-            <div className="absolute top-4 right-4 flex gap-2">
-              <div className="w-9 h-9 rounded-full bg-black/50 flex items-center justify-center">
-                <Bell size={16} />
-              </div>
-
-              <div className="w-9 h-9 rounded-full bg-black/50 flex items-center justify-center">
-                <Volume2 size={16} />
-              </div>
-            </div>
-
+            
             <div className="absolute bottom-5 right-4 text-right">
               <h2 className="text-2xl font-bold">
                 Khalid
