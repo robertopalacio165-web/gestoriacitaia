@@ -2281,7 +2281,7 @@ className="fixed inset-0 z-0 opacity-25 pointer-events-none"
           </div>
         </div>
 
-<div className="w-full px-1 py-1">
+<div className="mt-2 max-w-7xl mx-auto lg:grid lg:grid-cols-[420px_1fr] lg:gap-6">
  <motion.div
   initial={{ opacity: 0, y: 15 }}
   animate={{ opacity: 1, y: 0 }}
