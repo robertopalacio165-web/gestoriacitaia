@@ -2333,7 +2333,7 @@ className="fixed inset-0 z-0 opacity-25 pointer-events-none"
 
  <div className="p-3">
 
-<div className="relative overflow-hidden rounded-2xl border border-yellow-500/30 bg-gradient-to-br from-[#1a1200] via-[#0b0b0b] to-[#1a1200] p-3 max-w-[430px] mx-auto">
+<div className="relative overflow-hidden rounded-2xl border border-yellow-500/30 bg-gradient-to-br from-[#1a1200] via-[#0b0b0b] to-[#1a1200] p-4 w-full">
       <div className="flex items-center justify-between mb-3">
 
         <div>
