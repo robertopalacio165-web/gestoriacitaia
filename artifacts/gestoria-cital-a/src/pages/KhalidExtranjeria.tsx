@@ -661,13 +661,12 @@ else if (
           animate={{ opacity: 1, y: 0 }}
           className="rounded-2xl overflow-hidden border border-[#1e293b] bg-[#071224] shadow-2xl"
         >
-          <div className="relative">
-            {!isPaid && (
+          
 <video
   controls
   playsInline
   preload="metadata"
-  poster={`${import.meta.env.BASE_URL}images/khalid-extranjeria.png`}
+poster="/images/khalid-extranjeria.png"
   className="w-full h-[270px] object-cover border-b border-[#f6c453]/10"
 >
   <source
@@ -676,7 +675,7 @@ else if (
   />
 </video>   
 
-)}
+
            
             
 
