@@ -661,32 +661,29 @@ else if (
           animate={{ opacity: 1, y: 0 }}
           className="rounded-2xl overflow-hidden border border-[#1e293b] bg-[#071224] shadow-2xl"
         >
-       
-            
-
-           <div className="relative">
+          <div className="relative">
+            {!isPaid && (
 
   <video
-    controls
-    playsInline
-    preload="metadata"
-    poster="/images/khalid-extranjeria.png"
-    className="w-full h-[280px] object-cover"
-  >
-    <source src="/khalid-presentacion.mp4" type="video/mp4" />
-  </video>
+  autoPlay
+  muted
+  playsInline
+  controls={false}
+  preload="auto"
+  className="w-full h-[270px] object-cover border-b border-[#f6c453]/10"
+  poster={`${import.meta.env.BASE_URL}images/khalid-extranjeria.png`}
+>
+  <source
+    src="/khalid-presentacion.mp4"
+    type="video/mp4"
+  />
+</video>    
 
-  <div className="absolute bottom-5 right-4 text-right">
-    <h2 className="text-2xl font-bold">
-      Khalid
-    </h2>
+)}
+           
+            
 
-    <p className="text-sm text-gray-200">
-      {t("Especialista en Extranjería")}
-    </p>
-  </div>
-
-</div>
+           
 
             
             <div className="absolute bottom-5 right-4 text-right">
