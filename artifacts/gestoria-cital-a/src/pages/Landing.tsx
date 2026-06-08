@@ -330,26 +330,15 @@ export default function Landing() {
           transition={{ duration: 0.6 }}
           className="mb-16"
         >
-          <div className="relative rounded-2xl overflow-hidden glass-panel aspect-video max-w-3xl mx-auto border border-white/10 group cursor-pointer shadow-2xl shadow-primary/10">
-            <div className="absolute inset-0 bg-gradient-to-tr from-primary/10 to-secondary/10" />
-            <div className="absolute inset-0 bg-[hsl(222,47%,5%,0.5)]" />
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-4">
-              <div className="flex items-center gap-2 mb-1">
-                <span className="font-display font-bold text-xl text-white">
-                  GestoriaCita<span className="text-primary">IA</span>
-                </span>
-              </div>
-              <div className="w-16 h-16 rounded-full bg-red-600 border-4 border-white flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-xl">
-                <Play className="w-7 h-7 text-white ml-1 fill-white" />
-              </div>
-              <p className="font-medium text-sm text-white/80">
-                {tr(
-                  "landing_video_text",
-                  "Cómo funciona GestoriaCitaIA en 2 minutos"
-                )}
-              </p>
-            </div>
-          </div>
+        <div className="relative rounded-2xl overflow-hidden glass-panel aspect-video max-w-3xl mx-auto border border-white/10 shadow-2xl shadow-primary/10">
+  <video
+    controls
+    playsInline
+    className="w-full h-full object-cover"
+  >
+    <source src="/video12.mp4" type="video/mp4" />
+  </video>
+</div>  
         </motion.div>
 
         <motion.div
