@@ -2325,8 +2325,8 @@ className="fixed inset-0 z-0 opacity-25 pointer-events-none"
 
  
 
-     
-<div className="mt-0 w-full max-w-none">
+     </div>
+<div className="mt-0 w-full max-w-none lg:col-start-2">
 
 {/* ✅ ANTES DEL PAGO */}
 {!paymentCompleted && (
