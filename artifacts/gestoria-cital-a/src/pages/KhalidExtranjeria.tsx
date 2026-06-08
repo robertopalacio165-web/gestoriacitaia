@@ -663,7 +663,8 @@ else if (
         >
        
             
-<div className="relative">
+
+           <div className="relative">
 
   <video
     controls
@@ -675,8 +676,17 @@ else if (
     <source src="/khalid-presentacion.mp4" type="video/mp4" />
   </video>
 
+  <div className="absolute bottom-5 right-4 text-right">
+    <h2 className="text-2xl font-bold">
+      Khalid
+    </h2>
+
+    <p className="text-sm text-gray-200">
+      {t("Especialista en Extranjería")}
+    </p>
+  </div>
+
 </div>
-           
 
             
             <div className="absolute bottom-5 right-4 text-right">
