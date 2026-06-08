@@ -661,7 +661,8 @@ else if (
           animate={{ opacity: 1, y: 0 }}
           className="rounded-2xl overflow-hidden border border-[#1e293b] bg-[#071224] shadow-2xl"
         >
-          
+          <div className="relative">
+            {!isPaid && (
 <video
   controls
   playsInline
@@ -675,7 +676,7 @@ poster="/images/khalid-extranjeria.png"
   />
 </video>   
 
-
+)}
            
             
 
