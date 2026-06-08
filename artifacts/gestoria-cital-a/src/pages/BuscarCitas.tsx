@@ -1284,39 +1284,16 @@ const [formReady, setFormReady] = useState(
               className="relative rounded-2xl overflow-hidden border border-primary/20 shadow-[0_0_30px_-5px_hsl(var(--primary)/0.25)] bg-black"
               style={{ height: "280px" }}
             >
-<video
-  playsInline
-  controls={false}
-  preload="auto"
-  className="w-full h-full object-cover object-top"
->
-  <source
-    src="/sara-presentacion.mp4"
-    type="video/mp4"
-  />
-</video>
 
-<button
-  onClick={(e) => {
-    const video =
-      e.currentTarget.parentElement?.querySelector("video");
-
-    if (video) {
-      video.play();
-      video.muted = false;
-    }
-  }}
-  className="absolute inset-0 flex items-center justify-center bg-black/20"
-  type="button"
->
-  <div className="bg-white rounded-full px-5 py-3 font-bold">
-    ▶️ Reproducir vídeo
-  </div>
-</button>
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
 
               
-
+<video
+  controls
+  playsInline
+  preload="auto"
+  className="w-full h-full object-cover object-top"
+>
               
 
               {!muted && (
