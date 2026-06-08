@@ -2325,7 +2325,6 @@ className="fixed inset-0 z-0 opacity-25 pointer-events-none"
 
  
 
-          </div>
 <div className="mt-0 w-full max-w-none">
 
 {/* ✅ ANTES DEL PAGO */}
