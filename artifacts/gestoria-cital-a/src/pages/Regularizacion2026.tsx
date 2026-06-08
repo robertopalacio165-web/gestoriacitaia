@@ -2291,36 +2291,19 @@ className="fixed inset-0 z-0 opacity-25 pointer-events-none"
 
 
 
-<video
-  playsInline
-  controls={false}
-  preload="auto"
-  poster={`${import.meta.env.BASE_URL}images/avatar-mohamed.png`}
-  className="w-full h-[270px] object-cover border-b border-[#f6c453]/10"
->
-  <source
-    src="/soufiane-presentacion.mp4"
-    type="video/mp4"
-  />
-</video>
+<div className="relative">
 
-<button
-  onClick={(e) => {
-    const video =
-      e.currentTarget.parentElement?.querySelector("video");
+  <video
+    controls
+    playsInline
+    preload="metadata"
+    poster="/images/soufiane.png"
+    className="w-full h-[270px] object-cover border-b border-[#f6c453]/10"
+  >
+    <source src="/soufiane-presentacion.mp4" type="video/mp4" />
+  </video>
 
-    if (video) {
-      video.play();
-      video.muted = false;
-    }
-  }}
-  className="absolute inset-0 flex items-center justify-center bg-black/20"
-  type="button"
->
-  <div className="bg-white rounded-full px-5 py-3 font-bold">
-    ▶️ Reproducir vídeo
-  </div>
-</button>
+</div>
 
   
 
