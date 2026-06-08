@@ -331,12 +331,13 @@ export default function Landing() {
           className="mb-16"
         >
         <div className="relative rounded-2xl overflow-hidden glass-panel aspect-video max-w-3xl mx-auto border border-white/10 shadow-2xl shadow-primary/10">
-  <video
-    controls
-    playsInline
-    className="w-full h-full object-cover"
-  >
-    <source src="/video12.mp4" type="video/mp4" />
+<video
+  controls
+  playsInline
+  poster="/video12-thumb.png"
+  className="w-full h-full object-cover"
+>
+<source src="/Video12.mp4" type="video/mp4" />
   </video>
 </div>  
         </motion.div>
