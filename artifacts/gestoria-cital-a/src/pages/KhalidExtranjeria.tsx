@@ -661,12 +661,9 @@ else if (
           animate={{ opacity: 1, y: 0 }}
           className="rounded-2xl overflow-hidden border border-[#1e293b] bg-[#071224] shadow-2xl"
         >
-          <div className="relative">
-            {!isPaid && (
-
-
-
-         <div className="relative">
+       
+            
+<div className="relative">
 
   <video
     controls
@@ -678,26 +675,7 @@ else if (
     <source src="/khalid-presentacion.mp4" type="video/mp4" />
   </video>
 
-  {!isPaid && (
-    <button
-      onClick={(e) => {
-        const video = e.currentTarget.parentElement?.querySelector("video");
-        if (video) {
-          video.play();
-          video.muted = false;
-        }
-      }}
-      className="absolute inset-0 flex items-center justify-center bg-black/30"
-    >
-      <div className="bg-white/90 rounded-full px-6 py-3 font-bold">
-        ▶️ Reproducir vídeo
-      </div>
-    </button>
-  )}
-
-</div>  
-            
-
+</div>
            
 
             
