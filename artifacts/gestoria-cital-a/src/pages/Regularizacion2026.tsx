@@ -2290,9 +2290,8 @@ className="fixed inset-0 z-0 opacity-25 pointer-events-none"
   <div className="relative">
 
 
+
 <video
-  autoPlay
-  muted
   playsInline
   controls={false}
   preload="auto"
@@ -2305,6 +2304,23 @@ className="fixed inset-0 z-0 opacity-25 pointer-events-none"
   />
 </video>
 
+<button
+  onClick={(e) => {
+    const video =
+      e.currentTarget.parentElement?.querySelector("video");
+
+    if (video) {
+      video.play();
+      video.muted = false;
+    }
+  }}
+  className="absolute inset-0 flex items-center justify-center bg-black/20"
+  type="button"
+>
+  <div className="bg-white rounded-full px-5 py-3 font-bold">
+    ▶️ Reproducir vídeo
+  </div>
+</button>
 
   
 
