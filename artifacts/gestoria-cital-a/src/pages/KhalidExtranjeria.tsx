@@ -664,20 +664,20 @@ else if (
           <div className="relative">
             {!isPaid && (
 
-  <video
-  autoPlay
-  muted
-  playsInline
-  controls={false}
-  preload="auto"
-  className="w-full h-[270px] object-cover border-b border-[#f6c453]/10"
-  poster={`${import.meta.env.BASE_URL}images/khalid-extranjeria.png`}
+    <button
+  onClick={(e) => {
+    const video = e.currentTarget.parentElement?.querySelector("video");
+    if (video) {
+      video.play();
+      video.muted = false;
+    }
+  }}
+  className="absolute inset-0 flex items-center justify-center bg-black/30"
 >
-  <source
-    src="/khalid-presentacion.mp4"
-    type="video/mp4"
-  />
-</video>    
+  <div className="bg-white/90 rounded-full px-6 py-3 font-bold">
+    ▶️ Reproducir vídeo
+  </div>
+</button>
 
 )}
            
