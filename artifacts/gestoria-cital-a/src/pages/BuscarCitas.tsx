@@ -1285,19 +1285,17 @@ const [formReady, setFormReady] = useState(
               style={{ height: "280px" }}
             >
 
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+             
 
               
 <video
   controls
   playsInline
-  preload="auto"
+  preload="metadata"
+  poster="/images/sara.png"
   className="w-full h-full object-cover object-top"
 >
-  <source
-    src="/sara-presentacion.mp4"
-    type="video/mp4"
-  />
+  <source src="/sara-presentacion.mp4" type="video/mp4" />
 </video>
               
 
