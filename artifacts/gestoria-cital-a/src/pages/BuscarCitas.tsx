@@ -134,6 +134,7 @@ function OfficialBrowserBox({
 }) {
   const isMa = language === "ma";
   const isEn = language === "en";
+  const { toast } = useToast();
 
   const formIntro = isMa
     ? "إلى كنتي باغي موعد عمر المعلومات ديالك واختار نوع الموعد ومن بعد سارة غادي تكمل معاك وتعلمك فاش يكون الموعد."
