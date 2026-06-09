@@ -87,7 +87,7 @@ const context = await browser.newContext({
 });
 
 const page = await context.newPage();
-      const page = await context.newPage();
+
 
 await page.setExtraHTTPHeaders({
   "Accept-Language": "es-ES,es;q=0.9",
