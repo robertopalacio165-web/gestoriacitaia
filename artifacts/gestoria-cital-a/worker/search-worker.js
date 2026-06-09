@@ -69,7 +69,7 @@ await supabase
       */
 
 browser = await chromium.launch({
-headless: false,
+headless: true,
   proxy: {
     server: "http://brd.superproxy.io:33335",
     username: "brd-customer-hl_9084dec2-zone-residential_proxy1",
