@@ -93,7 +93,7 @@ await page.setExtraHTTPHeaders({
   "Accept-Language": "es-ES,es;q=0.9",
 });
 
-await page.setViewportSize({
+
 
       await page.setViewportSize({
         width: 1280 +
