@@ -129,6 +129,13 @@ console.log("✅ ICP opened");
 console.log("========== HTML ==========");
 console.log(html.substring(0, 5000));
 console.log("========== END HTML ==========");
+      await page.screenshot({
+  path: "icp-test.png",
+  fullPage: true,
+});
+
+console.log("CURRENT URL:");
+console.log(page.url());
 
       /*
       =========================
