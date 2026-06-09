@@ -663,19 +663,53 @@ else if (
         >
           <div className="relative">
             {!isPaid && (
-<video
-  controls
-  playsInline
-  preload="metadata"
-poster="/images/khalid-extranjeria.png"
-  className="w-full h-[270px] object-cover border-b border-[#f6c453]/10"
->
-  <source
-    src="/khalid-presentacion.mp4"
-    type="video/mp4"
-  />
-</video>   
+  
+<div className="relative">
 
+  <video
+    id="khalid-video"
+    playsInline
+    preload="metadata"
+    poster="/images/khalid-extranjeria.png"
+    className="w-full h-[270px] object-cover border-b border-[#f6c453]/10"
+    onPlay={() => {
+      const btn = document.getElementById("play-button-khalid");
+      if (btn) btn.style.display = "none";
+    }}
+  >
+    <source
+      src="/khalid-presentacion.mp4"
+      type="video/mp4"
+    />
+  </video>
+
+  <button
+    id="play-button-khalid"
+    type="button"
+    className="absolute inset-0 flex items-center justify-center"
+    onClick={() => {
+      const video = document.getElementById(
+        "khalid-video"
+      ) as HTMLVideoElement;
+
+      if (video) {
+        video.play();
+      }
+    }}
+  >
+    <div className="bg-black/10 backdrop-blur-[2px] rounded-full w-12 h-12 flex items-center justify-center">
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="white"
+      >
+        <path d="M8 5v14l11-7z" />
+      </svg>
+    </div>
+  </button>
+
+</div>
 )}
            
             
