@@ -82,7 +82,11 @@ browser = await chromium.launch({
   ]
 });
 
-const page = await browser.newPage();
+const context = await browser.newContext({
+  ignoreHTTPSErrors: true,
+});
+
+const page = await context.newPage();
 
       await page.setViewportSize({
         width: 1280 +
