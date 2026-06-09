@@ -2294,17 +2294,37 @@ className="fixed inset-0 z-0 opacity-25 pointer-events-none"
 <div className="relative">
 
   <video
-    controls
+    id="soufiane-video"
     playsInline
     preload="metadata"
     poster="/images/soufiane.png"
     className="w-full h-[270px] object-cover border-b border-[#f6c453]/10"
   >
-    <source src="/soufiane-presentacion.mp4" type="video/mp4" />
+    <source
+      src="/soufiane-presentacion.mp4"
+      type="video/mp4"
+    />
   </video>
 
-</div>
+  <button
+    type="button"
+    className="absolute inset-0 flex items-center justify-center"
+    onClick={() => {
+      const video = document.getElementById(
+        "soufiane-video"
+      ) as HTMLVideoElement;
 
+      if (video) {
+        video.play();
+      }
+    }}
+  >
+    <div className="bg-black/20 backdrop-blur-sm rounded-full w-16 h-16 flex items-center justify-center text-white text-3xl">
+      ▶
+    </div>
+  </button>
+
+</div>
   
 
 
