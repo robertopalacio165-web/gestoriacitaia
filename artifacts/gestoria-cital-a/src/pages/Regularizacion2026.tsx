@@ -2287,7 +2287,6 @@ className="fixed inset-0 z-0 opacity-25 pointer-events-none"
   animate={{ opacity: 1, y: 0 }}
   className="rounded-[26px] overflow-hidden relative"
 >
-  <div className="relative">
 
 
 
@@ -2299,6 +2298,10 @@ className="fixed inset-0 z-0 opacity-25 pointer-events-none"
     preload="metadata"
     poster="/images/soufiane.png"
     className="w-full h-[270px] object-cover border-b border-[#f6c453]/10"
+    onPlay={() => {
+      const btn = document.getElementById("play-button");
+      if (btn) btn.style.display = "none";
+    }}
   >
     <source
       src="/soufiane-presentacion.mp4"
@@ -2307,6 +2310,7 @@ className="fixed inset-0 z-0 opacity-25 pointer-events-none"
   </video>
 
   <button
+    id="play-button"
     type="button"
     className="absolute inset-0 flex items-center justify-center"
     onClick={() => {
@@ -2325,6 +2329,7 @@ className="fixed inset-0 z-0 opacity-25 pointer-events-none"
   </button>
 
 </div>
+
   
 
 
