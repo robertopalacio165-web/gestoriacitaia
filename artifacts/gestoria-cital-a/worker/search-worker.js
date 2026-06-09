@@ -92,12 +92,12 @@ const page = await browser.newPage();
       =========================
       */
 
-      
+      console.log("🌍 Opening ICP...");
 await page.goto(
-  "https://icp.administracionelectronica.gob.es/icpplus/index.html",
+  "https://sede.administracionespublicas.gob.es/icpplus/index.html",
   {
     waitUntil: "domcontentloaded",
-    timeout: 180000,
+    timeout: 30000,
   }
 );
       console.log("✅ ICP opened");
