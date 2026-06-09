@@ -2287,7 +2287,7 @@ className="fixed inset-0 z-0 opacity-25 pointer-events-none"
   animate={{ opacity: 1, y: 0 }}
   className="rounded-[26px] overflow-hidden relative"
 >
-
+<div className="relative">
 
 
 <div className="relative">
