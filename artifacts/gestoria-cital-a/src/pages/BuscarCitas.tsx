@@ -326,10 +326,17 @@ onChange={(e) =>
                       <option value="">
                         {isMa ? "اختار" : isEn ? "Select" : "Selecciona"}
                       </option>
-                      <option value="Madrid">Madrid</option>
-                      <option value="Barcelona">Barcelona</option>
-                      <option value="Valencia">Valencia</option>
-                      <option value="Málaga">Málaga</option>
+                   <option value="Madrid">Madrid</option>
+<option value="Barcelona">Barcelona</option>
+<option value="Valencia">Valencia</option>
+<option value="Málaga">Málaga</option>
+<option value="Sevilla">Sevilla</option>
+<option value="Bilbao">Bilbao</option>
+<option value="Alicante">Alicante</option>
+<option value="Murcia">Murcia</option>
+<option value="Zaragoza">Zaragoza</option>
+<option value="Palma de Mallorca">Palma de Mallorca</option>
+<option value="Las Palmas">Las Palmas</option>
                     </select>
                   </div>
 
@@ -705,16 +712,98 @@ const [formReady, setFormReady] = useState(
 
   const ui = useMemo(() => {
     return {
-    tramites: [
-  {
-    value: "primera_tie",
-    label: isMa
-      ? "أول بطاقة TIE - البصمات"
-      : isEn
-      ? "First TIE - Fingerprints"
-      : "Primera TIE (Toma de huellas)",
-  },
-  
+ tramites: [
+
+{
+  value: "primera_tie",
+  label: isMa
+    ? "البصمات - أول TIE"
+    : isEn
+    ? "First TIE - Fingerprints"
+    : "Primera TIE (Toma de huellas)",
+},
+
+{
+  value: "renovacion_nie",
+  label: isMa
+    ? "تجديد NIE أو TIE"
+    : isEn
+    ? "NIE / TIE Renewal"
+    : "Renovación NIE / TIE",
+},
+
+{
+  value: "reagrupacion_familiar",
+  label: isMa
+    ? "التجمع العائلي"
+    : isEn
+    ? "Family Reunification"
+    : "Reagrupación Familiar",
+},
+
+{
+  value: "arraigo",
+  label: isMa
+    ? "الاستقرار (أرايغو)"
+    : isEn
+    ? "Arraigo Residence"
+    : "Arraigo",
+},
+
+{
+  value: "familiar_ue",
+  label: isMa
+    ? "فرد من عائلة مواطن أوروبي"
+    : isEn
+    ? "EU Family Member"
+    : "Familiar de Ciudadano UE",
+},
+
+{
+  value: "certificado_ue",
+  label: isMa
+    ? "شهادة مواطن أوروبي"
+    : isEn
+    ? "EU Registration Certificate"
+    : "Certificado de Registro UE",
+},
+
+{
+  value: "autorizacion_regreso",
+  label: isMa
+    ? "رخصة الرجوع"
+    : isEn
+    ? "Return Authorization"
+    : "Autorización de Regreso",
+},
+
+{
+  value: "larga_duracion",
+  label: isMa
+    ? "الإقامة طويلة المدة"
+    : isEn
+    ? "Long-Term Residence"
+    : "Residencia de Larga Duración",
+},
+
+{
+  value: "estudios",
+  label: isMa
+    ? "إقامة الدراسة"
+    : isEn
+    ? "Student Residence"
+    : "Estancia por Estudios",
+},
+
+{
+  value: "asilo",
+  label: isMa
+    ? "اللجوء والحماية الدولية"
+    : isEn
+    ? "Asylum and International Protection"
+    : "Asilo y Protección Internacional",
+},
+
 ] as TramiteItem[],
 
       docsByTramite: {
