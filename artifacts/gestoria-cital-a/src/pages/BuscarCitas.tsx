@@ -423,7 +423,7 @@ const res = await fetch("/api/create-checkout-sara-inicial", {
 
  body: JSON.stringify({
 
-  token: params.token,
+ token: urlParams.token,
 
   appointment_id: appointment?.id,
 
