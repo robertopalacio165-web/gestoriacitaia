@@ -2323,9 +2323,9 @@ className="fixed inset-0 z-0 opacity-25 pointer-events-none"
       }
     }}
   >
-    <div className="bg-black/20 backdrop-blur-sm rounded-full w-16 h-16 flex items-center justify-center text-white text-3xl">
-      ▶
-    </div>
+   <div className="bg-black/5 rounded-full w-10 h-10 flex items-center justify-center text-white text-lg">
+  ▶
+</div>
   </button>
 
 </div>
