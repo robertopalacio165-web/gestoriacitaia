@@ -328,7 +328,6 @@ mohamedDescription:
 hero_btn1: "Regularization with Soufiane",
     hero_btn2: "Go to panel",
  hero_btn_citas: "Appointments with Sara",
-    hero_btn1: "Regularization with Soufiane",
     hero_trust: "Thousands of people already use GestoriaCitaIA",
 
     feat1: "Fast analysis",
