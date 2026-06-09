@@ -114,10 +114,12 @@ console.log("🌍 Opening ICP...");
 await page.goto(
   "https://icp.administracionelectronica.gob.es/icpplus/index.html",
   {
-    waitUntil: "domcontentloaded",
-    timeout: 30000,
+    waitUntil: "networkidle",
+    timeout: 60000,
   }
 );
+
+await page.waitForTimeout(10000);
 
 console.log("✅ ICP opened");
 
@@ -136,7 +138,10 @@ console.log("========== END HTML ==========");
 
       const provinceToSearch =
         client.province || "Barcelona";
+const body = await page.textContent("body");
 
+console.log("BODY:");
+console.log(body);
       await page.selectOption(
         'select[name="form"]',
         {
