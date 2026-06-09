@@ -70,12 +70,18 @@ await supabase
 
 browser = await chromium.launch({
   headless: true,
+  proxy: {
+    server: "http://brd.superproxy.io:33335",
+    username: "brd-customer-hl_9084dec2-zone-residential_proxy1",
+    password: "4r0lxn0iy1k9",
+  },
   args: [
     "--no-sandbox",
     "--disable-setuid-sandbox",
     "--disable-dev-shm-usage"
   ]
 });
+
 const page = await browser.newPage();
 
       await page.setViewportSize({
