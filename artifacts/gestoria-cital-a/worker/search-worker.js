@@ -105,6 +105,11 @@ await page.goto(
 console.log("✅ ICP opened");
 
       await page.waitForTimeout(4000);
+      const html = await page.content();
+
+console.log("========== HTML ==========");
+console.log(html.substring(0, 5000));
+console.log("========== END HTML ==========");
 
       /*
       =========================
