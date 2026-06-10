@@ -108,7 +108,6 @@ await page.setExtraHTTPHeaders({
       OPEN ICP
       =========================
       */
-
 console.log("🌍 Opening ICP...");
 
 await page.goto(
@@ -119,17 +118,33 @@ await page.goto(
   }
 );
 
+console.log("URL FINAL:");
+console.log(page.url());
+
+await page.screenshot({
+  path: "icp-debug.png",
+  fullPage: true
+});
+
+console.log("TITLE:");
+console.log(await page.title());
+
+console.log("BODY:");
+console.log(await page.textContent("body"));
+
 await page.waitForTimeout(10000);
 
 console.log("✅ ICP opened");
 
-      await page.waitForTimeout(4000);
-      const html = await page.content();
+await page.waitForTimeout(4000);
+
+const html = await page.content();
 
 console.log("========== HTML ==========");
 console.log(html.substring(0, 5000));
 console.log("========== END HTML ==========");
-      await page.screenshot({
+
+await page.screenshot({
   path: "icp-test.png",
   fullPage: true,
 });
