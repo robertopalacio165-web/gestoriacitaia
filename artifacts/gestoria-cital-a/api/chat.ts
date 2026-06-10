@@ -21,6 +21,7 @@ type LeadFormPayload = {
   email?: string;
   niePasaporte?: string;
   ciudad?: string;
+  provincia?: string;
   nacionalidad?: string;
   fechaLlegada?: string;
   cumple5Meses?: string;
@@ -60,6 +61,7 @@ function sanitizeLeadForm(raw: unknown): LeadFormPayload {
     email: safe(obj.email),
     niePasaporte: safe(obj.niePasaporte),
     ciudad: safe(obj.ciudad),
+    provincia: safe(obj.provincia),
     nacionalidad: safe(obj.nacionalidad),
     fechaLlegada: safe(obj.fechaLlegada),
     cumple5Meses: safe(obj.cumple5Meses),
