@@ -69,7 +69,7 @@ await supabase
       */
 
 browser = await chromium.launch({
-headless: true,
+headless: false,
   proxy: {
     server: "http://brd.superproxy.io:33335",
     username: "brd-customer-hl_9084dec2-zone-residential_proxy1",
@@ -114,10 +114,12 @@ console.log("🌍 Opening ICP...");
 await page.goto(
   "https://icp.administracionelectronica.gob.es/icpplus/index.html",
   {
-    waitUntil: "networkidle",
+    waitUntil: "domcontentloaded",
     timeout: 60000,
   }
 );
+await page.waitForLoadState("networkidle");
+await page.waitForTimeout(15000);      
 
 await page.waitForTimeout(10000);
 
