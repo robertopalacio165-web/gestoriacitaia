@@ -88,7 +88,22 @@ const context = await browser.newContext({
 
 const page = await context.newPage();
 
+const ipPage = await context.newPage();
 
+await ipPage.goto(
+  "https://api.ipify.org?format=json",
+  {
+    waitUntil: "networkidle",
+    timeout: 60000,
+  }
+);
+
+console.log(
+  "PROXY IP:",
+  await ipPage.textContent("body")
+);
+
+await ipPage.close();
 await page.setExtraHTTPHeaders({
   "Accept-Language": "es-ES,es;q=0.9",
 });
