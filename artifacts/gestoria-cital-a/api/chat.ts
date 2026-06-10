@@ -123,10 +123,10 @@ IDIOMA OBLIGATORIO
 }
 
 function getSaraPrompt(
-  lang,
-  procedureLabel,
-  context,
-  leadForm
+  lang: Lang,
+  procedureLabel?: string,
+  context?: string,
+  leadForm?: LeadFormPayload
 ) {
   const formReady =
     leadForm?.nombre &&
