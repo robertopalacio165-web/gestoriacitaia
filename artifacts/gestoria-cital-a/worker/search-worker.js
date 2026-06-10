@@ -148,9 +148,22 @@ console.log(page.url());
       const provinceToSearch =
         client.province || "Barcelona";
 const body = await page.textContent("body");
+console.log("TITLE:");
+console.log(await page.title());
+
+console.log("URL:");
+console.log(page.url());
 
 console.log("BODY:");
+console.log(await page.textContent("body"));
+
+await page.screenshot({
+  path: "icp-debug.png",
+  fullPage: true,
+});
+console.log("BODY:");
 console.log(body);
+      
       await page.selectOption(
         'select[name="form"]',
         {
