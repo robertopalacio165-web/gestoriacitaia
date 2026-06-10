@@ -1,6 +1,5 @@
 
 import dotenv from "dotenv";
-console.log("🚨 VERSION 999 TEST 🚨");
 dotenv.config({ path: ".env" });
 import { createClient } from "@supabase/supabase-js";
 import { chromium } from "playwright";
@@ -89,22 +88,7 @@ const context = await browser.newContext({
 
 const page = await context.newPage();
 
-const ipPage = await context.newPage();
 
-await ipPage.goto(
-  "https://api.ipify.org?format=json",
-  {
-    waitUntil: "networkidle",
-    timeout: 60000,
-  }
-);
-
-console.log(
-  "PROXY IP:",
-  await ipPage.textContent("body")
-);
-
-await ipPage.close();
 await page.setExtraHTTPHeaders({
   "Accept-Language": "es-ES,es;q=0.9",
 });
@@ -130,12 +114,10 @@ console.log("🌍 Opening ICP...");
 await page.goto(
   "https://icp.administracionelectronica.gob.es/icpplus/index.html",
   {
-    waitUntil: "domcontentloaded",
+    waitUntil: "networkidle",
     timeout: 60000,
   }
 );
-await page.waitForLoadState("networkidle");
-await page.waitForTimeout(15000);      
 
 await page.waitForTimeout(10000);
 
@@ -164,22 +146,9 @@ console.log(page.url());
       const provinceToSearch =
         client.province || "Barcelona";
 const body = await page.textContent("body");
-console.log("TITLE:");
-console.log(await page.title());
 
-console.log("URL:");
-console.log(page.url());
-
-console.log("BODY:");
-console.log(await page.textContent("body"));
-
-await page.screenshot({
-  path: "icp-debug.png",
-  fullPage: true,
-});
 console.log("BODY:");
 console.log(body);
-      
       await page.selectOption(
         'select[name="form"]',
         {
