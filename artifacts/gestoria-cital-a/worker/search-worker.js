@@ -88,10 +88,7 @@ const context = await browser.newContext({
 });
 
 const page = await context.newPage();
-      
-await page.goto("https://ipinfo.io/json");
-console.log(await page.textContent("body"));
-return;
+
 const ipPage = await context.newPage();
 
 await ipPage.goto(
