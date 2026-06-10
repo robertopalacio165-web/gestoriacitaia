@@ -1,5 +1,6 @@
 
 import dotenv from "dotenv";
+console.log("🚨 VERSION 999 TEST 🚨");
 dotenv.config({ path: ".env" });
 import { createClient } from "@supabase/supabase-js";
 import { chromium } from "playwright";
