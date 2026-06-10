@@ -68,26 +68,19 @@ await supabase
       =========================
       */
 
-browser = await chromium.launch({
-  headless: false,
-  slowMo: 500,
-proxy: {
-  server: "http://brd.superproxy.io:33335",
-  username: "brd-customer-hl_9084dec2-zone-residential_proxy1-country-es",
-  password: "4r0lxn0iy1k9",
-},
-  args: [
-    "--no-sandbox",
-    "--disable-setuid-sandbox",
-    "--disable-dev-shm-usage"
-  ]
-});
+browser = await chromium.connectOverCDP(
 
-const context = await browser.newContext({
-  ignoreHTTPSErrors: true,
-  locale: "es-ES",
-  timezoneId: "Europe/Madrid",
-});
+  "wss://brd-customer-hl_9084dec2-zone-scraping_browser1:6qhjhkbz8cwt@brd.superproxy.io:9222"
+
+);
+
+const context =
+  browser.contexts()[0] ||
+  await browser.newContext({
+    ignoreHTTPSErrors: true,
+    locale: "es-ES",
+    timezoneId: "Europe/Madrid",
+  });
 
 const page = await context.newPage();
 
