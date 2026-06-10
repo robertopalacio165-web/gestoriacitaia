@@ -112,7 +112,7 @@ await page.setExtraHTTPHeaders({
 console.log("🌍 Opening ICP...");
 
 await page.goto(
-  "https://icp.administracionelectronica.gob.es/icpplus/index.html",
+ "https://sede.administracionespublicas.gob.es/pagina/index/directorio/icpplus",
   {
     waitUntil: "domcontentloaded",
     timeout: 120000,
