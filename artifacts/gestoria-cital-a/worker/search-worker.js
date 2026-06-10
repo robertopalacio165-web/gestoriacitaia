@@ -108,50 +108,43 @@ await page.setExtraHTTPHeaders({
       OPEN ICP
       =========================
       */
+
 console.log("🌍 Opening ICP...");
 
 await page.goto(
   "https://icp.administracionelectronica.gob.es/icpplus/index.html",
   {
-    waitUntil: "networkidle",
-    timeout: 60000,
+    waitUntil: "domcontentloaded",
+    timeout: 120000,
   }
 );
 
-console.log("URL FINAL:");
-console.log(page.url());
+await page.waitForTimeout(15000);
 
-await page.screenshot({
-  path: "icp-debug.png",
-  fullPage: true
-});
+console.log("URL:");
+console.log(page.url());
 
 console.log("TITLE:");
 console.log(await page.title());
 
+const body = await page.textContent("body");
+
 console.log("BODY:");
-console.log(await page.textContent("body"));
-
-await page.waitForTimeout(10000);
-
-console.log("✅ ICP opened");
-
-await page.waitForTimeout(4000);
+console.log(body);
 
 const html = await page.content();
 
-console.log("========== HTML ==========");
-console.log(html.substring(0, 5000));
-console.log("========== END HTML ==========");
+require("fs").writeFileSync(
+  "icp-full.html",
+  html
+);
 
 await page.screenshot({
-  path: "icp-test.png",
+  path: "icp-full.png",
   fullPage: true,
 });
 
-console.log("CURRENT URL:");
-console.log(page.url());
-
+console.log("DEBUG SAVED");
       /*
       =========================
       SELECT PROVINCIA
