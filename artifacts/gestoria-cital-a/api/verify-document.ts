@@ -14,14 +14,14 @@ type VerifyDocumentType =
   | "supporting_document"
   | "personal_photo"
   | "other"
-  | "unknown";
-| "hospital_document"
-| "rental_contract"
-| "utility_bill"
-| "transport_ticket"
-| "work_document"
-| "tax_document"
-| "bank_document"
+  | "unknown"
+  | "hospital_document"
+  | "rental_contract"
+  | "utility_bill"
+  | "transport_ticket"
+  | "work_document"
+  | "tax_document"
+  | "bank_document";
 type StayProofStrength = "strong" | "medium" | "weak" | "none";
 type RecommendedBucket =
   | "identity_document"
