@@ -145,17 +145,27 @@ console.log(page.url());
 
       const provinceToSearch =
         client.province || "Barcelona";
-const body = await page.textContent("body");
 
-console.log("BODY:");
-console.log(body);
-      await page.selectOption(
-        'select[name="form"]',
-        {
-          label: provinceToSearch,
-        }
-      );
+await page.waitForLoadState("networkidle");
+await page.waitForTimeout(5000);
 
+await page.waitForSelector(
+  'select[name="form"]',
+  {
+    timeout: 60000,
+  }
+);
+
+console.log(
+  "Provincia selector encontrado"
+);
+
+await page.selectOption(
+  'select[name="form"]',
+  {
+    label: provinceToSearch,
+  }
+);
       console.log("✅ Provincia selected");
 
       await page.waitForTimeout(3000);
