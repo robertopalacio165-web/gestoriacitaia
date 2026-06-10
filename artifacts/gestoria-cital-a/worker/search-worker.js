@@ -69,7 +69,8 @@ await supabase
       */
 
 browser = await chromium.launch({
-headless: true,
+  headless: false,
+  slowMo: 500,
 proxy: {
   server: "http://brd.superproxy.io:33335",
   username: "brd-customer-hl_9084dec2-zone-residential_proxy1-country-es",
@@ -84,6 +85,8 @@ proxy: {
 
 const context = await browser.newContext({
   ignoreHTTPSErrors: true,
+  locale: "es-ES",
+  timezoneId: "Europe/Madrid",
 });
 
 const page = await context.newPage();
