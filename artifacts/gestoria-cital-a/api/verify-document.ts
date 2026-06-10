@@ -14,7 +14,7 @@ type VerifyDocumentType =
   | "supporting_document"
   | "personal_photo"
   | "other"
-  | "unknown"
+  | "unknown";
 | "hospital_document"
 | "rental_contract"
 | "utility_bill"
