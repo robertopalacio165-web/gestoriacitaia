@@ -272,14 +272,9 @@ console.log("=================================");
       =========================
       */
 
-      let extractedDate =
-        "28/05/2026";
-
-      let extractedHour =
-        "09:30";
-
-      let extractedOffice =
-        "Policía Barcelona";
+ let extractedDate = "TEST-SARA";
+let extractedHour = "TEST";
+let extractedOffice = "PRUEBA AUTOMATICA";
       const officialUrl =
   page.url();
 
@@ -289,7 +284,7 @@ console.log("=================================");
       =========================
       */
 
-  const fakeFound = false;
+  const fakeFound = true;
 
       if (fakeFound) {
 
