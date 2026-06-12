@@ -342,7 +342,7 @@ onChange={(e) =>
     className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white"
   />
 </div>
-            
+  </div>          
 
      
 
