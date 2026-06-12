@@ -600,7 +600,7 @@ window.location.href = data.url;
             </motion.div>
           </>
         )}
-      </div>
+      
     </motion.div>
   );
 }
