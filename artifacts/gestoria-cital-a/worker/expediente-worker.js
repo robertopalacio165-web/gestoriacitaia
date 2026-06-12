@@ -199,6 +199,105 @@ async function clickFirstAvailable(page, selectors, label) {
   throw new Error(`No se encontró el botón ${label}`);
 }
 
+async function selectIdExpedienteSolicitudMode(page) {
+  const visibleSelectors = [
+    'a:has-text("ID de expediente/solicitud")',
+    'button:has-text("ID de expediente/solicitud")',
+    'span:has-text("ID de expediente/solicitud")',
+    'div:has-text("ID de expediente/solicitud")',
+    'label:has-text("ID de expediente/solicitud")',
+    'text=ID de expediente/solicitud',
+  ];
+
+  for (const selector of visibleSelectors) {
+    const locator = page.locator(selector).first();
+
+    try {
+      if ((await locator.count()) > 0 && (await locator.isVisible({ timeout: 1500 }))) {
+        await locator.click({ timeout: 5000 });
+        console.log(`Modo ID de expediente/solicitud seleccionado con: ${selector}`);
+        return;
+      }
+    } catch {
+      // Si el elemento existe pero no es clicable, probamos el siguiente método.
+    }
+  }
+
+  const selectedByDom = await page.evaluate(() => {
+    const normalize = (value) =>
+      String(value || "")
+        .replace(/\s+/g, " ")
+        .trim()
+        .toLowerCase();
+
+    const wanted = "id de expediente/solicitud";
+    const labels = Array.from(document.querySelectorAll("label"));
+    const label = labels.find((item) => normalize(item.textContent).includes(wanted));
+
+    if (label) {
+      const htmlFor = label.getAttribute("for");
+
+      if (htmlFor) {
+        const target = document.getElementById(htmlFor);
+
+        if (target) {
+          target.click();
+          target.dispatchEvent(new Event("change", { bubbles: true }));
+          return `label-for:${htmlFor}`;
+        }
+      }
+
+      const inputInside = label.querySelector("input");
+
+      if (inputInside) {
+        inputInside.click();
+        inputInside.dispatchEvent(new Event("change", { bubbles: true }));
+        return "input-inside-label";
+      }
+
+      label.click();
+      label.dispatchEvent(new Event("click", { bubbles: true }));
+      return "label-click";
+    }
+
+    const candidates = Array.from(
+      document.querySelectorAll('input[type="radio"], input[type="checkbox"], option, button, a')
+    );
+
+    const candidate = candidates.find((item) => {
+      const text = normalize(item.textContent);
+      const value = normalize(item.getAttribute("value"));
+      const id = normalize(item.getAttribute("id"));
+      const name = normalize(item.getAttribute("name"));
+
+      return (
+        text.includes("expediente") ||
+        value.includes("expediente") ||
+        id.includes("expediente") ||
+        name.includes("expediente") ||
+        text.includes("solicitud") ||
+        value.includes("solicitud") ||
+        id.includes("solicitud") ||
+        name.includes("solicitud")
+      );
+    });
+
+    if (candidate) {
+      candidate.click();
+      candidate.dispatchEvent(new Event("change", { bubbles: true }));
+      return "candidate-click";
+    }
+
+    return "";
+  });
+
+  if (!selectedByDom) {
+    throw new Error("No se pudo seleccionar ID de expediente/solicitud");
+  }
+
+  console.log(`Modo ID de expediente/solicitud seleccionado por DOM: ${selectedByDom}`);
+}
+
 async function updateExpediente(id, payload) {
   const attempts = [
     payload,
@@ -316,11 +415,7 @@ async function checkExpediente(client) {
 
     console.log("Pulsando ID DE EXPEDIENTE/SOLICITUD...");
 
-    await page
-      .locator("text=ID de expediente/solicitud")
-      .click({
-        timeout: 60000,
-      });
+    await selectIdExpedienteSolicitudMode(page);
 
     await page.waitForTimeout(5000);
 
