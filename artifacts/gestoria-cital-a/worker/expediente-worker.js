@@ -117,6 +117,49 @@ async function fillFirstAvailable(page, selectors, value, fieldName) {
   throw new Error(`No se encontró el campo ${fieldName}`);
 }
 
+async function fillVisibleInputByPosition(page, position, value, fieldName) {
+  const text = String(value || "").trim();
+
+  if (!text) {
+    throw new Error(`Falta valor para ${fieldName}`);
+  }
+
+  const inputs = page.locator(
+    'input:not([type="hidden"]):not([type="submit"]):not([type="button"]):not([type="checkbox"]):not([type="radio"])'
+  );
+
+  const count = await inputs.count();
+  const visibleInputs = [];
+
+  for (let index = 0; index < count; index += 1) {
+    const input = inputs.nth(index);
+
+    try {
+      if (await input.isVisible({ timeout: 1000 })) {
+        visibleInputs.push(input);
+      }
+    } catch {
+      // Ignoramos inputs no accesibles.
+    }
+  }
+
+  if (!visibleInputs[position]) {
+    throw new Error(`No se encontró el campo visible ${position + 1} para ${fieldName}`);
+  }
+
+  await visibleInputs[position].fill(text);
+  console.log(`${fieldName} rellenado por posición visible: ${position + 1}`);
+}
+
+async function fillFirstAvailableOrPosition(page, selectors, value, fieldName, position) {
+  try {
+    await fillFirstAvailable(page, selectors, value, fieldName);
+  } catch (error) {
+    console.log(`${fieldName}: no se encontró por selector. Probando por posición visible...`);
+    await fillVisibleInputByPosition(page, position, value, fieldName);
+  }
+}
+
 async function clickFirstAvailable(page, selectors, label) {
   for (const selector of selectors) {
     const locator = page.locator(selector).first();
@@ -262,7 +305,7 @@ async function checkExpediente(client) {
 
     console.log("Formulario de expediente abierto");
 
-    await fillFirstAvailable(
+    await fillFirstAvailableOrPosition(
       page,
       [
         'input[name="numExpediente"]',
@@ -273,24 +316,42 @@ async function checkExpediente(client) {
         'input[placeholder*="expediente" i]',
       ],
       client.expediente_numero,
-      "número de expediente"
+      "número de expediente",
+      0
     );
 
-    await fillFirstAvailable(
+    await fillFirstAvailableOrPosition(
       page,
       [
         'input[name="codSolicitud"]',
         'input[name="identificadorSolicitud"]',
         'input[name="identificador"]',
+        'input[name="nie"]',
+        'input[name="nif"]',
+        'input[name="documento"]',
+        'input[name="numDocumento"]',
         'input[id*="solicitud" i]',
         'input[name*="solicitud" i]',
         'input[placeholder*="solicitud" i]',
+        'input[id*="identificador" i]',
+        'input[name*="identificador" i]',
+        'input[placeholder*="identificador" i]',
+        'input[id*="documento" i]',
+        'input[name*="documento" i]',
+        'input[placeholder*="documento" i]',
+        'input[id*="nie" i]',
+        'input[name*="nie" i]',
+        'input[placeholder*="nie" i]',
+        'input[id*="nif" i]',
+        'input[name*="nif" i]',
+        'input[placeholder*="nif" i]',
       ],
       client.identificador_solicitud,
-      "identificador de solicitud"
+      "identificador de solicitud",
+      1
     );
 
-    await fillFirstAvailable(
+    await fillFirstAvailableOrPosition(
       page,
       [
         'input[name="fechaNacimiento"]',
@@ -301,7 +362,8 @@ async function checkExpediente(client) {
         'input[placeholder*="nacimiento" i]',
       ],
       normalizeDateForSpain(client.fecha_nacimiento),
-      "fecha de nacimiento"
+      "fecha de nacimiento",
+      2
     );
 
     await clickFirstAvailable(
