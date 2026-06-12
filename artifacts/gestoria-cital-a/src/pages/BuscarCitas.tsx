@@ -599,7 +599,7 @@ window.location.href = data.url;
               
             </motion.div>
           </>
-        )}
+        602  ) : null}
       
     </motion.div>
   );
