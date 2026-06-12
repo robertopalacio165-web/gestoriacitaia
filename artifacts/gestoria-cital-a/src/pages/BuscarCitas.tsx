@@ -1,4 +1,4 @@
-   ﻿import { useEffect, useMemo, useRef, useState } from "react";
+﻿import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { Navbar } from "@/components/Navbar";
 import { useLang } from "@/contexts/LanguageContext";
@@ -598,6 +598,8 @@ window.location.href = data.url;
 </motion.div>
 
 </>
+
+        )}
 
 </div>
 </motion.div>
