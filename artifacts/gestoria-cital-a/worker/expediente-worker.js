@@ -240,6 +240,28 @@ async function checkExpediente(client) {
 
     await page.waitForTimeout(5000);
 
+    console.log("Pulsando ENTRAR FORMULARIO...");
+
+    await page
+      .locator("text=ENTRAR FORMULARIO")
+      .click({
+        timeout: 60000,
+      });
+
+    await page.waitForTimeout(5000);
+
+    console.log("Pulsando BUSCAR POR NÚMERO DE EXPEDIENTE...");
+
+    await page
+      .locator("text=BUSCAR POR NÚMERO DE EXPEDIENTE")
+      .click({
+        timeout: 60000,
+      });
+
+    await page.waitForTimeout(5000);
+
+    console.log("Formulario de expediente abierto");
+
     await fillFirstAvailable(
       page,
       [
