@@ -591,14 +591,14 @@ window.location.href = data.url;
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               className="flex flex-col items-center text-center py-10 gap-5"
-            >
-             )} 
-            </motion.div>
-          </>
-      
-      </div>
-    </motion.div>
-  );
+     >
+</motion.div>
+
+</>
+
+</div>
+</motion.div>
+);
 }
 
 export default function BuscarCitas() {
