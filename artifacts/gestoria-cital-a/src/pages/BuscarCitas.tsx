@@ -592,10 +592,10 @@ window.location.href = data.url;
               animate={{ opacity: 1, scale: 1 }}
               className="flex flex-col items-center text-center py-10 gap-5"
             >
-              
+             )} 
             </motion.div>
           </>
-        )}
+      
       </div>
     </motion.div>
   );
