@@ -63,9 +63,15 @@ type AppointmentResult = {
 };
 
 type ClientFormData = {
+
   fullName: string;
   phone: string;
   email: string;
+
+  expedienteNumero: string;
+  identificadorSolicitud: string;
+  fechaNacimiento: string;
+
   nie: string;
   passport: string;
   nationality: string;
@@ -286,84 +292,55 @@ onChange={(e) =>
                     />
                   </div>
 
-                  {/* NIE / Pasaporte */}
-                  <div>
-                    <label className="block text-white text-[13px] mb-2">
-                {isMa ? "NIE / جواز السفر" : isEn ? "NIE / Passport" : "NIE / Pasaporte"}
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="Y1234567X"
-                      value={formData.nie}
-                      onChange={(e) => onFormChange("nie", e.target.value)}
-                      className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-[14px] text-white placeholder:text-white/30 focus:outline-none focus:border-yellow-400"
-                    />
-                  </div>
+              {/* Número de expediente */}
+<div>
+  <label className="block text-white text-[13px] mb-2">
+    Número de expediente
+  </label>
 
-                  {/* Ciudad */}
-                  <div>
-                    <label className="block text-white text-[13px] mb-2">
-                      {isMa ? "المدينة" : isEn ? "City" : "Ciudad"}
-                    </label>
-                    <input
-                      type="text"
-                      placeholder={isMa ? "المدينة" : isEn ? "City" : "Tu ciudad"}
-                      value={formData.city}
-                      onChange={(e) => onFormChange("city", e.target.value)}
-                      className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-[14px] text-white placeholder:text-white/30 focus:outline-none focus:border-yellow-400"
-                    />
-                  </div>
+  <input
+    type="text"
+    placeholder="467020260019841"
+    value={formData.expedienteNumero || ""}
+    onChange={(e) =>
+      onFormChange("expedienteNumero", e.target.value)
+    }
+    className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white"
+  />
+</div>
 
-                  {/* Provincia */}
-                  <div>
-                    <label className="block text-white text-[13px] mb-2">
-                      {isMa ? "المقاطعة" : isEn ? "Province" : "Provincia"}
-                    </label>
-                    <select
-                      value={formData.province}
-                      onChange={(e) => onFormChange("province", e.target.value)}
-                      className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-[14px] text-white focus:outline-none focus:border-yellow-400"
-                    >
-                      <option value="">
-                        {isMa ? "اختار" : isEn ? "Select" : "Selecciona"}
-                      </option>
-                   <option value="Madrid">Madrid</option>
-<option value="Barcelona">Barcelona</option>
-<option value="Valencia">Valencia</option>
-<option value="Málaga">Málaga</option>
-<option value="Sevilla">Sevilla</option>
-<option value="Bilbao">Bilbao</option>
-<option value="Alicante">Alicante</option>
-<option value="Murcia">Murcia</option>
-<option value="Zaragoza">Zaragoza</option>
-<option value="Palma de Mallorca">Palma de Mallorca</option>
-<option value="Las Palmas">Las Palmas</option>
-                    </select>
-                  </div>
+{/* Identificador solicitud */}
+<div>
+  <label className="block text-white text-[13px] mb-2">
+    Identificador solicitud
+  </label>
 
-                  {/* Tipo de cita */}
-             <div className="col-span-1 lg:col-span-2">
-                    <label className="block text-white text-[13px] mb-2">
-                      {isMa ? "نوع الموعد" : isEn ? "Appointment type" : "Tipo de cita"}
-                    </label>
-                    <select
-                      value={selectedTramite}
-                      onChange={(e) => onSelectTramite(e.target.value)}
-                      className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-[14px] text-white focus:outline-none focus:border-yellow-400"
-                    >
-                      {tramites.map((tramite) => (
-                        <option
-                          key={tramite.value}
-                          value={tramite.value}
-                          className="bg-[#060b16] text-white"
-                        >
-                          {tramite.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-              </div>
+  <input
+    type="text"
+    placeholder="E46202600507573"
+    value={formData.identificadorSolicitud || ""}
+    onChange={(e) =>
+      onFormChange("identificadorSolicitud", e.target.value)
+    }
+    className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white"
+  />
+</div>
+
+{/* Fecha nacimiento */}
+<div>
+  <label className="block text-white text-[13px] mb-2">
+    Fecha nacimiento
+  </label>
+
+  <input
+    type="date"
+    value={formData.fechaNacimiento || ""}
+    onChange={(e) =>
+      onFormChange("fechaNacimiento", e.target.value)
+    }
+    className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white"
+  />
+</div>
 
               {/* Caja de reserva */}
               <div className="mt-4 rounded-[28px] border-2 border-yellow-500 bg-gradient-to-b from-[#0b0b0b] to-[#050505] p-4 shadow-[0_0_35px_rgba(255,200,0,0.18)]">
@@ -399,10 +376,11 @@ onChange={(e) =>
               onClick={async () => {
 
   if (
-    !formData.fullName.trim() ||
-    !formData.phone.trim() ||
-    !formData.city.trim() ||
-    !formData.province.trim()
+!formData.fullName.trim() ||
+!formData.phone.trim() ||
+!formData.expedienteNumero.trim() ||
+!formData.identificadorSolicitud.trim() ||
+!formData.fechaNacimiento.trim()
   ) {
     toast({
       title: ui.missingTitle,
@@ -430,13 +408,14 @@ body: JSON.stringify({
 
   email: formData.email,
 
-  nie: formData.nie,
+  expedienteNumero:
+    formData.expedienteNumero,
 
-  city: formData.city,
+  identificadorSolicitud:
+    formData.identificadorSolicitud,
 
-  province: formData.province,
-
-  tramite: selectedTramite,
+  fechaNacimiento:
+    formData.fechaNacimiento,
 
 }),
 });
@@ -639,18 +618,24 @@ const [confirmed, setConfirmed] = useState(
   const [profile, setProfile] = useState<ProfileRow | null>(null);
   const [appointmentData, setAppointmentData] = useState<AppointmentResult | null>(null);
   const [profileLoading, setProfileLoading] = useState(true);
-  const [formData, setFormData] = useState<ClientFormData>({
-    fullName: "",
-    phone: "",
-    email: "",
-    nie: "",
-    passport: "",
-    nationality: "",
-    birthYear: "",
-    city: "",
-    province: "",
-   preferredOffice: "+34",
-  });
+ const [formData, setFormData] = useState<ClientFormData>({
+  fullName: "",
+  phone: "",
+  email: "",
+
+  expedienteNumero: "",
+  identificadorSolicitud: "",
+  fechaNacimiento: "",
+
+  preferredOffice: "+34",
+
+  nie: "",
+  passport: "",
+  nationality: "",
+  birthYear: "",
+  city: "",
+  province: "",
+});
 const [formReady, setFormReady] = useState(
   localStorage.getItem("saraPaid") === "1"
 );
