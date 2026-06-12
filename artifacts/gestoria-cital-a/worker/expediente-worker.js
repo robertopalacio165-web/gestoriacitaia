@@ -50,6 +50,27 @@ function normalizeDateForSpain(value) {
   return raw;
 }
 
+function extractBirthYear(value) {
+  if (!value) return "";
+
+  const raw = String(value).trim();
+
+  if (/^\d{4}$/.test(raw)) {
+    return raw;
+  }
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+    return raw.split("-")[0];
+  }
+
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(raw)) {
+    return raw.split("/")[2];
+  }
+
+  const match = raw.match(/\b(19|20)\d{2}\b/);
+  return match ? match[0] : raw;
+}
+
 function detectFavorable(text) {
   const body = cleanText(text).toLowerCase();
 
@@ -293,21 +314,34 @@ async function checkExpediente(client) {
 
     await page.waitForTimeout(5000);
 
-    console.log("Pulsando BUSCAR POR NÚMERO DE EXPEDIENTE...");
+    console.log("Pulsando ID DE EXPEDIENTE/SOLICITUD...");
 
     await page
-      .locator("text=BUSCAR POR NÚMERO DE EXPEDIENTE")
+      .locator("text=ID de expediente/solicitud")
       .click({
         timeout: 60000,
       });
 
     await page.waitForTimeout(5000);
 
-    console.log("Formulario de expediente abierto");
+    console.log("Formulario por ID de expediente/solicitud abierto");
 
     await fillFirstAvailableOrPosition(
       page,
       [
+        'input[name="idExpediente"]',
+        'input[name="idSolicitud"]',
+        'input[name="identificadorSolicitud"]',
+        'input[name="codSolicitud"]',
+        'input[name="identificador"]',
+        'input[id*="solicitud" i]',
+        'input[name*="solicitud" i]',
+        'input[placeholder*="solicitud" i]',
+        'input[id*="identificador" i]',
+        'input[name*="identificador" i]',
+        'input[placeholder*="identificador" i]',
+        'input[id*="id" i]',
+        'input[name*="id" i]',
         'input[name="numExpediente"]',
         'input[name="numeroExpediente"]',
         'input[name="expediente"]',
@@ -315,55 +349,36 @@ async function checkExpediente(client) {
         'input[name*="expediente" i]',
         'input[placeholder*="expediente" i]',
       ],
-      client.expediente_numero,
-      "número de expediente",
+      client.identificador_solicitud || client.expediente_numero,
+      "ID de expediente/solicitud",
       0
     );
 
     await fillFirstAvailableOrPosition(
       page,
       [
-        'input[name="codSolicitud"]',
-        'input[name="identificadorSolicitud"]',
-        'input[name="identificador"]',
-        'input[name="nie"]',
-        'input[name="nif"]',
-        'input[name="documento"]',
-        'input[name="numDocumento"]',
-        'input[id*="solicitud" i]',
-        'input[name*="solicitud" i]',
-        'input[placeholder*="solicitud" i]',
-        'input[id*="identificador" i]',
-        'input[name*="identificador" i]',
-        'input[placeholder*="identificador" i]',
-        'input[id*="documento" i]',
-        'input[name*="documento" i]',
-        'input[placeholder*="documento" i]',
-        'input[id*="nie" i]',
-        'input[name*="nie" i]',
-        'input[placeholder*="nie" i]',
-        'input[id*="nif" i]',
-        'input[name*="nif" i]',
-        'input[placeholder*="nif" i]',
-      ],
-      client.identificador_solicitud,
-      "identificador de solicitud",
-      1
-    );
-
-    await fillFirstAvailableOrPosition(
-      page,
-      [
-        'input[name="fechaNacimiento"]',
-        'input[name="fecNacimiento"]',
-        'input[name="fecha_nacimiento"]',
+        'input[name="anio"]',
+        'input[name="ano"]',
+        'input[name="year"]',
+        'input[name="birthYear"]',
+        'input[name="anioNacimiento"]',
+        'input[name="anoNacimiento"]',
+        'input[id*="anio" i]',
+        'input[name*="anio" i]',
+        'input[placeholder*="anio" i]',
+        'input[id*="año" i]',
+        'input[name*="año" i]',
+        'input[placeholder*="año" i]',
+        'input[id*="ano" i]',
+        'input[name*="ano" i]',
+        'input[placeholder*="ano" i]',
         'input[id*="nacimiento" i]',
         'input[name*="nacimiento" i]',
         'input[placeholder*="nacimiento" i]',
       ],
-      normalizeDateForSpain(client.fecha_nacimiento),
-      "fecha de nacimiento",
-      2
+      extractBirthYear(client.fecha_nacimiento),
+      "año de nacimiento",
+      1
     );
 
     await clickFirstAvailable(
