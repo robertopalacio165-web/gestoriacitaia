@@ -143,10 +143,10 @@ function OfficialBrowserBox({
   const { toast } = useToast();
 
   const formIntro = isMa
-    ? "إلى كنتي باغي موعد عمر المعلومات ديالك واختار نوع الموعد ومن بعد سارة غادي تكمل معاك وتعلمك فاش يكون الموعد."
+    ? "إلى بغيتي تتابع الملف ديالك وتخرج رقم الضمان الاجتماعي وتدير فتح التسجيل، عمر الفورم وغادي نخبروك فالواتساب ملي يخرج ليك favorable."
     : isEn
-    ? "Fill in your information and choose the appointment type. Sara will continue with you and notify you on WhatsApp when an appointment appears."
-    : "Si necesitas una cita, rellena tus datos y elige el tipo de cita. Después Sara continuará contigo y te avisará por WhatsApp cuando exista una cita real.";
+    ? "If you need to follow your file, get your Social Security number and open registration, fill in the form. We will notify you on WhatsApp when your file is favorable."
+    : "Si necesitas seguir tu expediente, sacar tu número de Seguridad Social y abrir alta, rellena el formulario. Te avisamos por WhatsApp cuando tengas favorable.";
 
   const panelTitle = isMa
     ? "اللوحة الرسمية"
@@ -246,25 +246,25 @@ function OfficialBrowserBox({
     {isMa ? "الهاتف" : isEn ? "Phone" : "Teléfono"}
   </label>
 
-  <div className="flex gap-2">
+  <div className="flex gap-2 min-w-0">
 
     <select
-      className="w-[110px] h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-2 text-white"
+      className="w-[92px] shrink-0 h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-2 text-center text-white"
 value={formData.preferredOffice}
 onChange={(e) =>
   onFormChange("preferredOffice", e.target.value)
 }
       id="countryCode"
     >
-      <option value="+34">España +34</option>
-      <option value="+212">Marruecos +212</option>
-      <option value="+31">Países Bajos +31</option>
-      <option value="+32">Bélgica +32</option>
-      <option value="+33">Francia +33</option>
-      <option value="+39">Italia +39</option>
-      <option value="+49">Alemania +49</option>
-      <option value="+44">Reino Unido +44</option>
-      <option value="+1">Estados Unidos +1</option>
+      <option value="+34">🇪🇸 +34</option>
+      <option value="+212">🇲🇦 +212</option>
+      <option value="+31">🇳🇱 +31</option>
+      <option value="+32">🇧🇪 +32</option>
+      <option value="+33">🇫🇷 +33</option>
+      <option value="+39">🇮🇹 +39</option>
+      <option value="+49">🇩🇪 +49</option>
+      <option value="+44">🇬🇧 +44</option>
+      <option value="+1">🇺🇸 +1</option>
     </select>
 
     <input
@@ -272,7 +272,7 @@ onChange={(e) =>
       placeholder="34644403748"
       value={formData.phone}
       onChange={(e) => onFormChange("phone", e.target.value)}
-      className="flex-1 h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white"
+      className="min-w-0 flex-1 h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white"
     />
 
   </div>
@@ -327,7 +327,7 @@ onChange={(e) =>
 </div>
 
 {/* Fecha nacimiento */}
-<div>
+<div className="min-w-0">
   <label className="block text-white text-[13px] mb-2">
     Fecha nacimiento
   </label>
@@ -338,7 +338,7 @@ onChange={(e) =>
     onChange={(e) =>
       onFormChange("fechaNacimiento", e.target.value)
     }
-    className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white"
+    className="block w-full max-w-full min-w-0 h-[52px] box-border appearance-none rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white [color-scheme:dark]"
   />
 </div>
 
@@ -347,7 +347,7 @@ onChange={(e) =>
                 <div className="flex items-start justify-between mb-4 pt-2">
                   <div>
                     <p className="text-white text-[15px] font-bold">
-                      {isMa ? "حجز الموعد" : isEn ? "Reserve your appointment" : "Reserva tu cita"}
+                      {isMa ? "الملف favorable" : isEn ? "Favorable file status" : "Expediente favorable"}
                     </p>
                     <span className="inline-flex mt-1 rounded-full bg-gradient-to-r from-yellow-400 to-yellow-600 px-3 py-1 text-[10px] font-black uppercase tracking-wide text-black shadow-[0_0_15px_rgba(255,215,0,0.25)]">
                       Premium
@@ -358,17 +358,17 @@ onChange={(e) =>
                       10€
                     </p>
                     <p className="text-yellow-300 text-[11px] font-semibold">
-                      {isMa ? "الحجز الأول" : isEn ? "Initial reservation" : "Reserva inicial"}
+                      {isMa ? "التحقق الأول" : isEn ? "Initial verification" : "Verificación inicial"}
                     </p>
                   </div>
                 </div>
 
                 <p className="text-gray-300 text-[13px] mb-5 leading-relaxed">
                   {isMa
-                    ? "سارة غادي تبدا تقلب ليك على الموعد أوتوماتيكيا"
+                    ? "سارة غادي تبدا تراجع الملف ديالك أوتوماتيكيا"
                     : isEn
-                    ? "Sara will automatically start searching for your appointment"
-                    : "Sara empezará a buscar tu cita automáticamente"}
+                    ? "Sara will automatically start checking your file"
+                    : "Sara empieza a verificar tu expediente automáticamente"}
                 </p>
 
                 <button
@@ -439,10 +439,10 @@ window.location.href = data.url;
                   className="w-full min-h-[56px] rounded-[20px] bg-gradient-to-r from-yellow-400 via-yellow-500 to-amber-500 px-4 py-2 text-[15px] leading-tight font-black text-black shadow-[0_0_30px_rgba(255,215,0,0.35)] transition-all duration-300 hover:scale-[1.01]"
                 >
                   {isMa
-                    ? "🔐 حجز وبدء البحث"
+                    ? "🔐 خلص وبدأ التحقق"
                     : isEn
-                    ? "🔐 Reserve and start search"
-                    : "🔐 Reservar y empezar búsqueda"}
+                    ? "🔐 Pay and start verification"
+                    : "🔐 Pagar y empezar verificación"}
                 </button>
 
                 <div className="mt-5 flex items-center justify-center gap-2 text-[11px] text-gray-300">
@@ -493,17 +493,17 @@ window.location.href = data.url;
 </div>
               <h3 className="text-center text-white text-[18px] font-semibold leading-tight mb-3">
                 {isMa
-  ? "مبروك 🎉 بدينا نقلبو ليك على الموعد ديالك. إلى لقيناه غادي نعلموك فواتساب بشكل مستعجل خلال 24 ساعة."
+  ? "مبروك 🎉 بدينا نراجعو الملف ديالك. ملي يخرج favorable غادي نعلموك فالواتساب بشكل مستعجل."
   : isEn
-  ? "Congratulations 🎉 We have started searching for your appointment. As soon as we find it, we will urgently notify you on WhatsApp within 24 hours."
-  : "Felicidades 🎉 Hemos empezado a buscar tu cita. En cuanto la tengamos te avisaremos urgentemente por WhatsApp en menos de 24 horas."}
+  ? "Congratulations 🎉 We have started checking your file. As soon as it becomes favorable, we will urgently notify you on WhatsApp."
+  : "Felicidades 🎉 Hemos empezado a verificar tu expediente. En cuanto salga favorable te avisaremos urgentemente por WhatsApp."}
               </h3>
               <p className="text-center text-white/70 text-[14px] leading-relaxed">
                 {isMa
-                  ? "غادي نخبروك هنا ملي يكون جديد على الموعد ديالك."
+                  ? "غادي نخبروك هنا ملي يكون جديد على الملف ديالك."
                   : isEn
-                  ? "We will notify you here when there is news about your appointment."
-                  : "Te avisaremos aquí cuando haya novedades sobre tu cita."}
+                  ? "We will notify you here when there is news about your file."
+                  : "Te avisaremos aquí cuando haya novedades sobre tu expediente."}
               </p>
               
 
@@ -522,10 +522,10 @@ window.location.href = data.url;
   <p className="text-white/70 text-xs leading-relaxed">
 
     {isMa
-      ? "سارة دابا كتقلب ليك على موعد حقيقي وغادي توصلك رسالة فواتساب مباشرة ملي يبان الموعد."
+      ? "سارة دابا كتراجع الملف ديالك وغادي توصلك رسالة فواتساب مباشرة ملي يخرج favorable."
       : isEn
-      ? "Sara is now searching for a real appointment and you will receive a WhatsApp notification immediately when it appears."
-      : "Sara está buscando una cita real ahora mismo y recibirás una notificación por WhatsApp en cuanto aparezca una disponibilidad."}
+      ? "Sara is now checking your file and you will receive a WhatsApp notification as soon as it becomes favorable."
+      : "Sara está verificando tu expediente ahora mismo y recibirás una notificación por WhatsApp en cuanto salga favorable."}
 
   </p>
 
@@ -545,18 +545,18 @@ window.location.href = data.url;
 
                 <h2 className="text-center text-[#f6d06f] text-[36px] leading-[42px] font-black mb-5">
                   {isMa
-                    ? "مواعيد الأجانب بثقة"
+                    ? "متابعة الملف بثقة"
                     : isEn
-                    ? "Immigration Appointments with Confidence"
-                    : "Citas de Extranjería con Confianza"}
+                    ? "File Follow-up with Confidence"
+                    : "Seguimiento de expediente con confianza"}
                 </h2>
 
                 <p className="text-center text-white/75 text-[15px] leading-relaxed mb-8">
                   {isMa
-                    ? "كنعاونوك تدير موعد الأجانب بطريقة سريعة وآمنة 100% أونلاين."
+                    ? "كنعاونوك تتابع الملف ديالك وتخرج رقم الضمان الاجتماعي وتفتح alta بطريقة آمنة أونلاين."
                     : isEn
-                    ? "We help you manage your immigration appointment quickly, securely and 100% online."
-                    : "Te ayudamos a gestionar tu cita de extranjería de forma rápida, segura y 100% online."}
+                    ? "We help you follow your file, get your Social Security number and open registration securely online."
+                    : "Te ayudamos a seguir tu expediente, sacar tu número de Seguridad Social y abrir alta de forma segura online."}
                 </p>
 
                 <div className="grid grid-cols-3 gap-3 text-center">
@@ -575,17 +575,17 @@ window.location.href = data.url;
                   <div>
                     <CheckCircle2 className="w-8 h-8 text-[#f6d06f] mx-auto mb-3" />
                     <p className="text-white/80 text-[13px] leading-snug">
-                      {isMa ? "مواعيد مضمونة" : isEn ? "Guaranteed appointments" : "Citas garantizadas"}
+                      {isMa ? "متابعة مضمونة" : isEn ? "Guaranteed follow-up" : "Seguimiento garantizado"}
                     </p>
                   </div>
                 </div>
 
                 <div className="mt-8 text-center text-[#f6d06f] text-[24px] font-bold">
                   {isMa
-                    ? "« مستقبلك كيبدا بموعد. »"
+                    ? "« خدمتك كتبدا بملف واضح. »"
                     : isEn
-                    ? "\" Your future starts with an appointment. \""
-                    : "\" Tu futuro comienza con una cita. \""}
+                    ? "\" Your process starts with a clear file. \""
+                    : "\" Tu trámite empieza con un expediente claro. \""}
                 </div>
               </div>
             </div>
