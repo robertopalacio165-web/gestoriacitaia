@@ -143,13 +143,13 @@ function OfficialBrowserBox({
   const { toast } = useToast();
 
   const formIntro = isMa
-    ? "Ø¥Ù„Ù‰ ÙƒÙ†ØªÙŠ Ø¨Ø§ØºÙŠ Ù…ÙˆØ¹Ø¯ Ø¹Ù…Ø± Ø§Ù„Ù…Ø¹Ù„ÙˆÙ…Ø§Øª Ø¯ÙŠØ§Ù„Ùƒ ÙˆØ§Ø®ØªØ§Ø± Ù†ÙˆØ¹ Ø§Ù„Ù…ÙˆØ¹Ø¯ ÙˆÙ…Ù† Ø¨Ø¹Ø¯ Ø³Ø§Ø±Ø© ØºØ§Ø¯ÙŠ ØªÙƒÙ…Ù„ Ù…Ø¹Ø§Ùƒ ÙˆØªØ¹Ù„Ù…Ùƒ ÙØ§Ø´ ÙŠÙƒÙˆÙ† Ø§Ù„Ù…ÙˆØ¹Ø¯."
+    ? "إلى كنتي باغي موعد عمر المعلومات ديالك واختار نوع الموعد ومن بعد سارة غادي تكمل معاك وتعلمك فاش يكون الموعد."
     : isEn
     ? "Fill in your information and choose the appointment type. Sara will continue with you and notify you on WhatsApp when an appointment appears."
-    : "Si necesitas una cita, rellena tus datos y elige el tipo de cita. DespuÃ©s Sara continuarÃ¡ contigo y te avisarÃ¡ por WhatsApp cuando exista una cita real.";
+    : "Si necesitas una cita, rellena tus datos y elige el tipo de cita. Después Sara continuará contigo y te avisará por WhatsApp cuando exista una cita real.";
 
   const panelTitle = isMa
-    ? "Ø§Ù„Ù„ÙˆØ­Ø© Ø§Ù„Ø±Ø³Ù…ÙŠØ©"
+    ? "اللوحة الرسمية"
     : isEn
     ? "Official integrated panel"
     : "Panel oficial integrado";
@@ -168,15 +168,15 @@ function OfficialBrowserBox({
 
   <h2 className="text-emerald-400 text-3xl font-black mb-4">
   {isMa
-    ? "ðŸŽ‰ Ù…Ø¨Ø±ÙˆÙƒ! ØªØ£ÙƒØ¯ Ø§Ù„Ù…ÙˆØ¹Ø¯ Ø¯ÙŠØ§Ù„Ùƒ"
+    ? "🎉 مبروك! تأكد الموعد ديالك"
     : isEn
-    ? "ðŸŽ‰ APPOINTMENT CONFIRMED!"
-    : "ðŸŽ‰ Â¡CITA CONFIRMADA!"}
+    ? "🎉 APPOINTMENT CONFIRMED!"
+    : "🎉 ¡CITA CONFIRMADA!"}
 </h2>
 
 <p className="text-white text-lg font-bold mb-4">
   {isMa
-    ? "Ø´ÙƒØ±Ø§Ù‹ Ø¨Ø²Ø§Ù Ø¹Ù„Ù‰ Ø§Ù„Ø«Ù‚Ø© Ø¯ÙŠØ§Ù„Ùƒ ÙÙŠ GestoriaCitaIA."
+    ? "شكراً بزاف على الثقة ديالك في GestoriaCitaIA."
     : isEn
     ? "Thank you for trusting GestoriaCitaIA."
     : "Muchas gracias por confiar en GestoriaCitaIA."}
@@ -184,7 +184,7 @@ function OfficialBrowserBox({
 
 <p className="text-white/80">
   {isMa
-    ? "ØªÙ… ØªØ£ÙƒÙŠØ¯ Ø§Ù„Ù…ÙˆØ¹Ø¯ Ø¯ÙŠØ§Ù„Ùƒ Ø¨Ù†Ø¬Ø§Ø­."
+    ? "تم تأكيد الموعد ديالك بنجاح."
     : isEn
     ? "Your appointment has been successfully confirmed."
     : "Tu cita ha sido confirmada correctamente."}
@@ -192,26 +192,26 @@ function OfficialBrowserBox({
 
 <p className="text-white/80 mt-2">
   {isMa
-    ? "Ø³Ø§Ø±Ø© Ø³Ø§Ù„Ø§Øª Ø§Ù„Ø®Ø¯Ù…Ø© Ø¯ÙŠØ§Ù„Ù‡Ø§ Ø¨Ù†Ø¬Ø§Ø­."
+    ? "سارة سالات الخدمة ديالها بنجاح."
     : isEn
     ? "Sara has successfully completed her work."
-    : "Sara ha finalizado su trabajo con Ã©xito."}
+    : "Sara ha finalizado su trabajo con éxito."}
 </p>
 
 <p className="text-yellow-400 font-bold mt-4">
   {isMa
-    ? "âœ… Ø§Ù„Ø¹Ù…Ù„ÙŠØ© ÙƒÙ…Ù„Øª Ø¨Ù†Ø¬Ø§Ø­"
+    ? "✅ العملية كملت بنجاح"
     : isEn
-    ? "âœ… Reservation completed"
-    : "âœ… Reserva completada"}
+    ? "✅ Reservation completed"
+    : "✅ Reserva completada"}
 </p>
 
 <p className="text-white/70 mt-6">
   {isMa
-    ? "Ù†ØªÙ…Ù†Ù‘Ø§Ùˆ Ù„ÙŠÙƒ Ø§Ù„ØªÙˆÙÙŠÙ‚ ÙØ§Ù„Ø¥Ø¬Ø±Ø§Ø¡ Ø¯ÙŠØ§Ù„Ùƒ."
+    ? "نتمنّاو ليك التوفيق فالإجراء ديالك."
     : isEn
     ? "We wish you the best of luck with your procedure."
-    : "Te deseamos mucha suerte en tu trÃ¡mite."}
+    : "Te deseamos mucha suerte en tu trámite."}
 </p>
 </div>
 
@@ -229,21 +229,21 @@ function OfficialBrowserBox({
                   {/* Nombre */}
        <div className="col-span-1 md:col-span-1">
                     <label className="block text-white text-[13px] mb-2">
-                      {isMa ? "Ø§Ù„Ø§Ø³Ù… Ø§Ù„ÙƒØ§Ù…Ù„" : isEn ? "Full name" : "Nombre completo"}
+                      {isMa ? "الاسم الكامل" : isEn ? "Full name" : "Nombre completo"}
                     </label>
                     <input
                       type="text"
-                      placeholder={isMa ? "Ø¯Ø®Ù„ Ø³Ù…ÙŠØªÙƒ" : isEn ? "Your name" : "Escribe tu nombre"}
+                      placeholder={isMa ? "دخل سميتك" : isEn ? "Your name" : "Escribe tu nombre"}
                       value={formData.fullName}
                       onChange={(e) => onFormChange("fullName", e.target.value)}
                       className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-[14px] text-white placeholder:text-white/30 focus:outline-none focus:border-yellow-400"
                     />
                   </div>
 
-{/* TelÃ©fono internacional */}
+{/* Teléfono internacional */}
 <div className="col-span-1 md:col-span-1">
   <label className="block text-white text-[13px] mb-2">
-    {isMa ? "Ø§Ù„Ù‡Ø§ØªÙ" : isEn ? "Phone" : "TelÃ©fono"}
+    {isMa ? "الهاتف" : isEn ? "Phone" : "Teléfono"}
   </label>
 
   <div className="flex gap-2">
@@ -256,15 +256,15 @@ onChange={(e) =>
 }
       id="countryCode"
     >
-      <option value="+34">ðŸ‡ªðŸ‡¸ +34</option>
-      <option value="+212">ðŸ‡²ðŸ‡¦ +212</option>
-      <option value="+31">ðŸ‡³ðŸ‡± +31</option>
-      <option value="+32">ðŸ‡§ðŸ‡ª +32</option>
-      <option value="+33">ðŸ‡«ðŸ‡· +33</option>
-      <option value="+39">ðŸ‡®ðŸ‡¹ +39</option>
-      <option value="+49">ðŸ‡©ðŸ‡ª +49</option>
-      <option value="+44">ðŸ‡¬ðŸ‡§ +44</option>
-      <option value="+1">ðŸ‡ºðŸ‡¸ +1</option>
+      <option value="+34">España +34</option>
+      <option value="+212">Marruecos +212</option>
+      <option value="+31">Países Bajos +31</option>
+      <option value="+32">Bélgica +32</option>
+      <option value="+33">Francia +33</option>
+      <option value="+39">Italia +39</option>
+      <option value="+49">Alemania +49</option>
+      <option value="+44">Reino Unido +44</option>
+      <option value="+1">Estados Unidos +1</option>
     </select>
 
     <input
@@ -292,10 +292,10 @@ onChange={(e) =>
                     />
                   </div>
 
-              {/* NÃºmero de expediente */}
+              {/* Número de expediente */}
 <div>
   <label className="block text-white text-[13px] mb-2">
-    NÃºmero de expediente
+    Número de expediente
   </label>
 
   <input
@@ -347,7 +347,7 @@ onChange={(e) =>
                 <div className="flex items-start justify-between mb-4 pt-2">
                   <div>
                     <p className="text-white text-[15px] font-bold">
-                      {isMa ? "Ø­Ø¬Ø² Ø§Ù„Ù…ÙˆØ¹Ø¯" : isEn ? "Reserve your appointment" : "Reserva tu cita"}
+                      {isMa ? "حجز الموعد" : isEn ? "Reserve your appointment" : "Reserva tu cita"}
                     </p>
                     <span className="inline-flex mt-1 rounded-full bg-gradient-to-r from-yellow-400 to-yellow-600 px-3 py-1 text-[10px] font-black uppercase tracking-wide text-black shadow-[0_0_15px_rgba(255,215,0,0.25)]">
                       Premium
@@ -355,20 +355,20 @@ onChange={(e) =>
                   </div>
                   <div className="text-right">
                     <p className="text-yellow-400 text-[34px] font-black leading-none drop-shadow-[0_0_10px_rgba(255,215,0,0.35)]">
-                      10â‚¬
+                      10€
                     </p>
                     <p className="text-yellow-300 text-[11px] font-semibold">
-                      {isMa ? "Ø§Ù„Ø­Ø¬Ø² Ø§Ù„Ø£ÙˆÙ„" : isEn ? "Initial reservation" : "Reserva inicial"}
+                      {isMa ? "الحجز الأول" : isEn ? "Initial reservation" : "Reserva inicial"}
                     </p>
                   </div>
                 </div>
 
                 <p className="text-gray-300 text-[13px] mb-5 leading-relaxed">
                   {isMa
-                    ? "Ø³Ø§Ø±Ø© ØºØ§Ø¯ÙŠ ØªØ¨Ø¯Ø§ ØªÙ‚Ù„Ø¨ Ù„ÙŠÙƒ Ø¹Ù„Ù‰ Ø§Ù„Ù…ÙˆØ¹Ø¯ Ø£ÙˆØªÙˆÙ…Ø§ØªÙŠÙƒÙŠØ§"
+                    ? "سارة غادي تبدا تقلب ليك على الموعد أوتوماتيكيا"
                     : isEn
                     ? "Sara will automatically start searching for your appointment"
-                    : "Sara empezarÃ¡ a buscar tu cita automÃ¡ticamente"}
+                    : "Sara empezará a buscar tu cita automáticamente"}
                 </p>
 
                 <button
@@ -439,17 +439,17 @@ window.location.href = data.url;
                   className="w-full min-h-[56px] rounded-[20px] bg-gradient-to-r from-yellow-400 via-yellow-500 to-amber-500 px-4 py-2 text-[15px] leading-tight font-black text-black shadow-[0_0_30px_rgba(255,215,0,0.35)] transition-all duration-300 hover:scale-[1.01]"
                 >
                   {isMa
-                    ? "ðŸ” Ø­Ø¬Ø² ÙˆØ¨Ø¯Ø¡ Ø§Ù„Ø¨Ø­Ø«"
+                    ? "🔐 حجز وبدء البحث"
                     : isEn
-                    ? "ðŸ” Reserve and start search"
-                    : "ðŸ” Reservar y empezar bÃºsqueda"}
+                    ? "🔐 Reserve and start search"
+                    : "🔐 Reservar y empezar búsqueda"}
                 </button>
 
                 <div className="mt-5 flex items-center justify-center gap-2 text-[11px] text-gray-300">
                   <Shield className="w-3 h-3 text-yellow-400" />
                   <span>
                     {isMa
-                      ? "Ø¯ÙØ¹ Ø¢Ù…Ù† Ø¹Ø¨Ø± Stripe"
+                      ? "دفع آمن عبر Stripe"
                       : isEn
                       ? "Secure payment with Stripe"
                       : "Pago seguro con Stripe"}
@@ -470,15 +470,15 @@ window.location.href = data.url;
             {hasRealAppointment && (
               <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4">
                 <p className="text-sm font-bold text-emerald-800">
-                  {isMa ? "Ù„Ù‚ÙŠÙ†Ø§ Ø§Ù„Ù…ÙˆØ¹Ø¯ Ø§Ù„Ø­Ù‚ÙŠÙ‚ÙŠ" : isEn ? "Real appointment found" : "Cita real encontrada"}
+                  {isMa ? "لقينا الموعد الحقيقي" : isEn ? "Real appointment found" : "Cita real encontrada"}
                 </p>
                 <p className="mt-2 text-sm text-gray-700">
-                  {isMa ? "Ø§Ù„Ù†ÙˆØ¹" : isEn ? "Procedure" : "TrÃ¡mite"}: {appointmentData?.tramite || selectedTramiteLabel}
+                  {isMa ? "النوع" : isEn ? "Procedure" : "Trámite"}: {appointmentData?.tramite || selectedTramiteLabel}
                 </p>
-                <p className="text-sm text-gray-700">{isMa ? "Ø§Ù„ØªØ§Ø±ÙŠØ®" : isEn ? "Date" : "Fecha"}: {finalDate}</p>
-                <p className="text-sm text-gray-700">{isMa ? "Ø§Ù„ÙˆÙ‚Øª" : isEn ? "Time" : "Hora"}: {finalTime}</p>
-                <p className="text-sm text-gray-700">{isMa ? "Ø§Ù„Ù…ÙƒØªØ¨" : isEn ? "Office" : "Oficina"}: {finalOffice}</p>
-                <p className="text-sm text-gray-700">{isMa ? "Ø±Ù‚Ù… Ø§Ù„Ù…ÙˆØ¹Ø¯" : isEn ? "Locator" : "Localizador"}: {finalLocator}</p>
+                <p className="text-sm text-gray-700">{isMa ? "التاريخ" : isEn ? "Date" : "Fecha"}: {finalDate}</p>
+                <p className="text-sm text-gray-700">{isMa ? "الوقت" : isEn ? "Time" : "Hora"}: {finalTime}</p>
+                <p className="text-sm text-gray-700">{isMa ? "المكتب" : isEn ? "Office" : "Oficina"}: {finalOffice}</p>
+                <p className="text-sm text-gray-700">{isMa ? "رقم الموعد" : isEn ? "Locator" : "Localizador"}: {finalLocator}</p>
               </div>
             )}
           </>
@@ -493,17 +493,17 @@ window.location.href = data.url;
 </div>
               <h3 className="text-center text-white text-[18px] font-semibold leading-tight mb-3">
                 {isMa
-  ? "Ù…Ø¨Ø±ÙˆÙƒ ðŸŽ‰ Ø¨Ø¯ÙŠÙ†Ø§ Ù†Ù‚Ù„Ø¨Ùˆ Ù„ÙŠÙƒ Ø¹Ù„Ù‰ Ø§Ù„Ù…ÙˆØ¹Ø¯ Ø¯ÙŠØ§Ù„Ùƒ. Ø¥Ù„Ù‰ Ù„Ù‚ÙŠÙ†Ø§Ù‡ ØºØ§Ø¯ÙŠ Ù†Ø¹Ù„Ù…ÙˆÙƒ ÙÙˆØ§ØªØ³Ø§Ø¨ Ø¨Ø´ÙƒÙ„ Ù…Ø³ØªØ¹Ø¬Ù„ Ø®Ù„Ø§Ù„ 24 Ø³Ø§Ø¹Ø©."
+  ? "مبروك 🎉 بدينا نقلبو ليك على الموعد ديالك. إلى لقيناه غادي نعلموك فواتساب بشكل مستعجل خلال 24 ساعة."
   : isEn
-  ? "Congratulations ðŸŽ‰ We have started searching for your appointment. As soon as we find it, we will urgently notify you on WhatsApp within 24 hours."
-  : "Felicidades ðŸŽ‰ Hemos empezado a buscar tu cita. En cuanto la tengamos te avisaremos urgentemente por WhatsApp en menos de 24 horas."}
+  ? "Congratulations 🎉 We have started searching for your appointment. As soon as we find it, we will urgently notify you on WhatsApp within 24 hours."
+  : "Felicidades 🎉 Hemos empezado a buscar tu cita. En cuanto la tengamos te avisaremos urgentemente por WhatsApp en menos de 24 horas."}
               </h3>
               <p className="text-center text-white/70 text-[14px] leading-relaxed">
                 {isMa
-                  ? "ØºØ§Ø¯ÙŠ Ù†Ø®Ø¨Ø±ÙˆÙƒ Ù‡Ù†Ø§ Ù…Ù„ÙŠ ÙŠÙƒÙˆÙ† Ø¬Ø¯ÙŠØ¯ Ø¹Ù„Ù‰ Ø§Ù„Ù…ÙˆØ¹Ø¯ Ø¯ÙŠØ§Ù„Ùƒ."
+                  ? "غادي نخبروك هنا ملي يكون جديد على الموعد ديالك."
                   : isEn
                   ? "We will notify you here when there is news about your appointment."
-                  : "Te avisaremos aquÃ­ cuando haya novedades sobre tu cita."}
+                  : "Te avisaremos aquí cuando haya novedades sobre tu cita."}
               </p>
               
 
@@ -522,10 +522,10 @@ window.location.href = data.url;
   <p className="text-white/70 text-xs leading-relaxed">
 
     {isMa
-      ? "Ø³Ø§Ø±Ø© Ø¯Ø§Ø¨Ø§ ÙƒØªÙ‚Ù„Ø¨ Ù„ÙŠÙƒ Ø¹Ù„Ù‰ Ù…ÙˆØ¹Ø¯ Ø­Ù‚ÙŠÙ‚ÙŠ ÙˆØºØ§Ø¯ÙŠ ØªÙˆØµÙ„Ùƒ Ø±Ø³Ø§Ù„Ø© ÙÙˆØ§ØªØ³Ø§Ø¨ Ù…Ø¨Ø§Ø´Ø±Ø© Ù…Ù„ÙŠ ÙŠØ¨Ø§Ù† Ø§Ù„Ù…ÙˆØ¹Ø¯."
+      ? "سارة دابا كتقلب ليك على موعد حقيقي وغادي توصلك رسالة فواتساب مباشرة ملي يبان الموعد."
       : isEn
       ? "Sara is now searching for a real appointment and you will receive a WhatsApp notification immediately when it appears."
-      : "Sara estÃ¡ buscando una cita real ahora mismo y recibirÃ¡s una notificaciÃ³n por WhatsApp en cuanto aparezca una disponibilidad."}
+      : "Sara está buscando una cita real ahora mismo y recibirás una notificación por WhatsApp en cuanto aparezca una disponibilidad."}
 
   </p>
 
@@ -538,51 +538,51 @@ window.location.href = data.url;
                 <div className="flex justify-center mb-5">
                   <img
             src="https://upload.wikimedia.org/wikipedia/en/9/9a/Flag_of_Spain.svg"
-              alt="EspaÃ±a"
+              alt="España"
                className="w-20 h-14 object-cover rounded-lg shadow-[0_0_15px_rgba(255,255,255,0.15)] border border-white/20"
                   />
                 </div>
 
                 <h2 className="text-center text-[#f6d06f] text-[36px] leading-[42px] font-black mb-5">
                   {isMa
-                    ? "Ù…ÙˆØ§Ø¹ÙŠØ¯ Ø§Ù„Ø£Ø¬Ø§Ù†Ø¨ Ø¨Ø«Ù‚Ø©"
+                    ? "مواعيد الأجانب بثقة"
                     : isEn
                     ? "Immigration Appointments with Confidence"
-                    : "Citas de ExtranjerÃ­a con Confianza"}
+                    : "Citas de Extranjería con Confianza"}
                 </h2>
 
                 <p className="text-center text-white/75 text-[15px] leading-relaxed mb-8">
                   {isMa
-                    ? "ÙƒÙ†Ø¹Ø§ÙˆÙ†ÙˆÙƒ ØªØ¯ÙŠØ± Ù…ÙˆØ¹Ø¯ Ø§Ù„Ø£Ø¬Ø§Ù†Ø¨ Ø¨Ø·Ø±ÙŠÙ‚Ø© Ø³Ø±ÙŠØ¹Ø© ÙˆØ¢Ù…Ù†Ø© 100% Ø£ÙˆÙ†Ù„Ø§ÙŠÙ†."
+                    ? "كنعاونوك تدير موعد الأجانب بطريقة سريعة وآمنة 100% أونلاين."
                     : isEn
                     ? "We help you manage your immigration appointment quickly, securely and 100% online."
-                    : "Te ayudamos a gestionar tu cita de extranjerÃ­a de forma rÃ¡pida, segura y 100% online."}
+                    : "Te ayudamos a gestionar tu cita de extranjería de forma rápida, segura y 100% online."}
                 </p>
 
                 <div className="grid grid-cols-3 gap-3 text-center">
                   <div>
                     <Shield className="w-8 h-8 text-[#f6d06f] mx-auto mb-3" />
                     <p className="text-white/80 text-[13px] leading-snug">
-                      {isMa ? "Ø¹Ù…Ù„ÙŠØ© Ø¢Ù…Ù†Ø©" : isEn ? "Secure process" : "Proceso seguro"}
+                      {isMa ? "عملية آمنة" : isEn ? "Secure process" : "Proceso seguro"}
                     </p>
                   </div>
                   <div>
                     <Bell className="w-8 h-8 text-[#f6d06f] mx-auto mb-3" />
                     <p className="text-white/80 text-[13px] leading-snug">
-                      {isMa ? "Ù…Ø³Ø§Ø¹Ø¯Ø© Ù„Ù„Ù…Ù‡Ø§Ø¬Ø±ÙŠÙ†" : isEn ? "Immigration support" : "AtenciÃ³n a inmigrantes"}
+                      {isMa ? "مساعدة للمهاجرين" : isEn ? "Immigration support" : "Atención a inmigrantes"}
                     </p>
                   </div>
                   <div>
                     <CheckCircle2 className="w-8 h-8 text-[#f6d06f] mx-auto mb-3" />
                     <p className="text-white/80 text-[13px] leading-snug">
-                      {isMa ? "Ù…ÙˆØ§Ø¹ÙŠØ¯ Ù…Ø¶Ù…ÙˆÙ†Ø©" : isEn ? "Guaranteed appointments" : "Citas garantizadas"}
+                      {isMa ? "مواعيد مضمونة" : isEn ? "Guaranteed appointments" : "Citas garantizadas"}
                     </p>
                   </div>
                 </div>
 
                 <div className="mt-8 text-center text-[#f6d06f] text-[24px] font-bold">
                   {isMa
-                    ? "Â« Ù…Ø³ØªÙ‚Ø¨Ù„Ùƒ ÙƒÙŠØ¨Ø¯Ø§ Ø¨Ù…ÙˆØ¹Ø¯. Â»"
+                    ? "« مستقبلك كيبدا بموعد. »"
                     : isEn
                     ? "\" Your future starts with an appointment. \""
                     : "\" Tu futuro comienza con una cita. \""}
@@ -607,7 +607,7 @@ window.location.href = data.url;
 }
 
 export default function BuscarCitas() {
-  // âœ… CORRECCIÃ“N PRINCIPAL: usamos lang del contexto y mapeamos a "ma" para la lÃ³gica interna
+  // ✅ CORRECCIÓN PRINCIPAL: usamos lang del contexto y mapeamos a "ma" para la lógica interna
   const { lang } = useLang();
   const language = lang === "darija" ? "ma" : lang;
 
@@ -676,13 +676,13 @@ const [formReady, setFormReady] = useState(
   const voiceTexts = useMemo(
     () => ({
       initialVoice:
-        "Ø§Ù„Ø³Ù„Ø§Ù… Ø¹Ù„ÙŠÙƒÙ… Ù…Ø±Ø­Ø¨Ø§ Ø¨Ùƒ ÙÙŠ Ù‡ÙŠØ³ØªÙˆØ±ÙŠØ§ Ø¥ÙŠ Ø¢ÙŠ Ø£Ù†Ø§ Ø³Ø§Ø±Ø© ØºØ§Ø¯ÙŠ Ù†Ø¹Ø§ÙˆÙ†Ùƒ Ø¨Ø§Ø´ ØªÙ„Ù‚Ø§ Ù…ÙˆØ¹Ø¯ ÙÙŠ Ø£Ù‚Ø±Ø¨ ÙˆÙ‚Øª Ø¹Ù…Ø± Ù„ÙŠØ§ Ø§Ù„ÙÙˆØ±Ù…ÙˆÙ„Ø§Ø± ÙˆÙ…Ù† Ø¨Ø¹Ø¯ ÙƒÙ„ÙŠÙƒ Ø¹Ù„Ù‰ confirm",
+        "السلام عليكم مرحبا بك في هيستوريا إي آي أنا سارة غادي نعاونك باش تلقا موعد في أقرب وقت عمر ليا الفورمولار ومن بعد كليك على confirm",
       savedLeadReply:
-        "Ù…Ø²ÙŠØ§Ù† Ø¯Ø§Ø¨Ø§ ØªÙˆØµÙ„Ù†Ø§ Ø¨Ø§Ù„Ù…Ø¹Ù„ÙˆÙ…Ø© Ø¯ÙŠØ§Ù„Ùƒ ØºØ§Ø¯ÙŠ Ù†Ø¨Ø¯Ø£ Ù†Ù‚Ù„Ø¨ Ù„Ùƒ Ø¹Ù„Ù‰ Ù…ÙˆØ¹Ø¯ 24 Ø³Ø§Ø¹Ø© Ø¹Ù„Ù‰ 24 ÙˆØºØ§Ø¯ÙŠ Ù†ØµÙŠÙØ· Ù„Ùƒ ÙˆØ§ØªØ³Ø§Ø¨ Ø¥Ù„Ø§ Ø¨Ø§Ù† Ø§Ù„Ù…ÙˆØ¹Ø¯",
+        "مزيان دابا توصلنا بالمعلومة ديالك غادي نبدأ نقلب لك على موعد 24 ساعة على 24 وغادي نصيفط لك واتساب إلا بان الموعد",
       foundMsg:
-        "Ù„Ù‚ÙŠÙ†Ø§ Ù„Ùƒ Ø§Ù„Ø³ÙŠØ·Ø§ Ø¯ÙŠØ§Ù„Ùƒ Ø¯Ø§Ø¨Ø§ Ø¯Ø®Ù„ Ø¨Ø³Ø±Ø¹Ø© ÙˆÙƒÙ„ÙŠÙƒÙŠ Ø¹Ù„Ù‰ confirm Ø¨Ø§Ø´ Ù…Ø§ ØªØ·ÙŠØ±Ø´ Ø¹Ù„ÙŠÙƒ",
+        "لقينا لك السيطا ديالك دابا دخل بسرعة وكليكي على confirm باش ما تطيرش عليك",
       confirmMsg:
-        "Ù…Ø¨Ø±ÙˆÙƒ Ø¹Ù„ÙŠÙƒ ØªØ£ÙƒØ¯Ø§Øª Ø§Ù„Ø³ÙŠØ·Ø§ Ø¯ÙŠØ§Ù„Ùƒ Ø´ÙƒØ±Ø§ Ø¹Ù„Ù‰ Ø§Ù„Ø«Ù‚Ø© Ø¯ÙŠØ§Ù„Ùƒ ÙÙŠ Ù‡ÙŠØ³ØªÙˆØ±ÙŠØ§ Ø¥ÙŠ Ø¢ÙŠ",
+        "مبروك عليك تأكدات السيطا ديالك شكرا على الثقة ديالك في هيستوريا إي آي",
     }),
     []
   );
@@ -694,7 +694,7 @@ const [formReady, setFormReady] = useState(
 {
   value: "primera_tie",
   label: isMa
-    ? "Ø§Ù„Ø¨ØµÙ…Ø§Øª - Ø£ÙˆÙ„ TIE"
+    ? "البصمات - أول TIE"
     : isEn
     ? "First TIE - Fingerprints"
     : "Primera TIE (Toma de huellas)",
@@ -703,25 +703,25 @@ const [formReady, setFormReady] = useState(
 {
   value: "renovacion_nie",
   label: isMa
-    ? "ØªØ¬Ø¯ÙŠØ¯ NIE Ø£Ùˆ TIE"
+    ? "تجديد NIE أو TIE"
     : isEn
     ? "NIE / TIE Renewal"
-    : "RenovaciÃ³n NIE / TIE",
+    : "Renovación NIE / TIE",
 },
 
 {
   value: "reagrupacion_familiar",
   label: isMa
-    ? "Ø§Ù„ØªØ¬Ù…Ø¹ Ø§Ù„Ø¹Ø§Ø¦Ù„ÙŠ"
+    ? "التجمع العائلي"
     : isEn
     ? "Family Reunification"
-    : "ReagrupaciÃ³n Familiar",
+    : "Reagrupación Familiar",
 },
 
 {
   value: "arraigo",
   label: isMa
-    ? "Ø§Ù„Ø§Ø³ØªÙ‚Ø±Ø§Ø± (Ø£Ø±Ø§ÙŠØºÙˆ)"
+    ? "الاستقرار (أرايغو)"
     : isEn
     ? "Arraigo Residence"
     : "Arraigo",
@@ -730,7 +730,7 @@ const [formReady, setFormReady] = useState(
 {
   value: "familiar_ue",
   label: isMa
-    ? "ÙØ±Ø¯ Ù…Ù† Ø¹Ø§Ø¦Ù„Ø© Ù…ÙˆØ§Ø·Ù† Ø£ÙˆØ±ÙˆØ¨ÙŠ"
+    ? "فرد من عائلة مواطن أوروبي"
     : isEn
     ? "EU Family Member"
     : "Familiar de Ciudadano UE",
@@ -739,7 +739,7 @@ const [formReady, setFormReady] = useState(
 {
   value: "certificado_ue",
   label: isMa
-    ? "Ø´Ù‡Ø§Ø¯Ø© Ù…ÙˆØ§Ø·Ù† Ø£ÙˆØ±ÙˆØ¨ÙŠ"
+    ? "شهادة مواطن أوروبي"
     : isEn
     ? "EU Registration Certificate"
     : "Certificado de Registro UE",
@@ -748,25 +748,25 @@ const [formReady, setFormReady] = useState(
 {
   value: "autorizacion_regreso",
   label: isMa
-    ? "Ø±Ø®ØµØ© Ø§Ù„Ø±Ø¬ÙˆØ¹"
+    ? "رخصة الرجوع"
     : isEn
     ? "Return Authorization"
-    : "AutorizaciÃ³n de Regreso",
+    : "Autorización de Regreso",
 },
 
 {
   value: "larga_duracion",
   label: isMa
-    ? "Ø§Ù„Ø¥Ù‚Ø§Ù…Ø© Ø·ÙˆÙŠÙ„Ø© Ø§Ù„Ù…Ø¯Ø©"
+    ? "الإقامة طويلة المدة"
     : isEn
     ? "Long-Term Residence"
-    : "Residencia de Larga DuraciÃ³n",
+    : "Residencia de Larga Duración",
 },
 
 {
   value: "estudios",
   label: isMa
-    ? "Ø¥Ù‚Ø§Ù…Ø© Ø§Ù„Ø¯Ø±Ø§Ø³Ø©"
+    ? "إقامة الدراسة"
     : isEn
     ? "Student Residence"
     : "Estancia por Estudios",
@@ -775,10 +775,10 @@ const [formReady, setFormReady] = useState(
 {
   value: "asilo",
   label: isMa
-    ? "Ø§Ù„Ù„Ø¬ÙˆØ¡ ÙˆØ§Ù„Ø­Ù…Ø§ÙŠØ© Ø§Ù„Ø¯ÙˆÙ„ÙŠØ©"
+    ? "اللجوء والحماية الدولية"
     : isEn
     ? "Asylum and International Protection"
-    : "Asilo y ProtecciÃ³n Internacional",
+    : "Asilo y Protección Internacional",
 },
 
 ] as TramiteItem[],
@@ -796,122 +796,122 @@ const [formReady, setFormReady] = useState(
         ],
       } as Record<string, FormItem[]>,
 
-      online: isMa ? "Ø£ÙˆÙ†Ù„Ø§ÙŠÙ†" : isEn ? "Online" : "En lÃ­nea",
+      online: isMa ? "أونلاين" : isEn ? "Online" : "En línea",
 
-      agentRole: isMa ? "Ù…Ø³Ø§Ø¹Ø¯Ø© Ø§Ù„Ù…ÙˆØ§Ø¹ÙŠØ¯" : isEn ? "Appointments Assistant" : "Asesora de Citas",
+      agentRole: isMa ? "مساعدة المواعيد" : isEn ? "Appointments Assistant" : "Asesora de Citas",
 
       procedurePlaceholder: isMa
-        ? "Ø§Ø®ØªØ§Ø± Ù†ÙˆØ¹ Ø§Ù„Ø³ÙŠØªØ§"
+        ? "اختار نوع السيتا"
         : isEn
         ? "Select appointment type"
-        : "Seleccione el trÃ¡mite entre los relacionados",
+        : "Seleccione el trámite entre los relacionados",
 
       loadingUserData: isMa
-        ? "Ø¬Ø§Ø±ÙŠ ØªØ­Ù…ÙŠÙ„ Ø§Ù„Ù…Ø¹Ù„ÙˆÙ…Ø§Øª..."
+        ? "جاري تحميل المعلومات..."
         : isEn
         ? "Loading user data..."
         : "Cargando datos del usuario...",
 
-      govSmall: "extranjerÃ­a:",
+      govSmall: "extranjería:",
       govTitle: "CITA PREVIA",
-      govLine1: "COMISARÃA GENERAL",
-      govLine2: "DE EXTRANJERÃA",
-      govLine3: "E INMIGRACIÃ“N",
+      govLine1: "COMISARÍA GENERAL",
+      govLine2: "DE EXTRANJERÍA",
+      govLine3: "E INMIGRACIÓN",
 
-      confirmTitle: isMa ? "ØªÙ… ØªØ£ÙƒÙŠØ¯ Ø§Ù„Ù…ÙˆØ¹Ø¯!" : isEn ? "APPOINTMENT CONFIRMED!" : "Â¡CITA CONFIRMADA!",
+      confirmTitle: isMa ? "تم تأكيد الموعد!" : isEn ? "APPOINTMENT CONFIRMED!" : "¡CITA CONFIRMADA!",
 
-      date: isMa ? "Ø§Ù„ØªØ§Ø±ÙŠØ®" : isEn ? "Date" : "Fecha",
-      time: isMa ? "Ø§Ù„ÙˆÙ‚Øª" : isEn ? "Time" : "Hora",
-      office: isMa ? "Ø§Ù„Ù…ÙƒØªØ¨" : isEn ? "Office" : "Oficina",
-      appointmentNumber: isMa ? "Ø±Ù‚Ù… Ø§Ù„Ù…ÙˆØ¹Ø¯" : isEn ? "Appointment Number" : "NÂº Cita",
+      date: isMa ? "التاريخ" : isEn ? "Date" : "Fecha",
+      time: isMa ? "الوقت" : isEn ? "Time" : "Hora",
+      office: isMa ? "المكتب" : isEn ? "Office" : "Oficina",
+      appointmentNumber: isMa ? "رقم الموعد" : isEn ? "Appointment Number" : "Nº Cita",
 
       reservationSaved: isMa
-        ? "ØªÙ… Ø­ÙØ¸ Ø§Ù„Ø­Ø¬Ø²"
+        ? "تم حفظ الحجز"
         : isEn
         ? "Reservation saved"
         : "Reserva guardada correctamente",
 
-      sourceLabel: isMa ? "Ø§Ù„Ù…ØµØ¯Ø± Ø§Ù„Ø±Ø³Ù…ÙŠ" : isEn ? "Official source" : "Fuente oficial",
+      sourceLabel: isMa ? "المصدر الرسمي" : isEn ? "Official source" : "Fuente oficial",
 
-      foundSuccessTitle: isMa ? "Ù„Ù‚ÙŠÙ†Ø§ Ø§Ù„Ù…ÙˆØ¹Ø¯!" : isEn ? "Appointment found!" : "Â¡Cita encontrada!",
-      foundSuccessDesc: isMa ? "Ø£ÙƒØ¯ Ø§Ù„Ù…ÙˆØ¹Ø¯ Ø¯Ø§Ø¨Ø§" : isEn ? "Confirm now to continue." : "Ahora confirma para continuar.",
-      foundErrorTitle: isMa ? "Ø®Ø·Ø£" : isEn ? "Error" : "Error al buscar cita",
-      foundErrorDesc: isMa ? "Ù…Ø§ Ù‚Ø¯Ø±Ù†Ø§Ø´ Ù†Ù„Ù‚Ø§Ùˆ Ø§Ù„Ù…ÙˆØ¹Ø¯" : isEn ? "Could not search appointment." : "No se pudo buscar la cita en este momento.",
+      foundSuccessTitle: isMa ? "لقينا الموعد!" : isEn ? "Appointment found!" : "¡Cita encontrada!",
+      foundSuccessDesc: isMa ? "أكد الموعد دابا" : isEn ? "Confirm now to continue." : "Ahora confirma para continuar.",
+      foundErrorTitle: isMa ? "خطأ" : isEn ? "Error" : "Error al buscar cita",
+      foundErrorDesc: isMa ? "ما قدرناش نلقاو الموعد" : isEn ? "Could not search appointment." : "No se pudo buscar la cita en este momento.",
 
-      confirmSuccessTitle: isMa ? "ØªÙ… ØªØ£ÙƒÙŠØ¯ Ø§Ù„Ù…ÙˆØ¹Ø¯" : isEn ? "Appointment confirmed!" : "Â¡Cita confirmada!",
+      confirmSuccessTitle: isMa ? "تم تأكيد الموعد" : isEn ? "Appointment confirmed!" : "¡Cita confirmada!",
       confirmSuccessDesc: isMa
-        ? "ØªÙ… Ø­ÙØ¸ Ø§Ù„Ø­Ø¬Ø²"
+        ? "تم حفظ الحجز"
         : isEn
         ? "Reservation saved correctly."
         : "La reserva ha quedado registrada correctamente.",
 
-      procedureShort: isMa ? "Ø§Ù„Ù†ÙˆØ¹" : isEn ? "Procedure" : "TrÃ¡mite",
+      procedureShort: isMa ? "النوع" : isEn ? "Procedure" : "Trámite",
 
-      openOfficialSite: isMa ? "ÙØªØ­ Ø§Ù„Ù…ÙˆÙ‚Ø¹ Ø§Ù„Ø±Ø³Ù…ÙŠ" : isEn ? "Open official website" : "Abrir sede oficial",
-      downloadPdf: isMa ? "ØªØ­Ù…ÙŠÙ„ PDF" : isEn ? "Download PDF" : "Descargar PDF",
+      openOfficialSite: isMa ? "فتح الموقع الرسمي" : isEn ? "Open official website" : "Abrir sede oficial",
+      downloadPdf: isMa ? "تحميل PDF" : isEn ? "Download PDF" : "Descargar PDF",
 
-      voiceButton: isMa ? "ØªÙƒÙ„Ù… Ù…Ø¹ Ø³Ø§Ø±Ø©" : isEn ? "Talk with Sara" : "Hablar con Sara",
-      stopButton: isMa ? "ÙˆÙ‚Ù Ø§Ù„Ù…ÙŠÙƒØ±Ùˆ" : isEn ? "Stop microphone" : "Parar micrÃ³fono",
+      voiceButton: isMa ? "تكلم مع سارة" : isEn ? "Talk with Sara" : "Hablar con Sara",
+      stopButton: isMa ? "وقف الميكرو" : isEn ? "Stop microphone" : "Parar micrófono",
 
-      latestReply: isMa ? "Ø¢Ø®Ø± Ø±Ø¯ Ù…Ù† Ø³Ø§Ø±Ø©" : isEn ? "Latest Sara reply" : "Ãšltima respuesta de Sara",
-      yourVoice: isMa ? "Ø¢Ø®Ø± ÙƒÙ„Ø§Ù… Ø¯ÙŠØ§Ù„Ùƒ" : isEn ? "Your latest voice" : "Tu Ãºltima respuesta por voz",
-      listening: isMa ? "Ø³Ø§Ø±Ø© ÙƒØªØ³Ù…Ø¹ Ù„ÙŠÙƒ..." : isEn ? "Sara is listening..." : "Sara te estÃ¡ escuchando ahora...",
+      latestReply: isMa ? "آخر رد من سارة" : isEn ? "Latest Sara reply" : "Última respuesta de Sara",
+      yourVoice: isMa ? "آخر كلام ديالك" : isEn ? "Your latest voice" : "Tu última respuesta por voz",
+      listening: isMa ? "سارة كتسمع ليك..." : isEn ? "Sara is listening..." : "Sara te está escuchando ahora...",
 
-      saveTitle: isMa ? "ØªÙ… Ø­ÙØ¸ Ø§Ù„Ù…Ø¹Ù„ÙˆÙ…Ø§Øª" : isEn ? "Data saved" : "Datos guardados",
-      saveDesc: isMa ? "Ø³Ø§Ø±Ø© ØºØ§Ø¯ÙŠ ØªÙƒÙ…Ù„ Ù…Ø¹Ø§Ùƒ" : isEn ? "Sara can continue now." : "Sara ya puede continuar contigo.",
+      saveTitle: isMa ? "تم حفظ المعلومات" : isEn ? "Data saved" : "Datos guardados",
+      saveDesc: isMa ? "سارة غادي تكمل معاك" : isEn ? "Sara can continue now." : "Sara ya puede continuar contigo.",
 
-      missingTitle: isMa ? "Ù…Ø¹Ù„ÙˆÙ…Ø§Øª Ù†Ø§Ù‚ØµØ©" : isEn ? "Missing data" : "Faltan datos",
+      missingTitle: isMa ? "معلومات ناقصة" : isEn ? "Missing data" : "Faltan datos",
       missingDesc: isMa
-        ? "Ø¯Ø®Ù„ Ø§Ù„Ø§Ø³Ù… ÙˆØ§Ù„Ù‡Ø§ØªÙ ÙˆØ§Ù„Ù…Ø¯ÙŠÙ†Ø©"
+        ? "دخل الاسم والهاتف والمدينة"
         : isEn
         ? "Fill name, phone and city."
-        : "Rellena nombre, telÃ©fono y ciudad antes de continuar.",
+        : "Rellena nombre, teléfono y ciudad antes de continuar.",
 
       openRealtimeError: isMa
-        ? "Ø§Ù„Ù…ØªØµÙØ­ Ù…Ø§ ÙƒÙŠØ¯Ø¹Ù…Ø´ Ø§Ù„ØµÙˆØª"
+        ? "المتصفح ما كيدعمش الصوت"
         : isEn
         ? "Browser does not support audio."
         : "Este navegador no soporta audio. Usa Chrome moderno.",
 
       // Textos del footer / barra de abajo
-      docsButton: isMa ? "Ø§Ù„ÙˆØ«Ø§Ø¦Ù‚" : isEn ? "Documents" : "Documentos",
-      formsButton: isMa ? "Ø§Ù„Ø§Ø³ØªÙ…Ø§Ø±Ø§Øª" : isEn ? "Forms" : "Formularios",
-      docsRequiredTitle: isMa ? "Ø§Ù„ÙˆØ«Ø§Ø¦Ù‚ Ø§Ù„Ù…Ø·Ù„ÙˆØ¨Ø©" : isEn ? "Required documents" : "Documentos requeridos",
-      formsOfficialTitle: isMa ? "Ø§Ù„Ø§Ø³ØªÙ…Ø§Ø±Ø§Øª Ø§Ù„Ø±Ø³Ù…ÙŠØ©" : isEn ? "Official forms" : "Formularios oficiales",
+      docsButton: isMa ? "الوثائق" : isEn ? "Documents" : "Documentos",
+      formsButton: isMa ? "الاستمارات" : isEn ? "Forms" : "Formularios",
+      docsRequiredTitle: isMa ? "الوثائق المطلوبة" : isEn ? "Required documents" : "Documentos requeridos",
+      formsOfficialTitle: isMa ? "الاستمارات الرسمية" : isEn ? "Official forms" : "Formularios oficiales",
 
-      // TÃ­tulo pÃ¡gina
-      pageTitle: isMa ? "Ø§Ù„Ø¨Ø­Ø« Ø¹Ù„Ù‰ Ø§Ù„Ù…ÙˆØ§Ø¹ÙŠØ¯" : isEn ? "Find appointments" : "Buscar citas",
-      pageTitleConfirm: isMa ? "Ø³Ø§Ø±Ø©: ØªØ£ÙƒÙŠØ¯ Ø§Ù„Ù…ÙˆØ¹Ø¯" : isEn ? "Sara: appointment confirmation" : "Sara: confirmaciÃ³n de cita",
+      // Título página
+      pageTitle: isMa ? "البحث على المواعيد" : isEn ? "Find appointments" : "Buscar citas",
+      pageTitleConfirm: isMa ? "سارة: تأكيد الموعد" : isEn ? "Sara: appointment confirmation" : "Sara: confirmación de cita",
 
       // Mensaje Sara al guardar lead
       agentSavedMsg: isMa
-        ? "Ù…Ø²ÙŠØ§Ù†. Ø¯Ø§Ø¨Ø§ ÙƒÙ†Ù‚Ù„Ø¨Ùˆ Ø¹Ù„Ù‰ Ø§Ù„Ù…ÙˆØ¹Ø¯ Ø¯ÙŠØ§Ù„Ùƒ. ØºØ§Ø¯ÙŠ Ù†Ø®Ø¨Ø±ÙˆÙƒ ÙØ§Ù„ÙˆØ§ØªØ³Ø§Ø¨ ÙÙŠ Ø£Ù‚Ù„ Ù…Ù† 24 Ø³Ø§Ø¹Ø©."
+        ? "مزيان. دابا كنقلبو على الموعد ديالك. غادي نخبروك فالواتساب في أقل من 24 ساعة."
         : isEn
         ? "Perfect. We are already looking for your appointment. We will notify you on WhatsApp within 24 hours."
         : "Perfecto. Ya estamos buscando tu cita. Te avisaremos por WhatsApp en menos de 24h.",
 
-      // Confirmar cita botÃ³n
-      confirmBtn: isMa ? "ØªØ£ÙƒÙŠØ¯ Ø§Ù„Ù…ÙˆØ¹Ø¯" : isEn ? "Confirm appointment" : "Confirmar cita",
+      // Confirmar cita botón
+      confirmBtn: isMa ? "تأكيد الموعد" : isEn ? "Confirm appointment" : "Confirmar cita",
 
       // Errores varios
-      noRealAppointmentTitle: isMa ? "Ù…Ø§ ÙƒØ§ÙŠÙ† Ø­ØªÙ‰ Ù…ÙˆØ¹Ø¯ Ø­Ù‚ÙŠÙ‚ÙŠ" : isEn ? "No real appointment" : "No hay cita real",
+      noRealAppointmentTitle: isMa ? "ما كاين حتى موعد حقيقي" : isEn ? "No real appointment" : "No hay cita real",
       noRealAppointmentDesc: isMa
-        ? "Ù…Ø§ ØªÙ‚Ø¯Ø±Ø´ ØªØ£ÙƒØ¯ Ù…ÙˆØ¹Ø¯ Ù†Ø§Ù‚Øµ"
+        ? "ما تقدرش تأكد موعد ناقص"
         : isEn
         ? "You cannot confirm an incomplete appointment."
         : "No puedes confirmar una cita inventada o incompleta.",
 
-      stripeErrorTitle: isMa ? "Ø®Ø·Ø£ ÙÙŠ Ø§Ù„Ø¯ÙØ¹" : isEn ? "Payment error" : "Error Stripe",
-      stripeErrorDesc: isMa ? "Ù…Ø§ Ù‚Ø¯Ø±Ù†Ø§Ø´ Ù†ÙØªØ­Ùˆ Ø§Ù„Ø¯ÙØ¹" : isEn ? "Could not open payment." : "No se pudo abrir el pago",
+      stripeErrorTitle: isMa ? "خطأ في الدفع" : isEn ? "Payment error" : "Error Stripe",
+      stripeErrorDesc: isMa ? "ما قدرناش نفتحو الدفع" : isEn ? "Could not open payment." : "No se pudo abrir el pago",
 
-      saveErrorTitle: isMa ? "Ø®Ø·Ø£" : isEn ? "Error" : "Error",
-      saveErrorDesc: isMa ? "Ù…Ø§ Ù‚Ø¯Ø±Ù†Ø§Ø´ Ù†Ø­ÙØ¸Ùˆ Ø§Ù„Ù…Ø¹Ù„ÙˆÙ…Ø§Øª" : isEn ? "Could not save data." : "No se pudo guardar el cliente",
+      saveErrorTitle: isMa ? "خطأ" : isEn ? "Error" : "Error",
+      saveErrorDesc: isMa ? "ما قدرناش نحفظو المعلومات" : isEn ? "Could not save data." : "No se pudo guardar el cliente",
 
-      panelUpdated: isMa ? "ØªØ­Ø¯Ø« Ø§Ù„Ù„ÙˆØ­Ø©" : isEn ? "Panel updated" : "Panel actualizado",
+      panelUpdated: isMa ? "تحدث اللوحة" : isEn ? "Panel updated" : "Panel actualizado",
 
-      selectTramiteTitle: isMa ? "Ø§Ø®ØªØ§Ø± Ù†ÙˆØ¹ Ø§Ù„Ù…ÙˆØ¹Ø¯" : isEn ? "Select procedure" : "Selecciona trÃ¡mite",
+      selectTramiteTitle: isMa ? "اختار نوع الموعد" : isEn ? "Select procedure" : "Selecciona trámite",
       selectTramiteDesc: isMa
-        ? "Ø§Ø®ØªØ§Ø± Ù†ÙˆØ¹ Ø§Ù„Ù…ÙˆØ¹Ø¯ Ù‚Ø¨Ù„ ØªÙƒÙ…Ù„"
+        ? "اختار نوع الموعد قبل تكمل"
         : isEn
         ? "Choose the appointment type before continuing."
         : "Elige el tipo de cita antes de continuar.",
@@ -1020,7 +1020,7 @@ const [formReady, setFormReady] = useState(
     const text = assistantTextBufferRef.current.trim();
     if (!text) return;
     assistantTextBufferRef.current = "";
-    if (text === "..." || text === "â€¦") return;
+    if (text === "..." || text === "…") return;
     if (text === lastAssistantTextRef.current) return;
     pushAgentMessage(text);
   };
@@ -1040,7 +1040,7 @@ const [formReady, setFormReady] = useState(
           content: [
             {
               type: "input_text",
-              text: `Ø§Ø¨Ø¯Ø¦ÙŠ Ø£Ù†ØªÙ Ø§Ù„ÙƒÙ„Ø§Ù… Ø§Ù„Ø¢Ù† Ù…Ø¨Ø§Ø´Ø±Ø©. Ù„Ø§ ØªÙ†ØªØ¸Ø±ÙŠ Ø§Ù„Ø¹Ù…ÙŠÙ„. Ù‚ÙˆÙ„ÙŠ Ø§Ù„Ø¢Ù† Ù‡Ø°Ø§ Ø§Ù„ÙƒÙ„Ø§Ù… Ø¨ØµÙˆØª Ø·Ø¨ÙŠØ¹ÙŠ ÙˆØ¨Ø´ÙƒÙ„ Ø¨Ø´Ø±ÙŠ: ${message}`,
+              text: `ابدئي أنتِ الكلام الآن مباشرة. لا تنتظري العميل. قولي الآن هذا الكلام بصوت طبيعي وبشكل بشري: ${message}`,
             },
           ],
         },
@@ -1098,9 +1098,9 @@ const [formReady, setFormReady] = useState(
         body: JSON.stringify({ assistant: "sara" }),
       });
       const sessionData = await sessionRes.json();
-      if (!sessionRes.ok) throw new Error(sessionData?.error || "Error creando sesiÃ³n realtime");
+      if (!sessionRes.ok) throw new Error(sessionData?.error || "Error creando sesión realtime");
       const ephemeralKey = sessionData?.client_secret?.value || sessionData?.value || "";
-      if (!ephemeralKey) throw new Error("No llegÃ³ client secret desde /api/realtime-session");
+      if (!ephemeralKey) throw new Error("No llegó client secret desde /api/realtime-session");
 
       const pc = new RTCPeerConnection();
       realtimePcRef.current = pc;
@@ -1271,7 +1271,7 @@ const [formReady, setFormReady] = useState(
         }
       );
 
-      // âœ… Mensaje de Sara traducido
+      // ✅ Mensaje de Sara traducido
       pushAgentMessage(ui.agentSavedMsg);
     } catch (error) {
       console.error(error);
@@ -1335,7 +1335,7 @@ const [formReady, setFormReady] = useState(
       <Navbar />
 
       <main className="flex-1 relative z-10 flex flex-col pt-16 pb-0">
-        {/* âœ… TÃ­tulo de pÃ¡gina traducido */}
+        {/* ✅ Título de página traducido */}
         <h1 className="text-xl font-display font-bold px-4 sm:px-6 py-3 max-w-7xl mx-auto w-full">
           {cameFromConfirmationLink ? ui.pageTitleConfirm : ui.pageTitle}
         </h1>
@@ -1491,7 +1491,7 @@ const [formReady, setFormReady] = useState(
               </button>
             </div>
             <div className="px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-[10px] text-white/60">
-              Â© 2026 GestoriaCitaIA
+              © 2026 GestoriaCitaIA
             </div>
           </div>
         </div>
@@ -1511,13 +1511,13 @@ const [formReady, setFormReady] = useState(
                     <FileText className="w-4 h-4 text-primary" />
                     <span className="font-bold text-sm text-white">{ui.docsRequiredTitle}</span>
                   </div>
-                  <button onClick={() => setShowDocs(false)} className="w-6 h-6 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/60 text-xs" type="button">âœ•</button>
+                  <button onClick={() => setShowDocs(false)} className="w-6 h-6 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/60 text-xs" type="button">✕</button>
                 </div>
                 <div className="px-5 py-4 space-y-2.5 max-h-72 overflow-y-auto">
                   {docsForSelectedTramite.map((doc, i) => (
                     <div key={i} className="flex items-center gap-3">
                       <span className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 text-xs font-bold ${doc.estado === "ok" ? "bg-green-500/20 text-green-400" : doc.estado === "warn" ? "bg-yellow-500/20 text-yellow-400" : "bg-red-500/20 text-red-400"}`}>
-                        {doc.estado === "ok" ? "âœ“" : doc.estado === "warn" ? "!" : "âœ—"}
+                        {doc.estado === "ok" ? "✓" : doc.estado === "warn" ? "!" : "✗"}
                       </span>
                       <span className="text-sm text-white/90">{doc.nombre}</span>
                     </div>
@@ -1543,7 +1543,7 @@ const [formReady, setFormReady] = useState(
                     <Settings className="w-4 h-4 text-secondary" />
                     <span className="font-bold text-sm text-white">{ui.formsOfficialTitle}</span>
                   </div>
-                  <button onClick={() => setShowForms(false)} className="w-6 h-6 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/60 text-xs" type="button">âœ•</button>
+                  <button onClick={() => setShowForms(false)} className="w-6 h-6 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/60 text-xs" type="button">✕</button>
                 </div>
                 <div className="px-5 py-4 space-y-3">
                   {formsForSelectedTramite.map((form, i) => (
@@ -1555,7 +1555,7 @@ const [formReady, setFormReady] = useState(
                         <p className="text-xs font-bold text-primary">{form.codigo}</p>
                         <p className="text-sm text-white/80 truncate">{form.nombre}</p>
                       </div>
-                      <span className="text-[10px] font-semibold text-white/40 group-hover:text-primary transition-colors shrink-0">PDF â†“</span>
+                      <span className="text-[10px] font-semibold text-white/40 group-hover:text-primary transition-colors shrink-0">PDF ↓</span>
                     </a>
                   ))}
                   <p className="text-[10px] text-white/30 text-center pt-1">{ui.sourceLabel}</p>
@@ -1570,3 +1570,4 @@ const [formReady, setFormReady] = useState(
     </div>
   );
 }
+
