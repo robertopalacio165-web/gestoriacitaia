@@ -122,7 +122,7 @@ export default async function handler(
 
   const { data: existingSearch } =
     await supabase
-      .from("sara_searches")
+.from("expediente_checks")
       .select("id")
       .eq(
         "stripe_session_id",
@@ -150,36 +150,30 @@ export default async function handler(
 
   const { error } =
     await supabase
-      .from("sara_searches")
+  .from("expediente_checks")
       .insert([
         {
 
-          stripe_session_id:
-            session.id,
+      stripe_session_id:
+  session.id,
 
-          customer_name:
-            metadata.customer_name || "",
+customer_name:
+  metadata.customer_name || "",
 
-          customer_phone:
-            metadata.customer_phone || "",
+customer_phone:
+  metadata.customer_phone || "",
 
-          customer_email:
-            metadata.customer_email || "",
+customer_email:
+  metadata.customer_email || "",
 
-          city:
-            metadata.city || "",
+expediente_numero:
+  metadata.expediente_numero || "",
 
-          province:
-            metadata.province || "",
+identificador_solicitud:
+  metadata.identificador_solicitud || "",
 
-          tramite:
-            metadata.tramite || "",
-
-          status:
-            "searching",
-
-          reservation_status:
-            "searching",
+fecha_nacimiento:
+  metadata.fecha_nacimiento || "",
 
         },
       ]);
