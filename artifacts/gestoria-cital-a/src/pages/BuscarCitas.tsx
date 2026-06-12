@@ -70,15 +70,10 @@ type ClientFormData = {
 
   expedienteNumero: string;
   identificadorSolicitud: string;
-  fechaNacimiento: string;
 
-  nie: string;
-  passport: string;
-  nationality: string;
-  birthYear: string;
-  city: string;
-  province: string;
-  preferredOffice: string;
+  fechaPresentacion: string;
+
+  fechaNacimiento: string;
 };
 
 function OfficialBrowserBox({
@@ -333,7 +328,21 @@ onChange={(e) =>
     className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white"
   />
 </div>
+{/* Fecha presentación solicitud */}
+<div className="min-w-0">
+  <label className="block text-white text-[13px] mb-2">
+    Fecha presentación solicitud
+  </label>
 
+  <input
+    type="date"
+    value={formData.fechaPresentacion || ""}
+    onChange={(e) =>
+      onFormChange("fechaPresentacion", e.target.value)
+    }
+    className="block w-full max-w-full min-w-0 h-[52px] box-border appearance-none rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white [color-scheme:dark]"
+  />
+</div>
 {/* Fecha nacimiento */}
 <div className="min-w-0">
   <label className="block text-white text-[13px] mb-2">
@@ -388,6 +397,7 @@ onChange={(e) =>
 !formData.phone.trim() ||
 !formData.expedienteNumero.trim() ||
 !formData.identificadorSolicitud.trim() ||
+!formData.fechaPresentacion.trim() ||
 !formData.fechaNacimiento.trim()
   ) {
     toast({
@@ -631,13 +641,16 @@ const [confirmed, setConfirmed] = useState(
   const [profile, setProfile] = useState<ProfileRow | null>(null);
   const [appointmentData, setAppointmentData] = useState<AppointmentResult | null>(null);
   const [profileLoading, setProfileLoading] = useState(true);
- const [formData, setFormData] = useState<ClientFormData>({
+const [formData, setFormData] = useState<ClientFormData>({
   fullName: "",
   phone: "",
   email: "",
 
   expedienteNumero: "",
   identificadorSolicitud: "",
+
+  fechaPresentacion: "",
+
   fechaNacimiento: "",
 
   preferredOffice: "+34",
