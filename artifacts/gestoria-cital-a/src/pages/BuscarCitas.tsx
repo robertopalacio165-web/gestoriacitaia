@@ -479,7 +479,7 @@ window.location.href = data.url;
                 <p className="text-sm text-gray-700">{isMa ? "رقم الموعد" : isEn ? "Locator" : "Localizador"}: {finalLocator}</p>
               </div>
             )}
-          </>
+  
         ) : (
           <>
             <div className="rounded-[26px] border border-emerald-500/40 bg-[#07111f] px-5 py-7 mb-5 shadow-[0_0_30px_rgba(16,185,129,0.08)]">
