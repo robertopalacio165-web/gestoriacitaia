@@ -218,9 +218,17 @@ function OfficialBrowserBox({
 ) : !confirmed && !formReady ? (
           <>
             <div className="mt-3 mx-[-4px] rounded-[24px] border-2 border-yellow-500/60 bg-gradient-to-b from-[#0b0b0b] to-[#050505] px-3 py-3 shadow-[0_0_35px_rgba(255,200,0,0.18)]">
-              <h2 className="text-yellow-400 text-[18px] sm:text-[20px] font-black leading-tight mb-2">
-                {panelTitle}
-              </h2>
+              <div className="mb-3 grid grid-cols-[32px_1fr_32px] items-center gap-2">
+                <span />
+                <h2 className="text-center text-yellow-400 text-[18px] sm:text-[20px] font-black leading-tight">
+                  {isMa ? "عمر الفورم" : isEn ? "Fill in the form" : "Rellena el formulario"}
+                </h2>
+                <img
+                  src="https://upload.wikimedia.org/wikipedia/en/9/9a/Flag_of_Spain.svg"
+                  alt="España"
+                  className="h-5 w-8 rounded-[3px] object-cover shadow-[0_0_10px_rgba(255,255,255,0.20)]"
+                />
+              </div>
               <p className="text-white/80 text-[13px] leading-relaxed mb-5">
                 {formIntro}
               </p>
