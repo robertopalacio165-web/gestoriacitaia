@@ -25,15 +25,14 @@ export default async function handler(
         ? JSON.parse(req.body)
         : req.body;
 
-    const {
-      fullName,
-      phone,
-      email,
-      nie,
-      city,
-      province,
-      tramite,
-    } = body;
+const {
+  fullName,
+  phone,
+  email,
+  expedienteNumero,
+  identificadorSolicitud,
+  fechaNacimiento,
+} = body;
     
 console.log("PHONE RECEIVED:");
 console.log(phone);
@@ -47,28 +46,20 @@ console.log(body);
 
         mode: "payment",
 
-        metadata: {
-          customer_name:
-            fullName || "",
+     metadata: {
+  customer_name: fullName || "",
+  customer_phone: phone || "",
+  customer_email: email || "",
 
-          customer_phone:
-            phone || "",
+  expediente_numero:
+    expedienteNumero || "",
 
-          customer_email:
-            email || "",
+  identificador_solicitud:
+    identificadorSolicitud || "",
 
-          customer_nie:
-            nie || "",
-
-          city:
-            city || "",
-
-          province:
-            province || "",
-
-          tramite:
-            tramite || "",
-        },
+  fecha_nacimiento:
+    fechaNacimiento || "",
+},
 
         line_items: [
           {
