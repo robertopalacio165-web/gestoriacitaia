@@ -533,6 +533,8 @@ async function runWorker() {
   }
 
   for (const client of data) {
+    console.log("CLIENTE:");
+console.log(client);
     if (
       !client.expediente_numero ||
       !client.identificador_solicitud ||
