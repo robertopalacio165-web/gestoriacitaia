@@ -441,7 +441,13 @@ await fillFirstAvailableOrPosition(
      "año de nacimiento",
 2
     );
+const captchaImage = await page.locator("img").nth(0);
 
+await captchaImage.screenshot({
+  path: "captcha.png"
+});
+
+console.log("Captcha guardado");
     await clickFirstAvailable(
       page,
       [
