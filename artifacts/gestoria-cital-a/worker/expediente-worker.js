@@ -471,17 +471,7 @@ console.log("CAPTCHA:", captchaText);
 await page.locator('input[placeholder*="texto" i]').fill(captchaText);
 
 console.log("Captcha escrito:", captchaText);
-console.log("MP3 GUARDADO");
-const transcription = await openai.audio.transcriptions.create({
-  file: fs.createReadStream("captcha.mp3"),
-  model: "gpt-4o-mini-transcribe",
-});
 
-const captchaText = transcription.text
-  .replace(/[^a-zA-Z0-9]/g, "")
-  .trim();
-
-console.log("CAPTCHA:", captchaText);
 await page.screenshot({
   path: "captcha-audio.png",
   fullPage: true
