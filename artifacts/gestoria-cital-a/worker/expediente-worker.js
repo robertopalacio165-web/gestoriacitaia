@@ -399,6 +399,22 @@ async function checkExpediente(client) {
       0
     );
 
+await fillFirstAvailableOrPosition(
+  page,
+  [
+    'input[name="fechaPresentacion"]',
+    'input[name="fecha_presentacion"]',
+    'input[name="fechaSolicitud"]',
+    'input[name="fecha"]',
+    'input[id*="fecha" i]',
+    'input[name*="fecha" i]',
+    'input[placeholder*="fecha" i]',
+  ],
+  normalizeDateForSpain(client.fecha_presentacion),
+  "fecha de presentación",
+  1
+);
+    
     await fillFirstAvailableOrPosition(
       page,
       [
@@ -422,8 +438,8 @@ async function checkExpediente(client) {
         'input[placeholder*="nacimiento" i]',
       ],
       extractBirthYear(client.fecha_nacimiento),
-      "año de nacimiento",
-      1
+     "año de nacimiento",
+2
     );
 
     await clickFirstAvailable(
