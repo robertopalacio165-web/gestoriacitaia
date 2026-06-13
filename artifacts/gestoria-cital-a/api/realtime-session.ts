@@ -418,14 +418,14 @@ export default async function handler(
     ? "sara"
     : body.assistant === "khalid"
     ? "khalid"
-    : "mohamed";
+: "soufiane";
 
   const instructions =
   assistant === "sara"
     ? buildSaraInstructions()
     : assistant === "khalid"
     ? buildKhalidInstructions()
-    : buildMohamedInstructions();
+: buildSoufianeInstructions();
    const voice =
   assistant === "sara"
     ? "nova"
