@@ -172,6 +172,9 @@ expediente_numero:
 identificador_solicitud:
   metadata.identificador_solicitud || "",
 
+fecha_presentacion:
+  metadata.fecha_presentacion || "",
+
 fecha_nacimiento:
   metadata.fecha_nacimiento || "",
 
