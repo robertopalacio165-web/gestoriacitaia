@@ -441,13 +441,21 @@ await fillFirstAvailableOrPosition(
      "año de nacimiento",
 2
     );
-const captchaImage = await page.locator("img").nth(0);
+// BOTON AUDIO CAPTCHA
+const botonAudio = page.locator('img[onclick*="reproducir"], .ui-icon-volume-on').first();
 
-await captchaImage.screenshot({
-  path: "captcha.png"
-});
+await botonAudio.click();
 
-console.log("Captcha guardado");
+await page.waitForTimeout(3000);
+
+// GUARDAR HTML PARA VER COMO SALE EL AUDIO
+const html = await page.content();
+
+
+
+fs.writeFileSync("captcha_debug.html", html);
+
+console.log("Audio pulsado");D
     await clickFirstAvailable(
       page,
       [
