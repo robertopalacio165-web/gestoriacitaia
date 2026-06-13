@@ -445,6 +445,9 @@ await fillFirstAvailableOrPosition(
 const reproductor = page.locator("audio").first();
 
 console.log("Audio encontrado:", await reproductor.count());
+    const audioSrc = await reproductor.getAttribute("src");
+
+console.log("AUDIO SRC:", audioSrc);
 
 await page.screenshot({
   path: "captcha-audio.png",
