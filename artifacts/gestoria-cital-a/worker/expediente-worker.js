@@ -460,7 +460,7 @@ const html = await page.content();
 
 fs.writeFileSync("captcha_debug.html", html);
 
-console.log("Audio pulsado");D
+console.log("Audio pulsado");
     await clickFirstAvailable(
       page,
       [
