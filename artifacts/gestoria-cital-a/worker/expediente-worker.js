@@ -1,6 +1,7 @@
 import dotenv from "dotenv";
 dotenv.config({ path: ".env" });
 import fs from "fs";
+import OpenAI from "openai";
 import { createClient } from "@supabase/supabase-js";
 import { chromium } from "playwright";
 
@@ -22,6 +23,9 @@ if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
 }
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -453,9 +457,31 @@ fs.writeFileSync(
   "captcha.mp3",
   Buffer.from(base64Audio, "base64")
 );
+const transcription = await openai.audio.transcriptions.create({
+  file: fs.createReadStream("captcha.mp3"),
+  model: "gpt-4o-mini-transcribe",
+});
 
+const captchaText = transcription.text
+  .replace(/[^a-zA-Z0-9]/g, "")
+  .trim();
+
+console.log("CAPTCHA:", captchaText);
+
+await page.locator('input[placeholder*="texto" i]').fill(captchaText);
+
+console.log("Captcha escrito:", captchaText);
 console.log("MP3 GUARDADO");
+const transcription = await openai.audio.transcriptions.create({
+  file: fs.createReadStream("captcha.mp3"),
+  model: "gpt-4o-mini-transcribe",
+});
 
+const captchaText = transcription.text
+  .replace(/[^a-zA-Z0-9]/g, "")
+  .trim();
+
+console.log("CAPTCHA:", captchaText);
 await page.screenshot({
   path: "captcha-audio.png",
   fullPage: true
