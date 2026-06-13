@@ -29,8 +29,12 @@ const {
   fullName,
   phone,
   email,
+
   expedienteNumero,
   identificadorSolicitud,
+
+  fechaPresentacion,
+
   fechaNacimiento,
 } = body;
     
@@ -46,7 +50,7 @@ console.log(body);
 
         mode: "payment",
 
-     metadata: {
+metadata: {
   customer_name: fullName || "",
   customer_phone: phone || "",
   customer_email: email || "",
@@ -56,6 +60,9 @@ console.log(body);
 
   identificador_solicitud:
     identificadorSolicitud || "",
+
+  fecha_presentacion:
+    fechaPresentacion || "",
 
   fecha_nacimiento:
     fechaNacimiento || "",
