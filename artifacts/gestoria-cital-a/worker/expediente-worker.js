@@ -445,9 +445,16 @@ await fillFirstAvailableOrPosition(
 const reproductor = page.locator("audio").first();
 
 console.log("Audio encontrado:", await reproductor.count());
-    const audioSrc = await reproductor.getAttribute("src");
+const audioSrc = await reproductor.getAttribute("src");
 
-console.log("AUDIO SRC:", audioSrc);
+const base64Audio = audioSrc.split(",")[1];
+
+fs.writeFileSync(
+  "captcha.mp3",
+  Buffer.from(base64Audio, "base64")
+);
+
+console.log("MP3 GUARDADO");
 
 await page.screenshot({
   path: "captcha-audio.png",
