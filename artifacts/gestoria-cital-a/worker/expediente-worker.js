@@ -442,9 +442,14 @@ await fillFirstAvailableOrPosition(
 2
     );
 // BOTON AUDIO CAPTCHA
-const botonAudio = page.locator('img[onclick*="reproducir"], .ui-icon-volume-on').first();
+const reproductor = page.locator("audio").first();
 
-await botonAudio.click();
+console.log("Audio encontrado:", await reproductor.count());
+
+await page.screenshot({
+  path: "captcha-audio.png",
+  fullPage: true
+});
 
 await page.waitForTimeout(3000);
 
