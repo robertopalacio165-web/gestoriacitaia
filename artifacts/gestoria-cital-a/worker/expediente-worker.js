@@ -1,7 +1,5 @@
-# Guarda el código corregido
-cat > expediente-worker.js << 'EOF'
 import dotenv from "dotenv";
-dotenv.config({ path: "../.env" });
+dotenv.config();
 import fs from "fs";
 import OpenAI from "openai";
 import { createClient } from "@supabase/supabase-js";
@@ -9,20 +7,19 @@ import { chromium } from "playwright";
 
 const SUPABASE_URL = process.env.SUPABASE_URL?.replace(/"/g, "").trim();
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY?.replace(/"/g, "").trim();
-const BRIGHT_DATA_WS_ENDPOINT = process.env.BRIGHT_DATA_WS_ENDPOINT?.replace(/"/g, "").trim();
-const CHECK_INTERVAL_MS = Number(process.env.EXPEDIENTE_WORKER_INTERVAL_MS || 3600000);
-const BATCH_LIMIT = Number(process.env.EXPEDIENTE_WORKER_BATCH_LIMIT || 5);
-const INFOEXT_URL = "https://sede.administracionespublicas.gob.es/infoext2/";
+const CHECK_INTERVAL_MS = 30 * 60 * 1000; // 30 minutos
+const INFOEXT_URL = "https://infoext2.delegaciondelgobierno.gob.es/infoext2/consulta.html";
 
-if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) throw new Error("Faltan SUPABASE_URL o SUPABASE_SERVICE_ROLE_KEY en .env");
+if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) throw new Error("Faltan variables de Supabase");
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-function sleep(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
+function sleep(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
+
 function cleanText(value) { return String(value || "").replace(/\s+/g, " ").trim(); }
 
-function normalizeDateForSpain(value) {
+function normalizeDate(value) {
   if (!value) return "";
   const raw = String(value).trim();
   if (/^\d{2}\/\d{2}\/\d{4}$/.test(raw)) return raw;
@@ -33,7 +30,7 @@ function normalizeDateForSpain(value) {
   return raw;
 }
 
-function extractBirthYear(value) {
+function extractYear(value) {
   if (!value) return "";
   const raw = String(value).trim();
   if (/^\d{4}$/.test(raw)) return raw;
@@ -43,147 +40,162 @@ function extractBirthYear(value) {
   return match ? match[0] : raw;
 }
 
-function buildStatus(text) {
-  const body = cleanText(text).toLowerCase();
-  if (body.includes("favorable") || body.includes("resuelto favorable") || body.includes("concedido")) return "favorable";
-  if (body.includes("denegado") || body.includes("rechazado") || body.includes("no favorable")) return "denegado";
-  if (body.includes("en trámite") || body.includes("pendiente") || body.includes("no resuelto")) return "pendiente";
-  return "revisado";
+function esFavorable(texto) {
+  const body = cleanText(texto).toLowerCase();
+  return body.includes("favorable") || 
+         body.includes("resuelto favorable") || 
+         body.includes("concedido");
 }
 
-async function connectBrowser() {
-  if (BRIGHT_DATA_WS_ENDPOINT) {
-    console.log("✅ Conectando a Bright Data...");
-    const browser = await chromium.connectOverCDP(BRIGHT_DATA_WS_ENDPOINT);
-    const context = browser.contexts()[0] || await browser.newContext({ locale: 'es-ES', timezoneId: 'Europe/Madrid' });
-    return { browser, context };
-  }
-  console.log("⚠️ Usando Chromium local - probablemente será detectado");
-  const browser = await chromium.launch({ 
-    headless: false,
-    args: ['--disable-blink-features=AutomationControlled', '--no-sandbox']
-  });
-  const context = await browser.newContext({ 
-    locale: 'es-ES', 
-    timezoneId: 'Europe/Madrid',
-    userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0.0.0'
-  });
-  return { browser, context };
-}
-
-async function resolveCaptchaAudio(page) {
+async function resolverCaptcha(page) {
   console.log("🔊 Resolviendo CAPTCHA...");
-  await page.waitForTimeout(3000);
+  await sleep(3000);
   
-  const audioElement = page.locator("audio").first();
-  let audioSrc = await audioElement.getAttribute("src");
+  const audioSrc = await page.$eval('audio', el => el.src);
+  const response = await fetch(audioSrc);
+  const buffer = Buffer.from(await response.arrayBuffer());
+  fs.writeFileSync("/tmp/captcha.mp3", buffer);
   
-  let audioBuffer;
-  try {
-    audioBuffer = await page.evaluate(async (src) => {
-      const response = await fetch(src);
-      return Buffer.from(await response.arrayBuffer());
-    }, audioSrc);
-  } catch (e) {
-    const audioUrl = audioSrc.startsWith('http') ? audioSrc : `https://sede.administracionespublicas.gob.es${audioSrc}`;
-    const response = await fetch(audioUrl);
-    audioBuffer = Buffer.from(await response.arrayBuffer());
-  }
-  
-  fs.writeFileSync("captcha_temp.mp3", audioBuffer);
   const transcription = await openai.audio.transcriptions.create({
-    file: fs.createReadStream("captcha_temp.mp3"),
+    file: fs.createReadStream("/tmp/captcha.mp3"),
     model: "whisper-1",
     language: "es",
   });
   
-  const captchaText = transcription.text.replace(/[^a-zA-Z0-9]/g, "").trim().toLowerCase().substring(0, 6);
-  fs.unlinkSync("captcha_temp.mp3");
-  console.log("🎯 CAPTCHA:", captchaText);
-  return captchaText;
+  const texto = transcription.text.replace(/[^a-zA-Z0-9]/g, "").trim().toLowerCase().slice(0, 6);
+  console.log("✅ CAPTCHA:", texto);
+  return texto;
 }
 
-async function checkExpediente(client) {
-  let browser = null, context = null, page = null;
+async function enviarWhatsApp(cliente, resultado) {
+  const webhook = process.env.MAKE_WEBHOOK_EXPEDIENTE_FAVORABLE;
+  if (!webhook) {
+    console.log("⚠️ Webhook no configurado");
+    return;
+  }
+  
+  const payload = {
+    id: cliente.id,
+    nombre: cliente.customer_name,
+    telefono: cliente.customer_phone,
+    email: cliente.customer_email,
+    expediente: cliente.expediente_numero,
+    solicitud: cliente.identificador_solicitud,
+    estado: "favorable",
+    mensaje: "✅ ¡BUENAS NOTICIAS! Tu expediente ha sido resuelto FAVORABLEMENTE.",
+    fecha: new Date().toISOString()
+  };
+  
+  console.log("📱 Enviando WhatsApp a:", cliente.customer_phone);
+  const res = await fetch(webhook, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+  
+  if (res.ok) {
+    console.log("✅ WhatsApp enviado correctamente");
+  } else {
+    console.log("❌ Error enviando WhatsApp:", await res.text());
+  }
+}
+
+async function verificarExpediente(cliente) {
+  let browser;
   try {
-    const connection = await connectBrowser();
-    browser = connection.browser;
-    context = connection.context;
-    page = await context.newPage();
+    console.log(`\n👤 Cliente: ${cliente.customer_name}`);
+    console.log(`📝 Expediente: ${cliente.expediente_numero}`);
     
-    await page.goto(INFOEXT_URL, { waitUntil: "networkidle", timeout: 120000 });
-    await page.waitForTimeout(3000);
-    await page.locator("text=ENTRAR FORMULARIO").click();
-    await page.waitForTimeout(3000);
-    await page.locator('text=BUSCAR POR NÚMERO DE EXPEDIENTE / SOLICITUD').first().click();
-    await page.waitForTimeout(3000);
+    browser = await chromium.launch({ 
+      headless: true,
+      args: ['--no-sandbox', '--disable-setuid-sandbox']
+    });
     
-    await page.locator('input[name="idExpediente"]').fill(client.identificador_solicitud || client.expediente_numero);
-    await page.locator('input[name="fechaPresentacion"]').fill(normalizeDateForSpain(client.fecha_presentacion));
-    await page.locator('input[name="anio"]').fill(extractBirthYear(client.fecha_nacimiento));
+    const page = await browser.newPage();
     
-    const captchaText = await resolveCaptchaAudio(page);
-    await page.locator('input[type="text"]').first().fill(captchaText);
-    await page.waitForTimeout(2000);
-    await page.locator('button:has-text("Consultar")').first().click();
-    await page.waitForTimeout(15000);
+    await page.goto(INFOEXT_URL);
+    await sleep(2000);
+    await page.click("text=ENTRAR FORMULARIO");
+    await sleep(2000);
+    await page.click("text=BUSCAR POR NÚMERO DE EXPEDIENTE / SOLICITUD");
+    await sleep(2000);
     
-    const resultText = await page.textContent("body");
-    const estado = buildStatus(resultText);
-    const favorable = estado === "favorable";
+    await page.fill('input[name="idExpediente"]', cliente.identificador_solicitud);
+    await page.fill('input[name="fechaPresentacion"]', normalizeDate(cliente.fecha_presentacion));
+    await page.fill('input[name="anio"]', extractYear(cliente.fecha_nacimiento));
     
-    const screenshotName = `expediente-${client.id}-${Date.now()}.png`;
-    await page.screenshot({ path: screenshotName, fullPage: true });
+    const captcha = await resolverCaptcha(page);
+    await page.fill('input[type="text"]', captcha);
+    await sleep(2000);
     
-    console.log("📊 Resultado:", estado);
+    await page.click('button:has-text("Consultar")');
+    await sleep(10000);
     
-    await supabase.from("expediente_checks").update({
-      estado, favorable, notificado: favorable,
-      resultado: cleanText(resultText).slice(0, 4000),
-      last_check: new Date().toISOString(),
-      screenshot_path: screenshotName
-    }).eq("id", client.id);
+    const resultado = await page.textContent("body");
+    const favorable = esFavorable(resultado);
     
-    if (favorable && process.env.MAKE_WEBHOOK_EXPEDIENTE_FAVORABLE) {
-      await fetch(process.env.MAKE_WEBHOOK_EXPEDIENTE_FAVORABLE, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: client.id, phone: client.customer_phone, estado: "favorable" })
-      });
-      console.log("📱 WhatsApp enviado");
+    console.log(favorable ? "🎉 FAVORABLE!" : "❌ Pendiente");
+    
+    await supabase
+      .from("expediente_checks")
+      .update({
+        favorable: favorable,
+        notificado: favorable,
+        estado: favorable ? "favorable" : "pendiente",
+        resultado: cleanText(resultado).slice(0, 2000),
+        ultimo_check: new Date().toISOString()
+      })
+      .eq("id", cliente.id);
+    
+    if (favorable) {
+      await enviarWhatsApp(cliente, resultado);
     }
     
     await browser.close();
+    
   } catch (error) {
     console.log("❌ Error:", error.message);
-    await supabase.from("expediente_checks").update({
-      estado: "error", resultado: error.message, last_check: new Date().toISOString()
-    }).eq("id", client.id);
     if (browser) await browser.close().catch(() => {});
+    
+    await supabase
+      .from("expediente_checks")
+      .update({
+        estado: "error",
+        resultado: error.message,
+        ultimo_check: new Date().toISOString()
+      })
+      .eq("id", cliente.id);
   }
 }
 
-async function runWorker() {
+async function main() {
   console.log("🚀 Worker iniciado", new Date().toISOString());
-  const { data } = await supabase.from("expediente_checks").select("*").eq("notificado", false).limit(BATCH_LIMIT);
-  if (!data?.length) { console.log("📭 No hay expedientes"); return; }
-  for (const client of data) {
-    if (!client.expediente_numero || !client.identificador_solicitud || !client.fecha_nacimiento) {
-      console.log("⚠️ Datos incompletos");
-      continue;
-    }
-    await checkExpediente(client);
-    await sleep(10000);
+  
+  const { data: expedientes, error } = await supabase
+    .from("expediente_checks")
+    .select("*")
+    .eq("notificado", false);
+  
+  if (error) {
+    console.log("❌ Error en Supabase:", error.message);
+    return;
   }
+  
+  if (!expedientes?.length) {
+    console.log("📭 No hay expedientes pendientes");
+    return;
+  }
+  
+  console.log(`📋 ${expedientes.length} expediente(s) pendiente(s)`);
+  
+  for (const exp of expedientes) {
+    await verificarExpediente(exp);
+    await sleep(5000);
+  }
+  
+  console.log("✅ Ciclo completado\n");
 }
 
-async function startLoop() {
-  while (true) {
-    try { await runWorker(); } catch (error) { console.log("Error:", error); }
-    console.log(`⏰ Esperando ${CHECK_INTERVAL_MS/1000}s...`);
-    await sleep(CHECK_INTERVAL_MS);
-  }
-}
-
-startLoop();
-EOF
+// Ejecutar ahora y cada 30 minutos
+main();
+setInterval(main, CHECK_INTERVAL_MS);
