@@ -2561,9 +2561,7 @@ className="w-[92%] mx-auto flex items-center justify-center h-[52px] rounded-[20
 
 )}
 
-<div className="mt-4 rounded-2xl border border-green-500/20 bg-[#071326] p-4">
 
-  <h3 className="text-center text-green-400 font-bold text-lg mb-4">
 
   
 {/* ✅ DESPUÉS DEL PAGO */}
@@ -2774,7 +2772,7 @@ className="flex-1 h-full bg-transparent px-4 text-white placeholder:text-white/4
 )}
 
 
-</div>
+
 
 <audio ref={remoteAudioRef} autoPlay playsInline className="hidden" />
       </main>
