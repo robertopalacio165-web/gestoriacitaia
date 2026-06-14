@@ -75,47 +75,79 @@ function extractBirthYear(value) {
   return match ? match[0] : raw;
 }
 
-function detectFavorable(text) {
-  const body = cleanText(text).toLowerCase();
-
-  return (
-    body.includes("favorable") ||
-    body.includes("resuelto favorable") ||
-    body.includes("resolución favorable") ||
-    body.includes("concedido") ||
-    body.includes("concedida")
-  );
-}
-
-function detectPending(text) {
-  const body = cleanText(text).toLowerCase();
-
-  return (
-    body.includes("en trámite") ||
-    body.includes("en tramite") ||
-    body.includes("pendiente") ||
-    body.includes("no resuelto") ||
-    body.includes("en vía de tramitación") ||
-    body.includes("en via de tramitacion")
-  );
-}
-
 function buildStatus(text) {
-  if (detectFavorable(text)) return "favorable";
-  if (detectPending(text)) return "pendiente";
+  const body = cleanText(text).toLowerCase();
+  
+  // Resultados definitivos
+  if (body.includes("favorable") || 
+      body.includes("resuelto favorable") || 
+      body.includes("resolución favorable") ||
+      body.includes("concedido") ||
+      body.includes("concedida") ||
+      body.includes("aprobado") ||
+      body.includes("aprobada")) {
+    return "favorable";
+  }
+  
+  // Resultados desfavorables
+  if (body.includes("denegado") || 
+      body.includes("denegada") ||
+      body.includes("rechazado") ||
+      body.includes("rechazada") ||
+      body.includes("no favorable") ||
+      body.includes("desfavorable")) {
+    return "denegado";
+  }
+  
+  // En proceso
+  if (body.includes("en trámite") || 
+      body.includes("en tramite") || 
+      body.includes("pendiente") || 
+      body.includes("no resuelto") ||
+      body.includes("en estudio") ||
+      body.includes("tramitación") ||
+      body.includes("tramitacion")) {
+    return "pendiente";
+  }
+  
+  // Errores del sistema
+  if (body.includes("error") || 
+      body.includes("no encontrado") ||
+      body.includes("no existe")) {
+    return "error";
+  }
+  
   return "revisado";
 }
 
 async function connectBrowser() {
   if (BRIGHT_DATA_WS_ENDPOINT) {
-    console.log("Conectando a Bright Data Browser...");
-    return chromium.connectOverCDP(BRIGHT_DATA_WS_ENDPOINT);
+    console.log("✅ Conectando a Bright Data Browser (anti-detección)...");
+    const browser = await chromium.connectOverCDP(BRIGHT_DATA_WS_ENDPOINT);
+    const context = browser.contexts()[0] || await browser.newContext({
+      locale: 'es-ES',
+      timezoneId: 'Europe/Madrid',
+      viewport: { width: 1280, height: 720 },
+      userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36'
+    });
+    return { browser, context };
   }
 
-  console.log("BRIGHT_DATA_WS_ENDPOINT no configurado. Usando Chromium local.");
-  return chromium.launch({
-    headless: true,
+  console.log("⚠️ BRIGHT_DATA_WS_ENDPOINT no configurado. Usando Chromium local (puede ser detectado).");
+  const browser = await chromium.launch({
+    headless: false,
+    args: [
+      '--disable-blink-features=AutomationControlled',
+      '--disable-features=IsolateOrigins,site-per-process',
+      '--no-sandbox'
+    ]
   });
+  const context = await browser.newContext({
+    locale: 'es-ES',
+    timezoneId: 'Europe/Madrid',
+    viewport: { width: 1280, height: 720 }
+  });
+  return { browser, context };
 }
 
 async function fillFirstAvailable(page, selectors, value, fieldName) {
@@ -204,10 +236,7 @@ async function clickFirstAvailable(page, selectors, label) {
 }
 
 async function selectIdExpedienteSolicitudMode(page) {
-
-  console.log(
-    "Pulsando BUSCAR POR NÚMERO DE EXPEDIENTE / SOLICITUD..."
-  );
+  console.log("Pulsando BUSCAR POR NÚMERO DE EXPEDIENTE / SOLICITUD...");
 
   const selectors = [
     'text=BUSCAR POR NÚMERO DE EXPEDIENTE',
@@ -218,38 +247,19 @@ async function selectIdExpedienteSolicitudMode(page) {
   ];
 
   for (const selector of selectors) {
-
-    const locator =
-      page.locator(selector).first();
+    const locator = page.locator(selector).first();
 
     try {
-
-      if (
-        await locator.isVisible({
-          timeout: 3000
-        })
-      ) {
-
+      if (await locator.isVisible({ timeout: 3000 })) {
         await locator.click();
-
-        await page.waitForTimeout(
-          3000
-        );
-
-        console.log(
-          "Modo expediente activado"
-        );
-
+        await page.waitForTimeout(3000);
+        console.log("Modo expediente activado");
         return;
       }
-
     } catch {}
-
   }
 
-  throw new Error(
-    "No se encontró el botón BUSCAR POR NÚMERO DE EXPEDIENTE / SOLICITUD"
-  );
+  throw new Error("No se encontró el botón BUSCAR POR NÚMERO DE EXPEDIENTE / SOLICITUD");
 }
 
 async function updateExpediente(id, payload) {
@@ -315,40 +325,108 @@ async function sendWhatsAppNotification(client, resultText) {
       fecha_nacimiento: client.fecha_nacimiento,
       estado: "favorable",
       resultado: cleanText(resultText).slice(0, 4000),
-      message:
-        "Tu expediente aparece como favorable. Ya puedes continuar con Seguridad Social y alta.",
+      message: "✅ ¡BUENAS NOTICIAS! Tu expediente aparece como FAVORABLE. Ya puedes continuar con Seguridad Social y alta.",
     }),
   });
 
-  console.log("WhatsApp enviado por Make para expediente favorable.");
+  console.log("✅ WhatsApp enviado por Make para expediente favorable.");
+}
+
+async function resolveCaptchaAudio(page) {
+  console.log("🔊 Resolviendo CAPTCHA de audio...");
+  
+  // Buscar el reproductor de audio
+  const audioElement = page.locator("audio").first();
+  const audioCount = await audioElement.count();
+  
+  if (audioCount === 0) {
+    throw new Error("No se encontró el reproductor de audio del CAPTCHA");
+  }
+  
+  // Hacer clic en el botón de reproducir si existe
+  const playButton = page.locator('button:has-text("Escuchar"), button:has-text("Reproducir"), .play-audio, [aria-label*="audio"]').first();
+  if (await playButton.count() > 0 && await playButton.isVisible({ timeout: 2000 }).catch(() => false)) {
+    await playButton.click();
+    await page.waitForTimeout(2000);
+  }
+  
+  // Obtener la URL del audio
+  let audioSrc = await audioElement.getAttribute("src");
+  console.log("Audio SRC:", audioSrc);
+  
+  let audioBuffer;
+  
+  if (audioSrc && audioSrc.startsWith('data:audio')) {
+    // Es base64 inline
+    const base64Data = audioSrc.split(',')[1];
+    audioBuffer = Buffer.from(base64Data, 'base64');
+  } else if (audioSrc && (audioSrc.startsWith('http') || audioSrc.startsWith('/'))) {
+    // Es una URL - descargarlo
+    const audioUrl = audioSrc.startsWith('http') ? audioSrc : `https://sede.administracionespublicas.gob.es${audioSrc}`;
+    console.log("Descargando audio desde:", audioUrl);
+    
+    const response = await fetch(audioUrl);
+    const arrayBuffer = await response.arrayBuffer();
+    audioBuffer = Buffer.from(arrayBuffer);
+  } else {
+    // Intentar obtener el audio de la petición de red
+    throw new Error("No se pudo obtener el audio del CAPTCHA");
+  }
+  
+  // Guardar el audio temporalmente
+  fs.writeFileSync("captcha_temp.mp3", audioBuffer);
+  
+  // Transcribir con Whisper
+  const transcription = await openai.audio.transcriptions.create({
+    file: fs.createReadStream("captcha_temp.mp3"),
+    model: "whisper-1",
+    language: "es",
+  });
+  
+  let captchaText = transcription.text
+    .replace(/[^a-zA-Z0-9]/g, "")
+    .trim()
+    .toLowerCase();
+  
+  // Corregir números escritos como letras
+  captchaText = captchaText
+    .replace(/cero/g, '0')
+    .replace(/uno/g, '1')
+    .replace(/dos/g, '2')
+    .replace(/tres/g, '3')
+    .replace(/cuatro/g, '4')
+    .replace(/cinco/g, '5')
+    .replace(/seis/g, '6')
+    .replace(/siete/g, '7')
+    .replace(/ocho/g, '8')
+    .replace(/nueve/g, '9');
+  
+  console.log("🎯 CAPTCHA transcrito:", captchaText);
+  
+  // Limpiar archivo temporal
+  fs.unlinkSync("captcha_temp.mp3");
+  
+  return captchaText;
 }
 
 async function checkExpediente(client) {
-  let browser;
+  let browser = null;
+  let context = null;
+  let page = null;
 
   try {
-    browser = await connectBrowser();
+    const connection = await connectBrowser();
+    browser = connection.browser;
+    context = connection.context;
+    page = await context.newPage();
 
-    const context =
-      browser.contexts?.()[0] ||
-      (await browser.newContext({
-        ignoreHTTPSErrors: true,
-        locale: "es-ES",
-        timezoneId: "Europe/Madrid",
-      }));
-
-    const page = await context.newPage();
-
+    // Configurar headers para evitar detección
     await page.setExtraHTTPHeaders({
       "Accept-Language": "es-ES,es;q=0.9",
+      "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
     });
 
-    await page.setViewportSize({
-      width: 1280 + Math.floor(Math.random() * 80),
-      height: 720 + Math.floor(Math.random() * 80),
-    });
-
-    console.log(`Abriendo InfoExt2 para expediente ${client.expediente_numero}`);
+    console.log(`📋 Abriendo InfoExt2 para expediente ${client.expediente_numero}`);
 
     await page.goto(INFOEXT_URL, {
       waitUntil: "domcontentloaded",
@@ -357,24 +435,16 @@ async function checkExpediente(client) {
 
     await page.waitForTimeout(5000);
 
-    console.log("Pulsando ENTRAR FORMULARIO...");
-
-    await page
-      .locator("text=ENTRAR FORMULARIO")
-      .click({
-        timeout: 60000,
-      });
-
+    console.log("🔘 Pulsando ENTRAR FORMULARIO...");
+    await page.locator("text=ENTRAR FORMULARIO").click({ timeout: 60000 });
     await page.waitForTimeout(5000);
 
-    console.log("Pulsando ID DE EXPEDIENTE/SOLICITUD...");
-
+    console.log("🔘 Seleccionando búsqueda por expediente...");
     await selectIdExpedienteSolicitudMode(page);
-
     await page.waitForTimeout(5000);
 
-    console.log("Formulario por ID de expediente/solicitud abierto");
-
+    console.log("📝 Rellenando formulario...");
+    
     await fillFirstAvailableOrPosition(
       page,
       [
@@ -403,21 +473,21 @@ async function checkExpediente(client) {
       0
     );
 
-await fillFirstAvailableOrPosition(
-  page,
-  [
-    'input[name="fechaPresentacion"]',
-    'input[name="fecha_presentacion"]',
-    'input[name="fechaSolicitud"]',
-    'input[name="fecha"]',
-    'input[id*="fecha" i]',
-    'input[name*="fecha" i]',
-    'input[placeholder*="fecha" i]',
-  ],
-  normalizeDateForSpain(client.fecha_presentacion),
-  "fecha de presentación",
-  1
-);
+    await fillFirstAvailableOrPosition(
+      page,
+      [
+        'input[name="fechaPresentacion"]',
+        'input[name="fecha_presentacion"]',
+        'input[name="fechaSolicitud"]',
+        'input[name="fecha"]',
+        'input[id*="fecha" i]',
+        'input[name*="fecha" i]',
+        'input[placeholder*="fecha" i]',
+      ],
+      normalizeDateForSpain(client.fecha_presentacion),
+      "fecha de presentación",
+      1
+    );
     
     await fillFirstAvailableOrPosition(
       page,
@@ -442,82 +512,76 @@ await fillFirstAvailableOrPosition(
         'input[placeholder*="nacimiento" i]',
       ],
       extractBirthYear(client.fecha_nacimiento),
-     "año de nacimiento",
-2
+      "año de nacimiento",
+      2
     );
-// BOTON AUDIO CAPTCHA
-const reproductor = page.locator("audio").first();
 
-console.log("Audio encontrado:", await reproductor.count());
-const audioSrc = await reproductor.getAttribute("src");
+    // Resolver CAPTCHA de audio
+    const captchaText = await resolveCaptchaAudio(page);
+    
+    // Encontrar y llenar el input del CAPTCHA
+    const captchaInput = page.locator('input[type="text"], input[placeholder*="texto"], input[placeholder*="código"], input[name*="captcha"]').first();
+    await captchaInput.fill(captchaText);
+    console.log("📝 Captcha escrito:", captchaText);
 
-const base64Audio = audioSrc.split(",")[1];
+    // Tomar screenshot antes de consultar
+    await page.screenshot({ path: "antes-consultar.png", fullPage: true });
+    await page.waitForTimeout(2000);
 
-fs.writeFileSync(
-  "captcha.mp3",
-  Buffer.from(base64Audio, "base64")
-);
-const transcription = await openai.audio.transcriptions.create({
-  file: fs.createReadStream("captcha.mp3"),
-  model: "gpt-4o-mini-transcribe",
-});
-
-const captchaText = transcription.text
-  .replace(/[^a-zA-Z0-9]/g, "")
-  .trim();
-
-console.log("CAPTCHA:", captchaText);
-
-await page.locator('input[placeholder*="texto" i]').fill(captchaText);
-
-console.log("Captcha escrito:", captchaText);
-
-await page.screenshot({
-  path: "captcha-audio.png",
-  fullPage: true
-});
-
-await page.waitForTimeout(3000);
-
-// GUARDAR HTML PARA VER COMO SALE EL AUDIO
-const html = await page.content();
-
-
-
-fs.writeFileSync("captcha_debug.html", html);
-
-console.log("Audio pulsado");
+    // Hacer clic en CONSULTAR
     await clickFirstAvailable(
       page,
       [
-        'input[type="submit"]',
+        'button:has-text("Consultar")',
+        'input[type="submit"][value*="Consultar"]',
         'button[type="submit"]',
+        '#consultar',
+        '.btn-consultar',
         'input[value*="Consultar" i]',
         'input[value*="Aceptar" i]',
-        'button:has-text("Consultar")',
         'button:has-text("Aceptar")',
-        'a:has-text("Consultar")',
       ],
       "consultar"
     );
 
-    await page.waitForLoadState("domcontentloaded", { timeout: 60000 }).catch(() => {});
+    // Esperar la respuesta
     await page.waitForTimeout(8000);
+    
+    // Verificar si hay error de JavaScript
+    const pageContent = await page.content();
+    if (pageContent.includes('JavaScript desactivado') || pageContent.includes('noJS')) {
+      console.log("⚠️ El sitio detectó automatización. Reintentando con más delays...");
+      await page.waitForTimeout(5000);
+    }
 
-    const resultText = (await page.textContent("body")) || "";
+    // Esperar a que cargue el resultado
+    try {
+      await page.waitForFunction(
+        () => {
+          const body = document.body.innerText;
+          return body.includes('favorable') || 
+                 body.includes('pendiente') || 
+                 body.includes('en trámite') ||
+                 body.includes('resuelto') ||
+                 body.includes('denegado') ||
+                 body.length > 500;
+        },
+        { timeout: 30000 }
+      );
+    } catch (error) {
+      console.log("Timeout esperando resultado, continuando...");
+    }
+
+    const resultText = await page.textContent("body");
     const estado = buildStatus(resultText);
     const favorable = estado === "favorable";
 
     const screenshotName = `expediente-${client.id}-${Date.now()}.png`;
+    await page.screenshot({ path: screenshotName, fullPage: true });
 
-    await page.screenshot({
-      path: screenshotName,
-      fullPage: true,
-    });
-
-    console.log("Resultado expediente:", estado);
-    console.log(cleanText(resultText).slice(0, 1000));
-    console.log("Screenshot:", screenshotName);
+    console.log("📊 Resultado expediente:", estado);
+    console.log("📝 Texto extraído:", cleanText(resultText).slice(0, 500));
+    console.log("📸 Screenshot:", screenshotName);
 
     if (favorable) {
       await sendWhatsAppNotification(client, resultText);
@@ -535,21 +599,24 @@ console.log("Audio pulsado");
     });
 
     await browser.close();
+    
   } catch (error) {
-    console.log("Error verificando expediente:");
+    console.log("❌ Error verificando expediente:");
     console.log(error);
 
-    await updateExpediente(client.id, {
-      estado: "error",
-      resultado: error?.message || String(error),
-      favorable: false,
-      notificado: false,
-      last_check: new Date().toISOString(),
-      checked_at: new Date().toISOString(),
-    }).catch((updateError) => {
+    try {
+      await updateExpediente(client.id, {
+        estado: "error",
+        resultado: error?.message || String(error),
+        favorable: false,
+        notificado: false,
+        last_check: new Date().toISOString(),
+        checked_at: new Date().toISOString(),
+      });
+    } catch (updateError) {
       console.log("No se pudo guardar el error en expediente_checks:");
       console.log(updateError);
-    });
+    }
 
     if (browser) {
       await browser.close().catch(() => {});
@@ -558,7 +625,8 @@ console.log("Audio pulsado");
 }
 
 async function runWorker() {
-  console.log("Expediente Worker Started");
+  console.log("🚀 Expediente Worker Started");
+  console.log(`📅 ${new Date().toISOString()}`);
 
   const { data, error } = await supabase
     .from("expediente_checks")
@@ -573,24 +641,25 @@ async function runWorker() {
   }
 
   if (!data?.length) {
-    console.log("No hay expedientes pendientes.");
+    console.log("📭 No hay expedientes pendientes.");
     return;
   }
 
+  console.log(`📋 Procesando ${data.length} expediente(s)...`);
+
   for (const client of data) {
-    console.log("CLIENTE:");
-console.log(client);
+    console.log(`\n👤 Cliente: ${client.id} - ${client.expediente_numero}`);
+    
     if (
       !client.expediente_numero ||
       !client.identificador_solicitud ||
       !client.fecha_nacimiento
     ) {
-      console.log(`Expediente ${client.id} incompleto. Saltando.`);
+      console.log(`⚠️ Expediente ${client.id} incompleto. Saltando.`);
 
       await updateExpediente(client.id, {
         estado: "datos_incompletos",
-        resultado:
-          "Faltan expediente_numero, identificador_solicitud o fecha_nacimiento.",
+        resultado: "Faltan expediente_numero, identificador_solicitud o fecha_nacimiento.",
         favorable: false,
         notificado: false,
         last_check: new Date().toISOString(),
@@ -606,6 +675,9 @@ console.log(client);
 }
 
 async function startLoop() {
+  console.log("🔄 Iniciando loop de monitoreo...");
+  console.log(`⏱️  Intervalo: ${CHECK_INTERVAL_MS / 1000} segundos`);
+  
   while (true) {
     try {
       await runWorker();
@@ -614,7 +686,7 @@ async function startLoop() {
       console.log(error);
     }
 
-    console.log(`Esperando ${CHECK_INTERVAL_MS / 1000}s para el siguiente ciclo...`);
+    console.log(`\n⏰ Esperando ${CHECK_INTERVAL_MS / 1000}s para el siguiente ciclo...\n`);
     await sleep(CHECK_INTERVAL_MS);
   }
 }
