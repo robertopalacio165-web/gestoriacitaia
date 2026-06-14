@@ -104,15 +104,19 @@ export default function Regularizacion2026() {
         setShowStripe(false);
         setPaymentRequired(false);
         questionFlowLockedRef.current = false;
-        stopListening();
-        setTimeout(async () => {
-          startListening();
-        }, 1500);
+        
+        // NO iniciar listening automáticamente
         setQuestionIndex(0);
         setDocumentsUnlocked(true);
         setConfirmUnlocked(true);
         setQuestionsDone(true);
         setStep("upload");
+        
+        // Mensaje de bienvenida sin activar micrófono
+        setTimeout(() => {
+          speakExactText("مزيان. دابا خاصك ترفع جميع الوثائق اللي عندك. من بعد ما تسالي رفع الوثائق كاملة، ورك على زر التحقق من الوثائق باش نراجعهم ليك كاملين.");
+        }, 1200);
+        
         try {
           const pdfRes = await fetch("/api/generate-expediente-pdf", {
             method: "POST",
@@ -140,9 +144,6 @@ export default function Regularizacion2026() {
       }
       setShowStripe(false);
       setPaymentRequired(false);
-      setTimeout(() => {
-        speakExactText("مزيان. قولي شنو سميتك؟");
-      }, 1200);
     };
     handlePaidFlow();
   }, []);
@@ -1360,7 +1361,10 @@ GestoriaCitaIA
   const handleVerifyAll = async () => {
     try {
       setGeneralUploading(true);
-      if (!docs.length) { await speakFromAutomation("مازال ما توصلتش بالوثائق ديالك."); return; }
+      if (!docs.length) { 
+        await speakFromAutomation("مازال ما توصلتش بالوثائق ديالك."); 
+        return; 
+      }
 
       let explanation = "دابا غادي نشرح ليك الملف ديالك:\n\n";
       let hasPassport = false;
@@ -1426,14 +1430,6 @@ GestoriaCitaIA
       const soufianeUnlockCondition = hasPassport && hasMonths && (!hasExpulsion || expulsionExpired);
       setSoufianeReady(soufianeUnlockCondition);
       
-      if (!soufianeUnlockCondition) {
-        let mensajeAdicional = "\n\n⚠️ مازال ما تقدرش تحكي مع سفيان. ";
-        if (!hasPassport) mensajeAdicional += "خاصك ترفع الباسبور أو NIE. ";
-        if (!hasMonths) mensajeAdicional += `خاصك تجيب بروفات ديال 5 شهور (عندك ${stayDays} يوم). `;
-        if (hasExpulsion && !expulsionExpired) mensajeAdicional += "عندك قرار طرد نشط خاصك تحلو. ";
-        explanation += mensajeAdicional;
-      }
-
       const fullSpeech = `
 ${explanation}
 
@@ -1466,25 +1462,25 @@ ${explanation}
 حظ موفق سعيد.
 `;
 
-      if (!realtimeDcRef.current || realtimeDcRef.current.readyState !== "open") {
-        console.log("⚠️ REALTIME CLOSED - RECONNECTING");
-        await startListening();
-        await new Promise((resolve) => setTimeout(resolve, 3500));
-      }
+      if (soufianeUnlockCondition) {
+        if (!realtimeDcRef.current || realtimeDcRef.current.readyState !== "open") {
+          console.log("⚠️ REALTIME CLOSED - RECONNECTING");
+          await startListening();
+          await new Promise((resolve) => setTimeout(resolve, 3500));
+        }
 
-      if (realtimeDcRef.current && realtimeDcRef.current.readyState === "open") {
-        console.log("✅ VERIFY SPEECH START");
-        await speakFromAutomation(fullSpeech);
-        await new Promise(resolve => setTimeout(resolve, 18000));
-        await startListening();
-      } else {
-        console.error("❌ REALTIME STILL CLOSED");
-        await startListening();
-        await new Promise(resolve => setTimeout(resolve, 3500));
-        if (realtimeDcRef.current?.readyState === "open") {
+        if (realtimeDcRef.current && realtimeDcRef.current.readyState === "open") {
+          console.log("✅ VERIFY SPEECH START - Soufiane va a hablar");
           await speakFromAutomation(fullSpeech);
         }
+      } else {
+        let mensajeFalta = "الوثائق ناقصة. خاصك: ";
+        if (!hasPassport) mensajeFalta += "باسبور أو NIE، ";
+        if (!hasMonths) mensajeFalta += `بروفات ديال 5 شهور (عندك ${stayDays} يوم)، `;
+        if (hasExpulsion && !expulsionExpired) mensajeFalta += "حل قرار الطرد النشط";
+        await speakFromAutomation(mensajeFalta);
       }
+      
     } catch (err) {
       console.error(err);
       await speakFromAutomation("وقع مشكل وأنا كنحلل الوثائق، عاود حاول.");
@@ -1494,8 +1490,6 @@ ${explanation}
   };
 
   const goToSara = () => { window.location.href = "/sara"; };
-
-  const latestAgentMessage = [...voiceHistory].reverse().find((msg) => msg.from === "agent")?.text || voiceTexts.initialVoice;
 
   return (
     <div className="min-h-screen">
@@ -1518,6 +1512,7 @@ ${explanation}
           </div>
 
           <div className="mt-2 max-w-7xl mx-auto lg:grid lg:grid-cols-[480px_1fr] lg:gap-6">
+            {/* Video de Soufiane */}
             <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="rounded-[26px] overflow-hidden relative">
               <div className="relative">
                 <div className="relative">
@@ -1537,8 +1532,10 @@ ${explanation}
               </div>
             </motion.div>
 
-            {/* Panel de estadísticas y pago - RESTAURADO */}
+            {/* Panel derecho */}
             <div className="mt-0 w-full max-w-none lg:col-start-2">
+              
+              {/* Panel de pago - Solo visible si no ha pagado */}
               {!paymentCompleted && (
                 <div className="p-3">
                   <div className="relative overflow-hidden rounded-2xl border border-yellow-500/30 bg-gradient-to-br from-[#1a1200] via-[#0b0b0b] to-[#1a1200] p-4 w-full">
@@ -1563,7 +1560,7 @@ ${explanation}
                       <div className="h-8 px-2 rounded-lg bg-white flex items-center justify-center text-black font-black text-[10px]">G Pay</div>
                     </div>
                   </div>
-                  <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
+                  <div className="rounded-2xl border border-white/10 bg-white/5 p-3 mt-3">
                     <div className="flex items-center gap-2 mb-3">
                       <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
                       <p className="text-white font-bold">Soufiane IA</p>
@@ -1573,27 +1570,20 @@ ${explanation}
                 </div>
               )}
 
-              {/* CUADRO DE ESTADÍSTICAS - RESTAURADO */}
-              <div className="mt-4 rounded-2xl border border-green-500/20 bg-[#071326] p-4">
-                <h3 className="text-center text-green-400 font-bold text-lg mb-4">Miles de personas ya usan GestoriaCitaIA</h3>
-                <div className="grid grid-cols-4 gap-2 text-center">
-                  <div><p className="text-green-400 text-2xl font-black">18K+</p><p className="text-white/60 text-xs">Trámites</p></div>
-                  <div><p className="text-blue-400 text-2xl font-black">97%</p><p className="text-white/60 text-xs">Verificado</p></div>
-                  <div><p className="text-purple-400 text-2xl font-black">4m</p><p className="text-white/60 text-xs">Continuar</p></div>
-                  <div><p className="text-yellow-400 text-2xl font-black">100%</p><p className="text-white/60 text-xs">Asistente IA</p></div>
-                </div>
-                <div className="mt-4 rounded-full border border-yellow-500/30 py-2 text-center text-white font-bold">🏆 Regularización 2026</div>
-                <div className="flex items-end justify-between mt-4">
-                  <div><p className="text-green-400 text-4xl font-black">4.9/5</p><p className="text-yellow-400">★★★★★</p></div>
-                  <div className="text-white font-bold">+2K</div>
-                </div>
-              </div>
-
-              {/* BOTONES - SOLO DESPUÉS DE PAGO */}
+              {/* BOTONES - Solo visibles después del pago */}
               {paymentCompleted && (
                 <div className="mt-5 space-y-4">
+                  {/* Botón Hablar con Soufiane - DESHABILITADO hasta verificar documentos */}
                   <button
-                    onClick={isListening ? stopListening : startListening}
+                    onClick={() => {
+                      if (soufianeReady) {
+                        if (isListening) {
+                          stopListening();
+                        } else {
+                          startListening();
+                        }
+                      }
+                    }}
                     disabled={!soufianeReady}
                     className={`w-[92%] mx-auto h-[52px] rounded-[20px] flex items-center justify-center gap-3 text-[16px] font-semibold border shadow-xl transition-all duration-300 ${
                       !soufianeReady ? "bg-gray-600 opacity-60 cursor-not-allowed text-white"
@@ -1605,16 +1595,18 @@ ${explanation}
                       <><MicOff className="w-5 h-5" />Soufiane escuchando...</>
                     ) : (
                       <><Mic className="w-5 h-5" />
-                        {safeLang === "darija" ? (!soufianeReady ? "حقق الوثائق أولاً" : "تكلم مع سفيان") : safeLang === "en" ? (!soufianeReady ? "Verify documents first" : "Talk with Soufiane") : (!soufianeReady ? "Verificar documentos primero" : "Hablar con Soufiane")}
+                        {!soufianeReady ? "Verificar documentos primero" : "Hablar con Soufiane"}
                       </>
                     )}
                   </button>
 
+                  {/* Botón Subir documentos */}
                   <button onClick={handleGeneralUpload} disabled={generalUploading} className="w-[92%] mx-auto h-[52px] rounded-[20px] border border-[#c6922f] bg-[#050816] hover:bg-[#0b1220] transition-all text-white font-medium text-[16px] flex items-center justify-center gap-3 shadow-lg">
                     <Upload className="w-5 h-5 text-[#d4a94d]" />
                     {generalUploading ? "Subiendo..." : "Subir documentos"}
                   </button>
 
+                  {/* Botón Verificar documentos - Este activa soufianeReady */}
                   <button onClick={handleVerifyAll} className="w-[92%] mx-auto h-[52px] rounded-[20px] border border-[#c6922f] bg-[#050816] hover:bg-[#0b1220] transition-all text-white font-medium text-[16px] flex items-center justify-center gap-3 shadow-lg">
                     <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-[#d4a94d]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4" />
@@ -1622,6 +1614,7 @@ ${explanation}
                     Verificar documentos
                   </button>
 
+                  {/* Botón Verificar Asilo */}
                   <button onClick={handleVerifyAsilo} className="w-[92%] mx-auto h-[52px] rounded-[20px] border border-[#c6922f] bg-[#050816] hover:bg-[#0b1220] transition-all text-white font-medium text-[16px] flex items-center justify-center gap-3 shadow-lg">
                     <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-[#d4a94d]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
@@ -1629,6 +1622,7 @@ ${explanation}
                     Verificar Asilo
                   </button>
 
+                  {/* Botón Verificar Expulsión */}
                   <button onClick={handleVerifyExpulsion} className="w-[92%] mx-auto h-[52px] rounded-[20px] border border-[#c6922f] bg-[#050816] hover:bg-[#0b1220] transition-all text-white font-medium text-[16px] flex items-center justify-center gap-3 shadow-lg">
                     <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-[#d4a94d]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
@@ -1636,6 +1630,7 @@ ${explanation}
                     Verificar Expulsión Europea
                   </button>
 
+                  {/* Input WhatsApp */}
                   <div className="w-[92%] mx-auto h-[52px] rounded-[20px] border border-[#c6922f]/40 bg-[#050816] flex items-center overflow-hidden shadow-lg">
                     <div className="w-[58px] h-full flex items-center justify-center border-r border-[#c6922f]/30 bg-black">
                       <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" className="w-6 h-6" />
@@ -1644,7 +1639,7 @@ ${explanation}
                       type="tel" 
                       value={phone} 
                       onChange={(e) => setPhone(e.target.value)} 
-                      placeholder={safeLang === "darija" ? "رقم الواتساب" : safeLang === "en" ? "WhatsApp number" : "Número WhatsApp"} 
+                      placeholder="Número WhatsApp" 
                       className="flex-1 h-full bg-transparent px-4 text-white placeholder:text-white/40 outline-none text-[16px]" 
                     />
                   </div>
