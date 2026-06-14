@@ -236,7 +236,7 @@ window.location.href = data.url;
   const [voiceHistory, setVoiceHistory] = useState<ChatMsg[]>([]);
   const [currentStep, setCurrentStep] = useState(0);
   const [lastUserTranscript, setLastUserTranscript] = useState("");
-  const [waitingMohamed, setWaitingMohamed] = useState(false);
+const [waitingSoufiane, setWaitingSoufiane] = useState(false);
   const [savingForm, setSavingForm] = useState(false);
   const [waitingForDocument, setWaitingForDocument] = useState(false);
   const [documentsUnlocked, setDocumentsUnlocked] = useState(false);
@@ -309,7 +309,7 @@ const voiceTexts = useMemo(() => ({
   stayProofVerified: "",
   uploadWarn: "",
   uploadUnknown: "",
-  mohamedFinal: "",
+  soufianeFinal: "",
   realtimeError: "وقع مشكل فالصوت المباشر",
 }), []);
 
@@ -318,17 +318,20 @@ const voiceTexts = useMemo(() => ({
       return {
         online: "متصل الآن",
         role: "مختص فالهجرة",
-        voiceButton: "تكلم مع محمد",
+      voiceButton: "تكلم مع سفيان",
         stopButton: "وقف الميكروفون",
-        saveLeadButton: savingForm ? "كيتحفظ..." : "حفظ المعطيات والمتابعة مع محمد",
+  saveLeadButton: savingForm
+  ? "كيتحفظ..."
+  : "حفظ المعطيات والمتابعة مع سفيان",
         saveLeadTitle: "تحفظات المعطيات",
-        saveLeadDesc: "محمد يقدر دابا يبدا معاك بالصوت.",
+  saveLeadDesc:
+"سفيان يقدر دابا يبدا معاك بالصوت.",
         formTitle: "لوحة رسمية مدمجة",
-        formDesc:
-          "عمر المعطيات الأساسية باش محمد يبدا يراجع الملف ديالك بالصوت.",
+     formDesc:
+"عمر المعطيات الأساسية باش سفيان يبدا يراجع الملف ديالك بالصوت.",
         uploadGeneral: generalUploading ? "كيترفع..." : "رفع الوثائق",
-        uploadGeneralDesc:
-          "من هنا تقدر ترفع جميع الوثائق اللي طلب منك محمد، سواء كانت صورة أو PDF.",
+      uploadGeneralDesc:
+"من هنا تقدر ترفع جميع الوثائق اللي طلب منك سفيان، سواء كانت صورة أو PDF.",
         uploading: "كيترفع...",
         uploadSuccessTitle: "تقبلات الوثيقة",
         uploadSuccessDesc: "راجعنا الوثيقة وربطناها مع الملف.",
@@ -336,8 +339,10 @@ const voiceTexts = useMemo(() => ({
         uploadErrorDesc: "ما قدرناش نربط هاد الوثيقة مع الملف.",
         missingTitle: "كاينين بيانات ناقصين",
         missingDesc: "عمر الاسم والهاتف والمدينة قبل ما تكمل.",
-        listening: "محمد كيسمع ليك دابا...",
-        latestReply: "آخر جواب ديال محمد",
+  listening:
+"سفيان كيسمع ليك دابا...",
+     latestReply:
+"آخر جواب ديال سفيان",
         yourVoice: "آخر جواب ديالك بالصوت",
         micNotSupported:
           "هاد المتصفح ما كيدعمش الصوت المباشر. استعمل Chrome حديث.",
@@ -371,27 +376,54 @@ const voiceTexts = useMemo(() => ({
     return {
       online: "En línea",
       role: "Especialista en Extranjería",
-      voiceButton: "Hablar con Mohamed",
-      stopButton: "Parar micrófono",
-      saveLeadButton: savingForm ? "Guardando..." : "Guardar datos y continuar con Mohamed",
-      saveLeadTitle: "Datos guardados",
-      saveLeadDesc: "Mohamed ya puede empezar contigo por voz.",
-      formTitle: "Panel oficial integrado",
-      formDesc:
-        "Rellena los datos básicos para que Mohamed empiece a revisar tu caso por voz.",
-      uploadGeneral: generalUploading ? "Subiendo..." : "Subir documentos",
-      uploadGeneralDesc:
-        "Usa este botón para subir todos los documentos que te pida Mohamed, en foto o en PDF.",
-      uploading: "Subiendo...",
-      uploadSuccessTitle: "Documento recibido",
-      uploadSuccessDesc: "El documento se ha revisado y vinculado al expediente.",
-      uploadErrorTitle: "Error en documento",
-      uploadErrorDesc: "No se pudo vincular ese documento al expediente.",
-      missingTitle: "Faltan datos",
-      missingDesc: "Rellena nombre, teléfono y ciudad antes de continuar.",
-      listening: "Mohamed te está escuchando ahora...",
-      latestReply: "Última respuesta de Mohamed",
-      yourVoice: "Tu última respuesta por voz",
+   voiceButton: "Hablar con Soufiane",
+stopButton: "Parar micrófono",
+
+saveLeadButton: savingForm
+  ? "Guardando..."
+  : "Guardar datos y continuar con Soufiane",
+
+saveLeadTitle: "Datos guardados",
+
+saveLeadDesc:
+  "Soufiane ya puede empezar contigo por voz.",
+
+formTitle: "Panel oficial integrado",
+
+formDesc:
+  "Rellena los datos básicos para que Soufiane empiece a revisar tu caso por voz.",
+
+uploadGeneral:
+  generalUploading ? "Subiendo..." : "Subir documentos",
+
+uploadGeneralDesc:
+  "Usa este botón para subir todos los documentos que te pida Soufiane, en foto o PDF.",
+
+uploading: "Subiendo...",
+
+uploadSuccessTitle: "Documento recibido",
+
+uploadSuccessDesc:
+  "El documento se ha vinculado correctamente al expediente.",
+
+uploadErrorTitle: "Error en documento",
+
+uploadErrorDesc:
+  "No se pudo vincular el documento al expediente.",
+
+missingTitle: "Faltan datos",
+
+missingDesc:
+  "Rellena nombre, teléfono y ciudad antes de continuar.",
+
+listening:
+  "Soufiane te está escuchando ahora...",
+
+latestReply:
+  "Última respuesta de Soufiane",
+
+yourVoice:
+  "Tu última respuesta por voz",
       micNotSupported:
         "Este navegador no soporta voz en tiempo real. Usa Chrome moderno.",
       docStatusTitle: "Estado de tu expediente",
@@ -427,26 +459,29 @@ const voiceTexts = useMemo(() => ({
   );
 
   const historyStorageKey = useMemo(
-    () => `gestoriacitaia_mohamed_voice_history_${selectedSituacion}`,
-    [selectedSituacion]
-  );
-  const formStorageKey = useMemo(
-    () => `gestoriacitaia_mohamed_form_${selectedSituacion}`,
-    [selectedSituacion]
-  );
-  const leadSavedStorageKey = useMemo(
-    () => `gestoriacitaia_mohamed_lead_saved_${selectedSituacion}`,
-    [selectedSituacion]
-  );
-  const stepStorageKey = useMemo(
-  () => `gestoriacitaia_mohamed_step_${selectedSituacion}`,
+  () => `gestoriacitaia_soufiane_voice_history_${selectedSituacion}`,
   [selectedSituacion]
 );
-  const docsStorageKey = useMemo(
-    () => `gestoriacitaia_mohamed_docs_${selectedSituacion}`,
-    [selectedSituacion]
-  );
 
+const formStorageKey = useMemo(
+  () => `gestoriacitaia_soufiane_form_${selectedSituacion}`,
+  [selectedSituacion]
+);
+
+const leadSavedStorageKey = useMemo(
+  () => `gestoriacitaia_soufiane_lead_saved_${selectedSituacion}`,
+  [selectedSituacion]
+);
+
+const stepStorageKey = useMemo(
+  () => `gestoriacitaia_soufiane_step_${selectedSituacion}`,
+  [selectedSituacion]
+);
+
+const docsStorageKey = useMemo(
+  () => `gestoriacitaia_soufiane_docs_${selectedSituacion}`,
+  [selectedSituacion]
+);
   const leadFormReady =
     !!leadForm.nombre.trim() &&
     !!leadForm.telefono.trim() &&
@@ -580,7 +615,7 @@ if (rawStep) {
 }
       
     } catch (error) {
-      console.error("Error cargando estado de Mohamed:", error);
+      console.error("Error cargando estado de Soufiane:", error);
     }
   }, [formStorageKey, leadSavedStorageKey, docsStorageKey]);
 
@@ -588,7 +623,7 @@ if (rawStep) {
     try {
       localStorage.setItem(formStorageKey, JSON.stringify(leadForm));
     } catch (error) {
-      console.error("Error guardando formulario de Mohamed:", error);
+      console.error("Error guardando formulario de Soufiane:", error);
     }
   }, [leadForm, formStorageKey]);
 
@@ -619,7 +654,7 @@ if (rawStep) {
         if (Array.isArray(parsed) && parsed.length > 0) {
           setVoiceHistory(parsed);
           const completionAlreadySent = parsed.some(
-            (m) => m.from === "agent" && m.text === voiceTexts.mohamedFinal
+            (m) => m.from === "agent" && m.text === voiceTexts.soufianeFinal
           );
           const leadAlreadySaved = parsed.some(
             (m) => m.from === "agent" && m.text.includes("المعطيات ديالك تحفظات")
@@ -634,19 +669,19 @@ if (rawStep) {
         { from: "agent", text: voiceTexts.initialVoice, ts: Date.now() },
       ]);
     } catch (error) {
-      console.error("Error cargando historial de Mohamed:", error);
+      console.error("Error cargando historial de Soufiane:", error);
       setVoiceHistory([
         { from: "agent", text: voiceTexts.initialVoice, ts: Date.now() },
       ]);
     }
-  }, [historyStorageKey, voiceTexts.initialVoice, voiceTexts.mohamedFinal]);
+  }, [historyStorageKey, voiceTexts.initialVoice, voiceTexts.soufianeFinal]);
 
   useEffect(() => {
     if (voiceHistory.length === 0) return;
     try {
       localStorage.setItem(historyStorageKey, JSON.stringify(voiceHistory));
     } catch (error) {
-      console.error("Error guardando historial de Mohamed:", error);
+      console.error("Error guardando historial de Soufiane:", error);
     }
   }, [voiceHistory, historyStorageKey]);
 
@@ -778,12 +813,12 @@ pushAgentMessage(PAYMENT_TEXT);
 
    const stripeWatcher = setInterval(() => {
 
-  // Mohamed terminó de hablar
+  // Soufiane terminó de hablar
   if (!assistantBusyRef.current) {
 
     clearInterval(stripeWatcher);
 
-    console.log("✅ MOHAMED FINISHED TALKING");
+    console.log("✅ Soufiane FINISHED TALKING");
 
     setShowStripe(true);
 
@@ -981,7 +1016,7 @@ if (typeof result.verification_score === "number") {
       user_id: user.id,
       case_id: null,
       form_type: "regularizacion_2026",
-      title: "Formulario Mohamed Regularización 2026",
+      title: "Formulario Soufiane Regularización 2026",
       form_data: payload,
       status: "draft",
       updated_at: new Date().toISOString(),
@@ -1001,13 +1036,13 @@ if (typeof result.verification_score === "number") {
     return user.id;
   };
 
-  // ✅ CAMBIO #1: askMohamedToSpeak - AHORA ENVÍA instructions EN response.create
-  const askMohamedToSpeak = async (instruction: string) => {
+  // ✅ CAMBIO #1: askSoufianeToSpeak - AHORA ENVÍA instructions EN response.create
+  const askSoufianeToSpeak = async (instruction: string) => {
     try {
      const finalText = instruction;
   
       if (!realtimeDcRef.current) {
-        console.error("❌ No hay data channel en askMohamedToSpeak");
+        console.error("❌ No hay data channel en askSoufianeToSpeak");
         return false;
       }
       if (realtimeDcRef.current.readyState !== "open") {
@@ -1015,8 +1050,8 @@ if (typeof result.verification_score === "number") {
         return false;
       }
       
-      console.log("🎤 askMohamedToSpeak llamado:", instruction);
-      setWaitingMohamed(true);
+      console.log("🎤 askSoufianeToSpeak llamado:", instruction);
+      setWaitingSoufiane(true);
       assistantTextBufferRef.current = "";
       
       // ✅ PRIMER mensaje: crear el item
@@ -1046,7 +1081,7 @@ if (typeof result.verification_score === "number") {
       
       return true;
     } catch (error) {
-      console.error("❌ Error en askMohamedToSpeak:", error);
+      console.error("❌ Error en askSoufianeToSpeak:", error);
       return false;
     }
   };
@@ -1088,12 +1123,12 @@ if (typeof result.verification_score === "number") {
 }
         })
       );
-      console.log("✅ response.create enviado - Mohamed DEBERÍA hablar");
+      console.log("✅ response.create enviado - Soufiane DEBERÍA hablar");
       
       // Limpiar después de enviar
       pendingAutomationPromptRef.current = null;
       setPendingAutomationPrompt("");
-      setWaitingMohamed(false);
+      setWaitingSoufiane(false);
     } catch (error) {
       console.error("❌ Error enviando:", error);
     }
@@ -1143,7 +1178,7 @@ const NAME_QUESTION =
 
 
 
- const maybeSendIntroToMohamed = async () => {
+ const maybeSendIntroToSoufiane = async () => {
   if (!realtimeDcRef.current) return;
 
   realtimeDcRef.current.send(
@@ -1152,7 +1187,7 @@ const NAME_QUESTION =
       response: {
         modalities: ["audio", "text"],
         instructions: `
-السلام عليكم، أنا محمد من هيستوريا سيطا AI. مرحبا بك.
+السلام عليكم، أنا سفيان من هيستوريا سيطا AI. مرحبا بك.
 
 غادي نطرح عليك شوية ديال الأسئلة وغادي تجاوبني غير بآه ولا لا.
 
@@ -1189,7 +1224,7 @@ const NAME_QUESTION =
       assistantBusyRef.current = false;
       isConnectingRef.current = false;
       setIsListening(false);
-      setWaitingMohamed(false);
+      setWaitingSoufiane(false);
     }
   };
 const handleSendWhatsApp = async () => {
@@ -1289,14 +1324,14 @@ GestoriaCitaIA
     if (realtimeDcRef.current && realtimeDcRef.current.readyState === "open") return;
     try {
       isConnectingRef.current = true;
-      setWaitingMohamed(true);
+      setWaitingSoufiane(true);
     const sessionRes = await fetch(`/api/realtime-session?ts=${Date.now()}`, {
   method: "POST",
   headers: {
     "Content-Type": "application/json",
     "Cache-Control": "no-cache",
   },
- body: JSON.stringify({ assistant: "mohamed" }),
+ body: JSON.stringify({ assistant: "soufiane"  }),
 });
       const sessionData = await sessionRes.json();
       if (!sessionRes.ok) {
@@ -1319,7 +1354,7 @@ GestoriaCitaIA
           const playPromise = remoteAudioRef.current.play();
           if (playPromise) {
             playPromise.catch((err) => {
-              console.error("Error reproduciendo audio remoto Mohamed:", err);
+              console.error("Error reproduciendo audio remoto Soufiane:", err);
             });
           }
         }
@@ -1346,19 +1381,19 @@ GestoriaCitaIA
         dcOpenedRef.current = true;
         isConnectingRef.current = false;
         setIsListening(true);
-        setWaitingMohamed(false);
+        setWaitingSoufiane(false);
 dc.send(
   JSON.stringify({
     type: "session.update",
     session: {
     instructions: `
-أنت محمد من GestoriaCitaIA.
+أنت سفيان من GestoriaCitaIA.
 
 ممنوع تبدأ الحوار من جديد.
 ممنوع تقول:
 "غنعاود من الأول"
 أو
-"أنا محمد"
+"أنا سفيان"
 أو
 "مرحبا"
 إلا فالبداية الأولى فقط.
@@ -1394,7 +1429,7 @@ turn_detection: {
           pendingAutomationPromptRef.current = null;
           setPendingAutomationPrompt("");
           setTimeout(() => {
-            void askMohamedToSpeak(capturedPending);
+            void askSoufianeToSpeak(capturedPending);
           }, 400);
           return;
         }
@@ -1402,7 +1437,7 @@ turn_detection: {
 
   setTimeout(() => {
 
-    void maybeSendIntroToMohamed();
+    void maybeSendIntroToSoufiane();
 
   }, 500);
 
@@ -1460,7 +1495,7 @@ if (
  
 console.log("🚀 START INTRO");
 
-maybeSendIntroToMohamed();
+maybeSendIntroToSoufiane();
 
 realtimeLocalStreamRef.current
   ?.getTracks()
@@ -1471,7 +1506,7 @@ realtimeLocalStreamRef.current
 questionFlowLockedRef.current = true;
  
 const introText = `
-السلام عليكم، أنا محمد من هيستوريا سيطا AI. مرحبا بك.
+السلام عليكم، أنا سفيان من هيستوريا سيطا AI. مرحبا بك.
 
 غادي نطرح عليك شوية ديال الأسئلة وغادي تجاوبني غير بآه ولا لا.
 
@@ -1596,9 +1631,9 @@ if (
 if (msg.type === "response.created") {
   assistantBusyRef.current = true;
 
-setWaitingMohamed(true);
+setWaitingSoufiane(true);
 
-// 🔇 cortar micro COMPLETAMENTE mientras Mohamed habla
+// 🔇 cortar micro COMPLETAMENTE mientras Soufiane habla
 if (realtimeLocalStreamRef.current) {
 
   realtimeLocalStreamRef.current
@@ -1608,12 +1643,12 @@ if (realtimeLocalStreamRef.current) {
     });
 
 }
-// 🎤 سد الميكروفون ملي محمد كيهضر
+// 🎤 سد الميكروفون ملي سفيان كيهضر
  
 
   assistantBusyRef.current = true;
 
- setWaitingMohamed(true);
+ setWaitingSoufiane(true);
 // 🔇 قطع الميكرو الحقيقي
 if (senderRef.current) {
 
@@ -1624,7 +1659,7 @@ if (senderRef.current) {
 
     if (msg.type === "response.done") {
   assistantBusyRef.current = false;
-      // 🎤 reactivar micro SOLO cuando Mohamed termina
+      // 🎤 reactivar micro SOLO cuando Soufiane termina
 if (realtimeLocalStreamRef.current) {
 
   realtimeLocalStreamRef.current
@@ -1642,7 +1677,7 @@ if (realtimeLocalStreamRef.current) {
   }
 
   finalizeAssistantBuffer();
-// 🎤 فتح الميكروفون بعد ما يسالي محمد
+// 🎤 فتح الميكروفون بعد ما يسالي سفيان
 // 🎤 رجع الميكرو الحقيقي
 const audioTrack =
   realtimeLocalStreamRef.current
@@ -1657,7 +1692,7 @@ if (
 
 }
 
-setWaitingMohamed(false);
+setWaitingSoufiane(false);
   pendingAutomationPromptRef.current = null;
   setPendingAutomationPrompt("");
 
@@ -1704,7 +1739,7 @@ lastUserTranscriptRef.current = "";
       const answerSdp = await sdpRes.text();
       await pc.setRemoteDescription({ type: "answer", sdp: answerSdp });
     } catch (error: any) {
-      console.error("Error iniciando realtime Mohamed:", error);
+      console.error("Error iniciando realtime Soufiane:", error);
       stopListening();
       toast({
         title: "Error realtime",
@@ -1787,12 +1822,12 @@ if (savedIndex) {
         title: ui.saveLeadTitle,
         description: "Se han guardado los datos correctamente.",
       });
-      // ✅ CAMBIO #2: setTimeout para asegurar que Mohamed hable después de guardar
+      // ✅ CAMBIO #2: setTimeout para asegurar que Soufiane hable después de guardar
       setTimeout(() => {
         void speakExactText(savedMessage);
       }, 500);
     } catch (error: any) {
-      console.error("Error guardando formulario Mohamed:", error);
+      console.error("Error guardando formulario Soufiane:", error);
       toast({
         title: "Error guardando formulario",
         description: error?.message || "No se pudo guardar en Supabase",
@@ -1949,7 +1984,7 @@ if (savedIndex) {
     });
     const readyNow = (leadSaved || formConfirmed) && nextStayOk && nextIdentityOk;
     if (readyNow && !completionMessageSent) {
-      pushAgentMessage(voiceTexts.mohamedFinal);
+      pushAgentMessage(voiceTexts.soufianeFinal);
       setCompletionMessageSent(true);
       await speakFromAutomation(
         "قل الآن للعميل باختصار: مزيان. كلشي واجد ومراجع. دابا غادي نجهزو ليك الملف النهائي باش يتبعث ليك فـ واتساب."
@@ -2196,7 +2231,7 @@ const fullSpeech = `
 حظ موفق سعيد.
 `;
 
-    // 🔊 هنا محمد غادي يهضر بصوت حقيقي
+    // 🔊 هنا سفيان غادي يهضر بصوت حقيقي
     // ✅ نتأكدو realtime مفتوح
 if (
   !realtimeDcRef.current ||
@@ -2370,7 +2405,7 @@ className="fixed inset-0 z-0 opacity-25 pointer-events-none"
 
         <div>
           <p className="text-white font-bold text-lg">
-            Desbloquea a Mohamed
+            Desbloquea a Soufiane
           </p>
 
           <span className="inline-flex mt-1 px-2 py-1 rounded-full bg-yellow-500 text-black text-[10px] font-bold">
@@ -2391,7 +2426,7 @@ className="fixed inset-0 z-0 opacity-25 pointer-events-none"
       </div>
 
  <p className="text-white/70 text-[13px] leading-relaxed mb-3">
-        Acceso ilimitado a Mohamed IA, videollamada realtime,
+        Acceso ilimitado a Soufiane IA, videollamada realtime,
         análisis de documentos y generación automática del expediente.
       </p>
 
@@ -2414,7 +2449,7 @@ className="w-[92%] mx-auto flex items-center justify-center h-[52px] rounded-[20
 </div>
 
 <div className="h-8 px-2 rounded-lg bg-white flex items-center justify-center text-black font-black text-[10px]">
-   Pay
+   Pay
 </div>
 
 <div className="h-8 px-2 rounded-lg bg-white flex items-center justify-center text-black font-black text-[10px]">
@@ -2432,7 +2467,7 @@ className="w-[92%] mx-auto flex items-center justify-center h-[52px] rounded-[20
         <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
 
         <p className="text-white font-bold">
-          Mohamed IA
+          Soufiane IA
         </p>
 
       </div>
@@ -2517,17 +2552,17 @@ className={`w-[92%] mx-auto h-[52px] rounded-[20px] flex items-center justify-ce
   {isListening ? (
     <>
       <MicOff className="w-5 h-5" />
-      Mohamed escuchando...
+      Soufiane escuchando...
     </>
   ) : (
     <>
       <Mic className="w-5 h-5" />
       {
         safeLang === "darija"
-          ? "تكلم مع محمد"
+          ? "تكلم مع سفيان"
           : safeLang === "en"
-          ? "Talk with Mohamed"
-          : "Hablar con Mohamed"
+          ? "Talk with Soufiane"
+          : "Hablar con Soufiane"
       }
     </>
   )}
