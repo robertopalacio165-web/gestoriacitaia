@@ -1536,82 +1536,121 @@ ${explanation}
                 </div>
               </div>
             </motion.div>
-          </div>
 
-          {/* SOLO LOS BOTONES - SIN CUADROS EXTRA */}
-          <div className="mt-0 w-full max-w-none lg:col-start-2">
-            {paymentCompleted && (
-              <div className="mt-5 space-y-4">
-                {/* Botón Hablar con Soufiane - BLOQUEADO hasta verificar documentos */}
-                <button
-                  onClick={isListening ? stopListening : startListening}
-                  disabled={!soufianeReady}
-                  className={`w-[92%] mx-auto h-[52px] rounded-[20px] flex items-center justify-center gap-3 text-[16px] font-semibold border shadow-xl transition-all duration-300 ${
-                    !soufianeReady ? "bg-gray-600 opacity-60 cursor-not-allowed text-white"
-                    : isListening ? "bg-red-600 border-red-400 text-white shadow-red-500/30 animate-pulse"
-                    : "bg-gradient-to-r from-[#16a34a] to-[#22c55e] border-[#4ade80] text-white shadow-green-500/20"
-                  }`}
-                >
-                  {isListening ? (
-                    <><MicOff className="w-5 h-5" />Soufiane escuchando...</>
-                  ) : (
-                    <><Mic className="w-5 h-5" />
-                      {safeLang === "darija" ? (!soufianeReady ? "حقق الوثائق أولاً" : "تكلم مع سفيان") : safeLang === "en" ? (!soufianeReady ? "Verify documents first" : "Talk with Soufiane") : (!soufianeReady ? "Verificar documentos primero" : "Hablar con Soufiane")}
-                    </>
-                  )}
-                </button>
-
-                {/* Botón Subir documentos */}
-                <button onClick={handleGeneralUpload} disabled={generalUploading} className="w-[92%] mx-auto h-[52px] rounded-[20px] border border-[#c6922f] bg-[#050816] hover:bg-[#0b1220] transition-all text-white font-medium text-[16px] flex items-center justify-center gap-3 shadow-lg">
-                  <Upload className="w-5 h-5 text-[#d4a94d]" />
-                  {generalUploading ? "Subiendo..." : "Subir documentos"}
-                </button>
-
-                {/* Botón Verificar documentos - Este DESBLOQUEA a Soufiane */}
-                <button onClick={handleVerifyAll} className="w-[92%] mx-auto h-[52px] rounded-[20px] border border-[#c6922f] bg-[#050816] hover:bg-[#0b1220] transition-all text-white font-medium text-[16px] flex items-center justify-center gap-3 shadow-lg">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-[#d4a94d]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4" />
-                  </svg>
-                  Verificar documentos
-                </button>
-
-                {/* Botón Verificar Asilo */}
-                <button 
-                  onClick={handleVerifyAsilo}
-                  className="w-[92%] mx-auto h-[52px] rounded-[20px] border border-[#c6922f] bg-[#050816] hover:bg-[#0b1220] transition-all text-white font-medium text-[16px] flex items-center justify-center gap-3 shadow-lg"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-[#d4a94d]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                  </svg>
-                  Verificar Asilo
-                </button>
-
-                {/* Botón Verificar Expulsión */}
-                <button 
-                  onClick={handleVerifyExpulsion}
-                  className="w-[92%] mx-auto h-[52px] rounded-[20px] border border-[#c6922f] bg-[#050816] hover:bg-[#0b1220] transition-all text-white font-medium text-[16px] flex items-center justify-center gap-3 shadow-lg"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-[#d4a94d]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
-                  </svg>
-                  Verificar Expulsión Europea
-                </button>
-
-                {/* Input WhatsApp */}
-                <div className="w-[92%] mx-auto h-[52px] rounded-[20px] border border-[#c6922f]/40 bg-[#050816] flex items-center overflow-hidden shadow-lg">
-                  <div className="w-[58px] h-full flex items-center justify-center border-r border-[#c6922f]/30 bg-black">
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" className="w-6 h-6" />
+            {/* Panel de estadísticas y pago - RESTAURADO */}
+            <div className="mt-0 w-full max-w-none lg:col-start-2">
+              {!paymentCompleted && (
+                <div className="p-3">
+                  <div className="relative overflow-hidden rounded-2xl border border-yellow-500/30 bg-gradient-to-br from-[#1a1200] via-[#0b0b0b] to-[#1a1200] p-4 w-full">
+                    <div className="flex items-center justify-between mb-3">
+                      <div>
+                        <p className="text-white font-bold text-lg">Desbloquea a Soufiane</p>
+                        <span className="inline-flex mt-1 px-2 py-1 rounded-full bg-yellow-500 text-black text-[10px] font-bold">PREMIUM</span>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xl font-black text-yellow-400 leading-none">14,99€</p>
+                        <p className="text-white/60 text-xs">Acceso completo</p>
+                      </div>
+                    </div>
+                    <p className="text-white/70 text-[13px] leading-relaxed mb-3">Acceso ilimitado a Soufiane IA, videollamada realtime, análisis de documentos y generación automática del expediente.</p>
+                    <button onClick={handleStripePayment} type="button" className="w-[92%] mx-auto flex items-center justify-center h-[52px] rounded-[20px] text-white font-semibold text-[16px] bg-gradient-to-r from-[#16a34a] to-[#22c55e] border border-[#4ade80] shadow-[0_4px_14px_rgba(34,197,94,0.35)]">
+                      🔓 Desbloquear ahora
+                    </button>
+                    <div className="mt-2 flex items-center justify-center gap-2 flex-wrap">
+                      <div className="h-8 px-2 rounded-lg bg-white flex items-center justify-center text-blue-700 font-black text-[10px]">VISA</div>
+                      <div className="h-8 px-2 rounded-lg bg-white flex items-center justify-center text-red-500 font-black text-[10px]">Mastercard</div>
+                      <div className="h-8 px-2 rounded-lg bg-white flex items-center justify-center text-black font-black text-[10px]">Pay</div>
+                      <div className="h-8 px-2 rounded-lg bg-white flex items-center justify-center text-black font-black text-[10px]">G Pay</div>
+                    </div>
                   </div>
-                  <input 
-                    type="tel" 
-                    value={phone} 
-                    onChange={(e) => setPhone(e.target.value)} 
-                    placeholder={safeLang === "darija" ? "رقم الواتساب" : safeLang === "en" ? "WhatsApp number" : "Número WhatsApp"} 
-                    className="flex-1 h-full bg-transparent px-4 text-white placeholder:text-white/40 outline-none text-[16px]" 
-                  />
+                  <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+                      <p className="text-white font-bold">Soufiane IA</p>
+                    </div>
+                    <p className="text-white/80 text-sm leading-relaxed">Especialista profesional en extranjería española para marroquíes en España. Pregunta sobre residencia, papeles, policía, nacionalidad, arraigo, trabajo, estudios y cualquier problema legal relacionado con inmigración.</p>
+                  </div>
+                </div>
+              )}
+
+              {/* CUADRO DE ESTADÍSTICAS - RESTAURADO */}
+              <div className="mt-4 rounded-2xl border border-green-500/20 bg-[#071326] p-4">
+                <h3 className="text-center text-green-400 font-bold text-lg mb-4">Miles de personas ya usan GestoriaCitaIA</h3>
+                <div className="grid grid-cols-4 gap-2 text-center">
+                  <div><p className="text-green-400 text-2xl font-black">18K+</p><p className="text-white/60 text-xs">Trámites</p></div>
+                  <div><p className="text-blue-400 text-2xl font-black">97%</p><p className="text-white/60 text-xs">Verificado</p></div>
+                  <div><p className="text-purple-400 text-2xl font-black">4m</p><p className="text-white/60 text-xs">Continuar</p></div>
+                  <div><p className="text-yellow-400 text-2xl font-black">100%</p><p className="text-white/60 text-xs">Asistente IA</p></div>
+                </div>
+                <div className="mt-4 rounded-full border border-yellow-500/30 py-2 text-center text-white font-bold">🏆 Regularización 2026</div>
+                <div className="flex items-end justify-between mt-4">
+                  <div><p className="text-green-400 text-4xl font-black">4.9/5</p><p className="text-yellow-400">★★★★★</p></div>
+                  <div className="text-white font-bold">+2K</div>
                 </div>
               </div>
-            )}
+
+              {/* BOTONES - SOLO DESPUÉS DE PAGO */}
+              {paymentCompleted && (
+                <div className="mt-5 space-y-4">
+                  <button
+                    onClick={isListening ? stopListening : startListening}
+                    disabled={!soufianeReady}
+                    className={`w-[92%] mx-auto h-[52px] rounded-[20px] flex items-center justify-center gap-3 text-[16px] font-semibold border shadow-xl transition-all duration-300 ${
+                      !soufianeReady ? "bg-gray-600 opacity-60 cursor-not-allowed text-white"
+                      : isListening ? "bg-red-600 border-red-400 text-white shadow-red-500/30 animate-pulse"
+                      : "bg-gradient-to-r from-[#16a34a] to-[#22c55e] border-[#4ade80] text-white shadow-green-500/20"
+                    }`}
+                  >
+                    {isListening ? (
+                      <><MicOff className="w-5 h-5" />Soufiane escuchando...</>
+                    ) : (
+                      <><Mic className="w-5 h-5" />
+                        {safeLang === "darija" ? (!soufianeReady ? "حقق الوثائق أولاً" : "تكلم مع سفيان") : safeLang === "en" ? (!soufianeReady ? "Verify documents first" : "Talk with Soufiane") : (!soufianeReady ? "Verificar documentos primero" : "Hablar con Soufiane")}
+                      </>
+                    )}
+                  </button>
+
+                  <button onClick={handleGeneralUpload} disabled={generalUploading} className="w-[92%] mx-auto h-[52px] rounded-[20px] border border-[#c6922f] bg-[#050816] hover:bg-[#0b1220] transition-all text-white font-medium text-[16px] flex items-center justify-center gap-3 shadow-lg">
+                    <Upload className="w-5 h-5 text-[#d4a94d]" />
+                    {generalUploading ? "Subiendo..." : "Subir documentos"}
+                  </button>
+
+                  <button onClick={handleVerifyAll} className="w-[92%] mx-auto h-[52px] rounded-[20px] border border-[#c6922f] bg-[#050816] hover:bg-[#0b1220] transition-all text-white font-medium text-[16px] flex items-center justify-center gap-3 shadow-lg">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-[#d4a94d]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4" />
+                    </svg>
+                    Verificar documentos
+                  </button>
+
+                  <button onClick={handleVerifyAsilo} className="w-[92%] mx-auto h-[52px] rounded-[20px] border border-[#c6922f] bg-[#050816] hover:bg-[#0b1220] transition-all text-white font-medium text-[16px] flex items-center justify-center gap-3 shadow-lg">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-[#d4a94d]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    Verificar Asilo
+                  </button>
+
+                  <button onClick={handleVerifyExpulsion} className="w-[92%] mx-auto h-[52px] rounded-[20px] border border-[#c6922f] bg-[#050816] hover:bg-[#0b1220] transition-all text-white font-medium text-[16px] flex items-center justify-center gap-3 shadow-lg">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-[#d4a94d]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                    </svg>
+                    Verificar Expulsión Europea
+                  </button>
+
+                  <div className="w-[92%] mx-auto h-[52px] rounded-[20px] border border-[#c6922f]/40 bg-[#050816] flex items-center overflow-hidden shadow-lg">
+                    <div className="w-[58px] h-full flex items-center justify-center border-r border-[#c6922f]/30 bg-black">
+                      <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" className="w-6 h-6" />
+                    </div>
+                    <input 
+                      type="tel" 
+                      value={phone} 
+                      onChange={(e) => setPhone(e.target.value)} 
+                      placeholder={safeLang === "darija" ? "رقم الواتساب" : safeLang === "en" ? "WhatsApp number" : "Número WhatsApp"} 
+                      className="flex-1 h-full bg-transparent px-4 text-white placeholder:text-white/40 outline-none text-[16px]" 
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
           <audio ref={remoteAudioRef} autoPlay playsInline className="hidden" />
