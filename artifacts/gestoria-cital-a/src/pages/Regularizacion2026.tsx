@@ -265,7 +265,9 @@ const [clientQuestionsDone, setClientQuestionsDone] = useState(false);
 const [clientQuestionIndex, setClientQuestionIndex] = useState(0);
   const [showStripe, setShowStripe] = useState(false);
   const [paymentRequired, setPaymentRequired] = useState(false);
-
+const [stayVerified, setStayVerified] = useState(false);
+const [expulsionVerified, setExpulsionVerified] = useState(false);
+const [soufianeReady, setSoufianeReady] = useState(false);
   const [leadForm, setLeadForm] = useState<LeadFormState>({
     nombre: "",
     telefono: "",
@@ -2130,7 +2132,10 @@ results.push({
 
     let hasPassport = false;
     let stayDates: string[] = [];
-
+    let sortedDates: Date[] = [];
+let stayDays = 0;
+let hasExpulsion = false;
+let expulsionExpired = false;
     for (const doc of docs) {
       const name = doc.nombre || "وثيقة";
       const status = doc.estado;
@@ -2170,14 +2175,53 @@ explanation += speech + " ";
         stayDates.push((doc as any).document_date);
       }
     }
+const docName = (
+  doc.nombre ||
+  doc.detectedType ||
+  ""
+).toLowerCase();
 
-    // 📊 حساب الشهور
-    stayDates.sort();
-    const months = new Set(
-      stayDates.map((d) => new Date(d).getMonth())
+if (
+  docName.includes("expulsion") ||
+  docName.includes("expulsión") ||
+  docName.includes("asilo") ||
+  docName.includes("refugio") ||
+  docName.includes("retorno")
+) {
+  hasExpulsion = true;
+
+  if ((doc as any).expiry_date) {
+    const expiry = new Date(
+      (doc as any).expiry_date
     );
 
-    const hasMonths = months.size >= 5;
+    if (expiry < new Date()) {
+      expulsionExpired = true;
+    }
+  }
+}
+    // 📊 حساب الشهور
+  sortedDates = stayDates
+  .map(d => new Date(d))
+  .filter(d => !isNaN(d.getTime()))
+  .sort((a, b) => a.getTime() - b.getTime());
+
+let hasMonths = false;
+
+if (sortedDates.length >= 2) {
+
+  const firstDate = sortedDates[0];
+  const lastDate =
+    sortedDates[sortedDates.length - 1];
+
+  stayDays = Math.floor(
+    (lastDate.getTime() - firstDate.getTime()) /
+    (1000 * 60 * 60 * 24)
+  );
+
+  hasMonths = stayDays >= 150;
+
+}
 
     explanation += "\n";
 
@@ -2187,20 +2231,53 @@ explanation += speech + " ";
       explanation += "وثيقة الهوية مزيانة. ";
     }
 
-    if (!hasMonths) {
-      explanation += "ما كملتيش 5 شهور ديال البقاء. ";
-    } else {
-      explanation += "عندك 5 شهور ديال البقاء. ";
-    }
+  if (!hasMonths) {
+
+  explanation +=
+    `عندك غير ${stayDays} يوم ديال الإثبات. خاصك على الأقل 150 يوم. `;
+
+} else {
+
+  explanation +=
+    `عندك ${stayDays} يوم ديال الإثبات المتواصل، وكتحقق شرط 5 شهور. `;
+
+}
 
     // 🧠 الحكم النهائي
     let finalVerdict = "";
+    setStayVerified(hasMonths);
 
-    if (hasPassport && hasMonths) {
-      finalVerdict = "الملف ديالك قوي وتقدر تدفع.";
-    } else {
-      finalVerdict = "الملف خاصو تكملة.";
-    }
+setExpulsionVerified(
+  !hasExpulsion || expulsionExpired
+);
+
+setSoufianeReady(
+  hasPassport &&
+  hasMonths &&
+  (
+    !hasExpulsion ||
+    expulsionExpired
+  )
+);
+
+  if (
+  hasPassport &&
+  hasMonths &&
+  (
+    !hasExpulsion ||
+    expulsionExpired
+  )
+) {
+
+  finalVerdict =
+    "الملف ديالك قوي وتقدر تدفع.";
+
+} else {
+
+  finalVerdict =
+    "الملف خاصو تكملة.";
+
+}
 const fullSpeech = `
 دابا وصلنا لمرحلة مهمة.
 
@@ -2487,51 +2564,7 @@ className="w-[92%] mx-auto flex items-center justify-center h-[52px] rounded-[20
 <div className="mt-4 rounded-2xl border border-green-500/20 bg-[#071326] p-4">
 
   <h3 className="text-center text-green-400 font-bold text-lg mb-4">
-    Miles de personas ya usan GestoriaCitaIA
-  </h3>
 
-  <div className="grid grid-cols-4 gap-2 text-center">
-
-    <div>
-      <p className="text-green-400 text-2xl font-black">18K+</p>
-      <p className="text-white/60 text-xs">Trámites</p>
-    </div>
-
-    <div>
-      <p className="text-blue-400 text-2xl font-black">97%</p>
-      <p className="text-white/60 text-xs">Verificado</p>
-    </div>
-
-    <div>
-      <p className="text-purple-400 text-2xl font-black">4m</p>
-      <p className="text-white/60 text-xs">Continuar</p>
-    </div>
-
-    <div>
-      <p className="text-yellow-400 text-2xl font-black">100%</p>
-      <p className="text-white/60 text-xs">Asistente IA</p>
-    </div>
-
-  </div>
-
-  <div className="mt-4 rounded-full border border-yellow-500/30 py-2 text-center text-white font-bold">
-    🏆 Regularización 2026
-  </div>
-
-  <div className="flex items-end justify-between mt-4">
-
-    <div>
-      <p className="text-green-400 text-4xl font-black">4.9/5</p>
-      <p className="text-yellow-400">★★★★★</p>
-    </div>
-
-    <div className="text-white font-bold">
-      +2K
-    </div>
-
-  </div>
-
-</div>
   
 {/* ✅ DESPUÉS DEL PAGO */}
   
@@ -2543,10 +2576,13 @@ className="w-[92%] mx-auto flex items-center justify-center h-[52px] rounded-[20
 {/* MICRO VERDE */}
 <button
   onClick={isListening ? stopListening : startListening}
+  disabled={!soufianeReady}
 className={`w-[92%] mx-auto h-[52px] rounded-[20px] flex items-center justify-center gap-3 text-[16px] font-semibold border shadow-xl transition-all duration-300 ${
-  isListening
-      ? "bg-red-600 border-red-400 text-white shadow-red-500/30 animate-pulse"
-      : "bg-gradient-to-r from-[#16a34a] to-[#22c55e] border-[#4ade80] text-white shadow-green-500/20"
+ !soufianeReady
+? "bg-gray-600 opacity-60 cursor-not-allowed text-white"
+: isListening
+? "bg-red-600 border-red-400 text-white shadow-red-500/30 animate-pulse"
+: "bg-gradient-to-r from-[#16a34a] to-[#22c55e] border-[#4ade80] text-white shadow-green-500/20"
   }`}
 >
   {isListening ? (
@@ -2559,10 +2595,14 @@ className={`w-[92%] mx-auto h-[52px] rounded-[20px] flex items-center justify-ce
       <Mic className="w-5 h-5" />
       {
         safeLang === "darija"
-          ? "تكلم مع سفيان"
+!soufianeReady
+? "حقق الوثائق أولاً"
+: "تكلم مع سفيان"
           : safeLang === "en"
           ? "Talk with Soufiane"
-          : "Hablar con Soufiane"
+!soufianeReady
+? "Verificar documentos primero"
+: "Hablar con Soufiane"
       }
     </>
   )}
