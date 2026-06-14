@@ -2594,16 +2594,20 @@ className={`w-[92%] mx-auto h-[52px] rounded-[20px] flex items-center justify-ce
     <>
       <Mic className="w-5 h-5" />
       {
-        safeLang === "darija"
-!soufianeReady
-? "حقق الوثائق أولاً"
-: "تكلم مع سفيان"
-          : safeLang === "en"
-          ? "Talk with Soufiane"
-!soufianeReady
-? "Verificar documentos primero"
-: "Hablar con Soufiane"
-      }
+  safeLang === "darija"
+    ? !soufianeReady
+      ? "حقق الوثائق أولاً"
+      : "تكلم مع سفيان"
+    : safeLang === "en"
+    ? !soufianeReady
+      ? "Verify documents first"
+      : "Talk with Soufiane"
+    : !soufianeReady
+    ? "Verificar documentos primero"
+    : "Hablar con Soufiane"
+}
+         
+      
     </>
   )}
 </button>
