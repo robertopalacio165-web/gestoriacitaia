@@ -105,14 +105,12 @@ export default function Regularizacion2026() {
         setPaymentRequired(false);
         questionFlowLockedRef.current = false;
         
-        // NO iniciar listening automáticamente
         setQuestionIndex(0);
         setDocumentsUnlocked(true);
         setConfirmUnlocked(true);
         setQuestionsDone(true);
         setStep("upload");
         
-        // Mensaje de bienvenida sin activar micrófono
         setTimeout(() => {
           speakExactText("مزيان. دابا خاصك ترفع جميع الوثائق اللي عندك. من بعد ما تسالي رفع الوثائق كاملة، ورك على زر التحقق من الوثائق باش نراجعهم ليك كاملين.");
         }, 1200);
@@ -1206,7 +1204,7 @@ GestoriaCitaIA
   };
 
   const handleGeneralUpload = () => {
-    console.log("CLICK WORKING");
+    console.log("CLICK WORKING - Subiendo documentos");
     const input = document.createElement("input");
     input.type = "file";
     input.accept = "image/*,application/pdf";
@@ -1219,22 +1217,26 @@ GestoriaCitaIA
       try {
         const { data: { user }, error } = await supabase.auth.getUser();
         if (error || !user?.id) throw new Error("Usuario no conectado");
-        setWorkflowStep("waiting_confirm");
-        let results = [];
+        
         for (const file of files) {
+          console.log("📄 Procesando:", file.name);
           const safeName = `${Date.now()}_${file.name}`;
           const storagePath = `${user.id}/regularizacion_2026/${safeName}`;
+          
           await supabase.storage.from("user-documents").upload(storagePath, file, { upsert: true });
+          
           const result = await verifyDocument({ file });
-          const matchedDoc = getBestDocMatch(result, docs, file.name);
+          console.log("📊 Resultado análisis:", result);
+          
+          const matchedDoc = docs.find(doc => doc.estado === "missing") || docs[0];
           if (matchedDoc) {
             setDocs((prev) => prev.map((doc) => {
               if (doc.id !== matchedDoc.id) return doc;
               return {
                 ...doc,
                 archivo: file.name,
-                estado: result.final_verdict === "approved" ? "ok" : result.final_verdict === "review" ? "warn" : "missing",
-                detectedType: result.document_type || "",
+                estado: result.final_verdict === "approved" ? "ok" : "warn",
+                detectedType: result.document_type || "unknown",
                 full_name: result.full_name || "",
                 document_number: result.document_number || "",
                 birth_date: result.birth_date || "",
@@ -1242,15 +1244,15 @@ GestoriaCitaIA
                 verification_score: result.verification_score || 0,
                 fraud_risk: result.fraud_risk || "low",
                 final_verdict: result.final_verdict || "review",
-                document_date: result.document_date || "",
+                document_date: result.document_date || new Date().toISOString().split('T')[0],
               };
             }));
           }
-          results.push({ fileName: file.name, result });
         }
-        alert("✅ Documentos analizados correctamente");
+        toast({ title: "✅ Documentos subidos", description: "Ahora haz clic en Verificar documentos" });
       } catch (err) {
-        console.error(err);
+        console.error("Error subiendo documentos:", err);
+        toast({ title: "Error", description: "No se pudieron subir los documentos", variant: "destructive" });
       } finally {
         setGeneralUploading(false);
       }
@@ -1361,9 +1363,16 @@ GestoriaCitaIA
   const handleVerifyAll = async () => {
     try {
       setGeneralUploading(true);
+      
       if (!docs.length) { 
-        await speakFromAutomation("مازال ما توصلتش بالوثائق ديالك."); 
+        await speakFromAutomation("مازال ما توصلتش بالوثائق ديالك. خاصك ترفع وثائق قبل ما نتحقق."); 
         return; 
+      }
+
+      const docsWithData = docs.filter(doc => doc.archivo && doc.archivo !== "");
+      if (docsWithData.length === 0) {
+        await speakFromAutomation("الوثائق مازال ما تحللوش. خاصك ترفع وثائق وصور كاملة باش نقدر نقراها.");
+        return;
       }
 
       let explanation = "دابا غادي نشرح ليك الملف ديالك:\n\n";
@@ -1372,32 +1381,36 @@ GestoriaCitaIA
       let hasExpulsion = false;
       let expulsionExpired = false;
 
-      for (const doc of docs) {
+      for (const doc of docsWithData) {
         const name = doc.nombre || "وثيقة";
         const type = (doc.detectedType || "").toLowerCase();
+        const docName = (doc.nombre || "").toLowerCase();
 
-        const speech = buildDocSpeech(name, {
-          full_name: (doc as any).full_name,
-          document_number: (doc as any).document_number,
-          birth_date: (doc as any).birth_date,
-          expiry_date: (doc as any).expiry_date,
-          image_quality: { blurred: (doc as any).verification_score < 55 },
-          fraud_risk: (doc as any).fraud_risk || "medium",
-          final_verdict: (doc as any).final_verdict || "review",
-          verification_score: (doc as any).verification_score || 0,
-        });
-        explanation += speech + " ";
-
-        if (type.includes("passport") || type.includes("nie")) hasPassport = true;
-        if ((doc as any).document_date) stayDates.push((doc as any).document_date);
-
-        const docName = (doc.nombre || doc.detectedType || "").toLowerCase();
-        if (docName.includes("expulsion") || docName.includes("expulsión") || docName.includes("deportacion")) {
+        if (type.includes("passport") || type.includes("nie") || 
+            docName.includes("pasaporte") || docName.includes("passport") || 
+            docName.includes("nie")) {
+          hasPassport = true;
+          explanation += `✅ ${name}: وثيقة هوية صالحة\n`;
+        }
+        
+        if ((doc as any).document_date) {
+          stayDates.push((doc as any).document_date);
+          explanation += `📅 ${name}: تاريخ ${(doc as any).document_date}\n`;
+        }
+        
+        if (docName.includes("expulsion") || docName.includes("expulsión") || 
+            docName.includes("deportacion")) {
           hasExpulsion = true;
           if ((doc as any).expiry_date) {
             const expiry = new Date((doc as any).expiry_date);
             if (expiry < new Date()) expulsionExpired = true;
           }
+          explanation += `⚠️ ${name}: وثيقة طرد/ترحيل\n`;
+        }
+        
+        if (!type && !docName.includes("pasaporte") && !docName.includes("nie") && 
+            !docName.includes("expulsion") && !docName.includes("padron")) {
+          explanation += `❓ ${name}: نوع الوثيقة غير واضح\n`;
         }
       }
 
@@ -1409,80 +1422,87 @@ GestoriaCitaIA
         const lastDate = sortedDates[sortedDates.length - 1];
         stayDays = Math.floor((lastDate.getTime() - firstDate.getTime()) / (1000 * 60 * 60 * 24));
         hasMonths = stayDays >= 150;
+        explanation += `\n📊 المدة بين أول وثيقة وآخر وثيقة: ${stayDays} يوم\n`;
+      } else if (sortedDates.length === 1) {
+        explanation += `\n📊 عندك وثيقة وحيدة بتاريخ ${sortedDates[0].toLocaleDateString()}. خاصك وثيقتين على الأقل باش نحسب المدة.\n`;
+      } else {
+        explanation += `\n📊 ما عندكش وثائق فيها تواريخ باش نحسب مدة الإقامة.\n`;
       }
 
       explanation += "\n";
-      if (!hasPassport) explanation += "ما عندكش باسبور أو NIE. ";
-      else explanation += "وثيقة الهوية مزيانة. ";
-      if (!hasMonths) explanation += `عندك غير ${stayDays} يوم ديال الإثبات. خاصك على الأقل 150 يوم. `;
-      else explanation += `عندك ${stayDays} يوم ديال الإثبات المتواصل، وكتحقق شرط 5 شهور. `;
+      if (!hasPassport) explanation += "❌ ما عندكش باسبور أو NIE. خاصك ترفع واحد.\n";
+      else explanation += "✅ وثيقة الهوية مزيانة.\n";
+      
+      if (!hasMonths) explanation += `❌ مدة الإقامة: ${stayDays} يوم فقط. خاصك 150 يوم على الأقل (5 شهور).\n`;
+      else explanation += `✅ مدة الإقامة: ${stayDays} يوم (تزيد من 5 شهور).\n`;
+      
+      if (hasExpulsion && !expulsionExpired) explanation += "❌ عندك قرار طرد نشط. خاصك تحلو قبل ما تقدم.\n";
+      else if (hasExpulsion && expulsionExpired) explanation += "⚠️ عندك قرار طرد قديم (منتهي الصلاحية).\n";
+      else explanation += "✅ ما عندكش قرارات طرد.\n";
 
       setStayVerified(hasMonths);
-      
-      console.log("🔍 CONDICIONES PARA DESBLOQUEAR SOUFIANE:", {
-        hasPassport,
-        hasMonths,
-        hasExpulsion,
-        expulsionExpired,
-        resultado: hasPassport && hasMonths && (!hasExpulsion || expulsionExpired)
-      });
       
       const soufianeUnlockCondition = hasPassport && hasMonths && (!hasExpulsion || expulsionExpired);
       setSoufianeReady(soufianeUnlockCondition);
       
-      const fullSpeech = `
+      console.log("🔍 RESULTADO FINAL:", {
+        hasPassport,
+        hasMonths,
+        hasExpulsion,
+        expulsionExpired,
+        soufianeUnlockCondition
+      });
+
+      let resultadoTexto = "";
+      if (soufianeUnlockCondition) {
+        resultadoTexto = `
 ${explanation}
 
-دابا وصلنا لمرحلة مهمة.
+✅✅✅ مبروك! الملف ديالك كامل ومقبول!
 
-الملف ديالك تقريبا واجد، ودابا غادي نعطيوك النتيجة ديالو كاملة.
+دابا تقدر تحكي مع سفيان بالصوت. اضغط على زر "Hablar con Soufiane".
 
-دابا ركز معايا مزيان:
+ودابا ركز معايا:
+1. دخل رقم الهاتف ديالك
+2. اضغط على زر واتساب
+3. غادي توصلك الوثيقة المهمة بصيغة PDF
 
-دخل رقم الهاتف ديالك فالخانة اللي لتحت، وخاصو يكون رقم صحيح وبالـ international format.
-
-من بعد، ورݣ على الزر ديال واتساب.
-
-غادي يتحل ليك واتساب وفيه:
-
-النتيجة ديال الملف ديالك،
-الوثائق اللي مقبولين،
-والوثائق اللي خاصهم تصحيح.
-
-وزيد عليها، غادي تلقى واحد الوثيقة مهمة بزاف بصيغة PDF.
-
-هاد الوثيقة هي اللي غادي تعاونك تقوي الملف ديالك بزاف،
-وحطها مع الدوصي ديالك ضروري.
-
-الله يسهل عليك فالتسوية الجماعية،
-ودابا الملف ديالك كامل إن شاء الله.
-
-وغادي تتوصل بيه دابا فـ واتساب.
-
-حظ موفق سعيد.
+حظ موفق!
 `;
-
-      if (soufianeUnlockCondition) {
-        if (!realtimeDcRef.current || realtimeDcRef.current.readyState !== "open") {
-          console.log("⚠️ REALTIME CLOSED - RECONNECTING");
-          await startListening();
-          await new Promise((resolve) => setTimeout(resolve, 3500));
-        }
-
-        if (realtimeDcRef.current && realtimeDcRef.current.readyState === "open") {
-          console.log("✅ VERIFY SPEECH START - Soufiane va a hablar");
-          await speakFromAutomation(fullSpeech);
-        }
       } else {
-        let mensajeFalta = "الوثائق ناقصة. خاصك: ";
-        if (!hasPassport) mensajeFalta += "باسبور أو NIE، ";
-        if (!hasMonths) mensajeFalta += `بروفات ديال 5 شهور (عندك ${stayDays} يوم)، `;
-        if (hasExpulsion && !expulsionExpired) mensajeFalta += "حل قرار الطرد النشط";
-        await speakFromAutomation(mensajeFalta);
+        resultadoTexto = `
+${explanation}
+
+❌ الملف ديالك مازال ناقص. خاصك تجيب الوثائق الناقصة:
+
+${!hasPassport ? "- باسبور أو NIE\n" : ""}
+${!hasMonths ? `- بروفات ديال 5 شهور (عندك ${stayDays} يوم فقط)\n` : ""}
+${hasExpulsion && !expulsionExpired ? "- حل قرار الطرد النشط\n" : ""}
+
+من بعد ما تجيب الوثائق الناقصة، عاود اضغط على "Verificar documentos".
+`;
+      }
+
+      if (!realtimeDcRef.current || realtimeDcRef.current.readyState !== "open") {
+        console.log("⚠️ REALTIME NO CONECTADO - Intentando conectar...");
+        await startListening();
+        await new Promise((resolve) => setTimeout(resolve, 5000));
+      }
+
+      if (realtimeDcRef.current && realtimeDcRef.current.readyState === "open") {
+        console.log("✅ REALTIME CONECTADO - Enviando resultado...");
+        await speakFromAutomation(resultadoTexto);
+      } else {
+        console.log("⚠️ REALTIME NO DISPONIBLE - Mostrando mensaje en consola");
+        alert(resultadoTexto);
+        toast({
+          title: soufianeUnlockCondition ? "✅ Documentos verificados" : "❌ Documentos incompletos",
+          description: soufianeUnlockCondition ? "Ya puedes hablar con Soufiane" : "Faltan documentos para completar el expediente",
+        });
       }
       
     } catch (err) {
-      console.error(err);
+      console.error("Error en handleVerifyAll:", err);
       await speakFromAutomation("وقع مشكل وأنا كنحلل الوثائق، عاود حاول.");
     } finally {
       setGeneralUploading(false);
@@ -1512,7 +1532,6 @@ ${explanation}
           </div>
 
           <div className="mt-2 max-w-7xl mx-auto lg:grid lg:grid-cols-[480px_1fr] lg:gap-6">
-            {/* Video de Soufiane */}
             <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="rounded-[26px] overflow-hidden relative">
               <div className="relative">
                 <div className="relative">
@@ -1532,10 +1551,8 @@ ${explanation}
               </div>
             </motion.div>
 
-            {/* Panel derecho */}
             <div className="mt-0 w-full max-w-none lg:col-start-2">
               
-              {/* Panel de pago - Solo visible si no ha pagado */}
               {!paymentCompleted && (
                 <div className="p-3">
                   <div className="relative overflow-hidden rounded-2xl border border-yellow-500/30 bg-gradient-to-br from-[#1a1200] via-[#0b0b0b] to-[#1a1200] p-4 w-full">
@@ -1570,10 +1587,8 @@ ${explanation}
                 </div>
               )}
 
-              {/* BOTONES - Solo visibles después del pago */}
               {paymentCompleted && (
                 <div className="mt-5 space-y-4">
-                  {/* Botón Hablar con Soufiane - DESHABILITADO hasta verificar documentos */}
                   <button
                     onClick={() => {
                       if (soufianeReady) {
@@ -1600,13 +1615,11 @@ ${explanation}
                     )}
                   </button>
 
-                  {/* Botón Subir documentos */}
                   <button onClick={handleGeneralUpload} disabled={generalUploading} className="w-[92%] mx-auto h-[52px] rounded-[20px] border border-[#c6922f] bg-[#050816] hover:bg-[#0b1220] transition-all text-white font-medium text-[16px] flex items-center justify-center gap-3 shadow-lg">
                     <Upload className="w-5 h-5 text-[#d4a94d]" />
                     {generalUploading ? "Subiendo..." : "Subir documentos"}
                   </button>
 
-                  {/* Botón Verificar documentos - Este activa soufianeReady */}
                   <button onClick={handleVerifyAll} className="w-[92%] mx-auto h-[52px] rounded-[20px] border border-[#c6922f] bg-[#050816] hover:bg-[#0b1220] transition-all text-white font-medium text-[16px] flex items-center justify-center gap-3 shadow-lg">
                     <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-[#d4a94d]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4" />
@@ -1614,7 +1627,6 @@ ${explanation}
                     Verificar documentos
                   </button>
 
-                  {/* Botón Verificar Asilo */}
                   <button onClick={handleVerifyAsilo} className="w-[92%] mx-auto h-[52px] rounded-[20px] border border-[#c6922f] bg-[#050816] hover:bg-[#0b1220] transition-all text-white font-medium text-[16px] flex items-center justify-center gap-3 shadow-lg">
                     <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-[#d4a94d]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
@@ -1622,7 +1634,6 @@ ${explanation}
                     Verificar Asilo
                   </button>
 
-                  {/* Botón Verificar Expulsión */}
                   <button onClick={handleVerifyExpulsion} className="w-[92%] mx-auto h-[52px] rounded-[20px] border border-[#c6922f] bg-[#050816] hover:bg-[#0b1220] transition-all text-white font-medium text-[16px] flex items-center justify-center gap-3 shadow-lg">
                     <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-[#d4a94d]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
@@ -1630,7 +1641,6 @@ ${explanation}
                     Verificar Expulsión Europea
                   </button>
 
-                  {/* Input WhatsApp */}
                   <div className="w-[92%] mx-auto h-[52px] rounded-[20px] border border-[#c6922f]/40 bg-[#050816] flex items-center overflow-hidden shadow-lg">
                     <div className="w-[58px] h-full flex items-center justify-center border-r border-[#c6922f]/30 bg-black">
                       <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" className="w-6 h-6" />
