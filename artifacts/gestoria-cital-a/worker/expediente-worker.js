@@ -7,7 +7,7 @@ import { chromium } from "playwright";
 
 const SUPABASE_URL = process.env.SUPABASE_URL?.replace(/"/g, "").trim();
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY?.replace(/"/g, "").trim();
-const CHECK_INTERVAL_MS = 30 * 60 * 1000; // 30 minutos
+const CHECK_INTERVAL_MS = 60 * 60 * 1000; // 1 hora
 const INFOEXT_URL = "https://infoext2.delegaciondelgobierno.gob.es/infoext2/consulta.html";
 
 if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) throw new Error("Faltan variables de Supabase");
@@ -58,7 +58,7 @@ async function resolverCaptcha(page) {
   
   const transcription = await openai.audio.transcriptions.create({
     file: fs.createReadStream("/tmp/captcha.mp3"),
-    model: "whisper-1",
+model: "gpt-4o-mini-transcribe",
     language: "es",
   });
   
