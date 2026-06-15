@@ -111,12 +111,6 @@ export default function Regularizacion2026() {
         setQuestionsDone(true);
         setStep("upload");
         
-        // Solo mensaje de texto, NO activar micrófono
-        setTimeout(() => {
-          const msg = "مزيان. دابا خاصك ترفع جميع الوثائق اللي عندك. من بعد ما تسالي رفع الوثائق كاملة، ورك على زر التحقق من الوثائق باش نراجعهم ليك كاملين.";
-          pushAgentMessage(msg);
-        }, 1200);
-        
         try {
           const pdfRes = await fetch("/api/generate-expediente-pdf", {
             method: "POST",
@@ -194,7 +188,9 @@ export default function Regularizacion2026() {
   const [stayVerified, setStayVerified] = useState(false);
   const [expulsionVerified, setExpulsionVerified] = useState(false);
   const [soufianeReady, setSoufianeReady] = useState(false);
-  const [docsVerified, setDocsVerified] = useState(false);
+  
+  // Store the verification result to be read when user clicks the mic button
+  const [verificationResultText, setVerificationResultText] = useState("");
 
   useEffect(() => {
     localStorage.setItem("questionIndex", questionIndex.toString());
@@ -924,39 +920,34 @@ GestoriaCitaIA
         isConnectingRef.current = false;
         setIsListening(true);
         setWaitingSoufiane(false);
+        
+        // CONFIGURAR Soufiane para que SOLO LEA el resultado, sin conversación
         dc.send(JSON.stringify({
           type: "session.update",
           session: {
             instructions: `
 أنت سفيان من GestoriaCitaIA.
 
-ممنوع تبدأ الحوار من جديد.
-ممنوع تقول:
-"غنعاود من الأول"
-أو
-"أنا سفيان"
-أو
-"مرحبا"
-إلا فالبداية الأولى فقط.
+مهمتك الوحيدة: قراءة تحليل الوثائق التي سأرسلها لك.
 
-ممنوع تعاود أي سؤال سبق تسول.
+لا تسأل أي أسئلة.
+لا تطلب أي معلومات من العميل.
+لا تقل "السلام عليكم" أو "مرحبا".
+لا تبدأ أي محادثة.
+لا تنتظر رد من العميل.
 
-جاوب فقط بالجملة المطلوبة.
+فقط اقرأ النص الذي سأرسله لك حرفياً وبصوت واضح.
 
-إلا كان السؤال الحالي هو:
-"واش دخلتي لإسبانيا قبل من واحد يناير 2026؟"
+بعد أن تقرأ النص، توقف ولا تقل أي شيء إضافي.
 
-فلا تقل أي مقدمة أخرى.
-
-تكلم فقط بالدارجة المغربية.
-وباختصار.
+ممنوع تماماً التفاعل أو الرد على أي شيء يقوله العميل.
 `,
             modalities: ["audio", "text"],
             turn_detection: {
               type: "server_vad",
-              threshold: 0.98,
-              prefix_padding_ms: 300,
-              silence_duration_ms: 2200,
+              threshold: 0.99,
+              prefix_padding_ms: 500,
+              silence_duration_ms: 3000,
               interrupt_response: false,
               create_response: true,
             },
@@ -970,111 +961,18 @@ GestoriaCitaIA
           setTimeout(() => { void askSoufianeToSpeak(capturedPending); }, 400);
           return;
         }
-        if (!(window as any).paid) {
-          setTimeout(() => { void maybeSendIntroToSoufiane(); }, 500);
-        }
       };
 
       dc.onmessage = (event) => {
         try {
           const msg = JSON.parse(event.data);
-          const userTranscript = msg?.transcript || msg?.item?.transcript || msg?.item?.content?.[0]?.transcript || "";
-
-          if (
-            (msg.type === "conversation.item.input_audio_transcription.completed" || msg.type === "input_audio_buffer.transcription.completed") &&
-            typeof userTranscript === "string" && userTranscript.trim() && userTranscript.trim().length > 1
-          ) {
-            const transcript = userTranscript.trim();
-            if (transcript !== lastUserTranscriptRef.current) {
-              lastUserTranscriptRef.current = transcript;
-              setLastUserTranscript(transcript);
-              pushUserMessage(transcript);
-              console.log("✅ USER SAID:", transcript);
-
-              const lowerTranscript = transcript.toLowerCase().trim();
-
-              if (!paymentDoneRef.current && (lowerTranscript.includes("سلام") || lowerTranscript.includes("salam") || lowerTranscript.includes("hola") || lowerTranscript.includes("hello"))) {
-                console.log("🚀 START INTRO");
-                maybeSendIntroToSoufiane();
-                realtimeLocalStreamRef.current?.getTracks().forEach((track) => { track.stop(); });
-                questionFlowLockedRef.current = true;
-                const introText = `
-السلام عليكم، أنا سفيان من هيستوريا سيطا AI. مرحبا بك.
-
-غادي نطرح عليك شوية ديال الأسئلة وغادي تجاوبني غير بآه ولا لا.
-
-وملي غادي نسالي الأسئلة، غادي نراجع ليك الوثائق ديالك كاملين باش نشوف واش مقبولين ولا لا، واش صالحين ولا لا، وغادي نعطيك حتى وثيقة مهمة غادي تعزز الملف ديالك فالتسوية الجماعية.
-
-وزيد عليها، غادي نخليك تسولني حتى 4 أسئلة وغنجاوبك على جميع التساؤلات ديالك أوكي؟
-
-ولكن قبل، خاصك تكمل الأداء ديالك عاد باش نبداو.
-`;
-                const estimatedMs = Math.max(introText.length * 85, 12000);
-                setTimeout(() => {
-                  console.log("✅ INTRO FINISHED");
-                  setShowStripe(true);
-                  setPaymentRequired(true);
-                  stopListening();
-                  setIsListening(false);
-                }, estimatedMs);
-                return;
-              }
-
-              const isOnlyNameStep =
-                questionIndex === 1 &&
-                lowerTranscript.length > 1 &&
-                !lowerTranscript.includes("نعم") &&
-                !lowerTranscript.includes("لا") &&
-                !lowerTranscript.includes("اه") &&
-                !lowerTranscript.includes("آه");
-
-              if (isOnlyNameStep) {
-                console.log("👤 USER NAME ONLY:", transcript);
-                setTimeout(() => { speakExactText("مزيان. واش بقيتي في إسبانيا لمدة ديال خمسة أشهر متتالية؟ وشنو هي أول مدينة سكنتي فيها؟"); }, 500);
-                return;
-              }
-
-              const validAnswers = ["نعم", "لا", "اه", "آه", "ايييه", "ايوه", "oui", "non", "si", "no", "kayna", "makaynach", "عندي", "ما عنديش"];
-              const cleanAnswer = lowerTranscript.replace(/[.,!?¿؟]/g, "").trim();
-              const shouldCountQuestion = validAnswers.some(word => cleanAnswer === word || cleanAnswer.startsWith(word + " "));
-
-              if (paymentDoneRef.current && shouldCountQuestion && !questionFlowLockedRef.current) {
-                handleQuestionFlow();
-              }
-            }
-          }
-
-          if (msg.type === "response.output_text.delta" && typeof msg.delta === "string") {
-            assistantTextBufferRef.current += msg.delta;
-          }
-
-          if (msg.type === "response.output_text.done" && typeof msg.text === "string" && msg.text.trim()) {
-            assistantTextBufferRef.current = msg.text.trim();
-          }
-
-          if (msg.type === "response.created") {
-            assistantBusyRef.current = true;
-            setWaitingSoufiane(true);
-            if (realtimeLocalStreamRef.current) {
-              realtimeLocalStreamRef.current.getAudioTracks().forEach(track => { track.enabled = false; });
-            }
-            if (senderRef.current) { senderRef.current.replaceTrack(null); }
-          }
-
+          
+          // Ignorar cualquier entrada del usuario - Soufiane NO debe escuchar
           if (msg.type === "response.done") {
-            assistantBusyRef.current = false;
-            if (realtimeLocalStreamRef.current) {
-              realtimeLocalStreamRef.current.getAudioTracks().forEach(track => { track.enabled = true; });
-            }
-            const finalText = assistantTextBufferRef.current.trim();
-            if (finalText) lastAssistantTextRef.current = finalText;
-            finalizeAssistantBuffer();
-            const audioTrack = realtimeLocalStreamRef.current?.getAudioTracks?.()[0];
-            if (senderRef.current && audioTrack) { senderRef.current.replaceTrack(audioTrack); }
-            setWaitingSoufiane(false);
-            pendingAutomationPromptRef.current = null;
-            setPendingAutomationPrompt("");
-            setTimeout(() => { void flushPendingAutomation(); }, 150);
+            // Después de hablar, detener el listening automáticamente
+            setTimeout(() => {
+              stopListening();
+            }, 1000);
           }
         } catch (err) {
           console.error("Realtime event parse error:", err);
@@ -1106,6 +1004,14 @@ GestoriaCitaIA
       }
       const answerSdp = await sdpRes.text();
       await pc.setRemoteDescription({ type: "answer", sdp: answerSdp });
+      
+      // Después de conectar, enviar el resultado guardado
+      setTimeout(() => {
+        if (verificationResultText && realtimeDcRef.current?.readyState === "open") {
+          speakExactText(verificationResultText);
+        }
+      }, 2000);
+      
     } catch (error: any) {
       console.error("Error iniciando realtime Soufiane:", error);
       stopListening();
@@ -1117,7 +1023,7 @@ GestoriaCitaIA
 
   const speakExactText = async (text: string) => {
     if (!text.trim()) return;
-    console.log("🔊 REALTIME ONLY:", text);
+    console.log("🔊 REALTIME ONLY - Soufiane dirá:", text);
     pendingAutomationPromptRef.current = text;
     setPendingAutomationPrompt(text);
     setTimeout(() => { void flushPendingAutomation(); }, 300);
@@ -1381,7 +1287,7 @@ GestoriaCitaIA
       }
 
       let hasPassport = false;
-      let hasStayProof = false;
+      let stayDates: string[] = [];
       let hasExpulsion = false;
       let expulsionExpired = false;
 
@@ -1397,11 +1303,9 @@ GestoriaCitaIA
           hasPassport = true;
         }
         
-        // Detectar prueba de estancia
-        if (detectedType.includes("empadronamiento") || detectedType.includes("stay_proof") ||
-            docName.includes("empadronamiento") || docName.includes("padron") ||
-            doc.document_date) {
-          hasStayProof = true;
+        // Guardar fechas para calcular estancia
+        if (doc.document_date) {
+          stayDates.push(doc.document_date);
         }
         
         // Detectar expulsión
@@ -1415,41 +1319,81 @@ GestoriaCitaIA
         }
       }
 
-      // Determinar si Soufiane puede ser desbloqueado
-      const canUnlock = hasPassport && hasStayProof && (!hasExpulsion || expulsionExpired);
+      // Calcular días de estancia
+      const sortedDates = stayDates.map(d => new Date(d)).filter(d => !isNaN(d.getTime())).sort((a, b) => a.getTime() - b.getTime());
+      let stayDays = 0;
+      let hasMonths = false;
+      let firstDateStr = "";
+      let lastDateStr = "";
       
-      console.log("🔍 VERIFICACIÓN:", { hasPassport, hasStayProof, hasExpulsion, expulsionExpired, canUnlock });
-      
-      // Actualizar estado
-      setDocsVerified(true);
-      setSoufianeReady(canUnlock);
-      
-      // Mensaje de resultado
-      let resultadoMsg = "";
-      if (canUnlock) {
-        resultadoMsg = `✅✅✅ التحقق من الوثائق تم بنجاح!
-
-📋 نتيجة التحقق:
-${hasPassport ? "✅ وثيقة هوية (باسبور/NIE): موجودة" : "❌ وثيقة هوية: مفقودة"}
-${hasStayProof ? "✅ وثائق الإقامة (بروفات 5 شهور): موجودة" : "❌ وثائق الإقامة: مفقودة"}
-${hasExpulsion ? (expulsionExpired ? "⚠️ قرار طرد قديم (منتهي)" : "❌ قرار طرد نشط!") : "✅ قرارات طرد: لا توجد"}
-
-🎉 دابا تقدر تحكي مع سفيان بالصوت! اضغط على زر "Hablar con Soufiane".`;
-      } else {
-        resultadoMsg = `❌❌❌ الوثائق ناقصة! مازال ما تقدرش تحكي مع سفيان.
-
-📋 نتيجة التحقق:
-${hasPassport ? "✅ وثيقة هوية (باسبور/NIE): موجودة" : "❌ وثيقة هوية: مفقودة - خاصك ترفع باسبور أو NIE"}
-${hasStayProof ? "✅ وثائق الإقامة (بروفات 5 شهور): موجودة" : "❌ وثائق الإقامة: مفقودة - خاصك ترفع وثائق تثبت 5 شهور إقامة"}
-${hasExpulsion ? (expulsionExpired ? "⚠️ قرار طرد قديم (منتهي)" : "❌ قرار طرد نشط - خاصك تحلو أولاً") : "✅ قرارات طرد: لا توجد"}
-
-⚠️ من بعد ما تجيب الوثائق الناقصة، عاود اضغط على "Verificar documentos".`;
+      if (sortedDates.length >= 2) {
+        const firstDate = sortedDates[0];
+        const lastDate = sortedDates[sortedDates.length - 1];
+        stayDays = Math.floor((lastDate.getTime() - firstDate.getTime()) / (1000 * 60 * 60 * 24));
+        hasMonths = stayDays >= 150;
+        firstDateStr = firstDate.toLocaleDateString();
+        lastDateStr = lastDate.toLocaleDateString();
+      } else if (sortedDates.length === 1) {
+        stayDays = 0;
+        hasMonths = false;
+        firstDateStr = sortedDates[0].toLocaleDateString();
+        lastDateStr = firstDateStr;
       }
+
+      // Determinar si es apto para regularización
+      const isEligible = hasPassport && hasMonths && (!hasExpulsion || expulsionExpired);
       
-      pushAgentMessage(resultadoMsg);
+      // Determinar el veredicto final
+      let verdict = "";
+      let verdictEmoji = "";
+      let recommendation = "";
+      
+      if (isEligible) {
+        verdict = "مقبول";
+        verdictEmoji = "✅✅✅";
+        recommendation = "مبروك! ملفك كامل ومقبول للتسوية. دابا تقدر تحكي مع سفيان باش يقرا ليك النتيجة كاملة.";
+      } else {
+        verdict = "مرفوض مؤقتاً";
+        verdictEmoji = "❌❌❌";
+        recommendation = "ملفك مازال ناقص. خاصك تجيب الوثائق الناقصة قبل ما تعاود التقديم.";
+      }
+
+      // Construir el mensaje de resultado definitivo
+      const resultMessage = `
+${verdictEmoji} النتيجة النهائية للتحقق من الوثائق: ${verdict}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📋 تحليل مفصل:
+
+${hasPassport ? "✅ وثيقة الهوية (باسبور/NIE): موجودة وصالحة" : "❌ وثيقة الهوية (باسبور/NIE): مفقودة"}
+
+📅 مدة الإقامة في إسبانيا:
+${stayDays > 0 ? `من تاريخ: ${firstDateStr} إلى ${lastDateStr}` : "لا توجد تواريخ كافية للتحليل"}
+${stayDays > 0 ? `المدة الإجمالية: ${stayDays} يوم` : ""}
+${hasMonths ? `✅ ${stayDays} يوم = أكثر من 5 شهور (مطلوب 150 يوم)` : `❌ ${stayDays} يوم فقط - خاصك 150 يوم على الأقل`}
+
+${hasExpulsion ? (expulsionExpired ? "⚠️ قرار طرد قديم (منتهي الصلاحية) - ما يؤثرش" : "❌❌ قرار طرد نشط - يمنع التقديم") : "✅ قرارات طرد: لا توجد"}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎯 ${isEligible ? "✅ أنت مؤهل للتسوية الجماعية 2026" : "❌ للأسف، لست مؤهل بعد"}
+
+💡 التوصية: ${recommendation}
+
+${isEligible ? "📢 اضغط على زر 'Hablar con Soufiane' باش يقرا ليك النتيجة كاملة." : "⚠️ عاود اضغط على 'Verificar documentos' بعد ما تجيب الوثائق الناقصة."}
+`;
+
+      // Guardar el resultado para cuando el cliente pulse el botón de audio
+      setVerificationResultText(resultMessage);
+      setSoufianeReady(true);
+      
+      // Mostrar el resultado en el chat
+      pushAgentMessage(resultMessage);
+      
       toast({ 
-        title: canUnlock ? "✅ Documentos verificados" : "❌ Documentos incompletos", 
-        description: canUnlock ? "Ya puedes hablar con Soufiane" : "Revisa qué documentos faltan" 
+        title: isEligible ? "✅ Documentos verificados - APTO" : "❌ Documentos incompletos - NO APTO", 
+        description: isEligible ? "Ya puedes pulsar 'Hablar con Soufiane' para escuchar el resultado" : "Faltan documentos para ser apto" 
       });
       
     } catch (err) {
@@ -1547,7 +1491,7 @@ ${hasExpulsion ? (expulsionExpired ? "⚠️ قرار طرد قديم (منته�
                       <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
                       <p className="text-white font-bold">Soufiane IA</p>
                     </div>
-                    <p className="text-white/80 text-sm leading-relaxed">Especialista profesional en extranjería española para marroquíes en España. Pregunta sobre residencia, papeles, policía, nacionalidad, arraigo, trabajo, estudios y cualquier problema legal relacionado con inmigración.</p>
+                    <p className="text-white/80 text-sm leading-relaxed">Especialista profesional en extranjería española para marroquíes en España.</p>
                   </div>
                 </div>
               )}
