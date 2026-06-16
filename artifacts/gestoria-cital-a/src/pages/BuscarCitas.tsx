@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { Navbar } from "@/components/Navbar";
 import { useLang } from "@/contexts/LanguageContext";
@@ -63,17 +63,20 @@ type AppointmentResult = {
 };
 
 type ClientFormData = {
-
   fullName: string;
   phone: string;
   email: string;
-
   expedienteNumero: string;
   identificadorSolicitud: string;
-
   fechaPresentacion: string;
-
   fechaNacimiento: string;
+  preferredOffice: string;
+  nie: string;
+  passport: string;
+  nationality: string;
+  birthYear: string;
+  city: string;
+  province: string;
 };
 
 function OfficialBrowserBox({
@@ -157,60 +160,52 @@ function OfficialBrowserBox({
       className="flex-1 flex flex-col overflow-hidden bg-transparent"
     >
       <div className="flex-1 overflow-y-auto bg-transparent p-4 sm:p-6 text-black">
-{confirmed ? (
-
-<div className="rounded-[26px] border border-emerald-500/40 bg-[#07111f] px-6 py-8 text-center">
-
-  <h2 className="text-emerald-400 text-3xl font-black mb-4">
-  {isMa
-    ? "🎉 مبروك! تأكد الموعد ديالك"
-    : isEn
-    ? "🎉 APPOINTMENT CONFIRMED!"
-    : "🎉 ¡CITA CONFIRMADA!"}
-</h2>
-
-<p className="text-white text-lg font-bold mb-4">
-  {isMa
-    ? "شكراً بزاف على الثقة ديالك في GestoriaCitaIA."
-    : isEn
-    ? "Thank you for trusting GestoriaCitaIA."
-    : "Muchas gracias por confiar en GestoriaCitaIA."}
-</p>
-
-<p className="text-white/80">
-  {isMa
-    ? "تم تأكيد الموعد ديالك بنجاح."
-    : isEn
-    ? "Your appointment has been successfully confirmed."
-    : "Tu cita ha sido confirmada correctamente."}
-</p>
-
-<p className="text-white/80 mt-2">
-  {isMa
-    ? "سارة سالات الخدمة ديالها بنجاح."
-    : isEn
-    ? "Sara has successfully completed her work."
-    : "Sara ha finalizado su trabajo con éxito."}
-</p>
-
-<p className="text-yellow-400 font-bold mt-4">
-  {isMa
-    ? "✅ العملية كملت بنجاح"
-    : isEn
-    ? "✅ Reservation completed"
-    : "✅ Reserva completada"}
-</p>
-
-<p className="text-white/70 mt-6">
-  {isMa
-    ? "نتمنّاو ليك التوفيق فالإجراء ديالك."
-    : isEn
-    ? "We wish you the best of luck with your procedure."
-    : "Te deseamos mucha suerte en tu trámite."}
-</p>
-</div>
-
-) : !confirmed && !formReady ? (
+        {confirmed ? (
+          <div className="rounded-[26px] border border-emerald-500/40 bg-[#07111f] px-6 py-8 text-center">
+            <h2 className="text-emerald-400 text-3xl font-black mb-4">
+              {isMa
+                ? "🎉 مبروك! تأكد الموعد ديالك"
+                : isEn
+                ? "🎉 APPOINTMENT CONFIRMED!"
+                : "🎉 ¡CITA CONFIRMADA!"}
+            </h2>
+            <p className="text-white text-lg font-bold mb-4">
+              {isMa
+                ? "شكراً بزاف على الثقة ديالك في GestoriaCitaIA."
+                : isEn
+                ? "Thank you for trusting GestoriaCitaIA."
+                : "Muchas gracias por confiar en GestoriaCitaIA."}
+            </p>
+            <p className="text-white/80">
+              {isMa
+                ? "تم تأكيد الموعد ديالك بنجاح."
+                : isEn
+                ? "Your appointment has been successfully confirmed."
+                : "Tu cita ha sido confirmada correctamente."}
+            </p>
+            <p className="text-white/80 mt-2">
+              {isMa
+                ? "سارة سالات الخدمة ديالها بنجاح."
+                : isEn
+                ? "Sara has successfully completed her work."
+                : "Sara ha finalizado su trabajo con éxito."}
+            </p>
+            <p className="text-yellow-400 font-bold mt-4">
+              {isMa
+                ? "✅ العملية كملت بنجاح"
+                : isEn
+                ? "✅ Reservation completed"
+                : "✅ Reserva completada"}
+            </p>
+            <p className="text-white/70 mt-6">
+              {isMa
+                ? "نتمنّاو ليك التوفيق فالإجراء ديالك."
+                : isEn
+                ? "We wish you the best of luck with your procedure."
+                : "Te deseamos mucha suerte en tu trámite."}
+            </p>
+          </div>
+        ) : !confirmed && !formReady ? (
           <>
             <div className="mt-3 mx-[-4px] rounded-[24px] border-2 border-yellow-500/60 bg-gradient-to-b from-[#0b0b0b] to-[#050505] px-3 py-3 shadow-[0_0_35px_rgba(255,200,0,0.18)]">
               <div className="mb-3 grid grid-cols-[32px_1fr_32px] items-center gap-2">
@@ -228,9 +223,8 @@ function OfficialBrowserBox({
                 {formIntro}
               </p>
               <div className="w-full">
-         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 mb-5">
-                  {/* Nombre */}
-       <div className="col-span-1 md:col-span-1">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 mb-5">
+                  <div className="col-span-1 md:col-span-1">
                     <label className="block text-white text-[13px] mb-2">
                       {isMa ? "الاسم الكامل" : isEn ? "Full name" : "Nombre completo"}
                     </label>
@@ -243,49 +237,39 @@ function OfficialBrowserBox({
                     />
                   </div>
 
-{/* Teléfono internacional */}
-<div className="col-span-1 md:col-span-1">
-  <label className="block text-white text-[13px] mb-2">
-    {isMa ? "الهاتف" : isEn ? "Phone" : "Teléfono"}
-  </label>
-
-  <div className="flex gap-2 min-w-0">
-
-    <select
-      className="w-[92px] shrink-0 h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-2 text-center text-white"
-value={formData.preferredOffice}
-onChange={(e) =>
-  onFormChange("preferredOffice", e.target.value)
-}
-      id="countryCode"
-    >
-      <option value="+34">🇪🇸 +34</option>
-      <option value="+212">🇲🇦 +212</option>
-      <option value="+31">🇳🇱 +31</option>
-      <option value="+32">🇧🇪 +32</option>
-      <option value="+33">🇫🇷 +33</option>
-      <option value="+39">🇮🇹 +39</option>
-      <option value="+49">🇩🇪 +49</option>
-      <option value="+44">🇬🇧 +44</option>
-      <option value="+1">🇺🇸 +1</option>
-    </select>
-
-    <input
-      type="text"
-      placeholder="34644403748"
-      value={formData.phone}
-      onChange={(e) => onFormChange("phone", e.target.value)}
-      className="min-w-0 flex-1 h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white"
-    />
-
-  </div>
-</div>
-
-                  {/* Email */}
-                  <div>
+                  <div className="col-span-1 md:col-span-1">
                     <label className="block text-white text-[13px] mb-2">
-                      Email
+                      {isMa ? "الهاتف" : isEn ? "Phone" : "Teléfono"}
                     </label>
+                    <div className="flex gap-2 min-w-0">
+                      <select
+                        className="w-[92px] shrink-0 h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-2 text-center text-white"
+                        value={formData.preferredOffice}
+                        onChange={(e) => onFormChange("preferredOffice", e.target.value)}
+                        id="countryCode"
+                      >
+                        <option value="+34">🇪🇸 +34</option>
+                        <option value="+212">🇲🇦 +212</option>
+                        <option value="+31">🇳🇱 +31</option>
+                        <option value="+32">🇧🇪 +32</option>
+                        <option value="+33">🇫🇷 +33</option>
+                        <option value="+39">🇮🇹 +39</option>
+                        <option value="+49">🇩🇪 +49</option>
+                        <option value="+44">🇬🇧 +44</option>
+                        <option value="+1">🇺🇸 +1</option>
+                      </select>
+                      <input
+                        type="text"
+                        placeholder="34644403748"
+                        value={formData.phone}
+                        onChange={(e) => onFormChange("phone", e.target.value)}
+                        className="min-w-0 flex-1 h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-white text-[13px] mb-2">Email</label>
                     <input
                       type="email"
                       placeholder="tu@email.com"
@@ -295,229 +279,245 @@ onChange={(e) =>
                     />
                   </div>
 
-              {/* Número de expediente */}
-<div>
-  <label className="block text-white text-[13px] mb-2">
-    Número de expediente
-  </label>
-
-  <input
-    type="text"
-    placeholder="467020260019841"
-    value={formData.expedienteNumero || ""}
-    onChange={(e) =>
-      onFormChange("expedienteNumero", e.target.value)
-    }
-    className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white"
-  />
-</div>
-
-{/* Identificador solicitud */}
-<div>
-  <label className="block text-white text-[13px] mb-2">
-    Identificador solicitud
-  </label>
-
-  <input
-    type="text"
-    placeholder="E46202600507573"
-    value={formData.identificadorSolicitud || ""}
-    onChange={(e) =>
-      onFormChange("identificadorSolicitud", e.target.value)
-    }
-    className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white"
-  />
-</div>
-{/* Fecha presentación solicitud */}
-<div className="min-w-0">
-  <label className="block text-white text-[13px] mb-2">
-    Fecha presentación solicitud
-  </label>
-
-  <input
-    type="date"
-    value={formData.fechaPresentacion || ""}
-    onChange={(e) =>
-      onFormChange("fechaPresentacion", e.target.value)
-    }
-    className="block w-full max-w-full min-w-0 h-[52px] box-border appearance-none rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white [color-scheme:dark]"
-  />
-</div>
-{/* Fecha nacimiento */}
-<div className="min-w-0">
-  <label className="block text-white text-[13px] mb-2">
-    Fecha nacimiento
-  </label>
-
-  <input
-    type="date"
-    value={formData.fechaNacimiento || ""}
-    onChange={(e) =>
-      onFormChange("fechaNacimiento", e.target.value)
-    }
-    className="block w-full max-w-full min-w-0 h-[52px] box-border appearance-none rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white [color-scheme:dark]"
-  />
-</div>
-
-              {/* Caja de reserva */}
-              <div className="mt-4 rounded-[28px] border-2 border-yellow-500 bg-gradient-to-b from-[#0b0b0b] to-[#050505] p-4 shadow-[0_0_35px_rgba(255,200,0,0.18)]">
-                <div className="flex items-start justify-between mb-4 pt-2">
                   <div>
-                    <p className="text-white text-[15px] font-bold">
-                      {isMa ? "الملف favorable" : isEn ? "Favorable file status" : "Expediente favorable"}
-                    </p>
-                    <span className="inline-flex mt-1 rounded-full bg-gradient-to-r from-yellow-400 to-yellow-600 px-3 py-1 text-[10px] font-black uppercase tracking-wide text-black shadow-[0_0_15px_rgba(255,215,0,0.25)]">
-                      Premium
+                    <label className="block text-white text-[13px] mb-2">
+                      Número de expediente
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="467020260019841"
+                      value={formData.expedienteNumero}
+                      onChange={(e) => onFormChange("expedienteNumero", e.target.value)}
+                      className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-white text-[13px] mb-2">
+                      Identificador solicitud
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="E46202600507573"
+                      value={formData.identificadorSolicitud}
+                      onChange={(e) => onFormChange("identificadorSolicitud", e.target.value)}
+                      className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white"
+                    />
+                  </div>
+
+                  <div className="min-w-0">
+                    <label className="block text-white text-[13px] mb-2">
+                      Fecha presentación solicitud
+                    </label>
+                    <input
+                      type="date"
+                      value={formData.fechaPresentacion}
+                      onChange={(e) => onFormChange("fechaPresentacion", e.target.value)}
+                      className="block w-full max-w-full min-w-0 h-[52px] box-border appearance-none rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white [color-scheme:dark]"
+                    />
+                  </div>
+
+                  <div className="min-w-0">
+                    <label className="block text-white text-[13px] mb-2">
+                      Fecha nacimiento
+                    </label>
+                    <input
+                      type="date"
+                      value={formData.fechaNacimiento}
+                      onChange={(e) => onFormChange("fechaNacimiento", e.target.value)}
+                      className="block w-full max-w-full min-w-0 h-[52px] box-border appearance-none rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white [color-scheme:dark]"
+                    />
+                  </div>
+                </div>
+
+                {/* ✅ CASILLA DE AUTORIZACIÓN - OBLIGATORIA */}
+                <div className="mt-4 mb-4 p-4 rounded-xl border border-yellow-500/30 bg-yellow-500/10">
+                  <label className="flex items-start gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      id="autoriza_naf"
+                      required
+                      className="mt-1 w-5 h-5 accent-yellow-500 shrink-0"
+                      onChange={(e) => {
+                        (window as any).__autorizaNaf = e.target.checked;
+                      }}
+                    />
+                    <div>
+                      <p className="text-white text-sm font-medium">
+                        {isMa 
+                          ? "🔐 كتصريح لـ Gestoría Cita IA باش تسالي على رقم الضمان الاجتماعي ديالي" 
+                          : isEn 
+                          ? "🔐 I authorize Gestoría Cita IA to consult my Social Security number" 
+                          : "🔐 Autorizo a Gestoría Cita IA a consultar mi número de Seguridad Social"}
+                      </p>
+                      <ul className="text-white/70 text-xs mt-1 list-disc pl-4 space-y-0.5">
+                        <li>
+                          {isMa 
+                            ? "تسالي على رقم الضمان الاجتماعي ديالي" 
+                            : isEn 
+                            ? "Consult my Social Security number" 
+                            : "Consultar mi número de afiliación a la Seguridad Social"}
+                        </li>
+                        <li>
+                          {isMa 
+                            ? "تصيفطو ليا فـ WhatsApp ملي يخرج الملف favorable" 
+                            : isEn 
+                            ? "Send it to me via WhatsApp when favorable" 
+                            : "Enviármelo por WhatsApp en caso de favorable"}
+                        </li>
+                        <li>
+                          {isMa 
+                            ? "يحفظو فـ الملف ديالي" 
+                            : isEn 
+                            ? "Store it in my file" 
+                            : "Almacenarlo en mi expediente"}
+                        </li>
+                      </ul>
+                      <p className="text-white/40 text-[10px] mt-2">
+                        {isMa 
+                          ? "* هاد التصريح ضروري باش الخدمة تكمل. نقدر نرجع فيه فـ أي وقت." 
+                          : isEn 
+                          ? "* This authorization is required to complete the service. You can revoke it at any time." 
+                          : "* Esta autorización es obligatoria para el servicio. Puedes revocarla en cualquier momento."}
+                      </p>
+                    </div>
+                  </label>
+                </div>
+
+                {/* Caja de reserva */}
+                <div className="mt-4 rounded-[28px] border-2 border-yellow-500 bg-gradient-to-b from-[#0b0b0b] to-[#050505] p-4 shadow-[0_0_35px_rgba(255,200,0,0.18)]">
+                  <div className="flex items-start justify-between mb-4 pt-2">
+                    <div>
+                      <p className="text-white text-[15px] font-bold">
+                        {isMa ? "الملف favorable" : isEn ? "Favorable file status" : "Expediente favorable"}
+                      </p>
+                      <span className="inline-flex mt-1 rounded-full bg-gradient-to-r from-yellow-400 to-yellow-600 px-3 py-1 text-[10px] font-black uppercase tracking-wide text-black shadow-[0_0_15px_rgba(255,215,0,0.25)]">
+                        Premium
+                      </span>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-yellow-400 text-[34px] font-black leading-none drop-shadow-[0_0_10px_rgba(255,215,0,0.35)]">
+                        10€
+                      </p>
+                      <p className="text-yellow-300 text-[11px] font-semibold">
+                        {isMa ? "التحقق الأول" : isEn ? "Initial verification" : "Verificación inicial"}
+                      </p>
+                    </div>
+                  </div>
+
+                  <p className="text-gray-300 text-[13px] mb-5 leading-relaxed">
+                    {isMa
+                      ? "سارة غادي تبدا تراجع الملف ديالك أوتوماتيكيا"
+                      : isEn
+                      ? "Sara will automatically start checking your file"
+                      : "Sara empieza a verificar tu expediente automáticamente"}
+                  </p>
+
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (
+                        !formData.fullName.trim() ||
+                        !formData.phone.trim() ||
+                        !formData.expedienteNumero.trim() ||
+                        !formData.identificadorSolicitud.trim() ||
+                        !formData.fechaPresentacion.trim() ||
+                        !formData.fechaNacimiento.trim()
+                      ) {
+                        toast({
+                          title: ui.missingTitle,
+                          description: ui.missingDesc,
+                          variant: "destructive",
+                        });
+                        return;
+                      }
+
+                      // ✅ VALIDAR CASILLA DE AUTORIZACIÓN
+                      const autoriza = (window as any).__autorizaNaf;
+                      if (!autoriza) {
+                        toast({
+                          title: isMa ? "مطلوب التصريح" : isEn ? "Authorization required" : "Autorización requerida",
+                          description: isMa 
+                            ? "خاصك تدي التصريح باش تكمل الخدمة" 
+                            : isEn 
+                            ? "You must authorize to continue" 
+                            : "Debes autorizar para continuar",
+                          variant: "destructive",
+                        });
+                        return;
+                      }
+
+                      try {
+                        const res = await fetch("/api/create-checkout-sara-inicial", {
+                          method: "POST",
+                          headers: {
+                            "Content-Type": "application/json",
+                          },
+                          body: JSON.stringify({
+                            fullName: formData.fullName,
+                            phone: formData.phone,
+                            email: formData.email,
+                            expedienteNumero: formData.expedienteNumero,
+                            identificadorSolicitud: formData.identificadorSolicitud,
+                            fechaPresentacion: formData.fechaPresentacion,
+                            fechaNacimiento: formData.fechaNacimiento,
+                            autoriza_naf: true,
+                          }),
+                        });
+                        const data = await res.json();
+                        if (data.url) {
+                          localStorage.setItem("saraPaid", "1");
+                          window.location.href = data.url;
+                        }
+                      } catch (error) {
+                        console.error(error);
+                        alert("Stripe error");
+                      }
+                    }}
+                    className="w-full min-h-[56px] rounded-[20px] bg-gradient-to-r from-yellow-400 via-yellow-500 to-amber-500 px-4 py-2 text-[15px] leading-tight font-black text-black shadow-[0_0_30px_rgba(255,215,0,0.35)] transition-all duration-300 hover:scale-[1.01]"
+                  >
+                    {isMa
+                      ? "🔐 خلص وبدأ التحقق"
+                      : isEn
+                      ? "🔐 Pay and start verification"
+                      : "🔐 Pagar y empezar verificación"}
+                  </button>
+
+                  <div className="mt-5 flex items-center justify-center gap-2 text-[11px] text-gray-300">
+                    <Shield className="w-3 h-3 text-yellow-400" />
+                    <span>
+                      {isMa
+                        ? "دفع آمن عبر Stripe"
+                        : isEn
+                        ? "Secure payment with Stripe"
+                        : "Pago seguro con Stripe"}
                     </span>
                   </div>
-                  <div className="text-right">
-                    <p className="text-yellow-400 text-[34px] font-black leading-none drop-shadow-[0_0_10px_rgba(255,215,0,0.35)]">
-                      10€
-                    </p>
-                    <p className="text-yellow-300 text-[11px] font-semibold">
-                      {isMa ? "التحقق الأول" : isEn ? "Initial verification" : "Verificación inicial"}
-                    </p>
+
+                  <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
+                    <span className="rounded-full bg-white px-3 py-1 text-[11px] font-bold text-[#1434CB]">VISA</span>
+                    <span className="rounded-full bg-white px-3 py-1 text-[11px] font-bold text-[#EB001B]">Mastercard</span>
+                    <span className="rounded-full bg-white px-3 py-1 text-[11px] font-bold text-black"> Pay</span>
+                    <span className="rounded-full bg-white px-3 py-1 text-[11px] font-bold text-black">G Pay</span>
                   </div>
-                </div>
-
-                <p className="text-gray-300 text-[13px] mb-5 leading-relaxed">
-                  {isMa
-                    ? "سارة غادي تبدا تراجع الملف ديالك أوتوماتيكيا"
-                    : isEn
-                    ? "Sara will automatically start checking your file"
-                    : "Sara empieza a verificar tu expediente automáticamente"}
-                </p>
-
-                <button
-                  type="button"
-              onClick={async () => {
-
-  if (
-!formData.fullName.trim() ||
-!formData.phone.trim() ||
-!formData.expedienteNumero.trim() ||
-!formData.identificadorSolicitud.trim() ||
-!formData.fechaPresentacion.trim() ||
-!formData.fechaNacimiento.trim()
-  ) {
-    toast({
-      title: ui.missingTitle,
-      description: ui.missingDesc,
-      variant: "destructive",
-    });
-
-    return;
-  }
-
-  try {
-
-const res = await fetch("/api/create-checkout-sara-inicial", {
-  method: "POST",
-
-  headers: {
-    "Content-Type": "application/json",
-  },
-
-body: JSON.stringify({
-
-  fullName: formData.fullName,
-
-  phone: formData.phone,
-
-  email: formData.email,
-
-  expedienteNumero:
-    formData.expedienteNumero,
-
-  identificadorSolicitud:
-    formData.identificadorSolicitud,
-
-  fechaPresentacion:
-    formData.fechaPresentacion,
-
-  fechaNacimiento:
-    formData.fechaNacimiento,
-
-}),
-});
-
-const data = await res.json();
-
-  if (data.url) {
-localStorage.setItem("saraPaid", "1");
-window.location.href = data.url;
-
-}
-  } catch (error) {
-
-    console.error(error);
-
- alert("Stripe error");
-
-  }
-
-}}
-                  className="w-full min-h-[56px] rounded-[20px] bg-gradient-to-r from-yellow-400 via-yellow-500 to-amber-500 px-4 py-2 text-[15px] leading-tight font-black text-black shadow-[0_0_30px_rgba(255,215,0,0.35)] transition-all duration-300 hover:scale-[1.01]"
-                >
-                  {isMa
-                    ? "🔐 خلص وبدأ التحقق"
-                    : isEn
-                    ? "🔐 Pay and start verification"
-                    : "🔐 Pagar y empezar verificación"}
-                </button>
-
-                <div className="mt-5 flex items-center justify-center gap-2 text-[11px] text-gray-300">
-                  <Shield className="w-3 h-3 text-yellow-400" />
-                  <span>
-                    {isMa
-                      ? "دفع آمن عبر Stripe"
-                      : isEn
-                      ? "Secure payment with Stripe"
-                      : "Pago seguro con Stripe"}
-                  </span>
-                </div>
-
-                <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
-                  <span className="rounded-full bg-white px-3 py-1 text-[11px] font-bold text-[#1434CB]">VISA</span>
-                  <span className="rounded-full bg-white px-3 py-1 text-[11px] font-bold text-[#EB001B]">Mastercard</span>
-                  <span className="rounded-full bg-white px-3 py-1 text-[11px] font-bold text-black"> Pay</span>
-                  <span className="rounded-full bg-white px-3 py-1 text-[11px] font-bold text-black">G Pay</span>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-
-            {hasRealAppointment && (
-              <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4">
-                <p className="text-sm font-bold text-emerald-800">
-                  {isMa ? "لقينا الموعد الحقيقي" : isEn ? "Real appointment found" : "Cita real encontrada"}
-                </p>
-                <p className="mt-2 text-sm text-gray-700">
-                  {isMa ? "النوع" : isEn ? "Procedure" : "Trámite"}: {appointmentData?.tramite || selectedTramiteLabel}
-                </p>
-                <p className="text-sm text-gray-700">{isMa ? "التاريخ" : isEn ? "Date" : "Fecha"}: {finalDate}</p>
-                <p className="text-sm text-gray-700">{isMa ? "الوقت" : isEn ? "Time" : "Hora"}: {finalTime}</p>
-                <p className="text-sm text-gray-700">{isMa ? "المكتب" : isEn ? "Office" : "Oficina"}: {finalOffice}</p>
-                <p className="text-sm text-gray-700">{isMa ? "رقم الموعد" : isEn ? "Locator" : "Localizador"}: {finalLocator}</p>
-              </div>
-            )}
-          </>
-  
         ) : (
           <>
             <div className="rounded-[26px] border border-emerald-500/40 bg-[#07111f] px-5 py-7 mb-5 shadow-[0_0_30px_rgba(16,185,129,0.08)]">
-<div className="flex justify-center mb-4">
-  <div className="w-14 h-14 rounded-full border-2 border-emerald-400 bg-emerald-500/15 flex items-center justify-center shadow-[0_0_20px_rgba(16,185,129,0.35)]">
-    <CheckCircle2 className="w-8 h-8 text-emerald-400" />
-  </div>
-</div>
+              <div className="flex justify-center mb-4">
+                <div className="w-14 h-14 rounded-full border-2 border-emerald-400 bg-emerald-500/15 flex items-center justify-center shadow-[0_0_20px_rgba(16,185,129,0.35)]">
+                  <CheckCircle2 className="w-8 h-8 text-emerald-400" />
+                </div>
+              </div>
               <h3 className="text-center text-white text-[18px] font-semibold leading-tight mb-3">
                 {isMa
-  ? "مبروك 🎉 بدينا نراجعو الملف ديالك. ملي يخرج favorable غادي نعلموك فالواتساب بشكل مستعجل."
-  : isEn
-  ? "Congratulations 🎉 We have started checking your file. As soon as it becomes favorable, we will urgently notify you on WhatsApp."
-  : "Felicidades 🎉 Hemos empezado a verificar tu expediente. En cuanto salga favorable te avisaremos urgentemente por WhatsApp."}
+                  ? "مبروك 🎉 بدينا نراجعو الملف ديالك. ملي يخرج favorable غادي نعلموك فالواتساب بشكل مستعجل."
+                  : isEn
+                  ? "Congratulations 🎉 We have started checking your file. As soon as it becomes favorable, we will urgently notify you on WhatsApp."
+                  : "Felicidades 🎉 Hemos empezado a verificar tu expediente. En cuanto salga favorable te avisaremos urgentemente por WhatsApp."}
               </h3>
               <p className="text-center text-white/70 text-[14px] leading-relaxed">
                 {isMa
@@ -526,44 +526,32 @@ window.location.href = data.url;
                   ? "We will notify you here when there is news about your file."
                   : "Te avisaremos aquí cuando haya novedades sobre tu expediente."}
               </p>
-              
-
-<div className="mt-5 rounded-2xl border border-yellow-500/20 bg-yellow-500/10 p-4">
-
-  <div className="flex items-center gap-2 mb-2">
-
-    <div className="w-2.5 h-2.5 rounded-full bg-yellow-400 animate-pulse" />
-
-    <p className="text-yellow-300 font-bold text-sm">
-      Sara buscando 24/24
-    </p>
-
-  </div>
-
-  <p className="text-white/70 text-xs leading-relaxed">
-
-    {isMa
-      ? "سارة دابا كتراجع الملف ديالك وغادي توصلك رسالة فواتساب مباشرة ملي يخرج favorable."
-      : isEn
-      ? "Sara is now checking your file and you will receive a WhatsApp notification as soon as it becomes favorable."
-      : "Sara está verificando tu expediente ahora mismo y recibirás una notificación por WhatsApp en cuanto salga favorable."}
-
-  </p>
-
-</div>
-
-</div>
+              <div className="mt-5 rounded-2xl border border-yellow-500/20 bg-yellow-500/10 p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-2.5 h-2.5 rounded-full bg-yellow-400 animate-pulse" />
+                  <p className="text-yellow-300 font-bold text-sm">
+                    Sara buscando 24/24
+                  </p>
+                </div>
+                <p className="text-white/70 text-xs leading-relaxed">
+                  {isMa
+                    ? "سارة دابا كتراجع الملف ديالك وغادي توصلك رسالة فواتساب مباشرة ملي يخرج favorable."
+                    : isEn
+                    ? "Sara is now checking your file and you will receive a WhatsApp notification as soon as it becomes favorable."
+                    : "Sara está verificando tu expediente ahora mismo y recibirás una notificación por WhatsApp en cuanto salga favorable."}
+                </p>
+              </div>
+            </div>
 
             <div className="rounded-[30px] overflow-hidden border border-yellow-500/30 bg-[#050816] shadow-[0_0_40px_rgba(255,200,0,0.10)]">
               <div className="px-6 py-8 bg-[radial-gradient(circle_at_top,rgba(255,200,0,0.12),transparent_60%)]">
                 <div className="flex justify-center mb-5">
                   <img
-            src="https://upload.wikimedia.org/wikipedia/en/9/9a/Flag_of_Spain.svg"
-              alt="España"
-               className="w-20 h-14 object-cover rounded-lg shadow-[0_0_15px_rgba(255,255,255,0.15)] border border-white/20"
+                    src="https://upload.wikimedia.org/wikipedia/en/9/9a/Flag_of_Spain.svg"
+                    alt="España"
+                    className="w-20 h-14 object-cover rounded-lg shadow-[0_0_15px_rgba(255,255,255,0.15)] border border-white/20"
                   />
                 </div>
-
                 <h2 className="text-center text-[#f6d06f] text-[36px] leading-[42px] font-black mb-5">
                   {isMa
                     ? "متابعة الملف بثقة"
@@ -571,7 +559,6 @@ window.location.href = data.url;
                     ? "File Follow-up with Confidence"
                     : "Seguimiento de expediente con confianza"}
                 </h2>
-
                 <p className="text-center text-white/75 text-[15px] leading-relaxed mb-8">
                   {isMa
                     ? "كنعاونوك تتابع الملف ديالك وتخرج رقم الضمان الاجتماعي وتفتح alta بطريقة آمنة أونلاين."
@@ -579,7 +566,6 @@ window.location.href = data.url;
                     ? "We help you follow your file, get your Social Security number and open registration securely online."
                     : "Te ayudamos a seguir tu expediente, sacar tu número de Seguridad Social y abrir alta de forma segura online."}
                 </p>
-
                 <div className="grid grid-cols-3 gap-3 text-center">
                   <div>
                     <Shield className="w-8 h-8 text-[#f6d06f] mx-auto mb-3" />
@@ -600,7 +586,6 @@ window.location.href = data.url;
                     </p>
                   </div>
                 </div>
-
                 <div className="mt-8 text-center text-[#f6d06f] text-[24px] font-bold">
                   {isMa
                     ? "« خدمتك كتبدا بملف واضح. »"
@@ -615,59 +600,49 @@ window.location.href = data.url;
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               className="flex flex-col items-center text-center py-10 gap-5"
-     >
-</motion.div>
-
-</>
-
+            />
+          </>
         )}
-
-</div>
-</motion.div>
-);
+      </div>
+    </motion.div>
+  );
 }
 
 export default function BuscarCitas() {
-  // ✅ CORRECCIÓN PRINCIPAL: usamos lang del contexto y mapeamos a "ma" para la lógica interna
   const { lang } = useLang();
   const language = lang === "darija" ? "ma" : lang;
 
   const [location] = useLocation();
-const [selectedTramite, setSelectedTramite] = useState("primera_tie");
+  const [selectedTramite, setSelectedTramite] = useState("primera_tie");
   const [step, setStep] = useState(0);
   const [muted, setMuted] = useState(false);
-const [confirmed, setConfirmed] = useState(
-  new URLSearchParams(window.location.search).get("success") === "true"
-);
+  const [confirmed, setConfirmed] = useState(
+    new URLSearchParams(window.location.search).get("success") === "true"
+  );
   const [showDocs, setShowDocs] = useState(false);
   const [showForms, setShowForms] = useState(false);
   const [profile, setProfile] = useState<ProfileRow | null>(null);
   const [appointmentData, setAppointmentData] = useState<AppointmentResult | null>(null);
   const [profileLoading, setProfileLoading] = useState(true);
-const [formData, setFormData] = useState<ClientFormData>({
-  fullName: "",
-  phone: "",
-  email: "",
-
-  expedienteNumero: "",
-  identificadorSolicitud: "",
-
-  fechaPresentacion: "",
-
-  fechaNacimiento: "",
-
-  preferredOffice: "+34",
-
-  nie: "",
-  passport: "",
-  nationality: "",
-  birthYear: "",
-  city: "",
-  province: "",
-});
-const [formReady, setFormReady] = useState(
-  localStorage.getItem("saraPaid") === "1"
-);
+  const [formData, setFormData] = useState<ClientFormData>({
+    fullName: "",
+    phone: "",
+    email: "",
+    expedienteNumero: "",
+    identificadorSolicitud: "",
+    fechaPresentacion: "",
+    fechaNacimiento: "",
+    preferredOffice: "+34",
+    nie: "",
+    passport: "",
+    nationality: "",
+    birthYear: "",
+    city: "",
+    province: "",
+  });
+  const [formReady, setFormReady] = useState(
+    localStorage.getItem("saraPaid") === "1"
+  );
   const [voiceSupported, setVoiceSupported] = useState(true);
   const [isListening, setIsListening] = useState(false);
   const [waitingSara, setWaitingSara] = useState(false);
@@ -713,99 +688,88 @@ const [formReady, setFormReady] = useState(
 
   const ui = useMemo(() => {
     return {
- tramites: [
-
-{
-  value: "primera_tie",
-  label: isMa
-    ? "البصمات - أول TIE"
-    : isEn
-    ? "First TIE - Fingerprints"
-    : "Primera TIE (Toma de huellas)",
-},
-
-{
-  value: "renovacion_nie",
-  label: isMa
-    ? "تجديد NIE أو TIE"
-    : isEn
-    ? "NIE / TIE Renewal"
-    : "Renovación NIE / TIE",
-},
-
-{
-  value: "reagrupacion_familiar",
-  label: isMa
-    ? "التجمع العائلي"
-    : isEn
-    ? "Family Reunification"
-    : "Reagrupación Familiar",
-},
-
-{
-  value: "arraigo",
-  label: isMa
-    ? "الاستقرار (أرايغو)"
-    : isEn
-    ? "Arraigo Residence"
-    : "Arraigo",
-},
-
-{
-  value: "familiar_ue",
-  label: isMa
-    ? "فرد من عائلة مواطن أوروبي"
-    : isEn
-    ? "EU Family Member"
-    : "Familiar de Ciudadano UE",
-},
-
-{
-  value: "certificado_ue",
-  label: isMa
-    ? "شهادة مواطن أوروبي"
-    : isEn
-    ? "EU Registration Certificate"
-    : "Certificado de Registro UE",
-},
-
-{
-  value: "autorizacion_regreso",
-  label: isMa
-    ? "رخصة الرجوع"
-    : isEn
-    ? "Return Authorization"
-    : "Autorización de Regreso",
-},
-
-{
-  value: "larga_duracion",
-  label: isMa
-    ? "الإقامة طويلة المدة"
-    : isEn
-    ? "Long-Term Residence"
-    : "Residencia de Larga Duración",
-},
-
-{
-  value: "estudios",
-  label: isMa
-    ? "إقامة الدراسة"
-    : isEn
-    ? "Student Residence"
-    : "Estancia por Estudios",
-},
-
-{
-  value: "asilo",
-  label: isMa
-    ? "اللجوء والحماية الدولية"
-    : isEn
-    ? "Asylum and International Protection"
-    : "Asilo y Protección Internacional",
-},
-
-] as TramiteItem[],
+      tramites: [
+        {
+          value: "primera_tie",
+          label: isMa
+            ? "البصمات - أول TIE"
+            : isEn
+            ? "First TIE - Fingerprints"
+            : "Primera TIE (Toma de huellas)",
+        },
+        {
+          value: "renovacion_nie",
+          label: isMa
+            ? "تجديد NIE أو TIE"
+            : isEn
+            ? "NIE / TIE Renewal"
+            : "Renovación NIE / TIE",
+        },
+        {
+          value: "reagrupacion_familiar",
+          label: isMa
+            ? "التجمع العائلي"
+            : isEn
+            ? "Family Reunification"
+            : "Reagrupación Familiar",
+        },
+        {
+          value: "arraigo",
+          label: isMa
+            ? "الاستقرار (أرايغو)"
+            : isEn
+            ? "Arraigo Residence"
+            : "Arraigo",
+        },
+        {
+          value: "familiar_ue",
+          label: isMa
+            ? "فرد من عائلة مواطن أوروبي"
+            : isEn
+            ? "EU Family Member"
+            : "Familiar de Ciudadano UE",
+        },
+        {
+          value: "certificado_ue",
+          label: isMa
+            ? "شهادة مواطن أوروبي"
+            : isEn
+            ? "EU Registration Certificate"
+            : "Certificado de Registro UE",
+        },
+        {
+          value: "autorizacion_regreso",
+          label: isMa
+            ? "رخصة الرجوع"
+            : isEn
+            ? "Return Authorization"
+            : "Autorización de Regreso",
+        },
+        {
+          value: "larga_duracion",
+          label: isMa
+            ? "الإقامة طويلة المدة"
+            : isEn
+            ? "Long-Term Residence"
+            : "Residencia de Larga Duración",
+        },
+        {
+          value: "estudios",
+          label: isMa
+            ? "إقامة الدراسة"
+            : isEn
+            ? "Student Residence"
+            : "Estancia por Estudios",
+        },
+        {
+          value: "asilo",
+          label: isMa
+            ? "اللجوء والحماية الدولية"
+            : isEn
+            ? "Asylum and International Protection"
+            : "Asilo y Protección Internacional",
+        },
+      ] as TramiteItem[],
 
       docsByTramite: {
         tie: [
@@ -821,118 +785,87 @@ const [formReady, setFormReady] = useState(
       } as Record<string, FormItem[]>,
 
       online: isMa ? "أونلاين" : isEn ? "Online" : "En línea",
-
       agentRole: isMa ? "مساعدة المواعيد" : isEn ? "Appointments Assistant" : "Asesora de Citas",
-
       procedurePlaceholder: isMa
         ? "اختار نوع السيتا"
         : isEn
         ? "Select appointment type"
         : "Seleccione el trámite entre los relacionados",
-
       loadingUserData: isMa
         ? "جاري تحميل المعلومات..."
         : isEn
         ? "Loading user data..."
         : "Cargando datos del usuario...",
-
       govSmall: "extranjería:",
       govTitle: "CITA PREVIA",
       govLine1: "COMISARÍA GENERAL",
       govLine2: "DE EXTRANJERÍA",
       govLine3: "E INMIGRACIÓN",
-
       confirmTitle: isMa ? "تم تأكيد الموعد!" : isEn ? "APPOINTMENT CONFIRMED!" : "¡CITA CONFIRMADA!",
-
       date: isMa ? "التاريخ" : isEn ? "Date" : "Fecha",
       time: isMa ? "الوقت" : isEn ? "Time" : "Hora",
       office: isMa ? "المكتب" : isEn ? "Office" : "Oficina",
       appointmentNumber: isMa ? "رقم الموعد" : isEn ? "Appointment Number" : "Nº Cita",
-
       reservationSaved: isMa
         ? "تم حفظ الحجز"
         : isEn
         ? "Reservation saved"
         : "Reserva guardada correctamente",
-
       sourceLabel: isMa ? "المصدر الرسمي" : isEn ? "Official source" : "Fuente oficial",
-
       foundSuccessTitle: isMa ? "لقينا الموعد!" : isEn ? "Appointment found!" : "¡Cita encontrada!",
       foundSuccessDesc: isMa ? "أكد الموعد دابا" : isEn ? "Confirm now to continue." : "Ahora confirma para continuar.",
       foundErrorTitle: isMa ? "خطأ" : isEn ? "Error" : "Error al buscar cita",
       foundErrorDesc: isMa ? "ما قدرناش نلقاو الموعد" : isEn ? "Could not search appointment." : "No se pudo buscar la cita en este momento.",
-
       confirmSuccessTitle: isMa ? "تم تأكيد الموعد" : isEn ? "Appointment confirmed!" : "¡Cita confirmada!",
       confirmSuccessDesc: isMa
         ? "تم حفظ الحجز"
         : isEn
         ? "Reservation saved correctly."
         : "La reserva ha quedado registrada correctamente.",
-
       procedureShort: isMa ? "النوع" : isEn ? "Procedure" : "Trámite",
-
       openOfficialSite: isMa ? "فتح الموقع الرسمي" : isEn ? "Open official website" : "Abrir sede oficial",
       downloadPdf: isMa ? "تحميل PDF" : isEn ? "Download PDF" : "Descargar PDF",
-
       voiceButton: isMa ? "تكلم مع سارة" : isEn ? "Talk with Sara" : "Hablar con Sara",
       stopButton: isMa ? "وقف الميكرو" : isEn ? "Stop microphone" : "Parar micrófono",
-
       latestReply: isMa ? "آخر رد من سارة" : isEn ? "Latest Sara reply" : "Última respuesta de Sara",
       yourVoice: isMa ? "آخر كلام ديالك" : isEn ? "Your latest voice" : "Tu última respuesta por voz",
       listening: isMa ? "سارة كتسمع ليك..." : isEn ? "Sara is listening..." : "Sara te está escuchando ahora...",
-
       saveTitle: isMa ? "تم حفظ المعلومات" : isEn ? "Data saved" : "Datos guardados",
       saveDesc: isMa ? "سارة غادي تكمل معاك" : isEn ? "Sara can continue now." : "Sara ya puede continuar contigo.",
-
       missingTitle: isMa ? "معلومات ناقصة" : isEn ? "Missing data" : "Faltan datos",
       missingDesc: isMa
         ? "دخل الاسم والهاتف والمدينة"
         : isEn
         ? "Fill name, phone and city."
         : "Rellena nombre, teléfono y ciudad antes de continuar.",
-
       openRealtimeError: isMa
         ? "المتصفح ما كيدعمش الصوت"
         : isEn
         ? "Browser does not support audio."
         : "Este navegador no soporta audio. Usa Chrome moderno.",
-
-      // Textos del footer / barra de abajo
       docsButton: isMa ? "الوثائق" : isEn ? "Documents" : "Documentos",
       formsButton: isMa ? "الاستمارات" : isEn ? "Forms" : "Formularios",
       docsRequiredTitle: isMa ? "الوثائق المطلوبة" : isEn ? "Required documents" : "Documentos requeridos",
       formsOfficialTitle: isMa ? "الاستمارات الرسمية" : isEn ? "Official forms" : "Formularios oficiales",
-
-      // Título página
       pageTitle: isMa ? "البحث على المواعيد" : isEn ? "Find appointments" : "Buscar citas",
       pageTitleConfirm: isMa ? "سارة: تأكيد الموعد" : isEn ? "Sara: appointment confirmation" : "Sara: confirmación de cita",
-
-      // Mensaje Sara al guardar lead
       agentSavedMsg: isMa
         ? "مزيان. دابا كنقلبو على الموعد ديالك. غادي نخبروك فالواتساب في أقل من 24 ساعة."
         : isEn
         ? "Perfect. We are already looking for your appointment. We will notify you on WhatsApp within 24 hours."
         : "Perfecto. Ya estamos buscando tu cita. Te avisaremos por WhatsApp en menos de 24h.",
-
-      // Confirmar cita botón
       confirmBtn: isMa ? "تأكيد الموعد" : isEn ? "Confirm appointment" : "Confirmar cita",
-
-      // Errores varios
       noRealAppointmentTitle: isMa ? "ما كاين حتى موعد حقيقي" : isEn ? "No real appointment" : "No hay cita real",
       noRealAppointmentDesc: isMa
         ? "ما تقدرش تأكد موعد ناقص"
         : isEn
         ? "You cannot confirm an incomplete appointment."
         : "No puedes confirmar una cita inventada o incompleta.",
-
       stripeErrorTitle: isMa ? "خطأ في الدفع" : isEn ? "Payment error" : "Error Stripe",
       stripeErrorDesc: isMa ? "ما قدرناش نفتحو الدفع" : isEn ? "Could not open payment." : "No se pudo abrir el pago",
-
       saveErrorTitle: isMa ? "خطأ" : isEn ? "Error" : "Error",
       saveErrorDesc: isMa ? "ما قدرناش نحفظو المعلومات" : isEn ? "Could not save data." : "No se pudo guardar el cliente",
-
       panelUpdated: isMa ? "تحدث اللوحة" : isEn ? "Panel updated" : "Panel actualizado",
-
       selectTramiteTitle: isMa ? "اختار نوع الموعد" : isEn ? "Select procedure" : "Selecciona trámite",
       selectTramiteDesc: isMa
         ? "اختار نوع الموعد قبل تكمل"
@@ -1295,7 +1228,6 @@ const [formReady, setFormReady] = useState(
         }
       );
 
-      // ✅ Mensaje de Sara traducido
       pushAgentMessage(ui.agentSavedMsg);
     } catch (error) {
       console.error(error);
@@ -1312,23 +1244,19 @@ const [formReady, setFormReady] = useState(
       const res = await fetch("/api/create-checkout-sara", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-       body: JSON.stringify({
-  appointment_id: urlParams.appointmentId,
-  token: urlParams.token,
-
-  customer_name: formData.fullName,
-  customer_phone: formData.phone,
-  customer_email: formData.email,
-
-  city: formData.city,
-
-  office: appointmentData?.office || "",
-  appointment_date: appointmentData?.date || "",
-  appointment_hour: appointmentData?.time || "",
-
-  tramite: selectedTramite,
-}),
-});
+        body: JSON.stringify({
+          appointment_id: urlParams.appointmentId,
+          token: urlParams.token,
+          customer_name: formData.fullName,
+          customer_phone: formData.phone,
+          customer_email: formData.email,
+          city: formData.city,
+          office: appointmentData?.office || "",
+          appointment_date: appointmentData?.date || "",
+          appointment_hour: appointmentData?.time || "",
+          tramite: selectedTramite,
+        }),
+      });
       const data = await res.json();
       if (data.url) window.location.href = data.url;
     } catch (err) {
@@ -1359,7 +1287,6 @@ const [formReady, setFormReady] = useState(
       <Navbar />
 
       <main className="flex-1 relative z-10 flex flex-col pt-16 pb-0">
-        {/* ✅ Título de página traducido */}
         <h1 className="text-xl font-display font-bold px-4 sm:px-6 py-3 max-w-7xl mx-auto w-full">
           {cameFromConfirmationLink ? ui.pageTitleConfirm : ui.pageTitle}
         </h1>
@@ -1374,53 +1301,40 @@ const [formReady, setFormReady] = useState(
               className="relative rounded-2xl overflow-hidden border border-primary/20 shadow-[0_0_30px_-5px_hsl(var(--primary)/0.25)] bg-black"
               style={{ height: "280px" }}
             >
-
-             
-<div className="relative w-full h-full">
-
-  <video
-    id="sara-video"
-    playsInline
-    preload="metadata"
-    poster="/images/sara.png"
-    className="w-full h-full object-cover object-top"
-    onPlay={() => {
-      const btn = document.getElementById("play-button-sara");
-      if (btn) btn.style.display = "none";
-    }}
-  >
-    <source src="/sara-presentacion.mp4" type="video/mp4" />
-  </video>
-
-  <button
-    id="play-button-sara"
-    type="button"
-    className="absolute inset-0 flex items-center justify-center"
-    onClick={() => {
-      const video = document.getElementById(
-        "sara-video"
-      ) as HTMLVideoElement;
-
-      if (video) {
-        video.play();
-      }
-    }}
-  >
-    <div className="bg-black/10 backdrop-blur-[1px] rounded-full w-12 h-12 flex items-center justify-center">
-      <svg
-        width="18"
-        height="18"
-        viewBox="0 0 24 24"
-        fill="white"
-      >
-        <path d="M8 5v14l11-7z" />
-      </svg>
-    </div>
-  </button>
-
-</div>
-
-              
+              <div className="relative w-full h-full">
+                <video
+                  id="sara-video"
+                  playsInline
+                  preload="metadata"
+                  poster="/images/sara.png"
+                  className="w-full h-full object-cover object-top"
+                  onPlay={() => {
+                    const btn = document.getElementById("play-button-sara");
+                    if (btn) btn.style.display = "none";
+                  }}
+                >
+                  <source src="/sara-presentacion.mp4" type="video/mp4" />
+                </video>
+                <button
+                  id="play-button-sara"
+                  type="button"
+                  className="absolute inset-0 flex items-center justify-center"
+                  onClick={() => {
+                    const video = document.getElementById(
+                      "sara-video"
+                    ) as HTMLVideoElement;
+                    if (video) {
+                      video.play();
+                    }
+                  }}
+                >
+                  <div className="bg-black/10 backdrop-blur-[1px] rounded-full w-12 h-12 flex items-center justify-center">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="white">
+                      <path d="M8 5v14l11-7z" />
+                    </svg>
+                  </div>
+                </button>
+              </div>
 
               {!muted && (
                 <div className="absolute bottom-14 left-4 flex items-end gap-0.5 h-5">
@@ -1439,9 +1353,7 @@ const [formReady, setFormReady] = useState(
                 <p className="text-white font-bold text-sm drop-shadow-lg">Sara</p>
                 <p className="text-white/70 text-xs drop-shadow-lg">{ui.agentRole}</p>
               </div>
-
-        
-</div>
+            </div>
             {step === 2 && !confirmed && hasRealAppointment && (
               <motion.button
                 initial={{ opacity: 0, y: 10 }}
@@ -1489,7 +1401,6 @@ const [formReady, setFormReady] = useState(
           />
         </div>
 
-        {/* Barra inferior */}
         <div className="hidden lg:block sticky bottom-0 z-30 glass-panel-heavy border-t border-white/10 py-3">
           <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
             <div className="flex gap-3">
@@ -1520,7 +1431,6 @@ const [formReady, setFormReady] = useState(
           </div>
         </div>
 
-        {/* Panel documentos */}
         <AnimatePresence>
           {showDocs && (
             <motion.div
@@ -1552,7 +1462,6 @@ const [formReady, setFormReady] = useState(
           )}
         </AnimatePresence>
 
-        {/* Panel formularios */}
         <AnimatePresence>
           {showForms && (
             <motion.div
@@ -1594,4 +1503,3 @@ const [formReady, setFormReady] = useState(
     </div>
   );
 }
-
