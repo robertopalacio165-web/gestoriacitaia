@@ -8,7 +8,6 @@ import {
   Upload,
   Star,
   Volume2,
-  VolumeX,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { verifyDocument, type VerifyDocumentResult } from "@/lib/verifyDocument";
@@ -764,7 +763,7 @@ export default function Regularizacion2026() {
   };
 
   // ==============================================
-  // ⭐ FUNCIÓN CORREGIDA - Soufiane HABLA INMEDIATAMENTE
+  // ⭐ startListening - CORREGIDO: Soufiane habla INMEDIATAMENTE
   // ==============================================
   const startListening = async () => {
     if (!voiceSupported) { 
@@ -791,12 +790,13 @@ export default function Regularizacion2026() {
       const pc = new RTCPeerConnection();
       realtimePcRef.current = pc;
       
-      // Audio silencioso para que OpenAI acepte la conexión
+      // ✅ AUDIO SILENCIOSO - para que OpenAI acepte la conexión
+      // NO capturamos el micrófono del usuario
       const audioContext = new AudioContext();
       const silentStream = audioContext.createMediaStreamDestination();
       const oscillator = audioContext.createOscillator();
       const gainNode = audioContext.createGain();
-      gainNode.gain.value = 0;
+      gainNode.gain.value = 0; // Volumen CERO - silencio total
       oscillator.connect(gainNode);
       gainNode.connect(silentStream);
       oscillator.start();
@@ -830,7 +830,7 @@ export default function Regularizacion2026() {
         setIsListening(true);
         setWaitingSoufiane(false);
         
-        // Configurar sesión - Soufiane SOLO LEE
+        // Configurar sesión - Soufiane SOLO LEE, NO ESCUCHA
         dc.send(JSON.stringify({
           type: "session.update",
           session: {
@@ -838,12 +838,13 @@ export default function Regularizacion2026() {
             
             مهمتك: قراءة النص الذي سأرسله لك بصوت واضح.
             
-            ⚠️ قواعد مهمة:
+            ⚠️ قواعد مهمة جداً:
             1. لا تسأل أي أسئلة
             2. لا تنتظر رد من العميل
             3. لا تقل "السلام عليكم" أو "مرحبا"
             4. اقرأ النص فقط
-            5. بعد الانتهاء من القراءة، توقف ولا تقل شيئا إضافيا`,
+            5. بعد الانتهاء من القراءة، توقف ولا تقل شيئا إضافيا
+            6. لا تتفاعل مع العميل بأي شكل من الأشكال`,
             modalities: ["audio", "text"],
             turn_detection: {
               type: "server_vad",
@@ -858,12 +859,14 @@ export default function Regularizacion2026() {
           },
         }));
 
+        // Esperar 500ms para que la sesión se configure
         await new Promise(resolve => setTimeout(resolve, 500));
 
         // Enviar el texto INMEDIATAMENTE
         const textToRead = verificationResultText || "مازال ما عندكش نتيجة للتحقق. خاصك ترفع وثائق وتضغط على زر التحقق من الوثائق أولاً.";
-        console.log("🔊 Enviando texto a Soufiane");
+        console.log("🔊 Enviando texto a Soufiane:", textToRead.substring(0, 100) + "...");
         
+        // Enviar el mensaje como "usuario" para que el asistente lo lea
         dc.send(JSON.stringify({
           type: "conversation.item.create",
           item: {
@@ -873,6 +876,7 @@ export default function Regularizacion2026() {
           }
         }));
 
+        // Forzar la respuesta del asistente INMEDIATAMENTE
         dc.send(JSON.stringify({
           type: "response.create",
           response: {
@@ -1036,7 +1040,7 @@ export default function Regularizacion2026() {
   };
 
   // ==============================================
-  // ⭐ VERIFICAR DOCUMENTOS - Genera explicación en DARIJA
+  // ⭐ VERIFICAR DOCUMENTOS - Genera explicación en DARIJA con VALOR
   // ==============================================
   const handleVerifyAll = async () => {
     try {
@@ -1116,7 +1120,7 @@ export default function Regularizacion2026() {
         const now = new Date();
         const diffYears = (now.getTime() - expDate.getTime()) / (1000 * 60 * 60 * 24 * 365);
         if (diffYears >= 1) {
-          expulsionMessage = `عندك قرار طرد قديم من تاريخ ${expDate.toLocaleDateString('es-ES')}. هاد القرار قديم بزاف، ما يؤثرش على ملف التسوية. تقدر تقدم عادي.`;
+          expulsionMessage = `عندك قرار طرد قديم من تاريخ ${expDate.toLocaleDateString('es-ES')}. هاد القرار قديم بزاف (عندو أكثر من عام). ما يؤثرش على ملف التسوية. تقدر تقدم عادي.`;
         } else {
           expulsionMessage = `⚠️ عندك قرار طرد جديد من تاريخ ${expDate.toLocaleDateString('es-ES')}. هاد القرار عندو أقل من عام. خاصك تحل هاد المشكلة قبل ما تقدم على التسوية.`;
         }
