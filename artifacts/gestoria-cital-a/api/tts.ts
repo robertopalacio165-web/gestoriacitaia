@@ -1,11 +1,14 @@
-import { NextResponse } from "next/server";
+// api/tts.ts - Para proyectos sin Next.js (Vite, React, etc.)
 
-export async function POST(req: Request) {
+export default async function handler(req: Request) {
   try {
     const { text, voice = "alloy" } = await req.json();
 
     if (!text || text.trim() === "") {
-      return NextResponse.json({ error: "Texto vacío" }, { status: 400 });
+      return new Response(JSON.stringify({ error: "Texto vacío" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" }
+      });
     }
 
     const response = await fetch("https://api.openai.com/v1/audio/speech", {
@@ -16,7 +19,7 @@ export async function POST(req: Request) {
       },
       body: JSON.stringify({
         model: "tts-1",
-        voice: voice, // alloy, echo, fable, onyx, nova, shimmer
+        voice: voice,
         input: text,
         response_format: "mp3",
       }),
@@ -25,12 +28,15 @@ export async function POST(req: Request) {
     if (!response.ok) {
       const error = await response.text();
       console.error("Error TTS OpenAI:", error);
-      return NextResponse.json({ error: "Error generando audio" }, { status: response.status });
+      return new Response(JSON.stringify({ error: "Error generando audio" }), {
+        status: response.status,
+        headers: { "Content-Type": "application/json" }
+      });
     }
 
     const audioBuffer = await response.arrayBuffer();
     
-    return new NextResponse(audioBuffer, {
+    return new Response(audioBuffer, {
       headers: {
         "Content-Type": "audio/mpeg",
         "Content-Length": audioBuffer.byteLength.toString(),
@@ -38,6 +44,9 @@ export async function POST(req: Request) {
     });
   } catch (error) {
     console.error("Error en TTS:", error);
-    return NextResponse.json({ error: "Error interno" }, { status: 500 });
+    return new Response(JSON.stringify({ error: "Error interno" }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" }
+    });
   }
 }
