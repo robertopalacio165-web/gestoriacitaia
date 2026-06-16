@@ -7,15 +7,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   FileText,
   Settings,
-  Mic,
-  MicOff,
-  RefreshCw,
   Shield,
   Bell,
   CheckCircle2,
-  ExternalLink,
-  Volume2,
-  VolumeX,
 } from "lucide-react";
 import { useScheduleAppointment } from "@/hooks/use-appointments";
 import { supabase } from "@/lib/supabaseClient";
@@ -146,12 +140,6 @@ function OfficialBrowserBox({
     ? "If you need to follow your file, get your Social Security number and open registration, fill in the form. We will notify you on WhatsApp when your file is favorable."
     : "Si necesitas seguir tu expediente, sacar tu número de Seguridad Social y abrir alta, rellena el formulario. Te avisamos por WhatsApp cuando tengas favorable.";
 
-  const panelTitle = isMa
-    ? "اللوحة الرسمية"
-    : isEn
-    ? "Official integrated panel"
-    : "Panel oficial integrado";
-
   return (
     <motion.div
       initial={{ opacity: 0, x: 20 }}
@@ -206,300 +194,305 @@ function OfficialBrowserBox({
             </p>
           </div>
         ) : !confirmed && !formReady ? (
-          <>
-            <div className="mt-3 mx-[-4px] rounded-[24px] border-2 border-yellow-500/60 bg-gradient-to-b from-[#0b0b0b] to-[#050505] px-3 py-3 shadow-[0_0_35px_rgba(255,200,0,0.18)]">
-              <div className="mb-3 grid grid-cols-[32px_1fr_32px] items-center gap-2">
-                <span />
-                <h2 className="text-center text-yellow-400 text-[18px] sm:text-[20px] font-black leading-tight">
-                  {isMa ? "عمر الفورم" : isEn ? "Fill in the form" : "Rellena el formulario"}
-                </h2>
-                <img
-                  src="https://upload.wikimedia.org/wikipedia/en/9/9a/Flag_of_Spain.svg"
-                  alt="España"
-                  className="h-5 w-8 rounded-[3px] object-cover shadow-[0_0_10px_rgba(255,255,255,0.20)]"
-                />
-              </div>
-              <p className="text-white/80 text-[13px] leading-relaxed mb-5">
-                {formIntro}
-              </p>
-              <div className="w-full">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 mb-5">
-                  <div className="col-span-1 md:col-span-1">
-                    <label className="block text-white text-[13px] mb-2">
-                      {isMa ? "الاسم الكامل" : isEn ? "Full name" : "Nombre completo"}
-                    </label>
-                    <input
-                      type="text"
-                      placeholder={isMa ? "دخل سميتك" : isEn ? "Your name" : "Escribe tu nombre"}
-                      value={formData.fullName}
-                      onChange={(e) => onFormChange("fullName", e.target.value)}
-                      className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-[14px] text-white placeholder:text-white/30 focus:outline-none focus:border-yellow-400"
-                    />
-                  </div>
-
-                  <div className="col-span-1 md:col-span-1">
-                    <label className="block text-white text-[13px] mb-2">
-                      {isMa ? "الهاتف" : isEn ? "Phone" : "Teléfono"}
-                    </label>
-                    <div className="flex gap-2 min-w-0">
-                      <select
-                        className="w-[92px] shrink-0 h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-2 text-center text-white"
-                        value={formData.preferredOffice}
-                        onChange={(e) => onFormChange("preferredOffice", e.target.value)}
-                        id="countryCode"
-                      >
-                        <option value="+34">🇪🇸 +34</option>
-                        <option value="+212">🇲🇦 +212</option>
-                        <option value="+31">🇳🇱 +31</option>
-                        <option value="+32">🇧🇪 +32</option>
-                        <option value="+33">🇫🇷 +33</option>
-                        <option value="+39">🇮🇹 +39</option>
-                        <option value="+49">🇩🇪 +49</option>
-                        <option value="+44">🇬🇧 +44</option>
-                        <option value="+1">🇺🇸 +1</option>
-                      </select>
-                      <input
-                        type="text"
-                        placeholder="34644403748"
-                        value={formData.phone}
-                        onChange={(e) => onFormChange("phone", e.target.value)}
-                        className="min-w-0 flex-1 h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-white text-[13px] mb-2">Email</label>
-                    <input
-                      type="email"
-                      placeholder="tu@email.com"
-                      value={formData.email}
-                      onChange={(e) => onFormChange("email", e.target.value)}
-                      className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-[14px] text-white placeholder:text-white/30 focus:outline-none focus:border-yellow-400"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-white text-[13px] mb-2">
-                      Número de expediente
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="467020260019841"
-                      value={formData.expedienteNumero}
-                      onChange={(e) => onFormChange("expedienteNumero", e.target.value)}
-                      className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-white text-[13px] mb-2">
-                      Identificador solicitud
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="E46202600507573"
-                      value={formData.identificadorSolicitud}
-                      onChange={(e) => onFormChange("identificadorSolicitud", e.target.value)}
-                      className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white"
-                    />
-                  </div>
-
-                  <div className="min-w-0">
-                    <label className="block text-white text-[13px] mb-2">
-                      Fecha presentación solicitud
-                    </label>
-                    <input
-                      type="date"
-                      value={formData.fechaPresentacion}
-                      onChange={(e) => onFormChange("fechaPresentacion", e.target.value)}
-                      className="block w-full max-w-full min-w-0 h-[52px] box-border appearance-none rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white [color-scheme:dark]"
-                    />
-                  </div>
-
-                  <div className="min-w-0">
-                    <label className="block text-white text-[13px] mb-2">
-                      Fecha nacimiento
-                    </label>
-                    <input
-                      type="date"
-                      value={formData.fechaNacimiento}
-                      onChange={(e) => onFormChange("fechaNacimiento", e.target.value)}
-                      className="block w-full max-w-full min-w-0 h-[52px] box-border appearance-none rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white [color-scheme:dark]"
-                    />
-                  </div>
-                </div>
-
-                {/* ✅ CASILLA DE AUTORIZACIÓN - OBLIGATORIA */}
-                <div className="mt-4 mb-4 p-4 rounded-xl border border-yellow-500/30 bg-yellow-500/10">
-                  <label className="flex items-start gap-3 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      id="autoriza_naf"
-                      required
-                      className="mt-1 w-5 h-5 accent-yellow-500 shrink-0"
-                      onChange={(e) => {
-                        (window as any).__autorizaNaf = e.target.checked;
-                      }}
-                    />
-                    <div>
-                      <p className="text-white text-sm font-medium">
-                        {isMa 
-                          ? "🔐 كتصريح لـ Gestoría Cita IA باش تسالي على رقم الضمان الاجتماعي ديالي" 
-                          : isEn 
-                          ? "🔐 I authorize Gestoría Cita IA to consult my Social Security number" 
-                          : "🔐 Autorizo a Gestoría Cita IA a consultar mi número de Seguridad Social"}
-                      </p>
-                      <ul className="text-white/70 text-xs mt-1 list-disc pl-4 space-y-0.5">
-                        <li>
-                          {isMa 
-                            ? "تسالي على رقم الضمان الاجتماعي ديالي" 
-                            : isEn 
-                            ? "Consult my Social Security number" 
-                            : "Consultar mi número de afiliación a la Seguridad Social"}
-                        </li>
-                        <li>
-                          {isMa 
-                            ? "تصيفطو ليا فـ WhatsApp ملي يخرج الملف favorable" 
-                            : isEn 
-                            ? "Send it to me via WhatsApp when favorable" 
-                            : "Enviármelo por WhatsApp en caso de favorable"}
-                        </li>
-                        <li>
-                          {isMa 
-                            ? "يحفظو فـ الملف ديالي" 
-                            : isEn 
-                            ? "Store it in my file" 
-                            : "Almacenarlo en mi expediente"}
-                        </li>
-                      </ul>
-                      <p className="text-white/40 text-[10px] mt-2">
-                        {isMa 
-                          ? "* هاد التصريح ضروري باش الخدمة تكمل. نقدر نرجع فيه فـ أي وقت." 
-                          : isEn 
-                          ? "* This authorization is required to complete the service. You can revoke it at any time." 
-                          : "* Esta autorización es obligatoria para el servicio. Puedes revocarla en cualquier momento."}
-                      </p>
-                    </div>
+          <div className="mt-3 mx-[-4px] rounded-[24px] border-2 border-yellow-500/60 bg-gradient-to-b from-[#0b0b0b] to-[#050505] px-3 py-3 shadow-[0_0_35px_rgba(255,200,0,0.18)]">
+            <div className="mb-3 grid grid-cols-[32px_1fr_32px] items-center gap-2">
+              <span />
+              <h2 className="text-center text-yellow-400 text-[18px] sm:text-[20px] font-black leading-tight">
+                {isMa ? "عمر الفورم" : isEn ? "Fill in the form" : "Rellena el formulario"}
+              </h2>
+              <img
+                src="https://upload.wikimedia.org/wikipedia/en/9/9a/Flag_of_Spain.svg"
+                alt="España"
+                className="h-5 w-8 rounded-[3px] object-cover shadow-[0_0_10px_rgba(255,255,255,0.20)]"
+              />
+            </div>
+            <p className="text-white/80 text-[13px] leading-relaxed mb-5">
+              {formIntro}
+            </p>
+            <div className="w-full">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 mb-5">
+                {/* Nombre */}
+                <div className="col-span-1 md:col-span-1">
+                  <label className="block text-white text-[13px] mb-2">
+                    {isMa ? "الاسم الكامل" : isEn ? "Full name" : "Nombre completo"}
                   </label>
+                  <input
+                    type="text"
+                    placeholder={isMa ? "دخل سميتك" : isEn ? "Your name" : "Escribe tu nombre"}
+                    value={formData.fullName}
+                    onChange={(e) => onFormChange("fullName", e.target.value)}
+                    className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-[14px] text-white placeholder:text-white/30 focus:outline-none focus:border-yellow-400"
+                  />
                 </div>
 
-                {/* Caja de reserva */}
-                <div className="mt-4 rounded-[28px] border-2 border-yellow-500 bg-gradient-to-b from-[#0b0b0b] to-[#050505] p-4 shadow-[0_0_35px_rgba(255,200,0,0.18)]">
-                  <div className="flex items-start justify-between mb-4 pt-2">
-                    <div>
-                      <p className="text-white text-[15px] font-bold">
-                        {isMa ? "الملف favorable" : isEn ? "Favorable file status" : "Expediente favorable"}
-                      </p>
-                      <span className="inline-flex mt-1 rounded-full bg-gradient-to-r from-yellow-400 to-yellow-600 px-3 py-1 text-[10px] font-black uppercase tracking-wide text-black shadow-[0_0_15px_rgba(255,215,0,0.25)]">
-                        Premium
-                      </span>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-yellow-400 text-[34px] font-black leading-none drop-shadow-[0_0_10px_rgba(255,215,0,0.35)]">
-                        10€
-                      </p>
-                      <p className="text-yellow-300 text-[11px] font-semibold">
-                        {isMa ? "التحقق الأول" : isEn ? "Initial verification" : "Verificación inicial"}
-                      </p>
-                    </div>
+                {/* Teléfono */}
+                <div className="col-span-1 md:col-span-1">
+                  <label className="block text-white text-[13px] mb-2">
+                    {isMa ? "الهاتف" : isEn ? "Phone" : "Teléfono"}
+                  </label>
+                  <div className="flex gap-2 min-w-0">
+                    <select
+                      className="w-[92px] shrink-0 h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-2 text-center text-white"
+                      value={formData.preferredOffice}
+                      onChange={(e) => onFormChange("preferredOffice", e.target.value)}
+                      id="countryCode"
+                    >
+                      <option value="+34">🇪🇸 +34</option>
+                      <option value="+212">🇲🇦 +212</option>
+                      <option value="+31">🇳🇱 +31</option>
+                      <option value="+32">🇧🇪 +32</option>
+                      <option value="+33">🇫🇷 +33</option>
+                      <option value="+39">🇮🇹 +39</option>
+                      <option value="+49">🇩🇪 +49</option>
+                      <option value="+44">🇬🇧 +44</option>
+                      <option value="+1">🇺🇸 +1</option>
+                    </select>
+                    <input
+                      type="text"
+                      placeholder="34644403748"
+                      value={formData.phone}
+                      onChange={(e) => onFormChange("phone", e.target.value)}
+                      className="min-w-0 flex-1 h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white"
+                    />
                   </div>
+                </div>
 
-                  <p className="text-gray-300 text-[13px] mb-5 leading-relaxed">
-                    {isMa
-                      ? "سارة غادي تبدا تراجع الملف ديالك أوتوماتيكيا"
-                      : isEn
-                      ? "Sara will automatically start checking your file"
-                      : "Sara empieza a verificar tu expediente automáticamente"}
-                  </p>
+                {/* Email */}
+                <div>
+                  <label className="block text-white text-[13px] mb-2">Email</label>
+                  <input
+                    type="email"
+                    placeholder="tu@email.com"
+                    value={formData.email}
+                    onChange={(e) => onFormChange("email", e.target.value)}
+                    className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-[14px] text-white placeholder:text-white/30 focus:outline-none focus:border-yellow-400"
+                  />
+                </div>
 
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      if (
-                        !formData.fullName.trim() ||
-                        !formData.phone.trim() ||
-                        !formData.expedienteNumero.trim() ||
-                        !formData.identificadorSolicitud.trim() ||
-                        !formData.fechaPresentacion.trim() ||
-                        !formData.fechaNacimiento.trim()
-                      ) {
-                        toast({
-                          title: ui.missingTitle,
-                          description: ui.missingDesc,
-                          variant: "destructive",
-                        });
-                        return;
-                      }
+                {/* Número de expediente */}
+                <div>
+                  <label className="block text-white text-[13px] mb-2">
+                    Número de expediente
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="467020260019841"
+                    value={formData.expedienteNumero}
+                    onChange={(e) => onFormChange("expedienteNumero", e.target.value)}
+                    className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white"
+                  />
+                </div>
 
-                      // ✅ VALIDAR CASILLA DE AUTORIZACIÓN
-                      const autoriza = (window as any).__autorizaNaf;
-                      if (!autoriza) {
-                        toast({
-                          title: isMa ? "مطلوب التصريح" : isEn ? "Authorization required" : "Autorización requerida",
-                          description: isMa 
-                            ? "خاصك تدي التصريح باش تكمل الخدمة" 
-                            : isEn 
-                            ? "You must authorize to continue" 
-                            : "Debes autorizar para continuar",
-                          variant: "destructive",
-                        });
-                        return;
-                      }
+                {/* Identificador solicitud */}
+                <div>
+                  <label className="block text-white text-[13px] mb-2">
+                    Identificador solicitud
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="E46202600507573"
+                    value={formData.identificadorSolicitud}
+                    onChange={(e) => onFormChange("identificadorSolicitud", e.target.value)}
+                    className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white"
+                  />
+                </div>
 
-                      try {
-                        const res = await fetch("/api/create-checkout-sara-inicial", {
-                          method: "POST",
-                          headers: {
-                            "Content-Type": "application/json",
-                          },
-                          body: JSON.stringify({
-                            fullName: formData.fullName,
-                            phone: formData.phone,
-                            email: formData.email,
-                            expedienteNumero: formData.expedienteNumero,
-                            identificadorSolicitud: formData.identificadorSolicitud,
-                            fechaPresentacion: formData.fechaPresentacion,
-                            fechaNacimiento: formData.fechaNacimiento,
-                            autoriza_naf: true,
-                          }),
-                        });
-                        const data = await res.json();
-                        if (data.url) {
-                          localStorage.setItem("saraPaid", "1");
-                          window.location.href = data.url;
-                        }
-                      } catch (error) {
-                        console.error(error);
-                        alert("Stripe error");
-                      }
+                {/* Fecha presentación */}
+                <div className="min-w-0">
+                  <label className="block text-white text-[13px] mb-2">
+                    Fecha presentación solicitud
+                  </label>
+                  <input
+                    type="date"
+                    value={formData.fechaPresentacion}
+                    onChange={(e) => onFormChange("fechaPresentacion", e.target.value)}
+                    className="block w-full max-w-full min-w-0 h-[52px] box-border appearance-none rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white [color-scheme:dark]"
+                  />
+                </div>
+
+                {/* Fecha nacimiento */}
+                <div className="min-w-0">
+                  <label className="block text-white text-[13px] mb-2">
+                    Fecha nacimiento
+                  </label>
+                  <input
+                    type="date"
+                    value={formData.fechaNacimiento}
+                    onChange={(e) => onFormChange("fechaNacimiento", e.target.value)}
+                    className="block w-full max-w-full min-w-0 h-[52px] box-border appearance-none rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white [color-scheme:dark]"
+                  />
+                </div>
+              </div>
+
+              {/* ✅ CASILLA DE AUTORIZACIÓN - OBLIGATORIA */}
+              <div className="mt-4 mb-4 p-4 rounded-xl border border-yellow-500/30 bg-yellow-500/10">
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    id="autoriza_naf"
+                    required
+                    className="mt-1 w-5 h-5 accent-yellow-500 shrink-0"
+                    onChange={(e) => {
+                      (window as any).__autorizaNaf = e.target.checked;
                     }}
-                    className="w-full min-h-[56px] rounded-[20px] bg-gradient-to-r from-yellow-400 via-yellow-500 to-amber-500 px-4 py-2 text-[15px] leading-tight font-black text-black shadow-[0_0_30px_rgba(255,215,0,0.35)] transition-all duration-300 hover:scale-[1.01]"
-                  >
-                    {isMa
-                      ? "🔐 خلص وبدأ التحقق"
-                      : isEn
-                      ? "🔐 Pay and start verification"
-                      : "🔐 Pagar y empezar verificación"}
-                  </button>
+                  />
+                  <div>
+                    <p className="text-white text-sm font-medium">
+                      {isMa 
+                        ? "🔐 كتصريح لـ Gestoría Cita IA باش تسالي على رقم الضمان الاجتماعي ديالي" 
+                        : isEn 
+                        ? "🔐 I authorize Gestoría Cita IA to consult my Social Security number" 
+                        : "🔐 Autorizo a Gestoría Cita IA a consultar mi número de Seguridad Social"}
+                    </p>
+                    <ul className="text-white/70 text-xs mt-1 list-disc pl-4 space-y-0.5">
+                      <li>
+                        {isMa 
+                          ? "تسالي على رقم الضمان الاجتماعي ديالي" 
+                          : isEn 
+                          ? "Consult my Social Security number" 
+                          : "Consultar mi número de afiliación a la Seguridad Social"}
+                      </li>
+                      <li>
+                        {isMa 
+                          ? "تصيفطو ليا فـ WhatsApp ملي يخرج الملف favorable" 
+                          : isEn 
+                          ? "Send it to me via WhatsApp when favorable" 
+                          : "Enviármelo por WhatsApp en caso de favorable"}
+                      </li>
+                      <li>
+                        {isMa 
+                          ? "يحفظو فـ الملف ديالي" 
+                          : isEn 
+                          ? "Store it in my file" 
+                          : "Almacenarlo en mi expediente"}
+                      </li>
+                    </ul>
+                    <p className="text-white/40 text-[10px] mt-2">
+                      {isMa 
+                        ? "* هاد التصريح ضروري باش الخدمة تكمل. نقدر نرجع فيه فـ أي وقت." 
+                        : isEn 
+                        ? "* This authorization is required to complete the service. You can revoke it at any time." 
+                        : "* Esta autorización es obligatoria para el servicio. Puedes revocarla en cualquier momento."}
+                    </p>
+                  </div>
+                </label>
+              </div>
 
-                  <div className="mt-5 flex items-center justify-center gap-2 text-[11px] text-gray-300">
-                    <Shield className="w-3 h-3 text-yellow-400" />
-                    <span>
-                      {isMa
-                        ? "دفع آمن عبر Stripe"
-                        : isEn
-                        ? "Secure payment with Stripe"
-                        : "Pago seguro con Stripe"}
+              {/* Caja de reserva */}
+              <div className="mt-4 rounded-[28px] border-2 border-yellow-500 bg-gradient-to-b from-[#0b0b0b] to-[#050505] p-4 shadow-[0_0_35px_rgba(255,200,0,0.18)]">
+                <div className="flex items-start justify-between mb-4 pt-2">
+                  <div>
+                    <p className="text-white text-[15px] font-bold">
+                      {isMa ? "الملف favorable" : isEn ? "Favorable file status" : "Expediente favorable"}
+                    </p>
+                    <span className="inline-flex mt-1 rounded-full bg-gradient-to-r from-yellow-400 to-yellow-600 px-3 py-1 text-[10px] font-black uppercase tracking-wide text-black shadow-[0_0_15px_rgba(255,215,0,0.25)]">
+                      Premium
                     </span>
                   </div>
-
-                  <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
-                    <span className="rounded-full bg-white px-3 py-1 text-[11px] font-bold text-[#1434CB]">VISA</span>
-                    <span className="rounded-full bg-white px-3 py-1 text-[11px] font-bold text-[#EB001B]">Mastercard</span>
-                    <span className="rounded-full bg-white px-3 py-1 text-[11px] font-bold text-black"> Pay</span>
-                    <span className="rounded-full bg-white px-3 py-1 text-[11px] font-bold text-black">G Pay</span>
+                  <div className="text-right">
+                    <p className="text-yellow-400 text-[34px] font-black leading-none drop-shadow-[0_0_10px_rgba(255,215,0,0.35)]">
+                      10€
+                    </p>
+                    <p className="text-yellow-300 text-[11px] font-semibold">
+                      {isMa ? "التحقق الأول" : isEn ? "Initial verification" : "Verificación inicial"}
+                    </p>
                   </div>
+                </div>
+
+                <p className="text-gray-300 text-[13px] mb-5 leading-relaxed">
+                  {isMa
+                    ? "سارة غادي تبدا تراجع الملف ديالك أوتوماتيكيا"
+                    : isEn
+                    ? "Sara will automatically start checking your file"
+                    : "Sara empieza a verificar tu expediente automáticamente"}
+                </p>
+
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (
+                      !formData.fullName.trim() ||
+                      !formData.phone.trim() ||
+                      !formData.expedienteNumero.trim() ||
+                      !formData.identificadorSolicitud.trim() ||
+                      !formData.fechaPresentacion.trim() ||
+                      !formData.fechaNacimiento.trim()
+                    ) {
+                      toast({
+                        title: ui.missingTitle,
+                        description: ui.missingDesc,
+                        variant: "destructive",
+                      });
+                      return;
+                    }
+
+                    // ✅ VALIDAR CASILLA DE AUTORIZACIÓN
+                    const autoriza = (window as any).__autorizaNaf;
+                    if (!autoriza) {
+                      toast({
+                        title: isMa ? "مطلوب التصريح" : isEn ? "Authorization required" : "Autorización requerida",
+                        description: isMa 
+                          ? "خاصك تدي التصريح باش تكمل الخدمة" 
+                          : isEn 
+                          ? "You must authorize to continue" 
+                          : "Debes autorizar para continuar",
+                        variant: "destructive",
+                      });
+                      return;
+                    }
+
+                    try {
+                      const res = await fetch("/api/create-checkout-sara-inicial", {
+                        method: "POST",
+                        headers: {
+                          "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({
+                          fullName: formData.fullName,
+                          phone: formData.phone,
+                          email: formData.email,
+                          expedienteNumero: formData.expedienteNumero,
+                          identificadorSolicitud: formData.identificadorSolicitud,
+                          fechaPresentacion: formData.fechaPresentacion,
+                          fechaNacimiento: formData.fechaNacimiento,
+                          autoriza_naf: true,
+                        }),
+                      });
+                      const data = await res.json();
+                      if (data.url) {
+                        localStorage.setItem("saraPaid", "1");
+                        window.location.href = data.url;
+                      }
+                    } catch (error) {
+                      console.error(error);
+                      alert("Stripe error");
+                    }
+                  }}
+                  className="w-full min-h-[56px] rounded-[20px] bg-gradient-to-r from-yellow-400 via-yellow-500 to-amber-500 px-4 py-2 text-[15px] leading-tight font-black text-black shadow-[0_0_30px_rgba(255,215,0,0.35)] transition-all duration-300 hover:scale-[1.01]"
+                >
+                  {isMa
+                    ? "🔐 خلص وبدأ التحقق"
+                    : isEn
+                    ? "🔐 Pay and start verification"
+                    : "🔐 Pagar y empezar verificación"}
+                </button>
+
+                <div className="mt-5 flex items-center justify-center gap-2 text-[11px] text-gray-300">
+                  <Shield className="w-3 h-3 text-yellow-400" />
+                  <span>
+                    {isMa
+                      ? "دفع آمن عبر Stripe"
+                      : isEn
+                      ? "Secure payment with Stripe"
+                      : "Pago seguro con Stripe"}
+                  </span>
+                </div>
+
+                <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
+                  <span className="rounded-full bg-white px-3 py-1 text-[11px] font-bold text-[#1434CB]">VISA</span>
+                  <span className="rounded-full bg-white px-3 py-1 text-[11px] font-bold text-[#EB001B]">Mastercard</span>
+                  <span className="rounded-full bg-white px-3 py-1 text-[11px] font-bold text-black"> Pay</span>
+                  <span className="rounded-full bg-white px-3 py-1 text-[11px] font-bold text-black">G Pay</span>
                 </div>
               </div>
             </div>
@@ -595,12 +588,6 @@ function OfficialBrowserBox({
                 </div>
               </div>
             </div>
-
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="flex flex-col items-center text-center py-10 gap-5"
-            />
           </>
         )}
       </div>
