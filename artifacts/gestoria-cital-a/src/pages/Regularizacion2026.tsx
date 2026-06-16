@@ -8,6 +8,7 @@ import {
   Upload,
   Star,
   Volume2,
+  VolumeX,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { verifyDocument, type VerifyDocumentResult } from "@/lib/verifyDocument";
@@ -215,25 +216,11 @@ export default function Regularizacion2026() {
   const { toast } = useToast();
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const assistantTextBufferRef = useRef("");
-  const lastAssistantTextRef = useRef("");
-  const pendingAutomationPromptRef = useRef<string | null>(null);
-  const assistantBusyRef = useRef(false);
 
   const safeLang = (lang === "darija" || lang === "en" ? lang : "es") as "darija" | "es" | "en";
 
   const currentProcedure = getProcedureByKey(selectedSituacion) || null;
   if (!currentProcedure) return null;
-
-  const voiceTexts = useMemo(() => ({
-    initialVoice: "",
-    passportVerified: "",
-    stayProofVerified: "",
-    uploadWarn: "",
-    uploadUnknown: "",
-    soufianeFinal: "",
-    realtimeError: "وقع مشكل فالصوت المباشر",
-  }), []);
 
   const ui = useMemo(() => {
     if (safeLang === "darija") {
@@ -472,20 +459,15 @@ export default function Regularizacion2026() {
         const parsed = JSON.parse(raw) as ChatMsg[];
         if (Array.isArray(parsed) && parsed.length > 0) {
           setVoiceHistory(parsed);
-          const completionAlreadySent = parsed.some((m) => m.from === "agent" && m.text === voiceTexts.soufianeFinal);
-          const leadAlreadySaved = parsed.some((m) => m.from === "agent" && m.text.includes("المعطيات ديالك تحفظات"));
-          setCompletionMessageSent(completionAlreadySent);
-          setLeadSaved((prev) => prev || leadAlreadySaved);
-          setFormConfirmed((prev) => prev || leadAlreadySaved);
           return;
         }
       }
-      setVoiceHistory([{ from: "agent", text: voiceTexts.initialVoice, ts: Date.now() }]);
+      setVoiceHistory([{ from: "agent", text: "", ts: Date.now() }]);
     } catch (error) {
       console.error("Error cargando historial de Soufiane:", error);
-      setVoiceHistory([{ from: "agent", text: voiceTexts.initialVoice, ts: Date.now() }]);
+      setVoiceHistory([{ from: "agent", text: "", ts: Date.now() }]);
     }
-  }, [historyStorageKey, voiceTexts.initialVoice, voiceTexts.soufianeFinal]);
+  }, [historyStorageKey]);
 
   useEffect(() => {
     if (voiceHistory.length === 0) return;
@@ -548,16 +530,7 @@ export default function Regularizacion2026() {
         const PAYMENT_TEXT = `مزيان، من خلال الأجوبة ديالك بان ليا بللي الملف ديالك غادي يكون مقبول إن شاء الله ✅ باش نعطيك تحليل دقيق ونوجد ليك الملف كامل: ✔️ تحليل كامل ✔️ 100% التحقق من الوثائق ✔️ الوثيقة المهمة اللي غادي تعزز الملف ديالك بزاف غير ب 12 أورو ورك على زر الأداء ونكملو مباشرة.`;
         pushAgentMessage(PAYMENT_TEXT);
         setPaymentRequired(true);
-        assistantBusyRef.current = true;
-        pendingAutomationPromptRef.current = null;
         setTimeout(() => { speakExactText(PAYMENT_TEXT); }, 300);
-        const stripeWatcher = setInterval(() => {
-          if (!assistantBusyRef.current) {
-            clearInterval(stripeWatcher);
-            setShowStripe(true);
-            setIsSpeaking(false);
-          }
-        }, 300);
         setQuestionsDone(false);
         return next;
       }
@@ -573,111 +546,14 @@ export default function Regularizacion2026() {
     });
   };
 
-  const updateLeadForm = (field: keyof LeadFormState, value: string) => {
-    setLeadForm((prev) => ({ ...prev, [field]: value }));
-  };
-
   const pushAgentMessage = (text: string) => {
     if (!text?.trim()) return;
     setVoiceHistory((prev) => [...prev, { from: "agent", text, ts: Date.now() }]);
-    lastAssistantTextRef.current = text;
   };
 
   const pushUserMessage = (text: string) => {
     if (!text?.trim()) return;
     setVoiceHistory((prev) => [...prev, { from: "user", text, ts: Date.now() }]);
-  };
-
-  const buildSavedFormSpeech = () => {
-    return "مزيان. السؤال الثاني: عندك باسبور ولا NIE ولا TIE؟";
-  };
-
-  const buildDocSpeech = (matchedDocName: string, result: any, nextStatus?: DocStatus) => {
-    const parts: string[] = [];
-    parts.push(`توصلت بـ ${matchedDocName}.`);
-    if (result.full_name) parts.push(`الاسم: ${result.full_name}.`);
-    if (result.document_number) parts.push(`الرقم: ${result.document_number}.`);
-    if (result.birth_date) parts.push(`تاريخ الازدياد: ${result.birth_date}.`);
-    if (result.expiry_date) parts.push(`الصلاحية حتى: ${result.expiry_date}.`);
-    if (result.image_quality?.blurred) {
-      parts.push("الصورة شوية ما واضحةش.");
-    } else {
-      parts.push("الصورة واضحة والمعطيات مقروءة.");
-    }
-    if (result.fraud_risk === "high") parts.push("كاين خطر عالي، خاص مراجعة.");
-    else if (result.fraud_risk === "medium") parts.push("كاين شك متوسط.");
-    else parts.push("الوثيقة باينة صحيحة وما بان حتى مشكل واضح.");
-    if (result.final_verdict === "approved") parts.push("الوثيقة مقبولة.");
-    else if (result.final_verdict === "review") parts.push("الوثيقة خاصها مراجعة.");
-    else if (result.final_verdict === "rejected") parts.push("الوثيقة مرفوضة.");
-    if (typeof result.verification_score === "number") {
-      const realisticScore = result.verification_score > 92 ? 88 + Math.floor(Math.random() * 4) : result.verification_score;
-      parts.push(`نسبة التحقق ${realisticScore} من 100.`);
-    }
-    return parts.join(" ");
-  };
-
-  const finalizeAssistantBuffer = () => {
-    const text = assistantTextBufferRef.current.trim();
-    if (!text) return;
-    assistantTextBufferRef.current = "";
-    if (text === "..." || text === "…") return;
-    if (text === lastAssistantTextRef.current) return;
-    pushAgentMessage(text);
-  };
-
-  const saveFullStateToSupabase = async (nextDocs?: StoredDocItem[]) => {
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user?.id) throw new Error("No hay usuario conectado en Supabase");
-    const docsToSave = nextDocs || docs;
-    const payload = {
-      applicant: {
-        nombre: leadForm.nombre || "",
-        telefono: leadForm.telefono || "",
-        nie_pasaporte: leadForm.niePasaporte || "",
-        ciudad: leadForm.ciudad || "",
-        nacionalidad: leadForm.nacionalidad || "",
-        fecha_llegada: leadForm.fechaLlegada || "",
-        cumple_5_meses: leadForm.cumple5Meses || "",
-        asilo: leadForm.asilo || "",
-        penales: leadForm.penales || "",
-      },
-      procedure: { key: selectedSituacion, name: currentProcedure.name },
-      documents: docsToSave,
-      progress: {
-        formCompletedStatus: leadSaved || formConfirmed || leadFormReady ? "ok" : "missing",
-        stayProofStatus: docsToSave.some((doc) => (normalizeDocType(doc.expectedType) === "empadronamiento" || normalizeDocType(doc.expectedType) === "stay_proof") && doc.estado === "ok") ? "ok" : "missing",
-        identityStatus: docsToSave.some((doc) => (normalizeDocType(doc.expectedType) === "passport" || normalizeDocType(doc.expectedType) === "nie" || normalizeDocType(doc.expectedType) === "tie") && doc.estado === "ok") ? "ok" : "missing",
-      },
-      updated_at: new Date().toISOString(),
-    };
-    const { data: existingForm } = await supabase.from("user_forms").select("id").eq("user_id", user.id).eq("form_type", "regularizacion_2026").limit(1).maybeSingle<UserFormRow>();
-    const rowData = {
-      user_id: user.id,
-      case_id: null,
-      form_type: "regularizacion_2026",
-      title: "Formulario Soufiane Regularización 2026",
-      form_data: payload,
-      status: "draft",
-      updated_at: new Date().toISOString(),
-    };
-    if (existingForm?.id) {
-      const { error: updateError } = await supabase.from("user_forms").update(rowData).eq("id", existingForm.id);
-      if (updateError) throw new Error(updateError.message);
-    } else {
-      const { error: insertError } = await supabase.from("user_forms").insert(rowData);
-      if (insertError) throw new Error(insertError.message);
-    }
-    return user.id;
-  };
-
-  const stopSpeaking = () => {
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.src = "";
-      audioRef.current = null;
-    }
-    setIsSpeaking(false);
   };
 
   const handleSendWhatsApp = async () => {
@@ -693,61 +569,53 @@ export default function Regularizacion2026() {
   };
 
   // ==============================================
-  // ⭐ FUNCIÓN SIMPLE TTS - SIN WEBSOCKET
+  // ⭐ TTS USANDO SPEECHSYNTHESIS (Web API - GRATIS y SIN SERVIDOR)
   // ==============================================
-  const speakExactText = async (text: string) => {
+  const speakExactText = (text: string) => {
     if (!text.trim()) return;
     
     try {
-      // Limpiar audio anterior
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current.src = "";
-        audioRef.current = null;
-      }
-
+      // Detener cualquier audio previo
+      window.speechSynthesis.cancel();
+      
       setIsSpeaking(true);
       console.log("🔊 Soufiane hablando:", text.substring(0, 100) + "...");
 
-      // Usar API de TTS de OpenAI
-      const response = await fetch("/api/tts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          text: text,
-          voice: "alloy", // Voz de OpenAI
-          language: "es", // Español
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Error en TTS: " + response.status);
+      // Usar SpeechSynthesis API del navegador (gratis, sin servidor)
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = "es-ES";
+      utterance.rate = 0.95;
+      utterance.pitch = 1;
+      utterance.volume = muted ? 0 : 1;
+      
+      // Buscar voz en español
+      const voices = window.speechSynthesis.getVoices();
+      const spanishVoice = voices.find(v => v.lang.startsWith("es"));
+      if (spanishVoice) {
+        utterance.voice = spanishVoice;
       }
-
-      const audioBlob = await response.blob();
-      const audioUrl = URL.createObjectURL(audioBlob);
       
-      const audio = new Audio(audioUrl);
-      audioRef.current = audio;
-      
-      audio.onended = () => {
+      utterance.onend = () => {
         setIsSpeaking(false);
-        URL.revokeObjectURL(audioUrl);
         console.log("✅ Soufiane terminó de hablar");
       };
       
-      audio.onerror = (err) => {
-        console.error("Error reproduciendo audio:", err);
+      utterance.onerror = (err) => {
+        console.error("Error en SpeechSynthesis:", err);
         setIsSpeaking(false);
-        URL.revokeObjectURL(audioUrl);
+        // Fallback: mostrar toast
+        toast({ 
+          title: "Error de audio", 
+          description: "No se pudo reproducir el audio. Revisa el texto en el chat.", 
+          variant: "destructive" 
+        });
       };
 
-      await audio.play();
+      window.speechSynthesis.speak(utterance);
       
     } catch (error) {
       console.error("Error en TTS:", error);
       setIsSpeaking(false);
-      // Fallback: mostrar en toast
       toast({ 
         title: "Error de audio", 
         description: "No se pudo generar el audio. Revisa el texto en el chat.", 
@@ -756,11 +624,15 @@ export default function Regularizacion2026() {
     }
   };
 
+  const stopSpeaking = () => {
+    window.speechSynthesis.cancel();
+    setIsSpeaking(false);
+  };
+
   useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.volume = muted ? 0 : 1;
-    }
-  }, [muted]);
+    // Cargar voces
+    window.speechSynthesis.getVoices();
+  }, []);
 
   const handleGeneralUpload = () => {
     console.log("Subiendo documentos");
@@ -883,7 +755,6 @@ export default function Regularizacion2026() {
 
       const isEligible = hasPassport && hasMonths;
       
-      // Construir mensaje en español (para que Soufiane lo lea)
       const resultMessage = `
 📋 RESULTADO DE LA VERIFICACIÓN DE DOCUMENTOS
 
@@ -1064,8 +935,6 @@ ${isEligible ? "📢 Presione 'Hablar con Soufiane' para escuchar este resultado
               )}
             </div>
           </div>
-
-          <audio ref={audioRef} autoPlay playsInline className="hidden" />
         </main>
       </div>
     </div>
