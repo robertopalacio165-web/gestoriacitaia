@@ -762,7 +762,10 @@ export default function Regularizacion2026() {
   };
 
   const startListening = async () => {
-    if (!voiceSupported) { toast({ title: "Error", description: ui.micNotSupported, variant: "destructive" }); return; }
+    if (!voiceSupported) { 
+      toast({ title: "Error", description: ui.micNotSupported, variant: "destructive" }); 
+      return; 
+    }
     if (isConnectingRef.current) return;
     if (realtimeDcRef.current && realtimeDcRef.current.readyState === "open") return;
     
@@ -796,38 +799,74 @@ export default function Regularizacion2026() {
         }
       };
 
+      // NO capturar micrófono del usuario
+      // NO llamamos a getUserMedia
+
       const dc = pc.createDataChannel("oai-events");
       realtimeDcRef.current = dc;
 
       dc.onopen = async () => {
-        console.log("✅ Data channel abierto");
+        console.log("✅ Data channel abierto - Soufiane va a hablar AHORA");
         dcOpenedRef.current = true;
         isConnectingRef.current = false;
         setIsListening(true);
         setWaitingSoufiane(false);
         
-        // Configurar sesión - Soufiane SOLO LEE, NO ESCUCHA
+        // Configurar sesión - Forzar a Soufiane a hablar primero
         dc.send(JSON.stringify({
           type: "session.update",
           session: {
-            instructions: `Eres Soufiane. Tu única tarea es LEER el texto que se te va a enviar. No hagas preguntas. No esperes respuestas. Solo LEE el texto en voz alta y luego detente.`,
+            instructions: `Eres Soufiane. Tu UNICA tarea es LEER en voz alta el texto que se te va a enviar. 
+            
+            ⚠️ REGLAS IMPORTANTES:
+            1. NO hagas preguntas
+            2. NO esperes respuestas
+            3. NO digas "hola" ni "salam"
+            4. NO pidas información al usuario
+            5. SOLO lee el texto que te envío
+            6. Después de leer, DETENTE y no digas nada más
+            7. NO interactúes con el usuario bajo ninguna circunstancia`,
             modalities: ["audio", "text"],
             turn_detection: {
               type: "server_vad",
               threshold: 0.99,
-              prefix_padding_ms: 500,
-              silence_duration_ms: 3000,
+              prefix_padding_ms: 0,
+              silence_duration_ms: 100,
               interrupt_response: false,
               create_response: true,
             },
+            voice: "alloy",
+            temperature: 0.3,
           },
         }));
 
-        // Enviar el resultado guardado INMEDIATAMENTE
-        const textToRead = verificationResultText || "No hay resultado de verificación disponible.";
-        setTimeout(() => {
-          speakExactText(textToRead);
-        }, 1000);
+        // Esperar 500ms para que la sesión se configure
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        // Enviar el texto para que Soufiane lo lea INMEDIATAMENTE
+        const textToRead = verificationResultText || "No hay resultado de verificación disponible. Por favor, verifica los documentos primero.";
+        console.log("🔊 Enviando texto a Soufiane:", textToRead.substring(0, 100) + "...");
+        
+        // Enviar el mensaje como "usuario" para que el asistente lo lea
+        dc.send(JSON.stringify({
+          type: "conversation.item.create",
+          item: {
+            type: "message",
+            role: "user",
+            content: [{ type: "input_text", text: textToRead }]
+          }
+        }));
+
+        // Forzar la respuesta del asistente
+        dc.send(JSON.stringify({
+          type: "response.create",
+          response: {
+            modalities: ["audio", "text"],
+            instructions: "Lee el texto anterior en voz alta. Solo léelo, no añadas nada más."
+          }
+        }));
+
+        console.log("✅ Todo enviado - Soufiane DEBE hablar ahora");
       };
 
       dc.onmessage = (event) => {
@@ -841,12 +880,20 @@ export default function Regularizacion2026() {
               stopListening();
             }, 2000);
           }
+          
+          if (msg.type === "response.audio.done") {
+            console.log("🎤 Audio completado");
+          }
         } catch (err) {
           console.error("Error en mensaje:", err);
         }
       };
 
-      dc.onerror = (err) => { console.error("Data channel error:", err); };
+      dc.onerror = (err) => { 
+        console.error("Data channel error:", err); 
+        toast({ title: "Error", description: "Error en la conexión de audio", variant: "destructive" });
+      };
+      
       dc.onclose = () => {
         console.log("❌ Data channel cerrado");
         dcOpenedRef.current = false;
@@ -857,22 +904,27 @@ export default function Regularizacion2026() {
 
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
+      
       const sdpRes = await fetch("https://api.openai.com/v1/realtime/calls", {
         method: "POST",
         body: offer.sdp,
         headers: { Authorization: `Bearer ${ephemeralKey}`, "Content-Type": "application/sdp" },
       });
+      
       if (!sdpRes.ok) {
         const errText = await sdpRes.text();
         throw new Error(errText || "Error negociando WebRTC con OpenAI");
       }
+      
       const answerSdp = await sdpRes.text();
       await pc.setRemoteDescription({ type: "answer", sdp: answerSdp });
+      
+      console.log("✅ Conexión establecida con OpenAI");
       
     } catch (error: any) {
       console.error("Error iniciando realtime:", error);
       stopListening();
-      toast({ title: "Error", description: error?.message || "Error de conexión", variant: "destructive" });
+      toast({ title: "Error realtime", description: error?.message || "Error de conexión", variant: "destructive" });
     } finally {
       isConnectingRef.current = false;
     }
