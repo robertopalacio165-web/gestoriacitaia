@@ -1,0 +1,1045 @@
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Navbar } from "@/components/Navbar";
+import { useLang } from "@/contexts/LanguageContext";
+import { motion } from "framer-motion";
+import {
+  Mic,
+  MicOff,
+  Upload,
+  Star,
+  Volume2,
+  VolumeX,
+} from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { verifyDocument, type VerifyDocumentResult } from "@/lib/verifyDocument";
+import {
+  EXTRANJERIA_PROCEDURES,
+  getProcedureByKey,
+} from "@/lib/extranjeriaProcedures";
+import { supabase } from "@/lib/supabaseClient";
+
+interface ChatMsg {
+  from: "agent" | "user";
+  text: string;
+  ts?: number;
+}
+
+type DocStatus = "ok" | "warn" | "missing";
+
+type StoredDocItem = {
+  id: string;
+  nombre: string;
+  archivo: string;
+  estado: DocStatus;
+  kb: string;
+  expectedType?: string;
+  detectedType?: string;
+  note?: string;
+  full_name?: string;
+  document_number?: string;
+  birth_date?: string;
+  expiry_date?: string;
+  verification_score?: number;
+  fraud_risk?: string;
+  final_verdict?: string;
+  document_date?: string;
+  uploadedAt?: string;
+  storagePath?: string;
+};
+
+type LeadFormState = {
+  nombre: string;
+  telefono: string;
+  niePasaporte: string;
+  ciudad: string;
+  nacionalidad: string;
+  fechaLlegada: string;
+  cumple5Meses: string;
+  asilo: string;
+  penales: string;
+};
+
+type UserFormRow = {
+  id: string;
+  user_id: string;
+  case_id: string | null;
+  form_type: string;
+  title: string | null;
+  form_data: Record<string, any> | null;
+};
+
+function buildInitialDocs(procedureKey: string): StoredDocItem[] {
+  const procedure = getProcedureByKey(procedureKey) || EXTRANJERIA_PROCEDURES[0];
+  return procedure.requiredDocuments.map((doc) => ({
+    id: doc.id,
+    nombre: doc.name,
+    archivo: "",
+    estado: "missing" as DocStatus,
+    kb: "",
+    expectedType: doc.expectedType || "auto",
+    detectedType: "",
+    note: doc.notes || "",
+    uploadedAt: "",
+    storagePath: "",
+  }));
+}
+
+function normalizeDocType(value?: string) {
+  return (value || "").trim().toLowerCase();
+}
+
+export default function Regularizacion2026() {
+
+  useEffect(() => {
+    const handlePaidFlow = async () => {
+      const params = new URLSearchParams(window.location.search);
+      const paid = params.get("paid");
+      (window as any).paid = paid;
+      if (paid === "true") {
+        console.log("✅ CLIENT PAID");
+        paymentDoneRef.current = true;
+        setPaymentCompleted(true);
+        setShowStripe(false);
+        setPaymentRequired(false);
+        questionFlowLockedRef.current = false;
+        setQuestionIndex(0);
+        setDocumentsUnlocked(true);
+        setConfirmUnlocked(true);
+        setQuestionsDone(true);
+        setStep("upload");
+        
+        try {
+          const pdfRes = await fetch("/api/generate-expediente-pdf", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              nombre: leadForm.nombre,
+              nacionalidad: leadForm.nacionalidad,
+              ciudad: leadForm.ciudad,
+              fecha_llegada: leadForm.fechaLlegada,
+              tiempo_espana: "5 meses o más",
+              profesion: "Trabajador",
+              situacion_actual: "Proceso de regularización en España",
+              objetivo: "Regularizar situación administrativa",
+              idiomas: "Español, Árabe",
+              familia: "Información no especificada",
+            }),
+          });
+          const pdfData = await pdfRes.json();
+          if (pdfData?.pdfUrl) {
+            localStorage.setItem("generated_pdf_url", pdfData.pdfUrl);
+          }
+        } catch (err) {
+          console.error("PDF ERROR:", err);
+        }
+      }
+      setShowStripe(false);
+      setPaymentRequired(false);
+    };
+    handlePaidFlow();
+  }, []);
+
+  const handleStripePayment = async () => {
+    try {
+      const res = await fetch("/api/create-checkout-session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productType: "regularizacion" }),
+      });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        alert("❌ Stripe فيه مشكل");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("❌ خطأ فالكونكسيون");
+    }
+  };
+
+  const [selectedSituacion] = useState("regularizacion_2026_laboral");
+  const [muted, setMuted] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [voiceSupported, setVoiceSupported] = useState(true);
+  const [leadSaved, setLeadSaved] = useState(false);
+  const [generalUploading, setGeneralUploading] = useState(false);
+  const [workflowStep, setWorkflowStep] = useState("idle");
+  const [completionMessageSent, setCompletionMessageSent] = useState(false);
+  const [voiceHistory, setVoiceHistory] = useState<ChatMsg[]>([]);
+  const [currentStep, setCurrentStep] = useState(0);
+  const [lastUserTranscript, setLastUserTranscript] = useState("");
+  const [waitingSoufiane, setWaitingSoufiane] = useState(false);
+  const [savingForm, setSavingForm] = useState(false);
+  const [waitingForDocument, setWaitingForDocument] = useState(false);
+  const [documentsUnlocked, setDocumentsUnlocked] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState("");
+  const [formConfirmed, setFormConfirmed] = useState(false);
+  const [confirmUnlocked, setConfirmUnlocked] = useState(false);
+  const [phone, setPhone] = useState("");
+  const [questionsDone, setQuestionsDone] = useState(false);
+  const [clientQuestionsDone, setClientQuestionsDone] = useState(false);
+  const [questionIndex, setQuestionIndex] = useState(0);
+  const [stayVerified, setStayVerified] = useState(false);
+  const [expulsionVerified, setExpulsionVerified] = useState(false);
+  const [soufianeReady, setSoufianeReady] = useState(false);
+  const [verificationResultText, setVerificationResultText] = useState("");
+
+  useEffect(() => {
+    localStorage.setItem("questionIndex", questionIndex.toString());
+  }, [questionIndex]);
+
+  const questionFlowLockedRef = useRef(false);
+  const paymentDoneRef = useRef(false);
+  const [paymentCompleted, setPaymentCompleted] = useState(false);
+  const lastProcessedTranscriptRef = useRef("");
+  const [clientQuestionIndex, setClientQuestionIndex] = useState(0);
+  const [showStripe, setShowStripe] = useState(false);
+  const [paymentRequired, setPaymentRequired] = useState(false);
+
+  const [leadForm, setLeadForm] = useState<LeadFormState>({
+    nombre: "",
+    telefono: "",
+    niePasaporte: "",
+    ciudad: "",
+    nacionalidad: "",
+    fechaLlegada: "",
+    cumple5Meses: "",
+    asilo: "",
+    penales: "",
+  });
+  const [step, setStep] = useState<"questions" | "upload" | "verify" | "done">("questions");
+
+  const { t, lang } = useLang();
+  const { toast } = useToast();
+
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  const safeLang = (lang === "darija" || lang === "en" ? lang : "es") as "darija" | "es" | "en";
+
+  const currentProcedure = getProcedureByKey(selectedSituacion) || null;
+  if (!currentProcedure) return null;
+
+  const ui = useMemo(() => {
+    if (safeLang === "darija") {
+      return {
+        online: "متصل الآن",
+        role: "مختص فالهجرة",
+        voiceButton: "تكلم مع سفيان",
+        stopButton: "وقف الميكروفون",
+        saveLeadButton: savingForm ? "كيتحفظ..." : "حفظ المعطيات والمتابعة مع سفيان",
+        saveLeadTitle: "تحفظات المعطيات",
+        saveLeadDesc: "سفيان يقدر دابا يبدا معاك بالصوت.",
+        formTitle: "لوحة رسمية مدمجة",
+        formDesc: "عمر المعطيات الأساسية باش سفيان يبدا يراجع الملف ديالك بالصوت.",
+        uploadGeneral: generalUploading ? "كيترفع..." : "رفع الوثائق",
+        uploadGeneralDesc: "من هنا تقدر ترفع جميع الوثائق اللي طلب منك سفيان، سواء كانت صورة أو PDF.",
+        uploading: "كيترفع...",
+        uploadSuccessTitle: "تقبلات الوثيقة",
+        uploadSuccessDesc: "راجعنا الوثيقة وربطناها مع الملف.",
+        uploadErrorTitle: "خطأ فالوثيقة",
+        uploadErrorDesc: "ما قدرناش نربط هاد الوثيقة مع الملف.",
+        missingTitle: "كاينين بيانات ناقصين",
+        missingDesc: "عمر الاسم والهاتف والمدينة قبل ما تكمل.",
+        listening: "سفيان كيسمع ليك دابا...",
+        latestReply: "آخر جواب ديال سفيان",
+        yourVoice: "آخر جواب ديالك بالصوت",
+        micNotSupported: "هاد المتصفح ما كيدعمش الصوت المباشر. استعمل Chrome حديث.",
+        docStatusTitle: "حالة الملف ديالك",
+        docStatusDone: "جاهز",
+        docStatusReview: "مراجعة",
+        docStatusMissing: "ناقص",
+        docStepForm: "الفورمولار معمر",
+        docStepStayProof: "بروفات ديال 5 شهور",
+        docStepIdentity: "الباسبور أو NIE",
+        docStepFinal: "الملف النهائي واجد",
+        goSara: "المرور إلى سارة",
+        goSaraDesc: "إلى بغيتي تكمل بالموعد، سارة غادي تعاونك.",
+        labels: {
+          nombre: "الاسم الكامل",
+          telefono: "الهاتف",
+          niePasaporte: "NIE / الباسبور",
+          ciudad: "المدينة",
+          nacionalidad: "الجنسية",
+          fechaLlegada: "تاريخ الدخول لإسبانيا",
+          cumple5Meses: "واش عندك 5 شهور متواصلة؟",
+          asilo: "واش عندك طلب لجوء؟",
+          penales: "سوابق عدلية",
+          select: "اختر",
+          yes: "نعم",
+          no: "لا",
+          dontKnow: "ما عرفت",
+        },
+      };
+    }
+    return {
+      online: "En línea",
+      role: "Especialista en Extranjería",
+      voiceButton: "Hablar con Soufiane",
+      stopButton: "Parar micrófono",
+      saveLeadButton: savingForm ? "Guardando..." : "Guardar datos y continuar con Soufiane",
+      saveLeadTitle: "Datos guardados",
+      saveLeadDesc: "Soufiane ya puede empezar contigo por voz.",
+      formTitle: "Panel oficial integrado",
+      formDesc: "Rellena los datos básicos para que Soufiane empiece a revisar tu caso por voz.",
+      uploadGeneral: generalUploading ? "Subiendo..." : "Subir documentos",
+      uploadGeneralDesc: "Usa este botón para subir todos los documentos que te pida Soufiane, en foto o PDF.",
+      uploading: "Subiendo...",
+      uploadSuccessTitle: "Documento recibido",
+      uploadSuccessDesc: "El documento se ha vinculado correctamente al expediente.",
+      uploadErrorTitle: "Error en documento",
+      uploadErrorDesc: "No se pudo vincular el documento al expediente.",
+      missingTitle: "Faltan datos",
+      missingDesc: "Rellena nombre, teléfono y ciudad antes de continuar.",
+      listening: "Soufiane te está escuchando ahora...",
+      latestReply: "Última respuesta de Soufiane",
+      yourVoice: "Tu última respuesta por voz",
+      micNotSupported: "Este navegador no soporta voz en tiempo real. Usa Chrome moderno.",
+      docStatusTitle: "Estado de tu expediente",
+      docStatusDone: "Listo",
+      docStatusReview: "Revisar",
+      docStatusMissing: "Falta",
+      docStepForm: "Formulario completado",
+      docStepStayProof: "Pruebas de 5 meses",
+      docStepIdentity: "Pasaporte o NIE",
+      docStepFinal: "Expediente final listo",
+      goSara: "Ir con Sara",
+      goSaraDesc: "Si quieres seguir con la cita, Sara te ayuda.",
+      labels: {
+        nombre: "Nombre completo",
+        telefono: "Teléfono",
+        niePasaporte: "NIE / Pasaporte",
+        ciudad: "Ciudad",
+        nacionalidad: "Nacionalidad",
+        fechaLlegada: "Fecha llegada a España",
+        cumple5Meses: "¿Cumples 5 meses continuos?",
+        asilo: "¿Tienes solicitud de asilo?",
+        penales: "Antecedentes penales",
+        select: "Selecciona",
+        yes: "Sí",
+        no: "No",
+        dontKnow: "No sé",
+      },
+    };
+  }, [safeLang, savingForm, generalUploading]);
+
+  const [docs, setDocs] = useState<StoredDocItem[]>(buildInitialDocs(selectedSituacion));
+
+  const historyStorageKey = useMemo(() => `gestoriacitaia_soufiane_voice_history_${selectedSituacion}`, [selectedSituacion]);
+  const formStorageKey = useMemo(() => `gestoriacitaia_soufiane_form_${selectedSituacion}`, [selectedSituacion]);
+  const leadSavedStorageKey = useMemo(() => `gestoriacitaia_soufiane_lead_saved_${selectedSituacion}`, [selectedSituacion]);
+  const stepStorageKey = useMemo(() => `gestoriacitaia_soufiane_step_${selectedSituacion}`, [selectedSituacion]);
+  const docsStorageKey = useMemo(() => `gestoriacitaia_soufiane_docs_${selectedSituacion}`, [selectedSituacion]);
+
+  const leadFormReady =
+    !!leadForm.nombre.trim() &&
+    !!leadForm.telefono.trim() &&
+    !!leadForm.ciudad.trim();
+
+  useEffect(() => {
+    const supported =
+      typeof window !== "undefined" &&
+      typeof window.RTCPeerConnection !== "undefined" &&
+      typeof navigator !== "undefined" &&
+      !!navigator.mediaDevices?.getUserMedia;
+    setVoiceSupported(Boolean(supported));
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    const loadAuth = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!active) return;
+        setCurrentUserId(session?.user?.id || "");
+        setAuthChecked(true);
+      } catch (error) {
+        console.error("Error cargando sesión:", error);
+        if (!active) return;
+        setCurrentUserId("");
+        setAuthChecked(true);
+      }
+    };
+    loadAuth();
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setCurrentUserId(session?.user?.id || "");
+      setAuthChecked(true);
+    });
+    return () => {
+      active = false;
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!currentUserId || !authChecked) return;
+    const docsChannel = supabase
+      .channel(`docs-${currentUserId}`)
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "user_documents", filter: `user_id=eq.${currentUserId}` },
+        async (payload) => {
+          console.log("doc received");
+        }
+      )
+      .subscribe();
+
+    const formsChannel = supabase
+      .channel(`forms-${currentUserId}`)
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "user_forms", filter: `user_id=eq.${currentUserId}` },
+        async (payload) => {
+          const formData = payload.new as any;
+          if (formData.form_type === "regularizacion_2026") {
+            setTimeout(() => {
+              pushAgentMessage("مزيان. المعطيات ديالك تحفظات فالنظام. دابا غادي نكمل معاك خطوة بخطوة.");
+            }, 1000);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(docsChannel);
+      supabase.removeChannel(formsChannel);
+    };
+  }, [currentUserId, authChecked]);
+
+  useEffect(() => {
+    try {
+      const rawForm = localStorage.getItem(formStorageKey);
+      if (rawForm) {
+        const parsed = JSON.parse(rawForm) as LeadFormState;
+        setLeadForm({
+          nombre: parsed?.nombre || "",
+          telefono: parsed?.telefono || "",
+          niePasaporte: parsed?.niePasaporte || "",
+          ciudad: parsed?.ciudad || "",
+          nacionalidad: parsed?.nacionalidad || "",
+          fechaLlegada: parsed?.fechaLlegada || "",
+          cumple5Meses: parsed?.cumple5Meses || "",
+          asilo: parsed?.asilo || "",
+          penales: parsed?.penales || "",
+        });
+      }
+      const rawLeadSaved = localStorage.getItem(leadSavedStorageKey);
+      const saved = rawLeadSaved === "true";
+      setLeadSaved(saved);
+      setFormConfirmed(saved);
+      const rawDocs = localStorage.getItem(docsStorageKey);
+      if (rawDocs) {
+        const parsedDocs = JSON.parse(rawDocs) as StoredDocItem[];
+        if (Array.isArray(parsedDocs) && parsedDocs.length > 0) setDocs(parsedDocs);
+      }
+      const rawStep = localStorage.getItem(stepStorageKey);
+      if (rawStep) setCurrentStep(parseInt(rawStep));
+    } catch (error) {
+      console.error("Error cargando estado de Soufiane:", error);
+    }
+  }, [formStorageKey, leadSavedStorageKey, docsStorageKey]);
+
+  useEffect(() => {
+    try { localStorage.setItem(formStorageKey, JSON.stringify(leadForm)); }
+    catch (error) { console.error("Error guardando formulario de Soufiane:", error); }
+  }, [leadForm, formStorageKey]);
+
+  useEffect(() => {
+    try { localStorage.setItem(leadSavedStorageKey, leadSaved || formConfirmed ? "true" : "false"); }
+    catch (error) { console.error("Error guardando leadSaved:", error); }
+  }, [leadSaved, formConfirmed, leadSavedStorageKey]);
+
+  useEffect(() => {
+    try { localStorage.setItem(docsStorageKey, JSON.stringify(docs)); }
+    catch (error) { console.error("Error guardando docs:", error); }
+  }, [docs, docsStorageKey]);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(historyStorageKey);
+      if (raw) {
+        const parsed = JSON.parse(raw) as ChatMsg[];
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setVoiceHistory(parsed);
+          return;
+        }
+      }
+      setVoiceHistory([{ from: "agent", text: "", ts: Date.now() }]);
+    } catch (error) {
+      console.error("Error cargando historial de Soufiane:", error);
+      setVoiceHistory([{ from: "agent", text: "", ts: Date.now() }]);
+    }
+  }, [historyStorageKey]);
+
+  useEffect(() => {
+    if (voiceHistory.length === 0) return;
+    try { localStorage.setItem(historyStorageKey, JSON.stringify(voiceHistory)); }
+    catch (error) { console.error("Error guardando historial de Soufiane:", error); }
+  }, [voiceHistory, historyStorageKey]);
+
+  const identityDocs = docs.filter((doc) => {
+    const expected = normalizeDocType(doc.expectedType);
+    const detected = normalizeDocType(doc.detectedType);
+    const name = doc.nombre.toLowerCase();
+    return expected === "passport" || expected === "nie" || expected === "tie" ||
+      detected === "passport" || detected === "nie" || detected === "tie" ||
+      name.includes("pasaporte") || name.includes("passport") || name.includes("nie");
+  });
+
+  const stayProofDocs = docs.filter((doc) => {
+    const expected = normalizeDocType(doc.expectedType);
+    const detected = normalizeDocType(doc.detectedType);
+    const name = doc.nombre.toLowerCase();
+    const note = (doc.note || "").toLowerCase();
+    return expected === "empadronamiento" || expected === "stay_proof" ||
+      detected === "empadronamiento" || detected === "stay_proof" ||
+      name.includes("empadronamiento") || name.includes("padron") || name.includes("padrón") ||
+      name.includes("prueba de permanencia") || note.includes("empadronamiento") ||
+      note.includes("stay proof") || note.includes("prueba de permanencia");
+  });
+
+  const asiloDocs = docs.filter((doc) => {
+    const text = (doc.nombre + " " + (doc.detectedType || "") + " " + (doc.note || "")).toLowerCase();
+    return text.includes("asilo") || text.includes("refugio") || text.includes("protección") || text.includes("asylum");
+  });
+
+  const expulsionDocs = docs.filter((doc) => {
+    const text = (doc.nombre + " " + (doc.detectedType || "") + " " + (doc.note || "")).toLowerCase();
+    return text.includes("expulsion") || text.includes("expulsión") || text.includes("deportacion") || text.includes("deportation") || text.includes("retorno");
+  });
+
+  const formCompletedStatus: DocStatus = leadSaved || formConfirmed ? "ok" : "missing";
+  const stayProofStatus: DocStatus =
+    stayProofDocs.some((doc) => doc.estado === "ok") ? "ok" :
+    stayProofDocs.some((doc) => doc.estado === "warn") ? "warn" : "missing";
+  const identityStatus: DocStatus =
+    identityDocs.some((doc) => doc.estado === "ok") ? "ok" :
+    identityDocs.some((doc) => doc.estado === "warn") ? "warn" : "missing";
+  const finalFileStatus: DocStatus =
+    formCompletedStatus === "ok" && stayProofStatus === "ok" && identityStatus === "ok" ? "ok" :
+    formCompletedStatus === "warn" || stayProofStatus === "warn" || identityStatus === "warn" ? "warn" : "missing";
+
+  const handleQuestionFlow = () => {
+    if (questionFlowLockedRef.current) return;
+    setQuestionIndex((prev) => {
+      const next = prev + 1;
+      if (next === 1) {
+        setTimeout(() => { speakExactText(NAME_QUESTION); }, 400);
+        return next;
+      }
+      if (next === 5 && !paymentDoneRef.current) {
+        questionFlowLockedRef.current = true;
+        const PAYMENT_TEXT = `مزيان، من خلال الأجوبة ديالك بان ليا بللي الملف ديالك غادي يكون مقبول إن شاء الله ✅ باش نعطيك تحليل دقيق ونوجد ليك الملف كامل: ✔️ تحليل كامل ✔️ 100% التحقق من الوثائق ✔️ الوثيقة المهمة اللي غادي تعزز الملف ديالك بزاف غير ب 12 أورو ورك على زر الأداء ونكملو مباشرة.`;
+        pushAgentMessage(PAYMENT_TEXT);
+        setPaymentRequired(true);
+        setTimeout(() => { speakExactText(PAYMENT_TEXT); }, 300);
+        setQuestionsDone(false);
+        return next;
+      }
+      if (next >= questions.length - 1) {
+        setDocumentsUnlocked(true);
+        setConfirmUnlocked(true);
+        setQuestionsDone(true);
+        setTimeout(() => {
+          speakExactText(`دابا خاصك ترفع جميع الوثائق اللي عندك. من بعد ما تسالي رفع الوثائق كاملة، ورك على زر التحقق من الوثائق باش نراجعهم ليك كاملين.`);
+        }, 1000);
+      }
+      return next;
+    });
+  };
+
+  const pushAgentMessage = (text: string) => {
+    if (!text?.trim()) return;
+    setVoiceHistory((prev) => [...prev, { from: "agent", text, ts: Date.now() }]);
+  };
+
+  const pushUserMessage = (text: string) => {
+    if (!text?.trim()) return;
+    setVoiceHistory((prev) => [...prev, { from: "user", text, ts: Date.now() }]);
+  };
+
+  const handleSendWhatsApp = async () => {
+    try {
+      if (!phone || phone.trim().length < 6) { alert("دخل رقم الهاتف صحيح"); return; }
+      const cleanPhone = phone.trim().replace(/\s+/g, "");
+      const url = `https://wa.me/${cleanPhone}?text=${encodeURIComponent("Hola, soy de GestoriaCitaIA")}`;
+      window.open(url, "_blank");
+    } catch (error) {
+      console.error("WhatsApp error:", error);
+      alert("وقع مشكل، حاول مرة أخرى");
+    }
+  };
+
+  // ==============================================
+  // ⭐ TTS DE OPENAI - Soufiane habla INMEDIATAMENTE en darija
+  // ==============================================
+  const speakExactText = async (text: string) => {
+    if (!text.trim()) return;
+    
+    try {
+      // Detener audio anterior
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.src = "";
+        audioRef.current = null;
+      }
+
+      setIsSpeaking(true);
+      console.log("🔊 Soufiane hablando en darija:", text.substring(0, 100) + "...");
+
+      // Llamar al endpoint TTS
+      const response = await fetch("/api/tts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          text: text,
+          voice: "alloy", // Voz natural de OpenAI
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Error en TTS: " + response.status);
+      }
+
+      const audioBlob = await response.blob();
+      const audioUrl = URL.createObjectURL(audioBlob);
+      
+      const audio = new Audio(audioUrl);
+      audioRef.current = audio;
+      
+      audio.onended = () => {
+        setIsSpeaking(false);
+        URL.revokeObjectURL(audioUrl);
+        console.log("✅ Soufiane terminó de hablar");
+      };
+      
+      audio.onerror = (err) => {
+        console.error("Error reproduciendo audio:", err);
+        setIsSpeaking(false);
+        URL.revokeObjectURL(audioUrl);
+        toast({ 
+          title: "Error de audio", 
+          description: "No se pudo reproducir el audio", 
+          variant: "destructive" 
+        });
+      };
+
+      await audio.play();
+      
+    } catch (error) {
+      console.error("Error en TTS:", error);
+      setIsSpeaking(false);
+      toast({ 
+        title: "Error de audio", 
+        description: "No se pudo generar el audio. Revisa el texto en el chat.", 
+        variant: "destructive" 
+      });
+    }
+  };
+
+  const stopSpeaking = () => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.src = "";
+      audioRef.current = null;
+    }
+    setIsSpeaking(false);
+  };
+
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.volume = muted ? 0 : 1;
+    }
+  }, [muted]);
+
+  const handleGeneralUpload = () => {
+    console.log("Subiendo documentos");
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "image/*,application/pdf";
+    input.multiple = true;
+    input.setAttribute("capture", "environment");
+    input.onchange = async () => {
+      const files = Array.from(input.files || []);
+      if (!files.length) return;
+      setGeneralUploading(true);
+      try {
+        const { data: { user }, error } = await supabase.auth.getUser();
+        if (error || !user?.id) throw new Error("Usuario no conectado");
+        
+        for (const file of files) {
+          console.log("📄 Procesando:", file.name);
+          const safeName = `${Date.now()}_${file.name}`;
+          const storagePath = `${user.id}/regularizacion_2026/${safeName}`;
+          await supabase.storage.from("user-documents").upload(storagePath, file, { upsert: true });
+          const result = await verifyDocument({ file });
+          console.log("📊 Resultado:", result);
+          
+          const matchedDoc = docs.find(doc => doc.estado === "missing") || docs[0];
+          if (matchedDoc) {
+            setDocs((prev) => prev.map((doc) => {
+              if (doc.id !== matchedDoc.id) return doc;
+              return {
+                ...doc,
+                archivo: file.name,
+                estado: result.final_verdict === "approved" ? "ok" : "warn",
+                detectedType: result.document_type || "unknown",
+                document_date: result.document_date || new Date().toISOString().split('T')[0],
+                full_name: result.full_name || "",
+                document_number: result.document_number || "",
+                birth_date: result.birth_date || "",
+                expiry_date: result.expiry_date || "",
+              };
+            }));
+          }
+        }
+        toast({ title: "✅ Documentos subidos", description: "Ahora haz clic en Verificar documentos" });
+      } catch (err) {
+        console.error("Error:", err);
+        toast({ title: "Error", description: "No se pudieron subir los documentos", variant: "destructive" });
+      } finally {
+        setGeneralUploading(false);
+      }
+    };
+    input.click();
+  };
+
+  const handleVerifyAsilo = async () => {
+    console.log("Verificando Asilo...");
+    try {
+      if (asiloDocs.length === 0) {
+        pushAgentMessage("ما عندكش أي وثيقة فيها معلومات على اللجوء.");
+        return;
+      }
+      pushAgentMessage("📋 Se encontraron documentos relacionados con asilo.");
+    } catch (error) {
+      console.error("Error:", error);
+      pushAgentMessage("وقع مشكل في التحقق من اللجوء.");
+    }
+  };
+
+  const handleVerifyExpulsion = async () => {
+    console.log("Verificando Expulsión...");
+    try {
+      if (expulsionDocs.length === 0) {
+        pushAgentMessage("ماعندكش أي وثيقة فيها قرار الطرد.");
+        setExpulsionVerified(true);
+        return;
+      }
+      pushAgentMessage("📋 Se encontraron documentos relacionados con expulsión.");
+    } catch (error) {
+      console.error("Error:", error);
+      pushAgentMessage("وقع مشكل في التحقق من الطرد.");
+    }
+  };
+
+  // ==============================================
+  // ⭐ VERIFICAR DOCUMENTOS - Genera explicación en DARIJA
+  // ==============================================
+  const handleVerifyAll = async () => {
+    try {
+      setGeneralUploading(true);
+      
+      const uploadedDocs = docs.filter(doc => doc.archivo && doc.archivo !== "");
+      if (uploadedDocs.length === 0) { 
+        pushAgentMessage("مازال ما عندكش وثائق مرفوعة. خاصك ترفع وثائق قبل ما نتحقق.");
+        toast({ title: "⚠️ Sin documentos", description: "Primero sube documentos", variant: "destructive" });
+        return; 
+      }
+
+      let hasPassport = false;
+      let stayDates: string[] = [];
+      let hasExpulsion = false;
+      let expulsionDate = "";
+      let hasValidPassport = false;
+
+      for (const doc of uploadedDocs) {
+        const docName = (doc.nombre || "").toLowerCase();
+        const detectedType = (doc.detectedType || "").toLowerCase();
+        
+        if (detectedType.includes("passport") || detectedType.includes("nie") || 
+            docName.includes("pasaporte") || docName.includes("nie") ||
+            docName.includes("passport")) {
+          hasPassport = true;
+          if (doc.expiry_date) {
+            const expiry = new Date(doc.expiry_date);
+            if (expiry > new Date()) {
+              hasValidPassport = true;
+            }
+          }
+        }
+        
+        if (doc.document_date) {
+          stayDates.push(doc.document_date);
+        }
+        
+        if (docName.includes("expulsion") || docName.includes("expulsión") || 
+            docName.includes("deportacion")) {
+          hasExpulsion = true;
+          if (doc.document_date) {
+            expulsionDate = doc.document_date;
+          }
+        }
+      }
+
+      const sortedDates = stayDates.map(d => new Date(d)).filter(d => !isNaN(d.getTime())).sort((a, b) => a.getTime() - b.getTime());
+      let stayDays = 0;
+      let hasMonths = false;
+      let firstDateStr = "", lastDateStr = "";
+      let daysNeeded = 0;
+      
+      if (sortedDates.length >= 2) {
+        const firstDate = sortedDates[0];
+        const lastDate = sortedDates[sortedDates.length - 1];
+        stayDays = Math.floor((lastDate.getTime() - firstDate.getTime()) / (1000 * 60 * 60 * 24));
+        hasMonths = stayDays >= 150;
+        firstDateStr = firstDate.toLocaleDateString('es-ES');
+        lastDateStr = lastDate.toLocaleDateString('es-ES');
+        daysNeeded = Math.max(0, 150 - stayDays);
+      } else if (sortedDates.length === 1) {
+        stayDays = 0;
+        hasMonths = false;
+        firstDateStr = sortedDates[0].toLocaleDateString('es-ES');
+        daysNeeded = 150;
+      }
+
+      let expulsionMessage = "";
+      if (hasExpulsion && expulsionDate) {
+        const expDate = new Date(expulsionDate);
+        const now = new Date();
+        const diffYears = (now.getTime() - expDate.getTime()) / (1000 * 60 * 60 * 24 * 365);
+        if (diffYears >= 1) {
+          expulsionMessage = `عندك قرار طرد قديم من تاريخ ${expDate.toLocaleDateString('es-ES')}. هاد القرار قديم بزاف وعندو أكثر من عام. ما يؤثرش على ملف التسوية. تقدر تقدم عادي.`;
+        } else {
+          expulsionMessage = `⚠️ عندك قرار طرد جديد من تاريخ ${expDate.toLocaleDateString('es-ES')}. هاد القرار عندو أقل من عام. خاصك تحل هاد المشكلة قبل ما تقدم على التسوية.`;
+        }
+      } else if (hasExpulsion) {
+        expulsionMessage = "عندك وثيقة طرد ولكن مافيهاش تاريخ واضح. خاصك تجيب تاريخ دقيق باش نعرف واش قديم ولا جديد.";
+      } else {
+        expulsionMessage = "ما عندكش أي وثيقة طرد. هاد شي مزيان بزاف. تقدر تقدم على التسوية من هاد الناحية.";
+      }
+
+      const isEligible = hasPassport && hasMonths && (!hasExpulsion || (hasExpulsion && new Date(expulsionDate) < new Date(Date.now() - 365 * 24 * 60 * 60 * 1000)));
+
+      // ==========================================
+      // 🔥 GENERAR EXPLICACIÓN EN DARIJA CON VALOR
+      // ==========================================
+      let resultMessage = `🔍 تحليل الملف ديالك:\n\n`;
+
+      if (hasPassport) {
+        resultMessage += `✅ عندك باسبور أو NIE صالح. هاد الوثيقة أساسية للتسوية.\n`;
+        if (!hasValidPassport) {
+          resultMessage += `⚠️ ولكن الباسبور ديالك منتهي الصلاحية. خاصك تجددو قبل ما تقدم.\n`;
+        }
+      } else {
+        resultMessage += `❌ ما عندكش باسبور ولا NIE. هاد الوثيقة ضرورية. خاصك تجيب واحد.\n`;
+      }
+
+      resultMessage += `\n📅 حساب مدة الإقامة:\n`;
+      if (stayDays > 0) {
+        resultMessage += `من تاريخ: ${firstDateStr}\n`;
+        resultMessage += `تال تاريخ: ${lastDateStr}\n`;
+        resultMessage += `المدة الإجمالية: ${stayDays} يوم\n`;
+        
+        if (hasMonths) {
+          resultMessage += `✅ ${stayDays} يوم = ${Math.floor(stayDays/30)} شهور. هادشي كتر من 5 شهور (150 يوم).\n`;
+          resultMessage += `🎯 عندك ${stayDays - 150} يوم زيادة على المطلوب. مزيان.\n`;
+        } else {
+          resultMessage += `❌ ${stayDays} يوم فقط. خاصك 150 يوم باش تكمل 5 شهور.\n`;
+          resultMessage += `⚠️ باقي ليك ${daysNeeded} يوم باش توصل لل 5 شهور.\n`;
+        }
+      } else {
+        resultMessage += `❌ ما عندكش وثائق فيها تواريخ باش نحسب المدة.\n`;
+        resultMessage += `خاصك تجيب وثيقتين على الأقل فيها تواريخ باش نعرف مدة الإقامة.\n`;
+      }
+
+      resultMessage += `\n🚫 تحليل وثائق الطرد:\n${expulsionMessage}\n`;
+
+      resultMessage += `\n━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+      if (isEligible) {
+        resultMessage += `✅✅✅ النتيجة: أنت مؤهل للتسوية الجماعية 2026!\n\n`;
+        resultMessage += `💪 عندك جميع الوثائق المطلوبة.\n`;
+        if (hasMonths) {
+          resultMessage += `📅 عندك ${stayDays} يوم فإسبانيا (أكثر من 5 شهور).\n`;
+        }
+        if (hasPassport) {
+          resultMessage += `🪪 عندك باسبور/NIE صالح.\n`;
+        }
+        if (!hasExpulsion || new Date(expulsionDate) < new Date(Date.now() - 365 * 24 * 60 * 60 * 1000)) {
+          resultMessage += `✅ ما عندكش مشكل مع الطرد.\n`;
+        }
+        resultMessage += `\n🎯 تقدر دابا تقدم على التسوية. حظ موفق!`;
+      } else {
+        resultMessage += `❌❌❌ النتيجة: للأسف، مازال ما تقدرش تقدم على التسوية.\n\n`;
+        resultMessage += `⚠️ خاصك تجيب الوثائق الناقصة:\n`;
+        if (!hasPassport) {
+          resultMessage += `- باسبور أو NIE\n`;
+        }
+        if (!hasMonths) {
+          resultMessage += `- بروفات ديال ${daysNeeded} يوم باش تكمل 5 شهور (المدة الحالية: ${stayDays} يوم)\n`;
+        }
+        if (hasExpulsion && new Date(expulsionDate) > new Date(Date.now() - 365 * 24 * 60 * 60 * 1000)) {
+          resultMessage += `- حل مشكل الطرد الجديد\n`;
+        }
+        resultMessage += `\n📢 من بعد ما تجيب الوثائق الناقصة، عاود اضغط على "Verificar documentos".`;
+      }
+
+      setVerificationResultText(resultMessage);
+      setSoufianeReady(true);
+      pushAgentMessage(resultMessage);
+      
+      toast({ 
+        title: isEligible ? "✅ APTO" : "❌ NO APTO", 
+        description: isEligible ? "Ya puedes pulsar 'Hablar con Soufiane'" : "Faltan documentos para ser apto" 
+      });
+      
+    } catch (err) {
+      console.error("Error:", err);
+      pushAgentMessage("وقع مشكل في التحقق من الوثائق.");
+    } finally {
+      setGeneralUploading(false);
+    }
+  };
+
+  const handleTalkClick = () => {
+    if (!soufianeReady) {
+      toast({ title: "🔒 Bloqueado", description: "Primero verifica los documentos", variant: "destructive" });
+      return;
+    }
+    
+    if (isSpeaking) {
+      stopSpeaking();
+    } else {
+      if (verificationResultText) {
+        speakExactText(verificationResultText);
+      } else {
+        toast({ title: "⚠️ Sin resultado", description: "No hay resultado de verificación disponible", variant: "destructive" });
+      }
+    }
+  };
+
+  return (
+    <div className="min-h-screen">
+      <div className="w-full bg-background text-foreground relative min-h-screen rounded-[30px] overflow-hidden">
+        <Navbar />
+        <div className="fixed inset-0 z-0 opacity-25 pointer-events-none" style={{ backgroundImage: "radial-gradient(ellipse 70% 40% at 30% 20%, rgba(34,197,94,0.1), transparent), radial-gradient(ellipse 60% 40% at 80% 80%, rgba(59,130,246,0.08), transparent)" }} />
+
+        <main className="flex-1 relative z-10 pt-2 pb-6">
+          <div className="px-4 sm:px-6 py-3 w-full flex items-center justify-between">
+            <div>
+              <h1 className="text-xl font-display font-bold text-white flex items-center gap-2">
+                {t("reg_title")}
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 border border-amber-500/40 text-amber-400">
+                  <Star className="w-2.5 h-2.5" />
+                  {t("reg_new")}
+                </span>
+              </h1>
+              <p className="text-xs text-muted-foreground">{currentProcedure.name}</p>
+            </div>
+          </div>
+
+          <div className="mt-2 max-w-7xl mx-auto lg:grid lg:grid-cols-[480px_1fr] lg:gap-6">
+            <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="rounded-[26px] overflow-hidden relative">
+              <div className="relative">
+                <div className="relative">
+                  <video id="soufiane-video" playsInline preload="metadata" poster="/images/soufiane.png" className="w-full h-[270px] object-cover border-b border-[#f6c453]/10">
+                    <source src="/soufiane-presentacion.mp4" type="video/mp4" />
+                  </video>
+                </div>
+                <div className="absolute bottom-5 right-4 text-right">
+                  <h2 className="text-[22px] font-bold text-white">Soufiane</h2>
+                  <p className="text-[15px] text-[#d4a94d] font-medium tracking-wide">Experto en Regularización</p>
+                </div>
+              </div>
+            </motion.div>
+
+            <div className="mt-0 w-full max-w-none lg:col-start-2">
+              
+              {!paymentCompleted && (
+                <div className="p-3">
+                  <div className="relative overflow-hidden rounded-2xl border border-yellow-500/30 bg-gradient-to-br from-[#1a1200] via-[#0b0b0b] to-[#1a1200] p-4 w-full">
+                    <div className="flex items-center justify-between mb-3">
+                      <div>
+                        <p className="text-white font-bold text-lg">Desbloquea a Soufiane</p>
+                        <span className="inline-flex mt-1 px-2 py-1 rounded-full bg-yellow-500 text-black text-[10px] font-bold">PREMIUM</span>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xl font-black text-yellow-400 leading-none">14,99€</p>
+                        <p className="text-white/60 text-xs">Acceso completo</p>
+                      </div>
+                    </div>
+                    <p className="text-white/70 text-[13px] leading-relaxed mb-3">Acceso ilimitado a Soufiane IA, análisis de documentos y generación automática del expediente.</p>
+                    <button onClick={handleStripePayment} type="button" className="w-[92%] mx-auto flex items-center justify-center h-[52px] rounded-[20px] text-white font-semibold text-[16px] bg-gradient-to-r from-[#16a34a] to-[#22c55e] border border-[#4ade80] shadow-[0_4px_14px_rgba(34,197,94,0.35)]">
+                      🔓 Desbloquear ahora
+                    </button>
+                  </div>
+                  <div className="rounded-2xl border border-white/10 bg-white/5 p-3 mt-3">
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+                      <p className="text-white font-bold">Soufiane IA</p>
+                    </div>
+                    <p className="text-white/80 text-sm leading-relaxed">Especialista en extranjería española.</p>
+                  </div>
+                </div>
+              )}
+
+              {paymentCompleted && (
+                <div className="mt-5 space-y-4">
+                  <button
+                    onClick={handleTalkClick}
+                    disabled={!soufianeReady}
+                    className={`w-[92%] mx-auto h-[52px] rounded-[20px] flex items-center justify-center gap-3 text-[16px] font-semibold border shadow-xl transition-all duration-300 ${
+                      !soufianeReady ? "bg-gray-600 opacity-60 cursor-not-allowed text-white"
+                      : isSpeaking ? "bg-red-600 border-red-400 text-white shadow-red-500/30 animate-pulse"
+                      : "bg-gradient-to-r from-[#16a34a] to-[#22c55e] border-[#4ade80] text-white shadow-green-500/20"
+                    }`}
+                  >
+                    {isSpeaking ? (
+                      <><Volume2 className="w-5 h-5 animate-pulse" />Soufiane hablando...</>
+                    ) : (
+                      <><Mic className="w-5 h-5" />
+                        {!soufianeReady ? "Verificar documentos primero" : "Hablar con Soufiane"}
+                      </>
+                    )}
+                  </button>
+
+                  <button onClick={handleGeneralUpload} disabled={generalUploading} className="w-[92%] mx-auto h-[52px] rounded-[20px] border border-[#c6922f] bg-[#050816] hover:bg-[#0b1220] transition-all text-white font-medium text-[16px] flex items-center justify-center gap-3 shadow-lg">
+                    <Upload className="w-5 h-5 text-[#d4a94d]" />
+                    {generalUploading ? "Subiendo..." : "Subir documentos"}
+                  </button>
+
+                  <button onClick={handleVerifyAll} className="w-[92%] mx-auto h-[52px] rounded-[20px] border border-[#c6922f] bg-[#050816] hover:bg-[#0b1220] transition-all text-white font-medium text-[16px] flex items-center justify-center gap-3 shadow-lg">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-[#d4a94d]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4" />
+                    </svg>
+                    Verificar documentos
+                  </button>
+
+                  <button onClick={handleVerifyAsilo} className="w-[92%] mx-auto h-[52px] rounded-[20px] border border-[#c6922f] bg-[#050816] hover:bg-[#0b1220] transition-all text-white font-medium text-[16px] flex items-center justify-center gap-3 shadow-lg">
+                    Verificar Asilo
+                  </button>
+
+                  <button onClick={handleVerifyExpulsion} className="w-[92%] mx-auto h-[52px] rounded-[20px] border border-[#c6922f] bg-[#050816] hover:bg-[#0b1220] transition-all text-white font-medium text-[16px] flex items-center justify-center gap-3 shadow-lg">
+                    Verificar Expulsión Europea
+                  </button>
+
+                  <div className="w-[92%] mx-auto h-[52px] rounded-[20px] border border-[#c6922f]/40 bg-[#050816] flex items-center overflow-hidden shadow-lg">
+                    <div className="w-[58px] h-full flex items-center justify-center border-r border-[#c6922f]/30 bg-black">
+                      <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" className="w-6 h-6" />
+                    </div>
+                    <input 
+                      type="tel" 
+                      value={phone} 
+                      onChange={(e) => setPhone(e.target.value)} 
+                      placeholder="Número WhatsApp" 
+                      className="flex-1 h-full bg-transparent px-4 text-white placeholder:text-white/40 outline-none text-[16px]" 
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <audio ref={audioRef} autoPlay playsInline className="hidden" />
+        </main>
+      </div>
+    </div>
+  );
+}
