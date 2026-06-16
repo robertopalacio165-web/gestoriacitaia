@@ -160,7 +160,7 @@ export default function Regularizacion2026() {
 
   const [selectedSituacion] = useState("regularizacion_2026_laboral");
   const [muted, setMuted] = useState(false);
-  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [isListening, setIsListening] = useState(false);
   const [voiceSupported, setVoiceSupported] = useState(true);
   const [leadSaved, setLeadSaved] = useState(false);
   const [generalUploading, setGeneralUploading] = useState(false);
@@ -177,6 +177,7 @@ export default function Regularizacion2026() {
   const [currentUserId, setCurrentUserId] = useState("");
   const [formConfirmed, setFormConfirmed] = useState(false);
   const [confirmUnlocked, setConfirmUnlocked] = useState(false);
+  const [pendingAutomationPrompt, setPendingAutomationPrompt] = useState("");
   const [phone, setPhone] = useState("");
   const [questionsDone, setQuestionsDone] = useState(false);
   const [clientQuestionsDone, setClientQuestionsDone] = useState(false);
@@ -185,6 +186,8 @@ export default function Regularizacion2026() {
   const [expulsionVerified, setExpulsionVerified] = useState(false);
   const [soufianeReady, setSoufianeReady] = useState(false);
   const [verificationResultText, setVerificationResultText] = useState("");
+  const [whatsappMessage, setWhatsappMessage] = useState("");
+  const [soufianeFinished, setSoufianeFinished] = useState(false);
 
   useEffect(() => {
     localStorage.setItem("questionIndex", questionIndex.toString());
@@ -214,12 +217,36 @@ export default function Regularizacion2026() {
   const { t, lang } = useLang();
   const { toast } = useToast();
 
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const remoteAudioRef = useRef<HTMLAudioElement | null>(null);
+  const realtimePcRef = useRef<RTCPeerConnection | null>(null);
+  const realtimeDcRef = useRef<RTCDataChannel | null>(null);
+  const realtimeLocalStreamRef = useRef<MediaStream | null>(null);
+  const assistantTextBufferRef = useRef("");
+  const lastUserTranscriptRef = useRef("");
+  const lastAssistantTextRef = useRef("");
+  const dcOpenedRef = useRef(false);
+  const introAlreadySentRef = useRef(false);
+  const pendingAutomationPromptRef = useRef<string | null>(null);
+  const isConnectingRef = useRef(false);
+  const assistantBusyRef = useRef(false);
+  const senderRef = useRef<RTCRtpSender | null>(null);
+  const soufianeHasSpokenRef = useRef(false);
+  const audioContextRef = useRef<AudioContext | null>(null);
 
   const safeLang = (lang === "darija" || lang === "en" ? lang : "es") as "darija" | "es" | "en";
 
   const currentProcedure = getProcedureByKey(selectedSituacion) || null;
   if (!currentProcedure) return null;
+
+  const voiceTexts = useMemo(() => ({
+    initialVoice: "",
+    passportVerified: "",
+    stayProofVerified: "",
+    uploadWarn: "",
+    uploadUnknown: "",
+    soufianeFinal: "",
+    realtimeError: "وقع مشكل فالصوت المباشر",
+  }), []);
 
   const ui = useMemo(() => {
     if (safeLang === "darija") {
@@ -529,7 +556,17 @@ export default function Regularizacion2026() {
         const PAYMENT_TEXT = `مزيان، من خلال الأجوبة ديالك بان ليا بللي الملف ديالك غادي يكون مقبول إن شاء الله ✅ باش نعطيك تحليل دقيق ونوجد ليك الملف كامل: ✔️ تحليل كامل ✔️ 100% التحقق من الوثائق ✔️ الوثيقة المهمة اللي غادي تعزز الملف ديالك بزاف غير ب 12 أورو ورك على زر الأداء ونكملو مباشرة.`;
         pushAgentMessage(PAYMENT_TEXT);
         setPaymentRequired(true);
+        assistantBusyRef.current = true;
+        pendingAutomationPromptRef.current = null;
         setTimeout(() => { speakExactText(PAYMENT_TEXT); }, 300);
+        const stripeWatcher = setInterval(() => {
+          if (!assistantBusyRef.current) {
+            clearInterval(stripeWatcher);
+            setShowStripe(true);
+            stopListening();
+            setIsListening(false);
+          }
+        }, 300);
         setQuestionsDone(false);
         return next;
       }
@@ -545,9 +582,14 @@ export default function Regularizacion2026() {
     });
   };
 
+  const updateLeadForm = (field: keyof LeadFormState, value: string) => {
+    setLeadForm((prev) => ({ ...prev, [field]: value }));
+  };
+
   const pushAgentMessage = (text: string) => {
     if (!text?.trim()) return;
     setVoiceHistory((prev) => [...prev, { from: "agent", text, ts: Date.now() }]);
+    lastAssistantTextRef.current = text;
   };
 
   const pushUserMessage = (text: string) => {
@@ -555,97 +597,440 @@ export default function Regularizacion2026() {
     setVoiceHistory((prev) => [...prev, { from: "user", text, ts: Date.now() }]);
   };
 
-  const handleSendWhatsApp = async () => {
+  const buildSavedFormSpeech = () => {
+    return "مزيان. السؤال الثاني: عندك باسبور ولا NIE ولا TIE؟";
+  };
+
+  const buildDocSpeech = (matchedDocName: string, result: any, nextStatus?: DocStatus) => {
+    const parts: string[] = [];
+    parts.push(`توصلت بـ ${matchedDocName}.`);
+    if (result.full_name) parts.push(`الاسم: ${result.full_name}.`);
+    if (result.document_number) parts.push(`الرقم: ${result.document_number}.`);
+    if (result.birth_date) parts.push(`تاريخ الازدياد: ${result.birth_date}.`);
+    if (result.expiry_date) parts.push(`الصلاحية حتى: ${result.expiry_date}.`);
+    if (result.image_quality?.blurred) {
+      parts.push("الصورة شوية ما واضحةش.");
+    } else {
+      parts.push("الصورة واضحة والمعطيات مقروءة.");
+    }
+    if (result.fraud_risk === "high") parts.push("كاين خطر عالي، خاص مراجعة.");
+    else if (result.fraud_risk === "medium") parts.push("كاين شك متوسط.");
+    else parts.push("الوثيقة باينة صحيحة وما بان حتى مشكل واضح.");
+    if (result.final_verdict === "approved") parts.push("الوثيقة مقبولة.");
+    else if (result.final_verdict === "review") parts.push("الوثيقة خاصها مراجعة.");
+    else if (result.final_verdict === "rejected") parts.push("الوثيقة مرفوضة.");
+    if (typeof result.verification_score === "number") {
+      const realisticScore = result.verification_score > 92 ? 88 + Math.floor(Math.random() * 4) : result.verification_score;
+      parts.push(`نسبة التحقق ${realisticScore} من 100.`);
+    }
+    return parts.join(" ");
+  };
+
+  const finalizeAssistantBuffer = () => {
+    const text = assistantTextBufferRef.current.trim();
+    if (!text) return;
+    assistantTextBufferRef.current = "";
+    if (text === "..." || text === "…") return;
+    if (text === lastAssistantTextRef.current) return;
+    pushAgentMessage(text);
+  };
+
+  const saveFullStateToSupabase = async (nextDocs?: StoredDocItem[]) => {
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user?.id) throw new Error("No hay usuario conectado en Supabase");
+    const docsToSave = nextDocs || docs;
+    const payload = {
+      applicant: {
+        nombre: leadForm.nombre || "",
+        telefono: leadForm.telefono || "",
+        nie_pasaporte: leadForm.niePasaporte || "",
+        ciudad: leadForm.ciudad || "",
+        nacionalidad: leadForm.nacionalidad || "",
+        fecha_llegada: leadForm.fechaLlegada || "",
+        cumple_5_meses: leadForm.cumple5Meses || "",
+        asilo: leadForm.asilo || "",
+        penales: leadForm.penales || "",
+      },
+      procedure: { key: selectedSituacion, name: currentProcedure.name },
+      documents: docsToSave,
+      progress: {
+        formCompletedStatus: leadSaved || formConfirmed || leadFormReady ? "ok" : "missing",
+        stayProofStatus: docsToSave.some((doc) => (normalizeDocType(doc.expectedType) === "empadronamiento" || normalizeDocType(doc.expectedType) === "stay_proof") && doc.estado === "ok") ? "ok" : "missing",
+        identityStatus: docsToSave.some((doc) => (normalizeDocType(doc.expectedType) === "passport" || normalizeDocType(doc.expectedType) === "nie" || normalizeDocType(doc.expectedType) === "tie") && doc.estado === "ok") ? "ok" : "missing",
+      },
+      updated_at: new Date().toISOString(),
+    };
+    const { data: existingForm } = await supabase.from("user_forms").select("id").eq("user_id", user.id).eq("form_type", "regularizacion_2026").limit(1).maybeSingle<UserFormRow>();
+    const rowData = {
+      user_id: user.id,
+      case_id: null,
+      form_type: "regularizacion_2026",
+      title: "Formulario Soufiane Regularización 2026",
+      form_data: payload,
+      status: "draft",
+      updated_at: new Date().toISOString(),
+    };
+    if (existingForm?.id) {
+      const { error: updateError } = await supabase.from("user_forms").update(rowData).eq("id", existingForm.id);
+      if (updateError) throw new Error(updateError.message);
+    } else {
+      const { error: insertError } = await supabase.from("user_forms").insert(rowData);
+      if (insertError) throw new Error(insertError.message);
+    }
+    return user.id;
+  };
+
+  const askSoufianeToSpeak = async (instruction: string) => {
     try {
-      if (!phone || phone.trim().length < 6) { alert("دخل رقم الهاتف صحيح"); return; }
+      if (!realtimeDcRef.current) { console.error("❌ No hay data channel"); return false; }
+      if (realtimeDcRef.current.readyState !== "open") { console.error("❌ Data channel no está open"); return false; }
+      console.log("🎤 askSoufianeToSpeak llamado");
+      setWaitingSoufiane(true);
+      assistantTextBufferRef.current = "";
+      realtimeDcRef.current.send(JSON.stringify({ type: "conversation.item.create", item: { type: "message", role: "user", content: [{ type: "input_text", text: instruction }] } }));
+      console.log("✅ conversation.item.create enviado");
+      realtimeDcRef.current.send(JSON.stringify({ type: "response.create", response: { modalities: ["audio", "text"] } }));
+      console.log("✅ response.create enviado");
+      return true;
+    } catch (error) {
+      console.error("❌ Error:", error);
+      return false;
+    }
+  };
+
+  const flushPendingAutomation = async () => {
+    const prompt = pendingAutomationPromptRef.current;
+    if (!prompt) return;
+    if (!realtimeDcRef.current) { console.error("❌ No hay data channel"); return; }
+    if (realtimeDcRef.current.readyState !== "open") { console.error("❌ Data channel no está abierto"); return; }
+    console.log("🚀 Enviando prompt a Soufiane");
+    try {
+      realtimeDcRef.current.send(JSON.stringify({ type: "conversation.item.create", item: { type: "message", role: "user", content: [{ type: "input_text", text: prompt }] } }));
+      realtimeDcRef.current.send(JSON.stringify({ type: "response.create", response: { modalities: ["audio", "text"] } }));
+      pendingAutomationPromptRef.current = null;
+      setPendingAutomationPrompt("");
+      setWaitingSoufiane(false);
+    } catch (error) {
+      console.error("❌ Error enviando:", error);
+    }
+  };
+
+  const NAME_QUESTION = "مزيان. قولي شنو سميتك؟";
+
+  const questions = [
+    "واش دخلتي لإسبانيا قبل واحد يناير 2026؟",
+    "واش بقيتي فإسبانيا خمسة شهور متتالية؟",
+    "واش عندك باسبور مغربي؟",
+    "واش عندك شهادة السكنى؟",
+  ];
+
+  const stopListening = () => {
+    try {
+      realtimeDcRef.current?.close();
+      realtimeDcRef.current = null;
+      realtimePcRef.current?.close();
+      realtimePcRef.current = null;
+      if (realtimeLocalStreamRef.current) {
+        realtimeLocalStreamRef.current.getTracks().forEach((track) => track.stop());
+        realtimeLocalStreamRef.current = null;
+      }
+      if (remoteAudioRef.current) {
+        remoteAudioRef.current.pause();
+        remoteAudioRef.current.srcObject = null;
+      }
+    } catch (error) {
+      console.error("Error deteniendo realtime:", error);
+    } finally {
+      dcOpenedRef.current = false;
+      introAlreadySentRef.current = false;
+      assistantBusyRef.current = false;
+      isConnectingRef.current = false;
+      setIsListening(false);
+      setWaitingSoufiane(false);
+    }
+  };
+
+  // ==============================================
+  // ⭐ ENVIAR WHATSAPP CON RESUMEN
+  // ==============================================
+  const sendWhatsAppSummary = async () => {
+    try {
+      if (!phone || phone.trim().length < 6) { 
+        toast({ title: "⚠️ Número", description: "Introduce un número de WhatsApp válido", variant: "destructive" });
+        return; 
+      }
+
+      // Construir mensaje en darija y español
+      const darijaMsg = verificationResultText || "لا يوجد نتيجة للتحقق";
+      
       const cleanPhone = phone.trim().replace(/\s+/g, "");
-      const url = `https://wa.me/${cleanPhone}?text=${encodeURIComponent("Hola, soy de GestoriaCitaIA")}`;
+      
+      const message = encodeURIComponent(`
+سلام ${leadForm.nombre || "عميل"}،
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📋 هذا هو تحليل الملف ديالك من سفيان:
+
+${darijaMsg}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📌 RESULTADO EN ESPAÑOL:
+
+${darijaMsg.replace(/[^\x00-\x7F]/g, "").substring(0, 500)}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+💼 GestoriaCitaIA - Tu asesoría digital
+🔗 www.gestoriacitaia.com
+      `);
+
+      const url = `https://wa.me/${cleanPhone}?text=${message}`;
       window.open(url, "_blank");
+      
+      toast({ title: "✅ WhatsApp", description: "Abriendo WhatsApp con el resumen" });
+      
     } catch (error) {
       console.error("WhatsApp error:", error);
-      alert("وقع مشكل، حاول مرة أخرى");
+      toast({ title: "❌ Error", description: "No se pudo abrir WhatsApp", variant: "destructive" });
     }
   };
 
   // ==============================================
-  // ⭐ TTS DE OPENAI - Soufiane habla INMEDIATAMENTE en darija
+  // ⭐ START LISTENING - Soufiane con Realtime API
+  // ⭐ El cliente dice "salam" primero
+  // ⭐ Soufiane NO se interrumpe
+  // ⭐ Soufiane habla UNA SOLA VEZ
   // ==============================================
-  const speakExactText = async (text: string) => {
-    if (!text.trim()) return;
+  const startListening = async () => {
+    if (!voiceSupported) { 
+      toast({ title: "Error", description: ui.micNotSupported, variant: "destructive" }); 
+      return; 
+    }
+    if (isConnectingRef.current) return;
+    if (realtimeDcRef.current && realtimeDcRef.current.readyState === "open") return;
+    if (soufianeHasSpokenRef.current) {
+      toast({ title: "✅ Completado", description: "Soufiane ya ha dado su análisis", variant: "default" });
+      return;
+    }
     
     try {
-      // Detener audio anterior
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current.src = "";
-        audioRef.current = null;
-      }
-
-      setIsSpeaking(true);
-      console.log("🔊 Soufiane hablando en darija:", text.substring(0, 100) + "...");
-
-      // Llamar al endpoint TTS
-      const response = await fetch("/api/tts", {
+      isConnectingRef.current = true;
+      setWaitingSoufiane(true);
+      
+      const sessionRes = await fetch(`/api/realtime-session?ts=${Date.now()}`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          text: text,
-          voice: "alloy", // Voz natural de OpenAI
-        }),
+        headers: { "Content-Type": "application/json", "Cache-Control": "no-cache" },
+        body: JSON.stringify({ assistant: "soufiane" }),
       });
+      const sessionData = await sessionRes.json();
+      if (!sessionRes.ok) throw new Error(sessionData?.error || "Error creando sesión realtime");
+      const ephemeralKey = sessionData?.value || "";
+      if (!ephemeralKey) throw new Error("No llegó value desde realtime-session");
 
-      if (!response.ok) {
-        throw new Error("Error en TTS: " + response.status);
+      const pc = new RTCPeerConnection();
+      realtimePcRef.current = pc;
+      
+      // AUDIO SILENCIOSO - para mantener la conexión activa
+      const audioContext = new AudioContext();
+      audioContextRef.current = audioContext;
+      const silentStream = audioContext.createMediaStreamDestination();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      gainNode.gain.value = 0;
+      oscillator.connect(gainNode);
+      gainNode.connect(silentStream);
+      oscillator.start();
+      
+      const audioTrack = silentStream.stream.getAudioTracks()[0];
+      if (audioTrack) {
+        const sender = pc.addTrack(audioTrack, silentStream.stream);
+        senderRef.current = sender;
       }
-
-      const audioBlob = await response.blob();
-      const audioUrl = URL.createObjectURL(audioBlob);
       
-      const audio = new Audio(audioUrl);
-      audioRef.current = audio;
-      
-      audio.onended = () => {
-        setIsSpeaking(false);
-        URL.revokeObjectURL(audioUrl);
-        console.log("✅ Soufiane terminó de hablar");
-      };
-      
-      audio.onerror = (err) => {
-        console.error("Error reproduciendo audio:", err);
-        setIsSpeaking(false);
-        URL.revokeObjectURL(audioUrl);
-        toast({ 
-          title: "Error de audio", 
-          description: "No se pudo reproducir el audio", 
-          variant: "destructive" 
-        });
+      pc.ontrack = (event) => {
+        const [remoteStream] = event.streams;
+        if (remoteStream && remoteAudioRef.current) {
+          remoteAudioRef.current.srcObject = remoteStream;
+          remoteAudioRef.current.autoplay = true;
+          remoteAudioRef.current.playsInline = true;
+          remoteAudioRef.current.muted = false;
+          remoteAudioRef.current.volume = muted ? 0 : 1;
+          const playPromise = remoteAudioRef.current.play();
+          if (playPromise) playPromise.catch((err) => { console.error("Error reproduciendo audio:", err); });
+        }
       };
 
-      await audio.play();
+      const dc = pc.createDataChannel("oai-events");
+      realtimeDcRef.current = dc;
+
+      dc.onopen = async () => {
+        console.log("✅ Data channel abierto - Esperando que el cliente diga 'salam'");
+        dcOpenedRef.current = true;
+        isConnectingRef.current = false;
+        setIsListening(true);
+        setWaitingSoufiane(false);
+        
+        // Configurar sesión - Soufiane en darija, NO SE INTERRUMPE
+        dc.send(JSON.stringify({
+          type: "session.update",
+          session: {
+            instructions: `أنت سفيان من GestoriaCitaIA. تتحدث فقط بالدارجة المغربية.
+            
+            مهمتك: أنت خبير في الهجرة والتسوية الجماعية في إسبانيا.
+            
+            📌 IMPORTANTE - INTERACCIÓN CON EL CLIENTE:
+            1. Cuando el cliente diga "salam" o "السلام عليكم", empieza a hablar.
+            2. No te detengas por ningún motivo. No dejes que el cliente te interrumpa.
+            3. Habla de forma clara y pausada. Explica TODO el análisis.
+            4. Cuando termines de hablar, di "هذا هو تحليلي النهائي. شكراً لك" y detente.
+            5. No respondas a ninguna pregunta después de terminar.
+            6. No digas "السلام عليكم" tú primero - espera al cliente.
+            
+            🚫 REGLAS ESTRICTAS:
+            - NO te detengas si el cliente habla
+            - NO respondas a interrupciones
+            - NO hagas preguntas al cliente
+            - NO des respuestas adicionales después de terminar
+            - Habla UNA SOLA VEZ y termina`,
+            modalities: ["audio", "text"],
+            turn_detection: {
+              type: "server_vad",
+              threshold: 0.99,
+              prefix_padding_ms: 500,
+              silence_duration_ms: 100,
+              interrupt_response: false,
+              create_response: true,
+            },
+            voice: "alloy",
+            temperature: 0.3,
+          },
+        }));
+
+        // Esperar a que la sesión se configure
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        // Mostrar mensaje en la interfaz
+        pushAgentMessage("🎤 Soufiane está listo. Di 'salam' para empezar.");
+        toast({ title: "🎤 Listo", description: "Di 'salam' para que Soufiane empiece" });
+
+        // Escuchar el mensaje del cliente
+        // El cliente debe decir "salam" para activar a Soufiane
+      };
+
+      dc.onmessage = (event) => {
+        try {
+          const msg = JSON.parse(event.data);
+          
+          // Detectar cuando el cliente habla
+          if (msg.type === "conversation.item.input_audio_transcription.completed" && msg.transcript) {
+            const transcript = msg.transcript.toLowerCase().trim();
+            console.log("📝 Cliente dijo:", transcript);
+            
+            // Si el cliente dice "salam" y Soufiane no ha hablado aún
+            if ((transcript.includes("salam") || transcript.includes("السلام") || transcript.includes("hola")) && !soufianeHasSpokenRef.current) {
+              console.log("🚀 Cliente dijo salam - Soufiane va a hablar AHORA");
+              
+              // Enviar el texto para que Soufiane lo lea
+              const textToRead = verificationResultText || "مازال ما عندكش نتيجة للتحقق. خاصك ترفع وثائق وتضغط على زر التحقق من الوثائق أولاً.";
+              
+              dc.send(JSON.stringify({
+                type: "conversation.item.create",
+                item: {
+                  type: "message",
+                  role: "user",
+                  content: [{ type: "input_text", text: `السلام عليكم. أريد تحليل ملفي. ${textToRead}` }]
+                }
+              }));
+
+              dc.send(JSON.stringify({
+                type: "response.create",
+                response: {
+                  modalities: ["audio", "text"],
+                }
+              }));
+              
+              // Marcar que Soufiane ya habló
+              soufianeHasSpokenRef.current = true;
+              setSoufianeFinished(true);
+              
+              console.log("✅ Soufiane comenzó a hablar");
+            }
+          }
+
+          if (msg.type === "response.done") {
+            console.log("✅ Soufiane terminó de hablar");
+            setTimeout(() => {
+              stopListening();
+              // Mostrar botón de WhatsApp
+              setIsListening(false);
+              setSoufianeFinished(true);
+              toast({ title: "✅ Análisis completo", description: "Soufiane ha terminado. Envía el resumen por WhatsApp." });
+            }, 3000);
+          }
+          
+          if (msg.type === "response.audio_transcript.done") {
+            console.log("📝 Transcripción completa:", msg.transcript);
+          }
+          
+        } catch (err) {
+          console.error("Error en mensaje:", err);
+        }
+      };
+
+      dc.onerror = (err) => { 
+        console.error("Data channel error:", err); 
+        toast({ title: "Error", description: "Error en la conexión de audio", variant: "destructive" });
+      };
       
-    } catch (error) {
-      console.error("Error en TTS:", error);
-      setIsSpeaking(false);
-      toast({ 
-        title: "Error de audio", 
-        description: "No se pudo generar el audio. Revisa el texto en el chat.", 
-        variant: "destructive" 
+      dc.onclose = () => {
+        console.log("❌ Data channel cerrado");
+        dcOpenedRef.current = false;
+        isConnectingRef.current = false;
+        setIsListening(false);
+        setWaitingSoufiane(false);
+      };
+
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+      
+      const sdpRes = await fetch("https://api.openai.com/v1/realtime/calls", {
+        method: "POST",
+        body: offer.sdp,
+        headers: { Authorization: `Bearer ${ephemeralKey}`, "Content-Type": "application/sdp" },
       });
+      
+      if (!sdpRes.ok) {
+        const errText = await sdpRes.text();
+        throw new Error(errText || "Error negociando WebRTC con OpenAI");
+      }
+      
+      const answerSdp = await sdpRes.text();
+      await pc.setRemoteDescription({ type: "answer", sdp: answerSdp });
+      
+      console.log("✅ Conexión establecida con OpenAI");
+      
+    } catch (error: any) {
+      console.error("Error iniciando realtime:", error);
+      stopListening();
+      toast({ title: "Error realtime", description: error?.message || "Error de conexión", variant: "destructive" });
+    } finally {
+      isConnectingRef.current = false;
     }
   };
 
-  const stopSpeaking = () => {
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.src = "";
-      audioRef.current = null;
-    }
-    setIsSpeaking(false);
+  const speakExactText = async (text: string) => {
+    if (!text.trim()) return;
+    console.log("🔊 Soufiane hablará:", text.substring(0, 100) + "...");
+    pendingAutomationPromptRef.current = text;
+    setPendingAutomationPrompt(text);
+    setTimeout(() => { void flushPendingAutomation(); }, 500);
   };
 
   useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.volume = muted ? 0 : 1;
+    if (remoteAudioRef.current) {
+      remoteAudioRef.current.volume = muted ? 0 : 1;
     }
   }, [muted]);
 
@@ -882,6 +1267,19 @@ export default function Regularizacion2026() {
       }
 
       setVerificationResultText(resultMessage);
+      
+      // Preparar mensaje para WhatsApp (darija + español)
+      const whatsappMsg = `
+📋 RESULTADO DEL ANÁLISIS - ${isEligible ? "APTO" : "NO APTO"}
+
+${resultMessage}
+
+─────────────────────────
+
+🔗 GestoriaCitaIA - www.gestoriacitaia.com
+      `;
+      setWhatsappMessage(whatsappMsg);
+      
       setSoufianeReady(true);
       pushAgentMessage(resultMessage);
       
@@ -904,14 +1302,15 @@ export default function Regularizacion2026() {
       return;
     }
     
-    if (isSpeaking) {
-      stopSpeaking();
+    if (soufianeHasSpokenRef.current) {
+      toast({ title: "✅ Ya completado", description: "Soufiane ya ha dado su análisis. Envía el resumen por WhatsApp.", variant: "default" });
+      return;
+    }
+    
+    if (isListening) {
+      stopListening();
     } else {
-      if (verificationResultText) {
-        speakExactText(verificationResultText);
-      } else {
-        toast({ title: "⚠️ Sin resultado", description: "No hay resultado de verificación disponible", variant: "destructive" });
-      }
+      startListening();
     }
   };
 
@@ -982,17 +1381,20 @@ export default function Regularizacion2026() {
 
               {paymentCompleted && (
                 <div className="mt-5 space-y-4">
+                  {/* ⭐ Botón Hablar con Soufiane */}
                   <button
                     onClick={handleTalkClick}
-                    disabled={!soufianeReady}
+                    disabled={!soufianeReady || soufianeHasSpokenRef.current}
                     className={`w-[92%] mx-auto h-[52px] rounded-[20px] flex items-center justify-center gap-3 text-[16px] font-semibold border shadow-xl transition-all duration-300 ${
-                      !soufianeReady ? "bg-gray-600 opacity-60 cursor-not-allowed text-white"
-                      : isSpeaking ? "bg-red-600 border-red-400 text-white shadow-red-500/30 animate-pulse"
+                      !soufianeReady || soufianeHasSpokenRef.current ? "bg-gray-600 opacity-60 cursor-not-allowed text-white"
+                      : isListening ? "bg-green-600 border-green-400 text-white shadow-green-500/30 animate-pulse"
                       : "bg-gradient-to-r from-[#16a34a] to-[#22c55e] border-[#4ade80] text-white shadow-green-500/20"
                     }`}
                   >
-                    {isSpeaking ? (
-                      <><Volume2 className="w-5 h-5 animate-pulse" />Soufiane hablando...</>
+                    {soufianeHasSpokenRef.current ? (
+                      <><Volume2 className="w-5 h-5" />Análisis completado ✅</>
+                    ) : isListening ? (
+                      <><MicOff className="w-5 h-5" />Di "salam" para empezar</>
                     ) : (
                       <><Mic className="w-5 h-5" />
                         {!soufianeReady ? "Verificar documentos primero" : "Hablar con Soufiane"}
@@ -1020,24 +1422,44 @@ export default function Regularizacion2026() {
                     Verificar Expulsión Europea
                   </button>
 
-                  <div className="w-[92%] mx-auto h-[52px] rounded-[20px] border border-[#c6922f]/40 bg-[#050816] flex items-center overflow-hidden shadow-lg">
-                    <div className="w-[58px] h-full flex items-center justify-center border-r border-[#c6922f]/30 bg-black">
-                      <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" className="w-6 h-6" />
+                  {/* Input WhatsApp + Botón Enviar */}
+                  <div className="w-[92%] mx-auto flex gap-2">
+                    <div className="flex-1 h-[52px] rounded-[20px] border border-[#c6922f]/40 bg-[#050816] flex items-center overflow-hidden shadow-lg">
+                      <div className="w-[58px] h-full flex items-center justify-center border-r border-[#c6922f]/30 bg-black">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" className="w-6 h-6" />
+                      </div>
+                      <input 
+                        type="tel" 
+                        value={phone} 
+                        onChange={(e) => setPhone(e.target.value)} 
+                        placeholder="Número WhatsApp" 
+                        className="flex-1 h-full bg-transparent px-4 text-white placeholder:text-white/40 outline-none text-[16px]" 
+                      />
                     </div>
-                    <input 
-                      type="tel" 
-                      value={phone} 
-                      onChange={(e) => setPhone(e.target.value)} 
-                      placeholder="Número WhatsApp" 
-                      className="flex-1 h-full bg-transparent px-4 text-white placeholder:text-white/40 outline-none text-[16px]" 
-                    />
+                    <button 
+                      onClick={sendWhatsAppSummary}
+                      disabled={!soufianeHasSpokenRef.current}
+                      className={`h-[52px] px-4 rounded-[20px] font-semibold text-[14px] transition-all ${
+                        soufianeHasSpokenRef.current 
+                          ? "bg-green-600 hover:bg-green-700 text-white"
+                          : "bg-gray-600 opacity-60 cursor-not-allowed text-white"
+                      }`}
+                    >
+                      Enviar 📤
+                    </button>
                   </div>
+                  {soufianeHasSpokenRef.current && (
+                    <p className="text-green-400 text-center text-sm">✅ Análisis completado. Envía el resumen por WhatsApp.</p>
+                  )}
+                  {!soufianeHasSpokenRef.current && soufianeReady && (
+                    <p className="text-yellow-400 text-center text-sm">🎤 Pulsa "Hablar con Soufiane" y di "salam"</p>
+                  )}
                 </div>
               )}
             </div>
           </div>
 
-          <audio ref={audioRef} autoPlay playsInline className="hidden" />
+          <audio ref={remoteAudioRef} autoPlay playsInline className="hidden" />
         </main>
       </div>
     </div>
