@@ -1,14 +1,9 @@
-// api/tts.ts - Para proyectos sin Next.js (Vite, React, etc.)
-
-export default async function handler(req: Request) {
+export default async function handler(req, res) {
   try {
-    const { text, voice = "alloy" } = await req.json();
+    const { text, voice = "alloy" } = req.body;
 
     if (!text || text.trim() === "") {
-      return new Response(JSON.stringify({ error: "Texto vacío" }), {
-        status: 400,
-        headers: { "Content-Type": "application/json" }
-      });
+      return res.status(400).json({ error: "Texto vacío" });
     }
 
     const response = await fetch("https://api.openai.com/v1/audio/speech", {
@@ -28,25 +23,17 @@ export default async function handler(req: Request) {
     if (!response.ok) {
       const error = await response.text();
       console.error("Error TTS OpenAI:", error);
-      return new Response(JSON.stringify({ error: "Error generando audio" }), {
-        status: response.status,
-        headers: { "Content-Type": "application/json" }
-      });
+      return res.status(response.status).json({ error: "Error generando audio" });
     }
 
     const audioBuffer = await response.arrayBuffer();
     
-    return new Response(audioBuffer, {
-      headers: {
-        "Content-Type": "audio/mpeg",
-        "Content-Length": audioBuffer.byteLength.toString(),
-      },
-    });
+    res.setHeader('Content-Type', 'audio/mpeg');
+    res.setHeader('Content-Length', audioBuffer.byteLength);
+    res.send(Buffer.from(audioBuffer));
+    
   } catch (error) {
     console.error("Error en TTS:", error);
-    return new Response(JSON.stringify({ error: "Error interno" }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" }
-    });
+    res.status(500).json({ error: "Error interno" });
   }
 }
