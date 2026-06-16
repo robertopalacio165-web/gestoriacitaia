@@ -7,6 +7,7 @@ import {
   MicOff,
   Upload,
   Star,
+  Volume2,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { verifyDocument, type VerifyDocumentResult } from "@/lib/verifyDocument";
@@ -158,7 +159,7 @@ export default function Regularizacion2026() {
 
   const [selectedSituacion] = useState("regularizacion_2026_laboral");
   const [muted, setMuted] = useState(false);
-  const [isListening, setIsListening] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
   const [voiceSupported, setVoiceSupported] = useState(true);
   const [leadSaved, setLeadSaved] = useState(false);
   const [generalUploading, setGeneralUploading] = useState(false);
@@ -213,19 +214,11 @@ export default function Regularizacion2026() {
   const { t, lang } = useLang();
   const { toast } = useToast();
 
-  const remoteAudioRef = useRef<HTMLAudioElement | null>(null);
-  const realtimePcRef = useRef<RTCPeerConnection | null>(null);
-  const realtimeDcRef = useRef<RTCDataChannel | null>(null);
-  const realtimeLocalStreamRef = useRef<MediaStream | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   const assistantTextBufferRef = useRef("");
-  const lastUserTranscriptRef = useRef("");
   const lastAssistantTextRef = useRef("");
-  const dcOpenedRef = useRef(false);
-  const introAlreadySentRef = useRef(false);
   const pendingAutomationPromptRef = useRef<string | null>(null);
-  const isConnectingRef = useRef(false);
   const assistantBusyRef = useRef(false);
-  const senderRef = useRef<RTCRtpSender | null>(null);
 
   const safeLang = (lang === "darija" || lang === "en" ? lang : "es") as "darija" | "es" | "en";
 
@@ -562,8 +555,7 @@ export default function Regularizacion2026() {
           if (!assistantBusyRef.current) {
             clearInterval(stripeWatcher);
             setShowStripe(true);
-            stopListening();
-            setIsListening(false);
+            setIsSpeaking(false);
           }
         }, 300);
         setQuestionsDone(false);
@@ -679,74 +671,13 @@ export default function Regularizacion2026() {
     return user.id;
   };
 
-  const askSoufianeToSpeak = async (instruction: string) => {
-    try {
-      if (!realtimeDcRef.current) { console.error("❌ No hay data channel"); return false; }
-      if (realtimeDcRef.current.readyState !== "open") { console.error("❌ Data channel no está open:", realtimeDcRef.current.readyState); return false; }
-      console.log("🎤 askSoufianeToSpeak llamado");
-      setWaitingSoufiane(true);
-      assistantTextBufferRef.current = "";
-      realtimeDcRef.current.send(JSON.stringify({ type: "conversation.item.create", item: { type: "message", role: "user", content: [{ type: "input_text", text: instruction }] } }));
-      console.log("✅ conversation.item.create enviado");
-      realtimeDcRef.current.send(JSON.stringify({ type: "response.create", response: { modalities: ["audio", "text"] } }));
-      console.log("✅ response.create enviado");
-      return true;
-    } catch (error) {
-      console.error("❌ Error:", error);
-      return false;
+  const stopSpeaking = () => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.src = "";
+      audioRef.current = null;
     }
-  };
-
-  const flushPendingAutomation = async () => {
-    const prompt = pendingAutomationPromptRef.current;
-    if (!prompt) return;
-    if (!realtimeDcRef.current) { console.error("❌ No hay data channel"); return; }
-    if (realtimeDcRef.current.readyState !== "open") { console.error("❌ Data channel no está abierto"); return; }
-    console.log("🚀 Enviando prompt a Soufiane");
-    try {
-      realtimeDcRef.current.send(JSON.stringify({ type: "conversation.item.create", item: { type: "message", role: "user", content: [{ type: "input_text", text: prompt }] } }));
-      realtimeDcRef.current.send(JSON.stringify({ type: "response.create", response: { modalities: ["audio", "text"] } }));
-      pendingAutomationPromptRef.current = null;
-      setPendingAutomationPrompt("");
-      setWaitingSoufiane(false);
-    } catch (error) {
-      console.error("❌ Error enviando:", error);
-    }
-  };
-
-  const NAME_QUESTION = "مزيان. قولي شنو سميتك؟";
-
-  const questions = [
-    "واش دخلتي لإسبانيا قبل واحد يناير 2026؟",
-    "واش بقيتي فإسبانيا خمسة شهور متتالية؟",
-    "واش عندك باسبور مغربي؟",
-    "واش عندك شهادة السكنى؟",
-  ];
-
-  const stopListening = () => {
-    try {
-      realtimeDcRef.current?.close();
-      realtimeDcRef.current = null;
-      realtimePcRef.current?.close();
-      realtimePcRef.current = null;
-      if (realtimeLocalStreamRef.current) {
-        realtimeLocalStreamRef.current.getTracks().forEach((track) => track.stop());
-        realtimeLocalStreamRef.current = null;
-      }
-      if (remoteAudioRef.current) {
-        remoteAudioRef.current.pause();
-        remoteAudioRef.current.srcObject = null;
-      }
-    } catch (error) {
-      console.error("Error deteniendo realtime:", error);
-    } finally {
-      dcOpenedRef.current = false;
-      introAlreadySentRef.current = false;
-      assistantBusyRef.current = false;
-      isConnectingRef.current = false;
-      setIsListening(false);
-      setWaitingSoufiane(false);
-    }
+    setIsSpeaking(false);
   };
 
   const handleSendWhatsApp = async () => {
@@ -761,198 +692,73 @@ export default function Regularizacion2026() {
     }
   };
 
-  // ============================================
-  // ⭐ FUNCIÓN CORREGIDA - CON AUDIO
-  // ============================================
-  const startListening = async () => {
-    if (!voiceSupported) { 
-      toast({ title: "Error", description: ui.micNotSupported, variant: "destructive" }); 
-      return; 
-    }
-    if (isConnectingRef.current) return;
-    if (realtimeDcRef.current && realtimeDcRef.current.readyState === "open") return;
-    
-    try {
-      isConnectingRef.current = true;
-      setWaitingSoufiane(true);
-      
-      const sessionRes = await fetch(`/api/realtime-session?ts=${Date.now()}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "Cache-Control": "no-cache" },
-        body: JSON.stringify({ assistant: "soufiane" }),
-      });
-      const sessionData = await sessionRes.json();
-      if (!sessionRes.ok) throw new Error(sessionData?.error || "Error creando sesión realtime");
-      const ephemeralKey = sessionData?.value || "";
-      if (!ephemeralKey) throw new Error("No llegó value desde realtime-session");
-
-      const pc = new RTCPeerConnection();
-      realtimePcRef.current = pc;
-      
-      // 🔑 IMPORTANTE: Crear un stream de audio SILENCIOSO
-      // Esto resuelve el error "Offer did not have an audio media section"
-      const audioContext = new AudioContext();
-      const silentStream = audioContext.createMediaStreamDestination();
-      const oscillator = audioContext.createOscillator();
-      const gainNode = audioContext.createGain();
-      gainNode.gain.value = 0; // Volumen CERO - Silencio
-      oscillator.connect(gainNode);
-      gainNode.connect(silentStream);
-      oscillator.start();
-      
-      // Añadir el track de audio SILENCIOSO
-      const audioTrack = silentStream.stream.getAudioTracks()[0];
-      if (audioTrack) {
-        const sender = pc.addTrack(audioTrack, silentStream.stream);
-        senderRef.current = sender;
-      }
-      
-      pc.ontrack = (event) => {
-        const [remoteStream] = event.streams;
-        if (remoteStream && remoteAudioRef.current) {
-          remoteAudioRef.current.srcObject = remoteStream;
-          remoteAudioRef.current.autoplay = true;
-          remoteAudioRef.current.playsInline = true;
-          remoteAudioRef.current.muted = false;
-          remoteAudioRef.current.volume = muted ? 0 : 1;
-          const playPromise = remoteAudioRef.current.play();
-          if (playPromise) playPromise.catch((err) => { console.error("Error reproduciendo audio:", err); });
-        }
-      };
-
-      const dc = pc.createDataChannel("oai-events");
-      realtimeDcRef.current = dc;
-
-      dc.onopen = async () => {
-        console.log("✅ Data channel abierto - Soufiane va a hablar AHORA");
-        dcOpenedRef.current = true;
-        isConnectingRef.current = false;
-        setIsListening(true);
-        setWaitingSoufiane(false);
-        
-        // Configurar sesión
-        dc.send(JSON.stringify({
-          type: "session.update",
-          session: {
-            instructions: `Eres Soufiane. Tu UNICA tarea es LEER en voz alta el texto que se te va a enviar. 
-            
-            ⚠️ REGLAS IMPORTANTES:
-            1. NO hagas preguntas
-            2. NO esperes respuestas
-            3. NO digas "hola" ni "salam"
-            4. NO pidas información al usuario
-            5. SOLO lee el texto que te envío
-            6. Después de leer, DETENTE y no digas nada más`,
-            modalities: ["audio", "text"],
-            turn_detection: {
-              type: "server_vad",
-              threshold: 0.99,
-              prefix_padding_ms: 0,
-              silence_duration_ms: 100,
-              interrupt_response: false,
-              create_response: true,
-            },
-            voice: "alloy",
-            temperature: 0.3,
-          },
-        }));
-
-        // Esperar a que la sesión se configure
-        await new Promise(resolve => setTimeout(resolve, 800));
-
-        // Enviar el texto para que Soufiane lo lea
-        const textToRead = verificationResultText || "No hay resultado de verificación disponible. Por favor, verifica los documentos primero.";
-        console.log("🔊 Enviando texto a Soufiane");
-        
-        // Enviar el mensaje como "usuario"
-        dc.send(JSON.stringify({
-          type: "conversation.item.create",
-          item: {
-            type: "message",
-            role: "user",
-            content: [{ type: "input_text", text: textToRead }]
-          }
-        }));
-
-        // Forzar la respuesta
-        dc.send(JSON.stringify({
-          type: "response.create",
-          response: {
-            modalities: ["audio", "text"],
-          }
-        }));
-
-        console.log("✅ Todo enviado - Soufiane DEBE hablar ahora");
-      };
-
-      dc.onmessage = (event) => {
-        try {
-          const msg = JSON.parse(event.data);
-          console.log("📨 Mensaje recibido:", msg.type);
-          
-          if (msg.type === "response.done") {
-            console.log("✅ Soufiane terminó de hablar");
-            setTimeout(() => {
-              stopListening();
-            }, 3000);
-          }
-        } catch (err) {
-          console.error("Error en mensaje:", err);
-        }
-      };
-
-      dc.onerror = (err) => { 
-        console.error("Data channel error:", err); 
-        toast({ title: "Error", description: "Error en la conexión de audio", variant: "destructive" });
-      };
-      
-      dc.onclose = () => {
-        console.log("❌ Data channel cerrado");
-        dcOpenedRef.current = false;
-        isConnectingRef.current = false;
-        setIsListening(false);
-        setWaitingSoufiane(false);
-      };
-
-      const offer = await pc.createOffer();
-      await pc.setLocalDescription(offer);
-      
-      const sdpRes = await fetch("https://api.openai.com/v1/realtime/calls", {
-        method: "POST",
-        body: offer.sdp,
-        headers: { Authorization: `Bearer ${ephemeralKey}`, "Content-Type": "application/sdp" },
-      });
-      
-      if (!sdpRes.ok) {
-        const errText = await sdpRes.text();
-        throw new Error(errText || "Error negociando WebRTC con OpenAI");
-      }
-      
-      const answerSdp = await sdpRes.text();
-      await pc.setRemoteDescription({ type: "answer", sdp: answerSdp });
-      
-      console.log("✅ Conexión establecida con OpenAI");
-      
-    } catch (error: any) {
-      console.error("Error iniciando realtime:", error);
-      stopListening();
-      toast({ title: "Error realtime", description: error?.message || "Error de conexión", variant: "destructive" });
-    } finally {
-      isConnectingRef.current = false;
-    }
-  };
-
+  // ==============================================
+  // ⭐ FUNCIÓN SIMPLE TTS - SIN WEBSOCKET
+  // ==============================================
   const speakExactText = async (text: string) => {
     if (!text.trim()) return;
-    console.log("🔊 Soufiane hablará:", text.substring(0, 100) + "...");
-    pendingAutomationPromptRef.current = text;
-    setPendingAutomationPrompt(text);
-    setTimeout(() => { void flushPendingAutomation(); }, 500);
+    
+    try {
+      // Limpiar audio anterior
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.src = "";
+        audioRef.current = null;
+      }
+
+      setIsSpeaking(true);
+      console.log("🔊 Soufiane hablando:", text.substring(0, 100) + "...");
+
+      // Usar API de TTS de OpenAI
+      const response = await fetch("/api/tts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          text: text,
+          voice: "alloy", // Voz de OpenAI
+          language: "es", // Español
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Error en TTS: " + response.status);
+      }
+
+      const audioBlob = await response.blob();
+      const audioUrl = URL.createObjectURL(audioBlob);
+      
+      const audio = new Audio(audioUrl);
+      audioRef.current = audio;
+      
+      audio.onended = () => {
+        setIsSpeaking(false);
+        URL.revokeObjectURL(audioUrl);
+        console.log("✅ Soufiane terminó de hablar");
+      };
+      
+      audio.onerror = (err) => {
+        console.error("Error reproduciendo audio:", err);
+        setIsSpeaking(false);
+        URL.revokeObjectURL(audioUrl);
+      };
+
+      await audio.play();
+      
+    } catch (error) {
+      console.error("Error en TTS:", error);
+      setIsSpeaking(false);
+      // Fallback: mostrar en toast
+      toast({ 
+        title: "Error de audio", 
+        description: "No se pudo generar el audio. Revisa el texto en el chat.", 
+        variant: "destructive" 
+      });
+    }
   };
 
   useEffect(() => {
-    if (remoteAudioRef.current) {
-      remoteAudioRef.current.volume = muted ? 0 : 1;
+    if (audioRef.current) {
+      audioRef.current.volume = muted ? 0 : 1;
     }
   }, [muted]);
 
@@ -1077,6 +883,7 @@ export default function Regularizacion2026() {
 
       const isEligible = hasPassport && hasMonths;
       
+      // Construir mensaje en español (para que Soufiane lo lea)
       const resultMessage = `
 📋 RESULTADO DE LA VERIFICACIÓN DE DOCUMENTOS
 
@@ -1125,10 +932,14 @@ ${isEligible ? "📢 Presione 'Hablar con Soufiane' para escuchar este resultado
       return;
     }
     
-    if (isListening) {
-      stopListening();
+    if (isSpeaking) {
+      stopSpeaking();
     } else {
-      startListening();
+      if (verificationResultText) {
+        speakExactText(verificationResultText);
+      } else {
+        toast({ title: "⚠️ Sin resultado", description: "No hay resultado de verificación disponible", variant: "destructive" });
+      }
     }
   };
 
@@ -1182,7 +993,7 @@ ${isEligible ? "📢 Presione 'Hablar con Soufiane' para escuchar este resultado
                         <p className="text-white/60 text-xs">Acceso completo</p>
                       </div>
                     </div>
-                    <p className="text-white/70 text-[13px] leading-relaxed mb-3">Acceso ilimitado a Soufiane IA, videollamada realtime, análisis de documentos y generación automática del expediente.</p>
+                    <p className="text-white/70 text-[13px] leading-relaxed mb-3">Acceso ilimitado a Soufiane IA, análisis de documentos y generación automática del expediente.</p>
                     <button onClick={handleStripePayment} type="button" className="w-[92%] mx-auto flex items-center justify-center h-[52px] rounded-[20px] text-white font-semibold text-[16px] bg-gradient-to-r from-[#16a34a] to-[#22c55e] border border-[#4ade80] shadow-[0_4px_14px_rgba(34,197,94,0.35)]">
                       🔓 Desbloquear ahora
                     </button>
@@ -1204,12 +1015,12 @@ ${isEligible ? "📢 Presione 'Hablar con Soufiane' para escuchar este resultado
                     disabled={!soufianeReady}
                     className={`w-[92%] mx-auto h-[52px] rounded-[20px] flex items-center justify-center gap-3 text-[16px] font-semibold border shadow-xl transition-all duration-300 ${
                       !soufianeReady ? "bg-gray-600 opacity-60 cursor-not-allowed text-white"
-                      : isListening ? "bg-red-600 border-red-400 text-white shadow-red-500/30 animate-pulse"
+                      : isSpeaking ? "bg-red-600 border-red-400 text-white shadow-red-500/30 animate-pulse"
                       : "bg-gradient-to-r from-[#16a34a] to-[#22c55e] border-[#4ade80] text-white shadow-green-500/20"
                     }`}
                   >
-                    {isListening ? (
-                      <><MicOff className="w-5 h-5" />Soufiane hablando...</>
+                    {isSpeaking ? (
+                      <><Volume2 className="w-5 h-5 animate-pulse" />Soufiane hablando...</>
                     ) : (
                       <><Mic className="w-5 h-5" />
                         {!soufianeReady ? "Verificar documentos primero" : "Hablar con Soufiane"}
@@ -1254,7 +1065,7 @@ ${isEligible ? "📢 Presione 'Hablar con Soufiane' para escuchar este resultado
             </div>
           </div>
 
-          <audio ref={remoteAudioRef} autoPlay playsInline className="hidden" />
+          <audio ref={audioRef} autoPlay playsInline className="hidden" />
         </main>
       </div>
     </div>
