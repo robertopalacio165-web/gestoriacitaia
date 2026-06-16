@@ -761,6 +761,9 @@ export default function Regularizacion2026() {
     }
   };
 
+  // ============================================
+  // ⭐ FUNCIÓN CORREGIDA - CON AUDIO
+  // ============================================
   const startListening = async () => {
     if (!voiceSupported) { 
       toast({ title: "Error", description: ui.micNotSupported, variant: "destructive" }); 
@@ -786,6 +789,24 @@ export default function Regularizacion2026() {
       const pc = new RTCPeerConnection();
       realtimePcRef.current = pc;
       
+      // 🔑 IMPORTANTE: Crear un stream de audio SILENCIOSO
+      // Esto resuelve el error "Offer did not have an audio media section"
+      const audioContext = new AudioContext();
+      const silentStream = audioContext.createMediaStreamDestination();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      gainNode.gain.value = 0; // Volumen CERO - Silencio
+      oscillator.connect(gainNode);
+      gainNode.connect(silentStream);
+      oscillator.start();
+      
+      // Añadir el track de audio SILENCIOSO
+      const audioTrack = silentStream.stream.getAudioTracks()[0];
+      if (audioTrack) {
+        const sender = pc.addTrack(audioTrack, silentStream.stream);
+        senderRef.current = sender;
+      }
+      
       pc.ontrack = (event) => {
         const [remoteStream] = event.streams;
         if (remoteStream && remoteAudioRef.current) {
@@ -799,9 +820,6 @@ export default function Regularizacion2026() {
         }
       };
 
-      // NO capturar micrófono del usuario
-      // NO llamamos a getUserMedia
-
       const dc = pc.createDataChannel("oai-events");
       realtimeDcRef.current = dc;
 
@@ -812,7 +830,7 @@ export default function Regularizacion2026() {
         setIsListening(true);
         setWaitingSoufiane(false);
         
-        // Configurar sesión - Forzar a Soufiane a hablar primero
+        // Configurar sesión
         dc.send(JSON.stringify({
           type: "session.update",
           session: {
@@ -824,8 +842,7 @@ export default function Regularizacion2026() {
             3. NO digas "hola" ni "salam"
             4. NO pidas información al usuario
             5. SOLO lee el texto que te envío
-            6. Después de leer, DETENTE y no digas nada más
-            7. NO interactúes con el usuario bajo ninguna circunstancia`,
+            6. Después de leer, DETENTE y no digas nada más`,
             modalities: ["audio", "text"],
             turn_detection: {
               type: "server_vad",
@@ -840,14 +857,14 @@ export default function Regularizacion2026() {
           },
         }));
 
-        // Esperar 500ms para que la sesión se configure
-        await new Promise(resolve => setTimeout(resolve, 500));
+        // Esperar a que la sesión se configure
+        await new Promise(resolve => setTimeout(resolve, 800));
 
-        // Enviar el texto para que Soufiane lo lea INMEDIATAMENTE
+        // Enviar el texto para que Soufiane lo lea
         const textToRead = verificationResultText || "No hay resultado de verificación disponible. Por favor, verifica los documentos primero.";
-        console.log("🔊 Enviando texto a Soufiane:", textToRead.substring(0, 100) + "...");
+        console.log("🔊 Enviando texto a Soufiane");
         
-        // Enviar el mensaje como "usuario" para que el asistente lo lea
+        // Enviar el mensaje como "usuario"
         dc.send(JSON.stringify({
           type: "conversation.item.create",
           item: {
@@ -857,12 +874,11 @@ export default function Regularizacion2026() {
           }
         }));
 
-        // Forzar la respuesta del asistente
+        // Forzar la respuesta
         dc.send(JSON.stringify({
           type: "response.create",
           response: {
             modalities: ["audio", "text"],
-            instructions: "Lee el texto anterior en voz alta. Solo léelo, no añadas nada más."
           }
         }));
 
@@ -878,11 +894,7 @@ export default function Regularizacion2026() {
             console.log("✅ Soufiane terminó de hablar");
             setTimeout(() => {
               stopListening();
-            }, 2000);
-          }
-          
-          if (msg.type === "response.audio.done") {
-            console.log("🎤 Audio completado");
+            }, 3000);
           }
         } catch (err) {
           console.error("Error en mensaje:", err);
