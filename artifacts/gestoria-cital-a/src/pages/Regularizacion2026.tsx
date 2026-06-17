@@ -9,6 +9,8 @@ import {
   Star,
   CheckCircle,
   FileCheck,
+  Shield,
+  AlertTriangle,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { verifyDocument, type VerifyDocumentResult } from "@/lib/verifyDocument";
@@ -1225,7 +1227,7 @@ GestoriaCitaIA
   };
 
   // ============================================
-  // VERIFICAR ASILO - MEJORADO
+  // BOTÓN VERIFICAR ASILO
   // ============================================
   const handleVerifyAsilo = async () => {
     console.log("🛡️ Verificando Asilo...");
@@ -1296,7 +1298,7 @@ GestoriaCitaIA
   };
 
   // ============================================
-  // VERIFICAR EXPULSIÓN - MEJORADO
+  // BOTÓN VERIFICAR EXPULSIÓN
   // ============================================
   const handleVerifyExpulsion = async () => {
     console.log("🚫 Verificando Expulsión Europea...");
@@ -1397,7 +1399,7 @@ GestoriaCitaIA
   };
 
   // ============================================
-  // VERIFICAR TODOS LOS DOCUMENTOS - CORREGIDO
+  // VERIFICAR TODOS LOS DOCUMENTOS
   // ============================================
   const handleVerifyAll = async () => {
     try {
@@ -1474,7 +1476,7 @@ GestoriaCitaIA
       
       console.log("🔍 RESULTADO FINAL:", resultado);
 
-      // CONSTRUIR EL MENSAJE COMPLETO
+      // CONSTRUIR EL MENSAJE COMPLETO PARA SOUFIANE
       let mensajeFinal = "";
 
       let nombresTexto = "";
@@ -1544,35 +1546,8 @@ ${hasExpulsion && !expulsionExpired ? "- حل قرار الطرد النشط\n" 
 `;
       }
 
-      // Enviar mensaje a Soufiane
-      if (!realtimeDcRef.current || realtimeDcRef.current.readyState !== "open") {
-        console.log("⚠️ REALTIME NO CONECTADO - Conectando...");
-        await startListening();
-        let waitCount = 0;
-        while ((!realtimeDcRef.current || realtimeDcRef.current.readyState !== "open") && waitCount < 20) {
-          await new Promise(resolve => setTimeout(resolve, 500));
-          waitCount++;
-        }
-      }
-
-      if (realtimeDcRef.current && realtimeDcRef.current.readyState === "open") {
-        console.log("✅ Enviando mensaje a Soufiane:", resultadoFinal);
-        soufianeHasSpokenRef.current = false;
-        setSoufianeHasSpoken(false);
-        await askSoufianeToSpeak(resultadoFinal);
-        await new Promise(resolve => setTimeout(resolve, 25000));
-        soufianeHasSpokenRef.current = true;
-        setSoufianeHasSpoken(true);
-        stopListening();
-        setIsListening(false);
-      } else {
-        console.error("❌ REALTIME NO DISPONIBLE");
-        alert(resultadoFinal);
-        toast({
-          title: soufianeUnlockCondition ? "✅ Documentos verificados" : "❌ Documentos incompletos",
-          description: soufianeUnlockCondition ? "Documentos OK" : "Faltan documentos",
-        });
-      }
+      // Enviar mensaje a Soufiane usando speakFromAutomation
+      await speakFromAutomation(resultadoFinal);
       
     } catch (err) {
       console.error("Error en handleVerifyAll:", err);
@@ -1653,6 +1628,21 @@ ${hasExpulsion && !expulsionExpired ? "- حل قرار الطرد النشط\n" 
               </div>
             )}
 
+            <div className="mt-4 rounded-2xl border border-green-500/20 bg-[#071326] p-4">
+              <h3 className="text-center text-green-400 font-bold text-lg mb-4">Miles de personas ya usan GestoriaCitaIA</h3>
+              <div className="grid grid-cols-4 gap-2 text-center">
+                <div><p className="text-green-400 text-2xl font-black">18K+</p><p className="text-white/60 text-xs">Trámites</p></div>
+                <div><p className="text-blue-400 text-2xl font-black">97%</p><p className="text-white/60 text-xs">Verificado</p></div>
+                <div><p className="text-purple-400 text-2xl font-black">4m</p><p className="text-white/60 text-xs">Continuar</p></div>
+                <div><p className="text-yellow-400 text-2xl font-black">100%</p><p className="text-white/60 text-xs">Asistente IA</p></div>
+              </div>
+              <div className="mt-4 rounded-full border border-yellow-500/30 py-2 text-center text-white font-bold">🏆 Regularización 2026</div>
+              <div className="flex items-end justify-between mt-4">
+                <div><p className="text-green-400 text-4xl font-black">4.9/5</p><p className="text-yellow-400">★★★★★</p></div>
+                <div className="text-white font-bold">+2K</div>
+              </div>
+            </div>
+
             {paymentCompleted && (
               <div className="mt-5 space-y-4">
                 {/* Botón micrófono - VERDE cuando soufianeReady */}
@@ -1715,19 +1705,15 @@ ${hasExpulsion && !expulsionExpired ? "- حل قرار الطرد النشط\n" 
                   )}
                 </button>
 
-                {/* Verificar Asilo */}
+                {/* BOTÓN VERIFICAR ASILO */}
                 <button onClick={handleVerifyAsilo} className="w-[92%] mx-auto h-[52px] rounded-[20px] border border-[#c6922f] bg-[#050816] hover:bg-[#0b1220] transition-all text-white font-medium text-[16px] flex items-center justify-center gap-3 shadow-lg">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-[#d4a94d]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                  </svg>
+                  <Shield className="w-5 h-5 text-[#d4a94d]" />
                   Verificar Asilo
                 </button>
 
-                {/* Verificar Expulsión */}
+                {/* BOTÓN VERIFICAR EXPULSIÓN */}
                 <button onClick={handleVerifyExpulsion} className="w-[92%] mx-auto h-[52px] rounded-[20px] border border-[#c6922f] bg-[#050816] hover:bg-[#0b1220] transition-all text-white font-medium text-[16px] flex items-center justify-center gap-3 shadow-lg">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-[#d4a94d]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
-                  </svg>
+                  <AlertTriangle className="w-5 h-5 text-[#d4a94d]" />
                   Verificar Expulsión Europea
                 </button>
 
