@@ -191,7 +191,6 @@ export default function Regularizacion2026() {
   const [expulsionVerified, setExpulsionVerified] = useState(false);
   const [soufianeReady, setSoufianeReady] = useState(false);
   
-  // NUEVOS ESTADOS
   const [docsUploaded, setDocsUploaded] = useState(false);
   const [docsVerified, setDocsVerified] = useState(false);
   const [soufianeHasSpoken, setSoufianeHasSpoken] = useState(false);
@@ -1537,20 +1536,44 @@ ${hasExpulsion && !expulsionExpired ? "- حل قرار الطرد النشط\n" 
           </div>
 
           <div className="mt-2 max-w-7xl mx-auto lg:grid lg:grid-cols-[480px_1fr] lg:gap-6">
-            {/* FOTO DE SOUFIANE - SOLO FOTO, SIN VIDEO */}
-            <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="rounded-[26px] overflow-hidden relative">
-              <div className="relative">
-                <img 
-                  src="/images/soufiane.png" 
-                  alt="Soufiane" 
-                  className="w-full h-[270px] object-cover border-b border-[#f6c453]/10"
-                />
-                <div className="absolute bottom-5 right-4 text-right">
-                  <h2 className="text-[22px] font-bold text-white">Soufiane</h2>
-                  <p className="text-[15px] text-[#d4a94d] font-medium tracking-wide">Experto en Regularización</p>
+            {/* VIDEO - SOLO ANTES DEL PAGO */}
+            {!paymentCompleted && (
+              <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="rounded-[26px] overflow-hidden relative">
+                <div className="relative">
+                  <div className="relative">
+                    <video id="soufiane-video" playsInline preload="metadata" poster="/images/soufiane.png" className="w-full h-[270px] object-cover border-b border-[#f6c453]/10" onPlay={() => { const btn = document.getElementById("play-button"); if (btn) btn.style.display = "none"; }}>
+                      <source src="/soufiane-presentacion.mp4" type="video/mp4" />
+                    </video>
+                    <button id="play-button" type="button" className="absolute inset-0 flex items-center justify-center" onClick={() => { const video = document.getElementById("soufiane-video") as HTMLVideoElement; if (video) video.play(); }}>
+                      <div className="bg-black/10 backdrop-blur-[2px] rounded-full w-12 h-12 flex items-center justify-center">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z" /></svg>
+                      </div>
+                    </button>
+                  </div>
+                  <div className="absolute bottom-5 right-4 text-right">
+                    <h2 className="text-[22px] font-bold text-white">Soufiane</h2>
+                    <p className="text-[15px] text-[#d4a94d] font-medium tracking-wide">Experto en Regularización</p>
+                  </div>
                 </div>
-              </div>
-            </motion.div>
+              </motion.div>
+            )}
+
+            {/* FOTO - DESPUÉS DEL PAGO */}
+            {paymentCompleted && (
+              <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="rounded-[26px] overflow-hidden relative">
+                <div className="relative">
+                  <img 
+                    src="/images/soufiane.png" 
+                    alt="Soufiane" 
+                    className="w-full h-[270px] object-cover border-b border-[#f6c453]/10"
+                  />
+                  <div className="absolute bottom-5 right-4 text-right">
+                    <h2 className="text-[22px] font-bold text-white">Soufiane</h2>
+                    <p className="text-[15px] text-[#d4a94d] font-medium tracking-wide">Experto en Regularización</p>
+                  </div>
+                </div>
+              </motion.div>
+            )}
           </div>
 
           <div className="mt-0 w-full max-w-none lg:col-start-2">
@@ -1632,7 +1655,7 @@ ${hasExpulsion && !expulsionExpired ? "- حل قرار الطرد النشط\n" 
                   )}
                 </button>
 
-                {/* BOTÓN SUBIR DOCUMENTOS - Con indicador */}
+                {/* BOTÓN SUBIR DOCUMENTOS */}
                 <button 
                   onClick={handleGeneralUpload} 
                   disabled={generalUploading} 
@@ -1645,7 +1668,7 @@ ${hasExpulsion && !expulsionExpired ? "- حل قرار الطرد النشط\n" 
                   {docsUploaded && <CheckCircle className="w-4 h-4 text-green-400" />}
                 </button>
 
-                {/* BOTÓN VERIFICAR DOCUMENTOS - Con indicador */}
+                {/* BOTÓN VERIFICAR DOCUMENTOS */}
                 <button 
                   onClick={handleVerifyAll} 
                   disabled={!docsUploaded || generalUploading}
