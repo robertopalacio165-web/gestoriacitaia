@@ -1172,59 +1172,70 @@ GestoriaCitaIA
     }
   };
 
-  const handleGeneralUpload = () => {
-    console.log("CLICK WORKING");
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = "image/*,application/pdf";
-    input.multiple = true;
-    input.setAttribute("capture", "environment");
-    input.onchange = async () => {
-      const files = Array.from(input.files || []);
-      if (!files.length) return;
-      setGeneralUploading(true);
-      try {
-        const { data: { user }, error } = await supabase.auth.getUser();
-        if (error || !user?.id) throw new Error("Usuario no conectado");
-        setWorkflowStep("waiting_confirm");
-        let results = [];
-        for (const file of files) {
-          const safeName = `${Date.now()}_${file.name}`;
-          const storagePath = `${user.id}/regularizacion_2026/${safeName}`;
-          await supabase.storage.from("user-documents").upload(storagePath, file, { upsert: true });
-          const result = await verifyDocument({ file });
-          const matchedDoc = getBestDocMatch(result, docs, file.name);
-          if (matchedDoc) {
-            setDocs((prev) => prev.map((doc) => {
-              if (doc.id !== matchedDoc.id) return doc;
-              return {
-                ...doc,
-                archivo: file.name,
-                estado: result.final_verdict === "approved" ? "ok" : result.final_verdict === "review" ? "warn" : "missing",
-                detectedType: result.document_type || "",
-                full_name: result.full_name || "",
-                document_number: result.document_number || "",
-                birth_date: result.birth_date || "",
-                expiry_date: result.expiry_date || "",
-                verification_score: result.verification_score || 0,
-                fraud_risk: result.fraud_risk || "low",
-                final_verdict: result.final_verdict || "review",
-                document_date: result.document_date || "",
-              };
-            }));
-          }
-          results.push({ fileName: file.name, result });
+const handleGeneralUpload = () => {
+  console.log("CLICK WORKING");
+  const input = document.createElement("input");
+  input.type = "file";
+  input.accept = "image/*,application/pdf";
+  input.multiple = true;
+  input.setAttribute("capture", "environment");
+  input.onchange = async () => {
+    const files = Array.from(input.files || []);
+    if (!files.length) return;
+    setGeneralUploading(true);
+    try {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (error || !user?.id) throw new Error("Usuario no conectado");
+      setWorkflowStep("waiting_confirm");
+      let results = [];
+      for (const file of files) {
+        const safeName = `${Date.now()}_${file.name}`;
+        const storagePath = `${user.id}/regularizacion_2026/${safeName}`;
+        await supabase.storage.from("user-documents").upload(storagePath, file, { upsert: true });
+        const result = await verifyDocument({ file });
+        const matchedDoc = getBestDocMatch(result, docs, file.name);
+        if (matchedDoc) {
+          setDocs((prev) => prev.map((doc) => {
+            if (doc.id !== matchedDoc.id) return doc;
+            return {
+              ...doc,
+              archivo: file.name,
+              estado: result.final_verdict === "approved" ? "ok" : result.final_verdict === "review" ? "warn" : "missing",
+              detectedType: result.document_type || "",
+              full_name: result.full_name || "",
+              document_number: result.document_number || "",
+              birth_date: result.birth_date || "",
+              expiry_date: result.expiry_date || "",
+              verification_score: result.verification_score || 0,
+              fraud_risk: result.fraud_risk || "low",
+              final_verdict: result.final_verdict || "review",
+              document_date: result.document_date || "",
+            };
+          }));
         }
-        setDocsUploaded(true);
-        alert("✅ Documentos analizados correctamente");
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setGeneralUploading(false);
+        results.push({ fileName: file.name, result });
       }
-    };
-    input.click();
+      setDocsUploaded(true);
+      // ❌ ELIMINA ESTO: alert("✅ Documentos analizados correctamente");
+      // ✅ USA TOAST EN SU LUGAR:
+      toast({ 
+        title: "✅ Documentos analizados", 
+        description: `${files.length} documento(s) subido(s) correctamente`,
+        variant: "default" 
+      });
+    } catch (err) {
+      console.error(err);
+      toast({ 
+        title: "❌ Error", 
+        description: "No se pudieron subir los documentos",
+        variant: "destructive" 
+      });
+    } finally {
+      setGeneralUploading(false);
+    }
   };
+  input.click();
+};
 
   // ============================================
   // BOTÓN VERIFICAR ASILO
@@ -1401,126 +1412,126 @@ GestoriaCitaIA
   // ============================================
   // VERIFICAR TODOS LOS DOCUMENTOS
   // ============================================
-  const handleVerifyAll = async () => {
-    try {
-      setGeneralUploading(true);
+const handleVerifyAll = async () => {
+  try {
+    setGeneralUploading(true);
+    
+    if (!docs.length) { 
+      await speakFromAutomation("مازال ما توصلتش بالوثائق ديالك. خاصك ترفع وثائق قبل ما نتحقق."); 
+      return; 
+    }
+
+    const docsWithData = docs.filter(doc => doc.archivo && doc.archivo !== "");
+    if (docsWithData.length === 0) {
+      await speakFromAutomation("الوثائق مازال ما تحللوش. خاصك ترفع وثائق وصور كاملة باش نقدر نقراها.");
+      return;
+    }
+
+    let hasPassport = false;
+    let stayDates: string[] = [];
+    let hasExpulsion = false;
+    let expulsionExpired = false;
+    let nombresEncontrados: string[] = [];
+
+    for (const doc of docsWithData) {
+      const type = (doc.detectedType || "").toLowerCase();
+      const docName = (doc.nombre || "").toLowerCase();
+
+      if (type.includes("passport") || type.includes("nie") || 
+          docName.includes("pasaporte") || docName.includes("passport") || 
+          docName.includes("nie")) {
+        hasPassport = true;
+      }
       
-      if (!docs.length) { 
-        await speakFromAutomation("مازال ما توصلتش بالوثائق ديالك. خاصك ترفع وثائق قبل ما نتحقق."); 
-        return; 
+      if ((doc as any).document_date) {
+        stayDates.push((doc as any).document_date);
       }
-
-      const docsWithData = docs.filter(doc => doc.archivo && doc.archivo !== "");
-      if (docsWithData.length === 0) {
-        await speakFromAutomation("الوثائق مازال ما تحللوش. خاصك ترفع وثائق وصور كاملة باش نقدر نقراها.");
-        return;
-      }
-
-      let hasPassport = false;
-      let stayDates: string[] = [];
-      let hasExpulsion = false;
-      let expulsionExpired = false;
-      let nombresEncontrados: string[] = [];
-
-      for (const doc of docsWithData) {
-        const type = (doc.detectedType || "").toLowerCase();
-        const docName = (doc.nombre || "").toLowerCase();
-
-        if (type.includes("passport") || type.includes("nie") || 
-            docName.includes("pasaporte") || docName.includes("passport") || 
-            docName.includes("nie")) {
-          hasPassport = true;
-        }
-        
-        if ((doc as any).document_date) {
-          stayDates.push((doc as any).document_date);
-        }
-        
-        if ((doc as any).full_name) {
-          nombresEncontrados.push((doc as any).full_name);
-        }
-        
-        if (docName.includes("expulsion") || docName.includes("expulsión") || 
-            docName.includes("deportacion")) {
-          hasExpulsion = true;
-          if ((doc as any).expiry_date) {
-            const expiry = new Date((doc as any).expiry_date);
-            if (expiry < new Date()) expulsionExpired = true;
-          }
-        }
-      }
-
-      const sortedDates = stayDates.map(d => new Date(d)).filter(d => !isNaN(d.getTime())).sort((a, b) => a.getTime() - b.getTime());
-      let stayDays = 0;
-      let hasMonths = false;
-      if (sortedDates.length >= 2) {
-        const firstDate = sortedDates[0];
-        const lastDate = sortedDates[sortedDates.length - 1];
-        stayDays = Math.floor((lastDate.getTime() - firstDate.getTime()) / (1000 * 60 * 60 * 24));
-        hasMonths = stayDays >= 150;
-      }
-
-      const resultado = {
-        hasPassport,
-        hasMonths,
-        days: stayDays,
-        hasExpulsion,
-        expulsionExpired,
-        completo: hasPassport && hasMonths && (!hasExpulsion || expulsionExpired)
-      };
-      setAnalysisResult(resultado);
       
-      const soufianeUnlockCondition = hasPassport && hasMonths && (!hasExpulsion || expulsionExpired);
-      setSoufianeReady(soufianeUnlockCondition);
-      setDocsVerified(true);
+      if ((doc as any).full_name) {
+        nombresEncontrados.push((doc as any).full_name);
+      }
       
-      console.log("🔍 RESULTADO FINAL:", resultado);
-
-      // CONSTRUIR EL MENSAJE COMPLETO PARA SOUFIANE
-      let mensajeFinal = "";
-
-      let nombresTexto = "";
-      if (nombresEncontrados.length > 0) {
-        nombresTexto = `الاسماء: ${nombresEncontrados.join(", ")}.\n`;
-      }
-
-      let fechasTexto = "";
-      if (sortedDates.length >= 2) {
-        fechasTexto = `المدة بين أول وثيقة وآخر وثيقة: ${stayDays} يوم.\n`;
-      } else if (sortedDates.length === 1) {
-        fechasTexto = `لقيت تاريخ واحد فقط. خاصك وثيقتين على الأقل.\n`;
-      } else {
-        fechasTexto = `ما لقيتش تواريخ ف الوثائق.\n`;
-      }
-
-      let mesesTexto = "";
-      if (hasMonths) {
-        mesesTexto = `✅ عندك ${stayDays} يوم (تزيد من 5 شهور).\n`;
-      } else {
-        mesesTexto = `❌ عندك ${stayDays} يوم فقط. خاصك 150 يوم.\n`;
-      }
-
-      let passportTexto = "";
-      if (hasPassport) {
-        passportTexto = `✅ عندك وثيقة هوية.\n`;
-      } else {
-        passportTexto = `❌ ما عندكش باسبور أو NIE.\n`;
-      }
-
-      let expulsionTexto = "";
-      if (hasExpulsion) {
-        if (expulsionExpired) {
-          expulsionTexto = `⚠️ عندك قرار طرد قديم (منتهي الصلاحية).\n`;
-        } else {
-          expulsionTexto = `🚨 عندك قرار طرد نشط!\n`;
+      if (docName.includes("expulsion") || docName.includes("expulsión") || 
+          docName.includes("deportacion")) {
+        hasExpulsion = true;
+        if ((doc as any).expiry_date) {
+          const expiry = new Date((doc as any).expiry_date);
+          if (expiry < new Date()) expulsionExpired = true;
         }
-      } else {
-        expulsionTexto = `✅ ما عندكش قرارات طرد.\n`;
       }
+    }
 
-      let resultadoFinal = "";
-      if (soufianeUnlockCondition) {
-        resultadoFinal = `
+    const sortedDates = stayDates.map(d => new Date(d)).filter(d => !isNaN(d.getTime())).sort((a, b) => a.getTime() - b.getTime());
+    let stayDays = 0;
+    let hasMonths = false;
+    if (sortedDates.length >= 2) {
+      const firstDate = sortedDates[0];
+      const lastDate = sortedDates[sortedDates.length - 1];
+      stayDays = Math.floor((lastDate.getTime() - firstDate.getTime()) / (1000 * 60 * 60 * 24));
+      hasMonths = stayDays >= 150;
+    }
+
+    const resultado = {
+      hasPassport,
+      hasMonths,
+      days: stayDays,
+      hasExpulsion,
+      expulsionExpired,
+      completo: hasPassport && hasMonths && (!hasExpulsion || expulsionExpired)
+    };
+    setAnalysisResult(resultado);
+    
+    const soufianeUnlockCondition = hasPassport && hasMonths && (!hasExpulsion || expulsionExpired);
+    setSoufianeReady(soufianeUnlockCondition);
+    setDocsVerified(true);
+    
+    console.log("🔍 RESULTADO FINAL:", resultado);
+
+    // CONSTRUIR EL MENSAJE COMPLETO
+    let mensajeFinal = "";
+
+    let nombresTexto = "";
+    if (nombresEncontrados.length > 0) {
+      nombresTexto = `الاسماء: ${nombresEncontrados.join(", ")}.\n`;
+    }
+
+    let fechasTexto = "";
+    if (sortedDates.length >= 2) {
+      fechasTexto = `المدة بين أول وثيقة وآخر وثيقة: ${stayDays} يوم.\n`;
+    } else if (sortedDates.length === 1) {
+      fechasTexto = `لقيت تاريخ واحد فقط. خاصك وثيقتين على الأقل.\n`;
+    } else {
+      fechasTexto = `ما لقيتش تواريخ ف الوثائق.\n`;
+    }
+
+    let mesesTexto = "";
+    if (hasMonths) {
+      mesesTexto = `✅ عندك ${stayDays} يوم (تزيد من 5 شهور).\n`;
+    } else {
+      mesesTexto = `❌ عندك ${stayDays} يوم فقط. خاصك 150 يوم.\n`;
+    }
+
+    let passportTexto = "";
+    if (hasPassport) {
+      passportTexto = `✅ عندك وثيقة هوية.\n`;
+    } else {
+      passportTexto = `❌ ما عندكش باسبور أو NIE.\n`;
+    }
+
+    let expulsionTexto = "";
+    if (hasExpulsion) {
+      if (expulsionExpired) {
+        expulsionTexto = `⚠️ عندك قرار طرد قديم (منتهي الصلاحية).\n`;
+      } else {
+        expulsionTexto = `🚨 عندك قرار طرد نشط!\n`;
+      }
+    } else {
+      expulsionTexto = `✅ ما عندكش قرارات طرد.\n`;
+    }
+
+    let resultadoFinal = "";
+    if (soufianeUnlockCondition) {
+      resultadoFinal = `
 ${nombresTexto}
 ${fechasTexto}
 ${passportTexto}
@@ -1531,8 +1542,8 @@ ${expulsionTexto}
 
 دابا خاصك تدخل رقم هاتفك فالمربع ديال واتساب وتضغط على زر الإرسال باش توصلك الوثيقة المهمة ف جوالك.
 `;
-      } else {
-        resultadoFinal = `
+    } else {
+      resultadoFinal = `
 ${nombresTexto}
 ${fechasTexto}
 ${passportTexto}
@@ -1544,18 +1555,29 @@ ${!hasPassport ? "- باسبور أو NIE\n" : ""}
 ${!hasMonths ? `- بروفات ديال 5 شهور (عندك ${stayDays} يوم فقط)\n` : ""}
 ${hasExpulsion && !expulsionExpired ? "- حل قرار الطرد النشط\n" : ""}
 `;
-      }
-
-      // Enviar mensaje a Soufiane usando speakFromAutomation
-      await speakFromAutomation(resultadoFinal);
-      
-    } catch (err) {
-      console.error("Error en handleVerifyAll:", err);
-      await speakFromAutomation("وقع مشكل وأنا كنحلل الوثائق، عاود حاول.");
-    } finally {
-      setGeneralUploading(false);
     }
-  };
+
+    // ✅ ELIMINA EL ALERT Y USA TOAST
+    toast({
+      title: soufianeUnlockCondition ? "✅ Documentos verificados" : "❌ Documentos incompletos",
+      description: soufianeUnlockCondition ? "El archivo es válido para la regularización" : "Faltan documentos para completar el expediente",
+    });
+
+    // Enviar mensaje a Soufiane
+    await speakFromAutomation(resultadoFinal);
+    
+  } catch (err) {
+    console.error("Error en handleVerifyAll:", err);
+    await speakFromAutomation("وقع مشكل وأنا كنحلل الوثائق، عاود حاول.");
+    toast({ 
+      title: "❌ Error", 
+      description: "Ocurrió un error al verificar los documentos",
+      variant: "destructive" 
+    });
+  } finally {
+    setGeneralUploading(false);
+  }
+};
 
   return (
     <div className="min-h-screen">
