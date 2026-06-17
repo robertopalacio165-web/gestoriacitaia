@@ -7,10 +7,6 @@ import {
   MicOff,
   Upload,
   Star,
-  ArrowRight,
-  Bell,
-  Volume2,
-  VolumeX,
   CheckCircle,
   FileCheck,
 } from "lucide-react";
@@ -92,19 +88,6 @@ function normalizeDocType(value?: string) {
   return (value || "").trim().toLowerCase();
 }
 
-function getStatusLabel(status: DocStatus, done: string, review: string, missing: string) {
-  if (status === "ok") return done;
-  if (status === "warn") return review;
-  return missing;
-}
-
-function slugifyFileName(name: string) {
-  return name
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-zA-Z0-9._-]/g, "_");
-}
-
 export default function Regularizacion2026() {
 
   useEffect(() => {
@@ -119,15 +102,14 @@ export default function Regularizacion2026() {
         setShowStripe(false);
         setPaymentRequired(false);
         questionFlowLockedRef.current = false;
-        stopListening();
-        setTimeout(async () => {
-          startListening();
-        }, 1500);
         setQuestionIndex(0);
         setDocumentsUnlocked(true);
         setConfirmUnlocked(true);
         setQuestionsDone(true);
         setStep("upload");
+        setTimeout(() => {
+          speakExactText("مزيان. دابا خاصك ترفع جميع الوثائق اللي عندك.");
+        }, 1200);
         try {
           const pdfRes = await fetch("/api/generate-expediente-pdf", {
             method: "POST",
@@ -155,9 +137,6 @@ export default function Regularizacion2026() {
       }
       setShowStripe(false);
       setPaymentRequired(false);
-      setTimeout(() => {
-        speakExactText("مزيان. قولي شنو سميتك؟");
-      }, 1200);
     };
     handlePaidFlow();
   }, []);
@@ -208,10 +187,9 @@ export default function Regularizacion2026() {
   const [stayVerified, setStayVerified] = useState(false);
   const [expulsionVerified, setExpulsionVerified] = useState(false);
   const [soufianeReady, setSoufianeReady] = useState(false);
-  
-  // NUEVOS ESTADOS PARA INDICADORES
   const [docsUploaded, setDocsUploaded] = useState(false);
   const [docsVerified, setDocsVerified] = useState(false);
+  const [soufianeHasSpoken, setSoufianeHasSpoken] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<{ hasPassport: boolean; hasMonths: boolean; days: number; hasExpulsion: boolean; expulsionExpired: boolean; completo: boolean }>({
     hasPassport: false,
     hasMonths: false,
@@ -220,7 +198,6 @@ export default function Regularizacion2026() {
     expulsionExpired: false,
     completo: false
   });
-  const [soufianeHasSpoken, setSoufianeHasSpoken] = useState(false);
 
   useEffect(() => {
     localStorage.setItem("questionIndex", questionIndex.toString());
@@ -439,14 +416,6 @@ export default function Regularizacion2026() {
         async (payload) => {
           const newDoc = payload.new as any;
           const docName = newDoc.title || newDoc.original_name || "documento";
-          let proactiveMessage = "";
-          if (newDoc.document_type === "passport" || newDoc.document_type === "nie") {
-            proactiveMessage = `مزيان. توصلت بـ ${docName}. غادي نراجعو دابا ونشوف واش كلشي مزيان.`;
-          } else if (newDoc.document_type === "empadronamiento" || newDoc.document_type === "stay_proof") {
-            proactiveMessage = `مزيان. توصلت بـ ${docName}. هاد الوثيقة كتنفع كبرهان ديال البقاء.`;
-          } else {
-            proactiveMessage = `توصلت بـ ${docName}. غادي نراجعو دابا.`;
-          }
           setTimeout(() => { console.log("doc received"); }, 1500);
         }
       )
@@ -590,17 +559,6 @@ export default function Regularizacion2026() {
     formCompletedStatus === "ok" && stayProofStatus === "ok" && identityStatus === "ok" ? "ok" :
     formCompletedStatus === "warn" || stayProofStatus === "warn" || identityStatus === "warn" ? "warn" : "missing";
 
-  const progressCards = [
-    { id: "form_completed", nombre: ui.docStepForm, estado: formCompletedStatus },
-    { id: "stay_proof", nombre: ui.docStepStayProof, estado: stayProofStatus },
-    { id: "identity_document", nombre: ui.docStepIdentity, estado: identityStatus },
-    { id: "final_file", nombre: ui.docStepFinal, estado: finalFileStatus },
-  ];
-
-  const progressOk = progressCards.filter((item) => item.estado === "ok").length;
-  const progressTotal = progressCards.length;
-  const allReady = finalFileStatus === "ok";
-
   const handleQuestionFlow = () => {
     if (questionFlowLockedRef.current) return;
     console.log("QUESTION CURRENT:", questionIndex);
@@ -611,7 +569,6 @@ export default function Regularizacion2026() {
         setTimeout(() => { speakExactText(NAME_QUESTION); }, 400);
         return next;
       }
-      console.log("NEXT:", next);
       if (next === 5 && !paymentDoneRef.current) {
         questionFlowLockedRef.current = true;
         const PAYMENT_TEXT = `
@@ -628,7 +585,6 @@ export default function Regularizacion2026() {
 ورك على زر الأداء ونكملو مباشرة.
 `;
         pushAgentMessage(PAYMENT_TEXT);
-        console.log("SHOWING STRIPE BUTTON");
         setPaymentRequired(true);
         assistantBusyRef.current = true;
         pendingAutomationPromptRef.current = null;
@@ -636,7 +592,6 @@ export default function Regularizacion2026() {
         const stripeWatcher = setInterval(() => {
           if (!assistantBusyRef.current) {
             clearInterval(stripeWatcher);
-            console.log("✅ Soufiane FINISHED TALKING");
             setShowStripe(true);
             stopListening();
             setIsListening(false);
@@ -784,7 +739,7 @@ export default function Regularizacion2026() {
     if (!prompt) return;
     if (!realtimeDcRef.current) { console.error("❌ No hay data channel"); return; }
     if (realtimeDcRef.current.readyState !== "open") { console.error("❌ Data channel no está abierto:", realtimeDcRef.current.readyState); return; }
-    console.log("🚀 ENVIANDO DIRECTAMENTE (sin verificar busy):", prompt);
+    console.log("🚀 ENVIANDO DIRECTAMENTE:", prompt);
     try {
       realtimeDcRef.current.send(JSON.stringify({ type: "conversation.item.create", item: { type: "message", role: "user", content: [{ type: "input_text", text: prompt }] } }));
       console.log("✅ Item creado, enviando response.create...");
@@ -820,27 +775,6 @@ export default function Regularizacion2026() {
     "واش عمرك طلبتي اللجوء؟",
   ];
 
-  const maybeSendIntroToSoufiane = async () => {
-    if (!realtimeDcRef.current) return;
-    realtimeDcRef.current.send(JSON.stringify({
-      type: "response.create",
-      response: {
-        modalities: ["audio", "text"],
-        instructions: `
-السلام عليكم، أنا سفيان من هيستوريا سيطا AI. مرحبا بك.
-
-غادي نطرح عليك شوية ديال الأسئلة وغادي تجاوبني غير بآه ولا لا.
-
-وملي غادي نسالي الأسئلة، غادي نراجع ليك الوثائق ديالك كاملين باش نشوف واش مقبولين ولا لا، واش صالحين ولا لا، وغادي نعطيك حتى وثيقة مهمة غادي تعزز الملف ديالك فالتسوية الجماعية.
-
-وزيد عليها، غادي نخليك تسولني حتى 4 أسئلة وغنجاوبك على جميع التساؤلات ديالك أوكي؟
-
-ولكن قبل، خاصك تكمل الأداء ديالك عاد باش نبداو.
-        `,
-      },
-    }));
-  };
-
   const stopListening = () => {
     try {
       realtimeDcRef.current?.close();
@@ -869,10 +803,12 @@ export default function Regularizacion2026() {
 
   const handleSendWhatsApp = async () => {
     try {
-      if (!phone || phone.trim().length < 6) { alert("دخل رقم الهاتف صحيح"); return; }
+      if (!phone || phone.trim().length < 6) { 
+        alert("دخل رقم الهاتف صحيح"); 
+        return; 
+      }
       
-      // Construir mensaje con el resultado
-      const mensaje = `
+      const mensajeWhatsApp = `
 👋 سلام ${leadForm?.nombre || ""}
 
 ━━━━━━━━━━━━━━━
@@ -897,7 +833,7 @@ GestoriaCitaIA
 `;
       
       const cleanPhone = phone.trim().replace(/\s+/g, "");
-      const url = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(mensaje)}`;
+      const url = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(mensajeWhatsApp)}`;
       window.open(url, "_blank");
     } catch (error) {
       console.error("WhatsApp error:", error);
@@ -997,7 +933,7 @@ GestoriaCitaIA
 ❌ إذا كان كاين فراغ:
 قول: "عندك ${analysisResult.days} يوم فقط. خاصك 150 يوم (5 شهور)."
 
-📊 النتيجة النهائية (هذا هو المهم):
+📊 النتيجة النهائية:
 
 إذا كان الملف كامل:
 "✅ الملف ديالك كامل ومقبول. دابا خاصك تدخل رقم هاتفك فالمربع ديال واتساب وتضغط على زر الإرسال باش توصلك الوثيقة المهمة ف جوالك."
@@ -1030,9 +966,6 @@ GestoriaCitaIA
           setTimeout(() => { void askSoufianeToSpeak(capturedPending); }, 400);
           return;
         }
-        if (!(window as any).paid) {
-          setTimeout(() => { void maybeSendIntroToSoufiane(); }, 500);
-        }
       };
 
       dc.onmessage = (event) => {
@@ -1052,34 +985,6 @@ GestoriaCitaIA
               console.log("✅ USER SAID:", transcript);
 
               const lowerTranscript = transcript.toLowerCase().trim();
-              const normalized = lowerTranscript;
-
-              if (!paymentDoneRef.current && (lowerTranscript.includes("سلام") || lowerTranscript.includes("salam") || lowerTranscript.includes("hola") || lowerTranscript.includes("hello"))) {
-                console.log("🚀 START INTRO");
-                maybeSendIntroToSoufiane();
-                realtimeLocalStreamRef.current?.getTracks().forEach((track) => { track.stop(); });
-                questionFlowLockedRef.current = true;
-                const introText = `
-السلام عليكم، أنا سفيان من هيستوريا سيطا AI. مرحبا بك.
-
-غادي نطرح عليك شوية ديال الأسئلة وغادي تجاوبني غير بآه ولا لا.
-
-وملي غادي نسالي الأسئلة، غادي نراجع ليك الوثائق ديالك كاملين باش نشوف واش مقبولين ولا لا، واش صالحين ولا لا، وغادي نعطيك حتى وثيقة مهمة غادي تعزز الملف ديالك فالتسوية الجماعية.
-
-وزيد عليها، غادي نخليك تسولني حتى 4 أسئلة وغنجاوبك على جميع التساؤلات ديالك أوكي؟
-
-ولكن قبل، خاصك تكمل الأداء ديالك عاد باش نبداو.
-`;
-                const estimatedMs = Math.max(introText.length * 85, 12000);
-                setTimeout(() => {
-                  console.log("✅ INTRO FINISHED");
-                  setShowStripe(true);
-                  setPaymentRequired(true);
-                  stopListening();
-                  setIsListening(false);
-                }, estimatedMs);
-                return;
-              }
 
               const isOnlyNameStep =
                 questionIndex === 1 &&
@@ -1096,7 +1001,7 @@ GestoriaCitaIA
               }
 
               const validAnswers = ["نعم", "لا", "اه", "آه", "ايييه", "ايوه", "oui", "non", "si", "no", "kayna", "makaynach", "عندي", "ما عنديش"];
-              const cleanAnswer = normalized.replace(/[.,!?¿؟]/g, "").trim();
+              const cleanAnswer = lowerTranscript.replace(/[.,!?¿؟]/g, "").trim();
               const shouldCountQuestion = validAnswers.some(word => cleanAnswer === word || cleanAnswer.startsWith(word + " "));
 
               if (paymentDoneRef.current && shouldCountQuestion && !questionFlowLockedRef.current) {
@@ -1136,7 +1041,6 @@ GestoriaCitaIA
             pendingAutomationPromptRef.current = null;
             setPendingAutomationPrompt("");
             
-            // Marcar que Soufiane ya habló
             if (!soufianeHasSpokenRef.current) {
               soufianeHasSpokenRef.current = true;
               setSoufianeHasSpoken(true);
@@ -1256,27 +1160,6 @@ GestoriaCitaIA
       if (lowerFileName.includes("pasaporte") || lowerFileName.includes("passport") || lowerFileName.includes("nie") || lowerFileName.includes("tie")) { const d = findIdentityDoc(); if (d) return d; }
     }
     return currentDocs.find((doc) => doc.estado === "missing") || currentDocs.find((doc) => doc.estado === "warn") || null;
-  };
-
-  const maybeSendCompletionMessage = async (nextDocs: StoredDocItem[]) => {
-    const nextIdentityOk = nextDocs.some((doc) => {
-      const expected = normalizeDocType(doc.expectedType);
-      const detected = normalizeDocType(doc.detectedType);
-      const name = doc.nombre.toLowerCase();
-      return (expected === "passport" || expected === "nie" || expected === "tie" || detected === "passport" || detected === "nie" || detected === "tie" || name.includes("pasaporte") || name.includes("passport") || name.includes("nie")) && doc.estado === "ok";
-    });
-    const nextStayOk = nextDocs.some((doc) => {
-      const expected = normalizeDocType(doc.expectedType);
-      const detected = normalizeDocType(doc.detectedType);
-      const name = doc.nombre.toLowerCase();
-      return (expected === "empadronamiento" || expected === "stay_proof" || detected === "empadronamiento" || detected === "stay_proof" || name.includes("empadronamiento") || name.includes("padron") || name.includes("padrón") || name.includes("prueba de permanencia")) && doc.estado === "ok";
-    });
-    const readyNow = (leadSaved || formConfirmed) && nextStayOk && nextIdentityOk;
-    if (readyNow && !completionMessageSent) {
-      pushAgentMessage(voiceTexts.soufianeFinal);
-      setCompletionMessageSent(true);
-      await speakFromAutomation("قل الآن للعميل باختصار: مزيان. كلشي واجد ومراجع. دابا غادي نجهزو ليك الملف النهائي باش يتبعث ليك فـ واتساب.");
-    }
   };
 
   const handleGeneralUpload = () => {
@@ -1438,32 +1321,23 @@ GestoriaCitaIA
       setGeneralUploading(true);
       if (!docs.length) { await speakFromAutomation("مازال ما توصلتش بالوثائق ديالك."); return; }
 
-      let explanation = "دابا غادي نشرح ليك الملف ديالك:\n\n";
       let hasPassport = false;
       let stayDates: string[] = [];
       let hasExpulsion = false;
       let expulsionExpired = false;
 
       for (const doc of docs) {
-        const name = doc.nombre || "وثيقة";
         const type = (doc.detectedType || "").toLowerCase();
+        const docName = (doc.nombre || "").toLowerCase();
 
-        const speech = buildDocSpeech(name, {
-          full_name: (doc as any).full_name,
-          document_number: (doc as any).document_number,
-          birth_date: (doc as any).birth_date,
-          expiry_date: (doc as any).expiry_date,
-          image_quality: { blurred: (doc as any).verification_score < 55 },
-          fraud_risk: (doc as any).fraud_risk || "medium",
-          final_verdict: (doc as any).final_verdict || "review",
-          verification_score: (doc as any).verification_score || 0,
-        });
-        explanation += speech + " ";
-
-        if (type.includes("passport") || type.includes("nie")) hasPassport = true;
-        if ((doc as any).document_date) stayDates.push((doc as any).document_date);
-
-        const docName = (doc.nombre || doc.detectedType || "").toLowerCase();
+        if (type.includes("passport") || type.includes("nie") || 
+            docName.includes("pasaporte") || docName.includes("passport") || 
+            docName.includes("nie")) {
+          hasPassport = true;
+        }
+        if ((doc as any).document_date) {
+          stayDates.push((doc as any).document_date);
+        }
         if (docName.includes("expulsion") || docName.includes("expulsión") || docName.includes("deportacion")) {
           hasExpulsion = true;
           if ((doc as any).expiry_date) {
@@ -1483,15 +1357,6 @@ GestoriaCitaIA
         hasMonths = stayDays >= 150;
       }
 
-      explanation += "\n";
-      if (!hasPassport) explanation += "ما عندكش باسبور أو NIE. ";
-      else explanation += "وثيقة الهوية مزيانة. ";
-      if (!hasMonths) explanation += `عندك غير ${stayDays} يوم ديال الإثبات. خاصك على الأقل 150 يوم. `;
-      else explanation += `عندك ${stayDays} يوم ديال الإثبات المتواصل، وكتحقق شرط 5 شهور. `;
-
-      setStayVerified(hasMonths);
-      
-      // Guardar resultados
       const resultado = {
         hasPassport,
         hasMonths,
@@ -1502,19 +1367,10 @@ GestoriaCitaIA
       };
       setAnalysisResult(resultado);
       
-      console.log("🔍 CONDICIONES PARA DESBLOQUEAR SOUFIANE:", {
-        hasPassport,
-        hasMonths,
-        hasExpulsion,
-        expulsionExpired,
-        resultado: hasPassport && hasMonths && (!hasExpulsion || expulsionExpired)
-      });
-      
       const soufianeUnlockCondition = hasPassport && hasMonths && (!hasExpulsion || expulsionExpired);
       setSoufianeReady(soufianeUnlockCondition);
       setDocsVerified(true);
       
-      // Construir mensaje final para Soufiane
       let mensajeFinal = "";
       
       if (soufianeUnlockCondition) {
@@ -1551,7 +1407,6 @@ ${hasExpulsion && !expulsionExpired ? "- حل قرار الطرد النشط\n" 
         setSoufianeHasSpoken(false);
         await speakFromAutomation(mensajeFinal);
         await new Promise(resolve => setTimeout(resolve, 15000));
-        // Soufiane ya habló, se desactiva solo
       } else {
         console.error("❌ REALTIME STILL CLOSED");
         await startListening();
@@ -1570,8 +1425,6 @@ ${hasExpulsion && !expulsionExpired ? "- حل قرار الطرد النشط\n" 
 
   const goToSara = () => { window.location.href = "/sara"; };
   const goToKhalid = () => { window.location.href = "/khalid"; };
-
-  const latestAgentMessage = [...voiceHistory].reverse().find((msg) => msg.from === "agent")?.text || voiceTexts.initialVoice;
 
   return (
     <div className="min-h-screen">
@@ -1594,18 +1447,14 @@ ${hasExpulsion && !expulsionExpired ? "- حل قرار الطرد النشط\n" 
           </div>
 
           <div className="mt-2 max-w-7xl mx-auto lg:grid lg:grid-cols-[480px_1fr] lg:gap-6">
+            {/* FOTO DE SOUFIANE - SIEMPRE FOTO, NUNCA VIDEO */}
             <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="rounded-[26px] overflow-hidden relative">
               <div className="relative">
-                <div className="relative">
-                  <video id="soufiane-video" playsInline preload="metadata" poster="/images/soufiane.png" className="w-full h-[270px] object-cover border-b border-[#f6c453]/10" onPlay={() => { const btn = document.getElementById("play-button"); if (btn) btn.style.display = "none"; }}>
-                    <source src="/soufiane-presentacion.mp4" type="video/mp4" />
-                  </video>
-                  <button id="play-button" type="button" className="absolute inset-0 flex items-center justify-center" onClick={() => { const video = document.getElementById("soufiane-video") as HTMLVideoElement; if (video) video.play(); }}>
-                    <div className="bg-black/10 backdrop-blur-[2px] rounded-full w-12 h-12 flex items-center justify-center">
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z" /></svg>
-                    </div>
-                  </button>
-                </div>
+                <img 
+                  src="/images/soufiane.png" 
+                  alt="Soufiane" 
+                  className="w-full h-[270px] object-cover border-b border-[#f6c453]/10"
+                />
                 <div className="absolute bottom-5 right-4 text-right">
                   <h2 className="text-[22px] font-bold text-white">Soufiane</h2>
                   <p className="text-[15px] text-[#d4a94d] font-medium tracking-wide">Experto en Regularización</p>
@@ -1693,7 +1542,7 @@ ${hasExpulsion && !expulsionExpired ? "- حل قرار الطرد النشط\n" 
                   )}
                 </button>
 
-                {/* BOTÓN SUBIR DOCUMENTOS - Con indicador */}
+                {/* BOTÓN SUBIR DOCUMENTOS */}
                 <button 
                   onClick={handleGeneralUpload} 
                   disabled={generalUploading} 
@@ -1706,7 +1555,7 @@ ${hasExpulsion && !expulsionExpired ? "- حل قرار الطرد النشط\n" 
                   {docsUploaded && <CheckCircle className="w-4 h-4 text-green-400" />}
                 </button>
 
-                {/* BOTÓN VERIFICAR DOCUMENTOS - Con indicador */}
+                {/* BOTÓN VERIFICAR DOCUMENTOS */}
                 <button 
                   onClick={handleVerifyAll} 
                   disabled={!docsUploaded || generalUploading}
