@@ -125,22 +125,13 @@ if (match) {
       const lng = location.lng;
       const direccionFormateada = geocodeData.results[0].formatted_address;
 
-      const placesUrl = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lng}&radius=50&key=${GOOGLE_API_KEY}`;
-      const placesResponse = await fetch(placesUrl);
-      const placesData = await placesResponse.json();
-
+     
       let photoUrl = "";
       let nombreLugar = "";
 
-      if (placesData.status === "OK" && placesData.results.length > 0) {
-        const lugar = placesData.results[0];
-        nombreLugar = lugar.name || direccionFormateada;
+   nombreLugar = direccionFormateada;
 
-        if (lugar.photos && lugar.photos.length > 0) {
-          const photoReference = lugar.photos[0].photo_reference;
-          photoUrl = `https://maps.googleapis.com/maps/api/place/photo?maxwidth=1200&maxheight=600&photoreference=${photoReference}&key=${GOOGLE_API_KEY}`;
-        }
-      }
+photoUrl = `https://maps.googleapis.com/maps/api/staticmap?center=${lat},${lng}&zoom=17&size=1200x600&maptype=roadmap&markers=color:red|${lat},${lng}&key=${GOOGLE_API_KEY}`;
 
       if (!photoUrl) {
         photoUrl = `https://maps.googleapis.com/maps/api/staticmap?center=${lat},${lng}&zoom=17&size=1200x600&maptype=roadmap&markers=color:red|${lat},${lng}&key=${GOOGLE_API_KEY}`;
