@@ -9,7 +9,6 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useLang } from "@/contexts/LanguageContext";
 
-// ✅ SEGURO - Usando variable de entorno
 const GOOGLE_API_KEY = "AIzaSyAaXhxuYAfQL1WwfPsXWb168GlZ4B2JMIg";
 
 export default function KhalidExtranjeria() {
@@ -76,36 +75,31 @@ export default function KhalidExtranjeria() {
     }
   }, [lastReply]);
 
-  // 🔍 Extraer dirección completa del texto
-const extraerDireccionCompleta = (texto: string): string | null => {
-  if (!texto) return null;
+  // 🔍 Extraer dirección completa del texto - CORREGIDO
+  const extraerDireccionCompleta = (texto: string): string | null => {
+    if (!texto) return null;
 
-  console.log("🔍 TEXTO ORIGINAL:", texto);
+    console.log("🔍 TEXTO ORIGINAL:", texto);
 
+    const patrones = [
+      /(avinguda|avenida|avda|carrer|calle|rambla|plaza|paseo|ronda)\s+([^,\n]+?\d+[^\n]*)/i,
+      /(avinguda|avenida|avda|carrer|calle|rambla|plaza|paseo|ronda)\s+([^,\n]+)/i,
+    ];
 
-  const patrones = [
-  /(avinguda|avenida|avda|carrer|calle|rambla|plaza|paseo|ronda)\s+([^,\n]+?\d+[^\n]*)/i,
-  /(avinguda|avenida|avda|carrer|calle|rambla|plaza|paseo|ronda)\s+([^,\n]+)/i,
-];  
+    for (const patron of patrones) {
+      const match = texto.match(patron);
+      if (match) {
+        let direccion = match[0]
+          .split(/[.،\n]/)[0]
+          .trim();
+        direccion = direccion.replace(/\s+/g, " ");
+        console.log("📍 DIRECCION DETECTADA:", direccion);
+        return direccion;
+      }
+    }
 
-
-  for (const patron of patrones) {
-    const match = texto.match(patron);
-
-if (match) {
-  let direccion = match[0]
-    .split(/[.،\n]/)[0]
-    .trim();
-
-  direccion = direccion.replace(/\s+/g, " ");
-
-  console.log("📍 DIRECCION DETECTADA:", direccion);
-
-  return direccion;
-}
-
-  return null;
-};
+    return null;
+  };
 
   // 🔍 Obtener datos de Google Places
   const obtenerDatosGooglePlaces = async (direccion: string) => {
@@ -125,17 +119,12 @@ if (match) {
       const lng = location.lng;
       const direccionFormateada = geocodeData.results[0].formatted_address;
 
-     
       let photoUrl = "";
       let nombreLugar = "";
 
-   nombreLugar = direccionFormateada;
+      nombreLugar = direccionFormateada;
 
-photoUrl = `https://maps.googleapis.com/maps/api/staticmap?center=${lat},${lng}&zoom=17&size=1200x600&maptype=roadmap&markers=color:red|${lat},${lng}&key=${GOOGLE_API_KEY}`;
-
-      if (!photoUrl) {
-        photoUrl = `https://maps.googleapis.com/maps/api/staticmap?center=${lat},${lng}&zoom=17&size=1200x600&maptype=roadmap&markers=color:red|${lat},${lng}&key=${GOOGLE_API_KEY}`;
-      }
+      photoUrl = `https://maps.googleapis.com/maps/api/staticmap?center=${lat},${lng}&zoom=17&size=1200x600&maptype=roadmap&markers=color:red|${lat},${lng}&key=${GOOGLE_API_KEY}`;
 
       const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
 
@@ -146,7 +135,7 @@ photoUrl = `https://maps.googleapis.com/maps/api/staticmap?center=${lat},${lng}&
         name: nombreLugar || "Ubicación encontrada",
         photo: photoUrl,
         mapsUrl,
-        placeId: placesData.results[0]?.place_id || ""
+        placeId: ""
       };
 
     } catch (error) {
@@ -219,7 +208,8 @@ photoUrl = `https://maps.googleapis.com/maps/api/staticmap?center=${lat},${lng}&
       description: "Obteniendo información de Google Maps",
       loading: true
     });
-console.log("🚨 DIRECCION ENVIADA A GOOGLE:", direccion);
+    
+    console.log("🚨 DIRECCION ENVIADA A GOOGLE:", direccion);
     const datosGoogle = await obtenerDatosGooglePlaces(direccion);
 
     const nuevoSmartAction = {
