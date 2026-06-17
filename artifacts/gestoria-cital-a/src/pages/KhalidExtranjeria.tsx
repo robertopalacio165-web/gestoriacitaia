@@ -74,6 +74,145 @@ export default function KhalidExtranjeria() {
     }
   }, [lastReply]);
 
+  // 🔍 Función para detectar dirección y crear Smart Action
+  const detectarDireccionYMostrar = (texto: string) => {
+    if (!texto || texto.length < 3) return null;
+
+    const textoLower = texto.toLowerCase();
+    
+    // Lista de ciudades españolas
+    const ciudades = [
+      "madrid", "barcelona", "valencia", "sevilla",
+      "málaga", "malaga", "murcia", "alicante",
+      "granada", "bilbao", "zaragoza", "toledo", "vigo",
+      "cordoba", "valladolid", "salamanca", "tenerife",
+      "las palmas", "palma", "mallorca", "ibiza",
+      "san sebastian", "donostia", "gijon", "oviedo",
+      "santander", "cadiz", "almeria", "huelva",
+      "jaen", "ciudad real", "badajoz", "caceres",
+      "lugo", "ourense", "pontevedra", "coruña",
+      "alcala", "getafe", "leganes", "mostoles",
+      "fuenlabrada", "alcobendas", "pozuelo", "majadahonda"
+    ];
+
+    // Detectar ciudad
+    const ciudadDetectada = ciudades.find(city => textoLower.includes(city));
+    
+    // Patrones para detectar direcciones (calle, avenida, plaza, etc.)
+    const patronesDireccion = [
+      /calle\s+([a-zñáéíóú\s]+?)(?:\s|$|\.|,|;)/i,
+      /c\/\s*([a-zñáéíóú\s]+?)(?:\s|$|\.|,|;)/i,
+      /avenida\s+([a-zñáéíóú\s]+?)(?:\s|$|\.|,|;)/i,
+      /avda\s*([a-zñáéíóú\s]+?)(?:\s|$|\.|,|;)/i,
+      /plaza\s+([a-zñáéíóú\s]+?)(?:\s|$|\.|,|;)/i,
+      /pl\.\s*([a-zñáéíóú\s]+?)(?:\s|$|\.|,|;)/i,
+      /paseo\s+([a-zñáéíóú\s]+?)(?:\s|$|\.|,|;)/i,
+      /rambla\s+([a-zñáéíóú\s]+?)(?:\s|$|\.|,|;)/i,
+      /ronda\s+([a-zñáéíóú\s]+?)(?:\s|$|\.|,|;)/i,
+      /carrer\s+([a-zñáéíóú\s]+?)(?:\s|$|\.|,|;)/i,
+    ];
+
+    let direccionEncontrada = "";
+    let direccionCompleta = "";
+
+    // Buscar dirección en el texto
+    for (const patron of patronesDireccion) {
+      const match = textoLower.match(patron);
+      if (match && match[1]) {
+        // Limpiar la dirección encontrada
+        let dir = match[1].trim();
+        // Quitar palabras comunes que no son parte de la dirección
+        dir = dir.replace(/^(de|la|el|los|las)\s+/, "");
+        dir = dir.replace(/\s+(de|del|de la|en|a|para)$/, "");
+        
+        if (dir.length > 3) {
+          direccionEncontrada = dir;
+          direccionCompleta = match[0].trim();
+          break;
+        }
+      }
+    }
+
+    // Si no hay dirección pero hay ciudad, mostrar información genérica
+    if (!direccionEncontrada && !ciudadDetectada) {
+      return null;
+    }
+
+    // Determinar el tipo de lugar
+    let tipo = "oficina";
+    let titulo = "📍 Ubicación encontrada";
+    let descripcion = "Información sobre el lugar mencionado";
+    let icono = "📍";
+    let color = "blue";
+
+    if (textoLower.includes("policia") || textoLower.includes("policía") || 
+        textoLower.includes("comisaria") || textoLower.includes("comisaría") ||
+        textoLower.includes("tie") || textoLower.includes("huellas")) {
+      tipo = "policia";
+      titulo = `🚔 Comisaría ${ciudadDetectada ? `(${ciudadDetectada.charAt(0).toUpperCase() + ciudadDetectada.slice(1)})` : ""}`;
+      descripcion = "Citas para huellas, TIE y trámites policiales";
+      icono = "🚔";
+      color = "blue";
+    } else if (textoLower.includes("extranjeria") || textoLower.includes("extranjería") ||
+               textoLower.includes("inmigracion") || textoLower.includes("inmigración") ||
+               textoLower.includes("residencia") || textoLower.includes("arraigo") ||
+               textoLower.includes("visado") || textoLower.includes("permiso") ||
+               textoLower.includes("nie") || textoLower.includes("cita")) {
+      tipo = "extranjeria";
+      titulo = `🏢 Extranjería ${ciudadDetectada ? `(${ciudadDetectada.charAt(0).toUpperCase() + ciudadDetectada.slice(1)})` : ""}`;
+      descripcion = "Trámites de residencia, arraigo, visados y documentación";
+      icono = "🏢";
+      color = "red";
+    } else if (textoLower.includes("nacionalidad")) {
+      tipo = "nacionalidad";
+      titulo = "🇪🇸 Nacionalidad Española";
+      descripcion = "Requisitos, documentos y plazos para obtener la nacionalidad";
+      icono = "🇪🇸";
+      color = "orange";
+    }
+
+    // Construir la dirección completa para mostrar
+    let direccionMostrar = direccionCompleta;
+    if (direccionMostrar && ciudadDetectada) {
+      // Si ya tiene ciudad, no añadirla
+      if (!direccionMostrar.toLowerCase().includes(ciudadDetectada)) {
+        const ciudadCapitalizada = ciudadDetectada.charAt(0).toUpperCase() + ciudadDetectada.slice(1);
+        direccionMostrar = `${direccionMostrar}, ${ciudadCapitalizada}`;
+      }
+    } else if (ciudadDetectada && !direccionMostrar) {
+      direccionMostrar = ciudadDetectada.charAt(0).toUpperCase() + ciudadDetectada.slice(1);
+    }
+
+    // Construir query para Google Maps
+    let queryMaps = "";
+    if (direccionEncontrada && ciudadDetectada) {
+      queryMaps = `${direccionEncontrada} ${ciudadDetectada}`;
+    } else if (ciudadDetectada) {
+      queryMaps = `${tipo === "policia" ? "comisaria policia" : "oficina extranjeria"} ${ciudadDetectada}`;
+    } else if (direccionEncontrada) {
+      queryMaps = direccionEncontrada;
+    }
+
+    // Crear el Smart Action
+    return {
+      type: "link",
+      title: titulo,
+      description: descripcion,
+      address: direccionMostrar || "Ubicación mencionada",
+      image: `https://maps.googleapis.com/maps/api/staticmap?center=${encodeURIComponent(queryMaps || "Madrid")}&zoom=15&size=1200x600&maptype=roadmap&markers=color:${color}|${encodeURIComponent(queryMaps || "Madrid")}`,
+      buttons: [
+        {
+          label: "📅 Pedir cita",
+          url: "/sara-citas"
+        },
+        {
+          label: "📍 Ver en Maps",
+          url: `https://www.google.com/maps/search/${encodeURIComponent(queryMaps)}`
+        }
+      ]
+    };
+  };
+
   const startConversation = async () => {
     try {
       setIsListening(true);
@@ -193,14 +332,24 @@ Nunca interrumpas tus respuestas aunque تسمع الضجيج أو شخص يتك
       dc.onmessage = (event) => {
         try {
           const msg = JSON.parse(event.data);
+          
+          // 📦 LOG para depuración - muestra todos los mensajes
+          if (msg.type) {
+            console.log("📨 TIPO:", msg.type);
+          }
 
-          if (
-            msg.type === "response.output_text.delta" &&
-            typeof msg.delta === "string"
-          ) {
-            setLastReply((prev) => prev + msg.delta);
-            const khalidText = (lastAssistantTextRef.current + msg.delta).toLowerCase();
-            lastAssistantTextRef.current = khalidText;
+          // 🔥 DETECCIÓN EN TIEMPO REAL - mientras Khalid habla
+          if (msg.type === "response.output_text.delta" && typeof msg.delta === "string") {
+            const nuevoTexto = lastAssistantTextRef.current + msg.delta;
+            lastAssistantTextRef.current = nuevoTexto;
+            setLastReply(nuevoTexto);
+            
+            // 🎯 Detectar dirección en tiempo real
+            const actionDetectada = detectarDireccionYMostrar(nuevoTexto);
+            if (actionDetectada) {
+              console.log("📍 DIRECCIÓN DETECTADA:", actionDetectada);
+              setSmartAction(actionDetectada);
+            }
 
             const isPremium = localStorage.getItem("khalid_paid") === "true";
             if (userAskedQuestion && !freeQuestionUsed && !isPremium) {
@@ -211,6 +360,7 @@ Nunca interrumpas tus respuestas aunque تسمع الضجيج أو شخص يتك
             }
           }
 
+          // Transcripción del usuario
           const transcript =
             msg?.transcript ||
             msg?.item?.transcript ||
@@ -225,7 +375,7 @@ Nunca interrumpas tus respuestas aunque تسمع الضجيج أو شخص يتك
           ) {
             lastUserTranscriptRef.current = transcript;
             setLastTranscript(transcript);
-            console.log("USER:", transcript);
+            console.log("👤 USUARIO:", transcript);
             setUserAskedQuestion(true);
           }
 
@@ -241,9 +391,9 @@ Nunca interrumpas tus respuestas aunque تسمع الضجيج أو شخص يتك
             }
             setLastReply("");
             lastAssistantTextRef.current = "";
-            setSmartAction(null);
           }
 
+          // ⚠️ RESPONSE.DONE - respaldo por si no se detectó antes
           if (msg.type === "response.done") {
             assistantBusyRef.current = false;
             setWaitingKhalid(false);
@@ -256,7 +406,7 @@ Nunca interrumpas tus respuestas aunque تسمع الضجيج أو شخص يتك
                 });
             }
 
-            console.log("KHALID DONE");
+            console.log("✅ KHALID DONE");
 
             let assistantTranscript = "";
 
@@ -274,135 +424,19 @@ Nunca interrumpas tus respuestas aunque تسمع الضجيج أو شخص يتك
               assistantTranscript = lastAssistantTextRef.current;
             }
 
-            console.log("KHALID SAID:", assistantTranscript);
+            console.log("📝 TEXTO FINAL:", assistantTranscript);
 
-            const text = (assistantTranscript || "").toLowerCase();
-            console.log("TEXTO PARA DETECCIÓN:", text);
-
-            const cities = [
-              "madrid", "barcelona", "valencia", "sevilla",
-              "málaga", "malaga", "murcia", "alicante",
-              "granada", "bilbao", "zaragoza", "toledo", "vigo",
-              "cordoba", "valladolid", "salamanca", "tenerife",
-              "las palmas", "palma", "mallorca", "ibiza"
-            ];
-
-            const detectedCity = cities.find(city => text.includes(city));
-            console.log("CIUDAD DETECTADA:", detectedCity);
-
-            let newSmartAction = null;
-
-            if (text.includes("policia") || text.includes("policía") ||
-                text.includes("tie") || text.includes("huellas") ||
-                text.includes("comisaria") || text.includes("comisaría")) {
-
-              const cityName = detectedCity ? detectedCity.charAt(0).toUpperCase() + detectedCity.slice(1) : "Madrid";
-
-              newSmartAction = {
-                type: "link",
-                title: `🚔 Policía ${detectedCity ? `(${cityName})` : ""}`,
-                description: "Citas para huellas, TIE y trámites policiales",
-                image: `https://maps.googleapis.com/maps/api/staticmap?center=${detectedCity || "Madrid"}&zoom=15&size=1200x600&maptype=roadmap&markers=color:blue|${detectedCity || "Madrid"}`,
-                buttons: [
-                  {
-                    label: "📅 Reservar cita",
-                    url: "/sara-citas"
-                  },
-                  {
-                    label: "📍 Ver en Maps",
-                    url: `https://www.google.com/maps/search/comisaria+policia+${detectedCity || "Madrid"}`
-                  }
-                ]
-              };
-              console.log("✅ DETECTADO: POLICÍA");
-            }
-
-            else if (
-              text.includes("extranjeria") || text.includes("extranjería") ||
-              text.includes("inmigracion") || text.includes("inmigración") ||
-              text.includes("residencia") || text.includes("arraigo") ||
-              text.includes("asilo") || text.includes("refugio") ||
-              text.includes("visado") || text.includes("visa") ||
-              text.includes("estancia") || text.includes("permiso") ||
-              text.includes("renovacion") || text.includes("renovación") ||
-              text.includes("nie") || text.includes("pasaporte") ||
-              text.includes("dni") || text.includes("cita") ||
-              text.includes("citas") || text.includes("reserva") ||
-              text.includes("tramite") || text.includes("trámite")
-            ) {
-              const cityName = detectedCity ? detectedCity.charAt(0).toUpperCase() + detectedCity.slice(1) : "Madrid";
-
-              newSmartAction = {
-                type: "link",
-                title: `🏢 Extranjería ${detectedCity ? `(${cityName})` : ""}`,
-                description: "Información y trámites de residencia, arraigo y visados",
-                image: `https://maps.googleapis.com/maps/api/staticmap?center=${detectedCity || "Madrid"}&zoom=13&size=1200x600&maptype=roadmap&markers=color:red|${detectedCity || "Madrid"}`,
-                buttons: [
-                  {
-                    label: "📅 Pedir cita",
-                    url: "/sara-citas"
-                  },
-                  {
-                    label: "📄 Más información",
-                    url: "https://www.inclusion.gob.es/web/migraciones"
-                  },
-                  {
-                    label: "📍 Ver en Maps",
-                    url: `https://www.google.com/maps/search/oficina+extranjeria+${detectedCity || "Madrid"}`
-                  }
-                ]
-              };
-              console.log("✅ DETECTADO: EXTRANJERÍA");
-            }
-
-            else if (text.includes("nacionalidad") || text.includes("nacionalidad española")) {
-              newSmartAction = {
-                type: "link",
-                title: "🇪🇸 Nacionalidad Española",
-                description: "Requisitos, documentos y plazos para obtener la nacionalidad",
-                image: "https://images.unsplash.com/photo-1521295121783-8a321d551ad2?q=80&w=1200&auto=format&fit=crop",
-                buttons: [
-                  {
-                    label: "📄 Ver requisitos",
-                    url: "https://www.mjusticia.gob.es"
-                  },
-                  {
-                    label: "📅 Asesoría",
-                    url: "/sara-citas"
-                  }
-                ]
-              };
-              console.log("✅ DETECTADO: NACIONALIDAD");
-            }
-
-            else if (detectedCity) {
-              const cityName = detectedCity.charAt(0).toUpperCase() + detectedCity.slice(1);
-              newSmartAction = {
-                type: "link",
-                title: `📍 ${cityName}`,
-                description: `Información sobre trámites de extranjería en ${cityName}`,
-                image: `https://maps.googleapis.com/maps/api/staticmap?center=${detectedCity}&zoom=12&size=1200x600&maptype=roadmap&markers=color:green|${detectedCity}`,
-                buttons: [
-                  {
-                    label: "📅 Citas en Extranjería",
-                    url: "/sara-citas"
-                  },
-                  {
-                    label: "📍 Ver en Maps",
-                    url: `https://www.google.com/maps/search/oficina+extranjeria+${detectedCity}`
-                  }
-                ]
-              };
-              console.log("✅ DETECTADO: CIUDAD");
-            }
-
-            if (newSmartAction) {
-              setSmartAction(newSmartAction);
-              console.log("🎯 SMART ACTION ACTUALIZADO:", newSmartAction);
+            // 🔍 Última oportunidad de detectar dirección
+            if (assistantTranscript) {
+              const actionFinal = detectarDireccionYMostrar(assistantTranscript);
+              if (actionFinal) {
+                console.log("📍 DIRECCIÓN DETECTADA (FINAL):", actionFinal);
+                setSmartAction(actionFinal);
+              }
             }
           }
         } catch (err) {
-          console.error(err);
+          console.error("❌ Error en onmessage:", err);
         }
       };
 
@@ -778,7 +812,7 @@ Nunca interrumpas tus respuestas aunque تسمع الضجيج أو شخص يتك
             </div>
           </div>
 
-          {/* SMART ACTIONS - UBICACIONES Y DIRECCIONES */}
+          {/* 🗺️ SMART ACTIONS - TARJETA DE UBICACIÓN */}
           {isPaid && smartAction && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -792,6 +826,7 @@ Nunca interrumpas tus respuestas aunque تسمع الضجيج أو شخص يتك
               </div>
 
               <div className="rounded-2xl overflow-hidden border border-[#1e293b]">
+                {/* MAPA */}
                 <img
                   src={smartAction.image}
                   className="w-full h-[200px] object-cover"
@@ -806,10 +841,18 @@ Nunca interrumpas tus respuestas aunque تسمع الضجيج أو شخص يتك
                     {smartAction.title}
                   </h4>
 
+                  {/* DIRECCIÓN */}
+                  {smartAction.address && (
+                    <p className="text-green-400 text-sm font-medium mb-1">
+                      📍 {smartAction.address}
+                    </p>
+                  )}
+
                   <p className="text-gray-400 text-sm mb-3">
                     {smartAction.description}
                   </p>
 
+                  {/* BOTONES */}
                   <div className="grid grid-cols-2 gap-2">
                     {smartAction.buttons?.map((button: any, index: number) => (
                       <a
