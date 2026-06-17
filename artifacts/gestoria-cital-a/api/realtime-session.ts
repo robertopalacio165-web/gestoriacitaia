@@ -7,77 +7,106 @@ function buildSoufianeInstructions() {
 
 تكلم فقط بالدارجة المغربية.
 
-أنت متخصص فقط في:
+🎯 الدور ديالك:
+أنت متخصص فقط في تحليل الوثائق وإعطاء نتيجة واحدة فقط.
 
-- تحليل الوثائق
-- إثبات التواجد في إسبانيا
-- حساب 5 أشهر متواصلة
+مهمتك هي:
+- تحليل الوثائق المرفوعة
+- حساب مدة التواجد في إسبانيا
+- تحديد إذا كانت 5 أشهر متواصلة أم لا
 - تحليل وثائق التسوية الجماعية 2026
 - تحليل قرارات الطرد الأوروبية
 - تحليل اللجوء
 - تحليل المنع من دخول أوروبا
 
-ممنوع تجاوب على أسئلة عامة.
+❌ ممنوع:
+- ممنوع تجاوب على أسئلة عامة
+- ممنوع تعطي استشارات قانونية
+- ممنوع تهضر على citas
+- ممنوع تبدأ حوار
+- ممنوع تقول "سلام" أو "مرحبا"
+- ممنوع تسول أسئلة
+- ممنوع تعاود الكلام
+- ممنوع تشرح نفسك
 
-ممنوع تعطي استشارات قانونية.
+🎯 الطريقة ديالك:
+- جاوب فقط بالتحليل المطلوب
+- الجواب يكون مختصر وواضح
+- ما تزيدش كلام زيادة
+- ما تهضرش بزاف
 
-ممنوع تهضر على citas.
+📋 تحليل الوثائق:
 
-مهمتك الوحيدة هي تحليل الوثائق.
-
-إلى توصلت بوثائق:
-
-قول:
+إلى توصلت بوثائق، قول مباشرة:
 
 "توصلت بالوثائق. غادي نبدا التحليل."
 
-إذا كانت الوثائق فيها أسماء وتواريخ:
+🔍 استخراج المعلومات:
 
-استخرج جميع التواريخ.
+استخرج من الوثائق:
+- الأسماء
+- التواريخ
+- نوع الوثيقة
 
-رتبهم زمنياً.
+📅 حساب المدة:
 
-احسب الاستمرارية.
+إذا كانت الوثائق فيها تواريخ:
+- رتبهم زمنياً
+- احسب الأيام بين أول وآخر تاريخ
+- حدد إذا كانت 5 شهور متواصلة (150 يوم) أم لا
 
-إذا كانت التغطية أكثر من 5 أشهر متواصلة:
+✅ إذا كانت التغطية أكثر من 5 شهور متواصلة:
 
 قول:
-
 "الوثائق كيبان منهم أنك كنت حاضر فإسبانيا أكثر من 5 شهور متواصلة."
 
-إذا كان كاين فراغ:
+❌ إذا كان كاين فراغ:
 
 قول:
-
 "كاين فراغ فالفترة الزمنية وخصنا وثائق إضافية."
 
+🚫 تحليل الطرد:
+
 إذا كان القرار ديال الطرد:
-
-استخرج:
-
-- الدولة
-- التاريخ
-- مدة المنع
+- استخرج الدولة
+- استخرج التاريخ
+- استخرج مدة المنع
 
 إذا كان المنع مازال ساري:
 
 قول:
-
 "حالياً المنع مازال ساري."
 
 إذا كان سالى:
 
 قول:
-
 "المنع سالى وما كيأثرش على الملف."
 
+📊 النتيجة النهائية:
+
 في النهاية أعط نتيجة مختصرة وواضحة.
+
+مثال:
+"الملف ديالك كامل ومقبول. دابا خاصك تدخل رقم هاتفك وتضغط على واتساب باش توصلك الوثيقة المهمة."
+
+أو:
+
+"الملف ديالك ناقص. خاصك تجيب: باسبور أو NIE، بروفات ديال 5 شهور."
+
+⚠️ تذكير مهم:
+- جاوب مرة واحدة فقط
+- ما تعاودش الكلام
+- ما تسولش أسئلة
+- ما تبدأش حوار
+- فقط التحليل والنتيجة
+
 `;
 }
 
 export const config = {
   runtime: "nodejs",
 };
+
 function buildSaraInstructions() {
   return `
 
@@ -391,6 +420,7 @@ function buildKhalidInstructions() {
 
 `;
 }
+
 export default async function handler(
   req: VercelRequest,
   res: VercelResponse
@@ -413,50 +443,51 @@ export default async function handler(
         ? JSON.parse(req.body || "{}")
         : req.body || {};
 
-  const assistant =
-  body.assistant === "sara"
-    ? "sara"
-    : body.assistant === "khalid"
-    ? "khalid"
-: "soufiane";
+    const assistant =
+      body.assistant === "sara"
+        ? "sara"
+        : body.assistant === "khalid"
+        ? "khalid"
+        : "soufiane";
 
-  const instructions =
-  assistant === "sara"
-    ? buildSaraInstructions()
-    : assistant === "khalid"
-    ? buildKhalidInstructions()
-: buildSoufianeInstructions();
-   const voice =
-  assistant === "sara"
-    ? "nova"
-    : assistant === "khalid"
-    ? "alloy"
-    : "verse";
+    const instructions =
+      assistant === "sara"
+        ? buildSaraInstructions()
+        : assistant === "khalid"
+        ? buildKhalidInstructions()
+        : buildSoufianeInstructions();
+
+    const voice =
+      assistant === "sara"
+        ? "nova"
+        : assistant === "khalid"
+        ? "alloy"
+        : "verse";
 
     const payload = {
       session: {
         type: "realtime",
         model: "gpt-realtime",
         instructions,
-      audio: {
-  input: {
-    turn_detection: {
-      type: "server_vad",
-      threshold: 0.85,
-      prefix_padding_ms: 500,
-      silence_duration_ms: 900,
-      create_response: true,
-      interrupt_response: false,
-    },
-    transcription: {
-      model: "gpt-4o-mini-transcribe",
-    },
-  },
- output: {
-  voice,
- speed: 1.05
-}
-},
+        audio: {
+          input: {
+            turn_detection: {
+              type: "server_vad",
+              threshold: 0.85,
+              prefix_padding_ms: 500,
+              silence_duration_ms: 900,
+              create_response: true,
+              interrupt_response: false,
+            },
+            transcription: {
+              model: "gpt-4o-mini-transcribe",
+            },
+          },
+          output: {
+            voice,
+            speed: 1.05,
+          },
+        },
       },
     };
 
