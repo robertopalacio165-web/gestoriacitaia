@@ -7,6 +7,8 @@ import {
   MicOff,
   Upload,
   Star,
+  ArrowRight,
+  Bell,
   Volume2,
   VolumeX,
 } from "lucide-react";
@@ -102,11 +104,16 @@ export default function Regularizacion2026() {
         setShowStripe(false);
         setPaymentRequired(false);
         questionFlowLockedRef.current = false;
+        
         setQuestionIndex(0);
         setDocumentsUnlocked(true);
         setConfirmUnlocked(true);
         setQuestionsDone(true);
         setStep("upload");
+        
+        setTimeout(() => {
+          speakExactText("مزيان. دابا خاصك ترفع جميع الوثائق اللي عندك. من بعد ما تسالي رفع الوثائق كاملة، ورك على زر التحقق من الوثائق باش نراجعهم ليك كاملين.");
+        }, 1200);
         
         try {
           const pdfRes = await fetch("/api/generate-expediente-pdf", {
@@ -185,9 +192,6 @@ export default function Regularizacion2026() {
   const [stayVerified, setStayVerified] = useState(false);
   const [expulsionVerified, setExpulsionVerified] = useState(false);
   const [soufianeReady, setSoufianeReady] = useState(false);
-  const [verificationResultText, setVerificationResultText] = useState("");
-  const [whatsappMessage, setWhatsappMessage] = useState("");
-  const [soufianeFinished, setSoufianeFinished] = useState(false);
 
   useEffect(() => {
     localStorage.setItem("questionIndex", questionIndex.toString());
@@ -230,8 +234,6 @@ export default function Regularizacion2026() {
   const isConnectingRef = useRef(false);
   const assistantBusyRef = useRef(false);
   const senderRef = useRef<RTCRtpSender | null>(null);
-  const soufianeHasSpokenRef = useRef(false);
-  const audioContextRef = useRef<AudioContext | null>(null);
 
   const safeLang = (lang === "darija" || lang === "en" ? lang : "es") as "darija" | "es" | "en";
 
@@ -405,7 +407,9 @@ export default function Regularizacion2026() {
       .channel(`docs-${currentUserId}`)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "user_documents", filter: `user_id=eq.${currentUserId}` },
         async (payload) => {
-          console.log("doc received");
+          const newDoc = payload.new as any;
+          const docName = newDoc.title || newDoc.original_name || "documento";
+          setTimeout(() => { console.log("doc received"); }, 1500);
         }
       )
       .subscribe();
@@ -417,7 +421,7 @@ export default function Regularizacion2026() {
           const formData = payload.new as any;
           if (formData.form_type === "regularizacion_2026") {
             setTimeout(() => {
-              pushAgentMessage("مزيان. المعطيات ديالك تحفظات فالنظام. دابا غادي نكمل معاك خطوة بخطوة.");
+              speakFromAutomation("مزيان. المعطيات ديالك تحفظات فالنظام. دابا غادي نكمل معاك خطوة بخطوة.");
             }, 1000);
           }
         }
@@ -485,15 +489,20 @@ export default function Regularizacion2026() {
         const parsed = JSON.parse(raw) as ChatMsg[];
         if (Array.isArray(parsed) && parsed.length > 0) {
           setVoiceHistory(parsed);
+          const completionAlreadySent = parsed.some((m) => m.from === "agent" && m.text === voiceTexts.soufianeFinal);
+          const leadAlreadySaved = parsed.some((m) => m.from === "agent" && m.text.includes("المعطيات ديالك تحفظات"));
+          setCompletionMessageSent(completionAlreadySent);
+          setLeadSaved((prev) => prev || leadAlreadySaved);
+          setFormConfirmed((prev) => prev || leadAlreadySaved);
           return;
         }
       }
-      setVoiceHistory([{ from: "agent", text: "", ts: Date.now() }]);
+      setVoiceHistory([{ from: "agent", text: voiceTexts.initialVoice, ts: Date.now() }]);
     } catch (error) {
       console.error("Error cargando historial de Soufiane:", error);
-      setVoiceHistory([{ from: "agent", text: "", ts: Date.now() }]);
+      setVoiceHistory([{ from: "agent", text: voiceTexts.initialVoice, ts: Date.now() }]);
     }
-  }, [historyStorageKey]);
+  }, [historyStorageKey, voiceTexts.initialVoice, voiceTexts.soufianeFinal]);
 
   useEffect(() => {
     if (voiceHistory.length === 0) return;
@@ -545,15 +554,29 @@ export default function Regularizacion2026() {
 
   const handleQuestionFlow = () => {
     if (questionFlowLockedRef.current) return;
+    console.log("QUESTION CURRENT:", questionIndex);
     setQuestionIndex((prev) => {
       const next = prev + 1;
+      console.log("QUESTION NEXT:", next);
       if (next === 1) {
         setTimeout(() => { speakExactText(NAME_QUESTION); }, 400);
         return next;
       }
       if (next === 5 && !paymentDoneRef.current) {
         questionFlowLockedRef.current = true;
-        const PAYMENT_TEXT = `مزيان، من خلال الأجوبة ديالك بان ليا بللي الملف ديالك غادي يكون مقبول إن شاء الله ✅ باش نعطيك تحليل دقيق ونوجد ليك الملف كامل: ✔️ تحليل كامل ✔️ 100% التحقق من الوثائق ✔️ الوثيقة المهمة اللي غادي تعزز الملف ديالك بزاف غير ب 12 أورو ورك على زر الأداء ونكملو مباشرة.`;
+        const PAYMENT_TEXT = `
+مزيان، من خلال الأجوبة ديالك بان ليا بللي الملف ديالك غادي يكون مقبول إن شاء الله ✅
+
+باش نعطيك تحليل دقيق ونوجد ليك الملف كامل:
+
+✔️ تحليل كامل
+✔️ 100 fi 100 التحقق من الوثائق
+✔️ الوثيقة المهمة اللي غادي تعزز الملف ديالك بزاف
+
+غير ب 12 أورو
+
+ورك على زر الأداء ونكملو مباشرة.
+`;
         pushAgentMessage(PAYMENT_TEXT);
         setPaymentRequired(true);
         assistantBusyRef.current = true;
@@ -575,7 +598,12 @@ export default function Regularizacion2026() {
         setConfirmUnlocked(true);
         setQuestionsDone(true);
         setTimeout(() => {
-          speakExactText(`دابا خاصك ترفع جميع الوثائق اللي عندك. من بعد ما تسالي رفع الوثائق كاملة، ورك على زر التحقق من الوثائق باش نراجعهم ليك كاملين.`);
+          speakExactText(`
+دابا خاصك ترفع جميع الوثائق اللي عندك.
+
+من بعد ما تسالي رفع الوثائق كاملة،
+ورك على زر التحقق من الوثائق باش نراجعهم ليك كاملين.
+          `);
         }, 1000);
       }
       return next;
@@ -682,31 +710,34 @@ export default function Regularizacion2026() {
 
   const askSoufianeToSpeak = async (instruction: string) => {
     try {
-      if (!realtimeDcRef.current) { console.error("❌ No hay data channel"); return false; }
-      if (realtimeDcRef.current.readyState !== "open") { console.error("❌ Data channel no está open"); return false; }
-      console.log("🎤 askSoufianeToSpeak llamado");
+      const finalText = instruction;
+      if (!realtimeDcRef.current) { console.error("❌ No hay data channel en askSoufianeToSpeak"); return false; }
+      if (realtimeDcRef.current.readyState !== "open") { console.error("❌ Data channel no está open:", realtimeDcRef.current.readyState); return false; }
+      console.log("🎤 askSoufianeToSpeak llamado:", instruction);
       setWaitingSoufiane(true);
       assistantTextBufferRef.current = "";
-      realtimeDcRef.current.send(JSON.stringify({ type: "conversation.item.create", item: { type: "message", role: "user", content: [{ type: "input_text", text: instruction }] } }));
+      realtimeDcRef.current.send(JSON.stringify({ type: "conversation.item.create", item: { type: "message", role: "user", content: [{ type: "input_text", text: finalText }] } }));
       console.log("✅ conversation.item.create enviado");
-      realtimeDcRef.current.send(JSON.stringify({ type: "response.create", response: { modalities: ["audio", "text"] } }));
-      console.log("✅ response.create enviado");
+      realtimeDcRef.current.send(JSON.stringify({ type: "response.create", response: { modalities: ["audio", "text"], instructions: finalText } }));
+      console.log("✅ response.create enviado con instructions");
       return true;
     } catch (error) {
-      console.error("❌ Error:", error);
+      console.error("❌ Error en askSoufianeToSpeak:", error);
       return false;
     }
   };
 
-  const flushPendingAutomation = async () => {
+  const flushPendingAutomation = async (retries = 0) => {
     const prompt = pendingAutomationPromptRef.current;
     if (!prompt) return;
     if (!realtimeDcRef.current) { console.error("❌ No hay data channel"); return; }
-    if (realtimeDcRef.current.readyState !== "open") { console.error("❌ Data channel no está abierto"); return; }
-    console.log("🚀 Enviando prompt a Soufiane");
+    if (realtimeDcRef.current.readyState !== "open") { console.error("❌ Data channel no está abierto:", realtimeDcRef.current.readyState); return; }
+    console.log("🚀 ENVIANDO DIRECTAMENTE:", prompt);
     try {
       realtimeDcRef.current.send(JSON.stringify({ type: "conversation.item.create", item: { type: "message", role: "user", content: [{ type: "input_text", text: prompt }] } }));
+      console.log("✅ Item creado, enviando response.create...");
       realtimeDcRef.current.send(JSON.stringify({ type: "response.create", response: { modalities: ["audio", "text"] } }));
+      console.log("✅ response.create enviado - Soufiane DEBERÍA hablar");
       pendingAutomationPromptRef.current = null;
       setPendingAutomationPrompt("");
       setWaitingSoufiane(false);
@@ -719,10 +750,44 @@ export default function Regularizacion2026() {
 
   const questions = [
     "واش دخلتي لإسبانيا قبل واحد يناير 2026؟",
-    "واش بقيتي فإسبانيا خمسة شهور متتالية؟",
-    "واش عندك باسبور مغربي؟",
-    "واش عندك شهادة السكنى؟",
+    "واش بقيتي فإسبانيا خمسة شهور متتالية؟ وشنو هي أول مدينة سكنتي فيها؟",
+    "واش عندك باسبور مغربي ولا كارت ناسيونال ولا فوتوكوبي ديالهم؟",
+    "واش عندك شي ورقة فيها سميتك والتاريخ؟ بحال شهادة السكنى ولا ورقة ديال الطبيب ولا الصبيطار ولا الكراء؟",
+    "واش عندك البطاقة الطبية؟",
+    "واش عمرك مشيتي للصبيطار؟ واش عندك شي ورقة فيها سميتك والتاريخ؟",
+    "واش عندك شي ورقة ديال الدوا ولا ريسيتا؟",
+    "واش عندك شي رقم ديال التليفون باسمك؟",
+    "واش عندك شي لاكارط ديال الطوبيس ولا التران فيها سميتك والتاريخ؟",
+    "واش عمرك خدمتي فإسبانيا؟",
+    "واش عندك شي ورقة من شي جمعية؟",
+    "واش عندك شي مشكل مع البوليس؟",
+    "واش عمرك تشديتي؟",
+    "واش عطاك البوليس expulsion؟",
+    "واش عمرك مشيتي للكوميسارية؟",
+    "واش عندك شي فيزا؟",
+    "واش عمرك طلبتي اللجوء؟",
   ];
+
+  const maybeSendIntroToSoufiane = async () => {
+    if (!realtimeDcRef.current) return;
+    realtimeDcRef.current.send(JSON.stringify({
+      type: "response.create",
+      response: {
+        modalities: ["audio", "text"],
+        instructions: `
+السلام عليكم، أنا سفيان من هيستوريا سيطا AI. مرحبا بك.
+
+غادي نطرح عليك شوية ديال الأسئلة وغادي تجاوبني غير بآه ولا لا.
+
+وملي غادي نسالي الأسئلة، غادي نراجع ليك الوثائق ديالك كاملين باش نشوف واش مقبولين ولا لا، واش صالحين ولا لا، وغادي نعطيك حتى وثيقة مهمة غادي تعزز الملف ديالك فالتسوية الجماعية.
+
+وزيد عليها، غادي نخليك تسولني حتى 4 أسئلة وغنجاوبك على جميع التساؤلات ديالك أوكي؟
+
+ولكن قبل، خاصك تكمل الأداء ديالك عاد باش نبداو.
+        `,
+      },
+    }));
+  };
 
   const stopListening = () => {
     try {
@@ -750,75 +815,72 @@ export default function Regularizacion2026() {
     }
   };
 
-  // ==============================================
-  // ⭐ ENVIAR WHATSAPP CON RESUMEN
-  // ==============================================
-  const sendWhatsAppSummary = async () => {
+  const handleSendWhatsApp = async () => {
     try {
-      if (!phone || phone.trim().length < 6) { 
-        toast({ title: "⚠️ Número", description: "Introduce un número de WhatsApp válido", variant: "destructive" });
-        return; 
-      }
-
-      // Construir mensaje en darija y español
-      const darijaMsg = verificationResultText || "لا يوجد نتيجة للتحقق";
-      
+      if (!phone || phone.trim().length < 6) { alert("دخل رقم الهاتف صحيح"); return; }
+      const res = await fetch("/api/generate-expediente-report", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nombre: leadForm?.nombre,
+          telefono: phone,
+          ciudad: leadForm?.ciudad,
+          nacionalidad: leadForm?.nacionalidad,
+          fecha_llegada: leadForm?.fechaLlegada,
+          cumple_5_meses: leadForm.cumple5Meses === "yes" ? "yes" : "no",
+          documents: docs,
+        }),
+      });
+      const data = await res.json();
+      const pdfUrl = `${window.location.origin}/api/generate-expediente-pdf?nombre=${encodeURIComponent(leadForm?.nombre || "")}&nacionalidad=${encodeURIComponent(leadForm?.nacionalidad || "")}&ciudad=${encodeURIComponent(leadForm?.ciudad || "")}&fecha_llegada=${encodeURIComponent((leadForm as any)?.fecha_llegada || "")}`;
       const cleanPhone = phone.trim().replace(/\s+/g, "");
-      
+      const pdfLink = localStorage.getItem("generated_pdf_url") || "";
       const message = encodeURIComponent(`
-سلام ${leadForm.nombre || "عميل"}،
+👋 سلام ${leadForm?.nombre || ""}
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+━━━━━━━━━━━━━━━
 
-📋 هذا هو تحليل الملف ديالك من سفيان:
+👉 هذا تحليل الملف ديالك:
 
-${darijaMsg}
+${data.report.replace(/https?:\/\/[^\s]+/g, "").trim()}
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+━━━━━━━━━━━━━━━
 
-📌 RESULTADO EN ESPAÑOL:
+📩 الوثيقة المهمة (Motivación):
+${pdfLink || pdfUrl}
 
-${darijaMsg.replace(/[^\x00-\x7F]/g, "").substring(0, 500)}
+━━━━━━━━━━━━━━━
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚡ هاد الوثيقة مهمة بزاف وغادي تقوي الملف ديالك.
+حطها مع الدوسي ديالك باش تزيد الحظ ديالك فالتسوية.
 
-💼 GestoriaCitaIA - Tu asesoría digital
-🔗 www.gestoriacitaia.com
-      `);
+━━━━━━━━━━━━━━━
 
+🎁 دخل 3 صحاب بهاد الكود:
+GH-2026
+
+وغادي تربح شهر مجاني
+
+━━━━━━━━━━━━━━━
+
+💼 شكراً على الثقة ديالك
+GestoriaCitaIA
+`);
       const url = `https://wa.me/${cleanPhone}?text=${message}`;
       window.open(url, "_blank");
-      
-      toast({ title: "✅ WhatsApp", description: "Abriendo WhatsApp con el resumen" });
-      
     } catch (error) {
       console.error("WhatsApp error:", error);
-      toast({ title: "❌ Error", description: "No se pudo abrir WhatsApp", variant: "destructive" });
+      alert("وقع مشكل، حاول مرة أخرى");
     }
   };
 
-  // ==============================================
-  // ⭐ START LISTENING - Soufiane con Realtime API
-  // ⭐ El cliente dice "salam" primero
-  // ⭐ Soufiane NO se interrumpe
-  // ⭐ Soufiane habla UNA SOLA VEZ
-  // ==============================================
   const startListening = async () => {
-    if (!voiceSupported) { 
-      toast({ title: "Error", description: ui.micNotSupported, variant: "destructive" }); 
-      return; 
-    }
+    if (!voiceSupported) { toast({ title: "Error", description: ui.micNotSupported, variant: "destructive" }); return; }
     if (isConnectingRef.current) return;
     if (realtimeDcRef.current && realtimeDcRef.current.readyState === "open") return;
-    if (soufianeHasSpokenRef.current) {
-      toast({ title: "✅ Completado", description: "Soufiane ya ha dado su análisis", variant: "default" });
-      return;
-    }
-    
     try {
       isConnectingRef.current = true;
       setWaitingSoufiane(true);
-      
       const sessionRes = await fetch(`/api/realtime-session?ts=${Date.now()}`, {
         method: "POST",
         headers: { "Content-Type": "application/json", "Cache-Control": "no-cache" },
@@ -831,24 +893,6 @@ ${darijaMsg.replace(/[^\x00-\x7F]/g, "").substring(0, 500)}
 
       const pc = new RTCPeerConnection();
       realtimePcRef.current = pc;
-      
-      // AUDIO SILENCIOSO - para mantener la conexión activa
-      const audioContext = new AudioContext();
-      audioContextRef.current = audioContext;
-      const silentStream = audioContext.createMediaStreamDestination();
-      const oscillator = audioContext.createOscillator();
-      const gainNode = audioContext.createGain();
-      gainNode.gain.value = 0;
-      oscillator.connect(gainNode);
-      gainNode.connect(silentStream);
-      oscillator.start();
-      
-      const audioTrack = silentStream.stream.getAudioTracks()[0];
-      if (audioTrack) {
-        const sender = pc.addTrack(audioTrack, silentStream.stream);
-        senderRef.current = sender;
-      }
-      
       pc.ontrack = (event) => {
         const [remoteStream] = event.streams;
         if (remoteStream && remoteAudioRef.current) {
@@ -858,163 +902,210 @@ ${darijaMsg.replace(/[^\x00-\x7F]/g, "").substring(0, 500)}
           remoteAudioRef.current.muted = false;
           remoteAudioRef.current.volume = muted ? 0 : 1;
           const playPromise = remoteAudioRef.current.play();
-          if (playPromise) playPromise.catch((err) => { console.error("Error reproduciendo audio:", err); });
+          if (playPromise) playPromise.catch((err) => { console.error("Error reproduciendo audio remoto Soufiane:", err); });
         }
       };
+      const localStream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
+      realtimeLocalStreamRef.current = localStream;
+      for (const track of localStream.getTracks()) {
+        const sender = pc.addTrack(track, localStream);
+        senderRef.current = sender;
+      }
 
       const dc = pc.createDataChannel("oai-events");
       realtimeDcRef.current = dc;
 
       dc.onopen = async () => {
-        console.log("✅ Data channel abierto - Esperando que el cliente diga 'salam'");
         dcOpenedRef.current = true;
         isConnectingRef.current = false;
         setIsListening(true);
         setWaitingSoufiane(false);
-        
-        // Configurar sesión - Soufiane en darija, NO SE INTERRUMPE
         dc.send(JSON.stringify({
           type: "session.update",
           session: {
-            instructions: `أنت سفيان من GestoriaCitaIA. تتحدث فقط بالدارجة المغربية.
-            
-            مهمتك: أنت خبير في الهجرة والتسوية الجماعية في إسبانيا.
-            
-            📌 IMPORTANTE - INTERACCIÓN CON EL CLIENTE:
-            1. Cuando el cliente diga "salam" o "السلام عليكم", empieza a hablar.
-            2. No te detengas por ningún motivo. No dejes que el cliente te interrumpa.
-            3. Habla de forma clara y pausada. Explica TODO el análisis.
-            4. Cuando termines de hablar, di "هذا هو تحليلي النهائي. شكراً لك" y detente.
-            5. No respondas a ninguna pregunta después de terminar.
-            6. No digas "السلام عليكم" tú primero - espera al cliente.
-            
-            🚫 REGLAS ESTRICTAS:
-            - NO te detengas si el cliente habla
-            - NO respondas a interrupciones
-            - NO hagas preguntas al cliente
-            - NO des respuestas adicionales después de terminar
-            - Habla UNA SOLA VEZ y termina`,
+            instructions: `
+أنت سفيان من GestoriaCitaIA.
+
+ممنوع تبدأ الحوار من جديد.
+ممنوع تقول:
+"غنعاود من الأول"
+أو
+"أنا سفيان"
+أو
+"مرحبا"
+إلا فالبداية الأولى فقط.
+
+ممنوع تعاود أي سؤال سبق تسول.
+
+جاوب فقط بالجملة المطلوبة.
+
+إلا كان السؤال الحالي هو:
+"واش دخلتي لإسبانيا قبل من واحد يناير 2026؟"
+
+فلا تقل أي مقدمة أخرى.
+
+تكلم فقط بالدارجة المغربية.
+وباختصار.
+`,
             modalities: ["audio", "text"],
             turn_detection: {
               type: "server_vad",
-              threshold: 0.99,
-              prefix_padding_ms: 500,
-              silence_duration_ms: 100,
+              threshold: 0.98,
+              prefix_padding_ms: 300,
+              silence_duration_ms: 2200,
               interrupt_response: false,
               create_response: true,
             },
-            voice: "alloy",
-            temperature: 0.3,
           },
         }));
 
-        // Esperar a que la sesión se configure
-        await new Promise(resolve => setTimeout(resolve, 1000));
-
-        // Mostrar mensaje en la interfaz
-        pushAgentMessage("🎤 Soufiane está listo. Di 'salam' para empezar.");
-        toast({ title: "🎤 Listo", description: "Di 'salam' para que Soufiane empiece" });
-
-        // Escuchar el mensaje del cliente
-        // El cliente debe decir "salam" para activar a Soufiane
+        const capturedPending = pendingAutomationPromptRef.current;
+        if (capturedPending) {
+          pendingAutomationPromptRef.current = null;
+          setPendingAutomationPrompt("");
+          setTimeout(() => { void askSoufianeToSpeak(capturedPending); }, 400);
+          return;
+        }
+        if (!(window as any).paid) {
+          setTimeout(() => { void maybeSendIntroToSoufiane(); }, 500);
+        }
       };
 
       dc.onmessage = (event) => {
         try {
           const msg = JSON.parse(event.data);
-          
-          // Detectar cuando el cliente habla
-          if (msg.type === "conversation.item.input_audio_transcription.completed" && msg.transcript) {
-            const transcript = msg.transcript.toLowerCase().trim();
-            console.log("📝 Cliente dijo:", transcript);
-            
-            // Si el cliente dice "salam" y Soufiane no ha hablado aún
-            if ((transcript.includes("salam") || transcript.includes("السلام") || transcript.includes("hola")) && !soufianeHasSpokenRef.current) {
-              console.log("🚀 Cliente dijo salam - Soufiane va a hablar AHORA");
-              
-              // Enviar el texto para que Soufiane lo lea
-              const textToRead = verificationResultText || "مازال ما عندكش نتيجة للتحقق. خاصك ترفع وثائق وتضغط على زر التحقق من الوثائق أولاً.";
-              
-              dc.send(JSON.stringify({
-                type: "conversation.item.create",
-                item: {
-                  type: "message",
-                  role: "user",
-                  content: [{ type: "input_text", text: `السلام عليكم. أريد تحليل ملفي. ${textToRead}` }]
-                }
-              }));
+          const userTranscript = msg?.transcript || msg?.item?.transcript || msg?.item?.content?.[0]?.transcript || "";
 
-              dc.send(JSON.stringify({
-                type: "response.create",
-                response: {
-                  modalities: ["audio", "text"],
-                }
-              }));
-              
-              // Marcar que Soufiane ya habló
-              soufianeHasSpokenRef.current = true;
-              setSoufianeFinished(true);
-              
-              console.log("✅ Soufiane comenzó a hablar");
+          if (
+            (msg.type === "conversation.item.input_audio_transcription.completed" || msg.type === "input_audio_buffer.transcription.completed") &&
+            typeof userTranscript === "string" && userTranscript.trim() && userTranscript.trim().length > 1
+          ) {
+            const transcript = userTranscript.trim();
+            if (transcript !== lastUserTranscriptRef.current) {
+              lastUserTranscriptRef.current = transcript;
+              setLastUserTranscript(transcript);
+              pushUserMessage(transcript);
+              console.log("✅ USER SAID:", transcript);
+
+              const lowerTranscript = transcript.toLowerCase().trim();
+
+              if (!paymentDoneRef.current && (lowerTranscript.includes("سلام") || lowerTranscript.includes("salam") || lowerTranscript.includes("hola") || lowerTranscript.includes("hello"))) {
+                console.log("🚀 START INTRO");
+                maybeSendIntroToSoufiane();
+                realtimeLocalStreamRef.current?.getTracks().forEach((track) => { track.stop(); });
+                questionFlowLockedRef.current = true;
+                const introText = `
+السلام عليكم، أنا سفيان من هيستوريا سيطا AI. مرحبا بك.
+
+غادي نطرح عليك شوية ديال الأسئلة وغادي تجاوبني غير بآه ولا لا.
+
+وملي غادي نسالي الأسئلة، غادي نراجع ليك الوثائق ديالك كاملين باش نشوف واش مقبولين ولا لا، واش صالحين ولا لا، وغادي نعطيك حتى وثيقة مهمة غادي تعزز الملف ديالك فالتسوية الجماعية.
+
+وزيد عليها، غادي نخليك تسولني حتى 4 أسئلة وغنجاوبك على جميع التساؤلات ديالك أوكي؟
+
+ولكن قبل، خاصك تكمل الأداء ديالك عاد باش نبداو.
+`;
+                const estimatedMs = Math.max(introText.length * 85, 12000);
+                setTimeout(() => {
+                  console.log("✅ INTRO FINISHED");
+                  setShowStripe(true);
+                  setPaymentRequired(true);
+                  stopListening();
+                  setIsListening(false);
+                }, estimatedMs);
+                return;
+              }
+
+              const isOnlyNameStep =
+                questionIndex === 1 &&
+                lowerTranscript.length > 1 &&
+                !lowerTranscript.includes("نعم") &&
+                !lowerTranscript.includes("لا") &&
+                !lowerTranscript.includes("اه") &&
+                !lowerTranscript.includes("آه");
+
+              if (isOnlyNameStep) {
+                console.log("👤 USER NAME ONLY:", transcript);
+                setTimeout(() => { speakExactText("مزيان. واش بقيتي في إسبانيا لمدة ديال خمسة أشهر متتالية؟ وشنو هي أول مدينة سكنتي فيها؟"); }, 500);
+                return;
+              }
+
+              const validAnswers = ["نعم", "لا", "اه", "آه", "ايييه", "ايوه", "oui", "non", "si", "no", "kayna", "makaynach", "عندي", "ما عنديش"];
+              const cleanAnswer = lowerTranscript.replace(/[.,!?¿؟]/g, "").trim();
+              const shouldCountQuestion = validAnswers.some(word => cleanAnswer === word || cleanAnswer.startsWith(word + " "));
+
+              if (paymentDoneRef.current && shouldCountQuestion && !questionFlowLockedRef.current) {
+                handleQuestionFlow();
+              }
             }
           }
 
+          if (msg.type === "response.output_text.delta" && typeof msg.delta === "string") {
+            assistantTextBufferRef.current += msg.delta;
+          }
+
+          if (msg.type === "response.output_text.done" && typeof msg.text === "string" && msg.text.trim()) {
+            assistantTextBufferRef.current = msg.text.trim();
+          }
+
+          if (msg.type === "response.created") {
+            assistantBusyRef.current = true;
+            setWaitingSoufiane(true);
+            if (realtimeLocalStreamRef.current) {
+              realtimeLocalStreamRef.current.getAudioTracks().forEach(track => { track.enabled = false; });
+            }
+            if (senderRef.current) { senderRef.current.replaceTrack(null); }
+          }
+
           if (msg.type === "response.done") {
-            console.log("✅ Soufiane terminó de hablar");
-            setTimeout(() => {
-              stopListening();
-              // Mostrar botón de WhatsApp
-              setIsListening(false);
-              setSoufianeFinished(true);
-              toast({ title: "✅ Análisis completo", description: "Soufiane ha terminado. Envía el resumen por WhatsApp." });
-            }, 3000);
+            assistantBusyRef.current = false;
+            if (realtimeLocalStreamRef.current) {
+              realtimeLocalStreamRef.current.getAudioTracks().forEach(track => { track.enabled = true; });
+            }
+            const finalText = assistantTextBufferRef.current.trim();
+            if (finalText) lastAssistantTextRef.current = finalText;
+            finalizeAssistantBuffer();
+            const audioTrack = realtimeLocalStreamRef.current?.getAudioTracks?.()[0];
+            if (senderRef.current && audioTrack) { senderRef.current.replaceTrack(audioTrack); }
+            setWaitingSoufiane(false);
+            pendingAutomationPromptRef.current = null;
+            setPendingAutomationPrompt("");
+            setTimeout(() => { void flushPendingAutomation(); }, 150);
           }
-          
-          if (msg.type === "response.audio_transcript.done") {
-            console.log("📝 Transcripción completa:", msg.transcript);
-          }
-          
         } catch (err) {
-          console.error("Error en mensaje:", err);
+          console.error("Realtime event parse error:", err);
         }
       };
 
-      dc.onerror = (err) => { 
-        console.error("Data channel error:", err); 
-        toast({ title: "Error", description: "Error en la conexión de audio", variant: "destructive" });
-      };
-      
+      dc.onerror = (err) => { console.error("Realtime data channel error:", err); };
       dc.onclose = () => {
-        console.log("❌ Data channel cerrado");
         dcOpenedRef.current = false;
         isConnectingRef.current = false;
+        assistantBusyRef.current = false;
         setIsListening(false);
-        setWaitingSoufiane(false);
+        stopListening();
+        assistantTextBufferRef.current = "";
+        lastAssistantTextRef.current = "";
+        lastUserTranscriptRef.current = "";
       };
 
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
-      
       const sdpRes = await fetch("https://api.openai.com/v1/realtime/calls", {
         method: "POST",
         body: offer.sdp,
         headers: { Authorization: `Bearer ${ephemeralKey}`, "Content-Type": "application/sdp" },
       });
-      
       if (!sdpRes.ok) {
         const errText = await sdpRes.text();
         throw new Error(errText || "Error negociando WebRTC con OpenAI");
       }
-      
       const answerSdp = await sdpRes.text();
       await pc.setRemoteDescription({ type: "answer", sdp: answerSdp });
-      
-      console.log("✅ Conexión establecida con OpenAI");
-      
     } catch (error: any) {
-      console.error("Error iniciando realtime:", error);
+      console.error("Error iniciando realtime Soufiane:", error);
       stopListening();
-      toast({ title: "Error realtime", description: error?.message || "Error de conexión", variant: "destructive" });
+      toast({ title: "Error realtime", description: error?.message || voiceTexts.realtimeError, variant: "destructive" });
     } finally {
       isConnectingRef.current = false;
     }
@@ -1022,20 +1113,98 @@ ${darijaMsg.replace(/[^\x00-\x7F]/g, "").substring(0, 500)}
 
   const speakExactText = async (text: string) => {
     if (!text.trim()) return;
-    console.log("🔊 Soufiane hablará:", text.substring(0, 100) + "...");
+    console.log("🔊 REALTIME ONLY:", text);
     pendingAutomationPromptRef.current = text;
     setPendingAutomationPrompt(text);
-    setTimeout(() => { void flushPendingAutomation(); }, 500);
+    setTimeout(() => { void flushPendingAutomation(); }, 300);
+  };
+
+  const speakFromAutomation = async (text: string) => {
+    if (!text?.trim()) return;
+    await speakExactText(text);
   };
 
   useEffect(() => {
     if (remoteAudioRef.current) {
       remoteAudioRef.current.volume = muted ? 0 : 1;
+      remoteAudioRef.current.muted = false;
     }
   }, [muted]);
 
+  const handleSaveLeadForm = async () => {
+    if (!leadFormReady) { toast({ title: ui.missingTitle, description: ui.missingDesc, variant: "destructive" }); return; }
+    if (!authChecked) { toast({ title: "Espera", description: "Estamos comprobando tu sesión.", variant: "destructive" }); return; }
+    const savedIndex = localStorage.getItem("questionIndex");
+    if (savedIndex) setQuestionIndex(parseInt(savedIndex));
+    if (!currentUserId) {
+      toast({ title: "Sesión no detectada", description: "Debes entrar con Google antes de confirmar.", variant: "destructive" });
+      pushAgentMessage("عافاك دخل بحسابك أولاً، ومن بعد عاود دير تأكيد باش نكملو.");
+      return;
+    }
+    try {
+      setSavingForm(true);
+      await saveFullStateToSupabase();
+      setLeadSaved(true);
+      setFormConfirmed(true);
+      const savedMessage = buildSavedFormSpeech();
+      toast({ title: ui.saveLeadTitle, description: "Se han guardado los datos correctamente." });
+      setTimeout(() => { void speakExactText(savedMessage); }, 500);
+    } catch (error: any) {
+      console.error("Error guardando formulario Soufiane:", error);
+      toast({ title: "Error guardando formulario", description: error?.message || "No se pudo guardar en Supabase", variant: "destructive" });
+      pushAgentMessage("وقع مشكل فحفظ المعطيات. عافاك عاود دير تأكيد مرة أخرى.");
+    } finally {
+      setSavingForm(false);
+    }
+  };
+
+  const getBestDocMatch = (result: VerifyDocumentResult, currentDocs: StoredDocItem[], fileName?: string): StoredDocItem | null => {
+    const detectedType = normalizeDocType(result?.document_type || "");
+    const lowerFileName = (fileName || "").toLowerCase();
+    const combinedText = [result?.summary || "", ...(result?.visible_fields || []), ...(result?.missing_or_unclear_fields || []), ...(result?.warnings || []), result?.stay_proof_reason || "", lowerFileName].join(" ").toLowerCase();
+    const includesAny = (words: string[]) => words.some((word) => combinedText.includes(word));
+    const findIdentityDoc = () =>
+      currentDocs.find((doc) => doc.estado !== "ok" && (normalizeDocType(doc.expectedType) === "passport" || normalizeDocType(doc.expectedType) === "nie" || normalizeDocType(doc.expectedType) === "tie" || doc.nombre.toLowerCase().includes("pasaporte") || doc.nombre.toLowerCase().includes("passport") || doc.nombre.toLowerCase().includes("nie"))) ||
+      currentDocs.find((doc) => normalizeDocType(doc.expectedType) === "passport" || normalizeDocType(doc.expectedType) === "nie" || normalizeDocType(doc.expectedType) === "tie" || doc.nombre.toLowerCase().includes("pasaporte") || doc.nombre.toLowerCase().includes("passport") || doc.nombre.toLowerCase().includes("nie")) ||
+      null;
+    const findStayProofDoc = () =>
+      currentDocs.find((doc) => doc.estado !== "ok" && (normalizeDocType(doc.expectedType) === "empadronamiento" || normalizeDocType(doc.expectedType) === "stay_proof" || doc.nombre.toLowerCase().includes("empadronamiento") || doc.nombre.toLowerCase().includes("padron") || doc.nombre.toLowerCase().includes("padrón") || doc.nombre.toLowerCase().includes("prueba de permanencia"))) ||
+      currentDocs.find((doc) => normalizeDocType(doc.expectedType) === "empadronamiento" || normalizeDocType(doc.expectedType) === "stay_proof" || doc.nombre.toLowerCase().includes("empadronamiento") || doc.nombre.toLowerCase().includes("padron") || doc.nombre.toLowerCase().includes("padrón") || doc.nombre.toLowerCase().includes("prueba de permanencia")) ||
+      null;
+    if (detectedType === "passport" || detectedType === "nie" || detectedType === "tie") { const d = findIdentityDoc(); if (d) return d; }
+    if (detectedType === "empadronamiento" || detectedType === "stay_proof" || result?.recommended_bucket === "stay_proof" || result?.is_stay_proof === true) { const d = findStayProofDoc(); if (d) return d; }
+    if (includesAny(["passport", "pasaporte", "nie", "tie", "tarjeta de identidad", "documento identidad"])) { const d = findIdentityDoc(); if (d) return d; }
+    if (includesAny(["empadronamiento", "padron", "padrón", "prueba de permanencia", "stay proof", "ticket", "factura", "nomina", "nómina", "cita médica"])) { const d = findStayProofDoc(); if (d) return d; }
+    if (lowerFileName) {
+      if (lowerFileName.includes("padron") || lowerFileName.includes("padrón") || lowerFileName.includes("empadronamiento")) { const d = findStayProofDoc(); if (d) return d; }
+      if (lowerFileName.includes("pasaporte") || lowerFileName.includes("passport") || lowerFileName.includes("nie") || lowerFileName.includes("tie")) { const d = findIdentityDoc(); if (d) return d; }
+    }
+    return currentDocs.find((doc) => doc.estado === "missing") || currentDocs.find((doc) => doc.estado === "warn") || null;
+  };
+
+  const maybeSendCompletionMessage = async (nextDocs: StoredDocItem[]) => {
+    const nextIdentityOk = nextDocs.some((doc) => {
+      const expected = normalizeDocType(doc.expectedType);
+      const detected = normalizeDocType(doc.detectedType);
+      const name = doc.nombre.toLowerCase();
+      return (expected === "passport" || expected === "nie" || expected === "tie" || detected === "passport" || detected === "nie" || detected === "tie" || name.includes("pasaporte") || name.includes("passport") || name.includes("nie")) && doc.estado === "ok";
+    });
+    const nextStayOk = nextDocs.some((doc) => {
+      const expected = normalizeDocType(doc.expectedType);
+      const detected = normalizeDocType(doc.detectedType);
+      const name = doc.nombre.toLowerCase();
+      return (expected === "empadronamiento" || expected === "stay_proof" || detected === "empadronamiento" || detected === "stay_proof" || name.includes("empadronamiento") || name.includes("padron") || name.includes("padrón") || name.includes("prueba de permanencia")) && doc.estado === "ok";
+    });
+    const readyNow = (leadSaved || formConfirmed) && nextStayOk && nextIdentityOk;
+    if (readyNow && !completionMessageSent) {
+      pushAgentMessage(voiceTexts.soufianeFinal);
+      setCompletionMessageSent(true);
+      await speakFromAutomation("قل الآن للعميل باختصار: مزيان. كلشي واجد ومراجع. دابا غادي نجهزو ليك الملف النهائي باش يتبعث ليك فـ واتساب.");
+    }
+  };
+
   const handleGeneralUpload = () => {
-    console.log("Subiendo documentos");
+    console.log("CLICK WORKING - Subiendo documentos");
     const input = document.createElement("input");
     input.type = "file";
     input.accept = "image/*,application/pdf";
@@ -1053,9 +1222,11 @@ ${darijaMsg.replace(/[^\x00-\x7F]/g, "").substring(0, 500)}
           console.log("📄 Procesando:", file.name);
           const safeName = `${Date.now()}_${file.name}`;
           const storagePath = `${user.id}/regularizacion_2026/${safeName}`;
+          
           await supabase.storage.from("user-documents").upload(storagePath, file, { upsert: true });
+          
           const result = await verifyDocument({ file });
-          console.log("📊 Resultado:", result);
+          console.log("📊 Resultado análisis:", result);
           
           const matchedDoc = docs.find(doc => doc.estado === "missing") || docs[0];
           if (matchedDoc) {
@@ -1066,18 +1237,21 @@ ${darijaMsg.replace(/[^\x00-\x7F]/g, "").substring(0, 500)}
                 archivo: file.name,
                 estado: result.final_verdict === "approved" ? "ok" : "warn",
                 detectedType: result.document_type || "unknown",
-                document_date: result.document_date || new Date().toISOString().split('T')[0],
                 full_name: result.full_name || "",
                 document_number: result.document_number || "",
                 birth_date: result.birth_date || "",
                 expiry_date: result.expiry_date || "",
+                verification_score: result.verification_score || 0,
+                fraud_risk: result.fraud_risk || "low",
+                final_verdict: result.final_verdict || "review",
+                document_date: result.document_date || new Date().toISOString().split('T')[0],
               };
             }));
           }
         }
         toast({ title: "✅ Documentos subidos", description: "Ahora haz clic en Verificar documentos" });
       } catch (err) {
-        console.error("Error:", err);
+        console.error("Error subiendo documentos:", err);
         toast({ title: "Error", description: "No se pudieron subir los documentos", variant: "destructive" });
       } finally {
         setGeneralUploading(false);
@@ -1087,232 +1261,255 @@ ${darijaMsg.replace(/[^\x00-\x7F]/g, "").substring(0, 500)}
   };
 
   const handleVerifyAsilo = async () => {
-    console.log("Verificando Asilo...");
+    console.log("🛡️ Verificando Asilo...");
     try {
       if (asiloDocs.length === 0) {
-        pushAgentMessage("ما عندكش أي وثيقة فيها معلومات على اللجوء.");
+        await speakFromAutomation("ما عندكش أي وثيقة فيها معلومات على اللجوء. هاد شي مزيان للتسوية.");
         return;
       }
-      pushAgentMessage("📋 Se encontraron documentos relacionados con asilo.");
+      
+      let tieneSolicitudActiva = false;
+      let tieneDenegacion = false;
+      
+      for (const doc of asiloDocs) {
+        const text = (doc.detectedType + " " + doc.nombre + " " + (doc.note || "")).toLowerCase();
+        if (text.includes("solicitud") || text.includes("application") || text.includes("asylum application")) {
+          tieneSolicitudActiva = true;
+        }
+        if (doc.final_verdict === "rejected" || text.includes("denegado") || text.includes("rechazado")) {
+          tieneDenegacion = true;
+        }
+      }
+      
+      let mensaje = `تحليل وثائق اللجوء:\n\n`;
+      if (tieneSolicitudActiva) {
+        mensaje += `⚠️ عندك طلب لجوء نشط. هاد الشي كيأثر على ملف التسوية الجماعية لأنك ما تقدرش تقدم على الإثنين ف نفس الوقت.\n\n`;
+      } else {
+        mensaje += `✅ ما عندكش طلب لجوء نشط. هاد شي مزيان.\n\n`;
+      }
+      
+      if (tieneDenegacion) {
+        mensaje += `⚠️ عندك رفض لجوء سابق. خاصك تقدم هاد المعلومات لسفيان باش يعاونك.\n\n`;
+      } else {
+        mensaje += `✅ ما عندكش رفض لجوء.\n\n`;
+      }
+      
+      mensaje += `نصيحة سفيان: إذا كان عندك طلب لجوء نشط، خاصك تستنى على قرارو قبل ما تقدم على التسوية. وإذا كان مرفوض، نقدر نعاونك ف التسوية العادية.`;
+      
+      await speakFromAutomation(mensaje);
+      
     } catch (error) {
-      console.error("Error:", error);
-      pushAgentMessage("وقع مشكل في التحقق من اللجوء.");
+      console.error("Error verificando asilo:", error);
+      await speakFromAutomation("وقع مشكل وأنا كنحقق فطلب اللجوء. عاود حاول مرة أخرى.");
     }
   };
 
   const handleVerifyExpulsion = async () => {
-    console.log("Verificando Expulsión...");
+    console.log("🚫 Verificando Expulsión Europea...");
     try {
       if (expulsionDocs.length === 0) {
-        pushAgentMessage("ماعندكش أي وثيقة فيها قرار الطرد.");
+        await speakFromAutomation("ماعندكش أي وثيقة فيها قرار الطرد أو الترحيل. هاد شي مزيان بزاف لملف ديالك.");
         setExpulsionVerified(true);
         return;
       }
-      pushAgentMessage("📋 Se encontraron documentos relacionados con expulsión.");
+      
+      let tieneExpulsionActiva = false;
+      let fechaCaducidad: Date | null = null;
+      
+      for (const doc of expulsionDocs) {
+        if (doc.expiry_date) {
+          fechaCaducidad = new Date(doc.expiry_date);
+          if (fechaCaducidad > new Date()) {
+            tieneExpulsionActiva = true;
+          }
+        } else if (doc.document_date) {
+          const fechaDoc = new Date(doc.document_date);
+          const añosDiferencia = (new Date().getTime() - fechaDoc.getTime()) / (1000 * 3600 * 24 * 365);
+          if (añosDiferencia < 5) {
+            tieneExpulsionActiva = true;
+          }
+        }
+        
+        const text = (doc.nombre + " " + (doc.detectedType || "") + " " + (doc.note || "")).toLowerCase();
+        if (text.includes("activa") || text.includes("vigente")) {
+          tieneExpulsionActiva = true;
+        }
+      }
+      
+      let mensaje = `تحليل قرارات الطرد والترحيل:\n\n`;
+      
+      if (tieneExpulsionActiva) {
+        mensaje += `🚨🚨🚨 عندك قرار طرد نشط! هاد الشي خطير جدا ويأثر بزاف على ملف التسوية.\n\n`;
+        mensaje += `⚠️ خاصك تحل هاد المشكلة قبل ما تقدم على التسوية الجماعية.\n\n`;
+        if (fechaCaducidad) {
+          mensaje += `📅 تاريخ انتهاء القرار: ${fechaCaducidad.toLocaleDateString()}\n\n`;
+        }
+        mensaje += `نصيحة سفيان: خاصك تشوف محامي متخصص ف قضايا الطرد قبل ما تكمل.`;
+      } else {
+        mensaje += `✅ ما عندكش قرار طرد نشط.\n\n`;
+        mensaje += `هاد الشي مزيان بزاف باش تمشي معاك فالتسوية.\n\n`;
+        mensaje += `نصيحة سفيان: دابا نقدر نكمل معاك ف الملف ديالك عادي.`;
+      }
+      
+      await speakFromAutomation(mensaje);
+      setExpulsionVerified(!tieneExpulsionActiva);
+      
     } catch (error) {
-      console.error("Error:", error);
-      pushAgentMessage("وقع مشكل في التحقق من الطرد.");
+      console.error("Error verificando expulsión:", error);
+      await speakFromAutomation("وقع مشكل وأنا كنحقق فالقرارات ديال الطرد. عاود حاول مرة أخرى.");
     }
   };
 
-  // ==============================================
-  // ⭐ VERIFICAR DOCUMENTOS - Genera explicación en DARIJA
-  // ==============================================
   const handleVerifyAll = async () => {
     try {
       setGeneralUploading(true);
       
-      const uploadedDocs = docs.filter(doc => doc.archivo && doc.archivo !== "");
-      if (uploadedDocs.length === 0) { 
-        pushAgentMessage("مازال ما عندكش وثائق مرفوعة. خاصك ترفع وثائق قبل ما نتحقق.");
-        toast({ title: "⚠️ Sin documentos", description: "Primero sube documentos", variant: "destructive" });
+      if (!docs.length) { 
+        await speakFromAutomation("مازال ما توصلتش بالوثائق ديالك. خاصك ترفع وثائق قبل ما نتحقق."); 
         return; 
       }
 
+      const docsWithData = docs.filter(doc => doc.archivo && doc.archivo !== "");
+      if (docsWithData.length === 0) {
+        await speakFromAutomation("الوثائق مازال ما تحللوش. خاصك ترفع وثائق وصور كاملة باش نقدر نقراها.");
+        return;
+      }
+
+      let explanation = "دابا غادي نشرح ليك الملف ديالك:\n\n";
       let hasPassport = false;
       let stayDates: string[] = [];
       let hasExpulsion = false;
-      let expulsionDate = "";
-      let hasValidPassport = false;
+      let expulsionExpired = false;
 
-      for (const doc of uploadedDocs) {
+      for (const doc of docsWithData) {
+        const name = doc.nombre || "وثيقة";
+        const type = (doc.detectedType || "").toLowerCase();
         const docName = (doc.nombre || "").toLowerCase();
-        const detectedType = (doc.detectedType || "").toLowerCase();
-        
-        if (detectedType.includes("passport") || detectedType.includes("nie") || 
-            docName.includes("pasaporte") || docName.includes("nie") ||
-            docName.includes("passport")) {
+
+        if (type.includes("passport") || type.includes("nie") || 
+            docName.includes("pasaporte") || docName.includes("passport") || 
+            docName.includes("nie")) {
           hasPassport = true;
-          if (doc.expiry_date) {
-            const expiry = new Date(doc.expiry_date);
-            if (expiry > new Date()) {
-              hasValidPassport = true;
-            }
-          }
+          explanation += `✅ ${name}: وثيقة هوية صالحة\n`;
         }
         
-        if (doc.document_date) {
-          stayDates.push(doc.document_date);
+        if ((doc as any).document_date) {
+          stayDates.push((doc as any).document_date);
+          explanation += `📅 ${name}: تاريخ ${(doc as any).document_date}\n`;
         }
         
         if (docName.includes("expulsion") || docName.includes("expulsión") || 
             docName.includes("deportacion")) {
           hasExpulsion = true;
-          if (doc.document_date) {
-            expulsionDate = doc.document_date;
+          if ((doc as any).expiry_date) {
+            const expiry = new Date((doc as any).expiry_date);
+            if (expiry < new Date()) expulsionExpired = true;
           }
+          explanation += `⚠️ ${name}: وثيقة طرد/ترحيل\n`;
+        }
+        
+        if (!type && !docName.includes("pasaporte") && !docName.includes("nie") && 
+            !docName.includes("expulsion") && !docName.includes("padron")) {
+          explanation += `❓ ${name}: نوع الوثيقة غير واضح\n`;
         }
       }
 
       const sortedDates = stayDates.map(d => new Date(d)).filter(d => !isNaN(d.getTime())).sort((a, b) => a.getTime() - b.getTime());
       let stayDays = 0;
       let hasMonths = false;
-      let firstDateStr = "", lastDateStr = "";
-      let daysNeeded = 0;
-      
       if (sortedDates.length >= 2) {
         const firstDate = sortedDates[0];
         const lastDate = sortedDates[sortedDates.length - 1];
         stayDays = Math.floor((lastDate.getTime() - firstDate.getTime()) / (1000 * 60 * 60 * 24));
         hasMonths = stayDays >= 150;
-        firstDateStr = firstDate.toLocaleDateString('es-ES');
-        lastDateStr = lastDate.toLocaleDateString('es-ES');
-        daysNeeded = Math.max(0, 150 - stayDays);
+        explanation += `\n📊 المدة بين أول وثيقة وآخر وثيقة: ${stayDays} يوم\n`;
       } else if (sortedDates.length === 1) {
-        stayDays = 0;
-        hasMonths = false;
-        firstDateStr = sortedDates[0].toLocaleDateString('es-ES');
-        daysNeeded = 150;
-      }
-
-      let expulsionMessage = "";
-      if (hasExpulsion && expulsionDate) {
-        const expDate = new Date(expulsionDate);
-        const now = new Date();
-        const diffYears = (now.getTime() - expDate.getTime()) / (1000 * 60 * 60 * 24 * 365);
-        if (diffYears >= 1) {
-          expulsionMessage = `عندك قرار طرد قديم من تاريخ ${expDate.toLocaleDateString('es-ES')}. هاد القرار قديم بزاف وعندو أكثر من عام. ما يؤثرش على ملف التسوية. تقدر تقدم عادي.`;
-        } else {
-          expulsionMessage = `⚠️ عندك قرار طرد جديد من تاريخ ${expDate.toLocaleDateString('es-ES')}. هاد القرار عندو أقل من عام. خاصك تحل هاد المشكلة قبل ما تقدم على التسوية.`;
-        }
-      } else if (hasExpulsion) {
-        expulsionMessage = "عندك وثيقة طرد ولكن مافيهاش تاريخ واضح. خاصك تجيب تاريخ دقيق باش نعرف واش قديم ولا جديد.";
+        explanation += `\n📊 عندك وثيقة وحيدة بتاريخ ${sortedDates[0].toLocaleDateString()}. خاصك وثيقتين على الأقل باش نحسب المدة.\n`;
       } else {
-        expulsionMessage = "ما عندكش أي وثيقة طرد. هاد شي مزيان بزاف. تقدر تقدم على التسوية من هاد الناحية.";
+        explanation += `\n📊 ما عندكش وثائق فيها تواريخ باش نحسب مدة الإقامة.\n`;
       }
 
-      const isEligible = hasPassport && hasMonths && (!hasExpulsion || (hasExpulsion && new Date(expulsionDate) < new Date(Date.now() - 365 * 24 * 60 * 60 * 1000)));
-
-      // ==========================================
-      // 🔥 GENERAR EXPLICACIÓN EN DARIJA CON VALOR
-      // ==========================================
-      let resultMessage = `🔍 تحليل الملف ديالك:\n\n`;
-
-      if (hasPassport) {
-        resultMessage += `✅ عندك باسبور أو NIE صالح. هاد الوثيقة أساسية للتسوية.\n`;
-        if (!hasValidPassport) {
-          resultMessage += `⚠️ ولكن الباسبور ديالك منتهي الصلاحية. خاصك تجددو قبل ما تقدم.\n`;
-        }
-      } else {
-        resultMessage += `❌ ما عندكش باسبور ولا NIE. هاد الوثيقة ضرورية. خاصك تجيب واحد.\n`;
-      }
-
-      resultMessage += `\n📅 حساب مدة الإقامة:\n`;
-      if (stayDays > 0) {
-        resultMessage += `من تاريخ: ${firstDateStr}\n`;
-        resultMessage += `تال تاريخ: ${lastDateStr}\n`;
-        resultMessage += `المدة الإجمالية: ${stayDays} يوم\n`;
-        
-        if (hasMonths) {
-          resultMessage += `✅ ${stayDays} يوم = ${Math.floor(stayDays/30)} شهور. هادشي كتر من 5 شهور (150 يوم).\n`;
-          resultMessage += `🎯 عندك ${stayDays - 150} يوم زيادة على المطلوب. مزيان.\n`;
-        } else {
-          resultMessage += `❌ ${stayDays} يوم فقط. خاصك 150 يوم باش تكمل 5 شهور.\n`;
-          resultMessage += `⚠️ باقي ليك ${daysNeeded} يوم باش توصل لل 5 شهور.\n`;
-        }
-      } else {
-        resultMessage += `❌ ما عندكش وثائق فيها تواريخ باش نحسب المدة.\n`;
-        resultMessage += `خاصك تجيب وثيقتين على الأقل فيها تواريخ باش نعرف مدة الإقامة.\n`;
-      }
-
-      resultMessage += `\n🚫 تحليل وثائق الطرد:\n${expulsionMessage}\n`;
-
-      resultMessage += `\n━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
-      if (isEligible) {
-        resultMessage += `✅✅✅ النتيجة: أنت مؤهل للتسوية الجماعية 2026!\n\n`;
-        resultMessage += `💪 عندك جميع الوثائق المطلوبة.\n`;
-        if (hasMonths) {
-          resultMessage += `📅 عندك ${stayDays} يوم فإسبانيا (أكثر من 5 شهور).\n`;
-        }
-        if (hasPassport) {
-          resultMessage += `🪪 عندك باسبور/NIE صالح.\n`;
-        }
-        if (!hasExpulsion || new Date(expulsionDate) < new Date(Date.now() - 365 * 24 * 60 * 60 * 1000)) {
-          resultMessage += `✅ ما عندكش مشكل مع الطرد.\n`;
-        }
-        resultMessage += `\n🎯 تقدر دابا تقدم على التسوية. حظ موفق!`;
-      } else {
-        resultMessage += `❌❌❌ النتيجة: للأسف، مازال ما تقدرش تقدم على التسوية.\n\n`;
-        resultMessage += `⚠️ خاصك تجيب الوثائق الناقصة:\n`;
-        if (!hasPassport) {
-          resultMessage += `- باسبور أو NIE\n`;
-        }
-        if (!hasMonths) {
-          resultMessage += `- بروفات ديال ${daysNeeded} يوم باش تكمل 5 شهور (المدة الحالية: ${stayDays} يوم)\n`;
-        }
-        if (hasExpulsion && new Date(expulsionDate) > new Date(Date.now() - 365 * 24 * 60 * 60 * 1000)) {
-          resultMessage += `- حل مشكل الطرد الجديد\n`;
-        }
-        resultMessage += `\n📢 من بعد ما تجيب الوثائق الناقصة، عاود اضغط على "Verificar documentos".`;
-      }
-
-      setVerificationResultText(resultMessage);
+      explanation += "\n";
+      if (!hasPassport) explanation += "❌ ما عندكش باسبور أو NIE. خاصك ترفع واحد.\n";
+      else explanation += "✅ وثيقة الهوية مزيانة.\n";
       
-      // Preparar mensaje para WhatsApp (darija + español)
-      const whatsappMsg = `
-📋 RESULTADO DEL ANÁLISIS - ${isEligible ? "APTO" : "NO APTO"}
-
-${resultMessage}
-
-─────────────────────────
-
-🔗 GestoriaCitaIA - www.gestoriacitaia.com
-      `;
-      setWhatsappMessage(whatsappMsg);
+      if (!hasMonths) explanation += `❌ مدة الإقامة: ${stayDays} يوم فقط. خاصك 150 يوم على الأقل (5 شهور).\n`;
+      else explanation += `✅ مدة الإقامة: ${stayDays} يوم (تزيد من 5 شهور).\n`;
       
-      setSoufianeReady(true);
-      pushAgentMessage(resultMessage);
+      if (hasExpulsion && !expulsionExpired) explanation += "❌ عندك قرار طرد نشط. خاصك تحلو قبل ما تقدم.\n";
+      else if (hasExpulsion && expulsionExpired) explanation += "⚠️ عندك قرار طرد قديم (منتهي الصلاحية).\n";
+      else explanation += "✅ ما عندكش قرارات طرد.\n";
+
+      setStayVerified(hasMonths);
       
-      toast({ 
-        title: isEligible ? "✅ APTO" : "❌ NO APTO", 
-        description: isEligible ? "Ya puedes pulsar 'Hablar con Soufiane'" : "Faltan documentos para ser apto" 
+      const soufianeUnlockCondition = hasPassport && hasMonths && (!hasExpulsion || expulsionExpired);
+      setSoufianeReady(soufianeUnlockCondition);
+      
+      console.log("🔍 RESULTADO FINAL:", {
+        hasPassport,
+        hasMonths,
+        hasExpulsion,
+        expulsionExpired,
+        soufianeUnlockCondition
       });
+
+      let resultadoTexto = "";
+      if (soufianeUnlockCondition) {
+        resultadoTexto = `
+${explanation}
+
+✅✅✅ مبروك! الملف ديالك كامل ومقبول!
+
+دابا تقدر تحكي مع سفيان بالصوت. اضغط على زر "Hablar con Soufiane".
+
+ودابا ركز معايا:
+1. دخل رقم الهاتف ديالك
+2. اضغط على زر واتساب
+3. غادي توصلك الوثيقة المهمة بصيغة PDF
+
+حظ موفق!
+`;
+      } else {
+        resultadoTexto = `
+${explanation}
+
+❌ الملف ديالك مازال ناقص. خاصك تجيب الوثائق الناقصة:
+
+${!hasPassport ? "- باسبور أو NIE\n" : ""}
+${!hasMonths ? `- بروفات ديال 5 شهور (عندك ${stayDays} يوم فقط)\n` : ""}
+${hasExpulsion && !expulsionExpired ? "- حل قرار الطرد النشط\n" : ""}
+
+من بعد ما تجيب الوثائق الناقصة، عاود اضغط على "Verificar documentos".
+`;
+      }
+
+      if (!realtimeDcRef.current || realtimeDcRef.current.readyState !== "open") {
+        console.log("⚠️ REALTIME NO CONECTADO - Intentando conectar...");
+        await startListening();
+        await new Promise((resolve) => setTimeout(resolve, 5000));
+      }
+
+      if (realtimeDcRef.current && realtimeDcRef.current.readyState === "open") {
+        console.log("✅ REALTIME CONECTADO - Enviando resultado...");
+        await speakFromAutomation(resultadoTexto);
+      } else {
+        console.log("⚠️ REALTIME NO DISPONIBLE - Mostrando mensaje en consola");
+        alert(resultadoTexto);
+        toast({
+          title: soufianeUnlockCondition ? "✅ Documentos verificados" : "❌ Documentos incompletos",
+          description: soufianeUnlockCondition ? "Ya puedes hablar con Soufiane" : "Faltan documentos para completar el expediente",
+        });
+      }
       
     } catch (err) {
-      console.error("Error:", err);
-      pushAgentMessage("وقع مشكل في التحقق من الوثائق.");
+      console.error("Error en handleVerifyAll:", err);
+      await speakFromAutomation("وقع مشكل وأنا كنحلل الوثائق، عاود حاول.");
     } finally {
       setGeneralUploading(false);
     }
   };
 
-  const handleTalkClick = () => {
-    if (!soufianeReady) {
-      toast({ title: "🔒 Bloqueado", description: "Primero verifica los documentos", variant: "destructive" });
-      return;
-    }
-    
-    if (soufianeHasSpokenRef.current) {
-      toast({ title: "✅ Ya completado", description: "Soufiane ya ha dado su análisis. Envía el resumen por WhatsApp.", variant: "default" });
-      return;
-    }
-    
-    if (isListening) {
-      stopListening();
-    } else {
-      startListening();
-    }
-  };
+  const goToSara = () => { window.location.href = "/sara"; };
 
   return (
     <div className="min-h-screen">
@@ -1338,9 +1535,14 @@ ${resultMessage}
             <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="rounded-[26px] overflow-hidden relative">
               <div className="relative">
                 <div className="relative">
-                  <video id="soufiane-video" playsInline preload="metadata" poster="/images/soufiane.png" className="w-full h-[270px] object-cover border-b border-[#f6c453]/10">
+                  <video id="soufiane-video" playsInline preload="metadata" poster="/images/soufiane.png" className="w-full h-[270px] object-cover border-b border-[#f6c453]/10" onPlay={() => { const btn = document.getElementById("play-button"); if (btn) btn.style.display = "none"; }}>
                     <source src="/soufiane-presentacion.mp4" type="video/mp4" />
                   </video>
+                  <button id="play-button" type="button" className="absolute inset-0 flex items-center justify-center" onClick={() => { const video = document.getElementById("soufiane-video") as HTMLVideoElement; if (video) video.play(); }}>
+                    <div className="bg-black/10 backdrop-blur-[2px] rounded-full w-12 h-12 flex items-center justify-center">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z" /></svg>
+                    </div>
+                  </button>
                 </div>
                 <div className="absolute bottom-5 right-4 text-right">
                   <h2 className="text-[22px] font-bold text-white">Soufiane</h2>
@@ -1364,37 +1566,48 @@ ${resultMessage}
                         <p className="text-white/60 text-xs">Acceso completo</p>
                       </div>
                     </div>
-                    <p className="text-white/70 text-[13px] leading-relaxed mb-3">Acceso ilimitado a Soufiane IA, análisis de documentos y generación automática del expediente.</p>
+                    <p className="text-white/70 text-[13px] leading-relaxed mb-3">Acceso ilimitado a Soufiane IA, videollamada realtime, análisis de documentos y generación automática del expediente.</p>
                     <button onClick={handleStripePayment} type="button" className="w-[92%] mx-auto flex items-center justify-center h-[52px] rounded-[20px] text-white font-semibold text-[16px] bg-gradient-to-r from-[#16a34a] to-[#22c55e] border border-[#4ade80] shadow-[0_4px_14px_rgba(34,197,94,0.35)]">
                       🔓 Desbloquear ahora
                     </button>
+                    <div className="mt-2 flex items-center justify-center gap-2 flex-wrap">
+                      <div className="h-8 px-2 rounded-lg bg-white flex items-center justify-center text-blue-700 font-black text-[10px]">VISA</div>
+                      <div className="h-8 px-2 rounded-lg bg-white flex items-center justify-center text-red-500 font-black text-[10px]">Mastercard</div>
+                      <div className="h-8 px-2 rounded-lg bg-white flex items-center justify-center text-black font-black text-[10px]">Pay</div>
+                      <div className="h-8 px-2 rounded-lg bg-white flex items-center justify-center text-black font-black text-[10px]">G Pay</div>
+                    </div>
                   </div>
                   <div className="rounded-2xl border border-white/10 bg-white/5 p-3 mt-3">
                     <div className="flex items-center gap-2 mb-3">
                       <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
                       <p className="text-white font-bold">Soufiane IA</p>
                     </div>
-                    <p className="text-white/80 text-sm leading-relaxed">Especialista en extranjería española.</p>
+                    <p className="text-white/80 text-sm leading-relaxed">Especialista profesional en extranjería española para marroquíes en España. Pregunta sobre residencia, papeles, policía, nacionalidad, arraigo, trabajo, estudios y cualquier problema legal relacionado con inmigración.</p>
                   </div>
                 </div>
               )}
 
               {paymentCompleted && (
                 <div className="mt-5 space-y-4">
-                  {/* ⭐ Botón Hablar con Soufiane */}
                   <button
-                    onClick={handleTalkClick}
-                    disabled={!soufianeReady || soufianeHasSpokenRef.current}
+                    onClick={() => {
+                      if (soufianeReady) {
+                        if (isListening) {
+                          stopListening();
+                        } else {
+                          startListening();
+                        }
+                      }
+                    }}
+                    disabled={!soufianeReady}
                     className={`w-[92%] mx-auto h-[52px] rounded-[20px] flex items-center justify-center gap-3 text-[16px] font-semibold border shadow-xl transition-all duration-300 ${
-                      !soufianeReady || soufianeHasSpokenRef.current ? "bg-gray-600 opacity-60 cursor-not-allowed text-white"
-                      : isListening ? "bg-green-600 border-green-400 text-white shadow-green-500/30 animate-pulse"
+                      !soufianeReady ? "bg-gray-600 opacity-60 cursor-not-allowed text-white"
+                      : isListening ? "bg-red-600 border-red-400 text-white shadow-red-500/30 animate-pulse"
                       : "bg-gradient-to-r from-[#16a34a] to-[#22c55e] border-[#4ade80] text-white shadow-green-500/20"
                     }`}
                   >
-                    {soufianeHasSpokenRef.current ? (
-                      <><Volume2 className="w-5 h-5" />Análisis completado ✅</>
-                    ) : isListening ? (
-                      <><MicOff className="w-5 h-5" />Di "salam" para empezar</>
+                    {isListening ? (
+                      <><MicOff className="w-5 h-5" />Soufiane escuchando...</>
                     ) : (
                       <><Mic className="w-5 h-5" />
                         {!soufianeReady ? "Verificar documentos primero" : "Hablar con Soufiane"}
@@ -1415,45 +1628,31 @@ ${resultMessage}
                   </button>
 
                   <button onClick={handleVerifyAsilo} className="w-[92%] mx-auto h-[52px] rounded-[20px] border border-[#c6922f] bg-[#050816] hover:bg-[#0b1220] transition-all text-white font-medium text-[16px] flex items-center justify-center gap-3 shadow-lg">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-[#d4a94d]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
                     Verificar Asilo
                   </button>
 
                   <button onClick={handleVerifyExpulsion} className="w-[92%] mx-auto h-[52px] rounded-[20px] border border-[#c6922f] bg-[#050816] hover:bg-[#0b1220] transition-all text-white font-medium text-[16px] flex items-center justify-center gap-3 shadow-lg">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-[#d4a94d]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                    </svg>
                     Verificar Expulsión Europea
                   </button>
 
-                  {/* Input WhatsApp + Botón Enviar */}
-                  <div className="w-[92%] mx-auto flex gap-2">
-                    <div className="flex-1 h-[52px] rounded-[20px] border border-[#c6922f]/40 bg-[#050816] flex items-center overflow-hidden shadow-lg">
-                      <div className="w-[58px] h-full flex items-center justify-center border-r border-[#c6922f]/30 bg-black">
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" className="w-6 h-6" />
-                      </div>
-                      <input 
-                        type="tel" 
-                        value={phone} 
-                        onChange={(e) => setPhone(e.target.value)} 
-                        placeholder="Número WhatsApp" 
-                        className="flex-1 h-full bg-transparent px-4 text-white placeholder:text-white/40 outline-none text-[16px]" 
-                      />
+                  <div className="w-[92%] mx-auto h-[52px] rounded-[20px] border border-[#c6922f]/40 bg-[#050816] flex items-center overflow-hidden shadow-lg">
+                    <div className="w-[58px] h-full flex items-center justify-center border-r border-[#c6922f]/30 bg-black">
+                      <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" className="w-6 h-6" />
                     </div>
-                    <button 
-                      onClick={sendWhatsAppSummary}
-                      disabled={!soufianeHasSpokenRef.current}
-                      className={`h-[52px] px-4 rounded-[20px] font-semibold text-[14px] transition-all ${
-                        soufianeHasSpokenRef.current 
-                          ? "bg-green-600 hover:bg-green-700 text-white"
-                          : "bg-gray-600 opacity-60 cursor-not-allowed text-white"
-                      }`}
-                    >
-                      Enviar 📤
-                    </button>
+                    <input 
+                      type="tel" 
+                      value={phone} 
+                      onChange={(e) => setPhone(e.target.value)} 
+                      placeholder="Número WhatsApp" 
+                      className="flex-1 h-full bg-transparent px-4 text-white placeholder:text-white/40 outline-none text-[16px]" 
+                    />
                   </div>
-                  {soufianeHasSpokenRef.current && (
-                    <p className="text-green-400 text-center text-sm">✅ Análisis completado. Envía el resumen por WhatsApp.</p>
-                  )}
-                  {!soufianeHasSpokenRef.current && soufianeReady && (
-                    <p className="text-yellow-400 text-center text-sm">🎤 Pulsa "Hablar con Soufiane" y di "salam"</p>
-                  )}
                 </div>
               )}
             </div>
