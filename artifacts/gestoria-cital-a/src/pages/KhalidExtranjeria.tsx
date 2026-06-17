@@ -18,168 +18,117 @@ export default function KhalidExtranjeria() {
   const [isListening, setIsListening] = useState(false);
   const [messagesCount, setMessagesCount] = useState(0);
   const [showPayment, setShowPayment] = useState(false);
-const [paymentEnabled, setPaymentEnabled] = useState(true);
-const [answeredOnce, setAnsweredOnce] = useState(false);
+  const [paymentEnabled, setPaymentEnabled] = useState(true);
+  const [answeredOnce, setAnsweredOnce] = useState(false);
   const [userAskedQuestion, setUserAskedQuestion] = useState(false);
   const [freeQuestionUsed, setFreeQuestionUsed] = useState(false);
   const [isPaid, setIsPaid] = useState(false);
   const realtimeRef = useRef<any>(null);
-const remoteAudioRef = useRef<HTMLAudioElement | null>(null);
-const realtimePcRef = useRef<RTCPeerConnection | null>(null);
-const realtimeDcRef = useRef<RTCDataChannel | null>(null);
-const realtimeLocalStreamRef = useRef<MediaStream | null>(null);
+  const remoteAudioRef = useRef<HTMLAudioElement | null>(null);
+  const realtimePcRef = useRef<RTCPeerConnection | null>(null);
+  const realtimeDcRef = useRef<RTCDataChannel | null>(null);
+  const realtimeLocalStreamRef = useRef<MediaStream | null>(null);
 
-const assistantBusyRef = useRef(false);
-const lastUserTranscriptRef = useRef("");
-const lastAssistantTextRef = useRef("");
+  const assistantBusyRef = useRef(false);
+  const lastUserTranscriptRef = useRef("");
+  const lastAssistantTextRef = useRef("");
 
-const [waitingKhalid, setWaitingKhalid] = useState(false);
-const [lastTranscript, setLastTranscript] = useState("");
-const [lastReply, setLastReply] = useState("");
- const [smartAction, setSmartAction] =
-  useState<any>(null);
-const [hasStartedConversation, setHasStartedConversation] =
-  useState(
+  const [waitingKhalid, setWaitingKhalid] = useState(false);
+  const [lastTranscript, setLastTranscript] = useState("");
+  const [lastReply, setLastReply] = useState("");
+  const [smartAction, setSmartAction] = useState<any>(null);
+  const [hasStartedConversation, setHasStartedConversation] = useState(
     localStorage.getItem("khalid_started") === "true"
   );
- 
-  
-useEffect(() => {
 
-  const savedPaid =
-    localStorage.getItem("khalid_paid");
-
-  if (savedPaid === "true") {
-    const savedConversation =
-  localStorage.getItem("khalid_started");
-
-if (savedConversation === "true") {
-
-  setHasStartedConversation(true);
-
-}
-    setIsPaid(true);
-  }
-
-  const params =
-    new URLSearchParams(window.location.search);
-
-  const paid =
-    params.get("paid");
-
-  if (paid === "true") {
-
-    localStorage.setItem(
-      "khalid_paid",
-      "true"
-    );
-
-    setIsPaid(true);
-
-    setShowPayment(false);
-
-  }
-
-}, []);
-  
-
-useEffect(() => {
-
-  if (
-    lastReply.includes("سولني أي سؤال") ||
-    lastReply.includes("الهجرة") ||
-    lastReply.includes("الإقامة")
-  ) {
-
-    const isPremium =
-      localStorage.getItem("khalid_paid") === "true";
-
-    if (!isPremium) {
-
-      setShowPayment(true);
-
-      stopConversation();
-
+  useEffect(() => {
+    const savedPaid = localStorage.getItem("khalid_paid");
+    if (savedPaid === "true") {
+      const savedConversation = localStorage.getItem("khalid_started");
+      if (savedConversation === "true") {
+        setHasStartedConversation(true);
+      }
+      setIsPaid(true);
     }
 
-  }
+    const params = new URLSearchParams(window.location.search);
+    const paid = params.get("paid");
+    if (paid === "true") {
+      localStorage.setItem("khalid_paid", "true");
+      setIsPaid(true);
+      setShowPayment(false);
+    }
+  }, []);
 
-}, [lastReply]);
+  useEffect(() => {
+    if (
+      lastReply.includes("سولني أي سؤال") ||
+      lastReply.includes("الهجرة") ||
+      lastReply.includes("الإقامة")
+    ) {
+      const isPremium = localStorage.getItem("khalid_paid") === "true";
+      if (!isPremium) {
+        setShowPayment(true);
+        stopConversation();
+      }
+    }
+  }, [lastReply]);
 
   const startConversation = async () => {
     try {
       setIsListening(true);
-
       setMessagesCount((prev) => prev + 1);
 
-      const tokenResponse = await fetch(
-        "/api/realtime-session",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            assistant: "khalid",
-          }),
-        }
-      );
+      const tokenResponse = await fetch("/api/realtime-session", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          assistant: "khalid",
+        }),
+      });
 
       const data = await tokenResponse.json();
-
       console.log("TOKEN RESPONSE:", data);
 
-      const EPHEMERAL_KEY =
-        data?.client_secret?.value ||
-        data?.value ||
-        data?.clientSecret;
-
+      const EPHEMERAL_KEY = data?.client_secret?.value || data?.value || data?.clientSecret;
       if (!EPHEMERAL_KEY) {
         throw new Error("No ephemeral key");
       }
 
       const pc = new RTCPeerConnection();
-realtimePcRef.current = pc;
+      realtimePcRef.current = pc;
       realtimeRef.current = pc;
 
       const audioEl = document.createElement("audio");
-
-audioEl.autoplay = true;
-
-audioEl.playsInline = true;
-
-remoteAudioRef.current = audioEl;
-
       audioEl.autoplay = true;
+      audioEl.playsInline = true;
+      remoteAudioRef.current = audioEl;
 
       pc.ontrack = (e) => {
         audioEl.srcObject = e.streams[0];
       };
 
-      const mediaStream =
-        await navigator.mediaDevices.getUserMedia({
-          audio: true,
-        });
-realtimeLocalStreamRef.current = mediaStream;
+      const mediaStream = await navigator.mediaDevices.getUserMedia({
+        audio: true,
+      });
+      realtimeLocalStreamRef.current = mediaStream;
 
-mediaStream
-  .getTracks()
-  .forEach((track) => {
-    pc.addTrack(track, mediaStream);
-  });
-     
-      const dc =
-        pc.createDataChannel("oai-events");
+      mediaStream.getTracks().forEach((track) => {
+        pc.addTrack(track, mediaStream);
+      });
 
-     dc.addEventListener("open", () => {
+      const dc = pc.createDataChannel("oai-events");
 
-  console.log("Realtime conectado");
+      dc.addEventListener("open", () => {
+        console.log("Realtime conectado");
 
-  dc.send(
-    JSON.stringify({
-      type: "session.update",
-      session: {
-        instructions: `
+        dc.send(
+          JSON.stringify({
+            type: "session.update",
+            session: {
+              instructions: `
 أنت خالد من GestoriaCitaIA.
 
 تكلم فقط بالدارجة المغربية.
@@ -206,403 +155,273 @@ mediaStream
 سولني أي سؤال على الهجرة أو الإقامة أو الأوراق فإسبانيا وإن شاء الله نجاوبك.
 Nunca interrumpas tus respuestas aunque تسمع الضجيج أو شخص يتكلم. يجب أن تكمل الجواب كامل حتى النهاية قبل أن تستمع من جديد.
 `,
-        modalities: ["audio", "text"],
-       turn_detection: null,
-
-interrupt_response: false,
-
-create_response: true,
-      },
-    })
-  );
-
-  // 🎤 خالد يهضر مباشرة
-if (!hasStartedConversation) {
-
-  localStorage.setItem(
-    "khalid_started",
-    "true"
-  );
-
-  setHasStartedConversation(true);
-
-  dc.send(
-    JSON.stringify({
-      type: "response.create",
-      response: {
-        modalities: ["audio", "text"],
-        instructions:
-          "قول: السلام عليكم، أنا خالد من GestoriaCitaIA. سولني أي سؤال على الهجرة فإسبانيا.",
-      },
-    })
-  );
-
-} else {
-
-  dc.send(
-    JSON.stringify({
-      type: "response.create",
-      response: {
-        modalities: ["audio", "text"],
-        instructions:
-          "قول: رجعتي. مرحبا بيك من جديد، نكملو منين وقفنا.",
-      },
-    })
-  );
-
-}
-
-});
-dc.onmessage = (event) => {
-  try {
-
-    const msg = JSON.parse(event.data);
-
-    // 🧠 كلام خالد
-  if (
-  msg.type === "response.output_text.delta" &&
-  typeof msg.delta === "string"
-) {
-
-  setLastReply((prev) => prev + msg.delta);
-const khalidText =
-  (lastAssistantTextRef.current + msg.delta)
-    .toLowerCase();
-
-lastAssistantTextRef.current =
-  khalidText;
-
-if (
-  khalidText.includes("madrid")
-) {
-
-  setSmartAction({
-    type: "office",
-    city: "Madrid",
-    name: "Oficina Extranjería Madrid Centro",
-    address: "Calle Silva 19",
-    phone: "912 73 90 39",
-    image:
-      "https://images.unsplash.com/photo-1528909514045-2fa4ac7a08ba?q=80&w=1200&auto=format&fit=crop"
-  });
-
-}
-
-// 👮 Policía
-else if (
-  khalidText.includes("policia") ||
-  khalidText.includes("policía") ||
-  khalidText.includes("comisaria") ||
-  khalidText.includes("comisaría") ||
-  khalidText.includes("tie")
-) {
-
-  setSmartAction({
-    type: "police",
-    city: "Madrid",
-    name: "Comisaría Policía Nacional",
-    address: "Avenida de los Poblados",
-    phone: "091",
-    image:
-      "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=1200&auto=format&fit=crop"
-  });
-
-}
+              modalities: ["audio", "text"],
+              turn_detection: null,
+              interrupt_response: false,
+              create_response: true,
+            },
+          })
+        );
+
+        if (!hasStartedConversation) {
+          localStorage.setItem("khalid_started", "true");
+          setHasStartedConversation(true);
+
+          dc.send(
+            JSON.stringify({
+              type: "response.create",
+              response: {
+                modalities: ["audio", "text"],
+                instructions:
+                  "قول: السلام عليكم، أنا خالد من GestoriaCitaIA. سولني أي سؤال على الهجرة فإسبانيا.",
+              },
+            })
+          );
+        } else {
+          dc.send(
+            JSON.stringify({
+              type: "response.create",
+              response: {
+                modalities: ["audio", "text"],
+                instructions: "قول: رجعتي. مرحبا بيك من جديد، نكملو منين وقفنا.",
+              },
+            })
+          );
+        }
+      });
+
+      dc.onmessage = (event) => {
+        try {
+          const msg = JSON.parse(event.data);
+
+          if (
+            msg.type === "response.output_text.delta" &&
+            typeof msg.delta === "string"
+          ) {
+            setLastReply((prev) => prev + msg.delta);
+            const khalidText = (lastAssistantTextRef.current + msg.delta).toLowerCase();
+            lastAssistantTextRef.current = khalidText;
+
+            const isPremium = localStorage.getItem("khalid_paid") === "true";
+            if (userAskedQuestion && !freeQuestionUsed && !isPremium) {
+              setFreeQuestionUsed(true);
+              setPaymentEnabled(true);
+              setShowPayment(true);
+              stopConversation();
+            }
+          }
+
+          const transcript =
+            msg?.transcript ||
+            msg?.item?.transcript ||
+            msg?.item?.content?.[0]?.transcript ||
+            "";
+
+          if (
+            (msg.type === "conversation.item.input_audio_transcription.completed" ||
+              msg.type === "input_audio_buffer.transcription.completed") &&
+            transcript &&
+            transcript !== lastUserTranscriptRef.current
+          ) {
+            lastUserTranscriptRef.current = transcript;
+            setLastTranscript(transcript);
+            console.log("USER:", transcript);
+            setUserAskedQuestion(true);
+          }
+
+          if (msg.type === "response.created") {
+            assistantBusyRef.current = true;
+            setWaitingKhalid(true);
+            if (realtimeLocalStreamRef.current) {
+              realtimeLocalStreamRef.current
+                .getAudioTracks()
+                .forEach(track => {
+                  track.enabled = false;
+                });
+            }
+            setLastReply("");
+            lastAssistantTextRef.current = "";
+            setSmartAction(null);
+          }
+
+          if (msg.type === "response.done") {
+            assistantBusyRef.current = false;
+            setWaitingKhalid(false);
+
+            if (realtimeLocalStreamRef.current) {
+              realtimeLocalStreamRef.current
+                .getAudioTracks()
+                .forEach(track => {
+                  track.enabled = true;
+                });
+            }
+
+            console.log("KHALID DONE");
+
+            let assistantTranscript = "";
+
+            if (msg?.response?.output?.[0]?.content?.[0]?.transcript) {
+              assistantTranscript = msg.response.output[0].content[0].transcript;
+            } else if (msg?.response?.output?.[0]?.content?.[0]?.text) {
+              assistantTranscript = msg.response.output[0].content[0].text;
+            } else if (msg?.response?.output?.[0]?.text) {
+              assistantTranscript = msg.response.output[0].text;
+            } else if (msg?.response?.text) {
+              assistantTranscript = msg.response.text;
+            }
+
+            if (!assistantTranscript && lastAssistantTextRef.current) {
+              assistantTranscript = lastAssistantTextRef.current;
+            }
+
+            console.log("KHALID SAID:", assistantTranscript);
+
+            const text = (assistantTranscript || "").toLowerCase();
+            console.log("TEXTO PARA DETECCIÓN:", text);
+
+            const cities = [
+              "madrid", "barcelona", "valencia", "sevilla",
+              "málaga", "malaga", "murcia", "alicante",
+              "granada", "bilbao", "zaragoza", "toledo", "vigo",
+              "cordoba", "valladolid", "salamanca", "tenerife",
+              "las palmas", "palma", "mallorca", "ibiza"
+            ];
+
+            const detectedCity = cities.find(city => text.includes(city));
+            console.log("CIUDAD DETECTADA:", detectedCity);
+
+            let newSmartAction = null;
+
+            if (text.includes("policia") || text.includes("policía") ||
+                text.includes("tie") || text.includes("huellas") ||
+                text.includes("comisaria") || text.includes("comisaría")) {
+
+              const cityName = detectedCity ? detectedCity.charAt(0).toUpperCase() + detectedCity.slice(1) : "Madrid";
+
+              newSmartAction = {
+                type: "link",
+                title: `🚔 Policía ${detectedCity ? `(${cityName})` : ""}`,
+                description: "Citas para huellas, TIE y trámites policiales",
+                image: `https://maps.googleapis.com/maps/api/staticmap?center=${detectedCity || "Madrid"}&zoom=15&size=1200x600&maptype=roadmap&markers=color:blue|${detectedCity || "Madrid"}`,
+                buttons: [
+                  {
+                    label: "📅 Reservar cita",
+                    url: "/sara-citas"
+                  },
+                  {
+                    label: "📍 Ver en Maps",
+                    url: `https://www.google.com/maps/search/comisaria+policia+${detectedCity || "Madrid"}`
+                  }
+                ]
+              };
+              console.log("✅ DETECTADO: POLICÍA");
+            }
+
+            else if (
+              text.includes("extranjeria") || text.includes("extranjería") ||
+              text.includes("inmigracion") || text.includes("inmigración") ||
+              text.includes("residencia") || text.includes("arraigo") ||
+              text.includes("asilo") || text.includes("refugio") ||
+              text.includes("visado") || text.includes("visa") ||
+              text.includes("estancia") || text.includes("permiso") ||
+              text.includes("renovacion") || text.includes("renovación") ||
+              text.includes("nie") || text.includes("pasaporte") ||
+              text.includes("dni") || text.includes("cita") ||
+              text.includes("citas") || text.includes("reserva") ||
+              text.includes("tramite") || text.includes("trámite")
+            ) {
+              const cityName = detectedCity ? detectedCity.charAt(0).toUpperCase() + detectedCity.slice(1) : "Madrid";
+
+              newSmartAction = {
+                type: "link",
+                title: `🏢 Extranjería ${detectedCity ? `(${cityName})` : ""}`,
+                description: "Información y trámites de residencia, arraigo y visados",
+                image: `https://maps.googleapis.com/maps/api/staticmap?center=${detectedCity || "Madrid"}&zoom=13&size=1200x600&maptype=roadmap&markers=color:red|${detectedCity || "Madrid"}`,
+                buttons: [
+                  {
+                    label: "📅 Pedir cita",
+                    url: "/sara-citas"
+                  },
+                  {
+                    label: "📄 Más información",
+                    url: "https://www.inclusion.gob.es/web/migraciones"
+                  },
+                  {
+                    label: "📍 Ver en Maps",
+                    url: `https://www.google.com/maps/search/oficina+extranjeria+${detectedCity || "Madrid"}`
+                  }
+                ]
+              };
+              console.log("✅ DETECTADO: EXTRANJERÍA");
+            }
+
+            else if (text.includes("nacionalidad") || text.includes("nacionalidad española")) {
+              newSmartAction = {
+                type: "link",
+                title: "🇪🇸 Nacionalidad Española",
+                description: "Requisitos, documentos y plazos para obtener la nacionalidad",
+                image: "https://images.unsplash.com/photo-1521295121783-8a321d551ad2?q=80&w=1200&auto=format&fit=crop",
+                buttons: [
+                  {
+                    label: "📄 Ver requisitos",
+                    url: "https://www.mjusticia.gob.es"
+                  },
+                  {
+                    label: "📅 Asesoría",
+                    url: "/sara-citas"
+                  }
+                ]
+              };
+              console.log("✅ DETECTADO: NACIONALIDAD");
+            }
+
+            else if (detectedCity) {
+              const cityName = detectedCity.charAt(0).toUpperCase() + detectedCity.slice(1);
+              newSmartAction = {
+                type: "link",
+                title: `📍 ${cityName}`,
+                description: `Información sobre trámites de extranjería en ${cityName}`,
+                image: `https://maps.googleapis.com/maps/api/staticmap?center=${detectedCity}&zoom=12&size=1200x600&maptype=roadmap&markers=color:green|${detectedCity}`,
+                buttons: [
+                  {
+                    label: "📅 Citas en Extranjería",
+                    url: "/sara-citas"
+                  },
+                  {
+                    label: "📍 Ver en Maps",
+                    url: `https://www.google.com/maps/search/oficina+extranjeria+${detectedCity}`
+                  }
+                ]
+              };
+              console.log("✅ DETECTADO: CIUDAD");
+            }
+
+            if (newSmartAction) {
+              setSmartAction(newSmartAction);
+              console.log("🎯 SMART ACTION ACTUALIZADO:", newSmartAction);
+            }
+          }
+        } catch (err) {
+          console.error(err);
+        }
+      };
 
-// 📄 Arraigo
-else if (
-  khalidText.includes("arraigo")
-) {
-
-  setSmartAction("arraigo");
-
-}
-  const isPremium =
-    localStorage.getItem("khalid_paid") === "true";
-
-  if (
-    userAskedQuestion &&
-    !freeQuestionUsed &&
-    !isPremium
-  ) {
-
-    setFreeQuestionUsed(true);
-
-    setPaymentEnabled(true);
-
-    setShowPayment(true);
-
-    stopConversation();
-
-  }
-
-}
-
-    // 🎤 كلام المستخدم
-    const transcript =
-      msg?.transcript ||
-      msg?.item?.transcript ||
-      msg?.item?.content?.[0]?.transcript ||
-      "";
-
-    if (
-      (
-        msg.type === "conversation.item.input_audio_transcription.completed" ||
-        msg.type === "input_audio_buffer.transcription.completed"
-      ) &&
-      transcript &&
-      transcript !== lastUserTranscriptRef.current
-    ) {
-
-      lastUserTranscriptRef.current = transcript;
-
-      setLastTranscript(transcript);
-
-      console.log("USER:", transcript);
-setUserAskedQuestion(true);
-
-    }
-
-    // 🤖 خالد بدا يهضر
-    if (msg.type === "response.created") {
-
-      assistantBusyRef.current = true;
-
-      setWaitingKhalid(true);
-      // 🔇 apagar micro mientras Khalid habla
-if (realtimeLocalStreamRef.current) {
-
-  realtimeLocalStreamRef.current
-    .getAudioTracks()
-    .forEach(track => {
-      track.enabled = false;
-    });
-
-}
-
-      setLastReply("");
-      lastAssistantTextRef.current = "";
-setSmartAction(null);
-
-    }
-
-    // ✅ خالد سالى
-if (msg.type === "response.done") {
-
-  assistantBusyRef.current = false;
-
-  setWaitingKhalid(false);
-  // 🎤 reactivar micro cuando Khalid termina
-if (realtimeLocalStreamRef.current) {
-
-  realtimeLocalStreamRef.current
-    .getAudioTracks()
-    .forEach(track => {
-      track.enabled = true;
-    });
-
-}
-
-  console.log("KHALID DONE");
-  const assistantTranscript =
-  msg?.response?.output?.[0]?.content?.[0]?.transcript
-    ?.toLowerCase?.() || "";
-
-console.log(
-  "KHALID SAID:",
-  assistantTranscript
-);
-
-const text =
-  assistantTranscript.toLowerCase();
-const cities = [
-  "madrid",
-  "barcelona",
-  "valencia",
-  "sevilla",
-  "málaga",
-  "malaga",
-  "murcia",
-  "alicante",
-  "granada",
-  "bilbao",
-  "zaragoza",
-  "toledo",
-  "vigo"
-];
-
-const detectedCity =
-  cities.find(city =>
-    text.includes(city)
-  );
-// 👮 POLICÍA / TIE
-if (
-  text.includes("policia") ||
-  text.includes("policía") ||
-  text.includes("tie") ||
-  text.includes("huellas")
-) {
-
-  setSmartAction({
-    type: "link",
-    title: "Policía y TIE",
-    description:
-      "Citas, huellas y trámites TIE",
-image: `https://maps.googleapis.com/maps/api/staticmap?center=${
-  detectedCity || "Madrid"
-}&zoom=15&size=1200x600&maptype=roadmap&markers=color:blue|${
-  detectedCity || "Madrid"
-}`,
-    buttons: [
-      {
-        label: "📅 Reservar cita",
- url: "/sara-citas"
-      },
-      {
-        label: "📍 Maps",
-        url:
-          "https://www.google.com/maps"
-      }
-    ]
-  });
-
-}
-
-// 🏢 EXTRANJERÍA
-else if (
-
-  // 🌍 extranjería
-  text.includes("extranjeria") ||
-  text.includes("extranjería") ||
-  text.includes("inmigracion") ||
-  text.includes("inmigración") ||
-  text.includes("residencia") ||
-  text.includes("arraigo") ||
-  text.includes("asilo") ||
-  text.includes("refugio") ||
-  text.includes("visado") ||
-  text.includes("visa") ||
-  text.includes("estancia") ||
-  text.includes("permiso") ||
-  text.includes("renovacion") ||
-  text.includes("renovación") ||
-
-  // 📄 documentos
-  text.includes("nie") ||
-  text.includes("tie") ||
-  text.includes("huellas") ||
-  text.includes("pasaporte") ||
-  text.includes("dni") ||
-
-  // 👮 policía
-  text.includes("policia") ||
-  text.includes("policía") ||
-  text.includes("comisaria") ||
-  text.includes("comisaría") ||
-
-  // 📅 citas
-  text.includes("cita") ||
-  text.includes("citas") ||
-  text.includes("reserva") ||
-  text.includes("reservar") ||
-  text.includes("tramite") ||
-  text.includes("trámite") ||
-
-  // 🌐 webs
-  text.includes("pagina") ||
-  text.includes("página") ||
-  text.includes("web") ||
-  text.includes("sitio") ||
-  text.includes("link") ||
-  text.includes("url")
-
-)
-
-  setSmartAction({
-    type: "link",
-    title: "Oficina Extranjería",
-    description:
-      "Información y trámites de residencia",
-  image: `https://maps.googleapis.com/maps/api/staticmap?center=${
-  detectedCity || "Madrid"
-}&zoom=13&size=1200x600&maptype=roadmap&markers=color:red|${
-  detectedCity || "Madrid"
-}`,
-    buttons: [
-      {
-        label: "📅 Pedir cita",
-        url: "/sara-citas"
-      },
-      {
-        label: "📄 Información",
-        url:
-          "https://www.inclusion.gob.es/web/migraciones"
-      }
-    ]
-  });
-
-}
-
-// 🇪🇸 NACIONALIDAD
-else if (
-  text.includes("nacionalidad")
-) {
-
-  setSmartAction({
-    type: "link",
-    title: "Nacionalidad Española",
-    description:
-      "Documentos y requisitos",
-    image:
-      "https://images.unsplash.com/photo-1521295121783-8a321d551ad2?q=80&w=1200&auto=format&fit=crop",
-    buttons: [
-      {
-        label: "📄 Ver requisitos",
-        url:
-          "https://www.mjusticia.gob.es"
-      }
-    ]
-  });
-
-
-}
-  } catch (err) {
-
-    console.error(err);
-
-  }
-};
       const offer = await pc.createOffer();
-
       await pc.setLocalDescription(offer);
 
-      const baseUrl =
-     "https://api.openai.com/v1/realtime/calls";
+      const baseUrl = "https://api.openai.com/v1/realtime/calls";
+      const sdpResponse = await fetch(baseUrl, {
+        method: "POST",
+        body: offer.sdp,
+        headers: {
+          Authorization: `Bearer ${EPHEMERAL_KEY}`,
+          "Content-Type": "application/sdp",
+        },
+      });
 
-      const sdpResponse = await fetch(
-        baseUrl,
-        {
-          method: "POST",
-          body: offer.sdp,
-          headers: {
-            Authorization: `Bearer ${EPHEMERAL_KEY}`,
-            "Content-Type": "application/sdp",
-          },
-        }
-      );
-
-      const sdpText =
-        await sdpResponse.text();
-
-      console.log(
-        "SDP STATUS:",
-        sdpResponse.status
-      );
-
-      console.log(
-        "SDP RESPONSE:",
-        sdpText
-      );
+      const sdpText = await sdpResponse.text();
+      console.log("SDP STATUS:", sdpResponse.status);
+      console.log("SDP RESPONSE:", sdpText);
 
       if (!sdpResponse.ok) {
         throw new Error(sdpText);
@@ -613,9 +432,7 @@ else if (
         sdp: sdpText,
       };
 
-      await pc.setRemoteDescription(
-        answer as any
-      );
+      await pc.setRemoteDescription(answer as any);
 
       toast({
         title: "Khalid conectado",
@@ -623,9 +440,7 @@ else if (
       });
     } catch (error) {
       console.error(error);
-
       setIsListening(false);
-
       toast({
         title: "Error",
         description: "No se pudo conectar",
@@ -635,9 +450,7 @@ else if (
 
   const stopConversation = () => {
     setIsListening(false);
-
     realtimeRef.current?.close?.();
-
     realtimeRef.current = null;
   };
 
@@ -646,13 +459,13 @@ else if (
       <Navbar />
 
       <div className="max-w-md mx-auto px-4 pt-5 pb-20">
-<div className="mb-3">
+        <div className="mb-3">
           <h1 className="text-3xl font-bold">
             Khalid
           </h1>
 
           <p className="text-gray-400 text-sm">
-      {t("agent_mo_role")}
+            {t("agent_mo_role")}
           </p>
         </div>
 
@@ -663,60 +476,51 @@ else if (
         >
           <div className="relative">
             {!isPaid && (
-  
-<div className="relative">
+              <div className="relative">
+                <video
+                  id="khalid-video"
+                  playsInline
+                  preload="metadata"
+                  poster="/images/khalid-extranjeria.png"
+                  className="w-full h-[270px] object-cover border-b border-[#f6c453]/10"
+                  onPlay={() => {
+                    const btn = document.getElementById("play-button-khalid");
+                    if (btn) btn.style.display = "none";
+                  }}
+                >
+                  <source
+                    src="/khalid-presentacion.mp4"
+                    type="video/mp4"
+                  />
+                </video>
 
-  <video
-    id="khalid-video"
-    playsInline
-    preload="metadata"
-    poster="/images/khalid-extranjeria.png"
-    className="w-full h-[270px] object-cover border-b border-[#f6c453]/10"
-    onPlay={() => {
-      const btn = document.getElementById("play-button-khalid");
-      if (btn) btn.style.display = "none";
-    }}
-  >
-    <source
-      src="/khalid-presentacion.mp4"
-      type="video/mp4"
-    />
-  </video>
+                <button
+                  id="play-button-khalid"
+                  type="button"
+                  className="absolute inset-0 flex items-center justify-center"
+                  onClick={() => {
+                    const video = document.getElementById(
+                      "khalid-video"
+                    ) as HTMLVideoElement;
+                    if (video) {
+                      video.play();
+                    }
+                  }}
+                >
+                  <div className="bg-black/10 backdrop-blur-[2px] rounded-full w-12 h-12 flex items-center justify-center">
+                    <svg
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="white"
+                    >
+                      <path d="M8 5v14l11-7z" />
+                    </svg>
+                  </div>
+                </button>
+              </div>
+            )}
 
-  <button
-    id="play-button-khalid"
-    type="button"
-    className="absolute inset-0 flex items-center justify-center"
-    onClick={() => {
-      const video = document.getElementById(
-        "khalid-video"
-      ) as HTMLVideoElement;
-
-      if (video) {
-        video.play();
-      }
-    }}
-  >
-    <div className="bg-black/10 backdrop-blur-[2px] rounded-full w-12 h-12 flex items-center justify-center">
-      <svg
-        width="18"
-        height="18"
-        viewBox="0 0 24 24"
-        fill="white"
-      >
-        <path d="M8 5v14l11-7z" />
-      </svg>
-    </div>
-  </button>
-
-</div>
-)}
-           
-            
-
-           
-
-            
             <div className="absolute bottom-5 right-4 text-right">
               <h2 className="text-2xl font-bold">
                 Khalid
@@ -726,357 +530,303 @@ else if (
                 {t("Especialista en Extranjería")}
               </p>
             </div>
-
-           
           </div>
+
           <div className="p-4">
-
-       {isPaid && (
-  <div className="relative mb-4 rounded-2xl overflow-hidden">
-
-    <img
-      src={`${import.meta.env.BASE_URL}images/khalid-extranjeria.png`}
-      alt="Khalid"
-      className="w-full h-[260px] object-cover"
-    />
-
-    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-
- 
-
-
-
-  </div>
-)}    
+            {isPaid && (
+              <div className="relative mb-4 rounded-2xl overflow-hidden">
+                <img
+                  src={`${import.meta.env.BASE_URL}images/khalid-extranjeria.png`}
+                  alt="Khalid"
+                  className="w-full h-[260px] object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+              </div>
+            )}
 
             {!isPaid && (
-<motion.div
-  initial={{ opacity: 0, y: 20 }}
-  animate={{ opacity: 1, y: 0 }}
-  className="mt-3"
->
-  <div className="relative overflow-hidden rounded-2xl border border-yellow-500/30 bg-gradient-to-br from-[#1a1200] via-[#0b0b0b] to-[#1a1200] p-3">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mt-3"
+              >
+                <div className="relative overflow-hidden rounded-2xl border border-yellow-500/30 bg-gradient-to-br from-[#1a1200] via-[#0b0b0b] to-[#1a1200] p-3">
+                  <div className="relative z-10">
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <div className="w-9 h-9 rounded-xl bg-yellow-500/20 flex items-center justify-center text-sm">
+                          🔒
+                        </div>
 
-    <div className="relative z-10">
+                        <div>
+                          <h3 className="text-lg font-bold text-white leading-tight">
+                            {t("unlockKhalid")}
+                          </h3>
 
-      <div className="flex items-start justify-between mb-2">
+                          <div className="mt-1 inline-flex items-center rounded-full bg-yellow-500 px-2 py-[2px] text-[9px] font-bold text-black">
+                            PREMIUM
+                          </div>
+                        </div>
+                      </div>
 
-        <div className="flex items-center gap-2">
+                      <div className="text-right">
+                        <div className="text-xl font-black text-yellow-400 leading-none">
+                          11,99€
+                        </div>
 
-          <div className="w-9 h-9 rounded-xl bg-yellow-500/20 flex items-center justify-center text-sm">
-            🔒
-          </div>
+                        <div className="text-[10px] text-yellow-200 mt-1">
+                          {t("plan_std_f6")}
+                        </div>
+                      </div>
+                    </div>
 
-          <div>
-     <h3 className="text-lg font-bold text-white leading-tight">
-  {t("unlockKhalid")}
-</h3>
+                    <p className="text-gray-300 text-xs leading-relaxed mb-3">
+                      {t("premiumDescription")}
+                    </p>
 
-<div className="mt-1 inline-flex items-center rounded-full bg-yellow-500 px-2 py-[2px] text-[9px] font-bold text-black">
-  PREMIUM
-</div>
+                    <button
+                      disabled={!paymentEnabled}
+                      onClick={async () => {
+                        if (!paymentEnabled) {
+                          return;
+                        }
 
-</div>
+                        try {
+                          const response = await fetch(
+                            "/api/create-checkout-khalid",
+                            {
+                              method: "POST",
+                            }
+                          );
 
-</div>
+                          const data = await response.json();
 
-<div className="text-right">
-  <div className="text-xl font-black text-yellow-400 leading-none">
-    11,99€
-  </div>
+                          if (data?.url) {
+                            window.location.href = data.url;
+                          }
+                        } catch (err) {
+                          console.error(err);
+                        }
+                      }}
+                      className={`w-full h-10 rounded-xl text-black font-extrabold text-sm transition-all ${
+                        paymentEnabled
+                          ? "bg-gradient-to-b from-yellow-300 to-yellow-500 border border-yellow-200/40 shadow-[0_8px_25px_rgba(255,200,0,0.35)]"
+                          : "bg-gray-600 opacity-50 cursor-not-allowed"
+                      }`}
+                    >
+                      🔓 {t("unlockNow")}
+                    </button>
 
-  <div className="text-[10px] text-yellow-200 mt-1">
-    {t("plan_std_f6")}
-  </div>
-</div>
+                    <div className="mt-3 flex items-center justify-center gap-2 text-[10px] text-gray-400">
+                      <span>🔐 {t("securePayment")}</span>
+                    </div>
 
-</div>
+                    <div className="mt-2 flex items-center justify-center gap-2 flex-wrap">
+                      <div className="h-8 px-2 rounded-lg bg-white flex items-center justify-center text-blue-700 font-black text-[10px]">
+                        VISA
+                      </div>
 
-<p className="text-gray-300 text-xs leading-relaxed mb-3">
-  {t("premiumDescription")}
-</p>
+                      <div className="h-8 px-2 rounded-lg bg-white flex items-center justify-center text-red-500 font-black text-[10px]">
+                        Mastercard
+                      </div>
 
-<button
-  disabled={!paymentEnabled}
-  onClick={async () => {
+                      <div className="h-8 px-2 rounded-lg bg-white flex items-center justify-center text-black font-black text-[10px]">
+                         Pay
+                      </div>
 
-    if (!paymentEnabled) {
-      return;
-    }
+                      <div className="h-8 px-2 rounded-lg bg-white flex items-center justify-center text-black font-black text-[10px]">
+                        G Pay
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
 
-    try {
-
-      const response = await fetch(
-        "/api/create-checkout-khalid",
-        {
-          method: "POST",
-        }
-      );
-
-      const data = await response.json();
-
-      if (data?.url) {
-
-        window.location.href = data.url;
-
-      }
-
-    } catch (err) {
-
-      console.error(err);
-
-    }
-
-  }}
-  className={`w-full h-10 rounded-xl text-black font-extrabold text-sm transition-all ${
-    paymentEnabled
-      ? "bg-gradient-to-b from-yellow-300 to-yellow-500 border border-yellow-200/40 shadow-[0_8px_25px_rgba(255,200,0,0.35)]"
-      : "bg-gray-600 opacity-50 cursor-not-allowed"
-  }`}
->
-🔓 {t("unlockNow")}
-</button>
-
-      <div className="mt-3 flex items-center justify-center gap-2 text-[10px] text-gray-400">
-  <span>🔐 {t("securePayment")}</span>
-      </div>
-
-      <div className="mt-2 flex items-center justify-center gap-2 flex-wrap">
-
-        <div className="h-8 px-2 rounded-lg bg-white flex items-center justify-center text-blue-700 font-black text-[10px]">
-          VISA
-        </div>
-
-        <div className="h-8 px-2 rounded-lg bg-white flex items-center justify-center text-red-500 font-black text-[10px]">
-          Mastercard
-        </div>
-
-        <div className="h-8 px-2 rounded-lg bg-white flex items-center justify-center text-black font-black text-[10px]">
-           Pay
-        </div>
-
-        <div className="h-8 px-2 rounded-lg bg-white flex items-center justify-center text-black font-black text-[10px]">
-          G Pay
-        </div>
-
-      </div>
-
-    </div>
-  </div>
-</motion.div>
-          )}
             {isPaid && (
-  <div className="mt-4 mb-2">
+              <div className="mt-4 mb-2">
+                <motion.button
+                  whileTap={{ scale: 0.96 }}
+                  onClick={() => {
+                    if (isListening) {
+                      stopConversation();
+                    } else {
+                      startConversation();
+                    }
+                  }}
+                  className={`w-full h-11 rounded-2xl flex items-center justify-center gap-3 shadow-2xl border border-white/20 font-semibold text-base transition-all ${
+                    isListening
+                      ? "bg-red-500"
+                      : "bg-[#00E05A]"
+                  }`}
+                >
+                  {isListening ? (
+                    <>
+                      <MicOff size={22} />
+                      {t("endConversation")}
+                    </>
+                  ) : (
+                    <>
+                      <Mic size={22} />
+                      {t("talkToKhalid")}
+                    </>
+                  )}
+                </motion.button>
+              </div>
+            )}
 
-    <motion.button
-      whileTap={{ scale: 0.96 }}
-
-      onClick={() => {
-
-        if (isListening) {
-
-          stopConversation();
-
-        } else {
-
-          startConversation();
-
-        }
-
-      }}
-
-      className={`w-full h-11 rounded-2xl flex items-center justify-center gap-3 shadow-2xl border border-white/20 font-semibold text-base transition-all ${
-        isListening
-          ? "bg-red-500"
-          : "bg-[#00E05A]"
-      }`}
-    >
-
-      {isListening ? (
-        <>
-          <MicOff size={22} />
-       {t("endConversation")}
-        </>
-      ) : (
-        <>
-          <Mic size={22} />
-      {t("talkToKhalid")}
-        </>
-      )}
-
-    </motion.button>
-
-  </div>
-          
-)}
-       <div className="mt-5 rounded-2xl border border-[#1e293b] bg-[#0b1325] p-4">
+            <div className="mt-5 rounded-2xl border border-[#1e293b] bg-[#0b1325] p-4">
               <div className="flex items-center gap-2 mb-2">
                 <Shield
                   className="text-green-400"
                   size={18}
                 />
 
-              <span className="font-semibold">
-  Khalid IA
-</span>
+                <span className="font-semibold">
+                  Khalid IA
+                </span>
               </div>
-              
-           <p className="text-sm leading-relaxed text-gray-300">
-               {t("khalidDescription")}.
+
+              <p className="text-sm leading-relaxed text-gray-300">
+                {t("khalidDescription")}.
               </p>
             </div>
-  <div className="mt-4 rounded-2xl border border-green-500/30 bg-[#071224] p-3">
 
-  <h3 className="text-green-400 text-lg font-bold text-center mb-3">
-{t("hero_trust")}
-  </h3>
+            <div className="mt-4 rounded-2xl border border-green-500/30 bg-[#071224] p-3">
+              <h3 className="text-green-400 text-lg font-bold text-center mb-3">
+                {t("hero_trust")}
+              </h3>
 
-  <div className="grid grid-cols-4 gap-2">
+              <div className="grid grid-cols-4 gap-2">
+                <div className="rounded-xl bg-[#0b1325] p-2 text-center">
+                  <div className="text-green-400 text-xl font-black">
+                    18K+
+                  </div>
 
-    <div className="rounded-xl bg-[#0b1325] p-2 text-center">
-      <div className="text-green-400 text-xl font-black">
-        18K+
-      </div>
+                  <div className="text-[10px] text-gray-400">
+                    {t("panel_stat_tramites")}
+                  </div>
+                </div>
 
-      <div className="text-[10px] text-gray-400">
- {t("panel_stat_tramites")}
-      </div>
-    </div>
+                <div className="rounded-xl bg-[#0b1325] p-2 text-center">
+                  <div className="text-blue-400 text-xl font-black">
+                    97%
+                  </div>
 
-    <div className="rounded-xl bg-[#0b1325] p-2 text-center">
-      <div className="text-blue-400 text-xl font-black">
-        97%
-      </div>
+                  <div className="text-[10px] text-gray-400">
+                    {t("verified")}
+                  </div>
+                </div>
 
-      <div className="text-[10px] text-gray-400">
-     {t("verified")}
-      </div>
-    </div>
+                <div className="rounded-xl bg-[#0b1325] p-2 text-center">
+                  <div className="text-purple-400 text-xl font-black">
+                    4m
+                  </div>
 
-    <div className="rounded-xl bg-[#0b1325] p-2 text-center">
-      <div className="text-purple-400 text-xl font-black">
-        4m
-      </div>
+                  <div className="text-[10px] text-gray-400">
+                    {t("panel_continue")}
+                  </div>
+                </div>
 
-      <div className="text-[10px] text-gray-400">
-{t("panel_continue")}
-      </div>
-    </div>
+                <div className="rounded-xl bg-[#0b1325] p-2 text-center">
+                  <div className="text-yellow-400 text-xl font-black">
+                    100%
+                  </div>
 
-    <div className="rounded-xl bg-[#0b1325] p-2 text-center">
-      <div className="text-yellow-400 text-xl font-black">
-        100%
-      </div>
+                  <div className="text-[10px] text-gray-400">
+                    {t("panel_action_ia")}
+                  </div>
+                </div>
+              </div>
 
-      <div className="text-[10px] text-gray-400">
-  {t("panel_action_ia")}
-      </div>
-    </div>
+              <div className="mt-3 rounded-xl border border-yellow-500/30 bg-[#0b1325] py-2 text-center text-sm font-bold text-white">
+                🏆 {t("reg_title")}
+              </div>
 
-  </div>
+              <div className="mt-3 flex items-center justify-between">
+                <div>
+                  <div className="text-green-400 text-3xl font-black">
+                    4.9/5
+                  </div>
 
-  <div className="mt-3 rounded-xl border border-yellow-500/30 bg-[#0b1325] py-2 text-center text-sm font-bold text-white">
-  🏆 {t("reg_title")}
-  </div>
+                  <div className="text-yellow-400 text-sm">
+                    ★★★★★
+                  </div>
+                </div>
 
-  <div className="mt-3 flex items-center justify-between">
+                <div className="flex -space-x-2">
+                  <img
+                    src="https://randomuser.me/api/portraits/men/32.jpg"
+                    className="w-8 h-8 rounded-full border border-[#071224]"
+                  />
 
-    <div>
-      <div className="text-green-400 text-3xl font-black">
-        4.9/5
-      </div>
+                  <img
+                    src="https://randomuser.me/api/portraits/women/44.jpg"
+                    className="w-8 h-8 rounded-full border border-[#071224]"
+                  />
 
-      <div className="text-yellow-400 text-sm">
-        ★★★★★
-      </div>
-    </div>
+                  <img
+                    src="https://randomuser.me/api/portraits/men/75.jpg"
+                    className="w-8 h-8 rounded-full border border-[#071224]"
+                  />
 
-    <div className="flex -space-x-2">
-
-      <img
-        src="https://randomuser.me/api/portraits/men/32.jpg"
-        className="w-8 h-8 rounded-full border border-[#071224]"
-      />
-
-      <img
-        src="https://randomuser.me/api/portraits/women/44.jpg"
-        className="w-8 h-8 rounded-full border border-[#071224]"
-      />
-
-      <img
-        src="https://randomuser.me/api/portraits/men/75.jpg"
-        className="w-8 h-8 rounded-full border border-[#071224]"
-      />
-
-      <div className="w-8 h-8 rounded-full bg-[#111827] flex items-center justify-center text-[10px] font-bold border border-[#071224]">
-        +2K
-      </div>
-
-    </div>
-
-  </div>
-
-</div>
-   
+                  <div className="w-8 h-8 rounded-full bg-[#111827] flex items-center justify-center text-[10px] font-bold border border-[#071224]">
+                    +2K
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
-{/* SMART ACTIONS */}
-{isPaid && smartAction && (
 
-<div className="mt-5 rounded-2xl border border-[#1e293b] bg-[#0b1325] p-4">
+          {/* SMART ACTIONS - UBICACIONES Y DIRECCIONES */}
+          {isPaid && smartAction && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              className="mx-4 mb-4 rounded-2xl border border-[#1e293b] bg-[#0b1325] p-4"
+            >
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-green-400 text-lg">📍</span>
+                <h3 className="font-bold text-white">Ubicación recomendada</h3>
+              </div>
 
-  <div className="flex items-center gap-2 mb-3">
-    <span className="text-green-400 text-lg">✨</span>
+              <div className="rounded-2xl overflow-hidden border border-[#1e293b]">
+                <img
+                  src={smartAction.image}
+                  className="w-full h-[200px] object-cover"
+                  alt="Mapa de ubicación"
+                  onError={(e) => {
+                    e.currentTarget.src = "https://images.unsplash.com/photo-1569336415962-a4bd9f69cd83?q=80&w=1200&auto=format&fit=crop";
+                  }}
+                />
 
-<h3 className="font-bold text-white">
-  {t("panel_quick_actions")}
-</h3>
-  </div>
+                <div className="p-4">
+                  <h4 className="text-xl font-bold mb-1 text-white">
+                    {smartAction.title}
+                  </h4>
 
-  <div className="rounded-2xl overflow-hidden border border-[#1e293b]">
+                  <p className="text-gray-400 text-sm mb-3">
+                    {smartAction.description}
+                  </p>
 
-    <img
-      src={smartAction.image}
-      className="w-full h-[180px] object-cover"
-    />
-
-    <div className="p-4">
-
-      <h4 className="text-xl font-bold mb-1">
-        {smartAction.title}
-      </h4>
-
-    <p className="text-gray-400 text-sm">
-  {t(smartAction.description)}
-</p>
-
-      <div className="grid grid-cols-1 gap-2 mt-4">
-
-        {smartAction.buttons?.map(
-          (button: any, index: number) => (
-
-          <a
-            key={index}
-            href={button.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="h-11 rounded-xl bg-[#071224] border border-[#1e293b] text-sm flex items-center justify-center"
-          >
-{button.label}
-          </a>
-
-        ))}
-
-      </div>
-
-    </div>
-
-  </div>
-
-</div>
-
-)}
-  
-   
+                  <div className="grid grid-cols-2 gap-2">
+                    {smartAction.buttons?.map((button: any, index: number) => (
+                      <a
+                        key={index}
+                        href={button.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="h-11 rounded-xl bg-[#1a2940] hover:bg-[#1e3a5f] border border-[#1e293b] text-sm flex items-center justify-center text-white transition-all duration-200"
+                      >
+                        {button.label}
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
         </motion.div>
       </div>
     </div>
