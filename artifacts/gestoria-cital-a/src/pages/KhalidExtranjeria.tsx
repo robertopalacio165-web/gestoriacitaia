@@ -77,27 +77,30 @@ export default function KhalidExtranjeria() {
   }, [lastReply]);
 
   // 🔍 Extraer dirección completa del texto
-  const extraerDireccionCompleta = (texto: string): string | null => {
-    if (!texto) return null;
+const extraerDireccionCompleta = (texto: string): string | null => {
+  if (!texto) return null;
 
-    const patrones = [
-      /(calle|c\/|carrer|avda|avenida|plaza|pl|paseo|rambla|ronda)\s+([a-zñáéíóú\s]+?)(\d+)?\s*[,.]?\s*((?:,?\s*)?\d{5})?\s*[,.]?\s*([a-zñáéíóú\s]+?)(?:\s|$|\.|,|;)/i,
-      /([a-zñáéíóú\s]+)\s+(\d+)\s*[,.]?\s*([a-zñáéíóú\s]+?)(?:\s|$|\.|,|;)/i,
-      /(calle|c\/|carrer)\s+([a-zñáéíóú\s]+?)\s+(\d+)/i,
-    ];
+  console.log("🔍 TEXTO ORIGINAL:", texto);
 
-    for (const patron of patrones) {
-      const match = texto.match(patron);
-      if (match) {
-        let direccion = match[0].trim();
-        direccion = direccion.replace(/\s+(de|del|de la|en|a|para)\s+[a-z]+$/i, "");
-        direccion = direccion.charAt(0).toUpperCase() + direccion.slice(1);
-        return direccion;
-      }
+  const patrones = [
+    /(carrer|calle|avenida|avda|rambla|plaza|paseo|ronda)\s+([^,\n]+?\d+[^\n]*)/i,
+    /(carrer|calle)\s+([^,\n]+)/i,
+  ];
+
+  for (const patron of patrones) {
+    const match = texto.match(patron);
+
+    if (match) {
+      const direccion = match[0].trim();
+
+      console.log("📍 DIRECCION DETECTADA:", direccion);
+
+      return direccion;
     }
+  }
 
-    return null;
-  };
+  return null;
+};
 
   // 🔍 Obtener datos de Google Places
   const obtenerDatosGooglePlaces = async (direccion: string) => {
@@ -218,7 +221,7 @@ export default function KhalidExtranjeria() {
       description: "Obteniendo información de Google Maps",
       loading: true
     });
-
+console.log("🚨 DIRECCION ENVIADA A GOOGLE:", direccion);
     const datosGoogle = await obtenerDatosGooglePlaces(direccion);
 
     const nuevoSmartAction = {
