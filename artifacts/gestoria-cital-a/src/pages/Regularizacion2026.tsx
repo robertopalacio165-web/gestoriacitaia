@@ -968,13 +968,16 @@ if (!isListening) {
       if (!files.length) return;
       setGeneralUploading(true);
       try {
-        const { data: { user }, error } = await supabase.auth.getUser();
-        if (error || !user?.id) throw new Error("Usuario no conectado");
+       const { data: { user } } = await supabase.auth.getUser();
+
+if (!user?.id) {
+  console.warn("⚠️ Modo prueba sin login");
+}
         setWorkflowStep("waiting_confirm");
         let results = [];
         for (const file of files) {
           const safeName = `${Date.now()}_${file.name}`;
-          const storagePath = `${user.id}/regularizacion_2026/${safeName}`;
+        const storagePath = `${user?.id || "guest"}/regularizacion_2026/${safeName}`;
           await supabase.storage.from("user-documents").upload(storagePath, file, { upsert: true });
           const result = await verifyDocument({ file });
           const matchedDoc = getBestDocMatch(result, docs, file.name);
