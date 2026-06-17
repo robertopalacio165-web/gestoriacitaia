@@ -111,9 +111,10 @@ export default function Regularizacion2026() {
         setQuestionsDone(true);
         setStep("upload");
         
-        setTimeout(() => {
-          speakExactText("مزيان. دابا خاصك ترفع جميع الوثائق اللي عندك.");
-        }, 1200);
+    toast({
+  title: "📄 Documentos",
+  description: "Sube tus documentos para comenzar la verificación",
+});
         
         // ✅ ELIMINADO: NO se genera PDF
       }
@@ -858,14 +859,14 @@ GestoriaCitaIA
     pendingAutomationPromptRef.current = text;
     setPendingAutomationPrompt(text);
     
-    if (realtimeDcRef.current && realtimeDcRef.current.readyState === "open") {
-      flushPendingAutomation();
-      return;
-    }
-    
-    if (!isListening) {
-      await startListening();
-    }
+ if (!docsVerified) {
+  console.log("⛔ Realtime bloqueado hasta verificar documentos");
+  return;
+}
+
+if (!isListening) {
+  await startListening();
+}
   };
 
   const speakFromAutomation = async (text: string) => {
