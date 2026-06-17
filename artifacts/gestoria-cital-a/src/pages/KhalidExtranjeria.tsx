@@ -82,10 +82,12 @@ const extraerDireccionCompleta = (texto: string): string | null => {
 
   console.log("🔍 TEXTO ORIGINAL:", texto);
 
+
   const patrones = [
-    /(carrer|calle|avenida|avda|rambla|plaza|paseo|ronda)\s+([^,\n]+?\d+[^\n]*)/i,
-    /(carrer|calle)\s+([^,\n]+)/i,
-  ];
+  /(avinguda|avenida|avda|carrer|calle|rambla|plaza|paseo|ronda)\s+([^,\n]+?\d+[^\n]*)/i,
+  /(avinguda|avenida|avda|carrer|calle|rambla|plaza|paseo|ronda)\s+([^,\n]+)/i,
+];  
+
 
   for (const patron of patrones) {
     const match = texto.match(patron);
@@ -173,6 +175,7 @@ const extraerDireccionCompleta = (texto: string): string | null => {
   // 🔍 Función principal para detectar y mostrar dirección
   const detectarYMostrarDireccion = async (texto: string) => {
     if (!texto || texto.length < 5) return;
+    console.log("📝 TEXTO RECIBIDO:", texto);
 
     const textoLower = texto.toLowerCase();
     
@@ -185,6 +188,7 @@ const extraerDireccionCompleta = (texto: string): string | null => {
     const tieneCiudad = ciudades.some(city => textoLower.includes(city));
     
     let direccion = extraerDireccionCompleta(texto);
+    console.log("📍 DIRECCION FINAL:", direccion);
     
     if (!direccion && tieneCiudad) {
       const ciudadEncontrada = ciudades.find(city => textoLower.includes(city));
