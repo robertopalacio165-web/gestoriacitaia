@@ -92,14 +92,17 @@ const extraerDireccionCompleta = (texto: string): string | null => {
   for (const patron of patrones) {
     const match = texto.match(patron);
 
-    if (match) {
-      const direccion = match[0].trim();
+if (match) {
+  let direccion = match[0]
+    .split(/[.،\n]/)[0]
+    .trim();
 
-      console.log("📍 DIRECCION DETECTADA:", direccion);
+  direccion = direccion.replace(/\s+/g, " ");
 
-      return direccion;
-    }
-  }
+  console.log("📍 DIRECCION DETECTADA:", direccion);
+
+  return direccion;
+}
 
   return null;
 };
