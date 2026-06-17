@@ -10,7 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useLang } from "@/contexts/LanguageContext";
 
 // ✅ SEGURO - Usando variable de entorno
-const GOOGLE_API_KEY = AIzaSyAaXhxuYAfQL1WwfPsXWb168GlZ4B2JMIg ;
+const GOOGLE_API_KEY = "AIzaSyAaXhxuYAfQL1WwfPsXWb168GlZ4B2JMIg";
 
 export default function KhalidExtranjeria() {
   const { toast } = useToast();
