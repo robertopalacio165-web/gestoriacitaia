@@ -1414,107 +1414,118 @@ const handleVerifyAll = async () => {
     
     console.log("🔍 RESULTADO FINAL:", resultado);
 
-    // CONSTRUIR EL MENSAJE COMPLETO PARA SOUFIANE
+    // CONSTRUIR EL MENSAJE COMPLETO
     let mensajeFinal = "";
 
-    // Nombres encontrados
     let nombresTexto = "";
     if (nombresEncontrados.length > 0) {
-      nombresTexto = `الاسماء اللي لقيتهم ف الوثائق: ${nombresEncontrados.join(", ")}.\n\n`;
+      nombresTexto = `الاسماء: ${nombresEncontrados.join(", ")}.\n`;
     }
 
-    // Fechas
     let fechasTexto = "";
     if (sortedDates.length >= 2) {
-      fechasTexto = `أول تاريخ: ${sortedDates[0].toLocaleDateString()}. آخر تاريخ: ${sortedDates[sortedDates.length - 1].toLocaleDateString()}.\n`;
-      fechasTexto += `المدة بينهما: ${stayDays} يوم.\n\n`;
+      fechasTexto = `المدة بين أول وثيقة وآخر وثيقة: ${stayDays} يوم.\n`;
     } else if (sortedDates.length === 1) {
-      fechasTexto = `لقيت تاريخ واحد فقط: ${sortedDates[0].toLocaleDateString()}. خاصك وثيقتين على الأقل باش نحسب المدة.\n\n`;
+      fechasTexto = `لقيت تاريخ واحد فقط. خاصك وثيقتين على الأقل.\n`;
     } else {
-      fechasTexto = `ما لقيتش تواريخ ف الوثائق.\n\n`;
+      fechasTexto = `ما لقيتش تواريخ ف الوثائق.\n`;
     }
 
-    // Análisis de 5 meses
     let mesesTexto = "";
     if (hasMonths) {
-      mesesTexto = `✅ عندك ${stayDays} يوم ديال الإقامة (تزيد من 5 شهور). مزيان!`;
+      mesesTexto = `✅ عندك ${stayDays} يوم (تزيد من 5 شهور).\n`;
     } else {
-      mesesTexto = `❌ عندك ${stayDays} يوم فقط. خاصك 150 يوم (5 شهور) باش تكون مؤهل.`;
+      mesesTexto = `❌ عندك ${stayDays} يوم فقط. خاصك 150 يوم.\n`;
     }
 
-    // Análisis de pasaporte/NIE
     let passportTexto = "";
     if (hasPassport) {
-      passportTexto = `✅ عندك وثيقة هوية (باسبور أو NIE).`;
+      passportTexto = `✅ عندك وثيقة هوية.\n`;
     } else {
-      passportTexto = `❌ ما عندكش باسبور أو NIE. خاصك ترفع واحد.`;
+      passportTexto = `❌ ما عندكش باسبور أو NIE.\n`;
     }
 
-    // Análisis de expulsión
     let expulsionTexto = "";
     if (hasExpulsion) {
       if (expulsionExpired) {
-        expulsionTexto = `⚠️ عندك قرار طرد قديم (منتهي الصلاحية). ما كيأثرش على الملف.`;
+        expulsionTexto = `⚠️ عندك قرار طرد قديم (منتهي الصلاحية).\n`;
       } else {
-        expulsionTexto = `🚨 عندك قرار طرد نشط! خاصك تحلو قبل ما تقدم على التسوية.`;
+        expulsionTexto = `🚨 عندك قرار طرد نشط!\n`;
       }
     } else {
-      expulsionTexto = `✅ ما عندكش قرارات طرد.`;
+      expulsionTexto = `✅ ما عندكش قرارات طرد.\n`;
     }
 
-    // Resultado final
     let resultadoFinal = "";
     if (soufianeUnlockCondition) {
       resultadoFinal = `
-✅✅✅ الملف ديالك كامل ومقبول للتسوية الجماعية 2026!
-
 ${nombresTexto}
 ${fechasTexto}
 ${passportTexto}
 ${mesesTexto}
 ${expulsionTexto}
+
+✅ الملف ديالك كامل ومقبول للتسوية الجماعية 2026.
 
 دابا خاصك تدخل رقم هاتفك فالمربع ديال واتساب وتضغط على زر الإرسال باش توصلك الوثيقة المهمة ف جوالك.
 `;
     } else {
       resultadoFinal = `
-❌❌❌ الملف ديالك ناقص. مازال ما تقدرش تقدم على التسوية.
-
 ${nombresTexto}
 ${fechasTexto}
 ${passportTexto}
 ${mesesTexto}
 ${expulsionTexto}
 
-خاصك تجيب الوثائق الناقصة:
+❌ الملف ديالك ناقص. خاصك تجيب:
 ${!hasPassport ? "- باسبور أو NIE\n" : ""}
-${!hasMonths ? `- بروفات ديال 5 شهور (عندك ${stayDays} يوم فقط، خاصك 150 يوم)\n` : ""}
+${!hasMonths ? `- بروفات ديال 5 شهور (عندك ${stayDays} يوم فقط)\n` : ""}
 ${hasExpulsion && !expulsionExpired ? "- حل قرار الطرد النشط\n" : ""}
-
-من بعد ما تجيب الوثائق الناقصة، عاود اضغط على "Verificar documentos".
 `;
     }
 
-    // ENVIAR EL MENSAJE A SOUFIANE
+    // ==== AQUÍ ESTÁ EL FIX ====
+    // En lugar de speakFromAutomation, usar askSoufianeToSpeak directamente
+    // Primero asegurar que el data channel está abierto
+    
+    // Si no está conectado, conectar primero
     if (!realtimeDcRef.current || realtimeDcRef.current.readyState !== "open") {
-      console.log("⚠️ REALTIME NO CONECTADO - Intentando conectar...");
+      console.log("⚠️ REALTIME NO CONECTADO - Conectando...");
       await startListening();
-      await new Promise((resolve) => setTimeout(resolve, 5000));
+      // Esperar a que se conecte
+      let waitCount = 0;
+      while ((!realtimeDcRef.current || realtimeDcRef.current.readyState !== "open") && waitCount < 20) {
+        await new Promise(resolve => setTimeout(resolve, 500));
+        waitCount++;
+      }
     }
 
+    // Ahora enviar el mensaje directamente
     if (realtimeDcRef.current && realtimeDcRef.current.readyState === "open") {
-      console.log("✅ REALTIME CONECTADO - Enviando mensaje a Soufiane");
+      console.log("✅ Enviando mensaje a Soufiane:", resultadoFinal);
+      
+      // Resetear el flag de que ya habló
       soufianeHasSpokenRef.current = false;
       setSoufianeHasSpoken(false);
-      await speakFromAutomation(resultadoFinal);
-      // Esperar a que termine de hablar SIN interrupciones
+      
+      // Enviar el mensaje
+      await askSoufianeToSpeak(resultadoFinal);
+      
+      // Esperar a que termine de hablar
       await new Promise(resolve => setTimeout(resolve, 25000));
+      
+      // Marcar que ya habló y apagar
+      soufianeHasSpokenRef.current = true;
+      setSoufianeHasSpoken(true);
+      stopListening();
+      setIsListening(false);
+      
     } else {
-      console.log("⚠️ REALTIME NO DISPONIBLE - Mostrando resultado");
+      console.error("❌ REALTIME NO DISPONIBLE");
       alert(resultadoFinal);
       toast({
         title: soufianeUnlockCondition ? "✅ Documentos verificados" : "❌ Documentos incompletos",
-        description: soufianeUnlockCondition ? "Ya puedes ver el resultado" : "Faltan documentos para completar el expediente",
+        description: soufianeUnlockCondition ? "Documentos OK" : "Faltan documentos",
       });
     }
     
@@ -1524,7 +1535,7 @@ ${hasExpulsion && !expulsionExpired ? "- حل قرار الطرد النشط\n" 
   } finally {
     setGeneralUploading(false);
   }
-}; 
+};
 
   return (
     <div className="min-h-screen">
