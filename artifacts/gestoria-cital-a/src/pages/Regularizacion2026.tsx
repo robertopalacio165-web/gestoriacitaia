@@ -110,7 +110,7 @@ export default function Regularizacion2026() {
         setStep("upload");
         
         setTimeout(() => {
-          speakExactText("مزيان. دابا خاصك ترفع جميع الوثائق اللي عندك. من بعد ما تسالي رفع الوثائق كاملة، ورك على زر التحقق من الوثائق باش نراجعهم ليك كاملين.");
+          speakExactText("مزيان. دابا خاصك ترفع جميع الوثائق اللي عندك.");
         }, 1200);
         
         try {
@@ -932,11 +932,13 @@ GestoriaCitaIA
 - ممنوع تقول "سلام" أو "مرحبا"
 - ممنوع تسول أسئلة
 - ممنوع تعاود الكلام
+- ممنوع ترد على أي شيء بعد إعطاء النتيجة
 
 🎯 الطريقة ديالك:
 - جاوب فقط بالتحليل المطلوب
 - الجواب يكون مختصر وواضح
 - ما تزيدش كلام زيادة
+- مرة واحدة فقط
 
 📋 تحليل الوثائق:
 
@@ -955,7 +957,7 @@ GestoriaCitaIA
 ❌ إذا كان كاين فراغ:
 قول: "عندك ${analysisResult.days} يوم فقط. خاصك 150 يوم (5 شهور)."
 
-📊 النتيجة النهائية:
+📊 النتيجة النهائية (هذا هو المهم):
 
 إذا كان الملف كامل:
 "✅ الملف ديالك كامل ومقبول. دابا خاصك تدخل رقم هاتفك فالمربع ديال واتساب وتضغط على زر الإرسال باش توصلك الوثيقة المهمة ف جوالك."
@@ -968,6 +970,7 @@ GestoriaCitaIA
 - ما تعاودش الكلام
 - ما تسولش أسئلة
 - فقط التحليل والنتيجة
+- بعد ما تعطي النتيجة، توقف
 `,
             modalities: ["audio", "text"],
             turn_detection: {
@@ -988,80 +991,15 @@ GestoriaCitaIA
           setTimeout(() => { void askSoufianeToSpeak(capturedPending); }, 400);
           return;
         }
-        if (!(window as any).paid) {
-          setTimeout(() => { void maybeSendIntroToSoufiane(); }, 500);
-        }
       };
 
       dc.onmessage = (event) => {
         try {
           const msg = JSON.parse(event.data);
-          const userTranscript = msg?.transcript || msg?.item?.transcript || msg?.item?.content?.[0]?.transcript || "";
-
-          if (
-            (msg.type === "conversation.item.input_audio_transcription.completed" || msg.type === "input_audio_buffer.transcription.completed") &&
-            typeof userTranscript === "string" && userTranscript.trim() && userTranscript.trim().length > 1
-          ) {
-            const transcript = userTranscript.trim();
-            if (transcript !== lastUserTranscriptRef.current) {
-              lastUserTranscriptRef.current = transcript;
-              setLastUserTranscript(transcript);
-              pushUserMessage(transcript);
-              console.log("✅ USER SAID:", transcript);
-
-              const lowerTranscript = transcript.toLowerCase().trim();
-
-              if (!paymentDoneRef.current && (lowerTranscript.includes("سلام") || lowerTranscript.includes("salam") || lowerTranscript.includes("hola") || lowerTranscript.includes("hello"))) {
-                console.log("🚀 START INTRO");
-                maybeSendIntroToSoufiane();
-                realtimeLocalStreamRef.current?.getTracks().forEach((track) => { track.stop(); });
-                questionFlowLockedRef.current = true;
-                const introText = `
-السلام عليكم، أنا سفيان من هيستوريا سيطا AI. مرحبا بك.
-
-غادي نطرح عليك شوية ديال الأسئلة وغادي تجاوبني غير بآه ولا لا.
-
-وملي غادي نسالي الأسئلة، غادي نراجع ليك الوثائق ديالك كاملين باش نشوف واش مقبولين ولا لا، واش صالحين ولا لا، وغادي نعطيك حتى وثيقة مهمة غادي تعزز الملف ديالك فالتسوية الجماعية.
-
-وزيد عليها، غادي نخليك تسولني حتى 4 أسئلة وغنجاوبك على جميع التساؤلات ديالك أوكي؟
-
-ولكن قبل، خاصك تكمل الأداء ديالك عاد باش نبداو.
-`;
-                const estimatedMs = Math.max(introText.length * 85, 12000);
-                setTimeout(() => {
-                  console.log("✅ INTRO FINISHED");
-                  setShowStripe(true);
-                  setPaymentRequired(true);
-                  stopListening();
-                  setIsListening(false);
-                }, estimatedMs);
-                return;
-              }
-
-              const isOnlyNameStep =
-                questionIndex === 1 &&
-                lowerTranscript.length > 1 &&
-                !lowerTranscript.includes("نعم") &&
-                !lowerTranscript.includes("لا") &&
-                !lowerTranscript.includes("اه") &&
-                !lowerTranscript.includes("آه");
-
-              if (isOnlyNameStep) {
-                console.log("👤 USER NAME ONLY:", transcript);
-                setTimeout(() => { speakExactText("مزيان. واش بقيتي في إسبانيا لمدة ديال خمسة أشهر متتالية؟ وشنو هي أول مدينة سكنتي فيها؟"); }, 500);
-                return;
-              }
-
-              const validAnswers = ["نعم", "لا", "اه", "آه", "ايييه", "ايوه", "oui", "non", "si", "no", "kayna", "makaynach", "عندي", "ما عنديش"];
-              const cleanAnswer = lowerTranscript.replace(/[.,!?¿؟]/g, "").trim();
-              const shouldCountQuestion = validAnswers.some(word => cleanAnswer === word || cleanAnswer.startsWith(word + " "));
-
-              if (paymentDoneRef.current && shouldCountQuestion && !questionFlowLockedRef.current) {
-                handleQuestionFlow();
-              }
-            }
-          }
-
+          
+          // IGNORAR todo lo que no sea respuesta de Soufiane
+          // No procesamos transcripciones del usuario
+          
           if (msg.type === "response.output_text.delta" && typeof msg.delta === "string") {
             assistantTextBufferRef.current += msg.delta;
           }
@@ -1093,13 +1031,14 @@ GestoriaCitaIA
             pendingAutomationPromptRef.current = null;
             setPendingAutomationPrompt("");
             
+            // Soufiane terminó de hablar - APAGAR TODO
             if (!soufianeHasSpokenRef.current) {
               soufianeHasSpokenRef.current = true;
               setSoufianeHasSpoken(true);
               setTimeout(() => {
                 stopListening();
                 setIsListening(false);
-              }, 2000);
+              }, 1000);
             }
             
             setTimeout(() => { void flushPendingAutomation(); }, 150);
@@ -1231,7 +1170,7 @@ GestoriaCitaIA
     if (readyNow && !completionMessageSent) {
       pushAgentMessage(voiceTexts.soufianeFinal);
       setCompletionMessageSent(true);
-      await speakFromAutomation("قل الآن للعميل باختصار: مزيان. كلشي واجد ومراجع. دابا غادي نجهزو ليك الملف النهائي باش يتبعث ليك فـ واتساب.");
+      await speakFromAutomation("مزيان. كلشي واجد ومراجع. دابا غادي نجهزو ليك الملف النهائي باش يتبعث ليك فـ واتساب.");
     }
   };
 
@@ -1494,7 +1433,8 @@ ${hasExpulsion && !expulsionExpired ? "- حل قرار الطرد النشط\n" 
         soufianeHasSpokenRef.current = false;
         setSoufianeHasSpoken(false);
         await speakFromAutomation(mensajeFinal);
-        await new Promise(resolve => setTimeout(resolve, 15000));
+        // Esperar a que termine de hablar SIN interrupciones
+        await new Promise(resolve => setTimeout(resolve, 20000));
       } else {
         console.log("⚠️ REALTIME NO DISPONIBLE - Mostrando resultado");
         alert(mensajeFinal);
@@ -1511,9 +1451,6 @@ ${hasExpulsion && !expulsionExpired ? "- حل قرار الطرد النشط\n" 
       setGeneralUploading(false);
     }
   };
-
-  const goToSara = () => { window.location.href = "/sara"; };
-  const goToKhalid = () => { window.location.href = "/khalid"; };
 
   return (
     <div className="min-h-screen">
@@ -1536,44 +1473,20 @@ ${hasExpulsion && !expulsionExpired ? "- حل قرار الطرد النشط\n" 
           </div>
 
           <div className="mt-2 max-w-7xl mx-auto lg:grid lg:grid-cols-[480px_1fr] lg:gap-6">
-            {/* VIDEO - SOLO ANTES DEL PAGO */}
-            {!paymentCompleted && (
-              <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="rounded-[26px] overflow-hidden relative">
-                <div className="relative">
-                  <div className="relative">
-                    <video id="soufiane-video" playsInline preload="metadata" poster="/images/soufiane.png" className="w-full h-[270px] object-cover border-b border-[#f6c453]/10" onPlay={() => { const btn = document.getElementById("play-button"); if (btn) btn.style.display = "none"; }}>
-                      <source src="/soufiane-presentacion.mp4" type="video/mp4" />
-                    </video>
-                    <button id="play-button" type="button" className="absolute inset-0 flex items-center justify-center" onClick={() => { const video = document.getElementById("soufiane-video") as HTMLVideoElement; if (video) video.play(); }}>
-                      <div className="bg-black/10 backdrop-blur-[2px] rounded-full w-12 h-12 flex items-center justify-center">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z" /></svg>
-                      </div>
-                    </button>
-                  </div>
-                  <div className="absolute bottom-5 right-4 text-right">
-                    <h2 className="text-[22px] font-bold text-white">Soufiane</h2>
-                    <p className="text-[15px] text-[#d4a94d] font-medium tracking-wide">Experto en Regularización</p>
-                  </div>
+            {/* SOLO FOTO DE SOUFIANE - SIEMPRE */}
+            <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="rounded-[26px] overflow-hidden relative">
+              <div className="relative">
+                <img 
+                  src="/images/soufiane.png" 
+                  alt="Soufiane" 
+                  className="w-full h-[270px] object-cover border-b border-[#f6c453]/10"
+                />
+                <div className="absolute bottom-5 right-4 text-right">
+                  <h2 className="text-[22px] font-bold text-white">Soufiane</h2>
+                  <p className="text-[15px] text-[#d4a94d] font-medium tracking-wide">Experto en Regularización</p>
                 </div>
-              </motion.div>
-            )}
-
-            {/* FOTO - DESPUÉS DEL PAGO */}
-            {paymentCompleted && (
-              <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="rounded-[26px] overflow-hidden relative">
-                <div className="relative">
-                  <img 
-                    src="/images/soufiane.png" 
-                    alt="Soufiane" 
-                    className="w-full h-[270px] object-cover border-b border-[#f6c453]/10"
-                  />
-                  <div className="absolute bottom-5 right-4 text-right">
-                    <h2 className="text-[22px] font-bold text-white">Soufiane</h2>
-                    <p className="text-[15px] text-[#d4a94d] font-medium tracking-wide">Experto en Regularización</p>
-                  </div>
-                </div>
-              </motion.div>
-            )}
+              </div>
+            </motion.div>
           </div>
 
           <div className="mt-0 w-full max-w-none lg:col-start-2">
@@ -1611,24 +1524,9 @@ ${hasExpulsion && !expulsionExpired ? "- حل قرار الطرد النشط\n" 
               </div>
             )}
 
-            <div className="mt-4 rounded-2xl border border-green-500/20 bg-[#071326] p-4">
-              <h3 className="text-center text-green-400 font-bold text-lg mb-4">Miles de personas ya usan GestoriaCitaIA</h3>
-              <div className="grid grid-cols-4 gap-2 text-center">
-                <div><p className="text-green-400 text-2xl font-black">18K+</p><p className="text-white/60 text-xs">Trámites</p></div>
-                <div><p className="text-blue-400 text-2xl font-black">97%</p><p className="text-white/60 text-xs">Verificado</p></div>
-                <div><p className="text-purple-400 text-2xl font-black">4m</p><p className="text-white/60 text-xs">Continuar</p></div>
-                <div><p className="text-yellow-400 text-2xl font-black">100%</p><p className="text-white/60 text-xs">Asistente IA</p></div>
-              </div>
-              <div className="mt-4 rounded-full border border-yellow-500/30 py-2 text-center text-white font-bold">🏆 Regularización 2026</div>
-              <div className="flex items-end justify-between mt-4">
-                <div><p className="text-green-400 text-4xl font-black">4.9/5</p><p className="text-yellow-400">★★★★★</p></div>
-                <div className="text-white font-bold">+2K</div>
-              </div>
-            </div>
-
             {paymentCompleted && (
               <div className="mt-5 space-y-4">
-                {/* BOTÓN MICRÓFONO - VERDE cuando soufianeReady */}
+                {/* Botón micrófono - VERDE cuando soufianeReady */}
                 <button
                   onClick={() => {
                     if (soufianeReady && !soufianeHasSpoken) {
@@ -1655,7 +1553,7 @@ ${hasExpulsion && !expulsionExpired ? "- حل قرار الطرد النشط\n" 
                   )}
                 </button>
 
-                {/* BOTÓN SUBIR DOCUMENTOS */}
+                {/* Subir documentos */}
                 <button 
                   onClick={handleGeneralUpload} 
                   disabled={generalUploading} 
@@ -1668,7 +1566,7 @@ ${hasExpulsion && !expulsionExpired ? "- حل قرار الطرد النشط\n" 
                   {docsUploaded && <CheckCircle className="w-4 h-4 text-green-400" />}
                 </button>
 
-                {/* BOTÓN VERIFICAR DOCUMENTOS */}
+                {/* Verificar documentos */}
                 <button 
                   onClick={handleVerifyAll} 
                   disabled={!docsUploaded || generalUploading}
@@ -1688,6 +1586,7 @@ ${hasExpulsion && !expulsionExpired ? "- حل قرار الطرد النشط\n" 
                   )}
                 </button>
 
+                {/* Verificar Asilo */}
                 <button onClick={handleVerifyAsilo} className="w-[92%] mx-auto h-[52px] rounded-[20px] border border-[#c6922f] bg-[#050816] hover:bg-[#0b1220] transition-all text-white font-medium text-[16px] flex items-center justify-center gap-3 shadow-lg">
                   <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-[#d4a94d]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
@@ -1695,6 +1594,7 @@ ${hasExpulsion && !expulsionExpired ? "- حل قرار الطرد النشط\n" 
                   Verificar Asilo
                 </button>
 
+                {/* Verificar Expulsión */}
                 <button onClick={handleVerifyExpulsion} className="w-[92%] mx-auto h-[52px] rounded-[20px] border border-[#c6922f] bg-[#050816] hover:bg-[#0b1220] transition-all text-white font-medium text-[16px] flex items-center justify-center gap-3 shadow-lg">
                   <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-[#d4a94d]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
@@ -1702,7 +1602,7 @@ ${hasExpulsion && !expulsionExpired ? "- حل قرار الطرد النشط\n" 
                   Verificar Expulsión Europea
                 </button>
 
-                {/* WHATSAPP CON BOTÓN ENVIAR */}
+                {/* WhatsApp */}
                 <div className="w-[92%] mx-auto h-[52px] rounded-[20px] border border-[#c6922f]/40 bg-[#050816] flex items-center overflow-hidden shadow-lg">
                   <div className="w-[58px] h-full flex items-center justify-center border-r border-[#c6922f]/30 bg-black">
                     <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" className="w-6 h-6" />
@@ -1720,42 +1620,6 @@ ${hasExpulsion && !expulsionExpired ? "- حل قرار الطرد النشط\n" 
                   >
                     Enviar
                   </button>
-                </div>
-
-                <div className="flex gap-3 w-[92%] mx-auto">
-                  <button onClick={goToSara} className="flex-1 h-[52px] rounded-[20px] border border-pink-500/40 bg-[#1a0a15] hover:bg-[#2a1525] transition-all text-white font-medium text-[16px] flex items-center justify-center gap-2 shadow-lg">
-                    <span className="text-pink-400 text-xl">👩</span>
-                    Sara
-                  </button>
-                  <button onClick={goToKhalid} className="flex-1 h-[52px] rounded-[20px] border border-blue-500/40 bg-[#0a0f1a] hover:bg-[#15202a] transition-all text-white font-medium text-[16px] flex items-center justify-center gap-2 shadow-lg">
-                    <span className="text-blue-400 text-xl">👨</span>
-                    Khalid
-                  </button>
-                </div>
-
-                <div className="w-full rounded-[36px] border border-[#f6c453]/60 bg-gradient-to-b from-[#06111f] to-[#020617] p-5 shadow-[0_0_35px_rgba(255,215,0,0.10)] mt-4">
-                  <p className="text-center text-[#d4a94d] text-[15px] font-semibold mb-5">Miles de personas ya han confiado en nosotros</p>
-                  <div className="grid grid-cols-4 gap-3">
-                    <div className="text-center"><p className="text-[#d4a94d] font-bold text-[22px]">18.420+</p><p className="text-white/70 text-[11px]">Expedientes</p></div>
-                    <div className="text-center"><p className="text-[#d4a94d] font-bold text-[22px]">97%</p><p className="text-white/70 text-[11px]">Aprobados</p></div>
-                    <div className="text-center"><p className="text-[#d4a94d] font-bold text-[22px]">4 min</p><p className="text-white/70 text-[11px]">Respuesta</p></div>
-                    <div className="text-center"><p className="text-[#d4a94d] font-bold text-[22px]">100%</p><p className="text-white/70 text-[11px]">Atención</p></div>
-                  </div>
-                  <div className="mt-5 border border-[#c6922f]/30 rounded-[18px] p-3 bg-black/30 text-center">
-                    <p className="text-[#d4a94d] font-semibold text-[14px]">Primer sistema IA de extranjería en España</p>
-                  </div>
-                  <div className="flex items-center justify-center gap-3 mt-5">
-                    <div className="flex -space-x-2">
-                      <img src="https://i.pravatar.cc/60?img=1" className="w-9 h-9 rounded-full border-2 border-black" />
-                      <img src="https://i.pravatar.cc/60?img=2" className="w-9 h-9 rounded-full border-2 border-black" />
-                      <img src="https://i.pravatar.cc/60?img=3" className="w-9 h-9 rounded-full border-2 border-black" />
-                      <img src="https://i.pravatar.cc/60?img=4" className="w-9 h-9 rounded-full border-2 border-black" />
-                    </div>
-                    <div>
-                      <p className="text-[#d4a94d] text-[18px] font-bold">★★★★★ 4.9/5</p>
-                      <p className="text-white/60 text-[12px]">Basado en opiniones reales</p>
-                    </div>
-                  </div>
                 </div>
               </div>
             )}
