@@ -115,30 +115,7 @@ export default function Regularizacion2026() {
           speakExactText("مزيان. دابا خاصك ترفع جميع الوثائق اللي عندك.");
         }, 1200);
         
-        try {
-          const pdfRes = await fetch("/api/generate-expediente-pdf", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              nombre: leadForm.nombre,
-              nacionalidad: leadForm.nacionalidad,
-              ciudad: leadForm.ciudad,
-              fecha_llegada: leadForm.fechaLlegada,
-              tiempo_espana: "5 meses o más",
-              profesion: "Trabajador",
-              situacion_actual: "Proceso de regularización en España",
-              objetivo: "Regularizar situación administrativa",
-              idiomas: "Español, Árabe",
-              familia: "Información no especificada",
-            }),
-          });
-          const pdfData = await pdfRes.json();
-          if (pdfData?.pdfUrl) {
-            localStorage.setItem("generated_pdf_url", pdfData.pdfUrl);
-          }
-        } catch (err) {
-          console.error("PDF ERROR:", err);
-        }
+        // ✅ ELIMINADO: NO se genera PDF
       }
       setShowStripe(false);
       setPaymentRequired(false);
@@ -157,11 +134,11 @@ export default function Regularizacion2026() {
       if (data.url) {
         window.location.href = data.url;
       } else {
-        alert("❌ Stripe فيه مشكل");
+        toast({ title: "❌ Stripe", description: "فيه مشكل", variant: "destructive" });
       }
     } catch (err) {
       console.error(err);
-      alert("❌ خطأ فالكونكسيون");
+      toast({ title: "❌ خطأ", description: "فالكونكسيون", variant: "destructive" });
     }
   };
 
@@ -830,25 +807,34 @@ export default function Regularizacion2026() {
 
   const handleSendWhatsApp = async () => {
     try {
-      if (!phone || phone.trim().length < 6) { alert("دخل رقم الهاتف صحيح"); return; }
+      if (!phone || phone.trim().length < 6) { 
+        toast({ title: "❌ رقم غير صحيح", description: "دخل رقم الهاتف صحيح", variant: "destructive" });
+        return; 
+      }
       
+      // ✅ Mensaje SIN PDF, SOLO resumen
       const mensajeWhatsApp = `
 👋 سلام ${leadForm?.nombre || ""}
 
 ━━━━━━━━━━━━━━━
 
-📊 تحليل الملف ديالك:
+📊 ملخص الملف ديالك:
 
-${analysisResult.completo ? "✅ الملف ديالك كامل ومقبول" : "❌ الملف ديالك ناقص"}
+${analysisResult.completo ? "✅ الملف كامل ومقبول" : "❌ الملف ناقص"}
 
-${analysisResult.hasPassport ? "✅ وثيقة الهوية: موجودة" : "❌ وثيقة الهوية: ناقصة"}
-${analysisResult.hasMonths ? `✅ مدة الإقامة: ${analysisResult.days} يوم (تزيد من 5 شهور)` : `❌ مدة الإقامة: ${analysisResult.days} يوم فقط (خاصك 150 يوم)`}
-${analysisResult.hasExpulsion ? (analysisResult.expulsionExpired ? "⚠️ قرار طرد منتهي الصلاحية" : "❌ قرار طرد نشط") : "✅ ما عندكش قرارات طرد"}
+${analysisResult.hasPassport ? "✅ وثيقة الهوية موجودة" : "❌ وثيقة الهوية ناقصة"}
 
-━━━━━━━━━━━━━━━
+${analysisResult.hasMonths
+  ? `✅ مدة الإقامة: ${analysisResult.days} يوم (تزيد من 5 شهور)`
+  : `❌ مدة الإقامة: ${analysisResult.days} يوم فقط (خاصك 150 يوم)`
+}
 
-📩 الوثيقة المهمة:
-${localStorage.getItem("generated_pdf_url") || ""}
+${analysisResult.hasExpulsion
+  ? (analysisResult.expulsionExpired
+      ? "⚠️ قرار الطرد منتهي الصلاحية"
+      : "❌ قرار طرد نشط")
+  : "✅ لا يوجد قرار طرد"
+}
 
 ━━━━━━━━━━━━━━━
 
@@ -861,231 +847,25 @@ GestoriaCitaIA
       window.open(url, "_blank");
     } catch (error) {
       console.error("WhatsApp error:", error);
-      alert("وقع مشكل، حاول مرة أخرى");
+      toast({ title: "❌ خطأ", description: "وقع مشكل، حاول مرة أخرى", variant: "destructive" });
     }
   };
 
-  const startListening = async () => {
-    if (!voiceSupported) { toast({ title: "Error", description: ui.micNotSupported, variant: "destructive" }); return; }
-    if (isConnectingRef.current) return;
-    if (realtimeDcRef.current && realtimeDcRef.current.readyState === "open") return;
-    try {
-      isConnectingRef.current = true;
-      setWaitingSoufiane(true);
-      const sessionRes = await fetch(`/api/realtime-session?ts=${Date.now()}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "Cache-Control": "no-cache" },
-        body: JSON.stringify({ assistant: "soufiane" }),
-      });
-      const sessionData = await sessionRes.json();
-      if (!sessionRes.ok) throw new Error(sessionData?.error || "Error creando sesión realtime");
-      const ephemeralKey = sessionData?.value || "";
-      if (!ephemeralKey) throw new Error("No llegó value desde realtime-session");
-
-      const pc = new RTCPeerConnection();
-      realtimePcRef.current = pc;
-      pc.ontrack = (event) => {
-        const [remoteStream] = event.streams;
-        if (remoteStream && remoteAudioRef.current) {
-          remoteAudioRef.current.srcObject = remoteStream;
-          remoteAudioRef.current.autoplay = true;
-          remoteAudioRef.current.playsInline = true;
-          remoteAudioRef.current.muted = false;
-          remoteAudioRef.current.volume = muted ? 0 : 1;
-          const playPromise = remoteAudioRef.current.play();
-          if (playPromise) playPromise.catch((err) => { console.error("Error reproduciendo audio remoto Soufiane:", err); });
-        }
-      };
-      const localStream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
-      realtimeLocalStreamRef.current = localStream;
-      for (const track of localStream.getTracks()) {
-        const sender = pc.addTrack(track, localStream);
-        senderRef.current = sender;
-      }
-
-      const dc = pc.createDataChannel("oai-events");
-      realtimeDcRef.current = dc;
-
-      dc.onopen = async () => {
-        dcOpenedRef.current = true;
-        isConnectingRef.current = false;
-        setIsListening(true);
-        setWaitingSoufiane(false);
-        dc.send(JSON.stringify({
-          type: "session.update",
-          session: {
-            instructions: `
-أنت سفيان من GestoriaCitaIA.
-
-تكلم فقط بالدارجة المغربية.
-
-🎯 الدور ديالك:
-أنت متخصص فقط في تحليل الوثائق وإعطاء نتيجة واحدة فقط.
-
-مهمتك هي:
-- تحليل الوثائق المرفوعة
-- حساب مدة التواجد في إسبانيا
-- تحديد إذا كانت 5 أشهر متواصلة أم لا
-
-❌ ممنوع:
-- ممنوع تجاوب على أسئلة عامة
-- ممنوع تعطي استشارات قانونية
-- ممنوع تبدأ حوار
-- ممنوع تقول "سلام" أو "مرحبا"
-- ممنوع تسول أسئلة
-- ممنوع تعاود الكلام
-- ممنوع ترد على أي شيء بعد إعطاء النتيجة
-
-🎯 الطريقة ديالك:
-- جاوب فقط بالتحليل المطلوب
-- الجواب يكون مختصر وواضح
-- ما تزيدش كلام زيادة
-- مرة واحدة فقط
-
-📋 تحليل الوثائق:
-
-إلى توصلت بوثائق، قول مباشرة:
-"توصلت بالوثائق. غادي نبدا التحليل."
-
-🔍 استخراج المعلومات:
-استخرج من الوثائق الأسماء والتواريخ ونوع الوثيقة.
-
-📅 حساب المدة:
-إذا كانت الوثائق فيها تواريخ، رتبهم زمنياً واحسب الأيام.
-
-✅ إذا كانت التغطية أكثر من 5 شهور متواصلة (150 يوم):
-قول: "عندك ${analysisResult.days} يوم ديال الإقامة (تزيد من 5 شهور)."
-
-❌ إذا كان كاين فراغ:
-قول: "عندك ${analysisResult.days} يوم فقط. خاصك 150 يوم (5 شهور)."
-
-📊 النتيجة النهائية (هذا هو المهم):
-
-إذا كان الملف كامل:
-"✅ الملف ديالك كامل ومقبول. دابا خاصك تدخل رقم هاتفك فالمربع ديال واتساب وتضغط على زر الإرسال باش توصلك الوثيقة المهمة ف جوالك."
-
-إذا كان الملف ناقص:
-"❌ الملف ديالك ناقص. خاصك تجيب: ${!analysisResult.hasPassport ? 'باسبور أو NIE، ' : ''}${!analysisResult.hasMonths ? `بروفات ديال 5 شهور (عندك ${analysisResult.days} يوم فقط)، ` : ''}${analysisResult.hasExpulsion && !analysisResult.expulsionExpired ? 'حل قرار الطرد النشط' : ''}"
-
-⚠️ مهم جدا:
-- جاوب مرة واحدة فقط
-- ما تعاودش الكلام
-- ما تسولش أسئلة
-- فقط التحليل والنتيجة
-- بعد ما تعطي النتيجة، توقف
-`,
-            modalities: ["audio", "text"],
-            turn_detection: {
-              type: "server_vad",
-              threshold: 0.98,
-              prefix_padding_ms: 300,
-              silence_duration_ms: 2200,
-              interrupt_response: false,
-              create_response: true,
-            },
-          },
-        }));
-
-        const capturedPending = pendingAutomationPromptRef.current;
-        if (capturedPending) {
-          pendingAutomationPromptRef.current = null;
-          setPendingAutomationPrompt("");
-          setTimeout(() => { void askSoufianeToSpeak(capturedPending); }, 400);
-          return;
-        }
-      };
-
-      dc.onmessage = (event) => {
-        try {
-          const msg = JSON.parse(event.data);
-          
-          if (msg.type === "response.output_text.delta" && typeof msg.delta === "string") {
-            assistantTextBufferRef.current += msg.delta;
-          }
-
-          if (msg.type === "response.output_text.done" && typeof msg.text === "string" && msg.text.trim()) {
-            assistantTextBufferRef.current = msg.text.trim();
-          }
-
-          if (msg.type === "response.created") {
-            assistantBusyRef.current = true;
-            setWaitingSoufiane(true);
-            if (realtimeLocalStreamRef.current) {
-              realtimeLocalStreamRef.current.getAudioTracks().forEach(track => { track.enabled = false; });
-            }
-            if (senderRef.current) { senderRef.current.replaceTrack(null); }
-          }
-
-          if (msg.type === "response.done") {
-            assistantBusyRef.current = false;
-            if (realtimeLocalStreamRef.current) {
-              realtimeLocalStreamRef.current.getAudioTracks().forEach(track => { track.enabled = true; });
-            }
-            const finalText = assistantTextBufferRef.current.trim();
-            if (finalText) lastAssistantTextRef.current = finalText;
-            finalizeAssistantBuffer();
-            const audioTrack = realtimeLocalStreamRef.current?.getAudioTracks?.()[0];
-            if (senderRef.current && audioTrack) { senderRef.current.replaceTrack(audioTrack); }
-            setWaitingSoufiane(false);
-            pendingAutomationPromptRef.current = null;
-            setPendingAutomationPrompt("");
-            
-            if (!soufianeHasSpokenRef.current) {
-              soufianeHasSpokenRef.current = true;
-              setSoufianeHasSpoken(true);
-              setTimeout(() => {
-                stopListening();
-                setIsListening(false);
-              }, 1000);
-            }
-            
-            setTimeout(() => { void flushPendingAutomation(); }, 150);
-          }
-        } catch (err) {
-          console.error("Realtime event parse error:", err);
-        }
-      };
-
-      dc.onerror = (err) => { console.error("Realtime data channel error:", err); };
-      dc.onclose = () => {
-        dcOpenedRef.current = false;
-        isConnectingRef.current = false;
-        assistantBusyRef.current = false;
-        setIsListening(false);
-        stopListening();
-        assistantTextBufferRef.current = "";
-        lastAssistantTextRef.current = "";
-        lastUserTranscriptRef.current = "";
-      };
-
-      const offer = await pc.createOffer();
-      await pc.setLocalDescription(offer);
-      const sdpRes = await fetch("https://api.openai.com/v1/realtime/calls", {
-        method: "POST",
-        body: offer.sdp,
-        headers: { Authorization: `Bearer ${ephemeralKey}`, "Content-Type": "application/sdp" },
-      });
-      if (!sdpRes.ok) {
-        const errText = await sdpRes.text();
-        throw new Error(errText || "Error negociando WebRTC con OpenAI");
-      }
-      const answerSdp = await sdpRes.text();
-      await pc.setRemoteDescription({ type: "answer", sdp: answerSdp });
-    } catch (error: any) {
-      console.error("Error iniciando realtime Soufiane:", error);
-      stopListening();
-      toast({ title: "Error realtime", description: error?.message || voiceTexts.realtimeError, variant: "destructive" });
-    } finally {
-      isConnectingRef.current = false;
-    }
-  };
-
+  // ✅ CAMBIO 1: speakExactText CORREGIDO
   const speakExactText = async (text: string) => {
-    if (!text.trim()) return;
+    if (!text?.trim()) return;
     console.log("🔊 REALTIME ONLY:", text);
     pendingAutomationPromptRef.current = text;
     setPendingAutomationPrompt(text);
-    setTimeout(() => { void flushPendingAutomation(); }, 300);
+    
+    if (realtimeDcRef.current && realtimeDcRef.current.readyState === "open") {
+      flushPendingAutomation();
+      return;
+    }
+    
+    if (!isListening) {
+      await startListening();
+    }
   };
 
   const speakFromAutomation = async (text: string) => {
@@ -1173,7 +953,7 @@ GestoriaCitaIA
   };
 
   // ============================================
-  // SUBIR DOCUMENTOS - CORREGIDO (sin alert)
+  // SUBIR DOCUMENTOS
   // ============================================
   const handleGeneralUpload = () => {
     console.log("CLICK WORKING");
@@ -1219,7 +999,6 @@ GestoriaCitaIA
           results.push({ fileName: file.name, result });
         }
         setDocsUploaded(true);
-        // ✅ TOAST en lugar de ALERT
         toast({ 
           title: "✅ Documentos subidos", 
           description: `${files.length} documento(s) subido(s). Ahora haz clic en Verificar documentos`,
@@ -1500,6 +1279,12 @@ GestoriaCitaIA
       
       console.log("🔍 RESULTADO FINAL:", resultado);
 
+      // ✅ CAMBIO 4: Toast después de verificar
+      toast({
+        title: "✅ Análisis completado",
+        description: soufianeUnlockCondition ? "Soufiane ya puede hablar" : "Documentos incompletos",
+      });
+
       // CONSTRUIR EL MENSAJE COMPLETO PARA SOUFIANE
       let mensajeFinal = "";
 
@@ -1570,14 +1355,10 @@ ${hasExpulsion && !expulsionExpired ? "- حل قرار الطرد النشط\n" 
 `;
       }
 
-      // ✅ TOAST en lugar de ALERT
-      toast({
-        title: soufianeUnlockCondition ? "✅ Documentos verificados" : "❌ Documentos incompletos",
-        description: soufianeUnlockCondition ? "El archivo es válido para la regularización" : "Faltan documentos para completar el expediente",
-      });
-
-      // Enviar mensaje a Soufiane - HABLA UNA VEZ Y SE BLOQUEA
-      await speakFromAutomation(resultadoFinal);
+      // ✅ CAMBIO 5: Enviar mensaje a Soufiane
+      soufianeHasSpokenRef.current = false;
+      setSoufianeHasSpoken(false);
+      await speakExactText(resultadoFinal);
       
     } catch (err) {
       console.error("Error en handleVerifyAll:", err);
@@ -1589,6 +1370,222 @@ ${hasExpulsion && !expulsionExpired ? "- حل قرار الطرد النشط\n" 
       });
     } finally {
       setGeneralUploading(false);
+    }
+  };
+
+  const startListening = async () => {
+    if (!voiceSupported) { toast({ title: "Error", description: ui.micNotSupported, variant: "destructive" }); return; }
+    if (isConnectingRef.current) return;
+    if (realtimeDcRef.current && realtimeDcRef.current.readyState === "open") return;
+    try {
+      isConnectingRef.current = true;
+      setWaitingSoufiane(true);
+      const sessionRes = await fetch(`/api/realtime-session?ts=${Date.now()}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Cache-Control": "no-cache" },
+        body: JSON.stringify({ assistant: "soufiane" }),
+      });
+      const sessionData = await sessionRes.json();
+      if (!sessionRes.ok) throw new Error(sessionData?.error || "Error creando sesión realtime");
+      const ephemeralKey = sessionData?.value || "";
+      if (!ephemeralKey) throw new Error("No llegó value desde realtime-session");
+
+      const pc = new RTCPeerConnection();
+      realtimePcRef.current = pc;
+      pc.ontrack = (event) => {
+        const [remoteStream] = event.streams;
+        if (remoteStream && remoteAudioRef.current) {
+          remoteAudioRef.current.srcObject = remoteStream;
+          remoteAudioRef.current.autoplay = true;
+          remoteAudioRef.current.playsInline = true;
+          remoteAudioRef.current.muted = false;
+          remoteAudioRef.current.volume = muted ? 0 : 1;
+          const playPromise = remoteAudioRef.current.play();
+          if (playPromise) playPromise.catch((err) => { console.error("Error reproduciendo audio remoto Soufiane:", err); });
+        }
+      };
+      const localStream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
+      realtimeLocalStreamRef.current = localStream;
+      for (const track of localStream.getTracks()) {
+        const sender = pc.addTrack(track, localStream);
+        senderRef.current = sender;
+      }
+
+      const dc = pc.createDataChannel("oai-events");
+      realtimeDcRef.current = dc;
+
+      dc.onopen = async () => {
+        dcOpenedRef.current = true;
+        isConnectingRef.current = false;
+        setIsListening(true);
+        setWaitingSoufiane(false);
+        dc.send(JSON.stringify({
+          type: "session.update",
+          session: {
+            instructions: `
+أنت سفيان من GestoriaCitaIA.
+
+تكلم فقط بالدارجة المغربية.
+
+🎯 الدور ديالك:
+أنت متخصص فقط في تحليل الوثائق وإعطاء نتيجة واحدة فقط.
+
+مهمتك هي:
+- تحليل الوثائق المرفوعة
+- حساب مدة التواجد في إسبانيا
+- تحديد إذا كانت 5 أشهر متواصلة أم لا
+
+❌ ممنوع:
+- ممنوع تجاوب على أسئلة عامة
+- ممنوع تعطي استشارات قانونية
+- ممنوع تبدأ حوار
+- ممنوع تقول "سلام" أو "مرحبا"
+- ممنوع تسول أسئلة
+- ممنوع تعاود الكلام
+- ممنوع ترد على أي شيء بعد إعطاء النتيجة
+
+🎯 الطريقة ديالك:
+- جاوب فقط بالتحليل المطلوب
+- الجواب يكون مختصر وواضح
+- ما تزيدش كلام زيادة
+- مرة واحدة فقط
+
+📋 تحليل الوثائق:
+
+إلى توصلت بوثائق، قول مباشرة:
+"توصلت بالوثائق. غادي نبدا التحليل."
+
+🔍 استخراج المعلومات:
+استخرج من الوثائق الأسماء والتواريخ ونوع الوثيقة.
+
+📅 حساب المدة:
+إذا كانت الوثائق فيها تواريخ، رتبهم زمنياً واحسب الأيام.
+
+✅ إذا كانت التغطية أكثر من 5 شهور متواصلة (150 يوم):
+قول: "عندك ${analysisResult.days} يوم ديال الإقامة (تزيد من 5 شهور)."
+
+❌ إذا كان كاين فراغ:
+قول: "عندك ${analysisResult.days} يوم فقط. خاصك 150 يوم (5 شهور)."
+
+📊 النتيجة النهائية (هذا هو المهم):
+
+إذا كان الملف كامل:
+"✅ الملف ديالك كامل ومقبول. دابا خاصك تدخل رقم هاتفك فالمربع ديال واتساب وتضغط على زر الإرسال باش توصلك الوثيقة المهمة ف جوالك."
+
+إذا كان الملف ناقص:
+"❌ الملف ديالك ناقص. خاصك تجيب: ${!analysisResult.hasPassport ? 'باسبور أو NIE، ' : ''}${!analysisResult.hasMonths ? `بروفات ديال 5 شهور (عندك ${analysisResult.days} يوم فقط)، ` : ''}${analysisResult.hasExpulsion && !analysisResult.expulsionExpired ? 'حل قرار الطرد النشط' : ''}"
+
+⚠️ مهم جدا:
+- جاوب مرة واحدة فقط
+- ما تعاودش الكلام
+- ما تسولش أسئلة
+- فقط التحليل والنتيجة
+- بعد ما تعطي النتيجة، توقف
+`,
+            modalities: ["audio", "text"],
+            turn_detection: {
+              type: "server_vad",
+              threshold: 0.98,
+              prefix_padding_ms: 300,
+              silence_duration_ms: 2200,
+              interrupt_response: false,
+              create_response: true,
+            },
+          },
+        }));
+
+        const capturedPending = pendingAutomationPromptRef.current;
+        if (capturedPending) {
+          pendingAutomationPromptRef.current = null;
+          setPendingAutomationPrompt("");
+          setTimeout(() => { void askSoufianeToSpeak(capturedPending); }, 400);
+          return;
+        }
+      };
+
+      dc.onmessage = (event) => {
+        try {
+          const msg = JSON.parse(event.data);
+          
+          if (msg.type === "response.output_text.delta" && typeof msg.delta === "string") {
+            assistantTextBufferRef.current += msg.delta;
+          }
+
+          if (msg.type === "response.output_text.done" && typeof msg.text === "string" && msg.text.trim()) {
+            assistantTextBufferRef.current = msg.text.trim();
+          }
+
+          if (msg.type === "response.created") {
+            assistantBusyRef.current = true;
+            setWaitingSoufiane(true);
+            if (realtimeLocalStreamRef.current) {
+              realtimeLocalStreamRef.current.getAudioTracks().forEach(track => { track.enabled = false; });
+            }
+            if (senderRef.current) { senderRef.current.replaceTrack(null); }
+          }
+
+          if (msg.type === "response.done") {
+            assistantBusyRef.current = false;
+            if (realtimeLocalStreamRef.current) {
+              realtimeLocalStreamRef.current.getAudioTracks().forEach(track => { track.enabled = true; });
+            }
+            const finalText = assistantTextBufferRef.current.trim();
+            if (finalText) lastAssistantTextRef.current = finalText;
+            finalizeAssistantBuffer();
+            const audioTrack = realtimeLocalStreamRef.current?.getAudioTracks?.()[0];
+            if (senderRef.current && audioTrack) { senderRef.current.replaceTrack(audioTrack); }
+            setWaitingSoufiane(false);
+            pendingAutomationPromptRef.current = null;
+            setPendingAutomationPrompt("");
+            
+            // ✅ CAMBIO 2: Solo hablar si soufianeReady
+            if (!soufianeHasSpokenRef.current && soufianeReady) {
+              soufianeHasSpokenRef.current = true;
+              setSoufianeHasSpoken(true);
+              setTimeout(() => {
+                stopListening();
+                setIsListening(false);
+              }, 1000);
+            }
+            
+            setTimeout(() => { void flushPendingAutomation(); }, 150);
+          }
+        } catch (err) {
+          console.error("Realtime event parse error:", err);
+        }
+      };
+
+      dc.onerror = (err) => { console.error("Realtime data channel error:", err); };
+      dc.onclose = () => {
+        dcOpenedRef.current = false;
+        isConnectingRef.current = false;
+        assistantBusyRef.current = false;
+        setIsListening(false);
+        stopListening();
+        assistantTextBufferRef.current = "";
+        lastAssistantTextRef.current = "";
+        lastUserTranscriptRef.current = "";
+      };
+
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+      const sdpRes = await fetch("https://api.openai.com/v1/realtime/calls", {
+        method: "POST",
+        body: offer.sdp,
+        headers: { Authorization: `Bearer ${ephemeralKey}`, "Content-Type": "application/sdp" },
+      });
+      if (!sdpRes.ok) {
+        const errText = await sdpRes.text();
+        throw new Error(errText || "Error negociando WebRTC con OpenAI");
+      }
+      const answerSdp = await sdpRes.text();
+      await pc.setRemoteDescription({ type: "answer", sdp: answerSdp });
+    } catch (error: any) {
+      console.error("Error iniciando realtime Soufiane:", error);
+      stopListening();
+      toast({ title: "Error realtime", description: error?.message || voiceTexts.realtimeError, variant: "destructive" });
+    } finally {
+      isConnectingRef.current = false;
     }
   };
 
@@ -1680,7 +1677,7 @@ ${hasExpulsion && !expulsionExpired ? "- حل قرار الطرد النشط\n" 
 
             {paymentCompleted && (
               <div className="mt-5 space-y-4">
-                {/* Botón micrófono - VERDE cuando soufianeReady */}
+                {/* ✅ CAMBIO 3: Botón micrófono VERDE */}
                 <button
                   onClick={() => {
                     if (soufianeReady && !soufianeHasSpoken) {
@@ -1740,13 +1737,13 @@ ${hasExpulsion && !expulsionExpired ? "- حل قرار الطرد النشط\n" 
                   )}
                 </button>
 
-                {/* BOTÓN VERIFICAR ASILO */}
+                {/* Botón Verificar Asilo */}
                 <button onClick={handleVerifyAsilo} className="w-[92%] mx-auto h-[52px] rounded-[20px] border border-[#c6922f] bg-[#050816] hover:bg-[#0b1220] transition-all text-white font-medium text-[16px] flex items-center justify-center gap-3 shadow-lg">
                   <Shield className="w-5 h-5 text-[#d4a94d]" />
                   Verificar Asilo
                 </button>
 
-                {/* BOTÓN VERIFICAR EXPULSIÓN */}
+                {/* Botón Verificar Expulsión */}
                 <button onClick={handleVerifyExpulsion} className="w-[92%] mx-auto h-[52px] rounded-[20px] border border-[#c6922f] bg-[#050816] hover:bg-[#0b1220] transition-all text-white font-medium text-[16px] flex items-center justify-center gap-3 shadow-lg">
                   <AlertTriangle className="w-5 h-5 text-[#d4a94d]" />
                   Verificar Expulsión Europea
