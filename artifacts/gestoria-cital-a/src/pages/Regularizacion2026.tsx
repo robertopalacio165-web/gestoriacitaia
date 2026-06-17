@@ -7,10 +7,8 @@ import {
   MicOff,
   Upload,
   Star,
-  ArrowRight,
-  Bell,
-  Volume2,
-  VolumeX,
+  CheckCircle,
+  FileCheck,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { verifyDocument, type VerifyDocumentResult } from "@/lib/verifyDocument";
@@ -192,6 +190,19 @@ export default function Regularizacion2026() {
   const [stayVerified, setStayVerified] = useState(false);
   const [expulsionVerified, setExpulsionVerified] = useState(false);
   const [soufianeReady, setSoufianeReady] = useState(false);
+  
+  // NUEVOS ESTADOS
+  const [docsUploaded, setDocsUploaded] = useState(false);
+  const [docsVerified, setDocsVerified] = useState(false);
+  const [soufianeHasSpoken, setSoufianeHasSpoken] = useState(false);
+  const [analysisResult, setAnalysisResult] = useState<{ hasPassport: boolean; hasMonths: boolean; days: number; hasExpulsion: boolean; expulsionExpired: boolean; completo: boolean }>({
+    hasPassport: false,
+    hasMonths: false,
+    days: 0,
+    hasExpulsion: false,
+    expulsionExpired: false,
+    completo: false
+  });
 
   useEffect(() => {
     localStorage.setItem("questionIndex", questionIndex.toString());
@@ -204,6 +215,7 @@ export default function Regularizacion2026() {
   const [clientQuestionIndex, setClientQuestionIndex] = useState(0);
   const [showStripe, setShowStripe] = useState(false);
   const [paymentRequired, setPaymentRequired] = useState(false);
+  const soufianeHasSpokenRef = useRef(false);
 
   const [leadForm, setLeadForm] = useState<LeadFormState>({
     nombre: "",
@@ -818,55 +830,33 @@ export default function Regularizacion2026() {
   const handleSendWhatsApp = async () => {
     try {
       if (!phone || phone.trim().length < 6) { alert("دخل رقم الهاتف صحيح"); return; }
-      const res = await fetch("/api/generate-expediente-report", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          nombre: leadForm?.nombre,
-          telefono: phone,
-          ciudad: leadForm?.ciudad,
-          nacionalidad: leadForm?.nacionalidad,
-          fecha_llegada: leadForm?.fechaLlegada,
-          cumple_5_meses: leadForm.cumple5Meses === "yes" ? "yes" : "no",
-          documents: docs,
-        }),
-      });
-      const data = await res.json();
-      const pdfUrl = `${window.location.origin}/api/generate-expediente-pdf?nombre=${encodeURIComponent(leadForm?.nombre || "")}&nacionalidad=${encodeURIComponent(leadForm?.nacionalidad || "")}&ciudad=${encodeURIComponent(leadForm?.ciudad || "")}&fecha_llegada=${encodeURIComponent((leadForm as any)?.fecha_llegada || "")}`;
-      const cleanPhone = phone.trim().replace(/\s+/g, "");
-      const pdfLink = localStorage.getItem("generated_pdf_url") || "";
-      const message = encodeURIComponent(`
+      
+      const mensajeWhatsApp = `
 👋 سلام ${leadForm?.nombre || ""}
 
 ━━━━━━━━━━━━━━━
 
-👉 هذا تحليل الملف ديالك:
+📊 تحليل الملف ديالك:
 
-${data.report.replace(/https?:\/\/[^\s]+/g, "").trim()}
+${analysisResult.completo ? "✅ الملف ديالك كامل ومقبول" : "❌ الملف ديالك ناقص"}
 
-━━━━━━━━━━━━━━━
-
-📩 الوثيقة المهمة (Motivación):
-${pdfLink || pdfUrl}
-
-━━━━━━━━━━━━━━━
-
-⚡ هاد الوثيقة مهمة بزاف وغادي تقوي الملف ديالك.
-حطها مع الدوسي ديالك باش تزيد الحظ ديالك فالتسوية.
+${analysisResult.hasPassport ? "✅ وثيقة الهوية: موجودة" : "❌ وثيقة الهوية: ناقصة"}
+${analysisResult.hasMonths ? `✅ مدة الإقامة: ${analysisResult.days} يوم (تزيد من 5 شهور)` : `❌ مدة الإقامة: ${analysisResult.days} يوم فقط (خاصك 150 يوم)`}
+${analysisResult.hasExpulsion ? (analysisResult.expulsionExpired ? "⚠️ قرار طرد منتهي الصلاحية" : "❌ قرار طرد نشط") : "✅ ما عندكش قرارات طرد"}
 
 ━━━━━━━━━━━━━━━
 
-🎁 دخل 3 صحاب بهاد الكود:
-GH-2026
-
-وغادي تربح شهر مجاني
+📩 الوثيقة المهمة:
+${localStorage.getItem("generated_pdf_url") || ""}
 
 ━━━━━━━━━━━━━━━
 
 💼 شكراً على الثقة ديالك
 GestoriaCitaIA
-`);
-      const url = `https://wa.me/${cleanPhone}?text=${message}`;
+`;
+      
+      const cleanPhone = phone.trim().replace(/\s+/g, "");
+      const url = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(mensajeWhatsApp)}`;
       window.open(url, "_blank");
     } catch (error) {
       console.error("WhatsApp error:", error);
@@ -926,26 +916,59 @@ GestoriaCitaIA
             instructions: `
 أنت سفيان من GestoriaCitaIA.
 
-ممنوع تبدأ الحوار من جديد.
-ممنوع تقول:
-"غنعاود من الأول"
-أو
-"أنا سفيان"
-أو
-"مرحبا"
-إلا فالبداية الأولى فقط.
-
-ممنوع تعاود أي سؤال سبق تسول.
-
-جاوب فقط بالجملة المطلوبة.
-
-إلا كان السؤال الحالي هو:
-"واش دخلتي لإسبانيا قبل من واحد يناير 2026؟"
-
-فلا تقل أي مقدمة أخرى.
-
 تكلم فقط بالدارجة المغربية.
-وباختصار.
+
+🎯 الدور ديالك:
+أنت متخصص فقط في تحليل الوثائق وإعطاء نتيجة واحدة فقط.
+
+مهمتك هي:
+- تحليل الوثائق المرفوعة
+- حساب مدة التواجد في إسبانيا
+- تحديد إذا كانت 5 أشهر متواصلة أم لا
+
+❌ ممنوع:
+- ممنوع تجاوب على أسئلة عامة
+- ممنوع تعطي استشارات قانونية
+- ممنوع تبدأ حوار
+- ممنوع تقول "سلام" أو "مرحبا"
+- ممنوع تسول أسئلة
+- ممنوع تعاود الكلام
+
+🎯 الطريقة ديالك:
+- جاوب فقط بالتحليل المطلوب
+- الجواب يكون مختصر وواضح
+- ما تزيدش كلام زيادة
+
+📋 تحليل الوثائق:
+
+إلى توصلت بوثائق، قول مباشرة:
+"توصلت بالوثائق. غادي نبدا التحليل."
+
+🔍 استخراج المعلومات:
+استخرج من الوثائق الأسماء والتواريخ ونوع الوثيقة.
+
+📅 حساب المدة:
+إذا كانت الوثائق فيها تواريخ، رتبهم زمنياً واحسب الأيام.
+
+✅ إذا كانت التغطية أكثر من 5 شهور متواصلة (150 يوم):
+قول: "عندك ${analysisResult.days} يوم ديال الإقامة (تزيد من 5 شهور)."
+
+❌ إذا كان كاين فراغ:
+قول: "عندك ${analysisResult.days} يوم فقط. خاصك 150 يوم (5 شهور)."
+
+📊 النتيجة النهائية:
+
+إذا كان الملف كامل:
+"✅ الملف ديالك كامل ومقبول. دابا خاصك تدخل رقم هاتفك فالمربع ديال واتساب وتضغط على زر الإرسال باش توصلك الوثيقة المهمة ف جوالك."
+
+إذا كان الملف ناقص:
+"❌ الملف ديالك ناقص. خاصك تجيب: ${!analysisResult.hasPassport ? 'باسبور أو NIE، ' : ''}${!analysisResult.hasMonths ? `بروفات ديال 5 شهور (عندك ${analysisResult.days} يوم فقط)، ` : ''}${analysisResult.hasExpulsion && !analysisResult.expulsionExpired ? 'حل قرار الطرد النشط' : ''}"
+
+⚠️ مهم جدا:
+- جاوب مرة واحدة فقط
+- ما تعاودش الكلام
+- ما تسولش أسئلة
+- فقط التحليل والنتيجة
 `,
             modalities: ["audio", "text"],
             turn_detection: {
@@ -1070,6 +1093,16 @@ GestoriaCitaIA
             setWaitingSoufiane(false);
             pendingAutomationPromptRef.current = null;
             setPendingAutomationPrompt("");
+            
+            if (!soufianeHasSpokenRef.current) {
+              soufianeHasSpokenRef.current = true;
+              setSoufianeHasSpoken(true);
+              setTimeout(() => {
+                stopListening();
+                setIsListening(false);
+              }, 2000);
+            }
+            
             setTimeout(() => { void flushPendingAutomation(); }, 150);
           }
         } catch (err) {
@@ -1204,7 +1237,7 @@ GestoriaCitaIA
   };
 
   const handleGeneralUpload = () => {
-    console.log("CLICK WORKING - Subiendo documentos");
+    console.log("CLICK WORKING");
     const input = document.createElement("input");
     input.type = "file";
     input.accept = "image/*,application/pdf";
@@ -1217,26 +1250,22 @@ GestoriaCitaIA
       try {
         const { data: { user }, error } = await supabase.auth.getUser();
         if (error || !user?.id) throw new Error("Usuario no conectado");
-        
+        setWorkflowStep("waiting_confirm");
+        let results = [];
         for (const file of files) {
-          console.log("📄 Procesando:", file.name);
           const safeName = `${Date.now()}_${file.name}`;
           const storagePath = `${user.id}/regularizacion_2026/${safeName}`;
-          
           await supabase.storage.from("user-documents").upload(storagePath, file, { upsert: true });
-          
           const result = await verifyDocument({ file });
-          console.log("📊 Resultado análisis:", result);
-          
-          const matchedDoc = docs.find(doc => doc.estado === "missing") || docs[0];
+          const matchedDoc = getBestDocMatch(result, docs, file.name);
           if (matchedDoc) {
             setDocs((prev) => prev.map((doc) => {
               if (doc.id !== matchedDoc.id) return doc;
               return {
                 ...doc,
                 archivo: file.name,
-                estado: result.final_verdict === "approved" ? "ok" : "warn",
-                detectedType: result.document_type || "unknown",
+                estado: result.final_verdict === "approved" ? "ok" : result.final_verdict === "review" ? "warn" : "missing",
+                detectedType: result.document_type || "",
                 full_name: result.full_name || "",
                 document_number: result.document_number || "",
                 birth_date: result.birth_date || "",
@@ -1244,15 +1273,16 @@ GestoriaCitaIA
                 verification_score: result.verification_score || 0,
                 fraud_risk: result.fraud_risk || "low",
                 final_verdict: result.final_verdict || "review",
-                document_date: result.document_date || new Date().toISOString().split('T')[0],
+                document_date: result.document_date || "",
               };
             }));
           }
+          results.push({ fileName: file.name, result });
         }
-        toast({ title: "✅ Documentos subidos", description: "Ahora haz clic en Verificar documentos" });
+        setDocsUploaded(true);
+        alert("✅ Documentos analizados correctamente");
       } catch (err) {
-        console.error("Error subiendo documentos:", err);
-        toast({ title: "Error", description: "No se pudieron subir los documentos", variant: "destructive" });
+        console.error(err);
       } finally {
         setGeneralUploading(false);
       }
@@ -1375,14 +1405,12 @@ GestoriaCitaIA
         return;
       }
 
-      let explanation = "دابا غادي نشرح ليك الملف ديالك:\n\n";
       let hasPassport = false;
       let stayDates: string[] = [];
       let hasExpulsion = false;
       let expulsionExpired = false;
 
       for (const doc of docsWithData) {
-        const name = doc.nombre || "وثيقة";
         const type = (doc.detectedType || "").toLowerCase();
         const docName = (doc.nombre || "").toLowerCase();
 
@@ -1390,12 +1418,10 @@ GestoriaCitaIA
             docName.includes("pasaporte") || docName.includes("passport") || 
             docName.includes("nie")) {
           hasPassport = true;
-          explanation += `✅ ${name}: وثيقة هوية صالحة\n`;
         }
         
         if ((doc as any).document_date) {
           stayDates.push((doc as any).document_date);
-          explanation += `📅 ${name}: تاريخ ${(doc as any).document_date}\n`;
         }
         
         if (docName.includes("expulsion") || docName.includes("expulsión") || 
@@ -1405,12 +1431,6 @@ GestoriaCitaIA
             const expiry = new Date((doc as any).expiry_date);
             if (expiry < new Date()) expulsionExpired = true;
           }
-          explanation += `⚠️ ${name}: وثيقة طرد/ترحيل\n`;
-        }
-        
-        if (!type && !docName.includes("pasaporte") && !docName.includes("nie") && 
-            !docName.includes("expulsion") && !docName.includes("padron")) {
-          explanation += `❓ ${name}: نوع الوثيقة غير واضح\n`;
         }
       }
 
@@ -1422,61 +1442,42 @@ GestoriaCitaIA
         const lastDate = sortedDates[sortedDates.length - 1];
         stayDays = Math.floor((lastDate.getTime() - firstDate.getTime()) / (1000 * 60 * 60 * 24));
         hasMonths = stayDays >= 150;
-        explanation += `\n📊 المدة بين أول وثيقة وآخر وثيقة: ${stayDays} يوم\n`;
-      } else if (sortedDates.length === 1) {
-        explanation += `\n📊 عندك وثيقة وحيدة بتاريخ ${sortedDates[0].toLocaleDateString()}. خاصك وثيقتين على الأقل باش نحسب المدة.\n`;
-      } else {
-        explanation += `\n📊 ما عندكش وثائق فيها تواريخ باش نحسب مدة الإقامة.\n`;
       }
 
-      explanation += "\n";
-      if (!hasPassport) explanation += "❌ ما عندكش باسبور أو NIE. خاصك ترفع واحد.\n";
-      else explanation += "✅ وثيقة الهوية مزيانة.\n";
-      
-      if (!hasMonths) explanation += `❌ مدة الإقامة: ${stayDays} يوم فقط. خاصك 150 يوم على الأقل (5 شهور).\n`;
-      else explanation += `✅ مدة الإقامة: ${stayDays} يوم (تزيد من 5 شهور).\n`;
-      
-      if (hasExpulsion && !expulsionExpired) explanation += "❌ عندك قرار طرد نشط. خاصك تحلو قبل ما تقدم.\n";
-      else if (hasExpulsion && expulsionExpired) explanation += "⚠️ عندك قرار طرد قديم (منتهي الصلاحية).\n";
-      else explanation += "✅ ما عندكش قرارات طرد.\n";
-
-      setStayVerified(hasMonths);
+      const resultado = {
+        hasPassport,
+        hasMonths,
+        days: stayDays,
+        hasExpulsion,
+        expulsionExpired,
+        completo: hasPassport && hasMonths && (!hasExpulsion || expulsionExpired)
+      };
+      setAnalysisResult(resultado);
       
       const soufianeUnlockCondition = hasPassport && hasMonths && (!hasExpulsion || expulsionExpired);
       setSoufianeReady(soufianeUnlockCondition);
+      setDocsVerified(true);
       
-      console.log("🔍 RESULTADO FINAL:", {
-        hasPassport,
-        hasMonths,
-        hasExpulsion,
-        expulsionExpired,
-        soufianeUnlockCondition
-      });
+      console.log("🔍 RESULTADO FINAL:", resultado);
 
-      let resultadoTexto = "";
+      let mensajeFinal = "";
+      
       if (soufianeUnlockCondition) {
-        resultadoTexto = `
-${explanation}
+        mensajeFinal = `
+الوثائق كيبان منهم أنك كنت حاضر فإسبانيا ${stayDays} يوم (تزيد من 5 شهور).
 
-✅✅✅ مبروك! الملف ديالك كامل ومقبول!
+✅ الملف ديالك كامل ومقبول.
 
-دابا تقدر تحكي مع سفيان بالصوت. اضغط على زر "Hablar con Soufiane".
-
-ودابا ركز معايا:
-1. دخل رقم الهاتف ديالك
-2. اضغط على زر واتساب
-3. غادي توصلك الوثيقة المهمة بصيغة PDF
-
-حظ موفق!
+دابا خاصك تدخل رقم هاتفك فالمربع ديال واتساب وتضغط على زر الإرسال باش توصلك الوثيقة المهمة ف جوالك.
 `;
       } else {
-        resultadoTexto = `
-${explanation}
+        mensajeFinal = `
+الوثائق كيبان منهم أنك كنت حاضر فإسبانيا ${stayDays} يوم فقط.
 
-❌ الملف ديالك مازال ناقص. خاصك تجيب الوثائق الناقصة:
+❌ الملف ديالك ناقص. خاصك تجيب:
 
 ${!hasPassport ? "- باسبور أو NIE\n" : ""}
-${!hasMonths ? `- بروفات ديال 5 شهور (عندك ${stayDays} يوم فقط)\n` : ""}
+${!hasMonths ? `- بروفات ديال 5 شهور (عندك ${stayDays} يوم فقط، خاصك 150 يوم)\n` : ""}
 ${hasExpulsion && !expulsionExpired ? "- حل قرار الطرد النشط\n" : ""}
 
 من بعد ما تجيب الوثائق الناقصة، عاود اضغط على "Verificar documentos".
@@ -1490,14 +1491,17 @@ ${hasExpulsion && !expulsionExpired ? "- حل قرار الطرد النشط\n" 
       }
 
       if (realtimeDcRef.current && realtimeDcRef.current.readyState === "open") {
-        console.log("✅ REALTIME CONECTADO - Enviando resultado...");
-        await speakFromAutomation(resultadoTexto);
+        console.log("✅ REALTIME CONECTADO - Soufiane habla UNA VEZ");
+        soufianeHasSpokenRef.current = false;
+        setSoufianeHasSpoken(false);
+        await speakFromAutomation(mensajeFinal);
+        await new Promise(resolve => setTimeout(resolve, 15000));
       } else {
-        console.log("⚠️ REALTIME NO DISPONIBLE - Mostrando mensaje en consola");
-        alert(resultadoTexto);
+        console.log("⚠️ REALTIME NO DISPONIBLE - Mostrando resultado");
+        alert(mensajeFinal);
         toast({
           title: soufianeUnlockCondition ? "✅ Documentos verificados" : "❌ Documentos incompletos",
-          description: soufianeUnlockCondition ? "Ya puedes hablar con Soufiane" : "Faltan documentos para completar el expediente",
+          description: soufianeUnlockCondition ? "Ya puedes ver el resultado" : "Faltan documentos para completar el expediente",
         });
       }
       
@@ -1510,6 +1514,7 @@ ${hasExpulsion && !expulsionExpired ? "- حل قرار الطرد النشط\n" 
   };
 
   const goToSara = () => { window.location.href = "/sara"; };
+  const goToKhalid = () => { window.location.href = "/khalid"; };
 
   return (
     <div className="min-h-screen">
@@ -1532,130 +1537,205 @@ ${hasExpulsion && !expulsionExpired ? "- حل قرار الطرد النشط\n" 
           </div>
 
           <div className="mt-2 max-w-7xl mx-auto lg:grid lg:grid-cols-[480px_1fr] lg:gap-6">
+            {/* FOTO DE SOUFIANE - SOLO FOTO, SIN VIDEO */}
             <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="rounded-[26px] overflow-hidden relative">
               <div className="relative">
-                <div className="relative">
-                  <video id="soufiane-video" playsInline preload="metadata" poster="/images/soufiane.png" className="w-full h-[270px] object-cover border-b border-[#f6c453]/10" onPlay={() => { const btn = document.getElementById("play-button"); if (btn) btn.style.display = "none"; }}>
-                    <source src="/soufiane-presentacion.mp4" type="video/mp4" />
-                  </video>
-                  <button id="play-button" type="button" className="absolute inset-0 flex items-center justify-center" onClick={() => { const video = document.getElementById("soufiane-video") as HTMLVideoElement; if (video) video.play(); }}>
-                    <div className="bg-black/10 backdrop-blur-[2px] rounded-full w-12 h-12 flex items-center justify-center">
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z" /></svg>
-                    </div>
-                  </button>
-                </div>
+                <img 
+                  src="/images/soufiane.png" 
+                  alt="Soufiane" 
+                  className="w-full h-[270px] object-cover border-b border-[#f6c453]/10"
+                />
                 <div className="absolute bottom-5 right-4 text-right">
                   <h2 className="text-[22px] font-bold text-white">Soufiane</h2>
                   <p className="text-[15px] text-[#d4a94d] font-medium tracking-wide">Experto en Regularización</p>
                 </div>
               </div>
             </motion.div>
+          </div>
 
-            <div className="mt-0 w-full max-w-none lg:col-start-2">
-              
-              {!paymentCompleted && (
-                <div className="p-3">
-                  <div className="relative overflow-hidden rounded-2xl border border-yellow-500/30 bg-gradient-to-br from-[#1a1200] via-[#0b0b0b] to-[#1a1200] p-4 w-full">
-                    <div className="flex items-center justify-between mb-3">
-                      <div>
-                        <p className="text-white font-bold text-lg">Desbloquea a Soufiane</p>
-                        <span className="inline-flex mt-1 px-2 py-1 rounded-full bg-yellow-500 text-black text-[10px] font-bold">PREMIUM</span>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-xl font-black text-yellow-400 leading-none">14,99€</p>
-                        <p className="text-white/60 text-xs">Acceso completo</p>
-                      </div>
+          <div className="mt-0 w-full max-w-none lg:col-start-2">
+            {!paymentCompleted && (
+              <div className="p-3">
+                <div className="relative overflow-hidden rounded-2xl border border-yellow-500/30 bg-gradient-to-br from-[#1a1200] via-[#0b0b0b] to-[#1a1200] p-4 w-full">
+                  <div className="flex items-center justify-between mb-3">
+                    <div>
+                      <p className="text-white font-bold text-lg">Desbloquea a Soufiane</p>
+                      <span className="inline-flex mt-1 px-2 py-1 rounded-full bg-yellow-500 text-black text-[10px] font-bold">PREMIUM</span>
                     </div>
-                    <p className="text-white/70 text-[13px] leading-relaxed mb-3">Acceso ilimitado a Soufiane IA, videollamada realtime, análisis de documentos y generación automática del expediente.</p>
-                    <button onClick={handleStripePayment} type="button" className="w-[92%] mx-auto flex items-center justify-center h-[52px] rounded-[20px] text-white font-semibold text-[16px] bg-gradient-to-r from-[#16a34a] to-[#22c55e] border border-[#4ade80] shadow-[0_4px_14px_rgba(34,197,94,0.35)]">
-                      🔓 Desbloquear ahora
-                    </button>
-                    <div className="mt-2 flex items-center justify-center gap-2 flex-wrap">
-                      <div className="h-8 px-2 rounded-lg bg-white flex items-center justify-center text-blue-700 font-black text-[10px]">VISA</div>
-                      <div className="h-8 px-2 rounded-lg bg-white flex items-center justify-center text-red-500 font-black text-[10px]">Mastercard</div>
-                      <div className="h-8 px-2 rounded-lg bg-white flex items-center justify-center text-black font-black text-[10px]">Pay</div>
-                      <div className="h-8 px-2 rounded-lg bg-white flex items-center justify-center text-black font-black text-[10px]">G Pay</div>
+                    <div className="text-right">
+                      <p className="text-xl font-black text-yellow-400 leading-none">14,99€</p>
+                      <p className="text-white/60 text-xs">Acceso completo</p>
                     </div>
                   </div>
-                  <div className="rounded-2xl border border-white/10 bg-white/5 p-3 mt-3">
-                    <div className="flex items-center gap-2 mb-3">
-                      <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-                      <p className="text-white font-bold">Soufiane IA</p>
-                    </div>
-                    <p className="text-white/80 text-sm leading-relaxed">Especialista profesional en extranjería española para marroquíes en España. Pregunta sobre residencia, papeles, policía, nacionalidad, arraigo, trabajo, estudios y cualquier problema legal relacionado con inmigración.</p>
+                  <p className="text-white/70 text-[13px] leading-relaxed mb-3">Acceso ilimitado a Soufiane IA, videollamada realtime, análisis de documentos y generación automática del expediente.</p>
+                  <button onClick={handleStripePayment} type="button" className="w-[92%] mx-auto flex items-center justify-center h-[52px] rounded-[20px] text-white font-semibold text-[16px] bg-gradient-to-r from-[#16a34a] to-[#22c55e] border border-[#4ade80] shadow-[0_4px_14px_rgba(34,197,94,0.35)]">
+                    🔓 Desbloquear ahora
+                  </button>
+                  <div className="mt-2 flex items-center justify-center gap-2 flex-wrap">
+                    <div className="h-8 px-2 rounded-lg bg-white flex items-center justify-center text-blue-700 font-black text-[10px]">VISA</div>
+                    <div className="h-8 px-2 rounded-lg bg-white flex items-center justify-center text-red-500 font-black text-[10px]">Mastercard</div>
+                    <div className="h-8 px-2 rounded-lg bg-white flex items-center justify-center text-black font-black text-[10px]">Pay</div>
+                    <div className="h-8 px-2 rounded-lg bg-white flex items-center justify-center text-black font-black text-[10px]">G Pay</div>
                   </div>
                 </div>
-              )}
-
-              {paymentCompleted && (
-                <div className="mt-5 space-y-4">
-                  <button
-                    onClick={() => {
-                      if (soufianeReady) {
-                        if (isListening) {
-                          stopListening();
-                        } else {
-                          startListening();
-                        }
-                      }
-                    }}
-                    disabled={!soufianeReady}
-                    className={`w-[92%] mx-auto h-[52px] rounded-[20px] flex items-center justify-center gap-3 text-[16px] font-semibold border shadow-xl transition-all duration-300 ${
-                      !soufianeReady ? "bg-gray-600 opacity-60 cursor-not-allowed text-white"
-                      : isListening ? "bg-red-600 border-red-400 text-white shadow-red-500/30 animate-pulse"
-                      : "bg-gradient-to-r from-[#16a34a] to-[#22c55e] border-[#4ade80] text-white shadow-green-500/20"
-                    }`}
-                  >
-                    {isListening ? (
-                      <><MicOff className="w-5 h-5" />Soufiane escuchando...</>
-                    ) : (
-                      <><Mic className="w-5 h-5" />
-                        {!soufianeReady ? "Verificar documentos primero" : "Hablar con Soufiane"}
-                      </>
-                    )}
-                  </button>
-
-                  <button onClick={handleGeneralUpload} disabled={generalUploading} className="w-[92%] mx-auto h-[52px] rounded-[20px] border border-[#c6922f] bg-[#050816] hover:bg-[#0b1220] transition-all text-white font-medium text-[16px] flex items-center justify-center gap-3 shadow-lg">
-                    <Upload className="w-5 h-5 text-[#d4a94d]" />
-                    {generalUploading ? "Subiendo..." : "Subir documentos"}
-                  </button>
-
-                  <button onClick={handleVerifyAll} className="w-[92%] mx-auto h-[52px] rounded-[20px] border border-[#c6922f] bg-[#050816] hover:bg-[#0b1220] transition-all text-white font-medium text-[16px] flex items-center justify-center gap-3 shadow-lg">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-[#d4a94d]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4" />
-                    </svg>
-                    Verificar documentos
-                  </button>
-
-                  <button onClick={handleVerifyAsilo} className="w-[92%] mx-auto h-[52px] rounded-[20px] border border-[#c6922f] bg-[#050816] hover:bg-[#0b1220] transition-all text-white font-medium text-[16px] flex items-center justify-center gap-3 shadow-lg">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-[#d4a94d]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                    </svg>
-                    Verificar Asilo
-                  </button>
-
-                  <button onClick={handleVerifyExpulsion} className="w-[92%] mx-auto h-[52px] rounded-[20px] border border-[#c6922f] bg-[#050816] hover:bg-[#0b1220] transition-all text-white font-medium text-[16px] flex items-center justify-center gap-3 shadow-lg">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-[#d4a94d]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
-                    </svg>
-                    Verificar Expulsión Europea
-                  </button>
-
-                  <div className="w-[92%] mx-auto h-[52px] rounded-[20px] border border-[#c6922f]/40 bg-[#050816] flex items-center overflow-hidden shadow-lg">
-                    <div className="w-[58px] h-full flex items-center justify-center border-r border-[#c6922f]/30 bg-black">
-                      <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" className="w-6 h-6" />
-                    </div>
-                    <input 
-                      type="tel" 
-                      value={phone} 
-                      onChange={(e) => setPhone(e.target.value)} 
-                      placeholder="Número WhatsApp" 
-                      className="flex-1 h-full bg-transparent px-4 text-white placeholder:text-white/40 outline-none text-[16px]" 
-                    />
+                <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+                    <p className="text-white font-bold">Soufiane IA</p>
                   </div>
+                  <p className="text-white/80 text-sm leading-relaxed">Especialista profesional en extranjería española para marroquíes en España. Pregunta sobre residencia, papeles, policía, nacionalidad, arraigo, trabajo, estudios y cualquier problema legal relacionado con inmigración.</p>
                 </div>
-              )}
+              </div>
+            )}
+
+            <div className="mt-4 rounded-2xl border border-green-500/20 bg-[#071326] p-4">
+              <h3 className="text-center text-green-400 font-bold text-lg mb-4">Miles de personas ya usan GestoriaCitaIA</h3>
+              <div className="grid grid-cols-4 gap-2 text-center">
+                <div><p className="text-green-400 text-2xl font-black">18K+</p><p className="text-white/60 text-xs">Trámites</p></div>
+                <div><p className="text-blue-400 text-2xl font-black">97%</p><p className="text-white/60 text-xs">Verificado</p></div>
+                <div><p className="text-purple-400 text-2xl font-black">4m</p><p className="text-white/60 text-xs">Continuar</p></div>
+                <div><p className="text-yellow-400 text-2xl font-black">100%</p><p className="text-white/60 text-xs">Asistente IA</p></div>
+              </div>
+              <div className="mt-4 rounded-full border border-yellow-500/30 py-2 text-center text-white font-bold">🏆 Regularización 2026</div>
+              <div className="flex items-end justify-between mt-4">
+                <div><p className="text-green-400 text-4xl font-black">4.9/5</p><p className="text-yellow-400">★★★★★</p></div>
+                <div className="text-white font-bold">+2K</div>
+              </div>
             </div>
+
+            {paymentCompleted && (
+              <div className="mt-5 space-y-4">
+                {/* BOTÓN MICRÓFONO - VERDE cuando soufianeReady */}
+                <button
+                  onClick={() => {
+                    if (soufianeReady && !soufianeHasSpoken) {
+                      if (isListening) {
+                        stopListening();
+                      } else {
+                        startListening();
+                      }
+                    }
+                  }}
+                  disabled={!soufianeReady || soufianeHasSpoken}
+                  className={`w-[92%] mx-auto h-[52px] rounded-[20px] flex items-center justify-center gap-3 text-[16px] font-semibold border shadow-xl transition-all duration-300 ${
+                    !soufianeReady || soufianeHasSpoken ? "bg-gray-600 opacity-60 cursor-not-allowed text-white"
+                    : isListening ? "bg-red-600 border-red-400 text-white shadow-red-500/30 animate-pulse"
+                    : "bg-gradient-to-r from-[#16a34a] to-[#22c55e] border-[#4ade80] text-white shadow-green-500/20"
+                  }`}
+                >
+                  {isListening ? (
+                    <><MicOff className="w-5 h-5" />Soufiane escuchando...</>
+                  ) : (
+                    <><Mic className="w-5 h-5" />
+                      {!soufianeReady ? "Verificar documentos primero" : soufianeHasSpoken ? "✅ Análisis completado" : "Hablar con Soufiane"}
+                    </>
+                  )}
+                </button>
+
+                {/* BOTÓN SUBIR DOCUMENTOS - Con indicador */}
+                <button 
+                  onClick={handleGeneralUpload} 
+                  disabled={generalUploading} 
+                  className={`w-[92%] mx-auto h-[52px] rounded-[20px] border border-[#c6922f] bg-[#050816] hover:bg-[#0b1220] transition-all text-white font-medium text-[16px] flex items-center justify-center gap-3 shadow-lg ${
+                    docsUploaded ? "border-green-500/60 bg-green-900/20" : ""
+                  }`}
+                >
+                  <Upload className="w-5 h-5 text-[#d4a94d]" />
+                  {generalUploading ? "Subiendo..." : docsUploaded ? "✅ Documentos subidos" : "Subir documentos"}
+                  {docsUploaded && <CheckCircle className="w-4 h-4 text-green-400" />}
+                </button>
+
+                {/* BOTÓN VERIFICAR DOCUMENTOS - Con indicador */}
+                <button 
+                  onClick={handleVerifyAll} 
+                  disabled={!docsUploaded || generalUploading}
+                  className={`w-[92%] mx-auto h-[52px] rounded-[20px] border border-[#c6922f] bg-[#050816] hover:bg-[#0b1220] transition-all text-white font-medium text-[16px] flex items-center justify-center gap-3 shadow-lg ${
+                    docsVerified ? "border-green-500/60 bg-green-900/20" : ""
+                  }`}
+                >
+                  {docsVerified ? (
+                    <><FileCheck className="w-5 h-5 text-green-400" /> ✅ Documentos verificados</>
+                  ) : (
+                    <>
+                      <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-[#d4a94d]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4" />
+                      </svg>
+                      {generalUploading ? "Verificando..." : "Verificar documentos"}
+                    </>
+                  )}
+                </button>
+
+                <button onClick={handleVerifyAsilo} className="w-[92%] mx-auto h-[52px] rounded-[20px] border border-[#c6922f] bg-[#050816] hover:bg-[#0b1220] transition-all text-white font-medium text-[16px] flex items-center justify-center gap-3 shadow-lg">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-[#d4a94d]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                  Verificar Asilo
+                </button>
+
+                <button onClick={handleVerifyExpulsion} className="w-[92%] mx-auto h-[52px] rounded-[20px] border border-[#c6922f] bg-[#050816] hover:bg-[#0b1220] transition-all text-white font-medium text-[16px] flex items-center justify-center gap-3 shadow-lg">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-[#d4a94d]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                  </svg>
+                  Verificar Expulsión Europea
+                </button>
+
+                {/* WHATSAPP CON BOTÓN ENVIAR */}
+                <div className="w-[92%] mx-auto h-[52px] rounded-[20px] border border-[#c6922f]/40 bg-[#050816] flex items-center overflow-hidden shadow-lg">
+                  <div className="w-[58px] h-full flex items-center justify-center border-r border-[#c6922f]/30 bg-black">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" className="w-6 h-6" />
+                  </div>
+                  <input 
+                    type="tel" 
+                    value={phone} 
+                    onChange={(e) => setPhone(e.target.value)} 
+                    placeholder={safeLang === "darija" ? "رقم الواتساب" : safeLang === "en" ? "WhatsApp number" : "Número WhatsApp"} 
+                    className="flex-1 h-full bg-transparent px-4 text-white placeholder:text-white/40 outline-none text-[16px]" 
+                  />
+                  <button 
+                    onClick={handleSendWhatsApp}
+                    className="h-full px-4 bg-green-600 hover:bg-green-700 transition-colors text-white font-semibold text-sm"
+                  >
+                    Enviar
+                  </button>
+                </div>
+
+                <div className="flex gap-3 w-[92%] mx-auto">
+                  <button onClick={goToSara} className="flex-1 h-[52px] rounded-[20px] border border-pink-500/40 bg-[#1a0a15] hover:bg-[#2a1525] transition-all text-white font-medium text-[16px] flex items-center justify-center gap-2 shadow-lg">
+                    <span className="text-pink-400 text-xl">👩</span>
+                    Sara
+                  </button>
+                  <button onClick={goToKhalid} className="flex-1 h-[52px] rounded-[20px] border border-blue-500/40 bg-[#0a0f1a] hover:bg-[#15202a] transition-all text-white font-medium text-[16px] flex items-center justify-center gap-2 shadow-lg">
+                    <span className="text-blue-400 text-xl">👨</span>
+                    Khalid
+                  </button>
+                </div>
+
+                <div className="w-full rounded-[36px] border border-[#f6c453]/60 bg-gradient-to-b from-[#06111f] to-[#020617] p-5 shadow-[0_0_35px_rgba(255,215,0,0.10)] mt-4">
+                  <p className="text-center text-[#d4a94d] text-[15px] font-semibold mb-5">Miles de personas ya han confiado en nosotros</p>
+                  <div className="grid grid-cols-4 gap-3">
+                    <div className="text-center"><p className="text-[#d4a94d] font-bold text-[22px]">18.420+</p><p className="text-white/70 text-[11px]">Expedientes</p></div>
+                    <div className="text-center"><p className="text-[#d4a94d] font-bold text-[22px]">97%</p><p className="text-white/70 text-[11px]">Aprobados</p></div>
+                    <div className="text-center"><p className="text-[#d4a94d] font-bold text-[22px]">4 min</p><p className="text-white/70 text-[11px]">Respuesta</p></div>
+                    <div className="text-center"><p className="text-[#d4a94d] font-bold text-[22px]">100%</p><p className="text-white/70 text-[11px]">Atención</p></div>
+                  </div>
+                  <div className="mt-5 border border-[#c6922f]/30 rounded-[18px] p-3 bg-black/30 text-center">
+                    <p className="text-[#d4a94d] font-semibold text-[14px]">Primer sistema IA de extranjería en España</p>
+                  </div>
+                  <div className="flex items-center justify-center gap-3 mt-5">
+                    <div className="flex -space-x-2">
+                      <img src="https://i.pravatar.cc/60?img=1" className="w-9 h-9 rounded-full border-2 border-black" />
+                      <img src="https://i.pravatar.cc/60?img=2" className="w-9 h-9 rounded-full border-2 border-black" />
+                      <img src="https://i.pravatar.cc/60?img=3" className="w-9 h-9 rounded-full border-2 border-black" />
+                      <img src="https://i.pravatar.cc/60?img=4" className="w-9 h-9 rounded-full border-2 border-black" />
+                    </div>
+                    <div>
+                      <p className="text-[#d4a94d] text-[18px] font-bold">★★★★★ 4.9/5</p>
+                      <p className="text-white/60 text-[12px]">Basado en opiniones reales</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           <audio ref={remoteAudioRef} autoPlay playsInline className="hidden" />
