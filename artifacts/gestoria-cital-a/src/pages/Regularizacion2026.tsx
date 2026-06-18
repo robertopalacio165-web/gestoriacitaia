@@ -1207,7 +1207,6 @@ ${esApto
   // ============================================
   const getFullPhoneNumber = (): string => {
     const cleanNumber = phoneNumber.replace(/\s/g, "");
-    // Eliminar +34, 0034, etc si el usuario los escribió
     const countryCodeWithoutPlus = selectedCountry.code.replace("+", "");
     const numberWithoutPrefix = cleanNumber
       .replace(/^\+/, "")
@@ -1238,7 +1237,6 @@ ${esApto
         return;
       }
       
-      // Webhook de Make
       const webhookUrl = "https://hook.eu1.make.com/wkowicwqx3lpufxlay8yu6762bpvhk7b";
       
       const payload = {
@@ -1288,14 +1286,19 @@ ${esApto
     }
   };
 
-  // Cerrar dropdown al hacer clic fuera
+  // ✅ REFERENCIA para el dropdown
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // ✅ Cerrar dropdown al hacer clic fuera (CORREGIDO)
   useEffect(() => {
-    const handleClickOutside = () => {
-      setShowCountryDropdown(false);
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowCountryDropdown(false);
+      }
     };
-    document.addEventListener("click", handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
     return () => {
-      document.removeEventListener("click", handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
 
@@ -1420,12 +1423,13 @@ ${esApto
                   )}
                 </button>
 
-                {/* ✅ WhatsApp con selector de país - UNA SOLA FILA */}
+                {/* ✅ WhatsApp con selector de país - UNA SOLA FILA (CORREGIDO) */}
                 <div className="w-[92%] mx-auto flex items-center overflow-hidden rounded-[20px] border border-[#c6922f]/40 bg-[#050816] shadow-lg">
                   {/* Selector de país */}
-                  <div className="relative flex-shrink-0">
+                  <div className="relative flex-shrink-0" ref={dropdownRef}>
                     <button
                       onClick={(e) => {
+                        e.preventDefault();
                         e.stopPropagation();
                         setShowCountryDropdown(!showCountryDropdown);
                       }}
@@ -1434,12 +1438,12 @@ ${esApto
                       <span className="text-lg">{selectedCountry.flag}</span>
                       <span className="hidden sm:inline">{selectedCountry.code}</span>
                       <span className="sm:hidden">{selectedCountry.code}</span>
-                      <ChevronDown className={`w-3 h-3 transition-transform ${showCountryDropdown ? "rotate-180" : ""}`} />
+                      <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${showCountryDropdown ? "rotate-180" : ""}`} />
                     </button>
                     
                     {/* Dropdown países */}
                     {showCountryDropdown && (
-                      <div className="absolute left-0 top-full mt-1 w-[200px] max-h-[200px] overflow-y-auto rounded-lg border border-[#c6922f]/30 bg-[#0a0f1a] shadow-xl z-50">
+                      <div className="absolute left-0 top-full mt-1 w-[220px] max-h-[220px] overflow-y-auto rounded-lg border border-[#c6922f]/30 bg-[#0a0f1a] shadow-xl z-50">
                         {COUNTRIES.map((country) => (
                           <button
                             key={country.code}
@@ -1447,13 +1451,13 @@ ${esApto
                               setSelectedCountry(country);
                               setShowCountryDropdown(false);
                             }}
-                            className={`flex items-center gap-2 w-full px-3 py-2 text-sm text-left hover:bg-white/10 transition-colors ${
+                            className={`flex items-center gap-2 w-full px-3 py-2.5 text-sm text-left hover:bg-white/10 transition-colors ${
                               country.code === selectedCountry.code ? "bg-white/5 text-[#d4a94d]" : "text-white"
                             }`}
                           >
                             <span className="text-lg">{country.flag}</span>
-                            <span>{country.code}</span>
-                            <span className="text-white/60 text-xs">{country.name}</span>
+                            <span className="font-medium">{country.code}</span>
+                            <span className="text-white/50 text-xs">{country.name}</span>
                           </button>
                         ))}
                       </div>
@@ -1461,7 +1465,7 @@ ${esApto
                   </div>
 
                   {/* Separador */}
-                  <div className="w-px h-8 bg-[#c6922f]/30" />
+                  <div className="w-px h-8 bg-[#c6922f]/30 flex-shrink-0" />
 
                   {/* Input número */}
                   <input 
@@ -1474,7 +1478,7 @@ ${esApto
                       setPhoneNumber(value);
                     }}
                     placeholder="Número WhatsApp"
-                    className="flex-1 h-full bg-transparent px-3 text-white placeholder:text-white/40 outline-none text-[16px] min-w-[100px]"
+                    className="flex-1 h-full bg-transparent px-3 text-white placeholder:text-white/40 outline-none text-[16px] min-w-[80px]"
                   />
                 </div>
 
