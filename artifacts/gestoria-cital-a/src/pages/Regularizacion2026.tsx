@@ -1427,12 +1427,10 @@ ${esApto
                 <div className="w-[92%] mx-auto flex items-center overflow-hidden rounded-[20px] border border-[#c6922f]/40 bg-[#050816] shadow-lg">
                   {/* Selector de país */}
                   <div className="relative flex-shrink-0" ref={dropdownRef}>
-                    <button
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        setShowCountryDropdown(!showCountryDropdown);
-                      }}
+                   onClick={() => {
+  console.log("CLICK PAIS");
+  setShowCountryDropdown(prev => !prev);
+}}
                       className="flex items-center gap-1 px-3 py-3 h-[52px] bg-transparent text-white text-sm font-medium hover:bg-white/5 transition-colors"
                     >
                       <span className="text-lg">{selectedCountry.flag}</span>
