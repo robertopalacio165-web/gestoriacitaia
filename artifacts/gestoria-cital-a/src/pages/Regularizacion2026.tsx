@@ -1423,10 +1423,10 @@ ${esApto
                   )}
                 </button>
 
-                {/* ✅ WhatsApp con selector de país - UNA SOLA FILA */}
-                <div className="w-[92%] mx-auto flex items-center overflow-hidden rounded-[20px] border border-[#c6922f]/40 bg-[#050816] shadow-lg">
-                  {/* Selector de país */}
-                  <div className="relative flex-shrink-0" ref={dropdownRef}>
+                {/* ✅ WhatsApp con selector de país - CON Z-INDEX CORREGIDO */}
+                <div className="w-[92%] mx-auto flex items-center overflow-visible rounded-[20px] border border-[#c6922f]/40 bg-[#050816] shadow-lg">
+                  {/* Selector de país - CON Z-INDEX ALTO */}
+                  <div className="relative flex-shrink-0 z-[9999]" ref={dropdownRef}>
                     <button
                       onClick={(e) => {
                         e.preventDefault();
@@ -1441,9 +1441,9 @@ ${esApto
                       <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${showCountryDropdown ? "rotate-180" : ""}`} />
                     </button>
                     
-                    {/* Dropdown países */}
+                    {/* Dropdown países - CON Z-INDEX Y POSITION CORREGIDA */}
                     {showCountryDropdown && (
-                      <div className="absolute left-0 top-full mt-1 w-[220px] max-h-[220px] overflow-y-auto rounded-lg border border-[#c6922f]/30 bg-[#0a0f1a] shadow-xl z-50">
+                      <div className="absolute bottom-full left-0 mb-1 w-[220px] max-h-[220px] overflow-y-auto rounded-lg border border-[#c6922f]/30 bg-[#050816] shadow-2xl z-[9999]">
                         {COUNTRIES.map((country) => (
                           <button
                             key={country.code}
