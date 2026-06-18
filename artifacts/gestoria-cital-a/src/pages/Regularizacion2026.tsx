@@ -1426,13 +1426,23 @@ ${esApto
                 {/* ✅ WhatsApp con selector de país - UNA SOLA FILA (CORREGIDO) */}
                 <div className="w-[92%] mx-auto flex items-center overflow-hidden rounded-[20px] border border-[#c6922f]/40 bg-[#050816] shadow-lg">
                   {/* Selector de país */}
-                  <div className="relative flex-shrink-0" ref={dropdownRef}>
-                   onClick={() => {
-  console.log("CLICK PAIS");
-  setShowCountryDropdown(prev => !prev);
-}}
-                      className="flex items-center gap-1 px-3 py-3 h-[52px] bg-transparent text-white text-sm font-medium hover:bg-white/5 transition-colors"
-                    >
+    <div className="relative flex-shrink-0" ref={dropdownRef}>
+  <button
+    type="button"
+    onClick={() => {
+      console.log("CLICK PAIS");
+      setShowCountryDropdown(prev => !prev);
+    }}
+    className="flex items-center gap-1 px-3 py-3 h-[52px] bg-transparent text-white text-sm font-medium hover:bg-white/5 transition-colors"
+  >
+    <span className="text-lg">{selectedCountry.flag}</span>
+    <span>{selectedCountry.code}</span>
+    <ChevronDown
+      className={`w-3 h-3 transition-transform duration-200 ${
+        showCountryDropdown ? "rotate-180" : ""
+      }`}
+    />
+  </button>
                       <span className="text-lg">{selectedCountry.flag}</span>
                       <span className="hidden sm:inline">{selectedCountry.code}</span>
                       <span className="sm:hidden">{selectedCountry.code}</span>
