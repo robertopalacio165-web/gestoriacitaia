@@ -8,6 +8,7 @@ import {
   CheckCircle,
   FileCheck,
   Send,
+  ChevronDown,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { verifyDocument, type VerifyDocumentResult } from "@/lib/verifyDocument";
@@ -66,6 +67,20 @@ type UserFormRow = {
   title: string | null;
   form_data: Record<string, any> | null;
 };
+
+// ✅ Países para selector
+const COUNTRIES = [
+  { code: "+34", flag: "🇪🇸", name: "España" },
+  { code: "+212", flag: "🇲🇦", name: "Marruecos" },
+  { code: "+33", flag: "🇫🇷", name: "Francia" },
+  { code: "+32", flag: "🇧🇪", name: "Bélgica" },
+  { code: "+31", flag: "🇳🇱", name: "Holanda" },
+  { code: "+49", flag: "🇩🇪", name: "Alemania" },
+  { code: "+39", flag: "🇮🇹", name: "Italia" },
+  { code: "+44", flag: "🇬🇧", name: "Reino Unido" },
+  { code: "+351", flag: "🇵🇹", name: "Portugal" },
+  { code: "+41", flag: "🇨🇭", name: "Suiza" },
+];
 
 function buildInitialDocs(procedureKey: string): StoredDocItem[] {
   const procedure = getProcedureByKey(procedureKey) || EXTRANJERIA_PROCEDURES[0];
@@ -152,7 +167,12 @@ export default function Regularizacion2026() {
   const [currentUserId, setCurrentUserId] = useState("");
   const [formConfirmed, setFormConfirmed] = useState(false);
   const [confirmUnlocked, setConfirmUnlocked] = useState(false);
-  const [phone, setPhone] = useState("");
+  
+  // ✅ Estado para teléfono con país
+  const [selectedCountry, setSelectedCountry] = useState(COUNTRIES[0]);
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [showCountryDropdown, setShowCountryDropdown] = useState(false);
+  
   const [questionsDone, setQuestionsDone] = useState(false);
   const [clientQuestionsDone, setClientQuestionsDone] = useState(false);
   const [questionIndex, setQuestionIndex] = useState(0);
@@ -891,7 +911,7 @@ export default function Regularizacion2026() {
   };
 
   // ============================================
-  // VERIFICAR DOCUMENTOS - HACE TODO CON VINCULACIÓN
+  // VERIFICAR DOCUMENTOS - HACE TODO
   // ============================================
   const handleVerifyAll = async () => {
     try {
@@ -1083,18 +1103,17 @@ ${esApto
       // === 7. GUARDAR EN LOCALSTORAGE ===
       localStorage.setItem("soufiane_analysis", informeCompleto);
       
-      // === 8. GUARDAR EN SUPABASE - soufiane_analyses (con RETURN) ===
+      // === 8. GUARDAR EN SUPABASE - soufiane_analyses ===
       let analysisId = null;
       
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (user?.id) {
-          // ✅ Guardar análisis y obtener el ID
           const { data: analysisData, error: analysisError } = await supabase
             .from("soufiane_analyses")
             .insert({
               user_id: user.id,
-              telefono: phone || "",
+              telefono: getFullPhoneNumber(),
               nombre: resultado.nombreCliente || "",
               expediente_status: esApto ? "APTO" : "NO APTO",
               has_passport: hasPassport,
@@ -1118,7 +1137,6 @@ ${esApto
           if (analysisError) {
             console.error("Error guardando análisis:", analysisError);
           } else if (analysisData) {
-            // ✅ Guardar el ID del análisis
             analysisId = analysisData.id;
             console.log(`✅ Análisis guardado en soufiane_analyses con ID: ${analysisId}`);
 
@@ -1140,7 +1158,7 @@ ${esApto
               const { error: docError } = await supabase
                 .from("soufiane_documents")
                 .insert({
-                  analysis_id: analysisId, // ✅ VINCULADO al análisis
+                  analysis_id: analysisId,
                   document_name: doc.nombre || "",
                   document_type: doc.detectedType || "",
                   document_date: doc.document_date || "",
@@ -1185,11 +1203,27 @@ ${esApto
   };
 
   // ============================================
+  // OBTENER NÚMERO COMPLETO
+  // ============================================
+  const getFullPhoneNumber = (): string => {
+    const cleanNumber = phoneNumber.replace(/\s/g, "");
+    // Eliminar +34, 0034, etc si el usuario los escribió
+    const countryCodeWithoutPlus = selectedCountry.code.replace("+", "");
+    const numberWithoutPrefix = cleanNumber
+      .replace(/^\+/, "")
+      .replace(/^00/, "")
+      .replace(new RegExp(`^${countryCodeWithoutPlus}`), "");
+    return `${countryCodeWithoutPlus}${numberWithoutPrefix}`;
+  };
+
+  // ============================================
   // ENVIAR A WHATSAPP VIA MAKE
   // ============================================
   const handleSendWhatsApp = async () => {
     try {
-      if (!phone || phone.trim().length < 6) { 
+      const fullPhone = getFullPhoneNumber();
+      
+      if (!fullPhone || fullPhone.length < 8) { 
         toast({ title: "❌ Número incorrecto", description: "Introduce un número de teléfono válido", variant: "destructive" });
         return; 
       }
@@ -1208,7 +1242,7 @@ ${esApto
       const webhookUrl = "https://hook.eu1.make.com/wkowicwqx3lpufxlay8yu6762bpvhk7b";
       
       const payload = {
-        telefono: phone.trim().replace(/\s+/g, ""),
+        telefono: fullPhone,
         analysis: analysis,
         nombre: analysisResult.nombreCliente || leadForm?.nombre || "Cliente",
         days: analysisResult.days || 0,
@@ -1230,7 +1264,6 @@ ${esApto
         body: JSON.stringify(payload),
       });
       
-      // ✅ Leer respuesta como texto (no JSON)
       const resultText = await response.text();
       console.log("📥 MAKE RESPONSE:", resultText);
       
@@ -1254,6 +1287,17 @@ ${esApto
       setSendingToWhatsApp(false);
     }
   };
+
+  // Cerrar dropdown al hacer clic fuera
+  useEffect(() => {
+    const handleClickOutside = () => {
+      setShowCountryDropdown(false);
+    };
+    document.addEventListener("click", handleClickOutside);
+    return () => {
+      document.removeEventListener("click", handleClickOutside);
+    };
+  }, []);
 
   return (
     <div className="min-h-screen">
@@ -1356,7 +1400,7 @@ ${esApto
                   {docsUploaded && <CheckCircle className="w-4 h-4 text-green-400" />}
                 </button>
 
-                {/* Verificar documentos - HACE TODO */}
+                {/* Verificar documentos */}
                 <button 
                   onClick={handleVerifyAll} 
                   disabled={!docsUploaded || generalUploading}
@@ -1376,31 +1420,77 @@ ${esApto
                   )}
                 </button>
 
-                {/* WhatsApp con botón Enviar */}
-                <div className="w-[92%] mx-auto h-[52px] rounded-[20px] border border-[#c6922f]/40 bg-[#050816] flex items-center overflow-hidden shadow-lg">
-                  <div className="w-[58px] h-full flex items-center justify-center border-r border-[#c6922f]/30 bg-black">
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" className="w-6 h-6" />
+                {/* ✅ WhatsApp con selector de país - UNA SOLA FILA */}
+                <div className="w-[92%] mx-auto flex items-center overflow-hidden rounded-[20px] border border-[#c6922f]/40 bg-[#050816] shadow-lg">
+                  {/* Selector de país */}
+                  <div className="relative flex-shrink-0">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowCountryDropdown(!showCountryDropdown);
+                      }}
+                      className="flex items-center gap-1 px-3 py-3 h-[52px] bg-transparent text-white text-sm font-medium hover:bg-white/5 transition-colors"
+                    >
+                      <span className="text-lg">{selectedCountry.flag}</span>
+                      <span className="hidden sm:inline">{selectedCountry.code}</span>
+                      <span className="sm:hidden">{selectedCountry.code}</span>
+                      <ChevronDown className={`w-3 h-3 transition-transform ${showCountryDropdown ? "rotate-180" : ""}`} />
+                    </button>
+                    
+                    {/* Dropdown países */}
+                    {showCountryDropdown && (
+                      <div className="absolute left-0 top-full mt-1 w-[200px] max-h-[200px] overflow-y-auto rounded-lg border border-[#c6922f]/30 bg-[#0a0f1a] shadow-xl z-50">
+                        {COUNTRIES.map((country) => (
+                          <button
+                            key={country.code}
+                            onClick={() => {
+                              setSelectedCountry(country);
+                              setShowCountryDropdown(false);
+                            }}
+                            className={`flex items-center gap-2 w-full px-3 py-2 text-sm text-left hover:bg-white/10 transition-colors ${
+                              country.code === selectedCountry.code ? "bg-white/5 text-[#d4a94d]" : "text-white"
+                            }`}
+                          >
+                            <span className="text-lg">{country.flag}</span>
+                            <span>{country.code}</span>
+                            <span className="text-white/60 text-xs">{country.name}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
+
+                  {/* Separador */}
+                  <div className="w-px h-8 bg-[#c6922f]/30" />
+
+                  {/* Input número */}
                   <input 
-                    type="tel" 
-                    value={phone} 
-                    onChange={(e) => setPhone(e.target.value)} 
-                    placeholder={safeLang === "darija" ? "رقم الواتساب" : safeLang === "en" ? "WhatsApp number" : "Número WhatsApp"} 
-                    className="flex-1 h-full bg-transparent px-4 text-white placeholder:text-white/40 outline-none text-[16px]" 
+                    type="tel"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    value={phoneNumber}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/[^0-9]/g, "");
+                      setPhoneNumber(value);
+                    }}
+                    placeholder="Número WhatsApp"
+                    className="flex-1 h-full bg-transparent px-3 text-white placeholder:text-white/40 outline-none text-[16px] min-w-[100px]"
                   />
-                  <button 
-                    onClick={handleSendWhatsApp}
-                    disabled={!docsVerified || sendingToWhatsApp}
-                    className={`h-full px-4 text-white font-semibold text-sm flex items-center gap-1 transition-colors ${
-                      !docsVerified || sendingToWhatsApp 
-                        ? "bg-gray-600 cursor-not-allowed" 
-                        : "bg-green-600 hover:bg-green-700"
-                    }`}
-                  >
-                    <Send className="w-4 h-4" />
-                    {sendingToWhatsApp ? "Enviando..." : "Enviar"}
-                  </button>
                 </div>
+
+                {/* Botón Enviar - debajo del input */}
+                <button 
+                  onClick={handleSendWhatsApp}
+                  disabled={!docsVerified || sendingToWhatsApp}
+                  className={`w-[92%] mx-auto h-[52px] rounded-[20px] text-white font-semibold text-[16px] flex items-center justify-center gap-2 transition-all shadow-lg ${
+                    !docsVerified || sendingToWhatsApp 
+                      ? "bg-gray-600 cursor-not-allowed" 
+                      : "bg-gradient-to-r from-[#16a34a] to-[#22c55e] hover:opacity-90"
+                  }`}
+                >
+                  <Send className="w-4 h-4" />
+                  {sendingToWhatsApp ? "Enviando..." : "Enviar resultado"}
+                </button>
               </div>
             )}
           </div>
