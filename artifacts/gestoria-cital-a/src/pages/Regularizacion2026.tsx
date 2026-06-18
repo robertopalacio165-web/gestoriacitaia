@@ -1036,70 +1036,31 @@ export default function Regularizacion2026() {
 
       const analisisDocumentos = docsAnalysis.join("\n");
 
-      const informeCompleto = `
-📋 INFORME PROFESIONAL - REGULARIZACIÓN 2026
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+const informeCompleto = `
+الاسم: ${resultado.nombreCliente}
 
-👤 CLIENTE: ${resultado.nombreCliente}
-📅 FECHA ANÁLISIS: ${new Date().toLocaleDateString()}
+عدد الأيام: ${stayDays}
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+عدد الشهور: ${Math.floor(stayDays / 30)}
 
-📄 DOCUMENTOS ANALIZADOS
+الوثائق:
 
 ${analisisDocumentos}
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-📊 ESTADÍSTICAS
-
-📁 Pruebas fuertes de estancia: ${strongProofs}
-📄 Documentos complementarios: ${weakProofs}
-📅 Días acreditados: ${stayDays}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-🛡️ ANÁLISIS DE ASILO
-
+اللجوء:
 ${asiloStatus}
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+الطرد:
+${expulsionResult.status}
 
-🚫 ANÁLISIS DE EXPULSIÓN
-
-${expulsionResult.status} ${expulsionResult.expired ? "(caducada)" : ""}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-👮 ANÁLISIS POLICIAL
-
+البوليس:
 ${policeStatus}
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+عدد البروفات القوية:
+${strongProofs}
 
-📊 RESUMEN FINAL
-
-${passportTexto}
-${mesesTexto}
-${expulsionTexto}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-✅ CONCLUSIÓN
-
-${esApto 
-  ? "✅ EL EXPEDIENTE ES APTO PARA REGULARIZACIÓN 2026"
-  : "❌ EL EXPEDIENTE NO ES APTO PARA REGULARIZACIÓN 2026"
-}
-
-${esApto 
-  ? "El cliente cumple con los requisitos necesarios para la regularización."
-  : "Faltan requisitos: asegurar documento de identidad, 150 días de estancia o resolver expulsión."
-}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-📱 Para recibir el resultado completo, introduce tu número de WhatsApp y pulsa ENVIAR.
+عدد الوثائق الإضافية:
+${weakProofs}
 `;
 
       // === 7. GUARDAR EN LOCALSTORAGE ===
