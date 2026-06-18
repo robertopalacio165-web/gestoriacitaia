@@ -9,6 +9,7 @@ import {
   FileCheck,
   Send,
   ChevronDown,
+  MessageCircle,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { verifyDocument, type VerifyDocumentResult } from "@/lib/verifyDocument";
@@ -179,6 +180,7 @@ export default function Regularizacion2026() {
   const [expulsionVerified, setExpulsionVerified] = useState(false);
   const [docsUploaded, setDocsUploaded] = useState(false);
   const [docsVerified, setDocsVerified] = useState(false);
+  const [whatsappReady, setWhatsappReady] = useState(false);
   const [sendingToWhatsApp, setSendingToWhatsApp] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<{ 
     hasPassport: boolean; 
@@ -1184,6 +1186,8 @@ ${esApto
 
       // === 10. MARCAR COMO VERIFICADO ===
       setDocsVerified(true);
+      // ✅ ACTIVAR BOTÓN WHATSAPP
+      setWhatsappReady(true);
       
       toast({
         title: "✅ Análisis completado",
@@ -1216,7 +1220,17 @@ ${esApto
   };
 
   // ============================================
-  // ENVIAR A WHATSAPP VIA MAKE
+  // ABRIR WHATSAPP CON MENSAJE
+  // ============================================
+  const handleWhatsAppClick = () => {
+    const message = "Hola, quiero recibir mi análisis de regularización";
+    const phoneNumber = "34686154561"; // Número oficial de GestoriaCitaIA
+    const url = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+    window.open(url, "_blank");
+  };
+
+  // ============================================
+  // ENVIAR A WHATSAPP VIA MAKE (oculto)
   // ============================================
   const handleSendWhatsApp = async () => {
     try {
@@ -1423,9 +1437,8 @@ ${esApto
                   )}
                 </button>
 
-                {/* ✅ WhatsApp con selector de país - CON Z-INDEX CORREGIDO */}
+                {/* ✅ WhatsApp con selector de país */}
                 <div className="w-[92%] mx-auto flex items-center overflow-visible rounded-[20px] border border-[#c6922f]/40 bg-[#050816] shadow-lg">
-                  {/* Selector de país - CON Z-INDEX ALTO */}
                   <div className="relative flex-shrink-0 z-[9999]" ref={dropdownRef}>
                     <button
                       onClick={(e) => {
@@ -1441,7 +1454,6 @@ ${esApto
                       <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${showCountryDropdown ? "rotate-180" : ""}`} />
                     </button>
                     
-                    {/* Dropdown países - CON Z-INDEX Y POSITION CORREGIDA */}
                     {showCountryDropdown && (
                       <div className="absolute bottom-full left-0 mb-1 w-[220px] max-h-[220px] overflow-y-auto rounded-lg border border-[#c6922f]/30 bg-[#050816] shadow-2xl z-[9999]">
                         {COUNTRIES.map((country) => (
@@ -1464,10 +1476,8 @@ ${esApto
                     )}
                   </div>
 
-                  {/* Separador */}
                   <div className="w-px h-8 bg-[#c6922f]/30 flex-shrink-0" />
 
-                  {/* Input número */}
                   <input 
                     type="tel"
                     inputMode="numeric"
@@ -1482,18 +1492,22 @@ ${esApto
                   />
                 </div>
 
-                {/* Botón Enviar - debajo del input */}
-                <button 
-                  onClick={handleSendWhatsApp}
-                  disabled={!docsVerified || sendingToWhatsApp}
-                  className={`w-[92%] mx-auto h-[52px] rounded-[20px] text-white font-semibold text-[16px] flex items-center justify-center gap-2 transition-all shadow-lg ${
-                    !docsVerified || sendingToWhatsApp 
-                      ? "bg-gray-600 cursor-not-allowed" 
-                      : "bg-gradient-to-r from-[#16a34a] to-[#22c55e] hover:opacity-90"
+                {/* ✅ BOTÓN WHATSAPP - SE ACTIVA DESPUÉS DEL ANÁLISIS */}
+                <button
+                  onClick={handleWhatsAppClick}
+                  disabled={!whatsappReady}
+                  className={`w-[92%] mx-auto h-[52px] rounded-[20px] text-white font-bold text-[16px] flex items-center justify-center gap-2 transition-all shadow-lg ${
+                    whatsappReady
+                      ? "bg-gradient-to-r from-[#25D366] to-[#128C7E] hover:opacity-90"
+                      : "bg-gray-600 cursor-not-allowed opacity-60"
                   }`}
                 >
-                  <Send className="w-4 h-4" />
-                  {sendingToWhatsApp ? "Enviando..." : "Enviar resultado"}
+                  <MessageCircle className="w-5 h-5" />
+                  {safeLang === "darija"
+                    ? "📲 استقبل التحليل فواتساب"
+                    : safeLang === "en"
+                    ? "📲 Receive analysis on WhatsApp"
+                    : "📲 Recibir análisis en WhatsApp"}
                 </button>
               </div>
             )}
