@@ -1224,7 +1224,7 @@ ${esApto
   // ============================================
   const handleWhatsAppClick = () => {
     const message = "Hola, quiero recibir mi análisis de regularización";
-    const phoneNumber = "34686154561"; // Número oficial de GestoriaCitaIA
+ const phoneNumber = "31686154561"; // Número oficial de GestoriaCitaIA
     const url = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
     window.open(url, "_blank");
   };
