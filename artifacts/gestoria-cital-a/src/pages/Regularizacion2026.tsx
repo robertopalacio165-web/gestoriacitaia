@@ -111,9 +111,12 @@ export default function Regularizacion2026() {
         setQuestionsDone(true);
         setStep("upload");
         
-        setTimeout(() => {
-          speakExactText("مزيان. دابا خاصك ترفع جميع الوثائق اللي عندك.");
-        }, 1200);
+    toast({
+  title: "📄 Documentos",
+  description: "Sube tus documentos para comenzar la verificación",
+});
+        
+        // ✅ ELIMINADO: NO se genera PDF
       }
       setShowStripe(false);
       setPaymentRequired(false);
@@ -810,6 +813,7 @@ export default function Regularizacion2026() {
         return; 
       }
       
+      // ✅ Mensaje SIN PDF, SOLO resumen
       const mensajeWhatsApp = `
 👋 سلام ${leadForm?.nombre || ""}
 
@@ -848,20 +852,21 @@ GestoriaCitaIA
     }
   };
 
+  // ✅ CAMBIO 1: speakExactText CORREGIDO
   const speakExactText = async (text: string) => {
     if (!text?.trim()) return;
     console.log("🔊 REALTIME ONLY:", text);
     pendingAutomationPromptRef.current = text;
     setPendingAutomationPrompt(text);
     
-    if (realtimeDcRef.current && realtimeDcRef.current.readyState === "open") {
-      flushPendingAutomation();
-      return;
-    }
-    
-    if (!isListening) {
-      await startListening();
-    }
+ if (!docsVerified) {
+  console.log("⛔ Realtime bloqueado hasta verificar documentos");
+  return;
+}
+
+if (!isListening) {
+  await startListening();
+}
   };
 
   const speakFromAutomation = async (text: string) => {
@@ -963,13 +968,16 @@ GestoriaCitaIA
       if (!files.length) return;
       setGeneralUploading(true);
       try {
-        const { data: { user }, error } = await supabase.auth.getUser();
-        if (error || !user?.id) throw new Error("Usuario no conectado");
+       const { data: { user } } = await supabase.auth.getUser();
+
+if (!user?.id) {
+  console.warn("⚠️ Modo prueba sin login");
+}
         setWorkflowStep("waiting_confirm");
         let results = [];
         for (const file of files) {
           const safeName = `${Date.now()}_${file.name}`;
-          const storagePath = `${user.id}/regularizacion_2026/${safeName}`;
+        const storagePath = `${user?.id || "guest"}/regularizacion_2026/${safeName}`;
           await supabase.storage.from("user-documents").upload(storagePath, file, { upsert: true });
           const result = await verifyDocument({ file });
           const matchedDoc = getBestDocMatch(result, docs, file.name);
@@ -1219,46 +1227,26 @@ GestoriaCitaIA
       let stayDates: string[] = [];
       let hasExpulsion = false;
       let expulsionExpired = false;
-      let docsAnalysis: string[] = [];
-      let strongProofs = 0;
-      let weakProofs = 0;
+      let nombresEncontrados: string[] = [];
 
       for (const doc of docsWithData) {
         const type = (doc.detectedType || "").toLowerCase();
         const docName = (doc.nombre || "").toLowerCase();
 
-        // ✅ Analizar cada documento
         if (type.includes("passport") || type.includes("nie") || 
             docName.includes("pasaporte") || docName.includes("passport") || 
             docName.includes("nie")) {
           hasPassport = true;
-          docsAnalysis.push(
-            `✅ ${doc.nombre}: documento de identidad válido`
-          );
-        } else if (
-          type.includes("empadronamiento") || 
-          type.includes("stay_proof") ||
-          docName.includes("empadronamiento") ||
-          docName.includes("padron") ||
-          docName.includes("padrón")
-        ) {
-          strongProofs++;
-          docsAnalysis.push(
-            `✅ ${doc.nombre}: prueba fuerte de estancia`
-          );
-        } else {
-          weakProofs++;
-          docsAnalysis.push(
-            `⚠️ ${doc.nombre}: documento complementario`
-          );
         }
         
-        // ✅ Extraer fechas
         if ((doc as any).document_date) {
           stayDates.push((doc as any).document_date);
         }
         
-        // ✅ Detectar expulsión
+        if ((doc as any).full_name) {
+          nombresEncontrados.push((doc as any).full_name);
+        }
+        
         if (docName.includes("expulsion") || docName.includes("expulsión") || 
             docName.includes("deportacion")) {
           hasExpulsion = true;
@@ -1269,7 +1257,6 @@ GestoriaCitaIA
         }
       }
 
-      // ✅ Calcular días
       const sortedDates = stayDates.map(d => new Date(d)).filter(d => !isNaN(d.getTime())).sort((a, b) => a.getTime() - b.getTime());
       let stayDays = 0;
       let hasMonths = false;
@@ -1296,69 +1283,83 @@ GestoriaCitaIA
       
       console.log("🔍 RESULTADO FINAL:", resultado);
 
-      // ✅ Toast después de verificar
+      // ✅ CAMBIO 4: Toast después de verificar
       toast({
         title: "✅ Análisis completado",
         description: soufianeUnlockCondition ? "Soufiane ya puede hablar" : "Documentos incompletos",
       });
 
-      // ✅ Mensajes individuales
-      let passportTexto = "";
-      if (hasPassport) {
-        passportTexto = `✅ وثيقة الهوية موجودة`;
+      // CONSTRUIR EL MENSAJE COMPLETO PARA SOUFIANE
+      let mensajeFinal = "";
+
+      let nombresTexto = "";
+      if (nombresEncontrados.length > 0) {
+        nombresTexto = `الاسماء: ${nombresEncontrados.join(", ")}.\n`;
+      }
+
+      let fechasTexto = "";
+      if (sortedDates.length >= 2) {
+        fechasTexto = `المدة بين أول وثيقة وآخر وثيقة: ${stayDays} يوم.\n`;
+      } else if (sortedDates.length === 1) {
+        fechasTexto = `لقيت تاريخ واحد فقط. خاصك وثيقتين على الأقل.\n`;
       } else {
-        passportTexto = `❌ وثيقة الهوية ناقصة`;
+        fechasTexto = `ما لقيتش تواريخ ف الوثائق.\n`;
       }
 
       let mesesTexto = "";
       if (hasMonths) {
-        mesesTexto = `✅ مدة الإقامة: ${stayDays} يوم (تزيد من 5 شهور)`;
+        mesesTexto = `✅ عندك ${stayDays} يوم (تزيد من 5 شهور).\n`;
       } else {
-        mesesTexto = `❌ مدة الإقامة: ${stayDays} يوم فقط (خاصك 150 يوم)`;
+        mesesTexto = `❌ عندك ${stayDays} يوم فقط. خاصك 150 يوم.\n`;
+      }
+
+      let passportTexto = "";
+      if (hasPassport) {
+        passportTexto = `✅ عندك وثيقة هوية.\n`;
+      } else {
+        passportTexto = `❌ ما عندكش باسبور أو NIE.\n`;
       }
 
       let expulsionTexto = "";
       if (hasExpulsion) {
         if (expulsionExpired) {
-          expulsionTexto = `⚠️ قرار طرد قديم (منتهي الصلاحية)`;
+          expulsionTexto = `⚠️ عندك قرار طرد قديم (منتهي الصلاحية).\n`;
         } else {
-          expulsionTexto = `🚨 قرار طرد نشط!`;
+          expulsionTexto = `🚨 عندك قرار طرد نشط!\n`;
         }
       } else {
-        expulsionTexto = `✅ لا يوجد قرار طرد`;
+        expulsionTexto = `✅ ما عندكش قرارات طرد.\n`;
       }
 
-      // ✅ CONSTRUIR MENSAJE FINAL COMPLETO
-      const analisisDocumentos = docsAnalysis.join("\n");
-
-      let resultadoFinal = `
-📋 ANALISIS COMPLETO
-
-${analisisDocumentos}
-
-━━━━━━━━━━━━━━━
-
-📊 RESUMEN
-
-📁 Pruebas fuertes: ${strongProofs}
-📄 Pruebas complementarias: ${weakProofs}
-
+      let resultadoFinal = "";
+      if (soufianeUnlockCondition) {
+        resultadoFinal = `
+${nombresTexto}
+${fechasTexto}
 ${passportTexto}
 ${mesesTexto}
 ${expulsionTexto}
 
-${
-  soufianeUnlockCondition
-    ? "✅ El expediente es apto para Regularización 2026."
-    : "❌ El expediente todavía no es apto."
-}
+✅ الملف ديالك كامل ومقبول للتسوية الجماعية 2026.
 
-━━━━━━━━━━━━━━━
-
-📱 Ahora introduce tu número de WhatsApp y pulsa ENVIAR para recibir el resultado completo.
+دابا خاصك تدخل رقم هاتفك فالمربع ديال واتساب وتضغط على زر الإرسال باش توصلك الوثيقة المهمة ف جوالك.
 `;
+      } else {
+        resultadoFinal = `
+${nombresTexto}
+${fechasTexto}
+${passportTexto}
+${mesesTexto}
+${expulsionTexto}
 
-      // ✅ Enviar mensaje a Soufiane (SIEMPRE, apto o no)
+❌ الملف ديالك ناقص. خاصك تجيب:
+${!hasPassport ? "- باسبور أو NIE\n" : ""}
+${!hasMonths ? `- بروفات ديال 5 شهور (عندك ${stayDays} يوم فقط)\n` : ""}
+${hasExpulsion && !expulsionExpired ? "- حل قرار الطرد النشط\n" : ""}
+`;
+      }
+
+      // ✅ CAMBIO 5: Enviar mensaje a Soufiane
       soufianeHasSpokenRef.current = false;
       setSoufianeHasSpoken(false);
       await speakExactText(resultadoFinal);
@@ -1455,14 +1456,35 @@ ${
 
 📋 تحليل الوثائق:
 
-إقرأ النص الذي ستصلك به.
+إلى توصلت بوثائق، قول مباشرة:
+"توصلت بالوثائق. غادي نبدا التحليل."
+
+🔍 استخراج المعلومات:
+استخرج من الوثائق الأسماء والتواريخ ونوع الوثيقة.
+
+📅 حساب المدة:
+إذا كانت الوثائق فيها تواريخ، رتبهم زمنياً واحسب الأيام.
+
+✅ إذا كانت التغطية أكثر من 5 شهور متواصلة (150 يوم):
+قول: "عندك ${analysisResult.days} يوم ديال الإقامة (تزيد من 5 شهور)."
+
+❌ إذا كان كاين فراغ:
+قول: "عندك ${analysisResult.days} يوم فقط. خاصك 150 يوم (5 شهور)."
+
+📊 النتيجة النهائية (هذا هو المهم):
+
+إذا كان الملف كامل:
+"✅ الملف ديالك كامل ومقبول. دابا خاصك تدخل رقم هاتفك فالمربع ديال واتساب وتضغط على زر الإرسال باش توصلك الوثيقة المهمة ف جوالك."
+
+إذا كان الملف ناقص:
+"❌ الملف ديالك ناقص. خاصك تجيب: ${!analysisResult.hasPassport ? 'باسبور أو NIE، ' : ''}${!analysisResult.hasMonths ? `بروفات ديال 5 شهور (عندك ${analysisResult.days} يوم فقط)، ` : ''}${analysisResult.hasExpulsion && !analysisResult.expulsionExpired ? 'حل قرار الطرد النشط' : ''}"
 
 ⚠️ مهم جدا:
-- إقرأ النص كاملاً كما هو
-- لا تزيد ولا تنقص
-- لا تبدأ بسلام أو مرحبا
-- إقرأ مرة واحدة فقط
-- بعد الانتهاء، توقف
+- جاوب مرة واحدة فقط
+- ما تعاودش الكلام
+- ما تسولش أسئلة
+- فقط التحليل والنتيجة
+- بعد ما تعطي النتيجة، توقف
 `,
             modalities: ["audio", "text"],
             turn_detection: {
@@ -1520,6 +1542,7 @@ ${
             pendingAutomationPromptRef.current = null;
             setPendingAutomationPrompt("");
             
+            // ✅ CAMBIO 2: Solo hablar si soufianeReady
             if (!soufianeHasSpokenRef.current && soufianeReady) {
               soufianeHasSpokenRef.current = true;
               setSoufianeHasSpoken(true);
@@ -1658,7 +1681,7 @@ ${
 
             {paymentCompleted && (
               <div className="mt-5 space-y-4">
-                {/* Botón micrófono - VERDE cuando soufianeReady */}
+                {/* ✅ CAMBIO 3: Botón micrófono VERDE */}
                 <button
                   onClick={() => {
                     if (soufianeReady && !soufianeHasSpoken) {
