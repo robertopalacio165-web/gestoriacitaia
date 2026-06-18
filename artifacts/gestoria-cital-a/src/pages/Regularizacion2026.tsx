@@ -1222,25 +1222,7 @@ ${esApto
   // ============================================
   // ABRIR WHATSAPP CON MENSAJE
   // ============================================
-  const handleWhatsAppClick = () => {
-  const fullPhone = getFullPhoneNumber();
 
-  if (!fullPhone) {
-    alert("Introduce tu número WhatsApp");
-    return;
-  }
-
-  const myBusinessNumber = "31686154561";
-
-const text =
-  "بغيتي توصل بنتيجة التحليل ديال الملف ديالك؟ صيفط لينا هاد الرسالة دابا";
-
-
-  window.open(
-    `https://wa.me/${myBusinessNumber}?text=${encodeURIComponent(text)}`,
-    "_blank"
-  );
-};
 
   // ============================================
   // ENVIAR A WHATSAPP VIA MAKE (oculto)
@@ -1507,7 +1489,7 @@ const text =
 
                 {/* ✅ BOTÓN WHATSAPP - SE ACTIVA DESPUÉS DEL ANÁLISIS */}
                 <button
-                  onClick={handleWhatsAppClick}
+           onClick={handleSendWhatsApp}
                   disabled={!whatsappReady}
                   className={`w-[92%] mx-auto h-[52px] rounded-[20px] text-white font-bold text-[16px] flex items-center justify-center gap-2 transition-all shadow-lg ${
                     whatsappReady
