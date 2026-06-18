@@ -1223,11 +1223,24 @@ ${esApto
   // ABRIR WHATSAPP CON MENSAJE
   // ============================================
   const handleWhatsAppClick = () => {
-    const message = "Hola, quiero recibir mi análisis de regularización";
- const phoneNumber = "31686154561"; // Número oficial de GestoriaCitaIA
-    const url = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
-    window.open(url, "_blank");
-  };
+  const fullPhone = getFullPhoneNumber();
+
+  if (!fullPhone) {
+    alert("Introduce tu número WhatsApp");
+    return;
+  }
+
+  const myBusinessNumber = "31686154561";
+
+const text =
+  "بغيتي توصل بنتيجة التحليل ديال الملف ديالك؟ صيفط لينا هاد الرسالة دابا";
+
+
+  window.open(
+    `https://wa.me/${myBusinessNumber}?text=${encodeURIComponent(text)}`,
+    "_blank"
+  );
+};
 
   // ============================================
   // ENVIAR A WHATSAPP VIA MAKE (oculto)
