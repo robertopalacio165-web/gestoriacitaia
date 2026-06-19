@@ -88,10 +88,79 @@ function extraerNUSS(texto) {
   return null;
 }
 
-async function enviarWhatsAppFavorable(cliente) {
-  const webhook = process.env.MAKE_WEBHOOK_EXPEDIENTE_FAVORABLE;
+// ==============================================
+// 📱 WHATSAPP EN DARIJA MARROQUÍ - TODOS LOS ESTADOS
+// ==============================================
+
+async function enviarWhatsAppEstado(cliente, estado) {
+  const webhook = process.env.MAKE_WEBHOOK_ESTADO;
   if (!webhook) {
-    console.log("⚠️ Webhook no configurado");
+    console.log("⚠️ Webhook de estado no configurado");
+    return;
+  }
+  
+  const mensajes = {
+    'favorable': {
+      darija: `✅ مبروك ${cliente.customer_name}! ملف ديالك تم قبوله. مزيان!`,
+      es: `✅ ¡FELICIDADES ${cliente.customer_name}! Tu expediente ha sido APROBADO. ¡Excelente!`
+    },
+    'desfavorable': {
+      darija: `❌ ${cliente.customer_name}, ملف ديالك مرفوض. خاصك تقدم طعون.`,
+      es: `❌ ${cliente.customer_name}, tu expediente ha sido DENEGADO. Debes presentar recurso.`
+    },
+    'requerimiento': {
+      darija: `📄 ${cliente.customer_name}, ملف ديالك ناقص وثائق. خاصك ترسل وثائق.`,
+      es: `📄 ${cliente.customer_name}, tu expediente requiere DOCUMENTACIÓN adicional.`
+    },
+    'archivado': {
+      darija: `📁 ${cliente.customer_name}, ملف ديالك تم أرشفته.`,
+      es: `📁 ${cliente.customer_name}, tu expediente ha sido ARCHIVADO.`
+    },
+    'inadmitido': {
+      darija: `🚫 ${cliente.customer_name}, ملف ديالك غير مقبول.`,
+      es: `🚫 ${cliente.customer_name}, tu expediente NO HA SIDO ADMITIDO.`
+    },
+    'tramite': {
+      darija: `⏳ ${cliente.customer_name}, ملف ديالك فالطريق. كنتمنو.`,
+      es: `⏳ ${cliente.customer_name}, tu expediente está EN TRÁMITE. En espera.`
+    },
+    'desconocido': {
+      darija: `❓ ${cliente.customer_name}, مازال ما عرفناش الحالة ديال ملفك. غانرجعو.`,
+      es: `❓ ${cliente.customer_name}, aún no conocemos el estado de tu expediente. Volveremos a consultar.`
+    }
+  };
+  
+  const mensaje = mensajes[estado] || mensajes['desconocido'];
+  
+  const payload = {
+    id: cliente.id,
+    nombre: cliente.customer_name,
+    telefono: cliente.customer_phone,
+    expediente: cliente.expediente_numero,
+    solicitud: cliente.identificador_solicitud,
+    estado: estado,
+    mensaje_darija: mensaje.darija,
+    mensaje_es: mensaje.es,
+    fecha: new Date().toISOString()
+  };
+  
+  console.log(`📱 Enviando WhatsApp de estado (${estado}) a: ${cliente.customer_phone}`);
+  console.log(`💬 Darija: ${mensaje.darija}`);
+  
+  const res = await fetch(webhook, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+  
+  if (res.ok) console.log("✅ WhatsApp de estado enviado");
+  else console.log("❌ Error WhatsApp:", await res.text());
+}
+
+async function enviarWhatsAppFavorable(cliente) {
+  const webhook = process.env.MAKE_WEBHOOK_FAVORABLE;
+  if (!webhook) {
+    console.log("⚠️ Webhook favorable no configurado");
     return;
   }
   
@@ -102,17 +171,20 @@ async function enviarWhatsAppFavorable(cliente) {
     expediente: cliente.expediente_numero,
     solicitud: cliente.identificador_solicitud,
     estado: "favorable",
-    mensaje_es: `✅ ¡BUENAS NOTICIAS ${cliente.customer_name}!\n\nTu expediente ha sido resuelto FAVORABLEMENTE.\n\n¡Enhorabuena!`,
-    mensaje_ar: `✅ أخبار جيدة ${cliente.customer_name}!\n\nملفك تمت الموافقة عليه.\n\nمبروك!`,
+    mensaje_darija: `🎉 مبروك ${cliente.customer_name}! ملف ديالك تقبل. دابا غادي نجيبو رقم الضمان الاجتماعي ديالك.`,
+    mensaje_es: `🎉 ¡FELICIDADES ${cliente.customer_name}! Tu expediente ha sido APROBADO. Ahora vamos a obtener tu número de Seguridad Social.`,
     fecha: new Date().toISOString()
   };
   
   console.log(`📱 Enviando WhatsApp favorable a: ${cliente.customer_phone}`);
+  console.log(`💬 Darija: ${payload.mensaje_darija}`);
+  
   const res = await fetch(webhook, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload)
   });
+  
   if (res.ok) console.log("✅ WhatsApp favorable enviado");
   else console.log("❌ Error WhatsApp:", await res.text());
 }
@@ -129,18 +201,21 @@ async function enviarWhatsAppPedirCodigo(cliente, nie) {
     nombre: cliente.customer_name,
     telefono: cliente.customer_phone,
     nie: nie,
+    mensaje_darija: `📱 ${cliente.customer_name}, الضمان الاجتماعي صيفط ليك SMS فيه كود ديال 6 أرقام.\n\nجاوب على هاد الرسالة بالكود.\n\nمثال: 123456\n\n✅ بهاد الكود غادي نجيبو رقم الضمان الاجتماعي ديالك.\n\n💼 GestoriaCitaIA`,
     mensaje_es: `📱 ${cliente.customer_name}, la Seguridad Social te ha enviado un SMS con un código de 6 dígitos.\n\nRESPONDE A ESTE MENSAJE con el código.\n\nEjemplo: 123456\n\n✅ Con este código obtendremos tu NUSS.\n\n💼 GestoriaCitaIA`,
-    mensaje_ar: `📱 ${cliente.customer_name}, الضمان الاجتماعي أرسل لك رمز.\n\nالرد على هذه الرسالة بالرمز.\n\nمثال: 123456\n\n✅ بهذا الرمز سنحصل على رقم الضمان الاجتماعي.\n\n💼 GestoriaCitaIA`,
     tipo: "pedir_codigo",
     fecha: new Date().toISOString()
   };
   
   console.log(`📱 Enviando WhatsApp pidiendo código a: ${cliente.customer_phone}`);
+  console.log(`💬 Darija: ${payload.mensaje_darija}`);
+  
   const res = await fetch(webhook, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload)
   });
+  
   if (res.ok) console.log("✅ WhatsApp pedir código enviado");
   else console.log("❌ Error:", await res.text());
 }
@@ -158,22 +233,155 @@ async function enviarWhatsAppNUSS(cliente, nie, nuss) {
     telefono: cliente.customer_phone,
     nie: nie,
     nuss: nuss,
+    mensaje_darija: `🎉 تهانينا ${cliente.customer_name}!\n\nرقم الضمان الاجتماعي ديالك هو:\n📌 ${nuss}\n\n✅ بهاد الرقم يمكنك التسجيل فالصندوق.\n\n📋 NIE ديالك هو: ${nie}\n\n💼 GestoriaCitaIA`,
     mensaje_es: `🎉 FELICIDADES ${cliente.customer_name}!\n\nTu NÚMERO DE SEGURIDAD SOCIAL es:\n📌 ${nuss}\n\n✅ Con este número puedes darte de alta en la Seguridad Social.\n\n📋 Tu NIE es: ${nie}\n\n💼 GestoriaCitaIA`,
-    mensaje_ar: `🎉 ${cliente.customer_name}! تهانينا!\n\nرقم الضمان الاجتماعي:\n📌 ${nuss}\n\n✅ بهذا الرقم يمكنك التسجيل في الضمان الاجتماعي.\n\n📋 NIE الخاص بك هو: ${nie}\n\n💼 GestoriaCitaIA`,
     tipo: "nuss",
     fecha: new Date().toISOString()
   };
   
   console.log(`📱 Enviando WhatsApp con NUSS a: ${cliente.customer_phone}`);
+  console.log(`💬 Darija: ${payload.mensaje_darija}`);
+  
   const res = await fetch(webhook, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload)
   });
+  
   if (res.ok) console.log("✅ WhatsApp NUSS enviado");
   else console.log("❌ Error:", await res.text());
 }
 
+// ==============================================
+// 🎯 RESOLVER CAPTCHA
+// ==============================================
+async function resolverCaptcha(page) {
+  console.log("🔊 Resolviendo CAPTCHA por audio...");
+  
+  try {
+    await page.waitForSelector('audio', { timeout: 10000 });
+    await sleep(2000);
+    
+    const audioSrc = await page.$eval('audio', el => el.src);
+    console.log(`🔊 URL audio: ${audioSrc.substring(0, 80)}...`);
+    
+    const response = await fetch(audioSrc, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'Accept': 'audio/webm,audio/ogg,audio/wav,audio/*;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'es-ES,es;q=0.9',
+        'Cache-Control': 'no-cache'
+      }
+    });
+    
+    if (!response.ok) {
+      console.error(`❌ Error descargando audio: ${response.status}`);
+      return "error";
+    }
+    
+    const buffer = Buffer.from(await response.arrayBuffer());
+    
+    if (buffer.length < 1000) {
+      console.error(`❌ Audio demasiado pequeño: ${buffer.length} bytes`);
+      return "error";
+    }
+    
+    const timestamp = Date.now();
+    const audioPath = `/root/captcha-${timestamp}.mp3`;
+    fs.writeFileSync(audioPath, buffer);
+    console.log(`✅ Audio guardado: ${audioPath} (${buffer.length} bytes)`);
+    
+    let transcription = null;
+    let modelUsed = "whisper-1";
+    
+    try {
+      console.log("🔊 Transcribiendo con whisper-1...");
+      const result = await openai.audio.transcriptions.create({
+        file: fs.createReadStream(audioPath),
+        model: "whisper-1",
+        language: "es",
+        response_format: "text",
+        temperature: 0.0,
+        prompt: "El audio contiene una palabra de 6 letras en español. Solo letras minúsculas. Ejemplos: cinco, seis, siete, ocho, nueve.",
+      });
+      transcription = result;
+      console.log(`✅ Transcripción (${modelUsed}): "${transcription}"`);
+    } catch (error) {
+      console.warn(`⚠️ Error whisper-1: ${error.message}`);
+      
+      try {
+        console.log("🔊 Intentando con gpt-4o-mini-transcribe...");
+        const result = await openai.audio.transcriptions.create({
+          file: fs.createReadStream(audioPath),
+          model: "gpt-4o-mini-transcribe",
+          language: "es",
+          temperature: 0.0,
+          prompt: "Palabra de 6 letras en español.",
+        });
+        transcription = result.text;
+        modelUsed = "gpt-4o-mini-transcribe";
+        console.log(`✅ Transcripción (${modelUsed}): "${transcription}"`);
+      } catch (error2) {
+        console.error(`❌ Error en ambos modelos: ${error2.message}`);
+        return "error";
+      }
+    }
+    
+    let textoLimpio = transcription
+      .replace(/[^a-zA-Záéíóúüñ]/g, " ")
+      .trim()
+      .toLowerCase()
+      .split(' ')
+      .filter(word => word.length > 0)[0] || "";
+    
+    console.log(`📝 Texto extraído: "${textoLimpio}"`);
+    
+    const normalizar = {
+      'á': 'a', 'é': 'e', 'í': 'i', 'ó': 'o', 'ú': 'u',
+      'ü': 'u', 'ñ': 'n'
+    };
+    textoLimpio = textoLimpio.split('').map(c => normalizar[c] || c).join('');
+    
+    const correcciones = {
+      'cincoc': 'cinco', 'cincot': 'cinco', 'cincu': 'cinco',
+      'cinca': 'cinco', 'cinc': 'cinco', 'sinco': 'cinco',
+      'sinko': 'cinco', 'dobres': 'dos', 'dobreu': 'dos',
+      'dobre': 'dos', 'dobr': 'dos', 'doss': 'dos',
+      'tres': 'tres', 'cuatro': 'cuatro', 'cuatr': 'cuatro',
+      'seis': 'seis', 'siete': 'siete', 'ocho': 'ocho',
+      'nueve': 'nueve', 'diez': 'diez', 'once': 'once',
+      'doce': 'doce', 'trece': 'trece', 'catorce': 'catorce',
+      'quince': 'quince', 'veinte': 'veinte'
+    };
+    
+    if (correcciones[textoLimpio]) {
+      textoLimpio = correcciones[textoLimpio];
+      console.log(`✅ Corregido: "${textoLimpio}"`);
+    }
+    
+    if (textoLimpio === 'mm' || textoLimpio === 'mmm' || textoLimpio.length < 3) {
+      console.warn(`⚠️ Audio inaudible: "${textoLimpio}"`);
+      return "error";
+    }
+    
+    console.log(`🔑 CAPTCHA FINAL: "${textoLimpio}" (${textoLimpio.length} letras)`);
+    
+    if (/^[a-z]+$/.test(textoLimpio) && textoLimpio.length >= 3) {
+      return textoLimpio;
+    } else {
+      console.warn(`⚠️ CAPTCHA inválido: "${textoLimpio}"`);
+      return "error";
+    }
+    
+  } catch (error) {
+    console.error("❌ Error en resolverCaptcha:", error.message);
+    return "error";
+  }
+}
+
+// ==============================================
+// 🔄 SOLICITAR SMS SEGURIDAD SOCIAL
+// ==============================================
 async function solicitarSMSSeguridadSocial(nie, fechaNacimiento, telefono) {
   let browser;
   console.log(`🔍 Solicitando SMS para NIE: ${nie}`);
@@ -256,106 +464,7 @@ async function completarNUSS(nie, fechaNacimiento, codigo) {
 }
 
 // ==============================================
-// 🎯 RESOLVER CAPTCHA CON AUDIO (MEJORADO CON RETRY)
-// ==============================================
-async function resolverCaptcha(page, intento = 1) {
-  console.log(`🔊 Resolviendo CAPTCHA (intento ${intento})...`);
-  
-  try {
-    // Esperar a que el audio esté disponible
-    await page.waitForSelector('audio', { timeout: 10000 });
-    await sleep(2000);
-    
-    // Obtener la URL del audio
-    const audioSrc = await page.$eval('audio', el => el.src);
-    console.log(`🔊 URL del audio: ${audioSrc.substring(0, 80)}...`);
-    
-    // Descargar el audio
-    const response = await fetch(audioSrc, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-        'Accept': 'audio/webm,audio/ogg,audio/wav,audio/*;q=0.9,*/*;q=0.8',
-        'Accept-Language': 'es-ES,es;q=0.9'
-      }
-    });
-    
-    if (!response.ok) {
-      console.error(`❌ Error descargando audio: ${response.status}`);
-      return null;
-    }
-    
-    const buffer = Buffer.from(await response.arrayBuffer());
-    const timestamp = Date.now();
-    const audioPath = `/root/captcha-${timestamp}-${intento}.mp3`;
-    fs.writeFileSync(audioPath, buffer);
-    console.log(`✅ Audio guardado: ${audioPath}`);
-    
-    // Intentar transcripción con whisper-1
-    let transcription = null;
-    let modelUsed = "whisper-1";
-    
-    try {
-      console.log(`🔊 Transcribiendo con whisper-1 (intento ${intento})...`);
-      const result = await openai.audio.transcriptions.create({
-        file: fs.createReadStream(audioPath),
-        model: "whisper-1",
-        language: "es",
-        response_format: "text",
-        temperature: 0.0,
-        prompt: "Esta es una palabra corta en español de 6 letras. Solo letras minúsculas.",
-      });
-      transcription = result;
-      console.log(`✅ Transcripción (${modelUsed}): "${transcription}"`);
-    } catch (error) {
-      console.warn(`⚠️ Error con whisper-1: ${error.message}`);
-      
-      // Fallback a gpt-4o-mini-transcribe
-      try {
-        console.log(`🔊 Intentando con gpt-4o-mini-transcribe (intento ${intento})...`);
-        const result = await openai.audio.transcriptions.create({
-          file: fs.createReadStream(audioPath),
-          model: "gpt-4o-mini-transcribe",
-          language: "es",
-          temperature: 0.1,
-          prompt: "Palabra de 6 letras en español. Solo letras, sin números.",
-        });
-        transcription = result.text;
-        modelUsed = "gpt-4o-mini-transcribe";
-        console.log(`✅ Transcripción (${modelUsed}): "${transcription}"`);
-      } catch (error2) {
-        console.error(`❌ Error con ambos modelos: ${error2.message}`);
-        return null;
-      }
-    }
-    
-    // Limpiar y validar el texto
-    let textoLimpio = transcription
-      .replace(/[^a-zA-Z]/g, "")
-      .trim()
-      .toLowerCase();
-    
-    if (textoLimpio.length > 6) {
-      textoLimpio = textoLimpio.slice(0, 6);
-    }
-    
-    console.log(`🔑 CAPTCHA ENVIADO (${modelUsed}, intento ${intento}): "${textoLimpio}" (${textoLimpio.length} letras)`);
-    
-    // Validar que sea solo letras y tenga mínimo 4 caracteres
-    if (/^[a-z]+$/.test(textoLimpio) && textoLimpio.length >= 4) {
-      return textoLimpio;
-    } else {
-      console.warn(`⚠️ CAPTCHA inválido: "${textoLimpio}"`);
-      return null;
-    }
-    
-  } catch (error) {
-    console.error(`❌ Error en intento ${intento}:`, error.message);
-    return null;
-  }
-}
-
-// ==============================================
-// 🔄 VERIFICAR EXPEDIENTE (PRINCIPAL)
+// 🔄 VERIFICAR EXPEDIENTE
 // ==============================================
 async function verificarExpediente(cliente) {
   let browser;
@@ -372,28 +481,23 @@ async function verificarExpediente(cliente) {
     });
     const page = await browser.newPage();
     
-    // 1. Ir a la página
     console.log("🌐 Navegando a InfoExt...");
     await page.goto(INFOEXT_URL);
     await sleep(2000);
     
-    // 2. Entrar al formulario
     console.log("📝 Entrando al formulario...");
     await page.click("text=ENTRAR FORMULARIO");
     await sleep(2000);
     
-    // 3. Buscar por expediente
     console.log("🔍 Seleccionando búsqueda por expediente...");
     await page.click("text=BUSCAR POR NÚMERO DE EXPEDIENTE / SOLICITUD");
     await sleep(2000);
     
-    // 4. Rellenar datos
     console.log("📝 Rellenando datos del expediente...");
     await page.fill('input[name="idExpediente"]', cliente.identificador_solicitud);
     await page.fill('input[name="fechaPresentacion"]', normalizeDate(cliente.fecha_presentacion));
     await page.fill('input[name="anio"]', extractYear(cliente.fecha_nacimiento));
     
-    // 5. Resolver CAPTCHA con reintentos
     console.log("🎯 Resolviendo CAPTCHA...");
     let captcha = null;
     let intentos = 0;
@@ -401,73 +505,45 @@ async function verificarExpediente(cliente) {
     
     while (captcha === null && intentos < maxIntentos) {
       intentos++;
+      console.log(`🔄 Intento ${intentos}/${maxIntentos}`);
       
-      // Si no es el primer intento, recargar el CAPTCHA
       if (intentos > 1) {
-        console.log(`🔄 Recargando CAPTCHA para intento ${intentos}...`);
-        try {
-          // Intentar con el botón de recargar si existe
-          const recargarBtn = await page.$('button:has-text("Recargar")');
-          if (recargarBtn) {
-            await recargarBtn.click();
-          } else {
-            // O recargar con JavaScript
-            await page.evaluate(() => {
-              if (typeof recargarCaptcha === 'function') {
-                recargarCaptcha();
-              }
-            });
-          }
-          await sleep(3000);
-        } catch (e) {
-          console.log("⚠️ No se pudo recargar CAPTCHA, continuando...");
-          // Si no se puede recargar, recargar la página
-          await page.reload();
-          await sleep(3000);
-          // Rellenar datos nuevamente
-          await page.click("text=ENTRAR FORMULARIO");
-          await sleep(2000);
-          await page.click("text=BUSCAR POR NÚMERO DE EXPEDIENTE / SOLICITUD");
-          await sleep(2000);
-          await page.fill('input[name="idExpediente"]', cliente.identificador_solicitud);
-          await page.fill('input[name="fechaPresentacion"]', normalizeDate(cliente.fecha_presentacion));
-          await page.fill('input[name="anio"]', extractYear(cliente.fecha_nacimiento));
-        }
+        console.log("🔄 Recargando página para nuevo CAPTCHA...");
+        await page.reload();
+        await sleep(3000);
+        await page.click("text=ENTRAR FORMULARIO");
+        await sleep(2000);
+        await page.click("text=BUSCAR POR NÚMERO DE EXPEDIENTE / SOLICITUD");
+        await sleep(2000);
+        await page.fill('input[name="idExpediente"]', cliente.identificador_solicitud);
+        await page.fill('input[name="fechaPresentacion"]', normalizeDate(cliente.fecha_presentacion));
+        await page.fill('input[name="anio"]', extractYear(cliente.fecha_nacimiento));
+        await sleep(1000);
       }
       
-      // Resolver el CAPTCHA
-      captcha = await resolverCaptcha(page, intentos);
+      captcha = await resolverCaptcha(page);
       
-      if (captcha) {
-        console.log(`🔑 CAPTCHA ENVIADO (intento ${intentos}): "${captcha}"`);
-        
-        // Rellenar el CAPTCHA
+      if (captcha && captcha !== "error") {
+        console.log(`✍️ Rellenando CAPTCHA: "${captcha}"`);
         await page.fill('input[type="text"]', captcha);
         await sleep(1000);
-        
-        // Tomar screenshot antes de consultar
-        await page.screenshot({ 
-          path: `/root/debug-captcha-${cliente.id}-${Date.now()}.png`, 
-          fullPage: true 
-        });
-        
-        // Hacer clic en Consultar
         await page.click('button:has-text("Consultar")');
         await sleep(8000);
         
-        // Verificar si funcionó
         const pageText = await page.textContent("body");
         if (pageText.toLowerCase().includes("valida el captcha") || 
             pageText.toLowerCase().includes("captcha incorrecto") ||
             pageText.toLowerCase().includes("código de seguridad incorrecto")) {
-          console.log(`❌ CAPTCHA "${captcha}" fue rechazado, reintentando...`);
-          captcha = null; // Forzar reintento
+          console.log(`❌ CAPTCHA "${captcha}" rechazado`);
+          captcha = null;
         }
+      } else {
+        captcha = null;
       }
     }
     
     if (!captcha) {
-      console.error("❌ No se pudo resolver el CAPTCHA después de 3 intentos");
+      console.error("❌ No se pudo resolver CAPTCHA después de 3 intentos");
       await page.screenshot({ 
         path: `/root/debug-error-final-${cliente.id}-${Date.now()}.png`, 
         fullPage: true 
@@ -476,7 +552,6 @@ async function verificarExpediente(cliente) {
       return;
     }
     
-    // 6. Analizar respuesta final
     const texto = await page.textContent("body");
     console.log("📄 PRIMEROS 500 CARACTERES DE RESPUESTA:");
     console.log(texto.substring(0, 500));
@@ -485,7 +560,12 @@ async function verificarExpediente(cliente) {
     console.log(`📊 Estado detectado: ${estado}`);
     
     // ==============================================
-    // ⭐ SI ES FAVORABLE
+    // 📱 ENVIAR WHATSAPP PARA TODOS LOS ESTADOS
+    // ==============================================
+    await enviarWhatsAppEstado(cliente, estado);
+    
+    // ==============================================
+    // ⭐ SI ES FAVORABLE - FLUJO COMPLETO
     // ==============================================
     if (estado === "favorable" && !cliente.notificado_favorable) {
       console.log("🎉 EXPEDIENTE FAVORABLE DETECTADO!");
@@ -650,7 +730,6 @@ async function main() {
   console.log("✅ Ciclo completado");
 }
 
-// Ejecutar main una vez al iniciar y luego cada intervalo
 main();
 setInterval(main, CHECK_INTERVAL_MS);
 
