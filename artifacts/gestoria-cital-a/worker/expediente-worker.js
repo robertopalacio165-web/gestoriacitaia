@@ -256,93 +256,106 @@ async function completarNUSS(nie, fechaNacimiento, codigo) {
 }
 
 // ==============================================
-// 🎯 RESOLVER CAPTCHA (MEJORADO)
+// 🎯 RESOLVER CAPTCHA CON AUDIO (MEJORADO CON RETRY)
 // ==============================================
-async function resolverCaptcha(page) {
-  console.log("🔊 Resolviendo CAPTCHA...");
-  await sleep(3000);
+async function resolverCaptcha(page, intento = 1) {
+  console.log(`🔊 Resolviendo CAPTCHA (intento ${intento})...`);
   
   try {
-    // Verificar que existe el elemento audio
-    const audioExists = await page.$('audio');
-    if (!audioExists) {
-      console.error("❌ No se encontró elemento audio en la página");
-      return "error";
-    }
+    // Esperar a que el audio esté disponible
+    await page.waitForSelector('audio', { timeout: 10000 });
+    await sleep(2000);
     
+    // Obtener la URL del audio
     const audioSrc = await page.$eval('audio', el => el.src);
-    console.log("🔊 URL del audio:", audioSrc.substring(0, 100) + "...");
+    console.log(`🔊 URL del audio: ${audioSrc.substring(0, 80)}...`);
     
-    // Descargar audio
-    const response = await fetch(audioSrc);
+    // Descargar el audio
+    const response = await fetch(audioSrc, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'Accept': 'audio/webm,audio/ogg,audio/wav,audio/*;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'es-ES,es;q=0.9'
+      }
+    });
+    
     if (!response.ok) {
       console.error(`❌ Error descargando audio: ${response.status}`);
-      return "error";
+      return null;
     }
     
     const buffer = Buffer.from(await response.arrayBuffer());
     const timestamp = Date.now();
+    const audioPath = `/root/captcha-${timestamp}-${intento}.mp3`;
+    fs.writeFileSync(audioPath, buffer);
+    console.log(`✅ Audio guardado: ${audioPath}`);
     
-    // Guardar copia local para depuración
-    fs.writeFileSync(`/root/captcha-${timestamp}.mp3`, buffer);
-    console.log(`🔊 Audio guardado en: /root/captcha-${timestamp}.mp3`);
-    
-    // Intentar con whisper-1 primero (más preciso)
+    // Intentar transcripción con whisper-1
     let transcription = null;
-    let modelUsed = "";
+    let modelUsed = "whisper-1";
     
     try {
-      console.log("🔊 Intentando con whisper-1...");
+      console.log(`🔊 Transcribiendo con whisper-1 (intento ${intento})...`);
       const result = await openai.audio.transcriptions.create({
-        file: fs.createReadStream(`/root/captcha-${timestamp}.mp3`),
+        file: fs.createReadStream(audioPath),
         model: "whisper-1",
         language: "es",
         response_format: "text",
-        temperature: 0.1,
+        temperature: 0.0,
+        prompt: "Esta es una palabra corta en español de 6 letras. Solo letras minúsculas.",
       });
       transcription = result;
-      modelUsed = "whisper-1";
-      console.log("✅ Transcripción whisper-1:", transcription);
-    } catch (whisperError) {
-      console.warn("⚠️ Error con whisper-1, intentando con gpt-4o-mini-transcribe:", whisperError.message);
+      console.log(`✅ Transcripción (${modelUsed}): "${transcription}"`);
+    } catch (error) {
+      console.warn(`⚠️ Error con whisper-1: ${error.message}`);
       
+      // Fallback a gpt-4o-mini-transcribe
       try {
-        console.log("🔊 Intentando con gpt-4o-mini-transcribe...");
+        console.log(`🔊 Intentando con gpt-4o-mini-transcribe (intento ${intento})...`);
         const result = await openai.audio.transcriptions.create({
-          file: fs.createReadStream(`/root/captcha-${timestamp}.mp3`),
+          file: fs.createReadStream(audioPath),
           model: "gpt-4o-mini-transcribe",
           language: "es",
-          prompt: "Esta es una palabra de 6 letras en español. Solo letras minúsculas, sin números.",
-          temperature: 0.2,
+          temperature: 0.1,
+          prompt: "Palabra de 6 letras en español. Solo letras, sin números.",
         });
         transcription = result.text;
         modelUsed = "gpt-4o-mini-transcribe";
-        console.log("✅ Transcripción gpt-4o-mini-transcribe:", transcription);
-      } catch (miniError) {
-        console.error("❌ Error con gpt-4o-mini-transcribe:", miniError.message);
-        return "error";
+        console.log(`✅ Transcripción (${modelUsed}): "${transcription}"`);
+      } catch (error2) {
+        console.error(`❌ Error con ambos modelos: ${error2.message}`);
+        return null;
       }
     }
     
-    // Limpiar el texto: solo letras y números, máximo 6 caracteres
-    const textoLimpio = transcription.replace(/[^a-zA-Z0-9]/g, "").trim().toLowerCase().slice(0, 6);
-    console.log(`✅ CAPTCHA ENVIADO (${modelUsed}): "${textoLimpio}"`);
-    console.log(`✅ Longitud CAPTCHA: ${textoLimpio.length}`);
+    // Limpiar y validar el texto
+    let textoLimpio = transcription
+      .replace(/[^a-zA-Z]/g, "")
+      .trim()
+      .toLowerCase();
     
-    // Verificar que el CAPTCHA tiene al menos 4 caracteres
-    if (textoLimpio.length < 4) {
-      console.warn("⚠️ CAPTCHA demasiado corto, podría ser incorrecto");
+    if (textoLimpio.length > 6) {
+      textoLimpio = textoLimpio.slice(0, 6);
     }
     
-    return textoLimpio;
+    console.log(`🔑 CAPTCHA ENVIADO (${modelUsed}, intento ${intento}): "${textoLimpio}" (${textoLimpio.length} letras)`);
+    
+    // Validar que sea solo letras y tenga mínimo 4 caracteres
+    if (/^[a-z]+$/.test(textoLimpio) && textoLimpio.length >= 4) {
+      return textoLimpio;
+    } else {
+      console.warn(`⚠️ CAPTCHA inválido: "${textoLimpio}"`);
+      return null;
+    }
+    
   } catch (error) {
-    console.error("❌ Error resolviendo CAPTCHA:", error.message);
-    return "error";
+    console.error(`❌ Error en intento ${intento}:`, error.message);
+    return null;
   }
 }
 
 // ==============================================
-// 🔄 VERIFICAR EXPEDIENTE (PRINCIPAL CON DEBUG)
+// 🔄 VERIFICAR EXPEDIENTE (PRINCIPAL)
 // ==============================================
 async function verificarExpediente(cliente) {
   let browser;
@@ -380,78 +393,94 @@ async function verificarExpediente(cliente) {
     await page.fill('input[name="fechaPresentacion"]', normalizeDate(cliente.fecha_presentacion));
     await page.fill('input[name="anio"]', extractYear(cliente.fecha_nacimiento));
     
-    // Tomar screenshot antes del CAPTCHA
-    await page.screenshot({ 
-      path: `/root/debug-1-formulario-${cliente.id}-${Date.now()}.png`, 
-      fullPage: true 
-    });
-    console.log("📸 Screenshot 1: Formulario rellenado");
-    
-    // 5. Resolver CAPTCHA
+    // 5. Resolver CAPTCHA con reintentos
     console.log("🎯 Resolviendo CAPTCHA...");
-    const captcha = await resolverCaptcha(page);
-    console.log(`🔑 CAPTCHA ENVIADO: "${captcha}"`);
+    let captcha = null;
+    let intentos = 0;
+    const maxIntentos = 3;
     
-    if (captcha === "error" || captcha.length < 4) {
-      console.error("❌ Error obteniendo CAPTCHA válido");
+    while (captcha === null && intentos < maxIntentos) {
+      intentos++;
+      
+      // Si no es el primer intento, recargar el CAPTCHA
+      if (intentos > 1) {
+        console.log(`🔄 Recargando CAPTCHA para intento ${intentos}...`);
+        try {
+          // Intentar con el botón de recargar si existe
+          const recargarBtn = await page.$('button:has-text("Recargar")');
+          if (recargarBtn) {
+            await recargarBtn.click();
+          } else {
+            // O recargar con JavaScript
+            await page.evaluate(() => {
+              if (typeof recargarCaptcha === 'function') {
+                recargarCaptcha();
+              }
+            });
+          }
+          await sleep(3000);
+        } catch (e) {
+          console.log("⚠️ No se pudo recargar CAPTCHA, continuando...");
+          // Si no se puede recargar, recargar la página
+          await page.reload();
+          await sleep(3000);
+          // Rellenar datos nuevamente
+          await page.click("text=ENTRAR FORMULARIO");
+          await sleep(2000);
+          await page.click("text=BUSCAR POR NÚMERO DE EXPEDIENTE / SOLICITUD");
+          await sleep(2000);
+          await page.fill('input[name="idExpediente"]', cliente.identificador_solicitud);
+          await page.fill('input[name="fechaPresentacion"]', normalizeDate(cliente.fecha_presentacion));
+          await page.fill('input[name="anio"]', extractYear(cliente.fecha_nacimiento));
+        }
+      }
+      
+      // Resolver el CAPTCHA
+      captcha = await resolverCaptcha(page, intentos);
+      
+      if (captcha) {
+        console.log(`🔑 CAPTCHA ENVIADO (intento ${intentos}): "${captcha}"`);
+        
+        // Rellenar el CAPTCHA
+        await page.fill('input[type="text"]', captcha);
+        await sleep(1000);
+        
+        // Tomar screenshot antes de consultar
+        await page.screenshot({ 
+          path: `/root/debug-captcha-${cliente.id}-${Date.now()}.png`, 
+          fullPage: true 
+        });
+        
+        // Hacer clic en Consultar
+        await page.click('button:has-text("Consultar")');
+        await sleep(8000);
+        
+        // Verificar si funcionó
+        const pageText = await page.textContent("body");
+        if (pageText.toLowerCase().includes("valida el captcha") || 
+            pageText.toLowerCase().includes("captcha incorrecto") ||
+            pageText.toLowerCase().includes("código de seguridad incorrecto")) {
+          console.log(`❌ CAPTCHA "${captcha}" fue rechazado, reintentando...`);
+          captcha = null; // Forzar reintento
+        }
+      }
+    }
+    
+    if (!captcha) {
+      console.error("❌ No se pudo resolver el CAPTCHA después de 3 intentos");
       await page.screenshot({ 
-        path: `/root/debug-error-captcha-${cliente.id}-${Date.now()}.png`, 
+        path: `/root/debug-error-final-${cliente.id}-${Date.now()}.png`, 
         fullPage: true 
       });
       await browser.close();
       return;
     }
     
-    // 6. Rellenar CAPTCHA y consultar
-    console.log("✍️ Rellenando CAPTCHA...");
-    await page.fill('input[type="text"]', captcha);
-    await sleep(2000);
-    
-    // Tomar screenshot antes de enviar
-    await page.screenshot({ 
-      path: `/root/debug-2-antes-consultar-${cliente.id}-${Date.now()}.png`, 
-      fullPage: true 
-    });
-    console.log("📸 Screenshot 2: Antes de consultar");
-    
-    console.log("🔄 Haciendo clic en Consultar...");
-    await page.click('button:has-text("Consultar")');
-    await sleep(10000);
-    
-    // Tomar screenshot después de consultar
-    await page.screenshot({ 
-      path: `/root/debug-3-despues-consultar-${cliente.id}-${Date.now()}.png`, 
-      fullPage: true 
-    });
-    console.log("📸 Screenshot 3: Después de consultar");
-    
-    // 7. Analizar respuesta
+    // 6. Analizar respuesta final
     const texto = await page.textContent("body");
-    console.log("📄 PRIMEROS 800 CARACTERES DE RESPUESTA:");
-    console.log(texto.substring(0, 800));
-    console.log("...");
+    console.log("📄 PRIMEROS 500 CARACTERES DE RESPUESTA:");
+    console.log(texto.substring(0, 500));
     
-    // 8. Verificar si hay error de CAPTCHA
-    if (texto.toLowerCase().includes("valida el captcha") || 
-        texto.toLowerCase().includes("captcha incorrecto") ||
-        texto.toLowerCase().includes("código de seguridad incorrecto") ||
-        texto.toLowerCase().includes("por favor, valida")) {
-      
-      console.log("❌ ERROR DETECTADO: El CAPTCHA fue rechazado");
-      console.log(`❌ CAPTCHA enviado: "${captcha}"`);
-      
-      // Guardar evidencia adicional
-      await page.screenshot({ 
-        path: `/root/debug-4-captcha-rechazado-${cliente.id}-${Date.now()}.png`, 
-        fullPage: true 
-      });
-      console.log("📸 Screenshot 4: CAPTCHA rechazado");
-      
-      await browser.close();
-      return;
-    }
-    
-    // 9. Analizar estado
     const estado = analizarEstado(texto);
     console.log(`📊 Estado detectado: ${estado}`);
     
