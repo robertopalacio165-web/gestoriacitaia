@@ -256,57 +256,211 @@ async function completarNUSS(nie, fechaNacimiento, codigo) {
 }
 
 // ==============================================
-// 🎯 RESOLVER CAPTCHA
+// 🎯 RESOLVER CAPTCHA (MEJORADO)
 // ==============================================
 async function resolverCaptcha(page) {
   console.log("🔊 Resolviendo CAPTCHA...");
   await sleep(3000);
-  const audioSrc = await page.$eval('audio', el => el.src);
-  const response = await fetch(audioSrc);
-  const buffer = Buffer.from(await response.arrayBuffer());
-  fs.writeFileSync("/tmp/captcha.mp3", buffer);
-  const transcription = await openai.audio.transcriptions.create({
-    file: fs.createReadStream("/tmp/captcha.mp3"),
-    model: "gpt-4o-mini-transcribe",
-    language: "es",
-  });
-  const texto = transcription.text.replace(/[^a-zA-Z0-9]/g, "").trim().toLowerCase().slice(0, 6);
-  console.log("✅ CAPTCHA:", texto);
-  return texto;
+  
+  try {
+    // Verificar que existe el elemento audio
+    const audioExists = await page.$('audio');
+    if (!audioExists) {
+      console.error("❌ No se encontró elemento audio en la página");
+      return "error";
+    }
+    
+    const audioSrc = await page.$eval('audio', el => el.src);
+    console.log("🔊 URL del audio:", audioSrc.substring(0, 100) + "...");
+    
+    // Descargar audio
+    const response = await fetch(audioSrc);
+    if (!response.ok) {
+      console.error(`❌ Error descargando audio: ${response.status}`);
+      return "error";
+    }
+    
+    const buffer = Buffer.from(await response.arrayBuffer());
+    const timestamp = Date.now();
+    
+    // Guardar copia local para depuración
+    fs.writeFileSync(`/root/captcha-${timestamp}.mp3`, buffer);
+    console.log(`🔊 Audio guardado en: /root/captcha-${timestamp}.mp3`);
+    
+    // Intentar con whisper-1 primero (más preciso)
+    let transcription = null;
+    let modelUsed = "";
+    
+    try {
+      console.log("🔊 Intentando con whisper-1...");
+      const result = await openai.audio.transcriptions.create({
+        file: fs.createReadStream(`/root/captcha-${timestamp}.mp3`),
+        model: "whisper-1",
+        language: "es",
+        response_format: "text",
+        temperature: 0.1,
+      });
+      transcription = result;
+      modelUsed = "whisper-1";
+      console.log("✅ Transcripción whisper-1:", transcription);
+    } catch (whisperError) {
+      console.warn("⚠️ Error con whisper-1, intentando con gpt-4o-mini-transcribe:", whisperError.message);
+      
+      try {
+        console.log("🔊 Intentando con gpt-4o-mini-transcribe...");
+        const result = await openai.audio.transcriptions.create({
+          file: fs.createReadStream(`/root/captcha-${timestamp}.mp3`),
+          model: "gpt-4o-mini-transcribe",
+          language: "es",
+          prompt: "Esta es una palabra de 6 letras en español. Solo letras minúsculas, sin números.",
+          temperature: 0.2,
+        });
+        transcription = result.text;
+        modelUsed = "gpt-4o-mini-transcribe";
+        console.log("✅ Transcripción gpt-4o-mini-transcribe:", transcription);
+      } catch (miniError) {
+        console.error("❌ Error con gpt-4o-mini-transcribe:", miniError.message);
+        return "error";
+      }
+    }
+    
+    // Limpiar el texto: solo letras y números, máximo 6 caracteres
+    const textoLimpio = transcription.replace(/[^a-zA-Z0-9]/g, "").trim().toLowerCase().slice(0, 6);
+    console.log(`✅ CAPTCHA ENVIADO (${modelUsed}): "${textoLimpio}"`);
+    console.log(`✅ Longitud CAPTCHA: ${textoLimpio.length}`);
+    
+    // Verificar que el CAPTCHA tiene al menos 4 caracteres
+    if (textoLimpio.length < 4) {
+      console.warn("⚠️ CAPTCHA demasiado corto, podría ser incorrecto");
+    }
+    
+    return textoLimpio;
+  } catch (error) {
+    console.error("❌ Error resolviendo CAPTCHA:", error.message);
+    return "error";
+  }
 }
 
 // ==============================================
-// 🔄 VERIFICAR EXPEDIENTE (PRINCIPAL)
+// 🔄 VERIFICAR EXPEDIENTE (PRINCIPAL CON DEBUG)
 // ==============================================
 async function verificarExpediente(cliente) {
   let browser;
   try {
-    console.log(`\n👤 ${cliente.customer_name} - ${cliente.expediente_numero}`);
-    browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
+    console.log(`\n${"=".repeat(60)}`);
+    console.log(`👤 Cliente: ${cliente.customer_name}`);
+    console.log(`📋 Expediente: ${cliente.expediente_numero}`);
+    console.log(`🆔 Solicitud: ${cliente.identificador_solicitud}`);
+    console.log(`${"=".repeat(60)}`);
+    
+    browser = await chromium.launch({ 
+      headless: true, 
+      args: ['--no-sandbox', '--disable-setuid-sandbox'] 
+    });
     const page = await browser.newPage();
+    
+    // 1. Ir a la página
+    console.log("🌐 Navegando a InfoExt...");
     await page.goto(INFOEXT_URL);
     await sleep(2000);
+    
+    // 2. Entrar al formulario
+    console.log("📝 Entrando al formulario...");
     await page.click("text=ENTRAR FORMULARIO");
     await sleep(2000);
+    
+    // 3. Buscar por expediente
+    console.log("🔍 Seleccionando búsqueda por expediente...");
     await page.click("text=BUSCAR POR NÚMERO DE EXPEDIENTE / SOLICITUD");
     await sleep(2000);
+    
+    // 4. Rellenar datos
+    console.log("📝 Rellenando datos del expediente...");
     await page.fill('input[name="idExpediente"]', cliente.identificador_solicitud);
     await page.fill('input[name="fechaPresentacion"]', normalizeDate(cliente.fecha_presentacion));
     await page.fill('input[name="anio"]', extractYear(cliente.fecha_nacimiento));
+    
+    // Tomar screenshot antes del CAPTCHA
+    await page.screenshot({ 
+      path: `/root/debug-1-formulario-${cliente.id}-${Date.now()}.png`, 
+      fullPage: true 
+    });
+    console.log("📸 Screenshot 1: Formulario rellenado");
+    
+    // 5. Resolver CAPTCHA
+    console.log("🎯 Resolviendo CAPTCHA...");
     const captcha = await resolverCaptcha(page);
+    console.log(`🔑 CAPTCHA ENVIADO: "${captcha}"`);
+    
+    if (captcha === "error" || captcha.length < 4) {
+      console.error("❌ Error obteniendo CAPTCHA válido");
+      await page.screenshot({ 
+        path: `/root/debug-error-captcha-${cliente.id}-${Date.now()}.png`, 
+        fullPage: true 
+      });
+      await browser.close();
+      return;
+    }
+    
+    // 6. Rellenar CAPTCHA y consultar
+    console.log("✍️ Rellenando CAPTCHA...");
     await page.fill('input[type="text"]', captcha);
     await sleep(2000);
+    
+    // Tomar screenshot antes de enviar
+    await page.screenshot({ 
+      path: `/root/debug-2-antes-consultar-${cliente.id}-${Date.now()}.png`, 
+      fullPage: true 
+    });
+    console.log("📸 Screenshot 2: Antes de consultar");
+    
+    console.log("🔄 Haciendo clic en Consultar...");
     await page.click('button:has-text("Consultar")');
     await sleep(10000);
-    const texto = await page.textContent("body");
-    const estado = analizarEstado(texto);
     
+    // Tomar screenshot después de consultar
+    await page.screenshot({ 
+      path: `/root/debug-3-despues-consultar-${cliente.id}-${Date.now()}.png`, 
+      fullPage: true 
+    });
+    console.log("📸 Screenshot 3: Después de consultar");
+    
+    // 7. Analizar respuesta
+    const texto = await page.textContent("body");
+    console.log("📄 PRIMEROS 800 CARACTERES DE RESPUESTA:");
+    console.log(texto.substring(0, 800));
+    console.log("...");
+    
+    // 8. Verificar si hay error de CAPTCHA
+    if (texto.toLowerCase().includes("valida el captcha") || 
+        texto.toLowerCase().includes("captcha incorrecto") ||
+        texto.toLowerCase().includes("código de seguridad incorrecto") ||
+        texto.toLowerCase().includes("por favor, valida")) {
+      
+      console.log("❌ ERROR DETECTADO: El CAPTCHA fue rechazado");
+      console.log(`❌ CAPTCHA enviado: "${captcha}"`);
+      
+      // Guardar evidencia adicional
+      await page.screenshot({ 
+        path: `/root/debug-4-captcha-rechazado-${cliente.id}-${Date.now()}.png`, 
+        fullPage: true 
+      });
+      console.log("📸 Screenshot 4: CAPTCHA rechazado");
+      
+      await browser.close();
+      return;
+    }
+    
+    // 9. Analizar estado
+    const estado = analizarEstado(texto);
     console.log(`📊 Estado detectado: ${estado}`);
     
     // ==============================================
     // ⭐ SI ES FAVORABLE
     // ==============================================
     if (estado === "favorable" && !cliente.notificado_favorable) {
+      console.log("🎉 EXPEDIENTE FAVORABLE DETECTADO!");
+      
       // 1. Enviar WhatsApp de favorable
       await enviarWhatsAppFavorable(cliente);
       
@@ -349,9 +503,19 @@ async function verificarExpediente(cliente) {
     }).eq("id", cliente.id);
     
     await browser.close();
+    console.log("✅ Consulta completada exitosamente");
+    
   } catch (error) {
-    console.log("❌ Error:", error.message);
-    if (browser) await browser.close();
+    console.error("❌ Error en verificarExpediente:", error.message);
+    if (browser) {
+      try {
+        await browser.screenshot({ 
+          path: `/root/debug-error-${cliente.id}-${Date.now()}.png`, 
+          fullPage: true 
+        });
+      } catch (e) {}
+      await browser.close();
+    }
   }
 }
 
@@ -428,25 +592,38 @@ app.listen(PORT, () => {
 // 🚀 MAIN
 // ==============================================
 async function main() {
+  console.log("\n" + "=".repeat(60));
   console.log("🚀 Worker iniciado", new Date().toISOString());
+  console.log("=".repeat(60));
   
-  const { data: expedientes } = await supabase
+  const { data: expedientes, error } = await supabase
     .from("expediente_checks")
     .select("*")
     .or('notificado_favorable.eq.false,notificado_favorable.is.null');
   
-  if (!expedientes?.length) {
-    console.log("No hay expedientes pendientes");
+  if (error) {
+    console.error("❌ Error consultando expedientes:", error.message);
     return;
   }
+  
+  if (!expedientes?.length) {
+    console.log("📭 No hay expedientes pendientes");
+    return;
+  }
+  
+  console.log(`📋 ${expedientes.length} expedientes pendientes de verificar`);
   
   for (const exp of expedientes) {
     await verificarExpediente(exp);
     await sleep(5000);
   }
+  
+  console.log("✅ Ciclo completado");
 }
 
+// Ejecutar main una vez al iniciar y luego cada intervalo
 main();
 setInterval(main, CHECK_INTERVAL_MS);
 
 console.log("🔄 Sara worker ejecutándose...");
+console.log(`⏱️ Intervalo: ${CHECK_INTERVAL_MS / 1000 / 60} minutos`);
