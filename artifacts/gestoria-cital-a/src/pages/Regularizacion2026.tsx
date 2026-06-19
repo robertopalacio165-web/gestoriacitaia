@@ -1036,9 +1036,32 @@ export default function Regularizacion2026() {
 
       const analisisDocumentos = docsAnalysis.join("\n");
 
+const timelineDocuments = docsWithData
+  .filter(doc => doc.document_date)
+  .sort(
+    (a, b) =>
+      new Date(a.document_date || "").getTime() -
+      new Date(b.document_date || "").getTime()
+  );
+
 const informeCompleto = `
-الاسم:
-${resultado.nombreCliente}
+الاسم: ${resultado.nombreCliente}
+
+الوثائق مرتبة حسب التاريخ:
+
+${timelineDocuments.map((doc,index) => `
+الوثيقة رقم ${index + 1}
+
+الاسم: ${doc.nombre}
+
+النوع: ${doc.detectedType || "غير معروف"}
+
+التاريخ: ${doc.document_date || "غير موجود"}
+
+تاريخ الانتهاء: ${doc.expiry_date || "غير موجود"}
+
+النتيجة: ${doc.final_verdict || "غير معروفة"}
+`).join("\n")}
 
 عدد الأيام:
 ${stayDays}
@@ -1057,22 +1080,7 @@ ${expulsionResult.status}
 
 البوليس:
 ${policeStatus}
-
-عدد الوراق القوية:
-${strongProofs}
-
-عدد الوراق الإضافية:
-${weakProofs}
-
-الوثائق:
-
-${docsWithData.map(doc => `الاسم: ${doc.nombre}
-النوع: ${doc.detectedType || ""}
-التاريخ: ${doc.document_date || ""}
-تاريخ الانتهاء: ${doc.expiry_date || ""}
-النتيجة: ${doc.final_verdict || ""}`).join("\n")}
 `;
-
 
       // === 7. GUARDAR EN LOCALSTORAGE ===
       localStorage.setItem("soufiane_analysis", informeCompleto);
