@@ -251,26 +251,28 @@ export default function Landing() {
               className="w-full sm:w-auto rounded-full px-7 py-3 shadow-lg shadow-primary/30 bg-primary hover:bg-primary/90 text-base font-bold min-h-[52px]"
               onClick={() => goWithGoogleAuth("/regularizacion-2026")}
             >
-    {t("hero_btn1")} <ArrowRight className="w-4 h-4 ml-1" />
+              {t("hero_btn1")} <ArrowRight className="w-4 h-4 ml-1" />
             </Button>
 
+            {/* ✅ BOTÓN SARA ACTUALIZADO - USA t("hero_btn_sara") */}
             <Button
               className="w-full sm:w-auto rounded-full px-7 py-3 shadow-lg shadow-blue-500/30 bg-blue-600 hover:bg-blue-500 text-white text-base font-bold border-0 min-h-[52px]"
               onClick={() => goWithGoogleAuth("/buscar-citas")}
             >
-              {t("hero_btn_citas")} <ArrowRight className="w-4 h-4 ml-1" />
+              {t("hero_btn_sara")}
+              <ArrowRight className="w-4 h-4 ml-1" />
             </Button>
 
-<Button
-  className="w-full sm:w-auto rounded-full px-7 py-3 min-h-[52px]
-  bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500
-  hover:scale-[1.02] transition-all duration-300
-  text-black font-bold shadow-xl shadow-orange-500/30 border-0"
-  onClick={() => goWithGoogleAuth("/khalid-extranjeria")}
->
-{t("hero_btn_khalid")}
-  <ArrowRight className="w-4 h-4 ml-1" />
-</Button>
+            <Button
+              className="w-full sm:w-auto rounded-full px-7 py-3 min-h-[52px]
+              bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500
+              hover:scale-[1.02] transition-all duration-300
+              text-black font-bold shadow-xl shadow-orange-500/30 border-0"
+              onClick={() => goWithGoogleAuth("/khalid-extranjeria")}
+            >
+              {t("hero_btn_khalid")}
+              <ArrowRight className="w-4 h-4 ml-1" />
+            </Button>
           </div>
 
           <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
@@ -294,19 +296,20 @@ export default function Landing() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
         >
-        <AgentCard
-  name="Soufiane"
-  role="Experto en Regularización"
-  imagePath={`${import.meta.env.BASE_URL}images/soufiane.png`}
-  delay={0.1}
-/>
+          <AgentCard
+            name="Soufiane"
+            role="Experto en Regularización"
+            imagePath={`${import.meta.env.BASE_URL}images/soufiane.png`}
+            delay={0.1}
+          />
 
-<AgentCard
-  name="Sara"
-  role="Buscar Citas · 24/7"
-  imagePath={`${import.meta.env.BASE_URL}images/sara.png`}
-  delay={0.2}
-/>
+          {/* ✅ AGENT CARD SARA ACTUALIZADO - USA t("sara_role") */}
+          <AgentCard
+            name="Sara"
+            role={t("sara_role")}
+            imagePath={`${import.meta.env.BASE_URL}images/sara.png`}
+            delay={0.2}
+          />
         </motion.div>
 
         <motion.div
@@ -330,16 +333,16 @@ export default function Landing() {
           transition={{ duration: 0.6 }}
           className="mb-16"
         >
-        <div className="relative rounded-2xl overflow-hidden glass-panel aspect-video max-w-3xl mx-auto border border-white/10 shadow-2xl shadow-primary/10">
-<video
-  controls
-  playsInline
-  poster="/video12-thumb.png"
-  className="w-full h-full object-cover"
->
-<source src="/Video12.mp4" type="video/mp4" />
-  </video>
-</div>  
+          <div className="relative rounded-2xl overflow-hidden glass-panel aspect-video max-w-3xl mx-auto border border-white/10 shadow-2xl shadow-primary/10">
+            <video
+              controls
+              playsInline
+              poster="/video12-thumb.png"
+              className="w-full h-full object-cover"
+            >
+              <source src="/Video12.mp4" type="video/mp4" />
+            </video>
+          </div>
         </motion.div>
 
         <motion.div
