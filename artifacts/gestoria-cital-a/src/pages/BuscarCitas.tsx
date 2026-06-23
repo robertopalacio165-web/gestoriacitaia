@@ -17,7 +17,6 @@ import {
   Volume2,
   VolumeX,
 } from "lucide-react";
-import { useScheduleAppointment } from "@/hooks/use-appointments";
 import { supabase } from "@/lib/supabaseClient";
 
 interface ChatMsg {
@@ -25,11 +24,6 @@ interface ChatMsg {
   text: string;
   ts?: number;
 }
-
-type TramiteItem = {
-  value: string;
-  label: string;
-};
 
 type DocState = "ok" | "warn" | "missing";
 
@@ -52,16 +46,6 @@ type ProfileRow = {
   nie: string | null;
 };
 
-type AppointmentResult = {
-  tramite?: string | null;
-  date?: string | null;
-  time?: string | null;
-  office?: string | null;
-  locator?: string | null;
-  pdf_url?: string | null;
-  confirmation_pdf_url?: string | null;
-};
-
 type ClientFormData = {
   fullName: string;
   phone: string;
@@ -76,11 +60,6 @@ type ClientFormData = {
   provincia: string;
   preferredOffice: string;
   nie: string;
-  passport: string;
-  nationality: string;
-  birthYear: string;
-  city: string;
-  province: string;
 };
 
 function OfficialBrowserBox({
@@ -88,59 +67,31 @@ function OfficialBrowserBox({
   avatarImage,
   title,
   url,
-  selectedTramiteLabel,
   profileLoading,
   ui,
   confirmed,
-  appointmentData,
-  finalDate,
-  finalTime,
-  finalOffice,
-  finalLocator,
-  finalPdfUrl,
-  hasRealAppointment,
-  onRefresh,
-  onOpenOfficial,
-  onSelectTramite,
-  tramites,
-  selectedTramite,
-  onAceptar,
-  isPending,
-  cameFromConfirmationLink,
   formData,
   onFormChange,
   onFormSubmit,
   formReady,
   onPay,
+  acceptTerms,
+  setAcceptTerms,
 }: {
   language: string;
   avatarImage: string;
   title: string;
   url: string;
-  selectedTramiteLabel: string;
   profileLoading: boolean;
   ui: any;
   confirmed: boolean;
-  appointmentData: AppointmentResult | null;
-  finalDate: string;
-  finalTime: string;
-  finalOffice: string;
-  finalLocator: string;
-  finalPdfUrl: string | null;
-  hasRealAppointment: boolean;
-  onRefresh: () => void;
-  onOpenOfficial: () => void;
-  onSelectTramite: (value: string) => void;
-  tramites: TramiteItem[];
-  selectedTramite: string;
-  onAceptar: () => void;
-  isPending: boolean;
-  cameFromConfirmationLink: boolean;
   formData: ClientFormData;
   onFormChange: (field: keyof ClientFormData, value: string) => void;
   onFormSubmit: () => void;
   formReady: boolean;
   onPay: () => void;
+  acceptTerms: boolean;
+  setAcceptTerms: (value: boolean) => void;
 }) {
   const isMa = language === "ma";
   const isEn = language === "en";
@@ -152,12 +103,6 @@ function OfficialBrowserBox({
     ? "If you need to follow your file, get your Social Security number and open registration, fill in the form. We will notify you on WhatsApp when your file is favorable."
     : "Si necesitas seguir tu expediente, sacar tu número de Seguridad Social y abrir alta, rellena el formulario. Te avisamos por WhatsApp cuando tengas favorable.";
 
-  const panelTitle = isMa
-    ? "اللوحة الرسمية"
-    : isEn
-    ? "Official integrated panel"
-    : "Panel oficial integrado";
-
   return (
     <motion.div
       initial={{ opacity: 0, x: 20 }}
@@ -166,60 +111,52 @@ function OfficialBrowserBox({
       className="flex-1 flex flex-col overflow-hidden bg-transparent"
     >
       <div className="flex-1 overflow-y-auto bg-transparent p-4 sm:p-6 text-black">
-{confirmed ? (
-
-<div className="rounded-[26px] border border-emerald-500/40 bg-[#07111f] px-6 py-8 text-center">
-
-  <h2 className="text-emerald-400 text-3xl font-black mb-4">
-  {isMa
-    ? "🎉 مبروك! تأكد الموعد ديالك"
-    : isEn
-    ? "🎉 APPOINTMENT CONFIRMED!"
-    : "🎉 ¡CITA CONFIRMADA!"}
-</h2>
-
-<p className="text-white text-lg font-bold mb-4">
-  {isMa
-    ? "شكراً بزاف على الثقة ديالك في GestoriaCitaIA."
-    : isEn
-    ? "Thank you for trusting GestoriaCitaIA."
-    : "Muchas gracias por confiar en GestoriaCitaIA."}
-</p>
-
-<p className="text-white/80">
-  {isMa
-    ? "تم تأكيد الموعد ديالك بنجاح."
-    : isEn
-    ? "Your appointment has been successfully confirmed."
-    : "Tu cita ha sido confirmada correctamente."}
-</p>
-
-<p className="text-white/80 mt-2">
-  {isMa
-    ? "سارة سالات الخدمة ديالها بنجاح."
-    : isEn
-    ? "Sara has successfully completed her work."
-    : "Sara ha finalizado su trabajo con éxito."}
-</p>
-
-<p className="text-yellow-400 font-bold mt-4">
-  {isMa
-    ? "✅ العملية كملت بنجاح"
-    : isEn
-    ? "✅ Reservation completed"
-    : "✅ Reserva completada"}
-</p>
-
-<p className="text-white/70 mt-6">
-  {isMa
-    ? "نتمنّاو ليك التوفيق فالإجراء ديالك."
-    : isEn
-    ? "We wish you the best of luck with your procedure."
-    : "Te deseamos mucha suerte en tu trámite."}
-</p>
-</div>
-
-) : !confirmed && !formReady ? (
+        {confirmed ? (
+          <div className="rounded-[26px] border border-emerald-500/40 bg-[#07111f] px-6 py-8 text-center">
+            <h2 className="text-emerald-400 text-3xl font-black mb-4">
+              {isMa
+                ? "🎉 مبروك! تأكد الملف ديالك"
+                : isEn
+                ? "🎉 FILE CONFIRMED!"
+                : "🎉 ¡EXPEDIENTE CONFIRMADO!"}
+            </h2>
+            <p className="text-white text-lg font-bold mb-4">
+              {isMa
+                ? "شكراً بزاف على الثقة ديالك في GestoriaCitaIA."
+                : isEn
+                ? "Thank you for trusting GestoriaCitaIA."
+                : "Muchas gracias por confiar en GestoriaCitaIA."}
+            </p>
+            <p className="text-white/80">
+              {isMa
+                ? "تم تأكيد الملف ديالك بنجاح."
+                : isEn
+                ? "Your file has been successfully confirmed."
+                : "Tu expediente ha sido confirmado correctamente."}
+            </p>
+            <p className="text-white/80 mt-2">
+              {isMa
+                ? "سارة سالات الخدمة ديالها بنجاح."
+                : isEn
+                ? "Sara has successfully completed her work."
+                : "Sara ha finalizado su trabajo con éxito."}
+            </p>
+            <p className="text-yellow-400 font-bold mt-4">
+              {isMa
+                ? "✅ العملية كملت بنجاح"
+                : isEn
+                ? "✅ Process completed"
+                : "✅ Proceso completado"}
+            </p>
+            <p className="text-white/70 mt-6">
+              {isMa
+                ? "نتمنّاو ليك التوفيق فالإجراء ديالك."
+                : isEn
+                ? "We wish you the best of luck with your procedure."
+                : "Te deseamos mucha suerte en tu trámite."}
+            </p>
+          </div>
+        ) : !confirmed && !formReady ? (
           <>
             <div className="mt-3 mx-[-4px] rounded-[24px] border-2 border-yellow-500/60 bg-gradient-to-b from-[#0b0b0b] to-[#050505] px-3 py-3 shadow-[0_0_35px_rgba(255,200,0,0.18)]">
               <div className="mb-3 grid grid-cols-[32px_1fr_32px] items-center gap-2">
@@ -237,9 +174,9 @@ function OfficialBrowserBox({
                 {formIntro}
               </p>
               <div className="w-full">
-         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 mb-5">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 mb-5">
                   {/* Nombre */}
-       <div className="col-span-1 md:col-span-1">
+                  <div className="col-span-1 md:col-span-1">
                     <label className="block text-white text-[13px] mb-2">
                       {isMa ? "الاسم الكامل" : isEn ? "Full name" : "Nombre completo"}
                     </label>
@@ -252,43 +189,37 @@ function OfficialBrowserBox({
                     />
                   </div>
 
-{/* Teléfono internacional */}
-<div className="col-span-1 md:col-span-1">
-  <label className="block text-white text-[13px] mb-2">
-    {isMa ? "الهاتف" : isEn ? "Phone" : "Teléfono"}
-  </label>
-
-  <div className="flex gap-2 min-w-0">
-
-    <select
-      className="w-[92px] shrink-0 h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-2 text-center text-white"
-value={formData.preferredOffice}
-onChange={(e) =>
-  onFormChange("preferredOffice", e.target.value)
-}
-      id="countryCode"
-    >
-      <option value="+34">🇪🇸 +34</option>
-      <option value="+212">🇲🇦 +212</option>
-      <option value="+31">🇳🇱 +31</option>
-      <option value="+32">🇧🇪 +32</option>
-      <option value="+33">🇫🇷 +33</option>
-      <option value="+39">🇮🇹 +39</option>
-      <option value="+49">🇩🇪 +49</option>
-      <option value="+44">🇬🇧 +44</option>
-      <option value="+1">🇺🇸 +1</option>
-    </select>
-
-    <input
-      type="text"
-      placeholder="34644403748"
-      value={formData.phone}
-      onChange={(e) => onFormChange("phone", e.target.value)}
-      className="min-w-0 flex-1 h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white"
-    />
-
-  </div>
-</div>
+                  {/* Teléfono internacional */}
+                  <div className="col-span-1 md:col-span-1">
+                    <label className="block text-white text-[13px] mb-2">
+                      {isMa ? "الهاتف" : isEn ? "Phone" : "Teléfono"}
+                    </label>
+                    <div className="flex gap-2 min-w-0">
+                      <select
+                        className="w-[92px] shrink-0 h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-2 text-center text-white"
+                        value={formData.preferredOffice}
+                        onChange={(e) => onFormChange("preferredOffice", e.target.value)}
+                        id="countryCode"
+                      >
+                        <option value="+34">🇪🇸 +34</option>
+                        <option value="+212">🇲🇦 +212</option>
+                        <option value="+31">🇳🇱 +31</option>
+                        <option value="+32">🇧🇪 +32</option>
+                        <option value="+33">🇫🇷 +33</option>
+                        <option value="+39">🇮🇹 +39</option>
+                        <option value="+49">🇩🇪 +49</option>
+                        <option value="+44">🇬🇧 +44</option>
+                        <option value="+1">🇺🇸 +1</option>
+                      </select>
+                      <input
+                        type="text"
+                        placeholder="34644403748"
+                        value={formData.phone}
+                        onChange={(e) => onFormChange("phone", e.target.value)}
+                        className="min-w-0 flex-1 h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white"
+                      />
+                    </div>
+                  </div>
 
                   {/* Email */}
                   <div>
@@ -304,223 +235,230 @@ onChange={(e) =>
                     />
                   </div>
 
-              {/* Número de expediente */}
-<div>
-  <label className="block text-white text-[13px] mb-2">
-    Número de expediente
-  </label>
-
-  <input
-    type="text"
-    placeholder="467020260019841"
-    value={formData.expedienteNumero || ""}
-    onChange={(e) =>
-      onFormChange("expedienteNumero", e.target.value)
-    }
-    className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white"
-  />
-</div>
-
-{/* Identificador solicitud */}
-<div>
-  <label className="block text-white text-[13px] mb-2">
-    Identificador solicitud
-  </label>
-
-  <input
-    type="text"
-    placeholder="E46202600507573"
-    value={formData.identificadorSolicitud || ""}
-    onChange={(e) =>
-      onFormChange("identificadorSolicitud", e.target.value)
-    }
-    className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white"
-  />
-</div>
-{/* Fecha presentación solicitud */}
-<div className="min-w-0">
-  <label className="block text-white text-[13px] mb-2">
-    Fecha presentación solicitud
-  </label>
-
-  <input
-    type="date"
-    value={formData.fechaPresentacion || ""}
-    onChange={(e) =>
-      onFormChange("fechaPresentacion", e.target.value)
-    }
-    className="block w-full max-w-full min-w-0 h-[52px] box-border appearance-none rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white [color-scheme:dark]"
-  />
-</div>
-{/* Fecha nacimiento */}
-<div className="min-w-0">
-  <label className="block text-white text-[13px] mb-2">
-    Fecha nacimiento
-  </label>
-
-  <input
-    type="date"
-    value={formData.fechaNacimiento || ""}
-    onChange={(e) =>
-      onFormChange("fechaNacimiento", e.target.value)
-    }
-    className="block w-full max-w-full min-w-0 h-[52px] box-border appearance-none rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white [color-scheme:dark]"
-  />
-</div>
-
-{/* Dirección */}
-<div>
-  <label className="block text-white text-[13px] mb-2">
-    Dirección completa
-  </label>
-  <input
-    type="text"
-    placeholder="Calle y número"
-    value={formData.direccion || ""}
-    onChange={(e) => onFormChange("direccion", e.target.value)}
-    className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white"
-  />
-</div>
-
-{/* Código Postal */}
-<div>
-  <label className="block text-white text-[13px] mb-2">
-    Código Postal
-  </label>
-  <input
-    type="text"
-    placeholder="28001"
-    value={formData.codigoPostal || ""}
-    onChange={(e) => onFormChange("codigoPostal", e.target.value)}
-    className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white"
-  />
-</div>
-
-{/* Ciudad */}
-<div>
-  <label className="block text-white text-[13px] mb-2">
-    Ciudad
-  </label>
-  <input
-    type="text"
-    placeholder="Madrid"
-    value={formData.ciudad || ""}
-    onChange={(e) => onFormChange("ciudad", e.target.value)}
-    className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white"
-  />
-</div>
-
-{/* Provincia */}
-<div>
-  <label className="block text-white text-[13px] mb-2">
-    Provincia
-  </label>
-  <input
-    type="text"
-    placeholder="Madrid"
-    value={formData.provincia || ""}
-    onChange={(e) => onFormChange("provincia", e.target.value)}
-    className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white"
-  />
-</div>
-
-              {/* Caja de reserva */}
-              <div className="mt-4 rounded-[28px] border-2 border-yellow-500 bg-gradient-to-b from-[#0b0b0b] to-[#050505] p-4 shadow-[0_0_35px_rgba(255,200,0,0.18)]">
-                <div className="flex items-start justify-between mb-4 pt-2">
+                  {/* Número de expediente */}
                   <div>
-                    <p className="text-white text-[15px] font-bold">
+                    <label className="block text-white text-[13px] mb-2">
+                      {isMa ? "رقم الملف" : isEn ? "File number" : "Número de expediente"}
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="467020260019841"
+                      value={formData.expedienteNumero || ""}
+                      onChange={(e) => onFormChange("expedienteNumero", e.target.value)}
+                      className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white"
+                    />
+                  </div>
+
+                  {/* Identificador solicitud */}
+                  <div>
+                    <label className="block text-white text-[13px] mb-2">
+                      {isMa ? "محدد الطلب" : isEn ? "Request identifier" : "Identificador solicitud"}
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="E46202600507573"
+                      value={formData.identificadorSolicitud || ""}
+                      onChange={(e) => onFormChange("identificadorSolicitud", e.target.value)}
+                      className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white"
+                    />
+                  </div>
+
+                  {/* Fecha presentación solicitud */}
+                  <div className="min-w-0">
+                    <label className="block text-white text-[13px] mb-2">
+                      {isMa ? "تاريخ تقديم الطلب" : isEn ? "Application date" : "Fecha presentación solicitud"}
+                    </label>
+                    <input
+                      type="date"
+                      value={formData.fechaPresentacion || ""}
+                      onChange={(e) => onFormChange("fechaPresentacion", e.target.value)}
+                      className="block w-full max-w-full min-w-0 h-[52px] box-border appearance-none rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white [color-scheme:dark]"
+                    />
+                  </div>
+
+                  {/* Fecha nacimiento */}
+                  <div className="min-w-0">
+                    <label className="block text-white text-[13px] mb-2">
+                      {isMa ? "تاريخ الميلاد" : isEn ? "Birth date" : "Fecha nacimiento"}
+                    </label>
+                    <input
+                      type="date"
+                      value={formData.fechaNacimiento || ""}
+                      onChange={(e) => onFormChange("fechaNacimiento", e.target.value)}
+                      className="block w-full max-w-full min-w-0 h-[52px] box-border appearance-none rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white [color-scheme:dark]"
+                    />
+                  </div>
+
+                  {/* NIE */}
+                  <div>
+                    <label className="block text-white text-[13px] mb-2">
+                      NIE
+                    </label>
+                    <input
+                      type="text"
+                      placeholder={isMa ? "X1234567Z أو Y7654321X" : isEn ? "X1234567Z or Y7654321X" : "X1234567Z o Y7654321X"}
+                      value={formData.nie || ""}
+                      onChange={(e) => onFormChange("nie", e.target.value)}
+                      className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white"
+                    />
+                  </div>
+
+                  {/* Dirección */}
+                  <div>
+                    <label className="block text-white text-[13px] mb-2">
+                      {isMa ? "العنوان الكامل" : isEn ? "Full address" : "Dirección completa"}
+                    </label>
+                    <input
+                      type="text"
+                      placeholder={isMa ? "الشارع والرقم" : isEn ? "Street and number" : "Calle y número"}
+                      value={formData.direccion || ""}
+                      onChange={(e) => onFormChange("direccion", e.target.value)}
+                      className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white"
+                    />
+                  </div>
+
+                  {/* Código Postal */}
+                  <div>
+                    <label className="block text-white text-[13px] mb-2">
+                      {isMa ? "الرمز البريدي" : isEn ? "Postal code" : "Código Postal"}
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="28001"
+                      value={formData.codigoPostal || ""}
+                      onChange={(e) => onFormChange("codigoPostal", e.target.value)}
+                      className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white"
+                    />
+                  </div>
+
+                  {/* Ciudad */}
+                  <div>
+                    <label className="block text-white text-[13px] mb-2">
+                      {isMa ? "المدينة" : isEn ? "City" : "Ciudad"}
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Madrid"
+                      value={formData.ciudad || ""}
+                      onChange={(e) => onFormChange("ciudad", e.target.value)}
+                      className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white"
+                    />
+                  </div>
+
+                  {/* Provincia */}
+                  <div>
+                    <label className="block text-white text-[13px] mb-2">
+                      {isMa ? "المقاطعة" : isEn ? "Province" : "Provincia"}
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Madrid"
+                      value={formData.provincia || ""}
+                      onChange={(e) => onFormChange("provincia", e.target.value)}
+                      className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white"
+                    />
+                  </div>
+
+                  {/* Caja de pago con Checkbox */}
+                  <div className="col-span-1 lg:col-span-2 mt-4 rounded-[28px] border-2 border-yellow-500 bg-gradient-to-b from-[#0b0b0b] to-[#050505] p-4 shadow-[0_0_35px_rgba(255,200,0,0.18)]">
+                    <div className="flex items-start justify-between mb-4 pt-2">
+                      <div>
+                        <p className="text-white text-[15px] font-bold">
+                          {isMa
+                            ? "متابعة الملف + NUSS + طاكسا 790"
+                            : isEn
+                            ? "File Tracking + NUSS + Fee 790"
+                            : "Seguimiento Expediente + NUSS + Tasa 790"}
+                        </p>
+                        <span className="inline-flex mt-1 rounded-full bg-gradient-to-r from-yellow-400 to-yellow-600 px-3 py-1 text-[10px] font-black uppercase tracking-wide text-black shadow-[0_0_15px_rgba(255,215,0,0.25)]">
+                          Premium
+                        </span>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-yellow-400 text-[34px] font-black leading-none drop-shadow-[0_0_10px_rgba(255,215,0,0.35)]">
+                          10€
+                        </p>
+                        <p className="text-yellow-300 text-[11px] font-semibold">
+                          {isMa ? "التحقق الأول" : isEn ? "Initial verification" : "Verificación inicial"}
+                        </p>
+                      </div>
+                    </div>
+
+                    <p className="text-gray-300 text-[13px] mb-5 leading-relaxed">
                       {isMa
-                        ? "متابعة الملف + NUSS + التازا"
+                        ? "سارة غادي تراقب الملف ديالك 24/24. ملي يخرج القبول غادي توصلك رسالة فواتساب. من بعد غادي نجيبو ليك NUSS ونصيفطو ليك طاكسا 790 معمرة وجاهزة للأداء."
                         : isEn
-                        ? "File Tracking + NUSS + Fee"
-                        : "Seguimiento Expediente + NUSS + Tasa"}
+                        ? "Sara will monitor your file 24/7. When it becomes FAVORABLE you will receive a WhatsApp notification. Then we will obtain your NUSS and send you the completed Fee 790."
+                        : "Sara vigilará tu expediente 24/24. Cuando salga FAVORABLE recibirás un aviso por WhatsApp. Después obtendremos tu NUSS y recibirás la tasa 790 lista para pagar."}
                     </p>
-                    <span className="inline-flex mt-1 rounded-full bg-gradient-to-r from-yellow-400 to-yellow-600 px-3 py-1 text-[10px] font-black uppercase tracking-wide text-black shadow-[0_0_15px_rgba(255,215,0,0.25)]">
-                      Premium
-                    </span>
+
+                    {/* Checkbox de aceptación */}
+                    <div className="flex items-start gap-3 mb-4">
+                      <input
+                        type="checkbox"
+                        id="acceptTerms"
+                        checked={acceptTerms}
+                        onChange={(e) => setAcceptTerms(e.target.checked)}
+                        className="mt-1 w-4 h-4 rounded border-white/20 bg-[#060b16] text-yellow-500 focus:ring-yellow-500 focus:ring-offset-0"
+                      />
+                      <label htmlFor="acceptTerms" className="text-white/70 text-[12px] leading-relaxed">
+                        {isMa
+                          ? "☑️ نوافق على أن تقوم GestoriaCitaIA بمتابعة ملفي بشكل تلقائي."
+                          : isEn
+                          ? "☑️ I agree that GestoriaCitaIA performs automatic monitoring of my file."
+                          : "☑️ Acepto que GestoriaCitaIA realice el seguimiento automático de mi expediente."}
+                      </label>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={onPay}
+                      className="w-full min-h-[56px] rounded-[20px] bg-gradient-to-r from-yellow-400 via-yellow-500 to-amber-500 px-4 py-2 text-[15px] leading-tight font-black text-black shadow-[0_0_30px_rgba(255,215,0,0.35)] transition-all duration-300 hover:scale-[1.01] disabled:opacity-50 disabled:cursor-not-allowed"
+                      disabled={!acceptTerms}
+                    >
+                      {isMa
+                        ? "🔐 خلص وبدأ التحقق"
+                        : isEn
+                        ? "🔐 Pay and start verification"
+                        : "🔐 Pagar y empezar verificación"}
+                    </button>
+
+                    <div className="mt-5 flex items-center justify-center gap-2 text-[11px] text-gray-300">
+                      <Shield className="w-3 h-3 text-yellow-400" />
+                      <span>
+                        {isMa
+                          ? "دفع آمن عبر Stripe"
+                          : isEn
+                          ? "Secure payment with Stripe"
+                          : "Pago seguro con Stripe"}
+                      </span>
+                    </div>
+
+                    <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
+                      <span className="rounded-full bg-white px-3 py-1 text-[11px] font-bold text-[#1434CB]">VISA</span>
+                      <span className="rounded-full bg-white px-3 py-1 text-[11px] font-bold text-[#EB001B]">Mastercard</span>
+                      <span className="rounded-full bg-white px-3 py-1 text-[11px] font-bold text-black"> Pay</span>
+                      <span className="rounded-full bg-white px-3 py-1 text-[11px] font-bold text-black">G Pay</span>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <p className="text-yellow-400 text-[34px] font-black leading-none drop-shadow-[0_0_10px_rgba(255,215,0,0.35)]">
-                      10€
-                    </p>
-                    <p className="text-yellow-300 text-[11px] font-semibold">
-                      {isMa ? "التحقق الأول" : isEn ? "Initial verification" : "Verificación inicial"}
-                    </p>
-                  </div>
-                </div>
-
-                <p className="text-gray-300 text-[13px] mb-5 leading-relaxed">
-                  {isMa
-                    ? "سارة غادي تراقب الملف ديالك 24/24. ملي يخرج FAVORABLE غادي نعلموك فالواتساب. غادي نجيبو NUSS ديالك أوتوماتيكيا. غادي نرسلو ليك التازا 790-012 جاهزة باش تسدد."
-                    : isEn
-                    ? "Sara will monitor your file 24/24. When it becomes FAVORABLE we will notify you on WhatsApp. We will automatically get your NUSS. We will send you the 790-012 fee ready to pay."
-                    : "Sara vigilará tu expediente 24/24. Cuando salga FAVORABLE te avisaremos por WhatsApp. Obtendremos tu NUSS automáticamente. Te enviaremos la tasa 790-012 preparada y lista para pagar."}
-                </p>
-
-                <button
-                  type="button"
-                  onClick={onPay}
-                  className="w-full min-h-[56px] rounded-[20px] bg-gradient-to-r from-yellow-400 via-yellow-500 to-amber-500 px-4 py-2 text-[15px] leading-tight font-black text-black shadow-[0_0_30px_rgba(255,215,0,0.35)] transition-all duration-300 hover:scale-[1.01]"
-                >
-                  {isMa
-                    ? "🔐 خلص وبدأ التحقق"
-                    : isEn
-                    ? "🔐 Pay and start verification"
-                    : "🔐 Pagar y empezar verificación"}
-                </button>
-
-                <div className="mt-5 flex items-center justify-center gap-2 text-[11px] text-gray-300">
-                  <Shield className="w-3 h-3 text-yellow-400" />
-                  <span>
-                    {isMa
-                      ? "دفع آمن عبر Stripe"
-                      : isEn
-                      ? "Secure payment with Stripe"
-                      : "Pago seguro con Stripe"}
-                  </span>
-                </div>
-
-                <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
-                  <span className="rounded-full bg-white px-3 py-1 text-[11px] font-bold text-[#1434CB]">VISA</span>
-                  <span className="rounded-full bg-white px-3 py-1 text-[11px] font-bold text-[#EB001B]">Mastercard</span>
-                  <span className="rounded-full bg-white px-3 py-1 text-[11px] font-bold text-black"> Pay</span>
-                  <span className="rounded-full bg-white px-3 py-1 text-[11px] font-bold text-black">G Pay</span>
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-
-            {hasRealAppointment && (
-              <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4">
-                <p className="text-sm font-bold text-emerald-800">
-                  {isMa ? "لقينا الموعد الحقيقي" : isEn ? "Real appointment found" : "Cita real encontrada"}
-                </p>
-                <p className="mt-2 text-sm text-gray-700">
-                  {isMa ? "النوع" : isEn ? "Procedure" : "Trámite"}: {appointmentData?.tramite || selectedTramiteLabel}
-                </p>
-                <p className="text-sm text-gray-700">{isMa ? "التاريخ" : isEn ? "Date" : "Fecha"}: {finalDate}</p>
-                <p className="text-sm text-gray-700">{isMa ? "الوقت" : isEn ? "Time" : "Hora"}: {finalTime}</p>
-                <p className="text-sm text-gray-700">{isMa ? "المكتب" : isEn ? "Office" : "Oficina"}: {finalOffice}</p>
-                <p className="text-sm text-gray-700">{isMa ? "رقم الموعد" : isEn ? "Locator" : "Localizador"}: {finalLocator}</p>
-              </div>
-            )}
           </>
-  
         ) : (
           <>
             <div className="rounded-[26px] border border-emerald-500/40 bg-[#07111f] px-5 py-7 mb-5 shadow-[0_0_30px_rgba(16,185,129,0.08)]">
-<div className="flex justify-center mb-4">
-  <div className="w-14 h-14 rounded-full border-2 border-emerald-400 bg-emerald-500/15 flex items-center justify-center shadow-[0_0_20px_rgba(16,185,129,0.35)]">
-    <CheckCircle2 className="w-8 h-8 text-emerald-400" />
-  </div>
-</div>
+              <div className="flex justify-center mb-4">
+                <div className="w-14 h-14 rounded-full border-2 border-emerald-400 bg-emerald-500/15 flex items-center justify-center shadow-[0_0_20px_rgba(16,185,129,0.35)]">
+                  <CheckCircle2 className="w-8 h-8 text-emerald-400" />
+                </div>
+              </div>
               <h3 className="text-center text-white text-[18px] font-semibold leading-tight mb-3">
                 {isMa
-  ? "مبروك 🎉 بدينا نراجعو الملف ديالك. ملي يخرج favorable غادي نعلموك فالواتساب بشكل مستعجل."
-  : isEn
-  ? "Congratulations 🎉 We have started checking your file. As soon as it becomes favorable, we will urgently notify you on WhatsApp."
-  : "Felicidades 🎉 Hemos empezado a verificar tu expediente. En cuanto salga favorable te avisaremos urgentemente por WhatsApp."}
+                  ? "مبروك 🎉 بدينا نراجعو الملف ديالك. ملي يخرج favorable غادي نعلموك فالواتساب بشكل مستعجل."
+                  : isEn
+                  ? "Congratulations 🎉 We have started checking your file. As soon as it becomes favorable, we will urgently notify you on WhatsApp."
+                  : "Felicidades 🎉 Hemos empezado a verificar tu expediente. En cuanto salga favorable te avisaremos urgentemente por WhatsApp."}
               </h3>
               <p className="text-center text-white/70 text-[14px] leading-relaxed">
                 {isMa
@@ -529,41 +467,35 @@ onChange={(e) =>
                   ? "We will notify you here when there is news about your file."
                   : "Te avisaremos aquí cuando haya novedades sobre tu expediente."}
               </p>
-              
 
-<div className="mt-5 rounded-2xl border border-yellow-500/20 bg-yellow-500/10 p-4">
-
-  <div className="flex items-center gap-2 mb-2">
-
-    <div className="w-2.5 h-2.5 rounded-full bg-yellow-400 animate-pulse" />
-
-    <p className="text-yellow-300 font-bold text-sm">
-      Sara verificando expediente 24/24
-    </p>
-
-  </div>
-
-  <p className="text-white/70 text-xs leading-relaxed">
-
-    {isMa
-      ? "سارة غادي تراقب الملف ديالك 24/24. ملي يخرج FAVORABLE غادي نعلموك فالواتساب. غادي نجيبو NUSS ديالك أوتوماتيكيا. غادي نرسلو ليك التازا 790-012 جاهزة باش تسدد."
-      : isEn
-      ? "Sara will monitor your file 24/24. When it becomes FAVORABLE we will notify you on WhatsApp. We will automatically get your NUSS. We will send you the 790-012 fee ready to pay."
-      : "Sara vigilará tu expediente 24/24. Cuando salga FAVORABLE te avisaremos por WhatsApp. Obtendremos tu NUSS automáticamente. Te enviaremos la tasa 790-012 preparada y lista para pagar."}
-
-  </p>
-
-</div>
-
-</div>
+              <div className="mt-5 rounded-2xl border border-yellow-500/20 bg-yellow-500/10 p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-2.5 h-2.5 rounded-full bg-yellow-400 animate-pulse" />
+                  <p className="text-yellow-300 font-bold text-sm">
+                    {isMa
+                      ? "سارة كتراقب الملف 24/24"
+                      : isEn
+                      ? "Sara monitoring file 24/7"
+                      : "Sara verificando expediente 24/24"}
+                  </p>
+                </div>
+                <p className="text-white/70 text-xs leading-relaxed">
+                  {isMa
+                    ? "سارة غادي تراقب الملف ديالك 24/24. ملي يخرج القبول غادي توصلك رسالة فواتساب. من بعد غادي نجيبو ليك NUSS ونصيفطو ليك طاكسا 790 معمرة وجاهزة للأداء."
+                    : isEn
+                    ? "Sara will monitor your file 24/7. When it becomes FAVORABLE you will receive a WhatsApp notification. Then we will obtain your NUSS and send you the completed Fee 790."
+                    : "Sara vigilará tu expediente 24/24. Cuando salga FAVORABLE recibirás un aviso por WhatsApp. Después obtendremos tu NUSS y recibirás la tasa 790 lista para pagar."}
+                </p>
+              </div>
+            </div>
 
             <div className="rounded-[30px] overflow-hidden border border-yellow-500/30 bg-[#050816] shadow-[0_0_40px_rgba(255,200,0,0.10)]">
               <div className="px-6 py-8 bg-[radial-gradient(circle_at_top,rgba(255,200,0,0.12),transparent_60%)]">
                 <div className="flex justify-center mb-5">
                   <img
-            src="https://upload.wikimedia.org/wikipedia/en/9/9a/Flag_of_Spain.svg"
-              alt="España"
-               className="w-20 h-14 object-cover rounded-lg shadow-[0_0_15px_rgba(255,255,255,0.15)] border border-white/20"
+                    src="https://upload.wikimedia.org/wikipedia/en/9/9a/Flag_of_Spain.svg"
+                    alt="España"
+                    className="w-20 h-14 object-cover rounded-lg shadow-[0_0_15px_rgba(255,255,255,0.15)] border border-white/20"
                   />
                 </div>
 
@@ -613,21 +545,11 @@ onChange={(e) =>
                 </div>
               </div>
             </div>
-
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="flex flex-col items-center text-center py-10 gap-5"
-     >
-</motion.div>
-
-</>
-
+          </>
         )}
-
-</div>
-</motion.div>
-);
+      </div>
+    </motion.div>
+  );
 }
 
 export default function BuscarCitas() {
@@ -635,40 +557,33 @@ export default function BuscarCitas() {
   const language = lang === "darija" ? "ma" : lang;
 
   const [location] = useLocation();
-const [selectedTramite, setSelectedTramite] = useState("primera_tie");
-  const [step, setStep] = useState(0);
   const [muted, setMuted] = useState(false);
-const [confirmed, setConfirmed] = useState(
-  new URLSearchParams(window.location.search).get("success") === "true"
-);
+  const [confirmed, setConfirmed] = useState(
+    new URLSearchParams(window.location.search).get("success") === "true"
+  );
   const [showDocs, setShowDocs] = useState(false);
   const [showForms, setShowForms] = useState(false);
   const [profile, setProfile] = useState<ProfileRow | null>(null);
-  const [appointmentData, setAppointmentData] = useState<AppointmentResult | null>(null);
   const [profileLoading, setProfileLoading] = useState(true);
-const [formData, setFormData] = useState<ClientFormData>({
-  fullName: "",
-  phone: "",
-  email: "",
-  expedienteNumero: "",
-  identificadorSolicitud: "",
-  fechaPresentacion: "",
-  fechaNacimiento: "",
-  direccion: "",
-  codigoPostal: "",
-  ciudad: "",
-  provincia: "",
-  preferredOffice: "+34",
-  nie: "",
-  passport: "",
-  nationality: "",
-  birthYear: "",
-  city: "",
-  province: "",
-});
-const [formReady, setFormReady] = useState(
-  localStorage.getItem("saraPaid") === "1"
-);
+  const [acceptTerms, setAcceptTerms] = useState(false);
+  const [formData, setFormData] = useState<ClientFormData>({
+    fullName: "",
+    phone: "",
+    email: "",
+    expedienteNumero: "",
+    identificadorSolicitud: "",
+    fechaPresentacion: "",
+    fechaNacimiento: "",
+    direccion: "",
+    codigoPostal: "",
+    ciudad: "",
+    provincia: "",
+    preferredOffice: "+34",
+    nie: "",
+  });
+  const [formReady, setFormReady] = useState(
+    localStorage.getItem("saraPaid") === "1"
+  );
   const [voiceSupported, setVoiceSupported] = useState(true);
   const [isListening, setIsListening] = useState(false);
   const [waitingSara, setWaitingSara] = useState(false);
@@ -684,16 +599,7 @@ const [formReady, setFormReady] = useState(
   const lastAssistantTextRef = useRef("");
   const shouldKickoffSaraRef = useRef(false);
 
-  const urlParams = useMemo(() => {
-    const url = new URL(window.location.href);
-    return {
-      token: url.searchParams.get("token") || "",
-      appointmentId: url.searchParams.get("appointment_id") || "",
-    };
-  }, [location]);
-
   const { toast } = useToast();
-  const scheduleMutation = useScheduleAppointment();
 
   const isMa = language === "ma";
   const isEn = language === "en";
@@ -703,111 +609,15 @@ const [formReady, setFormReady] = useState(
       initialVoice:
         "السلام عليكم مرحبا بك في هيستوريا إي آي أنا سارة غادي نعاونك باش تتابع الملف ديالك وتخرج رقم الضمان الاجتماعي وتفتح alta. عمر ليا الفورمولار وغادي نبداو.",
       savedLeadReply:
-        "مزيان دابا توصلنا بالمعلومة ديالك غادي نبدأ نقلب لك على موعد 24 ساعة على 24 وغادي نصيفط لك واتساب إلا بان الموعد",
-      foundMsg:
-        "لقينا لك السيطا ديالك دابا دخل بسرعة وكليكي على confirm باش ما تطيرش عليك",
+        "مزيان دابا توصلنا بالمعلومة ديالك غادي نبداو نتابعو الملف ديالك 24/24.",
       confirmMsg:
-        "مبروك عليك تأكدات السيطا ديالك شكرا على الثقة ديالك في هيستوريا إي آي",
+        "مبروك عليك تأكدات الملف ديالك شكرا على الثقة ديالك في هيستوريا إي آي",
     }),
     []
   );
 
   const ui = useMemo(() => {
     return {
- tramites: [
-
-{
-  value: "primera_tie",
-  label: isMa
-    ? "البصمات - أول TIE"
-    : isEn
-    ? "First TIE - Fingerprints"
-    : "Primera TIE (Toma de huellas)",
-},
-
-{
-  value: "renovacion_nie",
-  label: isMa
-    ? "تجديد NIE أو TIE"
-    : isEn
-    ? "NIE / TIE Renewal"
-    : "Renovación NIE / TIE",
-},
-
-{
-  value: "reagrupacion_familiar",
-  label: isMa
-    ? "التجمع العائلي"
-    : isEn
-    ? "Family Reunification"
-    : "Reagrupación Familiar",
-},
-
-{
-  value: "arraigo",
-  label: isMa
-    ? "الاستقرار (أرايغو)"
-    : isEn
-    ? "Arraigo Residence"
-    : "Arraigo",
-},
-
-{
-  value: "familiar_ue",
-  label: isMa
-    ? "فرد من عائلة مواطن أوروبي"
-    : isEn
-    ? "EU Family Member"
-    : "Familiar de Ciudadano UE",
-},
-
-{
-  value: "certificado_ue",
-  label: isMa
-    ? "شهادة مواطن أوروبي"
-    : isEn
-    ? "EU Registration Certificate"
-    : "Certificado de Registro UE",
-},
-
-{
-  value: "autorizacion_regreso",
-  label: isMa
-    ? "رخصة الرجوع"
-    : isEn
-    ? "Return Authorization"
-    : "Autorización de Regreso",
-},
-
-{
-  value: "larga_duracion",
-  label: isMa
-    ? "الإقامة طويلة المدة"
-    : isEn
-    ? "Long-Term Residence"
-    : "Residencia de Larga Duración",
-},
-
-{
-  value: "estudios",
-  label: isMa
-    ? "إقامة الدراسة"
-    : isEn
-    ? "Student Residence"
-    : "Estancia por Estudios",
-},
-
-{
-  value: "asilo",
-  label: isMa
-    ? "اللجوء والحماية الدولية"
-    : isEn
-    ? "Asylum and International Protection"
-    : "Asilo y Protección Internacional",
-},
-
-] as TramiteItem[],
-
       docsByTramite: {
         tie: [
           { nombre: "Pasaporte o NIE vigente", estado: "ok" as DocState },
@@ -823,18 +633,11 @@ const [formReady, setFormReady] = useState(
 
       online: isMa ? "أونلاين" : isEn ? "Online" : "En línea",
 
-      // ✅ 2. AGENT ROLE ACTUALIZADO
       agentRole: isMa
         ? "متابعة الملفات"
         : isEn
         ? "File Tracking Assistant"
         : "Asesora de Expedientes",
-
-      procedurePlaceholder: isMa
-        ? "اختار نوع السيتا"
-        : isEn
-        ? "Select appointment type"
-        : "Seleccione el trámite entre los relacionados",
 
       loadingUserData: isMa
         ? "جاري تحميل المعلومات..."
@@ -843,44 +646,27 @@ const [formReady, setFormReady] = useState(
         : "Cargando datos del usuario...",
 
       govSmall: "extranjería:",
-      govTitle: "CITA PREVIA",
-      govLine1: "COMISARÍA GENERAL",
-      govLine2: "DE EXTRANJERÍA",
-      govLine3: "E INMIGRACIÓN",
+      // ✅ CAMBIADO: de "CITA PREVIA" a "FAVORABLE · NUSS · TASA 790"
+      govTitle: "FAVORABLE · NUSS · TASA 790",
+      govLine1: "SEGUIMIENTO EXPEDIENTE",
+      govLine2: "AUTOMÁTICO 24/24",
+      govLine3: "NOTIFICACIÓN WHATSAPP",
 
-      confirmTitle: isMa ? "تم تأكيد الموعد!" : isEn ? "APPOINTMENT CONFIRMED!" : "¡CITA CONFIRMADA!",
+      confirmTitle: isMa ? "تم تأكيد الملف!" : isEn ? "FILE CONFIRMED!" : "¡EXPEDIENTE CONFIRMADO!",
 
       date: isMa ? "التاريخ" : isEn ? "Date" : "Fecha",
       time: isMa ? "الوقت" : isEn ? "Time" : "Hora",
       office: isMa ? "المكتب" : isEn ? "Office" : "Oficina",
-      appointmentNumber: isMa ? "رقم الموعد" : isEn ? "Appointment Number" : "Nº Cita",
+      appointmentNumber: isMa ? "رقم الملف" : isEn ? "File Number" : "Nº Expediente",
 
       reservationSaved: isMa
-        ? "تم حفظ الحجز"
+        ? "تم حفظ الملف"
         : isEn
-        ? "Reservation saved"
-        : "Reserva guardada correctamente",
+        ? "File saved"
+        : "Expediente guardado correctamente",
 
       sourceLabel: isMa ? "المصدر الرسمي" : isEn ? "Official source" : "Fuente oficial",
 
-      foundSuccessTitle: isMa ? "لقينا الموعد!" : isEn ? "Appointment found!" : "¡Cita encontrada!",
-      foundSuccessDesc: isMa ? "أكد الموعد دابا" : isEn ? "Confirm now to continue." : "Ahora confirma para continuar.",
-      foundErrorTitle: isMa ? "خطأ" : isEn ? "Error" : "Error al buscar cita",
-      foundErrorDesc: isMa ? "ما قدرناش نلقاو الموعد" : isEn ? "Could not search appointment." : "No se pudo buscar la cita en este momento.",
-
-      confirmSuccessTitle: isMa ? "تم تأكيد الموعد" : isEn ? "Appointment confirmed!" : "¡Cita confirmada!",
-      confirmSuccessDesc: isMa
-        ? "تم حفظ الحجز"
-        : isEn
-        ? "Reservation saved correctly."
-        : "La reserva ha quedado registrada correctamente.",
-
-      procedureShort: isMa ? "النوع" : isEn ? "Procedure" : "Trámite",
-
-      openOfficialSite: isMa ? "فتح الموقع الرسمي" : isEn ? "Open official website" : "Abrir sede oficial",
-      downloadPdf: isMa ? "تحميل PDF" : isEn ? "Download PDF" : "Descargar PDF",
-
-      // ✅ 3. VOICE BUTTON ACTUALIZADO
       voiceButton: isMa
         ? "تكلم مع سارة حول الملف"
         : isEn
@@ -913,28 +699,17 @@ const [formReady, setFormReady] = useState(
       docsRequiredTitle: isMa ? "الوثائق المطلوبة" : isEn ? "Required documents" : "Documentos requeridos",
       formsOfficialTitle: isMa ? "الاستمارات الرسمية" : isEn ? "Official forms" : "Formularios oficiales",
 
-      // ✅ 1. PAGE TITLE ACTUALIZADO
       pageTitle: isMa
         ? "تتبع الملف"
         : isEn
         ? "File Tracking"
         : "Seguimiento de Expediente",
-      pageTitleConfirm: isMa ? "سارة: تأكيد الموعد" : isEn ? "Sara: appointment confirmation" : "Sara: confirmación de cita",
 
       agentSavedMsg: isMa
-        ? "مزيان. دابا كنقلبو على الموعد ديالك. غادي نخبروك فالواتساب في أقل من 24 ساعة."
+        ? "مزيان. دابا غادي نبداو نتابعو الملف ديالك. غادي نخبروك فالواتساب في أقل من 24 ساعة."
         : isEn
-        ? "Perfect. We are already looking for your appointment. We will notify you on WhatsApp within 24 hours."
-        : "Perfecto. Ya estamos buscando tu cita. Te avisaremos por WhatsApp en menos de 24h.",
-
-      confirmBtn: isMa ? "تأكيد الموعد" : isEn ? "Confirm appointment" : "Confirmar cita",
-
-      noRealAppointmentTitle: isMa ? "ما كاين حتى موعد حقيقي" : isEn ? "No real appointment" : "No hay cita real",
-      noRealAppointmentDesc: isMa
-        ? "ما تقدرش تأكد موعد ناقص"
-        : isEn
-        ? "You cannot confirm an incomplete appointment."
-        : "No puedes confirmar una cita inventada o incompleta.",
+        ? "Perfect. We are already tracking your file. We will notify you on WhatsApp within 24 hours."
+        : "Perfecto. Ya estamos rastreando tu expediente. Te avisaremos por WhatsApp en menos de 24h.",
 
       stripeErrorTitle: isMa ? "خطأ في الدفع" : isEn ? "Payment error" : "Error Stripe",
       stripeErrorDesc: isMa ? "ما قدرناش نفتحو الدفع" : isEn ? "Could not open payment." : "No se pudo abrir el pago",
@@ -943,31 +718,16 @@ const [formReady, setFormReady] = useState(
       saveErrorDesc: isMa ? "ما قدرناش نحفظو المعلومات" : isEn ? "Could not save data." : "No se pudo guardar el cliente",
 
       panelUpdated: isMa ? "تحدث اللوحة" : isEn ? "Panel updated" : "Panel actualizado",
-
-      selectTramiteTitle: isMa ? "اختار نوع الموعد" : isEn ? "Select procedure" : "Selecciona trámite",
-      selectTramiteDesc: isMa
-        ? "اختار نوع الموعد قبل تكمل"
-        : isEn
-        ? "Choose the appointment type before continuing."
-        : "Elige el tipo de cita antes de continuar.",
     };
   }, [language]);
 
-  const TRAMITES = ui.tramites;
-
-  const selectedTramiteLabel =
-    TRAMITES.find((item) => item.value === selectedTramite)?.label || TRAMITES[0].label;
+  const docsForSelectedTramite = ui.docsByTramite.tie;
+  const formsForSelectedTramite = ui.formsByTramite.tie;
 
   const voiceStorageKey = useMemo(() => {
     const userId = profile?.id || "guest";
     return `gestoriacitaia_sara_voice_${userId}`;
   }, [profile?.id]);
-
-  const docsForSelectedTramite =
-    ui.docsByTramite[selectedTramite] ?? ui.docsByTramite.tie;
-
-  const formsForSelectedTramite =
-    ui.formsByTramite[selectedTramite] ?? ui.formsByTramite.tie;
 
   useEffect(() => {
     const supported =
@@ -1217,13 +977,67 @@ const [formReady, setFormReady] = useState(
     }
   };
 
-  const handlePay = async () => {
-    if (!formData.fullName.trim() || !formData.phone.trim() || !formData.expedienteNumero.trim() || !formData.identificadorSolicitud.trim() || !formData.fechaPresentacion.trim() || !formData.fechaNacimiento.trim()) {
-      toast({
-        title: ui.missingTitle,
-        description: ui.missingDesc,
-        variant: "destructive",
+  // ✅ Validation completa antes del pago
+  const validateForm = (): boolean => {
+    const errors: string[] = [];
+
+    if (!formData.fullName.trim()) {
+      errors.push(isMa ? "الاسم الكامل مطلوب" : isEn ? "Full name is required" : "Nombre completo es requerido");
+    }
+    if (!formData.phone.trim()) {
+      errors.push(isMa ? "رقم الهاتف مطلوب" : isEn ? "Phone number is required" : "Teléfono es requerido");
+    }
+    if (!formData.email.trim()) {
+      errors.push(isMa ? "البريد الإلكتروني مطلوب" : isEn ? "Email is required" : "Email es requerido");
+    }
+    if (!formData.nie.trim()) {
+      errors.push(isMa ? "NIE مطلوب" : isEn ? "NIE is required" : "NIE es requerido");
+    }
+    if (!formData.expedienteNumero.trim()) {
+      errors.push(isMa ? "رقم الملف مطلوب" : isEn ? "File number is required" : "Número de expediente es requerido");
+    }
+    if (!formData.identificadorSolicitud.trim()) {
+      errors.push(isMa ? "محدد الطلب مطلوب" : isEn ? "Request identifier is required" : "Identificador de solicitud es requerido");
+    }
+    if (!formData.ciudad.trim()) {
+      errors.push(isMa ? "المدينة مطلوبة" : isEn ? "City is required" : "Ciudad es requerida");
+    }
+    if (!formData.provincia.trim()) {
+      errors.push(isMa ? "المقاطعة مطلوبة" : isEn ? "Province is required" : "Provincia es requerida");
+    }
+    if (!formData.direccion.trim()) {
+      errors.push(isMa ? "العنوان مطلوب" : isEn ? "Address is required" : "Dirección es requerida");
+    }
+    if (!formData.codigoPostal.trim()) {
+      errors.push(isMa ? "الرمز البريدي مطلوب" : isEn ? "Postal code is required" : "Código postal es requerido");
+    }
+    if (!formData.fechaPresentacion.trim()) {
+      errors.push(isMa ? "تاريخ التقديم مطلوب" : isEn ? "Application date is required" : "Fecha de presentación es requerida");
+    }
+    if (!formData.fechaNacimiento.trim()) {
+      errors.push(isMa ? "تاريخ الميلاد مطلوب" : isEn ? "Birth date is required" : "Fecha de nacimiento es requerida");
+    }
+    if (!acceptTerms) {
+      errors.push(isMa ? "خاصك توافق على شروط المتابعة" : isEn ? "You must accept the terms" : "Debes aceptar los términos");
+    }
+
+    if (errors.length > 0) {
+      errors.forEach((err) => {
+        toast({
+          title: ui.missingTitle,
+          description: err,
+          variant: "destructive",
+        });
       });
+      return false;
+    }
+
+    return true;
+  };
+
+  const handlePay = async () => {
+    // ✅ Validación antes del pago
+    if (!validateForm()) {
       return;
     }
 
@@ -1247,11 +1061,6 @@ const [formReady, setFormReady] = useState(
           provincia: formData.provincia,
           preferredOffice: formData.preferredOffice,
           nie: formData.nie,
-          passport: formData.passport,
-          nationality: formData.nationality,
-          birthYear: formData.birthYear,
-          city: formData.city,
-          province: formData.province,
         }),
       });
 
@@ -1274,137 +1083,6 @@ const [formReady, setFormReady] = useState(
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleTramiteClick = (value: string) => setSelectedTramite(value);
-
-  const handleFormSubmit = () => {
-    if (!formData.fullName.trim() || !formData.phone.trim() || !formData.city.trim() || !formData.province.trim()) {
-      toast({ title: ui.missingTitle, description: ui.missingDesc, variant: "destructive" });
-      return;
-    }
-    if (!selectedTramite) {
-      toast({ title: ui.selectTramiteTitle, description: ui.selectTramiteDesc, variant: "destructive" });
-      return;
-    }
-    setFormReady(true);
-    setStep(1);
-    pushAgentMessage(voiceTexts.savedLeadReply);
-    toast({ title: ui.saveTitle, description: ui.saveDesc });
-    setTimeout(() => {
-      if (realtimeDcRef.current && realtimeDcRef.current.readyState === "open" && realtimePcRef.current?.remoteDescription) {
-        sendSaraSpokenMessage(voiceTexts.savedLeadReply);
-      }
-    }, 150);
-  };
-
-  const handleAceptar = async () => {
-    if (!selectedTramite) return;
-    if (!formData.fullName.trim() || !formData.phone.trim() || !formData.city.trim()) {
-      toast({ title: ui.missingTitle, description: ui.missingDesc, variant: "destructive" });
-      return;
-    }
-    try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const user = sessionData?.session?.user;
-      const { error } = await supabase.from("appointments").insert([
-        {
-          user_id: user?.id || null,
-          appointment_type: selectedTramite,
-          office_city: formData.city,
-          office_province: formData.province,
-          status: "searching",
-          customer_name: formData.fullName,
-          customer_phone: formData.phone,
-          procedure_key: selectedTramite,
-          notes: `Cliente: ${formData.fullName} - ${formData.phone}`,
-        },
-      ]);
-      if (error) throw error;
-
-      await fetch("https://PUT_YOUR_WEBHOOK_HERE", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: formData.fullName,
-          phone: formData.phone,
-          tramite: selectedTramite,
-          city: formData.city,
-          province: formData.province,
-        }),
-      });
-
-      scheduleMutation.mutate(
-        { type: selectedTramite },
-        {
-          onSuccess: (result: unknown) => {
-            const data = (result as AppointmentResult | null) ?? null;
-            const hasReal = !!data?.locator && !!data?.date && !!data?.time && !!data?.office;
-            if (!hasReal) {
-              toast({ title: ui.panelUpdated, description: ui.agentSavedMsg });
-              return;
-            }
-            setAppointmentData(data);
-            setStep(2);
-            pushAgentMessage(voiceTexts.foundMsg);
-            setTimeout(() => {
-              if (realtimeDcRef.current && realtimeDcRef.current.readyState === "open" && realtimePcRef.current?.remoteDescription) {
-                sendSaraSpokenMessage(voiceTexts.foundMsg);
-              }
-            }, 150);
-            toast({ title: ui.foundSuccessTitle, description: ui.foundSuccessDesc });
-          },
-          onError: (error: unknown) => {
-            const message = error instanceof Error ? error.message : ui.foundErrorDesc;
-            toast({ title: ui.foundErrorTitle, description: message, variant: "destructive" });
-          },
-        }
-      );
-
-      pushAgentMessage(ui.agentSavedMsg);
-    } catch (error) {
-      console.error(error);
-      toast({ title: ui.saveErrorTitle, description: ui.saveErrorDesc, variant: "destructive" });
-    }
-  };
-
-  const handleConfirm = async () => {
-    if (!appointmentData?.locator || !appointmentData?.date || !appointmentData?.time || !appointmentData?.office) {
-      toast({ title: ui.noRealAppointmentTitle, description: ui.noRealAppointmentDesc, variant: "destructive" });
-      return;
-    }
-    try {
-      const res = await fetch("/api/create-checkout-sara", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          appointment_id: urlParams.appointmentId,
-          token: urlParams.token,
-          customer_name: formData.fullName,
-          customer_phone: formData.phone,
-          customer_email: formData.email,
-          city: formData.city,
-          office: appointmentData?.office || "",
-          appointment_date: appointmentData?.date || "",
-          appointment_hour: appointmentData?.time || "",
-          tramite: selectedTramite,
-        }),
-      });
-      const data = await res.json();
-      if (data.url) window.location.href = data.url;
-    } catch (err) {
-      console.error(err);
-      toast({ title: ui.stripeErrorTitle, description: ui.stripeErrorDesc, variant: "destructive" });
-    }
-  };
-
-  const finalLocator = appointmentData?.locator || "";
-  const finalDate = appointmentData?.date || "";
-  const finalTime = appointmentData?.time || "";
-  const finalOffice = appointmentData?.office || "";
-  const finalPdfUrl = appointmentData?.confirmation_pdf_url || appointmentData?.pdf_url || null;
-  const hasRealAppointment = !!appointmentData?.locator && !!appointmentData?.date && !!appointmentData?.time && !!appointmentData?.office;
-  const officialUrl = "icp.administracionelectronica.gob.es";
-  const cameFromConfirmationLink = !!urlParams.appointmentId || !!urlParams.token;
-
   return (
     <div className="min-h-screen bg-background text-foreground relative flex flex-col">
       <div
@@ -1419,7 +1097,7 @@ const [formReady, setFormReady] = useState(
 
       <main className="flex-1 relative z-10 flex flex-col pt-16 pb-0">
         <h1 className="text-xl font-display font-bold px-4 sm:px-6 py-3 max-w-7xl mx-auto w-full">
-          {cameFromConfirmationLink ? ui.pageTitleConfirm : ui.pageTitle}
+          {ui.pageTitle}
         </h1>
 
         <div className="flex-1 flex flex-col lg:flex-row gap-4 px-4 sm:px-6 max-w-7xl mx-auto w-full pb-4">
@@ -1432,53 +1110,41 @@ const [formReady, setFormReady] = useState(
               className="relative rounded-2xl overflow-hidden border border-primary/20 shadow-[0_0_30px_-5px_hsl(var(--primary)/0.25)] bg-black"
               style={{ height: "280px" }}
             >
+              <div className="relative w-full h-full">
+                <video
+                  id="sara-video"
+                  playsInline
+                  preload="metadata"
+                  poster="/images/sara.png"
+                  className="w-full h-full object-cover object-top"
+                  onPlay={() => {
+                    const btn = document.getElementById("play-button-sara");
+                    if (btn) btn.style.display = "none";
+                  }}
+                >
+                  <source src="/sara-presentacion.mp4" type="video/mp4" />
+                </video>
 
-             
-<div className="relative w-full h-full">
-
-  <video
-    id="sara-video"
-    playsInline
-    preload="metadata"
-    poster="/images/sara.png"
-    className="w-full h-full object-cover object-top"
-    onPlay={() => {
-      const btn = document.getElementById("play-button-sara");
-      if (btn) btn.style.display = "none";
-    }}
-  >
-    <source src="/sara-presentacion.mp4" type="video/mp4" />
-  </video>
-
-  <button
-    id="play-button-sara"
-    type="button"
-    className="absolute inset-0 flex items-center justify-center"
-    onClick={() => {
-      const video = document.getElementById(
-        "sara-video"
-      ) as HTMLVideoElement;
-
-      if (video) {
-        video.play();
-      }
-    }}
-  >
-    <div className="bg-black/10 backdrop-blur-[1px] rounded-full w-12 h-12 flex items-center justify-center">
-      <svg
-        width="18"
-        height="18"
-        viewBox="0 0 24 24"
-        fill="white"
-      >
-        <path d="M8 5v14l11-7z" />
-      </svg>
-    </div>
-  </button>
-
-</div>
-
-              
+                <button
+                  id="play-button-sara"
+                  type="button"
+                  className="absolute inset-0 flex items-center justify-center"
+                  onClick={() => {
+                    const video = document.getElementById(
+                      "sara-video"
+                    ) as HTMLVideoElement;
+                    if (video) {
+                      video.play();
+                    }
+                  }}
+                >
+                  <div className="bg-black/10 backdrop-blur-[1px] rounded-full w-12 h-12 flex items-center justify-center">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="white">
+                      <path d="M8 5v14l11-7z" />
+                    </svg>
+                  </div>
+                </button>
+              </div>
 
               {!muted && (
                 <div className="absolute bottom-14 left-4 flex items-end gap-0.5 h-5">
@@ -1497,54 +1163,24 @@ const [formReady, setFormReady] = useState(
                 <p className="text-white font-bold text-sm drop-shadow-lg">Sara</p>
                 <p className="text-white/70 text-xs drop-shadow-lg">{ui.agentRole}</p>
               </div>
-
-        
-</div>
-            {step === 2 && !confirmed && hasRealAppointment && (
-              <motion.button
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                onClick={handleConfirm}
-                className="w-full bg-primary hover:bg-primary/90 text-white font-bold py-3 rounded-xl text-sm transition-colors shadow-lg shadow-primary/30 flex items-center justify-center gap-2"
-                type="button"
-              >
-                <CheckCircle2 className="w-5 h-5" />
-                {ui.confirmBtn}
-              </motion.button>
-            )}
+            </div>
           </motion.div>
 
           <OfficialBrowserBox
             language={language}
             avatarImage={`${import.meta.env.BASE_URL}images/avatar-sara.png`}
-            title={cameFromConfirmationLink ? ui.pageTitleConfirm : ui.pageTitle}
-            url={officialUrl}
-            selectedTramiteLabel={selectedTramiteLabel}
+            title={ui.pageTitle}
+            url="icp.administracionelectronica.gob.es"
             profileLoading={profileLoading}
             ui={ui}
             confirmed={confirmed}
-            appointmentData={appointmentData}
-            finalDate={finalDate}
-            finalTime={finalTime}
-            finalOffice={finalOffice}
-            finalLocator={finalLocator}
-            finalPdfUrl={finalPdfUrl}
-            hasRealAppointment={hasRealAppointment}
-            onRefresh={() => toast({ title: ui.panelUpdated })}
-            onOpenOfficial={() => {
-              window.open("https://icp.administracionelectronica.gob.es/icpplus/index.html", "_blank", "noopener,noreferrer");
-            }}
-            onSelectTramite={handleTramiteClick}
-            tramites={TRAMITES}
-            selectedTramite={selectedTramite}
-            onAceptar={handleAceptar}
-            isPending={scheduleMutation.isPending}
-            cameFromConfirmationLink={cameFromConfirmationLink}
             formData={formData}
             onFormChange={handleFormChange}
-            onFormSubmit={handleFormSubmit}
+            onFormSubmit={() => {}}
             formReady={formReady}
             onPay={handlePay}
+            acceptTerms={acceptTerms}
+            setAcceptTerms={setAcceptTerms}
           />
         </div>
 
