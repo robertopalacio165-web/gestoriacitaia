@@ -3,7 +3,7 @@ import Stripe from "stripe";
 const stripe = new Stripe(
   process.env.STRIPE_SECRET_KEY as string,
   {
-apiVersion: "2025-08-27.basil",
+    apiVersion: "2025-08-27.basil",
   }
 );
 
@@ -25,72 +25,81 @@ export default async function handler(
         ? JSON.parse(req.body)
         : req.body;
 
-const {
-  fullName,
-  phone,
-  email,
+    // ✅ TODOS LOS CAMPOS DEL FORMULARIO
+    const {
+      fullName,
+      phone,
+      email,
 
-  expedienteNumero,
-  identificadorSolicitud,
+      expedienteNumero,
+      identificadorSolicitud,
 
-  fechaPresentacion,
+      fechaPresentacion,
+      fechaNacimiento,
 
-  fechaNacimiento,
-} = body;
+      // ✅ NUEVOS CAMPOS
+      direccion,
+      codigoPostal,
+      ciudad,
+      provincia,
+
+      preferredOffice,
+      nie,
+    } = body;
     
-console.log("PHONE RECEIVED:");
-console.log(phone);
-console.log("BODY:");
-console.log(body);
+    console.log("📞 PHONE RECEIVED:", phone);
+    console.log("📋 BODY:", body);
     
-    const session =
-      await stripe.checkout.sessions.create({
+    const session = await stripe.checkout.sessions.create({
 
-        payment_method_types: ["card"],
+      payment_method_types: ["card"],
 
-        mode: "payment",
+      mode: "payment",
 
-metadata: {
-  customer_name: fullName || "",
-  customer_phone: phone || "",
-  customer_email: email || "",
+      // ✅ METADATA COMPLETA CON TODOS LOS CAMPOS
+      metadata: {
+        customer_name: fullName || "",
+        customer_phone: phone || "",
+        customer_email: email || "",
 
-  expediente_numero:
-    expedienteNumero || "",
+        expediente_numero: expedienteNumero || "",
+        identificador_solicitud: identificadorSolicitud || "",
+        fecha_presentacion: fechaPresentacion || "",
+        fecha_nacimiento: fechaNacimiento || "",
 
-  identificador_solicitud:
-    identificadorSolicitud || "",
+        // ✅ NUEVOS CAMPOS EN METADATA
+        nie: nie || "",
+        direccion: direccion || "",
+        codigo_postal: codigoPostal || "",
+        ciudad: ciudad || "",
+        provincia: provincia || "",
+        preferred_office: preferredOffice || "+34",
+      },
 
-  fecha_presentacion:
-    fechaPresentacion || "",
+      line_items: [
+        {
+          price_data: {
+            currency: "eur",
 
-  fecha_nacimiento:
-    fechaNacimiento || "",
-},
-
-        line_items: [
-          {
-            price_data: {
-              currency: "eur",
-
-              product_data: {
-                name:
-                  "Reserva inicial Sara",
-              },
-
-          unit_amount: 1000,
+            product_data: {
+              // ✅ NOMBRE ACTUALIZADO
+              name: "Seguimiento Expediente + NUSS + Tasa 790",
             },
 
-            quantity: 1,
+            // ✅ PRECIO ACTUALIZADO: 14.99€
+            unit_amount: 1499,
           },
-        ],
 
-        success_url:
-`${process.env.NEXT_PUBLIC_URL}/buscar-citas?paid=true`,
+          quantity: 1,
+        },
+      ],
 
-        cancel_url:
-`${process.env.NEXT_PUBLIC_URL}/buscar-citas`,
-      });
+      success_url:
+        `${process.env.NEXT_PUBLIC_URL}/buscar-citas?paid=true`,
+
+      cancel_url:
+        `${process.env.NEXT_PUBLIC_URL}/buscar-citas`,
+    });
 
     return res.status(200).json({
       url: session.url,
@@ -99,7 +108,7 @@ metadata: {
   } catch (err: any) {
 
     console.error(
-      "STRIPE ERROR:",
+      "❌ STRIPE ERROR:",
       err
     );
 
