@@ -375,11 +375,13 @@ function OfficialBrowserBox({
                         </span>
                       </div>
                       <div className="text-right">
+                        {/* ✅ PRECIO ACTUALIZADO A 14,99€ */}
                         <p className="text-yellow-400 text-[34px] font-black leading-none drop-shadow-[0_0_10px_rgba(255,215,0,0.35)]">
-                          10€
+                          14,99€
                         </p>
+                        {/* ✅ TEXTO ACTUALIZADO A "Pago único" */}
                         <p className="text-yellow-300 text-[11px] font-semibold">
-                          {isMa ? "التحقق الأول" : isEn ? "Initial verification" : "Verificación inicial"}
+                          {isMa ? "خلاص مرة وحدة" : isEn ? "One-time payment" : "Pago único"}
                         </p>
                       </div>
                     </div>
@@ -646,7 +648,6 @@ export default function BuscarCitas() {
         : "Cargando datos del usuario...",
 
       govSmall: "extranjería:",
-      // ✅ CAMBIADO: de "CITA PREVIA" a "FAVORABLE · NUSS · TASA 790"
       govTitle: "FAVORABLE · NUSS · TASA 790",
       govLine1: "SEGUIMIENTO EXPEDIENTE",
       govLine2: "AUTOMÁTICO 24/24",
