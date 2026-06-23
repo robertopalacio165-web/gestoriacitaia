@@ -19,7 +19,7 @@ const translations: AllTranslations = {
   es: {
     nav_inicio: "Inicio",
     nav_panel: "Panel",
-    nav_citas: "Citas",
+    nav_citas: "Expedientes",
     nav_reg: "Regularización 2026",
     nav_login: "Iniciar sesión",
     nav_logout: "Cerrar sesión",
@@ -32,9 +32,9 @@ const translations: AllTranslations = {
     hero_title_2: "regularizarte en España",
     hero_sub:
       "Nuestro agente IA analiza tu situación, revisa tus documentos y te guía paso a paso de forma clara, rápida y segura.",
-hero_btn1: "Regularización con Soufiane",
+    hero_btn1: "Regularización con Soufiane",
     hero_btn2: "Ir al panel",
-hero_btn_citas: "Citas con Sara",
+    hero_btn_sara: "Expediente con Sara",
     hero_btn_khalid: "Consulta con Khalid",
     hero_trust: "Miles de personas ya usan GestoriaCitaIA",
 
@@ -56,13 +56,13 @@ hero_btn_citas: "Citas con Sara",
     plan_free_f3: "Orientación básica del trámite",
     plan_free_f4: "Sin pago inicial",
 
-    plan_cita_name: "Plan Citas",
-    plan_cita_f1: "Búsqueda de citas 24/7",
-    plan_cita_f2: "Intentos automáticos continuos",
-    plan_cita_f3: "Aviso cuando aparezca cita",
-    plan_cita_f4: "Seguimiento prioritario",
-    plan_cita_f5: "Soporte del agente IA",
-    plan_cita_f6: "Más opciones disponibles",
+    plan_cita_name: "Expediente Favorable + NUSS",
+    plan_cita_f1: "Seguimiento automático 24/7",
+    plan_cita_f2: "Aviso cuando salga FAVORABLE",
+    plan_cita_f3: "Obtención automática del NUSS",
+    plan_cita_f4: "WhatsApp inmediato",
+    plan_cita_f5: "Preparación automática tasa 790",
+    plan_cita_f6: "PDF listo para pagar",
 
     plan_reg_name: "Plan Regularización",
     plan_reg_f1: "Evaluación del caso",
@@ -97,7 +97,7 @@ hero_btn_citas: "Citas con Sara",
     tr_ue: "Certificado UE",
 
     agent_mo_role: "Especialista en Extranjería",
-    agent_sara_role: "Buscar Citas · 24/7",
+    agent_sara_role: "Seguimiento Favorable · NUSS · Tasa 790",
 
     legal_label: "Aviso legal",
     legal_body:
@@ -242,8 +242,8 @@ hero_btn_citas: "Citas con Sara",
     proofs_counter: "{total}/{min} pruebas",
     document_pending_review: "Documento recibido. Pendiente de revisión.",
 
-    buscar_title: "Buscar citas",
-    buscar_subtitle: "Busca citas disponibles de forma rápida",
+    buscar_title: "Seguimiento de Expediente",
+    buscar_subtitle: "FAVORABLE · NUSS · Tasa 790",
     buscar_chat_open: "Abrir chat",
     buscar_chat_close: "Cerrar chat",
     buscar_docs: "Documentos",
@@ -253,9 +253,9 @@ hero_btn_citas: "Citas con Sara",
     buscar_doc_ready: "Listo",
     buscar_doc_review: "Revisar",
     buscar_doc_missing: "Falta",
-    buscar_agent_role: "Asesora de Citas",
+    buscar_agent_role: "Asesora de Expedientes",
     buscar_chat_placeholder: "Escribe tu pregunta...",
-    buscar_title_short: "Citas",
+    buscar_title_short: "Expedientes",
     buscar_confirmar: "Confirmar",
     buscar_download_pdf: "Descargar PDF",
     buscar_mute: "Quitar audio",
@@ -278,41 +278,48 @@ hero_btn_citas: "Citas con Sara",
     reg_payment_agent_message:
       "Para continuar con tu Regularización 2026 y presentar tu solicitud, activa tu plan.",
     khalidDescription:
-  "Especialista profesional en extranjería española para marroquíes en España. Pregunta sobre residencia, papeles, policía, nacionalidad, arraigo, trabajo, estudios y cualquier problema legal relacionado con inmigración.",
+      "Especialista profesional en extranjería española para marroquíes en España. Pregunta sobre residencia, papeles, policía, nacionalidad, arraigo, trabajo, estudios y cualquier problema legal relacionado con inmigración.",
 
-unlockKhalid: "Desbloquea a Khalid",
+    unlockKhalid: "Desbloquea a Khalid",
 
-premiumDescription:
-  "Acceso ilimitado a respuestas y asesoría personalizada.",
+    premiumDescription:
+      "Acceso ilimitado a respuestas y asesoría personalizada.",
 
-unlockNow: "Desbloquear ahora",
+    unlockNow: "Desbloquear ahora",
 
-securePayment: "Pago seguro con Stripe",
+    securePayment: "Pago seguro con Stripe",
 
-endConversation: "Finalizar conversación",
+    endConversation: "Finalizar conversación",
 
-talkToKhalid: "Hablar con Khalid",
+    talkToKhalid: "Hablar con Khalid",
     onlineNow: "En línea",
 
-mohamedRole: "Especialista en Extranjería",
+    mohamedRole: "Especialista en Extranjería",
 
-talkMohamed: "Hablar con Mohamed",
+    talkMohamed: "Hablar con Mohamed",
 
-stopMic: "Parar micrófono",
+    stopMic: "Parar micrófono",
 
-unlockMohamed: "Desbloquea a Mohamed",
+    unlockMohamed: "Desbloquea a Mohamed",
 
-mohamedPremium:
-  "Acceso ilimitado a Mohamed IA, videollamada realtime, análisis de documentos y generación automática del expediente.",
+    mohamedPremium:
+      "Acceso ilimitado a Mohamed IA, videollamada realtime, análisis de documentos y generación automática del expediente.",
 
-mohamedDescription:
-  "Especialista profesional en extranjería española para marroquíes en España. Pregunta sobre residencia, papeles, policía, nacionalidad, arraigo, trabajo, estudios y cualquier problema legal relacionado con inmigración.",
+    mohamedDescription:
+      "Especialista profesional en extranjería española para marroquíes en España. Pregunta sobre residencia, papeles, policía, nacionalidad, arraigo, trabajo, estudios y cualquier problema legal relacionado con inmigración.",
+
+    sara_services_title: "Cómo trabaja Sara",
+    sara_services_sub: "Seguimiento automático de tu expediente",
+    sara_service_1: "Seguimiento del expediente",
+    sara_service_2: "Detección FAVORABLE",
+    sara_service_3: "Obtención automática NUSS",
+    sara_service_4: "WhatsApp + Tasa 790",
   },
 
   en: {
     nav_inicio: "Home",
     nav_panel: "Panel",
-    nav_citas: "Appointments",
+    nav_citas: "Files",
     nav_reg: "Regularization 2026",
     nav_login: "Log in",
     nav_logout: "Log out",
@@ -325,9 +332,9 @@ mohamedDescription:
     hero_title_2: "regularize your status in Spain",
     hero_sub:
       "Our AI agent analyzes your situation, reviews your documents, and guides you step by step clearly, quickly, and securely.",
-hero_btn1: "Regularization with Soufiane",
+    hero_btn1: "Regularization with Soufiane",
     hero_btn2: "Go to panel",
- hero_btn_citas: "Appointments with Sara",
+    hero_btn_sara: "File with Sara",
     hero_trust: "Thousands of people already use GestoriaCitaIA",
 
     feat1: "Fast analysis",
@@ -348,13 +355,13 @@ hero_btn1: "Regularization with Soufiane",
     plan_free_f3: "Basic guidance",
     plan_free_f4: "No initial payment",
 
-    plan_cita_name: "Appointments Plan",
-    plan_cita_f1: "24/7 appointment search",
-    plan_cita_f2: "Automatic continuous attempts",
-    plan_cita_f3: "Alert when a slot appears",
-    plan_cita_f4: "Priority follow-up",
-    plan_cita_f5: "AI support",
-    plan_cita_f6: "More options",
+    plan_cita_name: "Favorable File + NUSS",
+    plan_cita_f1: "Automatic 24/7 monitoring",
+    plan_cita_f2: "Alert when FAVORABLE appears",
+    plan_cita_f3: "Automatic NUSS retrieval",
+    plan_cita_f4: "Instant WhatsApp",
+    plan_cita_f5: "Automatic Fee 790 preparation",
+    plan_cita_f6: "PDF ready to pay",
 
     plan_reg_name: "Regularization Plan",
     plan_reg_f1: "Case evaluation",
@@ -389,7 +396,7 @@ hero_btn1: "Regularization with Soufiane",
     tr_ue: "EU certificate",
 
     agent_mo_role: "Immigration specialist",
-    agent_sara_role: "Appointments · 24/7",
+    agent_sara_role: "Favorable Tracking · NUSS · Fee 790",
 
     panel_header: "Panel",
     panel_plan_active: "Active plan",
@@ -479,46 +486,84 @@ hero_btn1: "Regularization with Soufiane",
     doc_pending_fill: "Pending completion",
     doc_pending_payment: "Pending payment",
 
-    buscar_title: "Find appointments",
-    buscar_subtitle: "Search for available appointments quickly",
+    buscar_title: "File Tracking",
+    buscar_subtitle: "FAVORABLE · NUSS · Fee 790",
+    buscar_chat_open: "Open chat",
+    buscar_chat_close: "Close chat",
+    buscar_docs: "Documents",
+    buscar_forms: "Forms",
+    buscar_docs_required: "Required documents",
+    buscar_forms_official: "Official forms",
+    buscar_doc_ready: "Ready",
+    buscar_doc_review: "Review",
+    buscar_doc_missing: "Missing",
+    buscar_agent_role: "File Tracking Assistant",
+    buscar_chat_placeholder: "Type your question...",
+    buscar_title_short: "Files",
+    buscar_confirmar: "Confirm",
+    buscar_download_pdf: "Download PDF",
+    buscar_mute: "Mute audio",
+    buscar_sin_audio: "No audio",
+    buscar_mute_simple: "Mute",
+    buscar_payment_agent_message:
+      "To book your appointment and continue with the process, activate your plan. I will guide you step by step.",
+
     reg_title: "Regularization 2026",
     reg_sub: "Find out if you meet the requirements and prepare your case with AI support",
+    reg_new: "New",
+    reg_alert_text:
+      "Check the information and review if you meet the requirements before continuing.",
+    reg_activar: "Activate",
+    reg_sit: "Select your situation",
+    reg_docs: "Documents",
+    reg_upload: "Upload",
+    reg_docs_btn: "Verify documents",
+    reg_agent_role: "Immigration specialist",
+    reg_payment_agent_message:
+      "To continue with your Regularization 2026 and submit your application, activate your plan.",
     khalidDescription:
-  "Professional Spanish immigration specialist for Moroccans in Spain. Ask about residency, police, nationality, work, studies or any immigration legal issue.",
+      "Professional Spanish immigration specialist for Moroccans in Spain. Ask about residency, police, nationality, work, studies or any immigration legal issue.",
 
-unlockKhalid: "Unlock Khalid",
+    unlockKhalid: "Unlock Khalid",
 
-premiumDescription:
-  "Unlimited access to answers and personalized assistance.",
+    premiumDescription:
+      "Unlimited access to answers and personalized assistance.",
 
-unlockNow: "Unlock now",
+    unlockNow: "Unlock now",
 
-securePayment: "Secure payment with Stripe",
+    securePayment: "Secure payment with Stripe",
 
-endConversation: "End conversation",
+    endConversation: "End conversation",
 
-talkToKhalid: "Talk to Khalid",
+    talkToKhalid: "Talk to Khalid",
     onlineNow: "Online",
 
-mohamedRole: "Immigration Specialist",
+    mohamedRole: "Immigration Specialist",
 
-talkMohamed: "Talk to Mohamed",
+    talkMohamed: "Talk to Mohamed",
 
-stopMic: "Stop microphone",
+    stopMic: "Stop microphone",
 
-unlockMohamed: "Unlock Mohamed",
+    unlockMohamed: "Unlock Mohamed",
 
-mohamedPremium:
-  "Unlimited access to Mohamed AI, realtime video call, document analysis and automatic case generation.",
+    mohamedPremium:
+      "Unlimited access to Mohamed AI, realtime video call, document analysis and automatic case generation.",
 
-mohamedDescription:
-  "Professional Spanish immigration specialist for Moroccans in Spain. Ask about residency, police, nationality, work, studies and immigration legal issues.",
+    mohamedDescription:
+      "Professional Spanish immigration specialist for Moroccans in Spain. Ask about residency, police, nationality, work, studies and immigration legal issues.",
+
+    sara_services_title: "How Sara works",
+    sara_services_sub: "Automatic file tracking",
+    sara_service_1: "File monitoring",
+    sara_service_2: "FAVORABLE detection",
+    sara_service_3: "Automatic NUSS retrieval",
+    sara_service_4: "WhatsApp + Fee 790",
   },
 
   darija: {
     nav_inicio: "الرئيسية",
     nav_panel: "البانيل",
-    nav_citas: "المواعيد",
+    nav_citas: "الملفات",
     nav_reg: "التسوية 2026",
     nav_login: "دخول",
     nav_logout: "خروج",
@@ -531,9 +576,9 @@ mohamedDescription:
     hero_title_2: "تسوي الوضعية ديالك فإسبانيا",
     hero_sub:
       "المساعد ديالنا كايحلل الحالة ديالك، كايشوف الوثائق ديالك، وكايوجهك مرحلة بمرحلة بطريقة واضحة وسريعة وآمنة.",
-hero_btn1: "التسوية مع سفيان",
+    hero_btn1: "التسوية مع سفيان",
     hero_btn2: "دخل للبانيل",
-hero_btn_citas: "المواعيد مع سارة",
+    hero_btn_sara: "الملف مع سارة",
     hero_btn_khalid: "استشارة مع خالد",
     hero_trust: "آلاف الناس كيستعملو GestoriaCitaIA",
 
@@ -555,13 +600,13 @@ hero_btn_citas: "المواعيد مع سارة",
     plan_free_f3: "توجيه أساسي",
     plan_free_f4: "بلا أداء أولي",
 
-    plan_cita_name: "خطة المواعيد",
-    plan_cita_f1: "بحث على المواعيد 24/7",
-    plan_cita_f2: "محاولات أوتوماتيكية",
-    plan_cita_f3: "إشعار ملي يبان الموعد",
-    plan_cita_f4: "متابعة مفضلة",
-    plan_cita_f5: "مساعدة الذكاء الاصطناعي",
-    plan_cita_f6: "خيارات أكثر",
+    plan_cita_name: "الملف الإيجابي + NUSS",
+    plan_cita_f1: "مراقبة أوتوماتيكية 24/7",
+    plan_cita_f2: "إشعار ملي يخرج FAVORABLE",
+    plan_cita_f3: "جلب NUSS أوتوماتيكياً",
+    plan_cita_f4: "واتساب فوري",
+    plan_cita_f5: "تحضير طاكسا 790 أوتوماتيكياً",
+    plan_cita_f6: "PDF جاهز للأداء",
 
     plan_reg_name: "خطة التسوية",
     plan_reg_f1: "تقييم الملف",
@@ -596,7 +641,7 @@ hero_btn_citas: "المواعيد مع سارة",
     tr_ue: "شهادة الاتحاد الأوروبي",
 
     agent_mo_role: "متخصص فالهجرة",
-    agent_sara_role: "البحث على المواعيد · 24/7",
+    agent_sara_role: "تتبع القبول · NUSS · طاكسا 790",
 
     panel_header: "البانيل",
     panel_plan_active: "الخطة النشيطة",
@@ -686,40 +731,78 @@ hero_btn_citas: "المواعيد مع سارة",
     doc_pending_fill: "خاصها تعمر",
     doc_pending_payment: "الأداء معلق",
 
-    buscar_title: "البحث على المواعيد",
-    buscar_subtitle: "قلب على المواعيد المتاحة بسرعة",
+    buscar_title: "تتبع الملف",
+    buscar_subtitle: "القبول · NUSS · طاكسا 790",
+    buscar_chat_open: "فتح الشات",
+    buscar_chat_close: "غلق الشات",
+    buscar_docs: "الوثائق",
+    buscar_forms: "الاستمارات",
+    buscar_docs_required: "الوثائق المطلوبة",
+    buscar_forms_official: "الاستمارات الرسمية",
+    buscar_doc_ready: "جاهز",
+    buscar_doc_review: "مراجعة",
+    buscar_doc_missing: "ناقص",
+    buscar_agent_role: "متابعة الملفات",
+    buscar_chat_placeholder: "اكتب سؤالك...",
+    buscar_title_short: "الملفات",
+    buscar_confirmar: "تأكيد",
+    buscar_download_pdf: "تحميل PDF",
+    buscar_mute: "إزالة الصوت",
+    buscar_sin_audio: "بدون صوت",
+    buscar_mute_simple: "كتم",
+    buscar_payment_agent_message:
+      "باش تحجز الموعد وتكمل العملية، فعّل الخطة ديالك. أنا غادي نوجهك خطوة بخطوة.",
+
     reg_title: "التسوية 2026",
     reg_sub: "عرف واش فيك الشروط وجهز الملف ديالك بمساعدة الذكاء الاصطناعي",
+    reg_new: "جديد",
+    reg_alert_text:
+      "شوف المعلومات وتأكد من الشروط قبل ما تكمل.",
+    reg_activar: "تفعيل",
+    reg_sit: "ختار الحالة ديالك",
+    reg_docs: "الوثائق",
+    reg_upload: "رفع",
+    reg_docs_btn: "تحقق من الوثائق",
+    reg_agent_role: "متخصص فالهجرة",
+    reg_payment_agent_message:
+      "باش تكمل التسوية ديالك 2026 وتقدم الطلب ديالك، فعّل الخطة.",
     khalidDescription:
-  "خبير فالهجرة والأوراق القانونية فإسبانيا للمغاربة. سول على الإقامة، البوليس، الجنسية، الخدمة، الدراسة وأي مشكل متعلق بالهجرة.",
+      "خبير فالهجرة والأوراق القانونية فإسبانيا للمغاربة. سول على الإقامة، البوليس، الجنسية، الخدمة، الدراسة وأي مشكل متعلق بالهجرة.",
 
-unlockKhalid: "فتح خالد",
+    unlockKhalid: "فتح خالد",
 
-premiumDescription:
-  "ولوج كامل للأجوبة والمساعدة الخاصة.",
+    premiumDescription:
+      "ولوج كامل للأجوبة والمساعدة الخاصة.",
 
-unlockNow: "فتح الآن",
+    unlockNow: "فتح الآن",
 
-securePayment: "دفع آمن عبر Stripe",
+    securePayment: "دفع آمن عبر Stripe",
 
-endConversation: "إنهاء المحادثة",
+    endConversation: "إنهاء المحادثة",
 
-talkToKhalid: "تكلم مع خالد",
+    talkToKhalid: "تكلم مع خالد",
     onlineNow: "متصل الآن",
 
-mohamedRole: "مختص فالهجرة",
+    mohamedRole: "مختص فالهجرة",
 
-talkMohamed: "تكلم مع محمد",
+    talkMohamed: "تكلم مع محمد",
 
-stopMic: "وقف الميكروفون",
+    stopMic: "وقف الميكروفون",
 
-unlockMohamed: "فتح محمد",
+    unlockMohamed: "فتح محمد",
 
-mohamedPremium:
-  "ولوج كامل لمحمد الذكي، مكالمة مباشرة، تحليل الوثائق وتحضير الملف أوتوماتيكياً.",
+    mohamedPremium:
+      "ولوج كامل لمحمد الذكي، مكالمة مباشرة، تحليل الوثائق وتحضير الملف أوتوماتيكياً.",
 
-mohamedDescription:
-  "خبير فالهجرة والأوراق القانونية فإسبانيا للمغاربة. سول على الإقامة، البوليس، الجنسية، الخدمة، الدراسة وأي مشكل متعلق بالهجرة.",
+    mohamedDescription:
+      "خبير فالهجرة والأوراق القانونية فإسبانيا للمغاربة. سول على الإقامة، البوليس، الجنسية، الخدمة، الدراسة وأي مشكل متعلق بالهجرة.",
+
+    sara_services_title: "كيفاش خدمة سارة",
+    sara_services_sub: "متابعة أوتوماتيكية ديال الملف",
+    sara_service_1: "مراقبة الملف",
+    sara_service_2: "كشف FAVORABLE",
+    sara_service_3: "جلب NUSS أوتوماتيكياً",
+    sara_service_4: "واتساب + طاكسا 790",
   },
 };
 
