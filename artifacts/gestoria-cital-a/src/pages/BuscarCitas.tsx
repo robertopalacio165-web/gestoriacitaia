@@ -7,7 +7,6 @@ import {
   Star,
   CheckCircle,
   FileCheck,
-  Send,
   ChevronDown,
   MessageCircle,
 } from "lucide-react";
@@ -19,30 +18,26 @@ import {
 } from "@/lib/extranjeriaProcedures";
 import { supabase } from "@/lib/supabaseClient";
 
-// ✅ NUEVO TIPO CLIENT FORM DATA
+// ============================================
+// TIPOS
+// ============================================
 type ClientFormData = {
   fullName: string;
   phone: string;
   email: string;
-
   expedienteNumero: string;
   identificadorSolicitud: string;
-
   fechaPresentacion: string;
   fechaNacimiento: string;
-
   direccion: string;
   codigoPostal: string;
   ciudad: string;
   provincia: string;
-
   preferredOffice: string;
-
   nie: string;
   passport: string;
   nationality: string;
   birthYear: string;
-
   city: string;
   province: string;
 };
@@ -85,7 +80,9 @@ type UserFormRow = {
   form_data: Record<string, any> | null;
 };
 
-// ✅ Países para selector
+// ============================================
+// CONSTANTES
+// ============================================
 const COUNTRIES = [
   { code: "+34", flag: "🇪🇸", name: "España" },
   { code: "+212", flag: "🇲🇦", name: "Marruecos" },
@@ -99,6 +96,9 @@ const COUNTRIES = [
   { code: "+41", flag: "🇨🇭", name: "Suiza" },
 ];
 
+// ============================================
+// FUNCIONES AUXILIARES
+// ============================================
 function buildInitialDocs(procedureKey: string): StoredDocItem[] {
   const procedure = getProcedureByKey(procedureKey) || EXTRANJERIA_PROCEDURES[0];
   return procedure.requiredDocuments.map((doc) => ({
@@ -119,62 +119,66 @@ function normalizeDocType(value?: string) {
   return (value || "").trim().toLowerCase();
 }
 
+// ============================================
+// COMPONENTE PRINCIPAL
+// ============================================
 export default function Regularizacion2026() {
+  // ============================================
+  // REFS
+  // ============================================
+  const questionFlowLockedRef = useRef(false);
+  const paymentDoneRef = useRef(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    const handlePaidFlow = async () => {
-      const params = new URLSearchParams(window.location.search);
-      const paid = params.get("paid");
-      (window as any).paid = paid;
-      if (paid === "true") {
-        console.log("✅ CLIENT PAID");
-        paymentDoneRef.current = true;
-        setPaymentCompleted(true);
-        setShowStripe(false);
-        setPaymentRequired(false);
-        questionFlowLockedRef.current = false;
-        
-        setQuestionIndex(0);
-        setDocumentsUnlocked(true);
-        setConfirmUnlocked(true);
-        setQuestionsDone(true);
-        setStep("upload");
-        
-        toast({
-          title: "📄 Documentos",
-          description: "Sube tus documentos para comenzar la verificación",
-        });
-      }
-      setShowStripe(false);
-      setPaymentRequired(false);
-    };
-    handlePaidFlow();
-  }, []);
+  // ============================================
+  // STATE - PAGO
+  // ============================================
+  const [paymentCompleted, setPaymentCompleted] = useState(false);
+  const [showStripe, setShowStripe] = useState(false);
+  const [paymentRequired, setPaymentRequired] = useState(false);
 
-  const handleStripePayment = async () => {
-    try {
-      const res = await fetch("/api/create-checkout-session", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ productType: "regularizacion" }),
-      });
-      const data = await res.json();
-      if (data.url) {
-        window.location.href = data.url;
-      } else {
-        toast({ title: "❌ Stripe", description: "فيه مشكل", variant: "destructive" });
-      }
-    } catch (err) {
-      console.error(err);
-      toast({ title: "❌ خطأ", description: "فالكونكسيون", variant: "destructive" });
-    }
+  // ============================================
+  // STATE - FORMULARIO CLIENTE
+  // ============================================
+  const [formData, setFormData] = useState<ClientFormData>({
+    fullName: "",
+    phone: "",
+    email: "",
+    expedienteNumero: "",
+    identificadorSolicitud: "",
+    fechaPresentacion: "",
+    fechaNacimiento: "",
+    direccion: "",
+    codigoPostal: "",
+    ciudad: "",
+    provincia: "",
+    preferredOffice: "+34",
+    nie: "",
+    passport: "",
+    nationality: "",
+    birthYear: "",
+    city: "",
+    province: "",
+  });
+
+  const onFormChange = (field: keyof ClientFormData, value: string) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
+  // ============================================
+  // STATE - TELÉFONO
+  // ============================================
+  const [selectedCountry, setSelectedCountry] = useState(COUNTRIES[0]);
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [showCountryDropdown, setShowCountryDropdown] = useState(false);
+
+  // ============================================
+  // STATE - GENERAL
+  // ============================================
   const [selectedSituacion] = useState("regularizacion_2026_laboral");
   const [leadSaved, setLeadSaved] = useState(false);
   const [generalUploading, setGeneralUploading] = useState(false);
   const [workflowStep, setWorkflowStep] = useState("idle");
-  const [completionMessageSent, setCompletionMessageSent] = useState(false);
   const [voiceHistory, setVoiceHistory] = useState<ChatMsg[]>([]);
   const [currentStep, setCurrentStep] = useState(0);
   const [savingForm, setSavingForm] = useState(false);
@@ -184,12 +188,6 @@ export default function Regularizacion2026() {
   const [currentUserId, setCurrentUserId] = useState("");
   const [formConfirmed, setFormConfirmed] = useState(false);
   const [confirmUnlocked, setConfirmUnlocked] = useState(false);
-  
-  // ✅ Estado para teléfono con país
-  const [selectedCountry, setSelectedCountry] = useState(COUNTRIES[0]);
-  const [phoneNumber, setPhoneNumber] = useState("");
-  const [showCountryDropdown, setShowCountryDropdown] = useState(false);
-  
   const [questionsDone, setQuestionsDone] = useState(false);
   const [clientQuestionsDone, setClientQuestionsDone] = useState(false);
   const [questionIndex, setQuestionIndex] = useState(0);
@@ -198,12 +196,18 @@ export default function Regularizacion2026() {
   const [docsVerified, setDocsVerified] = useState(false);
   const [whatsappReady, setWhatsappReady] = useState(false);
   const [sendingToWhatsApp, setSendingToWhatsApp] = useState(false);
-  const [analysisResult, setAnalysisResult] = useState<{ 
-    hasPassport: boolean; 
-    hasMonths: boolean; 
-    days: number; 
-    hasExpulsion: boolean; 
-    expulsionExpired: boolean; 
+  const [step, setStep] = useState<"questions" | "upload" | "verify" | "done">("questions");
+  const [docs, setDocs] = useState<StoredDocItem[]>(buildInitialDocs(selectedSituacion));
+
+  // ============================================
+  // STATE - ANÁLISIS
+  // ============================================
+  const [analysisResult, setAnalysisResult] = useState<{
+    hasPassport: boolean;
+    hasMonths: boolean;
+    days: number;
+    hasExpulsion: boolean;
+    expulsionExpired: boolean;
     completo: boolean;
     strongProofs: number;
     weakProofs: number;
@@ -228,60 +232,41 @@ export default function Regularizacion2026() {
     nombreCliente: "",
   });
 
-  useEffect(() => {
-    localStorage.setItem("questionIndex", questionIndex.toString());
-  }, [questionIndex]);
-
-  const questionFlowLockedRef = useRef(false);
-  const paymentDoneRef = useRef(false);
-  const [paymentCompleted, setPaymentCompleted] = useState(false);
-  const [clientQuestionIndex, setClientQuestionIndex] = useState(0);
-  const [showStripe, setShowStripe] = useState(false);
-  const [paymentRequired, setPaymentRequired] = useState(false);
-
-  // ✅ NUEVO ESTADO formData
-  const [formData, setFormData] = useState<ClientFormData>({
-    fullName: "",
-    phone: "",
-    email: "",
-
-    expedienteNumero: "",
-    identificadorSolicitud: "",
-
-    fechaPresentacion: "",
-    fechaNacimiento: "",
-
-    direccion: "",
-    codigoPostal: "",
-    ciudad: "",
-    provincia: "",
-
-    preferredOffice: "+34",
-
-    nie: "",
-    passport: "",
-    nationality: "",
-    birthYear: "",
-
-    city: "",
-    province: "",
-  });
-
-  // ✅ NUEVA FUNCIÓN onFormChange
-  const onFormChange = (field: keyof ClientFormData, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-  };
-
-  const [step, setStep] = useState<"questions" | "upload" | "verify" | "done">("questions");
-
+  // ============================================
+  // HOOKS
+  // ============================================
   const { t, lang } = useLang();
   const { toast } = useToast();
-
   const safeLang = (lang === "darija" || lang === "en" ? lang : "es") as "darija" | "es" | "en";
-
   const currentProcedure = getProcedureByKey(selectedSituacion) || null;
-  if (!currentProcedure) return null;
 
+  // ============================================
+  // STORAGE KEYS
+  // ============================================
+  const historyStorageKey = useMemo(
+    () => `gestoriacitaia_soufiane_voice_history_${selectedSituacion}`,
+    [selectedSituacion]
+  );
+  const formStorageKey = useMemo(
+    () => `gestoriacitaia_soufiane_form_${selectedSituacion}`,
+    [selectedSituacion]
+  );
+  const leadSavedStorageKey = useMemo(
+    () => `gestoriacitaia_soufiane_lead_saved_${selectedSituacion}`,
+    [selectedSituacion]
+  );
+  const stepStorageKey = useMemo(
+    () => `gestoriacitaia_soufiane_step_${selectedSituacion}`,
+    [selectedSituacion]
+  );
+  const docsStorageKey = useMemo(
+    () => `gestoriacitaia_soufiane_docs_${selectedSituacion}`,
+    [selectedSituacion]
+  );
+
+  // ============================================
+  // UI TEXT
+  // ============================================
   const ui = useMemo(() => {
     if (safeLang === "darija") {
       return {
@@ -385,19 +370,50 @@ export default function Regularizacion2026() {
     };
   }, [safeLang, savingForm, generalUploading]);
 
-  const [docs, setDocs] = useState<StoredDocItem[]>(buildInitialDocs(selectedSituacion));
-
-  const historyStorageKey = useMemo(() => `gestoriacitaia_soufiane_voice_history_${selectedSituacion}`, [selectedSituacion]);
-  const formStorageKey = useMemo(() => `gestoriacitaia_soufiane_form_${selectedSituacion}`, [selectedSituacion]);
-  const leadSavedStorageKey = useMemo(() => `gestoriacitaia_soufiane_lead_saved_${selectedSituacion}`, [selectedSituacion]);
-  const stepStorageKey = useMemo(() => `gestoriacitaia_soufiane_step_${selectedSituacion}`, [selectedSituacion]);
-  const docsStorageKey = useMemo(() => `gestoriacitaia_soufiane_docs_${selectedSituacion}`, [selectedSituacion]);
-
-  // ✅ ACTUALIZADO con formData
+  // ============================================
+  // COMPUTED
+  // ============================================
   const leadFormReady =
     !!formData.fullName.trim() &&
     !!formData.phone.trim() &&
     !!formData.city.trim();
+
+  if (!currentProcedure) return null;
+
+  // ============================================
+  // EFECTOS
+  // ============================================
+  useEffect(() => {
+    const handlePaidFlow = async () => {
+      const params = new URLSearchParams(window.location.search);
+      const paid = params.get("paid");
+      (window as any).paid = paid;
+      if (paid === "true") {
+        console.log("✅ CLIENT PAID");
+        paymentDoneRef.current = true;
+        setPaymentCompleted(true);
+        setShowStripe(false);
+        setPaymentRequired(false);
+        questionFlowLockedRef.current = false;
+        setQuestionIndex(0);
+        setDocumentsUnlocked(true);
+        setConfirmUnlocked(true);
+        setQuestionsDone(true);
+        setStep("upload");
+        toast({
+          title: "📄 Documentos",
+          description: "Sube tus documentos para comenzar la verificación",
+        });
+      }
+      setShowStripe(false);
+      setPaymentRequired(false);
+    };
+    handlePaidFlow();
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem("questionIndex", questionIndex.toString());
+  }, [questionIndex]);
 
   useEffect(() => {
     let active = true;
@@ -429,23 +445,40 @@ export default function Regularizacion2026() {
     if (!currentUserId || !authChecked) return;
     const docsChannel = supabase
       .channel(`docs-${currentUserId}`)
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "user_documents", filter: `user_id=eq.${currentUserId}` },
-        async (payload) => {
-          const newDoc = payload.new as any;
-          const docName = newDoc.title || newDoc.original_name || "documento";
-          setTimeout(() => { console.log("doc received"); }, 1500);
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "user_documents",
+          filter: `user_id=eq.${currentUserId}`,
+        },
+        async () => {
+          setTimeout(() => {
+            console.log("doc received");
+          }, 1500);
         }
       )
       .subscribe();
 
     const formsChannel = supabase
       .channel(`forms-${currentUserId}`)
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "user_forms", filter: `user_id=eq.${currentUserId}` },
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "user_forms",
+          filter: `user_id=eq.${currentUserId}`,
+        },
         async (payload) => {
           const formData = payload.new as any;
           if (formData.form_type === "regularizacion_2026") {
             setTimeout(() => {
-              toast({ title: "✅ Guardado", description: "المعطيات ديالك تحفظات فالنظام" });
+              toast({
+                title: "✅ Guardado",
+                description: "المعطيات ديالك تحفظات فالنظام",
+              });
             }, 1000);
           }
         }
@@ -501,18 +534,30 @@ export default function Regularizacion2026() {
   }, [formStorageKey, leadSavedStorageKey, docsStorageKey]);
 
   useEffect(() => {
-    try { localStorage.setItem(formStorageKey, JSON.stringify(formData)); }
-    catch (error) { console.error("Error guardando formulario:", error); }
+    try {
+      localStorage.setItem(formStorageKey, JSON.stringify(formData));
+    } catch (error) {
+      console.error("Error guardando formulario:", error);
+    }
   }, [formData, formStorageKey]);
 
   useEffect(() => {
-    try { localStorage.setItem(leadSavedStorageKey, leadSaved || formConfirmed ? "true" : "false"); }
-    catch (error) { console.error("Error guardando leadSaved:", error); }
+    try {
+      localStorage.setItem(
+        leadSavedStorageKey,
+        leadSaved || formConfirmed ? "true" : "false"
+      );
+    } catch (error) {
+      console.error("Error guardando leadSaved:", error);
+    }
   }, [leadSaved, formConfirmed, leadSavedStorageKey]);
 
   useEffect(() => {
-    try { localStorage.setItem(docsStorageKey, JSON.stringify(docs)); }
-    catch (error) { console.error("Error guardando docs:", error); }
+    try {
+      localStorage.setItem(docsStorageKey, JSON.stringify(docs));
+    } catch (error) {
+      console.error("Error guardando docs:", error);
+    }
   }, [docs, docsStorageKey]);
 
   useEffect(() => {
@@ -522,7 +567,9 @@ export default function Regularizacion2026() {
         const parsed = JSON.parse(raw) as ChatMsg[];
         if (Array.isArray(parsed) && parsed.length > 0) {
           setVoiceHistory(parsed);
-          const leadAlreadySaved = parsed.some((m) => m.from === "agent" && m.text.includes("المعطيات ديالك تحفظات"));
+          const leadAlreadySaved = parsed.some(
+            (m) => m.from === "agent" && m.text.includes("المعطيات ديالك تحفظات")
+          );
           setLeadSaved((prev) => prev || leadAlreadySaved);
           setFormConfirmed((prev) => prev || leadAlreadySaved);
           return;
@@ -537,17 +584,44 @@ export default function Regularizacion2026() {
 
   useEffect(() => {
     if (voiceHistory.length === 0) return;
-    try { localStorage.setItem(historyStorageKey, JSON.stringify(voiceHistory)); }
-    catch (error) { console.error("Error guardando historial:", error); }
+    try {
+      localStorage.setItem(historyStorageKey, JSON.stringify(voiceHistory));
+    } catch (error) {
+      console.error("Error guardando historial:", error);
+    }
   }, [voiceHistory, historyStorageKey]);
 
+  // Cerrar dropdown al hacer clic fuera
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowCountryDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  // ============================================
+  // FUNCIONES - DOCUMENTOS
+  // ============================================
   const identityDocs = docs.filter((doc) => {
     const expected = normalizeDocType(doc.expectedType);
     const detected = normalizeDocType(doc.detectedType);
     const name = doc.nombre.toLowerCase();
-    return expected === "passport" || expected === "nie" || expected === "tie" ||
-      detected === "passport" || detected === "nie" || detected === "tie" ||
-      name.includes("pasaporte") || name.includes("passport") || name.includes("nie");
+    return (
+      expected === "passport" ||
+      expected === "nie" ||
+      expected === "tie" ||
+      detected === "passport" ||
+      detected === "nie" ||
+      detected === "tie" ||
+      name.includes("pasaporte") ||
+      name.includes("passport") ||
+      name.includes("nie")
+    );
   });
 
   const stayProofDocs = docs.filter((doc) => {
@@ -555,82 +629,145 @@ export default function Regularizacion2026() {
     const detected = normalizeDocType(doc.detectedType);
     const name = doc.nombre.toLowerCase();
     const note = (doc.note || "").toLowerCase();
-    return expected === "empadronamiento" || expected === "stay_proof" ||
-      detected === "empadronamiento" || detected === "stay_proof" ||
-      name.includes("empadronamiento") || name.includes("padron") || name.includes("padrón") ||
-      name.includes("prueba de permanencia") || note.includes("empadronamiento") ||
-      note.includes("stay proof") || note.includes("prueba de permanencia");
+    return (
+      expected === "empadronamiento" ||
+      expected === "stay_proof" ||
+      detected === "empadronamiento" ||
+      detected === "stay_proof" ||
+      name.includes("empadronamiento") ||
+      name.includes("padron") ||
+      name.includes("padrón") ||
+      name.includes("prueba de permanencia") ||
+      note.includes("empadronamiento") ||
+      note.includes("stay proof") ||
+      note.includes("prueba de permanencia")
+    );
   });
 
   const asiloDocs = docs.filter((doc) => {
-    const text = (doc.nombre + " " + (doc.detectedType || "") + " " + (doc.note || "")).toLowerCase();
-    return text.includes("asilo") || text.includes("refugio") || text.includes("protección") || text.includes("asylum");
+    const text = (
+      doc.nombre +
+      " " +
+      (doc.detectedType || "") +
+      " " +
+      (doc.note || "")
+    ).toLowerCase();
+    return (
+      text.includes("asilo") ||
+      text.includes("refugio") ||
+      text.includes("protección") ||
+      text.includes("asylum")
+    );
   });
 
   const expulsionDocs = docs.filter((doc) => {
-    const text = (doc.nombre + " " + (doc.detectedType || "") + " " + (doc.note || "")).toLowerCase();
-    return text.includes("expulsion") || text.includes("expulsión") || text.includes("deportacion") || text.includes("deportation") || text.includes("retorno");
+    const text = (
+      doc.nombre +
+      " " +
+      (doc.detectedType || "") +
+      " " +
+      (doc.note || "")
+    ).toLowerCase();
+    return (
+      text.includes("expulsion") ||
+      text.includes("expulsión") ||
+      text.includes("deportacion") ||
+      text.includes("deportation") ||
+      text.includes("retorno")
+    );
   });
 
   const policiaDocs = docs.filter((doc) => {
-    const text = (doc.nombre + " " + (doc.detectedType || "") + " " + (doc.note || "")).toLowerCase();
-    return text.includes("policia") || text.includes("policía") || text.includes("comisaria") || text.includes("comisaría") || text.includes("denuncia") || text.includes("atestado");
+    const text = (
+      doc.nombre +
+      " " +
+      (doc.detectedType || "") +
+      " " +
+      (doc.note || "")
+    ).toLowerCase();
+    return (
+      text.includes("policia") ||
+      text.includes("policía") ||
+      text.includes("comisaria") ||
+      text.includes("comisaría") ||
+      text.includes("denuncia") ||
+      text.includes("atestado")
+    );
   });
 
   const formCompletedStatus: DocStatus = leadSaved || formConfirmed ? "ok" : "missing";
-  const stayProofStatus: DocStatus =
-    stayProofDocs.some((doc) => doc.estado === "ok") ? "ok" :
-    stayProofDocs.some((doc) => doc.estado === "warn") ? "warn" : "missing";
-  const identityStatus: DocStatus =
-    identityDocs.some((doc) => doc.estado === "ok") ? "ok" :
-    identityDocs.some((doc) => doc.estado === "warn") ? "warn" : "missing";
+  const stayProofStatus: DocStatus = stayProofDocs.some((doc) => doc.estado === "ok")
+    ? "ok"
+    : stayProofDocs.some((doc) => doc.estado === "warn")
+    ? "warn"
+    : "missing";
+  const identityStatus: DocStatus = identityDocs.some((doc) => doc.estado === "ok")
+    ? "ok"
+    : identityDocs.some((doc) => doc.estado === "warn")
+    ? "warn"
+    : "missing";
   const finalFileStatus: DocStatus =
-    formCompletedStatus === "ok" && stayProofStatus === "ok" && identityStatus === "ok" ? "ok" :
-    formCompletedStatus === "warn" || stayProofStatus === "warn" || identityStatus === "warn" ? "warn" : "missing";
+    formCompletedStatus === "ok" && stayProofStatus === "ok" && identityStatus === "ok"
+      ? "ok"
+      : formCompletedStatus === "warn" ||
+        stayProofStatus === "warn" ||
+        identityStatus === "warn"
+      ? "warn"
+      : "missing";
 
-  const handleQuestionFlow = () => {
-    if (questionFlowLockedRef.current) return;
-    console.log("QUESTION CURRENT:", questionIndex);
-    setQuestionIndex((prev) => {
-      const next = prev + 1;
-      console.log("QUESTION NEXT:", next);
-      if (next === 1) {
-        toast({ title: "سؤال", description: "مزيان. قولي شنو سميتك؟" });
-        return next;
-      }
-      if (next === 5 && !paymentDoneRef.current) {
-        questionFlowLockedRef.current = true;
-        const PAYMENT_TEXT = `
-مزيان، من خلال الأجوبة ديالك بان ليا بللي الملف ديالك غادي يكون مقبول إن شاء الله ✅
-
-باش نعطيك تحليل دقيق ونوجد ليك الملف كامل:
-
-✔️ تحليل كامل
-✔️ 100 fi 100 التحقق من الوثائق
-✔️ الوثيقة المهمة اللي غادي تعزز الملف ديالك بزاف
-
-غير ب 12 أورو
-
-ورك على زر الأداء ونكملو مباشرة.
-`;
-        setPaymentRequired(true);
-        setShowStripe(true);
-        setQuestionsDone(false);
-        return next;
-      }
-      if (next >= questions.length - 1) {
-        setDocumentsUnlocked(true);
-        setConfirmUnlocked(true);
-        setQuestionsDone(true);
+  // ============================================
+  // FUNCIONES - PAGO
+  // ============================================
+  const handleStripePayment = async () => {
+    try {
+      const res = await fetch("/api/create-checkout-sara-inicial", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          productType: "regularizacion_sara_inicial",
+          fullName: formData.fullName,
+          phone: formData.phone,
+          email: formData.email,
+          expedienteNumero: formData.expedienteNumero,
+          identificadorSolicitud: formData.identificadorSolicitud,
+          fechaPresentacion: formData.fechaPresentacion,
+          fechaNacimiento: formData.fechaNacimiento,
+          direccion: formData.direccion,
+          codigoPostal: formData.codigoPostal,
+          ciudad: formData.ciudad,
+          provincia: formData.provincia,
+          preferredOffice: formData.preferredOffice,
+          nie: formData.nie,
+          passport: formData.passport,
+          nationality: formData.nationality,
+          birthYear: formData.birthYear,
+          city: formData.city,
+          province: formData.province,
+        }),
+      });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
         toast({
-          title: "📄 Documentos",
-          description: "دابا خاصك ترفع جميع الوثائق اللي عندك.",
+          title: "❌ Stripe",
+          description: "فيه مشكل",
+          variant: "destructive",
         });
       }
-      return next;
-    });
+    } catch (err) {
+      console.error(err);
+      toast({
+        title: "❌ خطأ",
+        description: "فالكونكسيون",
+        variant: "destructive",
+      });
+    }
   };
 
+  // ============================================
+  // FUNCIONES - FORMULARIO
+  // ============================================
   const pushAgentMessage = (text: string) => {
     if (!text?.trim()) return;
     setVoiceHistory((prev) => [...prev, { from: "agent", text, ts: Date.now() }]);
@@ -645,9 +782,12 @@ export default function Regularizacion2026() {
     return "مزيان. السؤال الثاني: عندك باسبور ولا NIE ولا TIE؟";
   };
 
-  // ✅ ACTUALIZADO con formData
+  // ✅ ACTUALIZADO con direccion, codigoPostal, ciudad, provincia
   const saveFullStateToSupabase = async (nextDocs?: StoredDocItem[]) => {
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
     if (authError || !user?.id) throw new Error("No hay usuario conectado en Supabase");
     const docsToSave = nextDocs || docs;
     const payload = {
@@ -655,23 +795,50 @@ export default function Regularizacion2026() {
         nombre: formData.fullName || "",
         telefono: formData.phone || "",
         nie_pasaporte: formData.passport || "",
-        ciudad: formData.city || "",
+ 
         nacionalidad: formData.nationality || "",
         fecha_llegada: formData.fechaNacimiento || "",
         cumple_5_meses: "",
         asilo: "",
         penales: "",
+        // ✅ NUEVOS CAMPOS
+        direccion: formData.direccion || "",
+        codigo_postal: formData.codigoPostal || "",
+        ciudad: formData.ciudad || "",
+        provincia: formData.provincia || "",
       },
       procedure: { key: selectedSituacion, name: currentProcedure.name },
       documents: docsToSave,
       progress: {
-        formCompletedStatus: leadSaved || formConfirmed || leadFormReady ? "ok" : "missing",
-        stayProofStatus: docsToSave.some((doc) => (normalizeDocType(doc.expectedType) === "empadronamiento" || normalizeDocType(doc.expectedType) === "stay_proof") && doc.estado === "ok") ? "ok" : "missing",
-        identityStatus: docsToSave.some((doc) => (normalizeDocType(doc.expectedType) === "passport" || normalizeDocType(doc.expectedType) === "nie" || normalizeDocType(doc.expectedType) === "tie") && doc.estado === "ok") ? "ok" : "missing",
+        formCompletedStatus:
+          leadSaved || formConfirmed || leadFormReady ? "ok" : "missing",
+        stayProofStatus: docsToSave.some(
+          (doc) =>
+            (normalizeDocType(doc.expectedType) === "empadronamiento" ||
+              normalizeDocType(doc.expectedType) === "stay_proof") &&
+            doc.estado === "ok"
+        )
+          ? "ok"
+          : "missing",
+        identityStatus: docsToSave.some(
+          (doc) =>
+            (normalizeDocType(doc.expectedType) === "passport" ||
+              normalizeDocType(doc.expectedType) === "nie" ||
+              normalizeDocType(doc.expectedType) === "tie") &&
+            doc.estado === "ok"
+        )
+          ? "ok"
+          : "missing",
       },
       updated_at: new Date().toISOString(),
     };
-    const { data: existingForm } = await supabase.from("user_forms").select("id").eq("user_id", user.id).eq("form_type", "regularizacion_2026").limit(1).maybeSingle<UserFormRow>();
+    const { data: existingForm } = await supabase
+      .from("user_forms")
+      .select("id")
+      .eq("user_id", user.id)
+      .eq("form_type", "regularizacion_2026")
+      .limit(1)
+      .maybeSingle<UserFormRow>();
     const rowData = {
       user_id: user.id,
       case_id: null,
@@ -682,7 +849,10 @@ export default function Regularizacion2026() {
       updated_at: new Date().toISOString(),
     };
     if (existingForm?.id) {
-      const { error: updateError } = await supabase.from("user_forms").update(rowData).eq("id", existingForm.id);
+      const { error: updateError } = await supabase
+        .from("user_forms")
+        .update(rowData)
+        .eq("id", existingForm.id);
       if (updateError) throw new Error(updateError.message);
     } else {
       const { error: insertError } = await supabase.from("user_forms").insert(rowData);
@@ -691,8 +861,56 @@ export default function Regularizacion2026() {
     return user.id;
   };
 
-  const NAME_QUESTION = "مزيان. قولي شنو سميتك؟";
+  const handleSaveLeadForm = async () => {
+    if (!leadFormReady) {
+      toast({
+        title: ui.missingTitle,
+        description: ui.missingDesc,
+        variant: "destructive",
+      });
+      return;
+    }
+    if (!authChecked) {
+      toast({
+        title: "Espera",
+        description: "Estamos comprobando tu sesión.",
+        variant: "destructive",
+      });
+      return;
+    }
+    const savedIndex = localStorage.getItem("questionIndex");
+    if (savedIndex) setQuestionIndex(parseInt(savedIndex));
+    if (!currentUserId) {
+      toast({
+        title: "Sesión no detectada",
+        description: "Debes entrar con Google antes de confirmar.",
+        variant: "destructive",
+      });
+      return;
+    }
+    try {
+      setSavingForm(true);
+      await saveFullStateToSupabase();
+      setLeadSaved(true);
+      setFormConfirmed(true);
+      const savedMessage = buildSavedFormSpeech();
+      toast({ title: ui.saveLeadTitle, description: "Se han guardado los datos correctamente." });
+      toast({ title: "✅ Guardado", description: savedMessage });
+    } catch (error: any) {
+      console.error("Error guardando formulario:", error);
+      toast({
+        title: "Error guardando formulario",
+        description: error?.message || "No se pudo guardar en Supabase",
+        variant: "destructive",
+      });
+    } finally {
+      setSavingForm(false);
+    }
+  };
 
+  // ============================================
+  // FUNCIONES - PREGUNTAS
+  // ============================================
   const questions = [
     "واش دخلتي لإسبانيا قبل واحد يناير 2026؟",
     "واش بقيتي فإسبانيا خمسة شهور متتالية؟ وشنو هي أول مدينة سكنتي فيها؟",
@@ -713,25 +931,68 @@ export default function Regularizacion2026() {
     "واش عمرك طلبتي اللجوء؟",
   ];
 
+  const handleQuestionFlow = () => {
+    if (questionFlowLockedRef.current) return;
+    console.log("QUESTION CURRENT:", questionIndex);
+    setQuestionIndex((prev) => {
+      const next = prev + 1;
+      console.log("QUESTION NEXT:", next);
+      if (next === 1) {
+        toast({ title: "سؤال", description: "مزيان. قولي شنو سميتك؟" });
+        return next;
+      }
+      if (next === 5 && !paymentDoneRef.current) {
+        questionFlowLockedRef.current = true;
+        setPaymentRequired(true);
+        setShowStripe(true);
+        setQuestionsDone(false);
+        return next;
+      }
+      if (next >= questions.length - 1) {
+        setDocumentsUnlocked(true);
+        setConfirmUnlocked(true);
+        setQuestionsDone(true);
+        toast({
+          title: "📄 Documentos",
+          description: "دابا خاصك ترفع جميع الوثائق اللي عندك.",
+        });
+      }
+      return next;
+    });
+  };
+
   // ============================================
-  // ANALIZAR ASILO - INTERNO
+  // FUNCIONES - ANÁLISIS
   // ============================================
   const analyzeAsilo = async (): Promise<string> => {
     try {
       if (asiloDocs.length === 0) {
         return "Sin solicitud de asilo";
       }
-      
+
       let tieneSolicitudActiva = false;
       let tieneDenegacion = false;
       let tieneResolucionFavorable = false;
       let fechaSolicitud = "";
       let estadoSolicitud = "";
-      
+
       for (const doc of asiloDocs) {
-        const text = (doc.detectedType + " " + doc.nombre + " " + (doc.note || "") + " " + (doc.final_verdict || "")).toLowerCase();
-        
-        if (text.includes("solicitud") || text.includes("application") || text.includes("asylum application") || text.includes("solicit")) {
+        const text = (
+          doc.detectedType +
+          " " +
+          doc.nombre +
+          " " +
+          (doc.note || "") +
+          " " +
+          (doc.final_verdict || "")
+        ).toLowerCase();
+
+        if (
+          text.includes("solicitud") ||
+          text.includes("application") ||
+          text.includes("asylum application") ||
+          text.includes("solicit")
+        ) {
           tieneSolicitudActiva = true;
           if ((doc as any).document_date) {
             fechaSolicitud = (doc as any).document_date;
@@ -740,18 +1001,30 @@ export default function Regularizacion2026() {
             estadoSolicitud = doc.final_verdict;
           }
         }
-        
-        if (doc.final_verdict === "rejected" || text.includes("denegado") || text.includes("rechazado") || text.includes("denied")) {
+
+        if (
+          doc.final_verdict === "rejected" ||
+          text.includes("denegado") ||
+          text.includes("rechazado") ||
+          text.includes("denied")
+        ) {
           tieneDenegacion = true;
         }
-        
-        if (doc.final_verdict === "approved" || text.includes("aprobado") || text.includes("concedido") || text.includes("granted")) {
+
+        if (
+          doc.final_verdict === "approved" ||
+          text.includes("aprobado") ||
+          text.includes("concedido") ||
+          text.includes("granted")
+        ) {
           tieneResolucionFavorable = true;
         }
       }
-      
+
       if (tieneSolicitudActiva) {
-        return `Solicitud activa (${fechaSolicitud || "sin fecha"}) - ${estadoSolicitud || "en trámite"}`;
+        return `Solicitud activa (${fechaSolicitud || "sin fecha"}) - ${
+          estadoSolicitud || "en trámite"
+        }`;
       } else if (tieneDenegacion) {
         return "Denegado";
       } else if (tieneResolucionFavorable) {
@@ -765,18 +1038,15 @@ export default function Regularizacion2026() {
     }
   };
 
-  // ============================================
-  // ANALIZAR EXPULSIÓN - INTERNO
-  // ============================================
   const analyzeExpulsion = async (): Promise<{ status: string; expired: boolean }> => {
     try {
       if (expulsionDocs.length === 0) {
         return { status: "Sin expulsión", expired: false };
       }
-      
+
       let tieneExpulsionActiva = false;
       let tieneExpulsionCancelada = false;
-      
+
       for (const doc of expulsionDocs) {
         if ((doc as any).expiry_date) {
           const fechaCaducidad = new Date((doc as any).expiry_date);
@@ -786,14 +1056,18 @@ export default function Regularizacion2026() {
             tieneExpulsionCancelada = true;
           }
         }
-        
+
         const verdict = (doc.final_verdict || "").toLowerCase();
-        if (verdict.includes("cancelado") || verdict.includes("canceled") || verdict.includes("resuelto")) {
+        if (
+          verdict.includes("cancelado") ||
+          verdict.includes("canceled") ||
+          verdict.includes("resuelto")
+        ) {
           tieneExpulsionCancelada = true;
           tieneExpulsionActiva = false;
         }
       }
-      
+
       if (tieneExpulsionActiva) {
         return { status: "Activa", expired: false };
       } else if (tieneExpulsionCancelada) {
@@ -807,33 +1081,36 @@ export default function Regularizacion2026() {
     }
   };
 
-  // ============================================
-  // ANALIZAR POLICÍA - INTERNO
-  // ============================================
   const analyzePolicia = async (): Promise<string> => {
     try {
       if (policiaDocs.length === 0) {
         return "Sin antecedentes policiales";
       }
-      
+
       let tieneDenuncia = false;
       let tieneAtestado = false;
       let tieneCitacion = false;
-      
+
       for (const doc of policiaDocs) {
-        const text = (doc.nombre + " " + (doc.detectedType || "") + " " + (doc.note || "")).toLowerCase();
+        const text = (
+          doc.nombre +
+          " " +
+          (doc.detectedType || "") +
+          " " +
+          (doc.note || "")
+        ).toLowerCase();
         if (text.includes("denuncia")) tieneDenuncia = true;
         if (text.includes("atestado")) tieneAtestado = true;
         if (text.includes("citacion") || text.includes("citación")) tieneCitacion = true;
       }
-      
+
       let resultado = "Documentos policiales: ";
       if (tieneDenuncia) resultado += "denuncia, ";
       if (tieneAtestado) resultado += "atestado, ";
       if (tieneCitacion) resultado += "citación, ";
       resultado = resultado.replace(/, $/, "");
       if (resultado === "Documentos policiales: ") resultado = "Documentos policiales detectados";
-      
+
       return resultado;
     } catch (error) {
       console.error("Error analizando policía:", error);
@@ -842,8 +1119,135 @@ export default function Regularizacion2026() {
   };
 
   // ============================================
-  // SUBIR DOCUMENTOS
+  // FUNCIONES - DOCUMENTOS
   // ============================================
+  const getBestDocMatch = (
+    result: VerifyDocumentResult,
+    currentDocs: StoredDocItem[],
+    fileName?: string
+  ): StoredDocItem | null => {
+    const detectedType = normalizeDocType(result?.document_type || "");
+    const lowerFileName = (fileName || "").toLowerCase();
+    const combinedText = [
+      result?.summary || "",
+      ...(result?.visible_fields || []),
+      ...(result?.missing_or_unclear_fields || []),
+      ...(result?.warnings || []),
+      result?.stay_proof_reason || "",
+      lowerFileName,
+    ]
+      .join(" ")
+      .toLowerCase();
+    const includesAny = (words: string[]) => words.some((word) => combinedText.includes(word));
+    const findIdentityDoc = () =>
+      currentDocs.find(
+        (doc) =>
+          doc.estado !== "ok" &&
+          (normalizeDocType(doc.expectedType) === "passport" ||
+            normalizeDocType(doc.expectedType) === "nie" ||
+            normalizeDocType(doc.expectedType) === "tie" ||
+            doc.nombre.toLowerCase().includes("pasaporte") ||
+            doc.nombre.toLowerCase().includes("passport") ||
+            doc.nombre.toLowerCase().includes("nie"))
+      ) ||
+      currentDocs.find(
+        (doc) =>
+          normalizeDocType(doc.expectedType) === "passport" ||
+          normalizeDocType(doc.expectedType) === "nie" ||
+          normalizeDocType(doc.expectedType) === "tie" ||
+          doc.nombre.toLowerCase().includes("pasaporte") ||
+          doc.nombre.toLowerCase().includes("passport") ||
+          doc.nombre.toLowerCase().includes("nie")
+      ) ||
+      null;
+    const findStayProofDoc = () =>
+      currentDocs.find(
+        (doc) =>
+          doc.estado !== "ok" &&
+          (normalizeDocType(doc.expectedType) === "empadronamiento" ||
+            normalizeDocType(doc.expectedType) === "stay_proof" ||
+            doc.nombre.toLowerCase().includes("empadronamiento") ||
+            doc.nombre.toLowerCase().includes("padron") ||
+            doc.nombre.toLowerCase().includes("padrón") ||
+            doc.nombre.toLowerCase().includes("prueba de permanencia"))
+      ) ||
+      currentDocs.find(
+        (doc) =>
+          normalizeDocType(doc.expectedType) === "empadronamiento" ||
+          normalizeDocType(doc.expectedType) === "stay_proof" ||
+          doc.nombre.toLowerCase().includes("empadronamiento") ||
+          doc.nombre.toLowerCase().includes("padron") ||
+          doc.nombre.toLowerCase().includes("padrón") ||
+          doc.nombre.toLowerCase().includes("prueba de permanencia")
+      ) ||
+      null;
+    if (detectedType === "passport" || detectedType === "nie" || detectedType === "tie") {
+      const d = findIdentityDoc();
+      if (d) return d;
+    }
+    if (
+      detectedType === "empadronamiento" ||
+      detectedType === "stay_proof" ||
+      result?.recommended_bucket === "stay_proof" ||
+      result?.is_stay_proof === true
+    ) {
+      const d = findStayProofDoc();
+      if (d) return d;
+    }
+    if (
+      includesAny([
+        "passport",
+        "pasaporte",
+        "nie",
+        "tie",
+        "tarjeta de identidad",
+        "documento identidad",
+      ])
+    ) {
+      const d = findIdentityDoc();
+      if (d) return d;
+    }
+    if (
+      includesAny([
+        "empadronamiento",
+        "padron",
+        "padrón",
+        "prueba de permanencia",
+        "stay proof",
+        "ticket",
+        "factura",
+        "nomina",
+        "nómina",
+        "cita médica",
+      ])
+    ) {
+      const d = findStayProofDoc();
+      if (d) return d;
+    }
+    if (lowerFileName) {
+      if (
+        lowerFileName.includes("padron") ||
+        lowerFileName.includes("padrón") ||
+        lowerFileName.includes("empadronamiento")
+      ) {
+        const d = findStayProofDoc();
+        if (d) return d;
+      }
+      if (
+        lowerFileName.includes("pasaporte") ||
+        lowerFileName.includes("passport") ||
+        lowerFileName.includes("nie") ||
+        lowerFileName.includes("tie")
+      ) {
+        const d = findIdentityDoc();
+        if (d) return d;
+      }
+    }
+    return currentDocs.find((doc) => doc.estado === "missing") ||
+      currentDocs.find((doc) => doc.estado === "warn") ||
+      null;
+  };
+
   const handleGeneralUpload = () => {
     console.log("CLICK WORKING");
     const input = document.createElement("input");
@@ -865,41 +1269,50 @@ export default function Regularizacion2026() {
         for (const file of files) {
           const safeName = `${Date.now()}_${file.name}`;
           const storagePath = `${user?.id || "guest"}/regularizacion_2026/${safeName}`;
-          await supabase.storage.from("user-documents").upload(storagePath, file, { upsert: true });
+          await supabase.storage
+            .from("user-documents")
+            .upload(storagePath, file, { upsert: true });
           const result = await verifyDocument({ file });
           const matchedDoc = getBestDocMatch(result, docs, file.name);
           if (matchedDoc) {
-            setDocs((prev) => prev.map((doc) => {
-              if (doc.id !== matchedDoc.id) return doc;
-              return {
-                ...doc,
-                archivo: file.name,
-                estado: result.final_verdict === "approved" ? "ok" : result.final_verdict === "review" ? "warn" : "missing",
-                detectedType: result.document_type || "",
-                full_name: result.full_name || "",
-                document_number: result.document_number || "",
-                birth_date: result.birth_date || "",
-                expiry_date: result.expiry_date || "",
-                verification_score: result.verification_score || 0,
-                fraud_risk: result.fraud_risk || "low",
-                final_verdict: result.final_verdict || "review",
-                document_date: result.document_date || "",
-              };
-            }));
+            setDocs((prev) =>
+              prev.map((doc) => {
+                if (doc.id !== matchedDoc.id) return doc;
+                return {
+                  ...doc,
+                  archivo: file.name,
+                  estado:
+                    result.final_verdict === "approved"
+                      ? "ok"
+                      : result.final_verdict === "review"
+                      ? "warn"
+                      : "missing",
+                  detectedType: result.document_type || "",
+                  full_name: result.full_name || "",
+                  document_number: result.document_number || "",
+                  birth_date: result.birth_date || "",
+                  expiry_date: result.expiry_date || "",
+                  verification_score: result.verification_score || 0,
+                  fraud_risk: result.fraud_risk || "low",
+                  final_verdict: result.final_verdict || "review",
+                  document_date: result.document_date || "",
+                };
+              })
+            );
           }
           results.push({ fileName: file.name, result });
         }
         setDocsUploaded(true);
-        toast({ 
-          title: "✅ Documentos subidos", 
+        toast({
+          title: "✅ Documentos subidos",
           description: `${files.length} documento(s) subido(s). Ahora haz clic en Verificar documentos`,
         });
       } catch (err) {
         console.error(err);
-        toast({ 
-          title: "❌ Error", 
+        toast({
+          title: "❌ Error",
           description: "No se pudieron subir los documentos",
-          variant: "destructive" 
+          variant: "destructive",
         });
       } finally {
         setGeneralUploading(false);
@@ -908,75 +1321,33 @@ export default function Regularizacion2026() {
     input.click();
   };
 
-  const getBestDocMatch = (result: VerifyDocumentResult, currentDocs: StoredDocItem[], fileName?: string): StoredDocItem | null => {
-    const detectedType = normalizeDocType(result?.document_type || "");
-    const lowerFileName = (fileName || "").toLowerCase();
-    const combinedText = [result?.summary || "", ...(result?.visible_fields || []), ...(result?.missing_or_unclear_fields || []), ...(result?.warnings || []), result?.stay_proof_reason || "", lowerFileName].join(" ").toLowerCase();
-    const includesAny = (words: string[]) => words.some((word) => combinedText.includes(word));
-    const findIdentityDoc = () =>
-      currentDocs.find((doc) => doc.estado !== "ok" && (normalizeDocType(doc.expectedType) === "passport" || normalizeDocType(doc.expectedType) === "nie" || normalizeDocType(doc.expectedType) === "tie" || doc.nombre.toLowerCase().includes("pasaporte") || doc.nombre.toLowerCase().includes("passport") || doc.nombre.toLowerCase().includes("nie"))) ||
-      currentDocs.find((doc) => normalizeDocType(doc.expectedType) === "passport" || normalizeDocType(doc.expectedType) === "nie" || normalizeDocType(doc.expectedType) === "tie" || doc.nombre.toLowerCase().includes("pasaporte") || doc.nombre.toLowerCase().includes("passport") || doc.nombre.toLowerCase().includes("nie")) ||
-      null;
-    const findStayProofDoc = () =>
-      currentDocs.find((doc) => doc.estado !== "ok" && (normalizeDocType(doc.expectedType) === "empadronamiento" || normalizeDocType(doc.expectedType) === "stay_proof" || doc.nombre.toLowerCase().includes("empadronamiento") || doc.nombre.toLowerCase().includes("padron") || doc.nombre.toLowerCase().includes("padrón") || doc.nombre.toLowerCase().includes("prueba de permanencia"))) ||
-      currentDocs.find((doc) => normalizeDocType(doc.expectedType) === "empadronamiento" || normalizeDocType(doc.expectedType) === "stay_proof" || doc.nombre.toLowerCase().includes("empadronamiento") || doc.nombre.toLowerCase().includes("padron") || doc.nombre.toLowerCase().includes("padrón") || doc.nombre.toLowerCase().includes("prueba de permanencia")) ||
-      null;
-    if (detectedType === "passport" || detectedType === "nie" || detectedType === "tie") { const d = findIdentityDoc(); if (d) return d; }
-    if (detectedType === "empadronamiento" || detectedType === "stay_proof" || result?.recommended_bucket === "stay_proof" || result?.is_stay_proof === true) { const d = findStayProofDoc(); if (d) return d; }
-    if (includesAny(["passport", "pasaporte", "nie", "tie", "tarjeta de identidad", "documento identidad"])) { const d = findIdentityDoc(); if (d) return d; }
-    if (includesAny(["empadronamiento", "padron", "padrón", "prueba de permanencia", "stay proof", "ticket", "factura", "nomina", "nómina", "cita médica"])) { const d = findStayProofDoc(); if (d) return d; }
-    if (lowerFileName) {
-      if (lowerFileName.includes("padron") || lowerFileName.includes("padrón") || lowerFileName.includes("empadronamiento")) { const d = findStayProofDoc(); if (d) return d; }
-      if (lowerFileName.includes("pasaporte") || lowerFileName.includes("passport") || lowerFileName.includes("nie") || lowerFileName.includes("tie")) { const d = findIdentityDoc(); if (d) return d; }
-    }
-    return currentDocs.find((doc) => doc.estado === "missing") || currentDocs.find((doc) => doc.estado === "warn") || null;
-  };
-
-  // ✅ ACTUALIZADO con formData
-  const handleSaveLeadForm = async () => {
-    if (!leadFormReady) { toast({ title: ui.missingTitle, description: ui.missingDesc, variant: "destructive" }); return; }
-    if (!authChecked) { toast({ title: "Espera", description: "Estamos comprobando tu sesión.", variant: "destructive" }); return; }
-    const savedIndex = localStorage.getItem("questionIndex");
-    if (savedIndex) setQuestionIndex(parseInt(savedIndex));
-    if (!currentUserId) {
-      toast({ title: "Sesión no detectada", description: "Debes entrar con Google antes de confirmar.", variant: "destructive" });
-      return;
-    }
-    try {
-      setSavingForm(true);
-      await saveFullStateToSupabase();
-      setLeadSaved(true);
-      setFormConfirmed(true);
-      const savedMessage = buildSavedFormSpeech();
-      toast({ title: ui.saveLeadTitle, description: "Se han guardado los datos correctamente." });
-      toast({ title: "✅ Guardado", description: savedMessage });
-    } catch (error: any) {
-      console.error("Error guardando formulario:", error);
-      toast({ title: "Error guardando formulario", description: error?.message || "No se pudo guardar en Supabase", variant: "destructive" });
-    } finally {
-      setSavingForm(false);
-    }
-  };
-
   // ============================================
-  // VERIFICAR DOCUMENTOS - HACE TODO
+  // FUNCIONES - VERIFICAR DOCUMENTOS
   // ============================================
   const handleVerifyAll = async () => {
     try {
       setGeneralUploading(true);
-      
-      if (!docs.length) { 
-        toast({ title: "❌ Sin documentos", description: "Primero sube documentos", variant: "destructive" });
-        return; 
-      }
 
-      const docsWithData = docs.filter(doc => doc.archivo && doc.archivo !== "");
-      if (docsWithData.length === 0) {
-        toast({ title: "❌ Documentos sin analizar", description: "Sube imágenes o PDFs claros", variant: "destructive" });
+      if (!docs.length) {
+        toast({
+          title: "❌ Sin documentos",
+          description: "Primero sube documentos",
+          variant: "destructive",
+        });
         return;
       }
 
-      // === 1. ANALIZAR DOCUMENTOS PRINCIPALES ===
+      const docsWithData = docs.filter((doc) => doc.archivo && doc.archivo !== "");
+      if (docsWithData.length === 0) {
+        toast({
+          title: "❌ Documentos sin analizar",
+          description: "Sube imágenes o PDFs claros",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // 1. ANALIZAR DOCUMENTOS PRINCIPALES
       let hasPassport = false;
       let stayDates: string[] = [];
       let hasExpulsion = false;
@@ -994,9 +1365,13 @@ export default function Regularizacion2026() {
           nombreCliente = (doc as any).full_name;
         }
 
-        if (type.includes("passport") || type.includes("nie") || 
-            docName.includes("pasaporte") || docName.includes("passport") || 
-            docName.includes("nie")) {
+        if (
+          type.includes("passport") ||
+          type.includes("nie") ||
+          docName.includes("pasaporte") ||
+          docName.includes("passport") ||
+          docName.includes("nie")
+        ) {
           hasPassport = true;
           let info = `✅ ${doc.nombre}: documento de identidad válido`;
           if ((doc as any).expiry_date) {
@@ -1009,7 +1384,7 @@ export default function Regularizacion2026() {
           }
           docsAnalysis.push(info);
         } else if (
-          type.includes("empadronamiento") || 
+          type.includes("empadronamiento") ||
           type.includes("stay_proof") ||
           docName.includes("empadronamiento") ||
           docName.includes("padron") ||
@@ -1021,13 +1396,16 @@ export default function Regularizacion2026() {
           weakProofs++;
           docsAnalysis.push(`📄 ${doc.nombre}: documento complementario`);
         }
-        
+
         if ((doc as any).document_date) {
           stayDates.push((doc as any).document_date);
         }
-        
-        if (docName.includes("expulsion") || docName.includes("expulsión") || 
-            docName.includes("deportacion")) {
+
+        if (
+          docName.includes("expulsion") ||
+          docName.includes("expulsión") ||
+          docName.includes("deportacion")
+        ) {
           hasExpulsion = true;
           if ((doc as any).expiry_date) {
             const expiry = new Date((doc as any).expiry_date);
@@ -1036,28 +1414,33 @@ export default function Regularizacion2026() {
         }
       }
 
-      const sortedDates = stayDates.map(d => new Date(d)).filter(d => !isNaN(d.getTime())).sort((a, b) => a.getTime() - b.getTime());
+      const sortedDates = stayDates
+        .map((d) => new Date(d))
+        .filter((d) => !isNaN(d.getTime()))
+        .sort((a, b) => a.getTime() - b.getTime());
       let stayDays = 0;
       let hasMonths = false;
       if (sortedDates.length >= 2) {
         const firstDate = sortedDates[0];
         const lastDate = sortedDates[sortedDates.length - 1];
-        stayDays = Math.floor((lastDate.getTime() - firstDate.getTime()) / (1000 * 60 * 60 * 24));
+        stayDays = Math.floor(
+          (lastDate.getTime() - firstDate.getTime()) / (1000 * 60 * 60 * 24)
+        );
         hasMonths = stayDays >= 150;
       }
 
-      // === 2. ANALIZAR ASILO ===
+      // 2. ANALIZAR ASILO
       const asiloStatus = await analyzeAsilo();
-      
-      // === 3. ANALIZAR EXPULSIÓN ===
+
+      // 3. ANALIZAR EXPULSIÓN
       const expulsionResult = await analyzeExpulsion();
-      
-      // === 4. ANALIZAR POLICÍA ===
+
+      // 4. ANALIZAR POLICÍA
       const policeStatus = await analyzePolicia();
 
-      // === 5. CONSTRUIR RESULTADO ===
+      // 5. CONSTRUIR RESULTADO
       const esApto = hasPassport && hasMonths && (!hasExpulsion || expulsionExpired);
-      
+
       const resultado = {
         hasPassport,
         hasMonths,
@@ -1075,15 +1458,9 @@ export default function Regularizacion2026() {
       };
       setAnalysisResult(resultado);
 
-      // === 6. CONSTRUIR INFORME COMPLETO ===
-      const passportTexto = hasPassport ? "✅ Documento de identidad válido" : "❌ Documento de identidad NO DETECTADO";
-      const mesesTexto = hasMonths ? `✅ ${stayDays} días de estancia (más de 5 meses)` : `❌ ${stayDays} días de estancia (menos de 150 días)`;
-      const expulsionTexto = hasExpulsion ? (expulsionExpired ? "⚠️ Expulsión caducada" : "🚨 EXPULSIÓN ACTIVA") : "✅ Sin expulsión";
-
-      const analisisDocumentos = docsAnalysis.join("\n");
-
+      // 6. CONSTRUIR INFORME COMPLETO
       const timelineDocuments = docsWithData
-        .filter(doc => doc.document_date)
+        .filter((doc) => doc.document_date)
         .sort(
           (a, b) =>
             new Date(a.document_date || "").getTime() -
@@ -1095,7 +1472,9 @@ export default function Regularizacion2026() {
 
 الوثائق مرتبة حسب التاريخ:
 
-${timelineDocuments.map((doc,index) => `
+${timelineDocuments
+  .map(
+    (doc, index) => `
 الوثيقة رقم ${index + 1}
 
 الاسم: ${doc.nombre}
@@ -1107,7 +1486,9 @@ ${timelineDocuments.map((doc,index) => `
 تاريخ الانتهاء: ${doc.expiry_date || "غير موجود"}
 
 النتيجة: ${doc.final_verdict || "غير معروفة"}
-`).join("\n")}
+`
+  )
+  .join("\n")}
 
 عدد الأيام:
 ${stayDays}
@@ -1128,12 +1509,10 @@ ${expulsionResult.status}
 ${policeStatus}
 `;
 
-      // === 7. GUARDAR EN LOCALSTORAGE ===
+      // 7. GUARDAR EN LOCALSTORAGE
       localStorage.setItem("soufiane_analysis", informeCompleto);
-      
-      // === 8. GUARDAR EN SUPABASE - soufiane_analyses ===
-      let analysisId = null;
-      
+
+      // 8. GUARDAR EN SUPABASE
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (user?.id) {
@@ -1152,26 +1531,34 @@ ${policeStatus}
               has_asilo: asiloDocs.length > 0,
               asilo_status: asiloStatus,
               police_status: policeStatus,
-              recommendation: esApto 
-                ? "Puede presentar Regularización 2026" 
+              recommendation: esApto
+                ? "Puede presentar Regularización 2026"
                 : "Faltan requisitos para presentar",
               analysis_text: informeCompleto,
               whatsapp_sent: false,
               created_at: new Date().toISOString(),
             })
-            .select('id')
+            .select("id")
             .single();
-          
+
           if (analysisError) {
             console.error("Error guardando análisis:", analysisError);
           } else if (analysisData) {
-            analysisId = analysisData.id;
-            console.log(`✅ Análisis guardado en soufiane_analyses con ID: ${analysisId}`);
+            const analysisId = analysisData.id;
+            console.log(`✅ Análisis guardado con ID: ${analysisId}`);
 
-            // === 9. GUARDAR DOCUMENTOS VINCULADOS ===
+            // Guardar documentos vinculados
             for (const doc of docsWithData) {
-              const textToCheck = (doc.nombre + " " + (doc.detectedType || "") + " " + (doc.note || "") + " " + (doc.final_verdict || "")).toLowerCase();
-              const affectsRegularizacion = 
+              const textToCheck = (
+                doc.nombre +
+                " " +
+                (doc.detectedType || "") +
+                " " +
+                (doc.note || "") +
+                " " +
+                (doc.final_verdict || "")
+              ).toLowerCase();
+              const affectsRegularizacion =
                 textToCheck.includes("expulsion") ||
                 textToCheck.includes("expulsión") ||
                 textToCheck.includes("denegado") ||
@@ -1198,34 +1585,33 @@ ${policeStatus}
                   notes: doc.note || "",
                   created_at: new Date().toISOString(),
                 });
-              
+
               if (docError) {
                 console.error("Error guardando documento:", docError);
               }
             }
-            console.log(`✅ ${docsWithData.length} documentos guardados en soufiane_documents vinculados al análisis ${analysisId}`);
           }
         }
       } catch (error) {
         console.error("Error guardando en Supabase:", error);
       }
 
-      // === 10. MARCAR COMO VERIFICADO ===
+      // 9. MARCAR COMO VERIFICADO
       setDocsVerified(true);
-      // ✅ ACTIVAR BOTÓN WHATSAPP
       setWhatsappReady(true);
-      
+
       toast({
         title: "✅ Análisis completado",
-        description: esApto ? "El expediente es APTO para Regularización 2026" : "El expediente NO es apto. Faltan requisitos.",
+        description: esApto
+          ? "El expediente es APTO para Regularización 2026"
+          : "El expediente NO es apto. Faltan requisitos.",
       });
-      
     } catch (err) {
       console.error("Error en handleVerifyAll:", err);
-      toast({ 
-        title: "❌ Error", 
+      toast({
+        title: "❌ Error",
         description: "Ocurrió un error al verificar los documentos",
-        variant: "destructive" 
+        variant: "destructive",
       });
     } finally {
       setGeneralUploading(false);
@@ -1233,7 +1619,7 @@ ${policeStatus}
   };
 
   // ============================================
-  // OBTENER NÚMERO COMPLETO
+  // FUNCIONES - WHATSAPP
   // ============================================
   const getFullPhoneNumber = (): string => {
     const cleanNumber = phoneNumber.replace(/\s/g, "");
@@ -1245,30 +1631,35 @@ ${policeStatus}
     return `${countryCodeWithoutPlus}${numberWithoutPrefix}`;
   };
 
-  // ============================================
-  // ENVIAR A WHATSAPP VIA MAKE
-  // ============================================
   const handleSendWhatsApp = async () => {
     try {
       const fullPhone = getFullPhoneNumber();
-      
-      if (!fullPhone || fullPhone.length < 8) { 
-        toast({ title: "❌ Número incorrecto", description: "Introduce un número de teléfono válido", variant: "destructive" });
-        return; 
+
+      if (!fullPhone || fullPhone.length < 8) {
+        toast({
+          title: "❌ Número incorrecto",
+          description: "Introduce un número de teléfono válido",
+          variant: "destructive",
+        });
+        return;
       }
-      
+
       setSendingToWhatsApp(true);
-      
+
       const analysis = localStorage.getItem("soufiane_analysis") || "";
-      
+
       if (!analysis) {
-        toast({ title: "❌ Sin análisis", description: "Primero verifica los documentos", variant: "destructive" });
+        toast({
+          title: "❌ Sin análisis",
+          description: "Primero verifica los documentos",
+          variant: "destructive",
+        });
         setSendingToWhatsApp(false);
         return;
       }
-      
+
       const webhookUrl = "https://hook.eu1.make.com/wkowicwqx3lpufxlay8yu6762bpvhk7b";
-      
+
       const payload = {
         telefono: fullPhone,
         analysis: analysis,
@@ -1281,9 +1672,9 @@ ${policeStatus}
         isApto: analysisResult.completo || false,
         timestamp: new Date().toISOString(),
       };
-      
+
       console.log("📤 Enviando a Make:", payload);
-      
+
       const response = await fetch(webhookUrl, {
         method: "POST",
         headers: {
@@ -1291,52 +1682,44 @@ ${policeStatus}
         },
         body: JSON.stringify(payload),
       });
-      
+
       const resultText = await response.text();
       console.log("📥 MAKE RESPONSE:", resultText);
-      
+
       if (!response.ok) {
         throw new Error(`Error ${response.status}: ${resultText}`);
       }
-      
-      toast({ 
-        title: "✅ Enviado", 
-        description: "El análisis se ha enviado. Recibirás el resultado por WhatsApp en breve." 
+
+      toast({
+        title: "✅ Enviado",
+        description: "El análisis se ha enviado. Recibirás el resultado por WhatsApp en breve.",
       });
-      
     } catch (error) {
       console.error("WhatsApp error:", error);
-      toast({ 
-        title: "❌ Error", 
-        description: "Ocurrió un error al enviar. Intenta de nuevo.", 
-        variant: "destructive" 
+      toast({
+        title: "❌ Error",
+        description: "Ocurrió un error al enviar. Intenta de nuevo.",
+        variant: "destructive",
       });
     } finally {
       setSendingToWhatsApp(false);
     }
   };
 
-  // ✅ REFERENCIA para el dropdown
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
-  // ✅ Cerrar dropdown al hacer clic fuera
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setShowCountryDropdown(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
-
+  // ============================================
+  // RENDER
+  // ============================================
   return (
     <div className="min-h-screen">
       <div className="w-full bg-background text-foreground relative min-h-screen rounded-[30px] overflow-hidden">
         <Navbar />
-        <div className="fixed inset-0 z-0 opacity-25 pointer-events-none" style={{ backgroundImage: "radial-gradient(ellipse 70% 40% at 30% 20%, rgba(34,197,94,0.1), transparent), radial-gradient(ellipse 60% 40% at 80% 80%, rgba(59,130,246,0.08), transparent)" }} />
+        <div
+          className="fixed inset-0 z-0 opacity-25 pointer-events-none"
+          style={{
+            backgroundImage:
+              "radial-gradient(ellipse 70% 40% at 30% 20%, rgba(34,197,94,0.1), transparent), radial-gradient(ellipse 60% 40% at 80% 80%, rgba(59,130,246,0.08), transparent)",
+          }}
+        />
 
         <main className="flex-1 relative z-10 pt-2 pb-6">
           <div className="px-4 sm:px-6 py-3 w-full flex items-center justify-between">
@@ -1353,44 +1736,69 @@ ${policeStatus}
           </div>
 
           <div className="mt-2 max-w-7xl mx-auto lg:grid lg:grid-cols-[480px_1fr] lg:gap-6">
-            <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="rounded-[26px] overflow-hidden relative">
+            <motion.div
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="rounded-[26px] overflow-hidden relative"
+            >
               <div className="relative">
-                <img 
-                  src="/images/soufiane.png" 
-                  alt="Soufiane" 
+                <img
+                  src="/images/soufiane.png"
+                  alt="Soufiane"
                   className="w-full h-[270px] object-cover border-b border-[#f6c453]/10"
                 />
                 <div className="absolute bottom-5 right-4 text-right">
                   <h2 className="text-[22px] font-bold text-white">Soufiane</h2>
-                  <p className="text-[15px] text-[#d4a94d] font-medium tracking-wide">Experto en Regularización</p>
+                  <p className="text-[15px] text-[#d4a94d] font-medium tracking-wide">
+                    Seguimiento Favorable + NUSS + Tasa
+                  </p>
                 </div>
               </div>
             </motion.div>
           </div>
 
           <div className="mt-0 w-full max-w-none lg:col-start-2">
+            {/* ========================================== */}
+            {/* PAGO PENDIENTE */}
+            {/* ========================================== */}
             {!paymentCompleted && (
               <div className="p-3">
                 <div className="relative overflow-hidden rounded-2xl border border-yellow-500/30 bg-gradient-to-br from-[#1a1200] via-[#0b0b0b] to-[#1a1200] p-4 w-full">
                   <div className="flex items-center justify-between mb-3">
                     <div>
                       <p className="text-white font-bold text-lg">Desbloquea a Soufiane</p>
-                      <span className="inline-flex mt-1 px-2 py-1 rounded-full bg-yellow-500 text-black text-[10px] font-bold">PREMIUM</span>
+                      <span className="inline-flex mt-1 px-2 py-1 rounded-full bg-yellow-500 text-black text-[10px] font-bold">
+                        PREMIUM
+                      </span>
                     </div>
                     <div className="text-right">
                       <p className="text-xl font-black text-yellow-400 leading-none">14,99€</p>
                       <p className="text-white/60 text-xs">Acceso completo</p>
                     </div>
                   </div>
-                  <p className="text-white/70 text-[13px] leading-relaxed mb-3">Acceso ilimitado a Soufiane IA, análisis de documentos y generación automática del expediente.</p>
-                  <button onClick={handleStripePayment} type="button" className="w-[92%] mx-auto flex items-center justify-center h-[52px] rounded-[20px] text-white font-semibold text-[16px] bg-gradient-to-r from-[#16a34a] to-[#22c55e] border border-[#4ade80] shadow-[0_4px_14px_rgba(34,197,94,0.35)]">
+                  <p className="text-white/70 text-[13px] leading-relaxed mb-3">
+                    Seguimiento automático del expediente. Cuando salga FAVORABLE recibirás aviso por WhatsApp, tu NUSS y la tasa 790 lista para pagar.
+                  </p>
+                  <button
+                    onClick={handleStripePayment}
+                    type="button"
+                    className="w-[92%] mx-auto flex items-center justify-center h-[52px] rounded-[20px] text-white font-semibold text-[16px] bg-gradient-to-r from-[#16a34a] to-[#22c55e] border border-[#4ade80] shadow-[0_4px_14px_rgba(34,197,94,0.35)]"
+                  >
                     🔓 Desbloquear ahora
                   </button>
                   <div className="mt-2 flex items-center justify-center gap-2 flex-wrap">
-                    <div className="h-8 px-2 rounded-lg bg-white flex items-center justify-center text-blue-700 font-black text-[10px]">VISA</div>
-                    <div className="h-8 px-2 rounded-lg bg-white flex items-center justify-center text-red-500 font-black text-[10px]">Mastercard</div>
-                    <div className="h-8 px-2 rounded-lg bg-white flex items-center justify-center text-black font-black text-[10px]">Pay</div>
-                    <div className="h-8 px-2 rounded-lg bg-white flex items-center justify-center text-black font-black text-[10px]">G Pay</div>
+                    <div className="h-8 px-2 rounded-lg bg-white flex items-center justify-center text-blue-700 font-black text-[10px]">
+                      VISA
+                    </div>
+                    <div className="h-8 px-2 rounded-lg bg-white flex items-center justify-center text-red-500 font-black text-[10px]">
+                      Mastercard
+                    </div>
+                    <div className="h-8 px-2 rounded-lg bg-white flex items-center justify-center text-black font-black text-[10px]">
+                      Pay
+                    </div>
+                    <div className="h-8 px-2 rounded-lg bg-white flex items-center justify-center text-black font-black text-[10px]">
+                      G Pay
+                    </div>
                   </div>
                 </div>
                 <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
@@ -1398,62 +1806,163 @@ ${policeStatus}
                     <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
                     <p className="text-white font-bold">Soufiane IA</p>
                   </div>
-                  <p className="text-white/80 text-sm leading-relaxed">Especialista profesional en extranjería española para marroquíes en España.</p>
+                  <p className="text-white/80 text-sm leading-relaxed">
+                    Especialista profesional en extranjería española para marroquíes en España.
+                  </p>
                 </div>
               </div>
             )}
 
+            {/* ========================================== */}
+            {/* ESTADÍSTICAS */}
+            {/* ========================================== */}
             <div className="mt-4 rounded-2xl border border-green-500/20 bg-[#071326] p-4">
-              <h3 className="text-center text-green-400 font-bold text-lg mb-4">Miles de personas ya usan GestoriaCitaIA</h3>
+              <h3 className="text-center text-green-400 font-bold text-lg mb-4">
+                Miles de personas ya usan GestoriaCitaIA
+              </h3>
               <div className="grid grid-cols-4 gap-2 text-center">
-                <div><p className="text-green-400 text-2xl font-black">18K+</p><p className="text-white/60 text-xs">Trámites</p></div>
-                <div><p className="text-blue-400 text-2xl font-black">97%</p><p className="text-white/60 text-xs">Verificado</p></div>
-                <div><p className="text-purple-400 text-2xl font-black">4m</p><p className="text-white/60 text-xs">Continuar</p></div>
-                <div><p className="text-yellow-400 text-2xl font-black">100%</p><p className="text-white/60 text-xs">Asistente IA</p></div>
+                <div>
+                  <p className="text-green-400 text-2xl font-black">18K+</p>
+                  <p className="text-white/60 text-xs">Trámites</p>
+                </div>
+                <div>
+                  <p className="text-blue-400 text-2xl font-black">97%</p>
+                  <p className="text-white/60 text-xs">Verificado</p>
+                </div>
+                <div>
+                  <p className="text-purple-400 text-2xl font-black">4m</p>
+                  <p className="text-white/60 text-xs">Continuar</p>
+                </div>
+                <div>
+                  <p className="text-yellow-400 text-2xl font-black">100%</p>
+                  <p className="text-white/60 text-xs">Asistente IA</p>
+                </div>
               </div>
-              <div className="mt-4 rounded-full border border-yellow-500/30 py-2 text-center text-white font-bold">🏆 Regularización 2026</div>
+              <div className="mt-4 rounded-full border border-yellow-500/30 py-2 text-center text-white font-bold">
+                🏆 Regularización 2026
+              </div>
               <div className="flex items-end justify-between mt-4">
-                <div><p className="text-green-400 text-4xl font-black">4.9/5</p><p className="text-yellow-400">★★★★★</p></div>
+                <div>
+                  <p className="text-green-400 text-4xl font-black">4.9/5</p>
+                  <p className="text-yellow-400">★★★★★</p>
+                </div>
                 <div className="text-white font-bold">+2K</div>
               </div>
             </div>
 
+            {/* ========================================== */}
+            {/* PANEL DE ACCIONES (PAGO COMPLETADO) */}
+            {/* ========================================== */}
             {paymentCompleted && (
               <div className="mt-5 space-y-4">
+                {/* Dirección - NUEVOS CAMPOS */}
+                <div className="space-y-3 w-[92%] mx-auto">
+                  <h3 className="text-white font-bold text-sm">📍 Dirección</h3>
+
+                  <div>
+                    <label className="block text-white/70 text-[12px] mb-1">
+                      Dirección completa
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Calle y número"
+                      value={formData.direccion || ""}
+                      onChange={(e) => onFormChange("direccion", e.target.value)}
+                      className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-white/70 text-[12px] mb-1">
+                      Código Postal
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="28001"
+                      value={formData.codigoPostal || ""}
+                      onChange={(e) => onFormChange("codigoPostal", e.target.value)}
+                      className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-white/70 text-[12px] mb-1">
+                      Ciudad
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Madrid"
+                      value={formData.ciudad || ""}
+                      onChange={(e) => onFormChange("ciudad", e.target.value)}
+                      className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-white/70 text-[12px] mb-1">
+                      Provincia
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Madrid"
+                      value={formData.provincia || ""}
+                      onChange={(e) => onFormChange("provincia", e.target.value)}
+                      className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white"
+                    />
+                  </div>
+                </div>
+
                 {/* Subir documentos */}
-                <button 
-                  onClick={handleGeneralUpload} 
-                  disabled={generalUploading} 
+                <button
+                  onClick={handleGeneralUpload}
+                  disabled={generalUploading}
                   className={`w-[92%] mx-auto h-[52px] rounded-[20px] border border-[#c6922f] bg-[#050816] hover:bg-[#0b1220] transition-all text-white font-medium text-[16px] flex items-center justify-center gap-3 shadow-lg ${
                     docsUploaded ? "border-green-500/60 bg-green-900/20" : ""
                   }`}
                 >
                   <Upload className="w-5 h-5 text-[#d4a94d]" />
-                  {generalUploading ? "Subiendo..." : docsUploaded ? "✅ Documentos subidos" : "Subir documentos"}
+                  {generalUploading
+                    ? "Subiendo..."
+                    : docsUploaded
+                    ? "✅ Documentos subidos"
+                    : "Subir documentos"}
                   {docsUploaded && <CheckCircle className="w-4 h-4 text-green-400" />}
                 </button>
 
                 {/* Verificar documentos */}
-                <button 
-                  onClick={handleVerifyAll} 
+                <button
+                  onClick={handleVerifyAll}
                   disabled={!docsUploaded || generalUploading}
                   className={`w-[92%] mx-auto h-[52px] rounded-[20px] border border-[#c6922f] bg-[#050816] hover:bg-[#0b1220] transition-all text-white font-medium text-[16px] flex items-center justify-center gap-3 shadow-lg ${
                     docsVerified ? "border-green-500/60 bg-green-900/20" : ""
                   }`}
                 >
                   {docsVerified ? (
-                    <><FileCheck className="w-5 h-5 text-green-400" /> ✅ Análisis completado</>
+                    <>
+                      <FileCheck className="w-5 h-5 text-green-400" /> ✅ Análisis completado
+                    </>
                   ) : (
                     <>
-                      <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-[#d4a94d]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4" />
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="w-5 h-5 text-[#d4a94d]"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9 12l2 2 4-4"
+                        />
                       </svg>
                       {generalUploading ? "Verificando..." : "Verificar documentos"}
                     </>
                   )}
                 </button>
 
-                {/* ✅ WhatsApp con selector de país */}
+                {/* WhatsApp con selector de país */}
                 <div className="w-[92%] mx-auto flex items-center overflow-visible rounded-[20px] border border-[#c6922f]/40 bg-[#050816] shadow-lg">
                   <div className="relative flex-shrink-0 z-[9999]" ref={dropdownRef}>
                     <button
@@ -1467,9 +1976,13 @@ ${policeStatus}
                       <span className="text-lg">{selectedCountry.flag}</span>
                       <span className="hidden sm:inline">{selectedCountry.code}</span>
                       <span className="sm:hidden">{selectedCountry.code}</span>
-                      <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${showCountryDropdown ? "rotate-180" : ""}`} />
+                      <ChevronDown
+                        className={`w-3 h-3 transition-transform duration-200 ${
+                          showCountryDropdown ? "rotate-180" : ""
+                        }`}
+                      />
                     </button>
-                    
+
                     {showCountryDropdown && (
                       <div className="absolute bottom-full left-0 mb-1 w-[220px] max-h-[220px] overflow-y-auto rounded-lg border border-[#c6922f]/30 bg-[#050816] shadow-2xl z-[9999]">
                         {COUNTRIES.map((country) => (
@@ -1480,7 +1993,9 @@ ${policeStatus}
                               setShowCountryDropdown(false);
                             }}
                             className={`flex items-center gap-2 w-full px-3 py-2.5 text-sm text-left hover:bg-white/10 transition-colors ${
-                              country.code === selectedCountry.code ? "bg-white/5 text-[#d4a94d]" : "text-white"
+                              country.code === selectedCountry.code
+                                ? "bg-white/5 text-[#d4a94d]"
+                                : "text-white"
                             }`}
                           >
                             <span className="text-lg">{country.flag}</span>
@@ -1494,7 +2009,7 @@ ${policeStatus}
 
                   <div className="w-px h-8 bg-[#c6922f]/30 flex-shrink-0" />
 
-                  <input 
+                  <input
                     type="tel"
                     inputMode="numeric"
                     pattern="[0-9]*"
@@ -1508,7 +2023,7 @@ ${policeStatus}
                   />
                 </div>
 
-                {/* ✅ BOTÓN WHATSAPP - SE ACTIVA DESPUÉS DEL ANÁLISIS */}
+                {/* Botón WhatsApp */}
                 <button
                   onClick={handleSendWhatsApp}
                   disabled={!whatsappReady}
@@ -1525,6 +2040,25 @@ ${policeStatus}
                     ? "📲 Receive analysis on WhatsApp"
                     : "📲 Recibir análisis en WhatsApp"}
                 </button>
+
+                {/* ========================================== */}
+                {/* MENSAJE DE SARA */}
+                {/* ========================================== */}
+                <div className="w-[92%] mx-auto rounded-2xl border border-purple-500/30 bg-[#0a0518] p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="w-2 h-2 rounded-full bg-purple-400 animate-pulse" />
+                    <p className="text-purple-400 font-bold text-sm">Sara IA</p>
+                  </div>
+                  <p className="text-white/80 text-sm leading-relaxed">
+                    Sara vigilará tu expediente 24/24.
+                    <br />
+                    Cuando salga FAVORABLE recibirás una notificación por WhatsApp.
+                    <br />
+                    Obtendremos tu NUSS automáticamente.
+                    <br />
+                    Te enviaremos la tasa 790-012 preparada y lista para pagar.
+                  </p>
+                </div>
               </div>
             )}
           </div>
