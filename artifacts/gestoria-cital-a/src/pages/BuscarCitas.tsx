@@ -1,69 +1,26 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useLocation } from "wouter";
 import { Navbar } from "@/components/Navbar";
 import { useLang } from "@/contexts/LanguageContext";
-import { useToast } from "@/hooks/use-toast";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import {
-  FileText,
-  Settings,
-  Mic,
-  MicOff,
-  RefreshCw,
-  Shield,
-  Bell,
-  CheckCircle2,
-  ExternalLink,
-  Volume2,
-  VolumeX,
+  Upload,
+  Star,
+  CheckCircle,
+  FileCheck,
+  Send,
+  ChevronDown,
+  MessageCircle,
 } from "lucide-react";
-import { useScheduleAppointment } from "@/hooks/use-appointments";
+import { useToast } from "@/hooks/use-toast";
+import { verifyDocument, type VerifyDocumentResult } from "@/lib/verifyDocument";
+import {
+  EXTRANJERIA_PROCEDURES,
+  getProcedureByKey,
+} from "@/lib/extranjeriaProcedures";
 import { supabase } from "@/lib/supabaseClient";
 
-interface ChatMsg {
-  from: "agent" | "user";
-  text: string;
-  ts?: number;
-}
-
-type TramiteItem = {
-  value: string;
-  label: string;
-};
-
-type DocState = "ok" | "warn" | "missing";
-
-type DocItem = {
-  nombre: string;
-  estado: DocState;
-};
-
-type FormItem = {
-  nombre: string;
-  codigo: string;
-  url: string;
-};
-
-type ProfileRow = {
-  id: string;
-  email: string | null;
-  full_name: string | null;
-  phone: string | null;
-  nie: string | null;
-};
-
-type AppointmentResult = {
-  tramite?: string | null;
-  date?: string | null;
-  time?: string | null;
-  office?: string | null;
-  locator?: string | null;
-  pdf_url?: string | null;
-  confirmation_pdf_url?: string | null;
-};
-
+// ✅ NUEVO TIPO CLIENT FORM DATA
 type ClientFormData = {
-
   fullName: string;
   phone: string;
   email: string;
@@ -72,1525 +29,1507 @@ type ClientFormData = {
   identificadorSolicitud: string;
 
   fechaPresentacion: string;
-
   fechaNacimiento: string;
+
+  direccion: string;
+  codigoPostal: string;
+  ciudad: string;
+  provincia: string;
+
+  preferredOffice: string;
+
+  nie: string;
+  passport: string;
+  nationality: string;
+  birthYear: string;
+
+  city: string;
+  province: string;
 };
 
-function OfficialBrowserBox({
-  language,
-  avatarImage,
-  title,
-  url,
-  selectedTramiteLabel,
-  profileLoading,
-  ui,
-  confirmed,
-  appointmentData,
-  finalDate,
-  finalTime,
-  finalOffice,
-  finalLocator,
-  finalPdfUrl,
-  hasRealAppointment,
-  onRefresh,
-  onOpenOfficial,
-  onSelectTramite,
-  tramites,
-  selectedTramite,
-  onAceptar,
-  isPending,
-  cameFromConfirmationLink,
-  formData,
-  onFormChange,
-  onFormSubmit,
-  formReady,
-}: {
-  language: string;
-  avatarImage: string;
-  title: string;
-  url: string;
-  selectedTramiteLabel: string;
-  profileLoading: boolean;
-  ui: any;
-  confirmed: boolean;
-  appointmentData: AppointmentResult | null;
-  finalDate: string;
-  finalTime: string;
-  finalOffice: string;
-  finalLocator: string;
-  finalPdfUrl: string | null;
-  hasRealAppointment: boolean;
-  onRefresh: () => void;
-  onOpenOfficial: () => void;
-  onSelectTramite: (value: string) => void;
-  tramites: TramiteItem[];
-  selectedTramite: string;
-  onAceptar: () => void;
-  isPending: boolean;
-  cameFromConfirmationLink: boolean;
-  formData: ClientFormData;
-  onFormChange: (field: keyof ClientFormData, value: string) => void;
-  onFormSubmit: () => void;
-  formReady: boolean;
-}) {
-  const isMa = language === "ma";
-  const isEn = language === "en";
-  const { toast } = useToast();
-
-  const formIntro = isMa
-    ? "إلى بغيتي تتابع الملف ديالك وتخرج رقم الضمان الاجتماعي وتدير فتح التسجيل، عمر الفورم وغادي نخبروك فالواتساب ملي يخرج ليك favorable."
-    : isEn
-    ? "If you need to follow your file, get your Social Security number and open registration, fill in the form. We will notify you on WhatsApp when your file is favorable."
-    : "Si necesitas seguir tu expediente, sacar tu número de Seguridad Social y abrir alta, rellena el formulario. Te avisamos por WhatsApp cuando tengas favorable.";
-
-  const panelTitle = isMa
-    ? "اللوحة الرسمية"
-    : isEn
-    ? "Official integrated panel"
-    : "Panel oficial integrado";
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, x: 20 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ delay: 0.15 }}
-      className="flex-1 flex flex-col overflow-hidden bg-transparent"
-    >
-      <div className="flex-1 overflow-y-auto bg-transparent p-4 sm:p-6 text-black">
-{confirmed ? (
-
-<div className="rounded-[26px] border border-emerald-500/40 bg-[#07111f] px-6 py-8 text-center">
-
-  <h2 className="text-emerald-400 text-3xl font-black mb-4">
-  {isMa
-    ? "🎉 مبروك! تأكد الموعد ديالك"
-    : isEn
-    ? "🎉 APPOINTMENT CONFIRMED!"
-    : "🎉 ¡CITA CONFIRMADA!"}
-</h2>
-
-<p className="text-white text-lg font-bold mb-4">
-  {isMa
-    ? "شكراً بزاف على الثقة ديالك في GestoriaCitaIA."
-    : isEn
-    ? "Thank you for trusting GestoriaCitaIA."
-    : "Muchas gracias por confiar en GestoriaCitaIA."}
-</p>
-
-<p className="text-white/80">
-  {isMa
-    ? "تم تأكيد الموعد ديالك بنجاح."
-    : isEn
-    ? "Your appointment has been successfully confirmed."
-    : "Tu cita ha sido confirmada correctamente."}
-</p>
-
-<p className="text-white/80 mt-2">
-  {isMa
-    ? "سارة سالات الخدمة ديالها بنجاح."
-    : isEn
-    ? "Sara has successfully completed her work."
-    : "Sara ha finalizado su trabajo con éxito."}
-</p>
-
-<p className="text-yellow-400 font-bold mt-4">
-  {isMa
-    ? "✅ العملية كملت بنجاح"
-    : isEn
-    ? "✅ Reservation completed"
-    : "✅ Reserva completada"}
-</p>
-
-<p className="text-white/70 mt-6">
-  {isMa
-    ? "نتمنّاو ليك التوفيق فالإجراء ديالك."
-    : isEn
-    ? "We wish you the best of luck with your procedure."
-    : "Te deseamos mucha suerte en tu trámite."}
-</p>
-</div>
-
-) : !confirmed && !formReady ? (
-          <>
-            <div className="mt-3 mx-[-4px] rounded-[24px] border-2 border-yellow-500/60 bg-gradient-to-b from-[#0b0b0b] to-[#050505] px-3 py-3 shadow-[0_0_35px_rgba(255,200,0,0.18)]">
-              <div className="mb-3 grid grid-cols-[32px_1fr_32px] items-center gap-2">
-                <span />
-                <h2 className="text-center text-yellow-400 text-[18px] sm:text-[20px] font-black leading-tight">
-                  {isMa ? "عمر الفورم" : isEn ? "Fill in the form" : "Rellena el formulario"}
-                </h2>
-                <img
-                  src="https://upload.wikimedia.org/wikipedia/en/9/9a/Flag_of_Spain.svg"
-                  alt="España"
-                  className="h-5 w-8 rounded-[3px] object-cover shadow-[0_0_10px_rgba(255,255,255,0.20)]"
-                />
-              </div>
-              <p className="text-white/80 text-[13px] leading-relaxed mb-5">
-                {formIntro}
-              </p>
-              <div className="w-full">
-         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 mb-5">
-                  {/* Nombre */}
-       <div className="col-span-1 md:col-span-1">
-                    <label className="block text-white text-[13px] mb-2">
-                      {isMa ? "الاسم الكامل" : isEn ? "Full name" : "Nombre completo"}
-                    </label>
-                    <input
-                      type="text"
-                      placeholder={isMa ? "دخل سميتك" : isEn ? "Your name" : "Escribe tu nombre"}
-                      value={formData.fullName}
-                      onChange={(e) => onFormChange("fullName", e.target.value)}
-                      className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-[14px] text-white placeholder:text-white/30 focus:outline-none focus:border-yellow-400"
-                    />
-                  </div>
-
-{/* Teléfono internacional */}
-<div className="col-span-1 md:col-span-1">
-  <label className="block text-white text-[13px] mb-2">
-    {isMa ? "الهاتف" : isEn ? "Phone" : "Teléfono"}
-  </label>
-
-  <div className="flex gap-2 min-w-0">
-
-    <select
-      className="w-[92px] shrink-0 h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-2 text-center text-white"
-value={formData.preferredOffice}
-onChange={(e) =>
-  onFormChange("preferredOffice", e.target.value)
-}
-      id="countryCode"
-    >
-      <option value="+34">🇪🇸 +34</option>
-      <option value="+212">🇲🇦 +212</option>
-      <option value="+31">🇳🇱 +31</option>
-      <option value="+32">🇧🇪 +32</option>
-      <option value="+33">🇫🇷 +33</option>
-      <option value="+39">🇮🇹 +39</option>
-      <option value="+49">🇩🇪 +49</option>
-      <option value="+44">🇬🇧 +44</option>
-      <option value="+1">🇺🇸 +1</option>
-    </select>
-
-    <input
-      type="text"
-      placeholder="34644403748"
-      value={formData.phone}
-      onChange={(e) => onFormChange("phone", e.target.value)}
-      className="min-w-0 flex-1 h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white"
-    />
-
-  </div>
-</div>
-
-                  {/* Email */}
-                  <div>
-                    <label className="block text-white text-[13px] mb-2">
-                      Email
-                    </label>
-                    <input
-                      type="email"
-                      placeholder="tu@email.com"
-                      value={formData.email}
-                      onChange={(e) => onFormChange("email", e.target.value)}
-                      className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-[14px] text-white placeholder:text-white/30 focus:outline-none focus:border-yellow-400"
-                    />
-                  </div>
-
-              {/* Número de expediente */}
-<div>
-  <label className="block text-white text-[13px] mb-2">
-    Número de expediente
-  </label>
-
-  <input
-    type="text"
-    placeholder="467020260019841"
-    value={formData.expedienteNumero || ""}
-    onChange={(e) =>
-      onFormChange("expedienteNumero", e.target.value)
-    }
-    className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white"
-  />
-</div>
-
-{/* Identificador solicitud */}
-<div>
-  <label className="block text-white text-[13px] mb-2">
-    Identificador solicitud
-  </label>
-
-  <input
-    type="text"
-    placeholder="E46202600507573"
-    value={formData.identificadorSolicitud || ""}
-    onChange={(e) =>
-      onFormChange("identificadorSolicitud", e.target.value)
-    }
-    className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white"
-  />
-</div>
-{/* Fecha presentación solicitud */}
-<div className="min-w-0">
-  <label className="block text-white text-[13px] mb-2">
-    Fecha presentación solicitud
-  </label>
-
-  <input
-    type="date"
-    value={formData.fechaPresentacion || ""}
-    onChange={(e) =>
-      onFormChange("fechaPresentacion", e.target.value)
-    }
-    className="block w-full max-w-full min-w-0 h-[52px] box-border appearance-none rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white [color-scheme:dark]"
-  />
-</div>
-{/* Fecha nacimiento */}
-<div className="min-w-0">
-  <label className="block text-white text-[13px] mb-2">
-    Fecha nacimiento
-  </label>
-
-  <input
-    type="date"
-    value={formData.fechaNacimiento || ""}
-    onChange={(e) =>
-      onFormChange("fechaNacimiento", e.target.value)
-    }
-    className="block w-full max-w-full min-w-0 h-[52px] box-border appearance-none rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white [color-scheme:dark]"
-  />
-</div>
-
-              {/* Caja de reserva */}
-              <div className="mt-4 rounded-[28px] border-2 border-yellow-500 bg-gradient-to-b from-[#0b0b0b] to-[#050505] p-4 shadow-[0_0_35px_rgba(255,200,0,0.18)]">
-                <div className="flex items-start justify-between mb-4 pt-2">
-                  <div>
-                    <p className="text-white text-[15px] font-bold">
-                      {isMa ? "الملف favorable" : isEn ? "Favorable file status" : "Expediente favorable"}
-                    </p>
-                    <span className="inline-flex mt-1 rounded-full bg-gradient-to-r from-yellow-400 to-yellow-600 px-3 py-1 text-[10px] font-black uppercase tracking-wide text-black shadow-[0_0_15px_rgba(255,215,0,0.25)]">
-                      Premium
-                    </span>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-yellow-400 text-[34px] font-black leading-none drop-shadow-[0_0_10px_rgba(255,215,0,0.35)]">
-                      10€
-                    </p>
-                    <p className="text-yellow-300 text-[11px] font-semibold">
-                      {isMa ? "التحقق الأول" : isEn ? "Initial verification" : "Verificación inicial"}
-                    </p>
-                  </div>
-                </div>
-
-                <p className="text-gray-300 text-[13px] mb-5 leading-relaxed">
-                  {isMa
-                    ? "سارة غادي تبدا تراجع الملف ديالك أوتوماتيكيا"
-                    : isEn
-                    ? "Sara will automatically start checking your file"
-                    : "Sara empieza a verificar tu expediente automáticamente"}
-                </p>
-
-                <button
-                  type="button"
-              onClick={async () => {
-
-  if (
-!formData.fullName.trim() ||
-!formData.phone.trim() ||
-!formData.expedienteNumero.trim() ||
-!formData.identificadorSolicitud.trim() ||
-!formData.fechaPresentacion.trim() ||
-!formData.fechaNacimiento.trim()
-  ) {
-    toast({
-      title: ui.missingTitle,
-      description: ui.missingDesc,
-      variant: "destructive",
-    });
-
-    return;
-  }
-
-  try {
-
-const res = await fetch("/api/create-checkout-sara-inicial", {
-  method: "POST",
-
-  headers: {
-    "Content-Type": "application/json",
-  },
-
-body: JSON.stringify({
-
-  fullName: formData.fullName,
-
-  phone: formData.phone,
-
-  email: formData.email,
-
-  expedienteNumero:
-    formData.expedienteNumero,
-
-  identificadorSolicitud:
-    formData.identificadorSolicitud,
-
-  fechaPresentacion:
-    formData.fechaPresentacion,
-
-  fechaNacimiento:
-    formData.fechaNacimiento,
-
-}),
-});
-
-const data = await res.json();
-
-  if (data.url) {
-localStorage.setItem("saraPaid", "1");
-window.location.href = data.url;
-
-}
-  } catch (error) {
-
-    console.error(error);
-
- alert("Stripe error");
-
-  }
-
-}}
-                  className="w-full min-h-[56px] rounded-[20px] bg-gradient-to-r from-yellow-400 via-yellow-500 to-amber-500 px-4 py-2 text-[15px] leading-tight font-black text-black shadow-[0_0_30px_rgba(255,215,0,0.35)] transition-all duration-300 hover:scale-[1.01]"
-                >
-                  {isMa
-                    ? "🔐 خلص وبدأ التحقق"
-                    : isEn
-                    ? "🔐 Pay and start verification"
-                    : "🔐 Pagar y empezar verificación"}
-                </button>
-
-                <div className="mt-5 flex items-center justify-center gap-2 text-[11px] text-gray-300">
-                  <Shield className="w-3 h-3 text-yellow-400" />
-                  <span>
-                    {isMa
-                      ? "دفع آمن عبر Stripe"
-                      : isEn
-                      ? "Secure payment with Stripe"
-                      : "Pago seguro con Stripe"}
-                  </span>
-                </div>
-
-                <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
-                  <span className="rounded-full bg-white px-3 py-1 text-[11px] font-bold text-[#1434CB]">VISA</span>
-                  <span className="rounded-full bg-white px-3 py-1 text-[11px] font-bold text-[#EB001B]">Mastercard</span>
-                  <span className="rounded-full bg-white px-3 py-1 text-[11px] font-bold text-black"> Pay</span>
-                  <span className="rounded-full bg-white px-3 py-1 text-[11px] font-bold text-black">G Pay</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-            {hasRealAppointment && (
-              <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4">
-                <p className="text-sm font-bold text-emerald-800">
-                  {isMa ? "لقينا الموعد الحقيقي" : isEn ? "Real appointment found" : "Cita real encontrada"}
-                </p>
-                <p className="mt-2 text-sm text-gray-700">
-                  {isMa ? "النوع" : isEn ? "Procedure" : "Trámite"}: {appointmentData?.tramite || selectedTramiteLabel}
-                </p>
-                <p className="text-sm text-gray-700">{isMa ? "التاريخ" : isEn ? "Date" : "Fecha"}: {finalDate}</p>
-                <p className="text-sm text-gray-700">{isMa ? "الوقت" : isEn ? "Time" : "Hora"}: {finalTime}</p>
-                <p className="text-sm text-gray-700">{isMa ? "المكتب" : isEn ? "Office" : "Oficina"}: {finalOffice}</p>
-                <p className="text-sm text-gray-700">{isMa ? "رقم الموعد" : isEn ? "Locator" : "Localizador"}: {finalLocator}</p>
-              </div>
-            )}
-          </>
-  
-        ) : (
-          <>
-            <div className="rounded-[26px] border border-emerald-500/40 bg-[#07111f] px-5 py-7 mb-5 shadow-[0_0_30px_rgba(16,185,129,0.08)]">
-<div className="flex justify-center mb-4">
-  <div className="w-14 h-14 rounded-full border-2 border-emerald-400 bg-emerald-500/15 flex items-center justify-center shadow-[0_0_20px_rgba(16,185,129,0.35)]">
-    <CheckCircle2 className="w-8 h-8 text-emerald-400" />
-  </div>
-</div>
-              <h3 className="text-center text-white text-[18px] font-semibold leading-tight mb-3">
-                {isMa
-  ? "مبروك 🎉 بدينا نراجعو الملف ديالك. ملي يخرج favorable غادي نعلموك فالواتساب بشكل مستعجل."
-  : isEn
-  ? "Congratulations 🎉 We have started checking your file. As soon as it becomes favorable, we will urgently notify you on WhatsApp."
-  : "Felicidades 🎉 Hemos empezado a verificar tu expediente. En cuanto salga favorable te avisaremos urgentemente por WhatsApp."}
-              </h3>
-              <p className="text-center text-white/70 text-[14px] leading-relaxed">
-                {isMa
-                  ? "غادي نخبروك هنا ملي يكون جديد على الملف ديالك."
-                  : isEn
-                  ? "We will notify you here when there is news about your file."
-                  : "Te avisaremos aquí cuando haya novedades sobre tu expediente."}
-              </p>
-              
-
-<div className="mt-5 rounded-2xl border border-yellow-500/20 bg-yellow-500/10 p-4">
-
-  <div className="flex items-center gap-2 mb-2">
-
-    <div className="w-2.5 h-2.5 rounded-full bg-yellow-400 animate-pulse" />
-
-    <p className="text-yellow-300 font-bold text-sm">
-      Sara buscando 24/24
-    </p>
-
-  </div>
-
-  <p className="text-white/70 text-xs leading-relaxed">
-
-    {isMa
-      ? "سارة دابا كتراجع الملف ديالك وغادي توصلك رسالة فواتساب مباشرة ملي يخرج favorable."
-      : isEn
-      ? "Sara is now checking your file and you will receive a WhatsApp notification as soon as it becomes favorable."
-      : "Sara está verificando tu expediente ahora mismo y recibirás una notificación por WhatsApp en cuanto salga favorable."}
-
-  </p>
-
-</div>
-
-</div>
-
-            <div className="rounded-[30px] overflow-hidden border border-yellow-500/30 bg-[#050816] shadow-[0_0_40px_rgba(255,200,0,0.10)]">
-              <div className="px-6 py-8 bg-[radial-gradient(circle_at_top,rgba(255,200,0,0.12),transparent_60%)]">
-                <div className="flex justify-center mb-5">
-                  <img
-            src="https://upload.wikimedia.org/wikipedia/en/9/9a/Flag_of_Spain.svg"
-              alt="España"
-               className="w-20 h-14 object-cover rounded-lg shadow-[0_0_15px_rgba(255,255,255,0.15)] border border-white/20"
-                  />
-                </div>
-
-                <h2 className="text-center text-[#f6d06f] text-[36px] leading-[42px] font-black mb-5">
-                  {isMa
-                    ? "متابعة الملف بثقة"
-                    : isEn
-                    ? "File Follow-up with Confidence"
-                    : "Seguimiento de expediente con confianza"}
-                </h2>
-
-                <p className="text-center text-white/75 text-[15px] leading-relaxed mb-8">
-                  {isMa
-                    ? "كنعاونوك تتابع الملف ديالك وتخرج رقم الضمان الاجتماعي وتفتح alta بطريقة آمنة أونلاين."
-                    : isEn
-                    ? "We help you follow your file, get your Social Security number and open registration securely online."
-                    : "Te ayudamos a seguir tu expediente, sacar tu número de Seguridad Social y abrir alta de forma segura online."}
-                </p>
-
-                <div className="grid grid-cols-3 gap-3 text-center">
-                  <div>
-                    <Shield className="w-8 h-8 text-[#f6d06f] mx-auto mb-3" />
-                    <p className="text-white/80 text-[13px] leading-snug">
-                      {isMa ? "عملية آمنة" : isEn ? "Secure process" : "Proceso seguro"}
-                    </p>
-                  </div>
-                  <div>
-                    <Bell className="w-8 h-8 text-[#f6d06f] mx-auto mb-3" />
-                    <p className="text-white/80 text-[13px] leading-snug">
-                      {isMa ? "مساعدة للمهاجرين" : isEn ? "Immigration support" : "Atención a inmigrantes"}
-                    </p>
-                  </div>
-                  <div>
-                    <CheckCircle2 className="w-8 h-8 text-[#f6d06f] mx-auto mb-3" />
-                    <p className="text-white/80 text-[13px] leading-snug">
-                      {isMa ? "متابعة مضمونة" : isEn ? "Guaranteed follow-up" : "Seguimiento garantizado"}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="mt-8 text-center text-[#f6d06f] text-[24px] font-bold">
-                  {isMa
-                    ? "« خدمتك كتبدا بملف واضح. »"
-                    : isEn
-                    ? "\" Your process starts with a clear file. \""
-                    : "\" Tu trámite empieza con un expediente claro. \""}
-                </div>
-              </div>
-            </div>
-
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="flex flex-col items-center text-center py-10 gap-5"
-     >
-</motion.div>
-
-</>
-
-        )}
-
-</div>
-</motion.div>
-);
+interface ChatMsg {
+  from: "agent" | "user";
+  text: string;
+  ts?: number;
 }
 
-export default function BuscarCitas() {
-  // ✅ CORRECCIÓN PRINCIPAL: usamos lang del contexto y mapeamos a "ma" para la lógica interna
-  const { lang } = useLang();
-  const language = lang === "darija" ? "ma" : lang;
+type DocStatus = "ok" | "warn" | "missing";
 
-  const [location] = useLocation();
-const [selectedTramite, setSelectedTramite] = useState("primera_tie");
-  const [step, setStep] = useState(0);
-  const [muted, setMuted] = useState(false);
-const [confirmed, setConfirmed] = useState(
-  new URLSearchParams(window.location.search).get("success") === "true"
-);
-  const [showDocs, setShowDocs] = useState(false);
-  const [showForms, setShowForms] = useState(false);
-  const [profile, setProfile] = useState<ProfileRow | null>(null);
-  const [appointmentData, setAppointmentData] = useState<AppointmentResult | null>(null);
-  const [profileLoading, setProfileLoading] = useState(true);
-const [formData, setFormData] = useState<ClientFormData>({
-  fullName: "",
-  phone: "",
-  email: "",
+type StoredDocItem = {
+  id: string;
+  nombre: string;
+  archivo: string;
+  estado: DocStatus;
+  kb: string;
+  expectedType?: string;
+  detectedType?: string;
+  note?: string;
+  full_name?: string;
+  document_number?: string;
+  birth_date?: string;
+  expiry_date?: string;
+  verification_score?: number;
+  fraud_risk?: string;
+  final_verdict?: string;
+  document_date?: string;
+  uploadedAt?: string;
+  storagePath?: string;
+};
 
-  expedienteNumero: "",
-  identificadorSolicitud: "",
+type UserFormRow = {
+  id: string;
+  user_id: string;
+  case_id: string | null;
+  form_type: string;
+  title: string | null;
+  form_data: Record<string, any> | null;
+};
 
-  fechaPresentacion: "",
+// ✅ Países para selector
+const COUNTRIES = [
+  { code: "+34", flag: "🇪🇸", name: "España" },
+  { code: "+212", flag: "🇲🇦", name: "Marruecos" },
+  { code: "+33", flag: "🇫🇷", name: "Francia" },
+  { code: "+32", flag: "🇧🇪", name: "Bélgica" },
+  { code: "+31", flag: "🇳🇱", name: "Holanda" },
+  { code: "+49", flag: "🇩🇪", name: "Alemania" },
+  { code: "+39", flag: "🇮🇹", name: "Italia" },
+  { code: "+44", flag: "🇬🇧", name: "Reino Unido" },
+  { code: "+351", flag: "🇵🇹", name: "Portugal" },
+  { code: "+41", flag: "🇨🇭", name: "Suiza" },
+];
 
-  fechaNacimiento: "",
+function buildInitialDocs(procedureKey: string): StoredDocItem[] {
+  const procedure = getProcedureByKey(procedureKey) || EXTRANJERIA_PROCEDURES[0];
+  return procedure.requiredDocuments.map((doc) => ({
+    id: doc.id,
+    nombre: doc.name,
+    archivo: "",
+    estado: "missing" as DocStatus,
+    kb: "",
+    expectedType: doc.expectedType || "auto",
+    detectedType: "",
+    note: doc.notes || "",
+    uploadedAt: "",
+    storagePath: "",
+  }));
+}
 
-  preferredOffice: "+34",
+function normalizeDocType(value?: string) {
+  return (value || "").trim().toLowerCase();
+}
 
-  nie: "",
-  passport: "",
-  nationality: "",
-  birthYear: "",
-  city: "",
-  province: "",
-});
-const [formReady, setFormReady] = useState(
-  localStorage.getItem("saraPaid") === "1"
-);
-  const [voiceSupported, setVoiceSupported] = useState(true);
-  const [isListening, setIsListening] = useState(false);
-  const [waitingSara, setWaitingSara] = useState(false);
-  const [voiceHistory, setVoiceHistory] = useState<ChatMsg[]>([]);
-  const [lastUserTranscript, setLastUserTranscript] = useState("");
+export default function Regularizacion2026() {
 
-  const remoteAudioRef = useRef<HTMLAudioElement | null>(null);
-  const realtimePcRef = useRef<RTCPeerConnection | null>(null);
-  const realtimeDcRef = useRef<RTCDataChannel | null>(null);
-  const realtimeLocalStreamRef = useRef<MediaStream | null>(null);
-  const assistantTextBufferRef = useRef("");
-  const lastUserTranscriptRef = useRef("");
-  const lastAssistantTextRef = useRef("");
-  const shouldKickoffSaraRef = useRef(false);
-
-  const urlParams = useMemo(() => {
-    const url = new URL(window.location.href);
-    return {
-      token: url.searchParams.get("token") || "",
-      appointmentId: url.searchParams.get("appointment_id") || "",
+  useEffect(() => {
+    const handlePaidFlow = async () => {
+      const params = new URLSearchParams(window.location.search);
+      const paid = params.get("paid");
+      (window as any).paid = paid;
+      if (paid === "true") {
+        console.log("✅ CLIENT PAID");
+        paymentDoneRef.current = true;
+        setPaymentCompleted(true);
+        setShowStripe(false);
+        setPaymentRequired(false);
+        questionFlowLockedRef.current = false;
+        
+        setQuestionIndex(0);
+        setDocumentsUnlocked(true);
+        setConfirmUnlocked(true);
+        setQuestionsDone(true);
+        setStep("upload");
+        
+        toast({
+          title: "📄 Documentos",
+          description: "Sube tus documentos para comenzar la verificación",
+        });
+      }
+      setShowStripe(false);
+      setPaymentRequired(false);
     };
-  }, [location]);
+    handlePaidFlow();
+  }, []);
 
+  const handleStripePayment = async () => {
+    try {
+      const res = await fetch("/api/create-checkout-session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productType: "regularizacion" }),
+      });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        toast({ title: "❌ Stripe", description: "فيه مشكل", variant: "destructive" });
+      }
+    } catch (err) {
+      console.error(err);
+      toast({ title: "❌ خطأ", description: "فالكونكسيون", variant: "destructive" });
+    }
+  };
+
+  const [selectedSituacion] = useState("regularizacion_2026_laboral");
+  const [leadSaved, setLeadSaved] = useState(false);
+  const [generalUploading, setGeneralUploading] = useState(false);
+  const [workflowStep, setWorkflowStep] = useState("idle");
+  const [completionMessageSent, setCompletionMessageSent] = useState(false);
+  const [voiceHistory, setVoiceHistory] = useState<ChatMsg[]>([]);
+  const [currentStep, setCurrentStep] = useState(0);
+  const [savingForm, setSavingForm] = useState(false);
+  const [waitingForDocument, setWaitingForDocument] = useState(false);
+  const [documentsUnlocked, setDocumentsUnlocked] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState("");
+  const [formConfirmed, setFormConfirmed] = useState(false);
+  const [confirmUnlocked, setConfirmUnlocked] = useState(false);
+  
+  // ✅ Estado para teléfono con país
+  const [selectedCountry, setSelectedCountry] = useState(COUNTRIES[0]);
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [showCountryDropdown, setShowCountryDropdown] = useState(false);
+  
+  const [questionsDone, setQuestionsDone] = useState(false);
+  const [clientQuestionsDone, setClientQuestionsDone] = useState(false);
+  const [questionIndex, setQuestionIndex] = useState(0);
+  const [expulsionVerified, setExpulsionVerified] = useState(false);
+  const [docsUploaded, setDocsUploaded] = useState(false);
+  const [docsVerified, setDocsVerified] = useState(false);
+  const [whatsappReady, setWhatsappReady] = useState(false);
+  const [sendingToWhatsApp, setSendingToWhatsApp] = useState(false);
+  const [analysisResult, setAnalysisResult] = useState<{ 
+    hasPassport: boolean; 
+    hasMonths: boolean; 
+    days: number; 
+    hasExpulsion: boolean; 
+    expulsionExpired: boolean; 
+    completo: boolean;
+    strongProofs: number;
+    weakProofs: number;
+    docsAnalysis: string[];
+    asiloAnalysis: string;
+    expulsionAnalysis: string;
+    policiaAnalysis: string;
+    nombreCliente: string;
+  }>({
+    hasPassport: false,
+    hasMonths: false,
+    days: 0,
+    hasExpulsion: false,
+    expulsionExpired: false,
+    completo: false,
+    strongProofs: 0,
+    weakProofs: 0,
+    docsAnalysis: [],
+    asiloAnalysis: "No se detectaron documentos de asilo",
+    expulsionAnalysis: "No se detectaron documentos de expulsión",
+    policiaAnalysis: "No se detectaron documentos policiales",
+    nombreCliente: "",
+  });
+
+  useEffect(() => {
+    localStorage.setItem("questionIndex", questionIndex.toString());
+  }, [questionIndex]);
+
+  const questionFlowLockedRef = useRef(false);
+  const paymentDoneRef = useRef(false);
+  const [paymentCompleted, setPaymentCompleted] = useState(false);
+  const [clientQuestionIndex, setClientQuestionIndex] = useState(0);
+  const [showStripe, setShowStripe] = useState(false);
+  const [paymentRequired, setPaymentRequired] = useState(false);
+
+  // ✅ NUEVO ESTADO formData
+  const [formData, setFormData] = useState<ClientFormData>({
+    fullName: "",
+    phone: "",
+    email: "",
+
+    expedienteNumero: "",
+    identificadorSolicitud: "",
+
+    fechaPresentacion: "",
+    fechaNacimiento: "",
+
+    direccion: "",
+    codigoPostal: "",
+    ciudad: "",
+    provincia: "",
+
+    preferredOffice: "+34",
+
+    nie: "",
+    passport: "",
+    nationality: "",
+    birthYear: "",
+
+    city: "",
+    province: "",
+  });
+
+  // ✅ NUEVA FUNCIÓN onFormChange
+  const onFormChange = (field: keyof ClientFormData, value: string) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const [step, setStep] = useState<"questions" | "upload" | "verify" | "done">("questions");
+
+  const { t, lang } = useLang();
   const { toast } = useToast();
-  const scheduleMutation = useScheduleAppointment();
 
-  const isMa = language === "ma";
-  const isEn = language === "en";
+  const safeLang = (lang === "darija" || lang === "en" ? lang : "es") as "darija" | "es" | "en";
 
-  const voiceTexts = useMemo(
-    () => ({
-      initialVoice:
-        "السلام عليكم مرحبا بك في هيستوريا إي آي أنا سارة غادي نعاونك باش تلقا موعد في أقرب وقت عمر ليا الفورمولار ومن بعد كليك على confirm",
-      savedLeadReply:
-        "مزيان دابا توصلنا بالمعلومة ديالك غادي نبدأ نقلب لك على موعد 24 ساعة على 24 وغادي نصيفط لك واتساب إلا بان الموعد",
-      foundMsg:
-        "لقينا لك السيطا ديالك دابا دخل بسرعة وكليكي على confirm باش ما تطيرش عليك",
-      confirmMsg:
-        "مبروك عليك تأكدات السيطا ديالك شكرا على الثقة ديالك في هيستوريا إي آي",
-    }),
-    []
-  );
+  const currentProcedure = getProcedureByKey(selectedSituacion) || null;
+  if (!currentProcedure) return null;
 
   const ui = useMemo(() => {
+    if (safeLang === "darija") {
+      return {
+        online: "متصل الآن",
+        role: "مختص فالهجرة",
+        voiceButton: "تكلم مع سفيان",
+        stopButton: "وقف الميكروفون",
+        saveLeadButton: savingForm ? "كيتحفظ..." : "حفظ المعطيات والمتابعة مع سفيان",
+        saveLeadTitle: "تحفظات المعطيات",
+        saveLeadDesc: "سفيان يقدر دابا يبدا معاك بالصوت.",
+        formTitle: "لوحة رسمية مدمجة",
+        formDesc: "عمر المعطيات الأساسية باش سفيان يبدا يراجع الملف ديالك بالصوت.",
+        uploadGeneral: generalUploading ? "كيترفع..." : "رفع الوثائق",
+        uploadGeneralDesc: "من هنا تقدر ترفع جميع الوثائق اللي طلب منك سفيان، سواء كانت صورة أو PDF.",
+        uploading: "كيترفع...",
+        uploadSuccessTitle: "تقبلات الوثيقة",
+        uploadSuccessDesc: "راجعنا الوثيقة وربطناها مع الملف.",
+        uploadErrorTitle: "خطأ فالوثيقة",
+        uploadErrorDesc: "ما قدرناش نربط هاد الوثيقة مع الملف.",
+        missingTitle: "كاينين بيانات ناقصين",
+        missingDesc: "عمر الاسم والهاتف والمدينة قبل ما تكمل.",
+        listening: "سفيان كيسمع ليك دابا...",
+        latestReply: "آخر جواب ديال سفيان",
+        yourVoice: "آخر جواب ديالك بالصوت",
+        micNotSupported: "هاد المتصفح ما كيدعمش الصوت المباشر. استعمل Chrome حديث.",
+        docStatusTitle: "حالة الملف ديالك",
+        docStatusDone: "جاهز",
+        docStatusReview: "مراجعة",
+        docStatusMissing: "ناقص",
+        docStepForm: "الفورمولار معمر",
+        docStepStayProof: "بروفات ديال 5 شهور",
+        docStepIdentity: "الباسبور أو NIE",
+        docStepFinal: "الملف النهائي واجد",
+        goSara: "المرور إلى سارة",
+        goSaraDesc: "إلى بغيتي تكمل بالموعد، سارة غادي تعاونك.",
+        labels: {
+          nombre: "الاسم الكامل",
+          telefono: "الهاتف",
+          niePasaporte: "NIE / الباسبور",
+          ciudad: "المدينة",
+          nacionalidad: "الجنسية",
+          fechaLlegada: "تاريخ الدخول لإسبانيا",
+          cumple5Meses: "واش عندك 5 شهور متواصلة؟",
+          asilo: "واش عندك طلب لجوء؟",
+          penales: "سوابق عدلية",
+          select: "اختر",
+          yes: "نعم",
+          no: "لا",
+          dontKnow: "ما عرفت",
+        },
+      };
+    }
     return {
- tramites: [
-
-{
-  value: "primera_tie",
-  label: isMa
-    ? "البصمات - أول TIE"
-    : isEn
-    ? "First TIE - Fingerprints"
-    : "Primera TIE (Toma de huellas)",
-},
-
-{
-  value: "renovacion_nie",
-  label: isMa
-    ? "تجديد NIE أو TIE"
-    : isEn
-    ? "NIE / TIE Renewal"
-    : "Renovación NIE / TIE",
-},
-
-{
-  value: "reagrupacion_familiar",
-  label: isMa
-    ? "التجمع العائلي"
-    : isEn
-    ? "Family Reunification"
-    : "Reagrupación Familiar",
-},
-
-{
-  value: "arraigo",
-  label: isMa
-    ? "الاستقرار (أرايغو)"
-    : isEn
-    ? "Arraigo Residence"
-    : "Arraigo",
-},
-
-{
-  value: "familiar_ue",
-  label: isMa
-    ? "فرد من عائلة مواطن أوروبي"
-    : isEn
-    ? "EU Family Member"
-    : "Familiar de Ciudadano UE",
-},
-
-{
-  value: "certificado_ue",
-  label: isMa
-    ? "شهادة مواطن أوروبي"
-    : isEn
-    ? "EU Registration Certificate"
-    : "Certificado de Registro UE",
-},
-
-{
-  value: "autorizacion_regreso",
-  label: isMa
-    ? "رخصة الرجوع"
-    : isEn
-    ? "Return Authorization"
-    : "Autorización de Regreso",
-},
-
-{
-  value: "larga_duracion",
-  label: isMa
-    ? "الإقامة طويلة المدة"
-    : isEn
-    ? "Long-Term Residence"
-    : "Residencia de Larga Duración",
-},
-
-{
-  value: "estudios",
-  label: isMa
-    ? "إقامة الدراسة"
-    : isEn
-    ? "Student Residence"
-    : "Estancia por Estudios",
-},
-
-{
-  value: "asilo",
-  label: isMa
-    ? "اللجوء والحماية الدولية"
-    : isEn
-    ? "Asylum and International Protection"
-    : "Asilo y Protección Internacional",
-},
-
-] as TramiteItem[],
-
-      docsByTramite: {
-        tie: [
-          { nombre: "Pasaporte o NIE vigente", estado: "ok" as DocState },
-          { nombre: "Empadronamiento actual", estado: "ok" as DocState },
-        ],
-      } as Record<string, DocItem[]>,
-
-      formsByTramite: {
-        tie: [
-          { nombre: "Formulario EX-17", codigo: "EX-17", url: "https://example.com" },
-        ],
-      } as Record<string, FormItem[]>,
-
-      online: isMa ? "أونلاين" : isEn ? "Online" : "En línea",
-
-      agentRole: isMa ? "مساعدة المواعيد" : isEn ? "Appointments Assistant" : "Asesora de Citas",
-
-      procedurePlaceholder: isMa
-        ? "اختار نوع السيتا"
-        : isEn
-        ? "Select appointment type"
-        : "Seleccione el trámite entre los relacionados",
-
-      loadingUserData: isMa
-        ? "جاري تحميل المعلومات..."
-        : isEn
-        ? "Loading user data..."
-        : "Cargando datos del usuario...",
-
-      govSmall: "extranjería:",
-      govTitle: "CITA PREVIA",
-      govLine1: "COMISARÍA GENERAL",
-      govLine2: "DE EXTRANJERÍA",
-      govLine3: "E INMIGRACIÓN",
-
-      confirmTitle: isMa ? "تم تأكيد الموعد!" : isEn ? "APPOINTMENT CONFIRMED!" : "¡CITA CONFIRMADA!",
-
-      date: isMa ? "التاريخ" : isEn ? "Date" : "Fecha",
-      time: isMa ? "الوقت" : isEn ? "Time" : "Hora",
-      office: isMa ? "المكتب" : isEn ? "Office" : "Oficina",
-      appointmentNumber: isMa ? "رقم الموعد" : isEn ? "Appointment Number" : "Nº Cita",
-
-      reservationSaved: isMa
-        ? "تم حفظ الحجز"
-        : isEn
-        ? "Reservation saved"
-        : "Reserva guardada correctamente",
-
-      sourceLabel: isMa ? "المصدر الرسمي" : isEn ? "Official source" : "Fuente oficial",
-
-      foundSuccessTitle: isMa ? "لقينا الموعد!" : isEn ? "Appointment found!" : "¡Cita encontrada!",
-      foundSuccessDesc: isMa ? "أكد الموعد دابا" : isEn ? "Confirm now to continue." : "Ahora confirma para continuar.",
-      foundErrorTitle: isMa ? "خطأ" : isEn ? "Error" : "Error al buscar cita",
-      foundErrorDesc: isMa ? "ما قدرناش نلقاو الموعد" : isEn ? "Could not search appointment." : "No se pudo buscar la cita en este momento.",
-
-      confirmSuccessTitle: isMa ? "تم تأكيد الموعد" : isEn ? "Appointment confirmed!" : "¡Cita confirmada!",
-      confirmSuccessDesc: isMa
-        ? "تم حفظ الحجز"
-        : isEn
-        ? "Reservation saved correctly."
-        : "La reserva ha quedado registrada correctamente.",
-
-      procedureShort: isMa ? "النوع" : isEn ? "Procedure" : "Trámite",
-
-      openOfficialSite: isMa ? "فتح الموقع الرسمي" : isEn ? "Open official website" : "Abrir sede oficial",
-      downloadPdf: isMa ? "تحميل PDF" : isEn ? "Download PDF" : "Descargar PDF",
-
-      voiceButton: isMa ? "تكلم مع سارة" : isEn ? "Talk with Sara" : "Hablar con Sara",
-      stopButton: isMa ? "وقف الميكرو" : isEn ? "Stop microphone" : "Parar micrófono",
-
-      latestReply: isMa ? "آخر رد من سارة" : isEn ? "Latest Sara reply" : "Última respuesta de Sara",
-      yourVoice: isMa ? "آخر كلام ديالك" : isEn ? "Your latest voice" : "Tu última respuesta por voz",
-      listening: isMa ? "سارة كتسمع ليك..." : isEn ? "Sara is listening..." : "Sara te está escuchando ahora...",
-
-      saveTitle: isMa ? "تم حفظ المعلومات" : isEn ? "Data saved" : "Datos guardados",
-      saveDesc: isMa ? "سارة غادي تكمل معاك" : isEn ? "Sara can continue now." : "Sara ya puede continuar contigo.",
-
-      missingTitle: isMa ? "معلومات ناقصة" : isEn ? "Missing data" : "Faltan datos",
-      missingDesc: isMa
-        ? "دخل الاسم والهاتف والمدينة"
-        : isEn
-        ? "Fill name, phone and city."
-        : "Rellena nombre, teléfono y ciudad antes de continuar.",
-
-      openRealtimeError: isMa
-        ? "المتصفح ما كيدعمش الصوت"
-        : isEn
-        ? "Browser does not support audio."
-        : "Este navegador no soporta audio. Usa Chrome moderno.",
-
-      // Textos del footer / barra de abajo
-      docsButton: isMa ? "الوثائق" : isEn ? "Documents" : "Documentos",
-      formsButton: isMa ? "الاستمارات" : isEn ? "Forms" : "Formularios",
-      docsRequiredTitle: isMa ? "الوثائق المطلوبة" : isEn ? "Required documents" : "Documentos requeridos",
-      formsOfficialTitle: isMa ? "الاستمارات الرسمية" : isEn ? "Official forms" : "Formularios oficiales",
-
-      // Título página
-      pageTitle: isMa ? "البحث على المواعيد" : isEn ? "Find appointments" : "Buscar citas",
-      pageTitleConfirm: isMa ? "سارة: تأكيد الموعد" : isEn ? "Sara: appointment confirmation" : "Sara: confirmación de cita",
-
-      // Mensaje Sara al guardar lead
-      agentSavedMsg: isMa
-        ? "مزيان. دابا كنقلبو على الموعد ديالك. غادي نخبروك فالواتساب في أقل من 24 ساعة."
-        : isEn
-        ? "Perfect. We are already looking for your appointment. We will notify you on WhatsApp within 24 hours."
-        : "Perfecto. Ya estamos buscando tu cita. Te avisaremos por WhatsApp en menos de 24h.",
-
-      // Confirmar cita botón
-      confirmBtn: isMa ? "تأكيد الموعد" : isEn ? "Confirm appointment" : "Confirmar cita",
-
-      // Errores varios
-      noRealAppointmentTitle: isMa ? "ما كاين حتى موعد حقيقي" : isEn ? "No real appointment" : "No hay cita real",
-      noRealAppointmentDesc: isMa
-        ? "ما تقدرش تأكد موعد ناقص"
-        : isEn
-        ? "You cannot confirm an incomplete appointment."
-        : "No puedes confirmar una cita inventada o incompleta.",
-
-      stripeErrorTitle: isMa ? "خطأ في الدفع" : isEn ? "Payment error" : "Error Stripe",
-      stripeErrorDesc: isMa ? "ما قدرناش نفتحو الدفع" : isEn ? "Could not open payment." : "No se pudo abrir el pago",
-
-      saveErrorTitle: isMa ? "خطأ" : isEn ? "Error" : "Error",
-      saveErrorDesc: isMa ? "ما قدرناش نحفظو المعلومات" : isEn ? "Could not save data." : "No se pudo guardar el cliente",
-
-      panelUpdated: isMa ? "تحدث اللوحة" : isEn ? "Panel updated" : "Panel actualizado",
-
-      selectTramiteTitle: isMa ? "اختار نوع الموعد" : isEn ? "Select procedure" : "Selecciona trámite",
-      selectTramiteDesc: isMa
-        ? "اختار نوع الموعد قبل تكمل"
-        : isEn
-        ? "Choose the appointment type before continuing."
-        : "Elige el tipo de cita antes de continuar.",
+      online: "En línea",
+      role: "Especialista en Extranjería",
+      voiceButton: "Hablar con Soufiane",
+      stopButton: "Parar micrófono",
+      saveLeadButton: savingForm ? "Guardando..." : "Guardar datos y continuar con Soufiane",
+      saveLeadTitle: "Datos guardados",
+      saveLeadDesc: "Soufiane ya puede empezar contigo por voz.",
+      formTitle: "Panel oficial integrado",
+      formDesc: "Rellena los datos básicos para que Soufiane empiece a revisar tu caso por voz.",
+      uploadGeneral: generalUploading ? "Subiendo..." : "Subir documentos",
+      uploadGeneralDesc: "Usa este botón para subir todos los documentos que te pida Soufiane, en foto o PDF.",
+      uploading: "Subiendo...",
+      uploadSuccessTitle: "Documento recibido",
+      uploadSuccessDesc: "El documento se ha vinculado correctamente al expediente.",
+      uploadErrorTitle: "Error en documento",
+      uploadErrorDesc: "No se pudo vincular el documento al expediente.",
+      missingTitle: "Faltan datos",
+      missingDesc: "Rellena nombre, teléfono y ciudad antes de continuar.",
+      listening: "Soufiane te está escuchando ahora...",
+      latestReply: "Última respuesta de Soufiane",
+      yourVoice: "Tu última respuesta por voz",
+      micNotSupported: "Este navegador no soporta voz en tiempo real. Usa Chrome moderno.",
+      docStatusTitle: "Estado de tu expediente",
+      docStatusDone: "Listo",
+      docStatusReview: "Revisar",
+      docStatusMissing: "Falta",
+      docStepForm: "Formulario completado",
+      docStepStayProof: "Pruebas de 5 meses",
+      docStepIdentity: "Pasaporte o NIE",
+      docStepFinal: "Expediente final listo",
+      goSara: "Ir con Sara",
+      goSaraDesc: "Si quieres seguir con la cita, Sara te ayuda.",
+      labels: {
+        nombre: "Nombre completo",
+        telefono: "Teléfono",
+        niePasaporte: "NIE / Pasaporte",
+        ciudad: "Ciudad",
+        nacionalidad: "Nacionalidad",
+        fechaLlegada: "Fecha llegada a España",
+        cumple5Meses: "¿Cumples 5 meses continuos?",
+        asilo: "¿Tienes solicitud de asilo?",
+        penales: "Antecedentes penales",
+        select: "Selecciona",
+        yes: "Sí",
+        no: "No",
+        dontKnow: "No sé",
+      },
     };
-  }, [language]);
+  }, [safeLang, savingForm, generalUploading]);
 
-  const TRAMITES = ui.tramites;
+  const [docs, setDocs] = useState<StoredDocItem[]>(buildInitialDocs(selectedSituacion));
 
-  const selectedTramiteLabel =
-    TRAMITES.find((item) => item.value === selectedTramite)?.label || TRAMITES[0].label;
+  const historyStorageKey = useMemo(() => `gestoriacitaia_soufiane_voice_history_${selectedSituacion}`, [selectedSituacion]);
+  const formStorageKey = useMemo(() => `gestoriacitaia_soufiane_form_${selectedSituacion}`, [selectedSituacion]);
+  const leadSavedStorageKey = useMemo(() => `gestoriacitaia_soufiane_lead_saved_${selectedSituacion}`, [selectedSituacion]);
+  const stepStorageKey = useMemo(() => `gestoriacitaia_soufiane_step_${selectedSituacion}`, [selectedSituacion]);
+  const docsStorageKey = useMemo(() => `gestoriacitaia_soufiane_docs_${selectedSituacion}`, [selectedSituacion]);
 
-  const voiceStorageKey = useMemo(() => {
-    const userId = profile?.id || "guest";
-    return `gestoriacitaia_sara_voice_${userId}`;
-  }, [profile?.id]);
-
-  const docsForSelectedTramite =
-    ui.docsByTramite[selectedTramite] ?? ui.docsByTramite.tie;
-
-  const formsForSelectedTramite =
-    ui.formsByTramite[selectedTramite] ?? ui.formsByTramite.tie;
+  // ✅ ACTUALIZADO con formData
+  const leadFormReady =
+    !!formData.fullName.trim() &&
+    !!formData.phone.trim() &&
+    !!formData.city.trim();
 
   useEffect(() => {
-    const supported =
-      typeof window !== "undefined" &&
-      typeof window.RTCPeerConnection !== "undefined" &&
-      typeof navigator !== "undefined" &&
-      !!navigator.mediaDevices?.getUserMedia;
-    setVoiceSupported(Boolean(supported));
-  }, []);
-
-  useEffect(() => {
-    const loadProfile = async () => {
+    let active = true;
+    const loadAuth = async () => {
       try {
-        setProfileLoading(true);
-        const { data: sessionData } = await supabase.auth.getSession();
-        const user = sessionData?.session?.user;
-        if (!user?.id) {
-          setProfile(null);
-          setProfileLoading(false);
-          return;
-        }
-        const { data, error } = await supabase
-          .from("profiles")
-          .select("id,email,full_name,phone,nie")
-          .eq("id", user.id)
-          .maybeSingle();
-        if (error) {
-          setProfile(null);
-        } else {
-          setProfile((data as ProfileRow | null) ?? null);
-        }
-      } catch {
-        setProfile(null);
-      } finally {
-        setProfileLoading(false);
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!active) return;
+        setCurrentUserId(session?.user?.id || "");
+        setAuthChecked(true);
+      } catch (error) {
+        console.error("Error cargando sesión:", error);
+        if (!active) return;
+        setCurrentUserId("");
+        setAuthChecked(true);
       }
     };
-    loadProfile();
+    loadAuth();
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setCurrentUserId(session?.user?.id || "");
+      setAuthChecked(true);
+    });
+    return () => {
+      active = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   useEffect(() => {
-    setFormData((prev) => ({
-      ...prev,
-      fullName: profile?.full_name?.trim() || prev.fullName,
-      phone: profile?.phone?.trim() || prev.phone,
-      nie: profile?.nie?.trim() || prev.nie,
-    }));
-  }, [profile?.full_name, profile?.phone, profile?.nie]);
+    if (!currentUserId || !authChecked) return;
+    const docsChannel = supabase
+      .channel(`docs-${currentUserId}`)
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "user_documents", filter: `user_id=eq.${currentUserId}` },
+        async (payload) => {
+          const newDoc = payload.new as any;
+          const docName = newDoc.title || newDoc.original_name || "documento";
+          setTimeout(() => { console.log("doc received"); }, 1500);
+        }
+      )
+      .subscribe();
+
+    const formsChannel = supabase
+      .channel(`forms-${currentUserId}`)
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "user_forms", filter: `user_id=eq.${currentUserId}` },
+        async (payload) => {
+          const formData = payload.new as any;
+          if (formData.form_type === "regularizacion_2026") {
+            setTimeout(() => {
+              toast({ title: "✅ Guardado", description: "المعطيات ديالك تحفظات فالنظام" });
+            }, 1000);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(docsChannel);
+      supabase.removeChannel(formsChannel);
+    };
+  }, [currentUserId, authChecked]);
 
   useEffect(() => {
-    if (!voiceStorageKey) return;
     try {
-      const raw = localStorage.getItem(voiceStorageKey);
+      const rawForm = localStorage.getItem(formStorageKey);
+      if (rawForm) {
+        const parsed = JSON.parse(rawForm) as ClientFormData;
+        setFormData({
+          fullName: parsed?.fullName || "",
+          phone: parsed?.phone || "",
+          email: parsed?.email || "",
+          expedienteNumero: parsed?.expedienteNumero || "",
+          identificadorSolicitud: parsed?.identificadorSolicitud || "",
+          fechaPresentacion: parsed?.fechaPresentacion || "",
+          fechaNacimiento: parsed?.fechaNacimiento || "",
+          direccion: parsed?.direccion || "",
+          codigoPostal: parsed?.codigoPostal || "",
+          ciudad: parsed?.ciudad || "",
+          provincia: parsed?.provincia || "",
+          preferredOffice: parsed?.preferredOffice || "+34",
+          nie: parsed?.nie || "",
+          passport: parsed?.passport || "",
+          nationality: parsed?.nationality || "",
+          birthYear: parsed?.birthYear || "",
+          city: parsed?.city || "",
+          province: parsed?.province || "",
+        });
+      }
+      const rawLeadSaved = localStorage.getItem(leadSavedStorageKey);
+      const saved = rawLeadSaved === "true";
+      setLeadSaved(saved);
+      setFormConfirmed(saved);
+      const rawDocs = localStorage.getItem(docsStorageKey);
+      if (rawDocs) {
+        const parsedDocs = JSON.parse(rawDocs) as StoredDocItem[];
+        if (Array.isArray(parsedDocs) && parsedDocs.length > 0) setDocs(parsedDocs);
+      }
+      const rawStep = localStorage.getItem(stepStorageKey);
+      if (rawStep) setCurrentStep(parseInt(rawStep));
+    } catch (error) {
+      console.error("Error cargando estado:", error);
+    }
+  }, [formStorageKey, leadSavedStorageKey, docsStorageKey]);
+
+  useEffect(() => {
+    try { localStorage.setItem(formStorageKey, JSON.stringify(formData)); }
+    catch (error) { console.error("Error guardando formulario:", error); }
+  }, [formData, formStorageKey]);
+
+  useEffect(() => {
+    try { localStorage.setItem(leadSavedStorageKey, leadSaved || formConfirmed ? "true" : "false"); }
+    catch (error) { console.error("Error guardando leadSaved:", error); }
+  }, [leadSaved, formConfirmed, leadSavedStorageKey]);
+
+  useEffect(() => {
+    try { localStorage.setItem(docsStorageKey, JSON.stringify(docs)); }
+    catch (error) { console.error("Error guardando docs:", error); }
+  }, [docs, docsStorageKey]);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(historyStorageKey);
       if (raw) {
         const parsed = JSON.parse(raw) as ChatMsg[];
         if (Array.isArray(parsed) && parsed.length > 0) {
           setVoiceHistory(parsed);
+          const leadAlreadySaved = parsed.some((m) => m.from === "agent" && m.text.includes("المعطيات ديالك تحفظات"));
+          setLeadSaved((prev) => prev || leadAlreadySaved);
+          setFormConfirmed((prev) => prev || leadAlreadySaved);
           return;
         }
       }
-      setVoiceHistory([{ from: "agent", text: voiceTexts.initialVoice, ts: Date.now() }]);
-    } catch {
-      setVoiceHistory([{ from: "agent", text: voiceTexts.initialVoice, ts: Date.now() }]);
+      setVoiceHistory([{ from: "agent", text: "مرحبا بك", ts: Date.now() }]);
+    } catch (error) {
+      console.error("Error cargando historial:", error);
+      setVoiceHistory([{ from: "agent", text: "مرحبا بك", ts: Date.now() }]);
     }
-  }, [voiceStorageKey, voiceTexts.initialVoice]);
+  }, [historyStorageKey]);
 
   useEffect(() => {
-    if (!voiceStorageKey || voiceHistory.length === 0) return;
-    localStorage.setItem(voiceStorageKey, JSON.stringify(voiceHistory));
-  }, [voiceHistory, voiceStorageKey]);
+    if (voiceHistory.length === 0) return;
+    try { localStorage.setItem(historyStorageKey, JSON.stringify(voiceHistory)); }
+    catch (error) { console.error("Error guardando historial:", error); }
+  }, [voiceHistory, historyStorageKey]);
+
+  const identityDocs = docs.filter((doc) => {
+    const expected = normalizeDocType(doc.expectedType);
+    const detected = normalizeDocType(doc.detectedType);
+    const name = doc.nombre.toLowerCase();
+    return expected === "passport" || expected === "nie" || expected === "tie" ||
+      detected === "passport" || detected === "nie" || detected === "tie" ||
+      name.includes("pasaporte") || name.includes("passport") || name.includes("nie");
+  });
+
+  const stayProofDocs = docs.filter((doc) => {
+    const expected = normalizeDocType(doc.expectedType);
+    const detected = normalizeDocType(doc.detectedType);
+    const name = doc.nombre.toLowerCase();
+    const note = (doc.note || "").toLowerCase();
+    return expected === "empadronamiento" || expected === "stay_proof" ||
+      detected === "empadronamiento" || detected === "stay_proof" ||
+      name.includes("empadronamiento") || name.includes("padron") || name.includes("padrón") ||
+      name.includes("prueba de permanencia") || note.includes("empadronamiento") ||
+      note.includes("stay proof") || note.includes("prueba de permanencia");
+  });
+
+  const asiloDocs = docs.filter((doc) => {
+    const text = (doc.nombre + " " + (doc.detectedType || "") + " " + (doc.note || "")).toLowerCase();
+    return text.includes("asilo") || text.includes("refugio") || text.includes("protección") || text.includes("asylum");
+  });
+
+  const expulsionDocs = docs.filter((doc) => {
+    const text = (doc.nombre + " " + (doc.detectedType || "") + " " + (doc.note || "")).toLowerCase();
+    return text.includes("expulsion") || text.includes("expulsión") || text.includes("deportacion") || text.includes("deportation") || text.includes("retorno");
+  });
+
+  const policiaDocs = docs.filter((doc) => {
+    const text = (doc.nombre + " " + (doc.detectedType || "") + " " + (doc.note || "")).toLowerCase();
+    return text.includes("policia") || text.includes("policía") || text.includes("comisaria") || text.includes("comisaría") || text.includes("denuncia") || text.includes("atestado");
+  });
+
+  const formCompletedStatus: DocStatus = leadSaved || formConfirmed ? "ok" : "missing";
+  const stayProofStatus: DocStatus =
+    stayProofDocs.some((doc) => doc.estado === "ok") ? "ok" :
+    stayProofDocs.some((doc) => doc.estado === "warn") ? "warn" : "missing";
+  const identityStatus: DocStatus =
+    identityDocs.some((doc) => doc.estado === "ok") ? "ok" :
+    identityDocs.some((doc) => doc.estado === "warn") ? "warn" : "missing";
+  const finalFileStatus: DocStatus =
+    formCompletedStatus === "ok" && stayProofStatus === "ok" && identityStatus === "ok" ? "ok" :
+    formCompletedStatus === "warn" || stayProofStatus === "warn" || identityStatus === "warn" ? "warn" : "missing";
+
+  const handleQuestionFlow = () => {
+    if (questionFlowLockedRef.current) return;
+    console.log("QUESTION CURRENT:", questionIndex);
+    setQuestionIndex((prev) => {
+      const next = prev + 1;
+      console.log("QUESTION NEXT:", next);
+      if (next === 1) {
+        toast({ title: "سؤال", description: "مزيان. قولي شنو سميتك؟" });
+        return next;
+      }
+      if (next === 5 && !paymentDoneRef.current) {
+        questionFlowLockedRef.current = true;
+        const PAYMENT_TEXT = `
+مزيان، من خلال الأجوبة ديالك بان ليا بللي الملف ديالك غادي يكون مقبول إن شاء الله ✅
+
+باش نعطيك تحليل دقيق ونوجد ليك الملف كامل:
+
+✔️ تحليل كامل
+✔️ 100 fi 100 التحقق من الوثائق
+✔️ الوثيقة المهمة اللي غادي تعزز الملف ديالك بزاف
+
+غير ب 12 أورو
+
+ورك على زر الأداء ونكملو مباشرة.
+`;
+        setPaymentRequired(true);
+        setShowStripe(true);
+        setQuestionsDone(false);
+        return next;
+      }
+      if (next >= questions.length - 1) {
+        setDocumentsUnlocked(true);
+        setConfirmUnlocked(true);
+        setQuestionsDone(true);
+        toast({
+          title: "📄 Documentos",
+          description: "دابا خاصك ترفع جميع الوثائق اللي عندك.",
+        });
+      }
+      return next;
+    });
+  };
 
   const pushAgentMessage = (text: string) => {
     if (!text?.trim()) return;
     setVoiceHistory((prev) => [...prev, { from: "agent", text, ts: Date.now() }]);
-    lastAssistantTextRef.current = text;
   };
 
   const pushUserMessage = (text: string) => {
     if (!text?.trim()) return;
     setVoiceHistory((prev) => [...prev, { from: "user", text, ts: Date.now() }]);
-    setLastUserTranscript(text);
   };
 
-  const finalizeAssistantBuffer = () => {
-    const text = assistantTextBufferRef.current.trim();
-    if (!text) return;
-    assistantTextBufferRef.current = "";
-    if (text === "..." || text === "…") return;
-    if (text === lastAssistantTextRef.current) return;
-    pushAgentMessage(text);
+  const buildSavedFormSpeech = () => {
+    return "مزيان. السؤال الثاني: عندك باسبور ولا NIE ولا TIE؟";
   };
 
-  const sendSaraSpokenMessage = (message: string) => {
-    if (!message.trim()) return;
-    if (!realtimeDcRef.current || realtimeDcRef.current.readyState !== "open") return;
-    if (!realtimePcRef.current || !realtimePcRef.current.remoteDescription) return;
-    setWaitingSara(true);
-    assistantTextBufferRef.current = "";
-    realtimeDcRef.current.send(
-      JSON.stringify({
-        type: "conversation.item.create",
-        item: {
-          type: "message",
-          role: "user",
-          content: [
-            {
-              type: "input_text",
-              text: `ابدئي أنتِ الكلام الآن مباشرة. لا تنتظري العميل. قولي الآن هذا الكلام بصوت طبيعي وبشكل بشري: ${message}`,
-            },
-          ],
-        },
-      })
-    );
-    realtimeDcRef.current.send(
-      JSON.stringify({ type: "response.create", response: { modalities: ["audio", "text"] } })
-    );
+  // ✅ ACTUALIZADO con formData
+  const saveFullStateToSupabase = async (nextDocs?: StoredDocItem[]) => {
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user?.id) throw new Error("No hay usuario conectado en Supabase");
+    const docsToSave = nextDocs || docs;
+    const payload = {
+      applicant: {
+        nombre: formData.fullName || "",
+        telefono: formData.phone || "",
+        nie_pasaporte: formData.passport || "",
+        ciudad: formData.city || "",
+        nacionalidad: formData.nationality || "",
+        fecha_llegada: formData.fechaNacimiento || "",
+        cumple_5_meses: "",
+        asilo: "",
+        penales: "",
+      },
+      procedure: { key: selectedSituacion, name: currentProcedure.name },
+      documents: docsToSave,
+      progress: {
+        formCompletedStatus: leadSaved || formConfirmed || leadFormReady ? "ok" : "missing",
+        stayProofStatus: docsToSave.some((doc) => (normalizeDocType(doc.expectedType) === "empadronamiento" || normalizeDocType(doc.expectedType) === "stay_proof") && doc.estado === "ok") ? "ok" : "missing",
+        identityStatus: docsToSave.some((doc) => (normalizeDocType(doc.expectedType) === "passport" || normalizeDocType(doc.expectedType) === "nie" || normalizeDocType(doc.expectedType) === "tie") && doc.estado === "ok") ? "ok" : "missing",
+      },
+      updated_at: new Date().toISOString(),
+    };
+    const { data: existingForm } = await supabase.from("user_forms").select("id").eq("user_id", user.id).eq("form_type", "regularizacion_2026").limit(1).maybeSingle<UserFormRow>();
+    const rowData = {
+      user_id: user.id,
+      case_id: null,
+      form_type: "regularizacion_2026",
+      title: "Formulario Soufiane Regularización 2026",
+      form_data: payload,
+      status: "draft",
+      updated_at: new Date().toISOString(),
+    };
+    if (existingForm?.id) {
+      const { error: updateError } = await supabase.from("user_forms").update(rowData).eq("id", existingForm.id);
+      if (updateError) throw new Error(updateError.message);
+    } else {
+      const { error: insertError } = await supabase.from("user_forms").insert(rowData);
+      if (insertError) throw new Error(insertError.message);
+    }
+    return user.id;
   };
 
-  const kickoffSara = () => {
-    setIsListening(true);
-    setWaitingSara(true);
-    setLastUserTranscript("");
-    lastUserTranscriptRef.current = "";
-    assistantTextBufferRef.current = "";
-    const firstMessage = formReady ? voiceTexts.savedLeadReply : voiceTexts.initialVoice;
-    sendSaraSpokenMessage(firstMessage);
-  };
+  const NAME_QUESTION = "مزيان. قولي شنو سميتك؟";
 
-  const stopListening = () => {
+  const questions = [
+    "واش دخلتي لإسبانيا قبل واحد يناير 2026؟",
+    "واش بقيتي فإسبانيا خمسة شهور متتالية؟ وشنو هي أول مدينة سكنتي فيها؟",
+    "واش عندك باسبور مغربي ولا كارت ناسيونال ولا فوتوكوبي ديالهم؟",
+    "واش عندك شي ورقة فيها سميتك والتاريخ؟ بحال شهادة السكنى ولا ورقة ديال الطبيب ولا الصبيطار ولا الكراء؟",
+    "واش عندك البطاقة الطبية؟",
+    "واش عمرك مشيتي للصبيطار؟ واش عندك شي ورقة فيها سميتك والتاريخ؟",
+    "واش عندك شي ورقة ديال الدوا ولا ريسيتا؟",
+    "واش عندك شي رقم ديال التليفون باسمك؟",
+    "واش عندك شي لاكارط ديال الطوبيس ولا التران فيها سميتك والتاريخ؟",
+    "واش عمرك خدمتي فإسبانيا؟",
+    "واش عندك شي ورقة من شي جمعية؟",
+    "واش عندك شي مشكل مع البوليس؟",
+    "واش عمرك تشديتي؟",
+    "واش عطاك البوليس expulsion؟",
+    "واش عمرك مشيتي للكوميسارية؟",
+    "واش عندك شي فيزا؟",
+    "واش عمرك طلبتي اللجوء؟",
+  ];
+
+  // ============================================
+  // ANALIZAR ASILO - INTERNO
+  // ============================================
+  const analyzeAsilo = async (): Promise<string> => {
     try {
-      realtimeDcRef.current?.close();
-      realtimeDcRef.current = null;
-      realtimePcRef.current?.close();
-      realtimePcRef.current = null;
-      if (realtimeLocalStreamRef.current) {
-        realtimeLocalStreamRef.current.getTracks().forEach((track) => track.stop());
-        realtimeLocalStreamRef.current = null;
+      if (asiloDocs.length === 0) {
+        return "Sin solicitud de asilo";
       }
-      if (remoteAudioRef.current) {
-        remoteAudioRef.current.pause();
-        remoteAudioRef.current.srcObject = null;
+      
+      let tieneSolicitudActiva = false;
+      let tieneDenegacion = false;
+      let tieneResolucionFavorable = false;
+      let fechaSolicitud = "";
+      let estadoSolicitud = "";
+      
+      for (const doc of asiloDocs) {
+        const text = (doc.detectedType + " " + doc.nombre + " " + (doc.note || "") + " " + (doc.final_verdict || "")).toLowerCase();
+        
+        if (text.includes("solicitud") || text.includes("application") || text.includes("asylum application") || text.includes("solicit")) {
+          tieneSolicitudActiva = true;
+          if ((doc as any).document_date) {
+            fechaSolicitud = (doc as any).document_date;
+          }
+          if (doc.final_verdict) {
+            estadoSolicitud = doc.final_verdict;
+          }
+        }
+        
+        if (doc.final_verdict === "rejected" || text.includes("denegado") || text.includes("rechazado") || text.includes("denied")) {
+          tieneDenegacion = true;
+        }
+        
+        if (doc.final_verdict === "approved" || text.includes("aprobado") || text.includes("concedido") || text.includes("granted")) {
+          tieneResolucionFavorable = true;
+        }
+      }
+      
+      if (tieneSolicitudActiva) {
+        return `Solicitud activa (${fechaSolicitud || "sin fecha"}) - ${estadoSolicitud || "en trámite"}`;
+      } else if (tieneDenegacion) {
+        return "Denegado";
+      } else if (tieneResolucionFavorable) {
+        return "Concedido";
+      } else {
+        return "Sin solicitud";
       }
     } catch (error) {
-      console.error("Error deteniendo realtime Sara:", error);
-    } finally {
-      setIsListening(false);
-      setWaitingSara(false);
+      console.error("Error analizando asilo:", error);
+      return "Error al analizar";
     }
   };
 
-  const startListening = async () => {
-    if (!voiceSupported) {
-      toast({ title: "Error", description: ui.openRealtimeError, variant: "destructive" });
+  // ============================================
+  // ANALIZAR EXPULSIÓN - INTERNO
+  // ============================================
+  const analyzeExpulsion = async (): Promise<{ status: string; expired: boolean }> => {
+    try {
+      if (expulsionDocs.length === 0) {
+        return { status: "Sin expulsión", expired: false };
+      }
+      
+      let tieneExpulsionActiva = false;
+      let tieneExpulsionCancelada = false;
+      
+      for (const doc of expulsionDocs) {
+        if ((doc as any).expiry_date) {
+          const fechaCaducidad = new Date((doc as any).expiry_date);
+          if (fechaCaducidad > new Date()) {
+            tieneExpulsionActiva = true;
+          } else {
+            tieneExpulsionCancelada = true;
+          }
+        }
+        
+        const verdict = (doc.final_verdict || "").toLowerCase();
+        if (verdict.includes("cancelado") || verdict.includes("canceled") || verdict.includes("resuelto")) {
+          tieneExpulsionCancelada = true;
+          tieneExpulsionActiva = false;
+        }
+      }
+      
+      if (tieneExpulsionActiva) {
+        return { status: "Activa", expired: false };
+      } else if (tieneExpulsionCancelada) {
+        return { status: "Caducada", expired: true };
+      } else {
+        return { status: "No clara", expired: false };
+      }
+    } catch (error) {
+      console.error("Error analizando expulsión:", error);
+      return { status: "Error al analizar", expired: false };
+    }
+  };
+
+  // ============================================
+  // ANALIZAR POLICÍA - INTERNO
+  // ============================================
+  const analyzePolicia = async (): Promise<string> => {
+    try {
+      if (policiaDocs.length === 0) {
+        return "Sin antecedentes policiales";
+      }
+      
+      let tieneDenuncia = false;
+      let tieneAtestado = false;
+      let tieneCitacion = false;
+      
+      for (const doc of policiaDocs) {
+        const text = (doc.nombre + " " + (doc.detectedType || "") + " " + (doc.note || "")).toLowerCase();
+        if (text.includes("denuncia")) tieneDenuncia = true;
+        if (text.includes("atestado")) tieneAtestado = true;
+        if (text.includes("citacion") || text.includes("citación")) tieneCitacion = true;
+      }
+      
+      let resultado = "Documentos policiales: ";
+      if (tieneDenuncia) resultado += "denuncia, ";
+      if (tieneAtestado) resultado += "atestado, ";
+      if (tieneCitacion) resultado += "citación, ";
+      resultado = resultado.replace(/, $/, "");
+      if (resultado === "Documentos policiales: ") resultado = "Documentos policiales detectados";
+      
+      return resultado;
+    } catch (error) {
+      console.error("Error analizando policía:", error);
+      return "Error al analizar";
+    }
+  };
+
+  // ============================================
+  // SUBIR DOCUMENTOS
+  // ============================================
+  const handleGeneralUpload = () => {
+    console.log("CLICK WORKING");
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "image/*,application/pdf";
+    input.multiple = true;
+    input.setAttribute("capture", "environment");
+    input.onchange = async () => {
+      const files = Array.from(input.files || []);
+      if (!files.length) return;
+      setGeneralUploading(true);
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user?.id) {
+          console.warn("⚠️ Modo prueba sin login");
+        }
+        setWorkflowStep("waiting_confirm");
+        let results = [];
+        for (const file of files) {
+          const safeName = `${Date.now()}_${file.name}`;
+          const storagePath = `${user?.id || "guest"}/regularizacion_2026/${safeName}`;
+          await supabase.storage.from("user-documents").upload(storagePath, file, { upsert: true });
+          const result = await verifyDocument({ file });
+          const matchedDoc = getBestDocMatch(result, docs, file.name);
+          if (matchedDoc) {
+            setDocs((prev) => prev.map((doc) => {
+              if (doc.id !== matchedDoc.id) return doc;
+              return {
+                ...doc,
+                archivo: file.name,
+                estado: result.final_verdict === "approved" ? "ok" : result.final_verdict === "review" ? "warn" : "missing",
+                detectedType: result.document_type || "",
+                full_name: result.full_name || "",
+                document_number: result.document_number || "",
+                birth_date: result.birth_date || "",
+                expiry_date: result.expiry_date || "",
+                verification_score: result.verification_score || 0,
+                fraud_risk: result.fraud_risk || "low",
+                final_verdict: result.final_verdict || "review",
+                document_date: result.document_date || "",
+              };
+            }));
+          }
+          results.push({ fileName: file.name, result });
+        }
+        setDocsUploaded(true);
+        toast({ 
+          title: "✅ Documentos subidos", 
+          description: `${files.length} documento(s) subido(s). Ahora haz clic en Verificar documentos`,
+        });
+      } catch (err) {
+        console.error(err);
+        toast({ 
+          title: "❌ Error", 
+          description: "No se pudieron subir los documentos",
+          variant: "destructive" 
+        });
+      } finally {
+        setGeneralUploading(false);
+      }
+    };
+    input.click();
+  };
+
+  const getBestDocMatch = (result: VerifyDocumentResult, currentDocs: StoredDocItem[], fileName?: string): StoredDocItem | null => {
+    const detectedType = normalizeDocType(result?.document_type || "");
+    const lowerFileName = (fileName || "").toLowerCase();
+    const combinedText = [result?.summary || "", ...(result?.visible_fields || []), ...(result?.missing_or_unclear_fields || []), ...(result?.warnings || []), result?.stay_proof_reason || "", lowerFileName].join(" ").toLowerCase();
+    const includesAny = (words: string[]) => words.some((word) => combinedText.includes(word));
+    const findIdentityDoc = () =>
+      currentDocs.find((doc) => doc.estado !== "ok" && (normalizeDocType(doc.expectedType) === "passport" || normalizeDocType(doc.expectedType) === "nie" || normalizeDocType(doc.expectedType) === "tie" || doc.nombre.toLowerCase().includes("pasaporte") || doc.nombre.toLowerCase().includes("passport") || doc.nombre.toLowerCase().includes("nie"))) ||
+      currentDocs.find((doc) => normalizeDocType(doc.expectedType) === "passport" || normalizeDocType(doc.expectedType) === "nie" || normalizeDocType(doc.expectedType) === "tie" || doc.nombre.toLowerCase().includes("pasaporte") || doc.nombre.toLowerCase().includes("passport") || doc.nombre.toLowerCase().includes("nie")) ||
+      null;
+    const findStayProofDoc = () =>
+      currentDocs.find((doc) => doc.estado !== "ok" && (normalizeDocType(doc.expectedType) === "empadronamiento" || normalizeDocType(doc.expectedType) === "stay_proof" || doc.nombre.toLowerCase().includes("empadronamiento") || doc.nombre.toLowerCase().includes("padron") || doc.nombre.toLowerCase().includes("padrón") || doc.nombre.toLowerCase().includes("prueba de permanencia"))) ||
+      currentDocs.find((doc) => normalizeDocType(doc.expectedType) === "empadronamiento" || normalizeDocType(doc.expectedType) === "stay_proof" || doc.nombre.toLowerCase().includes("empadronamiento") || doc.nombre.toLowerCase().includes("padron") || doc.nombre.toLowerCase().includes("padrón") || doc.nombre.toLowerCase().includes("prueba de permanencia")) ||
+      null;
+    if (detectedType === "passport" || detectedType === "nie" || detectedType === "tie") { const d = findIdentityDoc(); if (d) return d; }
+    if (detectedType === "empadronamiento" || detectedType === "stay_proof" || result?.recommended_bucket === "stay_proof" || result?.is_stay_proof === true) { const d = findStayProofDoc(); if (d) return d; }
+    if (includesAny(["passport", "pasaporte", "nie", "tie", "tarjeta de identidad", "documento identidad"])) { const d = findIdentityDoc(); if (d) return d; }
+    if (includesAny(["empadronamiento", "padron", "padrón", "prueba de permanencia", "stay proof", "ticket", "factura", "nomina", "nómina", "cita médica"])) { const d = findStayProofDoc(); if (d) return d; }
+    if (lowerFileName) {
+      if (lowerFileName.includes("padron") || lowerFileName.includes("padrón") || lowerFileName.includes("empadronamiento")) { const d = findStayProofDoc(); if (d) return d; }
+      if (lowerFileName.includes("pasaporte") || lowerFileName.includes("passport") || lowerFileName.includes("nie") || lowerFileName.includes("tie")) { const d = findIdentityDoc(); if (d) return d; }
+    }
+    return currentDocs.find((doc) => doc.estado === "missing") || currentDocs.find((doc) => doc.estado === "warn") || null;
+  };
+
+  // ✅ ACTUALIZADO con formData
+  const handleSaveLeadForm = async () => {
+    if (!leadFormReady) { toast({ title: ui.missingTitle, description: ui.missingDesc, variant: "destructive" }); return; }
+    if (!authChecked) { toast({ title: "Espera", description: "Estamos comprobando tu sesión.", variant: "destructive" }); return; }
+    const savedIndex = localStorage.getItem("questionIndex");
+    if (savedIndex) setQuestionIndex(parseInt(savedIndex));
+    if (!currentUserId) {
+      toast({ title: "Sesión no detectada", description: "Debes entrar con Google antes de confirmar.", variant: "destructive" });
       return;
     }
     try {
-      stopListening();
-      assistantTextBufferRef.current = "";
-      setWaitingSara(true);
-      const sessionRes = await fetch("/api/realtime-session", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ assistant: "sara" }),
-      });
-      const sessionData = await sessionRes.json();
-      if (!sessionRes.ok) throw new Error(sessionData?.error || "Error creando sesión realtime");
-      const ephemeralKey = sessionData?.client_secret?.value || sessionData?.value || "";
-      if (!ephemeralKey) throw new Error("No llegó client secret desde /api/realtime-session");
-
-      const pc = new RTCPeerConnection();
-      realtimePcRef.current = pc;
-      pc.ontrack = (event) => {
-        const [remoteStream] = event.streams;
-        if (remoteStream && remoteAudioRef.current) {
-          remoteAudioRef.current.srcObject = remoteStream;
-          remoteAudioRef.current.autoplay = true;
-          remoteAudioRef.current.playsInline = true;
-          remoteAudioRef.current.muted = false;
-          remoteAudioRef.current.volume = 1;
-          remoteAudioRef.current.play().catch((err) => console.error("Sara audio play error:", err));
-        }
-      };
-      const localStream = await navigator.mediaDevices.getUserMedia({
-        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
-      });
-      realtimeLocalStreamRef.current = localStream;
-      for (const track of localStream.getTracks()) pc.addTrack(track, localStream);
-
-      const dc = pc.createDataChannel("oai-events");
-      realtimeDcRef.current = dc;
-      dc.onopen = () => { shouldKickoffSaraRef.current = true; };
-      dc.onmessage = (event) => {
-        try {
-          const msg = JSON.parse(event.data);
-          const userTranscript =
-            msg?.transcript ||
-            msg?.item?.transcript ||
-            msg?.item?.content?.[0]?.transcript ||
-            "";
-          if (
-            (msg.type === "conversation.item.input_audio_transcription.completed" ||
-              msg.type === "input_audio_buffer.transcription.completed") &&
-            typeof userTranscript === "string" &&
-            userTranscript.trim()
-          ) {
-            const transcript = userTranscript.trim();
-            if (transcript !== lastUserTranscriptRef.current) {
-              lastUserTranscriptRef.current = transcript;
-              pushUserMessage(transcript);
-            }
-          }
-          if (msg.type === "response.output_text.delta" && typeof msg.delta === "string") {
-            assistantTextBufferRef.current += msg.delta;
-          }
-          if (msg.type === "response.output_text.done" && typeof msg.text === "string" && msg.text.trim()) {
-            assistantTextBufferRef.current = msg.text.trim();
-          }
-          if (msg.type === "response.done") { finalizeAssistantBuffer(); setWaitingSara(false); }
-          if (msg.type === "response.created") { setWaitingSara(true); }
-        } catch (err) {
-          console.error("Realtime Sara parse error:", err);
-        }
-      };
-      dc.onerror = (err) => console.error("Realtime Sara data channel error:", err);
-
-      const offer = await pc.createOffer();
-      await pc.setLocalDescription(offer);
-      const sdpRes = await fetch("https://api.openai.com/v1/realtime/calls", {
-        method: "POST",
-        body: offer.sdp,
-        headers: { Authorization: `Bearer ${ephemeralKey}`, "Content-Type": "application/sdp" },
-      });
-      if (!sdpRes.ok) {
-        const errText = await sdpRes.text();
-        throw new Error(errText || "Error negociando WebRTC con OpenAI");
-      }
-      const answerSdp = await sdpRes.text();
-      await pc.setRemoteDescription({ type: "answer", sdp: answerSdp });
-      if (shouldKickoffSaraRef.current) {
-        shouldKickoffSaraRef.current = false;
-        setTimeout(() => kickoffSara(), 150);
-      }
+      setSavingForm(true);
+      await saveFullStateToSupabase();
+      setLeadSaved(true);
+      setFormConfirmed(true);
+      const savedMessage = buildSavedFormSpeech();
+      toast({ title: ui.saveLeadTitle, description: "Se han guardado los datos correctamente." });
+      toast({ title: "✅ Guardado", description: savedMessage });
     } catch (error: any) {
-      console.error("Error iniciando realtime Sara:", error);
-      stopListening();
-      toast({ title: "Error realtime", description: error?.message || "No se pudo iniciar Sara realtime", variant: "destructive" });
+      console.error("Error guardando formulario:", error);
+      toast({ title: "Error guardando formulario", description: error?.message || "No se pudo guardar en Supabase", variant: "destructive" });
+    } finally {
+      setSavingForm(false);
     }
   };
 
-  const handleFormChange = (field: keyof ClientFormData, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-  };
-
-  const handleTramiteClick = (value: string) => setSelectedTramite(value);
-
-  const handleFormSubmit = () => {
-    if (!formData.fullName.trim() || !formData.phone.trim() || !formData.city.trim() || !formData.province.trim()) {
-      toast({ title: ui.missingTitle, description: ui.missingDesc, variant: "destructive" });
-      return;
-    }
-    if (!selectedTramite) {
-      toast({ title: ui.selectTramiteTitle, description: ui.selectTramiteDesc, variant: "destructive" });
-      return;
-    }
-    setFormReady(true);
-    setStep(1);
-    pushAgentMessage(voiceTexts.savedLeadReply);
-    toast({ title: ui.saveTitle, description: ui.saveDesc });
-    setTimeout(() => {
-      if (realtimeDcRef.current && realtimeDcRef.current.readyState === "open" && realtimePcRef.current?.remoteDescription) {
-        sendSaraSpokenMessage(voiceTexts.savedLeadReply);
+  // ============================================
+  // VERIFICAR DOCUMENTOS - HACE TODO
+  // ============================================
+  const handleVerifyAll = async () => {
+    try {
+      setGeneralUploading(true);
+      
+      if (!docs.length) { 
+        toast({ title: "❌ Sin documentos", description: "Primero sube documentos", variant: "destructive" });
+        return; 
       }
-    }, 150);
-  };
 
-  const handleAceptar = async () => {
-    if (!selectedTramite) return;
-    if (!formData.fullName.trim() || !formData.phone.trim() || !formData.city.trim()) {
-      toast({ title: ui.missingTitle, description: ui.missingDesc, variant: "destructive" });
-      return;
-    }
-    try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const user = sessionData?.session?.user;
-      const { error } = await supabase.from("appointments").insert([
-        {
-          user_id: user?.id || null,
-          appointment_type: selectedTramite,
-          office_city: formData.city,
-          office_province: formData.province,
-          status: "searching",
-          customer_name: formData.fullName,
-          customer_phone: formData.phone,
-          procedure_key: selectedTramite,
-          notes: `Cliente: ${formData.fullName} - ${formData.phone}`,
-        },
-      ]);
-      if (error) throw error;
+      const docsWithData = docs.filter(doc => doc.archivo && doc.archivo !== "");
+      if (docsWithData.length === 0) {
+        toast({ title: "❌ Documentos sin analizar", description: "Sube imágenes o PDFs claros", variant: "destructive" });
+        return;
+      }
 
-      await fetch("https://PUT_YOUR_WEBHOOK_HERE", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: formData.fullName,
-          phone: formData.phone,
-          tramite: selectedTramite,
-          city: formData.city,
-          province: formData.province,
-        }),
-      });
+      // === 1. ANALIZAR DOCUMENTOS PRINCIPALES ===
+      let hasPassport = false;
+      let stayDates: string[] = [];
+      let hasExpulsion = false;
+      let expulsionExpired = false;
+      let docsAnalysis: string[] = [];
+      let strongProofs = 0;
+      let weakProofs = 0;
+      let nombreCliente = "";
 
-      scheduleMutation.mutate(
-        { type: selectedTramite },
-        {
-          onSuccess: (result: unknown) => {
-            const data = (result as AppointmentResult | null) ?? null;
-            const hasReal = !!data?.locator && !!data?.date && !!data?.time && !!data?.office;
-            if (!hasReal) {
-              toast({ title: ui.panelUpdated, description: ui.agentSavedMsg });
-              return;
-            }
-            setAppointmentData(data);
-            setStep(2);
-            pushAgentMessage(voiceTexts.foundMsg);
-            setTimeout(() => {
-              if (realtimeDcRef.current && realtimeDcRef.current.readyState === "open" && realtimePcRef.current?.remoteDescription) {
-                sendSaraSpokenMessage(voiceTexts.foundMsg);
-              }
-            }, 150);
-            toast({ title: ui.foundSuccessTitle, description: ui.foundSuccessDesc });
-          },
-          onError: (error: unknown) => {
-            const message = error instanceof Error ? error.message : ui.foundErrorDesc;
-            toast({ title: ui.foundErrorTitle, description: message, variant: "destructive" });
-          },
+      for (const doc of docsWithData) {
+        const type = (doc.detectedType || "").toLowerCase();
+        const docName = (doc.nombre || "").toLowerCase();
+
+        if ((doc as any).full_name && !nombreCliente) {
+          nombreCliente = (doc as any).full_name;
         }
-      );
 
-      // ✅ Mensaje de Sara traducido
-      pushAgentMessage(ui.agentSavedMsg);
-    } catch (error) {
-      console.error(error);
-      toast({ title: ui.saveErrorTitle, description: ui.saveErrorDesc, variant: "destructive" });
-    }
-  };
+        if (type.includes("passport") || type.includes("nie") || 
+            docName.includes("pasaporte") || docName.includes("passport") || 
+            docName.includes("nie")) {
+          hasPassport = true;
+          let info = `✅ ${doc.nombre}: documento de identidad válido`;
+          if ((doc as any).expiry_date) {
+            const expiry = new Date((doc as any).expiry_date);
+            if (expiry > new Date()) {
+              info += ` (vigente hasta ${expiry.toLocaleDateString()})`;
+            } else {
+              info += ` ⚠️ (CADUCADO - renovar)`;
+            }
+          }
+          docsAnalysis.push(info);
+        } else if (
+          type.includes("empadronamiento") || 
+          type.includes("stay_proof") ||
+          docName.includes("empadronamiento") ||
+          docName.includes("padron") ||
+          docName.includes("padrón")
+        ) {
+          strongProofs++;
+          docsAnalysis.push(`✅ ${doc.nombre}: prueba fuerte de estancia`);
+        } else {
+          weakProofs++;
+          docsAnalysis.push(`📄 ${doc.nombre}: documento complementario`);
+        }
+        
+        if ((doc as any).document_date) {
+          stayDates.push((doc as any).document_date);
+        }
+        
+        if (docName.includes("expulsion") || docName.includes("expulsión") || 
+            docName.includes("deportacion")) {
+          hasExpulsion = true;
+          if ((doc as any).expiry_date) {
+            const expiry = new Date((doc as any).expiry_date);
+            if (expiry < new Date()) expulsionExpired = true;
+          }
+        }
+      }
 
-  const handleConfirm = async () => {
-    if (!appointmentData?.locator || !appointmentData?.date || !appointmentData?.time || !appointmentData?.office) {
-      toast({ title: ui.noRealAppointmentTitle, description: ui.noRealAppointmentDesc, variant: "destructive" });
-      return;
-    }
-    try {
-      const res = await fetch("/api/create-checkout-sara", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-       body: JSON.stringify({
-  appointment_id: urlParams.appointmentId,
-  token: urlParams.token,
+      const sortedDates = stayDates.map(d => new Date(d)).filter(d => !isNaN(d.getTime())).sort((a, b) => a.getTime() - b.getTime());
+      let stayDays = 0;
+      let hasMonths = false;
+      if (sortedDates.length >= 2) {
+        const firstDate = sortedDates[0];
+        const lastDate = sortedDates[sortedDates.length - 1];
+        stayDays = Math.floor((lastDate.getTime() - firstDate.getTime()) / (1000 * 60 * 60 * 24));
+        hasMonths = stayDays >= 150;
+      }
 
-  customer_name: formData.fullName,
-  customer_phone: formData.phone,
-  customer_email: formData.email,
+      // === 2. ANALIZAR ASILO ===
+      const asiloStatus = await analyzeAsilo();
+      
+      // === 3. ANALIZAR EXPULSIÓN ===
+      const expulsionResult = await analyzeExpulsion();
+      
+      // === 4. ANALIZAR POLICÍA ===
+      const policeStatus = await analyzePolicia();
 
-  city: formData.city,
+      // === 5. CONSTRUIR RESULTADO ===
+      const esApto = hasPassport && hasMonths && (!hasExpulsion || expulsionExpired);
+      
+      const resultado = {
+        hasPassport,
+        hasMonths,
+        days: stayDays,
+        hasExpulsion,
+        expulsionExpired,
+        completo: esApto,
+        strongProofs,
+        weakProofs,
+        docsAnalysis,
+        asiloAnalysis: asiloStatus,
+        expulsionAnalysis: expulsionResult.status,
+        policiaAnalysis: policeStatus,
+        nombreCliente: nombreCliente || formData.fullName || "Cliente",
+      };
+      setAnalysisResult(resultado);
 
-  office: appointmentData?.office || "",
-  appointment_date: appointmentData?.date || "",
-  appointment_hour: appointmentData?.time || "",
+      // === 6. CONSTRUIR INFORME COMPLETO ===
+      const passportTexto = hasPassport ? "✅ Documento de identidad válido" : "❌ Documento de identidad NO DETECTADO";
+      const mesesTexto = hasMonths ? `✅ ${stayDays} días de estancia (más de 5 meses)` : `❌ ${stayDays} días de estancia (menos de 150 días)`;
+      const expulsionTexto = hasExpulsion ? (expulsionExpired ? "⚠️ Expulsión caducada" : "🚨 EXPULSIÓN ACTIVA") : "✅ Sin expulsión";
 
-  tramite: selectedTramite,
-}),
-});
-      const data = await res.json();
-      if (data.url) window.location.href = data.url;
+      const analisisDocumentos = docsAnalysis.join("\n");
+
+      const timelineDocuments = docsWithData
+        .filter(doc => doc.document_date)
+        .sort(
+          (a, b) =>
+            new Date(a.document_date || "").getTime() -
+            new Date(b.document_date || "").getTime()
+        );
+
+      const informeCompleto = `
+الاسم: ${resultado.nombreCliente}
+
+الوثائق مرتبة حسب التاريخ:
+
+${timelineDocuments.map((doc,index) => `
+الوثيقة رقم ${index + 1}
+
+الاسم: ${doc.nombre}
+
+النوع: ${doc.detectedType || "غير معروف"}
+
+التاريخ: ${doc.document_date || "غير موجود"}
+
+تاريخ الانتهاء: ${doc.expiry_date || "غير موجود"}
+
+النتيجة: ${doc.final_verdict || "غير معروفة"}
+`).join("\n")}
+
+عدد الأيام:
+${stayDays}
+
+عدد الشهور:
+${Math.floor(stayDays / 30)}
+
+الباسبور:
+${hasPassport ? "نعم" : "لا"}
+
+اللجوء:
+${asiloStatus}
+
+الطرد:
+${expulsionResult.status}
+
+البوليس:
+${policeStatus}
+`;
+
+      // === 7. GUARDAR EN LOCALSTORAGE ===
+      localStorage.setItem("soufiane_analysis", informeCompleto);
+      
+      // === 8. GUARDAR EN SUPABASE - soufiane_analyses ===
+      let analysisId = null;
+      
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user?.id) {
+          const { data: analysisData, error: analysisError } = await supabase
+            .from("soufiane_analyses")
+            .insert({
+              user_id: user.id,
+              telefono: getFullPhoneNumber(),
+              nombre: resultado.nombreCliente || "",
+              expediente_status: esApto ? "APTO" : "NO APTO",
+              has_passport: hasPassport,
+              has_150_days: hasMonths,
+              stay_days: stayDays,
+              has_expulsion: hasExpulsion,
+              expulsion_expired: expulsionExpired,
+              has_asilo: asiloDocs.length > 0,
+              asilo_status: asiloStatus,
+              police_status: policeStatus,
+              recommendation: esApto 
+                ? "Puede presentar Regularización 2026" 
+                : "Faltan requisitos para presentar",
+              analysis_text: informeCompleto,
+              whatsapp_sent: false,
+              created_at: new Date().toISOString(),
+            })
+            .select('id')
+            .single();
+          
+          if (analysisError) {
+            console.error("Error guardando análisis:", analysisError);
+          } else if (analysisData) {
+            analysisId = analysisData.id;
+            console.log(`✅ Análisis guardado en soufiane_analyses con ID: ${analysisId}`);
+
+            // === 9. GUARDAR DOCUMENTOS VINCULADOS ===
+            for (const doc of docsWithData) {
+              const textToCheck = (doc.nombre + " " + (doc.detectedType || "") + " " + (doc.note || "") + " " + (doc.final_verdict || "")).toLowerCase();
+              const affectsRegularizacion = 
+                textToCheck.includes("expulsion") ||
+                textToCheck.includes("expulsión") ||
+                textToCheck.includes("denegado") ||
+                textToCheck.includes("rechazado") ||
+                textToCheck.includes("antecedente") ||
+                textToCheck.includes("policia") ||
+                textToCheck.includes("policía") ||
+                textToCheck.includes("asilo") ||
+                textToCheck.includes("deportacion") ||
+                (doc.final_verdict && doc.final_verdict.toLowerCase().includes("rejected"));
+
+              const { error: docError } = await supabase
+                .from("soufiane_documents")
+                .insert({
+                  analysis_id: analysisId,
+                  document_name: doc.nombre || "",
+                  document_type: doc.detectedType || "",
+                  document_date: doc.document_date || "",
+                  expiry_date: doc.expiry_date || "",
+                  full_name: doc.full_name || "",
+                  document_number: doc.document_number || "",
+                  verdict: doc.final_verdict || "",
+                  affects_regularizacion: affectsRegularizacion,
+                  notes: doc.note || "",
+                  created_at: new Date().toISOString(),
+                });
+              
+              if (docError) {
+                console.error("Error guardando documento:", docError);
+              }
+            }
+            console.log(`✅ ${docsWithData.length} documentos guardados en soufiane_documents vinculados al análisis ${analysisId}`);
+          }
+        }
+      } catch (error) {
+        console.error("Error guardando en Supabase:", error);
+      }
+
+      // === 10. MARCAR COMO VERIFICADO ===
+      setDocsVerified(true);
+      // ✅ ACTIVAR BOTÓN WHATSAPP
+      setWhatsappReady(true);
+      
+      toast({
+        title: "✅ Análisis completado",
+        description: esApto ? "El expediente es APTO para Regularización 2026" : "El expediente NO es apto. Faltan requisitos.",
+      });
+      
     } catch (err) {
-      console.error(err);
-      toast({ title: ui.stripeErrorTitle, description: ui.stripeErrorDesc, variant: "destructive" });
+      console.error("Error en handleVerifyAll:", err);
+      toast({ 
+        title: "❌ Error", 
+        description: "Ocurrió un error al verificar los documentos",
+        variant: "destructive" 
+      });
+    } finally {
+      setGeneralUploading(false);
     }
   };
 
-  const finalLocator = appointmentData?.locator || "";
-  const finalDate = appointmentData?.date || "";
-  const finalTime = appointmentData?.time || "";
-  const finalOffice = appointmentData?.office || "";
-  const finalPdfUrl = appointmentData?.confirmation_pdf_url || appointmentData?.pdf_url || null;
-  const hasRealAppointment = !!appointmentData?.locator && !!appointmentData?.date && !!appointmentData?.time && !!appointmentData?.office;
-  const officialUrl = "icp.administracionelectronica.gob.es";
-  const cameFromConfirmationLink = !!urlParams.appointmentId || !!urlParams.token;
+  // ============================================
+  // OBTENER NÚMERO COMPLETO
+  // ============================================
+  const getFullPhoneNumber = (): string => {
+    const cleanNumber = phoneNumber.replace(/\s/g, "");
+    const countryCodeWithoutPlus = selectedCountry.code.replace("+", "");
+    const numberWithoutPrefix = cleanNumber
+      .replace(/^\+/, "")
+      .replace(/^00/, "")
+      .replace(new RegExp(`^${countryCodeWithoutPlus}`), "");
+    return `${countryCodeWithoutPlus}${numberWithoutPrefix}`;
+  };
+
+  // ============================================
+  // ENVIAR A WHATSAPP VIA MAKE
+  // ============================================
+  const handleSendWhatsApp = async () => {
+    try {
+      const fullPhone = getFullPhoneNumber();
+      
+      if (!fullPhone || fullPhone.length < 8) { 
+        toast({ title: "❌ Número incorrecto", description: "Introduce un número de teléfono válido", variant: "destructive" });
+        return; 
+      }
+      
+      setSendingToWhatsApp(true);
+      
+      const analysis = localStorage.getItem("soufiane_analysis") || "";
+      
+      if (!analysis) {
+        toast({ title: "❌ Sin análisis", description: "Primero verifica los documentos", variant: "destructive" });
+        setSendingToWhatsApp(false);
+        return;
+      }
+      
+      const webhookUrl = "https://hook.eu1.make.com/wkowicwqx3lpufxlay8yu6762bpvhk7b";
+      
+      const payload = {
+        telefono: fullPhone,
+        analysis: analysis,
+        nombre: analysisResult.nombreCliente || formData?.fullName || "Cliente",
+        days: analysisResult.days || 0,
+        hasPassport: analysisResult.hasPassport || false,
+        hasMonths: analysisResult.hasMonths || false,
+        hasExpulsion: analysisResult.hasExpulsion || false,
+        hasAsilo: asiloDocs.length > 0,
+        isApto: analysisResult.completo || false,
+        timestamp: new Date().toISOString(),
+      };
+      
+      console.log("📤 Enviando a Make:", payload);
+      
+      const response = await fetch(webhookUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+      
+      const resultText = await response.text();
+      console.log("📥 MAKE RESPONSE:", resultText);
+      
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${resultText}`);
+      }
+      
+      toast({ 
+        title: "✅ Enviado", 
+        description: "El análisis se ha enviado. Recibirás el resultado por WhatsApp en breve." 
+      });
+      
+    } catch (error) {
+      console.error("WhatsApp error:", error);
+      toast({ 
+        title: "❌ Error", 
+        description: "Ocurrió un error al enviar. Intenta de nuevo.", 
+        variant: "destructive" 
+      });
+    } finally {
+      setSendingToWhatsApp(false);
+    }
+  };
+
+  // ✅ REFERENCIA para el dropdown
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // ✅ Cerrar dropdown al hacer clic fuera
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowCountryDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   return (
-    <div className="min-h-screen bg-background text-foreground relative flex flex-col">
-      <div
-        className="fixed inset-0 z-0 opacity-30 pointer-events-none"
-        style={{
-          backgroundImage:
-            "radial-gradient(ellipse 80% 50% at 50% -20%, rgba(34,197,94,0.08), transparent), radial-gradient(ellipse 60% 40% at 80% 80%, rgba(59,130,246,0.07), transparent)",
-        }}
-      />
+    <div className="min-h-screen">
+      <div className="w-full bg-background text-foreground relative min-h-screen rounded-[30px] overflow-hidden">
+        <Navbar />
+        <div className="fixed inset-0 z-0 opacity-25 pointer-events-none" style={{ backgroundImage: "radial-gradient(ellipse 70% 40% at 30% 20%, rgba(34,197,94,0.1), transparent), radial-gradient(ellipse 60% 40% at 80% 80%, rgba(59,130,246,0.08), transparent)" }} />
 
-      <Navbar />
-
-      <main className="flex-1 relative z-10 flex flex-col pt-16 pb-0">
-        {/* ✅ Título de página traducido */}
-        <h1 className="text-xl font-display font-bold px-4 sm:px-6 py-3 max-w-7xl mx-auto w-full">
-          {cameFromConfirmationLink ? ui.pageTitleConfirm : ui.pageTitle}
-        </h1>
-
-        <div className="flex-1 flex flex-col lg:flex-row gap-4 px-4 sm:px-6 max-w-7xl mx-auto w-full pb-4">
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="lg:w-[340px] xl:w-[380px] shrink-0 flex flex-col gap-3"
-          >
-            <div
-              className="relative rounded-2xl overflow-hidden border border-primary/20 shadow-[0_0_30px_-5px_hsl(var(--primary)/0.25)] bg-black"
-              style={{ height: "280px" }}
-            >
-
-             
-<div className="relative w-full h-full">
-
-  <video
-    id="sara-video"
-    playsInline
-    preload="metadata"
-    poster="/images/sara.png"
-    className="w-full h-full object-cover object-top"
-    onPlay={() => {
-      const btn = document.getElementById("play-button-sara");
-      if (btn) btn.style.display = "none";
-    }}
-  >
-    <source src="/sara-presentacion.mp4" type="video/mp4" />
-  </video>
-
-  <button
-    id="play-button-sara"
-    type="button"
-    className="absolute inset-0 flex items-center justify-center"
-    onClick={() => {
-      const video = document.getElementById(
-        "sara-video"
-      ) as HTMLVideoElement;
-
-      if (video) {
-        video.play();
-      }
-    }}
-  >
-    <div className="bg-black/10 backdrop-blur-[1px] rounded-full w-12 h-12 flex items-center justify-center">
-      <svg
-        width="18"
-        height="18"
-        viewBox="0 0 24 24"
-        fill="white"
-      >
-        <path d="M8 5v14l11-7z" />
-      </svg>
-    </div>
-  </button>
-
-</div>
-
-              
-
-              {!muted && (
-                <div className="absolute bottom-14 left-4 flex items-end gap-0.5 h-5">
-                  {[3, 6, 4, 8, 5, 7, 3].map((h, i) => (
-                    <motion.div
-                      key={i}
-                      className="w-1 bg-primary rounded-full"
-                      animate={{ height: [`${h}px`, `${h * 2}px`, `${h}px`] }}
-                      transition={{ duration: 0.5, repeat: Infinity, delay: i * 0.07 }}
-                    />
-                  ))}
-                </div>
-              )}
-
-              <div className="absolute bottom-14 right-3 text-right">
-                <p className="text-white font-bold text-sm drop-shadow-lg">Sara</p>
-                <p className="text-white/70 text-xs drop-shadow-lg">{ui.agentRole}</p>
-              </div>
-
-        
-</div>
-            {step === 2 && !confirmed && hasRealAppointment && (
-              <motion.button
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                onClick={handleConfirm}
-                className="w-full bg-primary hover:bg-primary/90 text-white font-bold py-3 rounded-xl text-sm transition-colors shadow-lg shadow-primary/30 flex items-center justify-center gap-2"
-                type="button"
-              >
-                <CheckCircle2 className="w-5 h-5" />
-                {ui.confirmBtn}
-              </motion.button>
-            )}
-          </motion.div>
-
-          <OfficialBrowserBox
-            language={language}
-            avatarImage={`${import.meta.env.BASE_URL}images/avatar-sara.png`}
-            title={cameFromConfirmationLink ? ui.pageTitleConfirm : ui.pageTitle}
-            url={officialUrl}
-            selectedTramiteLabel={selectedTramiteLabel}
-            profileLoading={profileLoading}
-            ui={ui}
-            confirmed={confirmed}
-            appointmentData={appointmentData}
-            finalDate={finalDate}
-            finalTime={finalTime}
-            finalOffice={finalOffice}
-            finalLocator={finalLocator}
-            finalPdfUrl={finalPdfUrl}
-            hasRealAppointment={hasRealAppointment}
-            onRefresh={() => toast({ title: ui.panelUpdated })}
-            onOpenOfficial={() => {
-              window.open("https://icp.administracionelectronica.gob.es/icpplus/index.html", "_blank", "noopener,noreferrer");
-            }}
-            onSelectTramite={handleTramiteClick}
-            tramites={TRAMITES}
-            selectedTramite={selectedTramite}
-            onAceptar={handleAceptar}
-            isPending={scheduleMutation.isPending}
-            cameFromConfirmationLink={cameFromConfirmationLink}
-            formData={formData}
-            onFormChange={handleFormChange}
-            onFormSubmit={handleFormSubmit}
-            formReady={formReady}
-          />
-        </div>
-
-        {/* Barra inferior */}
-        <div className="hidden lg:block sticky bottom-0 z-30 glass-panel-heavy border-t border-white/10 py-3">
-          <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
-            <div className="flex gap-3">
-              <button
-                onClick={() => { setShowDocs(true); setShowForms(false); }}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold border transition-colors ${
-                  showDocs ? "bg-primary/20 border-primary/40 text-primary" : "bg-white/5 border-white/10 text-white/80 hover:bg-white/10"
-                }`}
-                type="button"
-              >
-                <FileText className="w-4 h-4 text-primary" />
-                {ui.docsButton}
-              </button>
-              <button
-                onClick={() => { setShowForms(true); setShowDocs(false); }}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold border transition-colors ${
-                  showForms ? "bg-secondary/20 border-secondary/40 text-secondary" : "bg-white/5 border-white/10 text-white/80 hover:bg-white/10"
-                }`}
-                type="button"
-              >
-                <Settings className="w-4 h-4 text-secondary" />
-                {ui.formsButton}
-              </button>
-            </div>
-            <div className="px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-[10px] text-white/60">
-              © 2026 GestoriaCitaIA
+        <main className="flex-1 relative z-10 pt-2 pb-6">
+          <div className="px-4 sm:px-6 py-3 w-full flex items-center justify-between">
+            <div>
+              <h1 className="text-xl font-display font-bold text-white flex items-center gap-2">
+                {t("reg_title")}
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 border border-amber-500/40 text-amber-400">
+                  <Star className="w-2.5 h-2.5" />
+                  {t("reg_new")}
+                </span>
+              </h1>
+              <p className="text-xs text-muted-foreground">{currentProcedure.name}</p>
             </div>
           </div>
-        </div>
 
-        {/* Panel documentos */}
-        <AnimatePresence>
-          {showDocs && (
-            <motion.div
-              initial={{ opacity: 0, y: 40 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 40 }}
-              className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 w-full max-w-md px-4"
-            >
-              <div className="rounded-2xl border border-white/15 shadow-2xl overflow-hidden" style={{ background: "#1a2236" }}>
-                <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
-                  <div className="flex items-center gap-2">
-                    <FileText className="w-4 h-4 text-primary" />
-                    <span className="font-bold text-sm text-white">{ui.docsRequiredTitle}</span>
-                  </div>
-                  <button onClick={() => setShowDocs(false)} className="w-6 h-6 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/60 text-xs" type="button">✕</button>
+          <div className="mt-2 max-w-7xl mx-auto lg:grid lg:grid-cols-[480px_1fr] lg:gap-6">
+            <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="rounded-[26px] overflow-hidden relative">
+              <div className="relative">
+                <img 
+                  src="/images/soufiane.png" 
+                  alt="Soufiane" 
+                  className="w-full h-[270px] object-cover border-b border-[#f6c453]/10"
+                />
+                <div className="absolute bottom-5 right-4 text-right">
+                  <h2 className="text-[22px] font-bold text-white">Soufiane</h2>
+                  <p className="text-[15px] text-[#d4a94d] font-medium tracking-wide">Experto en Regularización</p>
                 </div>
-                <div className="px-5 py-4 space-y-2.5 max-h-72 overflow-y-auto">
-                  {docsForSelectedTramite.map((doc, i) => (
-                    <div key={i} className="flex items-center gap-3">
-                      <span className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 text-xs font-bold ${doc.estado === "ok" ? "bg-green-500/20 text-green-400" : doc.estado === "warn" ? "bg-yellow-500/20 text-yellow-400" : "bg-red-500/20 text-red-400"}`}>
-                        {doc.estado === "ok" ? "✓" : doc.estado === "warn" ? "!" : "✗"}
-                      </span>
-                      <span className="text-sm text-white/90">{doc.nombre}</span>
+              </div>
+            </motion.div>
+          </div>
+
+          <div className="mt-0 w-full max-w-none lg:col-start-2">
+            {!paymentCompleted && (
+              <div className="p-3">
+                <div className="relative overflow-hidden rounded-2xl border border-yellow-500/30 bg-gradient-to-br from-[#1a1200] via-[#0b0b0b] to-[#1a1200] p-4 w-full">
+                  <div className="flex items-center justify-between mb-3">
+                    <div>
+                      <p className="text-white font-bold text-lg">Desbloquea a Soufiane</p>
+                      <span className="inline-flex mt-1 px-2 py-1 rounded-full bg-yellow-500 text-black text-[10px] font-bold">PREMIUM</span>
                     </div>
-                  ))}
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Panel formularios */}
-        <AnimatePresence>
-          {showForms && (
-            <motion.div
-              initial={{ opacity: 0, y: 40 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 40 }}
-              className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 w-full max-w-md px-4"
-            >
-              <div className="rounded-2xl border border-white/15 shadow-2xl overflow-hidden" style={{ background: "#1a2236" }}>
-                <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
-                  <div className="flex items-center gap-2">
-                    <Settings className="w-4 h-4 text-secondary" />
-                    <span className="font-bold text-sm text-white">{ui.formsOfficialTitle}</span>
+                    <div className="text-right">
+                      <p className="text-xl font-black text-yellow-400 leading-none">14,99€</p>
+                      <p className="text-white/60 text-xs">Acceso completo</p>
+                    </div>
                   </div>
-                  <button onClick={() => setShowForms(false)} className="w-6 h-6 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/60 text-xs" type="button">✕</button>
+                  <p className="text-white/70 text-[13px] leading-relaxed mb-3">Acceso ilimitado a Soufiane IA, análisis de documentos y generación automática del expediente.</p>
+                  <button onClick={handleStripePayment} type="button" className="w-[92%] mx-auto flex items-center justify-center h-[52px] rounded-[20px] text-white font-semibold text-[16px] bg-gradient-to-r from-[#16a34a] to-[#22c55e] border border-[#4ade80] shadow-[0_4px_14px_rgba(34,197,94,0.35)]">
+                    🔓 Desbloquear ahora
+                  </button>
+                  <div className="mt-2 flex items-center justify-center gap-2 flex-wrap">
+                    <div className="h-8 px-2 rounded-lg bg-white flex items-center justify-center text-blue-700 font-black text-[10px]">VISA</div>
+                    <div className="h-8 px-2 rounded-lg bg-white flex items-center justify-center text-red-500 font-black text-[10px]">Mastercard</div>
+                    <div className="h-8 px-2 rounded-lg bg-white flex items-center justify-center text-black font-black text-[10px]">Pay</div>
+                    <div className="h-8 px-2 rounded-lg bg-white flex items-center justify-center text-black font-black text-[10px]">G Pay</div>
+                  </div>
                 </div>
-                <div className="px-5 py-4 space-y-3">
-                  {formsForSelectedTramite.map((form, i) => (
-                    <a key={i} href={form.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-colors group">
-                      <div className="w-9 h-9 rounded-lg bg-primary/15 border border-primary/30 flex items-center justify-center shrink-0">
-                        <FileText className="w-4 h-4 text-primary" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-bold text-primary">{form.codigo}</p>
-                        <p className="text-sm text-white/80 truncate">{form.nombre}</p>
-                      </div>
-                      <span className="text-[10px] font-semibold text-white/40 group-hover:text-primary transition-colors shrink-0">PDF ↓</span>
-                    </a>
-                  ))}
-                  <p className="text-[10px] text-white/30 text-center pt-1">{ui.sourceLabel}</p>
+                <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+                    <p className="text-white font-bold">Soufiane IA</p>
+                  </div>
+                  <p className="text-white/80 text-sm leading-relaxed">Especialista profesional en extranjería española para marroquíes en España.</p>
                 </div>
               </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+            )}
 
-        <audio ref={remoteAudioRef} autoPlay playsInline className="hidden" />
-      </main>
+            <div className="mt-4 rounded-2xl border border-green-500/20 bg-[#071326] p-4">
+              <h3 className="text-center text-green-400 font-bold text-lg mb-4">Miles de personas ya usan GestoriaCitaIA</h3>
+              <div className="grid grid-cols-4 gap-2 text-center">
+                <div><p className="text-green-400 text-2xl font-black">18K+</p><p className="text-white/60 text-xs">Trámites</p></div>
+                <div><p className="text-blue-400 text-2xl font-black">97%</p><p className="text-white/60 text-xs">Verificado</p></div>
+                <div><p className="text-purple-400 text-2xl font-black">4m</p><p className="text-white/60 text-xs">Continuar</p></div>
+                <div><p className="text-yellow-400 text-2xl font-black">100%</p><p className="text-white/60 text-xs">Asistente IA</p></div>
+              </div>
+              <div className="mt-4 rounded-full border border-yellow-500/30 py-2 text-center text-white font-bold">🏆 Regularización 2026</div>
+              <div className="flex items-end justify-between mt-4">
+                <div><p className="text-green-400 text-4xl font-black">4.9/5</p><p className="text-yellow-400">★★★★★</p></div>
+                <div className="text-white font-bold">+2K</div>
+              </div>
+            </div>
+
+            {paymentCompleted && (
+              <div className="mt-5 space-y-4">
+                {/* Subir documentos */}
+                <button 
+                  onClick={handleGeneralUpload} 
+                  disabled={generalUploading} 
+                  className={`w-[92%] mx-auto h-[52px] rounded-[20px] border border-[#c6922f] bg-[#050816] hover:bg-[#0b1220] transition-all text-white font-medium text-[16px] flex items-center justify-center gap-3 shadow-lg ${
+                    docsUploaded ? "border-green-500/60 bg-green-900/20" : ""
+                  }`}
+                >
+                  <Upload className="w-5 h-5 text-[#d4a94d]" />
+                  {generalUploading ? "Subiendo..." : docsUploaded ? "✅ Documentos subidos" : "Subir documentos"}
+                  {docsUploaded && <CheckCircle className="w-4 h-4 text-green-400" />}
+                </button>
+
+                {/* Verificar documentos */}
+                <button 
+                  onClick={handleVerifyAll} 
+                  disabled={!docsUploaded || generalUploading}
+                  className={`w-[92%] mx-auto h-[52px] rounded-[20px] border border-[#c6922f] bg-[#050816] hover:bg-[#0b1220] transition-all text-white font-medium text-[16px] flex items-center justify-center gap-3 shadow-lg ${
+                    docsVerified ? "border-green-500/60 bg-green-900/20" : ""
+                  }`}
+                >
+                  {docsVerified ? (
+                    <><FileCheck className="w-5 h-5 text-green-400" /> ✅ Análisis completado</>
+                  ) : (
+                    <>
+                      <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-[#d4a94d]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4" />
+                      </svg>
+                      {generalUploading ? "Verificando..." : "Verificar documentos"}
+                    </>
+                  )}
+                </button>
+
+                {/* ✅ WhatsApp con selector de país */}
+                <div className="w-[92%] mx-auto flex items-center overflow-visible rounded-[20px] border border-[#c6922f]/40 bg-[#050816] shadow-lg">
+                  <div className="relative flex-shrink-0 z-[9999]" ref={dropdownRef}>
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setShowCountryDropdown(!showCountryDropdown);
+                      }}
+                      className="flex items-center gap-1 px-3 py-3 h-[52px] bg-transparent text-white text-sm font-medium hover:bg-white/5 transition-colors"
+                    >
+                      <span className="text-lg">{selectedCountry.flag}</span>
+                      <span className="hidden sm:inline">{selectedCountry.code}</span>
+                      <span className="sm:hidden">{selectedCountry.code}</span>
+                      <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${showCountryDropdown ? "rotate-180" : ""}`} />
+                    </button>
+                    
+                    {showCountryDropdown && (
+                      <div className="absolute bottom-full left-0 mb-1 w-[220px] max-h-[220px] overflow-y-auto rounded-lg border border-[#c6922f]/30 bg-[#050816] shadow-2xl z-[9999]">
+                        {COUNTRIES.map((country) => (
+                          <button
+                            key={country.code}
+                            onClick={() => {
+                              setSelectedCountry(country);
+                              setShowCountryDropdown(false);
+                            }}
+                            className={`flex items-center gap-2 w-full px-3 py-2.5 text-sm text-left hover:bg-white/10 transition-colors ${
+                              country.code === selectedCountry.code ? "bg-white/5 text-[#d4a94d]" : "text-white"
+                            }`}
+                          >
+                            <span className="text-lg">{country.flag}</span>
+                            <span className="font-medium">{country.code}</span>
+                            <span className="text-white/50 text-xs">{country.name}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="w-px h-8 bg-[#c6922f]/30 flex-shrink-0" />
+
+                  <input 
+                    type="tel"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    value={phoneNumber}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/[^0-9]/g, "");
+                      setPhoneNumber(value);
+                    }}
+                    placeholder="Número WhatsApp"
+                    className="flex-1 h-full bg-transparent px-3 text-white placeholder:text-white/40 outline-none text-[16px] min-w-[80px]"
+                  />
+                </div>
+
+                {/* ✅ BOTÓN WHATSAPP - SE ACTIVA DESPUÉS DEL ANÁLISIS */}
+                <button
+                  onClick={handleSendWhatsApp}
+                  disabled={!whatsappReady}
+                  className={`w-[92%] mx-auto h-[52px] rounded-[20px] text-white font-bold text-[16px] flex items-center justify-center gap-2 transition-all shadow-lg ${
+                    whatsappReady
+                      ? "bg-gradient-to-r from-[#25D366] to-[#128C7E] hover:opacity-90"
+                      : "bg-gray-600 cursor-not-allowed opacity-60"
+                  }`}
+                >
+                  <MessageCircle className="w-5 h-5" />
+                  {safeLang === "darija"
+                    ? "📲 استقبل التحليل فواتساب"
+                    : safeLang === "en"
+                    ? "📲 Receive analysis on WhatsApp"
+                    : "📲 Recibir análisis en WhatsApp"}
+                </button>
+              </div>
+            )}
+          </div>
+        </main>
+      </div>
     </div>
   );
 }
