@@ -8,18 +8,9 @@ import { LegalDisclaimer } from "@/components/LegalDisclaimer";
 import { useLang } from "@/contexts/LanguageContext";
 import {
   CheckCircle2,
-  Play,
   FileText,
-  Globe,
-  MapPin,
-  Users,
   Shield,
-  Home,
-  Briefcase,
-  GraduationCap,
-  Heart,
-  Car,
-  Building2,
+  Bell,
   ArrowRight,
 } from "lucide-react";
 import { Link } from "wouter";
@@ -36,12 +27,6 @@ type PlanItem = {
   free: boolean;
   shadow: boolean;
   features: string[];
-};
-
-type TramiteItem = {
-  icon: any;
-  label: string;
-  color: string;
 };
 
 function getPlans(t: (k: string) => string): PlanItem[] {
@@ -127,23 +112,6 @@ function getPlans(t: (k: string) => string): PlanItem[] {
   ];
 }
 
-function getTramites(t: (k: string) => string): TramiteItem[] {
-  return [
-    { icon: FileText, label: t("tr_tie"), color: "text-blue-400" },
-    { icon: Globe, label: t("tr_visado_nac"), color: "text-indigo-400" },
-    { icon: Shield, label: t("tr_nie"), color: "text-green-400" },
-    { icon: Home, label: t("tr_empadron"), color: "text-yellow-400" },
-    { icon: Briefcase, label: t("tr_trabajo"), color: "text-orange-400" },
-    { icon: Users, label: t("tr_familiar"), color: "text-pink-400" },
-    { icon: GraduationCap, label: t("tr_estudiante"), color: "text-cyan-400" },
-    { icon: Heart, label: t("tr_arraigo"), color: "text-red-400" },
-    { icon: Car, label: t("tr_conducir"), color: "text-purple-400" },
-    { icon: Building2, label: t("tr_larga"), color: "text-teal-400" },
-    { icon: Globe, label: t("tr_regreso"), color: "text-blue-300" },
-    { icon: MapPin, label: t("tr_ue"), color: "text-emerald-400" },
-  ];
-}
-
 export default function Landing() {
   const [showPayment, setShowPayment] = useState(false);
   const { t } = useLang();
@@ -187,7 +155,6 @@ export default function Landing() {
   };
 
   const PLANS = getPlans(t);
-  const TRAMITES = getTramites(t);
 
   const handlePlanClick = (plan: PlanItem) => {
     if (plan.free) {
@@ -254,7 +221,7 @@ export default function Landing() {
               {t("hero_btn1")} <ArrowRight className="w-4 h-4 ml-1" />
             </Button>
 
-            {/* ✅ BOTÓN SARA ACTUALIZADO - USA t("hero_btn_sara") */}
+            {/* ✅ BOTÓN SARA - USA t("hero_btn_sara") */}
             <Button
               className="w-full sm:w-auto rounded-full px-7 py-3 shadow-lg shadow-blue-500/30 bg-blue-600 hover:bg-blue-500 text-white text-base font-bold border-0 min-h-[52px]"
               onClick={() => goWithGoogleAuth("/buscar-citas")}
@@ -303,10 +270,10 @@ export default function Landing() {
             delay={0.1}
           />
 
-          {/* ✅ AGENT CARD SARA ACTUALIZADO - USA t("sara_role") */}
+          {/* ✅ AGENT CARD SARA - USA t("agent_sara_role") */}
           <AgentCard
             name="Sara"
-            role={t("sara_role")}
+            role={t("agent_sara_role")}
             imagePath={`${import.meta.env.BASE_URL}images/sara.png`}
             delay={0.2}
           />
@@ -423,6 +390,7 @@ export default function Landing() {
           </div>
         </motion.div>
 
+        {/* ✅ SECCIÓN DE SERVICIOS SARA - NUEVA */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -431,29 +399,67 @@ export default function Landing() {
         >
           <div className="text-center mb-8">
             <h2 className="text-2xl sm:text-3xl font-display font-bold text-white mb-2">
-              {t("tramites_title")}
+              {t("sara_services_title")}
             </h2>
-            <p className="text-sm text-muted-foreground">{t("tramites_sub")}</p>
+            <p className="text-sm text-muted-foreground">{t("sara_services_sub")}</p>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 max-w-4xl mx-auto">
-            {TRAMITES.map((trm, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 10 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.04 }}
-                className="glass-panel border border-white/[0.07] rounded-xl p-4 flex flex-col items-center gap-3 text-center"
-              >
-                <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center">
-                  <trm.icon className={`w-5 h-5 ${trm.color}`} />
-                </div>
-                <span className="text-xs font-medium text-white/80 leading-tight">
-                  {trm.label}
-                </span>
-              </motion.div>
-            ))}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-4xl mx-auto">
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="glass-panel border border-yellow-500/20 rounded-xl p-4 flex flex-col items-center gap-3 text-center bg-yellow-500/5"
+            >
+              <div className="w-12 h-12 rounded-xl bg-yellow-500/20 flex items-center justify-center">
+                <FileText className="w-6 h-6 text-yellow-400" />
+              </div>
+              <span className="text-xs font-medium text-white/80 leading-tight">
+                {t("sara_service_1")}
+              </span>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="glass-panel border border-green-500/20 rounded-xl p-4 flex flex-col items-center gap-3 text-center bg-green-500/5"
+            >
+              <div className="w-12 h-12 rounded-xl bg-green-500/20 flex items-center justify-center">
+                <CheckCircle2 className="w-6 h-6 text-green-400" />
+              </div>
+              <span className="text-xs font-medium text-white/80 leading-tight">
+                {t("sara_service_2")}
+              </span>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="glass-panel border border-blue-500/20 rounded-xl p-4 flex flex-col items-center gap-3 text-center bg-blue-500/5"
+            >
+              <div className="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center">
+                <Shield className="w-6 h-6 text-blue-400" />
+              </div>
+              <span className="text-xs font-medium text-white/80 leading-tight">
+                {t("sara_service_3")}
+              </span>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="glass-panel border border-purple-500/20 rounded-xl p-4 flex flex-col items-center gap-3 text-center bg-purple-500/5"
+            >
+              <div className="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center">
+                <Bell className="w-6 h-6 text-purple-400" />
+              </div>
+              <span className="text-xs font-medium text-white/80 leading-tight">
+                {t("sara_service_4")}
+              </span>
+            </motion.div>
           </div>
         </motion.div>
       </main>
