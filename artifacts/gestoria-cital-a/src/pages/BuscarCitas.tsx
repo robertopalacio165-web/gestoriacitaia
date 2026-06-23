@@ -804,7 +804,7 @@ export default function Regularizacion2026() {
         // ✅ NUEVOS CAMPOS
         direccion: formData.direccion || "",
         codigo_postal: formData.codigoPostal || "",
-        ciudad: formData.ciudad || "",
+     city: formData.ciudad || formData.city || "",
         provincia: formData.provincia || "",
       },
       procedure: { key: selectedSituacion, name: currentProcedure.name },
