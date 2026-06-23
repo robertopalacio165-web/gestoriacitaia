@@ -63,17 +63,24 @@ type AppointmentResult = {
 };
 
 type ClientFormData = {
-
   fullName: string;
   phone: string;
   email: string;
-
   expedienteNumero: string;
   identificadorSolicitud: string;
-
   fechaPresentacion: string;
-
   fechaNacimiento: string;
+  direccion: string;
+  codigoPostal: string;
+  ciudad: string;
+  provincia: string;
+  preferredOffice: string;
+  nie: string;
+  passport: string;
+  nationality: string;
+  birthYear: string;
+  city: string;
+  province: string;
 };
 
 function OfficialBrowserBox({
@@ -104,6 +111,7 @@ function OfficialBrowserBox({
   onFormChange,
   onFormSubmit,
   formReady,
+  onPay,
 }: {
   language: string;
   avatarImage: string;
@@ -132,6 +140,7 @@ function OfficialBrowserBox({
   onFormChange: (field: keyof ClientFormData, value: string) => void;
   onFormSubmit: () => void;
   formReady: boolean;
+  onPay: () => void;
 }) {
   const isMa = language === "ma";
   const isEn = language === "en";
@@ -359,12 +368,72 @@ onChange={(e) =>
   />
 </div>
 
+{/* Dirección */}
+<div>
+  <label className="block text-white text-[13px] mb-2">
+    Dirección completa
+  </label>
+  <input
+    type="text"
+    placeholder="Calle y número"
+    value={formData.direccion || ""}
+    onChange={(e) => onFormChange("direccion", e.target.value)}
+    className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white"
+  />
+</div>
+
+{/* Código Postal */}
+<div>
+  <label className="block text-white text-[13px] mb-2">
+    Código Postal
+  </label>
+  <input
+    type="text"
+    placeholder="28001"
+    value={formData.codigoPostal || ""}
+    onChange={(e) => onFormChange("codigoPostal", e.target.value)}
+    className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white"
+  />
+</div>
+
+{/* Ciudad */}
+<div>
+  <label className="block text-white text-[13px] mb-2">
+    Ciudad
+  </label>
+  <input
+    type="text"
+    placeholder="Madrid"
+    value={formData.ciudad || ""}
+    onChange={(e) => onFormChange("ciudad", e.target.value)}
+    className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white"
+  />
+</div>
+
+{/* Provincia */}
+<div>
+  <label className="block text-white text-[13px] mb-2">
+    Provincia
+  </label>
+  <input
+    type="text"
+    placeholder="Madrid"
+    value={formData.provincia || ""}
+    onChange={(e) => onFormChange("provincia", e.target.value)}
+    className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white"
+  />
+</div>
+
               {/* Caja de reserva */}
               <div className="mt-4 rounded-[28px] border-2 border-yellow-500 bg-gradient-to-b from-[#0b0b0b] to-[#050505] p-4 shadow-[0_0_35px_rgba(255,200,0,0.18)]">
                 <div className="flex items-start justify-between mb-4 pt-2">
                   <div>
                     <p className="text-white text-[15px] font-bold">
-                      {isMa ? "الملف favorable" : isEn ? "Favorable file status" : "Expediente favorable"}
+                      {isMa
+                        ? "متابعة الملف + NUSS + التازا"
+                        : isEn
+                        ? "File Tracking + NUSS + Fee"
+                        : "Seguimiento Expediente + NUSS + Tasa"}
                     </p>
                     <span className="inline-flex mt-1 rounded-full bg-gradient-to-r from-yellow-400 to-yellow-600 px-3 py-1 text-[10px] font-black uppercase tracking-wide text-black shadow-[0_0_15px_rgba(255,215,0,0.25)]">
                       Premium
@@ -382,81 +451,15 @@ onChange={(e) =>
 
                 <p className="text-gray-300 text-[13px] mb-5 leading-relaxed">
                   {isMa
-                    ? "سارة غادي تبدا تراجع الملف ديالك أوتوماتيكيا"
+                    ? "سارة غادي تراقب الملف ديالك 24/24. ملي يخرج FAVORABLE غادي نعلموك فالواتساب. غادي نجيبو NUSS ديالك أوتوماتيكيا. غادي نرسلو ليك التازا 790-012 جاهزة باش تسدد."
                     : isEn
-                    ? "Sara will automatically start checking your file"
-                    : "Sara empieza a verificar tu expediente automáticamente"}
+                    ? "Sara will monitor your file 24/24. When it becomes FAVORABLE we will notify you on WhatsApp. We will automatically get your NUSS. We will send you the 790-012 fee ready to pay."
+                    : "Sara vigilará tu expediente 24/24. Cuando salga FAVORABLE te avisaremos por WhatsApp. Obtendremos tu NUSS automáticamente. Te enviaremos la tasa 790-012 preparada y lista para pagar."}
                 </p>
 
                 <button
                   type="button"
-              onClick={async () => {
-
-  if (
-!formData.fullName.trim() ||
-!formData.phone.trim() ||
-!formData.expedienteNumero.trim() ||
-!formData.identificadorSolicitud.trim() ||
-!formData.fechaPresentacion.trim() ||
-!formData.fechaNacimiento.trim()
-  ) {
-    toast({
-      title: ui.missingTitle,
-      description: ui.missingDesc,
-      variant: "destructive",
-    });
-
-    return;
-  }
-
-  try {
-
-const res = await fetch("/api/create-checkout-sara-inicial", {
-  method: "POST",
-
-  headers: {
-    "Content-Type": "application/json",
-  },
-
-body: JSON.stringify({
-
-  fullName: formData.fullName,
-
-  phone: formData.phone,
-
-  email: formData.email,
-
-  expedienteNumero:
-    formData.expedienteNumero,
-
-  identificadorSolicitud:
-    formData.identificadorSolicitud,
-
-  fechaPresentacion:
-    formData.fechaPresentacion,
-
-  fechaNacimiento:
-    formData.fechaNacimiento,
-
-}),
-});
-
-const data = await res.json();
-
-  if (data.url) {
-localStorage.setItem("saraPaid", "1");
-window.location.href = data.url;
-
-}
-  } catch (error) {
-
-    console.error(error);
-
- alert("Stripe error");
-
-  }
-
-}}
+                  onClick={onPay}
                   className="w-full min-h-[56px] rounded-[20px] bg-gradient-to-r from-yellow-400 via-yellow-500 to-amber-500 px-4 py-2 text-[15px] leading-tight font-black text-black shadow-[0_0_30px_rgba(255,215,0,0.35)] transition-all duration-300 hover:scale-[1.01]"
                 >
                   {isMa
@@ -535,7 +538,7 @@ window.location.href = data.url;
     <div className="w-2.5 h-2.5 rounded-full bg-yellow-400 animate-pulse" />
 
     <p className="text-yellow-300 font-bold text-sm">
-      Sara buscando 24/24
+      Sara verificando expediente 24/24
     </p>
 
   </div>
@@ -543,10 +546,10 @@ window.location.href = data.url;
   <p className="text-white/70 text-xs leading-relaxed">
 
     {isMa
-      ? "سارة دابا كتراجع الملف ديالك وغادي توصلك رسالة فواتساب مباشرة ملي يخرج favorable."
+      ? "سارة غادي تراقب الملف ديالك 24/24. ملي يخرج FAVORABLE غادي نعلموك فالواتساب. غادي نجيبو NUSS ديالك أوتوماتيكيا. غادي نرسلو ليك التازا 790-012 جاهزة باش تسدد."
       : isEn
-      ? "Sara is now checking your file and you will receive a WhatsApp notification as soon as it becomes favorable."
-      : "Sara está verificando tu expediente ahora mismo y recibirás una notificación por WhatsApp en cuanto salga favorable."}
+      ? "Sara will monitor your file 24/24. When it becomes FAVORABLE we will notify you on WhatsApp. We will automatically get your NUSS. We will send you the 790-012 fee ready to pay."
+      : "Sara vigilará tu expediente 24/24. Cuando salga FAVORABLE te avisaremos por WhatsApp. Obtendremos tu NUSS automáticamente. Te enviaremos la tasa 790-012 preparada y lista para pagar."}
 
   </p>
 
@@ -628,7 +631,6 @@ window.location.href = data.url;
 }
 
 export default function BuscarCitas() {
-  // ✅ CORRECCIÓN PRINCIPAL: usamos lang del contexto y mapeamos a "ma" para la lógica interna
   const { lang } = useLang();
   const language = lang === "darija" ? "ma" : lang;
 
@@ -648,16 +650,15 @@ const [formData, setFormData] = useState<ClientFormData>({
   fullName: "",
   phone: "",
   email: "",
-
   expedienteNumero: "",
   identificadorSolicitud: "",
-
   fechaPresentacion: "",
-
   fechaNacimiento: "",
-
+  direccion: "",
+  codigoPostal: "",
+  ciudad: "",
+  provincia: "",
   preferredOffice: "+34",
-
   nie: "",
   passport: "",
   nationality: "",
@@ -700,7 +701,7 @@ const [formReady, setFormReady] = useState(
   const voiceTexts = useMemo(
     () => ({
       initialVoice:
-        "السلام عليكم مرحبا بك في هيستوريا إي آي أنا سارة غادي نعاونك باش تلقا موعد في أقرب وقت عمر ليا الفورمولار ومن بعد كليك على confirm",
+        "السلام عليكم مرحبا بك في هيستوريا إي آي أنا سارة غادي نعاونك باش تتابع الملف ديالك وتخرج رقم الضمان الاجتماعي وتفتح alta. عمر ليا الفورمولار وغادي نبداو.",
       savedLeadReply:
         "مزيان دابا توصلنا بالمعلومة ديالك غادي نبدأ نقلب لك على موعد 24 ساعة على 24 وغادي نصيفط لك واتساب إلا بان الموعد",
       foundMsg:
@@ -822,7 +823,12 @@ const [formReady, setFormReady] = useState(
 
       online: isMa ? "أونلاين" : isEn ? "Online" : "En línea",
 
-      agentRole: isMa ? "مساعدة المواعيد" : isEn ? "Appointments Assistant" : "Asesora de Citas",
+      // ✅ 2. AGENT ROLE ACTUALIZADO
+      agentRole: isMa
+        ? "متابعة الملفات"
+        : isEn
+        ? "File Tracking Assistant"
+        : "Asesora de Expedientes",
 
       procedurePlaceholder: isMa
         ? "اختار نوع السيتا"
@@ -874,7 +880,12 @@ const [formReady, setFormReady] = useState(
       openOfficialSite: isMa ? "فتح الموقع الرسمي" : isEn ? "Open official website" : "Abrir sede oficial",
       downloadPdf: isMa ? "تحميل PDF" : isEn ? "Download PDF" : "Descargar PDF",
 
-      voiceButton: isMa ? "تكلم مع سارة" : isEn ? "Talk with Sara" : "Hablar con Sara",
+      // ✅ 3. VOICE BUTTON ACTUALIZADO
+      voiceButton: isMa
+        ? "تكلم مع سارة حول الملف"
+        : isEn
+        ? "Talk with Sara about your file"
+        : "Hablar con Sara sobre tu expediente",
       stopButton: isMa ? "وقف الميكرو" : isEn ? "Stop microphone" : "Parar micrófono",
 
       latestReply: isMa ? "آخر رد من سارة" : isEn ? "Latest Sara reply" : "Última respuesta de Sara",
@@ -897,27 +908,27 @@ const [formReady, setFormReady] = useState(
         ? "Browser does not support audio."
         : "Este navegador no soporta audio. Usa Chrome moderno.",
 
-      // Textos del footer / barra de abajo
       docsButton: isMa ? "الوثائق" : isEn ? "Documents" : "Documentos",
       formsButton: isMa ? "الاستمارات" : isEn ? "Forms" : "Formularios",
       docsRequiredTitle: isMa ? "الوثائق المطلوبة" : isEn ? "Required documents" : "Documentos requeridos",
       formsOfficialTitle: isMa ? "الاستمارات الرسمية" : isEn ? "Official forms" : "Formularios oficiales",
 
-      // Título página
-      pageTitle: isMa ? "البحث على المواعيد" : isEn ? "Find appointments" : "Buscar citas",
+      // ✅ 1. PAGE TITLE ACTUALIZADO
+      pageTitle: isMa
+        ? "تتبع الملف"
+        : isEn
+        ? "File Tracking"
+        : "Seguimiento de Expediente",
       pageTitleConfirm: isMa ? "سارة: تأكيد الموعد" : isEn ? "Sara: appointment confirmation" : "Sara: confirmación de cita",
 
-      // Mensaje Sara al guardar lead
       agentSavedMsg: isMa
         ? "مزيان. دابا كنقلبو على الموعد ديالك. غادي نخبروك فالواتساب في أقل من 24 ساعة."
         : isEn
         ? "Perfect. We are already looking for your appointment. We will notify you on WhatsApp within 24 hours."
         : "Perfecto. Ya estamos buscando tu cita. Te avisaremos por WhatsApp en menos de 24h.",
 
-      // Confirmar cita botón
       confirmBtn: isMa ? "تأكيد الموعد" : isEn ? "Confirm appointment" : "Confirmar cita",
 
-      // Errores varios
       noRealAppointmentTitle: isMa ? "ما كاين حتى موعد حقيقي" : isEn ? "No real appointment" : "No hay cita real",
       noRealAppointmentDesc: isMa
         ? "ما تقدرش تأكد موعد ناقص"
@@ -1206,6 +1217,59 @@ const [formReady, setFormReady] = useState(
     }
   };
 
+  const handlePay = async () => {
+    if (!formData.fullName.trim() || !formData.phone.trim() || !formData.expedienteNumero.trim() || !formData.identificadorSolicitud.trim() || !formData.fechaPresentacion.trim() || !formData.fechaNacimiento.trim()) {
+      toast({
+        title: ui.missingTitle,
+        description: ui.missingDesc,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const res = await fetch("/api/create-checkout-sara-inicial", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          fullName: formData.fullName,
+          phone: formData.phone,
+          email: formData.email,
+          expedienteNumero: formData.expedienteNumero,
+          identificadorSolicitud: formData.identificadorSolicitud,
+          fechaPresentacion: formData.fechaPresentacion,
+          fechaNacimiento: formData.fechaNacimiento,
+          direccion: formData.direccion,
+          codigoPostal: formData.codigoPostal,
+          ciudad: formData.ciudad,
+          provincia: formData.provincia,
+          preferredOffice: formData.preferredOffice,
+          nie: formData.nie,
+          passport: formData.passport,
+          nationality: formData.nationality,
+          birthYear: formData.birthYear,
+          city: formData.city,
+          province: formData.province,
+        }),
+      });
+
+      const data = await res.json();
+      if (data.url) {
+        localStorage.setItem("saraPaid", "1");
+        window.location.href = data.url;
+      }
+    } catch (error) {
+      console.error(error);
+      toast({
+        title: ui.stripeErrorTitle,
+        description: ui.stripeErrorDesc,
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleFormChange = (field: keyof ClientFormData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
@@ -1295,7 +1359,6 @@ const [formReady, setFormReady] = useState(
         }
       );
 
-      // ✅ Mensaje de Sara traducido
       pushAgentMessage(ui.agentSavedMsg);
     } catch (error) {
       console.error(error);
@@ -1312,23 +1375,19 @@ const [formReady, setFormReady] = useState(
       const res = await fetch("/api/create-checkout-sara", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-       body: JSON.stringify({
-  appointment_id: urlParams.appointmentId,
-  token: urlParams.token,
-
-  customer_name: formData.fullName,
-  customer_phone: formData.phone,
-  customer_email: formData.email,
-
-  city: formData.city,
-
-  office: appointmentData?.office || "",
-  appointment_date: appointmentData?.date || "",
-  appointment_hour: appointmentData?.time || "",
-
-  tramite: selectedTramite,
-}),
-});
+        body: JSON.stringify({
+          appointment_id: urlParams.appointmentId,
+          token: urlParams.token,
+          customer_name: formData.fullName,
+          customer_phone: formData.phone,
+          customer_email: formData.email,
+          city: formData.city,
+          office: appointmentData?.office || "",
+          appointment_date: appointmentData?.date || "",
+          appointment_hour: appointmentData?.time || "",
+          tramite: selectedTramite,
+        }),
+      });
       const data = await res.json();
       if (data.url) window.location.href = data.url;
     } catch (err) {
@@ -1359,7 +1418,6 @@ const [formReady, setFormReady] = useState(
       <Navbar />
 
       <main className="flex-1 relative z-10 flex flex-col pt-16 pb-0">
-        {/* ✅ Título de página traducido */}
         <h1 className="text-xl font-display font-bold px-4 sm:px-6 py-3 max-w-7xl mx-auto w-full">
           {cameFromConfirmationLink ? ui.pageTitleConfirm : ui.pageTitle}
         </h1>
@@ -1486,6 +1544,7 @@ const [formReady, setFormReady] = useState(
             onFormChange={handleFormChange}
             onFormSubmit={handleFormSubmit}
             formReady={formReady}
+            onPay={handlePay}
           />
         </div>
 
