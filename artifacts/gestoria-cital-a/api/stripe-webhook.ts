@@ -84,43 +84,78 @@ export default async function handler(
 
       /*
       =====================================
-      SARA INITIAL PAYMENT
+      PREVENT DUPLICATES
       =====================================
       */
 
-      if (!metadata?.type || metadata?.type === "SARA_INITIAL") {
+      const { data: existingSearch } = await supabase
+        .from("expediente_checks")
+        .select("id")
+        .eq("stripe_session_id", session.id)
+        .maybeSingle();
 
-        /*
-        =====================================
-        PREVENT DUPLICATES
-        =====================================
-        */
+      if (existingSearch) {
+        console.log("⚠️ SESSION ALREADY PROCESSED");
+        return res.status(200).json({
+          received: true,
+        });
+      }
 
-        const { data: existingSearch } = await supabase
-          .from("expediente_checks")
-          .select("id")
-          .eq("stripe_session_id", session.id)
-          .maybeSingle();
+      /*
+      =====================================
+      SAVE TO SUPABASE - CON TODOS LOS CAMPOS
+      =====================================
+      */
 
-        if (existingSearch) {
-          console.log("⚠️ SESSION ALREADY PROCESSED");
-          return res.status(200).json({
-            received: true,
-          });
-        }
+      const { error } = await supabase
+        .from("expediente_checks")
+        .insert([
+          {
+            stripe_session_id: session.id,
 
-        /*
-        =====================================
-        SAVE TO SUPABASE - CON TODOS LOS CAMPOS
-        =====================================
-        */
+            // ✅ Datos personales
+            customer_name: metadata.customer_name || "",
+            customer_phone: metadata.customer_phone || "",
+            customer_email: metadata.customer_email || "",
 
-        const { error } = await supabase
-          .from("expediente_checks")
-          .insert([
-            {
-              stripe_session_id: session.id,
+            // ✅ Datos del expediente
+            expediente_numero: metadata.expediente_numero || "",
+            identificador_solicitud: metadata.identificador_solicitud || "",
+            fecha_presentacion: metadata.fecha_presentacion || "",
+            fecha_nacimiento: metadata.fecha_nacimiento || "",
 
+            // ✅ NUEVOS CAMPOS - COMPLETOS
+            nie: metadata.nie || "",
+            direccion: metadata.direccion || "",
+            codigo_postal: metadata.codigo_postal || "",
+            ciudad: metadata.ciudad || "",
+            provincia: metadata.provincia || "",
+           
+          },
+        ]);
+
+      if (error) {
+        console.log("❌ SUPABASE ERROR");
+        console.log(error);
+      } else {
+        console.log("✅ Saved in Supabase");
+      }
+
+      /*
+      =====================================
+      SEND TO MAKE - CON TODOS LOS CAMPOS
+      =====================================
+      */
+
+      try {
+        const makeResponse = await fetch(
+          "https://hook.eu1.make.com/k7f36tb5x2lh9840o19a9timdtnvcnqi",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
               // ✅ Datos personales
               customer_name: metadata.customer_name || "",
               customer_phone: metadata.customer_phone || "",
@@ -139,64 +174,19 @@ export default async function handler(
               ciudad: metadata.ciudad || "",
               provincia: metadata.provincia || "",
               preferred_office: metadata.preferred_office || "+34",
-            },
-          ]);
 
-        if (error) {
-          console.log("❌ SUPABASE ERROR");
-          console.log(error);
-        } else {
-          console.log("✅ Saved in Supabase");
-        }
+              paid: true,
+            }),
+          }
+        );
 
-        /*
-        =====================================
-        SEND TO MAKE - CON TODOS LOS CAMPOS
-        =====================================
-        */
+        console.log("✅ MAKE STATUS:", makeResponse.status);
+        const makeText = await makeResponse.text();
+        console.log("📥 MAKE RESPONSE:", makeText);
 
-        try {
-          const makeResponse = await fetch(
-            "https://hook.eu1.make.com/k7f36tb5x2lh9840o19a9timdtnvcnqi",
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                // ✅ Datos personales
-                customer_name: metadata.customer_name || "",
-                customer_phone: metadata.customer_phone || "",
-                customer_email: metadata.customer_email || "",
-
-                // ✅ Datos del expediente
-                expediente_numero: metadata.expediente_numero || "",
-                identificador_solicitud: metadata.identificador_solicitud || "",
-                fecha_presentacion: metadata.fecha_presentacion || "",
-                fecha_nacimiento: metadata.fecha_nacimiento || "",
-
-                // ✅ NUEVOS CAMPOS
-                nie: metadata.nie || "",
-                direccion: metadata.direccion || "",
-                codigo_postal: metadata.codigo_postal || "",
-                ciudad: metadata.ciudad || "",
-                provincia: metadata.provincia || "",
-                preferred_office: metadata.preferred_office || "+34",
-
-                paid: true,
-              }),
-            }
-          );
-
-          console.log("✅ MAKE STATUS:", makeResponse.status);
-          const makeText = await makeResponse.text();
-          console.log("📥 MAKE RESPONSE:", makeText);
-
-        } catch (makeErr) {
-          console.log("❌ MAKE ERROR");
-          console.log(makeErr);
-        }
-
+      } catch (makeErr) {
+        console.log("❌ MAKE ERROR");
+        console.log(makeErr);
       }
 
     }
