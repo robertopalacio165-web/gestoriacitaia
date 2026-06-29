@@ -25,6 +25,12 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 const solver = new Solver(process.env.TWOCAPTCHA_API_KEY);
 
 // ==============================================
+// WHATSAPP CONFIG
+// ==============================================
+const TOKEN = 'EAAX4uaZASSO0BR8WjHnHefCITS2nIiZAB94ydOZBxpz6nMCIfA98yjOdjZCcGWBKYziXu5zZC3QN42cRiF67UB6xboreIXCVPguVA5yqT0z3tcQGCdBK3GYzF6QlYbpQrcCKvwozOQEWi9fRUke5kQWb2k3eWIa5ACdbDpcqBlv9dId38SC3BMb7O9ufjmFKU7j1rMB4aUw82vH0yzq1ULXiuQ18mQBHwafPhTleRpSYW219avjTXuFovqvdd9ZBBecsJAOZADuG8LYC10ZBHCZAuPZByE';
+const PHONE_ID = '1121390731046153';
+
+// ==============================================
 // UTILIDADES
 // ==============================================
 function sleep(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
@@ -130,60 +136,6 @@ async function subirPDFaSupabase(pdfPath, nie, nombre) {
 }
 
 // ==============================================
-// 📨 ENVIAR PDF POR WHATSAPP (DIRECTO)
-// ==============================================
-async function enviarPDFWhatsApp(telefono, pdfUrl, nombre, nuss) {
-  const TOKEN = 'EAAX4uaZASSO0BR8WjHnHefCITS2nIiZAB94ydOZBxpz6nMCIfA98yjOdjZCcGWBKYziXu5zZC3QN42cRiF67UB6xboreIXCVPguVA5yqT0z3tcQGCdBK3GYzF6QlYbpQrcCKvwozOQEWi9fRUke5kQWb2k3eWIa5ACdbDpcqBlv9dId38SC3BMb7O9ufjmFKU7j1rMB4aUw82vH0yzq1ULXiuQ18mQBHwafPhTleRpSYW219avjTXuFovqvdd9ZBBecsJAOZADuG8LYC10ZBHCZAuPZByE';
-  const PHONE_ID = '1121390731046153';
-  
-  try {
-    await axios.post(
-      `https://graph.facebook.com/v18.0/${PHONE_ID}/messages`,
-      {
-        messaging_product: "whatsapp",
-        to: telefono,
-        type: "text",
-        text: {
-          body: `🎉 ${nombre}, tu Tasa 790-012 está lista!\n\n🔑 NUSS: ${nuss}\n💰 Importe: 16.08€`
-        }
-      },
-      {
-        headers: {
-          'Authorization': `Bearer ${TOKEN}`,
-          'Content-Type': 'application/json'
-        }
-      }
-    );
-    
-    const res = await axios.post(
-      `https://graph.facebook.com/v18.0/${PHONE_ID}/messages`,
-      {
-        messaging_product: "whatsapp",
-        to: telefono,
-        type: "document",
-        document: {
-          link: pdfUrl,
-          filename: `Tasa_790-012_${nombre.replace(/\s/g, '_')}.pdf`
-        }
-      },
-      {
-        headers: {
-          'Authorization': `Bearer ${TOKEN}`,
-          'Content-Type': 'application/json'
-        }
-      }
-    );
-    
-    console.log('✅ PDF enviado por WhatsApp');
-    console.log('📝 ID mensaje:', res.data?.messages?.[0]?.id);
-    return true;
-  } catch (error) {
-    console.error('❌ Error enviando PDF:', error.response?.data || error.message);
-    return false;
-  }
-}
-
-// ==============================================
 // 📄 GENERAR TASA AUTOMÁTICAMENTE
 // ==============================================
 async function generarTasa(nie, nombreCompleto, expediente) {
@@ -281,280 +233,218 @@ async function generarTasa(nie, nombreCompleto, expediente) {
 }
 
 // ==============================================
-// 📨 WHATSAPP FINAL CON NUSS + TASA + PDF
+// 📨 FUNCIONES WHATSAPP
 // ==============================================
-async function enviarWhatsAppFinal(cliente, nie, nuss, pdfUrl) {
-  await enviarPDFWhatsApp(cliente.customer_phone, pdfUrl, cliente.customer_name, nuss);
-  
-  const webhook = process.env.MAKE_WEBHOOK_FINAL || process.env.MAKE_WEBHOOK_NUSS;
-  if (webhook) {
-    try {
-      const payload = {
-        id: cliente.id,
-        nombre: cliente.customer_name,
-        telefono: cliente.customer_phone,
-        nie: nie,
-        nuss: nuss,
-        pdf_url: pdfUrl,
-        mensaje_darija: `🎉 مبروك ${cliente.customer_name}! هنا رقم الضمان الاجتماعي ديالك: ${nuss}\n\n📄 وتاعسة ديالك جاهزة. دوز للبنك القريب وخلصها. حظ سعيد في التقنين ديالك فإسبانيا!`,
-        mensaje_es: `🎉 FELICIDADES ${cliente.customer_name}! Tu NUSS es: ${nuss}\n\n📄 Tu tasa está lista. Ve al banco más cercano y págala. ¡Mucha suerte en tu regularización en España!`,
-        tipo: "final",
-        fecha: new Date().toISOString()
-      };
-      
-      await axios.post(webhook, payload);
-      console.log('✅ WhatsApp FINAL enviado por Make');
-    } catch (error) {
-      console.error('❌ Error enviando Make:', error.message);
-    }
+
+// 1. BIENVENIDA
+async function enviarWhatsAppBienvenida(cliente, nie) {
+  try {
+    await axios.post(
+      `https://graph.facebook.com/v18.0/${PHONE_ID}/messages`,
+      {
+        messaging_product: "whatsapp",
+        to: cliente.customer_phone,
+        type: "template",
+        template: {
+          name: "bienvenida_expediente",
+          language: { code: "ar" },
+          components: [{
+            type: "body",
+            parameters: [
+              { type: "text", text: cliente.customer_name },
+              { type: "text", text: cliente.expediente_numero },
+              { type: "text", text: nie }
+            ]
+          }]
+        }
+      },
+      { headers: { 'Authorization': `Bearer ${TOKEN}`, 'Content-Type': 'application/json' } }
+    );
+    console.log(`✅ BIENVENIDA enviado a: ${cliente.customer_phone}`);
+  } catch (error) {
+    console.error('❌ Error BIENVENIDA:', error.response?.data || error.message);
   }
 }
 
-// ==============================================
-// 📨 WHATSAPP NIE DETECTADO
-// ==============================================
+// 2. NIE DETECTADO
 async function enviarWhatsAppNIE(cliente, nie) {
-  const webhook = process.env.MAKE_WEBHOOK_NIE || process.env.MAKE_WEBHOOK_ESTADO;
-  if (!webhook) {
-    console.log("⚠️ Webhook NIE no configurado");
-    return;
+  try {
+    await axios.post(
+      `https://graph.facebook.com/v18.0/${PHONE_ID}/messages`,
+      {
+        messaging_product: "whatsapp",
+        to: cliente.customer_phone,
+        type: "template",
+        template: {
+          name: "nie_detectado",
+          language: { code: "ar" },
+          components: [{
+            type: "body",
+            parameters: [
+              { type: "text", text: cliente.customer_name },
+              { type: "text", text: nie }
+            ]
+          }]
+        }
+      },
+      { headers: { 'Authorization': `Bearer ${TOKEN}`, 'Content-Type': 'application/json' } }
+    );
+    console.log(`✅ NIE enviado a: ${cliente.customer_phone}`);
+  } catch (error) {
+    console.error('❌ Error NIE:', error.response?.data || error.message);
   }
-
-  const payload = {
-    id: cliente.id,
-    nombre: cliente.customer_name,
-    telefono: cliente.customer_phone,
-    nie: nie,
-    mensaje_darija: `✅ ${cliente.customer_name}! NIE ديالك خرج: ${nie}\n\nهاد شي إشارة مزيانة. نتمناو يخرج القرار النهائي قريبا.`,
-    mensaje_es: `✅ ${cliente.customer_name}! Tu NIE ha salido: ${nie}\n\nEs una buena señal. Esperamos que salga la resolución final pronto.`,
-    tipo: "nie_detectado",
-    fecha: new Date().toISOString()
-  };
-
-  console.log(`📱 Enviando WhatsApp NIE a: ${cliente.customer_phone}`);
-  console.log(`💬 Darija: ${payload.mensaje_darija}`);
-
-  const res = await fetch(webhook, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
-  });
-
-  if (res.ok) console.log("✅ WhatsApp NIE enviado");
-  else console.log("❌ Error WhatsApp NIE:", await res.text());
 }
 
-// ==============================================
-// 📨 WHATSAPP FAVORABLE
-// ==============================================
+// 3. ESTADO NO FAVORABLE (UN SOLO WHATSAPP)
+async function enviarWhatsAppEstadoNoFavorable(cliente, estado) {
+  const estadoText = {
+    'desfavorable': 'DESFAVORABLE',
+    'bloqueado': 'BLOQUEADO',
+    'requerimiento': 'REQUIERE DOCUMENTACIÓN',
+    'archivado': 'ARCHIVADO',
+    'inadmitido': 'INADMITIDO',
+    'resuelto': 'RESUELTO'
+  };
+
+  try {
+    await axios.post(
+      `https://graph.facebook.com/v18.0/${PHONE_ID}/messages`,
+      {
+        messaging_product: "whatsapp",
+        to: cliente.customer_phone,
+        type: "template",
+        template: {
+          name: "analisis_regularizacion",
+          language: { code: "ar" },
+          components: [{
+            type: "body",
+            parameters: [
+              { type: "text", text: cliente.customer_name },
+              { type: "text", text: estadoText[estado] || estado.toUpperCase() },
+              { type: "text", text: cliente.expediente_numero }
+            ]
+          }]
+        }
+      },
+      { headers: { 'Authorization': `Bearer ${TOKEN}`, 'Content-Type': 'application/json' } }
+    );
+    console.log(`✅ ESTADO NO FAVORABLE (${estado}) enviado a: ${cliente.customer_phone}`);
+  } catch (error) {
+    console.error('❌ Error ESTADO:', error.response?.data || error.message);
+  }
+}
+
+// 4. FAVORABLE (Texto libre)
 async function enviarWhatsAppFavorable(cliente) {
-  const webhook = process.env.MAKE_WEBHOOK_FAVORABLE;
-  if (!webhook) {
-    console.log("⚠️ Webhook favorable no configurado");
-    return;
+  try {
+    await axios.post(
+      `https://graph.facebook.com/v18.0/${PHONE_ID}/messages`,
+      {
+        messaging_product: "whatsapp",
+        to: cliente.customer_phone,
+        type: "text",
+        text: {
+          body: `🎉 مبروك ${cliente.customer_name}! ملف ديالك تقبل.\n\nدابا تسنا رسالة SMS فتيليفونك. خد الكود ورد علينا به هنا باش نكملك الإجراءات.`
+        }
+      },
+      { headers: { 'Authorization': `Bearer ${TOKEN}`, 'Content-Type': 'application/json' } }
+    );
+    console.log(`✅ FAVORABLE enviado a: ${cliente.customer_phone}`);
+  } catch (error) {
+    console.error('❌ Error FAVORABLE:', error.response?.data || error.message);
   }
+}
 
-  const payload = {
-    id: cliente.id,
-    nombre: cliente.customer_name,
-    telefono: cliente.customer_phone,
-    expediente: cliente.expediente_numero,
-    solicitud: cliente.identificador_solicitud,
-    estado: "favorable",
-    mensaje_darija: `🎉 مبروك ${cliente.customer_name}! ملف ديالك تقبل.\n\nدابا تسنا رسالة SMS فتيليفونك. خد الكود ورد علينا به هنا باش نكملك الإجراءات.`,
-    mensaje_es: `🎉 FELICIDADES ${cliente.customer_name}! Tu expediente ha sido APROBADO.\n\nAhora espera un mensaje SMS en tu móvil. Coge el código y respóndenos aquí para completar el trámite.`,
-    tipo: "favorable",
-    fecha: new Date().toISOString()
-  };
+// 5. PEDIR CÓDIGO (Texto libre)
+async function enviarWhatsAppPedirCodigo(cliente) {
+  try {
+    await axios.post(
+      `https://graph.facebook.com/v18.0/${PHONE_ID}/messages`,
+      {
+        messaging_product: "whatsapp",
+        to: cliente.customer_phone,
+        type: "text",
+        text: {
+          body: `📱 ${cliente.customer_name}! وصل ليك SMS بالكود. جاوب على هاد الرسالة بالكود باش نكملو.`
+        }
+      },
+      { headers: { 'Authorization': `Bearer ${TOKEN}`, 'Content-Type': 'application/json' } }
+    );
+    console.log(`✅ PEDIR CÓDIGO enviado a: ${cliente.customer_phone}`);
+  } catch (error) {
+    console.error('❌ Error PEDIR CÓDIGO:', error.response?.data || error.message);
+  }
+}
 
-  console.log(`📱 Enviando WhatsApp FAVORABLE a: ${cliente.customer_phone}`);
-  console.log(`💬 Darija: ${payload.mensaje_darija}`);
+// 6. NUSS (Texto libre)
+async function enviarWhatsAppNUSS(cliente, nuss) {
+  try {
+    await axios.post(
+      `https://graph.facebook.com/v18.0/${PHONE_ID}/messages`,
+      {
+        messaging_product: "whatsapp",
+        to: cliente.customer_phone,
+        type: "text",
+        text: {
+          body: `🔑 ${cliente.customer_name}! رقم الضمان الاجتماعي ديالك: ${nuss}\n\nدابا غادي نعمرو لك التاعسة ويوصلك PDF.`
+        }
+      },
+      { headers: { 'Authorization': `Bearer ${TOKEN}`, 'Content-Type': 'application/json' } }
+    );
+    console.log(`✅ NUSS enviado a: ${cliente.customer_phone}`);
+  } catch (error) {
+    console.error('❌ Error NUSS:', error.response?.data || error.message);
+  }
+}
 
-  const res = await fetch(webhook, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
-  });
+// 7. FINAL (Plantilla + PDF)
+async function enviarWhatsAppFinal(cliente, nuss, pdfUrl) {
+  try {
+    // Enviar plantilla final_felic
+    await axios.post(
+      `https://graph.facebook.com/v18.0/${PHONE_ID}/messages`,
+      {
+        messaging_product: "whatsapp",
+        to: cliente.customer_phone,
+        type: "template",
+        template: {
+          name: "final_felic",
+          language: { code: "ar" },
+          components: [{
+            type: "body",
+            parameters: [
+              { type: "text", text: cliente.customer_name },
+              { type: "text", text: nuss }
+            ]
+          }]
+        }
+      },
+      { headers: { 'Authorization': `Bearer ${TOKEN}`, 'Content-Type': 'application/json' } }
+    );
 
-  if (res.ok) console.log("✅ WhatsApp FAVORABLE enviado");
-  else console.log("❌ Error WhatsApp FAVORABLE:", await res.text());
+    // Enviar PDF
+    await axios.post(
+      `https://graph.facebook.com/v18.0/${PHONE_ID}/messages`,
+      {
+        messaging_product: "whatsapp",
+        to: cliente.customer_phone,
+        type: "document",
+        document: {
+          link: pdfUrl,
+          filename: `Tasa_790-012_${cliente.customer_name.replace(/\s/g, '_')}.pdf`
+        }
+      },
+      { headers: { 'Authorization': `Bearer ${TOKEN}`, 'Content-Type': 'application/json' } }
+    );
+    
+    console.log(`✅ FINAL enviado a: ${cliente.customer_phone}`);
+  } catch (error) {
+    console.error('❌ Error FINAL:', error.response?.data || error.message);
+  }
 }
 
 // ==============================================
-// 📨 WHATSAPP DESFAVORABLE
-// ==============================================
-async function enviarWhatsAppDesfavorable(cliente) {
-  const webhook = process.env.MAKE_WEBHOOK_DESFAVORABLE || process.env.MAKE_WEBHOOK_ESTADO;
-  if (!webhook) {
-    console.log("⚠️ Webhook desfavorable no configurado");
-    return;
-  }
-
-  const payload = {
-    id: cliente.id,
-    nombre: cliente.customer_name,
-    telefono: cliente.customer_phone,
-    expediente: cliente.expediente_numero,
-    solicitud: cliente.identificador_solicitud,
-    estado: "desfavorable",
-    mensaje_darija: `❌ ${cliente.customer_name}! ملف ديالك مرفوض.\n\nخاصك تتواصل مع المحامي ديالك بسرعة. كاين شي مشكل فملفك.`,
-    mensaje_es: `❌ ${cliente.customer_name}! Tu expediente ha sido DENEGADO.\n\nTienes que contactar con tu abogado urgentemente. Hay algo mal en tu expediente.`,
-    tipo: "desfavorable",
-    fecha: new Date().toISOString()
-  };
-
-  console.log(`📱 Enviando WhatsApp DESFAVORABLE a: ${cliente.customer_phone}`);
-  console.log(`💬 Darija: ${payload.mensaje_darija}`);
-
-  const res = await fetch(webhook, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
-  });
-
-  if (res.ok) console.log("✅ WhatsApp DESFAVORABLE enviado");
-  else console.log("❌ Error WhatsApp DESFAVORABLE:", await res.text());
-}
-
-// ==============================================
-// 📨 WHATSAPP PEDIR CÓDIGO SMS
-// ==============================================
-async function enviarWhatsAppPedirCodigo(cliente, nie) {
-  const webhook = process.env.MAKE_WEBHOOK_PEDIR_CODIGO;
-  if (!webhook) {
-    console.log("⚠️ Webhook pedir código no configurado");
-    return;
-  }
-
-  const payload = {
-    id: cliente.id,
-    nombre: cliente.customer_name,
-    telefono: cliente.customer_phone,
-    nie: nie,
-    mensaje_darija: `📱 ${cliente.customer_name}! وصل ليك SMS بالكود. جاوب على هاد الرسالة بالكود باش نكملو.`,
-    mensaje_es: `📱 ${cliente.customer_name}! Te ha llegado un SMS con el código. RESPONDE a este mensaje con el código para continuar.`,
-    tipo: "pedir_codigo",
-    fecha: new Date().toISOString()
-  };
-
-  console.log(`📱 Enviando WhatsApp PEDIR CÓDIGO a: ${cliente.customer_phone}`);
-  console.log(`💬 Darija: ${payload.mensaje_darija}`);
-
-  const res = await fetch(webhook, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
-  });
-
-  if (res.ok) console.log("✅ WhatsApp PEDIR CÓDIGO enviado");
-  else console.log("❌ Error:", await res.text());
-}
-
-// ==============================================
-// 📨 WHATSAPP NUSS ENCONTRADO
-// ==============================================
-async function enviarWhatsAppNUSS(cliente, nie, nuss) {
-  const webhook = process.env.MAKE_WEBHOOK_NUSS;
-  if (!webhook) {
-    console.log("⚠️ Webhook NUSS no configurado");
-    return;
-  }
-
-  const payload = {
-    id: cliente.id,
-    nombre: cliente.customer_name,
-    telefono: cliente.customer_phone,
-    nie: nie,
-    nuss: nuss,
-    mensaje_darija: `🔑 ${cliente.customer_name}! رقم الضمان الاجتماعي ديالك: ${nuss}\n\nدابا غادي نعمرو لك التاعسة ويوصلك PDF.`,
-    mensaje_es: `🔑 ${cliente.customer_name}! Tu NUSS es: ${nuss}\n\nAhora vamos a rellenar tu tasa y te llegará el PDF.`,
-    tipo: "nuss",
-    fecha: new Date().toISOString()
-  };
-
-  console.log(`📱 Enviando WhatsApp NUSS a: ${cliente.customer_phone}`);
-  console.log(`💬 Darija: ${payload.mensaje_darija}`);
-
-  const res = await fetch(webhook, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
-  });
-
-  if (res.ok) console.log("✅ WhatsApp NUSS enviado");
-  else console.log("❌ Error:", await res.text());
-}
-
-// ==============================================
-// 📨 WHATSAPP ESTADO (TRAMITE, BLOQUEADO, ETC)
-// ==============================================
-async function enviarWhatsAppEstado(cliente, estado) {
-  const webhook = process.env.MAKE_WEBHOOK_ESTADO;
-  if (!webhook) {
-    console.log("⚠️ Webhook de estado no configurado");
-    return;
-  }
-
-  const mensajes = {
-    'tramite': {
-      darija: `⏳ ${cliente.customer_name}! ملف ديالك فالطريق. كنتمنو.`,
-      es: `⏳ ${cliente.customer_name}! Tu expediente está EN TRÁMITE. Estamos pendientes.`
-    },
-    'bloqueado': {
-      darija: `🔒 ${cliente.customer_name}! ملف ديالك محظور. خاصك تتواصل مع المحامي.`,
-      es: `🔒 ${cliente.customer_name}! Tu expediente está BLOQUEADO. Contacta con tu abogado.`
-    },
-    'requerimiento': {
-      darija: `📄 ${cliente.customer_name}! ملف ديالك ناقص وثائق. خاصك ترسل وثائق جديدة.`,
-      es: `📄 ${cliente.customer_name}! Tu expediente requiere DOCUMENTACIÓN adicional.`
-    },
-    'archivado': {
-      darija: `📁 ${cliente.customer_name}! ملف ديالك تم أرشفته.`,
-      es: `📁 ${cliente.customer_name}! Tu expediente ha sido ARCHIVADO.`
-    },
-    'inadmitido': {
-      darija: `🚫 ${cliente.customer_name}! ملف ديالك غير مقبول.`,
-      es: `🚫 ${cliente.customer_name}! Tu expediente NO HA SIDO ADMITIDO.`
-    },
-    'resuelto': {
-      darija: `✅ ${cliente.customer_name}! ملف ديالك تم حله.`,
-      es: `✅ ${cliente.customer_name}! Tu expediente ha sido RESUELTO.`
-    },
-    'desconocido': {
-      darija: `❓ ${cliente.customer_name}! مازال ما عرفناش الحالة ديال ملفك. غانرجعو.`,
-      es: `❓ ${cliente.customer_name}! Aún no conocemos el estado de tu expediente. Volveremos.`
-    }
-  };
-
-  const mensaje = mensajes[estado] || mensajes['desconocido'];
-
-  const payload = {
-    id: cliente.id,
-    nombre: cliente.customer_name,
-    telefono: cliente.customer_phone,
-    expediente: cliente.expediente_numero,
-    solicitud: cliente.identificador_solicitud,
-    estado: estado,
-    mensaje_darija: mensaje.darija,
-    mensaje_es: mensaje.es,
-    fecha: new Date().toISOString()
-  };
-
-  console.log(`📱 Enviando WhatsApp estado (${estado}) a: ${cliente.customer_phone}`);
-  console.log(`💬 Darija: ${mensaje.darija}`);
-
-  const res = await fetch(webhook, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
-  });
-
-  if (res.ok) console.log("✅ WhatsApp estado enviado");
-  else console.log("❌ Error WhatsApp:", await res.text());
-}
-
-// ==============================================
-// 🎯 RESOLVER CAPTCHA CON 2CAPTCHA (IMAGEN)
+// 🎯 RESOLVER CAPTCHA CON 2CAPTCHA
 // ==============================================
 async function resolverCaptcha(page) {
   console.log("🔊 Resolviendo CAPTCHA con 2Captcha...");
@@ -583,10 +473,7 @@ async function resolverCaptcha(page) {
     console.log(`✅ Imagen CAPTCHA encontrada (${await captchaImg.count()} elementos)`);
 
     const imagePath = `/root/captcha-image-${Date.now()}.png`;
-    await captchaImg.first().screenshot({
-      path: imagePath
-    });
-
+    await captchaImg.first().screenshot({ path: imagePath });
     console.log(`📸 CAPTCHA guardado: ${imagePath}`);
 
     console.log("🔧 Enviando a 2Captcha...");
@@ -664,6 +551,9 @@ async function solicitarSMSSeguridadSocial(nie, fechaNacimiento, telefono) {
   }
 }
 
+// ==============================================
+// 🔄 COMPLETAR NUSS
+// ==============================================
 async function completarNUSS(nie, fechaNacimiento, codigo) {
   let browser;
   console.log(`🔍 Completando NUSS con código: ${codigo}`);
@@ -843,25 +733,24 @@ async function verificarExpediente(cliente) {
         nie_notificado: true
       }).eq("id", cliente.id);
     } else if (nie && !cliente.nie) {
-      await supabase.from("expediente_checks").update({
-        nie: nie
-      }).eq("id", cliente.id);
+      await supabase.from("expediente_checks").update({ nie }).eq("id", cliente.id);
     }
 
     // ==============================================
-    // 📨 NOTIFICAR DESFAVORABLE (SOLO 1 VEZ)
+    // 📨 ESTADOS NO FAVORABLES (UN SOLO WHATSAPP)
     // ==============================================
-    if (estado === "desfavorable" && !cliente.notificado_desfavorable) {
-      console.log(`📨 DESFAVORABLE detectado - Enviando WhatsApp...`);
-      await enviarWhatsAppDesfavorable(cliente);
+    const estadosNoFavorables = ['desfavorable', 'bloqueado', 'requerimiento', 'archivado', 'inadmitido', 'resuelto'];
+    if (estadosNoFavorables.includes(estado) && !cliente.notificado_no_favorable) {
+      console.log(`📨 ${estado.toUpperCase()} detectado - Enviando WhatsApp...`);
+      await enviarWhatsAppEstadoNoFavorable(cliente, estado);
       await supabase.from("expediente_checks").update({
-        notificado_desfavorable: true,
+        notificado_no_favorable: true,
         estado_detalle: estado
       }).eq("id", cliente.id);
     }
 
     // ==============================================
-    // 📨 NOTIFICAR FAVORABLE (SOLO 1 VEZ) + FLUJO COMPLETO
+    // 📨 FAVORABLE + FLUJO COMPLETO
     // ==============================================
     if (estado === "favorable" && !cliente.notificado_favorable) {
       console.log("🎉 EXPEDIENTE FAVORABLE DETECTADO!");
@@ -876,7 +765,7 @@ async function verificarExpediente(cliente) {
         );
 
         if (smsenviado) {
-          await enviarWhatsAppPedirCodigo(cliente, nie);
+          await enviarWhatsAppPedirCodigo(cliente);
           await supabase.from("expediente_checks").update({
             esperando_codigo: true,
             codigo_solicitado: new Date().toISOString(),
@@ -888,22 +777,9 @@ async function verificarExpediente(cliente) {
     }
 
     // ==============================================
-    // 📨 NOTIFICAR OTROS ESTADOS (SOLO 1 VEZ)
-    // ==============================================
-    const estadoNotificadoKey = `notificado_${estado}`;
-    if (estado !== "favorable" && estado !== "desfavorable" && estado !== "tramite" && estado !== "desconocido" && !cliente[estadoNotificadoKey]) {
-      await enviarWhatsAppEstado(cliente, estado);
-      await supabase.from("expediente_checks").update({
-        [estadoNotificadoKey]: true,
-        estado_detalle: estado
-      }).eq("id", cliente.id);
-    }
-
-    // ==============================================
-    // 📨 NOTIFICAR TRAMITE (SOLO 1 VEZ)
+    // 📨 TRAMITE (SOLO 1 VEZ)
     // ==============================================
     if (estado === "tramite" && !cliente.notificado_tramite) {
-      await enviarWhatsAppEstado(cliente, estado);
       await supabase.from("expediente_checks").update({
         notificado_tramite: true,
         estado_detalle: estado
@@ -985,10 +861,13 @@ app.post('/api/sms-code', async (req, res) => {
         fecha_nuss: new Date().toISOString()
       }).eq('id', clienteId);
 
-      await enviarWhatsAppNUSS(cliente, cliente.nie, nuss);
+      // ==============================================
+      // 📨 ENVIAR NUSS
+      // ==============================================
+      await enviarWhatsAppNUSS(cliente, nuss);
 
       // ==============================================
-      // 📄 GENERAR TASA AUTOMÁTICAMENTE
+      // 📄 GENERAR TASA
       // ==============================================
       console.log("📄 Generando tasa automáticamente...");
       const pdfPath = await generarTasa(
@@ -1004,11 +883,14 @@ app.post('/api/sms-code', async (req, res) => {
           await supabase.from("expediente_checks").update({
             tas_generated: true,
             tas_pdf_url: pdfUrl,
-            fecha_favorable: new Date().toISOString()
+            fecha_favorable: new Date().toISOString(),
+            proceso_completado: true
           }).eq('id', clienteId);
 
-          // 📨 WHATSAPP FINAL
-          await enviarWhatsAppFinal(cliente, cliente.nie, nuss, pdfUrl);
+          // ==============================================
+          // 📨 ENVIAR FINAL (Plantilla + PDF)
+          // ==============================================
+          await enviarWhatsAppFinal(cliente, nuss, pdfUrl);
           
           console.log(`✅ Proceso completado para ${cliente.customer_name}`);
           console.log(`📄 PDF URL: ${pdfUrl}`);
