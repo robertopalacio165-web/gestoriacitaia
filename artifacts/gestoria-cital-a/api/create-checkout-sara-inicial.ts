@@ -49,6 +49,10 @@ export default async function handler(
     
     console.log("📞 PHONE RECEIVED:", phone);
     console.log("📋 BODY:", body);
+
+    // ✅ CONSTRUIR TELÉFONO COMPLETO
+    const telefonoCompleto = `${(preferredOffice || "+34").replace("+","")}${phone || ""}`;
+    console.log("📞 TELEFONO FINAL:", telefonoCompleto);
     
     const session = await stripe.checkout.sessions.create({
 
@@ -56,10 +60,10 @@ export default async function handler(
 
       mode: "payment",
 
-      // ✅ METADATA COMPLETA CON TODOS LOS CAMPOS
+      // ✅ METADATA COMPLETA CON TELÉFONO CORREGIDO
       metadata: {
         customer_name: fullName || "",
-        customer_phone: phone || "",
+        customer_phone: telefonoCompleto,  // ✅ AHORA CON PREFIJO
         customer_email: email || "",
 
         expediente_numero: expedienteNumero || "",
