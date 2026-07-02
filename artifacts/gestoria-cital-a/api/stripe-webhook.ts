@@ -155,28 +155,30 @@ export default async function handler(
             headers: {
               "Content-Type": "application/json",
             },
-            body: JSON.stringify({
-              // ✅ Datos personales
-              customer_name: metadata.customer_name || "",
-              customer_phone: metadata.customer_phone || "",
-              customer_email: metadata.customer_email || "",
+     body: JSON.stringify({
+  id: session.id,
 
-              // ✅ Datos del expediente
-              expediente_numero: metadata.expediente_numero || "",
-              identificador_solicitud: metadata.identificador_solicitud || "",
-              fecha_presentacion: metadata.fecha_presentacion || "",
-              fecha_nacimiento: metadata.fecha_nacimiento || "",
+  nombre: metadata.customer_name || "",
+  telefono: metadata.customer_phone || "",
 
-              // ✅ NUEVOS CAMPOS
-              nie: metadata.nie || "",
-              direccion: metadata.direccion || "",
-              codigo_postal: metadata.codigo_postal || "",
-              ciudad: metadata.ciudad || "",
-              provincia: metadata.provincia || "",
-              preferred_office: metadata.preferred_office || "+34",
+  direccion: metadata.direccion || "",
+  codigo_postal: metadata.codigo_postal || "",
+  ciudad: metadata.ciudad || "",
+  provincia: metadata.provincia || "",
 
-              paid: true,
-            }),
+  fecha_nacimiento: metadata.fecha_nacimiento || "",
+  expediente: metadata.expediente_numero || "",
+  nie: metadata.nie || "",
+
+  mensaje_darija:
+    `👋 Salam ${metadata.customer_name || ""}! Sara tlebt 3lik l'exposant dyalk. Ghat9lb 3lih kola 30 minute w ghan9olik 7al l7ala dialo.`,
+
+  mensaje_es:
+    `👋 Hola ${metadata.customer_name || ""}! Sara ha comenzado a vigilar tu expediente. Revisará cada 30 minutos y te informará del estado.`,
+
+  tipo: "bienvenida",
+  fecha: new Date().toISOString()
+}),
           }
         );
 
