@@ -214,9 +214,7 @@ export default function Landing() {
           </p>
 
           <div className="flex flex-col sm:flex-row flex-wrap justify-center items-stretch gap-3 mb-5 max-w-2xl mx-auto">
-            {/* ✅ BOTÓN ELIMINADO: Regularización con Soufiane */}
-
-            {/* ✅ BOTÓN SARA (existente) */}
+            {/* ✅ BOTÓN SARA */}
             <Button
               className="w-full sm:w-auto rounded-full px-7 py-3 shadow-lg shadow-blue-500/30 bg-blue-600 hover:bg-blue-500 text-white text-base font-bold border-0 min-h-[52px]"
               onClick={() => goWithGoogleAuth("/buscar-citas")}
@@ -225,7 +223,7 @@ export default function Landing() {
               <ArrowRight className="w-4 h-4 ml-1" />
             </Button>
 
-            {/* ✅ BOTÓN KHALID (existente) */}
+            {/* ✅ BOTÓN KHALID */}
             <Button
               className="w-full sm:w-auto rounded-full px-7 py-3 min-h-[52px]
               bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500
@@ -237,22 +235,20 @@ export default function Landing() {
               <ArrowRight className="w-4 h-4 ml-1" />
             </Button>
 
-            {/* ✅ NUEVO BOTÓN TRABAJO MALTA (reemplaza al de Regularización) */}
+            {/* ✅ BOTÓN TRABAJO EN MALTA - VERDE LLAMATIVO Y TEXTO GRANDE */}
             <Button
-              className="w-full sm:w-auto rounded-full px-7 py-3 min-h-[52px]
-              bg-gradient-to-r from-red-600 via-orange-500 to-yellow-400
-              hover:scale-[1.02]
-              transition-all
-              duration-300
-              text-white
-              font-bold
-              shadow-2xl
-              shadow-orange-500/40
-              border-0"
+              className="w-full sm:w-auto rounded-full px-8 py-4 min-h-[60px]
+              bg-gradient-to-r from-green-500 via-emerald-500 to-green-600
+              hover:scale-[1.05] hover:shadow-2xl hover:shadow-green-500/50
+              transition-all duration-300
+              text-white text-xl font-extrabold
+              shadow-2xl shadow-green-500/40
+              border-0
+              tracking-wide"
               onClick={() => window.location.href = "/trabajo-malta"}
             >
               🇲🇹 {t("hero_btn_malta")}
-              <ArrowRight className="w-4 h-4 ml-2" />
+              <ArrowRight className="w-5 h-5 ml-2" />
             </Button>
           </div>
 
