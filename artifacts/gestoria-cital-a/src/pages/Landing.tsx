@@ -214,13 +214,7 @@ export default function Landing() {
           </p>
 
           <div className="flex flex-col sm:flex-row flex-wrap justify-center items-stretch gap-3 mb-5 max-w-2xl mx-auto">
-            {/* ✅ BOTÓN REGULARIZACIÓN (existente) */}
-            <Button
-              className="w-full sm:w-auto rounded-full px-7 py-3 shadow-lg shadow-primary/30 bg-primary hover:bg-primary/90 text-base font-bold min-h-[52px]"
-              onClick={() => goWithGoogleAuth("/regularizacion-2026")}
-            >
-              {t("hero_btn1")} <ArrowRight className="w-4 h-4 ml-1" />
-            </Button>
+            {/* ✅ BOTÓN ELIMINADO: Regularización con Soufiane */}
 
             {/* ✅ BOTÓN SARA (existente) */}
             <Button
@@ -243,7 +237,7 @@ export default function Landing() {
               <ArrowRight className="w-4 h-4 ml-1" />
             </Button>
 
-            {/* ✅ NUEVO BOTÓN TRABAJO MALTA */}
+            {/* ✅ NUEVO BOTÓN TRABAJO MALTA (reemplaza al de Regularización) */}
             <Button
               className="w-full sm:w-auto rounded-full px-7 py-3 min-h-[52px]
               bg-gradient-to-r from-red-600 via-orange-500 to-yellow-400
