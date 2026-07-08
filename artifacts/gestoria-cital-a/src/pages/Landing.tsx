@@ -214,6 +214,7 @@ export default function Landing() {
           </p>
 
           <div className="flex flex-col sm:flex-row flex-wrap justify-center items-stretch gap-3 mb-5 max-w-2xl mx-auto">
+            {/* ✅ BOTÓN REGULARIZACIÓN (existente) */}
             <Button
               className="w-full sm:w-auto rounded-full px-7 py-3 shadow-lg shadow-primary/30 bg-primary hover:bg-primary/90 text-base font-bold min-h-[52px]"
               onClick={() => goWithGoogleAuth("/regularizacion-2026")}
@@ -221,7 +222,7 @@ export default function Landing() {
               {t("hero_btn1")} <ArrowRight className="w-4 h-4 ml-1" />
             </Button>
 
-            {/* ✅ BOTÓN SARA - USA t("hero_btn_sara") */}
+            {/* ✅ BOTÓN SARA (existente) */}
             <Button
               className="w-full sm:w-auto rounded-full px-7 py-3 shadow-lg shadow-blue-500/30 bg-blue-600 hover:bg-blue-500 text-white text-base font-bold border-0 min-h-[52px]"
               onClick={() => goWithGoogleAuth("/buscar-citas")}
@@ -230,6 +231,7 @@ export default function Landing() {
               <ArrowRight className="w-4 h-4 ml-1" />
             </Button>
 
+            {/* ✅ BOTÓN KHALID (existente) */}
             <Button
               className="w-full sm:w-auto rounded-full px-7 py-3 min-h-[52px]
               bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500
@@ -239,6 +241,24 @@ export default function Landing() {
             >
               {t("hero_btn_khalid")}
               <ArrowRight className="w-4 h-4 ml-1" />
+            </Button>
+
+            {/* ✅ NUEVO BOTÓN TRABAJO MALTA */}
+            <Button
+              className="w-full sm:w-auto rounded-full px-7 py-3 min-h-[52px]
+              bg-gradient-to-r from-red-600 via-orange-500 to-yellow-400
+              hover:scale-[1.02]
+              transition-all
+              duration-300
+              text-white
+              font-bold
+              shadow-2xl
+              shadow-orange-500/40
+              border-0"
+              onClick={() => window.location.href = "/trabajo-malta"}
+            >
+              🇲🇹 {t("hero_btn_malta")}
+              <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
           </div>
 
@@ -270,7 +290,6 @@ export default function Landing() {
             delay={0.1}
           />
 
-          {/* ✅ AGENT CARD SARA - USA t("agent_sara_role") */}
           <AgentCard
             name="Sara"
             role={t("agent_sara_role")}
@@ -390,7 +409,7 @@ export default function Landing() {
           </div>
         </motion.div>
 
-        {/* ✅ SECCIÓN DE SERVICIOS SARA - NUEVA */}
+        {/* SECCIÓN DE SERVICIOS SARA */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
