@@ -1,5 +1,11 @@
 const dotenv = require("dotenv");
+
 dotenv.config();
+console.log("===============");
+console.log("MAKE_WEBHOOK_NIE =", process.env.MAKE_WEBHOOK_NIE);
+console.log("MAKE_WEBHOOK_FAVORABLE =", process.env.MAKE_WEBHOOK_FAVORABLE);
+console.log("MAKE_WEBHOOK_ESTADO =", process.env.MAKE_WEBHOOK_ESTADO);
+console.log("===============");
 const fs = require("fs");
 
 const OpenAI = require("openai");
@@ -13,7 +19,7 @@ const express = require("express");
 // ==============================================
 const SUPABASE_URL = process.env.SUPABASE_URL?.replace(/"/g, "").trim();
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY?.replace(/"/g, "").trim();
-const CHECK_INTERVAL_MS = 30 * 60 * 1000; // 30 minutos
+const CHECK_INTERVAL_MS = 30 * 1000; // 30 segundos para revisar la cola
 const INFOEXT_URL = "https://infoext2.delegaciondelgobierno.gob.es/infoext2/consulta.html";
 const PORT = process.env.PORT || 3000;
 
@@ -58,7 +64,21 @@ function analizarEstado(texto) {
 
   if (body.includes("favorable") || body.includes("concedido") || body.includes("resuelto favorable")) return "favorable";
   if (body.includes("desfavorable") || body.includes("denegado") || body.includes("rechazado")) return "desfavorable";
-  if (body.includes("requerimiento") || body.includes("documentación") || body.includes("subsanar") || body.includes("falta")) return "requerimiento";
+  if (
+    body.includes("requerimiento") ||
+    body.includes("documentación") ||
+    body.includes("subsanar") ||
+    body.includes("falta")
+  ) return "requerimiento";
+  if (
+    body.includes("recurso") ||
+    body.includes("vía de recurso") ||
+    body.includes("via de recurso")
+  ) return "recurso";
+  if (
+    body.includes("pendiente de informes") ||
+    body.includes("informes")
+  ) return "pendiente_informes";
   if (body.includes("archivado")) return "archivado";
   if (body.includes("inadmitido")) return "inadmitido";
   if (body.includes("en trámite") || body.includes("en tramite") || body.includes("pendiente") || body.includes("en estudio") || body.includes("tramitación") || body.includes("en proceso")) return "tramite";
@@ -68,7 +88,7 @@ function analizarEstado(texto) {
 }
 
 // ==============================================
-// FUNCIONES PARA NUSS Y SEGURIDAD SOCIAL
+// FUNCIONES PARA NIE Y NUSS
 // ==============================================
 
 function extraerNIE(texto) {
@@ -92,146 +112,8 @@ function extraerNUSS(texto) {
 }
 
 // ==============================================
-// 📄 GENERAR TASA AUTOMÁTICAMENTE
-// ==============================================
-async function generarTasa(nie, nombreCompleto, expediente) {
-  let browser;
-  console.log(`📄 Generando tasa para ${nombreCompleto} (${nie})`);
-
-  try {
-    browser = await chromium.launch({
-      headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-blink-features=AutomationControlled']
-    });
-
-    const context = await browser.newContext({
-      acceptDownloads: true,
-      userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36'
-    });
-
-    const page = await context.newPage();
-
-    console.log("🌐 Navegando a la página de tasas...");
-    await page.goto('https://sede.policia.gob.es/Tasa790_012/ImpresoRellenar', { waitUntil: 'networkidle' });
-    await sleep(2000);
-
-    console.log("📝 Rellenando datos del cliente...");
-    await page.fill('#nif', nie);
-    await page.fill('#nombre', nombreCompleto);
-    await page.fill('#calle', 'Pasaje');
-    await page.fill('#via', 'Progresso');
-    await page.fill('#numero', '1');
-    await page.fill('#localidad', 'Sabadell');
-    await page.fill('#municipio', 'Sabadell');
-    await page.fill('#provincia', 'Barcelona');
-    await page.fill('#codigoPostal', '08206');
-    await page.fill('#telefono', '600000000');
-
-    console.log("💰 Seleccionando tasa 5...");
-    await page.check('#tasa5Input');
-    await sleep(3000);
-
-    const importe = await page.locator('#total').inputValue().catch(() => 'NO_ENCONTRADO');
-    console.log(`💰 Importe calculado: ${importe}€`);
-
-    await page.check('#efectivo');
-
-    console.log("🎯 Resolviendo CAPTCHA para la tasa...");
-
-    const captchaImg = await page.locator('img[id*="captcha"], img[src*="captcha"]').first();
-    const imgBuffer = await captchaImg.screenshot({ type: 'png' });
-
-    fs.writeFileSync(`/root/captcha-tasa-${Date.now()}.png`, imgBuffer);
-    console.log("📸 CAPTCHA guardado");
-
-    const result = await solver.imageCaptcha(imgBuffer.toString('base64'));
-
-    if (result && result.data) {
-      console.log(`✅ CAPTCHA resuelto: "${result.data}"`);
-      await page.fill('#codSeguridadForm', result.data);
-    } else {
-      throw new Error('No se pudo resolver CAPTCHA');
-    }
-
-    console.log("📥 Descargando PDF de la tasa...");
-
-    if (!fs.existsSync('/root/pdfs')) {
-      fs.mkdirSync('/root/pdfs', { recursive: true });
-    }
-
-    const downloadPromise = page.waitForEvent('download', { timeout: 30000 });
-    await page.click('input[value="Descargar impreso rellenado"]');
-    console.log("⏳ Esperando descarga...");
-
-    const download = await downloadPromise;
-    const fecha = new Date().toISOString().slice(0,10);
-    const pdfNombre = `tasa_790-012_${nie}_${expediente}_${fecha}.pdf`;
-    const pdfPath = `/root/pdfs/${pdfNombre}`;
-
-    await download.saveAs(pdfPath);
-
-    if (fs.existsSync(pdfPath)) {
-      const stats = fs.statSync(pdfPath);
-      console.log(`✅ Tasa generada exitosamente: ${pdfPath}`);
-      console.log(`📄 Tamaño: ${(stats.size / 1024).toFixed(2)} KB`);
-      return pdfPath;
-    } else {
-      console.error("❌ El PDF no se guardó correctamente");
-      return null;
-    }
-  } catch (error) {
-    console.error("❌ Error generando tasa:", error.message);
-    return null;
-  } finally {
-    if (browser) await browser.close();
-  }
-}
-
-// ==============================================
 // 📨 WHATSAPP FUNCTIONS
 // ==============================================
-
-// 1️⃣ WhatsApp Bienvenida (una sola vez)
-async function enviarWhatsAppBienvenida(cliente) {
-  const webhook = process.env.MAKE_WEBHOOK_BIENVENIDA;
-  if (!webhook) {
-    console.log("⚠️ Webhook bienvenida no configurado");
-    return false;
-  }
-
-  const payload = {
-    id: cliente.id,
-    nombre: cliente.customer_name,
-    telefono: cliente.customer_phone,
-    direccion: cliente.direccion || "",
-    codigo_postal: cliente.codigo_postal || "",
-    ciudad: cliente.ciudad || "",
-    provincia: cliente.provincia || "",
-    fecha_nacimiento: cliente.fecha_nacimiento || "",
-    expediente: cliente.expediente_numero,
-    mensaje_darija: `👋 Salam ${cliente.customer_name}! Sara tlebt 3lik l'exposant dyalk. Ghat9lb 3lih kola 30 minute w ghan9olik 7al l7ala dialo.`,
-    mensaje_es: `👋 Hola ${cliente.customer_name}! Sara ha comenzado a vigilar tu expediente. Revisará cada 30 minutos y te informará del estado.`,
-    tipo: "bienvenida",
-    fecha: new Date().toISOString()
-  };
-
-  console.log(`📱 Enviando WhatsApp 1️⃣ BIENVENIDA a: ${cliente.customer_phone}`);
-  console.log(`💬 Darija: ${payload.mensaje_darija}`);
-
-  const res = await fetch(webhook, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
-  });
-
-  if (res.ok) {
-    console.log("✅ WhatsApp 1️⃣ BIENVENIDA enviado");
-    return true;
-  } else {
-    console.log("❌ Error:", await res.text());
-    return false;
-  }
-}
 
 // 2️⃣ WhatsApp NIE detectado (una sola vez)
 async function enviarWhatsAppNIE(cliente, nie) {
@@ -275,7 +157,7 @@ async function enviarWhatsAppNIE(cliente, nie) {
   }
 }
 
-// 3️⃣ WhatsApp Favorable
+// 3️⃣ WhatsApp Favorable (mabrouk_ma9boul)
 async function enviarWhatsAppFavorable(cliente) {
   const webhook = process.env.MAKE_WEBHOOK_FAVORABLE;
   if (!webhook) {
@@ -294,13 +176,15 @@ async function enviarWhatsAppFavorable(cliente) {
     fecha_nacimiento: cliente.fecha_nacimiento || "",
     expediente: cliente.expediente_numero,
     solicitud: cliente.identificador_solicitud,
+    nie: cliente.nie,
+    nuss: cliente.nuss,
     mensaje_darija: `🎉 مبروك ${cliente.customer_name}! ملف ديالك تقبل. غادي يصلك SMS من الضمان الاجتماعي فهادي اللحظة. جاوب على هاد الرسالة بالكود لي جاك فـ SMS.`,
     mensaje_es: `🎉 ¡FELICIDADES ${cliente.customer_name}! Tu expediente ha sido FAVORABLE. Vas a recibir un SMS de la Seguridad Social ahora mismo. RESPONDE a este mensaje con el código que te llegue.`,
-    tipo: "favorable",
+    tipo: "mabrouk_ma9boul",
     fecha: new Date().toISOString()
   };
 
-  console.log(`📱 Enviando WhatsApp 3️⃣ FAVORABLE a: ${cliente.customer_phone}`);
+  console.log(`📱 Enviando WhatsApp 3️⃣ FAVORABLE (mabrouk_ma9boul) a: ${cliente.customer_phone}`);
   console.log(`💬 Darija: ${payload.mensaje_darija}`);
 
   const res = await fetch(webhook, {
@@ -311,6 +195,21 @@ async function enviarWhatsAppFavorable(cliente) {
 
   if (res.ok) {
     console.log("✅ WhatsApp 3️⃣ FAVORABLE enviado");
+    
+    const webhookAdmin = process.env.MAKE_WEBHOOK_ALERTA_ADMIN;
+    if (webhookAdmin) {
+      await fetch(webhookAdmin, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          cliente: cliente.customer_name,
+          telefono: cliente.customer_phone,
+          expediente: cliente.expediente_numero,
+          tipo: "alerta_favorable_admin"
+        })
+      });
+      console.log("🚨 Alerta admin enviada");
+    }
     return true;
   } else {
     console.log("❌ Error:", await res.text());
@@ -318,94 +217,7 @@ async function enviarWhatsAppFavorable(cliente) {
   }
 }
 
-// 4️⃣ WhatsApp NUSS
-async function enviarWhatsAppNUSS(cliente, nie, nuss) {
-  const webhook = process.env.MAKE_WEBHOOK_NUSS;
-  if (!webhook) {
-    console.log("⚠️ Webhook NUSS no configurado");
-    return false;
-  }
-
-  const payload = {
-    id: cliente.id,
-    nombre: cliente.customer_name,
-    telefono: cliente.customer_phone,
-    direccion: cliente.direccion || "",
-    codigo_postal: cliente.codigo_postal || "",
-    ciudad: cliente.ciudad || "",
-    provincia: cliente.provincia || "",
-    fecha_nacimiento: cliente.fecha_nacimiento || "",
-    nie: nie,
-    nuss: nuss,
-    mensaje_darija: `🎉 تهانينا ${cliente.customer_name}! رقم الضمان الاجتماعي ديالك هو: ${nuss}\n\n📌 هاد الرقم خاصك باش تتعامل مع الضمان الاجتماعي فلمغريب.`,
-    mensaje_es: `🎉 FELICIDADES ${cliente.customer_name}! Tu Número de Seguridad Social (NUSS) es: ${nuss}\n\n📌 Este número es necesario para todos tus trámites con la Seguridad Social en España.`,
-    tipo: "nuss",
-    fecha: new Date().toISOString()
-  };
-
-  console.log(`📱 Enviando WhatsApp 4️⃣ NUSS a: ${cliente.customer_phone}`);
-  console.log(`💬 Darija: ${payload.mensaje_darija}`);
-
-  const res = await fetch(webhook, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
-  });
-
-  if (res.ok) {
-    console.log("✅ WhatsApp 4️⃣ NUSS enviado");
-    return true;
-  } else {
-    console.log("❌ Error:", await res.text());
-    return false;
-  }
-}
-
-// 5️⃣ WhatsApp Tasa 790
-async function enviarWhatsAppTasa(cliente, pdfPath) {
-  const webhook = process.env.MAKE_WEBHOOK_TASA;
-  if (!webhook) {
-    console.log("⚠️ Webhook tasa no configurado");
-    return false;
-  }
-
-  const pdfUrl = `http://167.233.48.133:8000/${pdfPath.split('/').pop()}`;
-
-  const payload = {
-    id: cliente.id,
-    nombre: cliente.customer_name,
-    telefono: cliente.customer_phone,
-    direccion: cliente.direccion || "",
-    codigo_postal: cliente.codigo_postal || "",
-    ciudad: cliente.ciudad || "",
-    provincia: cliente.provincia || "",
-    fecha_nacimiento: cliente.fecha_nacimiento || "",
-    pdf_url: pdfUrl,
-    mensaje_darija: `📄 ${cliente.customer_name}, تاعسة 790 ديالك جاهزة:\n${pdfUrl}\n\n📌 خطوات الجاية:\n1️⃣ طبع التاعسة\n2️⃣ سير لأي بنك وخلص 14.99€\n3️⃣ مشي لمكتب البوليس باش تاخد بصماتك\n4️⃣ قدم الوثائق كاملين فلمكتب ديال الإقامة`,
-    mensaje_es: `📄 ${cliente.customer_name}, tu Tasa 790 está lista:\n${pdfUrl}\n\n📌 Próximos pasos:\n1️⃣ Imprime la tasa\n2️⃣ Ve a cualquier banco y paga 14.99€\n3️⃣ Ve a la comisaría de policía para tomar tus huellas\n4️⃣ Presenta toda la documentación en la oficina de extranjería`,
-    tipo: "tasa",
-    fecha: new Date().toISOString()
-  };
-
-  console.log(`📱 Enviando WhatsApp 5️⃣ TASA a: ${cliente.customer_phone}`);
-  console.log(`💬 Darija: ${payload.mensaje_darija}`);
-
-  const res = await fetch(webhook, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
-  });
-
-  if (res.ok) {
-    console.log("✅ WhatsApp 5️⃣ TASA enviado");
-    return true;
-  } else {
-    console.log("❌ Error:", await res.text());
-    return false;
-  }
-}
-
-// 6️⃣ WhatsApp Estado alternativo
+// 6️⃣ WhatsApp Estado alternativo (resultado_no_favorable)
 async function enviarWhatsAppEstado(cliente, estado) {
   const webhook = process.env.MAKE_WEBHOOK_ESTADO;
   if (!webhook) {
@@ -430,17 +242,20 @@ async function enviarWhatsAppEstado(cliente, estado) {
       darija: `🚫 ${cliente.customer_name}, ملف ديالك غير مقبول. خاصك تقدم طعون.`,
       es: `🚫 ${cliente.customer_name}, tu expediente NO HA SIDO ADMITIDO. Debes presentar recurso.`
     },
-    'tramite': {
-      darija: `⏳ ${cliente.customer_name}, ملف ديالك فالطريق. كنتمنو ليك الخير. غانرجعو نعلموك كولشي جديد.`,
-      es: `⏳ ${cliente.customer_name}, tu expediente está EN TRÁMITE. Seguimos pendientes de cualquier novedad.`
+    'recurso': {
+      darija: `⚖️ ${cliente.customer_name}, ملف ديالك فطريق الطعون. كنتمنو ليك الخير.`,
+      es: `⚖️ ${cliente.customer_name}, tu expediente está en VÍA DE RECURSO. Seguimos pendientes.`
     },
-    'desconocido': {
-      darija: `❓ ${cliente.customer_name}, مازال ما عرفناش الحالة ديال ملفك. غانرجعو نعلموك من بعد.`,
-      es: `❓ ${cliente.customer_name}, aún no conocemos el estado de tu expediente. Te informaremos más adelante.`
+    'pendiente_informes': {
+      darija: `📋 ${cliente.customer_name}, ملف ديالك مستنى تقارير. غانعلموك ملي يكملو.`,
+      es: `📋 ${cliente.customer_name}, tu expediente está PENDIENTE DE INFORMES. Te avisaremos cuando se completen.`
     }
   };
 
-  const mensaje = mensajes[estado] || mensajes['desconocido'];
+  const mensaje = mensajes[estado] || {
+    darija: `❓ ${cliente.customer_name}, حالة ملفك: ${estado}. غانرجعو نعلموك من بعد.`,
+    es: `❓ ${cliente.customer_name}, estado de tu expediente: ${estado}. Te informaremos más adelante.`
+  };
 
   const payload = {
     id: cliente.id,
@@ -456,7 +271,7 @@ async function enviarWhatsAppEstado(cliente, estado) {
     estado: estado,
     mensaje_darija: mensaje.darija,
     mensaje_es: mensaje.es,
-    tipo: "estado_alternativo",
+    tipo: "resultado_no_favorable",
     fecha: new Date().toISOString()
   };
 
@@ -550,96 +365,6 @@ async function resolverCaptcha(page) {
 }
 
 // ==============================================
-// 🔄 SOLICITAR SMS SEGURIDAD SOCIAL
-// ==============================================
-async function solicitarSMSSeguridadSocial(nie, fechaNacimiento, telefono) {
-  let browser;
-  console.log(`🔍 Solicitando SMS para NIE: ${nie}`);
-
-  try {
-    browser = await chromium.launch({
-      headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox']
-    });
-    const page = await browser.newPage();
-
-    await page.goto("https://portal.seg-social.gob.es/");
-    await sleep(3000);
-
-    try { await page.click('a:has-text("Importass")'); await sleep(3000); }
-    catch { await page.goto("https://portal.seg-social.gob.es/importass"); await sleep(3000); }
-
-    try { await page.fill('input[name="nie"]', nie); await sleep(500); } catch {}
-    try { await page.fill('input[name="fechaNacimiento"]', normalizeDate(fechaNacimiento)); await sleep(500); } catch {}
-
-    const telefonoLimpio = telefono.replace(/\s/g, '').replace(/^\+34/, '');
-    try { await page.fill('input[name="telefono"]', telefonoLimpio); await sleep(500); } catch {}
-
-    try { await page.click('button:has-text("Enviar")'); await sleep(3000); }
-    catch { await page.click('button:has-text("Solicitar código")'); await sleep(3000); }
-
-    console.log("✅ SMS solicitado correctamente");
-    await browser.close();
-    return true;
-  } catch (error) {
-    console.error("❌ Error solicitando SMS:", error.message);
-    if (browser) await browser.close();
-    return false;
-  }
-}
-
-async function completarNUSS(nie, fechaNacimiento, codigo) {
-  let browser;
-  console.log(`🔍 Completando NUSS con código: ${codigo}`);
-
-  try {
-    browser = await chromium.launch({
-      headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox']
-    });
-    const page = await browser.newPage();
-
-    await page.goto("https://portal.seg-social.gob.es/");
-    await sleep(3000);
-
-    try { await page.click('a:has-text("Importass")'); await sleep(3000); }
-    catch { await page.goto("https://portal.seg-social.gob.es/importass"); await sleep(3000); }
-
-    try { await page.fill('input[name="nie"]', nie); await sleep(500); } catch {}
-    try { await page.fill('input[name="fechaNacimiento"]', normalizeDate(fechaNacimiento)); await sleep(500); } catch {}
-
-    try {
-      await page.fill('input[name="codigo"]', codigo);
-      await sleep(500);
-      await page.click('button:has-text("Verificar")');
-      await sleep(5000);
-    } catch {
-      await page.fill('input[type="text"]', codigo);
-      await sleep(500);
-      await page.click('button:has-text("Enviar")');
-      await sleep(5000);
-    }
-
-    const texto = await page.textContent("body");
-    const nuss = extraerNUSS(texto);
-
-    if (nuss) {
-      console.log(`✅ NUSS encontrado: ${nuss}`);
-      await browser.close();
-      return nuss;
-    }
-
-    console.log("⚠️ No se pudo encontrar el NUSS");
-    await browser.close();
-    return null;
-  } catch (error) {
-    console.error("❌ Error completando NUSS:", error.message);
-    if (browser) await browser.close();
-    return null;
-  }
-}
-
-// ==============================================
 // 🔄 VERIFICAR EXPEDIENTE
 // ==============================================
 async function verificarExpediente(cliente) {
@@ -647,21 +372,12 @@ async function verificarExpediente(cliente) {
   try {
     console.log(`\n${"=".repeat(60)}`);
     console.log(`👤 Cliente: ${cliente.customer_name}`);
+    console.log(`🆔 NIE: ${cliente.nie || "NO DETECTADO"}`);
+    console.log(`📨 NIE enviado: ${cliente.nie_notificado ? "SI" : "NO"}`);
+    console.log(`🎉 Favorable enviado: ${cliente.notificado_favorable ? "SI" : "NO"}`);
     console.log(`📋 Expediente: ${cliente.expediente_numero}`);
     console.log(`🆔 Solicitud: ${cliente.identificador_solicitud}`);
     console.log(`${"=".repeat(60)}`);
-
-    // ✅ 1️⃣ ENVIAR BIENVENIDA (si no se ha enviado)
-    if (!cliente.bienvenida_enviada) {
-      const enviado = await enviarWhatsAppBienvenida(cliente);
-      if (enviado) {
-        await supabase.from("expediente_checks").update({
-          bienvenida_enviada: true,
-          fecha_bienvenida: new Date().toISOString()
-        }).eq("id", cliente.id);
-        cliente.bienvenida_enviada = true;
-      }
-    }
 
     browser = await chromium.launch({
       headless: true,
@@ -769,16 +485,17 @@ async function verificarExpediente(cliente) {
     const nie = extraerNIE(texto);
 
     // ✅ 2️⃣ ENVIAR NIE DETECTADO (si no se ha enviado y encontramos NIE)
-    if (nie && !cliente.nie_enviado) {
+    if (nie && !cliente.nie_notificado) {
       console.log(`✅ NIE extraído: ${nie}`);
       const enviado = await enviarWhatsAppNIE(cliente, nie);
       if (enviado) {
         await supabase.from("expediente_checks").update({
           nie: nie,
-          nie_enviado: true,
+          nie_notificado: true,
           fecha_nie: new Date().toISOString()
         }).eq("id", cliente.id);
-        cliente.nie_enviado = true;
+
+        cliente.nie_notificado = true;
         cliente.nie = nie;
       }
     }
@@ -796,30 +513,22 @@ async function verificarExpediente(cliente) {
         cliente.notificado_favorable = true;
       }
 
-      // Solicitar SMS de la Seguridad Social
-      if (cliente.nie) {
-        const smsenviado = await solicitarSMSSeguridadSocial(
-          cliente.nie,
-          cliente.fecha_nacimiento,
-          cliente.customer_phone
-        );
-
-        if (smsenviado) {
-          await supabase.from("expediente_checks").update({
-            esperando_codigo: true,
-            codigo_solicitado: new Date().toISOString()
-          }).eq("id", cliente.id);
-        }
-      }
-
-    // ✅ 6️⃣ SI ES ESTADO ALTERNATIVO (no favorable)
-    } else if (estado !== "favorable") {
-      // Comprobar si el estado ha cambiado
+    // ✅ 6️⃣ SI ES ESTADO ALTERNATIVO (no favorable, no en trámite)
+    } else if (
+      [
+        "desfavorable",
+        "requerimiento",
+        "archivado",
+        "inadmitido",
+        "recurso",
+        "pendiente_informes"
+      ].includes(estado)
+    ) {
       const estadoAnterior = cliente.ultimo_estado_enviado || cliente.estado_detalle;
-      
+
       if (estado !== estadoAnterior || !cliente.estado_enviado) {
         console.log(`🔄 Estado cambiado de "${estadoAnterior}" a "${estado}"`);
-        
+
         const enviado = await enviarWhatsAppEstado(cliente, estado);
         if (enviado) {
           await supabase.from("expediente_checks").update({
@@ -827,12 +536,16 @@ async function verificarExpediente(cliente) {
             ultimo_estado_enviado: estado,
             fecha_estado: new Date().toISOString()
           }).eq("id", cliente.id);
+
           cliente.estado_enviado = true;
           cliente.ultimo_estado_enviado = estado;
         }
       } else {
-        console.log(`⏸️ Estado "${estado}" ya fue enviado anteriormente. No se envía duplicado.`);
+        console.log(`⏸️ Estado "${estado}" ya fue enviado anteriormente.`);
       }
+
+    } else {
+      console.log(`⏳ Estado "${estado}" -> no se envía WhatsApp.`);
     }
 
     // Actualizar estado y resultado siempre
@@ -841,6 +554,28 @@ async function verificarExpediente(cliente) {
       resultado: cleanText(texto).slice(0, 2000),
       ultimo_check: new Date().toISOString()
     }).eq("id", cliente.id);
+
+    // ==============================================
+    // AJUSTAR PRÓXIMA REVISIÓN (SOLO SI NO ESTÁ NOTIFICADO FAVORABLE)
+    // ==============================================
+    
+    if (!cliente.notificado_favorable) {
+      const ahora = Date.now();
+      const creado = new Date(cliente.created_at).getTime();
+      const minutosDesdeAlta = (ahora - creado) / 60000;
+      
+      const siguienteRevision =
+        minutosDesdeAlta <= 60
+          ? new Date(ahora + 10 * 60 * 1000)   // primeros 60 min → cada 10 min
+          : new Date(ahora + 30 * 60 * 1000);  // después → cada 30 min
+      
+      await supabase
+        .from("expediente_checks")
+        .update({
+          proxima_revision: siguienteRevision.toISOString()
+        })
+        .eq("id", cliente.id);
+    }
 
     await browser.close();
     console.log("✅ Consulta completada exitosamente");
@@ -859,113 +594,6 @@ async function verificarExpediente(cliente) {
 }
 
 // ==============================================
-// 📡 ENDPOINT PARA RECIBIR CÓDIGO DE MAKE
-// ==============================================
-const app = express();
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
-app.post('/api/sms-code', async (req, res) => {
-  console.log("📩 Recibiendo código SMS de Make...");
-  console.log("📝 Body:", req.body);
-
-  const clienteId = req.body.cliente_id || req.body.id;
-  const codigoSMS = req.body.codigo || req.body.text || req.body.mensaje || req.body.Body;
-
-  if (!clienteId || !codigoSMS) {
-    return res.status(400).json({ error: 'Faltan datos: cliente_id y codigo' });
-  }
-
-  const codigoLimpio = String(codigoSMS).replace(/\D/g, '');
-  if (codigoLimpio.length < 6) {
-    return res.status(400).json({ error: 'El código debe tener 6 dígitos' });
-  }
-
-  try {
-    const { data: cliente } = await supabase
-      .from("expediente_checks")
-      .select('*')
-      .eq('id', clienteId)
-      .single();
-
-    if (!cliente) {
-      return res.status(404).json({ error: 'Cliente no encontrado' });
-    }
-
-    console.log(`👤 Cliente: ${cliente.customer_name}`);
-    console.log(`🔑 NIE: ${cliente.nie}`);
-    console.log(`📱 Código: ${codigoLimpio}`);
-
-    const nuss = await completarNUSS(cliente.nie, cliente.fecha_nacimiento, codigoLimpio);
-
-    if (nuss) {
-      await supabase
-        .from("expediente_checks")
-        .update({
-          nuss: nuss,
-          esperando_codigo: false,
-          codigo_recibido: codigoLimpio,
-          fecha_nuss: new Date().toISOString()
-        })
-        .eq('id', clienteId);
-
-      // ✅ 4️⃣ ENVIAR NUSS
-      const enviadoNUSS = await enviarWhatsAppNUSS(cliente, cliente.nie, nuss);
-      if (enviadoNUSS) {
-        await supabase.from("expediente_checks").update({
-          nuss_enviado: true
-        }).eq('id', clienteId);
-      }
-
-      // ✅ Esperar 2 minutos antes de generar la tasa
-      console.log("⏳ Esperando 2 minutos antes de generar la tasa...");
-      await sleep(120000); // 2 minutos
-
-      // ✅ 5️⃣ GENERAR Y ENVIAR TASA
-      console.log("📄 Generando tasa automáticamente...");
-      const pdfPath = await generarTasa(
-        cliente.nie,
-        cliente.customer_name,
-        cliente.expediente_numero
-      );
-
-      if (pdfPath) {
-        await supabase.from("expediente_checks").update({
-          pdf_tasa_generado: true,
-          pdf_tasa_path: pdfPath,
-          pdf_tasa_fecha: new Date().toISOString()
-        }).eq('id', clienteId);
-
-        const enviadoTasa = await enviarWhatsAppTasa(cliente, pdfPath);
-        if (enviadoTasa) {
-          await supabase.from("expediente_checks").update({
-            tasa_enviada: true
-          }).eq('id', clienteId);
-        }
-        
-        console.log(`✅ Proceso completado para ${cliente.customer_name}`);
-        console.log(`📄 PDF: ${pdfPath}`);
-        console.log(`🆔 NUSS: ${nuss}`);
-      } else {
-        console.log(`⚠️ No se pudo generar la tasa para ${cliente.customer_name}`);
-      }
-
-      return res.status(200).json({ success: true, nuss });
-    } else {
-      return res.status(500).json({ error: 'No se pudo obtener el NUSS' });
-    }
-  } catch (error) {
-    console.error("❌ Error:", error);
-    return res.status(500).json({ error: error.message });
-  }
-});
-
-app.listen(PORT, () => {
-  console.log(`✅ Servidor Sara en puerto ${PORT}`);
-  console.log(`📡 Endpoint SMS: http://localhost:${PORT}/api/sms-code`);
-});
-
-// ==============================================
 // 🚀 MAIN
 // ==============================================
 async function main() {
@@ -973,10 +601,13 @@ async function main() {
   console.log("🚀 Worker iniciado", new Date().toISOString());
   console.log("=".repeat(60));
 
+  const ahora = new Date().toISOString();
+
   const { data: expedientes, error } = await supabase
     .from("expediente_checks")
     .select("*")
-    .or('notificado_favorable.eq.false,notificado_favorable.is.null,estado_enviado.is.null,ultimo_estado_enviado.is.null');
+    .eq("notificado_favorable", false)
+    .lte("proxima_revision", ahora);
 
   if (error) {
     console.error("❌ Error consultando expedientes:", error.message);
@@ -1001,8 +632,12 @@ async function main() {
 // Ejecutar main una vez al inicio
 main();
 
-// Programar ejecución periódica
+// Programar ejecución periódica (cada 30 segundos)
 setInterval(main, CHECK_INTERVAL_MS);
 
 console.log("🔄 Sara worker ejecutándose...");
-console.log(`⏱️ Intervalo: ${CHECK_INTERVAL_MS / 1000 / 60} minutos`);
+console.log(`⏱️ Revisión de cola: cada ${CHECK_INTERVAL_MS / 1000} segundos`);
+console.log(`📊 Estrategia de revisión:`);
+console.log(`   • Primera hora: cada 10 minutos`);
+console.log(`   • Después: cada 30 minutos`);
+console.log(`   • Solo para expedientes no favorables`);
