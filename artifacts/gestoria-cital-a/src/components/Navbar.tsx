@@ -15,6 +15,7 @@ import {
   CreditCard,
   ChevronDown,
   ChevronRight,
+  Briefcase,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -273,6 +274,13 @@ export function Navbar() {
       color: "text-amber-400",
       badge: true,
     },
+    {
+      href: "/trabajo-malta",
+      label: lang === "darija" ? "عمل في مالطا" : lang === "en" ? "Work in Malta" : "Trabajo en Malta",
+      icon: Briefcase,
+      color: "text-blue-400",
+      badge: false,
+    },
   ];
 
   const markAllRead = () => {
@@ -361,28 +369,27 @@ export function Navbar() {
   return (
     <>
       <header className="fixed top-0 w-full z-50 glass-panel-heavy border-b border-white/[0.07]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8  h-20 flex items-center justify-between gap-3">
-       <Link
-  href="/"
-  className="flex items-center gap-3 hover:opacity-90 transition-all duration-300 shrink-0"
-  onClick={() => setMobileOpen(false)}
->
-  <div className="relative">
-<img
-  src={`${import.meta.env.BASE_URL}images/logo.png`}
-  alt="GestoriaCitaIA"
-  className="w-10 h-10 rounded-xl object-cover"
-/>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-3">
+          <Link
+            href="/"
+            className="flex items-center gap-3 hover:opacity-90 transition-all duration-300 shrink-0"
+            onClick={() => setMobileOpen(false)}
+          >
+            <div className="relative">
+              <img
+                src={`${import.meta.env.BASE_URL}images/logo.png`}
+                alt="GestoriaCitaIA"
+                className="w-10 h-10 rounded-xl object-cover"
+              />
+              <div className="absolute -inset-1 bg-green-500/20 blur-xl rounded-xl"></div>
+            </div>
 
-    <div className="absolute -inset-1 bg-green-500/20 blur-xl rounded-xl"></div>
-  </div>
-
-  <div className="flex items-center text-lg font-extrabold tracking-tight">
-    <span className="text-white">Gestoria</span>
-    <span className="text-green-400">Cita</span>
-    <span className="text-white">IA</span>
-  </div>
-</Link>
+            <div className="flex items-center text-lg font-extrabold tracking-tight">
+              <span className="text-white">Gestoria</span>
+              <span className="text-green-400">Cita</span>
+              <span className="text-white">IA</span>
+            </div>
+          </Link>
 
           <div className="hidden sm:flex items-center gap-5 text-sm">
             {navLinks.map((link) => (
@@ -393,10 +400,14 @@ export function Navbar() {
                   "font-medium transition-colors flex items-center gap-1",
                   link.href === "/regularizacion-2026"
                     ? "hover:text-amber-400"
+                    : link.href === "/trabajo-malta"
+                    ? "hover:text-blue-400"
                     : "hover:text-primary",
                   location === link.href
                     ? link.href === "/regularizacion-2026"
                       ? "text-amber-400"
+                      : link.href === "/trabajo-malta"
+                      ? "text-blue-400"
                       : "text-primary"
                     : "text-muted-foreground"
                 )}
@@ -677,6 +688,12 @@ export function Navbar() {
                           label: t("nav_reg"),
                           href: "/regularizacion-2026",
                           color: "text-amber-400",
+                        },
+                        {
+                          icon: Briefcase,
+                          label: lang === "darija" ? "عمل في مالطا" : lang === "en" ? "Work in Malta" : "Trabajo en Malta",
+                          href: "/trabajo-malta",
+                          color: "text-blue-400",
                         },
                         {
                           icon: CreditCard,
