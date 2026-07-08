@@ -107,32 +107,35 @@ export default async function handler(
       =====================================
       */
 
-      const { error } = await supabase
-        .from("expediente_checks")
-        .insert([
-          {
-            stripe_session_id: session.id,
+const { error } = await supabase
+  .from("expediente_checks")
+  .insert([
+    {
+      stripe_session_id: session.id,
 
-            // ✅ Datos personales
-            customer_name: metadata.customer_name || "",
-            customer_phone: metadata.customer_phone || "",
-            customer_email: metadata.customer_email || "",
+      // ✅ Datos personales
+      customer_name: metadata.customer_name || "",
+      customer_phone: metadata.customer_phone || "",
+      customer_email: metadata.customer_email || "",
 
-            // ✅ Datos del expediente
-            expediente_numero: metadata.expediente_numero || "",
-            identificador_solicitud: metadata.identificador_solicitud || "",
-            fecha_presentacion: metadata.fecha_presentacion || "",
-            fecha_nacimiento: metadata.fecha_nacimiento || "",
+      // ✅ Datos del expediente
+      expediente_numero: metadata.expediente_numero || "",
+      identificador_solicitud: metadata.identificador_solicitud || "",
+      fecha_presentacion: metadata.fecha_presentacion || "",
+      fecha_nacimiento: metadata.fecha_nacimiento || "",
 
-            // ✅ NUEVOS CAMPOS - COMPLETOS
-            nie: metadata.nie || "",
-            direccion: metadata.direccion || "",
-            codigo_postal: metadata.codigo_postal || "",
-            ciudad: metadata.ciudad || "",
-            provincia: metadata.provincia || "",
-           
-          },
-        ]);
+      // ✅ NUEVOS CAMPOS
+      nie: metadata.nie || "",
+      direccion: metadata.direccion || "",
+      codigo_postal: metadata.codigo_postal || "",
+      ciudad: metadata.ciudad || "",
+      provincia: metadata.provincia || "",
+
+      // ✅ NUEVO
+      proxima_revision: new Date().toISOString(),
+
+    },
+  ]);
 
       if (error) {
         console.log("❌ SUPABASE ERROR");
