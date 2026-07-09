@@ -7,20 +7,11 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   FileText,
   Settings,
-  Mic,
-  MicOff,
-  RefreshCw,
   Shield,
   Bell,
   CheckCircle2,
-  ExternalLink,
-  Volume2,
-  VolumeX,
   Briefcase,
-  Clock,
-  Calendar,
   Award,
-  Star,
   Zap,
 } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
@@ -65,7 +56,6 @@ type MaltaFormData = {
   añosExperiencia: string;
   estudios: string;
   carnetConducir: "Sí" | "No";
-  tieneCV: "Sí" | "No";
   puestoBusca: string;
   disponibilidadViajar: "Sí" | "No";
   fechaDisponible: string;
@@ -179,8 +169,8 @@ function OfficialBrowserBox({
                   {isMa ? "عمر الفورم للبحث عن عمل" : isEn ? "Job Search Form" : "Formulario de Búsqueda de Empleo"}
                 </h2>
                 <img
-                  src="https://upload.wikimedia.org/wikipedia/en/9/9a/Flag_of_Spain.svg"
-                  alt="España"
+                  src="https://upload.wikimedia.org/wikipedia/commons/1/16/Flag_of_Andorra.svg"
+                  alt="Andorra"
                   className="h-5 w-8 rounded-[3px] object-cover shadow-[0_0_10px_rgba(255,255,255,0.20)]"
                 />
               </div>
@@ -227,6 +217,7 @@ function OfficialBrowserBox({
                         <option value="+44">🇬🇧 +44</option>
                         <option value="+1">🇺🇸 +1</option>
                         <option value="+356">🇲🇹 +356</option>
+                        <option value="+376">🇦🇩 +376</option>
                       </select>
                       <input
                         type="text"
@@ -385,21 +376,6 @@ function OfficialBrowserBox({
                     </select>
                   </div>
 
-                  {/* ¿Tienes CV? */}
-                  <div>
-                    <label className="block text-white text-[13px] mb-2">
-                      {isMa ? "هل لديك سيرة ذاتية؟" : isEn ? "Do you have a CV?" : "¿Tienes CV?"}
-                    </label>
-                    <select
-                      value={formData.tieneCV}
-                      onChange={(e) => onFormChange("tieneCV", e.target.value)}
-                      className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white focus:outline-none focus:border-yellow-400"
-                    >
-                      <option value="Sí">{isMa ? "نعم" : isEn ? "Yes" : "Sí"}</option>
-                      <option value="No">{isMa ? "لا" : isEn ? "No" : "No"}</option>
-                    </select>
-                  </div>
-
                   {/* Puesto que buscas */}
                   <div>
                     <label className="block text-white text-[13px] mb-2">
@@ -525,7 +501,7 @@ function OfficialBrowserBox({
                     )}
                   </div>
 
-                  {/* Checkbox de aceptación */}
+                  {/* Checkbox de aceptación - VERSIÓN CORTA PARA MÓVIL */}
                   <div className="col-span-1 lg:col-span-2 mt-4">
                     <div className="flex items-start gap-3 mb-4">
                       <input
@@ -533,14 +509,14 @@ function OfficialBrowserBox({
                         id="acceptTerms"
                         checked={acceptTerms}
                         onChange={(e) => setAcceptTerms(e.target.checked)}
-                        className="mt-1 w-4 h-4 rounded border-white/20 bg-[#060b16] text-yellow-500 focus:ring-yellow-500 focus:ring-offset-0"
+                        className="mt-1 w-4 h-4 rounded border-white/20 bg-[#060b16] text-yellow-500 focus:ring-yellow-500 focus:ring-offset-0 shrink-0"
                       />
-                      <label htmlFor="acceptTerms" className="text-white/70 text-[12px] leading-relaxed">
+                      <label htmlFor="acceptTerms" className="text-white/70 text-[11px] sm:text-[12px] leading-relaxed">
                         {isMa
-                          ? "☑️ نوافق على أن تقوم GestoriaCitaIA بالبحث عن عمل لنا في مالطا."
+                          ? "☑️ نوافق على أن تستخدم GestoriaCitaIA بياناتي وتشارك سيرتي الذاتية مع شركات ووكالات التوظيف في مالطا لإدارة بحثي عن عمل، وفقاً لسياسة الخصوصية."
                           : isEn
-                          ? "☑️ I agree that GestoriaCitaIA searches for jobs for me in Malta."
-                          : "☑️ Acepto que GestoriaCitaIA realice la búsqueda de empleo para mí en Malta."}
+                          ? "☑️ I agree that GestoriaCitaIA may use my data and share my CV with companies and employment agencies in Malta to manage my job search, in accordance with the Privacy Policy."
+                          : "☑️ Acepto que GestoriaCitaIA utilice mis datos y comparta mi CV con empresas y agencias de empleo en Malta para gestionar mi búsqueda de trabajo, de acuerdo con la Política de Privacidad."}
                       </label>
                     </div>
 
@@ -714,7 +690,6 @@ export default function TrabajoMalta() {
     añosExperiencia: "",
     estudios: "",
     carnetConducir: "Sí",
-    tieneCV: "Sí",
     puestoBusca: "",
     disponibilidadViajar: "Sí",
     fechaDisponible: "",
@@ -1182,7 +1157,6 @@ export default function TrabajoMalta() {
           añosExperiencia: formData.añosExperiencia,
           estudios: formData.estudios,
           carnetConducir: formData.carnetConducir,
-          tieneCV: formData.tieneCV,
           puestoBusca: formData.puestoBusca,
           disponibilidadViajar: formData.disponibilidadViajar,
           fechaDisponible: formData.fechaDisponible,
