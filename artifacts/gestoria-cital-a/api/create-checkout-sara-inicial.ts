@@ -30,7 +30,7 @@ export default async function handler(
       fullName,
       phone,
       email,
-
+      
       expedienteNumero,
       identificadorSolicitud,
 
@@ -46,6 +46,16 @@ export default async function handler(
       preferredOffice,
       nie,
     } = body;
+
+    // ✅ Roberto entra sin pagar
+if (
+  email &&
+  email.toLowerCase() === "robertopalacio165@gmail.com"
+) {
+  return res.status(200).json({
+    url: `${process.env.NEXT_PUBLIC_URL}/buscar-citas?paid=true&admin=true`,
+  });
+}
     
     console.log("📞 PHONE RECEIVED:", phone);
     console.log("📋 BODY:", body);
