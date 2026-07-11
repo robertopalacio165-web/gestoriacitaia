@@ -758,8 +758,18 @@ export default function BuscarCitas() {
         if (error) {
           setProfile(null);
         } else {
-          setProfile((data as ProfileRow | null) ?? null);
-        }
+  const profileData = (data as ProfileRow | null) ?? null;
+
+  setProfile(profileData);
+
+  // Acceso administrador (sin pagar)
+  if (
+    profileData?.email?.toLowerCase() ===
+    "robertopalacio165@gmail.com"
+  ) {
+    setFormReady(true);
+  }
+}
       } catch {
         setProfile(null);
       } finally {
