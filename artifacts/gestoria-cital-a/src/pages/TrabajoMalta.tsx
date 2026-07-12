@@ -1694,7 +1694,6 @@ export default function TrabajoMalta() {
               )}
 
               <div className="absolute bottom-14 right-3 text-right">
-                <p className="text-white font-bold text-sm drop-shadow-lg">Sara</p>
                 <p className="text-white/70 text-xs drop-shadow-lg">{ui.agentRole}</p>
               </div>
             </div>
