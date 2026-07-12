@@ -13,6 +13,8 @@ import {
   Briefcase,
   Award,
   Zap,
+  Upload,
+  Loader2,
 } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 
@@ -43,6 +45,7 @@ type ProfileRow = {
   nie: string | null;
 };
 
+// ✅ Tipo actualizado
 type MaltaFormData = {
   fullName: string;
   whatsapp: string;
@@ -50,17 +53,70 @@ type MaltaFormData = {
   nacionalidad: string;
   paisResidencia: string;
   fechaNacimiento: string;
-  nivelIngles: "Básico" | "Intermedio" | "Avanzado" | "Nativo";
-  otrosIdiomas: string;
-  profesion: string;
+  
+  // Idiomas con niveles
+  idiomas: string;
+  ingles_nivel: string;
+  frances_nivel: string;
+  italiano_nivel: string;
+  espanol_nivel: string;
+  arabe_nivel: string;
+  aleman_nivel: string;
+  
+  // Experiencia
+  experienciaLaboral: string;
   añosExperiencia: string;
   estudios: string;
-  carnetConducir: "Sí" | "No";
-  puestoBusca: string;
-  disponibilidadViajar: "Sí" | "No";
-  fechaDisponible: string;
+  
+  // Sectores
+  sectores: string;
+  
+  // Carnet de conducir
+  carnetConducir: "No" | "B" | "C" | "C+E";
+  
+  // CV
+  tieneCV: "Sí" | "No";
+  cvFile: File | null;
+  cvUrl: string;
+  
+  // Preguntas importantes
+  pasaporteValido: "Sí" | "No";
+  entrevistaVideo: "Sí" | "No";
+  
+  disponibilidadInicio: "inmediato" | "1_semana" | "2_semanas" | "1_mes";
+  
   plan: "weekly" | "monthly";
 };
+
+// ✅ Componente de barra de progreso
+function ProgressBar({ steps, currentStep }: { steps: string[]; currentStep: number }) {
+  return (
+    <div className="w-full space-y-2">
+      {steps.map((step, index) => (
+        <div key={index} className="flex items-center gap-3">
+          <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 text-xs font-bold ${
+            index < currentStep 
+              ? "bg-emerald-500 text-white" 
+              : index === currentStep 
+                ? "bg-yellow-500 text-black animate-pulse" 
+                : "bg-white/10 text-white/30"
+          }`}>
+            {index < currentStep ? "✓" : index === currentStep ? "⏳" : (index + 1)}
+          </div>
+          <span className={`text-sm ${
+            index < currentStep 
+              ? "text-emerald-400" 
+              : index === currentStep 
+                ? "text-yellow-400 font-semibold" 
+                : "text-white/30"
+          }`}>
+            {step}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 function OfficialBrowserBox({
   language,
@@ -88,7 +144,7 @@ function OfficialBrowserBox({
   ui: any;
   confirmed: boolean;
   formData: MaltaFormData;
-  onFormChange: (field: keyof MaltaFormData, value: string) => void;
+  onFormChange: (field: keyof MaltaFormData, value: string | File | null) => void;
   onFormSubmit: () => void;
   formReady: boolean;
   onPay: (plan: "weekly" | "monthly") => void;
@@ -100,12 +156,178 @@ function OfficialBrowserBox({
   const isMa = language === "ma";
   const isEn = language === "en";
   const { toast } = useToast();
+  const [uploadingCV, setUploadingCV] = useState(false);
+  const [progressSteps] = useState([
+    isMa ? "✅ تم الدفع" : isEn ? "✅ Payment received" : "✅ Pago recibido",
+    isMa ? "⏳ إنشاء السيرة الذاتية" : isEn ? "⏳ Creating CV" : "⏳ Creando CV",
+    isMa ? "⏳ إنشاء الرسالة" : isEn ? "⏳ Creating cover letter" : "⏳ Creando carta",
+    isMa ? "⏳ البحث عن الشركات" : isEn ? "⏳ Searching companies" : "⏳ Buscando empresas",
+    isMa ? "⏳ إرسال الطلبات" : isEn ? "⏳ Sending applications" : "⏳ Enviando candidaturas",
+    isMa ? "⏳ انتظار الردود" : isEn ? "⏳ Waiting for responses" : "⏳ Esperando respuestas",
+  ]);
+  const [progressStep, setProgressStep] = useState(0);
+
+  // ✅ Opciones de experiencia laboral
+  const experienciaOptions = [
+    { id: "kitchen", label: isMa ? "المطبخ" : isEn ? "Kitchen" : "Cocina" },
+    { id: "construction", label: isMa ? "البناء" : isEn ? "Construction" : "Construcción" },
+    { id: "cleaning", label: isMa ? "التنظيف" : isEn ? "Cleaning" : "Limpieza" },
+    { id: "warehouse", label: isMa ? "المستودع" : isEn ? "Warehouse" : "Almacén" },
+    { id: "restaurant", label: isMa ? "المطعم" : isEn ? "Restaurant" : "Restaurante" },
+    { id: "delivery", label: isMa ? "التوصيل" : isEn ? "Delivery" : "Delivery" },
+    { id: "hotel", label: isMa ? "الفندق" : isEn ? "Hotel" : "Hotel" },
+    { id: "factory", label: isMa ? "المصنع" : isEn ? "Factory" : "Fábrica" },
+    { id: "aluminium", label: isMa ? "الألمنيوم" : isEn ? "Aluminium" : "Aluminio" },
+    { id: "other", label: isMa ? "آخر" : isEn ? "Other" : "Otro" },
+  ];
+
+  // ✅ Idiomas disponibles con niveles
+  const idiomasDisponibles = [
+    { id: "ingles", label: isMa ? "الإنجليزية" : isEn ? "English" : "Inglés" },
+    { id: "frances", label: isMa ? "الفرنسية" : isEn ? "French" : "Francés" },
+    { id: "italiano", label: isMa ? "الإيطالية" : isEn ? "Italian" : "Italiano" },
+    { id: "espanol", label: isMa ? "الإسبانية" : isEn ? "Spanish" : "Español" },
+    { id: "arabe", label: isMa ? "العربية" : isEn ? "Arabic" : "Árabe" },
+    { id: "aleman", label: isMa ? "الألمانية" : isEn ? "German" : "Alemán" },
+  ];
+
+  const niveles = [
+    { id: "basico", label: isMa ? "أساسي" : isEn ? "Basic" : "Básico" },
+    { id: "intermedio", label: isMa ? "متوسط" : isEn ? "Intermediate" : "Intermedio" },
+    { id: "avanzado", label: isMa ? "متقدم" : isEn ? "Advanced" : "Avanzado" },
+    { id: "nativo", label: isMa ? "لغة أم" : isEn ? "Native" : "Nativo" },
+  ];
+
+  // ✅ Sectores disponibles
+  const sectores = [
+    { id: "kitchen", label: isMa ? "المطبخ" : isEn ? "Kitchen" : "Cocina" },
+    { id: "housekeeping", label: isMa ? "التدبير المنزلي" : isEn ? "Housekeeping" : "Housekeeping" },
+    { id: "restaurant", label: isMa ? "المطعم" : isEn ? "Restaurant" : "Restaurante" },
+    { id: "food_beverage", label: isMa ? "الطعام والشراب" : isEn ? "Food & Beverage" : "Food & Beverage" },
+    { id: "cleaning", label: isMa ? "التنظيف" : isEn ? "Cleaning" : "Limpieza" },
+    { id: "warehouse", label: isMa ? "المستودع" : isEn ? "Warehouse" : "Almacén" },
+    { id: "delivery", label: isMa ? "التوصيل" : isEn ? "Delivery" : "Delivery" },
+    { id: "construction", label: isMa ? "البناء" : isEn ? "Construction" : "Construcción" },
+    { id: "aluminium", label: isMa ? "الألمنيوم" : isEn ? "Aluminium" : "Aluminio" },
+    { id: "manufacturing", label: isMa ? "التصنيع" : isEn ? "Manufacturing" : "Fabricación" },
+  ];
+
+  // ✅ Opciones de estudios
+  const estudiosOptions = [
+    { id: "sin_estudios", label: isMa ? "بدون تعليم" : isEn ? "No education" : "Sin estudios" },
+    { id: "secundaria", label: isMa ? "التعليم الثانوي" : isEn ? "Secondary education" : "Educación secundaria" },
+    { id: "fp", label: isMa ? "التكوين المهني" : isEn ? "Vocational training" : "Formación Profesional" },
+    { id: "diploma", label: isMa ? "دبلوم" : isEn ? "Diploma" : "Diploma" },
+    { id: "universidad", label: isMa ? "الجامعة" : isEn ? "University" : "Universidad" },
+    { id: "master", label: isMa ? "ماجستير" : isEn ? "Master's degree" : "Máster" },
+    { id: "otro", label: isMa ? "آخر" : isEn ? "Other" : "Otro" },
+  ];
+
+  // ✅ Opciones de años de experiencia
+  const añosExperienciaOptions = [
+    { id: "sin_experiencia", label: isMa ? "بدون خبرة" : isEn ? "No experience" : "Sin experiencia" },
+    { id: "menos_1", label: isMa ? "أقل من سنة" : isEn ? "Less than 1 year" : "Menos de 1 año" },
+    { id: "1_2", label: isMa ? "1-2 سنة" : isEn ? "1-2 years" : "1-2 años" },
+    { id: "3_5", label: isMa ? "3-5 سنوات" : isEn ? "3-5 years" : "3-5 años" },
+    { id: "mas_5", label: isMa ? "أكثر من 5 سنوات" : isEn ? "More than 5 years" : "Más de 5 años" },
+  ];
+
+  // ✅ Opciones de carnet de conducir
+  const carnetOptions = [
+    { id: "No", label: isMa ? "لا" : isEn ? "No" : "No" },
+    { id: "B", label: "Carnet B" },
+    { id: "C", label: "Carnet C" },
+    { id: "C+E", label: "Carnet C+E" },
+  ];
 
   const formIntro = isMa
     ? "خدمة البحث عن عمل في مالطا باستخدام الذكاء الاصطناعي. عبّي الفورم ونحن نبحث عن العمل المناسب لك."
     : isEn
     ? "Job search service in Malta using Artificial Intelligence. Fill in the form and we will find the right job for you."
     : "Servicio de búsqueda de empleo en Malta con Inteligencia Artificial. Rellena el formulario y nosotros buscamos el trabajo adecuado para ti.";
+
+  // ✅ Función para subir CV a Supabase Storage
+  const uploadCVToSupabase = async (file: File, applicationId: string): Promise<string> => {
+    try {
+      const fileName = `cv_${applicationId}_${Date.now()}.pdf`;
+      const { data, error } = await supabase.storage
+        .from("malta-documents")
+        .upload(fileName, file, {
+          cacheControl: "3600",
+          upsert: true,
+        });
+
+      if (error) throw error;
+
+      const { data: publicUrlData } = supabase.storage
+        .from("malta-documents")
+        .getPublicUrl(fileName);
+
+      return publicUrlData.publicUrl;
+    } catch (error) {
+      console.error("Error uploading CV:", error);
+      throw error;
+    }
+  };
+
+  // ✅ Manejar subida de archivo CV con validación mejorada
+  const handleCVUpload = async (file: File) => {
+    if (!file) return;
+    
+    const validTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+    if (!validTypes.includes(file.type)) {
+      toast({
+        title: isMa ? "خطأ" : isEn ? "Error" : "Error",
+        description: isMa ? "يرجى رفع ملف PDF أو DOCX" : isEn ? "Please upload a PDF or DOCX file" : "Por favor sube un archivo PDF o DOCX",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: isMa ? "خطأ" : isEn ? "Error" : "Error",
+        description: isMa ? "الملف كبير جداً (الحد الأقصى 5 ميجابايت)" : isEn ? "File too large (max 5MB)" : "Archivo demasiado grande (máx 5MB)",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setUploadingCV(true);
+    try {
+      onFormChange("cvFile", file);
+      // ✅ Mensaje de confianza
+      toast({
+        title: isMa ? "✅ تم الاستلام" : isEn ? "✅ Received" : "✅ Recibido",
+        description: isMa ? `تم استلام سيرتك الذاتية بنجاح` : isEn ? `Your CV has been successfully received` : `Tu CV ha sido recibido correctamente`,
+      });
+    } catch (error) {
+      console.error("Error handling CV upload:", error);
+      toast({
+        title: isMa ? "خطأ" : isEn ? "Error" : "Error",
+        description: isMa ? "حدث خطأ أثناء رفع الملف" : isEn ? "Error uploading file" : "Error al subir el archivo",
+        variant: "destructive",
+      });
+    } finally {
+      setUploadingCV(false);
+    }
+  };
+
+  // ✅ Simular progreso después del pago
+  useEffect(() => {
+    if (confirmed) {
+      let step = 0;
+      const interval = setInterval(() => {
+        if (step < progressSteps.length - 1) {
+          step++;
+          setProgressStep(step);
+        } else {
+          clearInterval(interval);
+        }
+      }, 800);
+      return () => clearInterval(interval);
+    }
+  }, [confirmed]);
 
   return (
     <motion.div
@@ -124,6 +346,12 @@ function OfficialBrowserBox({
                 ? "🎉 SEARCH STARTED!"
                 : "🎉 ¡BÚSQUEDA INICIADA!"}
             </h2>
+            
+            {/* ✅ Barra de progreso */}
+            <div className="bg-[#0a0f1a] rounded-xl p-4 mb-4 text-left">
+              <ProgressBar steps={progressSteps} currentStep={progressStep} />
+            </div>
+            
             <p className="text-white text-lg font-bold mb-4">
               {isMa
                 ? "شكراً بزاف على الثقة ديالك في GestoriaCitaIA."
@@ -164,23 +392,25 @@ function OfficialBrowserBox({
           <>
             <div className="mt-3 mx-[-4px] rounded-[24px] border-2 border-yellow-500/60 bg-gradient-to-b from-[#0b0b0b] to-[#050505] px-3 py-3 shadow-[0_0_35px_rgba(255,200,0,0.18)]">
               <div className="mb-3 grid grid-cols-[32px_1fr_32px] items-center gap-2">
-                <div className="mb-3 grid grid-cols-[32px_1fr_32px] items-center gap-2">
-  <span />
-  <h2 className="text-center text-yellow-400 text-[18px] sm:text-[20px] font-black leading-tight">
-    {isMa ? "عمر الفورم للبحث عن عمل" : isEn ? "Job Search Form" : "Formulario de Búsqueda de Empleo"}
-  </h2>
-  <img
-    src="https://flagcdn.com/w80/mt.png"
-    alt="Malta"
-    className="h-5 w-8 rounded-[3px] object-cover shadow-[0_0_10px_rgba(255,255,255,0.20)]"
-  />
-</div>
+                <span />
+                <h2 className="text-center text-yellow-400 text-[18px] sm:text-[20px] font-black leading-tight">
+                  {isMa ? "عمر الفورم للبحث عن عمل" : isEn ? "Job Search Form" : "Formulario de Búsqueda de Empleo"}
+                </h2>
+                <img
+                  src="https://flagcdn.com/w80/mt.png"
+                  alt="Malta"
+                  className="h-5 w-8 rounded-[3px] object-cover shadow-[0_0_10px_rgba(255,255,255,0.20)]"
+                />
               </div>
               <p className="text-white/80 text-[13px] leading-relaxed mb-5">
                 {formIntro}
               </p>
               <div className="w-full">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 mb-5">
+                  {/* ============================================ */}
+                  {/* 1. DATOS PERSONALES */}
+                  {/* ============================================ */}
+                  
                   {/* Nombre completo */}
                   <div className="col-span-1 md:col-span-1">
                     <label className="block text-white text-[13px] mb-2">
@@ -195,7 +425,7 @@ function OfficialBrowserBox({
                     />
                   </div>
 
-                  {/* WhatsApp */}
+                  {/* WhatsApp con validación */}
                   <div className="col-span-1 md:col-span-1">
                     <label className="block text-white text-[13px] mb-2">
                       {isMa ? "واتساب" : isEn ? "WhatsApp" : "WhatsApp"}
@@ -227,14 +457,21 @@ function OfficialBrowserBox({
                         value={formData.whatsapp.replace(/^\+\d+\s*/, "")}
                         onChange={(e) => {
                           const prefix = formData.whatsapp.split(" ")[0] || "+34";
-                          onFormChange("whatsapp", prefix + " " + e.target.value);
+                          const number = e.target.value.replace(/\D/g, "");
+                          // ✅ Validación: mínimo 8, máximo 15 dígitos
+                          if (number.length <= 15) {
+                            onFormChange("whatsapp", prefix + " " + number);
+                          }
                         }}
                         className="min-w-0 flex-1 h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white"
                       />
                     </div>
+                    <p className="text-white/30 text-[10px] mt-1">
+                      {isMa ? "8-15 رقم" : isEn ? "8-15 digits" : "8-15 dígitos"}
+                    </p>
                   </div>
 
-                  {/* Email */}
+                  {/* Email con validación */}
                   <div>
                     <label className="block text-white text-[13px] mb-2">
                       Email
@@ -243,7 +480,10 @@ function OfficialBrowserBox({
                       type="email"
                       placeholder="tu@email.com"
                       value={formData.email}
-                      onChange={(e) => onFormChange("email", e.target.value)}
+                      onChange={(e) => {
+                        const email = e.target.value;
+                        onFormChange("email", email);
+                      }}
                       className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-[14px] text-white placeholder:text-white/30 focus:outline-none focus:border-yellow-400"
                     />
                   </div>
@@ -289,50 +529,97 @@ function OfficialBrowserBox({
                     />
                   </div>
 
-                  {/* Nivel de inglés */}
-                  <div>
+                  {/* ============================================ */}
+                  {/* 2. IDIOMAS CON NIVELES */}
+                  {/* ============================================ */}
+                  
+                  <div className="col-span-1 lg:col-span-2">
                     <label className="block text-white text-[13px] mb-2">
-                      {isMa ? "مستوى الإنجليزية" : isEn ? "English level" : "Nivel de inglés"}
+                      {isMa ? "ما هي اللغات التي تتحدثها؟" : isEn ? "What languages do you speak?" : "¿Qué idiomas hablas?"}
                     </label>
-                    <select
-                      value={formData.nivelIngles}
-                      onChange={(e) => onFormChange("nivelIngles", e.target.value)}
-                      className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white focus:outline-none focus:border-yellow-400"
-                    >
-                      <option value="">{isMa ? "اختر المستوى" : isEn ? "Select level" : "Selecciona nivel"}</option>
-                      <option value="Básico">{isMa ? "أساسي" : isEn ? "Basic" : "Básico"}</option>
-                      <option value="Intermedio">{isMa ? "متوسط" : isEn ? "Intermediate" : "Intermedio"}</option>
-                      <option value="Avanzado">{isMa ? "متقدم" : isEn ? "Advanced" : "Avanzado"}</option>
-                      <option value="Nativo">{isMa ? "لغة أم" : isEn ? "Native" : "Nativo"}</option>
-                    </select>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {idiomasDisponibles.map((idioma) => (
+                        <div key={idioma.id} className="rounded-xl border border-white/10 bg-[#060b16] p-3">
+                          <div className="flex items-center gap-2 mb-2">
+                            <input
+                              type="checkbox"
+                              id={`idioma_${idioma.id}`}
+                              checked={formData.idiomas?.includes(idioma.id) || false}
+                              onChange={(e) => {
+                                const currentIdiomas = formData.idiomas?.split(",").filter(Boolean) || [];
+                                let newIdiomas: string[];
+                                if (e.target.checked) {
+                                  newIdiomas = [...currentIdiomas, idioma.id];
+                                } else {
+                                  newIdiomas = currentIdiomas.filter((s) => s !== idioma.id);
+                                }
+                                onFormChange("idiomas", newIdiomas.join(","));
+                              }}
+                              className="w-4 h-4 rounded border-white/20 bg-[#060b16] text-yellow-500 focus:ring-yellow-500 focus:ring-offset-0 shrink-0"
+                            />
+                            <label htmlFor={`idioma_${idioma.id}`} className="text-white text-[13px] font-medium">
+                              {idioma.label}
+                            </label>
+                          </div>
+                          {formData.idiomas?.includes(idioma.id) && (
+                            <select
+                              value={formData[`${idioma.id}_nivel` as keyof MaltaFormData] as string || ""}
+                              onChange={(e) => onFormChange(`${idioma.id}_nivel` as keyof MaltaFormData, e.target.value)}
+                              className="w-full h-[36px] rounded-lg border border-white/10 bg-[#0a0f1a] px-3 text-[12px] text-white focus:outline-none focus:border-yellow-400"
+                            >
+                              <option value="">{isMa ? "اختر المستوى" : isEn ? "Select level" : "Selecciona nivel"}</option>
+                              {niveles.map((nivel) => (
+                                <option key={nivel.id} value={nivel.id}>{nivel.label}</option>
+                              ))}
+                            </select>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-white/40 text-[10px] mt-1">
+                      {isMa ? "اختر اللغات التي تتحدثها ومستوى كل منها" : isEn ? "Select the languages you speak and their level" : "Selecciona los idiomas que hablas y su nivel"}
+                    </p>
                   </div>
 
-                  {/* Otros idiomas */}
-                  <div>
+                  {/* ============================================ */}
+                  {/* 3. EXPERIENCIA */}
+                  {/* ============================================ */}
+                  
+                  {/* ✅ "¿En qué has trabajado antes?" con opciones */}
+                  <div className="col-span-1 lg:col-span-2">
                     <label className="block text-white text-[13px] mb-2">
-                      {isMa ? "لغات أخرى" : isEn ? "Other languages" : "Otros idiomas"}
+                      {isMa ? "في ماذا اشتغلت قبل؟" : isEn ? "What have you worked in before?" : "¿En qué has trabajado antes?"}
                     </label>
-                    <input
-                      type="text"
-                      placeholder={isMa ? "الفرنسية، الألمانية..." : isEn ? "French, German..." : "Francés, Alemán..."}
-                      value={formData.otrosIdiomas}
-                      onChange={(e) => onFormChange("otrosIdiomas", e.target.value)}
-                      className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white"
-                    />
-                  </div>
-
-                  {/* Profesión */}
-                  <div>
-                    <label className="block text-white text-[13px] mb-2">
-                      {isMa ? "المهنة" : isEn ? "Profession" : "Profesión"}
-                    </label>
-                    <input
-                      type="text"
-                      placeholder={isMa ? "المبرمج" : isEn ? "Programmer" : "Programador"}
-                      value={formData.profesion}
-                      onChange={(e) => onFormChange("profesion", e.target.value)}
-                      className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white"
-                    />
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                      {experienciaOptions.map((opt) => (
+                        <label
+                          key={opt.id}
+                          className={`flex items-center gap-2 p-2 rounded-xl border transition-colors cursor-pointer ${
+                            formData.experienciaLaboral === opt.id
+                              ? "border-yellow-500 bg-yellow-500/10"
+                              : "border-white/10 bg-[#060b16] hover:border-yellow-500/50"
+                          }`}
+                        >
+                          <input
+                            type="radio"
+                            name="experiencia"
+                            value={opt.id}
+                            checked={formData.experienciaLaboral === opt.id}
+                            onChange={(e) => onFormChange("experienciaLaboral", e.target.value)}
+                            className="w-4 h-4 rounded-full border-white/20 bg-[#060b16] text-yellow-500 focus:ring-yellow-500 focus:ring-offset-0 shrink-0"
+                          />
+                          <span className="text-white/80 text-[11px] sm:text-[12px]">{opt.label}</span>
+                        </label>
+                      ))}
+                    </div>
+                    {formData.experienciaLaboral === "other" && (
+                      <input
+                        type="text"
+                        placeholder={isMa ? "اكتب خبرتك..." : isEn ? "Write your experience..." : "Escribe tu experiencia..."}
+                        className="mt-2 w-full h-[40px] rounded-xl border border-white/10 bg-[#060b16] px-3 text-white placeholder:text-white/30 focus:outline-none focus:border-yellow-400"
+                        onChange={(e) => onFormChange("experienciaLaboral", e.target.value)}
+                      />
+                    )}
                   </div>
 
                   {/* Años de experiencia */}
@@ -340,13 +627,16 @@ function OfficialBrowserBox({
                     <label className="block text-white text-[13px] mb-2">
                       {isMa ? "سنوات الخبرة" : isEn ? "Years of experience" : "Años de experiencia"}
                     </label>
-                    <input
-                      type="number"
-                      placeholder="3"
+                    <select
                       value={formData.añosExperiencia}
                       onChange={(e) => onFormChange("añosExperiencia", e.target.value)}
-                      className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white"
-                    />
+                      className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white focus:outline-none focus:border-yellow-400"
+                    >
+                      <option value="">{isMa ? "اختر المدة" : isEn ? "Select" : "Selecciona"}</option>
+                      {añosExperienciaOptions.map((opt) => (
+                        <option key={opt.id} value={opt.id}>{opt.label}</option>
+                      ))}
+                    </select>
                   </div>
 
                   {/* Estudios */}
@@ -354,52 +644,143 @@ function OfficialBrowserBox({
                     <label className="block text-white text-[13px] mb-2">
                       {isMa ? "الدراسات" : isEn ? "Education" : "Estudios"}
                     </label>
-                    <input
-                      type="text"
-                      placeholder={isMa ? "بكالوريوس في..." : isEn ? "Bachelor's in..." : "Grado en..."}
+                    <select
                       value={formData.estudios}
                       onChange={(e) => onFormChange("estudios", e.target.value)}
-                      className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white"
-                    />
+                      className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white focus:outline-none focus:border-yellow-400"
+                    >
+                      <option value="">{isMa ? "اختر المستوى" : isEn ? "Select" : "Selecciona"}</option>
+                      {estudiosOptions.map((opt) => (
+                        <option key={opt.id} value={opt.id}>{opt.label}</option>
+                      ))}
+                    </select>
                   </div>
 
-                  {/* Carnet de conducir */}
+                  {/* ============================================ */}
+                  {/* 4. SECTORES DE EXPERIENCIA */}
+                  {/* ============================================ */}
+                  
+                  <div className="col-span-1 lg:col-span-2">
+                    <label className="block text-white text-[13px] mb-2">
+                      {isMa ? "في أي قطاعات لديك خبرة؟" : isEn ? "In which sectors do you have experience?" : "¿En qué sectores tienes experiencia?"}
+                    </label>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                      {sectores.map((sector) => (
+                        <label
+                          key={sector.id}
+                          className="flex items-center gap-2 p-2 rounded-xl border border-white/10 bg-[#060b16] hover:border-yellow-500/50 transition-colors cursor-pointer"
+                        >
+                          <input
+                            type="checkbox"
+                            value={sector.id}
+                            checked={formData.sectores?.includes(sector.id) || false}
+                            onChange={(e) => {
+                              const currentSectores = formData.sectores?.split(",").filter(Boolean) || [];
+                              let newSectores: string[];
+                              if (e.target.checked) {
+                                newSectores = [...currentSectores, sector.id];
+                              } else {
+                                newSectores = currentSectores.filter((s) => s !== sector.id);
+                              }
+                              onFormChange("sectores", newSectores.join(","));
+                            }}
+                            className="w-4 h-4 rounded border-white/20 bg-[#060b16] text-yellow-500 focus:ring-yellow-500 focus:ring-offset-0 shrink-0"
+                          />
+                          <span className="text-white/80 text-[11px] sm:text-[12px]">{sector.label}</span>
+                        </label>
+                      ))}
+                    </div>
+                    <p className="text-white/40 text-[10px] mt-1">
+                      {isMa ? "اختر كل القطاعات التي لديك خبرة فيها" : isEn ? "Select all sectors where you have experience" : "Selecciona todos los sectores donde tienes experiencia"}
+                    </p>
+                  </div>
+
+                  {/* ============================================ */}
+                  {/* 5. CARNET DE CONDUCIR */}
+                  {/* ============================================ */}
+                  
                   <div>
                     <label className="block text-white text-[13px] mb-2">
                       {isMa ? "رخصة السياقة" : isEn ? "Driver's license" : "Carnet de conducir"}
                     </label>
                     <select
                       value={formData.carnetConducir}
-                      onChange={(e) => onFormChange("carnetConducir", e.target.value)}
+                      onChange={(e) => onFormChange("carnetConducir", e.target.value as "No" | "B" | "C" | "C+E")}
                       className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white focus:outline-none focus:border-yellow-400"
                     >
-                      <option value="Sí">{isMa ? "نعم" : isEn ? "Yes" : "Sí"}</option>
-                      <option value="No">{isMa ? "لا" : isEn ? "No" : "No"}</option>
+                      {carnetOptions.map((opt) => (
+                        <option key={opt.id} value={opt.id}>{opt.label}</option>
+                      ))}
                     </select>
                   </div>
 
-                  {/* Puesto que buscas */}
+                  {/* ============================================ */}
+                  {/* 6. CV EN INGLÉS */}
+                  {/* ============================================ */}
+                  
                   <div>
                     <label className="block text-white text-[13px] mb-2">
-                      {isMa ? "المنصب الذي تبحث عنه" : isEn ? "Position you are looking for" : "Puesto que buscas"}
-                    </label>
-                    <input
-                      type="text"
-                      placeholder={isMa ? "مبرمج جافا" : isEn ? "Java Developer" : "Desarrollador Java"}
-                      value={formData.puestoBusca}
-                      onChange={(e) => onFormChange("puestoBusca", e.target.value)}
-                      className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white"
-                    />
-                  </div>
-
-                  {/* Disponibilidad para viajar */}
-                  <div>
-                    <label className="block text-white text-[13px] mb-2">
-                      {isMa ? "الاستعداد للسفر" : isEn ? "Willingness to travel" : "Disponibilidad para viajar"}
+                      {isMa ? "هل لديك سيرة ذاتية بالإنجليزية؟" : isEn ? "Do you have a CV in English?" : "¿Ya tienes un CV en inglés?"}
                     </label>
                     <select
-                      value={formData.disponibilidadViajar}
-                      onChange={(e) => onFormChange("disponibilidadViajar", e.target.value)}
+                      value={formData.tieneCV}
+                      onChange={(e) => onFormChange("tieneCV", e.target.value as "Sí" | "No")}
+                      className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white focus:outline-none focus:border-yellow-400"
+                    >
+                      <option value="Sí">{isMa ? "نعم" : isEn ? "Yes" : "Sí"}</option>
+                      <option value="No">{isMa ? "لا" : isEn ? "No" : "No"}</option>
+                    </select>
+                    {formData.tieneCV === "Sí" && (
+                      <div className="mt-2 p-3 rounded-xl border border-yellow-500/30 bg-yellow-500/10">
+                        <p className="text-yellow-400 text-[11px] font-semibold">
+                          {isMa ? "📄 ارفع سيرتك الذاتية هنا (PDF أو DOCX)" : isEn ? "📄 Upload your CV here (PDF or DOCX)" : "📄 Sube tu CV aquí (PDF o DOCX)"}
+                        </p>
+                        <div className="mt-2 flex items-center gap-2">
+                          <input
+                            type="file"
+                            accept=".pdf,.docx"
+                            className="flex-1 text-[11px] text-white/70 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:bg-yellow-500/20 file:text-yellow-400 file:text-xs file:font-semibold hover:file:bg-yellow-500/30"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) handleCVUpload(file);
+                            }}
+                            disabled={uploadingCV}
+                          />
+                          {uploadingCV && (
+                            <Loader2 className="w-5 h-5 text-yellow-400 animate-spin" />
+                          )}
+                        </div>
+                        {formData.cvFile && (
+                          <div className="mt-2 p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                            <p className="text-emerald-400 text-[11px] font-semibold">
+                              ✅ {isMa ? "تم استلام السيرة الذاتية" : isEn ? "CV received" : "CV recibido"}
+                            </p>
+                            <p className="text-emerald-400/70 text-[10px]">
+                              {formData.cvFile.name}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    {formData.tieneCV === "No" && (
+                      <p className="text-emerald-400 text-[11px] mt-1">
+                        {isMa ? "🤖 سنقوم بإنشاء سيرة ذاتية احترافية لك باستخدام الذكاء الاصطناعي" : isEn ? "🤖 We will create a professional CV for you using AI" : "🤖 Crearemos un CV profesional para ti con IA"}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* ============================================ */}
+                  {/* 7. PREGUNTAS IMPORTANTES */}
+                  {/* ============================================ */}
+                  
+                  {/* Pasaporte válido */}
+                  <div>
+                    <label className="block text-white text-[13px] mb-2">
+                      {isMa ? "هل لديك جواز سفر ساري المفعول؟" : isEn ? "Do you have a valid passport?" : "¿Tienes pasaporte válido?"}
+                    </label>
+                    <select
+                      value={formData.pasaporteValido}
+                      onChange={(e) => onFormChange("pasaporteValido", e.target.value as "Sí" | "No")}
                       className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white focus:outline-none focus:border-yellow-400"
                     >
                       <option value="Sí">{isMa ? "نعم" : isEn ? "Yes" : "Sí"}</option>
@@ -407,19 +788,42 @@ function OfficialBrowserBox({
                     </select>
                   </div>
 
-                  {/* Fecha disponible para empezar */}
-                  <div className="min-w-0">
+                  {/* Entrevista por videollamada */}
+                  <div>
                     <label className="block text-white text-[13px] mb-2">
-                      {isMa ? "تاريخ التوفر للبدء" : isEn ? "Available to start" : "Fecha disponible para empezar"}
+                      {isMa ? "هل يمكنك إجراء مقابلة عبر الفيديو؟" : isEn ? "Can you do a video interview?" : "¿Puedes hacer una entrevista por videollamada?"}
                     </label>
-                    <input
-                      type="date"
-                      value={formData.fechaDisponible}
-                      onChange={(e) => onFormChange("fechaDisponible", e.target.value)}
-                      className="block w-full max-w-full min-w-0 h-[52px] box-border appearance-none rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white [color-scheme:dark]"
-                    />
+                    <select
+                      value={formData.entrevistaVideo}
+                      onChange={(e) => onFormChange("entrevistaVideo", e.target.value as "Sí" | "No")}
+                      className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white focus:outline-none focus:border-yellow-400"
+                    >
+                      <option value="Sí">{isMa ? "نعم" : isEn ? "Yes" : "Sí"}</option>
+                      <option value="No">{isMa ? "لا" : isEn ? "No" : "No"}</option>
+                    </select>
                   </div>
 
+                  {/* Disponibilidad para empezar */}
+                  <div className="min-w-0">
+                    <label className="block text-white text-[13px] mb-2">
+                      {isMa ? "متى يمكنك البدء بالعمل؟" : isEn ? "When can you start working?" : "¿Cuándo puedes empezar a trabajar?"}
+                    </label>
+                    <select
+                      value={formData.disponibilidadInicio}
+                      onChange={(e) => onFormChange("disponibilidadInicio", e.target.value as "inmediato" | "1_semana" | "2_semanas" | "1_mes")}
+                      className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white focus:outline-none focus:border-yellow-400"
+                    >
+                      <option value="inmediato">{isMa ? "فوراً" : isEn ? "Immediately" : "Inmediatamente"}</option>
+                      <option value="1_semana">{isMa ? "في أسبوع" : isEn ? "In 1 week" : "En 1 semana"}</option>
+                      <option value="2_semanas">{isMa ? "في أسبوعين" : isEn ? "In 2 weeks" : "En 2 semanas"}</option>
+                      <option value="1_mes">{isMa ? "في شهر" : isEn ? "In 1 month" : "En 1 mes"}</option>
+                    </select>
+                  </div>
+
+                  {/* ============================================ */}
+                  {/* 8. PLANES */}
+                  {/* ============================================ */}
+                  
                   {/* Plan Semanal */}
                   <div 
                     className={`col-span-1 lg:col-span-1 mt-2 rounded-[28px] border-2 p-4 shadow-[0_0_35px_rgba(59,130,246,0.15)] cursor-pointer transition-all ${
@@ -503,8 +907,41 @@ function OfficialBrowserBox({
                     )}
                   </div>
 
-                  {/* Checkbox de aceptación - VERSIÓN CORTA PARA MÓVIL */}
-                  <div className="col-span-1 lg:col-span-2 mt-4">
+                  {/* ============================================ */}
+                  {/* 9. LO QUE RECIBIRÁS */}
+                  {/* ============================================ */}
+                  
+                  <div className="col-span-1 lg:col-span-2 mt-2 rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-4">
+                    <p className="text-emerald-400 font-bold text-sm mb-2">
+                      {isMa ? "🎁 ماذا ستحصل؟" : isEn ? "🎁 What you will receive?" : "🎁 ¿Qué recibirás?"}
+                    </p>
+                    <div className="grid grid-cols-2 gap-1 text-[11px] text-white/70">
+                      <div className="flex items-center gap-1">
+                        <span className="text-emerald-400">✅</span> {isMa ? "سيرة ذاتية احترافية" : isEn ? "Professional CV" : "CV profesional"}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <span className="text-emerald-400">✅</span> {isMa ? "رسالة تحفيزية مخصصة" : isEn ? "Personalized cover letter" : "Carta de presentación personalizada"}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <span className="text-emerald-400">✅</span> {isMa ? "حتى 10 طلبات يومياً" : isEn ? "Up to 10 daily applications" : "Hasta 10 solicitudes diarias"}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <span className="text-emerald-400">✅</span> {isMa ? "شركات موثوقة في مالطا" : isEn ? "Verified companies in Malta" : "Empresas verificadas en Malta"}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <span className="text-emerald-400">✅</span> {isMa ? "إشعارات واتساب" : isEn ? "WhatsApp notifications" : "Notificaciones WhatsApp"}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <span className="text-emerald-400">✅</span> {isMa ? "متابعة طوال المدة" : isEn ? "Tracking throughout the plan" : "Seguimiento durante todo el plan"}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* ============================================ */}
+                  {/* 10. CHECKBOX + BOTÓN DE PAGO */}
+                  {/* ============================================ */}
+                  
+                  <div className="col-span-1 lg:col-span-2 mt-2">
                     <div className="flex items-start gap-3 mb-4">
                       <input
                         type="checkbox"
@@ -522,6 +959,26 @@ function OfficialBrowserBox({
                       </label>
                     </div>
 
+                    {/* ✅ Texto de privacidad adicional */}
+                    <p className="text-white/30 text-[10px] text-center mb-3">
+                      {isMa
+                        ? "🔒 سيتم مشاركة معلوماتك فقط مع الشركات ووكالات التوظيف في مالطا للبحث عن عمل."
+                        : isEn
+                        ? "🔒 Your information will only be shared with companies and employment agencies in Malta to find work."
+                        : "🔒 Tu información solo será compartida con empresas y agencias de empleo en Malta para buscar trabajo."}
+                    </p>
+
+                    {/* ✅ Texto de confianza antes del botón */}
+                    <div className="mb-4 p-3 rounded-xl border border-yellow-500/20 bg-yellow-500/5">
+                      <p className="text-yellow-400 text-[11px] sm:text-[12px] leading-relaxed text-center">
+                        {isMa
+                          ? "🤖 سيتم إنشاء سيرتك الذاتية ورسالتك التحفيزية تلقائياً باستخدام الذكاء الاصطناعي (إذا لم ترفع واحدة). بعدها سنبدأ بإرسال طلبات التوظيف يومياً إلى شركات في مالطا."
+                          : isEn
+                          ? "🤖 Your CV and cover letter will be automatically generated using AI (if you don't upload one). Then we will start sending job applications daily to companies in Malta."
+                          : "🤖 Tu CV y tu carta de presentación se generarán automáticamente mediante IA (si no subes uno propio). Después comenzaremos a enviar candidaturas diariamente a empresas de Malta."}
+                      </p>
+                    </div>
+
                     <button
                       type="button"
                       onClick={() => onPay(selectedPlan)}
@@ -529,13 +986,13 @@ function OfficialBrowserBox({
                       disabled={!acceptTerms}
                     >
                       {isMa
-                        ? `🔐 خلص وابدأ البحث (${selectedPlan === "weekly" ? "19,99€" : "29,99€"})`
+                        ? `🚀 ابدأ البحث الآن (${selectedPlan === "weekly" ? "19,99€" : "29,99€"})`
                         : isEn
-                        ? `🔐 Pay and start search (${selectedPlan === "weekly" ? "19,99€" : "29,99€"})`
-                        : `🔐 Pagar y empezar búsqueda (${selectedPlan === "weekly" ? "19,99€" : "29,99€"})`}
+                        ? `🚀 Start search now (${selectedPlan === "weekly" ? "19,99€" : "29,99€"})`
+                        : `🚀 Empezar búsqueda ahora (${selectedPlan === "weekly" ? "19,99€" : "29,99€"})`}
                     </button>
 
-                    <div className="mt-5 flex items-center justify-center gap-2 text-[11px] text-gray-300">
+                    <div className="mt-4 flex items-center justify-center gap-2 text-[11px] text-gray-300">
                       <Shield className="w-3 h-3 text-yellow-400" />
                       <span>
                         {isMa
@@ -558,111 +1015,43 @@ function OfficialBrowserBox({
             </div>
           </>
         ) : (
-          <>
-            <div className="rounded-[26px] border border-emerald-500/40 bg-[#07111f] px-5 py-7 mb-5 shadow-[0_0_30px_rgba(16,185,129,0.08)]">
-              <div className="flex justify-center mb-4">
-                <div className="w-14 h-14 rounded-full border-2 border-emerald-400 bg-emerald-500/15 flex items-center justify-center shadow-[0_0_20px_rgba(16,185,129,0.35)]">
-                  <CheckCircle2 className="w-8 h-8 text-emerald-400" />
-                </div>
-              </div>
-              <h3 className="text-center text-white text-[18px] font-semibold leading-tight mb-3">
-                {isMa
-                  ? "مبروك 🎉 بدأنا البحث عن عمل لك في مالطا"
-                  : isEn
-                  ? "Congratulations 🎉 We have started searching for jobs for you in Malta"
-                  : "Felicidades 🎉 Hemos empezado a buscar trabajo para ti en Malta"}
-              </h3>
-              <p className="text-center text-white/70 text-[14px] leading-relaxed">
-                {isMa
-                  ? "سنتواصل معك عبر واتساب عند العثور على فرصة عمل مناسبة."
-                  : isEn
-                  ? "We will contact you via WhatsApp when we find a suitable job opportunity."
-                  : "Te contactaremos por WhatsApp cuando encontremos una oportunidad laboral adecuada."}
-              </p>
-
-              <div className="mt-5 rounded-2xl border border-yellow-500/20 bg-yellow-500/10 p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="w-2.5 h-2.5 rounded-full bg-yellow-400 animate-pulse" />
-                  <p className="text-yellow-300 font-bold text-sm">
-                    {isMa
-                      ? "نبحث عن عمل لك 24/7"
-                      : isEn
-                      ? "Searching for jobs for you 24/7"
-                      : "Buscando empleo para ti 24/7"}
-                  </p>
-                </div>
-                <p className="text-white/70 text-xs leading-relaxed">
-                  {isMa
-                    ? "نبحث يومياً في منصات التوظيف في مالطا. عند العثور على فرصة مناسبة، نرسل طلب التوظيف ونتواصل معك عبر واتساب."
-                    : isEn
-                    ? "We search daily on Maltese job platforms. When we find a suitable opportunity, we send the application and contact you via WhatsApp."
-                    : "Buscamos diariamente en plataformas de empleo en Malta. Cuando encontramos una oportunidad adecuada, enviamos la candidatura y te contactamos por WhatsApp."}
-                </p>
+          // Pantalla de confirmación después del pago (con barra de progreso)
+          <div className="rounded-[26px] border border-emerald-500/40 bg-[#07111f] px-5 py-7 mb-5 shadow-[0_0_30px_rgba(16,185,129,0.08)]">
+            <div className="flex justify-center mb-4">
+              <div className="w-14 h-14 rounded-full border-2 border-emerald-400 bg-emerald-500/15 flex items-center justify-center shadow-[0_0_20px_rgba(16,185,129,0.35)]">
+                <CheckCircle2 className="w-8 h-8 text-emerald-400" />
               </div>
             </div>
-
-            <div className="rounded-[30px] overflow-hidden border border-yellow-500/30 bg-[#050816] shadow-[0_0_40px_rgba(255,200,0,0.10)]">
-              <div className="px-6 py-8 bg-[radial-gradient(circle_at_top,rgba(255,200,0,0.12),transparent_60%)]">
-                <div className="flex justify-center mb-5">
-                  <img
-                    src="https://upload.wikimedia.org/wikipedia/commons/7/73/Flag_of_Malta.svg"
-                    alt="Malta"
-                    className="w-20 h-14 object-cover rounded-lg shadow-[0_0_15px_rgba(255,255,255,0.15)] border border-white/20"
-                  />
-                </div>
-
-                <h2 className="text-center text-[#f6d06f] text-[32px] sm:text-[36px] leading-[42px] font-black mb-5">
-                  {isMa
-                    ? "ابحث عن عمل في مالطا بثقة"
-                    : isEn
-                    ? "Find a Job in Malta with Confidence"
-                    : "Encuentra trabajo en Malta con confianza"}
-                </h2>
-
-                <p className="text-center text-white/75 text-[15px] leading-relaxed mb-8">
-                  {isMa
-                    ? "نساعدك في العثور على وظيفة في مالطا باستخدام الذكاء الاصطناعي. نبحث عن الفرص ونرسل طلبات التوظيف نيابة عنك."
-                    : isEn
-                    ? "We help you find a job in Malta using Artificial Intelligence. We search for opportunities and send applications on your behalf."
-                    : "Te ayudamos a encontrar empleo en Malta con Inteligencia Artificial. Buscamos oportunidades y enviamos candidaturas en tu nombre."}
-                </p>
-
-                <div className="grid grid-cols-3 gap-3 text-center">
-                  <div>
-                    <Briefcase className="w-8 h-8 text-[#f6d06f] mx-auto mb-3" />
-                    <p className="text-white/80 text-[13px] leading-snug">
-                      {isMa ? "فرص عمل يومية" : isEn ? "Daily opportunities" : "Oportunidades diarias"}
-                    </p>
-                  </div>
-                  <div>
-                    <Award className="w-8 h-8 text-[#f6d06f] mx-auto mb-3" />
-                    <p className="text-white/80 text-[13px] leading-snug">
-                      {isMa ? "CV احترافي" : isEn ? "Professional CV" : "CV profesional"}
-                    </p>
-                  </div>
-                  <div>
-                    <Zap className="w-8 h-8 text-[#f6d06f] mx-auto mb-3" />
-                    <p className="text-white/80 text-[13px] leading-snug">
-                      {isMa ? "توظيف سريع" : isEn ? "Fast recruitment" : "Contratación rápida"}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="mt-8 text-center text-[#f6d06f] text-[20px] sm:text-[24px] font-bold">
-                  {isMa
-                    ? "« مستقبلك المهني يبدأ هنا. »"
-                    : isEn
-                    ? "\" Your professional future starts here. \""
-                    : "\" Tu futuro profesional empieza aquí. \""}
-                </div>
-              </div>
+            <h3 className="text-center text-white text-[18px] font-semibold leading-tight mb-3">
+              {isMa
+                ? "مبروك 🎉 بدأنا البحث عن عمل لك في مالطا"
+                : isEn
+                ? "Congratulations 🎉 We have started searching for jobs for you in Malta"
+                : "Felicidades 🎉 Hemos empezado a buscar trabajo para ti en Malta"}
+            </h3>
+            
+            {/* ✅ Barra de progreso */}
+            <div className="bg-[#0a0f1a] rounded-xl p-4 mb-4">
+              <ProgressBar steps={progressSteps} currentStep={progressStep} />
             </div>
-          </>
+            
+            <p className="text-center text-white/70 text-[14px] leading-relaxed">
+              {isMa
+                ? "سنتواصل معك عبر واتساب عند العثور على فرصة عمل مناسبة."
+                : isEn
+                ? "We will contact you via WhatsApp when we find a suitable job opportunity."
+                : "Te contactaremos por WhatsApp cuando encontremos una oportunidad laboral adecuada."}
+            </p>
+          </div>
         )}
       </div>
     </motion.div>
   );
 }
+
+// ============================================
+// PÁGINA PRINCIPAL
+// ============================================
 
 export default function TrabajoMalta() {
   const { lang } = useLang();
@@ -679,6 +1068,8 @@ export default function TrabajoMalta() {
   const [profileLoading, setProfileLoading] = useState(true);
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<"weekly" | "monthly">("monthly");
+  
+  // ✅ FormData
   const [formData, setFormData] = useState<MaltaFormData>({
     fullName: "",
     whatsapp: "+34 ",
@@ -686,17 +1077,37 @@ export default function TrabajoMalta() {
     nacionalidad: "",
     paisResidencia: "",
     fechaNacimiento: "",
-    nivelIngles: "Intermedio",
-    otrosIdiomas: "",
-    profesion: "",
+    
+    // Idiomas
+    idiomas: "",
+    ingles_nivel: "",
+    frances_nivel: "",
+    italiano_nivel: "",
+    espanol_nivel: "",
+    arabe_nivel: "",
+    aleman_nivel: "",
+    
+    // Experiencia
+    experienciaLaboral: "",
     añosExperiencia: "",
     estudios: "",
-    carnetConducir: "Sí",
-    puestoBusca: "",
-    disponibilidadViajar: "Sí",
-    fechaDisponible: "",
+    
+    // Sectores
+    sectores: "",
+    
+    carnetConducir: "No",
+    tieneCV: "Sí",
+    cvFile: null,
+    cvUrl: "",
+    
+    pasaporteValido: "Sí",
+    entrevistaVideo: "Sí",
+    
+    disponibilidadInicio: "inmediato",
+    
     plan: "monthly",
   });
+  
   const [formReady, setFormReady] = useState(
     localStorage.getItem("maltaPaid") === "1"
   );
@@ -1090,30 +1501,37 @@ export default function TrabajoMalta() {
     }
   };
 
-  // Validation completa antes del pago
+  // ✅ Validación completa antes del pago
   const validateForm = (): boolean => {
     const errors: string[] = [];
 
     if (!formData.fullName.trim()) {
       errors.push(isMa ? "الاسم الكامل مطلوب" : isEn ? "Full name is required" : "Nombre completo es requerido");
     }
-    if (!formData.whatsapp.replace(/\D/g, "").trim()) {
-      errors.push(isMa ? "رقم واتساب مطلوب" : isEn ? "WhatsApp number is required" : "WhatsApp es requerido");
+    
+    // ✅ Validación WhatsApp
+    const whatsappNumber = formData.whatsapp.replace(/\D/g, "");
+    if (whatsappNumber.length < 8 || whatsappNumber.length > 15) {
+      errors.push(isMa ? "رقم واتساب يجب أن يكون بين 8 و 15 رقم" : isEn ? "WhatsApp must be between 8 and 15 digits" : "WhatsApp debe tener entre 8 y 15 dígitos");
     }
-    if (!formData.email.trim()) {
-      errors.push(isMa ? "البريد الإلكتروني مطلوب" : isEn ? "Email is required" : "Email es requerido");
+    
+    // ✅ Validación Email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      errors.push(isMa ? "البريد الإلكتروني غير صحيح" : isEn ? "Invalid email" : "Email inválido");
     }
+    
     if (!formData.nacionalidad.trim()) {
       errors.push(isMa ? "الجنسية مطلوبة" : isEn ? "Nationality is required" : "Nacionalidad es requerida");
     }
     if (!formData.paisResidencia.trim()) {
       errors.push(isMa ? "بلد الإقامة مطلوب" : isEn ? "Country of residence is required" : "País de residencia es requerido");
     }
-    if (!formData.profesion.trim()) {
-      errors.push(isMa ? "المهنة مطلوبة" : isEn ? "Profession is required" : "Profesión es requerida");
+    if (!formData.experienciaLaboral.trim()) {
+      errors.push(isMa ? "الخبرة العملية مطلوبة" : isEn ? "Work experience is required" : "Experiencia laboral es requerida");
     }
-    if (!formData.puestoBusca.trim()) {
-      errors.push(isMa ? "المنصب المطلوب مطلوب" : isEn ? "Position is required" : "Puesto es requerido");
+    if (!formData.sectores) {
+      errors.push(isMa ? "خاصك تختار قطاع على الأقل" : isEn ? "You must select at least one sector" : "Debes seleccionar al menos un sector");
     }
     if (!acceptTerms) {
       errors.push(isMa ? "خاصك توافق على الشروط" : isEn ? "You must accept the terms" : "Debes aceptar los términos");
@@ -1134,7 +1552,6 @@ export default function TrabajoMalta() {
   };
 
   const handlePay = async (plan: "weekly" | "monthly") => {
-    // Validación antes del pago
     if (!validateForm()) {
       return;
     }
@@ -1153,15 +1570,31 @@ export default function TrabajoMalta() {
           nacionalidad: formData.nacionalidad,
           paisResidencia: formData.paisResidencia,
           fechaNacimiento: formData.fechaNacimiento,
-          nivelIngles: formData.nivelIngles,
-          otrosIdiomas: formData.otrosIdiomas,
-          profesion: formData.profesion,
+          
+          // Idiomas
+          idiomas: formData.idiomas,
+          ingles_nivel: formData.ingles_nivel,
+          frances_nivel: formData.frances_nivel,
+          italiano_nivel: formData.italiano_nivel,
+          espanol_nivel: formData.espanol_nivel,
+          arabe_nivel: formData.arabe_nivel,
+          aleman_nivel: formData.aleman_nivel,
+          
+          // Experiencia
+          experienciaLaboral: formData.experienciaLaboral,
           añosExperiencia: formData.añosExperiencia,
           estudios: formData.estudios,
+          
+          // Sectores
+          sectores: formData.sectores,
+          
           carnetConducir: formData.carnetConducir,
-          puestoBusca: formData.puestoBusca,
-          disponibilidadViajar: formData.disponibilidadViajar,
-          fechaDisponible: formData.fechaDisponible,
+          tieneCV: formData.tieneCV,
+          
+          pasaporteValido: formData.pasaporteValido,
+          entrevistaVideo: formData.entrevistaVideo,
+          
+          disponibilidadInicio: formData.disponibilidadInicio,
         }),
       });
 
@@ -1180,7 +1613,7 @@ export default function TrabajoMalta() {
     }
   };
 
-  const handleFormChange = (field: keyof MaltaFormData, value: string) => {
+  const handleFormChange = (field: keyof MaltaFormData, value: string | File | null) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
