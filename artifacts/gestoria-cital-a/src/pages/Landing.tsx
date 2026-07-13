@@ -12,9 +12,6 @@ import {
   Shield,
   Bell,
   ArrowRight,
-  Briefcase,
-  Award,
-  Bot,
 } from "lucide-react";
 import { Link } from "wouter";
 import { supabase } from "@/lib/supabaseClient";
@@ -29,86 +26,87 @@ type PlanItem = {
   badge: string | null;
   free: boolean;
   shadow: boolean;
-  icon: React.ReactNode;
   features: string[];
-  title: string;
-  subtitle: string;
-  btnText: string;
 };
 
-function getPlans(t: (key: string) => string): PlanItem[] {
+function getPlans(t: (k: string) => string): PlanItem[] {
   return [
-    // ✅ PLAN 1: Trabajo en Malta (Semanal)
     {
-      id: "malta_weekly",
-      price: t("plan_malta_weekly_price"),
-      period: t("plan_malta_weekly_period"),
+      id: "free",
+      price: "0€",
+      period: "",
+      color: "from-white/5 to-white/[0.02]",
+      border: "border-white/10",
+      btnClass:
+        "bg-white/8 hover:bg-white/15 text-white border border-white/15",
+      badge: null,
+      free: true,
+      shadow: false,
+      features: [
+        t("plan_free_f1"),
+        t("plan_free_f2"),
+        t("plan_free_f3"),
+        t("plan_free_f4"),
+      ],
+    },
+    {
+      id: "cita",
+      price: "9.99€",
+      period: "/mes",
+      color: "from-green-900/30 to-green-950/10",
+      border: "border-green-600/20",
+      btnClass:
+        "bg-white/8 hover:bg-white/15 text-white border border-white/15",
+      badge: null,
+      free: false,
+      shadow: false,
+      features: [
+        t("plan_cita_f1"),
+        t("plan_cita_f2"),
+        t("plan_cita_f3"),
+        t("plan_cita_f4"),
+        t("plan_cita_f5"),
+        t("plan_cita_f6"),
+      ],
+    },
+    {
+      id: "reg",
+      price: "9.99€",
+      period: "/mes",
+      color: "from-orange-900/25 to-orange-950/10",
+      border: "border-orange-500/25",
+      btnClass:
+        "bg-white/8 hover:bg-white/15 text-white border border-white/15",
+      badge: null,
+      free: false,
+      shadow: false,
+      features: [
+        t("plan_reg_f1"),
+        t("plan_reg_f2"),
+        t("plan_reg_f3"),
+        t("plan_reg_f4"),
+        t("plan_reg_f5"),
+      ],
+    },
+    {
+      id: "std",
+      price: "19.99€",
+      period: "/mes",
       color: "from-blue-900/40 to-blue-950/20",
       border: "border-blue-400/35",
       btnClass:
-        "bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-500/30",
-      badge: null,
+        "bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/30",
+      badge: "POPULAR",
       free: false,
       shadow: true,
-      icon: <Briefcase className="w-6 h-6 text-blue-400" />,
-      title: t("plan_malta_weekly_title"),
-      subtitle: t("plan_malta_weekly_subtitle"),
-      btnText: t("plan_malta_weekly_button"),
       features: [
-        t("plan_malta_weekly_f1"),
-        t("plan_malta_weekly_f2"),
-        t("plan_malta_weekly_f3"),
-        t("plan_malta_weekly_f4"),
-      ],
-    },
-    // ✅ PLAN 2: Trabajo en Malta (Mensual)
-    {
-      id: "malta_monthly",
-      price: t("plan_malta_monthly_price"),
-      period: t("plan_malta_monthly_period"),
-      color: "from-yellow-900/40 to-yellow-950/20",
-      border: "border-yellow-400/35",
-      btnClass:
-        "bg-yellow-500 hover:bg-yellow-400 text-black shadow-lg shadow-yellow-500/40",
-      badge: t("plan_malta_monthly_badge"),
-      free: false,
-      shadow: true,
-      icon: <Award className="w-6 h-6 text-yellow-400" />,
-      title: t("plan_malta_monthly_title"),
-      subtitle: t("plan_malta_monthly_subtitle"),
-      btnText: t("plan_malta_monthly_button"),
-      features: [
-        t("plan_malta_monthly_f1"),
-        t("plan_malta_monthly_f2"),
-        t("plan_malta_monthly_f3"),
-        t("plan_malta_monthly_f4"),
-        t("plan_malta_monthly_f5"),
-      ],
-    },
-    // ✅ PLAN 3: Khalid Extranjería
-    {
-      id: "khalid",
-      price: t("plan_khalid_price"),
-      period: t("plan_khalid_period"),
-      color: "from-orange-900/40 to-orange-950/20",
-      border: "border-orange-400/35",
-      btnClass:
-        "bg-orange-500 hover:bg-orange-400 text-black shadow-lg shadow-orange-500/40",
-      badge: t("plan_khalid_badge"),
-      free: false,
-      shadow: true,
-      icon: <Bot className="w-6 h-6 text-orange-400" />,
-      title: t("plan_khalid_title"),
-      subtitle: t("plan_khalid_subtitle"),
-      btnText: t("plan_khalid_button"),
-      features: [
-        t("plan_khalid_f1"),
-        t("plan_khalid_f2"),
-        t("plan_khalid_f3"),
-        t("plan_khalid_f4"),
-        t("plan_khalid_f5"),
-        t("plan_khalid_f6"),
-        t("plan_khalid_f7"),
+        t("plan_std_f1"),
+        t("plan_std_f2"),
+        t("plan_std_f3"),
+        t("plan_std_f4"),
+        t("plan_std_f5"),
+        t("plan_std_f6"),
+        t("plan_std_f7"),
       ],
     },
   ];
@@ -116,7 +114,6 @@ function getPlans(t: (key: string) => string): PlanItem[] {
 
 export default function Landing() {
   const [showPayment, setShowPayment] = useState(false);
-  const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
   const { t } = useLang();
 
   const tr = (key: string, fallback: string) => {
@@ -160,20 +157,21 @@ export default function Landing() {
   const PLANS = getPlans(t);
 
   const handlePlanClick = (plan: PlanItem) => {
-    // Si es Khalid, redirigir con autenticación
-    if (plan.id === "khalid") {
-      goWithGoogleAuth("/khalid-extranjeria");
+    if (plan.free) {
+      goWithGoogleAuth("/buscar-citas");
       return;
     }
 
-    // Si es Malta, redirigir con autenticación
-    if (plan.id === "malta_weekly" || plan.id === "malta_monthly") {
-      goWithGoogleAuth("/trabajo-malta");
+    if (plan.id === "reg") {
+      goWithGoogleAuth("/regularizacion-2026");
       return;
     }
 
-    // Fallback: abrir modal de pago
-    setSelectedPlanId(plan.id);
+    if (plan.id === "cita") {
+      goWithGoogleAuth("/buscar-citas");
+      return;
+    }
+
     setShowPayment(true);
   };
 
@@ -237,7 +235,7 @@ export default function Landing() {
               <ArrowRight className="w-4 h-4 ml-1" />
             </Button>
 
-            {/* ✅ BOTÓN TRABAJO EN MALTA */}
+            {/* ✅ BOTÓN TRABAJO EN MALTA - VERDE LLAMATIVO Y TEXTO GRANDE */}
             <Button
               className="w-full sm:w-auto rounded-full px-8 py-4 min-h-[60px]
               bg-gradient-to-r from-green-500 via-emerald-500 to-green-600
@@ -247,9 +245,9 @@ export default function Landing() {
               shadow-2xl shadow-green-500/40
               border-0
               tracking-wide"
-              onClick={() => goWithGoogleAuth("/trabajo-malta")}
+              onClick={() => window.location.href = "/trabajo-malta"}
             >
-              {t("hero_btn_malta")}
+              🇲🇹 {t("hero_btn_malta")}
               <ArrowRight className="w-5 h-5 ml-2" />
             </Button>
           </div>
@@ -323,9 +321,6 @@ export default function Landing() {
           </div>
         </motion.div>
 
-        {/* ============================================ */}
-        {/* SECCIÓN DE PLANES - SOLO 3 TARJETAS */}
-        {/* ============================================ */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -339,72 +334,64 @@ export default function Landing() {
             <p className="text-sm text-muted-foreground">{t("plans_sub")}</p>
           </div>
 
-          {/* ✅ 3 TARJETAS */}
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-6xl mx-auto items-stretch">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-6xl mx-auto items-stretch">
             {PLANS.map((plan) => {
+              const nameKey =
+                plan.id === "free"
+                  ? "plan_free_name"
+                  : plan.id === "cita"
+                  ? "plan_cita_name"
+                  : plan.id === "reg"
+                  ? "plan_reg_name"
+                  : "plan_std_name";
+
               return (
                 <div
                   key={plan.id}
-                  className={`relative rounded-2xl border ${plan.border} bg-gradient-to-b ${plan.color} backdrop-blur-sm p-6 flex flex-col transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl`}
+                  className={`relative rounded-2xl border ${plan.border} bg-gradient-to-b ${plan.color} backdrop-blur-sm p-5 flex flex-col`}
                   style={{
                     boxShadow: plan.shadow
-                      ? "0 0 50px -10px hsla(142,71%,45%,0.30)"
+                      ? "0 0 50px -10px hsl(142,71%,45%,0.30)"
                       : undefined,
                   }}
                 >
-                  {/* Badge */}
                   {plan.badge && (
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                      <span className="inline-block px-4 py-1 rounded-full bg-gradient-to-r from-yellow-400 to-yellow-600 text-black text-[10px] font-bold uppercase tracking-wider shadow-lg shadow-yellow-500/30">
-                        {plan.badge}
-                      </span>
+                    <div className="absolute top-0 right-0 overflow-hidden w-20 h-20">
+                      <div className="absolute top-3 right-[-20px] w-24 text-center bg-primary text-white text-[10px] font-bold py-1 rotate-45 shadow-sm">
+                        {t("plan_popular")}
+                      </div>
                     </div>
                   )}
 
-                  {/* Icono */}
-                  <div className="flex justify-center mb-4">
-                    <div className="w-14 h-14 rounded-full bg-white/5 border border-white/10 flex items-center justify-center">
-                      {plan.icon}
+                  <div className="mb-5">
+                    <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-3">
+                      {t(nameKey)}
+                    </p>
+                    <div className="flex items-end gap-1 mb-1">
+                      <span className="text-4xl font-display font-black text-white">
+                        {plan.price}
+                      </span>
+                      <span className="text-sm text-muted-foreground mb-1">
+                        {plan.period}
+                      </span>
                     </div>
                   </div>
 
-                  {/* Título */}
-                  <div className="text-center mb-1">
-                    <p className="text-sm font-bold text-white">
-                      {plan.title}
-                    </p>
-                    <p className="text-xs font-medium text-white/50">
-                      {plan.subtitle}
-                    </p>
-                  </div>
-
-                  {/* Precio */}
-                  <div className="text-center mb-5">
-                    <span className="text-4xl font-display font-black text-white">
-                      {plan.price}
-                    </span>
-                    <span className="text-sm text-muted-foreground ml-1">
-                      {plan.period}
-                    </span>
-                  </div>
-
-                  {/* Características */}
                   <ul className="flex-1 space-y-2.5 mb-6">
                     {plan.features.map((f, i) => (
                       <li key={i} className="flex items-start gap-2.5 text-sm text-white/80">
-                        <span className="text-primary shrink-0 mt-0.5">✅</span>
-                        <span>{f.replace("✅ ", "")}</span>
+                        <CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                        {f}
                       </li>
                     ))}
                   </ul>
 
-                  {/* Botón */}
                   <button
                     onClick={() => handlePlanClick(plan)}
-                    className={`w-full py-3 rounded-xl text-sm font-bold uppercase tracking-wider transition-all ${plan.btnClass}`}
+                    className={`w-full py-2.5 rounded-xl text-sm font-bold uppercase tracking-wider transition-all ${plan.btnClass}`}
                     type="button"
                   >
-                    {plan.btnText}
+                    {plan.free ? t("plan_free_btn") : t("plan_btn")}
                   </button>
                 </div>
               );
