@@ -1,49 +1,358 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { createClient } from "@supabase/supabase-js";
-import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
+import * as fs from "fs";
+import * as path from "path";
+import { chromium } from "playwright";
 
-// Configuración de Supabase
+// ============================================
+// CONFIGURACIÓN
+// ============================================
 const supabase = createClient(
   process.env.VITE_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-// ✅ Configuración de OpenAI con validación
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 if (!OPENAI_API_KEY) {
   throw new Error("OPENAI_API_KEY is missing");
 }
-const OPENAI_MODEL = "gpt-4o-mini";
+
+const OPENAI_MODEL = "gpt-5.5";
 const BUCKET_NAME = "malta-documents";
-const OPENAI_TIMEOUT_MS = 90000;
+const OPENAI_TIMEOUT_MS = 120000;
 
-// Función para dividir texto en líneas
-function wrapText(text: string, maxLength: number = 85): string[] {
-  const words = text.split(" ");
-  const lines: string[] = [];
-  let currentLine = "";
+// ============================================
+// MAPEO DE SECTORES
+// ============================================
+const SECTOR_TEMPLATES: Record<string, {
+  title: string;
+  atsKeywords: string[];
+  skills: string[];
+  companies: string[];
+}> = {
+  kitchen: {
+    title: "Kitchen Assistant",
+    atsKeywords: ["food preparation", "hygiene", "HACCP", "cleaning", "inventory"],
+    skills: ["Food Preparation", "Kitchen Hygiene", "HACCP", "Inventory Management"],
+    companies: ["Hilton Malta", "Radisson Blu", "Corinthia Palace", "Marriott Malta"],
+  },
+  hotel: {
+    title: "Housekeeping Attendant",
+    atsKeywords: ["cleaning", "organization", "customer service", "attention to detail"],
+    skills: ["Cleaning", "Organization", "Customer Service", "Attention to Detail"],
+    companies: ["Hilton Malta", "Corinthia Palace", "Radisson Blu", "The Phoenicia"],
+  },
+  restaurant: {
+    title: "Food & Beverage Assistant",
+    atsKeywords: ["customer service", "food safety", "hygiene", "team work"],
+    skills: ["Customer Service", "Food Safety", "Hygiene", "Team Collaboration"],
+    companies: ["Hilton Malta", "Radisson Blu", "Corinthia Palace", "db Hotels"],
+  },
+  cleaning: {
+    title: "Professional Cleaner",
+    atsKeywords: ["cleaning", "hygiene", "organization", "attention to detail"],
+    skills: ["Cleaning", "Hygiene", "Organization", "Attention to Detail"],
+    companies: ["Hilton Malta", "Corinthia Palace", "Radisson Blu", "The Phoenicia"],
+  },
+  warehouse: {
+    title: "Warehouse Operative",
+    atsKeywords: ["inventory", "forklift", "packing", "organization", "safety"],
+    skills: ["Inventory Management", "Forklift", "Packing", "Safety"],
+    companies: ["DB Schenker", "Kuehne + Nagel", "Malta Freeport", "Express Group"],
+  },
+  delivery: {
+    title: "Delivery Driver",
+    atsKeywords: ["driving", "navigation", "time management", "customer service"],
+    skills: ["Driving", "Navigation", "Time Management", "Customer Service"],
+    companies: ["Bolt Malta", "Wolt Malta", "Glovo Malta", "DHL Malta"],
+  },
+  construction: {
+    title: "Construction Worker",
+    atsKeywords: ["building", "safety", "tools", "team work", "physical work"],
+    skills: ["Construction", "Safety", "Tools", "Team Work"],
+    companies: ["Vassallo Builders", "Hili Company", "Mason Group", "PG Group"],
+  },
+  aluminium: {
+    title: "Aluminium & Carpentry Worker",
+    atsKeywords: ["aluminium", "carpentry", "tools", "measurement", "quality"],
+    skills: ["Aluminium Work", "Carpentry", "Tools", "Quality Control"],
+    companies: ["Vassallo Builders", "Hili Company", "Mason Group", "PG Group"],
+  },
+  manufacturing: {
+    title: "Manufacturing Operative",
+    atsKeywords: ["production", "quality", "machinery", "safety", "team work"],
+    skills: ["Production", "Quality Control", "Machinery", "Safety"],
+    companies: ["ST Microelectronics", "Malta Enterprise", "Venture Global", "Mizzi Group"],
+  },
+  default: {
+    title: "General Worker",
+    atsKeywords: ["reliability", "team work", "safety", "quality", "adaptability"],
+    skills: ["Reliability", "Team Work", "Safety", "Adaptability"],
+    companies: ["Various Maltese Companies"],
+  },
+};
 
-  for (const word of words) {
-    const testLine = currentLine + word + " ";
+// ============================================
+// FUNCIONES DE UTILIDAD
+// ============================================
 
-    if (testLine.length > maxLength) {
-      lines.push(currentLine.trim());
-      currentLine = word + " ";
-    } else {
-      currentLine = testLine;
-    }
-  }
-
-  if (currentLine.trim()) {
-    lines.push(currentLine.trim());
-  }
-
-  return lines;
+function getInitials(name: string): string {
+  if (!name) return "?";
+  const parts = name.trim().split(" ");
+  if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
+  return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
 }
 
-// Función mejorada para llamar a OpenAI y generar contenido
+function getLevelStars(level: string): string {
+  const map: Record<string, string> = {
+    basico: "★",
+    intermedio: "★★",
+    avanzado: "★★★",
+    nativo: "★★★★★",
+  };
+  return map[level] || "★";
+}
+
+function getLanguageLevel(level: string): string {
+  const map: Record<string, string> = {
+    basico: "Basic",
+    intermedio: "Intermediate",
+    avanzado: "Advanced",
+    nativo: "Native",
+  };
+  return map[level] || level;
+}
+
+function getAvailabilityLabel(value: string): string {
+  const map: Record<string, string> = {
+    inmediato: "Immediate",
+    "1_semana": "1 Week",
+    "2_semanas": "2 Weeks",
+    "1_mes": "1 Month",
+  };
+  return map[value] || value;
+}
+
+function getExperienceLabel(value: string): string {
+  const map: Record<string, string> = {
+    sin_experiencia: "Entry Level",
+    menos_1: "Less than 1 Year",
+    "1_2": "1-2 Years",
+    "3_5": "3-5 Years",
+    mas_5: "5+ Years",
+  };
+  return map[value] || value;
+}
+
+function getEducationLabel(value: string): string {
+  const map: Record<string, string> = {
+    sin_estudios: "No formal education",
+    secundaria: "Secondary Education",
+    fp: "Vocational Training",
+    diploma: "Diploma",
+    universidad: "University Degree",
+    master: "Master's Degree",
+    otro: "Other",
+  };
+  return map[value] || value;
+}
+
+function getDriverLicenseLabel(value: string): string {
+  if (!value || value === "No") return "Not Available";
+  return `Category ${value}`;
+}
+
+// ============================================
+// LEER PLANTILLAS HTML
+// ============================================
+
+function readTemplate(templateName: string): string {
+  const templatePath = path.join(process.cwd(), "templates", templateName);
+  try {
+    return fs.readFileSync(templatePath, "utf-8");
+  } catch (error) {
+    console.error(`❌ Error reading template ${templateName}:`, error);
+    throw new Error(`Template ${templateName} not found`);
+  }
+}
+
+// ============================================
+// PROMPT PREMIUM PARA CV - GPT-5.5
+// ============================================
+
+function getPremiumPrompt(data: any): string {
+  const sector = data.sectores ? data.sectores.split(",")[0]?.trim()?.toLowerCase() : "default";
+  const template = SECTOR_TEMPLATES[sector] || SECTOR_TEMPLATES.default;
+
+  const expYears = data.anos_experiencia || "sin_experiencia";
+  const expMap: Record<string, string> = {
+    sin_experiencia: "0 years (entry level - highly motivated)",
+    menos_1: "less than 1 year",
+    "1_2": "1-2 years",
+    "3_5": "3-5 years",
+    mas_5: "5+ years",
+  };
+  const expLabel = expMap[expYears] || expYears;
+
+  const availability = data.disponibilidad_inicio || "inmediato";
+  const availabilityMap: Record<string, string> = {
+    inmediato: "Immediate",
+    "1_semana": "1 week",
+    "2_semanas": "2 weeks",
+    "1_mes": "1 month",
+  };
+  const availabilityLabel = availabilityMap[availability] || availability;
+
+  let languagesText = "";
+  if (data.idiomas) {
+    const idiomas = data.idiomas.split(",").map((i: string) => i.trim());
+    const levels: Record<string, string> = {
+      basico: "Basic",
+      intermedio: "Intermediate",
+      avanzado: "Advanced",
+      nativo: "Native",
+    };
+    languagesText = idiomas.map((lang: string) => {
+      const levelKey = `${lang.toLowerCase()}_nivel`;
+      const level = data[levelKey] || "";
+      return `${lang} (${levels[level] || level || "Professional"})`;
+    }).join(", ");
+  }
+
+  const license = data.carnet_conducir || "No";
+  const licenseText = license !== "No" ? `Category ${license}` : "Not available";
+
+  const passport = data.pasaporte_valido || "No";
+  const passportText = passport === "Sí" ? "Valid" : "Not available";
+
+  const video = data.entrevista_video || "No";
+  const videoText = video === "Sí" ? "Available" : "Not available";
+
+  const randomCompany = template.companies[Math.floor(Math.random() * template.companies.length)];
+
+  return `
+You are a senior recruitment specialist with 20 years of experience in the Maltese job market.
+Create a PREMIUM, PROFESSIONAL, and EXCEPTIONAL CV for a candidate applying for ${template.title} positions in Malta.
+
+CANDIDATE PROFILE:
+- Full Name: ${data.full_name || "N/A"}
+- Current Country: ${data.pais_residencia || "N/A"}
+- Nationality: ${data.nacionalidad || "N/A"}
+- Target Role: ${template.title}
+- Experience Level: ${expLabel}
+- Education: ${data.estudios || "N/A"}
+- Languages: ${languagesText || "English (Professional)"}
+- Driver's License: ${licenseText}
+- Availability: ${availabilityLabel}
+- Valid Passport: ${passportText}
+- Video Interview: ${videoText}
+
+ATS KEYWORDS TO INCLUDE:
+${template.atsKeywords.map(k => `- ${k}`).join("\n")}
+
+Generate a PREMIUM CV with these sections:
+
+1. EXECUTIVE SUMMARY (4-5 sentences):
+   - Powerful, confident opening
+   - Unique value proposition
+   - Key strengths and what they offer
+
+2. PROFESSIONAL PROFILE (3-4 sentences):
+   - Professional identity
+   - Core competencies and expertise
+
+3. KEY ACHIEVEMENTS (3-5 bullet points):
+   - Specific, measurable achievements
+
+4. CORE COMPETENCIES (10-12 bullet points):
+   - Technical and soft skills
+
+5. PROFESSIONAL EXPERIENCE (3-4 bullet points):
+   - Write realistic, compelling experience
+
+6. EDUCATION & QUALIFICATIONS:
+   - List all education and relevant training
+
+7. LANGUAGES:
+   - Format: Language (Level - CEFR)
+
+8. ADDITIONAL INFORMATION:
+   - Driver's License: ${licenseText}
+   - Valid Passport: ${passportText}
+   - Video Interview: ${videoText}
+   - Availability: ${availabilityLabel}
+
+Return as JSON:
+{
+  "summary": "...",
+  "profile": "...",
+  "achievements": ["...", "...", "..."],
+  "competencies": ["...", "...", "...", "..."],
+  "experience": ["...", "...", "..."],
+  "education": "...",
+  "languages": "...",
+  "additional": "..."
+}
+`;
+}
+
+async function generatePremiumCV(data: any): Promise<{
+  summary: string;
+  profile: string;
+  achievements: string[];
+  competencies: string[];
+  experience: string[];
+  education: string;
+  languages: string;
+  additional: string;
+  tokens?: number;
+}> {
+  const prompt = getPremiumPrompt(data);
+  const result = await generateContent(prompt);
+  
+  try {
+    const jsonMatch = result.text.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      const parsed = JSON.parse(jsonMatch[0]);
+      return {
+        summary: parsed.summary || "",
+        profile: parsed.profile || "",
+        achievements: parsed.achievements || [],
+        competencies: parsed.competencies || [],
+        experience: parsed.experience || [],
+        education: parsed.education || "",
+        languages: parsed.languages || "",
+        additional: parsed.additional || "",
+        tokens: result.tokens,
+      };
+    }
+    return {
+      summary: result.text,
+      profile: "",
+      achievements: [],
+      competencies: [],
+      experience: [],
+      education: "",
+      languages: "",
+      additional: "",
+      tokens: result.tokens,
+    };
+  } catch {
+    return {
+      summary: result.text,
+      profile: "",
+      achievements: [],
+      competencies: [],
+      experience: [],
+      education: "",
+      languages: "",
+      additional: "",
+      tokens: result.tokens,
+    };
+  }
+}
+
 async function generateContent(prompt: string): Promise<{ text: string; tokens?: number }> {
-  // ✅ Timeout para OpenAI
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), OPENAI_TIMEOUT_MS);
 
@@ -57,7 +366,7 @@ async function generateContent(prompt: string): Promise<{ text: string; tokens?:
       body: JSON.stringify({
         model: OPENAI_MODEL,
         input: prompt,
-        temperature: 0.7,
+        temperature: 0.5,
       }),
       signal: controller.signal,
     });
@@ -71,7 +380,6 @@ async function generateContent(prompt: string): Promise<{ text: string; tokens?:
 
     const data = await response.json();
     
-    // ✅ Extraer texto de forma robusta
     let text = "";
     if (data.output && data.output.length > 0) {
       const output = data.output[0];
@@ -79,15 +387,9 @@ async function generateContent(prompt: string): Promise<{ text: string; tokens?:
         if (Array.isArray(output.content)) {
           text = output.content
             .map((block: any) => {
-              if (block.text && typeof block.text === "string") {
-                return block.text.trim();
-              }
-              if (block.content && typeof block.content === "string") {
-                return block.content.trim();
-              }
-              if (typeof block === "string") {
-                return block.trim();
-              }
+              if (block.text && typeof block.text === "string") return block.text.trim();
+              if (block.content && typeof block.content === "string") return block.content.trim();
+              if (typeof block === "string") return block.trim();
               return "";
             })
             .filter(Boolean)
@@ -115,194 +417,322 @@ async function generateContent(prompt: string): Promise<{ text: string; tokens?:
   }
 }
 
-// Función para generar CV profesional en inglés (optimizado para Malta)
-async function generateCV(applicationData: any): Promise<{ text: string; tokens?: number; prompt: string }> {
+// ============================================
+// PROMPT PARA COVER LETTER
+// ============================================
+
+async function generatePremiumCoverLetter(data: any): Promise<{ text: string; tokens?: number }> {
+  const sector = data.sectores ? data.sectores.split(",")[0]?.trim()?.toLowerCase() : "default";
+  const template = SECTOR_TEMPLATES[sector] || SECTOR_TEMPLATES.default;
+  const randomCompany = template.companies[Math.floor(Math.random() * template.companies.length)];
+
+  const availability = data.disponibilidad_inicio || "inmediato";
+  const availabilityMap: Record<string, string> = {
+    inmediato: "immediate",
+    "1_semana": "1 week",
+    "2_semanas": "2 weeks",
+    "1_mes": "1 month",
+  };
+  const availabilityLabel = availabilityMap[availability] || availability;
+
+  const license = data.carnet_conducir || "No";
+  const licenseText = license !== "No" ? `Category ${license}` : "not available";
+
+  const passport = data.pasaporte_valido || "No";
+  const passportText = passport === "Sí" ? "a valid passport" : "currently processing my passport";
+
+  const video = data.entrevista_video || "No";
+  const videoText = video === "Sí" ? "available for immediate video interview" : "available for interview";
+
   const prompt = `
-You are a professional CV writer specialized in the Maltese job market. Create a professional CV in English for a job applicant based on the following information:
+You are a professional cover letter writer for the Maltese job market.
+Write a PREMIUM, PERSUASIVE, and PERSONALIZED cover letter for a candidate applying to ${randomCompany} for a ${template.title} position in Malta.
 
-PERSONAL INFORMATION:
-- Full Name: ${applicationData.full_name || ""}
-- Nationality: ${applicationData.nacionalidad || ""}
-- WhatsApp: ${applicationData.whatsapp || ""}
-- Email: ${applicationData.email || ""}
+CANDIDATE:
+- Name: ${data.full_name || "N/A"}
+- Target Role: ${template.title}
+- Target Company: ${randomCompany}
+- Experience: ${data.anos_experiencia || "Entry level"}
+- Education: ${data.estudios || "N/A"}
+- Languages: ${data.idiomas || "English"}
+- Driver's License: ${licenseText}
+- Availability: ${availabilityLabel}
+- Passport: ${passportText}
+- Interview: ${videoText}
 
-PROFESSIONAL INFORMATION:
-- Profession: ${applicationData.profesion || ""}
-- Years of Experience: ${applicationData.anos_experiencia || ""}
-- Education: ${applicationData.estudios || ""}
-- Current Situation: ${applicationData.current_situation || ""}
-- Main Objective: ${applicationData.puesto_busca || ""}
+STRUCTURE:
+1. Date (today's date)
+2. Subject line: "Application for ${template.title} - ${data.full_name || "Candidate"}"
+3. Professional salutation
+4. OPENING: Hook them with why you're the perfect fit
+5. BODY 1: Your relevant experience and skills
+6. BODY 2: Why Malta and ${randomCompany}
+7. BODY 3: Availability and next steps
+8. CLOSING: Strong call to action
+9. Signature
 
-SKILLS & LANGUAGES:
-- English Level: ${applicationData.nivel_ingles || ""}
-- Other Languages: ${applicationData.otros_idiomas || ""}
-- Driving License: ${applicationData.carnet_conducir || "No"}
-- Has CV: ${applicationData.tiene_cv || "No"}
-- Availability to Travel: ${applicationData.disponibilidad_viajar || "No"}
-- Availability Date: ${applicationData.fecha_disponible || ""}
-
-ADDITIONAL INFO:
-- Nationality: ${applicationData.nacionalidad || ""}
-- Country of Residence: ${applicationData.pais_residencia || ""}
-- Plan: ${applicationData.plan_name || ""}
-
-The CV should be:
-- Professional and well-structured with UK/European style
-- ATS-friendly (Applicant Tracking System optimized)
-- In English
-- Include sections: Professional Summary, Work Experience, Education, Skills, Languages
-- Highlight skills relevant to Malta's job market (hospitality, tourism, logistics, construction, customer service)
-- Be approximately 350-400 words
-- Use a formal and professional tone
-- Include keywords that recruiters in Malta look for
-- Format the CV with clear section headers and proper spacing
-- Make it specific to the candidate's profession and objectives
-
-Focus on making the candidate stand out for roles in:
-- Hospitality (hotels, restaurants, bars)
-- Tourism and customer service
-- Logistics and warehousing
-- Construction and maintenance
-- Kitchen and cleaning services
-`;
+Write the complete cover letter.`;
 
   const result = await generateContent(prompt);
   return {
     text: result.text,
     tokens: result.tokens,
-    prompt: prompt,
   };
 }
 
-// Función para generar Cover Letter personalizada (optimizado para Malta)
-async function generateCoverLetter(applicationData: any): Promise<{ text: string; tokens?: number; prompt: string }> {
-  const prompt = `
-You are a professional cover letter writer specialized in the Maltese job market. Create a personalized cover letter in English for a job application based on the following information:
+// ============================================
+// RENDERIZAR HTML → PDF CON PLAYWRIGHT
+// ============================================
 
-PERSONAL INFORMATION:
-- Full Name: ${applicationData.full_name || ""}
-- Nationality: ${applicationData.nacionalidad || ""}
-- WhatsApp: ${applicationData.whatsapp || ""}
-- Email: ${applicationData.email || ""}
-
-PROFESSIONAL INFORMATION:
-- Profession: ${applicationData.profesion || ""}
-- Years of Experience: ${applicationData.anos_experiencia || ""}
-- Education: ${applicationData.estudios || ""}
-- Main Objective: ${applicationData.puesto_busca || ""}
-
-SKILLS & LANGUAGES:
-- English Level: ${applicationData.nivel_ingles || ""}
-- Other Languages: ${applicationData.otros_idiomas || ""}
-- Driving License: ${applicationData.carnet_conducir || "No"}
-- Availability to Travel: ${applicationData.disponibilidad_viajar || "No"}
-- Availability Date: ${applicationData.fecha_disponible || ""}
-
-The cover letter should:
-- Be professional and persuasive with UK/European style
-- In English
-- Include a proper letter format (date, recipient, subject)
-- Explain why the candidate is suitable for the position in Malta
-- Reference their skills and experience relevant to Maltese job market
-- Express enthusiasm for working in Malta
-- Be approximately 250-300 words
-- Use a formal and respectful tone
-- End with a call to action and contact details
-- Highlight adaptability to multicultural work environment
-- Mention availability to start working
-
-Make it specific to the candidate's profession and the Maltese job market.
-`;
-
-  const result = await generateContent(prompt);
-  return {
-    text: result.text,
-    tokens: result.tokens,
-    prompt: prompt,
-  };
+async function renderPdfFromHtml(html: string): Promise<Buffer> {
+  const browser = await chromium.launch({
+    args: ['--no-sandbox', '--disable-setuid-sandbox']
+  });
+  
+  try {
+    const page = await browser.newPage();
+    await page.setContent(html, { waitUntil: 'networkidle' });
+    const pdf = await page.pdf({
+      format: 'A4',
+      printBackground: true,
+      margin: { top: 0, right: 0, bottom: 0, left: 0 },
+    });
+    return Buffer.from(pdf);
+  } finally {
+    await browser.close();
+  }
 }
 
-// Función mejorada para crear PDF a partir de texto
-async function createPDF(text: string, title: string): Promise<Uint8Array> {
-  const pdfDoc = await PDFDocument.create();
-  let page = pdfDoc.addPage([595, 842]); // A4
-  const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
-  const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+// ============================================
+// GENERAR HTML DEL CV - USANDO PLANTILLA PREMIUM CON CSS
+// ============================================
+
+function generateCVHtml(
+  data: any,
+  content: {
+    summary: string;
+    profile: string;
+    achievements: string[];
+    competencies: string[];
+    experience: string[];
+    education: string;
+    languages: string;
+    additional: string;
+  }
+): string {
+  // ✅ Leer plantilla premium
+  let template = readTemplate("premium-cv.html");
+  const css = readTemplate("premium-style.css");
   
-  const { height } = page.getSize();
-  const margin = 50;
-  let y = height - 60;
-
-  // Título
-  page.drawText(title, {
-    x: margin,
-    y,
-    size: 16,
-    font: boldFont,
-    color: rgb(0, 0.45, 0.2),
-  });
-
-  y -= 30;
-
-  // Fecha
-  page.drawText(`Date: ${new Date().toLocaleDateString("en-US")}`, {
-    x: margin,
-    y,
-    size: 10,
-    font,
-    color: rgb(0.3, 0.3, 0.3),
-  });
-
-  y -= 30;
-
-  // Contenido
-  const paragraphs = text.split("\n");
+  // ✅ Insertar CSS antes de </head> (más robusto)
+  if (template.includes("</head>")) {
+    template = template.replace(
+      "</head>",
+      `<style>${css}</style></head>`
+    );
+  }
   
-  for (const paragraph of paragraphs) {
-    const lines = wrapText(paragraph, 85);
+  const sector = data.sectores ? data.sectores.split(",")[0]?.trim()?.toLowerCase() : "default";
+  const templateData = SECTOR_TEMPLATES[sector] || SECTOR_TEMPLATES.default;
 
-    for (const line of lines) {
-      if (y < 70) {
-        const newPage = pdfDoc.addPage([595, 842]);
-        page = newPage;
-        y = 780;
+  const initials = getInitials(data.full_name);
+  const availability = getAvailabilityLabel(data.disponibilidad_inicio || "inmediato");
+  const expLabel = getExperienceLabel(data.anos_experiencia || "");
+  const eduLabel = getEducationLabel(data.estudios || "");
+  const licenseLabel = getDriverLicenseLabel(data.carnet_conducir || "");
 
-        page.drawText(line, {
-          x: margin,
-          y,
-          size: 11,
-          font,
-          color: rgb(0, 0, 0),
-        });
-
-        y -= 18;
-      } else {
-        page.drawText(line, {
-          x: margin,
-          y,
-          size: 11,
-          font,
-          color: rgb(0, 0, 0),
-        });
-
-        y -= 18;
-      }
+  // Construir idiomas
+  let languagesHtml = "";
+  if (data.idiomas) {
+    const idiomas = data.idiomas.split(",").map((i: string) => i.trim());
+    for (const idioma of idiomas) {
+      const nivelKey = `${idioma.toLowerCase()}_nivel`;
+      const nivel = data[nivelKey] || "";
+      const stars = getLevelStars(nivel);
+      const levelLabel = getLanguageLevel(nivel);
+      languagesHtml += `
+        <div class="language-item">
+          <span class="language-name">${idioma}</span>
+          <span class="language-level">${stars} ${levelLabel}</span>
+        </div>
+      `;
     }
-
-    y -= 10;
   }
 
-  return await pdfDoc.save();
+  // Construir competencias
+  let competenciesHtml = "";
+  for (const comp of content.competencies) {
+    competenciesHtml += `<li>${comp}</li>`;
+  }
+
+  // Construir logros
+  let achievementsHtml = "";
+  for (const ach of content.achievements) {
+    achievementsHtml += `<li>${ach}</li>`;
+  }
+
+  // Construir experiencia
+  let experienceHtml = "";
+  for (const exp of content.experience) {
+    experienceHtml += `<li>${exp}</li>`;
+  }
+
+  // ✅ Reemplazar variables en la plantilla premium
+  const photoHtml = data.photo_url 
+    ? `<img src="${data.photo_url}" alt="Photo" class="photo-img">` 
+    : `<div class="photo-initials">${initials}</div>`;
+
+  const replacements: Record<string, string> = {
+    "{{PHOTO}}": photoHtml,
+    "{{NAME}}": data.full_name || "Candidate",
+    "{{TITLE}}": templateData.title,
+    "{{WHATSAPP}}": data.whatsapp || "N/A",
+    "{{EMAIL}}": data.email || "N/A",
+    "{{NATIONALITY}}": data.nacionalidad || "N/A",
+    "{{LANGUAGES}}": languagesHtml,
+    "{{DRIVER_LICENSE}}": licenseLabel,
+    "{{AVAILABILITY}}": availability,
+    "{{SUMMARY}}": content.summary || "Professional summary",
+    "{{PROFILE}}": content.profile || "Professional profile",
+    "{{ACHIEVEMENTS}}": achievementsHtml,
+    "{{COMPETENCIES}}": competenciesHtml,
+    "{{EXPERIENCE}}": experienceHtml,
+    "{{EXPERIENCE_YEARS}}": expLabel,
+    "{{EDUCATION}}": `${eduLabel}${content.education ? ` — ${content.education}` : ''}`,
+    "{{COMPETENCIES_GRID}}": competenciesHtml,
+    "{{ADDITIONAL}}": content.additional || "Available for immediate start in Malta",
+  };
+
+  for (const [key, value] of Object.entries(replacements)) {
+    template = template.replace(new RegExp(key, "g"), value);
+  }
+
+  return template;
 }
 
-// Función para subir PDF a Supabase Storage
-async function uploadPDF(pdfBytes: Uint8Array, fileName: string): Promise<string> {
-  // ✅ VALIDAR QUE EL BUCKET EXISTE
+// ============================================
+// GENERAR HTML DE LA COVER LETTER - USANDO PLANTILLA PREMIUM CON CSS
+// ============================================
+
+function generateCoverHtml(data: any, content: string): string {
+  // ✅ Leer plantilla premium
+  let template = readTemplate("premium-cover-letter.html");
+  const css = readTemplate("premium-style.css");
+  
+  // ✅ Insertar CSS antes de </head> (más robusto)
+  if (template.includes("</head>")) {
+    template = template.replace(
+      "</head>",
+      `<style>${css}</style></head>`
+    );
+  }
+  
+  const sector = data.sectores ? data.sectores.split(",")[0]?.trim()?.toLowerCase() : "default";
+  const templateData = SECTOR_TEMPLATES[sector] || SECTOR_TEMPLATES.default;
+  
+  // Seleccionar empresa aleatoria
+  const randomCompany = templateData.companies[Math.floor(Math.random() * templateData.companies.length)];
+  
+  // Fecha actual formateada
+  const today = new Date();
+  const dateStr = today.toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+
+  // Direcciones de empresas (ejemplo)
+  const companyAddresses: Record<string, string> = {
+    "Hilton Malta": "Portomaso, St. Julian's, Malta",
+    "Radisson Blu": "St. Julian's, Malta",
+    "Corinthia Palace": "San Anton, Attard, Malta",
+    "Marriott Malta": "Balluta Bay, St. Julian's, Malta",
+    "The Phoenicia": "Floriana, Malta",
+    "db Hotels": "Sliema, Malta",
+    "DB Schenker": "Mriehel, Malta",
+    "Kuehne + Nagel": "Mriehel, Malta",
+    "Malta Freeport": "Birzebbuga, Malta",
+    "Express Group": "Qormi, Malta",
+    "Bolt Malta": "Sliema, Malta",
+    "Wolt Malta": "Birkirkara, Malta",
+    "Glovo Malta": "Birkirkara, Malta",
+    "DHL Malta": "Mriehel, Malta",
+    "UPS Malta": "Mriehel, Malta",
+    "Vassallo Builders": "Naxxar, Malta",
+    "Hili Company": "Mosta, Malta",
+    "Mason Group": "Mriehel, Malta",
+    "PG Group": "Mriehel, Malta",
+    "ST Microelectronics": "Kirkop, Malta",
+    "Malta Enterprise": "Gwardamangia, Malta",
+    "Venture Global": "Mriehel, Malta",
+    "Mizzi Group": "Mriehel, Malta",
+    "Alf Malta": "Qormi, Malta",
+    "Various Maltese Companies": "Malta",
+  };
+
+  const companyAddress = companyAddresses[randomCompany] || "Malta";
+
+  // Extraer las partes de la carta
+  const paragraphs = content.split("\n").filter((p: string) => p.trim());
+  
+  // Asignar párrafos a las variables
+  let introduction = paragraphs[0] || "I am writing to express my interest in the position.";
+  let body1 = paragraphs[1] || "I have experience in the sector and I am highly motivated.";
+  let body2 = paragraphs[2] || "I am particularly interested in working in Malta.";
+  let body3 = paragraphs[3] || "I am available to start immediately.";
+  let closing = paragraphs[4] || "I look forward to hearing from you.";
+
+  // Si hay más párrafos, combinarlos
+  if (paragraphs.length > 5) {
+    const extra = paragraphs.slice(4, paragraphs.length - 1).join(" ");
+    body3 = body3 + " " + extra;
+  }
+
+  // Saludo dinámico - usando la empresa real
+  const greetingOptions = [
+    "Dear Hiring Manager,",
+    "Dear Recruitment Team,",
+    "Dear Human Resources Manager,",
+    `Dear ${randomCompany} Recruitment Team,`,
+  ];
+  const greeting = greetingOptions[Math.floor(Math.random() * greetingOptions.length)];
+
+  // ✅ Reemplazar variables en la plantilla premium
+  const replacements: Record<string, string> = {
+    "{{NAME}}": data.full_name || "Candidate",
+    "{{TITLE}}": templateData.title,
+    "{{EMAIL}}": data.email || "N/A",
+    "{{WHATSAPP}}": data.whatsapp || "N/A",
+    "{{NATIONALITY}}": data.nacionalidad || "N/A",
+    "{{DRIVER_LICENSE}}": getDriverLicenseLabel(data.carnet_conducir || ""),
+    "{{DATE}}": dateStr,
+    "{{COMPANY}}": randomCompany,
+    "{{COMPANY_ADDRESS}}": companyAddress,
+    "{{GREETING}}": greeting,
+    "{{INTRODUCTION}}": introduction,
+    "{{BODY_1}}": body1,
+    "{{BODY_2}}": body2,
+    "{{BODY_3}}": body3,
+    "{{CLOSING}}": closing,
+  };
+
+  for (const [key, value] of Object.entries(replacements)) {
+    template = template.replace(new RegExp(key, "g"), value);
+  }
+
+  return template;
+}
+
+// ============================================
+// SUBIDA A SUPABASE
+// ============================================
+
+async function uploadPDF(pdfBytes: Buffer, fileName: string): Promise<string> {
   const { data: bucket, error: bucketError } = await supabase.storage
     .getBucket(BUCKET_NAME);
 
   if (bucketError || !bucket) {
-    throw new Error(`Bucket "${BUCKET_NAME}" not found: ${bucketError?.message || "Bucket does not exist"}`);
+    throw new Error(`Bucket "${BUCKET_NAME}" not found`);
   }
 
   const { error: uploadError } = await supabase.storage
@@ -323,29 +753,28 @@ async function uploadPDF(pdfBytes: Uint8Array, fileName: string): Promise<string
   return publicUrlData.publicUrl;
 }
 
-// Handler principal
+// ============================================
+// HANDLER PRINCIPAL
+// ============================================
+
 export default async function handler(
   req: VercelRequest,
   res: VercelResponse
 ) {
-  // Solo aceptar POST
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method Not Allowed" });
   }
 
   try {
-    // Parsear body
     const body = typeof req.body === "string" ? JSON.parse(req.body) : req.body;
     const { applicationId } = body;
 
-    // Validar applicationId
     if (!applicationId) {
       return res.status(400).json({ error: "applicationId is required" });
     }
 
-    console.log(`📄 Generating documents for application: ${applicationId}`);
+    console.log(`📄 Generating premium CV with GPT-5.5 for application: ${applicationId}`);
 
-    // 1. Leer datos de la aplicación desde Supabase
     const { data: application, error: fetchError } = await supabase
       .from("malta_applications")
       .select("*")
@@ -358,82 +787,96 @@ export default async function handler(
     }
 
     console.log(`✅ Application found: ${application.full_name}`);
+    console.log(`📸 Photo URL: ${application.photo_url || "No photo"}`);
 
-    // ✅ VALIDAR DATOS OBLIGATORIOS ANTES DE GENERAR
-    if (!application.email) {
-      throw new Error("Application has no email");
-    }
+    if (!application.email) throw new Error("Application has no email");
+    if (!application.full_name) throw new Error("Application has no full name");
 
-    if (!application.full_name) {
-      throw new Error("Application has no full name");
-    }
-
-    // ✅ COMPROBAR SI YA TIENE DOCUMENTOS GENERADOS
     if (application.cv_generated && application.letter_generated) {
-      console.log("⚠️ Documents already generated for this application");
+      console.log("⚠️ Documents already generated");
       return res.status(200).json({
         success: true,
         applicationId,
         cvUrl: application.cv_url,
         letterUrl: application.letter_url,
-        message: "Documents already generated",
         alreadyGenerated: true,
       });
     }
 
     const startTime = Date.now();
 
-    // 2. Generar CV con OpenAI
-    console.log("🤖 Generating CV...");
-    const cvResult = await generateCV(application);
-    console.log(`✅ CV generated (${cvResult.text.length} characters)`);
+    // 1. Generar contenido
+    console.log("🤖 Generating premium CV content with GPT-5.5...");
+    const cvContent = await generatePremiumCV(application);
+    console.log(`✅ CV content generated`);
 
-    // 3. Generar Cover Letter con OpenAI
-    console.log("🤖 Generating Cover Letter...");
-    const coverLetterResult = await generateCoverLetter(application);
-    console.log(`✅ Cover Letter generated (${coverLetterResult.text.length} characters)`);
+    console.log("🤖 Generating premium Cover Letter...");
+    const coverLetter = await generatePremiumCoverLetter(application);
+    console.log(`✅ Cover Letter generated`);
 
-    // 4. Crear PDFs
-    console.log("📄 Creating CV PDF...");
-    const cvPDF = await createPDF(cvResult.text, "CURRICULUM VITAE");
-    
-    console.log("📄 Creating Cover Letter PDF...");
-    const coverLetterPDF = await createPDF(coverLetterResult.text, "COVER LETTER");
+    // 2. Generar HTML desde plantillas
+    console.log("📄 Generating CV HTML from template...");
+    const cvHtml = generateCVHtml(application, cvContent);
+    console.log(`✅ CV HTML generated (${cvHtml.length} chars)`);
 
-    // 5. Subir PDFs a Supabase Storage
+    console.log("📄 Generating Cover Letter HTML from template...");
+    const coverHtml = generateCoverHtml(application, coverLetter.text);
+    console.log(`✅ Cover Letter HTML generated (${coverHtml.length} chars)`);
+
+    // 3. Convertir HTML → PDF con Playwright
+    console.log("🖨️ Converting CV HTML to PDF...");
+    const cvPdf = await renderPdfFromHtml(cvHtml);
+    console.log(`✅ CV PDF generated (${cvPdf.length} bytes)`);
+
+    console.log("🖨️ Converting Cover Letter HTML to PDF...");
+    const coverPdf = await renderPdfFromHtml(coverHtml);
+    console.log(`✅ Cover Letter PDF generated (${coverPdf.length} bytes)`);
+
+    // 4. Subir a Supabase
     const timestamp = Date.now();
     const cvFileName = `cv_${applicationId}_${timestamp}.pdf`;
     const letterFileName = `cover_letter_${applicationId}_${timestamp}.pdf`;
 
-    console.log(`📤 Uploading CV PDF: ${cvFileName}`);
-    const cvUrl = await uploadPDF(cvPDF, cvFileName);
+    console.log(`📤 Uploading CV PDF...`);
+    const cvUrl = await uploadPDF(cvPdf, cvFileName);
 
-    console.log(`📤 Uploading Cover Letter PDF: ${letterFileName}`);
-    const letterUrl = await uploadPDF(coverLetterPDF, letterFileName);
+    console.log(`📤 Uploading Cover Letter PDF...`);
+    const letterUrl = await uploadPDF(coverPdf, letterFileName);
 
     console.log("✅ Both PDFs uploaded successfully");
 
     const totalTime = Date.now() - startTime;
 
-    // 6. Actualizar la aplicación en Supabase
+    // 5. Actualizar Supabase
+    const updateData: any = {
+      cv_generated: true,
+      letter_generated: true,
+      cv_url: cvUrl,
+      letter_url: letterUrl,
+      cv_text: cvContent.summary,
+      letter_text: coverLetter.text,
+      cv_html: cvHtml,
+      letter_html: coverHtml,
+      cv_prompt: "Premium recruiter prompt - HTML template",
+      letter_prompt: "Premium cover letter prompt - HTML template",
+      cv_tokens: cvContent.tokens || 0,
+      letter_tokens: coverLetter.tokens || 0,
+      total_tokens: (cvContent.tokens || 0) + (coverLetter.tokens || 0),
+      model_used: OPENAI_MODEL,
+      generation_time_ms: totalTime,
+      documents_generated_at: new Date().toISOString(),
+      worker_ready: true,
+      worker_status: "ready",
+    };
+
+    if (application.photo_url) {
+      updateData.photo_uploaded = true;
+      updateData.photo_generated_at = new Date().toISOString();
+    }
+
     const { error: updateError } = await supabase
       .from("malta_applications")
-      .update({
-        cv_generated: true,
-        letter_generated: true,
-        cv_url: cvUrl,
-        letter_url: letterUrl,
-        cv_text: cvResult.text,
-        letter_text: coverLetterResult.text,
-        cv_prompt: cvResult.prompt,
-        letter_prompt: coverLetterResult.prompt,
-        cv_tokens: cvResult.tokens || 0,
-        letter_tokens: coverLetterResult.tokens || 0,
-        total_tokens: (cvResult.tokens || 0) + (coverLetterResult.tokens || 0),
-        model_used: OPENAI_MODEL,
-        generation_time_ms: totalTime,
-        documents_generated_at: new Date().toISOString(),
-      })
+      .update(updateData)
       .eq("id", applicationId);
 
     if (updateError) {
@@ -446,17 +889,39 @@ export default async function handler(
 
     console.log(`✅ Application updated successfully in ${totalTime}ms`);
 
-    // 7. Responder OK
+    // 6. ✅ AÑADIR A LA COLA DEL WORKER
+    console.log("🚀 Adding to worker queue...");
+    try {
+      const { error: queueError } = await supabase
+        .from("worker_queue")
+        .insert({
+          application_id: applicationId,
+          status: "pending",
+          priority: 1,
+          created_at: new Date().toISOString(),
+        });
+
+      if (queueError) {
+        console.error("❌ Error adding to worker queue:", queueError);
+      } else {
+        console.log("✅ Added to worker queue successfully");
+      }
+    } catch (queueErr) {
+      console.error("❌ Worker queue exception:", queueErr);
+    }
+
     return res.status(200).json({
       success: true,
       applicationId,
       cvUrl,
       letterUrl,
-      cvTokens: cvResult.tokens,
-      letterTokens: coverLetterResult.tokens,
-      totalTokens: (cvResult.tokens || 0) + (coverLetterResult.tokens || 0),
+      cvTokens: cvContent.tokens || 0,
+      letterTokens: coverLetter.tokens || 0,
+      totalTokens: (cvContent.tokens || 0) + (coverLetter.tokens || 0),
       generationTimeMs: totalTime,
-      message: "Documents generated and uploaded successfully",
+      photoUsed: !!application.photo_url,
+      workerQueued: true,
+      message: "Premium CV generated successfully with GPT-5.5 and HTML templates",
     });
 
   } catch (error: any) {
