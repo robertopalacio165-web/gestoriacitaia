@@ -1,1 +1,264 @@
+@page {
+  size: A4;
+  margin: 0;
+}
 
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    font-family:Arial,Helvetica,sans-serif;
+    color:#222;
+    background:#ffffff;
+}
+
+.page{
+    width:210mm;
+    min-height:297mm;
+    display:flex;
+}
+
+.sidebar{
+
+    width:34%;
+    background:#0f3d56;
+    color:white;
+    padding:35px 25px;
+
+}
+
+.content{
+
+    width:66%;
+    padding:40px;
+
+}
+
+.photo{
+
+    width:160px;
+    height:160px;
+    border-radius:50%;
+    overflow:hidden;
+    border:6px solid white;
+    margin:auto;
+    margin-bottom:25px;
+
+}
+
+.photo img{
+
+    width:100%;
+    height:100%;
+    object-fit:cover;
+
+}
+
+.name{
+
+    font-size:34px;
+    font-weight:bold;
+    color:#0f3d56;
+    margin-bottom:5px;
+
+}
+
+.job{
+
+    font-size:18px;
+    color:#666;
+    margin-bottom:30px;
+
+}
+
+.side-title{
+
+    font-size:18px;
+    text-transform:uppercase;
+    font-weight:bold;
+    margin-top:30px;
+    margin-bottom:12px;
+    letter-spacing:1px;
+    border-bottom:2px solid rgba(255,255,255,.35);
+    padding-bottom:6px;
+
+}
+
+.side-item{
+
+    margin-bottom:12px;
+    font-size:14px;
+    line-height:1.6;
+
+}
+
+.section{
+
+    margin-bottom:28px;
+
+}
+
+.section-title{
+
+    font-size:22px;
+    color:#0f3d56;
+    font-weight:bold;
+    border-bottom:2px solid #0f3d56;
+    padding-bottom:8px;
+    margin-bottom:18px;
+
+}
+
+.summary{
+
+    line-height:1.7;
+    font-size:15px;
+
+}
+
+.job-item{
+
+    margin-bottom:22px;
+
+}
+
+.job-company{
+
+    font-weight:bold;
+    font-size:18px;
+
+}
+
+.job-date{
+
+    color:#777;
+    font-size:13px;
+    margin-bottom:8px;
+
+}
+
+.job-desc{
+
+    line-height:1.7;
+    font-size:15px;
+
+}
+
+.skill{
+
+    margin-bottom:14px;
+
+}
+
+.skill-name{
+
+    margin-bottom:5px;
+    font-size:14px;
+
+}
+
+.bar{
+
+    width:100%;
+    height:8px;
+    background:#d8d8d8;
+    border-radius:20px;
+
+}
+
+.bar span{
+
+    display:block;
+    height:8px;
+    border-radius:20px;
+    background:white;
+
+}
+
+.language{
+
+    margin-bottom:12px;
+
+}
+
+.language span{
+
+    display:block;
+    font-size:13px;
+    margin-bottom:5px;
+
+}
+
+.language .bar{
+
+    background:rgba(255,255,255,.25);
+
+}
+
+.language .bar span{
+
+    background:white;
+
+}
+
+.education{
+
+    margin-bottom:18px;
+
+}
+
+.education-title{
+
+    font-weight:bold;
+
+}
+
+.footer{
+
+    margin-top:40px;
+    font-size:12px;
+    color:#777;
+
+}
+
+ul{
+
+    padding-left:18px;
+
+}
+
+li{
+
+    margin-bottom:6px;
+    line-height:1.6;
+
+}
+
+.contact{
+
+    line-height:1.8;
+    font-size:14px;
+}
+
+.badge{
+
+    display:inline-block;
+    padding:6px 12px;
+    border-radius:20px;
+    background:#0f3d56;
+    color:white;
+    font-size:12px;
+    margin-top:8px;
+
+}
+
+hr{
+
+    border:none;
+    border-top:1px solid #ddd;
+    margin:18px 0;
+
+}
