@@ -147,9 +147,8 @@ export default async function handler(
           disponibilidad_viajar: metadata.disponibilidad_viajar === "Sí",
           fecha_disponible: metadata.fecha_disponible || "",
 
-          plan: metadata.plan || "monthly",
-          plan_name: metadata.plan_name || "",
-          paid: true,
+          plan: metadata.plan || "weekly",
+paid: true,
         };
 
         // ============================================
