@@ -2,7 +2,8 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { createClient } from "@supabase/supabase-js";
 import * as fs from "fs";
 import * as path from "path";
-import { chromium } from "playwright";
+import chromium from "@sparticuz/chromium";
+import { chromium as playwright } from "playwright-core";
 
 // ============================================
 // CONFIGURACIÓN
@@ -515,9 +516,11 @@ Write the complete cover letter.`;
 // ============================================
 
 async function renderPdfFromHtml(html: string): Promise<Buffer> {
-  const browser = await chromium.launch({
-    args: ['--no-sandbox', '--disable-setuid-sandbox']
-  });
+ const browser = await playwright.launch({
+  args: chromium.args,
+  executablePath: await chromium.executablePath(),
+  headless: true,
+});
   
   try {
     const page = await browser.newPage();
