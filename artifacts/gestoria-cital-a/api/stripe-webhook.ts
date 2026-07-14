@@ -4,7 +4,7 @@ import Stripe from "stripe";
 
 // Configuración de Supabase
 const supabase = createClient(
-  process.env.VITE_SUPABASE_URL!,
+  process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
@@ -120,35 +120,60 @@ export default async function handler(
         // PASO 3: SAVE TO SUPABASE - MALTA
         // =====================================
 
-        // ✅ Preparar datos para insertar
+        // ✅ Preparar datos para insertar - ACTUALIZADO
         const insertData: any = {
           stripe_session_id: session.id,
           stripe_customer_id: session.customer?.toString() || "",
 
+          // Datos personales
           full_name: metadata.customer_name || "",
           whatsapp: metadata.customer_phone || "",
           email: metadata.customer_email || "",
 
+          // Datos de ubicación
           nacionalidad: metadata.nacionalidad || "",
           pais_residencia: metadata.pais_residencia || "",
           fecha_nacimiento: metadata.fecha_nacimiento || "",
 
-          nivel_ingles: metadata.nivel_ingles || "",
-          otros_idiomas: metadata.otros_idiomas || "",
+          // ✅ Idiomas con niveles (NUEVO)
+          idiomas: metadata.idiomas || "",
+          ingles_nivel: metadata.ingles_nivel || "",
+          frances_nivel: metadata.frances_nivel || "",
+          italiano_nivel: metadata.italiano_nivel || "",
+          espanol_nivel: metadata.espanol_nivel || "",
+          arabe_nivel: metadata.arabe_nivel || "",
+          aleman_nivel: metadata.aleman_nivel || "",
 
+          // ✅ Experiencia profesional
           profesion: metadata.profesion || "",
-       años_experiencia: metadata.anos_experiencia || "",
+          anos_experiencia: metadata.anos_experiencia || "",
           estudios: metadata.estudios || "",
 
-          carnet_conducir: metadata.carnet_conducir === "Sí",
+          // ✅ Sectores (NUEVO)
+          sectores: metadata.sectores || "",
+
+          // Habilidades
+          carnet_conducir: metadata.carnet_conducir || "", // ✅ Texto (No, B, C, C+E)
           tiene_cv: metadata.tiene_cv === "Sí",
 
-          puesto_busca: metadata.puesto_busca || "",
-          disponibilidad_viajar: metadata.disponibilidad_viajar === "Sí",
-          fecha_disponible: metadata.fecha_disponible || "",
+          // ✅ CV URL (NUEVO)
+          cv_url: metadata.cv_url || "",
 
+          // ✅ Preguntas importantes (NUEVO)
+          pasaporte_valido: metadata.pasaporte_valido === "Sí",
+          entrevista_video: metadata.entrevista_video === "Sí",
+
+          // ✅ Disponibilidad (NUEVO)
+          disponibilidad_inicio: metadata.disponibilidad_inicio || "inmediato",
+
+          // ✅ Worker status (NUEVO)
+          worker_status: metadata.worker_status || "waiting",
+          worker_started: false,
+          worker_finished: false,
+
+          // Plan
           plan: metadata.plan || "weekly",
-paid: true,
+          paid: true,
         };
 
         // ============================================
@@ -204,7 +229,7 @@ paid: true,
                   plan: metadata.plan || "monthly",
 
                   profesion: metadata.profesion || "",
-                  puesto: metadata.puesto_busca || "",
+                  puesto: metadata.profesion || "", // ✅ Usamos profesion en lugar de puesto_busca
 
                   mensaje:
                     `👋 Hola ${metadata.customer_name || ""}. Hemos recibido correctamente tu solicitud para Trabajo en Malta. En unos minutos comenzaremos a generar tu CV profesional y tu carta de presentación mediante IA. Después empezaremos a buscar ofertas adaptadas a tu perfil.`,
