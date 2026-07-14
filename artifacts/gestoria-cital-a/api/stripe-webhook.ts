@@ -137,7 +137,7 @@ export default async function handler(
           otros_idiomas: metadata.otros_idiomas || "",
 
           profesion: metadata.profesion || "",
-          anos_experiencia: metadata.anos_experiencia || "",
+       años_experiencia: metadata.anos_experiencia || "",
           estudios: metadata.estudios || "",
 
           carnet_conducir: metadata.carnet_conducir === "Sí",
