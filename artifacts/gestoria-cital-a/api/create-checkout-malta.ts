@@ -86,7 +86,9 @@ export default async function handler(
       });
     }
 
-    // ✅ TODOS LOS CAMPOS DEL FORMULARIO DE MALTA
+    // ============================================
+    // ✅ NUEVOS CAMPOS DEL FORMULARIO
+    // ============================================
     const {
       // Datos personales
       fullName,
@@ -96,24 +98,41 @@ export default async function handler(
       // Datos de ubicación
       nacionalidad,
       paisResidencia,
+      fechaNacimiento,
       
-      // Idiomas
-      nivelIngles,
-      otrosIdiomas,
+      // ✅ Idiomas con niveles (nuevos)
+      idiomas,
+      ingles_nivel,
+      frances_nivel,
+      italiano_nivel,
+      espanol_nivel,
+      arabe_nivel,
+      aleman_nivel,
       
-      // Experiencia profesional
+      // ✅ Experiencia profesional (actualizado)
       profesion,
-      anosExperiencia,
+      añosExperiencia,
       estudios,
+      
+      // ✅ Sectores (nuevo)
+      sectores,
       
       // Habilidades
       carnetConducir,
       tieneCV,
       
-      // Búsqueda de empleo
-      puestoBusca,
-      disponibilidadViajar,
-      fechaDisponible,
+      // ✅ CV URL (nuevo)
+      cv_url,
+      
+      // ✅ Preguntas importantes (nuevos)
+      pasaporteValido,
+      entrevistaVideo,
+      
+      // ✅ Disponibilidad (actualizado)
+      disponibilidadInicio,
+      
+      // ✅ Worker status (nuevo)
+      worker_status,
       
       // Plan seleccionado
       plan, // "weekly" o "monthly"
@@ -127,16 +146,25 @@ export default async function handler(
     console.log("  📋 plan:", plan);
     console.log("  📍 nacionalidad:", nacionalidad);
     console.log("  📍 paisResidencia:", paisResidencia);
-    console.log("  🏷️ nivelIngles:", nivelIngles);
-    console.log("  🏷️ otrosIdiomas:", otrosIdiomas);
+    console.log("  📅 fechaNacimiento:", fechaNacimiento);
+    console.log("  🏷️ idiomas:", idiomas);
+    console.log("  🏷️ ingles_nivel:", ingles_nivel);
+    console.log("  🏷️ frances_nivel:", frances_nivel);
+    console.log("  🏷️ italiano_nivel:", italiano_nivel);
+    console.log("  🏷️ espanol_nivel:", espanol_nivel);
+    console.log("  🏷️ arabe_nivel:", arabe_nivel);
+    console.log("  🏷️ aleman_nivel:", aleman_nivel);
     console.log("  💼 profesion:", profesion);
-    console.log("  📅 anosExperiencia:", anosExperiencia);
+    console.log("  📅 añosExperiencia:", añosExperiencia);
     console.log("  🎓 estudios:", estudios);
+    console.log("  📂 sectores:", sectores);
     console.log("  🚗 carnetConducir:", carnetConducir);
     console.log("  📄 tieneCV:", tieneCV);
-    console.log("  🎯 puestoBusca:", puestoBusca);
-    console.log("  ✈️ disponibilidadViajar:", disponibilidadViajar);
-    console.log("  📅 fechaDisponible:", fechaDisponible);
+    console.log("  🔗 cv_url:", cv_url);
+    console.log("  🛂 pasaporteValido:", pasaporteValido);
+    console.log("  🎥 entrevistaVideo:", entrevistaVideo);
+    console.log("  ⏰ disponibilidadInicio:", disponibilidadInicio);
+    console.log("  ⚙️ worker_status:", worker_status);
 
     // ✅ LIMPIAR DATOS
     const cleanFullName = fullName?.trim() || "";
@@ -216,7 +244,7 @@ export default async function handler(
       // ✅ EMAIL PARA EL RECIBO DE STRIPE
       customer_email: cleanEmail,
 
-      // ✅ METADATA COMPLETA DE MALTA CON DATOS LIMPIOS
+      // ✅ METADATA COMPLETA DE MALTA - ACTUALIZADA
       metadata: {
         // Identificador del servicio
         service: "malta",
@@ -229,24 +257,41 @@ export default async function handler(
         // Datos de ubicación
         nacionalidad: nacionalidad?.trim() || "",
         pais_residencia: paisResidencia?.trim() || "",
+        fecha_nacimiento: fechaNacimiento?.trim() || "",
         
-        // Idiomas
-        nivel_ingles: nivelIngles?.trim() || "",
-        otros_idiomas: otrosIdiomas?.trim() || "",
+        // ✅ Idiomas con niveles (nuevos)
+        idiomas: idiomas?.trim() || "",
+        ingles_nivel: ingles_nivel?.trim() || "",
+        frances_nivel: frances_nivel?.trim() || "",
+        italiano_nivel: italiano_nivel?.trim() || "",
+        espanol_nivel: espanol_nivel?.trim() || "",
+        arabe_nivel: arabe_nivel?.trim() || "",
+        aleman_nivel: aleman_nivel?.trim() || "",
         
-        // Experiencia profesional
+        // ✅ Experiencia profesional (actualizado)
         profesion: profesion?.trim() || "",
-        anos_experiencia: anosExperiencia?.trim() || "",
+        años_experiencia: añosExperiencia?.trim() || "",
         estudios: estudios?.trim() || "",
+        
+        // ✅ Sectores (nuevo)
+        sectores: sectores?.trim() || "",
         
         // Habilidades
         carnet_conducir: carnetConducir?.trim() || "No",
         tiene_cv: tieneCV?.trim() || "No",
         
-        // Búsqueda de empleo
-        puesto_busca: puestoBusca?.trim() || "",
-        disponibilidad_viajar: disponibilidadViajar?.trim() || "No",
-        fecha_disponible: fechaDisponible?.trim() || "",
+        // ✅ CV URL (nuevo)
+        cv_url: cv_url?.trim() || "",
+        
+        // ✅ Preguntas importantes (nuevos)
+        pasaporte_valido: pasaporteValido?.trim() || "Sí",
+        entrevista_video: entrevistaVideo?.trim() || "Sí",
+        
+        // ✅ Disponibilidad (actualizado)
+        disponibilidad_inicio: disponibilidadInicio?.trim() || "inmediato",
+        
+        // ✅ Worker status (nuevo)
+        worker_status: worker_status?.trim() || "waiting",
         
         // Plan
         plan: plan || "",
