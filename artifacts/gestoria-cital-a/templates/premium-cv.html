@@ -1,1 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Professional CV</title>
+  <style>
+    /* ============================================
+       RESET Y CONFIGURACIÓN GLOBAL
+    ============================================ */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
+    body {
+      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+      background: #f0f2f5;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .page {
+      width: 210mm;
+      min-height: 297mm;
+      background: #ffffff;
+      display: flex;
+      border-radius: 12px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+      overflow: hidden;
+    }
+
+    /* ============================================
+       SIDEBAR - VERDE OSCURO
+    ============================================ */
+    .sidebar {
+      width: 32%;
+      background: #0a1a2e;
+      padding: 35px 25px 30px;
+      color: #ffffff;
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+    }
+
+    /* --- FOTO --- */
+    .photo {
+      width: 130px;
+      height: 130px;
+      border-radius: 50%;
+      margin: 0 auto 22px;
+      overflow: hidden;
+      border: 4px solid #2d7d46;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+      background: #1a2a3e;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .photo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .photo-initials {
+      font-size: 42px;
+      font-weight: 700;
+      color: #ffffff;
+      letter-spacing: 2px;
+    }
+
+    /* --- Títulos de sección --- */
+    .side-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: #6a8a9a;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding-bottom: 8px;
+      margin-top: 18px;
+      margin-bottom: 12px;
+      font-weight: 600;
+    }
+
+    .side-title:first-of-type {
+      margin-top: 0;
+    }
+
+    /* --- Contacto --- */
+    .contact {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .side-item {
+      font-size: 11px;
+      color: #b8c8d8;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 2px 0;
+      line-height: 1.4;
+      word-break: break-word;
+    }
+
+    .side-item .icon {
+      font-size: 13px;
+      width: 20px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+
+    /* --- Idiomas --- */
+    .language-item {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      padding: 4px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    }
+
+    .language-item:last-child {
+      border-bottom: none;
+    }
+
+    .language-name {
+      color: #ffffff;
+      font-weight: 500;
+    }
+
+    .language-level {
+      color: #6a8a9a;
+    }
+
+    /* --- Skills en sidebar --- */
+    .sidebar-skills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 4px;
+    }
+
+    .sidebar-skill {
+      font-size: 10px;
+      color: #b8c8d8;
+      background: rgba(255, 255, 255, 0.06);
+      padding: 4px 12px;
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    /* ============================================
+       CONTENIDO PRINCIPAL
+    ============================================ */
+    .content {
+      width: 68%;
+      padding: 35px 40px 30px;
+      background: #ffffff;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* --- Nombre y título --- */
+    .name {
+      font-size: 28px;
+      font-weight: 700;
+      color: #0a1a2e;
+      letter-spacing: 1px;
+      margin-bottom: 2px;
+      line-height: 1.2;
+    }
+
+    .job {
+      font-size: 14px;
+      font-weight: 500;
+      color: #2d7d46;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: 22px;
+    }
+
+    /* --- Secciones --- */
+    .section {
+      margin-bottom: 14px;
+    }
+
+    .section-title {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: #2d7d46;
+      border-bottom: 2px solid #2d7d46;
+      padding-bottom: 4px;
+      margin-bottom: 10px;
+    }
+
+    /* --- Texto de secciones --- */
+    .section-text {
+      font-size: 11.5px;
+      line-height: 1.7;
+      color: #2d2d3f;
+    }
+
+    /* --- Listas --- */
+    .content ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .content ul li {
+      font-size: 11.5px;
+      color: #2d2d3f;
+      padding: 3px 0 3px 20px;
+      position: relative;
+      line-height: 1.6;
+    }
+
+    .content ul li::before {
+      content: "▸";
+      position: absolute;
+      left: 0;
+      color: #2d7d46;
+      font-weight: 700;
+    }
+
+    /* --- Logros (icono especial) --- */
+    .achievement-list li::before {
+      content: "🏆";
+      font-size: 11px;
+    }
+
+    /* --- Competencias en grid --- */
+    .competencies-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2px 20px;
+    }
+
+    .competencies-grid li {
+      padding: 2px 0 2px 20px;
+      font-size: 11.5px;
+    }
+
+    /* --- Experiencia --- */
+    .job-item {
+      margin-bottom: 8px;
+    }
+
+    .job-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .job-company {
+      font-size: 13px;
+      font-weight: 700;
+      color: #0a1a2e;
+    }
+
+    .job-date {
+      font-size: 10.5px;
+      color: #6a7a8a;
+      font-weight: 400;
+      margin-bottom: 4px;
+    }
+
+    .job-desc ul li {
+      font-size: 11.5px;
+      padding: 2px 0 2px 20px;
+    }
+
+    /* --- Educación --- */
+    .education {
+      margin-bottom: 2px;
+    }
+
+    .education-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: #0a1a2e;
+    }
+
+    .education-detail {
+      font-size: 11px;
+      color: #6a7a8a;
+    }
+
+    /* --- Footer --- */
+    .footer {
+      margin-top: auto;
+      padding-top: 15px;
+      border-top: 1px solid #e8ecf0;
+      text-align: center;
+      font-size: 9px;
+      color: #8a9aaa;
+      line-height: 1.6;
+      letter-spacing: 0.5px;
+    }
+
+    /* ============================================
+       RESPONSIVE PARA PANTALLAS PEQUEÑAS
+    ============================================ */
+    @media screen and (max-width: 800px) {
+      .page {
+        flex-direction: column;
+        width: 100%;
+        min-height: auto;
+        border-radius: 8px;
+      }
+
+      .sidebar {
+        width: 100%;
+        padding: 25px 20px;
+      }
+
+      .photo {
+        width: 100px;
+        height: 100px;
+      }
+
+      .photo-initials {
+        font-size: 32px;
+      }
+
+      .content {
+        width: 100%;
+        padding: 25px 20px;
+      }
+
+      .name {
+        font-size: 24px;
+      }
+
+      .competencies-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar-skills {
+        gap: 4px;
+      }
+
+      .sidebar-skill {
+        font-size: 9px;
+        padding: 3px 10px;
+      }
+    }
+
+    @media print {
+      body {
+        background: #ffffff;
+        padding: 0;
+      }
+
+      .page {
+        border-radius: 0;
+        box-shadow: none;
+        width: 100%;
+        min-height: 100vh;
+      }
+
+      .sidebar {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+      }
+
+      .photo img {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+      }
+
+      .photo-initials {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="page">
+
+  <!-- ============================================
+  SIDEBAR
+  ============================================ -->
+  <div class="sidebar">
+
+    <!-- FOTO -->
+    <div class="photo">
+      {{PHOTO}}
+    </div>
+
+    <!-- CONTACTO -->
+    <div class="side-title">Contact</div>
+    <div class="contact">
+      <div class="side-item">
+        <span class="icon">📱</span> {{WHATSAPP}}
+      </div>
+      <div class="side-item">
+        <span class="icon">✉️</span> {{EMAIL}}
+      </div>
+      <div class="side-item">
+        <span class="icon">🌍</span> {{NATIONALITY}}
+      </div>
+      <div class="side-item">
+        <span class="icon">🚗</span> {{DRIVER_LICENSE}}
+      </div>
+      <div class="side-item">
+        <span class="icon">📅</span> {{AVAILABILITY}}
+      </div>
+    </div>
+
+    <!-- IDIOMAS -->
+    <div class="side-title">Languages</div>
+    {{LANGUAGES}}
+
+    <!-- SKILLS EN SIDEBAR -->
+    <div class="side-title">Core Skills</div>
+    <div class="sidebar-skills">
+      {{COMPETENCIES}}
+    </div>
+
+  </div>
+
+  <!-- ============================================
+  CONTENIDO PRINCIPAL
+  ============================================ -->
+  <div class="content">
+
+    <!-- NOMBRE Y TÍTULO -->
+    <div class="name">{{NAME}}</div>
+    <div class="job">{{TITLE}}</div>
+
+    <!-- RESUMEN EJECUTIVO -->
+    <div class="section">
+      <div class="section-title">Professional Summary</div>
+      <div class="section-text">{{SUMMARY}}</div>
+    </div>
+
+    <!-- PERFIL PROFESIONAL -->
+    <div class="section">
+      <div class="section-title">Professional Profile</div>
+      <div class="section-text">{{PROFILE}}</div>
+    </div>
+
+    <!-- LOGROS -->
+    <div class="section">
+      <div class="section-title">Key Achievements</div>
+      <ul class="achievement-list">
+        {{ACHIEVEMENTS}}
+      </ul>
+    </div>
+
+    <!-- EXPERIENCIA -->
+    <div class="section">
+      <div class="section-title">Professional Experience</div>
+      <div class="job-item">
+        <div class="job-company">{{TITLE}}</div>
+        <div class="job-date">{{EXPERIENCE_YEARS}}</div>
+        <div class="job-desc">
+          <ul>
+            {{EXPERIENCE}}
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- EDUCACIÓN -->
+    <div class="section">
+      <div class="section-title">Education</div>
+      <div class="education">
+        <div class="education-title">{{EDUCATION}}</div>
+      </div>
+    </div>
+
+    <!-- COMPETENCIAS -->
+    <div class="section">
+      <div class="section-title">Core Competencies</div>
+      <ul class="competencies-grid">
+        {{COMPETENCIES_GRID}}
+      </ul>
+    </div>
+
+    <!-- INFORMACIÓN ADICIONAL -->
+    <div class="section">
+      <div class="section-title">Additional Information</div>
+      <div class="section-text">{{ADDITIONAL}}</div>
+    </div>
+
+    <!-- FOOTER -->
+    <div class="footer">
+      Prepared for employment opportunities in Malta<br>
+      Generated by GestoriaCitaIA
+    </div>
+
+  </div>
+
+</div>
+
+</body>
+</html>
