@@ -17,6 +17,9 @@ const STORAGE_KEY = "gestoriacitaia_lang";
 
 const translations: AllTranslations = {
   es: {
+    // ============================================
+    // NAVBAR
+    // ============================================
     nav_inicio: "Inicio",
     nav_panel: "Panel",
     nav_citas: "Expedientes",
@@ -27,6 +30,9 @@ const translations: AllTranslations = {
     nav_contacto: "Contacto",
     nav_idioma: "Idioma",
 
+    // ============================================
+    // HERO
+    // ============================================
     hero_badge: "Agente IA de Extranjería — 100% legal y seguro",
     hero_title_1: "Descubre si puedes",
     hero_title_2: "regularizarte en España",
@@ -36,14 +42,20 @@ const translations: AllTranslations = {
     hero_btn2: "Ir al panel",
     hero_btn_sara: "Expediente con Sara",
     hero_btn_khalid: "Consulta con Khalid",
-    hero_btn_malta: "Trabajo en Malta", // ✅ NUEVA TRADUCCIÓN
+    hero_btn_malta: "Trabajo en Malta",
     hero_trust: "Miles de personas ya usan GestoriaCitaIA",
 
+    // ============================================
+    // FEATURES
+    // ============================================
     feat1: "Análisis rápido",
     feat2: "Subida de documentos",
     feat3: "Preparación en PDF",
     feat4: "Asistencia 24/7",
 
+    // ============================================
+    // PLANS (PÁGINA PRINCIPAL)
+    // ============================================
     plans_title: "Planes disponibles",
     plans_sub: "Elige el plan que mejor se adapte a ti",
 
@@ -81,6 +93,48 @@ const translations: AllTranslations = {
     plan_std_f6: "Acceso completo",
     plan_std_f7: "Mejor seguimiento",
 
+    // ============================================
+    // PLANES MALTA (NUEVOS PARA LA PÁGINA LANDING)
+    // ============================================
+    plan_malta_weekly_title: "Trabajo en Malta",
+    plan_malta_weekly_subtitle: "Semanal",
+    plan_malta_weekly_price: "19,99€",
+    plan_malta_weekly_period: "/semana",
+    plan_malta_weekly_button: "Empezar ahora",
+    plan_malta_weekly_f1: "✅ CV profesional con IA",
+    plan_malta_weekly_f2: "✅ Carta de motivación en inglés",
+    plan_malta_weekly_f3: "✅ Hasta 70 candidaturas (10/día)",
+    plan_malta_weekly_f4: "✅ Notificaciones WhatsApp",
+
+    plan_malta_monthly_title: "Trabajo en Malta",
+    plan_malta_monthly_subtitle: "Mensual",
+    plan_malta_monthly_price: "29,99€",
+    plan_malta_monthly_period: "/mes",
+    plan_malta_monthly_badge: "⭐ MÁS POPULAR",
+    plan_malta_monthly_button: "Empezar ahora",
+    plan_malta_monthly_f1: "✅ Todo el plan semanal",
+    plan_malta_monthly_f2: "✅ 30 días de búsqueda",
+    plan_malta_monthly_f3: "✅ Hasta 300 candidaturas",
+    plan_malta_monthly_f4: "✅ Mayor probabilidad de entrevistas",
+    plan_malta_monthly_f5: "✅ Soporte prioritario WhatsApp",
+
+    plan_khalid_title: "Khalid Extranjería",
+    plan_khalid_subtitle: "Asistente IA",
+    plan_khalid_price: "14,99€",
+    plan_khalid_period: "/mes",
+    plan_khalid_badge: "IA 24/7",
+    plan_khalid_button: "Hablar con Khalid",
+    plan_khalid_f1: "✅ Chat IA ilimitado 24/7",
+    plan_khalid_f2: "✅ Consultas de extranjería",
+    plan_khalid_f3: "✅ Permisos de residencia",
+    plan_khalid_f4: "✅ Arraigo · Renovaciones",
+    plan_khalid_f5: "✅ Nacionalidad · Reagrupación familiar",
+    plan_khalid_f6: "✅ Revisión de documentos",
+    plan_khalid_f7: "✅ Ayuda en todos los trámites de España",
+
+    // ============================================
+    // TRÁMITES
+    // ============================================
     tramites_title: "Trámites disponibles",
     tramites_sub: "Explora los trámites que puedes gestionar con nosotros",
 
@@ -97,9 +151,15 @@ const translations: AllTranslations = {
     tr_regreso: "Autorización de regreso",
     tr_ue: "Certificado UE",
 
+    // ============================================
+    // AGENTES
+    // ============================================
     agent_mo_role: "Especialista en Extranjería",
     agent_sara_role: "Seguimiento Favorable · NUSS · Tasa 790",
 
+    // ============================================
+    // LEGAL
+    // ============================================
     legal_label: "Aviso legal",
     legal_body:
       "La información mostrada es orientativa y no sustituye el asesoramiento jurídico profesional.",
@@ -111,11 +171,17 @@ const translations: AllTranslations = {
     secure_payment_methods: "Pago seguro · Métodos aceptados",
     ssl_payment_text: "Pagos procesados con cifrado SSL 256-bit · PCI DSS Compliant",
 
+    // ============================================
+    // AUTENTICACIÓN
+    // ============================================
     access_error_title: "Error de acceso",
     access_error_desc: "No se pudo iniciar sesión con Google",
     google_login_error: "Error al iniciar sesión con Google",
     google_login_failed: "No se pudo iniciar sesión con Google",
 
+    // ============================================
+    // PANEL (ANTIGUO - REGULARIZACIÓN)
+    // ============================================
     panel_header: "Panel",
     panel_plan_active: "Plan activo",
     panel_tab_resumen: "Resumen",
@@ -179,13 +245,15 @@ const translations: AllTranslations = {
     panel_tramite_s3: "Revisión",
     panel_tramite_s4: "Final",
 
+    // ============================================
+    // DOCUMENTOS
+    // ============================================
     docs_required_title: "Documentos requeridos",
     my_uploaded_docs: "Mis documentos subidos",
     documents_count: "documentos",
     loading: "Cargando...",
     loading_documents: "Cargando documentos...",
     no_documents_uploaded: "Todavía no has subido documentos",
-    download: "Descargar",
     doc_uploaded: "Subido",
     doc_pending: "Pendiente",
     doc_replace: "Reemplazar",
@@ -243,6 +311,9 @@ const translations: AllTranslations = {
     proofs_counter: "{total}/{min} pruebas",
     document_pending_review: "Documento recibido. Pendiente de revisión.",
 
+    // ============================================
+    // BUSCAR (EXPEDIENTES)
+    // ============================================
     buscar_title: "Seguimiento de Expediente",
     buscar_subtitle: "FAVORABLE · NUSS · Tasa 790",
     buscar_chat_open: "Abrir chat",
@@ -265,6 +336,9 @@ const translations: AllTranslations = {
     buscar_payment_agent_message:
       "Para reservar tu cita y continuar con el proceso, activa tu plan. Yo te guío paso a paso.",
 
+    // ============================================
+    // REGULARIZACIÓN
+    // ============================================
     reg_title: "Regularización 2026",
     reg_sub: "Descubre si cumples los requisitos y prepara tu caso con ayuda de IA",
     reg_new: "Nuevo",
@@ -278,46 +352,111 @@ const translations: AllTranslations = {
     reg_agent_role: "Especialista en Extranjería",
     reg_payment_agent_message:
       "Para continuar con tu Regularización 2026 y presentar tu solicitud, activa tu plan.",
+
+    // ============================================
+    // KHALID
+    // ============================================
     khalidDescription:
       "Especialista profesional en extranjería española para marroquíes en España. Pregunta sobre residencia, papeles, policía, nacionalidad, arraigo, trabajo, estudios y cualquier problema legal relacionado con inmigración.",
-
     unlockKhalid: "Desbloquea a Khalid",
-
     premiumDescription:
       "Acceso ilimitado a respuestas y asesoría personalizada.",
-
     unlockNow: "Desbloquear ahora",
-
     securePayment: "Pago seguro con Stripe",
-
     endConversation: "Finalizar conversación",
-
     talkToKhalid: "Hablar con Khalid",
     onlineNow: "En línea",
 
+    // ============================================
+    // MOHAMED
+    // ============================================
     mohamedRole: "Especialista en Extranjería",
-
     talkMohamed: "Hablar con Mohamed",
-
     stopMic: "Parar micrófono",
-
     unlockMohamed: "Desbloquea a Mohamed",
-
     mohamedPremium:
       "Acceso ilimitado a Mohamed IA, videollamada realtime, análisis de documentos y generación automática del expediente.",
-
     mohamedDescription:
       "Especialista profesional en extranjería española para marroquíes en España. Pregunta sobre residencia, papeles, policía, nacionalidad, arraigo, trabajo, estudios y cualquier problema legal relacionado con inmigración.",
 
+    // ============================================
+    // SARA SERVICES
+    // ============================================
     sara_services_title: "Cómo trabaja Sara",
     sara_services_sub: "Seguimiento automático de tu expediente",
     sara_service_1: "Seguimiento del expediente",
     sara_service_2: "Detección FAVORABLE",
     sara_service_3: "Obtención automática NUSS",
     sara_service_4: "WhatsApp + Tasa 790",
+
+    // ============================================
+    // PANEL MALTA (NUEVO)
+    // ============================================
+    welcome: "👋 Bienvenido",
+    user: "Usuario",
+    plan: "Plan",
+    no_plan: "Sin plan",
+    weekly: "Semanal",
+    monthly: "Mensual",
+    days_left: "días restantes",
+    expired: "Expirado",
+    active: "Activo",
+    renew_plan: "Renovar plan",
+    choose_plan: "Elegir plan",
+    cv: "CV",
+    motivation_letter: "Carta de motivación", // ✅ CORREGIDO: ahora en español
+    generated: "Generado",
+    generating: "Generando...",
+    view: "Ver",
+    download: "Descargar", // ✅ UNIFICADO: misma clave
+    applications: "Solicitudes",
+    companies_contacted: "Empresas contactadas",
+    today: "Hoy",
+    total: "Total",
+    remaining: "Restantes",
+    paused: "Pausado",
+    waiting_plan: "Esperando plan",
+    responses: "Respuestas",
+    companies_interested: "Empresas interesadas",
+    we_notify: "Te avisaremos",
+    notify_renew: "Renueva para recibir notificaciones",
+    notify_whatsapp: "Te avisamos por WhatsApp",
+    whatsapp: "WhatsApp",
+    not_configured: "No configurado",
+    verified: "Verificado",
+    update_whatsapp: "Actualizar WhatsApp",
+    next_send: "Próximo envío",
+    next_auto_send: "Próximo envío automático",
+    today_20h: "Hoy · 20:00",
+    waiting: "Esperando...",
+    daily_sends: "Enviamos nuevas solicitudes automáticamente cada día",
+    paused_message: "No se enviarán nuevas solicitudes hasta que renueves",
+    no_plan_message: "Elige un plan para comenzar",
+    my_documents: "Mis documentos",
+    expired_plan: "Plan expirado",
+    docs_available_renew: "Tus documentos están disponibles · Renueva para continuar",
+    docs_waiting_plan: "Elige un plan para generar tus documentos",
+    my_account: "Mi cuenta",
+    name: "Nombre",
+    email: "Email",
+    status: "Estado",
+    inactive_renew: "Inactivo · Renueva para activar",
+    waiting_for_plan: "Esperando plan",
+    logout: "Cerrar sesión",
+    logout_success: "Sesión cerrada",
+    logout_desc: "Has cerrado sesión correctamente",
+    home: "Inicio",
+    documents: "Documentos",
+    no_responses_yet: "Todavía no hay respuestas de empresas. Te avisaremos por WhatsApp cuando llegue una.",
   },
 
+  // ============================================
+  // INGLÉS
+  // ============================================
   en: {
+    // ============================================
+    // NAVBAR
+    // ============================================
     nav_inicio: "Home",
     nav_panel: "Panel",
     nav_citas: "Files",
@@ -328,6 +467,9 @@ const translations: AllTranslations = {
     nav_contacto: "Contact",
     nav_idioma: "Language",
 
+    // ============================================
+    // HERO
+    // ============================================
     hero_badge: "Immigration AI Agent — 100% legal and secure",
     hero_title_1: "Find out if you can",
     hero_title_2: "regularize your status in Spain",
@@ -337,14 +479,20 @@ const translations: AllTranslations = {
     hero_btn2: "Go to panel",
     hero_btn_sara: "File with Sara",
     hero_btn_khalid: "Consult with Khalid",
-    hero_btn_malta: "Work in Malta", // ✅ NUEVA TRADUCCIÓN
+    hero_btn_malta: "Work in Malta",
     hero_trust: "Thousands of people already use GestoriaCitaIA",
 
+    // ============================================
+    // FEATURES
+    // ============================================
     feat1: "Fast analysis",
     feat2: "Document upload",
     feat3: "PDF preparation",
     feat4: "24/7 assistance",
 
+    // ============================================
+    // PLANS (PÁGINA PRINCIPAL)
+    // ============================================
     plans_title: "Available plans",
     plans_sub: "Choose the plan that best fits you",
 
@@ -382,6 +530,48 @@ const translations: AllTranslations = {
     plan_std_f6: "Full access",
     plan_std_f7: "Better tracking",
 
+    // ============================================
+    // PLANES MALTA (NUEVOS PARA LA PÁGINA LANDING)
+    // ============================================
+    plan_malta_weekly_title: "Malta Jobs",
+    plan_malta_weekly_subtitle: "Weekly",
+    plan_malta_weekly_price: "€19.99",
+    plan_malta_weekly_period: "/week",
+    plan_malta_weekly_button: "Get Started",
+    plan_malta_weekly_f1: "✅ AI Professional CV",
+    plan_malta_weekly_f2: "✅ Motivation Letter in English",
+    plan_malta_weekly_f3: "✅ Up to 70 applications (10/day)",
+    plan_malta_weekly_f4: "✅ WhatsApp notifications",
+
+    plan_malta_monthly_title: "Malta Jobs",
+    plan_malta_monthly_subtitle: "Monthly",
+    plan_malta_monthly_price: "€29.99",
+    plan_malta_monthly_period: "/month",
+    plan_malta_monthly_badge: "⭐ MOST POPULAR",
+    plan_malta_monthly_button: "Get Started",
+    plan_malta_monthly_f1: "✅ All weekly features",
+    plan_malta_monthly_f2: "✅ 30 days of searching",
+    plan_malta_monthly_f3: "✅ Up to 300 applications",
+    plan_malta_monthly_f4: "✅ Higher chance of interviews",
+    plan_malta_monthly_f5: "✅ Priority WhatsApp support",
+
+    plan_khalid_title: "Khalid AI Assistant",
+    plan_khalid_subtitle: "AI Assistant",
+    plan_khalid_price: "€14.99",
+    plan_khalid_period: "/month",
+    plan_khalid_badge: "24/7 AI",
+    plan_khalid_button: "Start Chat",
+    plan_khalid_f1: "✅ Unlimited 24/7 AI Chat",
+    plan_khalid_f2: "✅ Immigration consultations",
+    plan_khalid_f3: "✅ Residence permits",
+    plan_khalid_f4: "✅ Arraigo · Renewals",
+    plan_khalid_f5: "✅ Nationality · Family reunification",
+    plan_khalid_f6: "✅ Document review",
+    plan_khalid_f7: "✅ Help with all Spain procedures",
+
+    // ============================================
+    // TRÁMITES
+    // ============================================
     tramites_title: "Available procedures",
     tramites_sub: "Explore the procedures you can manage with us",
 
@@ -398,9 +588,37 @@ const translations: AllTranslations = {
     tr_regreso: "Return authorization",
     tr_ue: "EU certificate",
 
+    // ============================================
+    // AGENTES
+    // ============================================
     agent_mo_role: "Immigration specialist",
     agent_sara_role: "Favorable Tracking · NUSS · Fee 790",
 
+    // ============================================
+    // LEGAL
+    // ============================================
+    legal_label: "Legal notice",
+    legal_body:
+      "The information shown is for guidance only and does not replace professional legal advice.",
+
+    footer_legal: "Legal notice",
+    footer_privacy: "Privacy",
+    footer_cookies: "Cookies",
+
+    secure_payment_methods: "Secure payment · Accepted methods",
+    ssl_payment_text: "Payments processed with 256-bit SSL encryption · PCI DSS Compliant",
+
+    // ============================================
+    // AUTENTICACIÓN
+    // ============================================
+    access_error_title: "Access error",
+    access_error_desc: "Could not log in with Google",
+    google_login_error: "Error logging in with Google",
+    google_login_failed: "Could not log in with Google",
+
+    // ============================================
+    // PANEL (ANTIGUO - REGULARIZACIÓN)
+    // ============================================
     panel_header: "Panel",
     panel_plan_active: "Active plan",
     panel_tab_resumen: "Summary",
@@ -463,13 +681,15 @@ const translations: AllTranslations = {
     panel_tramite_s3: "Review",
     panel_tramite_s4: "Done",
 
+    // ============================================
+    // DOCUMENTOS
+    // ============================================
     docs_required_title: "Required documents",
     my_uploaded_docs: "My uploaded documents",
     documents_count: "documents",
     loading: "Loading...",
     loading_documents: "Loading documents...",
     no_documents_uploaded: "You have not uploaded documents yet",
-    download: "Download",
     doc_uploaded: "Uploaded",
     doc_pending: "Pending",
     doc_replace: "Replace",
@@ -489,6 +709,9 @@ const translations: AllTranslations = {
     doc_pending_fill: "Pending completion",
     doc_pending_payment: "Pending payment",
 
+    // ============================================
+    // BUSCAR (EXPEDIENTES)
+    // ============================================
     buscar_title: "File Tracking",
     buscar_subtitle: "FAVORABLE · NUSS · Fee 790",
     buscar_chat_open: "Open chat",
@@ -511,6 +734,9 @@ const translations: AllTranslations = {
     buscar_payment_agent_message:
       "To book your appointment and continue with the process, activate your plan. I will guide you step by step.",
 
+    // ============================================
+    // REGULARIZACIÓN
+    // ============================================
     reg_title: "Regularization 2026",
     reg_sub: "Find out if you meet the requirements and prepare your case with AI support",
     reg_new: "New",
@@ -523,47 +749,110 @@ const translations: AllTranslations = {
     reg_docs_btn: "Verify documents",
     reg_agent_role: "Immigration specialist",
     reg_payment_agent_message:
-      "To continue with your Regularization 2026 and submit your application, activate your plan.",
+      "To continue with your Regularization 2026 and submit your application, activate your plan.",    // ============================================
+    // KHALID
+    // ============================================
     khalidDescription:
       "Professional Spanish immigration specialist for Moroccans in Spain. Ask about residency, police, nationality, work, studies or any immigration legal issue.",
-
     unlockKhalid: "Unlock Khalid",
-
     premiumDescription:
       "Unlimited access to answers and personalized assistance.",
-
     unlockNow: "Unlock now",
-
     securePayment: "Secure payment with Stripe",
-
     endConversation: "End conversation",
-
     talkToKhalid: "Talk to Khalid",
     onlineNow: "Online",
 
+    // ============================================
+    // MOHAMED
+    // ============================================
     mohamedRole: "Immigration Specialist",
-
     talkMohamed: "Talk to Mohamed",
-
     stopMic: "Stop microphone",
-
     unlockMohamed: "Unlock Mohamed",
-
     mohamedPremium:
       "Unlimited access to Mohamed AI, realtime video call, document analysis and automatic case generation.",
-
     mohamedDescription:
       "Professional Spanish immigration specialist for Moroccans in Spain. Ask about residency, police, nationality, work, studies and immigration legal issues.",
 
+    // ============================================
+    // SARA SERVICES
+    // ============================================
     sara_services_title: "How Sara works",
     sara_services_sub: "Automatic file tracking",
     sara_service_1: "File monitoring",
     sara_service_2: "FAVORABLE detection",
     sara_service_3: "Automatic NUSS retrieval",
     sara_service_4: "WhatsApp + Fee 790",
+
+    // ============================================
+    // PANEL MALTA (NUEVO)
+    // ============================================
+    welcome: "👋 Welcome",
+    user: "User",
+    plan: "Plan",
+    no_plan: "No plan",
+    weekly: "Weekly",
+    monthly: "Monthly",
+    days_left: "days left",
+    expired: "Expired",
+    active: "Active",
+    renew_plan: "Renew plan",
+    choose_plan: "Choose plan",
+    cv: "CV",
+    motivation_letter: "Motivation Letter", // ✅ En inglés sigue siendo Motivation Letter
+    generated: "Generated",
+    generating: "Generating...",
+    view: "View",
+    download: "Download",
+    applications: "Applications",
+    companies_contacted: "Companies contacted",
+    today: "Today",
+    total: "Total",
+    remaining: "Remaining",
+    paused: "Paused",
+    waiting_plan: "Waiting for plan",
+    responses: "Responses",
+    companies_interested: "Companies interested",
+    we_notify: "We'll notify you",
+    notify_renew: "Renew to receive notifications",
+    notify_whatsapp: "We'll notify you via WhatsApp",
+    whatsapp: "WhatsApp",
+    not_configured: "Not configured",
+    verified: "Verified",
+    update_whatsapp: "Update WhatsApp",
+    next_send: "Next send",
+    next_auto_send: "Next automatic send",
+    today_20h: "Today · 8:00 PM",
+    waiting: "Waiting...",
+    daily_sends: "We send new applications automatically every day",
+    paused_message: "No new applications will be sent until you renew",
+    no_plan_message: "Choose a plan to start",
+    my_documents: "My documents",
+    expired_plan: "Expired plan",
+    docs_available_renew: "Your documents are available · Renew to continue",
+    docs_waiting_plan: "Choose a plan to generate your documents",
+    my_account: "My account",
+    name: "Name",
+    email: "Email",
+    status: "Status",
+    inactive_renew: "Inactive · Renew to activate",
+    waiting_for_plan: "Waiting for plan",
+    logout: "Logout",
+    logout_success: "Logged out",
+    logout_desc: "You have been logged out successfully",
+    home: "Home",
+    documents: "Documents",
+    no_responses_yet: "No responses from companies yet. We'll notify you via WhatsApp when one arrives.",
   },
 
+  // ============================================
+  // DARIJA
+  // ============================================
   darija: {
+    // ============================================
+    // NAVBAR
+    // ============================================
     nav_inicio: "الرئيسية",
     nav_panel: "البانيل",
     nav_citas: "الملفات",
@@ -574,6 +863,9 @@ const translations: AllTranslations = {
     nav_contacto: "تواصل",
     nav_idioma: "اللغة",
 
+    // ============================================
+    // HERO
+    // ============================================
     hero_badge: "مساعد الذكاء الاصطناعي ديال الهجرة — قانوني وآمن 100%",
     hero_title_1: "عرف واش تقدر",
     hero_title_2: "تسوي الوضعية ديالك فإسبانيا",
@@ -583,14 +875,20 @@ const translations: AllTranslations = {
     hero_btn2: "دخل للبانيل",
     hero_btn_sara: "الملف مع سارة",
     hero_btn_khalid: "استشارة مع خالد",
-    hero_btn_malta: "الخدمة فمالطا", // ✅ NUEVA TRADUCCIÓN
+    hero_btn_malta: "الخدمة فمالطا",
     hero_trust: "آلاف الناس كيستعملو GestoriaCitaIA",
 
+    // ============================================
+    // FEATURES
+    // ============================================
     feat1: "تحليل سريع",
     feat2: "رفع الوثائق",
     feat3: "تحضير PDF",
     feat4: "مساعدة 24/7",
 
+    // ============================================
+    // PLANS (PÁGINA PRINCIPAL)
+    // ============================================
     plans_title: "الخطط المتوفرة",
     plans_sub: "اختار الخطة اللي كتناسبك",
 
@@ -628,6 +926,48 @@ const translations: AllTranslations = {
     plan_std_f6: "ولوج كامل",
     plan_std_f7: "تتبع أفضل",
 
+    // ============================================
+    // PLANES MALTA (NUEVOS PARA LA PÁGINA LANDING)
+    // ============================================
+    plan_malta_weekly_title: "خدمة العمل فمالطا",
+    plan_malta_weekly_subtitle: "أسبوعي",
+    plan_malta_weekly_price: "19,99€",
+    plan_malta_weekly_period: "/أسبوع",
+    plan_malta_weekly_button: "ابدأ الآن",
+    plan_malta_weekly_f1: "✅ سيرة ذاتية احترافية بالذكاء الاصطناعي",
+    plan_malta_weekly_f2: "✅ رسالة تحفيزية بالانجليزية",
+    plan_malta_weekly_f3: "✅ حتى 70 طلب توظيف (10 في اليوم)",
+    plan_malta_weekly_f4: "✅ إشعارات واتساب",
+
+    plan_malta_monthly_title: "خدمة العمل فمالطا",
+    plan_malta_monthly_subtitle: "شهري",
+    plan_malta_monthly_price: "29,99€",
+    plan_malta_monthly_period: "/شهر",
+    plan_malta_monthly_badge: "⭐ الأكثر طلباً",
+    plan_malta_monthly_button: "ابدأ الآن",
+    plan_malta_monthly_f1: "✅ كل ما في الخطة الأسبوعية",
+    plan_malta_monthly_f2: "✅ 30 يوم من البحث",
+    plan_malta_monthly_f3: "✅ حتى 300 طلب توظيف",
+    plan_malta_monthly_f4: "✅ احتمالية أكبر للمقابلات",
+    plan_malta_monthly_f5: "✅ دعم أولوية عبر واتساب",
+
+    plan_khalid_title: "خالد - الهجرة",
+    plan_khalid_subtitle: "مساعد ذكاء اصطناعي",
+    plan_khalid_price: "14,99€",
+    plan_khalid_period: "/شهر",
+    plan_khalid_badge: "ذكاء اصطناعي 24/7",
+    plan_khalid_button: "تحدث مع خالد",
+    plan_khalid_f1: "✅ شات ذكاء اصطناعي غير محدود 24/7",
+    plan_khalid_f2: "✅ استشارات الهجرة",
+    plan_khalid_f3: "✅ تصاريح الإقامة",
+    plan_khalid_f4: "✅ التثبيت · التجديدات",
+    plan_khalid_f5: "✅ الجنسية · لم شمل العائلة",
+    plan_khalid_f6: "✅ مراجعة الوثائق",
+    plan_khalid_f7: "✅ المساعدة في جميع إجراءات إسبانيا",
+
+    // ============================================
+    // TRÁMITES
+    // ============================================
     tramites_title: "الخدمات المتوفرة",
     tramites_sub: "شوف شنو تقدر تدير معنا",
 
@@ -644,9 +984,37 @@ const translations: AllTranslations = {
     tr_regreso: "رخصة الرجوع",
     tr_ue: "شهادة الاتحاد الأوروبي",
 
+    // ============================================
+    // AGENTES
+    // ============================================
     agent_mo_role: "متخصص فالهجرة",
     agent_sara_role: "تتبع القبول · NUSS · طاكسا 790",
 
+    // ============================================
+    // LEGAL
+    // ============================================
+    legal_label: "تنبيه قانوني",
+    legal_body:
+      "المعلومات المعروضة للتوجيه فقط ولا تغني عن استشارة قانونية مهنية.",
+
+    footer_legal: "تنبيه قانوني",
+    footer_privacy: "الخصوصية",
+    footer_cookies: "الكوكيز",
+
+    secure_payment_methods: "دفع آمن · طرق مقبولة",
+    ssl_payment_text: "المدفوعات مشفرة بـ SSL 256-bit · متوافقة مع PCI DSS",
+
+    // ============================================
+    // AUTENTICACIÓN
+    // ============================================
+    access_error_title: "خطأ في الوصول",
+    access_error_desc: "لم نتمكن من تسجيل الدخول عبر Google",
+    google_login_error: "خطأ عند تسجيل الدخول عبر Google",
+    google_login_failed: "لم نتمكن من تسجيل الدخول عبر Google",
+
+    // ============================================
+    // PANEL (ANTIGUO - REGULARIZACIÓN)
+    // ============================================
     panel_header: "البانيل",
     panel_plan_active: "الخطة النشيطة",
     panel_tab_resumen: "الملخص",
@@ -709,13 +1077,15 @@ const translations: AllTranslations = {
     panel_tramite_s3: "المراجعة",
     panel_tramite_s4: "النهاية",
 
+    // ============================================
+    // DOCUMENTOS
+    // ============================================
     docs_required_title: "الوثائق المطلوبة",
     my_uploaded_docs: "الوثائق اللي رفعت",
     documents_count: "وثائق",
     loading: "جاري التحميل...",
     loading_documents: "جاري تحميل الوثائق...",
     no_documents_uploaded: "مازال ما رفعتي حتى وثيقة",
-    download: "تحميل",
     doc_uploaded: "مرفوع",
     doc_pending: "معلق",
     doc_replace: "بدل",
@@ -735,6 +1105,9 @@ const translations: AllTranslations = {
     doc_pending_fill: "خاصها تعمر",
     doc_pending_payment: "الأداء معلق",
 
+    // ============================================
+    // BUSCAR (EXPEDIENTES)
+    // ============================================
     buscar_title: "تتبع الملف",
     buscar_subtitle: "القبول · NUSS · طاكسا 790",
     buscar_chat_open: "فتح الشات",
@@ -757,6 +1130,9 @@ const translations: AllTranslations = {
     buscar_payment_agent_message:
       "باش تحجز الموعد وتكمل العملية، فعّل الخطة ديالك. أنا غادي نوجهك خطوة بخطوة.",
 
+    // ============================================
+    // REGULARIZACIÓN
+    // ============================================
     reg_title: "التسوية 2026",
     reg_sub: "عرف واش فيك الشروط وجهز الملف ديالك بمساعدة الذكاء الاصطناعي",
     reg_new: "جديد",
@@ -770,43 +1146,102 @@ const translations: AllTranslations = {
     reg_agent_role: "متخصص فالهجرة",
     reg_payment_agent_message:
       "باش تكمل التسوية ديالك 2026 وتقدم الطلب ديالك، فعّل الخطة.",
+
+    // ============================================
+    // KHALID
+    // ============================================
     khalidDescription:
       "خبير فالهجرة والأوراق القانونية فإسبانيا للمغاربة. سول على الإقامة، البوليس، الجنسية، الخدمة، الدراسة وأي مشكل متعلق بالهجرة.",
-
     unlockKhalid: "فتح خالد",
-
     premiumDescription:
       "ولوج كامل للأجوبة والمساعدة الخاصة.",
-
     unlockNow: "فتح الآن",
-
     securePayment: "دفع آمن عبر Stripe",
-
     endConversation: "إنهاء المحادثة",
-
     talkToKhalid: "تكلم مع خالد",
     onlineNow: "متصل الآن",
 
+    // ============================================
+    // MOHAMED
+    // ============================================
     mohamedRole: "مختص فالهجرة",
-
     talkMohamed: "تكلم مع محمد",
-
     stopMic: "وقف الميكروفون",
-
     unlockMohamed: "فتح محمد",
-
     mohamedPremium:
       "ولوج كامل لمحمد الذكي، مكالمة مباشرة، تحليل الوثائق وتحضير الملف أوتوماتيكياً.",
-
     mohamedDescription:
       "خبير فالهجرة والأوراق القانونية فإسبانيا للمغاربة. سول على الإقامة، البوليس، الجنسية، الخدمة، الدراسة وأي مشكل متعلق بالهجرة.",
 
+    // ============================================
+    // SARA SERVICES
+    // ============================================
     sara_services_title: "كيفاش خدمة سارة",
     sara_services_sub: "متابعة أوتوماتيكية ديال الملف",
     sara_service_1: "مراقبة الملف",
     sara_service_2: "كشف FAVORABLE",
     sara_service_3: "جلب NUSS أوتوماتيكياً",
     sara_service_4: "واتساب + طاكسا 790",
+
+    // ============================================
+    // PANEL MALTA (NUEVO)
+    // ============================================
+    welcome: "👋 مرحبا",
+    user: "المستخدم",
+    plan: "الخطة",
+    no_plan: "بدون خطة",
+    weekly: "أسبوعي",
+    monthly: "شهري",
+    days_left: "أيام متبقية",
+    expired: "منتهي",
+    active: "نشط",
+    renew_plan: "تجديد الخطة",
+    choose_plan: "اختر خطة",
+    cv: "السيرة الذاتية",
+    motivation_letter: "رسالة التحفيز",
+    generated: "تم الإنشاء",
+    generating: "جاري الإنشاء...",
+    view: "عرض",
+    download: "تحميل",
+    applications: "الطلبات",
+    companies_contacted: "الشركات التي تم التواصل معها",
+    today: "اليوم",
+    total: "المجموع",
+    remaining: "المتبقي",
+    paused: "متوقف",
+    waiting_plan: "في انتظار الخطة",
+    responses: "الردود",
+    companies_interested: "الشركات المهتمة",
+    we_notify: "سنخبرك",
+    notify_renew: "جدد لتلقي الإشعارات",
+    notify_whatsapp: "سنخبرك عبر واتساب",
+    whatsapp: "واتساب",
+    not_configured: "غير مضبوط",
+    verified: "مؤكد",
+    update_whatsapp: "بدل رقم الواتساب", // ✅ CORREGIDO: más natural en darija
+    next_send: "الإرسال القادم",
+    next_auto_send: "الإرسال التلقائي القادم",
+    today_20h: "اليوم · 20:00",
+    waiting: "في الانتظار...",
+    daily_sends: "نرسل طلبات جديدة تلقائياً كل يوم",
+    paused_message: "لن يتم إرسال طلبات جديدة حتى تجدد",
+    no_plan_message: "اختر خطة للبدء",
+    my_documents: "وثائقي",
+    expired_plan: "الخطة منتهية",
+    docs_available_renew: "وثائقك متوفرة · جدد للمتابعة",
+    docs_waiting_plan: "اختر خطة لإنشاء وثائقك",
+    my_account: "حسابي",
+    name: "الاسم",
+    email: "البريد الإلكتروني",
+    status: "الحالة",
+    inactive_renew: "غير نشط · جدد للتفعيل",
+    waiting_for_plan: "في انتظار الخطة",
+    logout: "تسجيل الخروج",
+    logout_success: "تم تسجيل الخروج",
+    logout_desc: "تم تسجيل خروجك بنجاح",
+    home: "الرئيسية",
+    documents: "الوثائق",
+    no_responses_yet: "لا توجد ردود من الشركات حتى الآن. سنخبرك عبر واتساب عند وصول رد.",
   },
 };
 
