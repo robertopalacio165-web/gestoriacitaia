@@ -169,12 +169,18 @@ function getDriverLicenseLabel(value: string): string {
 function readTemplate(templateName: string): string {
   const possiblePaths = [
     path.join(process.cwd(), "templates", templateName),
-    path.join(__dirname, "..", "templates", templateName),
-    path.join(process.cwd(), "artifacts", "gestoria-cital-a", "templates", templateName),
-    path.join(__dirname, "..", "artifacts", "gestoria-cital-a", "templates", templateName),
+    path.join(
+      process.cwd(),
+      "artifacts",
+      "gestoria-cital-a",
+      "templates",
+      templateName
+    ),
   ];
 
   for (const templatePath of possiblePaths) {
+    console.log("Checking:", templatePath);
+
     if (fs.existsSync(templatePath)) {
       console.log("✅ Template found:", templatePath);
       return fs.readFileSync(templatePath, "utf8");
