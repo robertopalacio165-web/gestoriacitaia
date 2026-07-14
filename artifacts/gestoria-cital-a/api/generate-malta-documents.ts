@@ -17,7 +17,8 @@ if (!OPENAI_API_KEY) {
   throw new Error("OPENAI_API_KEY is missing");
 }
 
-const OPENAI_MODEL = "gpt-5.5";
+// ✅ MODELO ACTUALIZADO
+const OPENAI_MODEL = "gpt-4o-mini";
 const BUCKET_NAME = "malta-documents";
 const OPENAI_TIMEOUT_MS = 120000;
 
@@ -177,7 +178,7 @@ function readTemplate(templateName: string): string {
 }
 
 // ============================================
-// PROMPT PREMIUM PARA CV - GPT-5.5
+// PROMPT PREMIUM PARA CV
 // ============================================
 
 function getPremiumPrompt(data: any): string {
@@ -352,6 +353,10 @@ async function generatePremiumCV(data: any): Promise<{
   }
 }
 
+// ============================================
+// ✅ FUNCIÓN CORREGIDA PARA LLAMAR A OPENAI
+// ============================================
+
 async function generateContent(prompt: string): Promise<{ text: string; tokens?: number }> {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), OPENAI_TIMEOUT_MS);
@@ -360,13 +365,22 @@ async function generateContent(prompt: string): Promise<{ text: string; tokens?:
     const response = await fetch("https://api.openai.com/v1/responses", {
       method: "POST",
       headers: {
+        "Authorization": `Bearer ${OPENAI_API_KEY}`,
         "Content-Type": "application/json",
-        Authorization: `Bearer ${OPENAI_API_KEY}`,
       },
       body: JSON.stringify({
         model: OPENAI_MODEL,
-        input: prompt,
-        temperature: 0.5,
+        input: [
+          {
+            role: "user",
+            content: [
+              {
+                type: "input_text",
+                text: prompt
+              }
+            ]
+          }
+        ]
       }),
       signal: controller.signal,
     });
@@ -374,8 +388,9 @@ async function generateContent(prompt: string): Promise<{ text: string; tokens?:
     clearTimeout(timeoutId);
 
     if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`OpenAI API error: ${response.status} - ${errorText}`);
+      const error = await response.json();
+      console.error("❌ OpenAI API Error:", JSON.stringify(error, null, 2));
+      throw new Error(JSON.stringify(error));
     }
 
     const data = await response.json();
@@ -773,7 +788,7 @@ export default async function handler(
       return res.status(400).json({ error: "applicationId is required" });
     }
 
-    console.log(`📄 Generating premium CV with GPT-5.5 for application: ${applicationId}`);
+    console.log(`📄 Generating premium CV for application: ${applicationId}`);
 
     const { data: application, error: fetchError } = await supabase
       .from("malta_applications")
@@ -806,7 +821,7 @@ export default async function handler(
     const startTime = Date.now();
 
     // 1. Generar contenido
-    console.log("🤖 Generating premium CV content with GPT-5.5...");
+    console.log("🤖 Generating premium CV content...");
     const cvContent = await generatePremiumCV(application);
     console.log(`✅ CV content generated`);
 
@@ -921,7 +936,7 @@ export default async function handler(
       generationTimeMs: totalTime,
       photoUsed: !!application.photo_url,
       workerQueued: true,
-      message: "Premium CV generated successfully with GPT-5.5 and HTML templates",
+      message: "Premium CV generated successfully",
     });
 
   } catch (error: any) {
