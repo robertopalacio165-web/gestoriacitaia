@@ -76,10 +76,23 @@ export default async function handler(
 
     // Procesar solo checkout.session.completed
     if (event.type === "checkout.session.completed") {
+      // ============================================
+      // PASO 1: LOGS DE DEPURACIÓN
+      // ============================================
       const session = event.data.object as Stripe.Checkout.Session;
       const metadata = session.metadata || {};
 
-      // ✅ Verificar que sea de Malta
+      console.log("============== MALTA DEBUG ==============");
+      console.log("SESSION:", session.id);
+      console.log("METADATA:", metadata);
+      console.log("SERVICE:", metadata.service);
+      console.log("=========================================");
+
+      // ============================================
+      // PASO 2: VERIFICAR SI ES MALTA
+      // ============================================
+      console.log("Entrando al IF MALTA...");
+
       if (metadata.service === "malta") {
         console.log("✅ Processing Malta checkout session:", session.id);
         console.log("📋 Metadata:", metadata);
@@ -139,11 +152,20 @@ export default async function handler(
           paid: true,
         };
 
+        // ============================================
+        // PASO 4: LOGS DE SUPABASE
+        // ============================================
+        console.log("📝 Insertando en Supabase...");
+        console.log("📝 insertData:", JSON.stringify(insertData, null, 2));
+
         const { data: insertedApplication, error: maltaError } = await supabase
           .from("malta_applications")
           .insert([insertData])
           .select()
           .single();
+
+        console.log("SUPABASE ERROR:", maltaError);
+        console.log("SUPABASE DATA:", insertedApplication);
 
         if (maltaError) {
           console.error("❌ ERROR SAVING MALTA:", maltaError);
@@ -156,7 +178,7 @@ export default async function handler(
         console.log("✅ Malta application saved:", insertedApplication.id);
 
         // =====================================
-        // PASO 4: SEND TO MAKE - MALTA WELCOME
+        // PASO 5: SEND TO MAKE - MALTA WELCOME
         // =====================================
 
         // ✅ No detener el flujo si Make falla
@@ -209,7 +231,7 @@ export default async function handler(
         }
 
         // =====================================
-        // PASO 5: GENERATE CV + COVER LETTER
+        // PASO 6: GENERATE CV + COVER LETTER
         // =====================================
 
         try {
@@ -222,6 +244,10 @@ export default async function handler(
             console.error("❌ NEXT_PUBLIC_URL no configurado");
             throw new Error("NEXT_PUBLIC_URL no configurado");
           }
+
+          console.log("🚀 Llamando a generate-malta-documents...");
+          console.log("🚀 baseUrl:", baseUrl);
+          console.log("🚀 applicationId:", insertedApplication.id);
 
           // ✅ Nombre correcto del endpoint: generate-malta-documents
           const generateResponse = await fetch(
