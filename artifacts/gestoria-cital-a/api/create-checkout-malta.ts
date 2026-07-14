@@ -100,7 +100,7 @@ export default async function handler(
       paisResidencia,
       fechaNacimiento,
       
-      // ✅ Idiomas con niveles (nuevos)
+      // ✅ Idiomas con niveles
       idiomas,
       ingles_nivel,
       frances_nivel,
@@ -109,29 +109,29 @@ export default async function handler(
       arabe_nivel,
       aleman_nivel,
       
-      // ✅ Experiencia profesional (actualizado)
+      // ✅ Experiencia profesional
       profesion,
-      añosExperiencia,
+      anosExperiencia, // ✅ CAMBIADO: sin ñ
       estudios,
       
-      // ✅ Sectores (nuevo)
+      // ✅ Sectores
       sectores,
       
       // Habilidades
       carnetConducir,
       tieneCV,
       
-      // ✅ CV URL (nuevo)
+      // ✅ CV URL
       cv_url,
       
-      // ✅ Preguntas importantes (nuevos)
+      // ✅ Preguntas importantes
       pasaporteValido,
       entrevistaVideo,
       
-      // ✅ Disponibilidad (actualizado)
+      // ✅ Disponibilidad
       disponibilidadInicio,
       
-      // ✅ Worker status (nuevo)
+      // ✅ Worker status
       worker_status,
       
       // Plan seleccionado
@@ -155,7 +155,7 @@ export default async function handler(
     console.log("  🏷️ arabe_nivel:", arabe_nivel);
     console.log("  🏷️ aleman_nivel:", aleman_nivel);
     console.log("  💼 profesion:", profesion);
-    console.log("  📅 añosExperiencia:", añosExperiencia);
+    console.log("  📅 anosExperiencia:", anosExperiencia);
     console.log("  🎓 estudios:", estudios);
     console.log("  📂 sectores:", sectores);
     console.log("  🚗 carnetConducir:", carnetConducir);
@@ -236,6 +236,20 @@ export default async function handler(
     // ✅ LOG: Antes de crear la sesión
     console.log("🚀 CREANDO SESIÓN DE STRIPE...");
 
+    // ============================================
+    // ✅ PROCESAR IDIOMAS (si es array, unirlo)
+    // ============================================
+    const idiomasString = Array.isArray(idiomas) 
+      ? idiomas.join(", ") 
+      : idiomas || "";
+
+    // ============================================
+    // ✅ PROCESAR SECTORES (si es array, unirlo)
+    // ============================================
+    const sectoresString = Array.isArray(sectores) 
+      ? sectores.join(", ") 
+      : sectores || "";
+
     // ✅ CREAR SESIÓN DE STRIPE CHECKOUT
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
@@ -244,7 +258,7 @@ export default async function handler(
       // ✅ EMAIL PARA EL RECIBO DE STRIPE
       customer_email: cleanEmail,
 
-      // ✅ METADATA COMPLETA DE MALTA - ACTUALIZADA
+      // ✅ METADATA COMPLETA DE MALTA
       metadata: {
         // Identificador del servicio
         service: "malta",
@@ -259,8 +273,8 @@ export default async function handler(
         pais_residencia: paisResidencia?.trim() || "",
         fecha_nacimiento: fechaNacimiento?.trim() || "",
         
-        // ✅ Idiomas con niveles (nuevos)
-        idiomas: idiomas?.trim() || "",
+        // ✅ Idiomas con niveles
+        idiomas: idiomasString,
         ingles_nivel: ingles_nivel?.trim() || "",
         frances_nivel: frances_nivel?.trim() || "",
         italiano_nivel: italiano_nivel?.trim() || "",
@@ -268,34 +282,33 @@ export default async function handler(
         arabe_nivel: arabe_nivel?.trim() || "",
         aleman_nivel: aleman_nivel?.trim() || "",
         
-        // ✅ Experiencia profesional (actualizado)
+        // ✅ Experiencia profesional
         profesion: profesion?.trim() || "",
-        años_experiencia: añosExperiencia?.trim() || "",
+        anos_experiencia: anosExperiencia?.trim() || "", // ✅ Sin ñ
         estudios: estudios?.trim() || "",
         
-        // ✅ Sectores (nuevo)
-        sectores: sectores?.trim() || "",
+        // ✅ Sectores
+        sectores: sectoresString,
         
         // Habilidades
         carnet_conducir: carnetConducir?.trim() || "No",
         tiene_cv: tieneCV?.trim() || "No",
         
-        // ✅ CV URL (nuevo)
+        // ✅ CV URL
         cv_url: cv_url?.trim() || "",
         
-        // ✅ Preguntas importantes (nuevos)
+        // ✅ Preguntas importantes
         pasaporte_valido: pasaporteValido?.trim() || "Sí",
         entrevista_video: entrevistaVideo?.trim() || "Sí",
         
-        // ✅ Disponibilidad (actualizado)
+        // ✅ Disponibilidad
         disponibilidad_inicio: disponibilidadInicio?.trim() || "inmediato",
         
-        // ✅ Worker status (nuevo)
+        // ✅ Worker status
         worker_status: worker_status?.trim() || "waiting",
         
-        // Plan
+        // ✅ Plan (eliminado plan_name)
         plan: plan || "",
-        plan_name: planName || "",
       },
 
       line_items: [
