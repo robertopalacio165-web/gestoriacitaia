@@ -45,7 +45,7 @@ type ProfileRow = {
   nie: string | null;
 };
 
-// ✅ Tipo actualizado
+// ✅ Tipo actualizado - experienciaLaboral → profesion
 type MaltaFormData = {
   fullName: string;
   whatsapp: string;
@@ -63,8 +63,8 @@ type MaltaFormData = {
   arabe_nivel: string;
   aleman_nivel: string;
   
-  // Experiencia
-  experienciaLaboral: string;
+  // ✅ Cambiado: experienciaLaboral → profesion
+  profesion: string;
   añosExperiencia: string;
   estudios: string;
   
@@ -168,7 +168,7 @@ function OfficialBrowserBox({
   const [progressStep, setProgressStep] = useState(0);
 
   // ✅ Opciones de experiencia laboral
-  const experienciaOptions = [
+  const profesionOptions = [
     { id: "kitchen", label: isMa ? "المطبخ" : isEn ? "Kitchen" : "Cocina" },
     { id: "construction", label: isMa ? "البناء" : isEn ? "Construction" : "Construcción" },
     { id: "cleaning", label: isMa ? "التنظيف" : isEn ? "Cleaning" : "Limpieza" },
@@ -246,10 +246,12 @@ function OfficialBrowserBox({
     ? "Job search service in Malta using Artificial Intelligence. Fill in the form and we will find the right job for you."
     : "Servicio de búsqueda de empleo en Malta con Inteligencia Artificial. Rellena el formulario y nosotros buscamos el trabajo adecuado para ti.";
 
-  // ✅ Función para subir CV a Supabase Storage
-  const uploadCVToSupabase = async (file: File, applicationId: string): Promise<string> => {
+  // ✅ Función para subir CV a Supabase Storage (ahora se usa antes del pago)
+  const uploadCVToSupabase = async (file: File): Promise<string> => {
     try {
-      const fileName = `cv_${applicationId}_${Date.now()}.pdf`;
+      const timestamp = Date.now();
+      const fileName = `cv_${timestamp}_${file.name.replace(/[^a-zA-Z0-9.]/g, "_")}`;
+      
       const { data, error } = await supabase.storage
         .from("malta-documents")
         .upload(fileName, file, {
@@ -270,7 +272,7 @@ function OfficialBrowserBox({
     }
   };
 
-  // ✅ Manejar subida de archivo CV con validación mejorada
+  // ✅ Manejar subida de archivo CV - AHORA SUBE REALMENTE A SUPABASE
   const handleCVUpload = async (file: File) => {
     if (!file) return;
     
@@ -295,11 +297,16 @@ function OfficialBrowserBox({
 
     setUploadingCV(true);
     try {
+      // ✅ SUBIR REALMENTE A SUPABASE
+      const cvUrl = await uploadCVToSupabase(file);
+      
+      // ✅ Guardar URL en el estado
+      onFormChange("cvUrl", cvUrl);
       onFormChange("cvFile", file);
-      // ✅ Mensaje de confianza
+      
       toast({
-        title: isMa ? "✅ تم الاستلام" : isEn ? "✅ Received" : "✅ Recibido",
-        description: isMa ? `تم استلام سيرتك الذاتية بنجاح` : isEn ? `Your CV has been successfully received` : `Tu CV ha sido recibido correctamente`,
+        title: isMa ? "✅ تم الرفع" : isEn ? "✅ Uploaded" : "✅ Subido",
+        description: isMa ? `تم رفع سيرتك الذاتية بنجاح` : isEn ? `Your CV has been uploaded successfully` : `Tu CV ha sido subido correctamente`,
       });
     } catch (error) {
       console.error("Error handling CV upload:", error);
@@ -347,7 +354,6 @@ function OfficialBrowserBox({
                 : "🎉 ¡BÚSQUEDA INICIADA!"}
             </h2>
             
-            {/* ✅ Barra de progreso */}
             <div className="bg-[#0a0f1a] rounded-xl p-4 mb-4 text-left">
               <ProgressBar steps={progressSteps} currentStep={progressStep} />
             </div>
@@ -458,7 +464,6 @@ function OfficialBrowserBox({
                         onChange={(e) => {
                           const prefix = formData.whatsapp.split(" ")[0] || "+34";
                           const number = e.target.value.replace(/\D/g, "");
-                          // ✅ Validación: mínimo 8, máximo 15 dígitos
                           if (number.length <= 15) {
                             onFormChange("whatsapp", prefix + " " + number);
                           }
@@ -582,42 +587,42 @@ function OfficialBrowserBox({
                   </div>
 
                   {/* ============================================ */}
-                  {/* 3. EXPERIENCIA */}
+                  {/* 3. EXPERIENCIA - PROFESIÓN */}
                   {/* ============================================ */}
                   
-                  {/* ✅ "¿En qué has trabajado antes?" con opciones */}
+                  {/* ✅ "¿En qué has trabajado antes?" → profesion */}
                   <div className="col-span-1 lg:col-span-2">
                     <label className="block text-white text-[13px] mb-2">
                       {isMa ? "في ماذا اشتغلت قبل؟" : isEn ? "What have you worked in before?" : "¿En qué has trabajado antes?"}
                     </label>
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                      {experienciaOptions.map((opt) => (
+                      {profesionOptions.map((opt) => (
                         <label
                           key={opt.id}
                           className={`flex items-center gap-2 p-2 rounded-xl border transition-colors cursor-pointer ${
-                            formData.experienciaLaboral === opt.id
+                            formData.profesion === opt.id
                               ? "border-yellow-500 bg-yellow-500/10"
                               : "border-white/10 bg-[#060b16] hover:border-yellow-500/50"
                           }`}
                         >
                           <input
                             type="radio"
-                            name="experiencia"
+                            name="profesion"
                             value={opt.id}
-                            checked={formData.experienciaLaboral === opt.id}
-                            onChange={(e) => onFormChange("experienciaLaboral", e.target.value)}
+                            checked={formData.profesion === opt.id}
+                            onChange={(e) => onFormChange("profesion", e.target.value)}
                             className="w-4 h-4 rounded-full border-white/20 bg-[#060b16] text-yellow-500 focus:ring-yellow-500 focus:ring-offset-0 shrink-0"
                           />
                           <span className="text-white/80 text-[11px] sm:text-[12px]">{opt.label}</span>
                         </label>
                       ))}
                     </div>
-                    {formData.experienciaLaboral === "other" && (
+                    {formData.profesion === "other" && (
                       <input
                         type="text"
                         placeholder={isMa ? "اكتب خبرتك..." : isEn ? "Write your experience..." : "Escribe tu experiencia..."}
                         className="mt-2 w-full h-[40px] rounded-xl border border-white/10 bg-[#060b16] px-3 text-white placeholder:text-white/30 focus:outline-none focus:border-yellow-400"
-                        onChange={(e) => onFormChange("experienciaLaboral", e.target.value)}
+                        onChange={(e) => onFormChange("profesion", e.target.value)}
                       />
                     )}
                   </div>
@@ -715,7 +720,7 @@ function OfficialBrowserBox({
                   </div>
 
                   {/* ============================================ */}
-                  {/* 6. CV EN INGLÉS */}
+                  {/* 6. CV EN INGLÉS - CON SUBIDA REAL */}
                   {/* ============================================ */}
                   
                   <div>
@@ -750,13 +755,13 @@ function OfficialBrowserBox({
                             <Loader2 className="w-5 h-5 text-yellow-400 animate-spin" />
                           )}
                         </div>
-                        {formData.cvFile && (
+                        {formData.cvUrl && (
                           <div className="mt-2 p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
                             <p className="text-emerald-400 text-[11px] font-semibold">
-                              ✅ {isMa ? "تم استلام السيرة الذاتية" : isEn ? "CV received" : "CV recibido"}
+                              ✅ {isMa ? "تم رفع السيرة الذاتية" : isEn ? "CV uploaded" : "CV subido"}
                             </p>
-                            <p className="text-emerald-400/70 text-[10px]">
-                              {formData.cvFile.name}
+                            <p className="text-emerald-400/70 text-[10px] truncate">
+                              {formData.cvUrl}
                             </p>
                           </div>
                         )}
@@ -1030,7 +1035,6 @@ function OfficialBrowserBox({
                 : "Felicidades 🎉 Hemos empezado a buscar trabajo para ti en Malta"}
             </h3>
             
-            {/* ✅ Barra de progreso */}
             <div className="bg-[#0a0f1a] rounded-xl p-4 mb-4">
               <ProgressBar steps={progressSteps} currentStep={progressStep} />
             </div>
@@ -1069,7 +1073,7 @@ export default function TrabajoMalta() {
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<"weekly" | "monthly">("monthly");
   
-  // ✅ FormData
+  // ✅ FormData - actualizado
   const [formData, setFormData] = useState<MaltaFormData>({
     fullName: "",
     whatsapp: "+34 ",
@@ -1087,8 +1091,8 @@ export default function TrabajoMalta() {
     arabe_nivel: "",
     aleman_nivel: "",
     
-    // Experiencia
-    experienciaLaboral: "",
+    // ✅ Cambiado: experienciaLaboral → profesion
+    profesion: "",
     añosExperiencia: "",
     estudios: "",
     
@@ -1509,13 +1513,11 @@ export default function TrabajoMalta() {
       errors.push(isMa ? "الاسم الكامل مطلوب" : isEn ? "Full name is required" : "Nombre completo es requerido");
     }
     
-    // ✅ Validación WhatsApp
     const whatsappNumber = formData.whatsapp.replace(/\D/g, "");
     if (whatsappNumber.length < 8 || whatsappNumber.length > 15) {
       errors.push(isMa ? "رقم واتساب يجب أن يكون بين 8 و 15 رقم" : isEn ? "WhatsApp must be between 8 and 15 digits" : "WhatsApp debe tener entre 8 y 15 dígitos");
     }
     
-    // ✅ Validación Email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) {
       errors.push(isMa ? "البريد الإلكتروني غير صحيح" : isEn ? "Invalid email" : "Email inválido");
@@ -1527,7 +1529,7 @@ export default function TrabajoMalta() {
     if (!formData.paisResidencia.trim()) {
       errors.push(isMa ? "بلد الإقامة مطلوب" : isEn ? "Country of residence is required" : "País de residencia es requerido");
     }
-    if (!formData.experienciaLaboral.trim()) {
+    if (!formData.profesion.trim()) {
       errors.push(isMa ? "الخبرة العملية مطلوبة" : isEn ? "Work experience is required" : "Experiencia laboral es requerida");
     }
     if (!formData.sectores) {
@@ -1580,8 +1582,8 @@ export default function TrabajoMalta() {
           arabe_nivel: formData.arabe_nivel,
           aleman_nivel: formData.aleman_nivel,
           
-          // Experiencia
-          experienciaLaboral: formData.experienciaLaboral,
+          // ✅ Cambiado: experienciaLaboral → profesion
+          profesion: formData.profesion,
           añosExperiencia: formData.añosExperiencia,
           estudios: formData.estudios,
           
@@ -1591,10 +1593,16 @@ export default function TrabajoMalta() {
           carnetConducir: formData.carnetConducir,
           tieneCV: formData.tieneCV,
           
+          // ✅ Añadido: cv_url si existe
+          cv_url: formData.cvUrl || "",
+          
           pasaporteValido: formData.pasaporteValido,
           entrevistaVideo: formData.entrevistaVideo,
           
           disponibilidadInicio: formData.disponibilidadInicio,
+          
+          // ✅ Añadido: worker_status
+          worker_status: "waiting",
         }),
       });
 
