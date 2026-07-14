@@ -17,7 +17,6 @@ if (!OPENAI_API_KEY) {
   throw new Error("OPENAI_API_KEY is missing");
 }
 
-// ✅ MODELO ACTUALIZADO
 const OPENAI_MODEL = "gpt-4o-mini";
 const BUCKET_NAME = "malta-documents";
 const OPENAI_TIMEOUT_MS = 120000;
@@ -164,17 +163,27 @@ function getDriverLicenseLabel(value: string): string {
 }
 
 // ============================================
-// LEER PLANTILLAS HTML
+// ✅ LEER PLANTILLAS HTML - CORREGIDO
 // ============================================
 
 function readTemplate(templateName: string): string {
-  const templatePath = path.join(process.cwd(), "templates", templateName);
-  try {
-    return fs.readFileSync(templatePath, "utf-8");
-  } catch (error) {
-    console.error(`❌ Error reading template ${templateName}:`, error);
-    throw new Error(`Template ${templateName} not found`);
+  const possiblePaths = [
+    path.join(process.cwd(), "templates", templateName),
+    path.join(__dirname, "..", "templates", templateName),
+    path.join(process.cwd(), "artifacts", "gestoria-cital-a", "templates", templateName),
+    path.join(__dirname, "..", "artifacts", "gestoria-cital-a", "templates", templateName),
+  ];
+
+  for (const templatePath of possiblePaths) {
+    if (fs.existsSync(templatePath)) {
+      console.log("✅ Template found:", templatePath);
+      return fs.readFileSync(templatePath, "utf8");
+    }
   }
+
+  throw new Error(
+    `Template ${templateName} not found.\nSearched:\n${possiblePaths.join("\n")}`
+  );
 }
 
 // ============================================
@@ -354,7 +363,7 @@ async function generatePremiumCV(data: any): Promise<{
 }
 
 // ============================================
-// ✅ FUNCIÓN CORREGIDA PARA LLAMAR A OPENAI
+// FUNCIÓN PARA LLAMAR A OPENAI
 // ============================================
 
 async function generateContent(prompt: string): Promise<{ text: string; tokens?: number }> {
