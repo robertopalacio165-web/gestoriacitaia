@@ -1,1 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Professional Cover Letter</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
+    body {
+      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+      background: #eef2f6;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 40px;
+    }
+
+    .page {
+      width: 210mm;
+      min-height: 297mm;
+      background: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.12);
+      overflow: hidden;
+    }
+
+    .wrapper {
+      padding: 55px 60px 50px;
+    }
+
+    /* ============================================
+       HEADER
+    ============================================ */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      border-bottom: 4px solid #2d7d46;
+      padding-bottom: 22px;
+      margin-bottom: 30px;
+    }
+
+    .left {
+      width: 70%;
+    }
+
+    .right {
+      text-align: right;
+      font-size: 12px;
+      color: #6a7a8a;
+      line-height: 1.6;
+      padding-top: 4px;
+    }
+
+    .right strong {
+      color: #0a1a2e;
+      font-weight: 600;
+    }
+
+    .name {
+      font-size: 32px;
+      font-weight: 700;
+      color: #0a1a2e;
+      letter-spacing: 1px;
+      line-height: 1.2;
+    }
+
+    .job {
+      margin-top: 4px;
+      font-size: 15px;
+      color: #2d7d46;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+
+    .contact {
+      margin-top: 14px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px 28px;
+      font-size: 12px;
+      color: #5a6a7a;
+    }
+
+    .contact span {
+      font-weight: 600;
+      color: #0a1a2e;
+      margin-right: 2px;
+    }
+
+    /* ============================================
+       CONTENIDO
+    ============================================ */
+    .company {
+      margin-bottom: 25px;
+      font-size: 13px;
+      line-height: 1.8;
+      color: #2d2d3f;
+    }
+
+    .company strong {
+      font-size: 15px;
+      color: #0a1a2e;
+    }
+
+    .subject {
+      font-size: 16px;
+      font-weight: 700;
+      color: #0a1a2e;
+      margin-bottom: 22px;
+    }
+
+    .salutation {
+      font-size: 14px;
+      font-weight: 500;
+      color: #0a1a2e;
+      margin-bottom: 22px;
+    }
+
+    .content p {
+      font-size: 13px;
+      line-height: 1.9;
+      color: #2b2b2b;
+      margin-bottom: 16px;
+      text-align: justify;
+    }
+
+    .content p:last-of-type {
+      margin-bottom: 0;
+    }
+
+    /* ============================================
+       FIRMA
+    ============================================ */
+    .signature {
+      margin-top: 40px;
+      padding-top: 20px;
+      border-top: 1px solid #e8ecf0;
+    }
+
+    .signature-name {
+      font-size: 18px;
+      font-weight: 700;
+      color: #0a1a2e;
+    }
+
+    .signature-job {
+      font-size: 13px;
+      color: #2d7d46;
+      margin-top: 2px;
+    }
+
+    .signature-company {
+      font-size: 12px;
+      color: #6a7a8a;
+      margin-top: 2px;
+    }
+
+    /* ============================================
+       FOOTER
+    ============================================ */
+    .footer {
+      margin-top: 50px;
+      padding-top: 18px;
+      border-top: 1px solid #e8ecf0;
+      text-align: center;
+      font-size: 10px;
+      color: #8a9aaa;
+      line-height: 1.8;
+      letter-spacing: 0.3px;
+    }
+
+    /* ============================================
+       RESPONSIVE
+    ============================================ */
+    @media screen and (max-width: 800px) {
+      body {
+        padding: 15px;
+      }
+
+      .page {
+        border-radius: 8px;
+        width: 100%;
+        min-height: auto;
+      }
+
+      .wrapper {
+        padding: 30px 25px;
+      }
+
+      .header {
+        flex-direction: column;
+        gap: 15px;
+      }
+
+      .left {
+        width: 100%;
+      }
+
+      .right {
+        text-align: left;
+        width: 100%;
+      }
+
+      .name {
+        font-size: 26px;
+      }
+
+      .contact {
+        gap: 10px 20px;
+        font-size: 11px;
+      }
+
+      .subject {
+        font-size: 14px;
+      }
+
+      .content p {
+        font-size: 12.5px;
+      }
+    }
+
+    @media print {
+      body {
+        background: #ffffff;
+        padding: 0;
+      }
+
+      .page {
+        border-radius: 0;
+        box-shadow: none;
+        width: 100%;
+        min-height: 100vh;
+      }
+
+      .wrapper {
+        padding: 50px 55px;
+      }
+
+      .header {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="page">
+  <div class="wrapper">
+
+    <!-- ============================================
+    HEADER
+    ============================================ -->
+    <div class="header">
+
+      <div class="left">
+        <div class="name">{{NAME}}</div>
+        <div class="job">{{TITLE}}</div>
+        <div class="contact">
+          <div><span>📧</span> {{EMAIL}}</div>
+          <div><span>📱</span> {{WHATSAPP}}</div>
+          <div><span>🌍</span> {{NATIONALITY}}</div>
+          <div><span>🚗</span> {{DRIVER_LICENSE}}</div>
+        </div>
+      </div>
+
+      <div class="right">
+        <strong>Date</strong><br>
+        {{DATE}}<br><br>
+        Malta
+      </div>
+
+    </div>
+
+    <!-- ============================================
+    EMPRESA
+    ============================================ -->
+    <div class="company">
+      <strong>{{COMPANY}}</strong><br>
+      {{COMPANY_ADDRESS}}
+    </div>
+
+    <!-- ============================================
+    ASUNTO
+    ============================================ -->
+    <div class="subject">
+      Subject: Application for the position of {{TITLE}}
+    </div>
+
+    <!-- ============================================
+    SALUDO DINÁMICO
+    ============================================ -->
+    <div class="salutation">
+      {{GREETING}}
+    </div>
+
+    <!-- ============================================
+    CUERPO
+    ============================================ -->
+    <div class="content">
+      <p>{{INTRODUCTION}}</p>
+      <p>{{BODY_1}}</p>
+      <p>{{BODY_2}}</p>
+      <p>{{BODY_3}}</p>
+      <p>{{CLOSING}}</p>
+      <p>
+        I appreciate your time and consideration.
+        I would welcome the opportunity to discuss how my skills, motivation and commitment can contribute to your team.
+        I am available for interview immediately and I can relocate to Malta as soon as required.
+        Thank you very much for your consideration.
+      </p>
+    </div>
+
+    <!-- ============================================
+    FIRMA CON EMPRESA
+    ============================================ -->
+    <div class="signature">
+      <div class="signature-name">{{NAME}}</div>
+      <div class="signature-job">{{TITLE}}</div>
+      <div class="signature-company">Applying to {{COMPANY}}</div>
+    </div>
+
+    <!-- ============================================
+    FOOTER
+    ============================================ -->
+    <div class="footer">
+      Generated by GestoriaCitaIA<br>
+      Professional Employment Documents • Malta Recruitment System
+    </div>
+
+  </div>
+</div>
+
+</body>
+</html>
