@@ -11,7 +11,6 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-// ✅ DESACTIVAR el parser de body de Vercel para este endpoint
 export const config = {
   api: {
     bodyParser: false,
@@ -31,7 +30,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(500).json({ error: "Webhook secret not configured" });
   }
 
-  // ✅ LEER EL RAW BODY COMO STRING
   const rawBody = await getRawBody(req);
 
   let event: Stripe.Event;
@@ -43,7 +41,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(400).json({ error: `Webhook Error: ${err.message}` });
   }
 
-  // Manejar el evento checkout.session.completed
   if (event.type === "checkout.session.completed") {
     const session = event.data.object as Stripe.Checkout.Session;
     const metadata = session.metadata || {};
@@ -51,7 +48,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     console.log("✅ Checkout completado:", session.id);
     console.log("📦 Metadata recibida:", metadata);
 
-    // ✅ Datos del formulario desde metadata
     const fullName = metadata.fullName || "";
     const whatsapp = metadata.whatsapp || "";
     const email = metadata.email || "";
@@ -75,7 +71,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const carnetConducir = metadata.carnetConducir || "";
     const tieneCV = metadata.tieneCV || "";
     
-    // ✅ Documentos subidos
     const cvUrl = metadata.cvUrl || "";
     const photoUrl = metadata.photoUrl || "";
     const pdfUrl = metadata.pdfUrl || "";
@@ -85,7 +80,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const disponibilidadInicio = metadata.disponibilidadInicio || "";
     const plan = metadata.plan || "monthly";
 
-    // Calcular fechas del plan
     const now = new Date();
     const startDate = now.toISOString();
     const endDate = new Date(now);
@@ -95,7 +89,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       endDate.setMonth(endDate.getMonth() + 1);
     }
 
-    // Insertar en Supabase
+    // ✅ INSERT CORREGIDO - SIN payment_status
     const { data, error } = await supabase
       .from("malta_applications")
       .insert({
@@ -127,7 +121,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         plan: plan,
         plan_start_date: startDate,
         plan_end_date: endDate.toISOString(),
-        payment_status: "paid",
         stripe_session_id: session.id,
         worker_status: "waiting",
         created_at: new Date().toISOString(),
@@ -143,7 +136,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     console.log("✅ Registro creado en Supabase:", data.id);
 
-    // 🔔 Enviar notificación a Make.com (opcional)
     try {
       const webhookUrl = process.env.MAKE_WEBHOOK_URL;
       if (webhookUrl) {
@@ -169,7 +161,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   return res.status(200).json({ received: true });
 }
 
-// ✅ FUNCIÓN PARA LEER EL RAW BODY
 async function getRawBody(req: VercelRequest): Promise<string> {
   return new Promise((resolve, reject) => {
     let body = "";
