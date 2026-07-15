@@ -370,46 +370,6 @@ const LANGUAGE_LABELS: Record<string, string> = {
 };
 
 // ============================================
-// COMPETENCIAS - ICONOS DINÁMICOS
-// ============================================
-
-const COMPETENCY_ICONS: Record<string, string> = {
-  "food preparation": "🍽️",
-  "kitchen hygiene": "🧼",
-  "haccp": "🛡️",
-  "haccp standards": "🛡️",
-  "inventory management": "📦",
-  "cleaning": "🧹",
-  "cleaning & sanitization": "🧹",
-  "sanitization": "🧴",
-  "team collaboration": "👥",
-  "teamwork": "👥",
-  "customer service": "💬",
-  "time management": "⏱️",
-  "organization": "📋",
-  "safety": "🦺",
-  "quality control": "✅",
-  "forklift": "🏗️",
-  "packing": "📦",
-  "driving": "🚗",
-  "navigation": "🧭",
-  "construction": "🔨",
-  "tools": "🔧",
-  "aluminium": "🏗️",
-  "carpentry": "🪚",
-  "production": "🏭",
-  "machinery": "⚙️",
-  "kitchen equipment": "🍳",
-  "food safety": "🥩",
-  "attention to detail": "🔍",
-  "communication": "💬",
-  "reliability": "🤝",
-  "precision": "🎯",
-  "physical work": "💪",
-  "measurement": "📐",
-};
-
-// ============================================
 // LEER PLANTILLAS HTML
 // ============================================
 
@@ -754,7 +714,7 @@ async function renderPdfFromHtml(html: string): Promise<Buffer> {
 }
 
 // ============================================
-// GENERAR HTML DEL CV - REESCRITO PARA premium-cv.html
+// GENERAR HTML DEL CV - LIMPIO Y CORREGIDO
 // ============================================
 
 function generateCVHtml(
@@ -773,6 +733,7 @@ function generateCVHtml(
   const nameParts = (data.full_name || "Candidate").trim().split(" ");
   const firstName = nameParts[0] || "Candidate";
   const lastName = nameParts.slice(1).join(" ") || "";
+  const fullName = `${firstName} ${lastName}`;
 
   // --- Sector ---
   const sector = data.sectores ? data.sectores.split(",")[0]?.trim()?.toLowerCase() : "default";
@@ -790,10 +751,10 @@ function generateCVHtml(
   // --- PHOTO HTML ---
   const initials = getInitials(data.full_name);
   const photoHtml = data.photo_url 
-    ? `<img src="${data.photo_url}" alt="${firstName} ${lastName}">` 
+    ? `<img src="${data.photo_url}" alt="${fullName}">` 
     : `<span class="initials">${initials}</span>`;
 
-  // --- LANGUAGES (con barras) ---
+  // --- LANGUAGES ---
   let languagesHtml = "";
   if (data.idiomas) {
     const idiomas = data.idiomas.split(",").map((i: string) => i.trim());
@@ -807,13 +768,8 @@ function generateCVHtml(
       
       languagesHtml += `
         <div class="lang-item">
-          <div class="lang-header">
-            <span>${idioma}</span>
-            <span class="level">${label}</span>
-          </div>
-          <div class="lang-bar">
-            <span style="width: ${percent}%;"></span>
-          </div>
+          <strong>${idioma}</strong> <span class="level">${label}</span>
+          <div class="lang-bar"><span style="width: ${percent}%;"></span></div>
         </div>
       `;
     }
@@ -821,30 +777,11 @@ function generateCVHtml(
   if (!languagesHtml) {
     languagesHtml = `
       <div class="lang-item">
-        <div class="lang-header">
-          <span>English</span>
-          <span class="level">Professional</span>
-        </div>
-        <div class="lang-bar">
-          <span style="width: 90%;"></span>
-        </div>
+        <strong>English</strong> <span class="level">Professional</span>
+        <div class="lang-bar"><span style="width: 90%;"></span></div>
       </div>
     `;
   }
-
-  // --- PROFESSIONAL SKILLS (barras) ---
-  const skills = templateData.skills || [];
-  const skillsHtml = skills.map((skill: string) => {
-    const percent = Math.floor(Math.random() * 20) + 75;
-    return `
-      <div class="skill-item">
-        <div class="skill-name">${skill}</div>
-        <div class="skill-bar">
-          <span style="width: ${percent}%;"></span>
-        </div>
-      </div>
-    `;
-  }).join("");
 
   // --- PROFILE HIGHLIGHTS (como <li>) ---
   const highlights = [
@@ -894,7 +831,7 @@ function generateCVHtml(
     <div class="education-item">
       <div class="edu-header">
         <span class="edu-degree">${educationLabel}</span>
-        <span class="edu-institution">${company.name}</span>
+        <span class="edu-institution">Professional Training</span>
         <span class="edu-date">Present</span>
       </div>
     </div>
@@ -904,13 +841,13 @@ function generateCVHtml(
   const tagline = `${templateData.title} professional with ${expLabel}`;
 
   // ============================================
-  // REEMPLAZAR SOLO LAS VARIABLES QUE EXISTEN EN premium-cv.html
+  // REEMPLAZAR TODAS LAS VARIABLES
   // ============================================
   const replacements: Record<string, string> = {
-    "{{NAME}}": `${firstName} ${lastName}`,
+    "{{PHOTO_HTML}}": photoHtml,
+    "{{NAME}}": fullName,
     "{{TITLE}}": templateData.title,
     "{{TAGLINE}}": tagline,
-    "{{PHOTO_HTML}}": photoHtml,
     "{{WHATSAPP}}": data.whatsapp || "",
     "{{EMAIL}}": data.email || "",
     "{{NATIONALITY}}": data.nacionalidad || "",
@@ -936,7 +873,7 @@ function generateCVHtml(
 }
 
 // ============================================
-// GENERAR HTML DE LA COVER LETTER - PLANTILLA PREMIUM V2
+// GENERAR HTML DE LA COVER LETTER
 // ============================================
 
 function generateCoverHtml(
@@ -962,21 +899,17 @@ function generateCoverHtml(
     year: "numeric",
   });
 
-  // --- Dividir nombre en First y Last ---
   const nameParts = (data.full_name || "Candidate").trim().split(" ");
   const firstName = nameParts[0] || "Candidate";
   const lastName = nameParts.slice(1).join(" ") || "";
 
-  // --- PHOTO HTML ---
   const initials = getInitials(data.full_name);
   const photoHtml = data.photo_url 
     ? `<img src="${data.photo_url}" alt="${firstName} ${lastName}">` 
     : `<span class="initials">${initials}</span>`;
 
-  // --- DRIVER LICENSE ---
   const license = getDriverLicenseLabel(data.carnet_conducir || "");
 
-  // --- COMPANY SECTION (opcional) ---
   const companySection = company.name ? `
     <div class="company">
       <strong>${company.name}</strong><br />
@@ -985,16 +918,12 @@ function generateCoverHtml(
     </div>
   ` : "";
 
-  // --- SIGNATURE IMAGE (opcional) ---
   const signatureImage = data.signature_image ? `
     <div class="signature-image">
       <img src="${data.signature_image}" alt="Signature">
     </div>
   ` : "";
 
-  // ============================================
-  // REEMPLAZAR TODAS LAS VARIABLES
-  // ============================================
   const replacements: Record<string, string> = {
     "{{PHOTO_HTML}}": photoHtml,
     "{{FIRST_NAME}}": firstName,
@@ -1086,7 +1015,6 @@ export default async function handler(
       return res.status(404).json({ error: "Application not found" });
     }
 
-    // ✅ VALIDAR Y CORREGIR DATOS DE ENTRADA
     const validatedData = {
       ...application,
       fecha_nacimiento: validateDate(application.fecha_nacimiento),
@@ -1119,7 +1047,6 @@ export default async function handler(
 
     const startTime = Date.now();
 
-    // 1. Seleccionar empresa UNA SOLA VEZ
     const sector = application.sectores ? application.sectores.split(",")[0]?.trim()?.toLowerCase() : "default";
     const template = SECTOR_TEMPLATES[sector] || SECTOR_TEMPLATES.default;
     
@@ -1130,17 +1057,14 @@ export default async function handler(
     const selectedCompany = template.companies[Math.floor(Math.random() * template.companies.length)];
     console.log(`🏢 Selected company: ${selectedCompany.name} (${selectedCompany.city})`);
 
-    // 2. Generar contenido CV (solo narrativa)
     console.log("🤖 Generating premium CV content...");
     const cvContent = await generatePremiumCV(validatedData, selectedCompany);
     console.log(`✅ CV content generated`);
 
-    // 3. Generar contenido Cover Letter (solo cuerpo)
     console.log("🤖 Generating premium Cover Letter content...");
     const letterContent = await generatePremiumCoverLetter(validatedData, selectedCompany);
     console.log(`✅ Cover Letter content generated`);
 
-    // 4. Generar HTML desde plantillas
     console.log("📄 Generating CV HTML from template...");
     const cvHtml = generateCVHtml(validatedData, cvContent, selectedCompany);
     console.log(`✅ CV HTML generated (${cvHtml.length} chars)`);
@@ -1149,7 +1073,6 @@ export default async function handler(
     const coverHtml = generateCoverHtml(validatedData, letterContent, selectedCompany);
     console.log(`✅ Cover Letter HTML generated (${coverHtml.length} chars)`);
 
-    // 5. Convertir HTML → PDF con Playwright
     console.log("🖨️ Converting CV HTML to PDF...");
     const cvPdf = await renderPdfFromHtml(cvHtml);
     console.log(`✅ CV PDF generated (${cvPdf.length} bytes)`);
@@ -1158,7 +1081,6 @@ export default async function handler(
     const coverPdf = await renderPdfFromHtml(coverHtml);
     console.log(`✅ Cover Letter PDF generated (${coverPdf.length} bytes)`);
 
-    // 6. Subir a Supabase
     const timestamp = Date.now();
     const cvFileName = `cv_${applicationId}_${timestamp}.pdf`;
     const letterFileName = `cover_letter_${applicationId}_${timestamp}.pdf`;
@@ -1173,7 +1095,6 @@ export default async function handler(
 
     const totalTime = Date.now() - startTime;
 
-    // 7. Actualizar Supabase
     const updateData: any = {
       cv_generated: true,
       letter_generated: true,
@@ -1217,7 +1138,6 @@ export default async function handler(
 
     console.log(`✅ Application updated successfully in ${totalTime}ms`);
 
-    // 8. Añadir a la cola del worker
     console.log("🚀 Adding to worker queue...");
     try {
       const { error: queueError } = await supabase
