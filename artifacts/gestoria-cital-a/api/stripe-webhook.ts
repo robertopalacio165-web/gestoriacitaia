@@ -48,6 +48,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     console.log("✅ Checkout completado:", session.id);
     console.log("📦 Metadata recibida:", metadata);
 
+    // Datos personales
     const fullName = metadata.fullName || "";
     const whatsapp = metadata.whatsapp || "";
     const email = metadata.email || "";
@@ -55,6 +56,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const paisResidencia = metadata.paisResidencia || "";
     const fechaNacimiento = metadata.fechaNacimiento || "";
     
+    // Idiomas
     const idiomas = metadata.idiomas || "";
     const ingles_nivel = metadata.ingles_nivel || "";
     const frances_nivel = metadata.frances_nivel || "";
@@ -63,22 +65,28 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const arabe_nivel = metadata.arabe_nivel || "";
     const aleman_nivel = metadata.aleman_nivel || "";
     
+    // Experiencia
     const profesion = metadata.profesion || "";
     const añosExperiencia = metadata.añosExperiencia || "";
     const estudios = metadata.estudios || "";
     const sectores = metadata.sectores || "";
     
+    // Carnet
     const carnetConducir = metadata.carnetConducir || "";
-    const tieneCV = metadata.tieneCV || "";
     
+    // ✅ Convertir "Sí"/"No" a boolean - UNA SOLA VEZ
+    const tieneCV = metadata.tieneCV === "Sí";
+    const pasaporteValido = metadata.pasaporteValido === "Sí";
+    const entrevistaVideo = metadata.entrevistaVideo === "Sí";
+    
+    // URLs
     const cvUrl = metadata.cvUrl || "";
     const photoUrl = metadata.photoUrl || "";
     
-  const pasaporteValido = metadata.pasaporteValido === "Sí";
-const entrevistaVideo = metadata.entrevistaVideo === "Sí";
-const tieneCV = metadata.tieneCV === "Sí";
+    const disponibilidadInicio = metadata.disponibilidadInicio || "";
+    const plan = metadata.plan || "monthly";
 
-    // ✅ INSERT CORREGIDO - SIN plan_start_date y plan_end_date
+    // ✅ INSERT CORREGIDO
     const { data, error } = await supabase
       .from("malta_applications")
       .insert({
@@ -115,14 +123,11 @@ const tieneCV = metadata.tieneCV === "Sí";
       .select()
       .single();
 
-   if (error) {
-  console.error("❌ Error insertando en Supabase:");
-  console.error(JSON.stringify(error, null, 2));
-
-  return res.status(500).json({
-    error,
-  });
-}
+    if (error) {
+      console.error("❌ Error insertando en Supabase:");
+      console.error(JSON.stringify(error, null, 2));
+      return res.status(500).json({ error });
+    }
 
     console.log("✅ Registro creado en Supabase:", data.id);
 
