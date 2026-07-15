@@ -54,52 +54,61 @@
       text-align: right;
       font-size: 12px;
       color: #6a7a8a;
-      line-height: 1.6;
+      line-height: 1.8;
       padding-top: 4px;
     }
 
-    .right strong {
+    .right .location {
+      font-weight: 500;
       color: #0a1a2e;
-      font-weight: 600;
     }
 
     .name {
-      font-size: 32px;
+      font-size: 34px;
       font-weight: 700;
       color: #0a1a2e;
-      letter-spacing: 1px;
-      line-height: 1.2;
+      letter-spacing: 0.8px;
+      line-height: 1.15;
     }
 
     .job {
       margin-top: 4px;
-      font-size: 15px;
-      color: #2d7d46;
+      font-size: 14px;
+      color: #607080;
       font-weight: 600;
       text-transform: uppercase;
-      letter-spacing: 2px;
+      letter-spacing: 2.5px;
     }
 
     .contact {
       margin-top: 14px;
       display: flex;
       flex-wrap: wrap;
-      gap: 16px 28px;
+      gap: 0 12px;
       font-size: 12px;
       color: #5a6a7a;
     }
 
-    .contact span {
-      font-weight: 600;
-      color: #0a1a2e;
-      margin-right: 2px;
+    .contact div {
+      display: inline;
+      white-space: nowrap;
+    }
+
+    .contact .separator {
+      color: #b0b8c3;
+    }
+
+    .contact div:first-child {
+      max-width: 260px;
+      overflow-wrap: anywhere;
+      white-space: normal;
     }
 
     /* ============================================
        CONTENIDO
     ============================================ */
     .company {
-      margin-bottom: 25px;
+      margin-bottom: 35px;
       font-size: 13px;
       line-height: 1.8;
       color: #2d2d3f;
@@ -108,6 +117,12 @@
     .company strong {
       font-size: 15px;
       color: #0a1a2e;
+    }
+
+    .company .department {
+      color: #607080;
+      font-weight: 500;
+      margin-top: 2px;
     }
 
     .subject {
@@ -125,8 +140,8 @@
     }
 
     .content p {
-      font-size: 13px;
-      line-height: 1.9;
+      font-size: 13.5px;
+      line-height: 1.85;
       color: #2b2b2b;
       margin-bottom: 16px;
       text-align: justify;
@@ -157,10 +172,11 @@
       margin-top: 2px;
     }
 
-    .signature-company {
+    .signature-contact {
+      margin-top: 8px;
       font-size: 12px;
       color: #6a7a8a;
-      margin-top: 2px;
+      line-height: 1.6;
     }
 
     /* ============================================
@@ -171,8 +187,8 @@
       padding-top: 18px;
       border-top: 1px solid #e8ecf0;
       text-align: center;
-      font-size: 10px;
-      color: #8a9aaa;
+      font-size: 9px;
+      color: #A0A8B3;
       line-height: 1.8;
       letter-spacing: 0.3px;
     }
@@ -210,12 +226,24 @@
       }
 
       .name {
-        font-size: 26px;
+        font-size: 28px;
       }
 
       .contact {
-        gap: 10px 20px;
+        gap: 0 8px;
         font-size: 11px;
+        flex-wrap: wrap;
+      }
+
+      .contact div:first-child {
+        max-width: 100%;
+        display: block;
+        white-space: normal;
+        margin-bottom: 4px;
+      }
+
+      .contact .separator {
+        display: none;
       }
 
       .subject {
@@ -266,17 +294,19 @@
         <div class="name">{{NAME}}</div>
         <div class="job">{{TITLE}}</div>
         <div class="contact">
-          <div><span>📧</span> {{EMAIL}}</div>
-          <div><span>📱</span> {{WHATSAPP}}</div>
-          <div><span>🌍</span> {{NATIONALITY}}</div>
-          <div><span>🚗</span> {{DRIVER_LICENSE}}</div>
+          <div>{{EMAIL}}</div>
+          <span class="separator">•</span>
+          <div>{{WHATSAPP}}</div>
+          <span class="separator">•</span>
+          <div>{{NATIONALITY}}</div>
+          <span class="separator">•</span>
+          <div>Driving Licence {{DRIVER_LICENSE}}</div>
         </div>
       </div>
 
       <div class="right">
-        <strong>Date</strong><br>
-        {{DATE}}<br><br>
-        Malta
+        <div class="location">{{COMPANY_CITY}}, Malta</div>
+        {{DATE}}
       </div>
 
     </div>
@@ -286,6 +316,7 @@
     ============================================ -->
     <div class="company">
       <strong>{{COMPANY}}</strong><br>
+      <div class="department">{{DEPARTMENT}}</div>
       {{COMPANY_ADDRESS}}
     </div>
 
@@ -293,18 +324,18 @@
     ASUNTO
     ============================================ -->
     <div class="subject">
-      Subject: Application for the position of {{TITLE}}
+      Application for the Position of {{TITLE}}
     </div>
 
     <!-- ============================================
-    SALUDO DINÁMICO
+    SALUDO
     ============================================ -->
     <div class="salutation">
       {{GREETING}}
     </div>
 
     <!-- ============================================
-    CUERPO
+    CUERPO - SOLO CONTENIDO GENERADO POR GPT
     ============================================ -->
     <div class="content">
       <p>{{INTRODUCTION}}</p>
@@ -312,29 +343,25 @@
       <p>{{BODY_2}}</p>
       <p>{{BODY_3}}</p>
       <p>{{CLOSING}}</p>
-      <p>
-        I appreciate your time and consideration.
-        I would welcome the opportunity to discuss how my skills, motivation and commitment can contribute to your team.
-        I am available for interview immediately and I can relocate to Malta as soon as required.
-        Thank you very much for your consideration.
-      </p>
     </div>
 
     <!-- ============================================
-    FIRMA CON EMPRESA
+    FIRMA CON CONTACTO
     ============================================ -->
     <div class="signature">
       <div class="signature-name">{{NAME}}</div>
       <div class="signature-job">{{TITLE}}</div>
-      <div class="signature-company">Applying to {{COMPANY}}</div>
+      <div class="signature-contact">
+        {{EMAIL}} • {{WHATSAPP}}
+      </div>
     </div>
 
     <!-- ============================================
     FOOTER
     ============================================ -->
     <div class="footer">
-      Generated by GestoriaCitaIA<br>
-      Professional Employment Documents • Malta Recruitment System
+      Professional Employment Documents<br>
+      Prepared for International Recruitment
     </div>
 
   </div>
