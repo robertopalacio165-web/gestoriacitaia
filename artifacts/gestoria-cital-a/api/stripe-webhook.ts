@@ -116,10 +116,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .select()
       .single();
 
-    if (error) {
-      console.error("❌ Error insertando en Supabase:", error);
-      return res.status(500).json({ error: "Error saving to database" });
-    }
+   if (error) {
+  console.error("❌ Error insertando en Supabase:");
+  console.error(JSON.stringify(error, null, 2));
+
+  return res.status(500).json({
+    error,
+  });
+}
 
     console.log("✅ Registro creado en Supabase:", data.id);
 
