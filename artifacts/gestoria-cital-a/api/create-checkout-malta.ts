@@ -50,7 +50,11 @@ export default async function handler(
     // Determinar precio según el plan
     const unitAmount = plan === "weekly" ? 1999 : 2999;
     const planName = plan === "weekly" ? "Semanal" : "Mensual";
-
+console.log("========== DOCUMENTOS ==========");
+console.log("photoUrl:", photoUrl);
+console.log("cvUrl:", cvUrl);
+console.log("pdfUrl:", pdfUrl);
+console.log("================================");
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       mode: "payment",
