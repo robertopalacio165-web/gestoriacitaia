@@ -130,6 +130,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     console.log("✅ Registro creado en Supabase:", data.id);
+    try {
+  await fetch(`${process.env.NEXT_PUBLIC_URL}/api/generate-malta-documents`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      applicationId: data.id,
+    }),
+  });
+
+  console.log("✅ Generación de documentos iniciada");
+} catch (err) {
+  console.error("❌ Error llamando generate-malta-documents:", err);
+}
 
     try {
       const webhookUrl = process.env.MAKE_WEBHOOK_URL;
