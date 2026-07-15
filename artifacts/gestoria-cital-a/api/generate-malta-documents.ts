@@ -34,7 +34,7 @@ const SECTOR_TEMPLATES: Record<string, {
   kitchen: {
     title: "Kitchen Assistant",
     atsKeywords: ["food preparation", "hygiene", "HACCP", "cleaning", "inventory"],
-    skills: ["Food Preparation", "Kitchen Hygiene", "HACCP", "Inventory Management"],
+    skills: ["Food Preparation", "Kitchen Hygiene", "HACCP", "Inventory Management", "Cleaning & Sanitization", "Team Collaboration"],
     companies: [
       { name: "Hilton Malta", address: "Portomaso, St. Julian's, Malta", city: "St. Julian's", department: "Human Resources Department" },
       { name: "Radisson Blu Resort", address: "St. George's Bay, St. Julian's, Malta", city: "St. Julian's", department: "Recruitment Team" },
@@ -46,7 +46,7 @@ const SECTOR_TEMPLATES: Record<string, {
   hotel: {
     title: "Housekeeping Attendant",
     atsKeywords: ["cleaning", "organization", "customer service", "attention to detail"],
-    skills: ["Cleaning", "Organization", "Customer Service", "Attention to Detail"],
+    skills: ["Cleaning", "Organization", "Customer Service", "Attention to Detail", "Teamwork", "Time Management"],
     companies: [
       { name: "Hilton Malta", address: "Portomaso, St. Julian's, Malta", city: "St. Julian's", department: "Human Resources Department" },
       { name: "Corinthia Palace", address: "San Anton, Attard, Malta", city: "Attard", department: "Human Resources" },
@@ -57,7 +57,7 @@ const SECTOR_TEMPLATES: Record<string, {
   restaurant: {
     title: "Food & Beverage Assistant",
     atsKeywords: ["customer service", "food safety", "hygiene", "team work"],
-    skills: ["Customer Service", "Food Safety", "Hygiene", "Team Collaboration"],
+    skills: ["Customer Service", "Food Safety", "Hygiene", "Team Collaboration", "Communication", "Attention to Detail"],
     companies: [
       { name: "Hilton Malta", address: "Portomaso, St. Julian's, Malta", city: "St. Julian's", department: "Human Resources Department" },
       { name: "Radisson Blu Resort", address: "St. George's Bay, St. Julian's, Malta", city: "St. Julian's", department: "Recruitment Team" },
@@ -68,7 +68,7 @@ const SECTOR_TEMPLATES: Record<string, {
   cleaning: {
     title: "Professional Cleaner",
     atsKeywords: ["cleaning", "hygiene", "organization", "attention to detail"],
-    skills: ["Cleaning", "Hygiene", "Organization", "Attention to Detail"],
+    skills: ["Cleaning", "Hygiene", "Organization", "Attention to Detail", "Time Management", "Reliability"],
     companies: [
       { name: "Hilton Malta", address: "Portomaso, St. Julian's, Malta", city: "St. Julian's", department: "Human Resources Department" },
       { name: "Corinthia Palace", address: "San Anton, Attard, Malta", city: "Attard", department: "Human Resources" },
@@ -79,7 +79,7 @@ const SECTOR_TEMPLATES: Record<string, {
   warehouse: {
     title: "Warehouse Operative",
     atsKeywords: ["inventory", "forklift", "packing", "organization", "safety"],
-    skills: ["Inventory Management", "Forklift", "Packing", "Safety"],
+    skills: ["Inventory Management", "Forklift", "Packing", "Safety", "Organization", "Teamwork"],
     companies: [
       { name: "DB Schenker", address: "Mriehel, Malta", city: "Mriehel", department: "Human Resources" },
       { name: "Kuehne + Nagel", address: "Mriehel, Malta", city: "Mriehel", department: "Recruitment Team" },
@@ -90,7 +90,7 @@ const SECTOR_TEMPLATES: Record<string, {
   delivery: {
     title: "Delivery Driver",
     atsKeywords: ["driving", "navigation", "time management", "customer service"],
-    skills: ["Driving", "Navigation", "Time Management", "Customer Service"],
+    skills: ["Driving", "Navigation", "Time Management", "Customer Service", "Reliability", "Communication"],
     companies: [
       { name: "Bolt Malta", address: "Sliema, Malta", city: "Sliema", department: "Operations Team" },
       { name: "Wolt Malta", address: "Birkirkara, Malta", city: "Birkirkara", department: "Recruitment Team" },
@@ -101,7 +101,7 @@ const SECTOR_TEMPLATES: Record<string, {
   construction: {
     title: "Construction Worker",
     atsKeywords: ["building", "safety", "tools", "team work", "physical work"],
-    skills: ["Construction", "Safety", "Tools", "Team Work"],
+    skills: ["Construction", "Safety", "Tools", "Team Work", "Physical Work", "Reliability"],
     companies: [
       { name: "Vassallo Builders", address: "Naxxar, Malta", city: "Naxxar", department: "Human Resources" },
       { name: "Hili Company", address: "Mosta, Malta", city: "Mosta", department: "Recruitment Team" },
@@ -112,7 +112,7 @@ const SECTOR_TEMPLATES: Record<string, {
   aluminium: {
     title: "Aluminium & Carpentry Worker",
     atsKeywords: ["aluminium", "carpentry", "tools", "measurement", "quality"],
-    skills: ["Aluminium Work", "Carpentry", "Tools", "Quality Control"],
+    skills: ["Aluminium Work", "Carpentry", "Tools", "Quality Control", "Measurement", "Precision"],
     companies: [
       { name: "Vassallo Builders", address: "Naxxar, Malta", city: "Naxxar", department: "Human Resources" },
       { name: "Hili Company", address: "Mosta, Malta", city: "Mosta", department: "Recruitment Team" },
@@ -123,12 +123,21 @@ const SECTOR_TEMPLATES: Record<string, {
   manufacturing: {
     title: "Manufacturing Operative",
     atsKeywords: ["production", "quality", "machinery", "safety", "team work"],
-    skills: ["Production", "Quality Control", "Machinery", "Safety"],
+    skills: ["Production", "Quality Control", "Machinery", "Safety", "Teamwork", "Attention to Detail"],
     companies: [
       { name: "ST Microelectronics", address: "Kirkop, Malta", city: "Kirkop", department: "Human Resources" },
       { name: "Malta Enterprise", address: "Gwardamangia, Malta", city: "Gwardamangia", department: "Recruitment Team" },
       { name: "Venture Global", address: "Mriehel, Malta", city: "Mriehel", department: "Human Resources Department" },
       { name: "Mizzi Group", address: "Mriehel, Malta", city: "Mriehel", department: "Human Resources" },
+    ],
+  },
+  // ✅ SECTOR POR DEFECTO
+  default: {
+    title: "General Worker",
+    atsKeywords: ["reliability", "team work", "safety", "quality", "adaptability"],
+    skills: ["Reliability", "Team Work", "Safety", "Adaptability", "Communication", "Punctuality"],
+    companies: [
+      { name: "Various Companies", address: "Malta", city: "Malta", department: "Human Resources Department" },
     ],
   },
 };
@@ -141,7 +150,7 @@ interface Company {
 }
 
 // ============================================
-// FUNCIONES DE NORMALIZACIÓN - CORREGIDAS
+// FUNCIONES DE NORMALIZACIÓN
 // ============================================
 
 function normalizePassport(value: string | null | undefined): string {
@@ -257,6 +266,10 @@ function getLanguageLevel(level: string): string {
     intermedio: "Intermediate",
     avanzado: "Advanced",
     nativo: "Native",
+    basic: "Basic",
+    intermediate: "Intermediate",
+    advanced: "Advanced",
+    native: "Native",
   };
   return map[level] || level;
 }
@@ -306,149 +319,96 @@ function getDriverLicenseLabel(value: string): string {
 const LANGUAGE_COLUMNS: Record<string, string> = {
   arabe: "arabe_nivel",
   árabe: "arabe_nivel",
+  arabic: "arabe_nivel",
   español: "espanol_nivel",
   espanol: "espanol_nivel",
+  spanish: "espanol_nivel",
   francés: "frances_nivel",
   frances: "frances_nivel",
+  french: "frances_nivel",
   italiano: "italiano_nivel",
+  italian: "italiano_nivel",
   alemán: "aleman_nivel",
   aleman: "aleman_nivel",
+  german: "aleman_nivel",
   inglés: "ingles_nivel",
   ingles: "ingles_nivel",
+  english: "ingles_nivel",
   portugues: "portugues_nivel",
   portugués: "portugues_nivel",
+  portuguese: "portugues_nivel",
   ruso: "ruso_nivel",
+  russian: "ruso_nivel",
   chino: "chino_nivel",
+  chinese: "chino_nivel",
   mandarin: "chino_nivel",
 };
 
 // ============================================
-// CONSTRUIR DATOS PARA LA PLANTILLA DESDE SUPABASE
+// IDIOMAS - CON SOPORTE PARA ESPAÑOL E INGLÉS
 // ============================================
 
-function buildCVDataFromSupabase(data: any, company: Company): {
-  name: string;
-  title: string;
-  whatsapp: string;
-  email: string;
-  nationality: string;
-  driverLicense: string;
-  passport: string;
-  availability: string;
-  video: string;
-  workPermit: string;
-  relocate: string;
-  photoHtml: string;
-  languagesHtml: string;
-  profileHighlightsHtml: string;
-  certificatesHtml: string;
-  infoGridHtml: string;
-  competenciesHtml: string;
-  tagline: string;
-} {
-  const sector = data.sectores ? data.sectores.split(",")[0]?.trim()?.toLowerCase() : "default";
-  const template = SECTOR_TEMPLATES[sector] || SECTOR_TEMPLATES.default;
+const LANGUAGE_LEVELS: Record<string, number> = {
+  basico: 35,
+  intermedio: 65,
+  avanzado: 90,
+  nativo: 100,
+  basic: 35,
+  intermediate: 65,
+  advanced: 90,
+  native: 100,
+};
 
-  const initials = getInitials(data.full_name);
-  const availability = getAvailabilityLabel(data.disponibilidad_inicio || "inmediato");
-  const license = getDriverLicenseLabel(data.carnet_conducir || "");
-  const passport = normalizePassport(data.pasaporte_valido);
-  const video = normalizeVideo(data.entrevista_video);
-  const workPermit = normalizeWorkPermit(data.permiso_trabajo);
-  const relocate = normalizeRelocate(data.reubicacion);
+const LANGUAGE_LABELS: Record<string, string> = {
+  basico: "Basic (A1–A2)",
+  intermedio: "Intermediate (B1–B2)",
+  avanzado: "Advanced (C1)",
+  nativo: "Native",
+  basic: "Basic (A1–A2)",
+  intermediate: "Intermediate (B1–B2)",
+  advanced: "Advanced (C1)",
+  native: "Native",
+};
 
-  // --- IDIOMAS ---
-  let languagesHtml = "";
-  if (data.idiomas) {
-    const idiomas = data.idiomas.split(",").map((i: string) => i.trim());
-    for (const idioma of idiomas) {
-      const idiomaLower = idioma.toLowerCase();
-      const columnName = LANGUAGE_COLUMNS[idiomaLower];
-      const nivelKey = columnName || `${idiomaLower}_nivel`;
-      const nivel = data[nivelKey] || "";
-      const levelLabel = getLanguageLevel(nivel);
-      
-      languagesHtml += `
-        <div class="lang-item">
-          <strong>${idioma}</strong> <span class="level">${levelLabel}</span>
-        </div>
-      `;
-    }
-  }
+// ============================================
+// COMPETENCIAS - ICONOS DINÁMICOS
+// ============================================
 
-  if (!languagesHtml) {
-    languagesHtml = `
-      <div class="lang-item">
-        <strong>English</strong> <span class="level">Professional</span>
-      </div>
-    `;
-  }
-
-  // --- PROFILE HIGHLIGHTS ---
-  const highlights = [
-    `✔ Immediate Availability: ${availability}`,
-    `✔ Willing to Relocate: ${relocate}`,
-    `✔ Team Player`,
-    `✔ Flexible Schedule`,
-    `✔ Eligible to Work in Malta: ${workPermit}`,
-  ];
-  const profileHighlightsHtml = highlights.map(h => `<li>${h}</li>`).join("");
-
-  // --- CERTIFICATES ---
-  const certificates = [
-    `<li><strong>Passport</strong> ${passport}</li>`,
-    `<li><strong>Driving Licence</strong> ${license}</li>`,
-    `<li><strong>Work Permit</strong> ${workPermit}</li>`,
-    `<li><strong>Interview Video</strong> ${video}</li>`,
-  ];
-  const certificatesHtml = certificates.join("");
-
-  // --- INFO GRID ---
-  const infoGridHtml = `
-    <div class="info-item"><strong>Passport</strong> ${passport}</div>
-    <div class="info-item"><strong>Driving Licence</strong> ${license}</div>
-    <div class="info-item"><strong>Availability</strong> <span class="status-available">${availability}</span></div>
-    <div class="info-item"><strong>Interview Video</strong> ${video}</div>
-    <div class="info-item"><strong>Work Permit</strong> ${workPermit}</div>
-    <div class="info-item"><strong>Willing to Relocate</strong> ${relocate}</div>
-  `;
-
-  // --- COMPETENCIAS ---
-  let competenciesHtml = "";
-  for (const skill of template.skills) {
-    competenciesHtml += `<span>${skill}</span>`;
-  }
-
-  // --- FOTO ---
-  const photoHtml = data.photo_url 
-    ? `<img src="${data.photo_url}" alt="Photo">` 
-    : `<span class="initials">${initials}</span>`;
-
-  // --- TAGLINE ---
-  const expLabel = getExperienceLabel(validateExperienceYears(data.anos_experiencia));
-  const tagline = `${template.title} professional with ${expLabel}`;
-
-  return {
-    name: data.full_name || "Candidate",
-    title: template.title,
-    whatsapp: data.whatsapp || "N/A",
-    email: data.email || "N/A",
-    nationality: data.nacionalidad || "N/A",
-    driverLicense: license,
-    passport: passport,
-    availability: availability,
-    video: video,
-    workPermit: workPermit,
-    relocate: relocate,
-    photoHtml: photoHtml,
-    languagesHtml: languagesHtml,
-    profileHighlightsHtml: profileHighlightsHtml,
-    certificatesHtml: certificatesHtml,
-    infoGridHtml: infoGridHtml,
-    competenciesHtml: competenciesHtml,
-    tagline: tagline,
-  };
-}
+const COMPETENCY_ICONS: Record<string, string> = {
+  "food preparation": "🍽️",
+  "kitchen hygiene": "🧼",
+  "haccp": "🛡️",
+  "haccp standards": "🛡️",
+  "inventory management": "📦",
+  "cleaning": "🧹",
+  "cleaning & sanitization": "🧹",
+  "sanitization": "🧴",
+  "team collaboration": "👥",
+  "teamwork": "👥",
+  "customer service": "💬",
+  "time management": "⏱️",
+  "organization": "📋",
+  "safety": "🦺",
+  "quality control": "✅",
+  "forklift": "🏗️",
+  "packing": "📦",
+  "driving": "🚗",
+  "navigation": "🧭",
+  "construction": "🔨",
+  "tools": "🔧",
+  "aluminium": "🏗️",
+  "carpentry": "🪚",
+  "production": "🏭",
+  "machinery": "⚙️",
+  "kitchen equipment": "🍳",
+  "food safety": "🥩",
+  "attention to detail": "🔍",
+  "communication": "💬",
+  "reliability": "🤝",
+  "precision": "🎯",
+  "physical work": "💪",
+  "measurement": "📐",
+};
 
 // ============================================
 // LEER PLANTILLAS HTML
@@ -795,7 +755,7 @@ async function renderPdfFromHtml(html: string): Promise<Buffer> {
 }
 
 // ============================================
-// GENERAR HTML DEL CV - PLANTILLA PREMIUM
+// GENERAR HTML DEL CV - PLANTILLA PREMIUM V2
 // ============================================
 
 function generateCVHtml(
@@ -810,67 +770,227 @@ function generateCVHtml(
 ): string {
   let template = readTemplate("premium-cv.html");
   
-  const cvData = buildCVDataFromSupabase(data, company);
-  
-  let achievementsHtml = "";
-  for (const ach of content.achievements) {
-    achievementsHtml += `<li>${ach}</li>`;
-  }
-  
-  let experienceHtml = "";
-  if (content.experience && content.experience.length > 0) {
-    const expBullets = content.experience.map(exp => `<li>${exp}</li>`).join("");
-    experienceHtml = `
-      <div class="experience-item">
-        <div class="exp-header">
-          <span class="exp-title">${cvData.title}</span>
-          <span class="exp-company">${company.name}</span>
+  // --- Dividir nombre en First y Last ---
+  const nameParts = (data.full_name || "Candidate").trim().split(" ");
+  const firstName = nameParts[0] || "Candidate";
+  const lastName = nameParts.slice(1).join(" ") || "";
+
+  // ✅ SECTOR CON DEFAULT
+  const sector = data.sectores ? data.sectores.split(",")[0]?.trim()?.toLowerCase() : "default";
+  const templateData = SECTOR_TEMPLATES[sector] || SECTOR_TEMPLATES.default;
+
+  // --- Normalizar datos ---
+  const availability = getAvailabilityLabel(data.disponibilidad_inicio || "inmediato");
+  const license = getDriverLicenseLabel(data.carnet_conducir || "");
+  const passport = normalizePassport(data.pasaporte_valido);
+  const video = normalizeVideo(data.entrevista_video);
+  const workPermit = normalizeWorkPermit(data.permiso_trabajo);
+  const relocate = normalizeRelocate(data.reubicacion);
+  const expLabel = getExperienceLabel(validateExperienceYears(data.anos_experiencia));
+  const tagline = `${templateData.title} professional with ${expLabel}`;
+
+  // --- PHOTO HTML ---
+  const initials = getInitials(data.full_name);
+  const photoHtml = data.photo_url 
+    ? `<img src="${data.photo_url}" alt="${firstName} ${lastName}">` 
+    : `<span class="initials">${initials}</span>`;
+
+  // --- LANGUAGES con barras ---
+  let languagesHtml = "";
+  if (data.idiomas) {
+    const idiomas = data.idiomas.split(",").map((i: string) => i.trim());
+    for (const idioma of idiomas) {
+      const idiomaLower = idioma.toLowerCase();
+      const columnName = LANGUAGE_COLUMNS[idiomaLower] || `${idiomaLower}_nivel`;
+      const nivel = data[columnName] || "";
+      const levelKey = String(nivel || "").trim().toLowerCase();
+      const percent = LANGUAGE_LEVELS[levelKey] ?? 35;
+      const label = LANGUAGE_LABELS[levelKey] ?? "Basic (A1–A2)";
+      
+      languagesHtml += `
+        <div class="lang-item">
+          <div class="lang-header">
+            <span>${idioma}</span>
+            <span class="level">${label}</span>
+          </div>
+          <div class="lang-bar">
+            <span style="width: ${percent}%;"></span>
+          </div>
         </div>
-        <div class="exp-description">
-          <ul>
-            ${expBullets}
-          </ul>
+      `;
+    }
+  }
+  if (!languagesHtml) {
+    languagesHtml = `
+      <div class="lang-item">
+        <div class="lang-header">
+          <span>English</span>
+          <span class="level">Professional</span>
+        </div>
+        <div class="lang-bar">
+          <span style="width: 90%;"></span>
         </div>
       </div>
     `;
   }
-  
+
+  // --- PROFESSIONAL SKILLS con barras ---
+  const skills = templateData.skills || [];
+  const skillsHtml = skills.map((skill: string) => {
+    const percent = Math.floor(Math.random() * 20) + 75;
+    return `
+      <div class="skill-item">
+        <div class="skill-name">${skill}</div>
+        <div class="skill-bar">
+          <span style="width: ${percent}%;"></span>
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  // --- HIGHLIGHTS ---
+  const highlights = [
+    `Strong work ethic`,
+    `Team player`,
+    `Fast learner`,
+    `Attention to detail`,
+    `Reliable and punctual`,
+    `Able to work under pressure`,
+  ];
+  const highlightsHtml = highlights.map(h => `
+    <div class="highlight-item">
+      <span class="highlight-icon">▸</span> ${h}
+    </div>
+  `).join("");
+
+  // --- CERTIFICATES ---
+  const certificatesHtml = `
+    <li><strong>Passport</strong> ${passport}</li>
+    <li><strong>Driving Licence</strong> ${license}</li>
+    <li><strong>Work Permit</strong> ${workPermit}</li>
+    <li><strong>Interview Video</strong> ${video}</li>
+  `;
+
+  // --- CORE COMPETENCIES con iconos ---
+  const competencies = templateData.skills || [];
+  const competenciesHtml = competencies.map((comp: string) => {
+    const icon = COMPETENCY_ICONS[comp.toLowerCase()] || "⭐";
+    return `
+      <div class="comp-item">
+        <div class="comp-icon">${icon}</div>
+        <div>${comp}</div>
+      </div>
+    `;
+  }).join("");
+
+  // --- EXPERIENCE ---
+  let experienceHtml = "";
+  if (content.experience && content.experience.length > 0) {
+    const expBullets = content.experience.map((exp: string) => `<li>${exp}</li>`).join("");
+    experienceHtml = `
+      <div class="experience-item">
+        <div class="exp-header">
+          <span class="exp-title">${templateData.title}</span>
+          <span class="exp-company">Professional Experience</span>
+          <span class="exp-location">${data.pais_residencia || "Malta"}</span>
+          <span class="exp-date">Present</span>
+        </div>
+        <div class="exp-description">
+          <ul>${expBullets}</ul>
+        </div>
+      </div>
+    `;
+  }
+
+  // --- EDUCATION ---
   const educationLabel = getEducationLabel(data.estudios || "");
   const educationHtml = `
     <div class="education-item">
       <div class="edu-header">
         <span class="edu-degree">${educationLabel}</span>
-        <span class="edu-institution">${content.profile || "Professional Training"}</span>
+        <span class="edu-institution">Professional Training</span>
+        <span class="edu-location">${data.pais_residencia || "Malta"}</span>
+        <span class="edu-date">Present</span>
       </div>
     </div>
   `;
 
+  // --- ADDITIONAL INFO ---
+  const infoGridHtml = `
+    <div class="info-item">
+      <span class="info-icon">🛂</span>
+      <strong>Passport</strong> ${passport}
+    </div>
+    <div class="info-item">
+      <span class="info-icon">🚗</span>
+      <strong>Driving Licence</strong> ${license}
+    </div>
+    <div class="info-item">
+      <span class="info-icon">⏰</span>
+      <strong>Availability</strong> <span class="status-available">${availability}</span>
+    </div>
+    <div class="info-item">
+      <span class="info-icon">🎥</span>
+      <strong>Interview Video</strong> ${video}
+    </div>
+    <div class="info-item">
+      <span class="info-icon">📄</span>
+      <strong>Work Permit</strong> ${workPermit}
+    </div>
+    <div class="info-item">
+      <span class="info-icon">✈️</span>
+      <strong>Willing to Relocate</strong> ${relocate}
+    </div>
+  `;
+
+  // --- PROFILE ---
+  const profileText = content.profile || `Dedicated and motivated ${templateData.title.toLowerCase()} with a strong passion for the hospitality industry.`;
+
+  // ✅ SUMMARY
+  const summaryText = content.summary || `Professional ${templateData.title} with a strong commitment to excellence.`;
+
+  // ✅ ACHIEVEMENTS
+  let achievementsHtml = "";
+  if (content.achievements && content.achievements.length > 0) {
+    achievementsHtml = content.achievements.map((ach: string) => `<li>${ach}</li>`).join("");
+  }
+
+  // --- LINKEDIN (opcional) ---
+  const linkedinHtml = data.linkedin ? `
+    <div class="contact-item">
+      <span class="icon">
+        <svg viewBox="0 0 24 24"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+      </span>
+      ${data.linkedin}
+    </div>
+  ` : "";
+
+  // ============================================
+  // REEMPLAZAR TODAS LAS VARIABLES
+  // ============================================
   const replacements: Record<string, string> = {
-    "{{PHOTO_HTML}}": cvData.photoHtml,
-    "{{NAME}}": cvData.name,
-    "{{TITLE}}": cvData.title,
-    "{{WHATSAPP}}": cvData.whatsapp,
-    "{{EMAIL}}": cvData.email,
-    "{{NATIONALITY}}": cvData.nationality,
-    "{{DRIVER_LICENSE}}": cvData.driverLicense,
-    "{{PROFILE_HIGHLIGHTS}}": cvData.profileHighlightsHtml,
-    "{{CERTIFICATES}}": cvData.certificatesHtml,
-    "{{LANGUAGES}}": cvData.languagesHtml,
-    "{{COMPETENCIES}}": cvData.competenciesHtml,
-    "{{EXPERIENCE_LIST}}": experienceHtml,
-    "{{EDUCATION_LIST}}": educationHtml,
-    "{{PASSPORT}}": cvData.passport,
-    "{{AVAILABILITY}}": cvData.availability,
-    "{{INTERVIEW_VIDEO}}": cvData.video,
-    "{{WORK_PERMIT}}": cvData.workPermit,
-    "{{RELOCATE}}": cvData.relocate,
-    "{{TAGLINE}}": cvData.tagline,
-    "{{COMPANY}}": company.name,
-    "{{COMPANY_CITY}}": company.city,
-    "{{DEPARTMENT}}": company.department,
-    "{{COMPANY_ADDRESS}}": company.address,
-    "{{PROFILE}}": content.profile || "",
+    "{{PHOTO_HTML}}": photoHtml,
+    "{{FIRST_NAME}}": firstName,
+    "{{LAST_NAME}}": lastName,
+    "{{TITLE}}": templateData.title,
+    "{{EMAIL}}": data.email || "N/A",
+    "{{WHATSAPP}}": data.whatsapp || "N/A",
+    "{{NATIONALITY}}": data.nacionalidad || "N/A",
+    "{{DRIVER_LICENSE}}": license,
+    "{{LOCATION}}": data.pais_residencia || "Malta",
+    "{{LINKEDIN}}": linkedinHtml,
+    "{{LANGUAGES}}": languagesHtml,
+    "{{PROFESSIONAL_SKILLS}}": skillsHtml,
+    "{{HIGHLIGHTS}}": highlightsHtml,
+    "{{CERTIFICATES}}": certificatesHtml,
+    "{{PROFILE}}": profileText,
+    "{{SUMMARY}}": summaryText,
     "{{ACHIEVEMENTS}}": achievementsHtml,
+    "{{CORE_COMPETENCIES}}": competenciesHtml,
+    "{{EXPERIENCE}}": experienceHtml,
+    "{{EDUCATION}}": educationHtml,
+    "{{ADDITIONAL_INFO}}": infoGridHtml,
+    "{{TAGLINE}}": tagline,
   };
 
   for (const [key, value] of Object.entries(replacements)) {
@@ -881,7 +1001,7 @@ function generateCVHtml(
 }
 
 // ============================================
-// GENERAR HTML DE LA COVER LETTER - PLANTILLA PREMIUM
+// GENERAR HTML DE LA COVER LETTER - PLANTILLA PREMIUM V2
 // ============================================
 
 function generateCoverHtml(
@@ -896,7 +1016,7 @@ function generateCoverHtml(
   company: Company
 ): string {
   let template = readTemplate("premium-cover-letter.html");
-  
+
   const sector = data.sectores ? data.sectores.split(",")[0]?.trim()?.toLowerCase() : "default";
   const templateData = SECTOR_TEMPLATES[sector] || SECTOR_TEMPLATES.default;
 
@@ -907,27 +1027,58 @@ function generateCoverHtml(
     year: "numeric",
   });
 
-  const greeting = "Dear Hiring Manager,";
-  const cvData = buildCVDataFromSupabase(data, company);
+  // --- Dividir nombre en First y Last ---
+  const nameParts = (data.full_name || "Candidate").trim().split(" ");
+  const firstName = nameParts[0] || "Candidate";
+  const lastName = nameParts.slice(1).join(" ") || "";
 
+  // --- PHOTO HTML ---
+  const initials = getInitials(data.full_name);
+  const photoHtml = data.photo_url 
+    ? `<img src="${data.photo_url}" alt="${firstName} ${lastName}">` 
+    : `<span class="initials">${initials}</span>`;
+
+  // --- DRIVER LICENSE ---
+  const license = getDriverLicenseLabel(data.carnet_conducir || "");
+
+  // --- COMPANY SECTION (opcional) ---
+  const companySection = company.name ? `
+    <div class="company">
+      <strong>${company.name}</strong><br />
+      <div class="department">${company.department || "Human Resources Department"}</div>
+      <div class="address-line">${company.address || ""}</div>
+    </div>
+  ` : "";
+
+  // --- SIGNATURE IMAGE (opcional) ---
+  const signatureImage = data.signature_image ? `
+    <div class="signature-image">
+      <img src="${data.signature_image}" alt="Signature">
+    </div>
+  ` : "";
+
+  // ============================================
+  // REEMPLAZAR TODAS LAS VARIABLES
+  // ============================================
   const replacements: Record<string, string> = {
-    "{{NAME}}": cvData.name,
+    "{{PHOTO_HTML}}": photoHtml,
+    "{{FIRST_NAME}}": firstName,
+    "{{LAST_NAME}}": lastName,
     "{{TITLE}}": templateData.title,
-    "{{EMAIL}}": cvData.email,
-    "{{WHATSAPP}}": cvData.whatsapp,
-    "{{NATIONALITY}}": cvData.nationality,
-    "{{DRIVER_LICENSE}}": cvData.driverLicense,
+    "{{EMAIL}}": data.email || "N/A",
+    "{{WHATSAPP}}": data.whatsapp || "N/A",
+    "{{NATIONALITY}}": data.nacionalidad || "N/A",
+    "{{DRIVER_LICENSE}}": license,
+    "{{LOCATION}}": data.pais_residencia || "Malta",
     "{{DATE}}": dateStr,
-    "{{COMPANY}}": company.name,
-    "{{COMPANY_ADDRESS}}": company.address,
-    "{{COMPANY_CITY}}": company.city,
-    "{{DEPARTMENT}}": company.department,
-    "{{GREETING}}": greeting,
+    "{{COMPANY_SECTION}}": companySection,
+    "{{GREETING}}": "Dear Hiring Manager,",
     "{{INTRODUCTION}}": content.introduction || "",
     "{{BODY_1}}": content.body1 || "",
     "{{BODY_2}}": content.body2 || "",
     "{{BODY_3}}": content.body3 || "",
     "{{CLOSING}}": content.closing || "",
+    "{{SIGNATURE_IMAGE}}": signatureImage,
   };
 
   for (const [key, value] of Object.entries(replacements)) {
@@ -1007,14 +1158,6 @@ export default async function handler(
       anos_experiencia: validateExperienceYears(application.anos_experiencia),
       experiencia_laboral: validateWorkExperience(application.experiencia_laboral),
     };
-
-    // ✅ Normalizar campos de forma segura
-    const passport = normalizePassport(application.pasaporte_valido);
-    const video = normalizeVideo(application.entrevista_video);
-    const workPermit = normalizeWorkPermit(application.permiso_trabajo);
-    const relocate = normalizeRelocate(application.reubicacion);
-    const license = getDriverLicenseLabel(application.carnet_conducir || "");
-    const availability = getAvailabilityLabel(application.disponibilidad_inicio || "inmediato");
 
     if (validatedData.fecha_nacimiento === null && application.fecha_nacimiento) {
       console.warn(`⚠️ Invalid birthdate corrected: ${application.fecha_nacimiento} -> NULL`);
@@ -1117,11 +1260,6 @@ export default async function handler(
       worker_status: "ready",
       company_name: selectedCompany.name,
       company_city: selectedCompany.city,
-      // ✅ Guardar valores normalizados
-      pasaporte_valido_normalizado: passport,
-      entrevista_video_normalizado: video,
-      permiso_trabajo_normalizado: workPermit,
-      reubicacion_normalizado: relocate,
     };
 
     if (application.photo_url) {
