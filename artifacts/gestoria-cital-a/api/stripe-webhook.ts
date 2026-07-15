@@ -74,10 +74,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const cvUrl = metadata.cvUrl || "";
     const photoUrl = metadata.photoUrl || "";
     
-    const pasaporteValido = metadata.pasaporteValido || "";
-    const entrevistaVideo = metadata.entrevistaVideo || "";
-    const disponibilidadInicio = metadata.disponibilidadInicio || "";
-    const plan = metadata.plan || "monthly";
+  const pasaporteValido = metadata.pasaporteValido === "Sí";
+const entrevistaVideo = metadata.entrevistaVideo === "Sí";
+const tieneCV = metadata.tieneCV === "Sí";
 
     // ✅ INSERT CORREGIDO - SIN plan_start_date y plan_end_date
     const { data, error } = await supabase
