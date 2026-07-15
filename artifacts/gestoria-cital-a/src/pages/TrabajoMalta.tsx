@@ -45,7 +45,7 @@ type ProfileRow = {
   nie: string | null;
 };
 
-// ✅ Tipo actualizado - experienciaLaboral → profesion
+// ✅ Tipo actualizado con documentos opcionales
 type MaltaFormData = {
   fullName: string;
   whatsapp: string;
@@ -63,7 +63,6 @@ type MaltaFormData = {
   arabe_nivel: string;
   aleman_nivel: string;
   
-  // ✅ Cambiado: experienciaLaboral → profesion
   profesion: string;
   añosExperiencia: string;
   estudios: string;
@@ -78,6 +77,10 @@ type MaltaFormData = {
   tieneCV: "Sí" | "No";
   cvFile: File | null;
   cvUrl: string;
+  
+  // ✅ Documentos opcionales
+  photoUrl: string;
+  pdfUrl: string;
   
   // Preguntas importantes
   pasaporteValido: "Sí" | "No";
@@ -157,6 +160,8 @@ function OfficialBrowserBox({
   const isEn = language === "en";
   const { toast } = useToast();
   const [uploadingCV, setUploadingCV] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [uploadingPdf, setUploadingPdf] = useState(false);
   const [progressSteps] = useState([
     isMa ? "✅ تم الدفع" : isEn ? "✅ Payment received" : "✅ Pago recibido",
     isMa ? "⏳ إنشاء السيرة الذاتية" : isEn ? "⏳ Creating CV" : "⏳ Creando CV",
@@ -246,33 +251,28 @@ function OfficialBrowserBox({
     ? "Job search service in Malta using Artificial Intelligence. Fill in the form and we will find the right job for you."
     : "Servicio de búsqueda de empleo en Malta con Inteligencia Artificial. Rellena el formulario y nosotros buscamos el trabajo adecuado para ti.";
 
-  // ✅ Función para subir CV a Supabase Storage (ahora se usa antes del pago)
-  const uploadCVToSupabase = async (file: File): Promise<string> => {
-    try {
-      const timestamp = Date.now();
-      const fileName = `cv_${timestamp}_${file.name.replace(/[^a-zA-Z0-9.]/g, "_")}`;
-      
-      const { data, error } = await supabase.storage
-        .from("malta-documents")
-        .upload(fileName, file, {
-          cacheControl: "3600",
-          upsert: true,
-        });
+  // ✅ Función para subir archivos a Supabase Storage
+  const uploadFileToSupabase = async (file: File, prefix: string): Promise<string> => {
+    const timestamp = Date.now();
+    const fileName = `${prefix}_${timestamp}_${file.name.replace(/[^a-zA-Z0-9.]/g, "_")}`;
+    
+    const { data, error } = await supabase.storage
+      .from("malta-documents")
+      .upload(fileName, file, {
+        cacheControl: "3600",
+        upsert: true,
+      });
 
-      if (error) throw error;
+    if (error) throw error;
 
-      const { data: publicUrlData } = supabase.storage
-        .from("malta-documents")
-        .getPublicUrl(fileName);
+    const { data: publicUrlData } = supabase.storage
+      .from("malta-documents")
+      .getPublicUrl(fileName);
 
-      return publicUrlData.publicUrl;
-    } catch (error) {
-      console.error("Error uploading CV:", error);
-      throw error;
-    }
+    return publicUrlData.publicUrl;
   };
 
-  // ✅ Manejar subida de archivo CV - AHORA SUBE REALMENTE A SUPABASE
+  // ✅ Manejar subida de archivo CV
   const handleCVUpload = async (file: File) => {
     if (!file) return;
     
@@ -297,10 +297,7 @@ function OfficialBrowserBox({
 
     setUploadingCV(true);
     try {
-      // ✅ SUBIR REALMENTE A SUPABASE
-      const cvUrl = await uploadCVToSupabase(file);
-      
-      // ✅ Guardar URL en el estado
+      const cvUrl = await uploadFileToSupabase(file, "cv");
       onFormChange("cvUrl", cvUrl);
       onFormChange("cvFile", file);
       
@@ -317,6 +314,93 @@ function OfficialBrowserBox({
       });
     } finally {
       setUploadingCV(false);
+    }
+  };
+
+  // ✅ Manejar subida de foto
+  const handlePhotoUpload = async (file: File) => {
+    if (!file) return;
+    
+    const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
+    if (!validTypes.includes(file.type)) {
+      toast({
+        title: isMa ? "خطأ" : isEn ? "Error" : "Error",
+        description: isMa ? "يرجى رفع صورة بصيغة JPG, PNG أو WEBP" : isEn ? "Please upload a JPG, PNG or WEBP image" : "Por favor sube una imagen JPG, PNG o WEBP",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: isMa ? "خطأ" : isEn ? "Error" : "Error",
+        description: isMa ? "الصورة كبيرة جداً (الحد الأقصى 5 ميجابايت)" : isEn ? "Image too large (max 5MB)" : "Imagen demasiado grande (máx 5MB)",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setUploadingPhoto(true);
+    try {
+      const photoUrl = await uploadFileToSupabase(file, "photo");
+      onFormChange("photoUrl", photoUrl);
+      
+      toast({
+        title: isMa ? "✅ تم الرفع" : isEn ? "✅ Uploaded" : "✅ Subida",
+        description: isMa ? "تم رفع الصورة بنجاح" : isEn ? "Photo uploaded successfully" : "Foto subida correctamente",
+      });
+    } catch (error) {
+      console.error("Error uploading photo:", error);
+      toast({
+        title: isMa ? "خطأ" : isEn ? "Error" : "Error",
+        description: isMa ? "حدث خطأ أثناء رفع الصورة" : isEn ? "Error uploading photo" : "Error al subir la foto",
+        variant: "destructive",
+      });
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
+
+  // ✅ Manejar subida de PDF
+  const handlePdfUpload = async (file: File) => {
+    if (!file) return;
+    
+    if (file.type !== 'application/pdf') {
+      toast({
+        title: isMa ? "خطأ" : isEn ? "Error" : "Error",
+        description: isMa ? "يرجى رفع ملف PDF" : isEn ? "Please upload a PDF file" : "Por favor sube un archivo PDF",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (file.size > 10 * 1024 * 1024) {
+      toast({
+        title: isMa ? "خطأ" : isEn ? "Error" : "Error",
+        description: isMa ? "الملف كبير جداً (الحد الأقصى 10 ميجابايت)" : isEn ? "File too large (max 10MB)" : "Archivo demasiado grande (máx 10MB)",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setUploadingPdf(true);
+    try {
+      const pdfUrl = await uploadFileToSupabase(file, "pdf");
+      onFormChange("pdfUrl", pdfUrl);
+      
+      toast({
+        title: isMa ? "✅ تم الرفع" : isEn ? "✅ Uploaded" : "✅ Subido",
+        description: isMa ? "تم رفع الملف بنجاح" : isEn ? "File uploaded successfully" : "Archivo subido correctamente",
+      });
+    } catch (error) {
+      console.error("Error uploading PDF:", error);
+      toast({
+        title: isMa ? "خطأ" : isEn ? "Error" : "Error",
+        description: isMa ? "حدث خطأ أثناء رفع الملف" : isEn ? "Error uploading file" : "Error al subir el archivo",
+        variant: "destructive",
+      });
+    } finally {
+      setUploadingPdf(false);
     }
   };
 
@@ -590,7 +674,6 @@ function OfficialBrowserBox({
                   {/* 3. EXPERIENCIA - PROFESIÓN */}
                   {/* ============================================ */}
                   
-                  {/* ✅ "¿En qué has trabajado antes?" → profesion */}
                   <div className="col-span-1 lg:col-span-2">
                     <label className="block text-white text-[13px] mb-2">
                       {isMa ? "في ماذا اشتغلت قبل؟" : isEn ? "What have you worked in before?" : "¿En qué has trabajado antes?"}
@@ -720,7 +803,7 @@ function OfficialBrowserBox({
                   </div>
 
                   {/* ============================================ */}
-                  {/* 6. CV EN INGLÉS - CON SUBIDA REAL */}
+                  {/* 6. CV EN INGLÉS */}
                   {/* ============================================ */}
                   
                   <div>
@@ -772,6 +855,92 @@ function OfficialBrowserBox({
                         {isMa ? "🤖 سنقوم بإنشاء سيرة ذاتية احترافية لك باستخدام الذكاء الاصطناعي" : isEn ? "🤖 We will create a professional CV for you using AI" : "🤖 Crearemos un CV profesional para ti con IA"}
                       </p>
                     )}
+                  </div>
+
+                  {/* ============================================ */}
+                  {/* 6.5 DOCUMENTOS OPCIONALES - NUEVO */}
+                  {/* ============================================ */}
+                  
+                  <div className="col-span-1 lg:col-span-2 mt-2 rounded-2xl border border-white/10 bg-[#060b16] p-4">
+                    <p className="text-white/70 text-[13px] font-medium mb-3 flex items-center gap-2">
+                      <Upload className="w-4 h-4 text-yellow-400" />
+                      {isMa ? "📎 وثائق إضافية (اختياري)" : isEn ? "📎 Optional Documents" : "📎 Documentos Opcionales"}
+                    </p>
+                    <p className="text-white/40 text-[11px] mb-3">
+                      {isMa 
+                        ? "يمكنك إضافة صورة شخصية أو ملف PDF إضافي (مثل شهادات، دورات، إلخ). هذه الوثائق ستُرفق مع طلبات التوظيف." 
+                        : isEn 
+                        ? "You can add a profile photo or an additional PDF (certificates, courses, etc.). These documents will be attached to your job applications."
+                        : "Puedes añadir una foto de perfil o un PDF adicional (certificados, cursos, etc.). Estos documentos se adjuntarán a tus solicitudes de empleo."}
+                    </p>
+                    
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {/* Foto opcional */}
+                      <div className="rounded-xl border border-white/10 bg-[#0a0f1a] p-3">
+                        <label className="block text-white/80 text-[12px] font-medium mb-2">
+                          {isMa ? "📷 صورة شخصية (اختياري)" : isEn ? "📷 Profile Photo (optional)" : "📷 Foto de perfil (opcional)"}
+                        </label>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="w-full text-[11px] text-white/70 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:bg-yellow-500/20 file:text-yellow-400 file:text-xs file:font-semibold hover:file:bg-yellow-500/30"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) handlePhotoUpload(file);
+                          }}
+                          disabled={uploadingPhoto}
+                        />
+                        {uploadingPhoto && (
+                          <div className="mt-2 flex items-center gap-2">
+                            <Loader2 className="w-4 h-4 text-yellow-400 animate-spin" />
+                            <span className="text-yellow-400 text-[10px]">{isMa ? "جاري الرفع..." : isEn ? "Uploading..." : "Subiendo..."}</span>
+                          </div>
+                        )}
+                        {formData.photoUrl && (
+                          <div className="mt-2 p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                            <p className="text-emerald-400 text-[10px] font-semibold truncate">
+                              ✅ {isMa ? "تم الرفع" : isEn ? "Uploaded" : "Subida"}
+                            </p>
+                          </div>
+                        )}
+                        <p className="text-white/30 text-[9px] mt-1">
+                          {isMa ? "JPG, PNG أو WEBP - حد أقصى 5 ميجابايت" : isEn ? "JPG, PNG or WEBP - max 5MB" : "JPG, PNG o WEBP - máx 5MB"}
+                        </p>
+                      </div>
+                      
+                      {/* PDF opcional */}
+                      <div className="rounded-xl border border-white/10 bg-[#0a0f1a] p-3">
+                        <label className="block text-white/80 text-[12px] font-medium mb-2">
+                          {isMa ? "📄 ملف PDF إضافي (اختياري)" : isEn ? "📄 Additional PDF (optional)" : "📄 PDF adicional (opcional)"}
+                        </label>
+                        <input
+                          type="file"
+                          accept=".pdf"
+                          className="w-full text-[11px] text-white/70 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:bg-yellow-500/20 file:text-yellow-400 file:text-xs file:font-semibold hover:file:bg-yellow-500/30"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) handlePdfUpload(file);
+                          }}
+                          disabled={uploadingPdf}
+                        />
+                        {uploadingPdf && (
+                          <div className="mt-2 flex items-center gap-2">
+                            <Loader2 className="w-4 h-4 text-yellow-400 animate-spin" />
+                            <span className="text-yellow-400 text-[10px]">{isMa ? "جاري الرفع..." : isEn ? "Uploading..." : "Subiendo..."}</span>
+                          </div>
+                        )}
+                        {formData.pdfUrl && (
+                          <div className="mt-2 p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                            <p className="text-emerald-400 text-[10px] font-semibold truncate">
+                              ✅ {isMa ? "تم الرفع" : isEn ? "Uploaded" : "Subido"}
+                            </p>
+                          </div>
+                        )}
+                        <p className="text-white/30 text-[9px] mt-1">
+                          {isMa ? "PDF - حد أقصى 10 ميجابايت" : isEn ? "PDF - max 10MB" : "PDF - máx 10MB"}
+                        </p>
+                      </div>
+                    </div>
                   </div>
 
                   {/* ============================================ */}
@@ -964,7 +1133,6 @@ function OfficialBrowserBox({
                       </label>
                     </div>
 
-                    {/* ✅ Texto de privacidad adicional */}
                     <p className="text-white/30 text-[10px] text-center mb-3">
                       {isMa
                         ? "🔒 سيتم مشاركة معلوماتك فقط مع الشركات ووكالات التوظيف في مالطا للبحث عن عمل."
@@ -973,7 +1141,6 @@ function OfficialBrowserBox({
                         : "🔒 Tu información solo será compartida con empresas y agencias de empleo en Malta para buscar trabajo."}
                     </p>
 
-                    {/* ✅ Texto de confianza antes del botón */}
                     <div className="mb-4 p-3 rounded-xl border border-yellow-500/20 bg-yellow-500/5">
                       <p className="text-yellow-400 text-[11px] sm:text-[12px] leading-relaxed text-center">
                         {isMa
@@ -1073,7 +1240,7 @@ export default function TrabajoMalta() {
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<"weekly" | "monthly">("monthly");
   
-  // ✅ FormData - actualizado
+  // ✅ FormData - actualizado con documentos opcionales
   const [formData, setFormData] = useState<MaltaFormData>({
     fullName: "",
     whatsapp: "+34 ",
@@ -1091,7 +1258,6 @@ export default function TrabajoMalta() {
     arabe_nivel: "",
     aleman_nivel: "",
     
-    // ✅ Cambiado: experienciaLaboral → profesion
     profesion: "",
     añosExperiencia: "",
     estudios: "",
@@ -1103,6 +1269,10 @@ export default function TrabajoMalta() {
     tieneCV: "Sí",
     cvFile: null,
     cvUrl: "",
+    
+    // ✅ Documentos opcionales
+    photoUrl: "",
+    pdfUrl: "",
     
     pasaporteValido: "Sí",
     entrevistaVideo: "Sí",
@@ -1582,7 +1752,6 @@ export default function TrabajoMalta() {
           arabe_nivel: formData.arabe_nivel,
           aleman_nivel: formData.aleman_nivel,
           
-          // ✅ Cambiado: experienciaLaboral → profesion
           profesion: formData.profesion,
           añosExperiencia: formData.añosExperiencia,
           estudios: formData.estudios,
@@ -1593,15 +1762,18 @@ export default function TrabajoMalta() {
           carnetConducir: formData.carnetConducir,
           tieneCV: formData.tieneCV,
           
-          // ✅ Añadido: cv_url si existe
+          // ✅ CV URL si existe
           cv_url: formData.cvUrl || "",
+          
+          // ✅ Documentos opcionales
+          photo_url: formData.photoUrl || "",
+          pdf_url: formData.pdfUrl || "",
           
           pasaporteValido: formData.pasaporteValido,
           entrevistaVideo: formData.entrevistaVideo,
           
           disponibilidadInicio: formData.disponibilidadInicio,
           
-          // ✅ Añadido: worker_status
           worker_status: "waiting",
         }),
       });
