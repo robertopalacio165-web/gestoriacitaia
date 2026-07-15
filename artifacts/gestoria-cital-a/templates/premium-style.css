@@ -16,7 +16,7 @@ html {
 }
 
 body {
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: 'Inter', sans-serif;
   color: #222;
   background: #ffffff;
   -webkit-font-smoothing: antialiased;
@@ -31,24 +31,24 @@ body {
 }
 
 .sidebar {
-  width: 34%;
-  background: #0f3d56;
+  width: 35%;
+  background: #071b47;
   color: white;
   padding: 35px 25px;
 }
 
 .content {
-  width: 66%;
-  padding: 40px;
+  width: 65%;
+  padding: 45px 45px 35px;
   background: white;
 }
 
 .photo {
-  width: 160px;
-  height: 160px;
+  width: 180px;
+  height: 180px;
   border-radius: 50%;
   overflow: hidden;
-  border: 6px solid white;
+  border: 5px solid white;
   margin: auto;
   margin-bottom: 25px;
 }
@@ -61,25 +61,34 @@ body {
 }
 
 .name {
-  font-size: 34px;
-  font-weight: bold;
-  color: #0f3d56;
+  font-size: 46px;
+  font-weight: 900;
+  letter-spacing: -1px;
+  text-transform: uppercase;
+  color: #071b47;
   margin-bottom: 5px;
 }
 
+.name .lastname {
+  color: #2d7d46;
+}
+
 .job {
-  font-size: 18px;
+  font-size: 17px;
+  letter-spacing: 4px;
+  text-transform: uppercase;
   color: #666;
+  font-weight: 500;
   margin-bottom: 30px;
 }
 
 .side-title {
-  font-size: 18px;
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: 2px;
   text-transform: uppercase;
-  font-weight: bold;
   margin-top: 30px;
   margin-bottom: 12px;
-  letter-spacing: 1px;
   border-bottom: 2px solid rgba(255, 255, 255, 0.35);
   padding-bottom: 6px;
 }
@@ -91,14 +100,16 @@ body {
 }
 
 .section {
-  margin-bottom: 28px;
+  margin-bottom: 34px;
 }
 
 .section-title {
-  font-size: 22px;
-  color: #0f3d56;
-  font-weight: bold;
-  border-bottom: 2px solid #0f3d56;
+  font-size: 20px;
+  font-weight: 800;
+  color: #071b47;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  border-bottom: 2px solid #071b47;
   padding-bottom: 8px;
   margin-bottom: 18px;
 }
@@ -135,20 +146,21 @@ body {
 .skill-name {
   margin-bottom: 5px;
   font-size: 14px;
+  font-weight: 600;
 }
 
 .bar {
   width: 100%;
-  height: 8px;
+  height: 6px;
   background: #d8d8d8;
   border-radius: 20px;
 }
 
 .bar span {
   display: block;
-  height: 8px;
+  height: 6px;
   border-radius: 20px;
-  background: white;
+  background: #071b47;
 }
 
 .language {
@@ -201,7 +213,7 @@ li {
   display: inline-block;
   padding: 6px 12px;
   border-radius: 20px;
-  background: #0f3d56;
+  background: #071b47;
   color: white;
   font-size: 12px;
   margin-top: 8px;
