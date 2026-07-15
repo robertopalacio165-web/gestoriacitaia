@@ -73,7 +73,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     
     const cvUrl = metadata.cvUrl || "";
     const photoUrl = metadata.photoUrl || "";
-    const pdfUrl = metadata.pdfUrl || "";
+    // const pdfUrl = metadata.pdfUrl || "";  // ❌ Comentado si no existe la columna
     
     const pasaporteValido = metadata.pasaporteValido || "";
     const entrevistaVideo = metadata.entrevistaVideo || "";
@@ -89,7 +89,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       endDate.setMonth(endDate.getMonth() + 1);
     }
 
-    // ✅ INSERT CORREGIDO - SIN payment_status
+    // ✅ INSERT CORREGIDO - SIN pdf_url
     const { data, error } = await supabase
       .from("malta_applications")
       .insert({
@@ -114,7 +114,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         tiene_cv: tieneCV,
         cv_url: cvUrl,
         photo_url: photoUrl,
-        pdf_url: pdfUrl,
+        // pdf_url: pdfUrl,  // ❌ Eliminado - columna no existe
         pasaporte_valido: pasaporteValido,
         entrevista_video: entrevistaVideo,
         disponibilidad_inicio: disponibilidadInicio,
