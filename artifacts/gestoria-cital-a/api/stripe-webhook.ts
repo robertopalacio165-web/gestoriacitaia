@@ -1,5 +1,6 @@
 import Stripe from "stripe";
 import { createClient } from "@supabase/supabase-js";
+import type { VercelRequest, VercelResponse } from "@vercel/node";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
   apiVersion: "2025-08-27.basil",
@@ -10,7 +11,14 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-export default async function handler(req: any, res: any) {
+// ✅ DESACTIVAR el parser de body de Vercel para este endpoint
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};
+
+export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
@@ -18,10 +26,18 @@ export default async function handler(req: any, res: any) {
   const sig = req.headers["stripe-signature"] as string;
   const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
+  if (!endpointSecret) {
+    console.error("❌ STRIPE_WEBHOOK_SECRET no configurado");
+    return res.status(500).json({ error: "Webhook secret not configured" });
+  }
+
+  // ✅ LEER EL RAW BODY COMO STRING
+  const rawBody = await getRawBody(req);
+
   let event: Stripe.Event;
 
   try {
-    event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret!);
+    event = stripe.webhooks.constructEvent(rawBody, sig, endpointSecret);
   } catch (err: any) {
     console.error("❌ Webhook signature verification failed:", err.message);
     return res.status(400).json({ error: `Webhook Error: ${err.message}` });
@@ -151,4 +167,20 @@ export default async function handler(req: any, res: any) {
   }
 
   return res.status(200).json({ received: true });
+}
+
+// ✅ FUNCIÓN PARA LEER EL RAW BODY
+async function getRawBody(req: VercelRequest): Promise<string> {
+  return new Promise((resolve, reject) => {
+    let body = "";
+    req.on("data", (chunk: Buffer) => {
+      body += chunk.toString();
+    });
+    req.on("end", () => {
+      resolve(body);
+    });
+    req.on("error", (err) => {
+      reject(err);
+    });
+  });
 }
