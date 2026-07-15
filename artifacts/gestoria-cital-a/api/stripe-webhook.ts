@@ -73,23 +73,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     
     const cvUrl = metadata.cvUrl || "";
     const photoUrl = metadata.photoUrl || "";
-    // const pdfUrl = metadata.pdfUrl || "";  // ❌ Comentado si no existe la columna
     
     const pasaporteValido = metadata.pasaporteValido || "";
     const entrevistaVideo = metadata.entrevistaVideo || "";
     const disponibilidadInicio = metadata.disponibilidadInicio || "";
     const plan = metadata.plan || "monthly";
 
-    const now = new Date();
-    const startDate = now.toISOString();
-    const endDate = new Date(now);
-    if (plan === "weekly") {
-      endDate.setDate(endDate.getDate() + 7);
-    } else {
-      endDate.setMonth(endDate.getMonth() + 1);
-    }
-
-    // ✅ INSERT CORREGIDO - SIN pdf_url
+    // ✅ INSERT CORREGIDO - SIN plan_start_date y plan_end_date
     const { data, error } = await supabase
       .from("malta_applications")
       .insert({
@@ -114,13 +104,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         tiene_cv: tieneCV,
         cv_url: cvUrl,
         photo_url: photoUrl,
-        // pdf_url: pdfUrl,  // ❌ Eliminado - columna no existe
         pasaporte_valido: pasaporteValido,
         entrevista_video: entrevistaVideo,
         disponibilidad_inicio: disponibilidadInicio,
         plan: plan,
-        plan_start_date: startDate,
-        plan_end_date: endDate.toISOString(),
         stripe_session_id: session.id,
         worker_status: "waiting",
         created_at: new Date().toISOString(),
