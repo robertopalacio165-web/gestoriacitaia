@@ -141,16 +141,56 @@ interface Company {
 }
 
 // ============================================
-// VALIDACIONES DE DATOS - CORREGIDO
+// FUNCIONES DE NORMALIZACIÓN - CORREGIDAS
+// ============================================
+
+function normalizePassport(value: string | null | undefined): string {
+  if (!value) return "Not available";
+  const normalized = String(value).toLowerCase().trim();
+  if (normalized === "sí" || normalized === "si" || normalized === "yes" || normalized === "true" || normalized === "1") {
+    return "Available";
+  }
+  return "Not available";
+}
+
+function normalizeVideo(value: string | null | undefined): string {
+  if (!value) return "Not available";
+  const normalized = String(value).toLowerCase().trim();
+  if (normalized === "sí" || normalized === "si" || normalized === "yes" || normalized === "true" || normalized === "1") {
+    return "Available";
+  }
+  return "Not available";
+}
+
+function normalizeWorkPermit(value: string | null | undefined): string {
+  if (!value) return "Not available";
+  const normalized = String(value).toLowerCase().trim();
+  if (normalized === "sí" || normalized === "si" || normalized === "yes" || normalized === "true" || normalized === "1") {
+    return "Eligible";
+  }
+  if (normalized === "en tramite" || normalized === "en_trámite" || normalized === "in_process") {
+    return "In process";
+  }
+  return "Not eligible";
+}
+
+function normalizeRelocate(value: string | null | undefined): string {
+  if (!value) return "Yes";
+  const normalized = String(value).toLowerCase().trim();
+  if (normalized === "sí" || normalized === "si" || normalized === "yes" || normalized === "true" || normalized === "1") {
+    return "Yes";
+  }
+  return "No";
+}
+
+// ============================================
+// VALIDACIONES DE DATOS
 // ============================================
 
 function validateDate(dateValue: string | null): string | null {
   if (!dateValue) return null;
   
-  // Limpiar caracteres extraños
   const cleaned = dateValue.replace(/[^0-9\-]/g, '');
-  
-  // Intentar parsear
   const parts = cleaned.split('-');
   if (parts.length !== 3) return null;
   
@@ -158,12 +198,10 @@ function validateDate(dateValue: string | null): string | null {
   const month = parseInt(parts[1]);
   const day = parseInt(parts[2]);
   
-  // Validar rango razonable (1900-2010 para fechas de nacimiento)
   if (year < 1900 || year > 2010) return null;
   if (month < 1 || month > 12) return null;
   if (day < 1 || day > 31) return null;
   
-  // Validar fecha real
   const date = new Date(year, month - 1, day);
   if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) {
     return null;
@@ -178,7 +216,6 @@ function validateExperienceYears(value: string | null): string {
   const validValues = ["sin_experiencia", "menos_1", "1_2", "3_5", "mas_5"];
   if (validValues.includes(value)) return value;
   
-  // Intentar mapear valores comunes
   const map: Record<string, string> = {
     "0": "sin_experiencia",
     "1": "menos_1",
@@ -204,7 +241,7 @@ function validateWorkExperience(value: string | null): string {
 }
 
 // ============================================
-// FUNCIONES DE UTILIDAD - DATOS DE SUPABASE
+// FUNCIONES DE UTILIDAD
 // ============================================
 
 function getInitials(name: string): string {
@@ -263,51 +300,33 @@ function getDriverLicenseLabel(value: string): string {
   return `Category ${value}`;
 }
 
-function normalizePassport(value: string): string {
-  if (!value) return "Not available";
-  const normalized = value.toLowerCase().trim();
-  if (normalized === "sí" || normalized === "si" || normalized === "yes" || normalized === "true" || normalized === "1") {
-    return "Available";
-  }
-  return "Not available";
-}
-
-function normalizeVideo(value: string): string {
-  if (!value) return "Not available";
-  const normalized = value.toLowerCase().trim();
-  if (normalized === "sí" || normalized === "si" || normalized === "yes" || normalized === "true" || normalized === "1") {
-    return "Available";
-  }
-  return "Not available";
-}
-
-function normalizeWorkPermit(value: string): string {
-  if (!value) return "Not available";
-  const normalized = value.toLowerCase().trim();
-  if (normalized === "sí" || normalized === "si" || normalized === "yes" || normalized === "true" || normalized === "1") {
-    return "Eligible";
-  }
-  if (normalized === "en tramite" || normalized === "en_trámite" || normalized === "in_process") {
-    return "In process";
-  }
-  return "Not eligible";
-}
-
-function normalizeRelocate(value: string): string {
-  if (!value) return "Yes";
-  const normalized = value.toLowerCase().trim();
-  if (normalized === "sí" || normalized === "si" || normalized === "yes" || normalized === "true" || normalized === "1") {
-    return "Yes";
-  }
-  return "No";
-}
+// ============================================
+// MAPA DE IDIOMAS
+// ============================================
+const LANGUAGE_COLUMNS: Record<string, string> = {
+  arabe: "arabe_nivel",
+  árabe: "arabe_nivel",
+  español: "espanol_nivel",
+  espanol: "espanol_nivel",
+  francés: "frances_nivel",
+  frances: "frances_nivel",
+  italiano: "italiano_nivel",
+  alemán: "aleman_nivel",
+  aleman: "aleman_nivel",
+  inglés: "ingles_nivel",
+  ingles: "ingles_nivel",
+  portugues: "portugues_nivel",
+  portugués: "portugues_nivel",
+  ruso: "ruso_nivel",
+  chino: "chino_nivel",
+  mandarin: "chino_nivel",
+};
 
 // ============================================
 // CONSTRUIR DATOS PARA LA PLANTILLA DESDE SUPABASE
 // ============================================
 
 function buildCVDataFromSupabase(data: any, company: Company): {
-  // Datos personales
   name: string;
   title: string;
   whatsapp: string;
@@ -320,23 +339,11 @@ function buildCVDataFromSupabase(data: any, company: Company): {
   workPermit: string;
   relocate: string;
   photoHtml: string;
-  
-  // Idiomas - DETECCIÓN AUTOMÁTICA
   languagesHtml: string;
-  
-  // Profile Highlights
   profileHighlightsHtml: string;
-  
-  // Certificates
   certificatesHtml: string;
-  
-  // Información adicional para la grid
   infoGridHtml: string;
-  
-  // Competencias desde el sector
   competenciesHtml: string;
-  
-  // Tagline / Summary
   tagline: string;
 } {
   const sector = data.sectores ? data.sectores.split(",")[0]?.trim()?.toLowerCase() : "default";
@@ -350,33 +357,17 @@ function buildCVDataFromSupabase(data: any, company: Company): {
   const workPermit = normalizeWorkPermit(data.permiso_trabajo);
   const relocate = normalizeRelocate(data.reubicacion);
 
-  // --- IDIOMAS - DETECCIÓN AUTOMÁTICA ---
-  // No necesitamos un mapa fijo. Detectamos automáticamente las columnas.
+  // --- IDIOMAS ---
   let languagesHtml = "";
   if (data.idiomas) {
     const idiomas = data.idiomas.split(",").map((i: string) => i.trim());
     for (const idioma of idiomas) {
-      // Intentar con el nombre exacto (normalizado)
-      const cleanIdioma = idioma.toLowerCase()
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '') // Eliminar tildes
-        .replace(/[^a-z]/g, ''); // Solo letras
-      
-      // Buscar en el objeto data cualquier columna que termine en "_nivel" y contenga el idioma
-      let nivel = "";
-      for (const [key, value] of Object.entries(data)) {
-        if (key.endsWith('_nivel')) {
-          const keyClean = key.replace('_nivel', '').toLowerCase()
-            .normalize('NFD')
-            .replace(/[\u0300-\u036f]/g, '');
-          if (keyClean === cleanIdioma) {
-            nivel = value as string || "";
-            break;
-          }
-        }
-      }
-      
+      const idiomaLower = idioma.toLowerCase();
+      const columnName = LANGUAGE_COLUMNS[idiomaLower];
+      const nivelKey = columnName || `${idiomaLower}_nivel`;
+      const nivel = data[nivelKey] || "";
       const levelLabel = getLanguageLevel(nivel);
+      
       languagesHtml += `
         <div class="lang-item">
           <strong>${idioma}</strong> <span class="level">${levelLabel}</span>
@@ -385,7 +376,6 @@ function buildCVDataFromSupabase(data: any, company: Company): {
     }
   }
 
-  // Si no hay idiomas, usar un valor por defecto
   if (!languagesHtml) {
     languagesHtml = `
       <div class="lang-item">
@@ -590,8 +580,6 @@ function getPremiumCVPrompt(data: any, company: Company): string {
   const passport = normalizePassport(data.pasaporte_valido);
   const video = normalizeVideo(data.entrevista_video);
   const workPermit = normalizeWorkPermit(data.permiso_trabajo);
-  
-  // Experiencia laboral real del usuario (si existe)
   const userExperience = validateWorkExperience(data.experiencia_laboral);
 
   return `
@@ -822,16 +810,13 @@ function generateCVHtml(
 ): string {
   let template = readTemplate("premium-cv.html");
   
-  // Construir datos desde Supabase
   const cvData = buildCVDataFromSupabase(data, company);
   
-  // Construir Achievements
   let achievementsHtml = "";
   for (const ach of content.achievements) {
     achievementsHtml += `<li>${ach}</li>`;
   }
   
-  // Construir Experience - GPT solo provee los bullets, HTML controla la estructura
   let experienceHtml = "";
   if (content.experience && content.experience.length > 0) {
     const expBullets = content.experience.map(exp => `<li>${exp}</li>`).join("");
@@ -850,7 +835,6 @@ function generateCVHtml(
     `;
   }
   
-  // Construir Education
   const educationLabel = getEducationLabel(data.estudios || "");
   const educationHtml = `
     <div class="education-item">
@@ -861,7 +845,6 @@ function generateCVHtml(
     </div>
   `;
 
-  // Reemplazar variables en la plantilla
   const replacements: Record<string, string> = {
     "{{PHOTO_HTML}}": cvData.photoHtml,
     "{{NAME}}": cvData.name,
@@ -917,7 +900,6 @@ function generateCoverHtml(
   const sector = data.sectores ? data.sectores.split(",")[0]?.trim()?.toLowerCase() : "default";
   const templateData = SECTOR_TEMPLATES[sector] || SECTOR_TEMPLATES.default;
 
-  // Fecha actual formateada
   const today = new Date();
   const dateStr = today.toLocaleDateString("en-GB", {
     day: "numeric",
@@ -925,13 +907,9 @@ function generateCoverHtml(
     year: "numeric",
   });
 
-  // Saludo FIJO - más profesional y consistente
   const greeting = "Dear Hiring Manager,";
-
-  // Datos desde Supabase
   const cvData = buildCVDataFromSupabase(data, company);
 
-  // Reemplazar variables en la plantilla
   const replacements: Record<string, string> = {
     "{{NAME}}": cvData.name,
     "{{TITLE}}": templateData.title,
@@ -1030,7 +1008,14 @@ export default async function handler(
       experiencia_laboral: validateWorkExperience(application.experiencia_laboral),
     };
 
-    // Si la fecha de nacimiento es inválida, la ponemos a NULL
+    // ✅ Normalizar campos de forma segura
+    const passport = normalizePassport(application.pasaporte_valido);
+    const video = normalizeVideo(application.entrevista_video);
+    const workPermit = normalizeWorkPermit(application.permiso_trabajo);
+    const relocate = normalizeRelocate(application.reubicacion);
+    const license = getDriverLicenseLabel(application.carnet_conducir || "");
+    const availability = getAvailabilityLabel(application.disponibilidad_inicio || "inmediato");
+
     if (validatedData.fecha_nacimiento === null && application.fecha_nacimiento) {
       console.warn(`⚠️ Invalid birthdate corrected: ${application.fecha_nacimiento} -> NULL`);
     }
@@ -1132,6 +1117,11 @@ export default async function handler(
       worker_status: "ready",
       company_name: selectedCompany.name,
       company_city: selectedCompany.city,
+      // ✅ Guardar valores normalizados
+      pasaporte_valido_normalizado: passport,
+      entrevista_video_normalizado: video,
+      permiso_trabajo_normalizado: workPermit,
+      reubicacion_normalizado: relocate,
     };
 
     if (application.photo_url) {
