@@ -45,18 +45,34 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const session = event.data.object as Stripe.Checkout.Session;
     const metadata = session.metadata || {};
 
+    // ✅ MEJORA: Log completo de metadata para depuración
+    console.log("=========================================");
+    console.log("📦 METADATA COMPLETA RECIBIDA:");
+    console.log(JSON.stringify(metadata, null, 2));
+    console.log("=========================================");
     console.log("✅ Checkout completado:", session.id);
-    console.log("📦 Metadata recibida:", metadata);
 
-    // Datos personales
+    // ============================================
+    // 1. DATOS PERSONALES (adaptados al nuevo formulario)
+    // ============================================
     const fullName = metadata.fullName || "";
     const whatsapp = metadata.whatsapp || "";
     const email = metadata.email || "";
-    const nacionalidad = metadata.nacionalidad || "";
-    const paisResidencia = metadata.paisResidencia || "";
+    
+    // ✅ CORREGIDO: nationality en lugar de nacionalidad
+    const nationality = metadata.nationality || "";
+    
+    // ✅ NUEVO: currentCity
+    const currentCity = metadata.currentCity || "";
+    
+    // ✅ CORREGIDO: countryResidence en lugar de paisResidencia
+    const countryResidence = metadata.countryResidence || "";
+    
     const fechaNacimiento = metadata.fechaNacimiento || "";
     
-    // Idiomas
+    // ============================================
+    // 2. IDIOMAS
+    // ============================================
     const idiomas = metadata.idiomas || "";
     const ingles_nivel = metadata.ingles_nivel || "";
     const frances_nivel = metadata.frances_nivel || "";
@@ -65,37 +81,103 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const arabe_nivel = metadata.arabe_nivel || "";
     const aleman_nivel = metadata.aleman_nivel || "";
     
-    // Experiencia
+    // ============================================
+    // 3. EXPERIENCIA
+    // ============================================
     const profesion = metadata.profesion || "";
     const añosExperiencia = metadata.añosExperiencia || "";
-    const estudios = metadata.estudios || "";
+    
+    // ✅ NUEVO: education_level
+    const educationLevel = metadata.education_level || "";
+    
     const sectores = metadata.sectores || "";
     
-    // Carnet
+    // ============================================
+    // 4. CARNET
+    // ============================================
     const carnetConducir = metadata.carnetConducir || "";
     
-    // ✅ Convertir "Sí"/"No" a boolean - UNA SOLA VEZ
-    const tieneCV = metadata.tieneCV === "Sí";
-    const pasaporteValido = metadata.pasaporteValido === "Sí";
-    const entrevistaVideo = metadata.entrevistaVideo === "Sí";
+    // ============================================
+    // 5. PREFERENCIAS (NUEVOS)
+    // ============================================
+    const preferredPosition = metadata.preferred_position || "";
+    const workPreference = metadata.work_preference || "";
+    const willingToRelocate = metadata.willing_to_relocate === "Yes";
     
-    // URLs
+    // ============================================
+    // 6. CV Y DOCUMENTOS
+    // ============================================
+    // ✅ CORREGIDO: El formulario envía "Sí" o "No" en español
+    // Si el formulario cambia a inglés, cambiar aquí también
+    const tieneCV = metadata.tieneCV === "Sí";
+    
     const cvUrl = metadata.cvUrl || "";
     const photoUrl = metadata.photoUrl || "";
+    const pdfUrl = metadata.pdfUrl || "";
     
-    const disponibilidadInicio = metadata.disponibilidadInicio || "";
+    // ============================================
+    // 7. PLAN
+    // ============================================
     const plan = metadata.plan || "monthly";
 
-    // ✅ INSERT CORREGIDO
+    // ============================================
+    // 8. CAMPOS ELIMINADOS (ya no se usan)
+    // ============================================
+    // ❌ ELIMINADO: pasaporteValido
+    // ❌ ELIMINADO: entrevistaVideo
+    // ❌ ELIMINADO: disponibilidadInicio
+    // ❌ ELIMINADO: estudios (ahora se usa education_level)
+
+    // ============================================
+    // 9. LOG DE VERIFICACIÓN
+    // ============================================
+    console.log("📋 DATOS PROCESADOS:");
+    console.log("  - fullName:", fullName);
+    console.log("  - nationality:", nationality);
+    console.log("  - currentCity:", currentCity);
+    console.log("  - countryResidence:", countryResidence);
+    console.log("  - educationLevel:", educationLevel);
+    console.log("  - preferredPosition:", preferredPosition);
+    console.log("  - workPreference:", workPreference);
+    console.log("  - willingToRelocate:", willingToRelocate);
+    console.log("  - tieneCV:", tieneCV);
+    console.log("  - photoUrl:", photoUrl);
+    console.log("  - cvUrl:", cvUrl);
+    console.log("  - pdfUrl:", pdfUrl);
+
+    // ============================================
+    // 10. INSERT EN SUPABASE (adaptado al nuevo formulario)
+    // ============================================
+    // ⚠️ IMPORTANTE: Asegúrate de que la tabla tenga estas columnas:
+    // - nationality (antes nacionalidad)
+    // - country_residence (antes pais_residencia)
+    // - current_city (NUEVA)
+    // - education_level (NUEVA)
+    // - preferred_position (NUEVA)
+    // - work_preference (NUEVA)
+    // - willing_to_relocate (NUEVA)
+    // - pdf_url (NUEVA)
+    
     const { data, error } = await supabase
       .from("malta_applications")
       .insert({
+        // Datos personales
         full_name: fullName,
         whatsapp: whatsapp,
         email: email,
-        nacionalidad: nacionalidad,
-        pais_residencia: paisResidencia,
+        
+        // ✅ CORREGIDO: nationality
+        nationality: nationality,
+        
+        // ✅ NUEVO: current_city
+        current_city: currentCity,
+        
+        // ✅ CORREGIDO: country_residence
+        country_residence: countryResidence,
+        
         fecha_nacimiento: fechaNacimiento || null,
+        
+        // Idiomas
         idiomas: idiomas,
         ingles_nivel: ingles_nivel,
         frances_nivel: frances_nivel,
@@ -103,18 +185,34 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         espanol_nivel: espanol_nivel,
         arabe_nivel: arabe_nivel,
         aleman_nivel: aleman_nivel,
+        
+        // Experiencia
         profesion: profesion,
         anos_experiencia: añosExperiencia,
-        estudios: estudios,
+        
+        // ✅ NUEVO: education_level
+        education_level: educationLevel,
+        
         sectores: sectores,
+        
+        // Carnet
         carnet_conducir: carnetConducir,
+        
+        // ✅ NUEVAS PREFERENCIAS
+        preferred_position: preferredPosition,
+        work_preference: workPreference,
+        willing_to_relocate: willingToRelocate,
+        
+        // CV y documentos
         tiene_cv: tieneCV,
         cv_url: cvUrl,
         photo_url: photoUrl,
-        pasaporte_valido: pasaporteValido,
-        entrevista_video: entrevistaVideo,
-        disponibilidad_inicio: disponibilidadInicio,
+        pdf_url: pdfUrl,
+        
+        // Plan
         plan: plan,
+        
+        // Stripe
         stripe_session_id: session.id,
         worker_status: "waiting",
         created_at: new Date().toISOString(),
@@ -130,22 +228,37 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     console.log("✅ Registro creado en Supabase:", data.id);
+    console.log("📸 photo_url guardada:", data.photo_url);
+    console.log("📄 cv_url guardada:", data.cv_url);
+    console.log("📎 pdf_url guardada:", data.pdf_url);
+    console.log("🏙️ current_city guardada:", data.current_city);
+    console.log("📚 education_level guardada:", data.education_level);
+    console.log("💼 preferred_position guardada:", data.preferred_position);
+    console.log("🔧 work_preference guardada:", data.work_preference);
+    console.log("🔄 willing_to_relocate guardado:", data.willing_to_relocate);
+
+    // ============================================
+    // 11. LLAMAR A GENERATE-MALTA-DOCUMENTS
+    // ============================================
     try {
-  await fetch(`${process.env.NEXT_PUBLIC_URL}/api/generate-malta-documents`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      applicationId: data.id,
-    }),
-  });
+      await fetch(`${process.env.NEXT_PUBLIC_URL}/api/generate-malta-documents`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          applicationId: data.id,
+        }),
+      });
 
-  console.log("✅ Generación de documentos iniciada");
-} catch (err) {
-  console.error("❌ Error llamando generate-malta-documents:", err);
-}
+      console.log("✅ Generación de documentos iniciada");
+    } catch (err) {
+      console.error("❌ Error llamando generate-malta-documents:", err);
+    }
 
+    // ============================================
+    // 12. NOTIFICACIÓN A MAKE
+    // ============================================
     try {
       const webhookUrl = process.env.MAKE_WEBHOOK_URL;
       if (webhookUrl) {
@@ -159,6 +272,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             whatsapp: whatsapp,
             email: email,
             plan: plan,
+            nationality: nationality,
+            currentCity: currentCity,
+            preferredPosition: preferredPosition,
           }),
         });
         console.log("✅ Notificación enviada a Make");
