@@ -14,10 +14,16 @@
       box-sizing: border-box;
     }
 
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+    }
+
     body {
-      font-family: 'Inter', sans-serif;
-      color: #222;
+      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
       background: #eef2f6;
+      color: #222;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
       display: flex;
@@ -30,15 +36,15 @@
     .page {
       width: 210mm;
       height: 297mm;
-      max-height: 297mm;
       min-height: 297mm;
+      max-height: 297mm;
       background: #ffffff;
-      display: flex;
-      overflow: hidden;
-      page-break-after: avoid;
-      page-break-inside: avoid;
       border-radius: 8px;
       box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+      display: flex;
+      flex-direction: row;
+      flex-shrink: 0;
     }
 
     /* ============================================
@@ -46,9 +52,9 @@
     ============================================ */
     .sidebar {
       width: 30%;
-      background: #071b47;
-      color: white;
-      padding: 20px 16px 18px;
+      background: #10284a;
+      color: #c8d0d8;
+      padding: 28px 20px 24px;
       flex-shrink: 0;
       height: 100%;
       display: flex;
@@ -56,16 +62,17 @@
     }
 
     .sidebar .photo {
-      width: 120px;
-      height: 120px;
+      width: 130px;
+      height: 130px;
       border-radius: 50%;
-      overflow: hidden;
-      border: 3px solid rgba(255, 255, 255, 0.2);
-      margin: 0 auto 14px;
+      background: #1a2a3e;
+      margin: 0 auto 16px;
       display: flex;
       align-items: center;
       justify-content: center;
-      background: #1a2a3e;
+      overflow: hidden;
+      border: 4px solid #ffffff;
+      box-shadow: 0 0 0 4px #0d2445;
       flex-shrink: 0;
     }
 
@@ -73,11 +80,10 @@
       width: 100%;
       height: 100%;
       object-fit: cover;
-      display: block;
     }
 
     .sidebar .photo .initials {
-      font-size: 40px;
+      font-size: 44px;
       font-weight: 700;
       color: #ffffff;
       letter-spacing: 1px;
@@ -89,9 +95,9 @@
       letter-spacing: 2px;
       color: #ffffff;
       font-weight: 600;
-      margin: 14px 0 6px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-      padding-bottom: 4px;
+      margin: 16px 0 8px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding-bottom: 5px;
     }
 
     .sidebar h2:first-of-type {
@@ -99,7 +105,7 @@
     }
 
     .sidebar .contact-item {
-      font-size: 10px;
+      font-size: 11px;
       line-height: 1.5;
       color: #c0c8d8;
       margin-bottom: 2px;
@@ -111,7 +117,7 @@
     }
 
     .sidebar .highlight-list li {
-      font-size: 10px;
+      font-size: 11px;
       line-height: 1.5;
       color: #c0c8d8;
       padding: 1px 0 1px 14px;
@@ -127,7 +133,7 @@
     }
 
     .sidebar .languages .lang-item {
-      font-size: 10px;
+      font-size: 11px;
       line-height: 1.5;
       color: #c0c8d8;
     }
@@ -139,11 +145,11 @@
 
     .sidebar .languages .lang-item .level {
       color: #8a9aaa;
-      font-size: 9px;
+      font-size: 10px;
     }
 
     .sidebar .additional-info .info-item {
-      font-size: 10px;
+      font-size: 11px;
       line-height: 1.5;
       color: #c0c8d8;
     }
@@ -155,183 +161,191 @@
       min-width: 72px;
     }
 
+    .sidebar .spacer {
+      flex: 1;
+    }
+
     /* ============================================
        MAIN CONTENT - 70%
     ============================================ */
-    .content {
+    .main {
       width: 70%;
-      padding: 22px 28px 16px;
+      padding: 24px 30px 20px 30px;
       background: white;
       height: 100%;
       display: flex;
       flex-direction: column;
+      flex: 1;
     }
 
-    .content .header-block {
+    .main .header-block {
       margin-bottom: 10px;
+      flex-shrink: 0;
     }
 
-    .content .header-block .name {
-      font-size: 28px;
+    .main .header-block .name {
+      font-size: 30px;
       font-weight: 900;
       letter-spacing: -0.5px;
-      line-height: 30px;
+      line-height: 32px;
       text-transform: uppercase;
-      color: #071b47;
+      color: #0a1a2e;
       margin-bottom: 2px;
     }
 
-    .content .header-block .name .lastname {
-      color: #2d7d46;
-    }
-
-    .content .header-block .job {
-      font-size: 12px;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      color: #666;
-      font-weight: 600;
-      margin-bottom: 6px;
-    }
-
-    .content .header-block .tagline {
-      font-size: 10.5px;
-      color: #4e5560;
-      line-height: 1.3;
-      max-width: 95%;
-    }
-
-    .content .section-title {
-      font-size: 11px;
+    .main .header-block .title {
+      font-size: 13px;
+      color: #6d7077;
       font-weight: 700;
-      letter-spacing: 1px;
-      padding-bottom: 3px;
-      margin-top: 10px;
-      margin-bottom: 5px;
-      color: #071b47;
       text-transform: uppercase;
-      border-bottom: 2px solid #071b47;
+      letter-spacing: 2px;
+      margin-top: 2px;
     }
 
-    .content .section-title:first-of-type {
+    .main .header-block .tagline {
+      max-width: 95%;
+      line-height: 1.4;
+      font-size: 11px;
+      color: #4e5560;
+      margin-top: 4px;
+    }
+
+    .main h2 {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: #0a1a2e;
+      font-weight: 700;
+      border-bottom: 1px solid #10284a;
+      padding-bottom: 4px;
+      margin-top: 12px;
+      margin-bottom: 6px;
+      flex-shrink: 0;
+    }
+
+    .main h2:first-of-type {
       margin-top: 0;
     }
 
-    .content .competencies {
+    .main .competencies {
       display: flex;
       flex-wrap: wrap;
-      gap: 4px;
+      gap: 5px;
       margin-bottom: 2px;
+      flex-shrink: 0;
     }
 
-    .content .competencies span {
-      padding: 3px 10px;
+    .main .competencies span {
+      padding: 4px 10px;
       font-size: 10px;
-      font-weight: 600;
-      border-radius: 6px;
-      background: #f0f2f5;
+      font-weight: 700;
+      border-radius: 8px;
+      background: #f5f6f8;
       color: #2b2b2b;
     }
 
-    .content .experience-item {
-      margin-bottom: 7px;
-      padding-left: 12px;
-      border-left: 2px solid #071b47;
+    .main .experience-item {
+      margin-bottom: 8px;
+      padding-left: 14px;
+      border-left: 2px solid #10284a;
       position: relative;
+      flex-shrink: 0;
     }
 
-    .content .experience-item::before {
+    .main .experience-item::before {
       content: "";
       position: absolute;
       left: -5px;
-      top: 3px;
-      width: 6px;
-      height: 6px;
-      background: #071b47;
+      top: 4px;
+      width: 7px;
+      height: 7px;
+      background: #10284a;
       border-radius: 50%;
       border: 2px solid #ffffff;
-      box-shadow: 0 0 0 2px #071b47;
+      box-shadow: 0 0 0 2px #10284a;
     }
 
-    .content .experience-item:last-child {
+    .main .experience-item:last-child {
       margin-bottom: 0;
     }
 
-    .content .experience-item .exp-title {
-      font-size: 12px;
-      font-weight: 700;
+    .main .experience-item .exp-title {
+      font-size: 13px;
+      font-weight: 800;
       color: #0a1a2e;
     }
 
-    .content .experience-item .exp-company {
-      font-size: 10.5px;
+    .main .experience-item .exp-company {
+      font-size: 11px;
       font-weight: 600;
       color: #666666;
       font-style: italic;
     }
 
-    .content .experience-item .exp-description {
-      font-size: 10px;
+    .main .experience-item .exp-description {
+      font-size: 10.5px;
       color: #3a3a4a;
-      line-height: 1.3;
-      margin-top: 1px;
+      line-height: 1.35;
+      margin-top: 2px;
       padding-left: 2px;
     }
 
-    .content .experience-item .exp-description ul {
+    .main .experience-item .exp-description ul {
       list-style: none;
       padding: 0;
-      margin: 1px 0 0;
+      margin: 2px 0 0;
     }
 
-    .content .experience-item .exp-description ul li {
-      padding: 1px 0 1px 12px;
+    .main .experience-item .exp-description ul li {
+      padding: 1px 0 1px 14px;
       position: relative;
-      font-size: 10px;
-      line-height: 1.25;
+      font-size: 10.5px;
+      line-height: 1.3;
     }
 
-    .content .experience-item .exp-description ul li::before {
+    .main .experience-item .exp-description ul li::before {
       content: "—";
       position: absolute;
       left: 0;
-      color: #071b47;
+      color: #10284a;
     }
 
-    .content .education-item {
-      margin-bottom: 4px;
+    .main .education-item {
+      margin-bottom: 5px;
+      flex-shrink: 0;
     }
 
-    .content .education-item:last-child {
+    .main .education-item:last-child {
       margin-bottom: 0;
     }
 
-    .content .education-item .edu-degree {
-      font-size: 11px;
+    .main .education-item .edu-degree {
+      font-size: 12px;
       font-weight: 700;
       color: #0a1a2e;
     }
 
-    .content .skills-container {
+    .main .skills-container {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 1px 16px;
+      gap: 2px 16px;
       margin-top: 2px;
+      flex-shrink: 0;
     }
 
-    .content .skill-bar {
+    .main .skill-bar {
       margin-bottom: 3px;
     }
 
-    .content .skill-bar .skill-label {
+    .main .skill-bar .skill-label {
       font-size: 10px;
       font-weight: 600;
       color: #0a1a2e;
       display: inline-block;
-      min-width: 90px;
+      min-width: 85px;
     }
 
-    .content .skill-bar .skill-track {
+    .main .skill-bar .skill-track {
       display: inline-block;
       width: 55%;
       height: 5px;
@@ -342,44 +356,50 @@
       margin-left: 3px;
     }
 
-    .content .skill-bar .skill-track .skill-fill {
+    .main .skill-bar .skill-track .skill-fill {
       height: 100%;
-      background: #071b47;
+      background: #10284a;
       border-radius: 3px;
     }
 
-    .content .info-grid {
+    .main .info-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 0;
-      font-size: 10px;
+      font-size: 10.5px;
       color: #2b2b2b;
       line-height: 1.5;
       margin-top: 2px;
+      flex-shrink: 0;
     }
 
-    .content .info-grid .info-item {
+    .main .info-grid .info-item {
       padding: 2px 0;
       border-bottom: 1px solid #f0f2f4;
     }
 
-    .content .info-grid .info-item:nth-last-child(1),
-    .content .info-grid .info-item:nth-last-child(2) {
+    .main .info-grid .info-item:nth-last-child(1),
+    .main .info-grid .info-item:nth-last-child(2) {
       border-bottom: none;
     }
 
-    .content .info-grid .info-item strong {
+    .main .info-grid .info-item strong {
       color: #0a1a2e;
       font-weight: 600;
       display: inline-block;
       min-width: 80px;
     }
 
-    .content .personal-statement {
-      font-size: 10px;
+    .main .personal-statement {
+      font-size: 10.5px;
       color: #3a3a4a;
       line-height: 1.4;
       margin-top: 2px;
+      flex-shrink: 0;
+    }
+
+    .main .spacer {
+      flex: 1;
     }
 
     .footer {
@@ -398,10 +418,17 @@
        IMPRESIÓN
     ============================================ */
     @media print {
+      html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+
       body {
         background: #ffffff;
         padding: 0;
         margin: 0;
+        display: block;
       }
 
       .page {
@@ -422,19 +449,19 @@
         color-adjust: exact !important;
       }
 
-      .content .competencies span {
+      .main .competencies span {
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
         color-adjust: exact !important;
       }
 
-      .content .skill-bar .skill-track .skill-fill {
+      .main .skill-bar .skill-track .skill-fill {
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
         color-adjust: exact !important;
       }
 
-      .content .experience-item::before {
+      .main .experience-item::before {
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
         color-adjust: exact !important;
@@ -447,6 +474,7 @@
         min-height: auto;
         max-height: none;
         height: auto;
+        width: 100%;
       }
 
       .sidebar {
@@ -459,30 +487,34 @@
         height: 100px;
       }
 
-      .content {
+      .main {
         width: 100%;
         padding: 20px;
       }
 
-      .content .header-block .name {
+      .main .header-block .name {
         font-size: 24px;
         line-height: 26px;
       }
 
-      .content .skills-container {
+      .main .skills-container {
         grid-template-columns: 1fr;
       }
 
-      .content .info-grid {
+      .main .info-grid {
         grid-template-columns: 1fr;
       }
 
-      .content .info-grid .info-item {
+      .main .info-grid .info-item {
         border-bottom: 1px solid #f0f2f4;
       }
 
-      .content .info-grid .info-item:nth-last-child(1) {
+      .main .info-grid .info-item:nth-last-child(1) {
         border-bottom: none;
+      }
+
+      .main .spacer {
+        display: none;
       }
     }
   </style>
@@ -528,42 +560,44 @@
       <div class="info-item"><strong>Willing to relocate:</strong> Available to relocate</div>
     </div>
 
+    <div class="spacer"></div>
+
   </aside>
 
   <!-- ============================================
   MAIN CONTENT
   ============================================ -->
-  <main class="content">
+  <main class="main">
 
     <!-- HEADER -->
     <div class="header-block">
       <div class="name">{{FULL_NAME}}</div>
-      <div class="job">{{JOB_TITLE}}</div>
+      <div class="title">{{JOB_TITLE}}</div>
       <div class="tagline">{{TAGLINE}}</div>
     </div>
 
     <!-- CORE COMPETENCIES -->
-    <div class="section-title">Core Competencies</div>
+    <h2>CORE COMPETENCIES</h2>
     <div class="competencies">
       {{CORE_COMPETENCIES}}
     </div>
 
     <!-- EXPERIENCE -->
-    <div class="section-title">Experience</div>
+    <h2>EXPERIENCE</h2>
     {{EXPERIENCE_LIST}}
 
     <!-- EDUCATION -->
-    <div class="section-title">Education</div>
+    <h2>EDUCATION</h2>
     {{EDUCATION_LIST}}
 
     <!-- PROFESSIONAL SKILLS -->
-    <div class="section-title">Professional Skills</div>
+    <h2>PROFESSIONAL SKILLS</h2>
     <div class="skills-container">
       {{PROFESSIONAL_SKILLS}}
     </div>
 
     <!-- ADDITIONAL INFORMATION -->
-    <div class="section-title">Additional Information</div>
+    <h2>ADDITIONAL INFORMATION</h2>
     <div class="info-grid">
       <div class="info-item"><strong>Passport</strong> Available</div>
       <div class="info-item"><strong>Driving Licence</strong> {{DRIVER_LICENSE}}</div>
@@ -572,8 +606,10 @@
     </div>
 
     <!-- PERSONAL STATEMENT -->
-    <div class="section-title">Personal Statement</div>
+    <h2>PERSONAL STATEMENT</h2>
     <p class="personal-statement">{{PERSONAL_STATEMENT}}</p>
+
+    <div class="spacer"></div>
 
     <!-- FOOTER -->
     <div class="footer">
