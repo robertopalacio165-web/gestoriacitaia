@@ -769,7 +769,7 @@ Output ONLY JSON:
 }
 
 // ============================================
-// GENERAR HTML DEL CV
+// ✅ GENERAR HTML DEL CV - ACTUALIZADO
 // ============================================
 
 function generateCVHtml(data: any, content: CVContent): string {
@@ -789,6 +789,7 @@ function generateCVHtml(data: any, content: CVContent): string {
     ? `${data.current_city}, ${data.nationality || "Morocco"}`
     : data.nationality || "Morocco";
 
+  // LANGUAGES - formato con puntos
   let languagesHtml = "";
   const idiomas = data.idiomas ? data.idiomas.split(",").map((i: string) => i.trim()) : ["English"];
   const levels: Record<string, string> = {
@@ -812,13 +813,12 @@ function generateCVHtml(data: any, content: CVContent): string {
     const level = levels[idioma.toLowerCase()] || "B1";
     languagesHtml += `
       <div class="lang-item">
-        <span class="lang-name">${idioma}</span>
-        <span class="lang-dots">................</span>
-        <span class="lang-level">${level}</span>
+        <strong>${idioma}</strong> - <span class="level">${level}</span>
       </div>
     `;
   }
 
+  // EXPERIENCE
   let experienceHtml = "";
   const experiences = content.experience || [];
   
@@ -840,17 +840,20 @@ function generateCVHtml(data: any, content: CVContent): string {
     `;
   }
 
+  // EDUCATION
   const educationHtml = `
     <div class="education-item">
       <div class="edu-degree">${content.education || data.education_level || "Secondary Education"}</div>
     </div>
   `;
 
+  // CORE COMPETENCIES
   const competencies = content.coreCompetencies || [];
   const competenciesHtml = competencies.map((comp: string) => 
     `<span>${comp}</span>`
   ).join("");
 
+  // KEY STRENGTHS
   const keyStrengths = content.softSkills && content.softSkills.length > 0
     ? content.softSkills
     : [
@@ -863,6 +866,7 @@ function generateCVHtml(data: any, content: CVContent): string {
       ];
   const keyStrengthsHtml = keyStrengths.map((s: string) => `<li>${s}</li>`).join("");
 
+  // PROFESSIONAL SKILLS
   const skills = content.skills || [];
   const skillPercentages: Record<string, number> = {
     "Food Preparation": 90,
@@ -903,6 +907,7 @@ function generateCVHtml(data: any, content: CVContent): string {
   
   const allSkillsHtml = [...leftSkills, ...rightSkills].map(renderSkillBar).join("");
 
+  // PERSONAL STATEMENT
   const personalStatement = content.personalStatement || "I am enthusiastic about joining a professional team where I can contribute positively, learn continuously, and grow within the industry. I am available to start immediately and ready to relocate.";
 
   const tagline = `Dedicated and motivated ${content.jobTitle || "professional"} with a strong passion for the hospitality industry. Eager to contribute to a dynamic team.`;
@@ -910,6 +915,7 @@ function generateCVHtml(data: any, content: CVContent): string {
   const hasDrivingLicense = data.carnet_conducir && data.carnet_conducir !== "No" && data.carnet_conducir !== "None";
   const driverLicense = hasDrivingLicense ? data.carnet_conducir : "";
 
+  // ✅ REPLACEMENTS - Coinciden con el nuevo HTML
   const replacements: Record<string, string> = {
     "{{PHOTO_HTML}}": photoHtml,
     "{{FULL_NAME}}": fullName,
