@@ -18,12 +18,12 @@ if (!OPENAI_API_KEY) {
   throw new Error("OPENAI_API_KEY is missing");
 }
 
-const OPENAI_MODEL = "gpt-4o-mini";
+const OPENAI_MODEL = "gpt-4o";
 const BUCKET_NAME = "malta-documents";
 const OPENAI_TIMEOUT_MS = 120000;
 
 // ============================================
-// EMPRESAS REALES DE MARRUECOS (ampliado)
+// EMPRESAS REALES DE MARRUECOS - SIN DUPLICADOS
 // ============================================
 const MOROCCAN_COMPANIES: Record<string, any[]> = {
   kitchen: [
@@ -41,7 +41,36 @@ const MOROCCAN_COMPANIES: Record<string, any[]> = {
     { name: "Restaurant La Maison Arabe", city: "Marrakech", type: "Restaurant" },
     { name: "Restaurant Café du Port", city: "Tangier", type: "Restaurant" },
     { name: "Restaurant Le Mirage", city: "Agadir", type: "Restaurant" },
-    { name: "Restaurant La Kasbah", city: "Ouarzazate", type: "Restaurant" },
+    { name: "Restaurant Le Palais", city: "Fes", type: "Restaurant" },
+    { name: "Restaurant La Tour Hassan", city: "Rabat", type: "Restaurant" },
+    { name: "Restaurant Le Soleil", city: "Agadir", type: "Restaurant" },
+    { name: "Restaurant La Plage", city: "Tangier", type: "Restaurant" },
+    { name: "Restaurant Le Médina", city: "Marrakech", type: "Restaurant" },
+    { name: "Restaurant La Perle", city: "Casablanca", type: "Restaurant" },
+    { name: "Restaurant Le Marocain", city: "Rabat", type: "Restaurant" },
+    { name: "Restaurant La Gazelle", city: "Agadir", type: "Restaurant" },
+    { name: "Restaurant Le Palmier", city: "Marrakech", type: "Restaurant" },
+    { name: "Restaurant La Rose", city: "Casablanca", type: "Restaurant" },
+    { name: "Restaurant Le Jardin Secret", city: "Marrakech", type: "Restaurant" },
+    { name: "Restaurant La Sultana", city: "Casablanca", type: "Restaurant" },
+    { name: "Restaurant Le Cèdre", city: "Fes", type: "Restaurant" },
+    { name: "Restaurant La Terrasse", city: "Tangier", type: "Restaurant" },
+    { name: "Restaurant Le Patio", city: "Rabat", type: "Restaurant" },
+    { name: "Restaurant La Fontaine", city: "Marrakech", type: "Restaurant" },
+    { name: "Restaurant Le Château", city: "Casablanca", type: "Restaurant" },
+    { name: "Restaurant La Palmeraie", city: "Marrakech", type: "Restaurant" },
+    { name: "Restaurant Le Mazagan", city: "El Jadida", type: "Restaurant" },
+    { name: "Restaurant La Corniche", city: "Casablanca", type: "Restaurant" },
+    { name: "Restaurant Le Mogador", city: "Essaouira", type: "Restaurant" },
+    { name: "Restaurant La Falaise", city: "Tangier", type: "Restaurant" },
+    { name: "Restaurant Le Riadh", city: "Fes", type: "Restaurant" },
+    { name: "Restaurant Le Tadelakt", city: "Marrakech", type: "Restaurant" },
+    { name: "Restaurant La Méditerranée", city: "Tangier", type: "Restaurant" },
+    { name: "Restaurant Le Panorama", city: "Agadir", type: "Restaurant" },
+    { name: "Restaurant La Belle Vue", city: "Casablanca", type: "Restaurant" },
+    { name: "Restaurant Le Mas", city: "Rabat", type: "Restaurant" },
+    { name: "Restaurant La Campagne", city: "Marrakech", type: "Restaurant" },
+    { name: "Restaurant Le Village", city: "Fes", type: "Restaurant" },
   ],
   hotel: [
     { name: "Hotel Kenzi Tower", city: "Casablanca", type: "Hotel" },
@@ -63,6 +92,27 @@ const MOROCCAN_COMPANIES: Record<string, any[]> = {
     { name: "Hotel Farah Casablanca", city: "Casablanca", type: "Hotel" },
     { name: "Hotel Atlas Medina", city: "Marrakech", type: "Hotel" },
     { name: "Hotel Ibis Casablanca", city: "Casablanca", type: "Hotel" },
+    { name: "Hotel Marriott Casablanca", city: "Casablanca", type: "Hotel" },
+    { name: "Hotel Sheraton Casablanca", city: "Casablanca", type: "Hotel" },
+    { name: "Hotel Radisson Blu Casablanca", city: "Casablanca", type: "Hotel" },
+    { name: "Hotel Four Seasons Casablanca", city: "Casablanca", type: "Hotel" },
+    { name: "Hotel Riad Fes", city: "Fes", type: "Hotel" },
+    { name: "Hotel Dar El Kebira", city: "Fes", type: "Hotel" },
+    { name: "Hotel Riad Laaroussa", city: "Fes", type: "Hotel" },
+    { name: "Hotel Le Jardin des Douars", city: "Essaouira", type: "Hotel" },
+    { name: "Hotel Heure Bleue Palais", city: "Essaouira", type: "Hotel" },
+    { name: "Hotel Sofitel Essaouira", city: "Essaouira", type: "Hotel" },
+    { name: "Hotel Kenzi Club Agadir", city: "Agadir", type: "Hotel" },
+    { name: "Hotel Riu Tikida Agadir", city: "Agadir", type: "Hotel" },
+    { name: "Hotel Iberostar Founty Beach", city: "Agadir", type: "Hotel" },
+    { name: "Hotel Kenzi Menara", city: "Marrakech", type: "Hotel" },
+    { name: "Hotel Riu Palace Tikida", city: "Marrakech", type: "Hotel" },
+    { name: "Hotel Iberostar Club Palmeraie", city: "Marrakech", type: "Hotel" },
+    { name: "Hotel Hilton Taghazout", city: "Agadir", type: "Hotel" },
+    { name: "Hotel Hyatt Tangier", city: "Tangier", type: "Hotel" },
+    { name: "Hotel Fairmont Tangier", city: "Tangier", type: "Hotel" },
+    { name: "Hotel Four Seasons Rabat", city: "Rabat", type: "Hotel" },
+    { name: "Hotel Sofitel Rabat Jardin", city: "Rabat", type: "Hotel" },
   ],
   construction: [
     { name: "TGCC Group", city: "Casablanca", type: "Construction" },
@@ -74,6 +124,7 @@ const MOROCCAN_COMPANIES: Record<string, any[]> = {
     { name: "Groupe Vinci Maroc", city: "Casablanca", type: "Construction" },
     { name: "Groupe GTM Maroc", city: "Casablanca", type: "Construction" },
     { name: "Groupe SGTM", city: "Casablanca", type: "Construction" },
+    { name: "Groupe SOMAGEC", city: "Casablanca", type: "Construction" },
   ],
   warehouse: [
     { name: "DB Schenker Morocco", city: "Casablanca", type: "Warehouse" },
@@ -84,6 +135,7 @@ const MOROCCAN_COMPANIES: Record<string, any[]> = {
     { name: "CMA CGM Morocco", city: "Casablanca", type: "Warehouse" },
     { name: "Panalpina Morocco", city: "Casablanca", type: "Warehouse" },
     { name: "SDV Morocco", city: "Casablanca", type: "Warehouse" },
+    { name: "Tanger Med", city: "Tangier", type: "Warehouse" },
   ],
   delivery: [
     { name: "DHL Express Morocco", city: "Casablanca", type: "Delivery" },
@@ -92,7 +144,6 @@ const MOROCCAN_COMPANIES: Record<string, any[]> = {
     { name: "Glovo Morocco", city: "Casablanca", type: "Delivery" },
     { name: "Jumia Food Morocco", city: "Casablanca", type: "Delivery" },
     { name: "Delivery Logistics", city: "Rabat", type: "Delivery" },
-    { name: "Tanger Logistics", city: "Tangier", type: "Delivery" },
   ],
   cleaning: [
     { name: "Cleanco Services", city: "Casablanca", type: "Cleaning" },
@@ -112,13 +163,79 @@ const MOROCCAN_COMPANIES: Record<string, any[]> = {
     { name: "Managem Group", city: "Casablanca", type: "Factory" },
     { name: "Nestlé Maroc", city: "Casablanca", type: "Factory" },
     { name: "Danone Maroc", city: "Casablanca", type: "Factory" },
+    { name: "Peugeot Citroën", city: "Kenitra", type: "Factory" },
+    { name: "Siemens Morocco", city: "Casablanca", type: "Factory" },
+    { name: "ABB Morocco", city: "Casablanca", type: "Factory" },
+    { name: "Schneider Electric", city: "Casablanca", type: "Factory" },
+    { name: "Procter & Gamble", city: "Casablanca", type: "Factory" },
+    { name: "Unilever Morocco", city: "Casablanca", type: "Factory" },
+    { name: "Coca-Cola Morocco", city: "Casablanca", type: "Factory" },
+    { name: "PepsiCo Morocco", city: "Casablanca", type: "Factory" },
+    { name: "Heineken Morocco", city: "Casablanca", type: "Factory" },
+    { name: "Castel Morocco", city: "Casablanca", type: "Factory" },
+  ],
+};
+
+// ============================================
+// CERTIFICADOS POR SECTOR
+// ============================================
+const CERTIFICATES_BY_SECTOR: Record<string, string[]> = {
+  kitchen: [
+    "Food Safety Level 2",
+    "HACCP Awareness",
+    "Manual Handling",
+    "Health & Safety",
+    "Kitchen Hygiene",
+    "Allergen Awareness"
+  ],
+  hotel: [
+    "Housekeeping Standards",
+    "Customer Service",
+    "Health & Safety",
+    "Manual Handling",
+    "Hygiene & Sanitation"
+  ],
+  construction: [
+    "CSCS Card",
+    "Manual Handling",
+    "Health & Safety",
+    "Working at Height",
+    "First Aid"
+  ],
+  warehouse: [
+    "Forklift Awareness",
+    "Manual Handling",
+    "Health & Safety",
+    "Warehouse Safety",
+    "First Aid"
+  ],
+  delivery: [
+    "Defensive Driving",
+    "Manual Handling",
+    "Health & Safety",
+    "Customer Service",
+    "Fleet Safety"
+  ],
+  cleaning: [
+    "Health & Safety",
+    "Manual Handling",
+    "Cleaning Standards",
+    "Hygiene & Sanitation",
+    "COSHH Awareness"
+  ],
+  factory: [
+    "Health & Safety",
+    "Manual Handling",
+    "Machine Safety",
+    "Quality Control",
+    "First Aid"
   ],
   default: [
-    { name: "Global Services", city: "Casablanca", type: "Services" },
-    { name: "International Group", city: "Rabat", type: "Services" },
-    { name: "Modern Solutions", city: "Marrakech", type: "Services" },
-    { name: "Premium Services", city: "Agadir", type: "Services" },
-  ],
+    "Health & Safety",
+    "Manual Handling",
+    "First Aid",
+    "Teamwork Skills"
+  ]
 };
 
 // ============================================
@@ -154,10 +271,6 @@ const JOB_TITLES: Record<string, string[]> = {
     "Factory Operative", "Production Assistant", "Assembly Worker",
     "Machine Operator", "Production Worker", "Factory Worker"
   ],
-  default: [
-    "General Worker", "Operative", "Assistant",
-    "Team Member", "Support Worker"
-  ]
 };
 
 // ============================================
@@ -169,31 +282,6 @@ const MOROCCAN_CITIES = [
   "Kenitra", "Safi", "El Jadida", "Beni Mellal", "Taza",
   "Settat", "Khouribga", "Khemisset", "Temara", "Mohammedia",
   "Chefchaouen", "Essaouira", "Taroudant", "Ouarzazate", "Tiznit"
-];
-
-// ============================================
-// LISTA COMPLETA DE HABILIDADES (40+)
-// ============================================
-const ALL_SKILLS = [
-  // Hard Skills
-  "Food Preparation", "Knife Skills", "HACCP Compliance",
-  "Stock Management", "Cleaning Procedures", "Cooking Techniques",
-  "Inventory Control", "Food Safety", "Quality Control",
-  "Bricklaying", "Concrete Work", "Power Tools Operation",
-  "Blueprint Reading", "Safety Protocols", "Heavy Machinery",
-  "Forklift Operation", "Loading & Unloading", "Order Picking",
-  "Route Planning", "Vehicle Maintenance", "Driving",
-  "Deep Cleaning", "Sanitization", "Production",
-  "Assembly", "Packaging", "Maintenance",
-  "Machinery Operation", "Quality Assurance", "Industrial Safety",
-  
-  // Soft Skills
-  "Teamwork", "Time Management", "Communication",
-  "Problem Solving", "Adaptability", "Reliability",
-  "Punctuality", "Multicultural Communication", "Customer Service",
-  "Organization", "Attention to Detail", "Fast Learning",
-  "Flexible Schedule", "Physical Stamina", "Stress Management",
-  "Decision Making", "Leadership", "Conflict Resolution"
 ];
 
 // ============================================
@@ -213,50 +301,40 @@ function getRandomItems<T>(array: T[], count: number): T[] {
   return shuffled.slice(0, count);
 }
 
-function getRandomDateRange(): { start: string; end: string } {
-  const yearRanges = [
-    { start: 2019, end: 2021 },
-    { start: 2020, end: 2022 },
-    { start: 2021, end: 2023 },
-    { start: 2022, end: 2024 },
-    { start: 2018, end: 2020 },
-    { start: 2020, end: 2023 },
-    { start: 2019, end: 2022 },
-  ];
-  
-  const range = getRandomItem(yearRanges);
+// Fechas según experiencia
+function getDateRangeByExperience(experience: string): { start: string; end: string } {
   const months = ["January", "February", "March", "April", "May", "June", 
                   "July", "August", "September", "October", "November", "December"];
   
-  const startMonth = getRandomItem(months);
   const endMonth = getRandomItem(months);
+  const endYear = "2025";
+  
+  let startYear: number;
+  const expLower = experience.toLowerCase();
+  
+  if (expLower.includes("no experience") || expLower.includes("0") || expLower.includes("entry")) {
+    startYear = 2024;
+  } else if (expLower.includes("1") || expLower.includes("less than")) {
+    startYear = 2023;
+  } else if (expLower.includes("2") || expLower.includes("1-2")) {
+    startYear = 2023;
+  } else if (expLower.includes("3") || expLower.includes("3-5")) {
+    startYear = 2021;
+  } else if (expLower.includes("5") || expLower.includes("5+")) {
+    startYear = 2018;
+  } else {
+    startYear = 2022;
+  }
+  
+  const variation = Math.random() > 0.7 ? 1 : 0;
+  startYear = startYear - variation;
+  
+  const startMonth = getRandomItem(months);
   
   return {
-    start: `${startMonth} ${range.start}`,
-    end: `${endMonth} ${range.end}`
+    start: `${startMonth} ${startYear}`,
+    end: `${endMonth} ${endYear}`
   };
-}
-
-function getRandomAchievement(): string {
-  const achievements = [
-    "Improved food preparation speed by 20%",
-    "Maintained 100% HACCP compliance standards",
-    "Prepared meals for up to 150 guests daily",
-    "Supported Head Chef in high-volume service",
-    "Reduced kitchen waste through improved stock rotation",
-    "Maintained clean and organized workstations",
-    "Assisted with buffet preparation for large events",
-    "Prepared breakfast service for hotel guests",
-    "Received 'Employee of the Month' recognition",
-    "Contributed to 4.5-star hotel rating",
-    "Successfully handled peak season operations",
-    "Trained new staff members on safety procedures",
-    "Maintained zero safety incidents for 2 years",
-    "Improved inventory accuracy by 15%",
-    "Consistently met performance targets",
-    "Recognized for exceptional customer service"
-  ];
-  return getRandomItem(achievements);
 }
 
 function getInitials(name: string): string {
@@ -266,104 +344,301 @@ function getInitials(name: string): string {
   return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
 }
 
-function normalizeYesNo(value: string | null | undefined): boolean {
-  if (!value) return false;
-  const normalized = String(value).toLowerCase().trim();
-  return normalized === "sí" || normalized === "si" || normalized === "yes" || normalized === "true";
+// Niveles de idioma CEFR
+function getLanguageLevel(level: string): string {
+  const map: Record<string, string> = {
+    native: "Native",
+    fluent: "C2",
+    advanced: "C1",
+    intermediate: "B2",
+    basic: "A2",
+    beginner: "A1",
+    nativo: "Native",
+    fluido: "C2",
+    avanzado: "C1",
+    intermedio: "B2",
+    básico: "A2",
+    principiante: "A1"
+  };
+  return map[level.toLowerCase()] || "B1";
 }
 
 // ============================================
-// GENERAR CV CON IA - VERSIÓN PREMIUM
+// GENERAR CV CON IA
 // ============================================
 
 async function generatePremiumCV(data: any, hasUserCV: boolean): Promise<{
   summary: string;
   coreCompetencies: string[];
-  experience: string[];
-  achievements: string[];
+  experience: any[];
   skills: string[];
   softSkills: string[];
   technicalSkills: string[];
   education: string;
   certificates: string[];
+  personalStatement: string;
   jobTitle: string;
   company: any;
   city: string;
   tokens?: number;
 }> {
   const sector = data.sectores ? data.sectores.split(",")[0]?.trim()?.toLowerCase() : "default";
-  const companies = MOROCCAN_COMPANIES[sector] || MOROCCAN_COMPANIES.default;
+  const companies = MOROCCAN_COMPANIES[sector] || MOROCCAN_COMPANIES.kitchen;
   
-  // Seleccionar 3 empresas y elegir una aleatoriamente
   const selectedCompanies = getRandomItems(companies, Math.min(3, companies.length));
   const selectedCompany = getRandomItem(selectedCompanies);
   
   const selectedCity = data.current_city || getRandomItem(MOROCCAN_CITIES);
-  const dateRange = getRandomDateRange();
   
-  // Títulos de puesto
-  const titles = JOB_TITLES[sector] || JOB_TITLES.default;
+  const titles = JOB_TITLES[sector] || JOB_TITLES.kitchen;
   const jobTitle = getRandomItem(titles);
-  
-  // Habilidades: seleccionar 10-12 aleatorias
-  const allSkills = ALL_SKILLS;
-  const selectedSkills = getRandomItems(allSkills, 12);
-  const softSkills = getRandomItems(allSkills.filter(s => 
-    ["Teamwork", "Time Management", "Communication", "Problem Solving", 
-     "Adaptability", "Reliability", "Punctuality", "Multicultural Communication",
-     "Customer Service", "Organization", "Attention to Detail", "Fast Learning",
-     "Flexible Schedule", "Physical Stamina", "Stress Management"].includes(s)
-  ), 5);
-  
-  const technicalSkills = selectedSkills.filter(s => !softSkills.includes(s));
   
   const añosExperiencia = data.anos_experiencia || "3-5 years";
   const expLabel = añosExperiencia.replace(/_/g, " ");
 
-  // Si el usuario tiene CV, la IA lo mejora en lugar de inventar
-  const cvInstruction = hasUserCV 
-    ? `IMPORTANT: The user has uploaded their own CV. IMPROVE their existing experience. Keep their REAL company names, dates, and roles. Make it more professional and ATS-friendly.`
-    : `IMPORTANT: The user does NOT have a CV. CREATE realistic professional experience for them.`;
+  // Certificados predefinidos por sector
+  const availableCertificates = CERTIFICATES_BY_SECTOR[sector] || CERTIFICATES_BY_SECTOR.default;
+  const selectedCertificates = getRandomItems(availableCertificates, Math.min(3, availableCertificates.length));
 
   const prompt = `
-You are a professional CV writer for the European job market. Generate ONLY the narrative sections of a CV.
+You are one of the world's best ATS CV writers for jobs in Malta.
 
-CANDIDATE INFORMATION:
-- Name: ${data.full_name || "Candidate"}
-- Position: ${jobTitle}
-- Target Company: ${selectedCompany.name} (${selectedCompany.city}, Morocco)
-- Experience Level: ${expLabel}
-- Nationality: ${data.nationality || "Moroccan"}
-- Current City: ${selectedCity}
-- Education: ${data.education_level || "Secondary Education"}
+Your mission is to create an EXTREMELY PROFESSIONAL European CV.
 
-${cvInstruction}
+IMPORTANT RULES:
 
-INSTRUCTIONS:
-1. Generate a UNIQUE CV for this candidate
-2. Use REAL Moroccan companies, hotels, and restaurants
-3. NEVER repeat the same company twice
-4. NEVER use "Present" - always use specific dates
-5. Create HUMAN-SOUNDING, ATS-FRIENDLY content
-6. Write in PERFECT British English
-7. Make each CV completely DIFFERENT
+- Every CV MUST be UNIQUE.
+- Never repeat the same text.
+- Never use generic AI phrases.
+- Never use "Volunteer Experience".
+- Never use "Community Kitchen".
+- Never invent impossible experience.
+- Never write fake awards.
+- Never repeat the same company.
+- Never create more than TWO jobs.
+- Maximum one A4 page.
+- Write natural British English.
+- ATS Optimized.
 
-${hasUserCV ? '8. PRESERVE the user\'s real experience from their CV' : '8. CREATE realistic experience for the user'}
+- The CV must look like it was written by an experienced HR recruiter.
+- Every section must be concise.
+- Never write long paragraphs.
+- Use professional business English.
+- The design template already exists.
+- You ONLY generate the content.
+- Do NOT mention that you are an AI.
+- Avoid generic phrases.
+- Everything must fit perfectly into ONE page.
 
-Generate ONLY these sections as JSON:
+- Never use the same company twice.
+- Every generated CV must use different companies.
+- Avoid repeating companies already used in previous jobs.
+
+- Never repeat sentences.
+- Every bullet point must be unique.
+- Every CV must look handwritten by a different recruiter.
+
+- Write exactly like a senior HR recruiter.
+- Avoid robotic wording.
+- Use natural British English.
+- The reader must believe this CV was written by a professional recruitment agency.
+- Every CV must feel personal.
+- Never generate identical summaries.
+- Never generate identical personal statements.
+- Never repeat competencies between different candidates.
+
+- Never remove important information.
+- Preserve employment dates.
+- Preserve company names.
+- Only improve formatting, wording and ATS optimisation.
+- Keep the candidate's original career history.
+
+- Never create experience longer than 24 months unless the uploaded CV already contains it.
+- Keep employment history realistic.
+- Avoid employment gaps unless they already exist.
+- Make the career progression believable.
+
+- Every responsibility, skill and achievement must match the selected profession exactly. Never include duties from another industry.
+
+=====================
+CANDIDATE
+=====================
+
+Name:
+${data.full_name}
+
+Nationality:
+${data.nationality}
+
+Current city:
+${selectedCity}
+
+Target Position:
+${jobTitle}
+
+Sector:
+${sector}
+
+Education Level:
+${data.education_level}
+
+Languages:
+${data.idiomas}
+
+Experience Level:
+${expLabel}
+
+Driver Licence:
+${data.carnet_conducir}
+
+Has uploaded CV:
+${hasUserCV}
+
+=====================
+IF USER HAS A CV
+=====================
+
+If the user uploaded a CV:
+
+- Keep their REAL experience.
+- Improve grammar.
+- Improve wording.
+- Improve ATS score.
+- Never invent companies.
+- Never invent dates.
+- Never invent positions.
+- Never remove important information.
+- Preserve employment dates.
+- Preserve company names.
+- Only improve formatting, wording and ATS optimisation.
+- Keep the candidate's original career history.
+
+=====================
+IF USER HAS NO CV
+=====================
+
+Create realistic professional work history.
+
+Generate EXACTLY 2 jobs.
+
+Each job must contain:
+
+- Real Moroccan company
+- Real Moroccan city
+- Job title
+- Employment dates
+- Exactly 4 bullet points
+
+Every bullet must be less than 18 words.
+
+Use action verbs.
+
+Never repeat verbs.
+
+Do not create management positions for inexperienced workers.
+
+The experience must match the selected profession.
+
+- Never create experience longer than 24 months unless the uploaded CV already contains it.
+- Keep employment history realistic.
+- Avoid employment gaps unless they already exist.
+- Make the career progression believable.
+
+=====================
+SUMMARY
+=====================
+
+Write ONE professional summary.
+
+Maximum 4 lines.
+
+=====================
+CORE COMPETENCIES
+=====================
+
+Generate EXACTLY 6 competencies.
+
+=====================
+PROFESSIONAL SKILLS
+=====================
+
+Generate EXACTLY 6 technical skills.
+
+=====================
+SOFT SKILLS
+=====================
+
+Generate EXACTLY 5 soft skills.
+
+=====================
+CERTIFICATES
+=====================
+
+Generate ONLY these certificates (choose from the list provided):
+
+${selectedCertificates.join(", ")}
+
+Do not add any other certificates.
+
+=====================
+EDUCATION
+=====================
+
+Return ONLY the education title.
+
+Examples:
+
+Primary Education
+Secondary Education
+High School Diploma
+Vocational Diploma
+Bachelor Degree
+
+Never explain the education.
+
+=====================
+PERSONAL STATEMENT
+=====================
+
+Maximum 3 lines.
+
+Professional.
+
+Positive.
+
+Ready to relocate to Malta.
+
+=====================
+OUTPUT
+=====================
+
+Return ONLY JSON.
+
 {
-  "summary": "4-5 sentence professional summary",
-  "coreCompetencies": ["5-7 core competencies"],
-  "experience": ["5-7 bullet points describing responsibilities"],
-  "achievements": ["3-5 specific achievements with numbers"],
-  "skills": ["10-12 skills"],
-  "softSkills": ["4-5 soft skills"],
-  "technicalSkills": ["4-5 technical skills"],
-  "education": "Education description",
-  "certificates": ["2-3 certificates"]
+  "summary":"",
+  "coreCompetencies":[],
+  "experience":[
+    {
+      "company":"",
+      "city":"",
+      "jobTitle":"",
+      "period":"",
+      "bullets":[]
+    }
+  ],
+  "skills":[],
+  "softSkills":[],
+  "technicalSkills":[],
+  "education":"",
+  "certificates":[],
+  "personalStatement":""
 }
 
-Return ONLY valid JSON.`;
+Never overflow the HTML template.
+
+Keep every section short enough to fit perfectly inside the CV design.
+
+If needed, shorten sentences automatically.`;
 
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), OPENAI_TIMEOUT_MS);
@@ -424,16 +699,41 @@ Return ONLY valid JSON.`;
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
       const parsed = JSON.parse(jsonMatch[0]);
+      
+      const dateRange = getDateRangeByExperience(expLabel);
+      
+      let experienceData = parsed.experience || [];
+      if (!Array.isArray(experienceData)) {
+        experienceData = [];
+      }
+      
+      // ✅ CAMBIO 3: Fechas forzadas - la IA no puede inventar
+      experienceData = experienceData.map((exp: any) => ({
+        company: exp.company || selectedCompany.name,
+        city: exp.city || selectedCity,
+        jobTitle: exp.jobTitle || jobTitle,
+        period: `${dateRange.start} - ${dateRange.end}`,
+        bullets: Array.isArray(exp.bullets) ? exp.bullets.slice(0, 4) : ["Prepared ingredients and assisted chefs", "Maintained high standards of cleanliness"]
+      }));
+      
+      if (experienceData.length > 2) {
+        experienceData = experienceData.slice(0, 2);
+      }
+      
+      const educationTitle = parsed.education || data.education_level || "Secondary Education";
+      const cleanEducation = educationTitle.split(".")[0].split(",")[0].trim();
+      
+      // ✅ CAMBIO 2: Forzar certificados seleccionados
       return {
         summary: parsed.summary || "",
         coreCompetencies: parsed.coreCompetencies || [],
-        experience: parsed.experience || [],
-        achievements: parsed.achievements || [],
-        skills: parsed.skills || selectedSkills,
-        softSkills: parsed.softSkills || softSkills,
-        technicalSkills: parsed.technicalSkills || technicalSkills,
-        education: parsed.education || "",
-        certificates: parsed.certificates || [],
+        experience: experienceData,
+        skills: parsed.skills || [],
+        softSkills: parsed.softSkills || [],
+        technicalSkills: parsed.technicalSkills || [],
+        education: cleanEducation,
+        certificates: selectedCertificates,
+        personalStatement: parsed.personalStatement || "",
         jobTitle: jobTitle,
         company: selectedCompany,
         city: selectedCity,
@@ -445,12 +745,12 @@ Return ONLY valid JSON.`;
       summary: text,
       coreCompetencies: [],
       experience: [],
-      achievements: [],
-      skills: selectedSkills,
-      softSkills: softSkills,
-      technicalSkills: technicalSkills,
-      education: "",
-      certificates: [],
+      skills: [],
+      softSkills: [],
+      technicalSkills: [],
+      education: data.education_level || "Secondary Education",
+      certificates: selectedCertificates,
+      personalStatement: "",
       jobTitle: jobTitle,
       company: selectedCompany,
       city: selectedCity,
@@ -467,7 +767,7 @@ Return ONLY valid JSON.`;
 }
 
 // ============================================
-// GENERAR CARTA CON IA - VERSIÓN PREMIUM
+// GENERAR CARTA CON IA
 // ============================================
 
 async function generatePremiumCoverLetter(data: any, company: any, jobTitle: string): Promise<{
@@ -478,10 +778,22 @@ async function generatePremiumCoverLetter(data: any, company: any, jobTitle: str
   closing: string;
   tokens?: number;
 }> {
-  const sector = data.sectores ? data.sectores.split(",")[0]?.trim()?.toLowerCase() : "default";
-
   const prompt = `
 You are a professional cover letter writer for the European job market.
+
+RULES:
+
+- Maximum 300 words.
+- British English.
+- Sound like a human.
+- Mention the company name.
+- Mention Malta.
+- Mention relocation.
+- Mention teamwork.
+- Mention motivation.
+- Never sound generated by AI.
+- Never repeat sentences.
+- End with a professional call to action.
 
 CANDIDATE INFORMATION:
 - Name: ${data.full_name || "Candidate"}
@@ -607,104 +919,153 @@ function generateCVHtml(data: any, content: any, company: any, city: string): st
   const lastName = nameParts.slice(1).join(" ") || "";
   const fullName = `${firstName} ${lastName}`;
 
-  const sector = data.sectores ? data.sectores.split(",")[0]?.trim()?.toLowerCase() : "default";
-
-  // PHOTO
   const initials = getInitials(data.full_name);
   const photoHtml = data.photo_url 
-    ? `<img src="${data.photo_url}" alt="${fullName}" class="profile-photo">` 
-    : `<div class="initials">${initials}</div>`;
+    ? `<img src="${data.photo_url}" alt="${fullName}">` 
+    : `<span class="initials">${initials}</span>`;
 
-  // LANGUAGES
+  // Idiomas con niveles CEFR
   let languagesHtml = "";
   const idiomas = data.idiomas ? data.idiomas.split(",").map((i: string) => i.trim()) : ["English"];
   const levels: Record<string, string> = {
-    english: "Fluent",
+    english: "C2",
     arabic: "Native",
-    french: "Advanced",
-    spanish: "Intermediate",
-    italian: "Beginner",
-    german: "Beginner"
+    french: "C1",
+    spanish: "B2",
+    italian: "B1",
+    german: "A2",
+    portuguese: "B1"
   };
   
-  for (const idioma of idiomas) {
-    const level = levels[idioma.toLowerCase()] || "Fluent";
+  const order = { Native: 6, C2: 5, C1: 4, B2: 3, B1: 2, A2: 1, A1: 0 };
+  const sortedIdiomas = idiomas.sort((a, b) => {
+    const levelA = levels[a.toLowerCase()] || "B1";
+    const levelB = levels[b.toLowerCase()] || "B1";
+    return (order[levelA as keyof typeof order] || 0) - (order[levelB as keyof typeof order] || 0);
+  }).reverse();
+
+  for (const idioma of sortedIdiomas) {
+    const level = levels[idioma.toLowerCase()] || "B1";
     languagesHtml += `
       <div class="lang-item">
         <span class="lang-name">${idioma}</span>
+        <span class="lang-dots">................</span>
         <span class="lang-level">${level}</span>
       </div>
     `;
   }
 
-  // EXPERIENCE
-  const experienceBullets = content.experience || [];
-  const experienceHtml = experienceBullets.map((exp: string) => 
-    `<li class="exp-bullet">${exp}</li>`
-  ).join("");
+  let experienceHtml = "";
+  const experiences = content.experience || [];
+  
+  for (let i = 0; i < Math.min(experiences.length, 2); i++) {
+    const exp = experiences[i];
+    const bullets = exp.bullets || [];
+    const bulletsHtml = bullets.map((b: string) => `<li>${b}</li>`).join("");
+    
+    experienceHtml += `
+      <div class="experience-item">
+        <div class="exp-title">${exp.jobTitle || content.jobTitle || "Professional"}</div>
+        <div class="exp-company">${exp.company || company.name}</div>
+        <div class="exp-description">
+          <ul>
+            ${bulletsHtml}
+          </ul>
+        </div>
+      </div>
+    `;
+  }
 
-  // ACHIEVEMENTS
-  const achievements = content.achievements || [];
-  const achievementsHtml = achievements.map((ach: string) => 
-    `<li class="achievement-bullet">${ach}</li>`
-  ).join("");
+  const educationHtml = `
+    <div class="education-item">
+      <div class="edu-degree">${content.education || data.education_level || "Secondary Education"}</div>
+    </div>
+  `;
 
-  // COMPETENCIES
   const competencies = content.coreCompetencies || [];
   const competenciesHtml = competencies.map((comp: string) => 
-    `<span class="competency-tag">${comp}</span>`
+    `<span>${comp}</span>`
   ).join("");
 
-  // SKILLS
+  const keyStrengths = [
+    "Strong work ethic",
+    "Team player",
+    "Fast learner",
+    "Attention to detail",
+    "Reliable and punctual",
+    "Able to work under pressure"
+  ];
+  const keyStrengthsHtml = keyStrengths.map(s => `<li>${s}</li>`).join("");
+
   const skills = content.skills || [];
-  const skillsHtml = skills.map((skill: string) => 
-    `<span class="skill-tag">${skill}</span>`
-  ).join("");
+  const skillPercentages: Record<string, number> = {
+    "Food Preparation": 90,
+    "Kitchen Hygiene": 85,
+    "HACCP Standards": 80,
+    "Inventory Management": 75,
+    "Cleaning & Sanitization": 85,
+    "Teamwork": 90,
+    "Knife Skills": 80,
+    "Stock Management": 75,
+    "Safety Protocols": 85,
+    "Customer Service": 80,
+    "Communication": 85,
+    "Problem Solving": 80,
+    "Time Management": 85,
+    "Organization": 80,
+    "Reliability": 90
+  };
+  
+  const skillsToShow = skills.slice(0, 6);
+  let professionalSkillsHtml = "";
+  
+  const midPoint = Math.ceil(skillsToShow.length / 2);
+  const leftSkills = skillsToShow.slice(0, midPoint);
+  const rightSkills = skillsToShow.slice(midPoint);
+  
+  const renderSkillBar = (skill: string) => {
+    const percentage = skillPercentages[skill] || Math.floor(Math.random() * 30) + 60;
+    return `
+      <div class="skill-bar">
+        <span class="skill-label">${skill}</span>
+        <span class="skill-track">
+          <span class="skill-fill" style="width: ${percentage}%;"></span>
+        </span>
+      </div>
+    `;
+  };
+  
+  const allSkillsHtml = [...leftSkills, ...rightSkills].map(renderSkillBar).join("");
 
-  // SOFT SKILLS
-  const softSkills = content.softSkills || [];
-  const softSkillsHtml = softSkills.map((skill: string) => 
-    `<span class="soft-skill-tag">${skill}</span>`
-  ).join("");
+  const personalStatement = content.personalStatement || `I am enthusiastic about joining a professional team where I can contribute positively, learn continuously, and grow within the industry. I am available to start immediately and ready to relocate.`;
 
-  // TECHNICAL SKILLS
-  const technicalSkills = content.technicalSkills || [];
-  const technicalSkillsHtml = technicalSkills.map((skill: string) => 
-    `<span class="tech-skill-tag">${skill}</span>`
-  ).join("");
+  const passport = data.pasaporte_valido ? "Available" : "Not available";
+  const availability = "Immediate";
+  const workPermit = data.permiso_trabajo ? "Eligible" : "Not available";
+  const relocate = "Yes";
 
-  // CERTIFICATES
-  const certificates = content.certificates || [];
-  const certificatesHtml = certificates.map((cert: string) => 
-    `<li class="cert-bullet">${cert}</li>`
-  ).join("");
+  const tagline = `Dedicated and motivated ${content.jobTitle || "professional"} with a strong passion for the hospitality industry. Eager to contribute to a dynamic team.`;
 
-  // REPLACEMENTS
   const replacements: Record<string, string> = {
     "{{PHOTO_HTML}}": photoHtml,
     "{{FULL_NAME}}": fullName,
-    "{{FIRST_NAME}}": firstName,
-    "{{LAST_NAME}}": lastName,
-    "{{JOB_TITLE}}": content.jobTitle || "",
-    "{{CITY}}": city,
-    "{{COMPANY_NAME}}": company.name,
-    "{{COMPANY_CITY}}": company.city,
-    "{{COMPANY_TYPE}}": company.type || "",
-    "{{NATIONALITY}}": data.nationality || "Moroccan",
-    "{{EMAIL}}": data.email || "",
+    "{{JOB_TITLE}}": content.jobTitle || "Professional",
+    "{{TAGLINE}}": tagline,
     "{{WHATSAPP}}": data.whatsapp || "",
-    "{{DRIVER_LICENSE}}": data.carnet_conducir || "No",
-    "{{EDUCATION}}": content.education || data.education_level || "Secondary Education",
-    "{{EXPERIENCE_YEARS}}": data.anos_experiencia || "3-5 years",
-    "{{SUMMARY}}": content.summary || "",
+    "{{EMAIL}}": data.email || "",
+    "{{NATIONALITY}}": data.nationality || "Moroccan",
+    "{{DRIVER_LICENSE}}": data.carnet_conducir || "Category B",
+    "{{LANGUAGES}}": languagesHtml,
+    "{{KEY_STRENGTHS}}": keyStrengthsHtml,
+    "{{PASSPORT}}": passport,
+    "{{AVAILABILITY}}": availability,
+    "{{WORK_PERMIT}}": workPermit,
+    "{{RELOCATE}}": relocate,
     "{{CORE_COMPETENCIES}}": competenciesHtml,
     "{{EXPERIENCE_LIST}}": experienceHtml,
-    "{{ACHIEVEMENTS_LIST}}": achievementsHtml,
-    "{{LANGUAGES}}": languagesHtml,
-    "{{SKILLS}}": skillsHtml,
-    "{{SOFT_SKILLS}}": softSkillsHtml,
-    "{{TECHNICAL_SKILLS}}": technicalSkillsHtml,
-    "{{CERTIFICATES}}": certificatesHtml,
+    "{{EDUCATION_LIST}}": educationHtml,
+    "{{PROFESSIONAL_SKILLS}}": allSkillsHtml,
+    "{{PERSONAL_STATEMENT}}": personalStatement,
   };
 
   for (const [key, value] of Object.entries(replacements)) {
@@ -735,28 +1096,33 @@ function generateCoverHtml(data: any, content: any, company: any, city: string, 
 
   const initials = getInitials(data.full_name);
   const photoHtml = data.photo_url 
-    ? `<img src="${data.photo_url}" alt="${fullName}" class="profile-photo">` 
-    : `<div class="initials">${initials}</div>`;
+    ? `<img src="${data.photo_url}" alt="${fullName}">` 
+    : `<span class="initials">${initials}</span>`;
+
+  const companySection = `
+    <div class="company">
+      <div class="department">Human Resources Department</div>
+      <div class="address-line">${company.name}</div>
+      <div class="address-line">${company.city}, Morocco</div>
+    </div>
+  `;
 
   const replacements: Record<string, string> = {
     "{{PHOTO_HTML}}": photoHtml,
     "{{FULL_NAME}}": fullName,
-    "{{FIRST_NAME}}": firstName,
-    "{{LAST_NAME}}": lastName,
     "{{JOB_TITLE}}": jobTitle,
-    "{{CITY}}": city,
-    "{{COMPANY_NAME}}": company.name,
-    "{{COMPANY_CITY}}": company.city,
-    "{{COMPANY_TYPE}}": company.type || "",
     "{{EMAIL}}": data.email || "",
     "{{WHATSAPP}}": data.whatsapp || "",
     "{{NATIONALITY}}": data.nationality || "Moroccan",
     "{{DATE}}": dateStr,
+    "{{COMPANY_SECTION}}": companySection,
+    "{{GREETING}}": "Dear Hiring Manager,",
     "{{INTRODUCTION}}": content.introduction || "",
     "{{BODY_1}}": content.body1 || "",
     "{{BODY_2}}": content.body2 || "",
     "{{BODY_3}}": content.body3 || "",
     "{{CLOSING}}": content.closing || "",
+    "{{SIGNATURE_IMAGE}}": "",
   };
 
   for (const [key, value] of Object.entries(replacements)) {
@@ -853,7 +1219,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     console.log(`📄 Generating premium documents for application: ${applicationId}`);
 
-    // Obtener datos de la aplicación
     const { data: application, error: fetchError } = await supabase
       .from("malta_applications")
       .select("*")
@@ -867,36 +1232,28 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     console.log(`✅ Application found: ${application.full_name}`);
     console.log(`📸 photo_url: ${application.photo_url || "No photo"}`);
-    console.log(`📄 cv_url: ${application.cv_url || "No CV"}`);
-    console.log(`📎 pdf_url: ${application.pdf_url || "No PDF"}`);
 
-    // Verificar si el usuario tiene CV
     const hasUserCV = !!application.cv_url && application.cv_url.trim() !== "";
     console.log(`📋 Has user CV: ${hasUserCV}`);
 
-    // Generar CV
     console.log("🤖 Generating premium CV...");
     const cvContent = await generatePremiumCV(application, hasUserCV);
     console.log(`✅ CV generated with ${cvContent.tokens || 0} tokens`);
     console.log(`   Job Title: ${cvContent.jobTitle}`);
     console.log(`   Company: ${cvContent.company.name} (${cvContent.company.city})`);
 
-    // Generar carta
     console.log("🤖 Generating premium cover letter...");
     const letterContent = await generatePremiumCoverLetter(application, cvContent.company, cvContent.jobTitle);
     console.log(`✅ Cover letter generated with ${letterContent.tokens || 0} tokens`);
 
-    // Generar HTML del CV
     console.log("📄 Generating CV HTML...");
     const cvHtml = generateCVHtml(application, cvContent, cvContent.company, cvContent.city);
     console.log(`✅ CV HTML generated (${cvHtml.length} chars)`);
 
-    // Generar HTML de la carta
     console.log("📄 Generating Cover Letter HTML...");
     const coverHtml = generateCoverHtml(application, letterContent, cvContent.company, cvContent.city, cvContent.jobTitle);
     console.log(`✅ Cover Letter HTML generated (${coverHtml.length} chars)`);
 
-    // Convertir a PDF
     console.log("🖨️ Converting CV to PDF...");
     const cvPdf = await renderPdfFromHtml(cvHtml);
     console.log(`✅ CV PDF generated (${cvPdf.length} bytes)`);
@@ -905,7 +1262,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const coverPdf = await renderPdfFromHtml(coverHtml);
     console.log(`✅ Cover Letter PDF generated (${coverPdf.length} bytes)`);
 
-    // Subir a Supabase
     const timestamp = Date.now();
     const cvFileName = `cv_${applicationId}_${timestamp}.pdf`;
     const letterFileName = `cover_letter_${applicationId}_${timestamp}.pdf`;
@@ -918,10 +1274,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     console.log("✅ Both PDFs uploaded successfully");
 
-    // Generar texto completo de la carta
     const fullLetterText = `${letterContent.introduction}\n\n${letterContent.body1}\n\n${letterContent.body2}\n\n${letterContent.body3}\n\n${letterContent.closing}`;
-
-    // Actualizar aplicación con TODOS los datos
     const totalTokens = (cvContent.tokens || 0) + (letterContent.tokens || 0);
     
     const updateData: any = {
@@ -944,7 +1297,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       company_name: cvContent.company.name,
       company_city: cvContent.company.city,
       
-      // ✅ Guardar todos los datos generados por IA para no tener que regenerarlos
       ai_summary: cvContent.summary,
       ai_experience: cvContent.experience || [],
       ai_skills: cvContent.skills || [],
@@ -952,18 +1304,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       ai_cover_letter: fullLetterText,
       ai_job_title: cvContent.jobTitle,
       ai_core_competencies: cvContent.coreCompetencies || [],
-      ai_achievements: cvContent.achievements || [],
       ai_soft_skills: cvContent.softSkills || [],
       ai_technical_skills: cvContent.technicalSkills || [],
       ai_certificates: cvContent.certificates || [],
       ai_education: cvContent.education || application.education_level || "",
+      ai_personal_statement: cvContent.personalStatement || "",
       
-      // Si el usuario tiene CV original, guardarlo
       original_cv_url: application.cv_url || "",
       has_user_cv: hasUserCV,
     };
 
-    // Si hay foto, guardar la URL
     if (application.photo_url) {
       updateData.photo_uploaded = true;
       updateData.photo_generated_at = new Date().toISOString();
@@ -981,7 +1331,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     console.log(`✅ Application updated successfully`);
 
-    // Añadir a worker queue
     try {
       const { error: queueError } = await supabase
         .from("worker_queue")
