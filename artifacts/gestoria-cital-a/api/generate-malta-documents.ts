@@ -764,14 +764,14 @@ Output ONLY JSON:
 }
 
 // ============================================
-// ✅ GENERAR CARTA CON IA - MEJORADA Y PROFESIONAL
+// GENERAR CARTA CON IA
 // ============================================
 
 async function generatePremiumCoverLetter(data: any, company: Company, jobTitle: string): Promise<LetterContent> {
   const prompt = `
 You are a professional cover letter writer for the European job market.
 
-RULES:
+Rules:
 - Maximum 300 words.
 - British English.
 - Sound like a human.
@@ -784,28 +784,24 @@ RULES:
 - Never repeat sentences.
 - End with a professional call to action.
 
-CANDIDATE:
+Candidate:
 Name: ${data.full_name || "Candidate"}
 Position: ${jobTitle}
-Company: ${company.name || "Hilton Malta"} (${company.city || "Malta"})
+Company: ${company.name} (${company.city}, Morocco)
 Experience: ${data.anos_experiencia || "3-5 years"}
 Nationality: ${data.nationality || "Moroccan"}
 Current City: ${data.current_city || "Casablanca"}
 Education: ${data.education_level || "Secondary Education"}
 Languages: ${data.idiomas || "English, Arabic, French"}
 
-Generate a professional cover letter body as JSON:
+Output ONLY JSON:
 {
-  "introduction": "Opening paragraph - hook the reader, mention the position and company",
-  "body1": "First body - relevant experience and skills specific to the company",
-  "body2": "Second body - why you want to work at this company and why Malta",
-  "body3": "Third body - availability to relocate to Malta immediately and next steps",
-  "closing": "Final paragraph - call to action, appreciation"
+  "introduction": "",
+  "body1": "",
+  "body2": "",
+  "body3": "",
+  "closing": ""
 }
-
-Each paragraph should be 2-4 sentences. Professional British English tone.
-Be specific about the company and position. Sound human, not AI-generated.
-Make it unique for this candidate.
 `;
 
   try {
@@ -829,7 +825,7 @@ Make it unique for this candidate.
 }
 
 // ============================================
-// GENERAR HTML DEL CV - SIN CAMBIOS
+// GENERAR HTML DEL CV - CON FOTO FUNCIONANDO
 // ============================================
 
 function generateCVHtml(data: any, content: CVContent): string {
@@ -840,17 +836,20 @@ function generateCVHtml(data: any, content: CVContent): string {
   const lastName = nameParts.slice(1).join(" ") || "";
   const fullName = `${firstName} ${lastName}`;
 
-  // ✅ FOTO
+  // ✅ FOTO - FUNCIONA CORRECTAMENTE
   const initials = getInitials(data.full_name);
   const photoHtml = data.photo_url 
     ? `<img src="${data.photo_url}" alt="${fullName}">` 
     : `<span class="initials">${initials}</span>`;
 
+  console.log("📸 PHOTO_URL:", data.photo_url);
+  console.log("📸 PHOTO_HTML:", photoHtml.substring(0, 100));
+
   const location = data.current_city
     ? `${data.current_city}, ${data.nationality || "Morocco"}`
     : data.nationality || "Morocco";
 
-  // LANGUAGES
+  // LANGUAGES - formato con puntos
   let languagesHtml = "";
   const idiomas = data.idiomas ? data.idiomas.split(",").map((i: string) => i.trim()) : ["English"];
   const levels: Record<string, string> = {
@@ -976,6 +975,7 @@ function generateCVHtml(data: any, content: CVContent): string {
   const hasDrivingLicense = data.carnet_conducir && data.carnet_conducir !== "No" && data.carnet_conducir !== "None";
   const driverLicense = hasDrivingLicense ? data.carnet_conducir : "";
 
+  // ✅ REPLACEMENTS - LA FOTO SE REEMPLAZA AQUÍ
   const replacements: Record<string, string> = {
     "{{PHOTO_HTML}}": photoHtml,
     "{{FULL_NAME}}": fullName,
@@ -1002,7 +1002,7 @@ function generateCVHtml(data: any, content: CVContent): string {
 }
 
 // ============================================
-// ✅ GENERAR HTML DE LA CARTA - ACTUALIZADO
+// GENERAR HTML DE LA CARTA
 // ============================================
 
 function generateCoverHtml(data: any, content: LetterContent, company: Company, jobTitle: string): string {
@@ -1029,36 +1029,20 @@ function generateCoverHtml(data: any, content: LetterContent, company: Company, 
     ? `${data.current_city}, ${data.nationality || "Morocco"}`
     : data.nationality || "Morocco";
 
-  const hasDrivingLicense = data.carnet_conducir && data.carnet_conducir !== "No" && data.carnet_conducir !== "None";
-  const driverLicense = hasDrivingLicense ? data.carnet_conducir : "Not available";
-
-  // ✅ COMPANY SECTION
-  const companySection = company && company.name ? `
+  const companySection = `
     <div class="company">
-      <strong>${company.name}</strong>
       <div class="department">Human Resources Department</div>
+      <div class="address-line">${company.name || ""}</div>
       <div class="address-line">${company.city || "Malta"}</div>
     </div>
-  ` : '<div class="company-empty"></div>';
+  `;
 
-  // ✅ SIGNATURE IMAGE
-  const signatureImageHtml = data.signature_image ? `
-    <div class="signature-image">
-      <img src="${data.signature_image}" alt="Signature">
-    </div>
-  ` : '';
-
-  // ✅ REPLACEMENTS
   const replacements: Record<string, string> = {
     "{{PHOTO_HTML}}": photoHtml,
-    "{{FIRST_NAME}}": firstName,
-    "{{LAST_NAME}}": lastName,
     "{{FULL_NAME}}": fullName,
-    "{{TITLE}}": jobTitle || "Professional",
+    "{{JOB_TITLE}}": jobTitle,
     "{{EMAIL}}": data.email || "",
     "{{WHATSAPP}}": data.whatsapp || "",
-    "{{NATIONALITY}}": data.nationality || "Moroccan",
-    "{{DRIVER_LICENSE}}": driverLicense,
     "{{LOCATION}}": location,
     "{{DATE}}": dateStr,
     "{{COMPANY_SECTION}}": companySection,
@@ -1068,7 +1052,7 @@ function generateCoverHtml(data: any, content: LetterContent, company: Company, 
     "{{BODY_2}}": content.body2 || "",
     "{{BODY_3}}": content.body3 || "",
     "{{CLOSING}}": content.closing || "",
-    "{{SIGNATURE_IMAGE_HTML}}": signatureImageHtml,
+    "{{SIGNATURE_IMAGE}}": "",
   };
 
   for (const [key, value] of Object.entries(replacements)) {
