@@ -1166,6 +1166,16 @@ async function renderPdfFromHtml(html: string): Promise<Buffer> {
 // ============================================
 
 async function uploadPDFWithRetry(pdfBytes: Buffer, fileName: string): Promise<string> {
+  // Verificar que el buffer es un PDF válido
+  if (pdfBytes.length === 0) {
+    throw new Error(`PDF buffer is empty for ${fileName}`);
+  }
+  
+  const pdfHeader = pdfBytes.slice(0, 4).toString('ascii');
+  if (pdfHeader !== '%PDF') {
+    console.warn(`⚠️ PDF header is "${pdfHeader}" instead of "%PDF" for ${fileName}`);
+  }
+  
   return await retryWithBackoff(
     async () => {
       const { error: uploadError } = await supabase.storage
@@ -1179,15 +1189,37 @@ async function uploadPDFWithRetry(pdfBytes: Buffer, fileName: string): Promise<s
         throw new Error(`Upload failed: ${uploadError.message}`);
       }
 
+      // Verificar que el archivo existe después de subirlo
+      const { data: listData, error: listError } = await supabase.storage
+        .from(BUCKET_NAME)
+        .list('', {
+          limit: 100,
+          offset: 0,
+          sortBy: { column: 'name', order: 'asc' },
+        });
+
+      if (listError) {
+        console.warn(`⚠️ Could not list bucket: ${listError.message}`);
+      } else {
+        const fileExists = listData?.some(file => file.name === fileName);
+        console.log(`📋 File exists in bucket: ${fileExists}`);
+        
+        if (!fileExists) {
+          console.warn(`⚠️ File ${fileName} not found in bucket after upload!`);
+        }
+      }
+
       const { data: publicUrlData } = supabase.storage
         .from(BUCKET_NAME)
         .getPublicUrl(fileName);
 
+      console.log(`🔗 Public URL: ${publicUrlData.publicUrl}`);
+      
       return publicUrlData.publicUrl;
     },
     3,
     2000,
-    "Supabase upload"
+    `Supabase upload ${fileName}`
   );
 }
 
@@ -1228,6 +1260,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     console.log(`✅ Application found: ${application.full_name}`);
     console.log(`📸 photo_url: ${application.photo_url || "No photo"}`);
+    console.log(`🆔 Application ID: ${applicationId}`);
 
     const hasUserCV = !!application.cv_url && application.cv_url.trim() !== "";
     console.log(`📋 Has user CV: ${hasUserCV}`);
@@ -1332,15 +1365,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           updateData.photo_generated_at = new Date().toISOString();
         }
 
+        console.log(`📊 Updating application ${applicationId} with:`, {
+          cv_generated: true,
+          worker_ready: true,
+          cv_url: cvUrl ? 'present' : 'missing',
+          letter_url: letterUrl ? 'present' : 'missing'
+        });
+
         const { error: updateError } = await supabase
           .from("malta_applications")
           .update(updateData)
           .eq("id", applicationId);
 
         if (updateError) {
+          console.error(`❌ Update error:`, updateError);
           throw new Error(`Supabase update failed: ${updateError.message}`);
         }
         
+        console.log(`✅ Application ${applicationId} updated successfully`);
         return true;
       },
       3,
