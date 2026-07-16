@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import * as fs from "fs";
 import * as path from "path";
 import chromium from "@sparticuz/chromium";
+import puppeteer from "puppeteer-core";
 
 // ============================================
 // TIPOS
@@ -533,15 +534,12 @@ async function generatePremiumCV(data: any, hasUserCV: boolean): Promise<CVConte
   const sector = data.sectores ? data.sectores.split(",")[0]?.trim()?.toLowerCase() : "default";
   const companies = MOROCCAN_COMPANIES[sector] || MOROCCAN_COMPANIES.kitchen;
   
-  // ✅ FILTRAR EMPRESAS POR CIUDAD DEL CLIENTE
   const userCity = data.current_city && data.current_city.trim() !== "" 
     ? data.current_city 
     : getRandomItem(MOROCCAN_CITIES);
   
-  // Filtrar empresas que coinciden con la ciudad del cliente
   let filteredCompanies = companies.filter(c => c.city === userCity);
   
-  // Si no hay empresas en esa ciudad, usar todas las empresas del sector
   if (filteredCompanies.length === 0) {
     console.log(`⚠️ No hay empresas en ${userCity}, usando todas las empresas del sector`);
     filteredCompanies = companies;
@@ -562,7 +560,6 @@ async function generatePremiumCV(data: any, hasUserCV: boolean): Promise<CVConte
   const availableCertificates = CERTIFICATES_BY_SECTOR[sector] || CERTIFICATES_BY_SECTOR.default;
   const selectedCertificates = getRandomItems(availableCertificates, Math.min(4, availableCertificates.length));
 
-  // ✅ PROMPT MEJORADO - CON CIUDAD REAL
   const prompt = `
 You are a professional CV writer for the European job market, specialized in Malta.
 
@@ -684,7 +681,6 @@ Output ONLY JSON:
     }
     const cleanEducation = educationTitle.split(".")[0].split(",")[0].trim();
     
-    // Asegurar 6 bullet points por trabajo
     experienceData = experienceData.map((exp: Experience) => {
       const bullets = exp.bullets || [];
       while (bullets.length < 6) {
@@ -696,7 +692,6 @@ Output ONLY JSON:
       };
     });
     
-    // Asegurar 8 softSkills
     let softSkills = Array.isArray(parsed.softSkills) ? parsed.softSkills : [];
     const defaultSoftSkills = [
       "Strong Work Ethic", "Team Collaboration", "Fast Learning Ability",
@@ -708,7 +703,6 @@ Output ONLY JSON:
     }
     softSkills = softSkills.slice(0, 8);
     
-    // Asegurar 8 skills
     let skills = Array.isArray(parsed.skills) ? parsed.skills : [];
     const defaultSkills = [
       "Food Preparation", "Kitchen Hygiene", "Inventory Management",
@@ -720,7 +714,6 @@ Output ONLY JSON:
     }
     skills = skills.slice(0, 8);
     
-    // Asegurar 4 certificates
     let certificates = Array.isArray(parsed.certificates) ? parsed.certificates : selectedCertificates;
     while (certificates.length < 4) {
       certificates.push("Health and Safety Awareness");
@@ -835,7 +828,6 @@ function generateCVHtml(data: any, content: CVContent): string {
   const lastName = nameParts.slice(1).join(" ") || "";
   const fullName = `${firstName} ${lastName}`;
 
-  // ✅ FOTO - FUNCIONA CORRECTAMENTE
   const initials = getInitials(data.full_name);
   const photoHtml = data.photo_url 
     ? `<img src="${data.photo_url}" alt="${fullName}">` 
@@ -848,7 +840,6 @@ function generateCVHtml(data: any, content: CVContent): string {
     ? `${data.current_city}, ${data.nationality || "Morocco"}`
     : data.nationality || "Morocco";
 
-  // LANGUAGES - formato con puntos
   let languagesHtml = "";
   const idiomas = data.idiomas ? data.idiomas.split(",").map((i: string) => i.trim()) : ["English"];
   const levels: Record<string, string> = {
@@ -877,7 +868,6 @@ function generateCVHtml(data: any, content: CVContent): string {
     `;
   }
 
-  // EXPERIENCE
   let experienceHtml = "";
   const experiences = content.experience || [];
   
@@ -899,20 +889,17 @@ function generateCVHtml(data: any, content: CVContent): string {
     `;
   }
 
-  // EDUCATION
   const educationHtml = `
     <div class="education-item">
       <div class="edu-degree">${content.education || data.education_level || "Secondary Education"}</div>
     </div>
   `;
 
-  // CORE COMPETENCIES
   const competencies = content.coreCompetencies || [];
   const competenciesHtml = competencies.map((comp: string) => 
     `<span>${comp}</span>`
   ).join("");
 
-  // KEY STRENGTHS
   const keyStrengths = content.softSkills && content.softSkills.length > 0
     ? content.softSkills
     : [
@@ -925,7 +912,6 @@ function generateCVHtml(data: any, content: CVContent): string {
       ];
   const keyStrengthsHtml = keyStrengths.map((s: string) => `<li>${s}</li>`).join("");
 
-  // PROFESSIONAL SKILLS
   const skills = content.skills || [];
   const skillPercentages: Record<string, number> = {
     "Food Preparation": 90,
@@ -966,7 +952,6 @@ function generateCVHtml(data: any, content: CVContent): string {
   
   const allSkillsHtml = [...leftSkills, ...rightSkills].map(renderSkillBar).join("");
 
-  // PERSONAL STATEMENT
   const personalStatement = content.personalStatement || "I am enthusiastic about joining a professional team where I can contribute positively, learn continuously, and grow within the industry. I am available to start immediately and ready to relocate.";
 
   const tagline = `Dedicated and motivated ${content.jobTitle || "professional"} with a strong passion for the hospitality industry. Eager to contribute to a dynamic team.`;
@@ -974,7 +959,6 @@ function generateCVHtml(data: any, content: CVContent): string {
   const hasDrivingLicense = data.carnet_conducir && data.carnet_conducir !== "No" && data.carnet_conducir !== "None";
   const driverLicense = hasDrivingLicense ? data.carnet_conducir : "";
 
-  // ✅ REPLACEMENTS - LA FOTO SE REEMPLAZA AQUÍ
   const replacements: Record<string, string> = {
     "{{PHOTO_HTML}}": photoHtml,
     "{{FULL_NAME}}": fullName,
@@ -1086,16 +1070,20 @@ function readTemplate(templateName: string): string {
 // ============================================
 
 async function renderPdfFromHtml(html: string): Promise<Buffer> {
-  const browser = await chromium.launch({
+  const executablePath = await chromium.executablePath();
+  
+  console.log(`🔍 Chromium executable path: ${executablePath}`);
+  
+  const browser = await puppeteer.launch({
     headless: true,
     args: chromium.args,
-    executablePath: await chromium.executablePath(),
+    executablePath: executablePath,
   });
   
   try {
     const page = await browser.newPage();
     await page.setContent(html, { waitUntil: 'networkidle' });
-    await page.emulateMedia({ media: "print" });
+    await page.emulateMediaType('print');
     
     const contentHeight = await page.evaluate(() => {
       const body = document.body;
@@ -1132,7 +1120,7 @@ async function renderPdfFromHtml(html: string): Promise<Buffer> {
       });
       
       await page.setContent(finalHtml, { waitUntil: 'networkidle' });
-      await page.emulateMedia({ media: "print" });
+      await page.emulateMediaType('print');
       
       const newHeight = await page.evaluate(() => {
         const body = document.body;
@@ -1166,7 +1154,6 @@ async function renderPdfFromHtml(html: string): Promise<Buffer> {
 // ============================================
 
 async function uploadPDFWithRetry(pdfBytes: Buffer, fileName: string): Promise<string> {
-  // Verificar que el buffer es un PDF válido
   if (pdfBytes.length === 0) {
     throw new Error(`PDF buffer is empty for ${fileName}`);
   }
@@ -1189,7 +1176,6 @@ async function uploadPDFWithRetry(pdfBytes: Buffer, fileName: string): Promise<s
         throw new Error(`Upload failed: ${uploadError.message}`);
       }
 
-      // Verificar que el archivo existe después de subirlo
       const { data: listData, error: listError } = await supabase.storage
         .from(BUCKET_NAME)
         .list('', {
