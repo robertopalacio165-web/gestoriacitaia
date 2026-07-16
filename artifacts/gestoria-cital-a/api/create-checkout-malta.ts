@@ -118,7 +118,7 @@ export default async function handler(
         aleman_nivel: aleman_nivel || "",
 
         profesion: profesion || "",
-        añosExperiencia: añosExperiencia || "",
+  anosExperiencia: anosExperiencia || "",
         education_level: education_level || "",
 
         sectores: sectores || "",
