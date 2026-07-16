@@ -769,7 +769,7 @@ Output ONLY JSON:
 }
 
 // ============================================
-// ✅ GENERAR HTML DEL CV - ACTUALIZADO
+// GENERAR HTML DEL CV - CON FOTO FUNCIONANDO
 // ============================================
 
 function generateCVHtml(data: any, content: CVContent): string {
@@ -780,10 +780,14 @@ function generateCVHtml(data: any, content: CVContent): string {
   const lastName = nameParts.slice(1).join(" ") || "";
   const fullName = `${firstName} ${lastName}`;
 
+  // ✅ FOTO - FUNCIONA CORRECTAMENTE
   const initials = getInitials(data.full_name);
   const photoHtml = data.photo_url 
     ? `<img src="${data.photo_url}" alt="${fullName}">` 
     : `<span class="initials">${initials}</span>`;
+
+  console.log("📸 PHOTO_URL:", data.photo_url);
+  console.log("📸 PHOTO_HTML:", photoHtml.substring(0, 100));
 
   const location = data.current_city
     ? `${data.current_city}, ${data.nationality || "Morocco"}`
@@ -915,7 +919,7 @@ function generateCVHtml(data: any, content: CVContent): string {
   const hasDrivingLicense = data.carnet_conducir && data.carnet_conducir !== "No" && data.carnet_conducir !== "None";
   const driverLicense = hasDrivingLicense ? data.carnet_conducir : "";
 
-  // ✅ REPLACEMENTS - Coinciden con el nuevo HTML
+  // ✅ REPLACEMENTS - LA FOTO SE REEMPLAZA AQUÍ
   const replacements: Record<string, string> = {
     "{{PHOTO_HTML}}": photoHtml,
     "{{FULL_NAME}}": fullName,
