@@ -45,7 +45,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const session = event.data.object as Stripe.Checkout.Session;
     const metadata = session.metadata || {};
 
-    // ✅ MEJORA: Log completo de metadata para depuración
     console.log("=========================================");
     console.log("📦 METADATA COMPLETA RECIBIDA:");
     console.log(JSON.stringify(metadata, null, 2));
@@ -53,21 +52,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     console.log("✅ Checkout completado:", session.id);
 
     // ============================================
-    // 1. DATOS PERSONALES (adaptados al nuevo formulario)
+    // 1. DATOS PERSONALES
     // ============================================
     const fullName = metadata.fullName || "";
     const whatsapp = metadata.whatsapp || "";
     const email = metadata.email || "";
-    
-    // ✅ CORREGIDO: nationality en lugar de nacionalidad
     const nationality = metadata.nationality || "";
-    
-    // ✅ NUEVO: currentCity
     const currentCity = metadata.currentCity || "";
-    
-    // ✅ CORREGIDO: countryResidence en lugar de paisResidencia
     const countryResidence = metadata.countryResidence || "";
-    
     const fechaNacimiento = metadata.fechaNacimiento || "";
     
     // ============================================
@@ -86,10 +78,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // ============================================
     const profesion = metadata.profesion || "";
     const añosExperiencia = metadata.añosExperiencia || "";
-    
-    // ✅ NUEVO: education_level
     const educationLevel = metadata.education_level || "";
-    
     const sectores = metadata.sectores || "";
     
     // ============================================
@@ -98,7 +87,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const carnetConducir = metadata.carnetConducir || "";
     
     // ============================================
-    // 5. PREFERENCIAS (NUEVOS)
+    // 5. PREFERENCIAS
     // ============================================
     const preferredPosition = metadata.preferred_position || "";
     const workPreference = metadata.work_preference || "";
@@ -107,10 +96,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // ============================================
     // 6. CV Y DOCUMENTOS
     // ============================================
-    // ✅ CORREGIDO: El formulario envía "Sí" o "No" en español
-    // Si el formulario cambia a inglés, cambiar aquí también
     const tieneCV = metadata.tieneCV === "Sí";
-    
     const cvUrl = metadata.cvUrl || "";
     const photoUrl = metadata.photoUrl || "";
     const pdfUrl = metadata.pdfUrl || "";
@@ -120,64 +106,44 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // ============================================
     const plan = metadata.plan || "monthly";
 
-    // ============================================
-    // 8. CAMPOS ELIMINADOS (ya no se usan)
-    // ============================================
-    // ❌ ELIMINADO: pasaporteValido
-    // ❌ ELIMINADO: entrevistaVideo
-    // ❌ ELIMINADO: disponibilidadInicio
-    // ❌ ELIMINADO: estudios (ahora se usa education_level)
-
-    // ============================================
-    // 9. LOG DE VERIFICACIÓN
-    // ============================================
     console.log("📋 DATOS PROCESADOS:");
     console.log("  - fullName:", fullName);
     console.log("  - nationality:", nationality);
     console.log("  - currentCity:", currentCity);
-    console.log("  - countryResidence:", countryResidence);
-    console.log("  - educationLevel:", educationLevel);
-    console.log("  - preferredPosition:", preferredPosition);
-    console.log("  - workPreference:", workPreference);
-    console.log("  - willingToRelocate:", willingToRelocate);
-    console.log("  - tieneCV:", tieneCV);
     console.log("  - photoUrl:", photoUrl);
     console.log("  - cvUrl:", cvUrl);
-    console.log("  - pdfUrl:", pdfUrl);
 
     // ============================================
-    // 10. INSERT EN SUPABASE (adaptado al nuevo formulario)
+    // ✅ 8. VERIFICAR SI YA EXISTE (ANTES DE INSERTAR)
     // ============================================
-    // ⚠️ IMPORTANTE: Asegúrate de que la tabla tenga estas columnas:
-    // - nationality (antes nacionalidad)
-    // - country_residence (antes pais_residencia)
-    // - current_city (NUEVA)
-    // - education_level (NUEVA)
-    // - preferred_position (NUEVA)
-    // - work_preference (NUEVA)
-    // - willing_to_relocate (NUEVA)
-    // - pdf_url (NUEVA)
-    
-    const { data, error } = await supabase
+    const { data: existing, error: checkError } = await supabase
       .from("malta_applications")
-      .insert({
-        // Datos personales
+      .select("id, worker_status")
+      .eq("stripe_session_id", session.id)
+      .maybeSingle();
+
+    if (checkError) {
+      console.error("❌ Error checking existing application:", checkError);
+    }
+
+    let applicationId: string;
+    let isNew = false;
+
+    // ============================================
+    // ✅ 9. SI YA EXISTE -> ACTUALIZAR
+    // ============================================
+    if (existing) {
+      applicationId = existing.id;
+      console.log(`🔄 Actualizando aplicación existente: ${applicationId}`);
+
+      const updateData: any = {
         full_name: fullName,
         whatsapp: whatsapp,
         email: email,
-        
-        // ✅ CORREGIDO: nationality
         nationality: nationality,
-        
-        // ✅ NUEVO: current_city
         current_city: currentCity,
-        
-        // ✅ CORREGIDO: country_residence
         country_residence: countryResidence,
-        
         fecha_nacimiento: fechaNacimiento || null,
-        
-        // Idiomas
         idiomas: idiomas,
         ingles_nivel: ingles_nivel,
         frances_nivel: frances_nivel,
@@ -185,103 +151,130 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         espanol_nivel: espanol_nivel,
         arabe_nivel: arabe_nivel,
         aleman_nivel: aleman_nivel,
-        
-        // Experiencia
         profesion: profesion,
         anos_experiencia: añosExperiencia,
-        
-        // ✅ NUEVO: education_level
         education_level: educationLevel,
-        
         sectores: sectores,
-        
-        // Carnet
         carnet_conducir: carnetConducir,
-        
-        // ✅ NUEVAS PREFERENCIAS
         preferred_position: preferredPosition,
         work_preference: workPreference,
         willing_to_relocate: willingToRelocate,
-        
-        // CV y documentos
         tiene_cv: tieneCV,
         cv_url: cvUrl,
         photo_url: photoUrl,
         pdf_url: pdfUrl,
-        
-        // Plan
         plan: plan,
-        
-        // Stripe
-        stripe_session_id: session.id,
-        worker_status: "waiting",
-        created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-      })
-      .select()
-      .single();
+      };
 
-    if (error) {
-      console.error("❌ Error insertando en Supabase:");
-      console.error(JSON.stringify(error, null, 2));
-      return res.status(500).json({ error });
-    }
-
-    console.log("✅ Registro creado en Supabase:", data.id);
-    console.log("📸 photo_url guardada:", data.photo_url);
-    console.log("📄 cv_url guardada:", data.cv_url);
-    console.log("📎 pdf_url guardada:", data.pdf_url);
-    console.log("🏙️ current_city guardada:", data.current_city);
-    console.log("📚 education_level guardada:", data.education_level);
-    console.log("💼 preferred_position guardada:", data.preferred_position);
-    console.log("🔧 work_preference guardada:", data.work_preference);
-    console.log("🔄 willing_to_relocate guardado:", data.willing_to_relocate);
-
-    // ============================================
-    // 11. LLAMAR A GENERATE-MALTA-DOCUMENTS
-    // ============================================
-    try {
-      await fetch(`${process.env.NEXT_PUBLIC_URL}/api/generate-malta-documents`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          applicationId: data.id,
-        }),
-      });
-
-      console.log("✅ Generación de documentos iniciada");
-    } catch (err) {
-      console.error("❌ Error llamando generate-malta-documents:", err);
-    }
-
-    // ============================================
-    // 12. NOTIFICACIÓN A MAKE
-    // ============================================
-    try {
-      const webhookUrl = process.env.MAKE_WEBHOOK_URL;
-      if (webhookUrl) {
-        await fetch(webhookUrl, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            event: "new_application",
-            applicationId: data.id,
-            fullName: fullName,
-            whatsapp: whatsapp,
-            email: email,
-            plan: plan,
-            nationality: nationality,
-            currentCity: currentCity,
-            preferredPosition: preferredPosition,
-          }),
-        });
-        console.log("✅ Notificación enviada a Make");
+      if (session.payment_intent) {
+        updateData.stripe_payment_intent = session.payment_intent as string;
       }
-    } catch (webhookError) {
-      console.error("⚠️ Error enviando a Make:", webhookError);
+
+      const { error: updateError } = await supabase
+        .from("malta_applications")
+        .update(updateData)
+        .eq("id", applicationId);
+
+      if (updateError) {
+        console.error("❌ Error updating application:", updateError);
+        return res.status(500).json({ error: "Failed to update application" });
+      }
+
+      console.log(`✅ Aplicación ${applicationId} actualizada correctamente`);
+
+    } else {
+      // ============================================
+      // ✅ 10. SI NO EXISTE -> INSERTAR
+      // ============================================
+      isNew = true;
+      console.log("🆕 Creando nueva aplicación");
+
+      const { data: newApp, error: insertError } = await supabase
+        .from("malta_applications")
+        .insert({
+          full_name: fullName,
+          whatsapp: whatsapp,
+          email: email,
+          nationality: nationality,
+          current_city: currentCity,
+          country_residence: countryResidence,
+          fecha_nacimiento: fechaNacimiento || null,
+          idiomas: idiomas,
+          ingles_nivel: ingles_nivel,
+          frances_nivel: frances_nivel,
+          italiano_nivel: italiano_nivel,
+          espanol_nivel: espanol_nivel,
+          arabe_nivel: arabe_nivel,
+          aleman_nivel: aleman_nivel,
+          profesion: profesion,
+          anos_experiencia: añosExperiencia,
+          education_level: educationLevel,
+          sectores: sectores,
+          carnet_conducir: carnetConducir,
+          preferred_position: preferredPosition,
+          work_preference: workPreference,
+          willing_to_relocate: willingToRelocate,
+          tiene_cv: tieneCV,
+          cv_url: cvUrl,
+          photo_url: photoUrl,
+          pdf_url: pdfUrl,
+          plan: plan,
+          stripe_session_id: session.id,
+          stripe_payment_intent: session.payment_intent as string,
+          worker_status: "pending",
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .select()
+        .single();
+
+      if (insertError) {
+        console.error("❌ Error insertando en Supabase:");
+        console.error(JSON.stringify(insertError, null, 2));
+        return res.status(500).json({ error: insertError });
+      }
+
+      applicationId = newApp.id;
+      console.log(`✅ Registro creado en Supabase: ${applicationId}`);
+      console.log("📸 photo_url guardada:", newApp.photo_url);
     }
+
+    // ============================================
+    // ✅ 11. AÑADIR A LA COLA DE TRABAJO (SOLO SI ES NUEVO)
+    // ============================================
+    if (isNew) {
+      try {
+        const { error: queueError } = await supabase
+          .from("worker_queue")
+          .insert({
+            application_id: applicationId,
+            status: "pending",
+            priority: 1,
+            created_at: new Date().toISOString(),
+          });
+
+        if (queueError) {
+          console.error("❌ Error adding to worker queue:", queueError);
+        } else {
+          console.log(`✅ Añadido a la cola de trabajo: ${applicationId}`);
+        }
+      } catch (queueErr) {
+        console.error("❌ Worker queue exception:", queueErr);
+      }
+    } else {
+      console.log(`⏳ Aplicación ${applicationId} ya existe, no se añade a la cola`);
+    }
+
+    // ============================================
+    // ✅ 12. RESPONDER RÁPIDO (NO ESPERAR GENERACIÓN)
+    // ============================================
+    return res.status(200).json({
+      received: true,
+      applicationId,
+      isNew,
+      message: isNew ? "Application created and queued" : "Application updated",
+    });
   }
 
   return res.status(200).json({ received: true });
