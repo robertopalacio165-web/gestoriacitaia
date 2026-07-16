@@ -527,7 +527,7 @@ async function callOpenAIWithRetry(
 }
 
 // ============================================
-// GENERAR CV CON IA - PROMPT SIMPLIFICADO
+// ✅ GENERAR CV CON IA - MEJORADO Y PROFESIONAL
 // ============================================
 
 async function generatePremiumCV(data: any, hasUserCV: boolean): Promise<CVContent> {
@@ -551,24 +551,37 @@ async function generatePremiumCV(data: any, hasUserCV: boolean): Promise<CVConte
   const expLabel = añosExperiencia.replace(/_/g, " ");
 
   const availableCertificates = CERTIFICATES_BY_SECTOR[sector] || CERTIFICATES_BY_SECTOR.default;
-  const selectedCertificates = getRandomItems(availableCertificates, Math.min(3, availableCertificates.length));
+  const selectedCertificates = getRandomItems(availableCertificates, Math.min(4, availableCertificates.length));
 
+  // ✅ PROMPT MEJORADO - CON INSTRUCCIONES CLARAS PARA RELLENAR LA PÁGINA
   const prompt = `
-You are a professional CV writer for Malta.
+You are a professional CV writer for the European job market, specialized in Malta.
 
-Generate a European CV.
+Generate a COMPLETE, DETAILED European CV that fills the ENTIRE A4 page.
 
-Rules:
-- Maximum 2 jobs
-- Maximum 4 bullet points per job
-- Maximum 6 core competencies
-- Maximum 6 professional skills
-- Education must be realistic
-- Never write "No Formal Education"
+CRITICAL REQUIREMENTS:
+- The CV must look FULL and PROFESSIONAL, not empty
+- Every section must have enough content to fill the page
+- The sidebar must be FULL (languages, key strengths, additional info)
+
+RULES:
+- Exactly 2 jobs
+- Exactly 6 bullet points per job (NOT 4, NOT 5 - SIX!)
+- Every bullet must be 12-18 words, specific and detailed
+- 6 core competencies
+- 8 professional skills with proper names
+- 8 key strengths (soft skills)
+- 4 certificates
+- Education must be realistic and well described
 - Passport is always Available
-- Never mention Work Permit
+- NEVER mention Work Permit
 - Availability is Immediate
-- Relocation is Available to relocate to Malta
+- Relocation: "Available to relocate to Malta"
+
+THE SIDEBAR MUST CONTAIN:
+- At least 6 languages with proper levels (Native, C2, C1, B2, B1, A2)
+- At least 8 key strengths (not just 4-5)
+- Complete additional info section
 
 Candidate:
 Name: ${data.full_name}
@@ -582,27 +595,34 @@ Experience Level: ${expLabel}
 Driver Licence: ${data.carnet_conducir}
 Has uploaded CV: ${hasUserCV}
 
-${hasUserCV ? "Keep their REAL experience. Improve grammar. Never invent companies, dates or positions." : "Create realistic professional work history. Generate EXACTLY 2 jobs with Real company name, City, Job title, Employment dates, Exactly 4 bullet points."}
+${hasUserCV ? "KEEP THEIR REAL EXPERIENCE. IMPROVE grammar and wording. ADD MORE DETAIL to their existing experience. NEVER invent companies or dates." : "CREATE realistic professional work history. Generate EXACTLY 2 jobs with Real Moroccan company, City, Job title, Employment dates, EXACTLY 6 bullet points per job."}
 
 Output ONLY JSON:
 {
-  "summary": "",
-  "coreCompetencies": [],
+  "summary": "A professional summary of 4-5 sentences describing the candidate's experience and goals",
+  "coreCompetencies": ["Competency1", "Competency2", "Competency3", "Competency4", "Competency5", "Competency6"],
   "experience": [
     {
-      "company": "",
-      "city": "",
-      "jobTitle": "",
-      "period": "",
-      "bullets": []
+      "company": "Real company name",
+      "city": "City in Morocco",
+      "jobTitle": "Job title",
+      "period": "Month Year - Month Year",
+      "bullets": [
+        "Detailed bullet 1 describing specific responsibility (12-18 words)",
+        "Detailed bullet 2 describing specific responsibility (12-18 words)",
+        "Detailed bullet 3 describing specific responsibility (12-18 words)",
+        "Detailed bullet 4 describing specific responsibility (12-18 words)",
+        "Detailed bullet 5 describing specific responsibility (12-18 words)",
+        "Detailed bullet 6 describing specific responsibility (12-18 words)"
+      ]
     }
   ],
-  "skills": [],
-  "softSkills": [],
-  "technicalSkills": [],
-  "education": "",
-  "certificates": [],
-  "personalStatement": ""
+  "skills": ["Skill1", "Skill2", "Skill3", "Skill4", "Skill5", "Skill6", "Skill7", "Skill8"],
+  "softSkills": ["Strength1", "Strength2", "Strength3", "Strength4", "Strength5", "Strength6", "Strength7", "Strength8"],
+  "technicalSkills": ["Tech1", "Tech2", "Tech3", "Tech4", "Tech5", "Tech6"],
+  "education": "Education title only",
+  "certificates": ["Cert1", "Cert2", "Cert3", "Cert4"],
+  "personalStatement": "A personal statement of 3-4 sentences"
 }
 `;
 
@@ -623,7 +643,7 @@ Output ONLY JSON:
             city: exp.city || selectedCity,
             jobTitle: exp.jobTitle || jobTitle,
             period: exp.period || "",
-            bullets: Array.isArray(exp.bullets) ? exp.bullets.slice(0, 4) : []
+            bullets: Array.isArray(exp.bullets) ? exp.bullets.slice(0, 6) : []
           };
         }
         
@@ -632,7 +652,14 @@ Output ONLY JSON:
           city: exp.city || selectedCity,
           jobTitle: exp.jobTitle || jobTitle,
           period: exp.period || `${dateRange.start} - ${dateRange.end}`,
-          bullets: Array.isArray(exp.bullets) ? exp.bullets.slice(0, 4) : ["Prepared ingredients and assisted chefs", "Maintained high standards of cleanliness"]
+          bullets: Array.isArray(exp.bullets) ? exp.bullets.slice(0, 6) : [
+            "Prepared ingredients and assisted chefs in daily kitchen operations efficiently",
+            "Maintained high standards of cleanliness and hygiene at all workstations consistently",
+            "Collaborated with team members to ensure timely food service during peak hours",
+            "Managed inventory and ensured proper storage of all food items and supplies",
+            "Followed all HACCP and food safety protocols to maintain quality standards",
+            "Supported senior chefs with food preparation and plating for special events"
+          ]
         };
       });
     }
@@ -647,43 +674,61 @@ Output ONLY JSON:
     }
     const cleanEducation = educationTitle.split(".")[0].split(",")[0].trim();
     
-    const MAX_BULLET_WORDS = 14;
-    experienceData = experienceData.map((exp: Experience) => ({
-      ...exp,
-      bullets: exp.bullets.map((bullet: string) => {
-        const words = bullet.split(" ");
-        if (words.length > MAX_BULLET_WORDS) {
-          return words.slice(0, MAX_BULLET_WORDS).join(" ");
-        }
-        return bullet;
-      })
-    }));
+    // Asegurar 6 bullet points por trabajo
+    experienceData = experienceData.map((exp: Experience) => {
+      const bullets = exp.bullets || [];
+      while (bullets.length < 6) {
+        bullets.push("Performed additional kitchen duties as assigned by the head chef");
+      }
+      return {
+        ...exp,
+        bullets: bullets.slice(0, 6)
+      };
+    });
+    
+    // Asegurar 8 softSkills
+    let softSkills = Array.isArray(parsed.softSkills) ? parsed.softSkills : [];
+    const defaultSoftSkills = [
+      "Strong Work Ethic", "Team Collaboration", "Fast Learning Ability",
+      "Attention to Detail", "Reliability and Punctuality", "Stress Management",
+      "Effective Communication", "Adaptability and Flexibility"
+    ];
+    while (softSkills.length < 8) {
+      softSkills.push(defaultSoftSkills[softSkills.length % defaultSoftSkills.length]);
+    }
+    softSkills = softSkills.slice(0, 8);
+    
+    // Asegurar 8 skills
+    let skills = Array.isArray(parsed.skills) ? parsed.skills : [];
+    const defaultSkills = [
+      "Food Preparation", "Kitchen Hygiene", "Inventory Management",
+      "Cleaning and Sanitization", "Knife Skills", "Food Safety",
+      "Teamwork", "Time Management"
+    ];
+    while (skills.length < 8) {
+      skills.push(defaultSkills[skills.length % defaultSkills.length]);
+    }
+    skills = skills.slice(0, 8);
+    
+    // Asegurar 4 certificates
+    let certificates = Array.isArray(parsed.certificates) ? parsed.certificates : selectedCertificates;
+    while (certificates.length < 4) {
+      certificates.push("Health and Safety Awareness");
+    }
+    certificates = certificates.slice(0, 4);
     
     let summary = parsed.summary || "";
-    const summaryLines = summary.split("\n");
-    if (summaryLines.length > 4) {
-      summary = summaryLines.slice(0, 4).join("\n");
+    if (summary.length < 50) {
+      summary = `Dedicated and motivated ${jobTitle} with ${expLabel} of experience in the hospitality industry. Proven ability to maintain high standards of cleanliness and food safety. Strong team player with excellent communication skills and a commitment to delivering quality results.`;
     }
     
     let personalStatement = parsed.personalStatement || "";
-    const psLines = personalStatement.split("\n");
-    if (psLines.length > 3) {
-      personalStatement = psLines.slice(0, 3).join("\n");
-    }
-    
-    if (summary.length > 600) {
-      summary = summary.slice(0, 580) + "...";
-    }
-    
-    if (personalStatement.length > 300) {
-      personalStatement = personalStatement.slice(0, 280) + "...";
+    if (personalStatement.length < 30) {
+      personalStatement = `I am enthusiastic about joining a professional culinary team where I can contribute positively and grow within the industry. I am available to start immediately and ready to relocate to Malta.`;
     }
     
     const coreCompetencies = Array.isArray(parsed.coreCompetencies) ? parsed.coreCompetencies : [];
-    const skills = Array.isArray(parsed.skills) ? parsed.skills : [];
-    const softSkills = Array.isArray(parsed.softSkills) ? parsed.softSkills : [];
     const technicalSkills = Array.isArray(parsed.technicalSkills) ? parsed.technicalSkills : [];
-    const certificates = Array.isArray(parsed.certificates) ? parsed.certificates : selectedCertificates;
     
     return {
       summary,
