@@ -8,11 +8,7 @@ import {
   FileText,
   Settings,
   Shield,
-  Bell,
   CheckCircle2,
-  Briefcase,
-  Award,
-  Zap,
   Upload,
   Loader2,
 } from "lucide-react";
@@ -45,16 +41,18 @@ type ProfileRow = {
   nie: string | null;
 };
 
-// ✅ Tipo actualizado con documentos opcionales
+// ✅ Tipo actualizado con todos los nuevos campos
 type MaltaFormData = {
+  // Datos personales
   fullName: string;
   whatsapp: string;
   email: string;
-  nacionalidad: string;
-  paisResidencia: string;
+  nationality: string; // ← en inglés: Morocco, Algeria, etc
+  currentCity: string; // ← NUEVO: Casablanca, Rabat, etc
+  countryResidence: string; // ← en inglés: Morocco, Spain, etc
   fechaNacimiento: string;
   
-  // Idiomas con niveles
+  // Idiomas con niveles (valores en inglés)
   idiomas: string;
   ingles_nivel: string;
   frances_nivel: string;
@@ -63,31 +61,33 @@ type MaltaFormData = {
   arabe_nivel: string;
   aleman_nivel: string;
   
-  profesion: string;
+  // Experiencia
+  profesion: string; // ← máximo 2
   añosExperiencia: string;
   estudios: string;
+  education_level: string; // ← NUEVO: Primary, Secondary, High School, Vocational, University
   
-  // Sectores
+  // Sectores (máximo 2)
   sectores: string;
   
-  // Carnet de conducir
-  carnetConducir: "No" | "B" | "C" | "C+E";
+  // Carnet de conducir (valores en inglés)
+  carnetConducir: "None" | "A" | "B" | "C" | "D" | "B+C" | "B+C+E";
+  
+  // Preferencias
+  preferred_position: string; // ← NUEVO
+  work_preference: string; // ← NUEVO
+  willing_to_relocate: "Yes" | "No"; // ← NUEVO
   
   // CV
-  tieneCV: "Sí" | "No";
+  tieneCV: "Yes" | "No";
   cvFile: File | null;
   cvUrl: string;
   
-  // ✅ Documentos opcionales
+  // Documentos opcionales
   photoUrl: string;
   pdfUrl: string;
   
-  // Preguntas importantes
-  pasaporteValido: "Sí" | "No";
-  entrevistaVideo: "Sí" | "No";
-  
-  disponibilidadInicio: "inmediato" | "1_semana" | "2_semanas" | "1_mes";
-  
+  // Plan
   plan: "weekly" | "monthly";
 };
 
@@ -172,84 +172,150 @@ function OfficialBrowserBox({
   ]);
   const [progressStep, setProgressStep] = useState(0);
 
-  // ✅ Opciones de experiencia laboral
-  const profesionOptions = [
-    { id: "kitchen", label: isMa ? "المطبخ" : isEn ? "Kitchen" : "Cocina" },
-    { id: "construction", label: isMa ? "البناء" : isEn ? "Construction" : "Construcción" },
-    { id: "cleaning", label: isMa ? "التنظيف" : isEn ? "Cleaning" : "Limpieza" },
-    { id: "warehouse", label: isMa ? "المستودع" : isEn ? "Warehouse" : "Almacén" },
-    { id: "restaurant", label: isMa ? "المطعم" : isEn ? "Restaurant" : "Restaurante" },
-    { id: "delivery", label: isMa ? "التوصيل" : isEn ? "Delivery" : "Delivery" },
-    { id: "hotel", label: isMa ? "الفندق" : isEn ? "Hotel" : "Hotel" },
-    { id: "factory", label: isMa ? "المصنع" : isEn ? "Factory" : "Fábrica" },
-    { id: "aluminium", label: isMa ? "الألمنيوم" : isEn ? "Aluminium" : "Aluminio" },
-    { id: "other", label: isMa ? "آخر" : isEn ? "Other" : "Otro" },
+  // ✅ NACIONALIDADES (valores en inglés)
+  const nationalityOptions = [
+    { id: "Morocco", label: isMa ? "المغرب" : isEn ? "Morocco" : "Marruecos" },
+    { id: "Algeria", label: isMa ? "الجزائر" : isEn ? "Algeria" : "Argelia" },
+    { id: "Tunisia", label: isMa ? "تونس" : isEn ? "Tunisia" : "Túnez" },
+    { id: "Libya", label: isMa ? "ليبيا" : isEn ? "Libya" : "Libia" },
+    { id: "Mauritania", label: isMa ? "موريتانيا" : isEn ? "Mauritania" : "Mauritania" },
+    { id: "Egypt", label: isMa ? "مصر" : isEn ? "Egypt" : "Egipto" },
+    { id: "Other", label: isMa ? "أخرى" : isEn ? "Other" : "Otro" },
   ];
 
-  // ✅ Idiomas disponibles con niveles
-  const idiomasDisponibles = [
-    { id: "ingles", label: isMa ? "الإنجليزية" : isEn ? "English" : "Inglés" },
-    { id: "frances", label: isMa ? "الفرنسية" : isEn ? "French" : "Francés" },
-    { id: "italiano", label: isMa ? "الإيطالية" : isEn ? "Italian" : "Italiano" },
-    { id: "espanol", label: isMa ? "الإسبانية" : isEn ? "Spanish" : "Español" },
-    { id: "arabe", label: isMa ? "العربية" : isEn ? "Arabic" : "Árabe" },
-    { id: "aleman", label: isMa ? "الألمانية" : isEn ? "German" : "Alemán" },
+  // ✅ CIUDADES DE MARRUECOS Y NORTE DE ÁFRICA (valores en inglés)
+  const cityOptions = [
+    { id: "Casablanca", label: "Casablanca" },
+    { id: "Rabat", label: "Rabat" },
+    { id: "Tangier", label: "Tangier" },
+    { id: "Agadir", label: "Agadir" },
+    { id: "Marrakech", label: "Marrakech" },
+    { id: "Fes", label: "Fes" },
+    { id: "Oujda", label: "Oujda" },
+    { id: "Nador", label: "Nador" },
+    { id: "Tetouan", label: "Tetouan" },
+    { id: "Meknes", label: "Meknes" },
+    { id: "Kenitra", label: "Kenitra" },
+    { id: "Algiers", label: "Algiers" },
+    { id: "Tunis", label: "Tunis" },
+    { id: "Tripoli", label: "Tripoli" },
+    { id: "Nouakchott", label: "Nouakchott" },
+    { id: "Cairo", label: "Cairo" },
+    { id: "Other", label: isMa ? "أخرى" : isEn ? "Other" : "Otro" },
   ];
 
-  const niveles = [
-    { id: "basico", label: isMa ? "أساسي" : isEn ? "Basic" : "Básico" },
-    { id: "intermedio", label: isMa ? "متوسط" : isEn ? "Intermediate" : "Intermedio" },
-    { id: "avanzado", label: isMa ? "متقدم" : isEn ? "Advanced" : "Avanzado" },
-    { id: "nativo", label: isMa ? "لغة أم" : isEn ? "Native" : "Nativo" },
+  // ✅ PAÍSES DE RESIDENCIA (valores en inglés)
+  const countryResidenceOptions = [
+    { id: "Morocco", label: isMa ? "المغرب" : isEn ? "Morocco" : "Marruecos" },
+    { id: "Spain", label: isMa ? "إسبانيا" : isEn ? "Spain" : "España" },
+    { id: "France", label: isMa ? "فرنسا" : isEn ? "France" : "Francia" },
+    { id: "Belgium", label: isMa ? "بلجيكا" : isEn ? "Belgium" : "Bélgica" },
+    { id: "Netherlands", label: isMa ? "هولندا" : isEn ? "Netherlands" : "Países Bajos" },
+    { id: "Italy", label: isMa ? "إيطاليا" : isEn ? "Italy" : "Italia" },
+    { id: "Germany", label: isMa ? "ألمانيا" : isEn ? "Germany" : "Alemania" },
+    { id: "Other", label: isMa ? "أخرى" : isEn ? "Other" : "Otro" },
   ];
 
-  // ✅ Sectores disponibles
-  const sectores = [
-    { id: "kitchen", label: isMa ? "المطبخ" : isEn ? "Kitchen" : "Cocina" },
-    { id: "housekeeping", label: isMa ? "التدبير المنزلي" : isEn ? "Housekeeping" : "Housekeeping" },
-    { id: "restaurant", label: isMa ? "المطعم" : isEn ? "Restaurant" : "Restaurante" },
-    { id: "food_beverage", label: isMa ? "الطعام والشراب" : isEn ? "Food & Beverage" : "Food & Beverage" },
-    { id: "cleaning", label: isMa ? "التنظيف" : isEn ? "Cleaning" : "Limpieza" },
-    { id: "warehouse", label: isMa ? "المستودع" : isEn ? "Warehouse" : "Almacén" },
-    { id: "delivery", label: isMa ? "التوصيل" : isEn ? "Delivery" : "Delivery" },
-    { id: "construction", label: isMa ? "البناء" : isEn ? "Construction" : "Construcción" },
-    { id: "aluminium", label: isMa ? "الألمنيوم" : isEn ? "Aluminium" : "Aluminio" },
-    { id: "manufacturing", label: isMa ? "التصنيع" : isEn ? "Manufacturing" : "Fabricación" },
+  // ✅ POSICIONES PREFERIDAS (valores en inglés)
+  const preferredPositionOptions = [
+    { id: "Kitchen Assistant", label: isMa ? "مساعد مطبخ" : isEn ? "Kitchen Assistant" : "Ayudante de cocina" },
+    { id: "Waiter", label: isMa ? "نادل" : isEn ? "Waiter" : "Camarero" },
+    { id: "Housekeeping", label: isMa ? "التدبير المنزلي" : isEn ? "Housekeeping" : "Housekeeping" },
+    { id: "Cleaner", label: isMa ? "عامل نظافة" : isEn ? "Cleaner" : "Limpiador" },
+    { id: "Warehouse Worker", label: isMa ? "عامل مستودع" : isEn ? "Warehouse Worker" : "Operario de almacén" },
+    { id: "Factory Operator", label: isMa ? "عامل مصنع" : isEn ? "Factory Operator" : "Operario de fábrica" },
+    { id: "Construction Labourer", label: isMa ? "عامل بناء" : isEn ? "Construction Labourer" : "Peón de construcción" },
+    { id: "Delivery Driver", label: isMa ? "سائق توصيل" : isEn ? "Delivery Driver" : "Conductor de reparto" },
+    { id: "Other", label: isMa ? "أخرى" : isEn ? "Other" : "Otro" },
   ];
 
-  // ✅ Opciones de estudios
-  const estudiosOptions = [
-    { id: "sin_estudios", label: isMa ? "بدون تعليم" : isEn ? "No education" : "Sin estudios" },
-    { id: "secundaria", label: isMa ? "التعليم الثانوي" : isEn ? "Secondary education" : "Educación secundaria" },
-    { id: "fp", label: isMa ? "التكوين المهني" : isEn ? "Vocational training" : "Formación Profesional" },
-    { id: "diploma", label: isMa ? "دبلوم" : isEn ? "Diploma" : "Diploma" },
-    { id: "universidad", label: isMa ? "الجامعة" : isEn ? "University" : "Universidad" },
-    { id: "master", label: isMa ? "ماجستير" : isEn ? "Master's degree" : "Máster" },
-    { id: "otro", label: isMa ? "آخر" : isEn ? "Other" : "Otro" },
+  // ✅ PREFERENCIA DE TRABAJO (valores en inglés)
+  const workPreferenceOptions = [
+    { id: "Hotel", label: isMa ? "فندق" : isEn ? "Hotel" : "Hotel" },
+    { id: "Restaurant", label: isMa ? "مطعم" : isEn ? "Restaurant" : "Restaurante" },
+    { id: "Warehouse", label: isMa ? "مستودع" : isEn ? "Warehouse" : "Almacén" },
+    { id: "Construction", label: isMa ? "بناء" : isEn ? "Construction" : "Construcción" },
+    { id: "Factory", label: isMa ? "مصنع" : isEn ? "Factory" : "Fábrica" },
+    { id: "Cleaning", label: isMa ? "تنظيف" : isEn ? "Cleaning" : "Limpieza" },
+    { id: "Retail", label: isMa ? "بيع بالتجزئة" : isEn ? "Retail" : "Venta al por menor" },
+    { id: "Other", label: isMa ? "أخرى" : isEn ? "Other" : "Otro" },
   ];
 
-  // ✅ Opciones de años de experiencia
-  const añosExperienciaOptions = [
-    { id: "sin_experiencia", label: isMa ? "بدون خبرة" : isEn ? "No experience" : "Sin experiencia" },
-    { id: "menos_1", label: isMa ? "أقل من سنة" : isEn ? "Less than 1 year" : "Menos de 1 año" },
-    { id: "1_2", label: isMa ? "1-2 سنة" : isEn ? "1-2 years" : "1-2 años" },
-    { id: "3_5", label: isMa ? "3-5 سنوات" : isEn ? "3-5 years" : "3-5 años" },
-    { id: "mas_5", label: isMa ? "أكثر من 5 سنوات" : isEn ? "More than 5 years" : "Más de 5 años" },
-  ];
-
-  // ✅ Opciones de carnet de conducir
+  // ✅ OPCIONES DE CARNET (valores en inglés)
   const carnetOptions = [
-    { id: "No", label: isMa ? "لا" : isEn ? "No" : "No" },
-    { id: "B", label: "Carnet B" },
-    { id: "C", label: "Carnet C" },
-    { id: "C+E", label: "Carnet C+E" },
+    { id: "None", label: isMa ? "لا" : isEn ? "None" : "Ninguno" },
+    { id: "A", label: "A" },
+    { id: "B", label: "B" },
+    { id: "C", label: "C" },
+    { id: "D", label: "D" },
+    { id: "B+C", label: "B + C" },
+    { id: "B+C+E", label: "B + C + E" },
   ];
 
-  const formIntro = isMa
-    ? "خدمة البحث عن عمل في مالطا باستخدام الذكاء الاصطناعي. عبّي الفورم ونحن نبحث عن العمل المناسب لك."
-    : isEn
-    ? "Job search service in Malta using Artificial Intelligence. Fill in the form and we will find the right job for you."
-    : "Servicio de búsqueda de empleo en Malta con Inteligencia Artificial. Rellena el formulario y nosotros buscamos el trabajo adecuado para ti.";
+  // ✅ NIVEL EDUCATIVO (valores en inglés)
+  const educationLevelOptions = [
+    { id: "Primary", label: isMa ? "ابتدائي" : isEn ? "Primary" : "Primaria" },
+    { id: "Secondary", label: isMa ? "ثانوي" : isEn ? "Secondary" : "Secundaria" },
+    { id: "High School", label: isMa ? "ثانوية عامة" : isEn ? "High School" : "Bachillerato" },
+    { id: "Vocational", label: isMa ? "تكوين مهني" : isEn ? "Vocational" : "Formación Profesional" },
+    { id: "University", label: isMa ? "جامعة" : isEn ? "University" : "Universidad" },
+    { id: "Other", label: isMa ? "أخرى" : isEn ? "Other" : "Otro" },
+  ];
+
+  // ✅ OPCIONES DE EXPERIENCIA LABORAL (máximo 2)
+  const profesionOptions = [
+    { id: "Kitchen", label: isMa ? "المطبخ" : isEn ? "Kitchen" : "Cocina" },
+    { id: "Construction", label: isMa ? "البناء" : isEn ? "Construction" : "Construcción" },
+    { id: "Cleaning", label: isMa ? "التنظيف" : isEn ? "Cleaning" : "Limpieza" },
+    { id: "Warehouse", label: isMa ? "المستودع" : isEn ? "Warehouse" : "Almacén" },
+    { id: "Restaurant", label: isMa ? "المطعم" : isEn ? "Restaurant" : "Restaurante" },
+    { id: "Delivery", label: isMa ? "التوصيل" : isEn ? "Delivery" : "Delivery" },
+    { id: "Hotel", label: isMa ? "الفندق" : isEn ? "Hotel" : "Hotel" },
+    { id: "Factory", label: isMa ? "المصنع" : isEn ? "Factory" : "Fábrica" },
+    { id: "Other", label: isMa ? "آخر" : isEn ? "Other" : "Otro" },
+  ];
+
+  // ✅ SECTORES (máximo 2)
+  const sectoresOptions = [
+    { id: "Kitchen", label: isMa ? "المطبخ" : isEn ? "Kitchen" : "Cocina" },
+    { id: "Housekeeping", label: isMa ? "التدبير المنزلي" : isEn ? "Housekeeping" : "Housekeeping" },
+    { id: "Restaurant", label: isMa ? "المطعم" : isEn ? "Restaurant" : "Restaurante" },
+    { id: "Food & Beverage", label: isMa ? "الطعام والشراب" : isEn ? "Food & Beverage" : "Food & Beverage" },
+    { id: "Cleaning", label: isMa ? "التنظيف" : isEn ? "Cleaning" : "Limpieza" },
+    { id: "Warehouse", label: isMa ? "المستودع" : isEn ? "Warehouse" : "Almacén" },
+    { id: "Delivery", label: isMa ? "التوصيل" : isEn ? "Delivery" : "Delivery" },
+    { id: "Construction", label: isMa ? "البناء" : isEn ? "Construction" : "Construcción" },
+    { id: "Manufacturing", label: isMa ? "التصنيع" : isEn ? "Manufacturing" : "Fabricación" },
+    { id: "Retail", label: isMa ? "بيع بالتجزئة" : isEn ? "Retail" : "Venta al por menor" },
+  ];
+
+  // ✅ AÑOS DE EXPERIENCIA (valores en inglés)
+  const añosExperienciaOptions = [
+    { id: "No experience", label: isMa ? "بدون خبرة" : isEn ? "No experience" : "Sin experiencia" },
+    { id: "Less than 1 year", label: isMa ? "أقل من سنة" : isEn ? "Less than 1 year" : "Menos de 1 año" },
+    { id: "1-2 years", label: isMa ? "1-2 سنة" : isEn ? "1-2 years" : "1-2 años" },
+    { id: "3-5 years", label: isMa ? "3-5 سنوات" : isEn ? "3-5 years" : "3-5 años" },
+    { id: "5+ years", label: isMa ? "أكثر من 5 سنوات" : isEn ? "5+ years" : "Más de 5 años" },
+  ];
+
+  // ✅ IDIOMAS (valores en inglés)
+  const idiomasDisponibles = [
+    { id: "English", label: isMa ? "الإنجليزية" : isEn ? "English" : "Inglés" },
+    { id: "French", label: isMa ? "الفرنسية" : isEn ? "French" : "Francés" },
+    { id: "Arabic", label: isMa ? "العربية" : isEn ? "Arabic" : "Árabe" },
+    { id: "Spanish", label: isMa ? "الإسبانية" : isEn ? "Spanish" : "Español" },
+    { id: "German", label: isMa ? "الألمانية" : isEn ? "German" : "Alemán" },
+    { id: "Italian", label: isMa ? "الإيطالية" : isEn ? "Italian" : "Italiano" },
+  ];
+
+  // ✅ NIVELES DE IDIOMAS (valores en inglés)
+  const nivelesIdiomas = [
+    { id: "Basic", label: isMa ? "أساسي" : isEn ? "Basic" : "Básico" },
+    { id: "Intermediate", label: isMa ? "متوسط" : isEn ? "Intermediate" : "Intermedio" },
+    { id: "Advanced", label: isMa ? "متقدم" : isEn ? "Advanced" : "Avanzado" },
+    { id: "Fluent", label: isMa ? "طلاقة" : isEn ? "Fluent" : "Fluido" },
+    { id: "Native", label: isMa ? "لغة أم" : isEn ? "Native" : "Nativo" },
+  ];
 
   // ✅ Función para subir archivos a Supabase Storage
   const uploadFileToSupabase = async (file: File, prefix: string): Promise<string> => {
@@ -420,6 +486,12 @@ function OfficialBrowserBox({
     }
   }, [confirmed]);
 
+  const formIntro = isMa
+    ? "خدمة البحث عن عمل في مالطا باستخدام الذكاء الاصطناعي. عبّي الفورم ونحن نبحث عن العمل المناسب لك."
+    : isEn
+    ? "Job search service in Malta using Artificial Intelligence. Fill in the form and we will find the right job for you."
+    : "Servicio de búsqueda de empleo en Malta con Inteligencia Artificial. Rellena el formulario y nosotros buscamos el trabajo adecuado para ti.";
+
   return (
     <motion.div
       initial={{ opacity: 0, x: 20 }}
@@ -497,8 +569,9 @@ function OfficialBrowserBox({
               </p>
               <div className="w-full">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 mb-5">
+                  
                   {/* ============================================ */}
-                  {/* 1. DATOS PERSONALES */}
+                  {/* 1. DATOS PERSONALES (TODO EN INGLÉS PARA IA) */}
                   {/* ============================================ */}
                   
                   {/* Nombre completo */}
@@ -515,10 +588,10 @@ function OfficialBrowserBox({
                     />
                   </div>
 
-                  {/* WhatsApp con validación */}
+                  {/* WhatsApp */}
                   <div className="col-span-1 md:col-span-1">
                     <label className="block text-white text-[13px] mb-2">
-                      {isMa ? "واتساب" : isEn ? "WhatsApp" : "WhatsApp"}
+                      WhatsApp
                     </label>
                     <div className="flex gap-2 min-w-0">
                       <select
@@ -539,7 +612,6 @@ function OfficialBrowserBox({
                         <option value="+44">🇬🇧 +44</option>
                         <option value="+1">🇺🇸 +1</option>
                         <option value="+356">🇲🇹 +356</option>
-                        <option value="+376">🇦🇩 +376</option>
                       </select>
                       <input
                         type="text"
@@ -560,49 +632,67 @@ function OfficialBrowserBox({
                     </p>
                   </div>
 
-                  {/* Email con validación */}
+                  {/* Email */}
                   <div>
-                    <label className="block text-white text-[13px] mb-2">
-                      Email
-                    </label>
+                    <label className="block text-white text-[13px] mb-2">Email</label>
                     <input
                       type="email"
                       placeholder="tu@email.com"
                       value={formData.email}
-                      onChange={(e) => {
-                        const email = e.target.value;
-                        onFormChange("email", email);
-                      }}
+                      onChange={(e) => onFormChange("email", e.target.value)}
                       className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-[14px] text-white placeholder:text-white/30 focus:outline-none focus:border-yellow-400"
                     />
                   </div>
 
-                  {/* Nacionalidad */}
+                  {/* Nacionalidad - Select en inglés */}
                   <div>
                     <label className="block text-white text-[13px] mb-2">
                       {isMa ? "الجنسية" : isEn ? "Nationality" : "Nacionalidad"}
                     </label>
-                    <input
-                      type="text"
-                      placeholder={isMa ? "المغربية" : isEn ? "Moroccan" : "Marroquí"}
-                      value={formData.nacionalidad}
-                      onChange={(e) => onFormChange("nacionalidad", e.target.value)}
-                      className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white"
-                    />
+                    <select
+                      value={formData.nationality}
+                      onChange={(e) => onFormChange("nationality", e.target.value)}
+                      className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white focus:outline-none focus:border-yellow-400"
+                    >
+                      <option value="">{isMa ? "اختر الجنسية" : isEn ? "Select nationality" : "Selecciona nacionalidad"}</option>
+                      {nationalityOptions.map((opt) => (
+                        <option key={opt.id} value={opt.id}>{opt.label}</option>
+                      ))}
+                    </select>
                   </div>
 
-                  {/* País de residencia */}
+                  {/* Ciudad actual - NUEVO */}
+                  <div>
+                    <label className="block text-white text-[13px] mb-2">
+                      {isMa ? "المدينة الحالية" : isEn ? "Current City" : "Ciudad actual"}
+                    </label>
+                    <select
+                      value={formData.currentCity}
+                      onChange={(e) => onFormChange("currentCity", e.target.value)}
+                      className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white focus:outline-none focus:border-yellow-400"
+                    >
+                      <option value="">{isMa ? "اختر المدينة" : isEn ? "Select city" : "Selecciona ciudad"}</option>
+                      {cityOptions.map((opt) => (
+                        <option key={opt.id} value={opt.id}>{opt.label}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* País de residencia - Select en inglés */}
                   <div>
                     <label className="block text-white text-[13px] mb-2">
                       {isMa ? "بلد الإقامة" : isEn ? "Country of residence" : "País de residencia"}
                     </label>
-                    <input
-                      type="text"
-                      placeholder={isMa ? "إسبانيا" : isEn ? "Spain" : "España"}
-                      value={formData.paisResidencia}
-                      onChange={(e) => onFormChange("paisResidencia", e.target.value)}
-                      className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white"
-                    />
+                    <select
+                      value={formData.countryResidence}
+                      onChange={(e) => onFormChange("countryResidence", e.target.value)}
+                      className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white focus:outline-none focus:border-yellow-400"
+                    >
+                      <option value="">{isMa ? "اختر البلد" : isEn ? "Select country" : "Selecciona país"}</option>
+                      {countryResidenceOptions.map((opt) => (
+                        <option key={opt.id} value={opt.id}>{opt.label}</option>
+                      ))}
+                    </select>
                   </div>
 
                   {/* Fecha nacimiento */}
@@ -619,7 +709,60 @@ function OfficialBrowserBox({
                   </div>
 
                   {/* ============================================ */}
-                  {/* 2. IDIOMAS CON NIVELES */}
+                  {/* 2. PREFERENCIAS LABORALES (NUEVO) */}
+                  {/* ============================================ */}
+                  
+                  {/* Posición preferida */}
+                  <div>
+                    <label className="block text-white text-[13px] mb-2">
+                      {isMa ? "المنصب المفضل" : isEn ? "Preferred Position" : "Posición preferida"}
+                    </label>
+                    <select
+                      value={formData.preferred_position}
+                      onChange={(e) => onFormChange("preferred_position", e.target.value)}
+                      className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white focus:outline-none focus:border-yellow-400"
+                    >
+                      <option value="">{isMa ? "اختر المنصب" : isEn ? "Select position" : "Selecciona posición"}</option>
+                      {preferredPositionOptions.map((opt) => (
+                        <option key={opt.id} value={opt.id}>{opt.label}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Preferencia de trabajo */}
+                  <div>
+                    <label className="block text-white text-[13px] mb-2">
+                      {isMa ? "مجال العمل المفضل" : isEn ? "Work Preference" : "Preferencia de trabajo"}
+                    </label>
+                    <select
+                      value={formData.work_preference}
+                      onChange={(e) => onFormChange("work_preference", e.target.value)}
+                      className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white focus:outline-none focus:border-yellow-400"
+                    >
+                      <option value="">{isMa ? "اختر المجال" : isEn ? "Select preference" : "Selecciona preferencia"}</option>
+                      {workPreferenceOptions.map((opt) => (
+                        <option key={opt.id} value={opt.id}>{opt.label}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* ¿Desea reubicarse? - NUEVO */}
+                  <div>
+                    <label className="block text-white text-[13px] mb-2">
+                      {isMa ? "هل ترغب في الانتقال إلى مالطا؟" : isEn ? "Willing to relocate to Malta?" : "¿Desea reubicarse en Malta?"}
+                    </label>
+                    <select
+                      value={formData.willing_to_relocate}
+                      onChange={(e) => onFormChange("willing_to_relocate", e.target.value as "Yes" | "No")}
+                      className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white focus:outline-none focus:border-yellow-400"
+                    >
+                      <option value="Yes">{isMa ? "نعم" : isEn ? "Yes" : "Sí"}</option>
+                      <option value="No">{isMa ? "لا" : isEn ? "No" : "No"}</option>
+                    </select>
+                  </div>
+
+                  {/* ============================================ */}
+                  {/* 3. IDIOMAS (valores en inglés) */}
                   {/* ============================================ */}
                   
                   <div className="col-span-1 lg:col-span-2">
@@ -652,12 +795,12 @@ function OfficialBrowserBox({
                           </div>
                           {formData.idiomas?.includes(idioma.id) && (
                             <select
-                              value={formData[`${idioma.id}_nivel` as keyof MaltaFormData] as string || ""}
-                              onChange={(e) => onFormChange(`${idioma.id}_nivel` as keyof MaltaFormData, e.target.value)}
+                              value={formData[`${idioma.id.toLowerCase()}_nivel` as keyof MaltaFormData] as string || ""}
+                              onChange={(e) => onFormChange(`${idioma.id.toLowerCase()}_nivel` as keyof MaltaFormData, e.target.value)}
                               className="w-full h-[36px] rounded-lg border border-white/10 bg-[#0a0f1a] px-3 text-[12px] text-white focus:outline-none focus:border-yellow-400"
                             >
                               <option value="">{isMa ? "اختر المستوى" : isEn ? "Select level" : "Selecciona nivel"}</option>
-                              {niveles.map((nivel) => (
+                              {nivelesIdiomas.map((nivel) => (
                                 <option key={nivel.id} value={nivel.id}>{nivel.label}</option>
                               ))}
                             </select>
@@ -671,43 +814,55 @@ function OfficialBrowserBox({
                   </div>
 
                   {/* ============================================ */}
-                  {/* 3. EXPERIENCIA - PROFESIÓN */}
+                  {/* 4. EXPERIENCIA (máximo 2 profesiones) */}
                   {/* ============================================ */}
                   
                   <div className="col-span-1 lg:col-span-2">
                     <label className="block text-white text-[13px] mb-2">
-                      {isMa ? "في ماذا اشتغلت قبل؟" : isEn ? "What have you worked in before?" : "¿En qué has trabajado antes?"}
+                      {isMa ? "في ماذا اشتغلت قبل؟ (اختر 2 كحد أقصى)" : isEn ? "What have you worked in before? (Max 2)" : "¿En qué has trabajado antes? (Máx 2)"}
                     </label>
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                      {profesionOptions.map((opt) => (
-                        <label
-                          key={opt.id}
-                          className={`flex items-center gap-2 p-2 rounded-xl border transition-colors cursor-pointer ${
-                            formData.profesion === opt.id
-                              ? "border-yellow-500 bg-yellow-500/10"
-                              : "border-white/10 bg-[#060b16] hover:border-yellow-500/50"
-                          }`}
-                        >
-                          <input
-                            type="radio"
-                            name="profesion"
-                            value={opt.id}
-                            checked={formData.profesion === opt.id}
-                            onChange={(e) => onFormChange("profesion", e.target.value)}
-                            className="w-4 h-4 rounded-full border-white/20 bg-[#060b16] text-yellow-500 focus:ring-yellow-500 focus:ring-offset-0 shrink-0"
-                          />
-                          <span className="text-white/80 text-[11px] sm:text-[12px]">{opt.label}</span>
-                        </label>
-                      ))}
+                      {profesionOptions.map((opt) => {
+                        const selected = formData.profesion?.split(",").filter(Boolean) || [];
+                        const isSelected = selected.includes(opt.id);
+                        const isDisabled = !isSelected && selected.length >= 2;
+                        return (
+                          <label
+                            key={opt.id}
+                            className={`flex items-center gap-2 p-2 rounded-xl border transition-colors cursor-pointer ${
+                              isSelected
+                                ? "border-yellow-500 bg-yellow-500/10"
+                                : isDisabled
+                                ? "border-white/5 bg-[#060b16] opacity-40 cursor-not-allowed"
+                                : "border-white/10 bg-[#060b16] hover:border-yellow-500/50"
+                            }`}
+                          >
+                            <input
+                              type="checkbox"
+                              value={opt.id}
+                              checked={isSelected}
+                              disabled={isDisabled}
+                              onChange={(e) => {
+                                const currentSelected = formData.profesion?.split(",").filter(Boolean) || [];
+                                let newSelected: string[];
+                                if (e.target.checked) {
+                                  if (currentSelected.length >= 2) return;
+                                  newSelected = [...currentSelected, opt.id];
+                                } else {
+                                  newSelected = currentSelected.filter((s) => s !== opt.id);
+                                }
+                                onFormChange("profesion", newSelected.join(","));
+                              }}
+                              className="w-4 h-4 rounded border-white/20 bg-[#060b16] text-yellow-500 focus:ring-yellow-500 focus:ring-offset-0 shrink-0"
+                            />
+                            <span className="text-white/80 text-[11px] sm:text-[12px]">{opt.label}</span>
+                          </label>
+                        );
+                      })}
                     </div>
-                    {formData.profesion === "other" && (
-                      <input
-                        type="text"
-                        placeholder={isMa ? "اكتب خبرتك..." : isEn ? "Write your experience..." : "Escribe tu experiencia..."}
-                        className="mt-2 w-full h-[40px] rounded-xl border border-white/10 bg-[#060b16] px-3 text-white placeholder:text-white/30 focus:outline-none focus:border-yellow-400"
-                        onChange={(e) => onFormChange("profesion", e.target.value)}
-                      />
-                    )}
+                    <p className="text-white/40 text-[10px] mt-1">
+                      {isMa ? "يمكنك اختيار مجالين كحد أقصى" : isEn ? "You can select up to 2 fields" : "Puedes seleccionar hasta 2 campos"}
+                    </p>
                   </div>
 
                   {/* Años de experiencia */}
@@ -727,64 +882,77 @@ function OfficialBrowserBox({
                     </select>
                   </div>
 
-                  {/* Estudios */}
+                  {/* Nivel educativo - NUEVO */}
                   <div>
                     <label className="block text-white text-[13px] mb-2">
-                      {isMa ? "الدراسات" : isEn ? "Education" : "Estudios"}
+                      {isMa ? "المستوى التعليمي" : isEn ? "Education Level" : "Nivel educativo"}
                     </label>
                     <select
-                      value={formData.estudios}
-                      onChange={(e) => onFormChange("estudios", e.target.value)}
+                      value={formData.education_level}
+                      onChange={(e) => onFormChange("education_level", e.target.value)}
                       className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white focus:outline-none focus:border-yellow-400"
                     >
-                      <option value="">{isMa ? "اختر المستوى" : isEn ? "Select" : "Selecciona"}</option>
-                      {estudiosOptions.map((opt) => (
+                      <option value="">{isMa ? "اختر المستوى" : isEn ? "Select level" : "Selecciona nivel"}</option>
+                      {educationLevelOptions.map((opt) => (
                         <option key={opt.id} value={opt.id}>{opt.label}</option>
                       ))}
                     </select>
                   </div>
 
                   {/* ============================================ */}
-                  {/* 4. SECTORES DE EXPERIENCIA */}
+                  {/* 5. SECTORES (máximo 2) */}
                   {/* ============================================ */}
                   
                   <div className="col-span-1 lg:col-span-2">
                     <label className="block text-white text-[13px] mb-2">
-                      {isMa ? "في أي قطاعات لديك خبرة؟" : isEn ? "In which sectors do you have experience?" : "¿En qué sectores tienes experiencia?"}
+                      {isMa ? "في أي قطاعات لديك خبرة؟ (اختر 2 كحد أقصى)" : isEn ? "In which sectors do you have experience? (Max 2)" : "¿En qué sectores tienes experiencia? (Máx 2)"}
                     </label>
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                      {sectores.map((sector) => (
-                        <label
-                          key={sector.id}
-                          className="flex items-center gap-2 p-2 rounded-xl border border-white/10 bg-[#060b16] hover:border-yellow-500/50 transition-colors cursor-pointer"
-                        >
-                          <input
-                            type="checkbox"
-                            value={sector.id}
-                            checked={formData.sectores?.includes(sector.id) || false}
-                            onChange={(e) => {
-                              const currentSectores = formData.sectores?.split(",").filter(Boolean) || [];
-                              let newSectores: string[];
-                              if (e.target.checked) {
-                                newSectores = [...currentSectores, sector.id];
-                              } else {
-                                newSectores = currentSectores.filter((s) => s !== sector.id);
-                              }
-                              onFormChange("sectores", newSectores.join(","));
-                            }}
-                            className="w-4 h-4 rounded border-white/20 bg-[#060b16] text-yellow-500 focus:ring-yellow-500 focus:ring-offset-0 shrink-0"
-                          />
-                          <span className="text-white/80 text-[11px] sm:text-[12px]">{sector.label}</span>
-                        </label>
-                      ))}
+                      {sectoresOptions.map((sector) => {
+                        const selected = formData.sectores?.split(",").filter(Boolean) || [];
+                        const isSelected = selected.includes(sector.id);
+                        const isDisabled = !isSelected && selected.length >= 2;
+                        return (
+                          <label
+                            key={sector.id}
+                            className={`flex items-center gap-2 p-2 rounded-xl border transition-colors cursor-pointer ${
+                              isSelected
+                                ? "border-yellow-500 bg-yellow-500/10"
+                                : isDisabled
+                                ? "border-white/5 bg-[#060b16] opacity-40 cursor-not-allowed"
+                                : "border-white/10 bg-[#060b16] hover:border-yellow-500/50"
+                            }`}
+                          >
+                            <input
+                              type="checkbox"
+                              value={sector.id}
+                              checked={isSelected}
+                              disabled={isDisabled}
+                              onChange={(e) => {
+                                const currentSelected = formData.sectores?.split(",").filter(Boolean) || [];
+                                let newSelected: string[];
+                                if (e.target.checked) {
+                                  if (currentSelected.length >= 2) return;
+                                  newSelected = [...currentSelected, sector.id];
+                                } else {
+                                  newSelected = currentSelected.filter((s) => s !== sector.id);
+                                }
+                                onFormChange("sectores", newSelected.join(","));
+                              }}
+                              className="w-4 h-4 rounded border-white/20 bg-[#060b16] text-yellow-500 focus:ring-yellow-500 focus:ring-offset-0 shrink-0"
+                            />
+                            <span className="text-white/80 text-[11px] sm:text-[12px]">{sector.label}</span>
+                          </label>
+                        );
+                      })}
                     </div>
                     <p className="text-white/40 text-[10px] mt-1">
-                      {isMa ? "اختر كل القطاعات التي لديك خبرة فيها" : isEn ? "Select all sectors where you have experience" : "Selecciona todos los sectores donde tienes experiencia"}
+                      {isMa ? "يمكنك اختيار قطاعين كحد أقصى" : isEn ? "You can select up to 2 sectors" : "Puedes seleccionar hasta 2 sectores"}
                     </p>
                   </div>
 
                   {/* ============================================ */}
-                  {/* 5. CARNET DE CONDUCIR */}
+                  {/* 6. CARNET DE CONDUCIR (valores en inglés) */}
                   {/* ============================================ */}
                   
                   <div>
@@ -793,7 +961,7 @@ function OfficialBrowserBox({
                     </label>
                     <select
                       value={formData.carnetConducir}
-                      onChange={(e) => onFormChange("carnetConducir", e.target.value as "No" | "B" | "C" | "C+E")}
+                      onChange={(e) => onFormChange("carnetConducir", e.target.value as "None" | "A" | "B" | "C" | "D" | "B+C" | "B+C+E")}
                       className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white focus:outline-none focus:border-yellow-400"
                     >
                       {carnetOptions.map((opt) => (
@@ -803,7 +971,7 @@ function OfficialBrowserBox({
                   </div>
 
                   {/* ============================================ */}
-                  {/* 6. CV EN INGLÉS */}
+                  {/* 7. CV EN INGLÉS (valores en inglés) */}
                   {/* ============================================ */}
                   
                   <div>
@@ -812,13 +980,13 @@ function OfficialBrowserBox({
                     </label>
                     <select
                       value={formData.tieneCV}
-                      onChange={(e) => onFormChange("tieneCV", e.target.value as "Sí" | "No")}
+                      onChange={(e) => onFormChange("tieneCV", e.target.value as "Yes" | "No")}
                       className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white focus:outline-none focus:border-yellow-400"
                     >
-                      <option value="Sí">{isMa ? "نعم" : isEn ? "Yes" : "Sí"}</option>
+                      <option value="Yes">{isMa ? "نعم" : isEn ? "Yes" : "Sí"}</option>
                       <option value="No">{isMa ? "لا" : isEn ? "No" : "No"}</option>
                     </select>
-                    {formData.tieneCV === "Sí" && (
+                    {formData.tieneCV === "Yes" && (
                       <div className="mt-2 p-3 rounded-xl border border-yellow-500/30 bg-yellow-500/10">
                         <p className="text-yellow-400 text-[11px] font-semibold">
                           {isMa ? "📄 ارفع سيرتك الذاتية هنا (PDF أو DOCX)" : isEn ? "📄 Upload your CV here (PDF or DOCX)" : "📄 Sube tu CV aquí (PDF o DOCX)"}
@@ -858,7 +1026,7 @@ function OfficialBrowserBox({
                   </div>
 
                   {/* ============================================ */}
-                  {/* 6.5 DOCUMENTOS OPCIONALES - NUEVO */}
+                  {/* 8. DOCUMENTOS OPCIONALES */}
                   {/* ============================================ */}
                   
                   <div className="col-span-1 lg:col-span-2 mt-2 rounded-2xl border border-white/10 bg-[#060b16] p-4">
@@ -944,58 +1112,7 @@ function OfficialBrowserBox({
                   </div>
 
                   {/* ============================================ */}
-                  {/* 7. PREGUNTAS IMPORTANTES */}
-                  {/* ============================================ */}
-                  
-                  {/* Pasaporte válido */}
-                  <div>
-                    <label className="block text-white text-[13px] mb-2">
-                      {isMa ? "هل لديك جواز سفر ساري المفعول؟" : isEn ? "Do you have a valid passport?" : "¿Tienes pasaporte válido?"}
-                    </label>
-                    <select
-                      value={formData.pasaporteValido}
-                      onChange={(e) => onFormChange("pasaporteValido", e.target.value as "Sí" | "No")}
-                      className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white focus:outline-none focus:border-yellow-400"
-                    >
-                      <option value="Sí">{isMa ? "نعم" : isEn ? "Yes" : "Sí"}</option>
-                      <option value="No">{isMa ? "لا" : isEn ? "No" : "No"}</option>
-                    </select>
-                  </div>
-
-                  {/* Entrevista por videollamada */}
-                  <div>
-                    <label className="block text-white text-[13px] mb-2">
-                      {isMa ? "هل يمكنك إجراء مقابلة عبر الفيديو؟" : isEn ? "Can you do a video interview?" : "¿Puedes hacer una entrevista por videollamada?"}
-                    </label>
-                    <select
-                      value={formData.entrevistaVideo}
-                      onChange={(e) => onFormChange("entrevistaVideo", e.target.value as "Sí" | "No")}
-                      className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white focus:outline-none focus:border-yellow-400"
-                    >
-                      <option value="Sí">{isMa ? "نعم" : isEn ? "Yes" : "Sí"}</option>
-                      <option value="No">{isMa ? "لا" : isEn ? "No" : "No"}</option>
-                    </select>
-                  </div>
-
-                  {/* Disponibilidad para empezar */}
-                  <div className="min-w-0">
-                    <label className="block text-white text-[13px] mb-2">
-                      {isMa ? "متى يمكنك البدء بالعمل؟" : isEn ? "When can you start working?" : "¿Cuándo puedes empezar a trabajar?"}
-                    </label>
-                    <select
-                      value={formData.disponibilidadInicio}
-                      onChange={(e) => onFormChange("disponibilidadInicio", e.target.value as "inmediato" | "1_semana" | "2_semanas" | "1_mes")}
-                      className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white focus:outline-none focus:border-yellow-400"
-                    >
-                      <option value="inmediato">{isMa ? "فوراً" : isEn ? "Immediately" : "Inmediatamente"}</option>
-                      <option value="1_semana">{isMa ? "في أسبوع" : isEn ? "In 1 week" : "En 1 semana"}</option>
-                      <option value="2_semanas">{isMa ? "في أسبوعين" : isEn ? "In 2 weeks" : "En 2 semanas"}</option>
-                      <option value="1_mes">{isMa ? "في شهر" : isEn ? "In 1 month" : "En 1 mes"}</option>
-                    </select>
-                  </div>
-
-                  {/* ============================================ */}
-                  {/* 8. PLANES */}
+                  {/* 9. PLANES */}
                   {/* ============================================ */}
                   
                   {/* Plan Semanal */}
@@ -1082,36 +1199,6 @@ function OfficialBrowserBox({
                   </div>
 
                   {/* ============================================ */}
-                  {/* 9. LO QUE RECIBIRÁS */}
-                  {/* ============================================ */}
-                  
-                  <div className="col-span-1 lg:col-span-2 mt-2 rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-4">
-                    <p className="text-emerald-400 font-bold text-sm mb-2">
-                      {isMa ? "🎁 ماذا ستحصل؟" : isEn ? "🎁 What you will receive?" : "🎁 ¿Qué recibirás?"}
-                    </p>
-                    <div className="grid grid-cols-2 gap-1 text-[11px] text-white/70">
-                      <div className="flex items-center gap-1">
-                        <span className="text-emerald-400">✅</span> {isMa ? "سيرة ذاتية احترافية" : isEn ? "Professional CV" : "CV profesional"}
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <span className="text-emerald-400">✅</span> {isMa ? "رسالة تحفيزية مخصصة" : isEn ? "Personalized cover letter" : "Carta de presentación personalizada"}
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <span className="text-emerald-400">✅</span> {isMa ? "حتى 10 طلبات يومياً" : isEn ? "Up to 10 daily applications" : "Hasta 10 solicitudes diarias"}
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <span className="text-emerald-400">✅</span> {isMa ? "شركات موثوقة في مالطا" : isEn ? "Verified companies in Malta" : "Empresas verificadas en Malta"}
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <span className="text-emerald-400">✅</span> {isMa ? "إشعارات واتساب" : isEn ? "WhatsApp notifications" : "Notificaciones WhatsApp"}
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <span className="text-emerald-400">✅</span> {isMa ? "متابعة طوال المدة" : isEn ? "Tracking throughout the plan" : "Seguimiento durante todo el plan"}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* ============================================ */}
                   {/* 10. CHECKBOX + BOTÓN DE PAGO */}
                   {/* ============================================ */}
                   
@@ -1140,16 +1227,6 @@ function OfficialBrowserBox({
                         ? "🔒 Your information will only be shared with companies and employment agencies in Malta to find work."
                         : "🔒 Tu información solo será compartida con empresas y agencias de empleo en Malta para buscar trabajo."}
                     </p>
-
-                    <div className="mb-4 p-3 rounded-xl border border-yellow-500/20 bg-yellow-500/5">
-                      <p className="text-yellow-400 text-[11px] sm:text-[12px] leading-relaxed text-center">
-                        {isMa
-                          ? "🤖 سيتم إنشاء سيرتك الذاتية ورسالتك التحفيزية تلقائياً باستخدام الذكاء الاصطناعي (إذا لم ترفع واحدة). بعدها سنبدأ بإرسال طلبات التوظيف يومياً إلى شركات في مالطا."
-                          : isEn
-                          ? "🤖 Your CV and cover letter will be automatically generated using AI (if you don't upload one). Then we will start sending job applications daily to companies in Malta."
-                          : "🤖 Tu CV y tu carta de presentación se generarán automáticamente mediante IA (si no subes uno propio). Después comenzaremos a enviar candidaturas diariamente a empresas de Malta."}
-                      </p>
-                    </div>
 
                     <button
                       type="button"
@@ -1187,7 +1264,6 @@ function OfficialBrowserBox({
             </div>
           </>
         ) : (
-          // Pantalla de confirmación después del pago (con barra de progreso)
           <div className="rounded-[26px] border border-emerald-500/40 bg-[#07111f] px-5 py-7 mb-5 shadow-[0_0_30px_rgba(16,185,129,0.08)]">
             <div className="flex justify-center mb-4">
               <div className="w-14 h-14 rounded-full border-2 border-emerald-400 bg-emerald-500/15 flex items-center justify-center shadow-[0_0_20px_rgba(16,185,129,0.35)]">
@@ -1240,13 +1316,14 @@ export default function TrabajoMalta() {
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<"weekly" | "monthly">("monthly");
   
-  // ✅ FormData - actualizado con documentos opcionales
+  // ✅ FormData actualizado con todos los nuevos campos
   const [formData, setFormData] = useState<MaltaFormData>({
     fullName: "",
     whatsapp: "+34 ",
     email: "",
-    nacionalidad: "",
-    paisResidencia: "",
+    nationality: "",
+    currentCity: "",
+    countryResidence: "",
     fechaNacimiento: "",
     
     // Idiomas
@@ -1261,23 +1338,24 @@ export default function TrabajoMalta() {
     profesion: "",
     añosExperiencia: "",
     estudios: "",
+    education_level: "",
     
     // Sectores
     sectores: "",
     
-    carnetConducir: "No",
-    tieneCV: "Sí",
+    carnetConducir: "None",
+    tieneCV: "Yes",
     cvFile: null,
     cvUrl: "",
     
-    // ✅ Documentos opcionales
+    // Nuevas preferencias
+    preferred_position: "",
+    work_preference: "",
+    willing_to_relocate: "Yes",
+    
+    // Documentos opcionales
     photoUrl: "",
     pdfUrl: "",
-    
-    pasaporteValido: "Sí",
-    entrevistaVideo: "Sí",
-    
-    disponibilidadInicio: "inmediato",
     
     plan: "monthly",
   });
@@ -1693,11 +1771,20 @@ export default function TrabajoMalta() {
       errors.push(isMa ? "البريد الإلكتروني غير صحيح" : isEn ? "Invalid email" : "Email inválido");
     }
     
-    if (!formData.nacionalidad.trim()) {
+    if (!formData.nationality) {
       errors.push(isMa ? "الجنسية مطلوبة" : isEn ? "Nationality is required" : "Nacionalidad es requerida");
     }
-    if (!formData.paisResidencia.trim()) {
+    if (!formData.currentCity) {
+      errors.push(isMa ? "المدينة الحالية مطلوبة" : isEn ? "Current city is required" : "Ciudad actual es requerida");
+    }
+    if (!formData.countryResidence) {
       errors.push(isMa ? "بلد الإقامة مطلوب" : isEn ? "Country of residence is required" : "País de residencia es requerido");
+    }
+    if (!formData.preferred_position) {
+      errors.push(isMa ? "المنصب المفضل مطلوب" : isEn ? "Preferred position is required" : "Posición preferida es requerida");
+    }
+    if (!formData.work_preference) {
+      errors.push(isMa ? "مجال العمل المفضل مطلوب" : isEn ? "Work preference is required" : "Preferencia de trabajo es requerida");
     }
     if (!formData.profesion.trim()) {
       errors.push(isMa ? "الخبرة العملية مطلوبة" : isEn ? "Work experience is required" : "Experiencia laboral es requerida");
@@ -1723,6 +1810,7 @@ export default function TrabajoMalta() {
     return true;
   };
 
+  // ✅ HANDLE PAY CORREGIDO - con todos los nuevos campos
   const handlePay = async (plan: "weekly" | "monthly") => {
     if (!validateForm()) {
       return;
@@ -1739,11 +1827,12 @@ export default function TrabajoMalta() {
           fullName: formData.fullName,
           whatsapp: formData.whatsapp,
           email: formData.email,
-          nacionalidad: formData.nacionalidad,
-          paisResidencia: formData.paisResidencia,
+          nationality: formData.nationality,
+          currentCity: formData.currentCity,
+          countryResidence: formData.countryResidence,
           fechaNacimiento: formData.fechaNacimiento,
           
-          // Idiomas
+          // Idiomas (valores en inglés)
           idiomas: formData.idiomas,
           ingles_nivel: formData.ingles_nivel,
           frances_nivel: formData.frances_nivel,
@@ -1752,27 +1841,33 @@ export default function TrabajoMalta() {
           arabe_nivel: formData.arabe_nivel,
           aleman_nivel: formData.aleman_nivel,
           
+          // Experiencia
           profesion: formData.profesion,
           añosExperiencia: formData.añosExperiencia,
-          estudios: formData.estudios,
+          education_level: formData.education_level,
           
           // Sectores
           sectores: formData.sectores,
           
+          // Carnet
           carnetConducir: formData.carnetConducir,
+          
+          // Preferencias
+          preferred_position: formData.preferred_position,
+          work_preference: formData.work_preference,
+          willing_to_relocate: formData.willing_to_relocate,
+          
+          // CV
           tieneCV: formData.tieneCV,
           
-          // ✅ CV URL si existe
-          cv_url: formData.cvUrl || "",
+          // ✅ CORREGIDO: cvUrl en lugar de cv_url
+          cvUrl: formData.cvUrl || "",
           
-          // ✅ Documentos opcionales
-          photo_url: formData.photoUrl || "",
-          pdf_url: formData.pdfUrl || "",
+          // ✅ CORREGIDO: photoUrl en lugar de photo_url
+          photoUrl: formData.photoUrl || "",
           
-          pasaporteValido: formData.pasaporteValido,
-          entrevistaVideo: formData.entrevistaVideo,
-          
-          disponibilidadInicio: formData.disponibilidadInicio,
+          // ✅ CORREGIDO: pdfUrl en lugar de pdf_url
+          pdfUrl: formData.pdfUrl || "",
           
           worker_status: "waiting",
         }),
@@ -1793,6 +1888,7 @@ export default function TrabajoMalta() {
     }
   };
 
+  // ✅ HANDLE FORM CHANGE CORREGIDO
   const handleFormChange = (field: keyof MaltaFormData, value: string | File | null) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
