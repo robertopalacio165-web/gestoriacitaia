@@ -47,8 +47,8 @@
     }
 
     .sidebar .photo {
-      width: 175px;
-      height: 175px;
+      width: 155px;
+      height: 155px;
       border-radius: 50%;
       background: #1a2a3e;
       margin: 0 auto 22px;
@@ -67,7 +67,7 @@
     }
 
     .sidebar .photo .initials {
-      font-size: 56px;
+      font-size: 52px;
       font-weight: 700;
       color: #ffffff;
       letter-spacing: 1px;
@@ -123,7 +123,6 @@
       font-weight: 700;
     }
 
-    /* 1. LANGUAGES - ALINEADOS CON PUNTOS */
     .sidebar .languages {
       margin-top: 4px;
     }
@@ -132,26 +131,14 @@
       font-size: 12px;
       line-height: 1.8;
       color: #c8d0d8;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
     }
 
-    .sidebar .languages .lang-item .lang-name {
+    .sidebar .languages .lang-item strong {
       color: #ffffff;
       font-weight: 500;
     }
 
-    .sidebar .languages .lang-item .lang-dots {
-      color: #4a5a6a;
-      letter-spacing: 1px;
-      flex: 1;
-      margin: 0 8px;
-      text-align: center;
-      font-size: 10px;
-    }
-
-    .sidebar .languages .lang-item .lang-level {
+    .sidebar .languages .lang-item .level {
       color: #8a9aaa;
       font-size: 11px;
     }
@@ -190,12 +177,13 @@
       margin-bottom: 22px;
     }
 
+    /* ✅ NOMBRE REDUCIDO A 42px */
     .main .header-block .name {
-      font-size: 58px;
+      font-size: 42px;
       font-weight: 900;
       color: #0a1a2e;
-      letter-spacing: 2px;
-      line-height: 1;
+      letter-spacing: 1px;
+      line-height: 44px;
       text-transform: uppercase;
     }
 
@@ -208,6 +196,7 @@
       margin-top: 4px;
     }
 
+    /* ✅ TAGLINE - RESUMEN PROFESIONAL */
     .main .header-block .tagline {
       max-width: 95%;
       line-height: 1.5;
@@ -248,7 +237,6 @@
       color: #2b2b2b;
     }
 
-    /* 3. EXPERIENCE - TEXTO MÁS GRANDE */
     .main .experience-item {
       margin-bottom: 14px;
       padding-left: 18px;
@@ -328,14 +316,6 @@
       color: #0a1a2e;
     }
 
-    .main .education-item .edu-description {
-      font-size: 12px;
-      color: #607080;
-      line-height: 1.5;
-      margin-top: 2px;
-    }
-
-    /* 2. PROFESSIONAL SKILLS - BARRAS MÁS LARGAS */
     .main .skills-container {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -372,6 +352,7 @@
       transition: width 0.3s ease;
     }
 
+    /* ✅ ADDITIONAL INFORMATION - SIN WORK PERMIT */
     .main .info-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -398,16 +379,6 @@
       min-width: 100px;
     }
 
-    .main .info-grid .info-item .status-available {
-      color: #2d7d46;
-      font-weight: 600;
-    }
-
-    .main .info-grid .info-item .status-not-available {
-      color: #c97d2d;
-      font-weight: 600;
-    }
-
     .main .personal-statement {
       font-size: 12.5px;
       color: #3a3a4a;
@@ -423,7 +394,7 @@
       font-size: 8px;
       color: #B5BDC7;
       line-height: 1.8;
-      letter-spacing: 0.3px;
+      letter-spacing: 0.5px;
     }
 
     /* ============================================
@@ -461,7 +432,8 @@
       }
 
       .main .header-block .name {
-        font-size: 38px;
+        font-size: 34px;
+        line-height: 36px;
       }
 
       .main .header-block .title {
@@ -486,10 +458,6 @@
 
       .main .skill-bar .skill-track {
         width: 50%;
-      }
-
-      .sidebar .languages .lang-item .lang-dots {
-        display: none;
       }
     }
 
@@ -550,9 +518,10 @@
     <h2>CONTACT</h2>
     <div class="contact-item">{{WHATSAPP}}</div>
     <div class="contact-item">{{EMAIL}}</div>
-    <div class="contact-item">{{NATIONALITY}}</div>
+    <!-- ✅ LOCATION en lugar de NATIONALITY -->
+    <div class="contact-item">{{LOCATION}}</div>
 
-    <!-- LANGUAGES - Alineados con puntos -->
+    <!-- LANGUAGES -->
     <h2>LANGUAGES</h2>
     <div class="languages">
       {{LANGUAGES}}
@@ -564,14 +533,13 @@
       {{KEY_STRENGTHS}}
     </ul>
 
-    <!-- ADDITIONAL INFO -->
+    <!-- ✅ ADDITIONAL INFO - SIN WORK PERMIT -->
     <h2>ADDITIONAL INFO</h2>
     <div class="additional-info">
-      <div class="info-item"><strong>Passport:</strong> {{PASSPORT}}</div>
+      <div class="info-item"><strong>Passport:</strong> Available</div>
       <div class="info-item"><strong>Driving Licence:</strong> {{DRIVER_LICENSE}}</div>
-      <div class="info-item"><strong>Work Permit:</strong> {{WORK_PERMIT}}</div>
-      <div class="info-item"><strong>Availability:</strong> {{AVAILABILITY}}</div>
-      <div class="info-item"><strong>Willing to relocate:</strong> {{RELOCATE}}</div>
+      <div class="info-item"><strong>Availability:</strong> Immediate</div>
+      <div class="info-item"><strong>Willing to relocate:</strong> Available to relocate</div>
     </div>
 
   </aside>
@@ -602,20 +570,19 @@
     <h2>EDUCATION</h2>
     {{EDUCATION_LIST}}
 
-    <!-- PROFESSIONAL SKILLS - Barras al 65% -->
+    <!-- PROFESSIONAL SKILLS -->
     <h2>PROFESSIONAL SKILLS</h2>
     <div class="skills-container">
       {{PROFESSIONAL_SKILLS}}
     </div>
 
-    <!-- ADDITIONAL INFORMATION -->
+    <!-- ✅ ADDITIONAL INFORMATION - SIN WORK PERMIT -->
     <h2>ADDITIONAL INFORMATION</h2>
     <div class="info-grid">
-      <div class="info-item"><strong>Passport</strong> {{PASSPORT}}</div>
+      <div class="info-item"><strong>Passport</strong> Available</div>
       <div class="info-item"><strong>Driving Licence</strong> {{DRIVER_LICENSE}}</div>
-      <div class="info-item"><strong>Availability</strong> {{AVAILABILITY}}</div>
-      <div class="info-item"><strong>Work Permit</strong> {{WORK_PERMIT}}</div>
-      <div class="info-item"><strong>Relocation</strong> {{RELOCATE}}</div>
+      <div class="info-item"><strong>Availability</strong> Immediate</div>
+      <div class="info-item"><strong>Relocation</strong> Available to relocate</div>
     </div>
 
     <!-- PERSONAL STATEMENT -->
