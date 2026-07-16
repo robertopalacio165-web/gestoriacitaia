@@ -1168,8 +1168,8 @@ Make it unique for this candidate.
 // ============================================
 
 function generateCVHtml(data: any, content: CVContent): string {
-  let template = readTemplate("premium-template.html");
-  
+
+  let template = readTemplate("premium-cv.html");
   const nameParts = (data.full_name || "Candidate").trim().split(" ");
   const firstName = nameParts[0] || "Candidate";
   const lastName = nameParts.slice(1).join(" ") || "";
