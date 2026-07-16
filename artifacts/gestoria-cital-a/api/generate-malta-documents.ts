@@ -1,588 +1,1341 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Professional CV - {{FULL_NAME}}</title>
-  <style>
-    /* ============================================
-       RESET & BASE
-    ============================================ */
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+import type { VercelRequest, VercelResponse } from "@vercel/node";
+import { createClient } from "@supabase/supabase-js";
+import * as fs from "fs";
+import * as path from "path";
+import chromium from "@sparticuz/chromium";
+import { chromium as playwright } from "playwright-core";
 
-    body {
-      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
-      background: #eef2f6;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      padding: 40px;
-    }
+// ============================================
+// TIPOS
+// ============================================
+interface Company {
+  name: string;
+  city: string;
+  type: string;
+}
 
-    .page {
-      width: 210mm;
-      min-height: 297mm;
-      background: #ffffff;
-      border-radius: 12px;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.12);
-      overflow: hidden;
-      display: flex;
-      flex-direction: row;
-    }
+interface Experience {
+  company: string;
+  city: string;
+  jobTitle: string;
+  period: string;
+  bullets: string[];
+}
 
-    /* ============================================
-       SIDEBAR
-    ============================================ */
-    .sidebar {
-      width: 30%;
-      background: #10284a;
-      color: #c8d0d8;
-      padding: 40px 28px 35px;
-      flex-shrink: 0;
-    }
+interface CVContent {
+  summary: string;
+  coreCompetencies: string[];
+  experience: Experience[];
+  skills: string[];
+  softSkills: string[];
+  technicalSkills: string[];
+  education: string;
+  certificates: string[];
+  personalStatement: string;
+  jobTitle: string;
+  company: Company;
+  city: string;
+  tokens: number;
+}
 
-    .sidebar .photo {
-      width: 155px;
-      height: 155px;
-      border-radius: 50%;
-      background: #1a2a3e;
-      margin: 0 auto 22px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
-      border: 5px solid #ffffff;
-      box-shadow: 0 0 0 4px #0d2445;
-    }
+interface LetterContent {
+  introduction: string;
+  body1: string;
+  body2: string;
+  body3: string;
+  closing: string;
+  tokens: number;
+}
 
-    .sidebar .photo img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
+// ============================================
+// CONFIGURACIÓN
+// ============================================
+const supabase = createClient(
+  process.env.VITE_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
-    .sidebar .photo .initials {
-      font-size: 52px;
-      font-weight: 700;
-      color: #ffffff;
-      letter-spacing: 1px;
-    }
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+if (!OPENAI_API_KEY) {
+  throw new Error("OPENAI_API_KEY is missing");
+}
 
-    .sidebar h2 {
-      font-size: 12px;
-      text-transform: uppercase;
-      letter-spacing: 2px;
-      color: #ffffff;
-      font-weight: 600;
-      margin: 28px 0 14px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-      padding-bottom: 10px;
-    }
+const OPENAI_MODEL = "gpt-4o";
+const BUCKET_NAME = "malta-documents";
+const OPENAI_TIMEOUT_MS = 60000;
+const MAX_PAGE_HEIGHT_PX = 1120;
 
-    .sidebar h2:first-of-type {
-      margin-top: 0;
-    }
+// ============================================
+// EMPRESAS REALES DE MARRUECOS
+// ============================================
+const MOROCCAN_COMPANIES: Record<string, Company[]> = {
+  kitchen: [
+    { name: "Restaurant La Sqala", city: "Casablanca", type: "Restaurant" },
+    { name: "Restaurant Al Fassia", city: "Casablanca", type: "Restaurant" },
+    { name: "Restaurant Le Riad", city: "Marrakech", type: "Restaurant" },
+    { name: "Restaurant La Mamounia", city: "Marrakech", type: "Restaurant" },
+    { name: "Restaurant Dar Yacout", city: "Marrakech", type: "Restaurant" },
+    { name: "Restaurant Le Bistrot", city: "Casablanca", type: "Restaurant" },
+    { name: "Restaurant Villa Blanca", city: "Rabat", type: "Restaurant" },
+    { name: "Restaurant Le Dhow", city: "Casablanca", type: "Restaurant" },
+    { name: "Restaurant La Table du Palais", city: "Fes", type: "Restaurant" },
+    { name: "Restaurant Nur", city: "Casablanca", type: "Restaurant" },
+    { name: "Restaurant Le Jardin", city: "Marrakech", type: "Restaurant" },
+    { name: "Restaurant La Maison Arabe", city: "Marrakech", type: "Restaurant" },
+    { name: "Restaurant Café du Port", city: "Tangier", type: "Restaurant" },
+    { name: "Restaurant Le Mirage", city: "Agadir", type: "Restaurant" },
+    { name: "Restaurant Le Palais", city: "Fes", type: "Restaurant" },
+    { name: "Restaurant La Tour Hassan", city: "Rabat", type: "Restaurant" },
+    { name: "Restaurant Le Soleil", city: "Agadir", type: "Restaurant" },
+    { name: "Restaurant La Plage", city: "Tangier", type: "Restaurant" },
+    { name: "Restaurant Le Médina", city: "Marrakech", type: "Restaurant" },
+    { name: "Restaurant La Perle", city: "Casablanca", type: "Restaurant" },
+    { name: "Restaurant Le Marocain", city: "Rabat", type: "Restaurant" },
+    { name: "Restaurant La Gazelle", city: "Agadir", type: "Restaurant" },
+    { name: "Restaurant Le Palmier", city: "Marrakech", type: "Restaurant" },
+    { name: "Restaurant La Rose", city: "Casablanca", type: "Restaurant" },
+    { name: "Restaurant Le Jardin Secret", city: "Marrakech", type: "Restaurant" },
+    { name: "Restaurant La Sultana", city: "Casablanca", type: "Restaurant" },
+    { name: "Restaurant Le Cèdre", city: "Fes", type: "Restaurant" },
+    { name: "Restaurant La Terrasse", city: "Tangier", type: "Restaurant" },
+    { name: "Restaurant Le Patio", city: "Rabat", type: "Restaurant" },
+    { name: "Restaurant La Fontaine", city: "Marrakech", type: "Restaurant" },
+    { name: "Restaurant Le Château", city: "Casablanca", type: "Restaurant" },
+    { name: "Restaurant La Palmeraie", city: "Marrakech", type: "Restaurant" },
+    { name: "Restaurant Le Mazagan", city: "El Jadida", type: "Restaurant" },
+    { name: "Restaurant La Corniche", city: "Casablanca", type: "Restaurant" },
+    { name: "Restaurant Le Mogador", city: "Essaouira", type: "Restaurant" },
+    { name: "Restaurant La Falaise", city: "Tangier", type: "Restaurant" },
+    { name: "Restaurant Le Riadh", city: "Fes", type: "Restaurant" },
+    { name: "Restaurant Le Tadelakt", city: "Marrakech", type: "Restaurant" },
+    { name: "Restaurant La Méditerranée", city: "Tangier", type: "Restaurant" },
+    { name: "Restaurant Le Panorama", city: "Agadir", type: "Restaurant" },
+    { name: "Restaurant La Belle Vue", city: "Casablanca", type: "Restaurant" },
+    { name: "Restaurant Le Mas", city: "Rabat", type: "Restaurant" },
+    { name: "Restaurant La Campagne", city: "Marrakech", type: "Restaurant" },
+    { name: "Restaurant Le Village", city: "Fes", type: "Restaurant" },
+  ],
+  hotel: [
+    { name: "Hotel Kenzi Tower", city: "Casablanca", type: "Hotel" },
+    { name: "Hotel Sofitel Casablanca", city: "Casablanca", type: "Hotel" },
+    { name: "Hotel Movenpick Casablanca", city: "Casablanca", type: "Hotel" },
+    { name: "Hotel Hyatt Regency Casablanca", city: "Casablanca", type: "Hotel" },
+    { name: "Hotel La Mamounia", city: "Marrakech", type: "Hotel" },
+    { name: "Hotel Sofitel Marrakech", city: "Marrakech", type: "Hotel" },
+    { name: "Hotel Royal Mansour", city: "Marrakech", type: "Hotel" },
+    { name: "Hotel Hilton Tangier", city: "Tangier", type: "Hotel" },
+    { name: "Hotel Movenpick Tangier", city: "Tangier", type: "Hotel" },
+    { name: "Hotel Sofitel Rabat", city: "Rabat", type: "Hotel" },
+    { name: "Hotel Hilton Rabat", city: "Rabat", type: "Hotel" },
+    { name: "Hotel La Tour Hassan", city: "Rabat", type: "Hotel" },
+    { name: "Hotel Palais Medina", city: "Fes", type: "Hotel" },
+    { name: "Hotel Sofitel Agadir", city: "Agadir", type: "Hotel" },
+    { name: "Hotel Hilton Agadir", city: "Agadir", type: "Hotel" },
+    { name: "Hotel Barceló Tanger", city: "Tangier", type: "Hotel" },
+    { name: "Hotel Farah Casablanca", city: "Casablanca", type: "Hotel" },
+    { name: "Hotel Atlas Medina", city: "Marrakech", type: "Hotel" },
+    { name: "Hotel Ibis Casablanca", city: "Casablanca", type: "Hotel" },
+    { name: "Hotel Marriott Casablanca", city: "Casablanca", type: "Hotel" },
+    { name: "Hotel Sheraton Casablanca", city: "Casablanca", type: "Hotel" },
+    { name: "Hotel Radisson Blu Casablanca", city: "Casablanca", type: "Hotel" },
+    { name: "Hotel Four Seasons Casablanca", city: "Casablanca", type: "Hotel" },
+    { name: "Hotel Riad Fes", city: "Fes", type: "Hotel" },
+    { name: "Hotel Dar El Kebira", city: "Fes", type: "Hotel" },
+    { name: "Hotel Riad Laaroussa", city: "Fes", type: "Hotel" },
+    { name: "Hotel Le Jardin des Douars", city: "Essaouira", type: "Hotel" },
+    { name: "Hotel Heure Bleue Palais", city: "Essaouira", type: "Hotel" },
+    { name: "Hotel Sofitel Essaouira", city: "Essaouira", type: "Hotel" },
+    { name: "Hotel Kenzi Club Agadir", city: "Agadir", type: "Hotel" },
+    { name: "Hotel Riu Tikida Agadir", city: "Agadir", type: "Hotel" },
+    { name: "Hotel Iberostar Founty Beach", city: "Agadir", type: "Hotel" },
+    { name: "Hotel Kenzi Menara", city: "Marrakech", type: "Hotel" },
+    { name: "Hotel Riu Palace Tikida", city: "Marrakech", type: "Hotel" },
+    { name: "Hotel Iberostar Club Palmeraie", city: "Marrakech", type: "Hotel" },
+    { name: "Hotel Hilton Taghazout", city: "Agadir", type: "Hotel" },
+    { name: "Hotel Hyatt Tangier", city: "Tangier", type: "Hotel" },
+    { name: "Hotel Fairmont Tangier", city: "Tangier", type: "Hotel" },
+    { name: "Hotel Four Seasons Rabat", city: "Rabat", type: "Hotel" },
+    { name: "Hotel Sofitel Rabat Jardin", city: "Rabat", type: "Hotel" },
+  ],
+  construction: [
+    { name: "TGCC Group", city: "Casablanca", type: "Construction" },
+    { name: "RMA Groupe", city: "Casablanca", type: "Construction" },
+    { name: "OCP Group", city: "Casablanca", type: "Construction" },
+    { name: "Groupe Addoha", city: "Casablanca", type: "Construction" },
+    { name: "Groupe Alliances", city: "Casablanca", type: "Construction" },
+    { name: "Groupe Bouygues Maroc", city: "Casablanca", type: "Construction" },
+    { name: "Groupe Vinci Maroc", city: "Casablanca", type: "Construction" },
+    { name: "Groupe GTM Maroc", city: "Casablanca", type: "Construction" },
+    { name: "Groupe SGTM", city: "Casablanca", type: "Construction" },
+    { name: "Groupe SOMAGEC", city: "Casablanca", type: "Construction" },
+  ],
+  warehouse: [
+    { name: "DB Schenker Morocco", city: "Casablanca", type: "Warehouse" },
+    { name: "Kuehne + Nagel Morocco", city: "Casablanca", type: "Warehouse" },
+    { name: "DHL Global Forwarding", city: "Casablanca", type: "Warehouse" },
+    { name: "CEVA Logistics", city: "Casablanca", type: "Warehouse" },
+    { name: "Maersk Morocco", city: "Casablanca", type: "Warehouse" },
+    { name: "CMA CGM Morocco", city: "Casablanca", type: "Warehouse" },
+    { name: "Panalpina Morocco", city: "Casablanca", type: "Warehouse" },
+    { name: "SDV Morocco", city: "Casablanca", type: "Warehouse" },
+    { name: "Tanger Med", city: "Tangier", type: "Warehouse" },
+  ],
+  delivery: [
+    { name: "DHL Express Morocco", city: "Casablanca", type: "Delivery" },
+    { name: "UPS Morocco", city: "Casablanca", type: "Delivery" },
+    { name: "FedEx Morocco", city: "Casablanca", type: "Delivery" },
+    { name: "Glovo Morocco", city: "Casablanca", type: "Delivery" },
+    { name: "Jumia Food Morocco", city: "Casablanca", type: "Delivery" },
+    { name: "Delivery Logistics", city: "Rabat", type: "Delivery" },
+  ],
+  cleaning: [
+    { name: "Cleanco Services", city: "Casablanca", type: "Cleaning" },
+    { name: "Diamond Cleaning", city: "Casablanca", type: "Cleaning" },
+    { name: "Royal Cleaning Services", city: "Rabat", type: "Cleaning" },
+    { name: "Green Clean Morocco", city: "Marrakech", type: "Cleaning" },
+    { name: "Eco Cleaning Services", city: "Agadir", type: "Cleaning" },
+    { name: "ProClean Services", city: "Tangier", type: "Cleaning" },
+    { name: "Atlantic Cleaning", city: "Casablanca", type: "Cleaning" },
+  ],
+  factory: [
+    { name: "ST Microelectronics", city: "Casablanca", type: "Factory" },
+    { name: "Renault Maroc", city: "Tangier", type: "Factory" },
+    { name: "PSA Maroc", city: "Kenitra", type: "Factory" },
+    { name: "Holcim Maroc", city: "Casablanca", type: "Factory" },
+    { name: "LafargeHolcim Maroc", city: "Casablanca", type: "Factory" },
+    { name: "Managem Group", city: "Casablanca", type: "Factory" },
+    { name: "Nestlé Maroc", city: "Casablanca", type: "Factory" },
+    { name: "Danone Maroc", city: "Casablanca", type: "Factory" },
+    { name: "Peugeot Citroën", city: "Kenitra", type: "Factory" },
+    { name: "Siemens Morocco", city: "Casablanca", type: "Factory" },
+    { name: "ABB Morocco", city: "Casablanca", type: "Factory" },
+    { name: "Schneider Electric", city: "Casablanca", type: "Factory" },
+    { name: "Procter & Gamble", city: "Casablanca", type: "Factory" },
+    { name: "Unilever Morocco", city: "Casablanca", type: "Factory" },
+    { name: "Coca-Cola Morocco", city: "Casablanca", type: "Factory" },
+    { name: "PepsiCo Morocco", city: "Casablanca", type: "Factory" },
+    { name: "Heineken Morocco", city: "Casablanca", type: "Factory" },
+    { name: "Castel Morocco", city: "Casablanca", type: "Factory" },
+  ],
+};
 
-    .sidebar .contact-item {
-      font-size: 12px;
-      line-height: 1.8;
-      color: #c8d0d8;
-      margin-bottom: 4px;
-    }
+// ============================================
+// CERTIFICADOS POR SECTOR
+// ============================================
+const CERTIFICATES_BY_SECTOR: Record<string, string[]> = {
+  kitchen: [
+    "Food Safety Level 2",
+    "HACCP Awareness",
+    "Manual Handling",
+    "Health & Safety",
+    "Kitchen Hygiene",
+    "Allergen Awareness"
+  ],
+  hotel: [
+    "Housekeeping Standards",
+    "Customer Service",
+    "Health & Safety",
+    "Manual Handling",
+    "Hygiene & Sanitation"
+  ],
+  construction: [
+    "CSCS Card",
+    "Manual Handling",
+    "Health & Safety",
+    "Working at Height",
+    "First Aid"
+  ],
+  warehouse: [
+    "Forklift Awareness",
+    "Manual Handling",
+    "Health & Safety",
+    "Warehouse Safety",
+    "First Aid"
+  ],
+  delivery: [
+    "Defensive Driving",
+    "Manual Handling",
+    "Health & Safety",
+    "Customer Service",
+    "Fleet Safety"
+  ],
+  cleaning: [
+    "Health & Safety",
+    "Manual Handling",
+    "Cleaning Standards",
+    "Hygiene & Sanitation",
+    "COSHH Awareness"
+  ],
+  factory: [
+    "Health & Safety",
+    "Manual Handling",
+    "Machine Safety",
+    "Quality Control",
+    "First Aid"
+  ],
+  default: [
+    "Health & Safety",
+    "Manual Handling",
+    "First Aid",
+    "Teamwork Skills"
+  ]
+};
 
-    .sidebar .highlight-list {
-      list-style: none;
-      padding: 0;
-    }
+// ============================================
+// TÍTULOS DE PUESTO POR SECTOR
+// ============================================
+const JOB_TITLES: Record<string, string[]> = {
+  kitchen: [
+    "Kitchen Assistant", "Kitchen Porter", "Food Preparation Assistant",
+    "Commis Chef", "Kitchen Helper", "Kitchen Steward",
+    "Line Cook", "Prep Cook", "Culinary Assistant"
+  ],
+  hotel: [
+    "Housekeeping Attendant", "Room Attendant", "Housekeeping Assistant",
+    "Hotel Cleaner", "Guest Room Attendant", "Housekeeping Porter"
+  ],
+  construction: [
+    "Construction Worker", "Building Labourer", "Site Assistant",
+    "Construction Labourer", "General Worker", "Building Operative"
+  ],
+  warehouse: [
+    "Warehouse Operative", "Warehouse Assistant", "Logistics Assistant",
+    "Stock Controller", "Warehouse Worker", "Distribution Assistant"
+  ],
+  delivery: [
+    "Delivery Driver", "Courier", "Logistics Driver",
+    "Delivery Assistant", "Transport Assistant", "Courier Driver"
+  ],
+  cleaning: [
+    "Cleaner", "Housekeeper", "Cleaning Assistant",
+    "Sanitation Worker", "Janitor", "Cleaning Operative"
+  ],
+  factory: [
+    "Factory Operative", "Production Assistant", "Assembly Worker",
+    "Machine Operator", "Production Worker", "Factory Worker"
+  ],
+};
 
-    .sidebar .highlight-list li {
-      font-size: 12px;
-      line-height: 1.8;
-      color: #c8d0d8;
-      padding: 3px 0 3px 18px;
-      position: relative;
-    }
+// ============================================
+// CIUDADES DE MARRUECOS
+// ============================================
+const MOROCCAN_CITIES = [
+  "Casablanca", "Rabat", "Marrakech", "Agadir", "Tangier",
+  "Fes", "Meknes", "Oujda", "Nador", "Tetouan",
+  "Kenitra", "Safi", "El Jadida", "Beni Mellal", "Taza",
+  "Settat", "Khouribga", "Khemisset", "Temara", "Mohammedia",
+  "Chefchaouen", "Essaouira", "Taroudant", "Ouarzazate", "Tiznit"
+];
 
-    .sidebar .highlight-list li::before {
-      content: "▸";
-      position: absolute;
-      left: 0;
-      color: #ffffff;
-      font-weight: 700;
-    }
+// ============================================
+// FUNCIONES DE UTILIDAD
+// ============================================
 
-    .sidebar .languages {
-      margin-top: 4px;
-    }
+function getRandomItem<T>(array: T[]): T {
+  return array[Math.floor(Math.random() * array.length)];
+}
 
-    .sidebar .languages .lang-item {
-      font-size: 12px;
-      line-height: 1.8;
-      color: #c8d0d8;
-    }
+function getRandomItems<T>(array: T[], count: number): T[] {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled.slice(0, count);
+}
 
-    .sidebar .languages .lang-item strong {
-      color: #ffffff;
-      font-weight: 500;
-    }
+function getDateRangeByExperience(experience: string): { start: string; end: string } {
+  const months = ["January", "February", "March", "April", "May", "June", 
+                  "July", "August", "September", "October", "November", "December"];
+  
+  const endMonth = getRandomItem(months);
+  const endYear = "2025";
+  
+  let startYear: number;
+  const expLower = experience.toLowerCase();
+  
+  if (expLower.includes("no experience") || expLower.includes("0") || expLower.includes("entry")) {
+    startYear = 2024;
+  } else if (expLower.includes("1") || expLower.includes("less than")) {
+    startYear = 2023;
+  } else if (expLower.includes("2") || expLower.includes("1-2")) {
+    startYear = 2023;
+  } else if (expLower.includes("3") || expLower.includes("3-5")) {
+    startYear = 2021;
+  } else if (expLower.includes("5") || expLower.includes("5+")) {
+    startYear = 2018;
+  } else {
+    startYear = 2022;
+  }
+  
+  const variation = Math.random() > 0.7 ? 1 : 0;
+  startYear = startYear - variation;
+  
+  const startMonth = getRandomItem(months);
+  
+  return {
+    start: `${startMonth} ${startYear}`,
+    end: `${endMonth} ${endYear}`
+  };
+}
 
-    .sidebar .languages .lang-item .level {
-      color: #8a9aaa;
-      font-size: 11px;
-    }
+function getInitials(name: string): string {
+  if (!name) return "?";
+  const parts = name.trim().split(" ");
+  if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
+  return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+}
 
-    .sidebar .additional-info .info-item {
-      font-size: 12px;
-      line-height: 1.8;
-      color: #c8d0d8;
-    }
+function getLanguageLevel(level: string): string {
+  const map: Record<string, string> = {
+    native: "Native",
+    fluent: "C2",
+    advanced: "C1",
+    intermediate: "B2",
+    basic: "A2",
+    beginner: "A1",
+    nativo: "Native",
+    fluido: "C2",
+    avanzado: "C1",
+    intermedio: "B2",
+    básico: "A2",
+    principiante: "A1"
+  };
+  return map[level.toLowerCase()] || "B1";
+}
 
-    .sidebar .additional-info .info-item strong {
-      color: #ffffff;
-      font-weight: 500;
-      display: inline-block;
-      min-width: 90px;
-    }
+// ============================================
+// FUNCIÓN DE REINTENTO CON RETROCESO EXPONENCIAL
+// ============================================
 
-    /* ============================================
-       MAIN CONTENT
-    ============================================ */
-    .main {
-      width: 70%;
-      padding: 40px 45px 35px 40px;
-      flex-grow: 1;
-    }
-
-    .main .header-block {
-      margin-bottom: 22px;
-    }
-
-    .main .header-block .name {
-      font-size: 42px;
-      font-weight: 900;
-      color: #0a1a2e;
-      letter-spacing: 1px;
-      line-height: 44px;
-      text-transform: uppercase;
-    }
-
-    .main .header-block .title {
-      font-size: 18px;
-      color: #6d7077;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 2px;
-      margin-top: 4px;
-    }
-
-    .main .header-block .tagline {
-      max-width: 95%;
-      line-height: 1.5;
-      font-size: 13px;
-      color: #4e5560;
-      margin-top: 6px;
-    }
-
-    .main h2 {
-      font-size: 13px;
-      text-transform: uppercase;
-      letter-spacing: 2px;
-      color: #0a1a2e;
-      font-weight: 700;
-      border-bottom: 1px solid #10284a;
-      padding-bottom: 8px;
-      margin-top: 26px;
-      margin-bottom: 14px;
-    }
-
-    .main h2:first-of-type {
-      margin-top: 0;
-    }
-
-    /* ✅ COMPETENCIES */
-    .main .competencies {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-bottom: 4px;
-    }
-
-    .main .competencies span {
-      padding: 8px 16px;
-      font-size: 12px;
-      font-weight: 700;
-      border-radius: 10px;
-      background: #f5f6f8;
-      color: #2b2b2b;
-    }
-
-    /* ✅ EXPERIENCE - coincide con generateCVHtml */
-    .main .experience-item {
-      margin-bottom: 14px;
-      padding-left: 18px;
-      border-left: 2px solid #10284a;
-      position: relative;
-    }
-
-    .main .experience-item::before {
-      content: "";
-      position: absolute;
-      left: -5px;
-      top: 6px;
-      width: 8px;
-      height: 8px;
-      background: #10284a;
-      border-radius: 50%;
-      border: 2px solid #ffffff;
-      box-shadow: 0 0 0 2px #10284a;
-    }
-
-    .main .experience-item:last-child {
-      margin-bottom: 0;
-    }
-
-    .main .experience-item .exp-title {
-      font-size: 16px;
-      font-weight: 800;
-      color: #0a1a2e;
-    }
-
-    .main .experience-item .exp-company {
-      font-size: 14px;
-      font-weight: 600;
-      color: #666666;
-      font-style: italic;
-    }
-
-    .main .experience-item .exp-description {
-      font-size: 13px;
-      color: #3a3a4a;
-      line-height: 1.45;
-      margin-top: 4px;
-      padding-left: 4px;
-    }
-
-    .main .experience-item .exp-description ul {
-      list-style: none;
-      padding: 0;
-      margin: 4px 0 0;
-    }
-
-    .main .experience-item .exp-description ul li {
-      padding: 2px 0 2px 18px;
-      position: relative;
-      font-size: 13px;
-      line-height: 1.45;
-    }
-
-    .main .experience-item .exp-description ul li::before {
-      content: "—";
-      position: absolute;
-      left: 0;
-      color: #10284a;
-    }
-
-    /* ✅ EDUCATION - coincide con generateCVHtml */
-    .main .education-item {
-      margin-bottom: 10px;
-    }
-
-    .main .education-item:last-child {
-      margin-bottom: 0;
-    }
-
-    .main .education-item .edu-degree {
-      font-size: 14px;
-      font-weight: 700;
-      color: #0a1a2e;
-    }
-
-    /* ✅ PROFESSIONAL SKILLS - coincide con generateCVHtml */
-    .main .skills-container {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 4px 24px;
-    }
-
-    .main .skill-bar {
-      margin-bottom: 6px;
-    }
-
-    .main .skill-bar .skill-label {
-      font-size: 12px;
-      font-weight: 600;
-      color: #0a1a2e;
-      display: inline-block;
-      min-width: 110px;
-    }
-
-    .main .skill-bar .skill-track {
-      display: inline-block;
-      width: 65%;
-      height: 8px;
-      background: #eef2f6;
-      border-radius: 4px;
-      overflow: hidden;
-      vertical-align: middle;
-      margin-left: 4px;
-    }
-
-    .main .skill-bar .skill-track .skill-fill {
-      height: 100%;
-      background: #10284a;
-      border-radius: 4px;
-    }
-
-    /* ✅ ADDITIONAL INFORMATION - coincide con generateCVHtml */
-    .main .info-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 0;
-      font-size: 12px;
-      color: #2b2b2b;
-      line-height: 1.8;
-    }
-
-    .main .info-grid .info-item {
-      padding: 4px 0;
-      border-bottom: 1px solid #f0f2f4;
-    }
-
-    .main .info-grid .info-item:nth-last-child(1),
-    .main .info-grid .info-item:nth-last-child(2) {
-      border-bottom: none;
-    }
-
-    .main .info-grid .info-item strong {
-      color: #0a1a2e;
-      font-weight: 600;
-      display: inline-block;
-      min-width: 100px;
-    }
-
-    /* ✅ PERSONAL STATEMENT - coincide con generateCVHtml */
-    .main .personal-statement {
-      font-size: 12.5px;
-      color: #3a3a4a;
-      line-height: 1.7;
-      margin-top: 4px;
-    }
-
-    .footer {
-      margin-top: 30px;
-      padding-top: 14px;
-      border-top: 1px solid #eef0f2;
-      text-align: center;
-      font-size: 8px;
-      color: #B5BDC7;
-      line-height: 1.8;
-      letter-spacing: 0.5px;
-    }
-
-    /* ============================================
-       RESPONSIVE
-    ============================================ */
-    @media screen and (max-width: 800px) {
-      body {
-        padding: 15px;
-      }
-
-      .page {
-        border-radius: 8px;
-        width: 100%;
-        min-height: auto;
-        flex-direction: column;
-      }
-
-      .sidebar {
-        width: 100%;
-        padding: 30px 25px;
-      }
-
-      .sidebar .photo {
-        width: 130px;
-        height: 130px;
-      }
-
-      .sidebar .photo .initials {
-        font-size: 42px;
-      }
-
-      .main {
-        width: 100%;
-        padding: 30px 25px;
-      }
-
-      .main .header-block .name {
-        font-size: 34px;
-        line-height: 36px;
-      }
-
-      .main .header-block .title {
-        font-size: 16px;
-      }
-
-      .main .info-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .main .info-grid .info-item {
-        border-bottom: 1px solid #f0f2f4;
-      }
-
-      .main .info-grid .info-item:nth-last-child(1) {
-        border-bottom: none;
-      }
-
-      .main .skills-container {
-        grid-template-columns: 1fr;
-      }
-
-      .main .skill-bar .skill-track {
-        width: 50%;
+async function retryWithBackoff<T>(
+  fn: () => Promise<T>,
+  maxRetries: number = 3,
+  baseDelay: number = 1000,
+  context: string = "operation"
+): Promise<T> {
+  let lastError: Error | null = null;
+  
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (error) {
+      lastError = error as Error;
+      if (attempt < maxRetries) {
+        const delay = baseDelay * Math.pow(2, attempt);
+        console.warn(`⚠️ ${context} attempt ${attempt + 1} failed: ${lastError.message}`);
+        console.log(`🔄 Retrying in ${delay}ms... (attempt ${attempt + 2}/${maxRetries + 1})`);
+        await new Promise(resolve => setTimeout(resolve, delay));
       }
     }
+  }
+  
+  throw lastError || new Error(`${context} failed after ${maxRetries + 1} attempts`);
+}
 
-    @media print {
-      body {
-        background: #ffffff;
-        padding: 0;
+// ============================================
+// FUNCIÓN DE PARSE CON REINTENTO - LLAMADA REAL A OPENAI
+// ============================================
+
+async function callOpenAIWithRetry(
+  prompt: string,
+  maxRetries: number = 2,
+  context: string = "OpenAI"
+): Promise<{ text: string; tokens: number }> {
+  let lastError: Error | null = null;
+  
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), OPENAI_TIMEOUT_MS);
+      
+      const response = await fetch("https://api.openai.com/v1/responses", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${OPENAI_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: OPENAI_MODEL,
+          input: [
+            {
+              role: "user",
+              content: [
+                {
+                  type: "input_text",
+                  text: prompt
+                }
+              ]
+            }
+          ]
+        }),
+        signal: controller.signal,
+      });
+      
+      clearTimeout(timeoutId);
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(`OpenAI API Error: ${JSON.stringify(error)}`);
       }
-
-      .page {
-        border-radius: 0;
-        box-shadow: none;
-        width: 100%;
-        min-height: 100vh;
+      
+      const result = await response.json();
+      
+      let text = "";
+      if (result.output && result.output.length > 0) {
+        const output = result.output[0];
+        if (output.content) {
+          if (Array.isArray(output.content)) {
+            text = output.content
+              .map((block: any) => block.text || "")
+              .filter(Boolean)
+              .join("\n");
+          } else if (typeof output.content === "string") {
+            text = output.content;
+          }
+        }
       }
-
-      .sidebar {
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-        color-adjust: exact !important;
+      
+      if (!text) {
+        throw new Error("No content generated from OpenAI");
       }
-
-      .main .competencies span {
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-        color-adjust: exact !important;
+      
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        JSON.parse(jsonMatch[0]);
+      } else {
+        throw new Error("No valid JSON found in OpenAI response");
       }
-
-      .main .skill-bar .skill-track .skill-fill {
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-        color-adjust: exact !important;
-      }
-
-      .main .experience-item::before {
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-        color-adjust: exact !important;
+      
+      return {
+        text: text,
+        tokens: result.usage?.total_tokens || 0,
+      };
+      
+    } catch (error: any) {
+      lastError = error;
+      if (attempt < maxRetries) {
+        const delay = 1500 * Math.pow(2, attempt);
+        console.warn(`⚠️ ${context} attempt ${attempt + 1} failed: ${error.message}`);
+        console.log(`🔄 Retrying OpenAI in ${delay}ms... (attempt ${attempt + 2}/${maxRetries + 1})`);
+        await new Promise(resolve => setTimeout(resolve, delay));
       }
     }
-  </style>
-</head>
-<body>
+  }
+  
+  throw lastError || new Error(`${context} failed after ${maxRetries + 1} attempts`);
+}
 
-<div class="page">
+// ============================================
+// GENERAR CV CON IA - PROMPT SIMPLIFICADO
+// ============================================
 
-  <!-- ============================================
-  SIDEBAR
-  ============================================ -->
-  <aside class="sidebar">
+async function generatePremiumCV(data: any, hasUserCV: boolean): Promise<CVContent> {
+  const sector = data.sectores ? data.sectores.split(",")[0]?.trim()?.toLowerCase() : "default";
+  const companies = MOROCCAN_COMPANIES[sector] || MOROCCAN_COMPANIES.kitchen;
+  
+  const selectedCompanies = getRandomItems(companies, Math.min(3, companies.length));
+  const selectedCompany = getRandomItem(selectedCompanies);
+  
+  const selectedCity = data.current_city && data.current_city.trim() !== "" 
+    ? data.current_city 
+    : getRandomItem(MOROCCAN_CITIES);
+  
+  const titles = JOB_TITLES[sector] || JOB_TITLES.kitchen;
+  
+  const jobTitle = data.preferred_position && data.preferred_position.trim() !== ""
+    ? data.preferred_position
+    : getRandomItem(titles);
+  
+  const añosExperiencia = data.anos_experiencia || "3-5 years";
+  const expLabel = añosExperiencia.replace(/_/g, " ");
 
-    <!-- PHOTO -->
-    <div class="photo">
-      {{PHOTO_HTML}}
+  const availableCertificates = CERTIFICATES_BY_SECTOR[sector] || CERTIFICATES_BY_SECTOR.default;
+  const selectedCertificates = getRandomItems(availableCertificates, Math.min(3, availableCertificates.length));
+
+  const prompt = `
+You are a professional CV writer for Malta.
+
+Generate a European CV.
+
+Rules:
+- Maximum 2 jobs
+- Maximum 4 bullet points per job
+- Maximum 6 core competencies
+- Maximum 6 professional skills
+- Education must be realistic
+- Never write "No Formal Education"
+- Passport is always Available
+- Never mention Work Permit
+- Availability is Immediate
+- Relocation is Available to relocate to Malta
+
+Candidate:
+Name: ${data.full_name}
+Nationality: ${data.nationality}
+Current city: ${selectedCity}
+Target Position: ${jobTitle}
+Sector: ${sector}
+Education Level: ${data.education_level}
+Languages: ${data.idiomas}
+Experience Level: ${expLabel}
+Driver Licence: ${data.carnet_conducir}
+Has uploaded CV: ${hasUserCV}
+
+${hasUserCV ? "Keep their REAL experience. Improve grammar. Never invent companies, dates or positions." : "Create realistic professional work history. Generate EXACTLY 2 jobs with Real company name, City, Job title, Employment dates, Exactly 4 bullet points."}
+
+Output ONLY JSON:
+{
+  "summary": "",
+  "coreCompetencies": [],
+  "experience": [
+    {
+      "company": "",
+      "city": "",
+      "jobTitle": "",
+      "period": "",
+      "bullets": []
+    }
+  ],
+  "skills": [],
+  "softSkills": [],
+  "technicalSkills": [],
+  "education": "",
+  "certificates": [],
+  "personalStatement": ""
+}
+`;
+
+  try {
+    const result = await callOpenAIWithRetry(prompt, 2, "OpenAI CV generation");
+    
+    const parsed = JSON.parse(result.text.match(/\{[\s\S]*\}/)?.[0] || "{}");
+    
+    const dateRange = getDateRangeByExperience(expLabel);
+    
+    let experienceData: Experience[] = [];
+    const rawExperience = parsed.experience || [];
+    if (Array.isArray(rawExperience)) {
+      experienceData = rawExperience.map((exp: any) => {
+        if (hasUserCV) {
+          return {
+            company: exp.company || "",
+            city: exp.city || selectedCity,
+            jobTitle: exp.jobTitle || jobTitle,
+            period: exp.period || "",
+            bullets: Array.isArray(exp.bullets) ? exp.bullets.slice(0, 4) : []
+          };
+        }
+        
+        return {
+          company: exp.company || selectedCompany.name,
+          city: exp.city || selectedCity,
+          jobTitle: exp.jobTitle || jobTitle,
+          period: exp.period || `${dateRange.start} - ${dateRange.end}`,
+          bullets: Array.isArray(exp.bullets) ? exp.bullets.slice(0, 4) : ["Prepared ingredients and assisted chefs", "Maintained high standards of cleanliness"]
+        };
+      });
+    }
+    
+    if (experienceData.length > 2) {
+      experienceData = experienceData.slice(0, 2);
+    }
+    
+    let educationTitle = parsed.education || data.education_level || "Secondary Education";
+    if (educationTitle.toLowerCase().includes("no formal") || educationTitle.toLowerCase().includes("no education")) {
+      educationTitle = "Secondary Education";
+    }
+    const cleanEducation = educationTitle.split(".")[0].split(",")[0].trim();
+    
+    const MAX_BULLET_WORDS = 14;
+    experienceData = experienceData.map((exp: Experience) => ({
+      ...exp,
+      bullets: exp.bullets.map((bullet: string) => {
+        const words = bullet.split(" ");
+        if (words.length > MAX_BULLET_WORDS) {
+          return words.slice(0, MAX_BULLET_WORDS).join(" ");
+        }
+        return bullet;
+      })
+    }));
+    
+    let summary = parsed.summary || "";
+    const summaryLines = summary.split("\n");
+    if (summaryLines.length > 4) {
+      summary = summaryLines.slice(0, 4).join("\n");
+    }
+    
+    let personalStatement = parsed.personalStatement || "";
+    const psLines = personalStatement.split("\n");
+    if (psLines.length > 3) {
+      personalStatement = psLines.slice(0, 3).join("\n");
+    }
+    
+    if (summary.length > 600) {
+      summary = summary.slice(0, 580) + "...";
+    }
+    
+    if (personalStatement.length > 300) {
+      personalStatement = personalStatement.slice(0, 280) + "...";
+    }
+    
+    const coreCompetencies = Array.isArray(parsed.coreCompetencies) ? parsed.coreCompetencies : [];
+    const skills = Array.isArray(parsed.skills) ? parsed.skills : [];
+    const softSkills = Array.isArray(parsed.softSkills) ? parsed.softSkills : [];
+    const technicalSkills = Array.isArray(parsed.technicalSkills) ? parsed.technicalSkills : [];
+    const certificates = Array.isArray(parsed.certificates) ? parsed.certificates : selectedCertificates;
+    
+    return {
+      summary,
+      coreCompetencies,
+      experience: experienceData,
+      skills,
+      softSkills,
+      technicalSkills,
+      education: cleanEducation,
+      certificates,
+      personalStatement,
+      jobTitle,
+      company: selectedCompany,
+      city: selectedCity,
+      tokens: result.tokens || 0,
+    };
+
+  } catch (error: any) {
+    console.error("❌ Error generating CV after retries:", error);
+    throw error;
+  }
+}
+
+// ============================================
+// GENERAR CARTA CON IA
+// ============================================
+
+async function generatePremiumCoverLetter(data: any, company: Company, jobTitle: string): Promise<LetterContent> {
+  const prompt = `
+You are a professional cover letter writer for the European job market.
+
+Rules:
+- Maximum 300 words.
+- British English.
+- Sound like a human.
+- Mention the company name.
+- Mention Malta.
+- Mention relocation.
+- Mention teamwork.
+- Mention motivation.
+- Never sound generated by AI.
+- Never repeat sentences.
+- End with a professional call to action.
+
+Candidate:
+Name: ${data.full_name || "Candidate"}
+Position: ${jobTitle}
+Company: ${company.name} (${company.city}, Morocco)
+Experience: ${data.anos_experiencia || "3-5 years"}
+Nationality: ${data.nationality || "Moroccan"}
+Current City: ${data.current_city || "Casablanca"}
+Education: ${data.education_level || "Secondary Education"}
+Languages: ${data.idiomas || "English, Arabic, French"}
+
+Output ONLY JSON:
+{
+  "introduction": "",
+  "body1": "",
+  "body2": "",
+  "body3": "",
+  "closing": ""
+}
+`;
+
+  try {
+    const result = await callOpenAIWithRetry(prompt, 2, "OpenAI Cover Letter generation");
+    
+    const parsed = JSON.parse(result.text.match(/\{[\s\S]*\}/)?.[0] || "{}");
+    
+    return {
+      introduction: parsed.introduction || "",
+      body1: parsed.body1 || "",
+      body2: parsed.body2 || "",
+      body3: parsed.body3 || "",
+      closing: parsed.closing || "",
+      tokens: result.tokens || 0,
+    };
+
+  } catch (error: any) {
+    console.error("❌ Error generating cover letter after retries:", error);
+    throw error;
+  }
+}
+
+// ============================================
+// GENERAR HTML DEL CV
+// ============================================
+
+function generateCVHtml(data: any, content: CVContent): string {
+  let template = readTemplate("premium-cv.html");
+  
+  const nameParts = (data.full_name || "Candidate").trim().split(" ");
+  const firstName = nameParts[0] || "Candidate";
+  const lastName = nameParts.slice(1).join(" ") || "";
+  const fullName = `${firstName} ${lastName}`;
+
+  const initials = getInitials(data.full_name);
+  const photoHtml = data.photo_url 
+    ? `<img src="${data.photo_url}" alt="${fullName}">` 
+    : `<span class="initials">${initials}</span>`;
+
+  const location = data.current_city
+    ? `${data.current_city}, ${data.nationality || "Morocco"}`
+    : data.nationality || "Morocco";
+
+  let languagesHtml = "";
+  const idiomas = data.idiomas ? data.idiomas.split(",").map((i: string) => i.trim()) : ["English"];
+  const levels: Record<string, string> = {
+    english: "C2",
+    arabic: "Native",
+    french: "C1",
+    spanish: "B2",
+    italian: "B1",
+    german: "A2",
+    portuguese: "B1"
+  };
+  
+  const order = { Native: 6, C2: 5, C1: 4, B2: 3, B1: 2, A2: 1, A1: 0 };
+  const sortedIdiomas = [...idiomas].sort((a, b) => {
+    const levelA = levels[a.toLowerCase()] || "B1";
+    const levelB = levels[b.toLowerCase()] || "B1";
+    return (order[levelA as keyof typeof order] || 0) - (order[levelB as keyof typeof order] || 0);
+  }).reverse();
+
+  for (const idioma of sortedIdiomas) {
+    const level = levels[idioma.toLowerCase()] || "B1";
+    languagesHtml += `
+      <div class="lang-item">
+        <span class="lang-name">${idioma}</span>
+        <span class="lang-dots">................</span>
+        <span class="lang-level">${level}</span>
+      </div>
+    `;
+  }
+
+  let experienceHtml = "";
+  const experiences = content.experience || [];
+  
+  for (let i = 0; i < Math.min(experiences.length, 2); i++) {
+    const exp = experiences[i];
+    const bullets = exp.bullets || [];
+    const bulletsHtml = bullets.map((b: string) => `<li>${b}</li>`).join("");
+    
+    experienceHtml += `
+      <div class="experience-item">
+        <div class="exp-title">${exp.jobTitle || content.jobTitle || "Professional"}</div>
+        <div class="exp-company">${exp.company || ""}</div>
+        <div class="exp-description">
+          <ul>
+            ${bulletsHtml}
+          </ul>
+        </div>
+      </div>
+    `;
+  }
+
+  const educationHtml = `
+    <div class="education-item">
+      <div class="edu-degree">${content.education || data.education_level || "Secondary Education"}</div>
     </div>
+  `;
 
-    <!-- CONTACT -->
-    <h2>CONTACT</h2>
-    <div class="contact-item">{{WHATSAPP}}</div>
-    <div class="contact-item">{{EMAIL}}</div>
-    <div class="contact-item">{{LOCATION}}</div>
+  const competencies = content.coreCompetencies || [];
+  const competenciesHtml = competencies.map((comp: string) => 
+    `<span>${comp}</span>`
+  ).join("");
 
-    <!-- LANGUAGES -->
-    <h2>LANGUAGES</h2>
-    <div class="languages">
-      {{LANGUAGES}}
+  const keyStrengths = content.softSkills && content.softSkills.length > 0
+    ? content.softSkills
+    : [
+        "Strong work ethic",
+        "Team player",
+        "Fast learner",
+        "Attention to detail",
+        "Reliable and punctual",
+        "Able to work under pressure"
+      ];
+  const keyStrengthsHtml = keyStrengths.map((s: string) => `<li>${s}</li>`).join("");
+
+  const skills = content.skills || [];
+  const skillPercentages: Record<string, number> = {
+    "Food Preparation": 90,
+    "Kitchen Hygiene": 85,
+    "HACCP Standards": 80,
+    "Inventory Management": 75,
+    "Cleaning & Sanitization": 85,
+    "Teamwork": 90,
+    "Knife Skills": 80,
+    "Stock Management": 75,
+    "Safety Protocols": 85,
+    "Customer Service": 80,
+    "Communication": 85,
+    "Problem Solving": 80,
+    "Time Management": 85,
+    "Organization": 80,
+    "Reliability": 90
+  };
+  
+  const skillsToShow = skills.slice(0, 6);
+  let professionalSkillsHtml = "";
+  
+  const midPoint = Math.ceil(skillsToShow.length / 2);
+  const leftSkills = skillsToShow.slice(0, midPoint);
+  const rightSkills = skillsToShow.slice(midPoint);
+  
+  const renderSkillBar = (skill: string) => {
+    const percentage = skillPercentages[skill] || Math.floor(Math.random() * 30) + 60;
+    return `
+      <div class="skill-bar">
+        <span class="skill-label">${skill}</span>
+        <span class="skill-track">
+          <span class="skill-fill" style="width: ${percentage}%;"></span>
+        </span>
+      </div>
+    `;
+  };
+  
+  const allSkillsHtml = [...leftSkills, ...rightSkills].map(renderSkillBar).join("");
+
+  const personalStatement = content.personalStatement || "I am enthusiastic about joining a professional team where I can contribute positively, learn continuously, and grow within the industry. I am available to start immediately and ready to relocate.";
+
+  const tagline = `Dedicated and motivated ${content.jobTitle || "professional"} with a strong passion for the hospitality industry. Eager to contribute to a dynamic team.`;
+
+  const hasDrivingLicense = data.carnet_conducir && data.carnet_conducir !== "No" && data.carnet_conducir !== "None";
+  const driverLicense = hasDrivingLicense ? data.carnet_conducir : "";
+
+  const replacements: Record<string, string> = {
+    "{{PHOTO_HTML}}": photoHtml,
+    "{{FULL_NAME}}": fullName,
+    "{{JOB_TITLE}}": content.jobTitle || "Professional",
+    "{{TAGLINE}}": tagline,
+    "{{WHATSAPP}}": data.whatsapp || "",
+    "{{EMAIL}}": data.email || "",
+    "{{LOCATION}}": location,
+    "{{DRIVER_LICENSE}}": driverLicense,
+    "{{LANGUAGES}}": languagesHtml,
+    "{{KEY_STRENGTHS}}": keyStrengthsHtml,
+    "{{CORE_COMPETENCIES}}": competenciesHtml,
+    "{{EXPERIENCE_LIST}}": experienceHtml,
+    "{{EDUCATION_LIST}}": educationHtml,
+    "{{PROFESSIONAL_SKILLS}}": allSkillsHtml,
+    "{{PERSONAL_STATEMENT}}": personalStatement,
+  };
+
+  for (const [key, value] of Object.entries(replacements)) {
+    template = template.replace(new RegExp(key, "g"), value);
+  }
+
+  return template;
+}
+
+// ============================================
+// GENERAR HTML DE LA CARTA
+// ============================================
+
+function generateCoverHtml(data: any, content: LetterContent, company: Company, jobTitle: string): string {
+  let template = readTemplate("premium-cover-letter.html");
+
+  const nameParts = (data.full_name || "Candidate").trim().split(" ");
+  const firstName = nameParts[0] || "Candidate";
+  const lastName = nameParts.slice(1).join(" ") || "";
+  const fullName = `${firstName} ${lastName}`;
+
+  const today = new Date();
+  const dateStr = today.toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+
+  const initials = getInitials(data.full_name);
+  const photoHtml = data.photo_url 
+    ? `<img src="${data.photo_url}" alt="${fullName}">` 
+    : `<span class="initials">${initials}</span>`;
+
+  const location = data.current_city
+    ? `${data.current_city}, ${data.nationality || "Morocco"}`
+    : data.nationality || "Morocco";
+
+  const companySection = `
+    <div class="company">
+      <div class="department">Human Resources Department</div>
+      <div class="address-line">${company.name || ""}</div>
+      <div class="address-line">${company.city || "Malta"}</div>
     </div>
+  `;
 
-    <!-- KEY STRENGTHS -->
-    <h2>KEY STRENGTHS</h2>
-    <ul class="highlight-list">
-      {{KEY_STRENGTHS}}
-    </ul>
+  const replacements: Record<string, string> = {
+    "{{PHOTO_HTML}}": photoHtml,
+    "{{FULL_NAME}}": fullName,
+    "{{JOB_TITLE}}": jobTitle,
+    "{{EMAIL}}": data.email || "",
+    "{{WHATSAPP}}": data.whatsapp || "",
+    "{{LOCATION}}": location,
+    "{{DATE}}": dateStr,
+    "{{COMPANY_SECTION}}": companySection,
+    "{{GREETING}}": "Dear Hiring Manager,",
+    "{{INTRODUCTION}}": content.introduction || "",
+    "{{BODY_1}}": content.body1 || "",
+    "{{BODY_2}}": content.body2 || "",
+    "{{BODY_3}}": content.body3 || "",
+    "{{CLOSING}}": content.closing || "",
+    "{{SIGNATURE_IMAGE}}": "",
+  };
 
-    <!-- ADDITIONAL INFO -->
-    <h2>ADDITIONAL INFO</h2>
-    <div class="additional-info">
-      <div class="info-item"><strong>Passport:</strong> Available</div>
-      <div class="info-item"><strong>Driving Licence:</strong> {{DRIVER_LICENSE}}</div>
-      <div class="info-item"><strong>Availability:</strong> Immediate</div>
-      <div class="info-item"><strong>Willing to relocate:</strong> Available to relocate</div>
-    </div>
+  for (const [key, value] of Object.entries(replacements)) {
+    template = template.replace(new RegExp(key, "g"), value);
+  }
 
-  </aside>
+  return template;
+}
 
-  <!-- ============================================
-  MAIN CONTENT
-  ============================================ -->
-  <main class="main">
+// ============================================
+// LEER PLANTILLA HTML
+// ============================================
 
-    <!-- HEADER -->
-    <div class="header-block">
-      <div class="name">{{FULL_NAME}}</div>
-      <div class="title">{{JOB_TITLE}}</div>
-      <div class="tagline">{{TAGLINE}}</div>
-    </div>
+function readTemplate(templateName: string): string {
+  const possiblePaths = [
+    path.join(process.cwd(), "templates", templateName),
+    path.join(process.cwd(), "artifacts", "gestoria-cital-a", "templates", templateName),
+  ];
 
-    <!-- CORE COMPETENCIES -->
-    <h2>CORE COMPETENCIES</h2>
-    <div class="competencies">
-      {{CORE_COMPETENCIES}}
-    </div>
+  for (const templatePath of possiblePaths) {
+    if (fs.existsSync(templatePath)) {
+      console.log("✅ Template found:", templatePath);
+      return fs.readFileSync(templatePath, "utf8");
+    }
+  }
 
-    <!-- EXPERIENCE -->
-    <h2>EXPERIENCE</h2>
-    {{EXPERIENCE_LIST}}
+  throw new Error(`Template ${templateName} not found`);
+}
 
-    <!-- EDUCATION -->
-    <h2>EDUCATION</h2>
-    {{EDUCATION_LIST}}
+// ============================================
+// RENDERIZAR PDF CON COMPROBACIÓN DE ALTURA
+// ============================================
 
-    <!-- PROFESSIONAL SKILLS -->
-    <h2>PROFESSIONAL SKILLS</h2>
-    <div class="skills-container">
-      {{PROFESSIONAL_SKILLS}}
-    </div>
+async function renderPdfFromHtml(html: string): Promise<Buffer> {
+  const browser = await playwright.launch({
+    args: chromium.args,
+    executablePath: await chromium.executablePath(),
+    headless: true,
+  });
+  
+  try {
+    const page = await browser.newPage();
+    await page.setContent(html, { waitUntil: 'networkidle' });
+    await page.emulateMedia({ media: "print" });
+    
+    const contentHeight = await page.evaluate(() => {
+      const body = document.body;
+      const html = document.documentElement;
+      return Math.max(
+        body.scrollHeight,
+        body.offsetHeight,
+        html.clientHeight,
+        html.scrollHeight,
+        html.offsetHeight
+      );
+    });
+    
+    console.log(`📏 Content height: ${contentHeight}px (limit: ${MAX_PAGE_HEIGHT_PX}px)`);
+    
+    let finalHtml = html;
+    if (contentHeight > MAX_PAGE_HEIGHT_PX) {
+      console.log(`⚠️ Content overflows A4 page (${contentHeight}px > ${MAX_PAGE_HEIGHT_PX}px)`);
+      console.log("🔄 Reducing font size to fit on one page...");
+      
+      finalHtml = html.replace(/font-size:(\s*)(\d+)/g, (match, space, size) => {
+        const newSize = Math.max(10, parseInt(size) - 1);
+        return `font-size:${space}${newSize}`;
+      });
+      
+      finalHtml = finalHtml.replace(/padding:(\s*)(\d+)/g, (match, space, size) => {
+        const newSize = Math.max(4, parseInt(size) - 2);
+        return `padding:${space}${newSize}`;
+      });
+      
+      finalHtml = finalHtml.replace(/margin:(\s*)(\d+)/g, (match, space, size) => {
+        const newSize = Math.max(2, parseInt(size) - 2);
+        return `margin:${space}${newSize}`;
+      });
+      
+      await page.setContent(finalHtml, { waitUntil: 'networkidle' });
+      await page.emulateMedia({ media: "print" });
+      
+      const newHeight = await page.evaluate(() => {
+        const body = document.body;
+        const html = document.documentElement;
+        return Math.max(
+          body.scrollHeight,
+          body.offsetHeight,
+          html.clientHeight,
+          html.scrollHeight,
+          html.offsetHeight
+        );
+      });
+      
+      console.log(`📏 New content height: ${newHeight}px`);
+    }
+    
+    const pdf = await page.pdf({
+      format: 'A4',
+      printBackground: true,
+      margin: { top: 0, right: 0, bottom: 0, left: 0 },
+    });
+    return Buffer.from(pdf);
+    
+  } finally {
+    await browser.close();
+  }
+}
 
-    <!-- ADDITIONAL INFORMATION -->
-    <h2>ADDITIONAL INFORMATION</h2>
-    <div class="info-grid">
-      <div class="info-item"><strong>Passport</strong> Available</div>
-      <div class="info-item"><strong>Driving Licence</strong> {{DRIVER_LICENSE}}</div>
-      <div class="info-item"><strong>Availability</strong> Immediate</div>
-      <div class="info-item"><strong>Relocation</strong> Available to relocate</div>
-    </div>
+// ============================================
+// SUBIR PDF A SUPABASE CON REINTENTO
+// ============================================
 
-    <!-- PERSONAL STATEMENT -->
-    <h2>PERSONAL STATEMENT</h2>
-    <p class="personal-statement">{{PERSONAL_STATEMENT}}</p>
+async function uploadPDFWithRetry(pdfBytes: Buffer, fileName: string): Promise<string> {
+  return await retryWithBackoff(
+    async () => {
+      const { error: uploadError } = await supabase.storage
+        .from(BUCKET_NAME)
+        .upload(fileName, pdfBytes, {
+          contentType: "application/pdf",
+          upsert: true,
+        });
 
-    <!-- FOOTER -->
-    <div class="footer">
-      Professional Curriculum Vitae
-    </div>
+      if (uploadError) {
+        throw new Error(`Upload failed: ${uploadError.message}`);
+      }
 
-  </main>
+      const { data: publicUrlData } = supabase.storage
+        .from(BUCKET_NAME)
+        .getPublicUrl(fileName);
 
-</div>
+      return publicUrlData.publicUrl;
+    },
+    3,
+    2000,
+    "Supabase upload"
+  );
+}
 
-</body>
-</html>
+// ============================================
+// HANDLER PRINCIPAL
+// ============================================
+
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Method Not Allowed" });
+  }
+
+  try {
+    const body = typeof req.body === "string" ? JSON.parse(req.body) : req.body;
+    const { applicationId } = body;
+
+    if (!applicationId) {
+      return res.status(400).json({ error: "applicationId is required" });
+    }
+
+    const startTime = Date.now();
+    let openaiTime = 0;
+    let pdfTime = 0;
+    let uploadTime = 0;
+
+    console.log(`📄 Generating premium documents for application: ${applicationId}`);
+
+    const { data: application, error: fetchError } = await supabase
+      .from("malta_applications")
+      .select("*")
+      .eq("id", applicationId)
+      .single();
+
+    if (fetchError || !application) {
+      console.error("❌ Error fetching application:", fetchError);
+      return res.status(404).json({ error: "Application not found" });
+    }
+
+    console.log(`✅ Application found: ${application.full_name}`);
+    console.log(`📸 photo_url: ${application.photo_url || "No photo"}`);
+
+    const hasUserCV = !!application.cv_url && application.cv_url.trim() !== "";
+    console.log(`📋 Has user CV: ${hasUserCV}`);
+
+    const openaiStart = Date.now();
+    console.log("🤖 Generating premium CV...");
+    const cvContent = await generatePremiumCV(application, hasUserCV);
+    console.log(`✅ CV generated with ${cvContent.tokens || 0} tokens`);
+    console.log(`   Job Title: ${cvContent.jobTitle}`);
+    console.log(`   Company: ${cvContent.company.name || "N/A"} (${cvContent.company.city || "N/A"})`);
+
+    console.log("🤖 Generating premium cover letter...");
+    const letterContent = await generatePremiumCoverLetter(application, cvContent.company, cvContent.jobTitle);
+    console.log(`✅ Cover letter generated with ${letterContent.tokens || 0} tokens`);
+    openaiTime = Date.now() - openaiStart;
+    console.log(`⏱️ OpenAI generation: ${openaiTime}ms`);
+
+    console.log("📄 Generating CV HTML...");
+    const cvHtml = generateCVHtml(application, cvContent);
+    console.log(`✅ CV HTML generated (${cvHtml.length} chars)`);
+
+    console.log("📄 Generating Cover Letter HTML...");
+    const coverHtml = generateCoverHtml(application, letterContent, cvContent.company, cvContent.jobTitle);
+    console.log(`✅ Cover Letter HTML generated (${coverHtml.length} chars)`);
+
+    const pdfStart = Date.now();
+    console.log("🖨️ Converting CV to PDF with height check...");
+    const cvPdf = await renderPdfFromHtml(cvHtml);
+    console.log(`✅ CV PDF generated (${cvPdf.length} bytes)`);
+
+    console.log("🖨️ Converting Cover Letter to PDF with height check...");
+    const coverPdf = await renderPdfFromHtml(coverHtml);
+    console.log(`✅ Cover Letter PDF generated (${coverPdf.length} bytes)`);
+    pdfTime = Date.now() - pdfStart;
+    console.log(`⏱️ PDF generation: ${pdfTime}ms`);
+
+    const timestamp = Date.now();
+    const cvFileName = `cv_${applicationId}_${timestamp}.pdf`;
+    const letterFileName = `cover_letter_${applicationId}_${timestamp}.pdf`;
+
+    const uploadStart = Date.now();
+    console.log("📤 Uploading CV PDF...");
+    const cvUrl = await uploadPDFWithRetry(cvPdf, cvFileName);
+
+    console.log("📤 Uploading Cover Letter PDF...");
+    const letterUrl = await uploadPDFWithRetry(coverPdf, letterFileName);
+    uploadTime = Date.now() - uploadStart;
+    console.log(`⏱️ Upload to Supabase: ${uploadTime}ms`);
+
+    console.log("✅ Both PDFs uploaded successfully");
+
+    const fullLetterText = `${letterContent.introduction}\n\n${letterContent.body1}\n\n${letterContent.body2}\n\n${letterContent.body3}\n\n${letterContent.closing}`;
+    const totalTokens = (cvContent.tokens || 0) + (letterContent.tokens || 0);
+    const generationTime = Date.now() - startTime;
+    
+    console.log(`⏱️ Total generation time: ${generationTime}ms`);
+    console.log(`   ├─ OpenAI: ${openaiTime}ms (${Math.round(openaiTime/generationTime*100)}%)`);
+    console.log(`   ├─ PDF: ${pdfTime}ms (${Math.round(pdfTime/generationTime*100)}%)`);
+    console.log(`   └─ Upload: ${uploadTime}ms (${Math.round(uploadTime/generationTime*100)}%)`);
+    
+    await retryWithBackoff(
+      async () => {
+        const updateData: any = {
+          cv_generated: true,
+          letter_generated: true,
+          cv_url: cvUrl,
+          letter_url: letterUrl,
+          cv_text: cvContent.summary,
+          letter_text: fullLetterText,
+          cv_html: cvHtml,
+          letter_html: coverHtml,
+          cv_tokens: cvContent.tokens || 0,
+          letter_tokens: letterContent.tokens || 0,
+          total_tokens: totalTokens,
+          model_used: OPENAI_MODEL,
+          generation_time_ms: generationTime,
+          documents_generated_at: new Date().toISOString(),
+          worker_ready: true,
+          worker_status: "ready",
+          company_name: cvContent.company.name || "",
+          company_city: cvContent.company.city || "",
+          
+          ai_summary: cvContent.summary,
+          ai_experience: cvContent.experience || [],
+          ai_skills: cvContent.skills || [],
+          ai_languages: application.idiomas ? application.idiomas.split(",").map((i: string) => i.trim()) : [],
+          ai_cover_letter: fullLetterText,
+          ai_job_title: cvContent.jobTitle,
+          ai_core_competencies: cvContent.coreCompetencies || [],
+          ai_soft_skills: cvContent.softSkills || [],
+          ai_technical_skills: cvContent.technicalSkills || [],
+          ai_certificates: cvContent.certificates || [],
+          ai_education: cvContent.education || application.education_level || "",
+          ai_personal_statement: cvContent.personalStatement || "",
+          
+          original_cv_url: application.cv_url || "",
+          has_user_cv: hasUserCV,
+        };
+
+        if (application.photo_url) {
+          updateData.photo_uploaded = true;
+          updateData.photo_generated_at = new Date().toISOString();
+        }
+
+        const { error: updateError } = await supabase
+          .from("malta_applications")
+          .update(updateData)
+          .eq("id", applicationId);
+
+        if (updateError) {
+          throw new Error(`Supabase update failed: ${updateError.message}`);
+        }
+        
+        return true;
+      },
+      3,
+      1500,
+      "Supabase update"
+    );
+
+    console.log(`✅ Application updated successfully`);
+
+    try {
+      await retryWithBackoff(
+        async () => {
+          const { error: queueError } = await supabase
+            .from("worker_queue")
+            .insert({
+              application_id: applicationId,
+              status: "pending",
+              priority: 1,
+              created_at: new Date().toISOString(),
+            });
+
+          if (queueError) {
+            throw new Error(`Worker queue insert failed: ${queueError.message}`);
+          }
+          return true;
+        },
+        2,
+        1000,
+        "Worker queue insert"
+      );
+      console.log("✅ Added to worker queue successfully");
+    } catch (queueErr) {
+      console.error("❌ Worker queue exception (non-critical):", queueErr);
+    }
+
+    return res.status(200).json({
+      success: true,
+      applicationId,
+      cvUrl,
+      letterUrl,
+      company: cvContent.company.name || "",
+      companyCity: cvContent.company.city || "",
+      jobTitle: cvContent.jobTitle,
+      hasUserCV: hasUserCV,
+      photoUsed: !!application.photo_url,
+      cvTokens: cvContent.tokens || 0,
+      letterTokens: letterContent.tokens || 0,
+      totalTokens: totalTokens,
+      generationTimeMs: generationTime,
+      openaiTimeMs: openaiTime,
+      pdfTimeMs: pdfTime,
+      uploadTimeMs: uploadTime,
+      message: "Premium documents generated successfully",
+    });
+
+  } catch (error: any) {
+    console.error("❌ Error in generate-malta-documents:", error);
+    return res.status(500).json({
+      error: "Failed to generate documents",
+      details: error.message || "Unknown error",
+    });
+  }
+}
