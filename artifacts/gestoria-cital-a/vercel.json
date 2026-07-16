@@ -15,11 +15,5 @@
         }
       ]
     }
-  ],
-  "crons": [
-    {
-      "path": "/api/worker-cron",
-      "schedule": "*/2 * * * *"
-    }
   ]
 }
