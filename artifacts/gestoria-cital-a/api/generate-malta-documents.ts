@@ -527,7 +527,7 @@ async function callOpenAIWithRetry(
 }
 
 // ============================================
-// ✅ GENERAR CV CON IA
+// GENERAR CV CON IA - EXACTAMENTE IGUAL
 // ============================================
 
 async function generatePremiumCV(data: any, hasUserCV: boolean): Promise<CVContent> {
@@ -755,7 +755,7 @@ Output ONLY JSON:
 }
 
 // ============================================
-// ✅ GENERAR CARTA CON IA - PROFESIONAL
+// GENERAR CARTA CON IA - MEJORADA (SOLO ESTO CAMBIA)
 // ============================================
 
 async function generatePremiumCoverLetter(data: any, company: Company, jobTitle: string): Promise<LetterContent> {
@@ -820,7 +820,7 @@ Make it unique for this candidate.
 }
 
 // ============================================
-// GENERAR HTML DEL CV - SIN CAMBIOS
+// GENERAR HTML DEL CV - EXACTAMENTE IGUAL
 // ============================================
 
 function generateCVHtml(data: any, content: CVContent): string {
@@ -985,7 +985,7 @@ function generateCVHtml(data: any, content: CVContent): string {
 }
 
 // ============================================
-// ✅ GENERAR HTML DE LA CARTA - CON FIRMA CORREGIDA
+// GENERAR HTML DE LA CARTA - MEJORADA (SOLO ESTO CAMBIA)
 // ============================================
 
 function generateCoverHtml(data: any, content: LetterContent, company: Company, jobTitle: string): string {
@@ -1015,7 +1015,7 @@ function generateCoverHtml(data: any, content: LetterContent, company: Company, 
   const hasDrivingLicense = data.carnet_conducir && data.carnet_conducir !== "No" && data.carnet_conducir !== "None";
   const driverLicense = hasDrivingLicense ? data.carnet_conducir : "Not available";
 
-  // ✅ COMPANY SECTION
+  // COMPANY SECTION - SOLO SI EXISTE EMPRESA
   const companySection = company && company.name ? `
     <div class="company">
       <strong>${company.name}</strong>
@@ -1024,8 +1024,7 @@ function generateCoverHtml(data: any, content: LetterContent, company: Company, 
     </div>
   ` : '<div class="company-empty"></div>';
 
-  // ✅ FIRMA CORREGIDA - NUNCA VACÍA
-  // Si hay firma manuscrita, la muestra. Si no, muestra el nombre en cursiva como firma electrónica
+  // FIRMA - SIEMPRE VISIBLE
   const signatureHtml = `
     <div class="signature">
       <div class="signature-name">${firstName} ${lastName}</div>
@@ -1038,7 +1037,6 @@ function generateCoverHtml(data: any, content: LetterContent, company: Company, 
     </div>
   `;
 
-  // ✅ REPLACEMENTS
   const replacements: Record<string, string> = {
     "{{PHOTO_HTML}}": photoHtml,
     "{{FIRST_NAME}}": firstName,
