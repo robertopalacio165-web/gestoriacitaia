@@ -49,7 +49,7 @@
     }
 
     /* ============================================
-       HEADER - CON FOTO Y ESTILO COMO EL CV
+       HEADER - EXACTO A LA IMAGEN
     ============================================ */
     .header {
       display: flex;
@@ -128,29 +128,6 @@
       gap: 6px;
     }
 
-    .header .header-info .contact-line .contact-item .icon {
-      width: 18px;
-      height: 18px;
-      flex-shrink: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .header .header-info .contact-line .contact-item .icon svg {
-      width: 14px;
-      height: 14px;
-      fill: none;
-      stroke: #6a7a8a;
-      stroke-width: 2;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-    }
-
-    .header .header-info .contact-line .sep {
-      color: #d0d5da;
-    }
-
     .header .date {
       text-align: right;
       font-size: 13px;
@@ -165,14 +142,13 @@
     }
 
     /* ============================================
-       CUERPO DE LA CARTA
+       CUERPO - EXACTO A LA IMAGEN
     ============================================ */
     .body {
       display: flex;
       flex-direction: column;
     }
 
-    /* --- EMPRESA (OPCIONAL) --- */
     .body .company {
       font-size: 14px;
       color: #2b2b3f;
@@ -228,22 +204,12 @@
     }
 
     /* ============================================
-       FIRMA
+       FIRMA - EXACTO A LA IMAGEN
     ============================================ */
     .signature {
       margin-top: 38px;
       padding-top: 22px;
       border-top: 1px solid #e8ecf0;
-    }
-
-    .signature .signature-image {
-      margin-bottom: 6px;
-    }
-
-    .signature .signature-image svg,
-    .signature .signature-image img {
-      max-height: 50px;
-      width: auto;
     }
 
     .signature .signature-name {
@@ -345,7 +311,7 @@
 <div class="page">
 
   <!-- ============================================
-  HEADER
+  HEADER - EXACTO A LA IMAGEN
   ============================================ -->
   <div class="header">
 
@@ -359,33 +325,11 @@
       <div class="name">{{FIRST_NAME}} <span class="lastname">{{LAST_NAME}}</span></div>
       <div class="title">{{TITLE}}</div>
       <div class="contact-line">
-        <span class="contact-item">
-          <span class="icon">
-            <svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-          </span>
-          {{EMAIL}}
-        </span>
+        <span class="contact-item">{{EMAIL}}</span>
         <span class="sep">|</span>
-        <span class="contact-item">
-          <span class="icon">
-            <svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.362 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.574 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-          </span>
-          {{WHATSAPP}}
-        </span>
+        <span class="contact-item">{{WHATSAPP}}</span>
         <span class="sep">|</span>
-        <span class="contact-item">
-          <span class="icon">
-            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-          </span>
-          {{NATIONALITY}}
-        </span>
-        <span class="sep">|</span>
-        <span class="contact-item">
-          <span class="icon">
-            <svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M8 6v12"/><path d="M16 6v12"/><path d="M2 10h20"/><path d="M2 14h20"/></svg>
-          </span>
-          {{DRIVER_LICENSE}}
-        </span>
+        <span class="contact-item">{{LOCATION}}</span>
       </div>
     </div>
 
@@ -398,7 +342,7 @@
   </div>
 
   <!-- ============================================
-  CUERPO
+  CUERPO - EXACTO A LA IMAGEN
   ============================================ -->
   <div class="body">
 
@@ -424,9 +368,8 @@
       <p>{{CLOSING}}</p>
     </div>
 
-    <!-- FIRMA -->
+    <!-- FIRMA - EXACTO A LA IMAGEN -->
     <div class="signature">
-      {{SIGNATURE_IMAGE_HTML}}
       <div class="signature-name">{{FIRST_NAME}} {{LAST_NAME}}</div>
       <div class="signature-title">{{TITLE}}</div>
       <div class="signature-contact">
