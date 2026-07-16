@@ -11,6 +11,9 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
+// ✅ URL del webhook de Make
+const MAKE_WEBHOOK_URL = process.env.MAKE_WEBHOOK_URL || "https://hook.eu1.make.com/5ugo16vgnvx2rhhu3mwjfag553d1g0ij";
+
 export const config = {
   api: {
     bodyParser: false,
@@ -267,7 +270,35 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // ============================================
-    // ✅ 12. RESPONDER RÁPIDO (NO ESPERAR GENERACIÓN)
+    // ✅ 12. NOTIFICAR A MAKE (WEBHOOK)
+    // ============================================
+    try {
+      await fetch(MAKE_WEBHOOK_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          event: "new_job",
+          applicationId: applicationId,
+          isNew: isNew,
+          fullName: fullName,
+          whatsapp: whatsapp,
+          email: email,
+          plan: plan,
+          nationality: nationality,
+          currentCity: currentCity,
+          preferredPosition: preferredPosition,
+          timestamp: new Date().toISOString(),
+        }),
+      });
+      console.log(`✅ Notificado a Make: ${applicationId}`);
+    } catch (err) {
+      console.error("❌ Error notificando a Make:", err);
+    }
+
+    // ============================================
+    // ✅ 13. RESPONDER RÁPIDO (NO ESPERAR GENERACIÓN)
     // ============================================
     return res.status(200).json({
       received: true,
