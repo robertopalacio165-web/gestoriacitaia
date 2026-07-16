@@ -30,27 +30,33 @@ body {
   overflow: hidden;
 }
 
+/* ============================================
+   SIDEBAR
+   ============================================ */
 .sidebar {
   width: 35%;
   background: #071b47;
   color: white;
-  padding: 35px 25px;
+  padding: 25px 20px;
 }
 
 .content {
   width: 65%;
-  padding: 45px 45px 35px;
+  padding: 32px 34px 25px;
   background: white;
 }
 
+/* ============================================
+   FOTO
+   ============================================ */
 .photo {
-  width: 180px;
-  height: 180px;
+  width: 140px;
+  height: 140px;
   border-radius: 50%;
   overflow: hidden;
-  border: 5px solid white;
+  border: 4px solid white;
   margin: auto;
-  margin-bottom: 25px;
+  margin-bottom: 20px;
 }
 
 .photo img {
@@ -60,28 +66,38 @@ body {
   display: block;
 }
 
+/* ============================================
+   NOMBRE
+   ============================================ */
 .name {
-  font-size: 46px;
+  font-size: 32px;
   font-weight: 900;
-  letter-spacing: -1px;
+  letter-spacing: -0.5px;
+  line-height: 34px;
   text-transform: uppercase;
   color: #071b47;
-  margin-bottom: 5px;
+  margin-bottom: 4px;
 }
 
 .name .lastname {
   color: #2d7d46;
 }
 
+/* ============================================
+   CARGO
+   ============================================ */
 .job {
-  font-size: 17px;
-  letter-spacing: 4px;
+  font-size: 14px;
+  letter-spacing: 2px;
   text-transform: uppercase;
   color: #666;
   font-weight: 500;
-  margin-bottom: 30px;
+  margin-bottom: 16px;
 }
 
+/* ============================================
+   TÍTULOS
+   ============================================ */
 .side-title {
   font-size: 19px;
   font-weight: 700;
@@ -99,33 +115,36 @@ body {
   line-height: 1.6;
 }
 
-.section {
-  margin-bottom: 34px;
-}
-
 .section-title {
-  font-size: 20px;
+  font-size: 17px;
   font-weight: 800;
+  letter-spacing: 1px;
+  padding-bottom: 6px;
+  margin-bottom: 12px;
   color: #071b47;
-  letter-spacing: 2px;
   text-transform: uppercase;
   border-bottom: 2px solid #071b47;
-  padding-bottom: 8px;
-  margin-bottom: 18px;
+}
+
+.section {
+  margin-bottom: 16px;
 }
 
 .summary {
-  line-height: 1.7;
-  font-size: 15px;
+  line-height: 1.5;
+  font-size: 13px;
 }
 
 .job-item {
-  margin-bottom: 22px;
+  margin-bottom: 14px;
 }
 
+/* ============================================
+   1. EMPRESA - Reducido
+   ============================================ */
 .job-company {
-  font-weight: bold;
-  font-size: 18px;
+  font-weight: 700;
+  font-size: 16px;
 }
 
 .job-date {
@@ -135,12 +154,12 @@ body {
 }
 
 .job-desc {
-  line-height: 1.7;
-  font-size: 15px;
+  line-height: 1.4;
+  font-size: 13px;
 }
 
 .skill {
-  margin-bottom: 14px;
+  margin-bottom: 8px;
 }
 
 .skill-name {
@@ -200,13 +219,16 @@ ul {
 }
 
 li {
-  margin-bottom: 6px;
-  line-height: 1.6;
+  margin-bottom: 3px;
+  line-height: 1.35;
 }
 
+/* ============================================
+   2. CONTACTO - Reducido
+   ============================================ */
 .contact {
-  line-height: 1.8;
-  font-size: 14px;
+  line-height: 1.6;
+  font-size: 13px;
 }
 
 .badge {
