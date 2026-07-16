@@ -527,19 +527,29 @@ async function callOpenAIWithRetry(
 }
 
 // ============================================
-// ✅ GENERAR CV CON IA - MEJORADO Y PROFESIONAL
+// ✅ GENERAR CV CON IA - CON FILTRO POR CIUDAD
 // ============================================
 
 async function generatePremiumCV(data: any, hasUserCV: boolean): Promise<CVContent> {
   const sector = data.sectores ? data.sectores.split(",")[0]?.trim()?.toLowerCase() : "default";
   const companies = MOROCCAN_COMPANIES[sector] || MOROCCAN_COMPANIES.kitchen;
   
-  const selectedCompanies = getRandomItems(companies, Math.min(3, companies.length));
-  const selectedCompany = getRandomItem(selectedCompanies);
-  
-  const selectedCity = data.current_city && data.current_city.trim() !== "" 
+  // ✅ FILTRAR EMPRESAS POR CIUDAD DEL CLIENTE
+  const userCity = data.current_city && data.current_city.trim() !== "" 
     ? data.current_city 
     : getRandomItem(MOROCCAN_CITIES);
+  
+  // Filtrar empresas que coinciden con la ciudad del cliente
+  let filteredCompanies = companies.filter(c => c.city === userCity);
+  
+  // Si no hay empresas en esa ciudad, usar todas las empresas del sector
+  if (filteredCompanies.length === 0) {
+    console.log(`⚠️ No hay empresas en ${userCity}, usando todas las empresas del sector`);
+    filteredCompanies = companies;
+  }
+  
+  const selectedCompanies = getRandomItems(filteredCompanies, Math.min(3, filteredCompanies.length));
+  const selectedCompany = getRandomItem(selectedCompanies);
   
   const titles = JOB_TITLES[sector] || JOB_TITLES.kitchen;
   
@@ -553,7 +563,7 @@ async function generatePremiumCV(data: any, hasUserCV: boolean): Promise<CVConte
   const availableCertificates = CERTIFICATES_BY_SECTOR[sector] || CERTIFICATES_BY_SECTOR.default;
   const selectedCertificates = getRandomItems(availableCertificates, Math.min(4, availableCertificates.length));
 
-  // ✅ PROMPT MEJORADO - CON INSTRUCCIONES CLARAS PARA RELLENAR LA PÁGINA
+  // ✅ PROMPT MEJORADO - CON CIUDAD REAL
   const prompt = `
 You are a professional CV writer for the European job market, specialized in Malta.
 
@@ -564,9 +574,15 @@ CRITICAL REQUIREMENTS:
 - Every section must have enough content to fill the page
 - The sidebar must be FULL (languages, key strengths, additional info)
 
+IMPORTANT - REALISM:
+- The candidate is from ${userCity}, Morocco
+- ALL companies in the experience section MUST be from ${userCity}
+- Use REAL Moroccan restaurant names in ${userCity}
+- Example if ${userCity} is Casablanca: "Restaurant La Sqala", "Restaurant Al Fassia", "Le Bistrot", etc.
+
 RULES:
 - Exactly 2 jobs
-- Exactly 6 bullet points per job (NOT 4, NOT 5 - SIX!)
+- Exactly 6 bullet points per job
 - Every bullet must be 12-18 words, specific and detailed
 - 6 core competencies
 - 8 professional skills with proper names
@@ -578,15 +594,10 @@ RULES:
 - Availability is Immediate
 - Relocation: "Available to relocate to Malta"
 
-THE SIDEBAR MUST CONTAIN:
-- At least 6 languages with proper levels (Native, C2, C1, B2, B1, A2)
-- At least 8 key strengths (not just 4-5)
-- Complete additional info section
-
 Candidate:
 Name: ${data.full_name}
 Nationality: ${data.nationality}
-Current city: ${selectedCity}
+Current city: ${userCity}
 Target Position: ${jobTitle}
 Sector: ${sector}
 Education Level: ${data.education_level}
@@ -595,25 +606,25 @@ Experience Level: ${expLabel}
 Driver Licence: ${data.carnet_conducir}
 Has uploaded CV: ${hasUserCV}
 
-${hasUserCV ? "KEEP THEIR REAL EXPERIENCE. IMPROVE grammar and wording. ADD MORE DETAIL to their existing experience. NEVER invent companies or dates." : "CREATE realistic professional work history. Generate EXACTLY 2 jobs with Real Moroccan company, City, Job title, Employment dates, EXACTLY 6 bullet points per job."}
+${hasUserCV ? "KEEP THEIR REAL EXPERIENCE. IMPROVE grammar and wording. ADD MORE DETAIL to their existing experience. NEVER invent companies or dates." : `CREATE realistic professional work history. Generate EXACTLY 2 jobs with Real Moroccan companies located in ${userCity}, City: ${userCity}, Job title, Employment dates, EXACTLY 6 bullet points per job.`}
 
 Output ONLY JSON:
 {
-  "summary": "A professional summary of 4-5 sentences describing the candidate's experience and goals",
-  "coreCompetencies": ["Competency1", "Competency2", "Competency3", "Competency4", "Competency5", "Competency6"],
+  "summary": "A professional summary of 4-5 sentences",
+  "coreCompetencies": ["Comp1", "Comp2", "Comp3", "Comp4", "Comp5", "Comp6"],
   "experience": [
     {
-      "company": "Real company name",
-      "city": "City in Morocco",
+      "company": "Real company name from ${userCity}",
+      "city": "${userCity}",
       "jobTitle": "Job title",
       "period": "Month Year - Month Year",
       "bullets": [
-        "Detailed bullet 1 describing specific responsibility (12-18 words)",
-        "Detailed bullet 2 describing specific responsibility (12-18 words)",
-        "Detailed bullet 3 describing specific responsibility (12-18 words)",
-        "Detailed bullet 4 describing specific responsibility (12-18 words)",
-        "Detailed bullet 5 describing specific responsibility (12-18 words)",
-        "Detailed bullet 6 describing specific responsibility (12-18 words)"
+        "Detailed bullet 1 (12-18 words)",
+        "Detailed bullet 2 (12-18 words)",
+        "Detailed bullet 3 (12-18 words)",
+        "Detailed bullet 4 (12-18 words)",
+        "Detailed bullet 5 (12-18 words)",
+        "Detailed bullet 6 (12-18 words)"
       ]
     }
   ],
@@ -640,7 +651,7 @@ Output ONLY JSON:
         if (hasUserCV) {
           return {
             company: exp.company || "",
-            city: exp.city || selectedCity,
+            city: exp.city || userCity,
             jobTitle: exp.jobTitle || jobTitle,
             period: exp.period || "",
             bullets: Array.isArray(exp.bullets) ? exp.bullets.slice(0, 6) : []
@@ -649,12 +660,12 @@ Output ONLY JSON:
         
         return {
           company: exp.company || selectedCompany.name,
-          city: exp.city || selectedCity,
+          city: exp.city || userCity,
           jobTitle: exp.jobTitle || jobTitle,
           period: exp.period || `${dateRange.start} - ${dateRange.end}`,
           bullets: Array.isArray(exp.bullets) ? exp.bullets.slice(0, 6) : [
-            "Prepared ingredients and assisted chefs in daily kitchen operations efficiently",
-            "Maintained high standards of cleanliness and hygiene at all workstations consistently",
+            `Prepared ingredients and assisted chefs in daily kitchen operations at ${selectedCompany.name}`,
+            `Maintained high standards of cleanliness and hygiene at all workstations in ${userCity}`,
             "Collaborated with team members to ensure timely food service during peak hours",
             "Managed inventory and ensured proper storage of all food items and supplies",
             "Followed all HACCP and food safety protocols to maintain quality standards",
@@ -678,7 +689,7 @@ Output ONLY JSON:
     experienceData = experienceData.map((exp: Experience) => {
       const bullets = exp.bullets || [];
       while (bullets.length < 6) {
-        bullets.push("Performed additional kitchen duties as assigned by the head chef");
+        bullets.push(`Performed additional kitchen duties as assigned by the head chef at ${exp.company}`);
       }
       return {
         ...exp,
@@ -719,7 +730,7 @@ Output ONLY JSON:
     
     let summary = parsed.summary || "";
     if (summary.length < 50) {
-      summary = `Dedicated and motivated ${jobTitle} with ${expLabel} of experience in the hospitality industry. Proven ability to maintain high standards of cleanliness and food safety. Strong team player with excellent communication skills and a commitment to delivering quality results.`;
+      summary = `Dedicated and motivated ${jobTitle} with ${expLabel} of experience in the hospitality industry in ${userCity}. Proven ability to maintain high standards of cleanliness and food safety. Strong team player with excellent communication skills and a commitment to delivering quality results.`;
     }
     
     let personalStatement = parsed.personalStatement || "";
@@ -742,7 +753,7 @@ Output ONLY JSON:
       personalStatement,
       jobTitle,
       company: selectedCompany,
-      city: selectedCity,
+      city: userCity,
       tokens: result.tokens || 0,
     };
 
