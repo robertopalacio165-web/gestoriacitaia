@@ -3,7 +3,6 @@ import { createClient } from "@supabase/supabase-js";
 import * as fs from "fs";
 import * as path from "path";
 import chromium from "@sparticuz/chromium";
-import { chromium as playwright } from "playwright-core";
 
 // ============================================
 // TIPOS
@@ -1087,10 +1086,10 @@ function readTemplate(templateName: string): string {
 // ============================================
 
 async function renderPdfFromHtml(html: string): Promise<Buffer> {
-  const browser = await playwright.launch({
+  const browser = await chromium.launch({
+    headless: true,
     args: chromium.args,
     executablePath: await chromium.executablePath(),
-    headless: true,
   });
   
   try {
