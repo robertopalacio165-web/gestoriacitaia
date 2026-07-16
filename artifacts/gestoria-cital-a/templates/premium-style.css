@@ -28,40 +28,48 @@ body {
   padding: 40px;
 }
 
+/* ✅ FORZAR TAMAÑO EXACTO A4 */
 .page {
   width: 210mm;
+  height: 297mm;
   min-height: 297mm;
+  max-height: 297mm;
   background: #ffffff;
   border-radius: 12px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.12);
   overflow: hidden;
   display: flex;
   flex-direction: row;
+  flex-shrink: 0;
 }
 
 /* ============================================
-   SIDEBAR
+   SIDEBAR - MÁS COMPACTA
    ============================================ */
 .sidebar {
   width: 30%;
   background: #10284a;
   color: #c8d0d8;
-  padding: 40px 28px 35px;
+  padding: 30px 22px 25px;
   flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
 .sidebar .photo {
-  width: 145px;
-  height: 145px;
+  width: 130px;
+  height: 130px;
   border-radius: 50%;
   background: #1a2a3e;
-  margin: 0 auto 22px;
+  margin: 0 auto 16px;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  border: 5px solid #ffffff;
+  border: 4px solid #ffffff;
   box-shadow: 0 0 0 4px #0d2445;
+  flex-shrink: 0;
 }
 
 .sidebar .photo img {
@@ -71,21 +79,21 @@ body {
 }
 
 .sidebar .photo .initials {
-  font-size: 52px;
+  font-size: 44px;
   font-weight: 700;
   color: #ffffff;
   letter-spacing: 1px;
 }
 
 .sidebar h2 {
-  font-size: 12px;
+  font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 2px;
   color: #ffffff;
   font-weight: 600;
-  margin: 28px 0 14px;
+  margin: 18px 0 8px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  padding-bottom: 10px;
+  padding-bottom: 6px;
 }
 
 .sidebar h2:first-of-type {
@@ -93,10 +101,10 @@ body {
 }
 
 .sidebar .contact-item {
-  font-size: 12px;
-  line-height: 1.8;
+  font-size: 11px;
+  line-height: 1.6;
   color: #c8d0d8;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 }
 
 .sidebar .highlight-list {
@@ -105,10 +113,10 @@ body {
 }
 
 .sidebar .highlight-list li {
-  font-size: 12px;
-  line-height: 1.8;
+  font-size: 11px;
+  line-height: 1.6;
   color: #c8d0d8;
-  padding: 3px 0 3px 18px;
+  padding: 2px 0 2px 16px;
   position: relative;
 }
 
@@ -121,12 +129,12 @@ body {
 }
 
 .sidebar .languages {
-  margin-top: 4px;
+  margin-top: 2px;
 }
 
 .sidebar .languages .lang-item {
-  font-size: 12px;
-  line-height: 1.8;
+  font-size: 11px;
+  line-height: 1.6;
   color: #c8d0d8;
   display: flex;
   justify-content: space-between;
@@ -144,17 +152,17 @@ body {
   flex: 1;
   margin: 0 8px;
   text-align: center;
-  font-size: 10px;
+  font-size: 9px;
 }
 
 .sidebar .languages .lang-item .lang-level {
   color: #8a9aaa;
-  font-size: 11px;
+  font-size: 10px;
 }
 
 .sidebar .additional-info .info-item {
-  font-size: 12px;
-  line-height: 1.8;
+  font-size: 11px;
+  line-height: 1.6;
   color: #c8d0d8;
 }
 
@@ -162,25 +170,29 @@ body {
   color: #ffffff;
   font-weight: 500;
   display: inline-block;
-  min-width: 90px;
+  min-width: 80px;
 }
 
 /* ============================================
-   MAIN CONTENT
+   MAIN CONTENT - OCUPA TODA LA ALTURA
    ============================================ */
 .main {
   width: 70%;
-  padding: 40px 45px 35px 40px;
+  padding: 30px 35px 25px 35px;
   flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
 .main .header-block {
-  margin-bottom: 22px;
+  margin-bottom: 14px;
+  flex-shrink: 0;
 }
 
 .main .header-block .name {
-  font-size: 42px;
-  line-height: 44px;
+  font-size: 36px;
+  line-height: 38px;
   font-weight: 900;
   color: #0a1a2e;
   letter-spacing: 1px;
@@ -188,32 +200,33 @@ body {
 }
 
 .main .header-block .title {
-  font-size: 18px;
+  font-size: 16px;
   color: #6d7077;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 2px;
-  margin-top: 4px;
+  margin-top: 2px;
 }
 
 .main .header-block .tagline {
   max-width: 95%;
-  line-height: 1.5;
-  font-size: 13px;
+  line-height: 1.4;
+  font-size: 12px;
   color: #4e5560;
-  margin-top: 6px;
+  margin-top: 4px;
 }
 
 .main h2 {
-  font-size: 13px;
+  font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 2px;
   color: #0a1a2e;
   font-weight: 700;
   border-bottom: 1px solid #10284a;
-  padding-bottom: 8px;
-  margin-top: 26px;
-  margin-bottom: 14px;
+  padding-bottom: 5px;
+  margin-top: 16px;
+  margin-bottom: 10px;
+  flex-shrink: 0;
 }
 
 .main h2:first-of-type {
@@ -223,13 +236,14 @@ body {
 .main .competencies {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
-  margin-bottom: 4px;
+  gap: 8px;
+  margin-bottom: 2px;
+  flex-shrink: 0;
 }
 
 .main .competencies span {
-  padding: 8px 16px;
-  font-size: 12px;
+  padding: 6px 14px;
+  font-size: 11px;
   font-weight: 700;
   border-radius: 10px;
   background: #f5f6f8;
@@ -237,19 +251,20 @@ body {
 }
 
 .main .experience-item {
-  margin-bottom: 14px;
-  padding-left: 18px;
+  margin-bottom: 10px;
+  padding-left: 16px;
   border-left: 2px solid #10284a;
   position: relative;
+  flex-shrink: 0;
 }
 
 .main .experience-item::before {
   content: "";
   position: absolute;
   left: -5px;
-  top: 6px;
-  width: 8px;
-  height: 8px;
+  top: 5px;
+  width: 7px;
+  height: 7px;
   background: #10284a;
   border-radius: 50%;
   border: 2px solid #ffffff;
@@ -261,37 +276,37 @@ body {
 }
 
 .main .experience-item .exp-title {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 800;
   color: #0a1a2e;
 }
 
 .main .experience-item .exp-company {
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 600;
   color: #666666;
   font-style: italic;
 }
 
 .main .experience-item .exp-description {
-  font-size: 13px;
+  font-size: 11.5px;
   color: #3a3a4a;
-  line-height: 1.45;
-  margin-top: 4px;
-  padding-left: 4px;
+  line-height: 1.4;
+  margin-top: 2px;
+  padding-left: 2px;
 }
 
 .main .experience-item .exp-description ul {
   list-style: none;
   padding: 0;
-  margin: 4px 0 0;
+  margin: 2px 0 0;
 }
 
 .main .experience-item .exp-description ul li {
-  padding: 2px 0 2px 18px;
+  padding: 1px 0 1px 16px;
   position: relative;
-  font-size: 13px;
-  line-height: 1.45;
+  font-size: 11.5px;
+  line-height: 1.35;
 }
 
 .main .experience-item .exp-description ul li::before {
@@ -302,7 +317,8 @@ body {
 }
 
 .main .education-item {
-  margin-bottom: 10px;
+  margin-bottom: 6px;
+  flex-shrink: 0;
 }
 
 .main .education-item:last-child {
@@ -310,7 +326,7 @@ body {
 }
 
 .main .education-item .edu-degree {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 700;
   color: #0a1a2e;
 }
@@ -318,25 +334,27 @@ body {
 .main .skills-container {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 4px 24px;
+  gap: 2px 20px;
+  margin-top: 2px;
+  flex-shrink: 0;
 }
 
 .main .skill-bar {
-  margin-bottom: 6px;
+  margin-bottom: 4px;
 }
 
 .main .skill-bar .skill-label {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
   color: #0a1a2e;
   display: inline-block;
-  min-width: 110px;
+  min-width: 100px;
 }
 
 .main .skill-bar .skill-track {
   display: inline-block;
-  width: 65%;
-  height: 8px;
+  width: 60%;
+  height: 6px;
   background: #eef2f6;
   border-radius: 4px;
   overflow: hidden;
@@ -355,13 +373,15 @@ body {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 0;
-  font-size: 12px;
+  font-size: 11px;
   color: #2b2b2b;
-  line-height: 1.8;
+  line-height: 1.6;
+  margin-top: 2px;
+  flex-shrink: 0;
 }
 
 .main .info-grid .info-item {
-  padding: 4px 0;
+  padding: 2px 0;
   border-bottom: 1px solid #f0f2f4;
 }
 
@@ -374,25 +394,32 @@ body {
   color: #0a1a2e;
   font-weight: 600;
   display: inline-block;
-  min-width: 100px;
+  min-width: 90px;
 }
 
 .main .personal-statement {
-  font-size: 12.5px;
+  font-size: 11.5px;
   color: #3a3a4a;
-  line-height: 1.7;
-  margin-top: 4px;
+  line-height: 1.5;
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+/* ✅ SPACER PARA RELLENAR PÁGINA */
+.main .spacer {
+  flex: 1;
 }
 
 .footer {
-  margin-top: 30px;
-  padding-top: 14px;
+  margin-top: 16px;
+  padding-top: 10px;
   border-top: 1px solid #eef0f2;
   text-align: center;
-  font-size: 8px;
+  font-size: 7px;
   color: #B5BDC7;
-  line-height: 1.8;
+  line-height: 1.6;
   letter-spacing: 0.5px;
+  flex-shrink: 0;
 }
 
 /* ============================================
@@ -407,6 +434,8 @@ body {
     border-radius: 8px;
     width: 100%;
     min-height: auto;
+    max-height: none;
+    height: auto;
     flex-direction: column;
   }
 
@@ -462,6 +491,10 @@ body {
   .sidebar .languages .lang-item .lang-dots {
     display: none;
   }
+
+  .main .spacer {
+    display: none;
+  }
 }
 
 @media print {
@@ -474,6 +507,8 @@ body {
     border-radius: 0;
     box-shadow: none;
     width: 100%;
+    height: 100vh;
+    max-height: 100vh;
     min-height: 100vh;
   }
 
