@@ -527,22 +527,19 @@ async function callOpenAIWithRetry(
 }
 
 // ============================================
-// ✅ GENERAR CV CON IA - CON FILTRO POR CIUDAD
+// ✅ GENERAR CV CON IA
 // ============================================
 
 async function generatePremiumCV(data: any, hasUserCV: boolean): Promise<CVContent> {
   const sector = data.sectores ? data.sectores.split(",")[0]?.trim()?.toLowerCase() : "default";
   const companies = MOROCCAN_COMPANIES[sector] || MOROCCAN_COMPANIES.kitchen;
   
-  // ✅ FILTRAR EMPRESAS POR CIUDAD DEL CLIENTE
   const userCity = data.current_city && data.current_city.trim() !== "" 
     ? data.current_city 
     : getRandomItem(MOROCCAN_CITIES);
   
-  // Filtrar empresas que coinciden con la ciudad del cliente
   let filteredCompanies = companies.filter(c => c.city === userCity);
   
-  // Si no hay empresas en esa ciudad, usar todas las empresas del sector
   if (filteredCompanies.length === 0) {
     console.log(`⚠️ No hay empresas en ${userCity}, usando todas las empresas del sector`);
     filteredCompanies = companies;
@@ -563,7 +560,6 @@ async function generatePremiumCV(data: any, hasUserCV: boolean): Promise<CVConte
   const availableCertificates = CERTIFICATES_BY_SECTOR[sector] || CERTIFICATES_BY_SECTOR.default;
   const selectedCertificates = getRandomItems(availableCertificates, Math.min(4, availableCertificates.length));
 
-  // ✅ PROMPT MEJORADO - CON CIUDAD REAL
   const prompt = `
 You are a professional CV writer for the European job market, specialized in Malta.
 
@@ -578,7 +574,6 @@ IMPORTANT - REALISM:
 - The candidate is from ${userCity}, Morocco
 - ALL companies in the experience section MUST be from ${userCity}
 - Use REAL Moroccan restaurant names in ${userCity}
-- Example if ${userCity} is Casablanca: "Restaurant La Sqala", "Restaurant Al Fassia", "Le Bistrot", etc.
 
 RULES:
 - Exactly 2 jobs
@@ -685,7 +680,6 @@ Output ONLY JSON:
     }
     const cleanEducation = educationTitle.split(".")[0].split(",")[0].trim();
     
-    // Asegurar 6 bullet points por trabajo
     experienceData = experienceData.map((exp: Experience) => {
       const bullets = exp.bullets || [];
       while (bullets.length < 6) {
@@ -697,7 +691,6 @@ Output ONLY JSON:
       };
     });
     
-    // Asegurar 8 softSkills
     let softSkills = Array.isArray(parsed.softSkills) ? parsed.softSkills : [];
     const defaultSoftSkills = [
       "Strong Work Ethic", "Team Collaboration", "Fast Learning Ability",
@@ -709,7 +702,6 @@ Output ONLY JSON:
     }
     softSkills = softSkills.slice(0, 8);
     
-    // Asegurar 8 skills
     let skills = Array.isArray(parsed.skills) ? parsed.skills : [];
     const defaultSkills = [
       "Food Preparation", "Kitchen Hygiene", "Inventory Management",
@@ -721,7 +713,6 @@ Output ONLY JSON:
     }
     skills = skills.slice(0, 8);
     
-    // Asegurar 4 certificates
     let certificates = Array.isArray(parsed.certificates) ? parsed.certificates : selectedCertificates;
     while (certificates.length < 4) {
       certificates.push("Health and Safety Awareness");
@@ -764,7 +755,7 @@ Output ONLY JSON:
 }
 
 // ============================================
-// ✅ GENERAR CARTA CON IA - MEJORADA Y PROFESIONAL
+// ✅ GENERAR CARTA CON IA - PROFESIONAL
 // ============================================
 
 async function generatePremiumCoverLetter(data: any, company: Company, jobTitle: string): Promise<LetterContent> {
@@ -840,7 +831,6 @@ function generateCVHtml(data: any, content: CVContent): string {
   const lastName = nameParts.slice(1).join(" ") || "";
   const fullName = `${firstName} ${lastName}`;
 
-  // ✅ FOTO
   const initials = getInitials(data.full_name);
   const photoHtml = data.photo_url 
     ? `<img src="${data.photo_url}" alt="${fullName}">` 
@@ -850,7 +840,6 @@ function generateCVHtml(data: any, content: CVContent): string {
     ? `${data.current_city}, ${data.nationality || "Morocco"}`
     : data.nationality || "Morocco";
 
-  // LANGUAGES
   let languagesHtml = "";
   const idiomas = data.idiomas ? data.idiomas.split(",").map((i: string) => i.trim()) : ["English"];
   const levels: Record<string, string> = {
@@ -879,7 +868,6 @@ function generateCVHtml(data: any, content: CVContent): string {
     `;
   }
 
-  // EXPERIENCE
   let experienceHtml = "";
   const experiences = content.experience || [];
   
@@ -901,20 +889,17 @@ function generateCVHtml(data: any, content: CVContent): string {
     `;
   }
 
-  // EDUCATION
   const educationHtml = `
     <div class="education-item">
       <div class="edu-degree">${content.education || data.education_level || "Secondary Education"}</div>
     </div>
   `;
 
-  // CORE COMPETENCIES
   const competencies = content.coreCompetencies || [];
   const competenciesHtml = competencies.map((comp: string) => 
     `<span>${comp}</span>`
   ).join("");
 
-  // KEY STRENGTHS
   const keyStrengths = content.softSkills && content.softSkills.length > 0
     ? content.softSkills
     : [
@@ -927,7 +912,6 @@ function generateCVHtml(data: any, content: CVContent): string {
       ];
   const keyStrengthsHtml = keyStrengths.map((s: string) => `<li>${s}</li>`).join("");
 
-  // PROFESSIONAL SKILLS
   const skills = content.skills || [];
   const skillPercentages: Record<string, number> = {
     "Food Preparation": 90,
@@ -968,7 +952,6 @@ function generateCVHtml(data: any, content: CVContent): string {
   
   const allSkillsHtml = [...leftSkills, ...rightSkills].map(renderSkillBar).join("");
 
-  // PERSONAL STATEMENT
   const personalStatement = content.personalStatement || "I am enthusiastic about joining a professional team where I can contribute positively, learn continuously, and grow within the industry. I am available to start immediately and ready to relocate.";
 
   const tagline = `Dedicated and motivated ${content.jobTitle || "professional"} with a strong passion for the hospitality industry. Eager to contribute to a dynamic team.`;
@@ -1002,7 +985,7 @@ function generateCVHtml(data: any, content: CVContent): string {
 }
 
 // ============================================
-// ✅ GENERAR HTML DE LA CARTA - ACTUALIZADO
+// ✅ GENERAR HTML DE LA CARTA - CON FIRMA CORREGIDA
 // ============================================
 
 function generateCoverHtml(data: any, content: LetterContent, company: Company, jobTitle: string): string {
@@ -1041,12 +1024,19 @@ function generateCoverHtml(data: any, content: LetterContent, company: Company, 
     </div>
   ` : '<div class="company-empty"></div>';
 
-  // ✅ SIGNATURE IMAGE
-  const signatureImageHtml = data.signature_image ? `
-    <div class="signature-image">
-      <img src="${data.signature_image}" alt="Signature">
+  // ✅ FIRMA CORREGIDA - NUNCA VACÍA
+  // Si hay firma manuscrita, la muestra. Si no, muestra el nombre en cursiva como firma electrónica
+  const signatureHtml = `
+    <div class="signature">
+      <div class="signature-name">${firstName} ${lastName}</div>
+      <div class="signature-title">${jobTitle || "Professional"}</div>
+      <div class="signature-contact">
+        <span class="contact-item">${data.email || ""}</span>
+        <span class="sep">•</span>
+        <span class="contact-item">${data.whatsapp || ""}</span>
+      </div>
     </div>
-  ` : '';
+  `;
 
   // ✅ REPLACEMENTS
   const replacements: Record<string, string> = {
@@ -1068,7 +1058,7 @@ function generateCoverHtml(data: any, content: LetterContent, company: Company, 
     "{{BODY_2}}": content.body2 || "",
     "{{BODY_3}}": content.body3 || "",
     "{{CLOSING}}": content.closing || "",
-    "{{SIGNATURE_IMAGE_HTML}}": signatureImageHtml,
+    "{{SIGNATURE_IMAGE_HTML}}": signatureHtml,
   };
 
   for (const [key, value] of Object.entries(replacements)) {
