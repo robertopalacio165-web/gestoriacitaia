@@ -18,13 +18,18 @@ export default async function handler(
   }
 
   try {
+    // ✅ 1. DESESTRUCTURACIÓN ACTUALIZADA con todos los nuevos campos
     const {
       fullName,
       whatsapp,
       email,
-      nacionalidad,
-      paisResidencia,
+
+      nationality,
+      currentCity,
+      countryResidence,
+
       fechaNacimiento,
+
       idiomas,
       ingles_nivel,
       frances_nivel,
@@ -32,29 +37,44 @@ export default async function handler(
       espanol_nivel,
       arabe_nivel,
       aleman_nivel,
+
       profesion,
-      añosExperiencia,
-      estudios,
+   anosExperiencia,
+
+      education_level,
+
       sectores,
       carnetConducir,
+
+      preferred_position,
+      work_preference,
+      willing_to_relocate,
+
       tieneCV,
       cvUrl,
       photoUrl,
       pdfUrl,
-      pasaporteValido,
-      entrevistaVideo,
-      disponibilidadInicio,
-      plan
+
+      plan,
     } = req.body;
 
     // Determinar precio según el plan
     const unitAmount = plan === "weekly" ? 1999 : 2999;
     const planName = plan === "weekly" ? "Semanal" : "Mensual";
-console.log("========== DOCUMENTOS ==========");
-console.log("photoUrl:", photoUrl);
-console.log("cvUrl:", cvUrl);
-console.log("pdfUrl:", pdfUrl);
-console.log("================================");
+
+    console.log("========== DOCUMENTOS ==========");
+    console.log("photoUrl:", photoUrl);
+    console.log("cvUrl:", cvUrl);
+    console.log("pdfUrl:", pdfUrl);
+    console.log("nationality:", nationality);
+    console.log("currentCity:", currentCity);
+    console.log("countryResidence:", countryResidence);
+    console.log("preferred_position:", preferred_position);
+    console.log("work_preference:", work_preference);
+    console.log("willing_to_relocate:", willing_to_relocate);
+    console.log("education_level:", education_level);
+    console.log("=================================");
+
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       mode: "payment",
@@ -77,13 +97,18 @@ console.log("================================");
       ],
       success_url: `${process.env.NEXT_PUBLIC_URL}/trabajo-malta?success=true&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.NEXT_PUBLIC_URL}/trabajo-malta?canceled=true`,
+      // ✅ 2. METADATA ACTUALIZADA con todos los nuevos campos
       metadata: {
         fullName: fullName || "",
         whatsapp: whatsapp || "",
         email: email || "",
-        nacionalidad: nacionalidad || "",
-        paisResidencia: paisResidencia || "",
+
+        nationality: nationality || "",
+        currentCity: currentCity || "",
+        countryResidence: countryResidence || "",
+
         fechaNacimiento: fechaNacimiento || "",
+
         idiomas: idiomas || "",
         ingles_nivel: ingles_nivel || "",
         frances_nivel: frances_nivel || "",
@@ -91,18 +116,24 @@ console.log("================================");
         espanol_nivel: espanol_nivel || "",
         arabe_nivel: arabe_nivel || "",
         aleman_nivel: aleman_nivel || "",
+
         profesion: profesion || "",
         añosExperiencia: añosExperiencia || "",
-        estudios: estudios || "",
+        education_level: education_level || "",
+
         sectores: sectores || "",
         carnetConducir: carnetConducir || "",
+
+        preferred_position: preferred_position || "",
+        work_preference: work_preference || "",
+        willing_to_relocate: willing_to_relocate || "Yes",
+
         tieneCV: tieneCV || "",
+
         cvUrl: cvUrl || "",
         photoUrl: photoUrl || "",
         pdfUrl: pdfUrl || "",
-        pasaporteValido: pasaporteValido || "",
-        entrevistaVideo: entrevistaVideo || "",
-        disponibilidadInicio: disponibilidadInicio || "",
+
         plan: plan || "monthly",
       },
     });
