@@ -386,24 +386,6 @@ function getInitials(name: string): string {
   return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
 }
 
-function getLanguageLevel(level: string): string {
-  const map: Record<string, string> = {
-    native: "Native",
-    fluent: "C2",
-    advanced: "C1",
-    intermediate: "B2",
-    basic: "A2",
-    beginner: "A1",
-    nativo: "Native",
-    fluido: "C2",
-    avanzado: "C1",
-    intermedio: "B2",
-    básico: "A2",
-    principiante: "A1"
-  };
-  return map[level.toLowerCase()] || "B1";
-}
-
 // ============================================
 // FUNCIÓN DE REINTENTO CON RETROCESO EXPONENCIAL
 // ============================================
@@ -574,7 +556,6 @@ IMPORTANT - REALISM:
 - The candidate is from ${userCity}, Morocco
 - ALL companies in the experience section MUST be from ${userCity}
 - Use REAL Moroccan restaurant names in ${userCity}
-- Example if ${userCity} is Casablanca: "Restaurant La Sqala", "Restaurant Al Fassia", "Le Bistrot", etc.
 
 RULES:
 - Exactly 2 jobs
@@ -817,11 +798,597 @@ Output ONLY JSON:
 }
 
 // ============================================
-// GENERAR HTML DEL CV - CON FOTO FUNCIONANDO
+// PLANTILLA CV HTML EMBEBIDA
+// ============================================
+
+function getCVTemplate(): string {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Professional CV - {{FULL_NAME}}</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+      background: #eef2f6;
+      color: #222;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .page {
+      width: 210mm;
+      height: 297mm;
+      min-height: 297mm;
+      max-height: 297mm;
+      background: #ffffff;
+      border-radius: 8px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+      display: flex;
+      flex-direction: row;
+      flex-shrink: 0;
+    }
+    .sidebar {
+      width: 30%;
+      background: #10284a;
+      color: #c8d0d8;
+      padding: 28px 20px 24px;
+      flex-shrink: 0;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+    .sidebar .photo {
+      width: 130px;
+      height: 130px;
+      border-radius: 50%;
+      background: #1a2a3e;
+      margin: 0 auto 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      border: 4px solid #ffffff;
+      box-shadow: 0 0 0 4px #0d2445;
+      flex-shrink: 0;
+    }
+    .sidebar .photo img { width: 100%; height: 100%; object-fit: cover; }
+    .sidebar .photo .initials { font-size: 44px; font-weight: 700; color: #ffffff; letter-spacing: 1px; }
+    .sidebar h2 {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: #ffffff;
+      font-weight: 600;
+      margin: 16px 0 8px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      padding-bottom: 5px;
+    }
+    .sidebar h2:first-of-type { margin-top: 0; }
+    .sidebar .contact-item {
+      font-size: 11px;
+      line-height: 1.5;
+      color: #c0c8d8;
+      margin-bottom: 2px;
+    }
+    .sidebar .highlight-list { list-style: none; padding: 0; }
+    .sidebar .highlight-list li {
+      font-size: 11px;
+      line-height: 1.5;
+      color: #c0c8d8;
+      padding: 1px 0 1px 14px;
+      position: relative;
+    }
+    .sidebar .highlight-list li::before {
+      content: "▸";
+      position: absolute;
+      left: 0;
+      color: #ffffff;
+      font-weight: 700;
+    }
+    .sidebar .languages .lang-item {
+      font-size: 11px;
+      line-height: 1.5;
+      color: #c0c8d8;
+    }
+    .sidebar .languages .lang-item strong { color: #ffffff; font-weight: 500; }
+    .sidebar .languages .lang-item .level { color: #8a9aaa; font-size: 10px; }
+    .sidebar .additional-info .info-item {
+      font-size: 11px;
+      line-height: 1.5;
+      color: #c0c8d8;
+    }
+    .sidebar .additional-info .info-item strong {
+      color: #ffffff;
+      font-weight: 500;
+      display: inline-block;
+      min-width: 72px;
+    }
+    .sidebar .spacer { flex: 1; }
+    .main {
+      width: 70%;
+      padding: 24px 30px 20px 30px;
+      background: white;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+    }
+    .main .header-block { margin-bottom: 10px; flex-shrink: 0; }
+    .main .header-block .name {
+      font-size: 30px;
+      font-weight: 900;
+      letter-spacing: -0.5px;
+      line-height: 32px;
+      text-transform: uppercase;
+      color: #0a1a2e;
+      margin-bottom: 2px;
+    }
+    .main .header-block .title {
+      font-size: 13px;
+      color: #6d7077;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-top: 2px;
+    }
+    .main .header-block .tagline {
+      max-width: 95%;
+      line-height: 1.4;
+      font-size: 11px;
+      color: #4e5560;
+      margin-top: 4px;
+    }
+    .main h2 {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: #0a1a2e;
+      font-weight: 700;
+      border-bottom: 1px solid #10284a;
+      padding-bottom: 4px;
+      margin-top: 12px;
+      margin-bottom: 6px;
+      flex-shrink: 0;
+    }
+    .main h2:first-of-type { margin-top: 0; }
+    .main .competencies {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-bottom: 2px;
+      flex-shrink: 0;
+    }
+    .main .competencies span {
+      padding: 4px 10px;
+      font-size: 10px;
+      font-weight: 700;
+      border-radius: 8px;
+      background: #f5f6f8;
+      color: #2b2b2b;
+    }
+    .main .experience-item {
+      margin-bottom: 8px;
+      padding-left: 14px;
+      border-left: 2px solid #10284a;
+      position: relative;
+      flex-shrink: 0;
+    }
+    .main .experience-item::before {
+      content: "";
+      position: absolute;
+      left: -5px;
+      top: 4px;
+      width: 7px;
+      height: 7px;
+      background: #10284a;
+      border-radius: 50%;
+      border: 2px solid #ffffff;
+      box-shadow: 0 0 0 2px #10284a;
+    }
+    .main .experience-item:last-child { margin-bottom: 0; }
+    .main .experience-item .exp-title { font-size: 13px; font-weight: 800; color: #0a1a2e; }
+    .main .experience-item .exp-company { font-size: 11px; font-weight: 600; color: #666666; font-style: italic; }
+    .main .experience-item .exp-description {
+      font-size: 10.5px;
+      color: #3a3a4a;
+      line-height: 1.35;
+      margin-top: 2px;
+      padding-left: 2px;
+    }
+    .main .experience-item .exp-description ul { list-style: none; padding: 0; margin: 2px 0 0; }
+    .main .experience-item .exp-description ul li {
+      padding: 1px 0 1px 14px;
+      position: relative;
+      font-size: 10.5px;
+      line-height: 1.3;
+    }
+    .main .experience-item .exp-description ul li::before {
+      content: "—";
+      position: absolute;
+      left: 0;
+      color: #10284a;
+    }
+    .main .education-item { margin-bottom: 5px; flex-shrink: 0; }
+    .main .education-item:last-child { margin-bottom: 0; }
+    .main .education-item .edu-degree { font-size: 12px; font-weight: 700; color: #0a1a2e; }
+    .main .skills-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2px 16px;
+      margin-top: 2px;
+      flex-shrink: 0;
+    }
+    .main .skill-bar { margin-bottom: 3px; }
+    .main .skill-bar .skill-label {
+      font-size: 10px;
+      font-weight: 600;
+      color: #0a1a2e;
+      display: inline-block;
+      min-width: 85px;
+    }
+    .main .skill-bar .skill-track {
+      display: inline-block;
+      width: 55%;
+      height: 5px;
+      background: #eef2f6;
+      border-radius: 3px;
+      overflow: hidden;
+      vertical-align: middle;
+      margin-left: 3px;
+    }
+    .main .skill-bar .skill-track .skill-fill {
+      height: 100%;
+      background: #10284a;
+      border-radius: 3px;
+    }
+    .main .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0;
+      font-size: 10.5px;
+      color: #2b2b2b;
+      line-height: 1.5;
+      margin-top: 2px;
+      flex-shrink: 0;
+    }
+    .main .info-grid .info-item {
+      padding: 2px 0;
+      border-bottom: 1px solid #f0f2f4;
+    }
+    .main .info-grid .info-item:nth-last-child(1),
+    .main .info-grid .info-item:nth-last-child(2) { border-bottom: none; }
+    .main .info-grid .info-item strong {
+      color: #0a1a2e;
+      font-weight: 600;
+      display: inline-block;
+      min-width: 80px;
+    }
+    .main .personal-statement {
+      font-size: 10.5px;
+      color: #3a3a4a;
+      line-height: 1.4;
+      margin-top: 2px;
+      flex-shrink: 0;
+    }
+    .main .spacer { flex: 1; }
+    .footer {
+      margin-top: 14px;
+      padding-top: 8px;
+      border-top: 1px solid #eef0f2;
+      text-align: center;
+      font-size: 7px;
+      color: #B5BDC7;
+      line-height: 1.5;
+      letter-spacing: 0.3px;
+      flex-shrink: 0;
+    }
+    @media print {
+      html, body { height: 100%; margin: 0; padding: 0; }
+      body { background: #ffffff; padding: 0; margin: 0; display: block; }
+      .page {
+        border-radius: 0;
+        box-shadow: none;
+        width: 100%;
+        height: 100vh;
+        max-height: 100vh;
+        min-height: 100vh;
+        page-break-after: avoid;
+        page-break-inside: avoid;
+        overflow: hidden;
+      }
+      .sidebar { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+      .main .competencies span { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+      .main .skill-bar .skill-track .skill-fill { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+      .main .experience-item::before { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+    }
+    @media screen and (max-width: 800px) {
+      .page { flex-direction: column; min-height: auto; max-height: none; height: auto; width: 100%; }
+      .sidebar { width: 100%; padding: 20px; }
+      .sidebar .photo { width: 100px; height: 100px; }
+      .main { width: 100%; padding: 20px; }
+      .main .header-block .name { font-size: 24px; line-height: 26px; }
+      .main .skills-container { grid-template-columns: 1fr; }
+      .main .info-grid { grid-template-columns: 1fr; }
+      .main .info-grid .info-item { border-bottom: 1px solid #f0f2f4; }
+      .main .info-grid .info-item:nth-last-child(1) { border-bottom: none; }
+      .main .spacer { display: none; }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+  <aside class="sidebar">
+    <div class="photo">{{PHOTO_HTML}}</div>
+    <h2>CONTACT</h2>
+    <div class="contact-item">{{WHATSAPP}}</div>
+    <div class="contact-item">{{EMAIL}}</div>
+    <div class="contact-item">{{LOCATION}}</div>
+    <h2>LANGUAGES</h2>
+    <div class="languages">{{LANGUAGES}}</div>
+    <h2>KEY STRENGTHS</h2>
+    <ul class="highlight-list">{{KEY_STRENGTHS}}</ul>
+    <h2>ADDITIONAL INFO</h2>
+    <div class="additional-info">
+      <div class="info-item"><strong>Passport:</strong> Available</div>
+      <div class="info-item"><strong>Driving Licence:</strong> {{DRIVER_LICENSE}}</div>
+      <div class="info-item"><strong>Availability:</strong> Immediate</div>
+      <div class="info-item"><strong>Willing to relocate:</strong> Available to relocate</div>
+    </div>
+    <div class="spacer"></div>
+  </aside>
+  <main class="main">
+    <div class="header-block">
+      <div class="name">{{FULL_NAME}}</div>
+      <div class="title">{{JOB_TITLE}}</div>
+      <div class="tagline">{{TAGLINE}}</div>
+    </div>
+    <h2>CORE COMPETENCIES</h2>
+    <div class="competencies">{{CORE_COMPETENCIES}}</div>
+    <h2>EXPERIENCE</h2>
+    {{EXPERIENCE_LIST}}
+    <h2>EDUCATION</h2>
+    {{EDUCATION_LIST}}
+    <h2>PROFESSIONAL SKILLS</h2>
+    <div class="skills-container">{{PROFESSIONAL_SKILLS}}</div>
+    <h2>ADDITIONAL INFORMATION</h2>
+    <div class="info-grid">
+      <div class="info-item"><strong>Passport</strong> Available</div>
+      <div class="info-item"><strong>Driving Licence</strong> {{DRIVER_LICENSE}}</div>
+      <div class="info-item"><strong>Availability</strong> Immediate</div>
+      <div class="info-item"><strong>Relocation</strong> Available to relocate</div>
+    </div>
+    <h2>PERSONAL STATEMENT</h2>
+    <p class="personal-statement">{{PERSONAL_STATEMENT}}</p>
+    <div class="spacer"></div>
+    <div class="footer">Professional Curriculum Vitae</div>
+  </main>
+</div>
+</body>
+</html>`;
+}
+
+// ============================================
+// PLANTILLA CARTA HTML EMBEBIDA
+// ============================================
+
+function getCoverLetterTemplate(): string {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{FIRST_NAME}} {{LAST_NAME}} - Cover Letter</title>
+  <style>
+    @page { size: A4; margin: 0; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    body {
+      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+      background: #eef2f6;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 40px;
+      -webkit-font-smoothing: antialiased;
+    }
+    .page {
+      width: 210mm;
+      min-height: 297mm;
+      background: #ffffff;
+      border-radius: 16px;
+      box-shadow: 0 25px 80px rgba(0, 0, 0, 0.15);
+      overflow: hidden;
+      padding: 48px 55px 42px;
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 28px;
+      padding-bottom: 20px;
+      border-bottom: 4px solid #2d7d46;
+      margin-bottom: 28px;
+    }
+    .header .photo {
+      width: 90px;
+      height: 90px;
+      border-radius: 50%;
+      overflow: hidden;
+      flex-shrink: 0;
+      border: 4px solid #2d7d46;
+      background: linear-gradient(135deg, #2d7d46, #1a5a33);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .header .photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .header .photo .initials { font-size: 32px; font-weight: 800; color: #ffffff; letter-spacing: 1px; }
+    .header .header-info { flex: 1; }
+    .header .header-info .name {
+      font-size: 34px;
+      font-weight: 900;
+      color: #0b2345;
+      letter-spacing: -0.5px;
+      line-height: 1.1;
+      text-transform: uppercase;
+    }
+    .header .header-info .name .lastname { color: #2d7d46; }
+    .header .header-info .title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #2d7d46;
+      text-transform: uppercase;
+      letter-spacing: 2.5px;
+      margin-top: 4px;
+      margin-bottom: 8px;
+    }
+    .header .header-info .contact-line {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px 16px;
+      font-size: 12px;
+      color: #6a7a8a;
+    }
+    .header .header-info .contact-line .contact-item { display: flex; align-items: center; gap: 6px; }
+    .header .date {
+      text-align: right;
+      font-size: 13px;
+      color: #6a7a8a;
+      line-height: 1.8;
+      flex-shrink: 0;
+    }
+    .header .date .city { font-weight: 600; color: #0b2345; }
+    .body .company {
+      font-size: 14px;
+      color: #2b2b3f;
+      line-height: 1.9;
+      margin-bottom: 18px;
+    }
+    .body .company strong { font-size: 16px; color: #0b2345; }
+    .body .company .department { color: #6a7a8a; font-weight: 500; margin-top: 1px; }
+    .body .company .address-line { color: #6a7a8a; font-weight: 400; }
+    .body .subject {
+      font-size: 16px;
+      font-weight: 700;
+      color: #0b2345;
+      margin-bottom: 20px;
+      margin-top: 4px;
+    }
+    .body .greeting {
+      font-size: 15px;
+      font-weight: 600;
+      color: #0b2345;
+      margin-bottom: 20px;
+    }
+    .body .content p {
+      font-size: 14px;
+      line-height: 1.85;
+      color: #2b2b3f;
+      margin-bottom: 14px;
+      text-align: justify;
+    }
+    .body .content p:last-of-type { margin-bottom: 0; }
+    .signature {
+      margin-top: 38px;
+      padding-top: 22px;
+      border-top: 1px solid #e8ecf0;
+    }
+    .signature .signature-name {
+      font-size: 20px;
+      font-weight: 900;
+      color: #0b2345;
+      letter-spacing: -0.3px;
+      text-transform: uppercase;
+    }
+    .signature .signature-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #2d7d46;
+      margin-top: 2px;
+    }
+    .signature .signature-contact {
+      margin-top: 6px;
+      font-size: 13px;
+      color: #6a7a8a;
+      line-height: 1.6;
+    }
+    .signature .signature-contact .sep { color: #d0d5da; margin: 0 4px; }
+    @media screen and (max-width: 800px) {
+      body { padding: 15px; }
+      .page { border-radius: 12px; padding: 30px 25px; width: 100%; min-height: auto; }
+      .header { flex-direction: column; align-items: center; text-align: center; gap: 16px; }
+      .header .date { text-align: center; }
+      .header .header-info .contact-line { justify-content: center; }
+      .body .content p { font-size: 13px; }
+    }
+    @media print {
+      body { background: #ffffff; padding: 0; display: block; }
+      .page { border-radius: 0 !important; box-shadow: none !important; width: 100%; min-height: 100vh; padding: 45px 50px 40px; }
+      .header .photo { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+  <div class="header">
+    <div class="photo">{{PHOTO_HTML}}</div>
+    <div class="header-info">
+      <div class="name">{{FIRST_NAME}} <span class="lastname">{{LAST_NAME}}</span></div>
+      <div class="title">{{TITLE}}</div>
+      <div class="contact-line">
+        <span class="contact-item">{{EMAIL}}</span>
+        <span style="color:#d0d5da;">|</span>
+        <span class="contact-item">{{WHATSAPP}}</span>
+        <span style="color:#d0d5da;">|</span>
+        <span class="contact-item">{{LOCATION}}</span>
+      </div>
+    </div>
+    <div class="date">
+      <div class="city">{{LOCATION}}</div>
+      {{DATE}}
+    </div>
+  </div>
+  <div class="body">
+    {{COMPANY_SECTION}}
+    <div class="subject">Application for the Position of {{TITLE}}</div>
+    <div class="greeting">{{GREETING}}</div>
+    <div class="content">
+      <p>{{INTRODUCTION}}</p>
+      <p>{{BODY_1}}</p>
+      <p>{{BODY_2}}</p>
+      <p>{{BODY_3}}</p>
+      <p>{{CLOSING}}</p>
+    </div>
+    <div class="signature">
+      <div class="signature-name">{{FIRST_NAME}} {{LAST_NAME}}</div>
+      <div class="signature-title">{{TITLE}}</div>
+      <div class="signature-contact">
+        <span class="contact-item">{{EMAIL}}</span>
+        <span class="sep">•</span>
+        <span class="contact-item">{{WHATSAPP}}</span>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>`;
+}
+
+// ============================================
+// GENERAR HTML DEL CV - CON DISEÑO EMBEBIDO
 // ============================================
 
 function generateCVHtml(data: any, content: CVContent): string {
-  let template = readTemplate("premium-cv.html");
+  let template = getCVTemplate();
   
   const nameParts = (data.full_name || "Candidate").trim().split(" ");
   const firstName = nameParts[0] || "Candidate";
@@ -840,6 +1407,7 @@ function generateCVHtml(data: any, content: CVContent): string {
     ? `${data.current_city}, ${data.nationality || "Morocco"}`
     : data.nationality || "Morocco";
 
+  // LANGUAGES
   let languagesHtml = "";
   const idiomas = data.idiomas ? data.idiomas.split(",").map((i: string) => i.trim()) : ["English"];
   const levels: Record<string, string> = {
@@ -868,6 +1436,7 @@ function generateCVHtml(data: any, content: CVContent): string {
     `;
   }
 
+  // EXPERIENCE
   let experienceHtml = "";
   const experiences = content.experience || [];
   
@@ -881,25 +1450,26 @@ function generateCVHtml(data: any, content: CVContent): string {
         <div class="exp-title">${exp.jobTitle || content.jobTitle || "Professional"}</div>
         <div class="exp-company">${exp.company || ""}</div>
         <div class="exp-description">
-          <ul>
-            ${bulletsHtml}
-          </ul>
+          <ul>${bulletsHtml}</ul>
         </div>
       </div>
     `;
   }
 
+  // EDUCATION
   const educationHtml = `
     <div class="education-item">
       <div class="edu-degree">${content.education || data.education_level || "Secondary Education"}</div>
     </div>
   `;
 
+  // CORE COMPETENCIES
   const competencies = content.coreCompetencies || [];
   const competenciesHtml = competencies.map((comp: string) => 
     `<span>${comp}</span>`
   ).join("");
 
+  // KEY STRENGTHS
   const keyStrengths = content.softSkills && content.softSkills.length > 0
     ? content.softSkills
     : [
@@ -912,6 +1482,7 @@ function generateCVHtml(data: any, content: CVContent): string {
       ];
   const keyStrengthsHtml = keyStrengths.map((s: string) => `<li>${s}</li>`).join("");
 
+  // PROFESSIONAL SKILLS
   const skills = content.skills || [];
   const skillPercentages: Record<string, number> = {
     "Food Preparation": 90,
@@ -952,12 +1523,13 @@ function generateCVHtml(data: any, content: CVContent): string {
   
   const allSkillsHtml = [...leftSkills, ...rightSkills].map(renderSkillBar).join("");
 
+  // PERSONAL STATEMENT
   const personalStatement = content.personalStatement || "I am enthusiastic about joining a professional team where I can contribute positively, learn continuously, and grow within the industry. I am available to start immediately and ready to relocate.";
 
   const tagline = `Dedicated and motivated ${content.jobTitle || "professional"} with a strong passion for the hospitality industry. Eager to contribute to a dynamic team.`;
 
   const hasDrivingLicense = data.carnet_conducir && data.carnet_conducir !== "No" && data.carnet_conducir !== "None";
-  const driverLicense = hasDrivingLicense ? data.carnet_conducir : "";
+  const driverLicense = hasDrivingLicense ? data.carnet_conducir : "No";
 
   const replacements: Record<string, string> = {
     "{{PHOTO_HTML}}": photoHtml,
@@ -985,11 +1557,11 @@ function generateCVHtml(data: any, content: CVContent): string {
 }
 
 // ============================================
-// GENERAR HTML DE LA CARTA
+// GENERAR HTML DE LA CARTA - CON DISEÑO EMBEBIDO
 // ============================================
 
 function generateCoverHtml(data: any, content: LetterContent, company: Company, jobTitle: string): string {
-  let template = readTemplate("premium-cover-letter.html");
+  let template = getCoverLetterTemplate();
 
   const nameParts = (data.full_name || "Candidate").trim().split(" ");
   const firstName = nameParts[0] || "Candidate";
@@ -1022,8 +1594,10 @@ function generateCoverHtml(data: any, content: LetterContent, company: Company, 
 
   const replacements: Record<string, string> = {
     "{{PHOTO_HTML}}": photoHtml,
+    "{{FIRST_NAME}}": firstName,
+    "{{LAST_NAME}}": lastName,
     "{{FULL_NAME}}": fullName,
-    "{{JOB_TITLE}}": jobTitle,
+    "{{TITLE}}": jobTitle,
     "{{EMAIL}}": data.email || "",
     "{{WHATSAPP}}": data.whatsapp || "",
     "{{LOCATION}}": location,
@@ -1043,26 +1617,6 @@ function generateCoverHtml(data: any, content: LetterContent, company: Company, 
   }
 
   return template;
-}
-
-// ============================================
-// LEER PLANTILLA HTML
-// ============================================
-
-function readTemplate(templateName: string): string {
-  const possiblePaths = [
-    path.join(process.cwd(), "templates", templateName),
-    path.join(process.cwd(), "artifacts", "gestoria-cital-a", "templates", templateName),
-  ];
-
-  for (const templatePath of possiblePaths) {
-    if (fs.existsSync(templatePath)) {
-      console.log("✅ Template found:", templatePath);
-      return fs.readFileSync(templatePath, "utf8");
-    }
-  }
-
-  throw new Error(`Template ${templateName} not found`);
 }
 
 // ============================================
