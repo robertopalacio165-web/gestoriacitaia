@@ -43,13 +43,15 @@
     }
 
     /* ============================================
-       SIDEBAR - 32%
+       SIDEBAR - 225px FIJO
     ============================================ */
     .sidebar {
-      width: 32%;
+      width: 225px;
+      min-width: 225px;
+      max-width: 225px;
       background: #10284a;
       color: #c8d0d8;
-      padding: 24px 18px 18px 18px;
+      padding: 20px 16px 16px 16px;
       flex-shrink: 0;
       height: 100%;
       display: flex;
@@ -57,11 +59,11 @@
     }
 
     .sidebar .photo {
-      width: 130px;
-      height: 130px;
+      width: 110px;
+      height: 110px;
       border-radius: 50%;
       background: #1a2a3e;
-      margin: 0 auto 14px;
+      margin: 0 auto 12px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -72,48 +74,48 @@
     }
 
     .sidebar .photo .initials {
-      font-size: 38px;
+      font-size: 36px;
       font-weight: 700;
       color: #ffffff;
       letter-spacing: 1px;
     }
 
     .sidebar h2 {
-      font-size: 11px;
+      font-size: 10px;
       text-transform: uppercase;
-      letter-spacing: 2px;
+      letter-spacing: 1.5px;
       color: #ffffff;
       font-weight: 700;
-      margin: 12px 0 6px;
+      margin: 10px 0 4px;
       border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-      padding-bottom: 4px;
+      padding-bottom: 3px;
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 5px;
     }
 
     .sidebar h2 .icon {
-      width: 13px;
-      height: 13px;
+      width: 12px;
+      height: 12px;
       flex-shrink: 0;
       fill: #ffffff;
       opacity: 0.7;
     }
 
     .sidebar .contact-item {
-      font-size: 11px;
-      line-height: 1.5;
+      font-size: 10px;
+      line-height: 1.4;
       color: #c0c8d8;
       margin-bottom: 0;
       word-break: break-word;
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 5px;
     }
 
     .sidebar .contact-item .icon {
-      width: 12px;
-      height: 12px;
+      width: 11px;
+      height: 11px;
       flex-shrink: 0;
       fill: #8a9aaa;
     }
@@ -125,10 +127,10 @@
     }
 
     .sidebar .highlight-list li {
-      font-size: 11px;
-      line-height: 1.5;
+      font-size: 10px;
+      line-height: 1.4;
       color: #c0c8d8;
-      padding: 1px 0 1px 12px;
+      padding: 0.5px 0 0.5px 10px;
       position: relative;
     }
 
@@ -141,8 +143,8 @@
     }
 
     .sidebar .languages .lang-item {
-      font-size: 11px;
-      line-height: 1.5;
+      font-size: 10px;
+      line-height: 1.4;
       color: #c0c8d8;
       margin-bottom: 0;
     }
@@ -154,12 +156,12 @@
 
     .sidebar .languages .lang-item .level {
       color: #8a9aaa;
-      font-size: 10px;
+      font-size: 9px;
     }
 
     .sidebar .languages .lang-item .lang-bar {
       width: 100%;
-      height: 3px;
+      height: 2px;
       background: rgba(255, 255, 255, 0.1);
       border-radius: 2px;
       margin-top: 1px;
@@ -174,8 +176,8 @@
     }
 
     .sidebar .additional-info .info-item {
-      font-size: 11px;
-      line-height: 1.5;
+      font-size: 10px;
+      line-height: 1.4;
       color: #c0c8d8;
     }
 
@@ -183,7 +185,7 @@
       color: #ffffff;
       font-weight: 500;
       display: inline-block;
-      min-width: 72px;
+      min-width: 65px;
     }
 
     .sidebar .spacer {
@@ -191,11 +193,11 @@
     }
 
     /* ============================================
-       MAIN CONTENT - 68% (15% MÁS COMPACTO)
+       MAIN CONTENT - RESTO DEL ESPACIO
     ============================================ */
     .main {
-      width: 68%;
-      padding: 24px 24px 18px 24px;
+      flex: 1;
+      padding: 20px 22px 16px 22px;
       background: white;
       height: 100%;
       display: flex;
@@ -203,22 +205,22 @@
     }
 
     .main .header-block {
-      margin-bottom: 4px;
+      margin-bottom: 3px;
       flex-shrink: 0;
     }
 
     .main .header-block .name {
-      font-size: 42px;
+      font-size: 36px;
       font-weight: 900;
       letter-spacing: -0.5px;
-      line-height: 44px;
+      line-height: 38px;
       text-transform: uppercase;
       color: #0a1a2e;
       margin-bottom: 1px;
     }
 
     .main .header-block .title {
-      font-size: 18px;
+      font-size: 15px;
       color: #6d7077;
       font-weight: 700;
       text-transform: uppercase;
@@ -228,26 +230,26 @@
 
     .main .header-block .tagline {
       max-width: 95%;
-      line-height: 1.5;
-      font-size: 13px;
+      line-height: 1.4;
+      font-size: 11px;
       color: #4e5560;
-      margin-top: 3px;
+      margin-top: 2px;
     }
 
     .main h2 {
-      font-size: 15px;
+      font-size: 13px;
       text-transform: uppercase;
-      letter-spacing: 2px;
+      letter-spacing: 1.5px;
       color: #0a1a2e;
       font-weight: 700;
       border-bottom: 2px solid #10284a;
-      padding-bottom: 4px;
-      margin-top: 12px;
-      margin-bottom: 6px;
+      padding-bottom: 3px;
+      margin-top: 10px;
+      margin-bottom: 4px;
       flex-shrink: 0;
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 5px;
     }
 
     .main h2:first-of-type {
@@ -255,8 +257,8 @@
     }
 
     .main h2 .icon {
-      width: 15px;
-      height: 15px;
+      width: 13px;
+      height: 13px;
       flex-shrink: 0;
       fill: #10284a;
     }
@@ -264,24 +266,24 @@
     .main .competencies {
       display: flex;
       flex-wrap: wrap;
-      gap: 4px 6px;
-      margin-bottom: 2px;
+      gap: 3px 4px;
+      margin-bottom: 1px;
       flex-shrink: 0;
     }
 
     .main .competencies span {
-      padding: 5px 12px;
-      font-size: 11px;
+      padding: 3px 10px;
+      font-size: 10px;
       font-weight: 700;
-      border-radius: 6px;
+      border-radius: 5px;
       background: #f5f6f8;
       color: #2b2b2b;
-      letter-spacing: 0.3px;
+      letter-spacing: 0.2px;
     }
 
     .main .experience-item {
-      margin-bottom: 5px;
-      padding-left: 12px;
+      margin-bottom: 4px;
+      padding-left: 10px;
       border-left: 2px solid #10284a;
       position: relative;
       flex-shrink: 0;
@@ -290,10 +292,10 @@
     .main .experience-item::before {
       content: "";
       position: absolute;
-      left: -5px;
-      top: 3px;
-      width: 6px;
-      height: 6px;
+      left: -4px;
+      top: 2px;
+      width: 5px;
+      height: 5px;
       background: #10284a;
       border-radius: 50%;
       border: 2px solid #ffffff;
@@ -308,34 +310,34 @@
       display: flex;
       flex-wrap: wrap;
       align-items: baseline;
-      gap: 3px 8px;
+      gap: 2px 6px;
     }
 
     .main .experience-item .exp-title {
-      font-size: 15px;
+      font-size: 13px;
       font-weight: 800;
       color: #0a1a2e;
     }
 
     .main .experience-item .exp-company {
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 600;
       color: #666666;
       font-style: italic;
     }
 
     .main .experience-item .exp-date {
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 600;
       color: #888888;
       margin-left: auto;
     }
 
     .main .experience-item .exp-description {
-      font-size: 12px;
+      font-size: 10px;
       color: #3a3a4a;
-      line-height: 1.45;
-      margin-top: 2px;
+      line-height: 1.35;
+      margin-top: 1px;
     }
 
     .main .experience-item .exp-description ul {
@@ -345,10 +347,10 @@
     }
 
     .main .experience-item .exp-description ul li {
-      padding: 1px 0 1px 12px;
+      padding: 0.5px 0 0.5px 10px;
       position: relative;
-      font-size: 12px;
-      line-height: 1.4;
+      font-size: 10px;
+      line-height: 1.35;
     }
 
     .main .experience-item .exp-description ul li::before {
@@ -359,7 +361,7 @@
     }
 
     .main .education-item {
-      margin-bottom: 3px;
+      margin-bottom: 2px;
       flex-shrink: 0;
     }
 
@@ -367,24 +369,24 @@
       display: flex;
       flex-wrap: wrap;
       align-items: baseline;
-      gap: 3px 8px;
+      gap: 2px 6px;
     }
 
     .main .education-item .edu-degree {
-      font-size: 15px;
+      font-size: 13px;
       font-weight: 700;
       color: #0a1a2e;
     }
 
     .main .education-item .edu-institution {
-      font-size: 12px;
+      font-size: 11px;
       color: #666666;
       font-weight: 500;
       font-style: italic;
     }
 
     .main .education-item .edu-date {
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 600;
       color: #888888;
       margin-left: auto;
@@ -393,52 +395,52 @@
     .main .skills-container {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 2px 16px;
-      margin-top: 2px;
+      gap: 1px 14px;
+      margin-top: 1px;
       flex-shrink: 0;
     }
 
     .main .skill-bar {
-      margin-bottom: 2px;
+      margin-bottom: 1.5px;
       display: flex;
       align-items: center;
-      gap: 4px;
+      gap: 3px;
     }
 
     .main .skill-bar .skill-label {
-      font-size: 12px;
+      font-size: 10px;
       font-weight: 600;
       color: #0a1a2e;
-      min-width: 72px;
+      min-width: 65px;
     }
 
     .main .skill-bar .skill-track {
       flex: 1;
-      height: 5px;
+      height: 4px;
       background: #eef2f6;
-      border-radius: 3px;
+      border-radius: 2px;
       overflow: hidden;
     }
 
     .main .skill-bar .skill-track .skill-fill {
       height: 100%;
       background: #10284a;
-      border-radius: 3px;
+      border-radius: 2px;
     }
 
     .main .info-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 0;
-      font-size: 11px;
+      font-size: 10px;
       color: #2b2b2b;
-      line-height: 1.5;
-      margin-top: 2px;
+      line-height: 1.4;
+      margin-top: 1px;
       flex-shrink: 0;
     }
 
     .main .info-grid .info-item {
-      padding: 1.5px 0;
+      padding: 1px 0;
       border-bottom: 1px solid #f0f2f4;
     }
 
@@ -450,14 +452,14 @@
       color: #0a1a2e;
       font-weight: 600;
       display: inline-block;
-      min-width: 72px;
+      min-width: 65px;
     }
 
     .main .personal-statement {
-      font-size: 12px;
+      font-size: 10px;
       color: #3a3a4a;
-      line-height: 1.5;
-      margin-top: 2px;
+      line-height: 1.4;
+      margin-top: 1px;
       flex-shrink: 0;
     }
 
@@ -466,11 +468,11 @@
     }
 
     .footer {
-      margin-top: 8px;
-      padding-top: 4px;
+      margin-top: 6px;
+      padding-top: 3px;
       border-top: 1px solid #eef0f2;
       text-align: center;
-      font-size: 7px;
+      font-size: 6.5px;
       color: #B5BDC7;
       line-height: 1.5;
       letter-spacing: 0.3px;
@@ -563,7 +565,9 @@
 
       .sidebar {
         width: 100%;
-        padding: 16px;
+        min-width: unset;
+        max-width: unset;
+        padding: 14px;
       }
 
       .sidebar .photo {
@@ -572,13 +576,13 @@
       }
 
       .main {
-        width: 100%;
-        padding: 16px;
+        flex: 1;
+        padding: 14px;
       }
 
       .main .header-block .name {
-        font-size: 28px;
-        line-height: 30px;
+        font-size: 24px;
+        line-height: 26px;
       }
 
       .main .skills-container {
@@ -626,7 +630,7 @@
 <div class="page">
 
   <!-- ============================================
-  SIDEBAR
+  SIDEBAR - 225px FIJO
   ============================================ -->
   <aside class="sidebar">
 
