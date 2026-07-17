@@ -498,7 +498,7 @@ async function generateContent(prompt: string): Promise<{ text: string; tokens?:
 }
 
 // ============================================
-// PROMPT PARA CV - CORREGIDO
+// PROMPT PARA CV - VERSIÓN MEJORADA (MÁS CONTENIDO)
 // ============================================
 
 function getPremiumCVPrompt(data: any, company: Company): string {
@@ -525,44 +525,74 @@ function getPremiumCVPrompt(data: any, company: Company): string {
   const education = data.estudios || "No formal education";
 
   return `
-You are a senior recruitment consultant. Write a professional, ATS-optimised CV.
+You are a senior recruitment consultant with 20+ years of experience in the Maltese hospitality and labour market. You write professional, ATS-optimised CVs that sound human, unique, and tailored to each candidate.
 
-📌 RULES:
-1. The candidate is from ${city}, ${country} applying for jobs in MALTA.
-2. Use the education: ${education}
-3. DO NOT invent companies - use only user-provided experience.
-4. Use professional British English.
-5. Each experience: 4-5 bullet points.
-6. Achievements: 5-6 bullet points.
-7. Generate 800-1000 words to fill the entire A4 page.
+📌 CRITICAL RULES:
+1. The candidate is from ${city}, ${country}. Use this to add authentic regional context to their profile.
+2. The candidate is applying for jobs in MALTA. Always mention Malta as the target destination.
+3. DO NOT state that the candidate worked at a specific company unless the user provided that information.
+4. If the user has NO work experience, write a compelling entry-level profile using realistic responsibilities.
+5. Use professional, natural British English.
+6. AVOID generic phrases like "hard-working" or "dedicated" without context.
+7. GENERATE SUBSTANTIAL CONTENT - minimum 800-1000 words to fill an entire A4 page.
 
-CANDIDATE:
-- Name: ${data.full_name || "N/A"}
+---
+
+CANDIDATE PROFILE:
+- Full Name: ${data.full_name || "N/A"}
 - Target Role: ${template.title}
-- Target Company: ${company.name} (Malta)
-- Experience: ${expLabel}
+- Target Company: ${company.name} (${company.city}, MALTA)
+- Experience Level: ${expLabel}
 - Education: ${education}
-- City: ${city}
+- City of Origin: ${city}
+- Country of Residence: ${country}
 - Availability: ${availability}
 - Passport: ${passport}
 - Work Permit: ${workPermit}
+- Video Interview: ${video}
 
-${userExperience ? `User Experience: ${userExperience}` : ''}
+${userExperience ? `REAL WORK EXPERIENCE PROVIDED BY CANDIDATE:\n${userExperience}\n\n⚠️ IMPORTANT: Use this as the foundation for the Professional Experience section. If the candidate mentions a specific company, you CAN use that company name. Otherwise, describe the experience generically.` : ''}
 
-ATS Keywords: ${template.atsKeywords.join(", ")}
+ATS KEYWORDS FOR THIS ROLE:
+${template.atsKeywords.map(k => `- ${k}`).join("\n")}
 
-Generate CV with these sections:
-1. PROFESSIONAL SUMMARY (150-200 words)
-2. KEY ACHIEVEMENTS (5-6 bullet points)
-3. PROFESSIONAL EXPERIENCE (2 positions, 4-5 bullets each)
-4. EDUCATION (use the actual education: ${education})
+---
 
-Return JSON:
+Generate a COMPLETE, PROFESSIONAL CV with these sections. Each section must be substantial and detailed to fill a full A4 page.
+
+1. PROFESSIONAL SUMMARY (200-250 words):
+   - Powerful opening about the candidate's professional identity
+   - Mention their origin (${city}) and motivation to work in MALTA
+   - Highlight their unique value proposition for the Maltese market
+   - Include career goals and what they offer to employers
+   - Use industry keywords and terminology
+
+2. PROFESSIONAL PROFILE (150-200 words):
+   - Detailed description of the candidate's professional identity
+   - Core competencies and areas of expertise
+   - Understanding of the Maltese hospitality industry
+   - Career trajectory and ambitions in Malta
+
+3. KEY ACHIEVEMENTS (8-10 bullet points):
+   - Specific, measurable achievements
+   - If no experience, write realistic achievements from training or volunteer work
+   - Use strong action verbs (improved, managed, achieved, increased, reduced, delivered, implemented)
+   - Each bullet should be a complete, impactful statement
+
+4. PROFESSIONAL EXPERIENCE (3 positions, each with 5-7 bullet points):
+   ${userExperience ? '- Use the user\'s real experience as the foundation' : '- Write realistic, compelling experience for an entry-level candidate'}
+   - Each position should have a clear job title and time period
+   - Each bullet describes one key responsibility or achievement
+   - Use strong action verbs
+   - Each bullet should be detailed and specific
+   - Mention MALTA or the company location if relevant
+
+Return ONLY valid JSON:
 {
   "summary": "...",
   "profile": "...",
-  "achievements": ["...", "...", "...", "...", "..."],
-  "experience": ["Position 1: 4-5 bullets", "Position 2: 4-5 bullets"]
+  "achievements": ["...", "...", "...", "...", "...", "...", "...", "..."],
+  "experience": ["Position 1: 5-7 bullets", "Position 2: 5-7 bullets", "Position 3: 5-7 bullets"]
 }
 `;
 }
@@ -619,35 +649,70 @@ async function generatePremiumCoverLetter(data: any, company: Company): Promise<
   const country = data.pais_residencia || "Morocco";
 
   const prompt = `
-You are a professional cover letter writer. Write a professional cover letter.
+You are a professional cover letter writer specialising in the Maltese job market. You write natural, human-sounding letters that are unique to each candidate and company.
 
-📌 RULES:
-1. Candidate is from ${city}, ${country} applying to work in MALTA.
-2. Write ONLY the body paragraphs.
-3. DO NOT include: name, address, date, greeting, signature, phone, email.
-4. Each paragraph: 4-5 sentences.
+📌 CRITICAL RULES:
+1. The candidate is from ${city}, ${country} and wants to work in MALTA. This is essential - mention the move from ${city} to Malta.
+2. Write ONLY the BODY paragraphs of the cover letter.
+3. DO NOT include: name, address, date, subject line, greeting, signature, phone, email.
+4. DO NOT mention languages, passport, driving licence, or work permit - these are in the CV.
+5. Make each letter DIFFERENT for each candidate and company.
+6. Use natural, professional British English.
+7. Never use generic phrases like "I am writing to apply for".
+8. GENERATE SUBSTANTIAL CONTENT - each paragraph should be 5-7 sentences.
 
-CANDIDATE:
-- Name: ${data.full_name || "N/A"}
+---
+
+CANDIDATE PROFILE:
+- Full Name: ${data.full_name || "N/A"}
 - Target Role: ${template.title}
-- Target Company: ${company.name} (Malta)
-- Experience: ${data.anos_experiencia || "Entry level"}
-- Education: ${data.estudios || "No formal education"}
-- City: ${city}
+- Target Company: ${company.name} (${company.city}, MALTA)
+- Experience Level: ${data.anos_experiencia || "Entry level"}
+- Education: ${data.estudios || "N/A"}
+- City of Origin: ${city}, ${country}
 - Availability: ${availability}
 - Passport: ${passport}
+- Video Interview: ${video}
 - Work Permit: ${workPermit}
+- Driver's License: ${license}
 
-${userExperience ? `User Experience: ${userExperience}` : ''}
+${userExperience ? `REAL WORK EXPERIENCE PROVIDED BY CANDIDATE:\n${userExperience}\n\nUse this as the foundation for the body paragraphs.` : ''}
 
-Generate cover letter body (5 paragraphs):
-1. INTRODUCTION - enthusiasm for role and company
-2. BODY 1 - skills and experience relevance
-3. BODY 2 - why this company and Malta
-4. BODY 3 - availability and relocation
-5. CLOSING - call to action
+---
 
-Return JSON:
+Generate a PROFESSIONAL, DETAILED cover letter body as 5 paragraphs. Each paragraph must be 5-7 sentences.
+
+1. INTRODUCTION:
+   - Compelling opening about moving from ${city} to Malta to pursue career goals
+   - Mention the specific company (${company.name}) and position (${template.title})
+   - Show genuine enthusiasm and research about the company
+   - Establish why the candidate is interested in this role in Malta
+
+2. BODY 1:
+   - Highlight relevant skills and experience in detail
+   - Connect background directly to the needs of the role in Malta
+   - Show understanding of the Maltese hospitality industry
+   - Be specific and demonstrate knowledge of the role
+
+3. BODY 2:
+   - Explain WHY this company (${company.name}) in Malta
+   - Show thorough research into the company's values or reputation
+   - Connect personal values to the company's mission
+   - Demonstrate genuine interest in working in Malta
+
+4. BODY 3:
+   - Address availability and relocation from ${city} to Malta
+   - Mention willingness to relocate immediately (${availability})
+   - Express readiness to contribute in the Maltese market
+   - Show flexibility and commitment
+
+5. CLOSING:
+   - Professional and confident conclusion
+   - Strong call to action for interview
+   - Express appreciation
+   - Reiterate enthusiasm for the opportunity in Malta
+
+Return ONLY valid JSON:
 {
   "introduction": "...",
   "body1": "...",
@@ -720,7 +785,7 @@ async function renderPdfFromHtml(html: string): Promise<Buffer> {
 }
 
 // ============================================
-// GENERAR HTML DEL CV - CORREGIDO
+// GENERAR HTML DEL CV
 // ============================================
 
 function generateCVHtml(
@@ -754,7 +819,7 @@ function generateCVHtml(
     ? `<img src="${data.photo_url}" alt="${fullName}">` 
     : `<span class="initials">${initials}</span>`;
 
-  // --- LANGUAGES - CORREGIDO ---
+  // --- LANGUAGES ---
   let languagesHtml = "";
   if (data.idiomas) {
     const idiomas = data.idiomas.split(",").map((i: string) => i.trim());
@@ -825,7 +890,7 @@ function generateCVHtml(
     experienceHtml = expItems;
   }
 
-  // --- EDUCATION - CORREGIDO ---
+  // --- EDUCATION ---
   const educationLabel = getEducationLabel(education);
   const educationHtml = `
     <div class="education-item">
@@ -878,7 +943,7 @@ function generateCVHtml(
   const tagline = `${templateData.title} professional from ${city} seeking opportunities in Malta`;
   const personalStatement = content.profile || content.summary || `${templateData.title} professional with ${expLabel} experience.`;
 
-  // --- REPLACEMENTS CORREGIDOS ---
+  // --- REPLACEMENTS ---
   const replacements: Record<string, string> = {
     "{{PHOTO_HTML}}": photoHtml,
     "{{FULL_NAME}}": fullName,
@@ -954,6 +1019,7 @@ function generateCoverHtml(
     </div>
   ` : "";
 
+  // --- REPLACEMENTS ---
   const replacements: Record<string, string> = {
     "{{PHOTO_HTML}}": photoHtml,
     "{{FULL_NAME}}": fullName,
@@ -1123,8 +1189,8 @@ export default async function handler(
       letter_text: `${letterContent.introduction || ''}\n${letterContent.body1 || ''}\n${letterContent.body2 || ''}\n${letterContent.body3 || ''}\n${letterContent.closing || ''}`,
       cv_html: cvHtml,
       letter_html: coverHtml,
-      cv_prompt: "Premium CV prompt - extended",
-      letter_prompt: "Premium cover letter prompt - extended",
+      cv_prompt: "Premium CV prompt - extended version (800-1000 words)",
+      letter_prompt: "Premium cover letter prompt - extended version (5 paragraphs, 5-7 sentences each)",
       cv_tokens: cvContent.tokens || 0,
       letter_tokens: letterContent.tokens || 0,
       total_tokens: (cvContent.tokens || 0) + (letterContent.tokens || 0),
