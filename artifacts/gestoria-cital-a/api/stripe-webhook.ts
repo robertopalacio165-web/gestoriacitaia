@@ -167,6 +167,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         photo_url: photoUrl,
         pdf_url: pdfUrl,
         plan: plan,
+        paid: true,
         updated_at: new Date().toISOString(),
       };
 
@@ -225,6 +226,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           plan: plan,
           stripe_session_id: session.id,
           stripe_payment_intent: session.payment_intent as string,
+          paid: true,
           worker_status: "pending",
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
