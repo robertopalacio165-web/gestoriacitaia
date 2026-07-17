@@ -498,7 +498,7 @@ async function generateContent(prompt: string): Promise<{ text: string; tokens?:
 }
 
 // ============================================
-// PROMPT PARA CV
+// PROMPT PARA CV - CORREGIDO
 // ============================================
 
 function getPremiumCVPrompt(data: any, company: Company): string {
@@ -529,11 +529,12 @@ You are a senior recruitment consultant. Write a professional, ATS-optimised CV.
 
 📌 RULES:
 1. The candidate is from ${city}, ${country} applying for jobs in MALTA.
-2. DO NOT invent companies - use only user-provided experience.
-3. Use professional British English.
-4. Keep content CONCISE - approximately 500-700 words total.
-5. Each experience: 3-4 bullet points max.
-6. Achievements: 4-5 bullet points max.
+2. Use the education: ${education}
+3. DO NOT invent companies - use only user-provided experience.
+4. Use professional British English.
+5. Each experience: 4-5 bullet points.
+6. Achievements: 5-6 bullet points.
+7. Generate 800-1000 words to fill the entire A4 page.
 
 CANDIDATE:
 - Name: ${data.full_name || "N/A"}
@@ -550,18 +551,18 @@ ${userExperience ? `User Experience: ${userExperience}` : ''}
 
 ATS Keywords: ${template.atsKeywords.join(", ")}
 
-Generate CV with these sections (concise):
-1. SUMMARY (4-5 sentences)
-2. PROFILE (3-4 sentences)
-3. ACHIEVEMENTS (4-5 bullet points)
-4. EXPERIENCE (2 positions max, 3-4 bullets each)
+Generate CV with these sections:
+1. PROFESSIONAL SUMMARY (150-200 words)
+2. KEY ACHIEVEMENTS (5-6 bullet points)
+3. PROFESSIONAL EXPERIENCE (2 positions, 4-5 bullets each)
+4. EDUCATION (use the actual education: ${education})
 
 Return JSON:
 {
   "summary": "...",
   "profile": "...",
-  "achievements": ["...", "...", "..."],
-  "experience": ["Position 1: bullets", "Position 2: bullets"]
+  "achievements": ["...", "...", "...", "...", "..."],
+  "experience": ["Position 1: 4-5 bullets", "Position 2: 4-5 bullets"]
 }
 `;
 }
@@ -618,21 +619,20 @@ async function generatePremiumCoverLetter(data: any, company: Company): Promise<
   const country = data.pais_residencia || "Morocco";
 
   const prompt = `
-You are a professional cover letter writer. Write a concise, professional cover letter.
+You are a professional cover letter writer. Write a professional cover letter.
 
 📌 RULES:
 1. Candidate is from ${city}, ${country} applying to work in MALTA.
 2. Write ONLY the body paragraphs.
 3. DO NOT include: name, address, date, greeting, signature, phone, email.
-4. Keep it CONCISE - 3-4 paragraphs, 3-4 sentences each.
-5. Never use generic phrases.
+4. Each paragraph: 4-5 sentences.
 
 CANDIDATE:
 - Name: ${data.full_name || "N/A"}
 - Target Role: ${template.title}
 - Target Company: ${company.name} (Malta)
 - Experience: ${data.anos_experiencia || "Entry level"}
-- Education: ${data.estudios || "N/A"}
+- Education: ${data.estudios || "No formal education"}
 - City: ${city}
 - Availability: ${availability}
 - Passport: ${passport}
@@ -640,11 +640,12 @@ CANDIDATE:
 
 ${userExperience ? `User Experience: ${userExperience}` : ''}
 
-Generate cover letter body (3-4 paragraphs):
-1. Opening - enthusiasm for role and company
-2. Skills and experience relevance
-3. Why this company and Malta
-4. Availability and closing
+Generate cover letter body (5 paragraphs):
+1. INTRODUCTION - enthusiasm for role and company
+2. BODY 1 - skills and experience relevance
+3. BODY 2 - why this company and Malta
+4. BODY 3 - availability and relocation
+5. CLOSING - call to action
 
 Return JSON:
 {
@@ -745,16 +746,15 @@ function generateCVHtml(
   const relocate = normalizeRelocate(data.reubicacion);
   const expLabel = getExperienceLabel(validateExperienceYears(data.anos_experiencia));
   const nationality = data.nacionalidad || data.nationality || "Morocco";
-  
-  // ✅ CORREGIDO: city definido correctamente
   const city = data.current_city || data.ciudad_actual || "Morocco";
+  const education = data.estudios || "No formal education";
 
   const initials = getInitials(data.full_name);
   const photoHtml = data.photo_url 
     ? `<img src="${data.photo_url}" alt="${fullName}">` 
     : `<span class="initials">${initials}</span>`;
 
-  // --- LANGUAGES ---
+  // --- LANGUAGES - CORREGIDO ---
   let languagesHtml = "";
   if (data.idiomas) {
     const idiomas = data.idiomas.split(",").map((i: string) => i.trim());
@@ -825,13 +825,13 @@ function generateCVHtml(
     experienceHtml = expItems;
   }
 
-  // --- EDUCATION ---
-  const educationLabel = getEducationLabel(data.estudios || "");
+  // --- EDUCATION - CORREGIDO ---
+  const educationLabel = getEducationLabel(education);
   const educationHtml = `
     <div class="education-item">
       <div class="edu-header">
         <span class="edu-degree">${educationLabel}</span>
-        <span class="edu-institution">Professional Training</span>
+        <span class="edu-institution">${education}</span>
         <span class="edu-date">Present</span>
       </div>
     </div>
@@ -874,11 +874,11 @@ function generateCVHtml(
     `;
   }
 
-  // --- TAGLINE & PERSONAL STATEMENT - CORREGIDO ---
+  // --- TAGLINE & PERSONAL STATEMENT ---
   const tagline = `${templateData.title} professional from ${city} seeking opportunities in Malta`;
   const personalStatement = content.profile || content.summary || `${templateData.title} professional with ${expLabel} experience.`;
 
-  // --- REPLACEMENTS ---
+  // --- REPLACEMENTS CORREGIDOS ---
   const replacements: Record<string, string> = {
     "{{PHOTO_HTML}}": photoHtml,
     "{{FULL_NAME}}": fullName,
@@ -954,7 +954,6 @@ function generateCoverHtml(
     </div>
   ` : "";
 
-  // --- REPLACEMENTS ---
   const replacements: Record<string, string> = {
     "{{PHOTO_HTML}}": photoHtml,
     "{{FULL_NAME}}": fullName,
@@ -982,27 +981,19 @@ function generateCoverHtml(
 }
 
 // ============================================
-// SUBIDA A SUPABASE - CON LOGS PARA DEBUG
+// SUBIDA A SUPABASE
 // ============================================
 
 async function uploadPDF(pdfBytes: Buffer, fileName: string): Promise<string> {
-  console.log(`📤 Starting upload: ${fileName} (${pdfBytes.length} bytes)`);
-  console.log(`📦 Bucket: ${BUCKET_NAME}`);
+  console.log(`📤 Uploading: ${fileName} (${pdfBytes.length} bytes)`);
   
-  // Verificar bucket
   const { data: bucket, error: bucketError } = await supabase.storage
     .getBucket(BUCKET_NAME);
 
-  console.log(`🔍 Bucket check result:`, { bucket, bucketError });
-
   if (bucketError || !bucket) {
-    console.error(`❌ Bucket "${BUCKET_NAME}" not found!`);
     throw new Error(`Bucket "${BUCKET_NAME}" not found`);
   }
 
-  console.log(`✅ Bucket found: ${BUCKET_NAME}`);
-
-  // Subir archivo
   const { error: uploadError } = await supabase.storage
     .from(BUCKET_NAME)
     .upload(fileName, pdfBytes, {
@@ -1011,23 +1002,19 @@ async function uploadPDF(pdfBytes: Buffer, fileName: string): Promise<string> {
     });
 
   if (uploadError) {
-    console.error(`❌ Upload failed:`, uploadError);
     throw new Error(`Upload failed: ${uploadError.message}`);
   }
 
-  console.log(`✅ Upload successful: ${fileName}`);
-
-  // Obtener URL pública
   const { data: publicUrlData } = supabase.storage
     .from(BUCKET_NAME)
     .getPublicUrl(fileName);
 
-  console.log(`✅ Public URL: ${publicUrlData.publicUrl}`);
+  console.log(`✅ Uploaded: ${publicUrlData.publicUrl}`);
   return publicUrlData.publicUrl;
 }
 
 // ============================================
-// HANDLER PRINCIPAL - CORREGIDO
+// HANDLER PRINCIPAL
 // ============================================
 
 export default async function handler(
@@ -1060,7 +1047,8 @@ export default async function handler(
     }
 
     console.log(`✅ Application found: ${application.full_name}`);
-    console.log(`📸 Photo URL: ${application.photo_url || 'No photo'}`);
+    console.log(`📚 Education: ${application.estudios || 'Not set'}`);
+    console.log(`🌍 City: ${application.current_city || application.ciudad_actual || 'Not set'}`);
 
     if (!application.email) throw new Error("Application has no email");
     if (!application.full_name) throw new Error("Application has no full name");
@@ -1126,7 +1114,6 @@ export default async function handler(
 
     const totalTime = Date.now() - startTime;
 
-    // ✅ NOMBRES CORREGIDOS
     const updateData: any = {
       cv_generated: true,
       letter_generated: true,
@@ -1136,8 +1123,8 @@ export default async function handler(
       letter_text: `${letterContent.introduction || ''}\n${letterContent.body1 || ''}\n${letterContent.body2 || ''}\n${letterContent.body3 || ''}\n${letterContent.closing || ''}`,
       cv_html: cvHtml,
       letter_html: coverHtml,
-      cv_prompt: "Premium CV prompt - concise version",
-      letter_prompt: "Premium cover letter prompt - concise version",
+      cv_prompt: "Premium CV prompt - extended",
+      letter_prompt: "Premium cover letter prompt - extended",
       cv_tokens: cvContent.tokens || 0,
       letter_tokens: letterContent.tokens || 0,
       total_tokens: (cvContent.tokens || 0) + (letterContent.tokens || 0),
@@ -1152,7 +1139,7 @@ export default async function handler(
 
     if (application.photo_url) {
       updateData.photo_uploaded = true;
-      updateData.photo_generated_at = new Date().toISOString(); // ✅ CORREGIDO
+      updateData.photo_generated_at = new Date().toISOString();
     }
 
     console.log("📦 updateData:");
