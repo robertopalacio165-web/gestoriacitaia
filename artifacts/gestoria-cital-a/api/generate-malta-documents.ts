@@ -953,7 +953,7 @@ function generateCVHtml(
     "{{EMAIL}}": data.email || "",
     "{{NATIONALITY}}": nationality,
     "{{LOCATION}}": data.pais_residencia || "Malta",
-    "{{LANGUAGES}}": languagesHtml,
+  "{{LANGUAGES_LIST}}": languagesHtml,
     "{{KEY_STRENGTHS}}": keyStrengthsHtml,
     "{{DRIVER_LICENSE}}": license,
     "{{PASSPORT}}": passport,
