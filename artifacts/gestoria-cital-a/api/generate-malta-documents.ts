@@ -1140,19 +1140,24 @@ export default async function handler(
       updateData.photo_uploaded = true;
       updateData.photo_generated_at = new Date().toISOString();
     }
+console.log("📦 updateData:");
+console.log(JSON.stringify(updateData, null, 2));
+ const { error: updateError } = await supabase
+  .from("malta_applications")
+  .update(updateData)
+  .eq("id", applicationId);
 
-    const { error: updateError } = await supabase
-      .from("malta_applications")
-      .update(updateData)
-      .eq("id", applicationId);
+if (updateError) {
+  console.error(
+    "❌ Supabase UPDATE ERROR:",
+    JSON.stringify(updateError, null, 2)
+  );
 
-    if (updateError) {
-      console.error("❌ Error updating application:", updateError);
-      return res.status(500).json({ 
-        error: "Failed to update application",
-        details: updateError.message 
-      });
-    }
+  return res.status(500).json({
+    error: updateError.message,
+    details: updateError,
+  });
+}
 
     console.log(`✅ Application updated successfully in ${totalTime}ms`);
 
