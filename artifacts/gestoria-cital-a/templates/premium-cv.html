@@ -43,13 +43,13 @@
     }
 
     /* ============================================
-       SIDEBAR - VERSIÓN FINAL
+       SIDEBAR - 32%
     ============================================ */
     .sidebar {
       width: 32%;
       background: #10284a;
       color: #c8d0d8;
-      padding: 34px 26px;
+      padding: 24px 18px 18px 18px;
       flex-shrink: 0;
       height: 100%;
       display: flex;
@@ -57,11 +57,11 @@
     }
 
     .sidebar .photo {
-      width: 155px;
-      height: 155px;
+      width: 130px;
+      height: 130px;
       border-radius: 50%;
       background: #1a2a3e;
-      margin: 0 auto 26px;
+      margin: 0 auto 14px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -72,50 +72,50 @@
     }
 
     .sidebar .photo .initials {
-      font-size: 50px;
+      font-size: 38px;
       font-weight: 700;
       color: #ffffff;
       letter-spacing: 1px;
     }
 
     .sidebar h2 {
-      font-size: 14px;
+      font-size: 11px;
       text-transform: uppercase;
       letter-spacing: 2px;
       color: #ffffff;
       font-weight: 700;
-      margin: 22px 0 12px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.12);
-      padding-bottom: 6px;
+      margin: 12px 0 6px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      padding-bottom: 4px;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
     }
 
     .sidebar h2 .icon {
-      width: 15px;
-      height: 15px;
-      fill: #ffffff;
-      opacity: 0.8;
+      width: 13px;
+      height: 13px;
       flex-shrink: 0;
+      fill: #ffffff;
+      opacity: 0.7;
     }
 
     .sidebar .contact-item {
-      font-size: 13px;
-      line-height: 1.9;
+      font-size: 11px;
+      line-height: 1.5;
       color: #c0c8d8;
       margin-bottom: 0;
       word-break: break-word;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
     }
 
     .sidebar .contact-item .icon {
-      width: 14px;
-      height: 14px;
-      fill: #8a9aaa;
+      width: 12px;
+      height: 12px;
       flex-shrink: 0;
+      fill: #8a9aaa;
     }
 
     .sidebar .highlight-list {
@@ -125,10 +125,10 @@
     }
 
     .sidebar .highlight-list li {
-      font-size: 13px;
-      line-height: 1.9;
+      font-size: 11px;
+      line-height: 1.5;
       color: #c0c8d8;
-      padding: 1px 0 1px 14px;
+      padding: 1px 0 1px 12px;
       position: relative;
     }
 
@@ -141,8 +141,8 @@
     }
 
     .sidebar .languages .lang-item {
-      font-size: 13px;
-      line-height: 1.9;
+      font-size: 11px;
+      line-height: 1.5;
       color: #c0c8d8;
       margin-bottom: 0;
     }
@@ -154,7 +154,7 @@
 
     .sidebar .languages .lang-item .level {
       color: #8a9aaa;
-      font-size: 12px;
+      font-size: 10px;
     }
 
     .sidebar .languages .lang-item .lang-bar {
@@ -162,7 +162,7 @@
       height: 3px;
       background: rgba(255, 255, 255, 0.1);
       border-radius: 2px;
-      margin-top: 2px;
+      margin-top: 1px;
       overflow: hidden;
     }
 
@@ -174,8 +174,8 @@
     }
 
     .sidebar .additional-info .info-item {
-      font-size: 13px;
-      line-height: 1.9;
+      font-size: 11px;
+      line-height: 1.5;
       color: #c0c8d8;
     }
 
@@ -183,15 +183,19 @@
       color: #ffffff;
       font-weight: 500;
       display: inline-block;
-      min-width: 75px;
+      min-width: 72px;
+    }
+
+    .sidebar .spacer {
+      flex: 1;
     }
 
     /* ============================================
-       MAIN CONTENT - VERSIÓN FINAL
+       MAIN CONTENT - 68% (15% MÁS COMPACTO)
     ============================================ */
     .main {
       width: 68%;
-      padding: 38px 36px 30px;
+      padding: 24px 24px 18px 24px;
       background: white;
       height: 100%;
       display: flex;
@@ -199,51 +203,51 @@
     }
 
     .main .header-block {
-      margin-bottom: 8px;
+      margin-bottom: 4px;
       flex-shrink: 0;
     }
 
     .main .header-block .name {
-      font-size: 52px;
+      font-size: 42px;
       font-weight: 900;
       letter-spacing: -0.5px;
-      line-height: 54px;
+      line-height: 44px;
       text-transform: uppercase;
       color: #0a1a2e;
       margin-bottom: 1px;
     }
 
     .main .header-block .title {
-      font-size: 22px;
+      font-size: 18px;
       color: #6d7077;
       font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 6px;
+      letter-spacing: 3px;
       margin-top: 1px;
     }
 
     .main .header-block .tagline {
       max-width: 95%;
-      line-height: 1.8;
-      font-size: 15px;
+      line-height: 1.5;
+      font-size: 13px;
       color: #4e5560;
-      margin-top: 8px;
+      margin-top: 3px;
     }
 
     .main h2 {
-      font-size: 17px;
+      font-size: 15px;
       text-transform: uppercase;
       letter-spacing: 2px;
       color: #0a1a2e;
       font-weight: 700;
       border-bottom: 2px solid #10284a;
-      padding-bottom: 5px;
-      margin-top: 20px;
-      margin-bottom: 12px;
+      padding-bottom: 4px;
+      margin-top: 12px;
+      margin-bottom: 6px;
       flex-shrink: 0;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
     }
 
     .main h2:first-of-type {
@@ -251,23 +255,23 @@
     }
 
     .main h2 .icon {
-      width: 17px;
-      height: 17px;
-      fill: #10284a;
+      width: 15px;
+      height: 15px;
       flex-shrink: 0;
+      fill: #10284a;
     }
 
     .main .competencies {
       display: flex;
       flex-wrap: wrap;
-      gap: 6px 10px;
+      gap: 4px 6px;
       margin-bottom: 2px;
       flex-shrink: 0;
     }
 
     .main .competencies span {
-      padding: 7px 16px;
-      font-size: 13px;
+      padding: 5px 12px;
+      font-size: 11px;
       font-weight: 700;
       border-radius: 6px;
       background: #f5f6f8;
@@ -276,8 +280,8 @@
     }
 
     .main .experience-item {
-      margin-bottom: 8px;
-      padding-left: 14px;
+      margin-bottom: 5px;
+      padding-left: 12px;
       border-left: 2px solid #10284a;
       position: relative;
       flex-shrink: 0;
@@ -287,9 +291,9 @@
       content: "";
       position: absolute;
       left: -5px;
-      top: 4px;
-      width: 7px;
-      height: 7px;
+      top: 3px;
+      width: 6px;
+      height: 6px;
       background: #10284a;
       border-radius: 50%;
       border: 2px solid #ffffff;
@@ -304,47 +308,47 @@
       display: flex;
       flex-wrap: wrap;
       align-items: baseline;
-      gap: 4px 12px;
+      gap: 3px 8px;
     }
 
     .main .experience-item .exp-title {
-      font-size: 17px;
+      font-size: 15px;
       font-weight: 800;
       color: #0a1a2e;
     }
 
     .main .experience-item .exp-company {
-      font-size: 14px;
+      font-size: 12px;
       font-weight: 600;
       color: #666666;
       font-style: italic;
     }
 
     .main .experience-item .exp-date {
-      font-size: 13px;
+      font-size: 11px;
       font-weight: 600;
       color: #888888;
       margin-left: auto;
     }
 
     .main .experience-item .exp-description {
-      font-size: 14px;
+      font-size: 12px;
       color: #3a3a4a;
-      line-height: 1.8;
+      line-height: 1.45;
       margin-top: 2px;
     }
 
     .main .experience-item .exp-description ul {
       list-style: none;
       padding: 0;
-      margin: 2px 0 0;
+      margin: 1px 0 0;
     }
 
     .main .experience-item .exp-description ul li {
-      padding: 1px 0 1px 14px;
+      padding: 1px 0 1px 12px;
       position: relative;
-      font-size: 14px;
-      line-height: 1.8;
+      font-size: 12px;
+      line-height: 1.4;
     }
 
     .main .experience-item .exp-description ul li::before {
@@ -355,7 +359,7 @@
     }
 
     .main .education-item {
-      margin-bottom: 4px;
+      margin-bottom: 3px;
       flex-shrink: 0;
     }
 
@@ -363,24 +367,24 @@
       display: flex;
       flex-wrap: wrap;
       align-items: baseline;
-      gap: 4px 12px;
+      gap: 3px 8px;
     }
 
     .main .education-item .edu-degree {
-      font-size: 17px;
+      font-size: 15px;
       font-weight: 700;
       color: #0a1a2e;
     }
 
     .main .education-item .edu-institution {
-      font-size: 14px;
+      font-size: 12px;
       color: #666666;
       font-weight: 500;
       font-style: italic;
     }
 
     .main .education-item .edu-date {
-      font-size: 13px;
+      font-size: 11px;
       font-weight: 600;
       color: #888888;
       margin-left: auto;
@@ -389,7 +393,7 @@
     .main .skills-container {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 2px 20px;
+      gap: 2px 16px;
       margin-top: 2px;
       flex-shrink: 0;
     }
@@ -402,15 +406,15 @@
     }
 
     .main .skill-bar .skill-label {
-      font-size: 14px;
+      font-size: 12px;
       font-weight: 600;
       color: #0a1a2e;
-      min-width: 78px;
+      min-width: 72px;
     }
 
     .main .skill-bar .skill-track {
       flex: 1;
-      height: 8px;
+      height: 5px;
       background: #eef2f6;
       border-radius: 3px;
       overflow: hidden;
@@ -426,9 +430,9 @@
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 0;
-      font-size: 13px;
+      font-size: 11px;
       color: #2b2b2b;
-      line-height: 1.8;
+      line-height: 1.5;
       margin-top: 2px;
       flex-shrink: 0;
     }
@@ -446,23 +450,27 @@
       color: #0a1a2e;
       font-weight: 600;
       display: inline-block;
-      min-width: 78px;
+      min-width: 72px;
     }
 
     .main .personal-statement {
-      font-size: 14px;
+      font-size: 12px;
       color: #3a3a4a;
-      line-height: 1.9;
+      line-height: 1.5;
       margin-top: 2px;
       flex-shrink: 0;
     }
 
+    .main .spacer {
+      flex: 1;
+    }
+
     .footer {
-      margin-top: 10px;
-      padding-top: 5px;
+      margin-top: 8px;
+      padding-top: 4px;
       border-top: 1px solid #eef0f2;
       text-align: center;
-      font-size: 8px;
+      font-size: 7px;
       color: #B5BDC7;
       line-height: 1.5;
       letter-spacing: 0.3px;
@@ -589,6 +597,10 @@
         border-bottom: none;
       }
 
+      .main .spacer {
+        display: none;
+      }
+
       .main .experience-item .exp-header {
         flex-direction: column;
         gap: 1px;
@@ -672,6 +684,8 @@
       <div class="info-item"><strong>Interview via video:</strong> {{VIDEO_INTERVIEW}}</div>
     </div>
 
+    <div class="spacer"></div>
+
   </aside>
 
   <!-- ============================================
@@ -731,6 +745,8 @@
       PERSONAL STATEMENT
     </h2>
     <p class="personal-statement">{{PERSONAL_STATEMENT}}</p>
+
+    <div class="spacer"></div>
 
     <div class="footer">
       Professional Curriculum Vitae
