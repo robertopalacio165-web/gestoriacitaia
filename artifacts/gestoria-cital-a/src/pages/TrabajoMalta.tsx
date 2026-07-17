@@ -84,7 +84,9 @@ type MaltaFormData = {
   cvUrl: string;
   
   // Documentos opcionales
+  photoFile: File | null;
   photoUrl: string;
+  pdfFile: File | null;
   pdfUrl: string;
   
   // Plan
@@ -317,28 +319,7 @@ function OfficialBrowserBox({
     { id: "Native", label: isMa ? "لغة أم" : isEn ? "Native" : "Nativo" },
   ];
 
-  // ✅ Función para subir archivos a Supabase Storage
-  const uploadFileToSupabase = async (file: File, prefix: string): Promise<string> => {
-    const timestamp = Date.now();
-    const fileName = `${prefix}_${timestamp}_${file.name.replace(/[^a-zA-Z0-9.]/g, "_")}`;
-    
-    const { data, error } = await supabase.storage
-      .from("malta-documents")
-      .upload(fileName, file, {
-        cacheControl: "3600",
-        upsert: true,
-      });
-
-    if (error) throw error;
-
-    const { data: publicUrlData } = supabase.storage
-      .from("malta-documents")
-      .getPublicUrl(fileName);
-
-    return publicUrlData.publicUrl;
-  };
-
-  // ✅ Manejar subida de archivo CV
+  // ✅ PASO 2: handleCVUpload CORREGIDO - Solo guarda el archivo, no sube a Supabase
   const handleCVUpload = async (file: File) => {
     if (!file) return;
     
@@ -363,19 +344,18 @@ function OfficialBrowserBox({
 
     setUploadingCV(true);
     try {
-      const cvUrl = await uploadFileToSupabase(file, "cv");
-      onFormChange("cvUrl", cvUrl);
+      // ✅ SOLO guardamos el archivo en el estado, NO subimos a Supabase
       onFormChange("cvFile", file);
       
       toast({
-        title: isMa ? "✅ تم الرفع" : isEn ? "✅ Uploaded" : "✅ Subido",
-        description: isMa ? `تم رفع سيرتك الذاتية بنجاح` : isEn ? `Your CV has been uploaded successfully` : `Tu CV ha sido subido correctamente`,
+        title: isMa ? "✅ تم التحميل" : isEn ? "✅ File ready" : "✅ Archivo listo",
+        description: isMa ? `تم تحميل سيرتك الذاتية` : isEn ? `Your CV has been loaded` : `Tu CV ha sido cargado`,
       });
     } catch (error) {
       console.error("Error handling CV upload:", error);
       toast({
         title: isMa ? "خطأ" : isEn ? "Error" : "Error",
-        description: isMa ? "حدث خطأ أثناء رفع الملف" : isEn ? "Error uploading file" : "Error al subir el archivo",
+        description: isMa ? "حدث خطأ أثناء تحميل الملف" : isEn ? "Error loading file" : "Error al cargar el archivo",
         variant: "destructive",
       });
     } finally {
@@ -383,7 +363,7 @@ function OfficialBrowserBox({
     }
   };
 
-  // ✅ Manejar subida de foto
+  // ✅ PASO 3: handlePhotoUpload CORREGIDO - Solo guarda el archivo, no sube a Supabase
   const handlePhotoUpload = async (file: File) => {
     if (!file) return;
     
@@ -408,18 +388,18 @@ function OfficialBrowserBox({
     
     setUploadingPhoto(true);
     try {
-      const photoUrl = await uploadFileToSupabase(file, "photo");
-      onFormChange("photoUrl", photoUrl);
+      // ✅ SOLO guardamos el archivo en el estado, NO subimos a Supabase
+      onFormChange("photoFile", file);
       
       toast({
-        title: isMa ? "✅ تم الرفع" : isEn ? "✅ Uploaded" : "✅ Subida",
-        description: isMa ? "تم رفع الصورة بنجاح" : isEn ? "Photo uploaded successfully" : "Foto subida correctamente",
+        title: isMa ? "✅ تم التحميل" : isEn ? "✅ File ready" : "✅ Archivo listo",
+        description: isMa ? "تم تحميل الصورة" : isEn ? "Photo loaded" : "Foto cargada",
       });
     } catch (error) {
-      console.error("Error uploading photo:", error);
+      console.error("Error loading photo:", error);
       toast({
         title: isMa ? "خطأ" : isEn ? "Error" : "Error",
-        description: isMa ? "حدث خطأ أثناء رفع الصورة" : isEn ? "Error uploading photo" : "Error al subir la foto",
+        description: isMa ? "حدث خطأ أثناء تحميل الصورة" : isEn ? "Error loading photo" : "Error al cargar la foto",
         variant: "destructive",
       });
     } finally {
@@ -427,7 +407,7 @@ function OfficialBrowserBox({
     }
   };
 
-  // ✅ Manejar subida de PDF
+  // ✅ PASO 4: handlePdfUpload CORREGIDO - Solo guarda el archivo, no sube a Supabase
   const handlePdfUpload = async (file: File) => {
     if (!file) return;
     
@@ -451,18 +431,18 @@ function OfficialBrowserBox({
     
     setUploadingPdf(true);
     try {
-      const pdfUrl = await uploadFileToSupabase(file, "pdf");
-      onFormChange("pdfUrl", pdfUrl);
+      // ✅ SOLO guardamos el archivo en el estado, NO subimos a Supabase
+      onFormChange("pdfFile", file);
       
       toast({
-        title: isMa ? "✅ تم الرفع" : isEn ? "✅ Uploaded" : "✅ Subido",
-        description: isMa ? "تم رفع الملف بنجاح" : isEn ? "File uploaded successfully" : "Archivo subido correctamente",
+        title: isMa ? "✅ تم التحميل" : isEn ? "✅ File ready" : "✅ Archivo listo",
+        description: isMa ? "تم تحميل الملف" : isEn ? "File loaded" : "Archivo cargado",
       });
     } catch (error) {
-      console.error("Error uploading PDF:", error);
+      console.error("Error loading PDF:", error);
       toast({
         title: isMa ? "خطأ" : isEn ? "Error" : "Error",
-        description: isMa ? "حدث خطأ أثناء رفع الملف" : isEn ? "Error uploading file" : "Error al subir el archivo",
+        description: isMa ? "حدث خطأ أثناء تحميل الملف" : isEn ? "Error loading file" : "Error al cargar el archivo",
         variant: "destructive",
       });
     } finally {
@@ -1006,13 +986,13 @@ function OfficialBrowserBox({
                             <Loader2 className="w-5 h-5 text-yellow-400 animate-spin" />
                           )}
                         </div>
-                        {formData.cvUrl && (
+                        {formData.cvFile && (
                           <div className="mt-2 p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
                             <p className="text-emerald-400 text-[11px] font-semibold">
-                              ✅ {isMa ? "تم رفع السيرة الذاتية" : isEn ? "CV uploaded" : "CV subido"}
+                              ✅ {isMa ? "تم تحميل الملف" : isEn ? "File loaded" : "Archivo cargado"}
                             </p>
                             <p className="text-emerald-400/70 text-[10px] truncate">
-                              {formData.cvUrl}
+                              {formData.cvFile.name}
                             </p>
                           </div>
                         )}
@@ -1061,13 +1041,13 @@ function OfficialBrowserBox({
                         {uploadingPhoto && (
                           <div className="mt-2 flex items-center gap-2">
                             <Loader2 className="w-4 h-4 text-yellow-400 animate-spin" />
-                            <span className="text-yellow-400 text-[10px]">{isMa ? "جاري الرفع..." : isEn ? "Uploading..." : "Subiendo..."}</span>
+                            <span className="text-yellow-400 text-[10px]">{isMa ? "جاري التحميل..." : isEn ? "Loading..." : "Cargando..."}</span>
                           </div>
                         )}
-                        {formData.photoUrl && (
+                        {formData.photoFile && (
                           <div className="mt-2 p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
                             <p className="text-emerald-400 text-[10px] font-semibold truncate">
-                              ✅ {isMa ? "تم الرفع" : isEn ? "Uploaded" : "Subida"}
+                              ✅ {isMa ? "تم التحميل" : isEn ? "Loaded" : "Cargada"}
                             </p>
                           </div>
                         )}
@@ -1094,13 +1074,13 @@ function OfficialBrowserBox({
                         {uploadingPdf && (
                           <div className="mt-2 flex items-center gap-2">
                             <Loader2 className="w-4 h-4 text-yellow-400 animate-spin" />
-                            <span className="text-yellow-400 text-[10px]">{isMa ? "جاري الرفع..." : isEn ? "Uploading..." : "Subiendo..."}</span>
+                            <span className="text-yellow-400 text-[10px]">{isMa ? "جاري التحميل..." : isEn ? "Loading..." : "Cargando..."}</span>
                           </div>
                         )}
-                        {formData.pdfUrl && (
+                        {formData.pdfFile && (
                           <div className="mt-2 p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
                             <p className="text-emerald-400 text-[10px] font-semibold truncate">
-                              ✅ {isMa ? "تم الرفع" : isEn ? "Uploaded" : "Subido"}
+                              ✅ {isMa ? "تم التحميل" : isEn ? "Loaded" : "Cargado"}
                             </p>
                           </div>
                         )}
@@ -1354,7 +1334,9 @@ export default function TrabajoMalta() {
     willing_to_relocate: "Yes",
     
     // Documentos opcionales
+    photoFile: null,
     photoUrl: "",
+    pdfFile: null,
     pdfUrl: "",
     
     plan: "monthly",
@@ -1810,67 +1792,57 @@ export default function TrabajoMalta() {
     return true;
   };
 
-  // ✅ HANDLE PAY CORREGIDO - con todos los nuevos campos
+  // ✅ PASO 5: handlePay CORREGIDO - Envía formData y archivos, NO urls
   const handlePay = async (plan: "weekly" | "monthly") => {
     if (!validateForm()) {
       return;
     }
 
     try {
+      // ✅ Creamos FormData para enviar archivos
+      const formDataToSend = new FormData();
+      
+      // Datos del formulario
+      formDataToSend.append("plan", plan);
+      formDataToSend.append("fullName", formData.fullName);
+      formDataToSend.append("whatsapp", formData.whatsapp);
+      formDataToSend.append("email", formData.email);
+      formDataToSend.append("nationality", formData.nationality);
+      formDataToSend.append("currentCity", formData.currentCity);
+      formDataToSend.append("countryResidence", formData.countryResidence);
+      formDataToSend.append("fechaNacimiento", formData.fechaNacimiento);
+      formDataToSend.append("idiomas", formData.idiomas);
+      formDataToSend.append("ingles_nivel", formData.ingles_nivel);
+      formDataToSend.append("frances_nivel", formData.frances_nivel);
+      formDataToSend.append("italiano_nivel", formData.italiano_nivel);
+      formDataToSend.append("espanol_nivel", formData.espanol_nivel);
+      formDataToSend.append("arabe_nivel", formData.arabe_nivel);
+      formDataToSend.append("aleman_nivel", formData.aleman_nivel);
+      formDataToSend.append("profesion", formData.profesion);
+      formDataToSend.append("añosExperiencia", formData.añosExperiencia);
+      formDataToSend.append("education_level", formData.education_level);
+      formDataToSend.append("sectores", formData.sectores);
+      formDataToSend.append("carnetConducir", formData.carnetConducir);
+      formDataToSend.append("preferred_position", formData.preferred_position);
+      formDataToSend.append("work_preference", formData.work_preference);
+      formDataToSend.append("willing_to_relocate", formData.willing_to_relocate);
+      formDataToSend.append("tieneCV", formData.tieneCV);
+      formDataToSend.append("worker_status", "waiting");
+
+      // ✅ Enviamos los archivos (NO las URLs)
+      if (formData.cvFile) {
+        formDataToSend.append("cvFile", formData.cvFile);
+      }
+      if (formData.photoFile) {
+        formDataToSend.append("photoFile", formData.photoFile);
+      }
+      if (formData.pdfFile) {
+        formDataToSend.append("pdfFile", formData.pdfFile);
+      }
+
       const res = await fetch("/api/create-checkout-malta", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          plan,
-          fullName: formData.fullName,
-          whatsapp: formData.whatsapp,
-          email: formData.email,
-          nationality: formData.nationality,
-          currentCity: formData.currentCity,
-          countryResidence: formData.countryResidence,
-          fechaNacimiento: formData.fechaNacimiento,
-          
-          // Idiomas (valores en inglés)
-          idiomas: formData.idiomas,
-          ingles_nivel: formData.ingles_nivel,
-          frances_nivel: formData.frances_nivel,
-          italiano_nivel: formData.italiano_nivel,
-          espanol_nivel: formData.espanol_nivel,
-          arabe_nivel: formData.arabe_nivel,
-          aleman_nivel: formData.aleman_nivel,
-          
-          // Experiencia
-          profesion: formData.profesion,
-          añosExperiencia: formData.añosExperiencia,
-          education_level: formData.education_level,
-          
-          // Sectores
-          sectores: formData.sectores,
-          
-          // Carnet
-          carnetConducir: formData.carnetConducir,
-          
-          // Preferencias
-          preferred_position: formData.preferred_position,
-          work_preference: formData.work_preference,
-          willing_to_relocate: formData.willing_to_relocate,
-          
-          // CV
-          tieneCV: formData.tieneCV,
-          
-          // ✅ CORREGIDO: cvUrl en lugar de cv_url
-          cvUrl: formData.cvUrl || "",
-          
-          // ✅ CORREGIDO: photoUrl en lugar de photo_url
-          photoUrl: formData.photoUrl || "",
-          
-          // ✅ CORREGIDO: pdfUrl en lugar de pdf_url
-          pdfUrl: formData.pdfUrl || "",
-          
-          worker_status: "waiting",
-        }),
+        body: formDataToSend, // ✅ Usamos FormData, no JSON
       });
 
       const data = await res.json();
