@@ -77,11 +77,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const aleman_nivel = metadata.aleman_nivel || "";
     
     // ============================================
-    // 3. EXPERIENCIA
+    // 3. EXPERIENCIA - ✅ CAMBIO 1: Añadido estudios
     // ============================================
     const profesion = metadata.profesion || "";
-    // ✅ CAMBIO 1: añosExperiencia -> anosExperiencia
     const anosExperiencia = metadata.anosExperiencia || "";
+    const estudios = metadata.estudios || ""; // ✅ AÑADIDO
     const educationLevel = metadata.education_level || "";
     const sectores = metadata.sectores || "";
     
@@ -100,7 +100,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // ============================================
     // 6. CV Y DOCUMENTOS
     // ============================================
-    // ✅ CAMBIO 2: tieneCV ahora acepta "Yes" o "Sí"
     const tieneCV =
       metadata.tieneCV === "Yes" ||
       metadata.tieneCV === "Sí";
@@ -119,6 +118,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     console.log("  - currentCity:", currentCity);
     console.log("  - photoUrl:", photoUrl);
     console.log("  - cvUrl:", cvUrl);
+    console.log("  - estudios:", estudios); // ✅ AÑADIDO: log de estudios
 
     // ============================================
     // ✅ 8. VERIFICAR SI YA EXISTE (ANTES DE INSERTAR)
@@ -147,10 +147,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         full_name: fullName,
         whatsapp: whatsapp,
         email: email,
-        // ✅ CAMBIO 3: nationality -> nacionalidad
         nacionalidad: nationality,
         current_city: currentCity,
-        // ✅ CAMBIO 3: country_residence -> pais_residencia
         pais_residencia: countryResidence,
         fecha_nacimiento: fechaNacimiento || null,
         idiomas: idiomas,
@@ -161,8 +159,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         arabe_nivel: arabe_nivel,
         aleman_nivel: aleman_nivel,
         profesion: profesion,
-        // ✅ CAMBIO 3: anos_experiencia usa la variable correcta
+        // ✅ CAMBIO 2: Orden correcto con estudios
         anos_experiencia: anosExperiencia,
+        estudios: estudios, // ✅ AÑADIDO
         education_level: educationLevel,
         sectores: sectores,
         carnet_conducir: carnetConducir,
@@ -180,6 +179,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       if (session.payment_intent) {
         updateData.stripe_payment_intent = session.payment_intent as string;
+      }
+
+      // ✅ CAMBIO 3: Añadir stripe_customer_id al update
+      if (session.customer) {
+        updateData.stripe_customer_id = session.customer as string;
       }
 
       const { error: updateError } = await supabase
@@ -207,10 +211,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           full_name: fullName,
           whatsapp: whatsapp,
           email: email,
-          // ✅ CAMBIO 4: nationality -> nacionalidad
           nacionalidad: nationality,
           current_city: currentCity,
-          // ✅ CAMBIO 4: country_residence -> pais_residencia
           pais_residencia: countryResidence,
           fecha_nacimiento: fechaNacimiento || null,
           idiomas: idiomas,
@@ -221,8 +223,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           arabe_nivel: arabe_nivel,
           aleman_nivel: aleman_nivel,
           profesion: profesion,
-          // ✅ CAMBIO 4: anos_experiencia usa la variable correcta
+          // ✅ CAMBIO 4: Orden correcto con estudios en INSERT
           anos_experiencia: anosExperiencia,
+          estudios: estudios, // ✅ AÑADIDO
           education_level: educationLevel,
           sectores: sectores,
           carnet_conducir: carnetConducir,
@@ -235,6 +238,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           pdf_url: pdfUrl,
           plan: plan,
           stripe_session_id: session.id,
+          // ✅ CAMBIO 5: Añadir stripe_customer_id al INSERT
+          stripe_customer_id: session.customer as string,
           stripe_payment_intent: session.payment_intent as string,
           paid: true,
           worker_status: "pending",
