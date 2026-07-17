@@ -498,7 +498,7 @@ async function generateContent(prompt: string): Promise<{ text: string; tokens?:
 }
 
 // ============================================
-// PROMPT PARA CV - SOLO NARRATIVA
+// ✅ PROMPT PARA CV - VERSIÓN MEJORADA (NARRATIVA PROFESIONAL)
 // ============================================
 
 function getPremiumCVPrompt(data: any, company: Company): string {
@@ -507,7 +507,7 @@ function getPremiumCVPrompt(data: any, company: Company): string {
 
   const expYears = validateExperienceYears(data.anos_experiencia);
   const expMap: Record<string, string> = {
-    sin_experiencia: "0 years (entry level - highly motivated)",
+    sin_experiencia: "entry level",
     menos_1: "less than 1 year",
     "1_2": "1-2 years",
     "3_5": "3-5 years",
@@ -520,51 +520,69 @@ function getPremiumCVPrompt(data: any, company: Company): string {
   const video = normalizeVideo(data.entrevista_video);
   const workPermit = normalizeWorkPermit(data.permiso_trabajo);
   const userExperience = validateWorkExperience(data.experiencia_laboral);
+  const city = data.current_city || data.ciudad_actual || "Morocco";
+  const country = data.pais_residencia || "Morocco";
+  const education = data.estudios || "No formal education";
 
   return `
-You are a senior recruitment specialist with 20 years of experience in the Maltese job market.
+You are a senior recruitment consultant with 20+ years of experience in the Maltese hospitality and labour market. You write professional, ATS-optimised CVs that sound human, unique, and tailored to each candidate.
 
-IMPORTANT: You are writing ONLY the NARRATIVE sections of a CV.
-DO NOT write languages, passport, driving licence, availability, work permit, or video interview.
-These are already provided by the template from the database.
+📌 CRITICAL RULES:
+1. DO NOT state that the candidate worked at a specific company unless the user provided that information in their experience.
+2. If the user has NO work experience, write a compelling entry-level profile using realistic responsibilities and skills for the role.
+3. Use the candidate's city of origin (${city}) and country (${country}) to add regional context and authenticity.
+4. Use professional, natural British English.
+5. Avoid generic phrases like "hard-working", "dedicated", or "team player" without context.
+6. Each section must be unique and tailored to this candidate.
+
+---
 
 CANDIDATE PROFILE:
 - Full Name: ${data.full_name || "N/A"}
 - Target Role: ${template.title}
-- Target Company: ${company.name}
+- Target Company: ${company.name} (${company.city})
 - Experience Level: ${expLabel}
-- Education: ${data.estudios || "N/A"}
-- Languages: (will be added by template, DO NOT write these)
-- Driver's License: (will be added by template, DO NOT write these)
-- Availability: ${availability} (will be added by template)
-- Passport: ${passport} (will be added by template)
-- Video Interview: ${video} (will be added by template)
-- Work Permit: ${workPermit} (will be added by template)
+- Education: ${education}
+- City of Origin: ${city}
+- Country of Residence: ${country}
+- Availability: ${availability}
+- Passport: ${passport}
+- Work Permit: ${workPermit}
+- Video Interview: ${video}
 
-${userExperience ? `REAL WORK EXPERIENCE PROVIDED BY CANDIDATE:\n${userExperience}\n\nUse this as the foundation for the Professional Experience section.` : ''}
+${userExperience ? `REAL WORK EXPERIENCE PROVIDED BY CANDIDATE:\n${userExperience}\n\n⚠️ IMPORTANT: Use this as the foundation for the Professional Experience section. If the candidate mentions a specific company, you CAN use that company name. Otherwise, describe the experience generically.` : ''}
 
-ATS KEYWORDS TO INCLUDE:
+ATS KEYWORDS FOR THIS ROLE:
 ${template.atsKeywords.map(k => `- ${k}`).join("\n")}
 
-Generate ONLY these narrative sections:
+---
 
-1. EXECUTIVE SUMMARY (4-5 sentences):
-   - Powerful, confident opening
-   - Unique value proposition
-   - Key strengths and what they offer
+Generate ONLY these narrative sections in JSON format:
+
+1. SUMMARY (4-5 sentences):
+   Write a powerful executive summary that:
+   - Opens with a confident statement about the candidate's professional identity
+   - Highlights their unique value proposition
+   - Mentions their key strengths and what they offer to the employer
+   - Is tailored to the Maltese job market and this specific role
 
 2. PROFESSIONAL PROFILE (3-4 sentences):
-   - Professional identity
-   - Core competencies and expertise
+   - Describes the candidate's professional identity and core competencies
+   - Shows understanding of the industry
+   - Is concise and impactful
 
 3. KEY ACHIEVEMENTS (3-5 bullet points):
    - Specific, measurable achievements
+   - If the candidate has no experience, write realistic achievements from training or volunteer work
+   - Use action verbs (improved, managed, achieved, increased, reduced, etc.)
 
 4. PROFESSIONAL EXPERIENCE (3-4 bullet points):
-   ${userExperience ? '- Use the user\'s real experience as the foundation' : '- Write realistic, compelling experience bullets for a junior/entry-level position'}
-   - Each bullet is one sentence or phrase
+   ${userExperience ? '- Use the user\'s real experience as the foundation' : '- Write realistic, compelling experience bullets for an entry-level candidate'}
+   - Each bullet describes one key responsibility or achievement
+   - Use action verbs
+   - Keep each bullet concise (one sentence or short phrase)
 
-Return as JSON:
+Return ONLY valid JSON:
 {
   "summary": "...",
   "profile": "...",
@@ -609,7 +627,7 @@ async function generatePremiumCV(data: any, company: Company): Promise<CVContent
 }
 
 // ============================================
-// PROMPT PARA COVER LETTER - SOLO EL CUERPO
+// ✅ PROMPT PARA COVER LETTER - VERSIÓN MEJORADA
 // ============================================
 
 async function generatePremiumCoverLetter(data: any, company: Company): Promise<LetterContent> {
@@ -622,20 +640,32 @@ async function generatePremiumCoverLetter(data: any, company: Company): Promise<
   const video = normalizeVideo(data.entrevista_video);
   const workPermit = normalizeWorkPermit(data.permiso_trabajo);
   const userExperience = validateWorkExperience(data.experiencia_laboral);
+  const city = data.current_city || data.ciudad_actual || "Morocco";
+  const country = data.pais_residencia || "Morocco";
 
   const prompt = `
-You are a professional cover letter writer for the Maltese job market.
+You are a professional cover letter writer specialising in the Maltese job market. You write natural, human-sounding letters that are unique to each candidate and company.
 
-IMPORTANT: You are writing ONLY the BODY of a professional cover letter.
-DO NOT write applicant name, company name, address, greeting, date, subject, closing signature, phone, email, or placeholders.
-DO NOT write languages, passport, driving licence, availability, work permit, or video interview.
-These are already provided by the template.
+📌 CRITICAL RULES:
+1. Write ONLY the BODY paragraphs of the cover letter.
+2. DO NOT include: name, address, date, subject line, greeting, signature, phone, email, or placeholders.
+3. DO NOT mention the candidate's languages, passport, driving licence, or work permit - these are already in the CV.
+4. Make each letter DIFFERENT for each candidate and company.
+5. Use natural, professional British English.
+6. Never use generic phrases like "I am writing to apply for" or "I am a hard-working individual".
+7. Use the candidate's city of origin (${city}) and country (${country}) for authentic context.
 
-CANDIDATE PROFILE (for context only - DO NOT include these in the letter):
+---
+
+CANDIDATE PROFILE (for context only):
+- Full Name: ${data.full_name || "N/A"}
 - Target Role: ${template.title}
 - Target Company: ${company.name}
-- Experience: ${data.anos_experiencia || "Entry level"}
+- Company Location: ${company.city}
+- Experience Level: ${data.anos_experiencia || "Entry level"}
 - Education: ${data.estudios || "N/A"}
+- City of Origin: ${city}
+- Country of Residence: ${country}
 - Availability: ${availability}
 - Passport: ${passport}
 - Video Interview: ${video}
@@ -644,18 +674,44 @@ CANDIDATE PROFILE (for context only - DO NOT include these in the letter):
 
 ${userExperience ? `REAL WORK EXPERIENCE PROVIDED BY CANDIDATE:\n${userExperience}\n\nUse this as the foundation for the body paragraphs.` : ''}
 
-Return ONLY valid JSON in this exact format:
-{
-  "introduction": "Opening paragraph - hook, mention the position and company",
-  "body1": "First body paragraph - relevant experience and skills",
-  "body2": "Second body paragraph - why this company and why Malta",
-  "body3": "Third body paragraph - availability and next steps",
-  "closing": "Final paragraph - call to action and appreciation"
-}
+---
 
-Each paragraph must be 2-4 sentences, professional tone, tailored to hospitality in Malta.
-Never mention a hotel or company different from ${company.name}.
-Never mention the applicant's name, phone, or email.
+Generate the cover letter body as 5 paragraphs in JSON format:
+
+1. INTRODUCTION (2-3 sentences):
+   - A compelling opening that hooks the reader
+   - Mention the specific company (${company.name}) and position (${template.title})
+   - Show enthusiasm for this opportunity
+   - DO NOT use generic openings
+
+2. BODY 1 (2-4 sentences):
+   - Highlight the candidate's relevant skills and experience
+   - Connect their background to the needs of the role
+   - Be specific and show understanding of the industry
+
+3. BODY 2 (2-4 sentences):
+   - Explain WHY this company (${company.name}) and WHY Malta
+   - Show research into the company's values or reputation
+   - Connect the candidate's values to the company's mission
+
+4. BODY 3 (2-4 sentences):
+   - Address availability and next steps
+   - Mention willingness to relocate if applicable (${availability})
+   - Express readiness to contribute immediately
+
+5. CLOSING (2-3 sentences):
+   - Professional conclusion
+   - Call to action (invitation for interview)
+   - Appreciation for their consideration
+
+Return ONLY valid JSON:
+{
+  "introduction": "...",
+  "body1": "...",
+  "body2": "...",
+  "body3": "...",
+  "closing": "..."
+}
 `;
 
   const result = await generateContent(prompt);
@@ -872,7 +928,7 @@ function generateCVHtml(
   const tagline = `${templateData.title} professional with ${expLabel}`;
 
   // --- PERSONAL STATEMENT ---
-  const personalStatement = content.summary || `${templateData.title} professional with ${expLabel} experience. Dedicated to delivering quality work.`;
+  const personalStatement = content.profile || content.summary || `${templateData.title} professional with ${expLabel} experience.`;
 
   // ============================================
   // REEMPLAZAR TODAS LAS VARIABLES UNIFICADAS
@@ -1122,8 +1178,8 @@ export default async function handler(
       letter_text: `${letterContent.introduction}\n${letterContent.body1}\n${letterContent.body2}\n${letterContent.body3}\n${letterContent.closing}`,
       cv_html: cvHtml,
       letter_html: coverHtml,
-      cv_prompt: "Premium CV prompt - narrative only",
-      letter_prompt: "Premium cover letter prompt - JSON body only",
+      cv_prompt: "Premium CV prompt - narrative only (improved)",
+      letter_prompt: "Premium cover letter prompt - JSON body only (improved)",
       cv_tokens: cvContent.tokens || 0,
       letter_tokens: letterContent.tokens || 0,
       total_tokens: (cvContent.tokens || 0) + (letterContent.tokens || 0),
@@ -1140,24 +1196,26 @@ export default async function handler(
       updateData.photo_uploaded = true;
       updateData.photo_generated_at = new Date().toISOString();
     }
-console.log("📦 updateData:");
-console.log(JSON.stringify(updateData, null, 2));
- const { error: updateError } = await supabase
-  .from("malta_applications")
-  .update(updateData)
-  .eq("id", applicationId);
 
-if (updateError) {
-  console.error(
-    "❌ Supabase UPDATE ERROR:",
-    JSON.stringify(updateError, null, 2)
-  );
+    console.log("📦 updateData:");
+    console.log(JSON.stringify(updateData, null, 2));
 
-  return res.status(500).json({
-    error: updateError.message,
-    details: updateError,
-  });
-}
+    const { error: updateError } = await supabase
+      .from("malta_applications")
+      .update(updateData)
+      .eq("id", applicationId);
+
+    if (updateError) {
+      console.error(
+        "❌ Supabase UPDATE ERROR:",
+        JSON.stringify(updateError, null, 2)
+      );
+
+      return res.status(500).json({
+        error: updateError.message,
+        details: updateError,
+      });
+    }
 
     console.log(`✅ Application updated successfully in ${totalTime}ms`);
 
