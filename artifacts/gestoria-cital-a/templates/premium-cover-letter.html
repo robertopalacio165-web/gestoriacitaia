@@ -3,305 +3,396 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>{{FIRST_NAME}} {{LAST_NAME}} - Cover Letter</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <title>Cover Letter - {{FULL_NAME}}</title>
   <style>
-    /* ============================================
-       RESET Y CONFIGURACIÓN
-    ============================================ */
-    @page {
-      size: A4;
-      margin: 0;
-    }
-
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
     }
 
-    html {
-      -webkit-print-color-adjust: exact;
-      print-color-adjust: exact;
-      color-adjust: exact;
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
     }
 
     body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
-      background: #eef2f6;
+      font-family: 'Georgia', 'Times New Roman', serif;
+      background: #e8e4de;
+      color: #222;
       display: flex;
       justify-content: center;
       align-items: center;
       min-height: 100vh;
-      padding: 40px;
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
+      padding: 20px;
     }
 
     .page {
       width: 210mm;
+      height: 297mm;
       min-height: 297mm;
+      max-height: 297mm;
       background: #ffffff;
-      border-radius: 16px;
-      box-shadow: 0 25px 80px rgba(0, 0, 0, 0.15);
+      border-radius: 12px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
       overflow: hidden;
-      padding: 48px 55px 42px;
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      padding: 52px 60px 48px 60px;
+      position: relative;
     }
 
     /* ============================================
-       HEADER - EXACTO A LA IMAGEN
+       BORDES PREMIUM
     ============================================ */
-    .header {
-      display: flex;
-      align-items: center;
-      gap: 28px;
-      padding-bottom: 20px;
-      border-bottom: 4px solid #2d7d46;
-      margin-bottom: 28px;
+    .page::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 8px;
+      background: linear-gradient(90deg, #0f2a1e 0%, #c9a84c 30%, #d4af37 50%, #c9a84c 70%, #0f2a1e 100%);
+      box-shadow: 0 2px 15px rgba(201, 168, 76, 0.3);
     }
 
-    .header .photo {
-      width: 90px;
-      height: 90px;
-      border-radius: 50%;
-      overflow: hidden;
-      flex-shrink: 0;
-      border: 4px solid #2d7d46;
-      background: linear-gradient(135deg, #2d7d46, #1a5a33);
-      display: flex;
-      align-items: center;
-      justify-content: center;
+    .page::after {
+      content: "";
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 8px;
+      background: linear-gradient(90deg, #0f2a1e 0%, #c9a84c 30%, #d4af37 50%, #c9a84c 70%, #0f2a1e 100%);
+      box-shadow: 0 -2px 15px rgba(201, 168, 76, 0.3);
     }
 
-    .header .photo img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
+    .page .border-line-top {
+      position: absolute;
+      top: 14px;
+      left: 20px;
+      right: 20px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(201, 168, 76, 0.2), transparent);
     }
 
-    .header .photo .initials {
-      font-size: 32px;
-      font-weight: 800;
-      color: #ffffff;
-      letter-spacing: 1px;
+    .page .border-line-bottom {
+      position: absolute;
+      bottom: 14px;
+      left: 20px;
+      right: 20px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(201, 168, 76, 0.2), transparent);
     }
 
-    .header .header-info {
-      flex: 1;
+    .corner {
+      position: absolute;
+      width: 40px;
+      height: 40px;
+      border-color: #c9a84c;
+      border-style: solid;
+      border-width: 0;
+      opacity: 0.5;
     }
 
-    .header .header-info .name {
+    .corner-tl {
+      top: 18px;
+      left: 18px;
+      border-top-width: 2px;
+      border-left-width: 2px;
+      border-radius: 2px 0 0 0;
+    }
+
+    .corner-tr {
+      top: 18px;
+      right: 18px;
+      border-top-width: 2px;
+      border-right-width: 2px;
+      border-radius: 0 2px 0 0;
+    }
+
+    .corner-bl {
+      bottom: 18px;
+      left: 18px;
+      border-bottom-width: 2px;
+      border-left-width: 2px;
+      border-radius: 0 0 0 2px;
+    }
+
+    .corner-br {
+      bottom: 18px;
+      right: 18px;
+      border-bottom-width: 2px;
+      border-right-width: 2px;
+      border-radius: 0 0 2px 0;
+    }
+
+    /* ============================================
+       HEADER
+    ============================================ */
+    .header-block {
+      text-align: center;
+      margin-bottom: 24px;
+      padding-bottom: 18px;
+      border-bottom: 2px solid #0f2a1e;
+      position: relative;
+    }
+
+    .header-block::after {
+      content: "✦";
+      position: absolute;
+      bottom: -11px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: white;
+      padding: 0 16px;
+      color: #d4af37;
+      font-size: 18px;
+      text-shadow: 0 0 20px rgba(212, 175, 55, 0.3);
+    }
+
+    .header-block .name {
       font-size: 34px;
-      font-weight: 900;
-      color: #0b2345;
-      letter-spacing: -0.5px;
-      line-height: 1.1;
-      text-transform: uppercase;
-    }
-
-    .header .header-info .name .lastname {
-      color: #2d7d46;
-    }
-
-    .header .header-info .title {
-      font-size: 13px;
       font-weight: 700;
-      color: #2d7d46;
-      text-transform: uppercase;
       letter-spacing: 2.5px;
-      margin-top: 4px;
-      margin-bottom: 8px;
+      text-transform: uppercase;
+      color: #0f2a1e;
+      margin-bottom: 2px;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      text-shadow: 0 1px 2px rgba(15, 42, 30, 0.05);
     }
 
-    .header .header-info .contact-line {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px 16px;
-      font-size: 12px;
-      color: #6a7a8a;
-    }
-
-    .header .header-info .contact-line .contact-item {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .header .date {
-      text-align: right;
-      font-size: 13px;
-      color: #6a7a8a;
-      line-height: 1.8;
-      flex-shrink: 0;
-    }
-
-    .header .date .city {
+    .header-block .title {
+      font-size: 14px;
+      color: #7a8a82;
       font-weight: 600;
-      color: #0b2345;
+      text-transform: uppercase;
+      letter-spacing: 5px;
+      margin-top: 2px;
+      font-family: 'Segoe UI', Arial, sans-serif;
+    }
+
+    .header-block .contact-line {
+      font-size: 11px;
+      color: #aaaaaa;
+      margin-top: 10px;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      letter-spacing: 0.5px;
+    }
+
+    .header-block .contact-line .sep {
+      color: #d4af37;
+      margin: 0 10px;
+      font-size: 6px;
+      vertical-align: middle;
+      opacity: 0.6;
     }
 
     /* ============================================
-       CUERPO - EXACTO A LA IMAGEN
+       TO / DATE / SUBJECT
     ============================================ */
-    .body {
+    .letter-meta {
+      margin-bottom: 20px;
+      font-size: 12px;
+      color: #3a4a42;
+      line-height: 1.9;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: linear-gradient(145deg, #faf8f4 0%, #f0ece6 100%);
+      padding: 16px 22px;
+      border-radius: 6px;
+      border-left: 5px solid #d4af37;
+      border-right: 1px solid rgba(201, 168, 76, 0.08);
+      border-top: 1px solid rgba(201, 168, 76, 0.05);
+      border-bottom: 1px solid rgba(201, 168, 76, 0.05);
+      position: relative;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
+    }
+
+    .letter-meta::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 60px;
+      height: 60px;
+      background: radial-gradient(circle at top right, rgba(212, 175, 55, 0.03), transparent 70%);
+      border-radius: 0 6px 0 0;
+    }
+
+    .letter-meta .meta-label {
+      font-weight: 700;
+      color: #0f2a1e;
+      display: inline-block;
+      min-width: 68px;
+      letter-spacing: 0.8px;
+      font-size: 11px;
+    }
+
+    .letter-meta .meta-line {
+      margin-bottom: 1px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .letter-meta .meta-line:last-child {
+      margin-bottom: 0;
+    }
+
+    .letter-meta .meta-value {
+      color: #2a3a32;
+    }
+
+    /* ============================================
+       CONTENIDO
+    ============================================ */
+    .letter-content {
+      flex: 1;
       display: flex;
       flex-direction: column;
     }
 
-    .body .company {
-      font-size: 14px;
-      color: #2b2b3f;
-      line-height: 1.9;
-      margin-bottom: 18px;
-    }
-
-    .body .company strong {
-      font-size: 16px;
-      color: #0b2345;
-    }
-
-    .body .company .department {
-      color: #6a7a8a;
-      font-weight: 500;
-      margin-top: 1px;
-    }
-
-    .body .company .address-line {
-      color: #6a7a8a;
-      font-weight: 400;
-    }
-
-    .body .company-empty {
-      display: none;
-    }
-
-    .body .subject {
-      font-size: 16px;
-      font-weight: 700;
-      color: #0b2345;
-      margin-bottom: 20px;
-      margin-top: 4px;
-    }
-
-    .body .greeting {
-      font-size: 15px;
+    .letter-content .greeting {
+      font-size: 13.5px;
+      color: #0f2a1e;
       font-weight: 600;
-      color: #0b2345;
-      margin-bottom: 20px;
-    }
-
-    .body .content p {
-      font-size: 14px;
-      line-height: 1.85;
-      color: #2b2b3f;
       margin-bottom: 14px;
-      text-align: justify;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      letter-spacing: 0.5px;
     }
 
-    .body .content p:last-of-type {
+    .letter-content p {
+      font-size: 12px;
+      line-height: 2;
+      color: #3a4a42;
+      margin-bottom: 13px;
+      text-align: justify;
+      font-family: 'Georgia', serif;
+    }
+
+    .letter-content p:first-of-type {
+      margin-top: 0;
+    }
+
+    .letter-content p:last-of-type {
       margin-bottom: 0;
     }
 
-    /* ============================================
-       FIRMA - EXACTO A LA IMAGEN
-    ============================================ */
-    .signature {
-      margin-top: 38px;
-      padding-top: 22px;
-      border-top: 1px solid #e8ecf0;
+    .letter-content .signature {
+      margin-top: 34px;
+      padding-top: 14px;
+      border-top: 2px solid #0f2a1e;
+      position: relative;
     }
 
-    .signature .signature-name {
-      font-size: 20px;
-      font-weight: 900;
-      color: #0b2345;
-      letter-spacing: -0.3px;
-      text-transform: uppercase;
-    }
-
-    .signature .signature-title {
+    .letter-content .signature::after {
+      content: "✦";
+      position: absolute;
+      top: -10px;
+      left: 0;
+      background: white;
+      padding-right: 12px;
+      color: #d4af37;
       font-size: 14px;
-      font-weight: 700;
-      color: #2d7d46;
-      margin-top: 2px;
+      text-shadow: 0 0 20px rgba(212, 175, 55, 0.2);
     }
 
-    .signature .signature-contact {
-      margin-top: 6px;
+    .letter-content .signature .signature-closing {
       font-size: 13px;
-      color: #6a7a8a;
-      line-height: 1.6;
-      overflow-wrap: anywhere;
-      word-break: break-word;
+      color: #3a4a42;
+      font-weight: 400;
+      margin-bottom: 4px;
+      font-family: 'Georgia', serif;
+      font-style: italic;
     }
 
-    .signature .signature-contact .contact-item {
-      display: inline;
+    .letter-content .signature .signature-name {
+      font-size: 19px;
+      font-weight: 700;
+      color: #0f2a1e;
+      margin-top: 4px;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      letter-spacing: 1.5px;
     }
 
-    .signature .signature-contact .sep {
-      color: #d0d5da;
-      margin: 0 4px;
-    }
-
-    /* ============================================
-       RESPONSIVE
-    ============================================ */
-    @media screen and (max-width: 800px) {
-      body {
-        padding: 15px;
-      }
-
-      .page {
-        border-radius: 12px;
-        padding: 30px 25px;
-        width: 100%;
-        min-height: auto;
-      }
-
-      .header {
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-        gap: 16px;
-      }
-
-      .header .date {
-        text-align: center;
-      }
-
-      .header .header-info .contact-line {
-        justify-content: center;
-      }
-
-      .body .content p {
-        font-size: 13px;
-      }
+    .letter-content .signature .signature-title {
+      font-size: 12px;
+      color: #7a8a82;
+      margin-top: 2px;
+      font-weight: 500;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      letter-spacing: 1px;
     }
 
     /* ============================================
        IMPRESIÓN
     ============================================ */
     @media print {
+      html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+
       body {
         background: #ffffff;
         padding: 0;
+        margin: 0;
         display: block;
       }
 
       .page {
-        border-radius: 0 !important;
-        box-shadow: none !important;
+        border-radius: 0;
+        box-shadow: none;
         width: 100%;
+        height: 100vh;
+        max-height: 100vh;
         min-height: 100vh;
-        padding: 45px 50px 40px;
+        page-break-after: avoid;
+        page-break-inside: avoid;
+        overflow: hidden;
+        padding: 48px 56px 44px 56px;
       }
 
-      .header .photo {
+      .letter-meta {
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
         color-adjust: exact !important;
+      }
+    }
+
+    @media screen and (max-width: 800px) {
+      .page {
+        padding: 32px 28px 28px 28px;
+        height: auto;
+        min-height: 100vh;
+        max-height: none;
+        width: 100%;
+        border-radius: 0;
+      }
+
+      .header-block .name {
+        font-size: 24px;
+        line-height: 26px;
+      }
+
+      .letter-content p {
+        font-size: 11.5px;
+        line-height: 1.8;
+      }
+
+      .header-block .contact-line {
+        font-size: 10px;
+      }
+
+      .letter-meta {
+        padding: 12px 16px;
+        font-size: 11px;
+      }
+
+      .corner {
+        display: none;
       }
     }
   </style>
@@ -310,73 +401,66 @@
 
 <div class="page">
 
+  <!-- LÍNEAS DECORATIVAS INTERNAS -->
+  <div class="border-line-top"></div>
+  <div class="border-line-bottom"></div>
+
+  <!-- ESQUINAS DORADAS -->
+  <div class="corner corner-tl"></div>
+  <div class="corner corner-tr"></div>
+  <div class="corner corner-bl"></div>
+  <div class="corner corner-br"></div>
+
   <!-- ============================================
-  HEADER - EXACTO A LA IMAGEN
+  HEADER
   ============================================ -->
-  <div class="header">
-
-    <!-- FOTO -->
-    <div class="photo">
-      {{PHOTO_HTML}}
+  <div class="header-block">
+    <div class="name">{{FULL_NAME}}</div>
+    <div class="title">{{JOB_TITLE}}</div>
+    <div class="contact-line">
+      <span>{{EMAIL}}</span>
+      <span class="sep">◆</span>
+      <span>{{PHONE}}</span>
+      <span class="sep">◆</span>
+      <span>{{NATIONALITY}}</span>
+      <span class="sep">◆</span>
+      <span>{{LOCATION}}</span>
     </div>
-
-    <!-- INFORMACIÓN -->
-    <div class="header-info">
-      <div class="name">{{FIRST_NAME}} <span class="lastname">{{LAST_NAME}}</span></div>
-      <div class="title">{{TITLE}}</div>
-      <div class="contact-line">
-        <span class="contact-item">{{EMAIL}}</span>
-        <span class="sep">|</span>
-        <span class="contact-item">{{WHATSAPP}}</span>
-        <span class="sep">|</span>
-        <span class="contact-item">{{LOCATION}}</span>
-      </div>
-    </div>
-
-    <!-- FECHA -->
-    <div class="date">
-      <div class="city">{{LOCATION}}</div>
-      {{DATE}}
-    </div>
-
   </div>
 
   <!-- ============================================
-  CUERPO - EXACTO A LA IMAGEN
+  TO / DATE / SUBJECT
   ============================================ -->
-  <div class="body">
+  <div class="letter-meta">
+    <div class="meta-line"><span class="meta-label">TO</span> <span class="meta-value">{{TO_COMPANY}}</span></div>
+    <div class="meta-line"><span class="meta-label"></span> <span class="meta-value">{{COMPANY_NAME}}</span></div>
+    <div class="meta-line"><span class="meta-label"></span> <span class="meta-value">{{COMPANY_ADDRESS}}</span></div>
+    <div class="meta-line" style="margin-top:4px;"><span class="meta-label">DATE</span> <span class="meta-value">{{DATE}}</span></div>
+    <div class="meta-line"><span class="meta-label">SUBJECT</span> <span class="meta-value">Application for the Position of {{JOB_TITLE}}</span></div>
+  </div>
 
-    <!-- EMPRESA -->
-    {{COMPANY_SECTION}}
+  <!-- ============================================
+  CONTENIDO
+  ============================================ -->
+  <div class="letter-content">
 
-    <!-- ASUNTO -->
-    <div class="subject">
-      Application for the Position of {{TITLE}}
-    </div>
+    <p class="greeting">Dear Hiring Manager,</p>
 
-    <!-- SALUDO -->
-    <div class="greeting">
-      {{GREETING}}
-    </div>
+    <p>{{INTRODUCTION}}</p>
 
-    <!-- CONTENIDO -->
-    <div class="content">
-      <p>{{INTRODUCTION}}</p>
-      <p>{{BODY_1}}</p>
-      <p>{{BODY_2}}</p>
-      <p>{{BODY_3}}</p>
-      <p>{{CLOSING}}</p>
-    </div>
+    <p>{{BODY_1}}</p>
 
-    <!-- FIRMA - EXACTO A LA IMAGEN -->
+    <p>{{BODY_2}}</p>
+
+    <p>{{BODY_3}}</p>
+
+    <p>{{CLOSING}}</p>
+
+    <!-- FIRMA -->
     <div class="signature">
-      <div class="signature-name">{{FIRST_NAME}} {{LAST_NAME}}</div>
-      <div class="signature-title">{{TITLE}}</div>
-      <div class="signature-contact">
-        <span class="contact-item">{{EMAIL}}</span>
-        <span class="sep">•</span>
-        <span class="contact-item">{{WHATSAPP}}</span>
-      </div>
+      <div class="signature-closing">Yours sincerely,</div>
+      <div class="signature-name">{{FULL_NAME}}</div>
+      <div class="signature-title">{{JOB_TITLE}}</div>
     </div>
 
   </div>
