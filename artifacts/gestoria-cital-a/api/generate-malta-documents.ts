@@ -498,7 +498,7 @@ async function generateContent(prompt: string): Promise<{ text: string; tokens?:
 }
 
 // ============================================
-// ✅ PROMPT PARA CV - VERSIÓN AJUSTADA
+// PROMPT PARA CV
 // ============================================
 
 function getPremiumCVPrompt(data: any, company: Company): string {
@@ -601,7 +601,7 @@ async function generatePremiumCV(data: any, company: Company): Promise<CVContent
 }
 
 // ============================================
-// ✅ PROMPT PARA COVER LETTER - VERSIÓN AJUSTADA
+// PROMPT PARA COVER LETTER
 // ============================================
 
 async function generatePremiumCoverLetter(data: any, company: Company): Promise<LetterContent> {
@@ -979,7 +979,7 @@ function generateCoverHtml(
 }
 
 // ============================================
-// SUBIDA A SUPABASE - ORIGINAL (SIN CAMBIOS)
+// SUBIDA A SUPABASE
 // ============================================
 
 async function uploadPDF(pdfBytes: Buffer, fileName: string): Promise<string> {
@@ -1009,7 +1009,7 @@ async function uploadPDF(pdfBytes: Buffer, fileName: string): Promise<string> {
 }
 
 // ============================================
-// HANDLER PRINCIPAL
+// HANDLER PRINCIPAL - CON NOMBRES CORREGIDOS
 // ============================================
 
 export default async function handler(
@@ -1058,8 +1058,8 @@ export default async function handler(
       return res.status(200).json({
         success: true,
         applicationId,
-        cvUrl: application.cv_url,
-        letterUrl: application.letter_url,
+        cvUrl: application.cv_generado_url,
+        letterUrl: application.cover_letter_url,
         alreadyGenerated: true,
       });
     }
@@ -1114,11 +1114,12 @@ export default async function handler(
 
     const totalTime = Date.now() - startTime;
 
+    // ✅ NOMBRES CORREGIDOS PARA COINCIDIR CON LA TABLA
     const updateData: any = {
       cv_generated: true,
       letter_generated: true,
-      cv_url: cvUrl,
-      letter_url: letterUrl,
+      cv_generado_url: cvUrl,          // ✅ CORREGIDO
+      cover_letter_url: letterUrl,     // ✅ CORREGIDO
       cv_text: cvContent.summary,
       letter_text: `${letterContent.introduction}\n${letterContent.body1}\n${letterContent.body2}\n${letterContent.body3}\n${letterContent.closing}`,
       cv_html: cvHtml,
@@ -1139,7 +1140,7 @@ export default async function handler(
 
     if (application.photo_url) {
       updateData.photo_uploaded = true;
-      updateData.photo_generated_at: new Date().toISOString();
+      updateData.photo_generated_at = new Date().toISOString();
     }
 
     console.log("📦 updateData:");
@@ -1183,8 +1184,8 @@ export default async function handler(
     return res.status(200).json({
       success: true,
       applicationId,
-      cvUrl,
-      letterUrl,
+      cvUrl: cvUrl,
+      letterUrl: letterUrl,
       company: selectedCompany.name,
       companyCity: selectedCompany.city,
       cvTokens: cvContent.tokens || 0,
