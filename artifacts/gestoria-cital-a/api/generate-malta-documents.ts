@@ -498,7 +498,7 @@ async function generateContent(prompt: string): Promise<{ text: string; tokens?:
 }
 
 // ============================================
-// ✅ PROMPT PARA CV - VERSIÓN MEJORADA (NARRATIVA PROFESIONAL)
+// ✅ PROMPT PARA CV - VERSIÓN PROFESIONAL EXTENDIDA
 // ============================================
 
 function getPremiumCVPrompt(data: any, company: Company): string {
@@ -532,8 +532,9 @@ You are a senior recruitment consultant with 20+ years of experience in the Malt
 2. If the user has NO work experience, write a compelling entry-level profile using realistic responsibilities and skills for the role.
 3. Use the candidate's city of origin (${city}) and country (${country}) to add regional context and authenticity.
 4. Use professional, natural British English.
-5. Avoid generic phrases like "hard-working", "dedicated", or "team player" without context.
+5. AVOID generic phrases like "hard-working", "dedicated", or "team player" without context.
 6. Each section must be unique and tailored to this candidate.
+7. GENERATE SUBSTANTIAL CONTENT - this CV should fill an entire A4 page.
 
 ---
 
@@ -557,37 +558,43 @@ ${template.atsKeywords.map(k => `- ${k}`).join("\n")}
 
 ---
 
-Generate ONLY these narrative sections in JSON format:
+Generate a COMPLETE, PROFESSIONAL CV with these sections in JSON format. Each section must be substantial and detailed.
 
-1. SUMMARY (4-5 sentences):
-   Write a powerful executive summary that:
-   - Opens with a confident statement about the candidate's professional identity
-   - Highlights their unique value proposition
-   - Mentions their key strengths and what they offer to the employer
+1. PROFESSIONAL SUMMARY (150-200 words):
+   Write a comprehensive executive summary that:
+   - Opens with a powerful statement about the candidate's professional identity
+   - Highlights their unique value proposition and key strengths
+   - Mentions their career goals and what they offer to employers
    - Is tailored to the Maltese job market and this specific role
+   - Includes relevant keywords and industry terminology
 
-2. PROFESSIONAL PROFILE (3-4 sentences):
-   - Describes the candidate's professional identity and core competencies
-   - Shows understanding of the industry
-   - Is concise and impactful
+2. PROFESSIONAL PROFILE (100-150 words):
+   - Detailed description of the candidate's professional identity
+   - Core competencies and areas of expertise
+   - Understanding of the industry and role requirements
+   - Career trajectory and ambitions
 
-3. KEY ACHIEVEMENTS (3-5 bullet points):
+3. KEY ACHIEVEMENTS (5-8 bullet points):
    - Specific, measurable achievements
    - If the candidate has no experience, write realistic achievements from training or volunteer work
-   - Use action verbs (improved, managed, achieved, increased, reduced, etc.)
+   - Use strong action verbs (improved, managed, achieved, increased, reduced, delivered, implemented, etc.)
+   - Each bullet should be a complete, impactful statement
 
-4. PROFESSIONAL EXPERIENCE (3-4 bullet points):
-   ${userExperience ? '- Use the user\'s real experience as the foundation' : '- Write realistic, compelling experience bullets for an entry-level candidate'}
+4. PROFESSIONAL EXPERIENCE (2-3 positions, each with 5-8 bullet points):
+   ${userExperience ? '- Use the user\'s real experience as the foundation' : '- Write realistic, compelling experience for an entry-level candidate'}
+   - Each position should have a clear job title, company (if provided by user), and time period
    - Each bullet describes one key responsibility or achievement
-   - Use action verbs
-   - Keep each bullet concise (one sentence or short phrase)
+   - Use strong action verbs
+   - Each bullet should be detailed and specific
+
+5. ADDITIONAL EXPERIENCE (Optional - if user has no formal experience, include volunteer work, training, or internships)
 
 Return ONLY valid JSON:
 {
   "summary": "...",
   "profile": "...",
-  "achievements": ["...", "...", "..."],
-  "experience": ["...", "...", "..."]
+  "achievements": ["...", "...", "...", "...", "..."],
+  "experience": ["Position 1: 5-8 bullets", "Position 2: 5-8 bullets"]
 }
 `;
 }
@@ -627,7 +634,7 @@ async function generatePremiumCV(data: any, company: Company): Promise<CVContent
 }
 
 // ============================================
-// ✅ PROMPT PARA COVER LETTER - VERSIÓN MEJORADA
+// ✅ PROMPT PARA COVER LETTER - VERSIÓN PROFESIONAL EXTENDIDA
 // ============================================
 
 async function generatePremiumCoverLetter(data: any, company: Company): Promise<LetterContent> {
@@ -654,6 +661,7 @@ You are a professional cover letter writer specialising in the Maltese job marke
 5. Use natural, professional British English.
 6. Never use generic phrases like "I am writing to apply for" or "I am a hard-working individual".
 7. Use the candidate's city of origin (${city}) and country (${country}) for authentic context.
+8. GENERATE SUBSTANTIAL CONTENT - each paragraph should be 4-6 sentences.
 
 ---
 
@@ -676,33 +684,38 @@ ${userExperience ? `REAL WORK EXPERIENCE PROVIDED BY CANDIDATE:\n${userExperienc
 
 ---
 
-Generate the cover letter body as 5 paragraphs in JSON format:
+Generate a PROFESSIONAL, DETAILED cover letter body as 5 paragraphs in JSON format. Each paragraph should be 4-6 sentences long.
 
-1. INTRODUCTION (2-3 sentences):
+1. INTRODUCTION (4-6 sentences):
    - A compelling opening that hooks the reader
    - Mention the specific company (${company.name}) and position (${template.title})
-   - Show enthusiasm for this opportunity
+   - Show genuine enthusiasm and research about this opportunity
+   - Establish why the candidate is interested in this role
    - DO NOT use generic openings
 
-2. BODY 1 (2-4 sentences):
-   - Highlight the candidate's relevant skills and experience
-   - Connect their background to the needs of the role
-   - Be specific and show understanding of the industry
+2. BODY 1 (4-6 sentences):
+   - Highlight the candidate's relevant skills and experience in detail
+   - Connect their background directly to the needs of the role
+   - Show understanding of the industry challenges and requirements
+   - Be specific and demonstrate knowledge of the role
 
-3. BODY 2 (2-4 sentences):
+3. BODY 2 (4-6 sentences):
    - Explain WHY this company (${company.name}) and WHY Malta
-   - Show research into the company's values or reputation
-   - Connect the candidate's values to the company's mission
+   - Show thorough research into the company's values, reputation, or recent achievements
+   - Connect the candidate's personal values and career goals to the company's mission
+   - Demonstrate genuine interest in working for this specific organization
 
-4. BODY 3 (2-4 sentences):
-   - Address availability and next steps
+4. BODY 3 (4-6 sentences):
+   - Address availability and next steps in detail
    - Mention willingness to relocate if applicable (${availability})
    - Express readiness to contribute immediately
+   - Show flexibility and commitment to the role
 
-5. CLOSING (2-3 sentences):
-   - Professional conclusion
-   - Call to action (invitation for interview)
-   - Appreciation for their consideration
+5. CLOSING (4-6 sentences):
+   - Professional and confident conclusion
+   - Strong call to action (invitation for interview)
+   - Express appreciation for their consideration
+   - Reiterate enthusiasm for the opportunity
 
 Return ONLY valid JSON:
 {
@@ -777,7 +790,7 @@ async function renderPdfFromHtml(html: string): Promise<Buffer> {
 }
 
 // ============================================
-// GENERAR HTML DEL CV - CON VARIABLES UNIFICADAS
+// GENERAR HTML DEL CV
 // ============================================
 
 function generateCVHtml(
@@ -787,17 +800,14 @@ function generateCVHtml(
 ): string {
   let template = readTemplate("premium-cv.html");
   
-  // --- Dividir nombre ---
   const nameParts = (data.full_name || "Candidate").trim().split(" ");
   const firstName = nameParts[0] || "Candidate";
   const lastName = nameParts.slice(1).join(" ") || "";
   const fullName = `${firstName} ${lastName}`;
 
-  // --- Sector ---
   const sector = data.sectores ? data.sectores.split(",")[0]?.trim()?.toLowerCase() : "default";
   const templateData = SECTOR_TEMPLATES[sector] || SECTOR_TEMPLATES.default;
 
-  // --- Normalizar datos ---
   const availability = getAvailabilityLabel(data.disponibilidad_inicio || "inmediato");
   const license = getDriverLicenseLabel(data.carnet_conducir || "");
   const passport = normalizePassport(data.pasaporte_valido);
@@ -806,7 +816,6 @@ function generateCVHtml(
   const relocate = normalizeRelocate(data.reubicacion);
   const expLabel = getExperienceLabel(validateExperienceYears(data.anos_experiencia));
 
-  // --- PHOTO HTML ---
   const initials = getInitials(data.full_name);
   const photoHtml = data.photo_url 
     ? `<img src="${data.photo_url}" alt="${fullName}">` 
@@ -841,7 +850,7 @@ function generateCVHtml(
     `;
   }
 
-  // --- KEY STRENGTHS (como <li>) ---
+  // --- KEY STRENGTHS ---
   const keyStrengths = [
     `Immediate Availability: ${availability}`,
     `Willing to Relocate: ${relocate}`,
@@ -851,7 +860,7 @@ function generateCVHtml(
   ];
   const keyStrengthsHtml = keyStrengths.map(h => `<li>${h}</li>`).join("");
 
-  // --- CORE COMPETENCIES (como <span>) ---
+  // --- CORE COMPETENCIES ---
   const competencies = templateData.skills || [];
   const coreCompetenciesHtml = competencies.map((comp: string) => {
     return `<span>${comp}</span>`;
@@ -860,22 +869,30 @@ function generateCVHtml(
   // --- EXPERIENCE LIST ---
   let experienceHtml = "";
   if (content.experience && content.experience.length > 0) {
-    const expBullets = content.experience.map((exp: string) => `<li>${exp}</li>`).join("");
-    experienceHtml = `
-      <div class="experience-item">
-        <div class="exp-header">
-          <span class="exp-title">${templateData.title}</span>
-          <span class="exp-company">${company.name}</span>
-          <span class="exp-date">Present</span>
+    const expItems = content.experience.map((exp: string) => {
+      const parts = exp.split(":");
+      const title = parts[0] || templateData.title;
+      const bullets = parts.slice(1).join(":").trim() || exp;
+      
+      return `
+        <div class="experience-item">
+          <div class="exp-header">
+            <span class="exp-title">${title}</span>
+            <span class="exp-company">${company.name}</span>
+            <span class="exp-date">Present</span>
+          </div>
+          <div class="exp-description">
+            <ul>
+              ${bullets.split("\n").filter(b => b.trim()).map(b => `<li>${b.trim()}</li>`).join("")}
+            </ul>
+          </div>
         </div>
-        <div class="exp-description">
-          <ul>${expBullets}</ul>
-        </div>
-      </div>
-    `;
+      `;
+    }).join("");
+    experienceHtml = expItems;
   }
 
-  // --- EDUCATION LIST ---
+  // --- EDUCATION ---
   const educationLabel = getEducationLabel(data.estudios || "");
   const educationHtml = `
     <div class="education-item">
@@ -887,7 +904,7 @@ function generateCVHtml(
     </div>
   `;
 
-  // --- PROFESSIONAL SKILLS (skill bars) ---
+  // --- PROFESSIONAL SKILLS ---
   let professionalSkillsHtml = "";
   const skills = templateData.skills || [];
   const skillPercentages: Record<string, number> = {
@@ -924,15 +941,11 @@ function generateCVHtml(
     `;
   }
 
-  // --- TAGLINE ---
+  // --- TAGLINE & PERSONAL STATEMENT ---
   const tagline = `${templateData.title} professional with ${expLabel}`;
-
-  // --- PERSONAL STATEMENT ---
   const personalStatement = content.profile || content.summary || `${templateData.title} professional with ${expLabel} experience.`;
 
-  // ============================================
-  // REEMPLAZAR TODAS LAS VARIABLES UNIFICADAS
-  // ============================================
+  // --- REPLACEMENTS ---
   const replacements: Record<string, string> = {
     "{{PHOTO_HTML}}": photoHtml,
     "{{FULL_NAME}}": fullName,
@@ -959,7 +972,7 @@ function generateCVHtml(
 }
 
 // ============================================
-// GENERAR HTML DE LA COVER LETTER - CON VARIABLES UNIFICADAS
+// GENERAR HTML DE LA COVER LETTER
 // ============================================
 
 function generateCoverHtml(
@@ -999,9 +1012,7 @@ function generateCoverHtml(
     </div>
   ` : "";
 
-  // ============================================
-  // REEMPLAZAR TODAS LAS VARIABLES UNIFICADAS
-  // ============================================
+  // --- REPLACEMENTS ---
   const replacements: Record<string, string> = {
     "{{PHOTO_HTML}}": photoHtml,
     "{{FULL_NAME}}": fullName,
@@ -1178,8 +1189,8 @@ export default async function handler(
       letter_text: `${letterContent.introduction}\n${letterContent.body1}\n${letterContent.body2}\n${letterContent.body3}\n${letterContent.closing}`,
       cv_html: cvHtml,
       letter_html: coverHtml,
-      cv_prompt: "Premium CV prompt - narrative only (improved)",
-      letter_prompt: "Premium cover letter prompt - JSON body only (improved)",
+      cv_prompt: "Premium CV prompt - extended professional version",
+      letter_prompt: "Premium cover letter prompt - extended professional version",
       cv_tokens: cvContent.tokens || 0,
       letter_tokens: letterContent.tokens || 0,
       total_tokens: (cvContent.tokens || 0) + (letterContent.tokens || 0),
