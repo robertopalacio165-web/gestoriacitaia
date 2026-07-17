@@ -1826,45 +1826,44 @@ export default function TrabajoMalta() {
         user?.email?.toLowerCase() === "robertopalacio165@gmail.com";
 
       // ✅ Creamos el payload con todos los datos
-      const payload = {
-        plan,
+   const payload = {
+  plan,
 
-        fullName: formData.fullName,
-        whatsapp: formData.whatsapp,
-        email: formData.email,
+  fullName: formData.fullName,
+  whatsapp: formData.whatsapp,
+  email: formData.email,
 
-        nationality: formData.nationality,
-        currentCity: formData.currentCity,
-        countryResidence: formData.countryResidence,
+  nationality: formData.nationality,
+  currentCity: formData.currentCity,
+  countryResidence: formData.countryResidence,
+  fechaNacimiento: formData.fechaNacimiento,
 
-        fechaNacimiento: formData.fechaNacimiento,
+  idiomas: formData.idiomas,
+  ingles_nivel: formData.ingles_nivel,
+  frances_nivel: formData.frances_nivel,
+  italiano_nivel: formData.italiano_nivel,
+  espanol_nivel: formData.espanol_nivel,
+  arabe_nivel: formData.arabe_nivel,
+  aleman_nivel: formData.aleman_nivel,
 
-        idiomas: formData.idiomas,
-        ingles_nivel: formData.ingles_nivel,
-        frances_nivel: formData.frances_nivel,
-        italiano_nivel: formData.italiano_nivel,
-        espanol_nivel: formData.espanol_nivel,
-        arabe_nivel: formData.arabe_nivel,
-        aleman_nivel: formData.aleman_nivel,
+  profesion: formData.profesion,
+  anosExperiencia: formData.anosExperiencia,
+  estudios: formData.estudios,
+  education_level: formData.education_level,
 
-        profesion: formData.profesion,
-        anosExperiencia: formData.anosExperiencia,
+  sectores: formData.sectores,
+  carnetConducir: formData.carnetConducir,
 
-        education_level: formData.education_level,
+  preferred_position: formData.preferred_position,
+  work_preference: formData.work_preference,
+  willing_to_relocate: formData.willing_to_relocate,
 
-        sectores: formData.sectores,
-        carnetConducir: formData.carnetConducir,
+  tieneCV: formData.tieneCV,
 
-        preferred_position: formData.preferred_position,
-        work_preference: formData.work_preference,
-        willing_to_relocate: formData.willing_to_relocate,
-
-        tieneCV: formData.tieneCV,
-
-        cvUrl: "",
-        photoUrl: "",
-        pdfUrl: "",
-      };
+  cvUrl: formData.cvUrl,
+  photoUrl: formData.photoUrl,
+  pdfUrl: formData.pdfUrl,
+};
 
       // ✅ Seleccionar endpoint según si es admin o no
       const endpoint = isAdmin
