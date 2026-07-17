@@ -54,7 +54,7 @@
       width: 30%;
       background: #10284a;
       color: #c8d0d8;
-      padding: 30px 22px 26px;
+      padding: 22px 18px 18px 18px;
       flex-shrink: 0;
       height: 100%;
       display: flex;
@@ -63,11 +63,11 @@
     }
 
     .sidebar .photo {
-      width: 130px;
-      height: 130px;
+      width: 110px;
+      height: 110px;
       border-radius: 50%;
       background: #1a2a3e;
-      margin: 0 auto 16px;
+      margin: 0 auto 12px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -84,33 +84,54 @@
     }
 
     .sidebar .photo .initials {
-      font-size: 44px;
+      font-size: 38px;
       font-weight: 700;
       color: #ffffff;
       letter-spacing: 1px;
     }
 
     .sidebar h2 {
-      font-size: 10px;
+      font-size: 9px;
       text-transform: uppercase;
       letter-spacing: 2px;
       color: #ffffff;
       font-weight: 600;
-      margin: 14px 0 6px;
+      margin: 10px 0 4px;
       border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-      padding-bottom: 4px;
+      padding-bottom: 3px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
     }
 
     .sidebar h2:first-of-type {
       margin-top: 0;
     }
 
+    .sidebar h2 .icon {
+      width: 11px;
+      height: 11px;
+      flex-shrink: 0;
+      fill: #ffffff;
+      opacity: 0.7;
+    }
+
     .sidebar .contact-item {
-      font-size: 10.5px;
-      line-height: 1.6;
+      font-size: 9px;
+      line-height: 1.5;
       color: #c0c8d8;
       margin-bottom: 0;
       word-break: break-word;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .sidebar .contact-item .icon {
+      width: 10px;
+      height: 10px;
+      flex-shrink: 0;
+      fill: #8a9aaa;
     }
 
     .sidebar .highlight-list {
@@ -120,10 +141,10 @@
     }
 
     .sidebar .highlight-list li {
-      font-size: 10.5px;
-      line-height: 1.6;
+      font-size: 9px;
+      line-height: 1.5;
       color: #c0c8d8;
-      padding: 1px 0 1px 14px;
+      padding: 0.5px 0 0.5px 12px;
       position: relative;
     }
 
@@ -136,8 +157,8 @@
     }
 
     .sidebar .languages .lang-item {
-      font-size: 10.5px;
-      line-height: 1.6;
+      font-size: 9px;
+      line-height: 1.5;
       color: #c0c8d8;
     }
 
@@ -148,12 +169,28 @@
 
     .sidebar .languages .lang-item .level {
       color: #8a9aaa;
-      font-size: 9.5px;
+      font-size: 8px;
+    }
+
+    .sidebar .languages .lang-item .lang-bar {
+      width: 100%;
+      height: 2px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 2px;
+      margin-top: 1px;
+      overflow: hidden;
+    }
+
+    .sidebar .languages .lang-item .lang-bar span {
+      display: block;
+      height: 100%;
+      background: #ffffff;
+      border-radius: 2px;
     }
 
     .sidebar .additional-info .info-item {
-      font-size: 10.5px;
-      line-height: 1.6;
+      font-size: 9px;
+      line-height: 1.5;
       color: #c0c8d8;
     }
 
@@ -161,7 +198,11 @@
       color: #ffffff;
       font-weight: 500;
       display: inline-block;
-      min-width: 80px;
+      min-width: 72px;
+    }
+
+    .sidebar .spacer {
+      flex: 1;
     }
 
     /* ============================================
@@ -169,7 +210,7 @@
     ============================================ */
     .main {
       width: 70%;
-      padding: 28px 34px 24px 34px;
+      padding: 18px 22px 14px 22px;
       background: white;
       height: 100%;
       display: block;
@@ -177,21 +218,21 @@
     }
 
     .main .header-block {
-      margin-bottom: 6px;
+      margin-bottom: 4px;
     }
 
     .main .header-block .name {
-      font-size: 32px;
+      font-size: 26px;
       font-weight: 900;
       letter-spacing: -0.5px;
-      line-height: 34px;
+      line-height: 28px;
       text-transform: uppercase;
       color: #0a1a2e;
       margin-bottom: 1px;
     }
 
     .main .header-block .title {
-      font-size: 13px;
+      font-size: 11px;
       color: #6d7077;
       font-weight: 700;
       text-transform: uppercase;
@@ -201,48 +242,58 @@
 
     .main .header-block .tagline {
       max-width: 95%;
-      line-height: 1.4;
-      font-size: 11px;
+      line-height: 1.3;
+      font-size: 9.5px;
       color: #4e5560;
-      margin-top: 4px;
+      margin-top: 2px;
     }
 
     .main h2 {
-      font-size: 11px;
+      font-size: 9.5px;
       text-transform: uppercase;
       letter-spacing: 2px;
       color: #0a1a2e;
       font-weight: 700;
       border-bottom: 1.5px solid #10284a;
-      padding-bottom: 3px;
-      margin-top: 10px;
-      margin-bottom: 5px;
+      padding-bottom: 2px;
+      margin-top: 6px;
+      margin-bottom: 3px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
     }
 
     .main h2:first-of-type {
       margin-top: 0;
     }
 
+    .main h2 .icon {
+      width: 12px;
+      height: 12px;
+      flex-shrink: 0;
+      fill: #10284a;
+    }
+
     .main .competencies {
       display: flex;
       flex-wrap: wrap;
-      gap: 4px 6px;
-      margin-bottom: 2px;
+      gap: 3px 4px;
+      margin-bottom: 1px;
     }
 
     .main .competencies span {
-      padding: 3px 10px;
-      font-size: 9.5px;
+      padding: 2px 7px;
+      font-size: 8.5px;
       font-weight: 700;
-      border-radius: 8px;
+      border-radius: 6px;
       background: #f5f6f8;
       color: #2b2b2b;
-      letter-spacing: 0.3px;
+      letter-spacing: 0.2px;
     }
 
     .main .experience-item {
-      margin-bottom: 7px;
-      padding-left: 14px;
+      margin-bottom: 4px;
+      padding-left: 10px;
       border-left: 2px solid #10284a;
       position: relative;
     }
@@ -251,9 +302,9 @@
       content: "";
       position: absolute;
       left: -5px;
-      top: 4px;
-      width: 7px;
-      height: 7px;
+      top: 3px;
+      width: 6px;
+      height: 6px;
       background: #10284a;
       border-radius: 50%;
       border: 2px solid #ffffff;
@@ -264,37 +315,51 @@
       margin-bottom: 0;
     }
 
+    .main .experience-item .exp-header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: 2px 6px;
+    }
+
     .main .experience-item .exp-title {
-      font-size: 12.5px;
+      font-size: 10.5px;
       font-weight: 800;
       color: #0a1a2e;
     }
 
     .main .experience-item .exp-company {
-      font-size: 10.5px;
+      font-size: 9.5px;
       font-weight: 600;
       color: #666666;
       font-style: italic;
     }
 
+    .main .experience-item .exp-date {
+      font-size: 8.5px;
+      font-weight: 600;
+      color: #888888;
+      margin-left: auto;
+    }
+
     .main .experience-item .exp-description {
-      font-size: 10px;
+      font-size: 9px;
       color: #3a3a4a;
-      line-height: 1.4;
-      margin-top: 2px;
+      line-height: 1.35;
+      margin-top: 1px;
     }
 
     .main .experience-item .exp-description ul {
       list-style: none;
       padding: 0;
-      margin: 2px 0 0;
+      margin: 1px 0 0;
     }
 
     .main .experience-item .exp-description ul li {
-      padding: 1px 0 1px 14px;
+      padding: 0.5px 0 0.5px 12px;
       position: relative;
-      font-size: 10px;
-      line-height: 1.4;
+      font-size: 9px;
+      line-height: 1.35;
     }
 
     .main .experience-item .exp-description ul li::before {
@@ -305,74 +370,87 @@
     }
 
     .main .education-item {
-      margin-bottom: 4px;
+      margin-bottom: 3px;
     }
 
     .main .education-item:last-child {
       margin-bottom: 0;
     }
 
+    .main .education-item .edu-header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: 2px 6px;
+    }
+
     .main .education-item .edu-degree {
-      font-size: 12px;
+      font-size: 10.5px;
       font-weight: 700;
       color: #0a1a2e;
     }
 
-    .main .education-item .edu-school {
-      font-size: 10.5px;
+    .main .education-item .edu-institution {
+      font-size: 9.5px;
       color: #666666;
       font-weight: 500;
       font-style: italic;
     }
 
+    .main .education-item .edu-date {
+      font-size: 8.5px;
+      font-weight: 600;
+      color: #888888;
+      margin-left: auto;
+    }
+
     .main .skills-container {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 1px 20px;
-      margin-top: 2px;
+      gap: 0px 14px;
+      margin-top: 1px;
     }
 
     .main .skill-bar {
-      margin-bottom: 2px;
+      margin-bottom: 1px;
+      display: flex;
+      align-items: center;
+      gap: 2px;
     }
 
     .main .skill-bar .skill-label {
-      font-size: 10px;
+      font-size: 9px;
       font-weight: 600;
       color: #0a1a2e;
-      display: inline-block;
-      min-width: 85px;
+      min-width: 72px;
     }
 
     .main .skill-bar .skill-track {
-      display: inline-block;
-      width: 55%;
-      height: 5px;
+      flex: 1;
+      height: 3px;
       background: #eef2f6;
-      border-radius: 3px;
+      border-radius: 2px;
       overflow: hidden;
-      vertical-align: middle;
-      margin-left: 3px;
     }
 
     .main .skill-bar .skill-track .skill-fill {
       height: 100%;
       background: #10284a;
-      border-radius: 3px;
+      border-radius: 2px;
     }
 
     .main .info-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 0;
-      font-size: 10px;
+      font-size: 9px;
       color: #2b2b2b;
-      line-height: 1.6;
-      margin-top: 2px;
+      line-height: 1.5;
+      margin-top: 1px;
     }
 
     .main .info-grid .info-item {
-      padding: 2px 0;
+      padding: 1.5px 0;
       border-bottom: 1px solid #f0f2f4;
     }
 
@@ -385,25 +463,30 @@
       color: #0a1a2e;
       font-weight: 600;
       display: inline-block;
-      min-width: 80px;
+      min-width: 72px;
     }
 
     .main .personal-statement {
-      font-size: 10px;
+      font-size: 9px;
       color: #3a3a4a;
-      line-height: 1.5;
-      margin-top: 2px;
+      line-height: 1.4;
+      margin-top: 1px;
+    }
+
+    .main .spacer {
+      flex: 1;
     }
 
     .footer {
-      margin-top: 12px;
-      padding-top: 6px;
+      margin-top: 8px;
+      padding-top: 4px;
       border-top: 1px solid #eef0f2;
       text-align: center;
-      font-size: 7px;
+      font-size: 6.5px;
       color: #B5BDC7;
       line-height: 1.5;
       letter-spacing: 0.3px;
+      flex-shrink: 0;
     }
 
     /* ============================================
@@ -441,6 +524,24 @@
         color-adjust: exact !important;
       }
 
+      .sidebar h2 .icon {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+      }
+
+      .main h2 .icon {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+      }
+
+      .sidebar .contact-item .icon {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+      }
+
       .main .competencies span {
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
@@ -458,6 +559,12 @@
         print-color-adjust: exact !important;
         color-adjust: exact !important;
       }
+
+      .sidebar .languages .lang-item .lang-bar span {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+      }
     }
 
     @media screen and (max-width: 800px) {
@@ -471,22 +578,22 @@
 
       .sidebar {
         width: 100%;
-        padding: 20px;
+        padding: 16px;
       }
 
       .sidebar .photo {
-        width: 100px;
-        height: 100px;
+        width: 80px;
+        height: 80px;
       }
 
       .main {
         width: 100%;
-        padding: 20px;
+        padding: 16px;
       }
 
       .main .header-block .name {
-        font-size: 24px;
-        line-height: 26px;
+        font-size: 20px;
+        line-height: 22px;
       }
 
       .main .skills-container {
@@ -503,6 +610,28 @@
 
       .main .info-grid .info-item:nth-last-child(1) {
         border-bottom: none;
+      }
+
+      .main .spacer {
+        display: none;
+      }
+
+      .main .experience-item .exp-header {
+        flex-direction: column;
+        gap: 1px;
+      }
+
+      .main .experience-item .exp-date {
+        margin-left: 0;
+      }
+
+      .main .education-item .edu-header {
+        flex-direction: column;
+        gap: 1px;
+      }
+
+      .main .education-item .edu-date {
+        margin-left: 0;
       }
     }
   </style>
@@ -522,31 +651,60 @@
     </div>
 
     <!-- CONTACT -->
-    <h2>CONTACT</h2>
-    <div class="contact-item">{{WHATSAPP}}</div>
-    <div class="contact-item">{{EMAIL}}</div>
-    <div class="contact-item">{{LOCATION}}</div>
+    <h2>
+      <svg class="icon" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+      CONTACT
+    </h2>
+    <div class="contact-item">
+      <svg class="icon" viewBox="0 0 24 24"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
+      {{WHATSAPP}}
+    </div>
+    <div class="contact-item">
+      <svg class="icon" viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
+      {{EMAIL}}
+    </div>
+    <div class="contact-item">
+      <svg class="icon" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+      {{NATIONALITY}}
+    </div>
+    <div class="contact-item">
+      <svg class="icon" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+      {{LOCATION}}
+    </div>
 
     <!-- LANGUAGES -->
-    <h2>LANGUAGES</h2>
+    <h2>
+      <svg class="icon" viewBox="0 0 24 24"><path d="M12.87 15.07l-2.54-2.51.03-.03c1.74-1.94 2.98-4.17 3.71-6.53H17V4h-7V2H8v2H1v1.99h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z"/></svg>
+      LANGUAGES
+    </h2>
     <div class="languages">
       {{LANGUAGES}}
     </div>
 
     <!-- KEY STRENGTHS -->
-    <h2>KEY STRENGTHS</h2>
+    <h2>
+      <svg class="icon" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+      KEY STRENGTHS
+    </h2>
     <ul class="highlight-list">
       {{KEY_STRENGTHS}}
     </ul>
 
     <!-- ADDITIONAL INFO -->
-    <h2>ADDITIONAL INFO</h2>
+    <h2>
+      <svg class="icon" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+      ADDITIONAL INFO
+    </h2>
     <div class="additional-info">
-      <div class="info-item"><strong>Passport:</strong> Available</div>
+      <div class="info-item"><strong>Passport:</strong> {{PASSPORT}}</div>
       <div class="info-item"><strong>Driving Licence:</strong> {{DRIVER_LICENSE}}</div>
-      <div class="info-item"><strong>Availability:</strong> Immediate</div>
-      <div class="info-item"><strong>Willing to relocate:</strong> Available to relocate</div>
+      <div class="info-item"><strong>Work Permit:</strong> {{WORK_PERMIT}}</div>
+      <div class="info-item"><strong>Availability:</strong> {{AVAILABILITY}}</div>
+      <div class="info-item"><strong>Willing to relocate:</strong> {{RELOCATE}}</div>
+      <div class="info-item"><strong>Interview via video:</strong> {{VIDEO_INTERVIEW}}</div>
     </div>
+
+    <div class="spacer"></div>
 
   </aside>
 
@@ -563,37 +721,59 @@
     </div>
 
     <!-- CORE COMPETENCIES -->
-    <h2>CORE COMPETENCIES</h2>
+    <h2>
+      <svg class="icon" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+      CORE COMPETENCIES
+    </h2>
     <div class="competencies">
       {{CORE_COMPETENCIES}}
     </div>
 
     <!-- EXPERIENCE -->
-    <h2>EXPERIENCE</h2>
+    <h2>
+      <svg class="icon" viewBox="0 0 24 24"><path d="M20 6h-4V4c0-1.11-.89-2-2-2h-4c-1.11 0-2 .89-2 2v2H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-6 0h-4V4h4v2z"/></svg>
+      EXPERIENCE
+    </h2>
     {{EXPERIENCE_LIST}}
 
     <!-- EDUCATION -->
-    <h2>EDUCATION</h2>
+    <h2>
+      <svg class="icon" viewBox="0 0 24 24"><path d="M5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82zM12 3L1 9l11 6 9-4.91V17h2V9L12 3z"/></svg>
+      EDUCATION
+    </h2>
     {{EDUCATION_LIST}}
 
     <!-- PROFESSIONAL SKILLS -->
-    <h2>PROFESSIONAL SKILLS</h2>
+    <h2>
+      <svg class="icon" viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+      PROFESSIONAL SKILLS
+    </h2>
     <div class="skills-container">
       {{PROFESSIONAL_SKILLS}}
     </div>
 
     <!-- ADDITIONAL INFORMATION -->
-    <h2>ADDITIONAL INFORMATION</h2>
+    <h2>
+      <svg class="icon" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+      ADDITIONAL INFORMATION
+    </h2>
     <div class="info-grid">
-      <div class="info-item"><strong>Passport</strong> Available</div>
+      <div class="info-item"><strong>Passport</strong> {{PASSPORT}}</div>
       <div class="info-item"><strong>Driving Licence</strong> {{DRIVER_LICENSE}}</div>
-      <div class="info-item"><strong>Availability</strong> Immediate</div>
-      <div class="info-item"><strong>Relocation</strong> Available to relocate</div>
+      <div class="info-item"><strong>Work Permit</strong> {{WORK_PERMIT}}</div>
+      <div class="info-item"><strong>Interview via Video</strong> {{VIDEO_INTERVIEW}}</div>
+      <div class="info-item"><strong>Availability</strong> {{AVAILABILITY}}</div>
+      <div class="info-item"><strong>Willing to Relocate</strong> {{RELOCATE}}</div>
     </div>
 
     <!-- PERSONAL STATEMENT -->
-    <h2>PERSONAL STATEMENT</h2>
+    <h2>
+      <svg class="icon" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H5.17L4 17.17V4h16v12z"/></svg>
+      PERSONAL STATEMENT
+    </h2>
     <p class="personal-statement">{{PERSONAL_STATEMENT}}</p>
+
+    <div class="spacer"></div>
 
     <!-- FOOTER -->
     <div class="footer">
