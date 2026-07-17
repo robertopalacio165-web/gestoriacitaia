@@ -47,12 +47,12 @@ type MaltaFormData = {
   fullName: string;
   whatsapp: string;
   email: string;
-  nationality: string; // ← en inglés: Morocco, Algeria, etc
-  currentCity: string; // ← NUEVO: Casablanca, Rabat, etc
-  countryResidence: string; // ← en inglés: Morocco, Spain, etc
+  nationality: string;
+  currentCity: string;
+  countryResidence: string;
   fechaNacimiento: string;
   
-  // Idiomas con niveles (valores en inglés)
+  // Idiomas con niveles
   idiomas: string;
   ingles_nivel: string;
   frances_nivel: string;
@@ -62,21 +62,21 @@ type MaltaFormData = {
   aleman_nivel: string;
   
   // Experiencia
-  profesion: string; // ← máximo 2
-  añosExperiencia: string;
+  profesion: string;
+  anosExperiencia: string; // ✅ CAMBIADO: añosExperiencia → anosExperiencia
   estudios: string;
-  education_level: string; // ← NUEVO: Primary, Secondary, High School, Vocational, University
+  education_level: string;
   
-  // Sectores (máximo 2)
+  // Sectores
   sectores: string;
   
-  // Carnet de conducir (valores en inglés)
+  // Carnet de conducir
   carnetConducir: "None" | "A" | "B" | "C" | "D" | "B+C" | "B+C+E";
   
   // Preferencias
-  preferred_position: string; // ← NUEVO
-  work_preference: string; // ← NUEVO
-  willing_to_relocate: "Yes" | "No"; // ← NUEVO
+  preferred_position: string;
+  work_preference: string;
+  willing_to_relocate: "Yes" | "No";
   
   // CV
   tieneCV: "Yes" | "No";
@@ -174,7 +174,7 @@ function OfficialBrowserBox({
   ]);
   const [progressStep, setProgressStep] = useState(0);
 
-  // ✅ NACIONALIDADES (valores en inglés)
+  // ✅ NACIONALIDADES
   const nationalityOptions = [
     { id: "Morocco", label: isMa ? "المغرب" : isEn ? "Morocco" : "Marruecos" },
     { id: "Algeria", label: isMa ? "الجزائر" : isEn ? "Algeria" : "Argelia" },
@@ -185,7 +185,7 @@ function OfficialBrowserBox({
     { id: "Other", label: isMa ? "أخرى" : isEn ? "Other" : "Otro" },
   ];
 
-  // ✅ CIUDADES DE MARRUECOS Y NORTE DE ÁFRICA (valores en inglés)
+  // ✅ CIUDADES
   const cityOptions = [
     { id: "Casablanca", label: "Casablanca" },
     { id: "Rabat", label: "Rabat" },
@@ -206,7 +206,7 @@ function OfficialBrowserBox({
     { id: "Other", label: isMa ? "أخرى" : isEn ? "Other" : "Otro" },
   ];
 
-  // ✅ PAÍSES DE RESIDENCIA (valores en inglés)
+  // ✅ PAÍSES DE RESIDENCIA
   const countryResidenceOptions = [
     { id: "Morocco", label: isMa ? "المغرب" : isEn ? "Morocco" : "Marruecos" },
     { id: "Spain", label: isMa ? "إسبانيا" : isEn ? "Spain" : "España" },
@@ -218,7 +218,7 @@ function OfficialBrowserBox({
     { id: "Other", label: isMa ? "أخرى" : isEn ? "Other" : "Otro" },
   ];
 
-  // ✅ POSICIONES PREFERIDAS (valores en inglés)
+  // ✅ POSICIONES PREFERIDAS
   const preferredPositionOptions = [
     { id: "Kitchen Assistant", label: isMa ? "مساعد مطبخ" : isEn ? "Kitchen Assistant" : "Ayudante de cocina" },
     { id: "Waiter", label: isMa ? "نادل" : isEn ? "Waiter" : "Camarero" },
@@ -231,7 +231,7 @@ function OfficialBrowserBox({
     { id: "Other", label: isMa ? "أخرى" : isEn ? "Other" : "Otro" },
   ];
 
-  // ✅ PREFERENCIA DE TRABAJO (valores en inglés)
+  // ✅ PREFERENCIA DE TRABAJO
   const workPreferenceOptions = [
     { id: "Hotel", label: isMa ? "فندق" : isEn ? "Hotel" : "Hotel" },
     { id: "Restaurant", label: isMa ? "مطعم" : isEn ? "Restaurant" : "Restaurante" },
@@ -243,7 +243,7 @@ function OfficialBrowserBox({
     { id: "Other", label: isMa ? "أخرى" : isEn ? "Other" : "Otro" },
   ];
 
-  // ✅ OPCIONES DE CARNET (valores en inglés)
+  // ✅ OPCIONES DE CARNET
   const carnetOptions = [
     { id: "None", label: isMa ? "لا" : isEn ? "None" : "Ninguno" },
     { id: "A", label: "A" },
@@ -254,7 +254,7 @@ function OfficialBrowserBox({
     { id: "B+C+E", label: "B + C + E" },
   ];
 
-  // ✅ NIVEL EDUCATIVO (valores en inglés)
+  // ✅ NIVEL EDUCATIVO
   const educationLevelOptions = [
     { id: "Primary", label: isMa ? "ابتدائي" : isEn ? "Primary" : "Primaria" },
     { id: "Secondary", label: isMa ? "ثانوي" : isEn ? "Secondary" : "Secundaria" },
@@ -264,7 +264,7 @@ function OfficialBrowserBox({
     { id: "Other", label: isMa ? "أخرى" : isEn ? "Other" : "Otro" },
   ];
 
-  // ✅ OPCIONES DE EXPERIENCIA LABORAL (máximo 2)
+  // ✅ OPCIONES DE EXPERIENCIA LABORAL
   const profesionOptions = [
     { id: "Kitchen", label: isMa ? "المطبخ" : isEn ? "Kitchen" : "Cocina" },
     { id: "Construction", label: isMa ? "البناء" : isEn ? "Construction" : "Construcción" },
@@ -277,7 +277,7 @@ function OfficialBrowserBox({
     { id: "Other", label: isMa ? "آخر" : isEn ? "Other" : "Otro" },
   ];
 
-  // ✅ SECTORES (máximo 2)
+  // ✅ SECTORES
   const sectoresOptions = [
     { id: "Kitchen", label: isMa ? "المطبخ" : isEn ? "Kitchen" : "Cocina" },
     { id: "Housekeeping", label: isMa ? "التدبير المنزلي" : isEn ? "Housekeeping" : "Housekeeping" },
@@ -291,8 +291,8 @@ function OfficialBrowserBox({
     { id: "Retail", label: isMa ? "بيع بالتجزئة" : isEn ? "Retail" : "Venta al por menor" },
   ];
 
-  // ✅ AÑOS DE EXPERIENCIA (valores en inglés)
-  const añosExperienciaOptions = [
+  // ✅ AÑOS DE EXPERIENCIA - ✅ CAMBIADO: añosExperienciaOptions → anosExperienciaOptions
+  const anosExperienciaOptions = [
     { id: "No experience", label: isMa ? "بدون خبرة" : isEn ? "No experience" : "Sin experiencia" },
     { id: "Less than 1 year", label: isMa ? "أقل من سنة" : isEn ? "Less than 1 year" : "Menos de 1 año" },
     { id: "1-2 years", label: isMa ? "1-2 سنة" : isEn ? "1-2 years" : "1-2 años" },
@@ -300,7 +300,7 @@ function OfficialBrowserBox({
     { id: "5+ years", label: isMa ? "أكثر من 5 سنوات" : isEn ? "5+ years" : "Más de 5 años" },
   ];
 
-  // ✅ IDIOMAS (valores en inglés)
+  // ✅ IDIOMAS
   const idiomasDisponibles = [
     { id: "English", label: isMa ? "الإنجليزية" : isEn ? "English" : "Inglés" },
     { id: "French", label: isMa ? "الفرنسية" : isEn ? "French" : "Francés" },
@@ -310,7 +310,7 @@ function OfficialBrowserBox({
     { id: "Italian", label: isMa ? "الإيطالية" : isEn ? "Italian" : "Italiano" },
   ];
 
-  // ✅ NIVELES DE IDIOMAS (valores en inglés)
+  // ✅ NIVELES DE IDIOMAS
   const nivelesIdiomas = [
     { id: "Basic", label: isMa ? "أساسي" : isEn ? "Basic" : "Básico" },
     { id: "Intermediate", label: isMa ? "متوسط" : isEn ? "Intermediate" : "Intermedio" },
@@ -319,7 +319,7 @@ function OfficialBrowserBox({
     { id: "Native", label: isMa ? "لغة أم" : isEn ? "Native" : "Nativo" },
   ];
 
-  // ✅ PASO 2: handleCVUpload CORREGIDO - Solo guarda el archivo, no sube a Supabase
+  // handleCVUpload - Solo guarda el archivo, no sube a Supabase
   const handleCVUpload = async (file: File) => {
     if (!file) return;
     
@@ -344,7 +344,6 @@ function OfficialBrowserBox({
 
     setUploadingCV(true);
     try {
-      // ✅ SOLO guardamos el archivo en el estado, NO subimos a Supabase
       onFormChange("cvFile", file);
       
       toast({
@@ -363,7 +362,7 @@ function OfficialBrowserBox({
     }
   };
 
-  // ✅ PASO 3: handlePhotoUpload CORREGIDO - Solo guarda el archivo, no sube a Supabase
+  // handlePhotoUpload - Solo guarda el archivo, no sube a Supabase
   const handlePhotoUpload = async (file: File) => {
     if (!file) return;
     
@@ -388,7 +387,6 @@ function OfficialBrowserBox({
     
     setUploadingPhoto(true);
     try {
-      // ✅ SOLO guardamos el archivo en el estado, NO subimos a Supabase
       onFormChange("photoFile", file);
       
       toast({
@@ -407,7 +405,7 @@ function OfficialBrowserBox({
     }
   };
 
-  // ✅ PASO 4: handlePdfUpload CORREGIDO - Solo guarda el archivo, no sube a Supabase
+  // handlePdfUpload - Solo guarda el archivo, no sube a Supabase
   const handlePdfUpload = async (file: File) => {
     if (!file) return;
     
@@ -431,7 +429,6 @@ function OfficialBrowserBox({
     
     setUploadingPdf(true);
     try {
-      // ✅ SOLO guardamos el archivo en el estado, NO subimos a Supabase
       onFormChange("pdfFile", file);
       
       toast({
@@ -450,7 +447,7 @@ function OfficialBrowserBox({
     }
   };
 
-  // ✅ Simular progreso después del pago
+  // Simular progreso después del pago
   useEffect(() => {
     if (confirmed) {
       let step = 0;
@@ -551,7 +548,7 @@ function OfficialBrowserBox({
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 mb-5">
                   
                   {/* ============================================ */}
-                  {/* 1. DATOS PERSONALES (TODO EN INGLÉS PARA IA) */}
+                  {/* 1. DATOS PERSONALES */}
                   {/* ============================================ */}
                   
                   {/* Nombre completo */}
@@ -624,7 +621,7 @@ function OfficialBrowserBox({
                     />
                   </div>
 
-                  {/* Nacionalidad - Select en inglés */}
+                  {/* Nacionalidad */}
                   <div>
                     <label className="block text-white text-[13px] mb-2">
                       {isMa ? "الجنسية" : isEn ? "Nationality" : "Nacionalidad"}
@@ -641,7 +638,7 @@ function OfficialBrowserBox({
                     </select>
                   </div>
 
-                  {/* Ciudad actual - NUEVO */}
+                  {/* Ciudad actual */}
                   <div>
                     <label className="block text-white text-[13px] mb-2">
                       {isMa ? "المدينة الحالية" : isEn ? "Current City" : "Ciudad actual"}
@@ -658,7 +655,7 @@ function OfficialBrowserBox({
                     </select>
                   </div>
 
-                  {/* País de residencia - Select en inglés */}
+                  {/* País de residencia */}
                   <div>
                     <label className="block text-white text-[13px] mb-2">
                       {isMa ? "بلد الإقامة" : isEn ? "Country of residence" : "País de residencia"}
@@ -689,7 +686,7 @@ function OfficialBrowserBox({
                   </div>
 
                   {/* ============================================ */}
-                  {/* 2. PREFERENCIAS LABORALES (NUEVO) */}
+                  {/* 2. PREFERENCIAS LABORALES */}
                   {/* ============================================ */}
                   
                   {/* Posición preferida */}
@@ -726,7 +723,7 @@ function OfficialBrowserBox({
                     </select>
                   </div>
 
-                  {/* ¿Desea reubicarse? - NUEVO */}
+                  {/* ¿Desea reubicarse? */}
                   <div>
                     <label className="block text-white text-[13px] mb-2">
                       {isMa ? "هل ترغب في الانتقال إلى مالطا؟" : isEn ? "Willing to relocate to Malta?" : "¿Desea reubicarse en Malta?"}
@@ -742,7 +739,7 @@ function OfficialBrowserBox({
                   </div>
 
                   {/* ============================================ */}
-                  {/* 3. IDIOMAS (valores en inglés) */}
+                  {/* 3. IDIOMAS */}
                   {/* ============================================ */}
                   
                   <div className="col-span-1 lg:col-span-2">
@@ -794,7 +791,7 @@ function OfficialBrowserBox({
                   </div>
 
                   {/* ============================================ */}
-                  {/* 4. EXPERIENCIA (máximo 2 profesiones) */}
+                  {/* 4. EXPERIENCIA */}
                   {/* ============================================ */}
                   
                   <div className="col-span-1 lg:col-span-2">
@@ -845,24 +842,24 @@ function OfficialBrowserBox({
                     </p>
                   </div>
 
-                  {/* Años de experiencia */}
+                  {/* Años de experiencia - ✅ CAMBIADO: usa anosExperiencia */}
                   <div>
                     <label className="block text-white text-[13px] mb-2">
                       {isMa ? "سنوات الخبرة" : isEn ? "Years of experience" : "Años de experiencia"}
                     </label>
                     <select
-                      value={formData.añosExperiencia}
-                      onChange={(e) => onFormChange("añosExperiencia", e.target.value)}
+                      value={formData.anosExperiencia}
+                      onChange={(e) => onFormChange("anosExperiencia", e.target.value)}
                       className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white focus:outline-none focus:border-yellow-400"
                     >
                       <option value="">{isMa ? "اختر المدة" : isEn ? "Select" : "Selecciona"}</option>
-                      {añosExperienciaOptions.map((opt) => (
+                      {anosExperienciaOptions.map((opt) => (
                         <option key={opt.id} value={opt.id}>{opt.label}</option>
                       ))}
                     </select>
                   </div>
 
-                  {/* Nivel educativo - NUEVO */}
+                  {/* Nivel educativo */}
                   <div>
                     <label className="block text-white text-[13px] mb-2">
                       {isMa ? "المستوى التعليمي" : isEn ? "Education Level" : "Nivel educativo"}
@@ -880,7 +877,7 @@ function OfficialBrowserBox({
                   </div>
 
                   {/* ============================================ */}
-                  {/* 5. SECTORES (máximo 2) */}
+                  {/* 5. SECTORES */}
                   {/* ============================================ */}
                   
                   <div className="col-span-1 lg:col-span-2">
@@ -932,7 +929,7 @@ function OfficialBrowserBox({
                   </div>
 
                   {/* ============================================ */}
-                  {/* 6. CARNET DE CONDUCIR (valores en inglés) */}
+                  {/* 6. CARNET DE CONDUCIR */}
                   {/* ============================================ */}
                   
                   <div>
@@ -951,7 +948,7 @@ function OfficialBrowserBox({
                   </div>
 
                   {/* ============================================ */}
-                  {/* 7. CV EN INGLÉS (valores en inglés) */}
+                  {/* 7. CV EN INGLÉS */}
                   {/* ============================================ */}
                   
                   <div>
@@ -1316,7 +1313,7 @@ export default function TrabajoMalta() {
     aleman_nivel: "",
     
     profesion: "",
-    añosExperiencia: "",
+    anosExperiencia: "", // ✅ CAMBIADO: añosExperiencia → anosExperiencia
     estudios: "",
     education_level: "",
     
@@ -1792,99 +1789,62 @@ export default function TrabajoMalta() {
     return true;
   };
 
-  // ✅ PASO 5: handlePay CORREGIDO - Envía formData y archivos, NO urls
+  // ✅ handlePay - Solo envía JSON con payload
   const handlePay = async (plan: "weekly" | "monthly") => {
     if (!validateForm()) {
       return;
     }
 
     try {
-      // ✅ Creamos FormData para enviar archivos
-      const formDataToSend = new FormData();
-      
-      // Datos del formulario
-      formDataToSend.append("plan", plan);
-      formDataToSend.append("fullName", formData.fullName);
-      formDataToSend.append("whatsapp", formData.whatsapp);
-      formDataToSend.append("email", formData.email);
-      formDataToSend.append("nationality", formData.nationality);
-      formDataToSend.append("currentCity", formData.currentCity);
-      formDataToSend.append("countryResidence", formData.countryResidence);
-      formDataToSend.append("fechaNacimiento", formData.fechaNacimiento);
-      formDataToSend.append("idiomas", formData.idiomas);
-      formDataToSend.append("ingles_nivel", formData.ingles_nivel);
-      formDataToSend.append("frances_nivel", formData.frances_nivel);
-      formDataToSend.append("italiano_nivel", formData.italiano_nivel);
-      formDataToSend.append("espanol_nivel", formData.espanol_nivel);
-      formDataToSend.append("arabe_nivel", formData.arabe_nivel);
-      formDataToSend.append("aleman_nivel", formData.aleman_nivel);
-      formDataToSend.append("profesion", formData.profesion);
-      formDataToSend.append("añosExperiencia", formData.añosExperiencia);
-      formDataToSend.append("education_level", formData.education_level);
-      formDataToSend.append("sectores", formData.sectores);
-      formDataToSend.append("carnetConducir", formData.carnetConducir);
-      formDataToSend.append("preferred_position", formData.preferred_position);
-      formDataToSend.append("work_preference", formData.work_preference);
-      formDataToSend.append("willing_to_relocate", formData.willing_to_relocate);
-      formDataToSend.append("tieneCV", formData.tieneCV);
-      formDataToSend.append("worker_status", "waiting");
+      // ✅ Creamos el payload con todos los datos
+      const payload = {
+        plan,
 
-      // ✅ Enviamos los archivos (NO las URLs)
-      if (formData.cvFile) {
-        formDataToSend.append("cvFile", formData.cvFile);
-      }
-      if (formData.photoFile) {
-        formDataToSend.append("photoFile", formData.photoFile);
-      }
-      if (formData.pdfFile) {
-        formDataToSend.append("pdfFile", formData.pdfFile);
-      }
-const payload = {
-  plan,
+        fullName: formData.fullName,
+        whatsapp: formData.whatsapp,
+        email: formData.email,
 
-  fullName: formData.fullName,
-  whatsapp: formData.whatsapp,
-  email: formData.email,
+        nationality: formData.nationality,
+        currentCity: formData.currentCity,
+        countryResidence: formData.countryResidence,
 
-  nationality: formData.nationality,
-  currentCity: formData.currentCity,
-  countryResidence: formData.countryResidence,
+        fechaNacimiento: formData.fechaNacimiento,
 
-  fechaNacimiento: formData.fechaNacimiento,
+        idiomas: formData.idiomas,
+        ingles_nivel: formData.ingles_nivel,
+        frances_nivel: formData.frances_nivel,
+        italiano_nivel: formData.italiano_nivel,
+        espanol_nivel: formData.espanol_nivel,
+        arabe_nivel: formData.arabe_nivel,
+        aleman_nivel: formData.aleman_nivel,
 
-  idiomas: formData.idiomas,
-  ingles_nivel: formData.ingles_nivel,
-  frances_nivel: formData.frances_nivel,
-  italiano_nivel: formData.italiano_nivel,
-  espanol_nivel: formData.espanol_nivel,
-  arabe_nivel: formData.arabe_nivel,
-  aleman_nivel: formData.aleman_nivel,
+        profesion: formData.profesion,
+        anosExperiencia: formData.anosExperiencia, // ✅ CAMBIADO
 
-  profesion: formData.profesion,
-  anosExperiencia: formData.añosExperiencia,
+        education_level: formData.education_level,
 
-  education_level: formData.education_level,
+        sectores: formData.sectores,
+        carnetConducir: formData.carnetConducir,
 
-  sectores: formData.sectores,
-  carnetConducir: formData.carnetConducir,
+        preferred_position: formData.preferred_position,
+        work_preference: formData.work_preference,
+        willing_to_relocate: formData.willing_to_relocate,
 
-  preferred_position: formData.preferred_position,
-  work_preference: formData.work_preference,
-  willing_to_relocate: formData.willing_to_relocate,
+        tieneCV: formData.tieneCV,
 
-  tieneCV: formData.tieneCV,
+        cvUrl: "",
+        photoUrl: "",
+        pdfUrl: "",
+      };
 
-  cvUrl: "",
-  photoUrl: "",
-  pdfUrl: "",
-};
- const res = await fetch("/api/create-checkout-malta", {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json",
-  },
-  body: JSON.stringify(payload),
-});
+      const res = await fetch("/api/create-checkout-malta", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
       const data = await res.json();
       if (data.url) {
         localStorage.setItem("maltaPaid", "1");
@@ -1900,7 +1860,7 @@ const payload = {
     }
   };
 
-  // ✅ HANDLE FORM CHANGE CORREGIDO
+  // ✅ HANDLE FORM CHANGE
   const handleFormChange = (field: keyof MaltaFormData, value: string | File | null) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
