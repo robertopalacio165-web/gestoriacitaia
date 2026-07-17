@@ -1,0 +1,132 @@
+import { createClient } from "@supabase/supabase-js";
+import type { VercelRequest, VercelResponse } from "@vercel/node";
+
+const supabase = createClient(
+  process.env.VITE_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
+
+export default async function handler(
+  req: VercelRequest,
+  res: VercelResponse
+) {
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Method not allowed" });
+  }
+
+  try {
+    // ✅ Obtener el body
+    const body = req.body;
+
+    console.log("========== DEV CREATE APPLICATION ==========");
+    console.log("📦 Body recibido:", JSON.stringify(body, null, 2));
+    console.log("============================================");
+
+    // ✅ Desestructurar todos los campos
+    const {
+      plan,
+      fullName,
+      whatsapp,
+      email,
+      nationality,
+      currentCity,
+      countryResidence,
+      fechaNacimiento,
+      idiomas,
+      ingles_nivel,
+      frances_nivel,
+      italiano_nivel,
+      espanol_nivel,
+      arabe_nivel,
+      aleman_nivel,
+      profesion,
+      anosExperiencia,
+      estudios, // ✅ AÑADIDO: estudios
+      education_level,
+      sectores,
+      carnetConducir,
+      preferred_position,
+      work_preference,
+      willing_to_relocate,
+      tieneCV,
+      cvUrl,
+      photoUrl,
+      pdfUrl,
+    } = body;
+
+    // ✅ Insertar directamente en Supabase (modo desarrollo)
+    const { data, error } = await supabase
+      .from("malta_applications")
+      .insert({
+        full_name: fullName || "",
+        whatsapp: whatsapp || "",
+        email: email || "",
+        nacionalidad: nationality || "",
+        current_city: currentCity || "",
+        pais_residencia: countryResidence || "",
+        fecha_nacimiento: fechaNacimiento || null,
+        idiomas: idiomas || "",
+        ingles_nivel: ingles_nivel || "",
+        frances_nivel: frances_nivel || "",
+        italiano_nivel: italiano_nivel || "",
+        espanol_nivel: espanol_nivel || "",
+        arabe_nivel: arabe_nivel || "",
+        aleman_nivel: aleman_nivel || "",
+        profesion: profesion || "",
+        anos_experiencia: anosExperiencia || "",
+        estudios: estudios || "", // ✅ AÑADIDO: estudios
+        education_level: education_level || "",
+        sectores: sectores || "",
+        carnet_conducir: carnetConducir || "",
+        preferred_position: preferred_position || "",
+        work_preference: work_preference || "",
+        willing_to_relocate: willing_to_relocate === "Yes",
+        tiene_cv: tieneCV === "Yes" || tieneCV === "Sí",
+        cv_url: cvUrl || "",
+        photo_url: photoUrl || "",
+        pdf_url: pdfUrl || "",
+        plan: plan || "monthly",
+        paid: true,
+        worker_status: "pending",
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error("❌ Error insertando en Supabase:", error);
+      return res.status(500).json({ error: error.message });
+    }
+
+    console.log(`✅ Aplicación creada en modo DEV: ${data.id}`);
+
+    // ✅ Añadir a la cola de trabajo
+    const { error: queueError } = await supabase
+      .from("worker_queue")
+      .insert({
+        application_id: data.id,
+        status: "pending",
+        priority: 1,
+        created_at: new Date().toISOString(),
+      });
+
+    if (queueError) {
+      console.error("❌ Error añadiendo a worker_queue:", queueError);
+    } else {
+      console.log(`✅ Añadido a la cola de trabajo: ${data.id}`);
+    }
+
+    // ✅ Responder con éxito
+    return res.status(200).json({
+      success: true,
+      applicationId: data.id,
+      message: "Application created in dev mode",
+      url: `${process.env.NEXT_PUBLIC_URL}/trabajo-malta?success=true&dev=true`,
+    });
+
+  } catch (error: any) {
+    console.error("❌ Error en dev-create-application:", error);
+    return res.status(500).json({ error: error.message });
+  }
+}
