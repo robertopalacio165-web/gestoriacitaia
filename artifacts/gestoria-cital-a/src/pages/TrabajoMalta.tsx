@@ -63,7 +63,7 @@ type MaltaFormData = {
   
   // Experiencia
   profesion: string;
-  anosExperiencia: string; // ✅ CAMBIADO: añosExperiencia → anosExperiencia
+  anosExperiencia: string;
   estudios: string;
   education_level: string;
   
@@ -291,7 +291,7 @@ function OfficialBrowserBox({
     { id: "Retail", label: isMa ? "بيع بالتجزئة" : isEn ? "Retail" : "Venta al por menor" },
   ];
 
-  // ✅ AÑOS DE EXPERIENCIA - ✅ CAMBIADO: añosExperienciaOptions → anosExperienciaOptions
+  // ✅ AÑOS DE EXPERIENCIA
   const anosExperienciaOptions = [
     { id: "No experience", label: isMa ? "بدون خبرة" : isEn ? "No experience" : "Sin experiencia" },
     { id: "Less than 1 year", label: isMa ? "أقل من سنة" : isEn ? "Less than 1 year" : "Menos de 1 año" },
@@ -842,7 +842,7 @@ function OfficialBrowserBox({
                     </p>
                   </div>
 
-                  {/* Años de experiencia - ✅ CAMBIADO: usa anosExperiencia */}
+                  {/* Años de experiencia */}
                   <div>
                     <label className="block text-white text-[13px] mb-2">
                       {isMa ? "سنوات الخبرة" : isEn ? "Years of experience" : "Años de experiencia"}
@@ -1313,7 +1313,7 @@ export default function TrabajoMalta() {
     aleman_nivel: "",
     
     profesion: "",
-    anosExperiencia: "", // ✅ CAMBIADO: añosExperiencia → anosExperiencia
+    anosExperiencia: "",
     estudios: "",
     education_level: "",
     
@@ -1789,13 +1789,21 @@ export default function TrabajoMalta() {
     return true;
   };
 
-  // ✅ handlePay - Solo envía JSON con payload
+  // ✅ handlePay - Con detección de admin
   const handlePay = async (plan: "weekly" | "monthly") => {
     if (!validateForm()) {
       return;
     }
 
     try {
+      // ✅ Obtener usuario actual y verificar si es admin
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      const isAdmin =
+        user?.email?.toLowerCase() === "robertopalacio165@gmail.com";
+
       // ✅ Creamos el payload con todos los datos
       const payload = {
         plan,
@@ -1819,7 +1827,7 @@ export default function TrabajoMalta() {
         aleman_nivel: formData.aleman_nivel,
 
         profesion: formData.profesion,
-        anosExperiencia: formData.anosExperiencia, // ✅ CAMBIADO
+        anosExperiencia: formData.anosExperiencia,
 
         education_level: formData.education_level,
 
@@ -1837,7 +1845,12 @@ export default function TrabajoMalta() {
         pdfUrl: "",
       };
 
-      const res = await fetch("/api/create-checkout-malta", {
+      // ✅ Seleccionar endpoint según si es admin o no
+      const endpoint = isAdmin
+        ? "/api/dev-create-application"
+        : "/api/create-checkout-malta";
+
+      const res = await fetch(endpoint, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
