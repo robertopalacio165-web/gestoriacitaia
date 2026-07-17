@@ -979,7 +979,7 @@ function generateCoverHtml(
 }
 
 // ============================================
-// SUBIDA A SUPABASE - ORIGINAL SIN CAMBIOS
+// SUBIDA A SUPABASE - ORIGINAL (SIN CAMBIOS)
 // ============================================
 
 async function uploadPDF(pdfBytes: Buffer, fileName: string): Promise<string> {
@@ -1139,7 +1139,7 @@ export default async function handler(
 
     if (application.photo_url) {
       updateData.photo_uploaded = true;
-      updateData.photo_generated_at = new Date().toISOString();
+      updateData.photo_generated_at: new Date().toISOString();
     }
 
     console.log("📦 updateData:");
