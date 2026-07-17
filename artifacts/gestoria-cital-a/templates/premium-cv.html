@@ -36,10 +36,10 @@
       background: #ffffff;
       border-radius: 8px;
       box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
-      overflow: hidden;
       display: flex;
       flex-direction: row;
       flex-shrink: 0;
+      /* ⚠️ SIN overflow: hidden */
     }
 
     /* ============================================
@@ -58,19 +58,32 @@
       flex-direction: column;
     }
 
+    /* ============================================
+       FOTO - CORREGIDA (sin zoom, sin deformación)
+    ============================================ */
     .sidebar .photo {
-      width: 110px;
-      height: 110px;
+      width: 90px;
+      height: 90px;
+      overflow: hidden;
       border-radius: 50%;
-      background: #1a2a3e;
-      margin: 0 auto 12px;
       display: flex;
       align-items: center;
       justify-content: center;
-      overflow: hidden;
+      margin: 0 auto 12px;
       border: 4px solid #ffffff;
       box-shadow: 0 0 0 4px #0d2445;
       flex-shrink: 0;
+      background: #1a2a3e;
+    }
+
+    .sidebar .photo img {
+      display: block;
+      max-width: 90px;
+      max-height: 90px;
+      width: auto;
+      height: auto;
+      object-fit: contain;
+        object-position: center;
     }
 
     .sidebar .photo .initials {
@@ -202,6 +215,7 @@
       height: 100%;
       display: flex;
       flex-direction: column;
+      /* ⚠️ SIN overflow: hidden - eliminado */
     }
 
     .main .header-block {
@@ -281,6 +295,9 @@
       letter-spacing: 0.2px;
     }
 
+    /* ============================================
+       EXPERIENCIA - LIMITADA A 4 BULLETS
+    ============================================ */
     .main .experience-item {
       margin-bottom: 4px;
       padding-left: 10px;
@@ -448,6 +465,10 @@
       border-bottom: none;
     }
 
+    .main .info-grid .info-item:nth-last-child(2) {
+      border-bottom: none;
+    }
+
     .main .info-grid .info-item strong {
       color: #0a1a2e;
       font-weight: 600;
@@ -502,7 +523,6 @@
         min-height: 100vh;
         page-break-after: avoid;
         page-break-inside: avoid;
-        overflow: hidden;
       }
 
       .sidebar {
@@ -573,6 +593,11 @@
       .sidebar .photo {
         width: 80px;
         height: 80px;
+      }
+
+      .sidebar .photo img {
+        max-width: 80px;
+        max-height: 80px;
       }
 
       .main {
