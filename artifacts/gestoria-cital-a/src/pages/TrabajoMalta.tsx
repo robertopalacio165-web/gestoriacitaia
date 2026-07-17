@@ -362,7 +362,7 @@ function OfficialBrowserBox({
     }
   };
 
-  // handlePhotoUpload - Solo guarda el archivo, no sube a Supabase
+  // ✅ handlePhotoUpload - Sube la foto a Supabase y guarda la URL
   const handlePhotoUpload = async (file: File) => {
     if (!file) return;
     
@@ -387,17 +387,38 @@ function OfficialBrowserBox({
     
     setUploadingPhoto(true);
     try {
+      // ✅ Subir la foto a Supabase Storage
+      const timestamp = Date.now();
+      const fileName = `photo_${timestamp}_${file.name.replace(/[^a-zA-Z0-9.]/g, "_")}`;
+      
+      const { data, error } = await supabase.storage
+        .from("malta-documents")
+        .upload(fileName, file, {
+          cacheControl: "3600",
+          upsert: true,
+        });
+
+      if (error) throw error;
+
+      const { data: publicUrlData } = supabase.storage
+        .from("malta-documents")
+        .getPublicUrl(fileName);
+
+      const photoUrl = publicUrlData.publicUrl;
+
+      // ✅ Guardar el archivo y la URL en el estado
       onFormChange("photoFile", file);
+      onFormChange("photoUrl", photoUrl);
       
       toast({
-        title: isMa ? "✅ تم التحميل" : isEn ? "✅ File ready" : "✅ Archivo listo",
-        description: isMa ? "تم تحميل الصورة" : isEn ? "Photo loaded" : "Foto cargada",
+        title: isMa ? "✅ تم الرفع" : isEn ? "✅ Uploaded" : "✅ Subida",
+        description: isMa ? "تم رفع الصورة بنجاح" : isEn ? "Photo uploaded successfully" : "Foto subida correctamente",
       });
     } catch (error) {
-      console.error("Error loading photo:", error);
+      console.error("Error uploading photo:", error);
       toast({
         title: isMa ? "خطأ" : isEn ? "Error" : "Error",
-        description: isMa ? "حدث خطأ أثناء تحميل الصورة" : isEn ? "Error loading photo" : "Error al cargar la foto",
+        description: isMa ? "حدث خطأ أثناء رفع الصورة" : isEn ? "Error uploading photo" : "Error al subir la foto",
         variant: "destructive",
       });
     } finally {
