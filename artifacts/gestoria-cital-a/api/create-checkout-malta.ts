@@ -18,7 +18,14 @@ export default async function handler(
   }
 
   try {
-    // ✅ 1. DESESTRUCTURACIÓN ACTUALIZADA con todos los nuevos campos
+    // ✅ 1. OBTENER EL BODY PRIMERO
+    const body = req.body;
+
+    console.log("========== BODY RECIBIDO ==========");
+    console.log(body);
+    console.log("==================================");
+
+    // ✅ 2. DESESTRUCTURACIÓN ACTUALIZADA con todos los nuevos campos usando 'body'
     const {
       fullName,
       whatsapp,
@@ -39,7 +46,7 @@ export default async function handler(
       aleman_nivel,
 
       profesion,
-   anosExperiencia,
+      anosExperiencia,
 
       education_level,
 
@@ -56,7 +63,7 @@ export default async function handler(
       pdfUrl,
 
       plan,
-    } = req.body;
+    } = body;
 
     // Determinar precio según el plan
     const unitAmount = plan === "weekly" ? 1999 : 2999;
@@ -97,7 +104,7 @@ export default async function handler(
       ],
       success_url: `${process.env.NEXT_PUBLIC_URL}/trabajo-malta?success=true&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.NEXT_PUBLIC_URL}/trabajo-malta?canceled=true`,
-      // ✅ 2. METADATA ACTUALIZADA con todos los nuevos campos
+      // ✅ 3. METADATA ACTUALIZADA con todos los nuevos campos
       metadata: {
         fullName: fullName || "",
         whatsapp: whatsapp || "",
@@ -118,7 +125,7 @@ export default async function handler(
         aleman_nivel: aleman_nivel || "",
 
         profesion: profesion || "",
-  anosExperiencia: anosExperiencia || "",
+        anosExperiencia: anosExperiencia || "",
         education_level: education_level || "",
 
         sectores: sectores || "",
