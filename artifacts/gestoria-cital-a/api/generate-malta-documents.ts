@@ -61,7 +61,7 @@ const SECTOR_TEMPLATES: Record<string, {
   kitchen: {
     title: "Kitchen Assistant",
     atsKeywords: ["food preparation", "hygiene", "HACCP", "cleaning", "inventory"],
-    skills: ["Food Preparation", "Kitchen Hygiene", "HACCP", "Inventory Management", "Cleaning & Sanitization", "Team Collaboration"],
+    skills: ["Food Preparation", "Kitchen Hygiene", "HACCP", "Inventory Management", "Cleaning & Sanitization", "Team Collaboration", "Time Management", "Quality Control"],
     companies: [
       { name: "Hilton Malta", address: "Portomaso, St. Julian's, Malta", city: "St. Julian's", department: "Human Resources Department" },
       { name: "Radisson Blu Resort", address: "St. George's Bay, St. Julian's, Malta", city: "St. Julian's", department: "Recruitment Team" },
@@ -73,7 +73,7 @@ const SECTOR_TEMPLATES: Record<string, {
   hotel: {
     title: "Housekeeping Attendant",
     atsKeywords: ["cleaning", "organization", "customer service", "attention to detail"],
-    skills: ["Cleaning", "Organization", "Customer Service", "Attention to Detail", "Teamwork", "Time Management"],
+    skills: ["Cleaning", "Organization", "Customer Service", "Attention to Detail", "Teamwork", "Time Management", "Reliability", "Communication"],
     companies: [
       { name: "Hilton Malta", address: "Portomaso, St. Julian's, Malta", city: "St. Julian's", department: "Human Resources Department" },
       { name: "Corinthia Palace", address: "San Anton, Attard, Malta", city: "Attard", department: "Human Resources" },
@@ -84,7 +84,7 @@ const SECTOR_TEMPLATES: Record<string, {
   restaurant: {
     title: "Food & Beverage Assistant",
     atsKeywords: ["customer service", "food safety", "hygiene", "team work"],
-    skills: ["Customer Service", "Food Safety", "Hygiene", "Team Collaboration", "Communication", "Attention to Detail"],
+    skills: ["Customer Service", "Food Safety", "Hygiene", "Team Collaboration", "Communication", "Attention to Detail", "Time Management", "Problem Solving"],
     companies: [
       { name: "Hilton Malta", address: "Portomaso, St. Julian's, Malta", city: "St. Julian's", department: "Human Resources Department" },
       { name: "Radisson Blu Resort", address: "St. George's Bay, St. Julian's, Malta", city: "St. Julian's", department: "Recruitment Team" },
@@ -95,7 +95,7 @@ const SECTOR_TEMPLATES: Record<string, {
   cleaning: {
     title: "Professional Cleaner",
     atsKeywords: ["cleaning", "hygiene", "organization", "attention to detail"],
-    skills: ["Cleaning", "Hygiene", "Organization", "Attention to Detail", "Time Management", "Reliability"],
+    skills: ["Cleaning", "Hygiene", "Organization", "Attention to Detail", "Time Management", "Reliability", "Communication", "Safety Awareness"],
     companies: [
       { name: "Hilton Malta", address: "Portomaso, St. Julian's, Malta", city: "St. Julian's", department: "Human Resources Department" },
       { name: "Corinthia Palace", address: "San Anton, Attard, Malta", city: "Attard", department: "Human Resources" },
@@ -106,7 +106,7 @@ const SECTOR_TEMPLATES: Record<string, {
   warehouse: {
     title: "Warehouse Operative",
     atsKeywords: ["inventory", "forklift", "packing", "organization", "safety"],
-    skills: ["Inventory Management", "Forklift", "Packing", "Safety", "Organization", "Teamwork"],
+    skills: ["Inventory Management", "Forklift", "Packing", "Safety", "Organization", "Teamwork", "Time Management", "Attention to Detail"],
     companies: [
       { name: "DB Schenker", address: "Mriehel, Malta", city: "Mriehel", department: "Human Resources" },
       { name: "Kuehne + Nagel", address: "Mriehel, Malta", city: "Mriehel", department: "Recruitment Team" },
@@ -117,7 +117,7 @@ const SECTOR_TEMPLATES: Record<string, {
   delivery: {
     title: "Delivery Driver",
     atsKeywords: ["driving", "navigation", "time management", "customer service"],
-    skills: ["Driving", "Navigation", "Time Management", "Customer Service", "Reliability", "Communication"],
+    skills: ["Driving", "Navigation", "Time Management", "Customer Service", "Reliability", "Communication", "Problem Solving", "Safety"],
     companies: [
       { name: "Bolt Malta", address: "Sliema, Malta", city: "Sliema", department: "Operations Team" },
       { name: "Wolt Malta", address: "Birkirkara, Malta", city: "Birkirkara", department: "Recruitment Team" },
@@ -128,7 +128,7 @@ const SECTOR_TEMPLATES: Record<string, {
   construction: {
     title: "Construction Worker",
     atsKeywords: ["building", "safety", "tools", "team work", "physical work"],
-    skills: ["Construction", "Safety", "Tools", "Team Work", "Physical Work", "Reliability"],
+    skills: ["Construction", "Safety", "Tools", "Team Work", "Physical Work", "Reliability", "Communication", "Problem Solving"],
     companies: [
       { name: "Vassallo Builders", address: "Naxxar, Malta", city: "Naxxar", department: "Human Resources" },
       { name: "Hili Company", address: "Mosta, Malta", city: "Mosta", department: "Recruitment Team" },
@@ -139,7 +139,7 @@ const SECTOR_TEMPLATES: Record<string, {
   aluminium: {
     title: "Aluminium & Carpentry Worker",
     atsKeywords: ["aluminium", "carpentry", "tools", "measurement", "quality"],
-    skills: ["Aluminium Work", "Carpentry", "Tools", "Quality Control", "Measurement", "Precision"],
+    skills: ["Aluminium Work", "Carpentry", "Tools", "Quality Control", "Measurement", "Precision", "Safety", "Problem Solving"],
     companies: [
       { name: "Vassallo Builders", address: "Naxxar, Malta", city: "Naxxar", department: "Human Resources" },
       { name: "Hili Company", address: "Mosta, Malta", city: "Mosta", department: "Recruitment Team" },
@@ -150,7 +150,7 @@ const SECTOR_TEMPLATES: Record<string, {
   manufacturing: {
     title: "Manufacturing Operative",
     atsKeywords: ["production", "quality", "machinery", "safety", "team work"],
-    skills: ["Production", "Quality Control", "Machinery", "Safety", "Teamwork", "Attention to Detail"],
+    skills: ["Production", "Quality Control", "Machinery", "Safety", "Teamwork", "Attention to Detail", "Problem Solving", "Time Management"],
     companies: [
       { name: "ST Microelectronics", address: "Kirkop, Malta", city: "Kirkop", department: "Human Resources" },
       { name: "Malta Enterprise", address: "Gwardamangia, Malta", city: "Gwardamangia", department: "Recruitment Team" },
@@ -161,7 +161,7 @@ const SECTOR_TEMPLATES: Record<string, {
   default: {
     title: "General Worker",
     atsKeywords: ["reliability", "team work", "safety", "quality", "adaptability"],
-    skills: ["Reliability", "Team Work", "Safety", "Adaptability", "Communication", "Punctuality"],
+    skills: ["Reliability", "Team Work", "Safety", "Adaptability", "Communication", "Punctuality", "Problem Solving", "Time Management"],
     companies: [
       { name: "Various Companies", address: "Malta", city: "Malta", department: "Human Resources Department" },
     ],
@@ -498,7 +498,94 @@ async function generateContent(prompt: string): Promise<{ text: string; tokens?:
 }
 
 // ============================================
-// PROMPT PARA CV - VERSIÓN MEJORADA (MÁS CONTENIDO)
+// CONTEXTO DE CIUDADES - VERSIÓN EXTENDIDA (50+ CIUDADES)
+// ============================================
+
+function getCityDescription(city: string): string {
+  const cityContexts: Record<string, string> = {
+    // Grandes ciudades
+    "Casablanca": "Casablanca, Morocco's economic capital with a vibrant hospitality and restaurant scene",
+    "Rabat": "Rabat, the political and administrative capital with a growing tourism sector",
+    "Tangier": "Tangier, the historic port city with strong Mediterranean tourism and hospitality",
+    "Agadir": "Agadir, the coastal tourist destination with a well-established hotel industry",
+    "Marrakech": "Marrakech, the world-famous tourist hub with luxury hotels and international cuisine",
+    "Fes": "Fes, the cultural and spiritual heart with traditional Moroccan hospitality",
+    "Meknes": "Meknes, the imperial city with rich historical tourism",
+    
+    // Ciudades medianas
+    "Oujda": "Oujda, the eastern gateway with a developing hospitality sector",
+    "Kenitra": "Kenitra, the northwestern city with commercial and industrial activity",
+    "Tetouan": "Tetouan, the northern city with Andalusian heritage and Mediterranean tourism",
+    "Safi": "Safi, the coastal city known for its port and pottery tradition",
+    "El Jadida": "El Jadida, the coastal city with Portuguese heritage and seaside tourism",
+    "Settat": "Settat, the central city with agricultural and commercial activities",
+    "Khouribga": "Khouribga, the mining city with a developing service sector",
+    "Beni Mellal": "Beni Mellal, the central city surrounded by agricultural and natural attractions",
+    "Nador": "Nador, the northeastern coastal city with growing tourism potential",
+    "Taza": "Taza, the mountain city with natural heritage and local commerce",
+    "Larache": "Larache, the coastal town with fishing and tourism activities",
+    "Ksar El Kebir": "Ksar El Kebir, the northern city with agricultural and commercial traditions",
+    "Sidi Kacem": "Sidi Kacem, the northern agricultural city with growing services",
+    "Khemisset": "Khemisset, the central city with artisan and commercial activities",
+    "Mohammedia": "Mohammedia, the coastal industrial city with a developing hospitality sector",
+    
+    // Ciudades pequeñas y turísticas
+    "Essaouira": "Essaouira, the coastal city with traditional fishing and growing tourism",
+    "Ouarzazate": "Ouarzazate, the gateway to the desert with film and tourism industries",
+    "Dakhla": "Dakhla, the southern coastal city with windsurfing and eco-tourism",
+    "Laayoune": "Laayoune, the southern administrative centre with developing services",
+    "Al Hoceima": "Al Hoceima, the northern coastal city with Mediterranean tourism",
+    "Chefchaouen": "Chefchaouen, the famous blue city with international tourism",
+    "Ifrane": "Ifrane, the alpine city with mountain tourism and green landscapes",
+    "Azrou": "Azrou, the central mountain city with forest and artisan tourism",
+    "Errachidia": "Errachidia, the eastern city with oasis and desert tourism",
+    "Guelmim": "Guelmim, the southern city with desert and camel tourism",
+    "Tiznit": "Tiznit, the southern city with silver craftsmanship and tourism",
+    "Taroudant": "Taroudant, the southern city with traditional souks and tourism",
+    "Oued Zem": "Oued Zem, the central mining city with developing services",
+    "Sefrou": "Sefrou, the central city with cherry festival and tourism",
+    "Berkane": "Berkane, the eastern agricultural city with citrus production",
+    "M'Diq": "M'Diq, the northern coastal city with Mediterranean tourism",
+    "Fnideq": "Fnideq, the northern border city with commercial activity",
+    "Martil": "Martil, the northern coastal town with summer tourism",
+    "Sidi Slimane": "Sidi Slimane, the northwestern agricultural city",
+  };
+
+  return cityContexts[city] || `${city}, a city in Morocco with a developing hospitality and service sector`;
+}
+
+function getCitySectors(city: string): string {
+  const sectorMap: Record<string, string> = {
+    "Casablanca": "hospitality, restaurants, cafés, commerce, tourism, corporate services, and international business",
+    "Rabat": "government services, tourism, hospitality, restaurants, and cultural institutions",
+    "Tangier": "tourism, hospitality, shipping, commerce, and international trade",
+    "Agadir": "tourism, hotels, restaurants, beach resorts, and coastal hospitality",
+    "Marrakech": "luxury hospitality, tourism, restaurants, riads, and international cuisine",
+    "Fes": "cultural tourism, traditional hospitality, artisan crafts, and historical tourism",
+    "Meknes": "historical tourism, agriculture, and traditional commerce",
+    "Oujda": "commerce, agriculture, and developing hospitality",
+    "Kenitra": "industry, commerce, and hospitality services",
+    "Tetouan": "tourism, crafts, and Mediterranean hospitality",
+    "Safi": "fishing industry, pottery, and coastal tourism",
+    "El Jadida": "coastal tourism, fishing, and Portuguese heritage tourism",
+    "Settat": "agriculture, commerce, and services",
+    "Khouribga": "mining industry and developing services",
+    "Beni Mellal": "agriculture, mountain tourism, and local commerce",
+    "Nador": "fishing, coastal tourism, and cross-border commerce",
+    "Taza": "mountain tourism, agriculture, and local commerce",
+    "Larache": "fishing, coastal tourism, and agriculture",
+    "Essaouira": "cultural tourism, fishing, and windsurfing",
+    "Ouarzazate": "film tourism, desert tourism, and cultural heritage",
+    "Dakhla": "water sports, eco-tourism, and fishing",
+    "Chefchaouen": "international tourism, crafts, and mountain hospitality",
+    "Ifrane": "mountain tourism, eco-tourism, and winter sports",
+  };
+
+  return sectorMap[city] || "hospitality, local commerce, services, and community-oriented businesses";
+}
+
+// ============================================
+// PROMPT PARA CV - VERSIÓN FINAL
 // ============================================
 
 function getPremiumCVPrompt(data: any, company: Company): string {
@@ -524,17 +611,29 @@ function getPremiumCVPrompt(data: any, company: Company): string {
   const country = data.pais_residencia || "Morocco";
   const education = data.estudios || "No formal education";
 
+  const cityDescription = getCityDescription(city);
+  const citySectors = getCitySectors(city);
+
   return `
 You are a senior recruitment consultant with 20+ years of experience in the Maltese hospitality and labour market. You write professional, ATS-optimised CVs that sound human, unique, and tailored to each candidate.
 
 📌 CRITICAL RULES:
 1. The candidate is from ${city}, ${country}. Use this to add authentic regional context to their profile.
 2. The candidate is applying for jobs in MALTA. Always mention Malta as the target destination.
-3. DO NOT state that the candidate worked at a specific company unless the user provided that information.
+3. IMPORTANT: Never invent employers, restaurant names, cafés, hotels, addresses or companies. Describe the local labour market and the candidate's familiarity with sectors such as hospitality, cafés, restaurants, retail or tourism based on the city of origin, but never claim employment at a specific business unless the candidate explicitly provided it.
 4. If the user has NO work experience, write a compelling entry-level profile using realistic responsibilities.
 5. Use professional, natural British English.
 6. AVOID generic phrases like "hard-working" or "dedicated" without context.
-7. GENERATE SUBSTANTIAL CONTENT - minimum 800-1000 words to fill an entire A4 page.
+7. Every CV must be unique. Never generate the same professional summary twice. Rewrite the structure, wording and examples for every candidate.
+8. Explain how the candidate developed transferable skills in Morocco before seeking professional growth in Malta.
+
+ABOUT THE CANDIDATE'S CITY:
+The candidate is from ${city}, ${cityDescription}. This background provides valuable experience and transferable skills for the Maltese market, including:
+- Familiarity with the local hospitality, café and restaurant culture in ${city}
+- Understanding of customer service in a busy urban environment
+- Experience with diverse clientele and multicultural interactions
+- Knowledge of food safety and hygiene practices common in ${city}
+- The local economy in ${city} includes sectors such as ${citySectors}
 
 ---
 
@@ -558,16 +657,18 @@ ${template.atsKeywords.map(k => `- ${k}`).join("\n")}
 
 ---
 
-Generate a COMPLETE, PROFESSIONAL CV with these sections. Each section must be substantial and detailed to fill a full A4 page.
+Generate a COMPLETE, PROFESSIONAL CV with these sections:
 
-1. PROFESSIONAL SUMMARY (200-250 words):
-   - Powerful opening about the candidate's professional identity
-   - Mention their origin (${city}) and motivation to work in MALTA
-   - Highlight their unique value proposition for the Maltese market
-   - Include career goals and what they offer to employers
-   - Use industry keywords and terminology
+1. PROFESSIONAL SUMMARY (180-220 words):
+   Write a powerful executive summary that:
+   - Opens with a confident statement about the candidate's professional identity
+   - Highlights their unique value proposition for the Maltese market
+   - Mentions their origin (${city}) and motivation to work in MALTA
+   - Shows how skills developed in Morocco transfer to the Maltese market
+   - Includes career goals and what they offer to employers
+   - Uses industry keywords and terminology
 
-2. PROFESSIONAL PROFILE (150-200 words):
+2. PROFESSIONAL PROFILE (120-150 words):
    - Detailed description of the candidate's professional identity
    - Core competencies and areas of expertise
    - Understanding of the Maltese hospitality industry
@@ -576,7 +677,7 @@ Generate a COMPLETE, PROFESSIONAL CV with these sections. Each section must be s
 3. KEY ACHIEVEMENTS (8-10 bullet points):
    - Specific, measurable achievements
    - If no experience, write realistic achievements from training or volunteer work
-   - Use strong action verbs (improved, managed, achieved, increased, reduced, delivered, implemented)
+   - Use strong action verbs
    - Each bullet should be a complete, impactful statement
 
 4. PROFESSIONAL EXPERIENCE (3 positions, each with 5-7 bullet points):
@@ -585,7 +686,6 @@ Generate a COMPLETE, PROFESSIONAL CV with these sections. Each section must be s
    - Each bullet describes one key responsibility or achievement
    - Use strong action verbs
    - Each bullet should be detailed and specific
-   - Mention MALTA or the company location if relevant
 
 Return ONLY valid JSON:
 {
@@ -632,10 +732,10 @@ async function generatePremiumCV(data: any, company: Company): Promise<CVContent
 }
 
 // ============================================
-// PROMPT PARA COVER LETTER
+// PROMPT PARA COVER LETTER - SOLO CONSTRUYE EL PROMPT
 // ============================================
 
-async function generatePremiumCoverLetter(data: any, company: Company): Promise<LetterContent> {
+function getPremiumCoverLetterPrompt(data: any, company: Company): string {
   const sector = data.sectores ? data.sectores.split(",")[0]?.trim()?.toLowerCase() : "default";
   const template = SECTOR_TEMPLATES[sector] || SECTOR_TEMPLATES.default;
 
@@ -648,18 +748,31 @@ async function generatePremiumCoverLetter(data: any, company: Company): Promise<
   const city = data.current_city || data.ciudad_actual || "Morocco";
   const country = data.pais_residencia || "Morocco";
 
-  const prompt = `
+  const cityDescription = getCityDescription(city);
+  const citySectors = getCitySectors(city);
+
+  return `
 You are a professional cover letter writer specialising in the Maltese job market. You write natural, human-sounding letters that are unique to each candidate and company.
 
 📌 CRITICAL RULES:
 1. The candidate is from ${city}, ${country} and wants to work in MALTA. This is essential - mention the move from ${city} to Malta.
-2. Write ONLY the BODY paragraphs of the cover letter.
-3. DO NOT include: name, address, date, subject line, greeting, signature, phone, email.
-4. DO NOT mention languages, passport, driving licence, or work permit - these are in the CV.
-5. Make each letter DIFFERENT for each candidate and company.
-6. Use natural, professional British English.
-7. Never use generic phrases like "I am writing to apply for".
-8. GENERATE SUBSTANTIAL CONTENT - each paragraph should be 5-7 sentences.
+2. Write a compelling career story: how the candidate's experience in ${city} prepared them for the Maltese market.
+3. Write ONLY the BODY paragraphs of the cover letter (350-500 words total).
+4. DO NOT include: name, address, date, subject line, greeting, signature, phone, email.
+5. DO NOT mention languages, passport, driving licence, or work permit - these are in the CV.
+6. Make each letter DIFFERENT for each candidate and company. Never use identical text for different candidates.
+7. Use natural, professional British English.
+8. Never use generic phrases like "I am writing to apply for".
+9. Never invent employers, restaurant names, cafés, hotels, addresses or companies.
+10. Mention why the candidate wants to build a long-term career in Malta rather than simply finding a temporary job.
+
+ABOUT THE CANDIDATE'S BACKGROUND:
+- From ${cityDescription}
+- Familiar with the hospitality, café and restaurant culture in ${city}
+- The local economy in ${city} includes sectors such as ${citySectors}
+- Motivated to bring their skills to the Maltese market
+- Ready to relocate and contribute to ${company.name}
+- Seeking long-term professional growth in Malta's hospitality industry
 
 ---
 
@@ -680,7 +793,7 @@ ${userExperience ? `REAL WORK EXPERIENCE PROVIDED BY CANDIDATE:\n${userExperienc
 
 ---
 
-Generate a PROFESSIONAL, DETAILED cover letter body as 5 paragraphs. Each paragraph must be 5-7 sentences.
+Generate a PROFESSIONAL, DETAILED cover letter body as 5 paragraphs (350-500 words total). Each paragraph must be 4-6 sentences.
 
 1. INTRODUCTION:
    - Compelling opening about moving from ${city} to Malta to pursue career goals
@@ -689,8 +802,8 @@ Generate a PROFESSIONAL, DETAILED cover letter body as 5 paragraphs. Each paragr
    - Establish why the candidate is interested in this role in Malta
 
 2. BODY 1:
-   - Highlight relevant skills and experience in detail
-   - Connect background directly to the needs of the role in Malta
+   - Highlight relevant skills and experience developed in ${city}
+   - Connect background from ${city} directly to the needs of the role in Malta
    - Show understanding of the Maltese hospitality industry
    - Be specific and demonstrate knowledge of the role
 
@@ -698,7 +811,7 @@ Generate a PROFESSIONAL, DETAILED cover letter body as 5 paragraphs. Each paragr
    - Explain WHY this company (${company.name}) in Malta
    - Show thorough research into the company's values or reputation
    - Connect personal values to the company's mission
-   - Demonstrate genuine interest in working in Malta
+   - Demonstrate genuine interest in working in Malta long-term
 
 4. BODY 3:
    - Address availability and relocation from ${city} to Malta
@@ -711,6 +824,7 @@ Generate a PROFESSIONAL, DETAILED cover letter body as 5 paragraphs. Each paragr
    - Strong call to action for interview
    - Express appreciation
    - Reiterate enthusiasm for the opportunity in Malta
+   - Mention long-term career aspirations in Malta
 
 Return ONLY valid JSON:
 {
@@ -721,7 +835,14 @@ Return ONLY valid JSON:
   "closing": "..."
 }
 `;
+}
 
+// ============================================
+// GENERAR COVER LETTER - LLAMA A OPENAI CON EL PROMPT
+// ============================================
+
+async function generatePremiumCoverLetter(data: any, company: Company): Promise<LetterContent> {
+  const prompt = getPremiumCoverLetterPrompt(data, company);
   const result = await generateContent(prompt);
   
   try {
@@ -785,7 +906,7 @@ async function renderPdfFromHtml(html: string): Promise<Buffer> {
 }
 
 // ============================================
-// GENERAR HTML DEL CV
+// GENERAR HTML DEL CV - CORREGIDO
 // ============================================
 
 function generateCVHtml(
@@ -855,16 +976,27 @@ function generateCVHtml(
     `Team Player`,
     `Flexible Schedule`,
     `Eligible to Work in Malta: ${workPermit}`,
+    `Adaptable to New Environments`,
+    `Strong Work Ethic`,
+    `Quick Learner`,
+    `Attention to Detail`,
+    `Reliable and Punctual`,
   ];
   const keyStrengthsHtml = keyStrengths.map(h => `<li>${h}</li>`).join("");
 
   // --- CORE COMPETENCIES ---
   const competencies = templateData.skills || [];
+  while (competencies.length < 8) {
+    const extraSkills = ["Time Management", "Problem Solving", "Communication", "Safety Awareness"];
+    if (!competencies.includes(extraSkills[competencies.length - 4])) {
+      competencies.push(extraSkills[competencies.length - 4]);
+    }
+  }
   const coreCompetenciesHtml = competencies.map((comp: string) => {
     return `<span>${comp}</span>`;
   }).join("");
 
-  // --- EXPERIENCE LIST ---
+  // --- EXPERIENCE LIST - CORREGIDO (muestra ciudad, no empresa de Malta) ---
   let experienceHtml = "";
   if (content.experience && content.experience.length > 0) {
     const expItems = content.experience.map((exp: string) => {
@@ -872,11 +1004,14 @@ function generateCVHtml(
       const title = parts[0] || templateData.title;
       const bullets = parts.slice(1).join(":").trim() || exp;
       
+      // ✅ CORREGIDO: Mostrar la ciudad de origen y sector, NO la empresa de Malta
+      const expLocation = `${city} Hospitality Sector`;
+      
       return `
         <div class="experience-item">
           <div class="exp-header">
             <span class="exp-title">${title}</span>
-            <span class="exp-company">${company.name}</span>
+            <span class="exp-company">${expLocation}</span>
             <span class="exp-date">Present</span>
           </div>
           <div class="exp-description">
@@ -902,33 +1037,49 @@ function generateCVHtml(
     </div>
   `;
 
-  // --- PROFESSIONAL SKILLS ---
+  // --- PROFESSIONAL SKILLS - DETERMINISTAS ---
   let professionalSkillsHtml = "";
   const skills = templateData.skills || [];
+  while (skills.length < 8) {
+    const extraSkills = ["Time Management", "Problem Solving", "Communication", "Safety Awareness"];
+    if (!skills.includes(extraSkills[skills.length - 4])) {
+      skills.push(extraSkills[skills.length - 4]);
+    }
+  }
+  
+  // ✅ CORREGIDO: Porcentajes deterministas basados en experiencia
+  const expLevel = validateExperienceYears(data.anos_experiencia);
+  const basePercentage = expLevel === "sin_experiencia" ? 50 :
+                         expLevel === "menos_1" ? 60 :
+                         expLevel === "1_2" ? 70 :
+                         expLevel === "3_5" ? 80 : 90;
+
   const skillPercentages: Record<string, number> = {
-    "Food Preparation": 90,
-    "Kitchen Hygiene": 85,
-    "HACCP": 80,
-    "Inventory Management": 75,
-    "Cleaning & Sanitization": 85,
-    "Team Collaboration": 90,
-    "Customer Service": 85,
-    "Food Safety": 80,
-    "Hygiene": 85,
-    "Organization": 80,
-    "Attention to Detail": 85,
-    "Time Management": 80,
-    "Reliability": 90,
-    "Cleaning": 85,
-    "Teamwork": 90,
-    "Communication": 85,
-    "Safety": 85,
-    "Adaptability": 80,
-    "Punctuality": 90,
+    "Food Preparation": basePercentage + 10,
+    "Kitchen Hygiene": basePercentage + 5,
+    "HACCP": basePercentage,
+    "Inventory Management": basePercentage - 5,
+    "Cleaning & Sanitization": basePercentage + 5,
+    "Team Collaboration": basePercentage + 10,
+    "Customer Service": basePercentage + 5,
+    "Food Safety": basePercentage,
+    "Hygiene": basePercentage + 5,
+    "Organization": basePercentage,
+    "Attention to Detail": basePercentage + 5,
+    "Time Management": basePercentage,
+    "Reliability": basePercentage + 10,
+    "Cleaning": basePercentage + 5,
+    "Teamwork": basePercentage + 10,
+    "Communication": basePercentage + 5,
+    "Safety": basePercentage,
+    "Adaptability": basePercentage + 5,
+    "Punctuality": basePercentage + 10,
+    "Problem Solving": basePercentage - 5,
+    "Safety Awareness": basePercentage,
   };
   
   for (const skill of skills) {
-    const percentage = skillPercentages[skill] || Math.floor(Math.random() * 30) + 60;
+    const percentage = skillPercentages[skill] || basePercentage;
     professionalSkillsHtml += `
       <div class="skill-bar">
         <span class="skill-label">${skill}</span>
@@ -939,7 +1090,7 @@ function generateCVHtml(
     `;
   }
 
-  // --- TAGLINE & PERSONAL STATEMENT ---
+  // --- TAGLINE & PERSONAL STATEMENT - CORREGIDO ---
   const tagline = `${templateData.title} professional from ${city} seeking opportunities in Malta`;
   const personalStatement = content.profile || content.summary || `${templateData.title} professional with ${expLabel} experience.`;
 
@@ -953,7 +1104,7 @@ function generateCVHtml(
     "{{EMAIL}}": data.email || "",
     "{{NATIONALITY}}": nationality,
     "{{LOCATION}}": data.pais_residencia || "Malta",
-  "{{LANGUAGES_LIST}}": languagesHtml,
+    "{{LANGUAGES}}": languagesHtml,
     "{{KEY_STRENGTHS}}": keyStrengthsHtml,
     "{{DRIVER_LICENSE}}": license,
     "{{PASSPORT}}": passport,
@@ -1080,7 +1231,7 @@ async function uploadPDF(pdfBytes: Buffer, fileName: string): Promise<string> {
 }
 
 // ============================================
-// HANDLER PRINCIPAL
+// HANDLER PRINCIPAL - CORREGIDO
 // ============================================
 
 export default async function handler(
@@ -1142,6 +1293,10 @@ export default async function handler(
     const selectedCompany = template.companies[Math.floor(Math.random() * template.companies.length)];
     console.log(`🏢 Selected company: ${selectedCompany.name} (${selectedCompany.city})`);
 
+    // ✅ CORREGIDO: Solo construir el prompt, NO llamar a OpenAI
+    const cvPromptFull = getPremiumCVPrompt(application, selectedCompany);
+    const coverPromptFull = getPremiumCoverLetterPrompt(application, selectedCompany);
+
     console.log("🤖 Generating premium CV content...");
     const cvContent = await generatePremiumCV(application, selectedCompany);
     console.log(`✅ CV content generated`);
@@ -1180,6 +1335,7 @@ export default async function handler(
 
     const totalTime = Date.now() - startTime;
 
+    // ✅ CORREGIDO: Guardar el prompt completo (sin límite si es TEXT en Supabase)
     const updateData: any = {
       cv_generated: true,
       letter_generated: true,
@@ -1189,8 +1345,8 @@ export default async function handler(
       letter_text: `${letterContent.introduction || ''}\n${letterContent.body1 || ''}\n${letterContent.body2 || ''}\n${letterContent.body3 || ''}\n${letterContent.closing || ''}`,
       cv_html: cvHtml,
       letter_html: coverHtml,
-      cv_prompt: "Premium CV prompt - extended version (800-1000 words)",
-      letter_prompt: "Premium cover letter prompt - extended version (5 paragraphs, 5-7 sentences each)",
+      cv_prompt: cvPromptFull,
+      letter_prompt: coverPromptFull,
       cv_tokens: cvContent.tokens || 0,
       letter_tokens: letterContent.tokens || 0,
       total_tokens: (cvContent.tokens || 0) + (letterContent.tokens || 0),
