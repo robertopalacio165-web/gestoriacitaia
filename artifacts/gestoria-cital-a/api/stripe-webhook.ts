@@ -80,7 +80,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // 3. EXPERIENCIA
     // ============================================
     const profesion = metadata.profesion || "";
-    const añosExperiencia = metadata.añosExperiencia || "";
+    // ✅ CAMBIO 1: añosExperiencia -> anosExperiencia
+    const anosExperiencia = metadata.anosExperiencia || "";
     const educationLevel = metadata.education_level || "";
     const sectores = metadata.sectores || "";
     
@@ -99,7 +100,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // ============================================
     // 6. CV Y DOCUMENTOS
     // ============================================
-    const tieneCV = metadata.tieneCV === "Sí";
+    // ✅ CAMBIO 2: tieneCV ahora acepta "Yes" o "Sí"
+    const tieneCV =
+      metadata.tieneCV === "Yes" ||
+      metadata.tieneCV === "Sí";
     const cvUrl = metadata.cvUrl || "";
     const photoUrl = metadata.photoUrl || "";
     const pdfUrl = metadata.pdfUrl || "";
@@ -143,9 +147,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         full_name: fullName,
         whatsapp: whatsapp,
         email: email,
-        nationality: nationality,
+        // ✅ CAMBIO 3: nationality -> nacionalidad
+        nacionalidad: nationality,
         current_city: currentCity,
-        country_residence: countryResidence,
+        // ✅ CAMBIO 3: country_residence -> pais_residencia
+        pais_residencia: countryResidence,
         fecha_nacimiento: fechaNacimiento || null,
         idiomas: idiomas,
         ingles_nivel: ingles_nivel,
@@ -155,7 +161,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         arabe_nivel: arabe_nivel,
         aleman_nivel: aleman_nivel,
         profesion: profesion,
-        anos_experiencia: añosExperiencia,
+        // ✅ CAMBIO 3: anos_experiencia usa la variable correcta
+        anos_experiencia: anosExperiencia,
         education_level: educationLevel,
         sectores: sectores,
         carnet_conducir: carnetConducir,
@@ -200,9 +207,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           full_name: fullName,
           whatsapp: whatsapp,
           email: email,
-          nationality: nationality,
+          // ✅ CAMBIO 4: nationality -> nacionalidad
+          nacionalidad: nationality,
           current_city: currentCity,
-          country_residence: countryResidence,
+          // ✅ CAMBIO 4: country_residence -> pais_residencia
+          pais_residencia: countryResidence,
           fecha_nacimiento: fechaNacimiento || null,
           idiomas: idiomas,
           ingles_nivel: ingles_nivel,
@@ -212,7 +221,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           arabe_nivel: arabe_nivel,
           aleman_nivel: aleman_nivel,
           profesion: profesion,
-          anos_experiencia: añosExperiencia,
+          // ✅ CAMBIO 4: anos_experiencia usa la variable correcta
+          anos_experiencia: anosExperiencia,
           education_level: educationLevel,
           sectores: sectores,
           carnet_conducir: carnetConducir,
