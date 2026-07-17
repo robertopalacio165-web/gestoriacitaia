@@ -41,7 +41,7 @@ export default async function handler(
       aleman_nivel,
       profesion,
       anosExperiencia,
-      estudios, // ✅ AÑADIDO: estudios
+      estudios,
       education_level,
       sectores,
       carnetConducir,
@@ -74,7 +74,7 @@ export default async function handler(
         aleman_nivel: aleman_nivel || "",
         profesion: profesion || "",
         anos_experiencia: anosExperiencia || "",
-        estudios: estudios || "", // ✅ AÑADIDO: estudios
+        estudios: estudios || "",
         education_level: education_level || "",
         sectores: sectores || "",
         carnet_conducir: carnetConducir || "",
@@ -115,6 +115,33 @@ export default async function handler(
       console.error("❌ Error añadiendo a worker_queue:", queueError);
     } else {
       console.log(`✅ Añadido a la cola de trabajo: ${data.id}`);
+    }
+
+    // ✅ Generar CV y carta inmediatamente (modo administrador)
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_URL}/api/generate-malta-documents`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            applicationId: data.id,
+          }),
+        }
+      );
+
+      // ✅ Mejor control de errores
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("❌ Error generate-malta-documents:", errorText);
+      } else {
+        const result = await response.json();
+        console.log("✅ Documentos generados:", result);
+      }
+    } catch (err) {
+      console.error("❌ Error generando documentos:", err);
     }
 
     // ✅ Responder con éxito
