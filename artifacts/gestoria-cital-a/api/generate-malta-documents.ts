@@ -6,6 +6,33 @@ import chromium from "@sparticuz/chromium";
 import { chromium as playwright } from "playwright-core";
 
 // ============================================
+// TIPOS
+// ============================================
+interface Company {
+  name: string;
+  address: string;
+  city: string;
+  department: string;
+}
+
+interface CVContent {
+  summary: string;
+  profile: string;
+  achievements: string[];
+  experience: string[];
+  tokens?: number;
+}
+
+interface LetterContent {
+  introduction: string;
+  body1: string;
+  body2: string;
+  body3: string;
+  closing: string;
+  tokens?: number;
+}
+
+// ============================================
 // CONFIGURACIÓN
 // ============================================
 const supabase = createClient(
@@ -140,13 +167,6 @@ const SECTOR_TEMPLATES: Record<string, {
     ],
   },
 };
-
-interface Company {
-  name: string;
-  address: string;
-  city: string;
-  department: string;
-}
 
 // ============================================
 // FUNCIONES DE NORMALIZACIÓN
@@ -554,13 +574,7 @@ Return as JSON:
 `;
 }
 
-async function generatePremiumCV(data: any, company: Company): Promise<{
-  summary: string;
-  profile: string;
-  achievements: string[];
-  experience: string[];
-  tokens?: number;
-}> {
+async function generatePremiumCV(data: any, company: Company): Promise<CVContent> {
   const prompt = getPremiumCVPrompt(data, company);
   const result = await generateContent(prompt);
   
@@ -598,14 +612,7 @@ async function generatePremiumCV(data: any, company: Company): Promise<{
 // PROMPT PARA COVER LETTER - SOLO EL CUERPO
 // ============================================
 
-async function generatePremiumCoverLetter(data: any, company: Company): Promise<{
-  introduction: string;
-  body1: string;
-  body2: string;
-  body3: string;
-  closing: string;
-  tokens?: number;
-}> {
+async function generatePremiumCoverLetter(data: any, company: Company): Promise<LetterContent> {
   const sector = data.sectores ? data.sectores.split(",")[0]?.trim()?.toLowerCase() : "default";
   const template = SECTOR_TEMPLATES[sector] || SECTOR_TEMPLATES.default;
 
@@ -714,17 +721,12 @@ async function renderPdfFromHtml(html: string): Promise<Buffer> {
 }
 
 // ============================================
-// GENERAR HTML DEL CV - LIMPIO Y CORREGIDO
+// GENERAR HTML DEL CV - CON VARIABLES UNIFICADAS
 // ============================================
 
 function generateCVHtml(
   data: any,
-  content: {
-    summary: string;
-    profile: string;
-    achievements: string[];
-    experience: string[];
-  },
+  content: CVContent,
   company: Company
 ): string {
   let template = readTemplate("premium-cv.html");
@@ -783,27 +785,19 @@ function generateCVHtml(
     `;
   }
 
-  // --- PROFILE HIGHLIGHTS (como <li>) ---
-  const highlights = [
-    `✔ Immediate Availability: ${availability}`,
-    `✔ Willing to Relocate: ${relocate}`,
-    `✔ Team Player`,
-    `✔ Flexible Schedule`,
-    `✔ Eligible to Work in Malta: ${workPermit}`,
+  // --- KEY STRENGTHS (como <li>) ---
+  const keyStrengths = [
+    `Immediate Availability: ${availability}`,
+    `Willing to Relocate: ${relocate}`,
+    `Team Player`,
+    `Flexible Schedule`,
+    `Eligible to Work in Malta: ${workPermit}`,
   ];
-  const highlightsHtml = highlights.map(h => `<li>${h}</li>`).join("");
+  const keyStrengthsHtml = keyStrengths.map(h => `<li>${h}</li>`).join("");
 
-  // --- CERTIFICATES (como <li>) ---
-  const certificatesHtml = `
-    <li><strong>Passport</strong> ${passport}</li>
-    <li><strong>Driving Licence</strong> ${license}</li>
-    <li><strong>Work Permit</strong> ${workPermit}</li>
-    <li><strong>Interview Video</strong> ${video}</li>
-  `;
-
-  // --- COMPETENCIES (como <span>) ---
+  // --- CORE COMPETENCIES (como <span>) ---
   const competencies = templateData.skills || [];
-  const competenciesHtml = competencies.map((comp: string) => {
+  const coreCompetenciesHtml = competencies.map((comp: string) => {
     return `<span>${comp}</span>`;
   }).join("");
 
@@ -837,32 +831,68 @@ function generateCVHtml(
     </div>
   `;
 
+  // --- PROFESSIONAL SKILLS (skill bars) ---
+  let professionalSkillsHtml = "";
+  const skills = templateData.skills || [];
+  const skillPercentages: Record<string, number> = {
+    "Food Preparation": 90,
+    "Kitchen Hygiene": 85,
+    "HACCP": 80,
+    "Inventory Management": 75,
+    "Cleaning & Sanitization": 85,
+    "Team Collaboration": 90,
+    "Customer Service": 85,
+    "Food Safety": 80,
+    "Hygiene": 85,
+    "Organization": 80,
+    "Attention to Detail": 85,
+    "Time Management": 80,
+    "Reliability": 90,
+    "Cleaning": 85,
+    "Teamwork": 90,
+    "Communication": 85,
+    "Safety": 85,
+    "Adaptability": 80,
+    "Punctuality": 90,
+  };
+  
+  for (const skill of skills) {
+    const percentage = skillPercentages[skill] || Math.floor(Math.random() * 30) + 60;
+    professionalSkillsHtml += `
+      <div class="skill-bar">
+        <span class="skill-label">${skill}</span>
+        <span class="skill-track">
+          <span class="skill-fill" style="width: ${percentage}%;"></span>
+        </span>
+      </div>
+    `;
+  }
+
   // --- TAGLINE ---
   const tagline = `${templateData.title} professional with ${expLabel}`;
 
+  // --- PERSONAL STATEMENT ---
+  const personalStatement = content.summary || `${templateData.title} professional with ${expLabel} experience. Dedicated to delivering quality work.`;
+
   // ============================================
-  // REEMPLAZAR TODAS LAS VARIABLES
+  // REEMPLAZAR TODAS LAS VARIABLES UNIFICADAS
   // ============================================
   const replacements: Record<string, string> = {
     "{{PHOTO_HTML}}": photoHtml,
-    "{{NAME}}": fullName,
-    "{{TITLE}}": templateData.title,
+    "{{FULL_NAME}}": fullName,
+    "{{JOB_TITLE}}": templateData.title,
     "{{TAGLINE}}": tagline,
     "{{WHATSAPP}}": data.whatsapp || "",
     "{{EMAIL}}": data.email || "",
-    "{{NATIONALITY}}": data.nacionalidad || "",
-    "{{DRIVER_LICENSE}}": license,
-    "{{PROFILE_HIGHLIGHTS}}": highlightsHtml,
-    "{{CERTIFICATES}}": certificatesHtml,
+    "{{LOCATION}}": data.pais_residencia || "Malta",
     "{{LANGUAGES}}": languagesHtml,
-    "{{COMPETENCIES}}": competenciesHtml,
+    "{{KEY_STRENGTHS}}": keyStrengthsHtml,
+    "{{DRIVER_LICENSE}}": license,
+    "{{CORE_COMPETENCIES}}": coreCompetenciesHtml,
     "{{EXPERIENCE_LIST}}": experienceHtml,
     "{{EDUCATION_LIST}}": educationHtml,
-    "{{PASSPORT}}": passport,
-    "{{AVAILABILITY}}": availability,
-    "{{INTERVIEW_VIDEO}}": video,
-    "{{WORK_PERMIT}}": workPermit,
-    "{{RELOCATE}}": relocate,
+    "{{PROFESSIONAL_SKILLS}}": professionalSkillsHtml,
+    "{{PERSONAL_STATEMENT}}": personalStatement,
   };
 
   for (const [key, value] of Object.entries(replacements)) {
@@ -873,18 +903,12 @@ function generateCVHtml(
 }
 
 // ============================================
-// GENERAR HTML DE LA COVER LETTER
+// GENERAR HTML DE LA COVER LETTER - CON VARIABLES UNIFICADAS
 // ============================================
 
 function generateCoverHtml(
   data: any,
-  content: {
-    introduction: string;
-    body1: string;
-    body2: string;
-    body3: string;
-    closing: string;
-  },
+  content: LetterContent,
   company: Company
 ): string {
   let template = readTemplate("premium-cover-letter.html");
@@ -902,13 +926,14 @@ function generateCoverHtml(
   const nameParts = (data.full_name || "Candidate").trim().split(" ");
   const firstName = nameParts[0] || "Candidate";
   const lastName = nameParts.slice(1).join(" ") || "";
+  const fullName = `${firstName} ${lastName}`;
 
   const initials = getInitials(data.full_name);
   const photoHtml = data.photo_url 
-    ? `<img src="${data.photo_url}" alt="${firstName} ${lastName}">` 
+    ? `<img src="${data.photo_url}" alt="${fullName}">` 
     : `<span class="initials">${initials}</span>`;
 
-  const license = getDriverLicenseLabel(data.carnet_conducir || "");
+  const location = data.pais_residencia || "Malta";
 
   const companySection = company.name ? `
     <div class="company">
@@ -918,22 +943,13 @@ function generateCoverHtml(
     </div>
   ` : "";
 
-  const signatureImage = data.signature_image ? `
-    <div class="signature-image">
-      <img src="${data.signature_image}" alt="Signature">
-    </div>
-  ` : "";
-
+  // ============================================
+  // REEMPLAZAR TODAS LAS VARIABLES UNIFICADAS
+  // ============================================
   const replacements: Record<string, string> = {
     "{{PHOTO_HTML}}": photoHtml,
-    "{{FIRST_NAME}}": firstName,
-    "{{LAST_NAME}}": lastName,
-    "{{TITLE}}": templateData.title,
-    "{{EMAIL}}": data.email || "N/A",
-    "{{WHATSAPP}}": data.whatsapp || "N/A",
-    "{{NATIONALITY}}": data.nacionalidad || "N/A",
-    "{{DRIVER_LICENSE}}": license,
-    "{{LOCATION}}": data.pais_residencia || "Malta",
+    "{{FULL_NAME}}": fullName,
+    "{{JOB_TITLE}}": templateData.title,
     "{{DATE}}": dateStr,
     "{{COMPANY_SECTION}}": companySection,
     "{{GREETING}}": "Dear Hiring Manager,",
@@ -942,7 +958,9 @@ function generateCoverHtml(
     "{{BODY_2}}": content.body2 || "",
     "{{BODY_3}}": content.body3 || "",
     "{{CLOSING}}": content.closing || "",
-    "{{SIGNATURE_IMAGE}}": signatureImage,
+    "{{WHATSAPP}}": data.whatsapp || "",
+    "{{EMAIL}}": data.email || "",
+    "{{LOCATION}}": location,
   };
 
   for (const [key, value] of Object.entries(replacements)) {
