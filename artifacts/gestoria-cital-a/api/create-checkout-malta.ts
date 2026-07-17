@@ -47,7 +47,7 @@ export default async function handler(
 
       profesion,
       anosExperiencia,
-
+      estudios, // ✅ AÑADIDO: estudios
       education_level,
 
       sectores,
@@ -80,6 +80,7 @@ export default async function handler(
     console.log("work_preference:", work_preference);
     console.log("willing_to_relocate:", willing_to_relocate);
     console.log("education_level:", education_level);
+    console.log("estudios:", estudios); // ✅ AÑADIDO: log de estudios
     console.log("=================================");
 
     const session = await stripe.checkout.sessions.create({
@@ -126,6 +127,7 @@ export default async function handler(
 
         profesion: profesion || "",
         anosExperiencia: anosExperiencia || "",
+        estudios: estudios || "", // ✅ AÑADIDO: estudios en metadata
         education_level: education_level || "",
 
         sectores: sectores || "",
