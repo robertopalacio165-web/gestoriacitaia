@@ -719,7 +719,7 @@ async function renderPdfFromHtml(html: string): Promise<Buffer> {
 }
 
 // ============================================
-// GENERAR HTML DEL CV
+// GENERAR HTML DEL CV - CORREGIDO
 // ============================================
 
 function generateCVHtml(
@@ -745,6 +745,9 @@ function generateCVHtml(
   const relocate = normalizeRelocate(data.reubicacion);
   const expLabel = getExperienceLabel(validateExperienceYears(data.anos_experiencia));
   const nationality = data.nacionalidad || data.nationality || "Morocco";
+  
+  // ✅ CORREGIDO: city definido correctamente
+  const city = data.current_city || data.ciudad_actual || "Morocco";
 
   const initials = getInitials(data.full_name);
   const photoHtml = data.photo_url 
@@ -871,8 +874,8 @@ function generateCVHtml(
     `;
   }
 
-  // --- TAGLINE & PERSONAL STATEMENT ---
-  const tagline = `${templateData.title} professional from ${city || "Morocco"} seeking opportunities in Malta`;
+  // --- TAGLINE & PERSONAL STATEMENT - CORREGIDO ---
+  const tagline = `${templateData.title} professional from ${city} seeking opportunities in Malta`;
   const personalStatement = content.profile || content.summary || `${templateData.title} professional with ${expLabel} experience.`;
 
   // --- REPLACEMENTS ---
@@ -979,17 +982,27 @@ function generateCoverHtml(
 }
 
 // ============================================
-// SUBIDA A SUPABASE
+// SUBIDA A SUPABASE - CON LOGS PARA DEBUG
 // ============================================
 
 async function uploadPDF(pdfBytes: Buffer, fileName: string): Promise<string> {
+  console.log(`📤 Starting upload: ${fileName} (${pdfBytes.length} bytes)`);
+  console.log(`📦 Bucket: ${BUCKET_NAME}`);
+  
+  // Verificar bucket
   const { data: bucket, error: bucketError } = await supabase.storage
     .getBucket(BUCKET_NAME);
 
+  console.log(`🔍 Bucket check result:`, { bucket, bucketError });
+
   if (bucketError || !bucket) {
+    console.error(`❌ Bucket "${BUCKET_NAME}" not found!`);
     throw new Error(`Bucket "${BUCKET_NAME}" not found`);
   }
 
+  console.log(`✅ Bucket found: ${BUCKET_NAME}`);
+
+  // Subir archivo
   const { error: uploadError } = await supabase.storage
     .from(BUCKET_NAME)
     .upload(fileName, pdfBytes, {
@@ -998,18 +1011,23 @@ async function uploadPDF(pdfBytes: Buffer, fileName: string): Promise<string> {
     });
 
   if (uploadError) {
+    console.error(`❌ Upload failed:`, uploadError);
     throw new Error(`Upload failed: ${uploadError.message}`);
   }
 
+  console.log(`✅ Upload successful: ${fileName}`);
+
+  // Obtener URL pública
   const { data: publicUrlData } = supabase.storage
     .from(BUCKET_NAME)
     .getPublicUrl(fileName);
 
+  console.log(`✅ Public URL: ${publicUrlData.publicUrl}`);
   return publicUrlData.publicUrl;
 }
 
 // ============================================
-// HANDLER PRINCIPAL - CON NOMBRES CORREGIDOS
+// HANDLER PRINCIPAL - CORREGIDO
 // ============================================
 
 export default async function handler(
@@ -1041,14 +1059,8 @@ export default async function handler(
       return res.status(404).json({ error: "Application not found" });
     }
 
-    const validatedData = {
-      ...application,
-      fecha_nacimiento: validateDate(application.fecha_nacimiento),
-      anos_experiencia: validateExperienceYears(application.anos_experiencia),
-      experiencia_laboral: validateWorkExperience(application.experiencia_laboral),
-    };
-
-    console.log(`✅ Application found: ${validatedData.full_name}`);
+    console.log(`✅ Application found: ${application.full_name}`);
+    console.log(`📸 Photo URL: ${application.photo_url || 'No photo'}`);
 
     if (!application.email) throw new Error("Application has no email");
     if (!application.full_name) throw new Error("Application has no full name");
@@ -1077,19 +1089,19 @@ export default async function handler(
     console.log(`🏢 Selected company: ${selectedCompany.name} (${selectedCompany.city})`);
 
     console.log("🤖 Generating premium CV content...");
-    const cvContent = await generatePremiumCV(validatedData, selectedCompany);
+    const cvContent = await generatePremiumCV(application, selectedCompany);
     console.log(`✅ CV content generated`);
 
     console.log("🤖 Generating premium Cover Letter content...");
-    const letterContent = await generatePremiumCoverLetter(validatedData, selectedCompany);
+    const letterContent = await generatePremiumCoverLetter(application, selectedCompany);
     console.log(`✅ Cover Letter content generated`);
 
     console.log("📄 Generating CV HTML from template...");
-    const cvHtml = generateCVHtml(validatedData, cvContent, selectedCompany);
+    const cvHtml = generateCVHtml(application, cvContent, selectedCompany);
     console.log(`✅ CV HTML generated (${cvHtml.length} chars)`);
 
     console.log("📄 Generating Cover Letter HTML from template...");
-    const coverHtml = generateCoverHtml(validatedData, letterContent, selectedCompany);
+    const coverHtml = generateCoverHtml(application, letterContent, selectedCompany);
     console.log(`✅ Cover Letter HTML generated (${coverHtml.length} chars)`);
 
     console.log("🖨️ Converting CV HTML to PDF...");
@@ -1114,14 +1126,14 @@ export default async function handler(
 
     const totalTime = Date.now() - startTime;
 
-    // ✅ NOMBRES CORREGIDOS PARA COINCIDIR CON LA TABLA
+    // ✅ NOMBRES CORREGIDOS
     const updateData: any = {
       cv_generated: true,
       letter_generated: true,
-      cv_generado_url: cvUrl,          // ✅ CORREGIDO
-      cover_letter_url: letterUrl,     // ✅ CORREGIDO
-      cv_text: cvContent.summary,
-      letter_text: `${letterContent.introduction}\n${letterContent.body1}\n${letterContent.body2}\n${letterContent.body3}\n${letterContent.closing}`,
+      cv_generado_url: cvUrl,
+      cover_letter_url: letterUrl,
+      cv_text: cvContent.summary || '',
+      letter_text: `${letterContent.introduction || ''}\n${letterContent.body1 || ''}\n${letterContent.body2 || ''}\n${letterContent.body3 || ''}\n${letterContent.closing || ''}`,
       cv_html: cvHtml,
       letter_html: coverHtml,
       cv_prompt: "Premium CV prompt - concise version",
@@ -1140,7 +1152,7 @@ export default async function handler(
 
     if (application.photo_url) {
       updateData.photo_uploaded = true;
-      updateData.photo_generated_at = new Date().toISOString();
+      updateData.photo_generated_at = new Date().toISOString(); // ✅ CORREGIDO
     }
 
     console.log("📦 updateData:");
@@ -1184,8 +1196,8 @@ export default async function handler(
     return res.status(200).json({
       success: true,
       applicationId,
-      cvUrl: cvUrl,
-      letterUrl: letterUrl,
+      cvUrl,
+      letterUrl,
       company: selectedCompany.name,
       companyCity: selectedCompany.city,
       cvTokens: cvContent.tokens || 0,
