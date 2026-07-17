@@ -1839,12 +1839,52 @@ export default function TrabajoMalta() {
       if (formData.pdfFile) {
         formDataToSend.append("pdfFile", formData.pdfFile);
       }
+const payload = {
+  plan,
 
-      const res = await fetch("/api/create-checkout-malta", {
-        method: "POST",
-        body: formDataToSend, // ✅ Usamos FormData, no JSON
-      });
+  fullName: formData.fullName,
+  whatsapp: formData.whatsapp,
+  email: formData.email,
 
+  nationality: formData.nationality,
+  currentCity: formData.currentCity,
+  countryResidence: formData.countryResidence,
+
+  fechaNacimiento: formData.fechaNacimiento,
+
+  idiomas: formData.idiomas,
+  ingles_nivel: formData.ingles_nivel,
+  frances_nivel: formData.frances_nivel,
+  italiano_nivel: formData.italiano_nivel,
+  espanol_nivel: formData.espanol_nivel,
+  arabe_nivel: formData.arabe_nivel,
+  aleman_nivel: formData.aleman_nivel,
+
+  profesion: formData.profesion,
+  anosExperiencia: formData.añosExperiencia,
+
+  education_level: formData.education_level,
+
+  sectores: formData.sectores,
+  carnetConducir: formData.carnetConducir,
+
+  preferred_position: formData.preferred_position,
+  work_preference: formData.work_preference,
+  willing_to_relocate: formData.willing_to_relocate,
+
+  tieneCV: formData.tieneCV,
+
+  cvUrl: "",
+  photoUrl: "",
+  pdfUrl: "",
+};
+ const res = await fetch("/api/create-checkout-malta", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify(payload),
+});
       const data = await res.json();
       if (data.url) {
         localStorage.setItem("maltaPaid", "1");
