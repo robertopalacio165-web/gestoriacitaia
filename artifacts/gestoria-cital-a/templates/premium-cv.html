@@ -39,7 +39,6 @@
       display: flex;
       flex-direction: row;
       flex-shrink: 0;
-      /* ⚠️ SIN overflow: hidden */
     }
 
     /* ============================================
@@ -51,7 +50,7 @@
       max-width: 225px;
       background: #10284a;
       color: #c8d0d8;
-      padding: 18px 15px 14px 15px;  /* ✅ CAMBIADO */
+      padding: 18px 15px 14px 15px;
       flex-shrink: 0;
       height: 100%;
       display: flex;
@@ -59,7 +58,7 @@
     }
 
     /* ============================================
-       FOTO - CORREGIDA (sin zoom, sin deformación)
+       FOTO - 90x90
     ============================================ */
     .sidebar .photo {
       width: 90px;
@@ -83,7 +82,7 @@
       width: auto;
       height: auto;
       object-fit: contain;
-        object-position: center;
+      object-position: center;
     }
 
     .sidebar .photo .initials {
@@ -210,12 +209,11 @@
     ============================================ */
     .main {
       flex: 1;
-      padding: 18px 20px 14px 20px;  /* ✅ CAMBIADO */
+      padding: 18px 20px 14px 20px;
       background: white;
       height: 100%;
       display: flex;
       flex-direction: column;
-      /* ⚠️ SIN overflow: hidden - eliminado */
     }
 
     .main .header-block {
@@ -223,33 +221,37 @@
       flex-shrink: 0;
     }
 
+    /* ✅ CAMBIADO: Nombre más pequeño */
     .main .header-block .name {
-      font-size: 36px;
+      font-size: 34px;
       font-weight: 900;
       letter-spacing: -0.5px;
-      line-height: 38px;
+      line-height: 35px;
       text-transform: uppercase;
       color: #0a1a2e;
       margin-bottom: 1px;
     }
 
+    /* ✅ CAMBIADO: Cargo más pequeño */
     .main .header-block .title {
-      font-size: 15px;
+      font-size: 14px;
       color: #6d7077;
       font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 3px;
+      letter-spacing: 2px;
       margin-top: 1px;
     }
 
+    /* ✅ CAMBIADO: Tagline más pequeño */
     .main .header-block .tagline {
       max-width: 95%;
-      line-height: 1.4;
-      font-size: 11px;
+      line-height: 1.3;
+      font-size: 10px;
       color: #4e5560;
       margin-top: 2px;
     }
 
+    /* ✅ CAMBIADO: Títulos de sección más compactos */
     .main h2 {
       font-size: 13px;
       text-transform: uppercase;
@@ -258,8 +260,8 @@
       font-weight: 700;
       border-bottom: 2px solid #10284a;
       padding-bottom: 3px;
-      margin-top: 10px;
-      margin-bottom: 4px;
+      margin-top: 8px;
+      margin-bottom: 3px;
       flex-shrink: 0;
       display: flex;
       align-items: center;
@@ -277,6 +279,7 @@
       fill: #10284a;
     }
 
+    /* ✅ CAMBIADO: Competencias más compactas */
     .main .competencies {
       display: flex;
       flex-wrap: wrap;
@@ -286,7 +289,7 @@
     }
 
     .main .competencies span {
-      padding: 3px 10px;
+      padding: 2px 8px;
       font-size: 10px;
       font-weight: 700;
       border-radius: 5px;
@@ -298,8 +301,9 @@
     /* ============================================
        EXPERIENCIA - LIMITADA A 4 BULLETS
     ============================================ */
+    /* ✅ CAMBIADO: Experience más compacto */
     .main .experience-item {
-      margin-bottom: 4px;
+      margin-bottom: 3px;
       padding-left: 10px;
       border-left: 2px solid #10284a;
       position: relative;
@@ -488,8 +492,9 @@
       flex: 1;
     }
 
+    /* ✅ CAMBIADO: Footer más compacto */
     .footer {
-      margin-top: 6px;
+      margin-top: 3px;
       padding-top: 3px;
       border-top: 1px solid #eef0f2;
       text-align: center;
