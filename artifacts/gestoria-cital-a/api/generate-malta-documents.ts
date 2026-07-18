@@ -585,7 +585,7 @@ function getCitySectors(city: string): string {
 }
 
 // ============================================
-// PROMPT PARA CV - VERSIÓN FINAL
+// PROMPT PARA CV - VERSIÓN CORREGIDA (CON LÍMITES)
 // ============================================
 
 function getPremiumCVPrompt(data: any, company: Company): string {
@@ -659,40 +659,40 @@ ${template.atsKeywords.map(k => `- ${k}`).join("\n")}
 
 Generate a COMPLETE, PROFESSIONAL CV with these sections:
 
-1. PROFESSIONAL SUMMARY (180-220 words):
-   Write a powerful executive summary that:
-   - Opens with a confident statement about the candidate's professional identity
-   - Highlights their unique value proposition for the Maltese market
-   - Mentions their origin (${city}) and motivation to work in MALTA
-   - Shows how skills developed in Morocco transfer to the Maltese market
-   - Includes career goals and what they offer to employers
-   - Uses industry keywords and terminology
+1. PROFESSIONAL SUMMARY (60-80 words):
+- Maximum 80 words.
+- Maximum 4 sentences.
+- Keep it concise and ATS-friendly.
 
-2. PROFESSIONAL PROFILE (120-150 words):
-   - Detailed description of the candidate's professional identity
-   - Core competencies and areas of expertise
-   - Understanding of the Maltese hospitality industry
-   - Career trajectory and ambitions in Malta
+2. PROFESSIONAL PROFILE (40-60 words):
+- Maximum 60 words.
+- Maximum 3 sentences.
 
-3. KEY ACHIEVEMENTS (8-10 bullet points):
-   - Specific, measurable achievements
-   - If no experience, write realistic achievements from training or volunteer work
-   - Use strong action verbs
-   - Each bullet should be a complete, impactful statement
+3. KEY ACHIEVEMENTS:
+- Exactly 6 bullet points.
+- Maximum 35 characters per bullet.
+- One line per bullet.
 
-4. PROFESSIONAL EXPERIENCE (3 positions, each with 5-7 bullet points):
-   ${userExperience ? '- Use the user\'s real experience as the foundation' : '- Write realistic, compelling experience for an entry-level candidate'}
-   - Each position should have a clear job title and time period
-   - Each bullet describes one key responsibility or achievement
-   - Use strong action verbs
-   - Each bullet should be detailed and specific
+4. PROFESSIONAL EXPERIENCE
+- Maximum 3 positions.
+- Maximum 4 bullet points per position.
+- Maximum 85 characters per bullet.
+- One line per bullet.
+
+IMPORTANT LAYOUT RULES:
+
+- The CV MUST fit on a single A4 page.
+- Keep every section concise.
+- Never exceed the requested limits.
+- Never generate unnecessary text.
+- Prioritize short, professional sentences.
 
 Return ONLY valid JSON:
 {
   "summary": "...",
   "profile": "...",
-  "achievements": ["...", "...", "...", "...", "...", "...", "...", "..."],
-  "experience": ["Position 1: 5-7 bullets", "Position 2: 5-7 bullets", "Position 3: 5-7 bullets"]
+  "achievements": ["...", "...", "...", "...", "...", "..."],
+  "experience": ["Position 1: 4 bullets", "Position 2: 4 bullets", "Position 3: 4 bullets"]
 }
 `;
 }
