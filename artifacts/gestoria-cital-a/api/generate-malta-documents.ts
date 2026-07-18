@@ -19,6 +19,7 @@ interface CVContent {
   summary: string;
   profile: string;
   achievements: string[];
+  professional_highlights: string[];
   experience: string[];
   tokens?: number;
 }
@@ -828,7 +829,52 @@ Each bullet must be a complete, impactful statement.
 4-8 words per bullet.
 Natural and professional.
 
-4. PROFESSIONAL EXPERIENCE:
+4. PROFESSIONAL HIGHLIGHTS:
+Generate exactly 6 professional highlights.
+
+Each highlight must contain between 4 and 8 words.
+
+Write them as short professional statements.
+
+Examples:
+• Strong team collaboration skills
+• Reliable under pressure
+• Excellent attention to detail
+• Flexible with rotating shifts
+• Committed to workplace safety
+• Ready to relocate immediately
+
+Do not use single words.
+Do not repeat the same structure.
+Every highlight must sound natural and recruiter-written.
+
+Possible topics include:
+- Teamwork
+- Adaptability
+- Reliability
+- Safety Awareness
+- Time Management
+- Customer Service
+- Food Hygiene
+- Warehouse Operations
+- Cleaning Standards
+- Construction Safety
+- Manufacturing Processes
+- Driving Responsibility
+- Problem Solving
+- Communication
+- Attention to Detail
+- Flexible Schedule
+- Immediate Availability
+- Willingness to Relocate
+
+Every candidate must receive different wording.
+
+Do not repeat the same sentence structure.
+
+Return exactly 6 highlights.
+
+5. PROFESSIONAL EXPERIENCE:
 Create up to 3 professional positions based ONLY on the candidate's real experience.
 
 If the candidate only has one job, split it into different career stages or responsibility groups.
@@ -856,6 +902,7 @@ Return ONLY valid JSON:
   "summary": "...",
   "profile": "...",
   "achievements": ["...", "...", "...", "...", "...", "..."],
+  "professional_highlights": ["...", "...", "...", "...", "...", "..."],
   "experience": ["Position 1: 3-5 bullets", "Position 2: 3-5 bullets", "Position 3: 3-5 bullets"]
 }
 `;
@@ -873,6 +920,7 @@ async function generatePremiumCV(data: any): Promise<CVContent> {
         summary: parsed.summary || "",
         profile: parsed.profile || "",
         achievements: parsed.achievements || [],
+        professional_highlights: parsed.professional_highlights || [],
         experience: parsed.experience || [],
         tokens: result.tokens,
       };
@@ -881,6 +929,7 @@ async function generatePremiumCV(data: any): Promise<CVContent> {
       summary: result.text,
       profile: "",
       achievements: [],
+      professional_highlights: [],
       experience: [],
       tokens: result.tokens,
     };
@@ -889,6 +938,7 @@ async function generatePremiumCV(data: any): Promise<CVContent> {
       summary: result.text,
       profile: "",
       achievements: [],
+      professional_highlights: [],
       experience: [],
       tokens: result.tokens,
     };
@@ -1278,7 +1328,6 @@ function generateCVHtml(data: any, content: CVContent): string {
   // --- EDUCATION ---
   const educationLabel = getEducationLabel(education);
   const educationYear = generateEducationYear(expYears, data.fechaNacimiento || null);
-  // ✅ CORREGIDO: Ya no duplicamos educationLabel
   const educationHtml = `
     <div class="education-item">
       <div class="edu-header">
@@ -1345,6 +1394,12 @@ function generateCVHtml(data: any, content: CVContent): string {
   const tagline = "";
   const personalStatement = content.profile || `${templateData.title} professional with practical experience, strong motivation to relocate to Malta, excellent teamwork skills and a commitment to delivering high-quality results in a professional environment.`;
 
+  // --- PROFESSIONAL HIGHLIGHTS ---
+  const professionalHighlightsHtml =
+    (content.professional_highlights || [])
+      .map(item => `<li>${item}</li>`)
+      .join("");
+
   // --- REPLACEMENTS ---
   const replacements: Record<string, string> = {
     "{{PHOTO_HTML}}": photoHtml,
@@ -1364,6 +1419,7 @@ function generateCVHtml(data: any, content: CVContent): string {
     "{{EXPERIENCE_LIST}}": experienceHtml,
     "{{EDUCATION_LIST}}": educationHtml,
     "{{PROFESSIONAL_SKILLS}}": professionalSkillsHtml,
+    "{{PROFESSIONAL_HIGHLIGHTS}}": professionalHighlightsHtml,
     "{{PERSONAL_STATEMENT}}": personalStatement,
   };
 
@@ -1411,7 +1467,6 @@ function generateCoverHtml(data: any, content: LetterContent): string {
   const roleShort = "ROLE";
   const roleValue = templateData.title;
 
-  // ✅ INDUSTRY dinámico según el sector
   const industry = "INDUSTRY";
   const industryValue = getIndustryLabel(sector);
 
