@@ -240,9 +240,8 @@ function OfficialBrowserBox({
     { id: "Other", label: isMa ? "آخر" : isEn ? "Other" : "Otro" },
   ];
 
-  // ✅ AÑOS DE EXPERIENCIA
+  // ✅ AÑOS DE EXPERIENCIA (eliminado "No experience")
   const anosExperienciaOptions = [
-    { id: "No experience", label: isMa ? "بدون خبرة" : isEn ? "No experience" : "Sin experiencia" },
     { id: "Less than 1 year", label: isMa ? "أقل من سنة" : isEn ? "Less than 1 year" : "Menos de 1 año" },
     { id: "1-2 years", label: isMa ? "1-2 سنة" : isEn ? "1-2 years" : "1-2 años" },
     { id: "3-5 years", label: isMa ? "3-5 سنوات" : isEn ? "3-5 years" : "3-5 años" },
