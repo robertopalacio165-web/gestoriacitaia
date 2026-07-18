@@ -1176,7 +1176,19 @@ function generateCoverHtml(
   const nationality = data.nacionalidad || data.nationality || "Morocco";
   const phone = data.whatsapp || "";
   const email = data.email || "";
+const relocate = normalizeRelocate(data.reubicacion);
 
+const roleShort = "ROLE";
+const roleValue = templateData.title;
+
+const industry = "INDUSTRY";
+const industryValue = "Hospitality";
+
+const relocating = "RELOCATION";
+const relocatingValue =
+  relocate === "Yes"
+    ? "Ready for Malta"
+    : "Not Available";
   const companySection = company.name ? `
     <div class="company">
       <strong>${company.name}</strong><br />
@@ -1204,7 +1216,16 @@ function generateCoverHtml(
     "{{LOCATION}}": location,
     "{{PHONE}}": phone,
   };
+"{{INITIALS}}": initials,
 
+"{{ROLE_SHORT}}": roleShort,
+"{{ROLE_VALUE}}": roleValue,
+
+"{{INDUSTRY}}": industry,
+"{{INDUSTRY_VALUE}}": industryValue,
+
+"{{RELOCATING}}": relocating,
+"{{RELOCATING_VALUE}}": relocatingValue,
   for (const [key, value] of Object.entries(replacements)) {
     template = template.replace(new RegExp(key, "g"), value);
   }
