@@ -585,7 +585,7 @@ function getCitySectors(city: string): string {
 }
 
 // ============================================
-// PROMPT PARA CV - VERSIÓN CORREGIDA CON NUEVOS LÍMITES
+// PROMPT PARA CV - VERSIÓN DETERMINISTA CON LONGITUD FIJA
 // ============================================
 
 function getPremiumCVPrompt(data: any, company: Company): string {
@@ -657,18 +657,18 @@ ${template.atsKeywords.map(k => `- ${k}`).join("\n")}
 
 ---
 
-Generate a COMPLETE, PROFESSIONAL CV with these sections:
+Generate a COMPLETE, PROFESSIONAL CV with EXACTLY these lengths:
 
-1. PROFESSIONAL SUMMARY (75-85 words):
-- EXACTLY 75-85 words.
+1. PROFESSIONAL SUMMARY:
+- EXACTLY 80 words.
 - Exactly 5 sentences.
-- Each sentence must contain 15-17 words.
+- Each sentence must be 15-17 words.
 - Write naturally.
 - ATS-friendly.
 - Fill the available layout space without unnecessary repetition.
 
-2. PROFESSIONAL PROFILE
-- EXACTLY 80-95 words.
+2. PROFESSIONAL PROFILE:
+- EXACTLY 90 words.
 - Exactly 6 lines when rendered in the CV.
 - 6-7 sentences.
 - Fill the Personal Statement section naturally.
@@ -677,15 +677,14 @@ Generate a COMPLETE, PROFESSIONAL CV with these sections:
 
 3. KEY ACHIEVEMENTS:
 - Exactly 6 bullet points.
-- 4-7 words per bullet.
-- Maximum 40 characters.
+- EXACTLY 6 words per bullet.
+- Never exceed 6 words.
 - One line only.
 
-4. PROFESSIONAL EXPERIENCE
+4. PROFESSIONAL EXPERIENCE:
 - Exactly 3 positions.
 - Exactly 4 bullet points per position.
-- Every bullet must contain 14-18 words.
-- Maximum 100 characters per bullet.
+- EXACTLY 15-17 words per bullet.
 - Never leave positions empty.
 - Keep every bullet on one line.
 
@@ -696,18 +695,14 @@ IMPORTANT LAYOUT RULES:
 - Never exceed the requested limits.
 - Never generate unnecessary text.
 - Prioritize short, professional sentences.
-- Generate enough text to naturally fill one A4 page.
-- Never generate extremely short sections.
-- Never generate empty sections.
-- Keep every section balanced.
-- The final CV should contain approximately 380-450 words.
+- The final CV must contain EXACTLY 420 ± 10 words total.
 
 Return ONLY valid JSON:
 {
-  "summary": "...",
-  "profile": "...",
-  "achievements": ["...", "...", "...", "...", "...", "..."],
-  "experience": ["Position 1: 4 bullets", "Position 2: 4 bullets", "Position 3: 4 bullets"]
+  "summary": "80 words exactly",
+  "profile": "90 words exactly",
+  "achievements": ["6 words", "6 words", "6 words", "6 words", "6 words", "6 words"],
+  "experience": ["Position 1: 4 bullets (15-17 words each)", "Position 2: 4 bullets (15-17 words each)", "Position 3: 4 bullets (15-17 words each)"]
 }
 `;
 }
@@ -747,7 +742,7 @@ async function generatePremiumCV(data: any, company: Company): Promise<CVContent
 }
 
 // ============================================
-// PROMPT PARA COVER LETTER - SOLO CONSTRUYE EL PROMPT
+// PROMPT PARA COVER LETTER - VERSIÓN DETERMINISTA CON LONGITUD FIJA
 // ============================================
 
 function getPremiumCoverLetterPrompt(data: any, company: Company): string {
@@ -772,7 +767,7 @@ You are a professional cover letter writer specialising in the Maltese job marke
 📌 CRITICAL RULES:
 1. The candidate is from ${city}, ${country} and wants to work in MALTA. This is essential - mention the move from ${city} to Malta.
 2. Write a compelling career story: how the candidate's experience in ${city} prepared them for the Maltese market.
-3. Write ONLY the BODY paragraphs of the cover letter (350-500 words total).
+3. Write ONLY the BODY paragraphs of the cover letter.
 4. DO NOT include: name, address, date, subject line, greeting, signature, phone, email.
 5. DO NOT mention languages, passport, driving licence, or work permit - these are in the CV.
 6. Make each letter DIFFERENT for each candidate and company. Never use identical text for different candidates.
@@ -808,46 +803,55 @@ ${userExperience ? `REAL WORK EXPERIENCE PROVIDED BY CANDIDATE:\n${userExperienc
 
 ---
 
-Generate a PROFESSIONAL, DETAILED cover letter body as 5 paragraphs (350-500 words total). Each paragraph must be 4-6 sentences.
+Generate EXACTLY these sections with EXACT word counts:
 
 1. INTRODUCTION:
-   - Compelling opening about moving from ${city} to Malta to pursue career goals
-   - Mention the specific company (${company.name}) and position (${template.title})
-   - Show genuine enthusiasm and research about the company
-   - Establish why the candidate is interested in this role in Malta
+- EXACTLY 75 words.
+- Compelling opening about moving from ${city} to Malta to pursue career goals.
+- Mention the specific company (${company.name}) and position (${template.title}).
+- Show genuine enthusiasm and research about the company.
+- Establish why the candidate is interested in this role in Malta.
 
 2. BODY 1:
-   - Highlight relevant skills and experience developed in ${city}
-   - Connect background from ${city} directly to the needs of the role in Malta
-   - Show understanding of the Maltese hospitality industry
-   - Be specific and demonstrate knowledge of the role
+- EXACTLY 80 words.
+- Highlight relevant skills and experience developed in ${city}.
+- Connect background from ${city} directly to the needs of the role in Malta.
+- Show understanding of the Maltese hospitality industry.
+- Be specific and demonstrate knowledge of the role.
 
 3. BODY 2:
-   - Explain WHY this company (${company.name}) in Malta
-   - Show thorough research into the company's values or reputation
-   - Connect personal values to the company's mission
-   - Demonstrate genuine interest in working in Malta long-term
+- EXACTLY 80 words.
+- Explain WHY this company (${company.name}) in Malta.
+- Show thorough research into the company's values or reputation.
+- Connect personal values to the company's mission.
+- Demonstrate genuine interest in working in Malta long-term.
 
 4. BODY 3:
-   - Address availability and relocation from ${city} to Malta
-   - Mention willingness to relocate immediately (${availability})
-   - Express readiness to contribute in the Maltese market
-   - Show flexibility and commitment
+- EXACTLY 80 words.
+- Address availability and relocation from ${city} to Malta.
+- Mention willingness to relocate immediately (${availability}).
+- Express readiness to contribute in the Maltese market.
+- Show flexibility and commitment.
 
 5. CLOSING:
-   - Professional and confident conclusion
-   - Strong call to action for interview
-   - Express appreciation
-   - Reiterate enthusiasm for the opportunity in Malta
-   - Mention long-term career aspirations in Malta
+- EXACTLY 55 words.
+- Professional and confident conclusion.
+- Strong call to action for interview.
+- Express appreciation.
+- Reiterate enthusiasm for the opportunity in Malta.
+- Mention long-term career aspirations in Malta.
+
+TOTAL: EXACTLY 370 words.
+
+Never exceed these limits. Never generate additional sentences. The text must fit the HTML template without overflow.
 
 Return ONLY valid JSON:
 {
-  "introduction": "...",
-  "body1": "...",
-  "body2": "...",
-  "body3": "...",
-  "closing": "..."
+  "introduction": "75 words exactly",
+  "body1": "80 words exactly",
+  "body2": "80 words exactly",
+  "body3": "80 words exactly",
+  "closing": "55 words exactly"
 }
 `;
 }
