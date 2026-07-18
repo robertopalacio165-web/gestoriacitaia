@@ -585,7 +585,7 @@ function getCitySectors(city: string): string {
 }
 
 // ============================================
-// PROMPT PARA CV - VERSIÓN CORREGIDA (CON LÍMITES)
+// PROMPT PARA CV - VERSIÓN CORREGIDA CON NUEVOS LÍMITES
 // ============================================
 
 function getPremiumCVPrompt(data: any, company: Company): string {
@@ -659,25 +659,32 @@ ${template.atsKeywords.map(k => `- ${k}`).join("\n")}
 
 Generate a COMPLETE, PROFESSIONAL CV with these sections:
 
-1. PROFESSIONAL SUMMARY (60-80 words):
-- Maximum 80 words.
-- Maximum 4 sentences.
-- Keep it concise and ATS-friendly.
+1. PROFESSIONAL SUMMARY (75-85 words):
+- EXACTLY 75-85 words.
+- Exactly 5 sentences.
+- Each sentence must contain 15-17 words.
+- Write naturally.
+- ATS-friendly.
+- Fill the available layout space without unnecessary repetition.
 
-2. PROFESSIONAL PROFILE (40-60 words):
-- Maximum 60 words.
-- Maximum 3 sentences.
+2. PROFESSIONAL PROFILE (45-55 words):
+- EXACTLY 45-55 words.
+- Exactly 3 sentences.
+- Keep it professional and concise.
 
 3. KEY ACHIEVEMENTS:
 - Exactly 6 bullet points.
-- Maximum 35 characters per bullet.
-- One line per bullet.
+- 4-7 words per bullet.
+- Maximum 40 characters.
+- One line only.
 
 4. PROFESSIONAL EXPERIENCE
-- Maximum 3 positions.
-- Maximum 4 bullet points per position.
-- Maximum 85 characters per bullet.
-- One line per bullet.
+- Exactly 3 positions.
+- Exactly 4 bullet points per position.
+- Every bullet must contain 14-18 words.
+- Maximum 100 characters per bullet.
+- Never leave positions empty.
+- Keep every bullet on one line.
 
 IMPORTANT LAYOUT RULES:
 
@@ -686,6 +693,11 @@ IMPORTANT LAYOUT RULES:
 - Never exceed the requested limits.
 - Never generate unnecessary text.
 - Prioritize short, professional sentences.
+- Generate enough text to naturally fill one A4 page.
+- Never generate extremely short sections.
+- Never generate empty sections.
+- Keep every section balanced.
+- The final CV should contain approximately 380-450 words.
 
 Return ONLY valid JSON:
 {
@@ -1092,7 +1104,7 @@ function generateCVHtml(
 
   // --- TAGLINE & PERSONAL STATEMENT - CORREGIDO ---
   const tagline = `${templateData.title} professional from ${city} seeking opportunities in Malta`;
-  const personalStatement = content.profile || content.summary || `${templateData.title} professional with ${expLabel} experience.`;
+  const personalStatement = content.profile || content.summary || `${templateData.title} professional with practical experience, strong motivation to relocate to Malta, excellent teamwork skills and a commitment to delivering high-quality results in a professional environment.`;
 
   // --- REPLACEMENTS ---
   const replacements: Record<string, string> = {
