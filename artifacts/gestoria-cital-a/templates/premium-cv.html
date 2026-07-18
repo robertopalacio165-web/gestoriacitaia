@@ -219,7 +219,6 @@
       flex-shrink: 0;
     }
 
-    /* ✅ NOMBRE - Tamaño original */
     .main .header-block .name {
       font-size: 36px;
       font-weight: 900;
@@ -230,7 +229,6 @@
       margin-bottom: 1px;
     }
 
-    /* ✅ PROFESIÓN - Tamaño original */
     .main .header-block .title {
       font-size: 15px;
       color: #6d7077;
@@ -240,7 +238,6 @@
       margin-top: 1px;
     }
 
-    /* ✅ TAGLINE - Tamaño original */
     .main .header-block .tagline {
       max-width: 95%;
       line-height: 1.35;
@@ -249,7 +246,6 @@
       margin-top: 2px;
     }
 
-    /* ✅ TÍTULOS - Tamaño original */
     .main h2 {
       font-size: 13px;
       text-transform: uppercase;
@@ -277,7 +273,6 @@
       fill: #10284a;
     }
 
-    /* ✅ COMPETENCIAS - Tamaño original */
     .main .competencies {
       display: flex;
       flex-wrap: wrap;
@@ -297,11 +292,11 @@
     }
 
     /* ============================================
-       EXPERIENCIA - LIMITADA A 4 BULLETS
+       EXPERIENCIA - CON MÁS ESPACIO
     ============================================ */
-    /* ✅ EXPERIENCE - Tamaño original */
+    /* ✅ CAMBIADO: margin-bottom de 4px a 10px */
     .main .experience-item {
-      margin-bottom: 4px;
+      margin-bottom: 10px;
       padding-left: 10px;
       border-left: 2px solid #10284a;
       position: relative;
@@ -365,11 +360,12 @@
       margin: 1px 0 0;
     }
 
+    /* ✅ CAMBIADO: bullets con más espacio */
     .main .experience-item .exp-description ul li {
-      padding: 0.5px 0 0.5px 10px;
+      padding: 2px 0 2px 12px;
       position: relative;
       font-size: 10px;
-      line-height: 1.35;
+      line-height: 1.55;
     }
 
     .main .experience-item .exp-description ul li::before {
@@ -379,8 +375,9 @@
       color: #10284a;
     }
 
+    /* ✅ CAMBIADO: education con más espacio */
     .main .education-item {
-      margin-bottom: 2px;
+      margin-bottom: 8px;
       flex-shrink: 0;
     }
 
@@ -419,8 +416,9 @@
       flex-shrink: 0;
     }
 
+    /* ✅ CAMBIADO: skill bars con más espacio */
     .main .skill-bar {
-      margin-bottom: 1.5px;
+      margin-bottom: 5px;
       display: flex;
       align-items: center;
       gap: 3px;
@@ -458,8 +456,9 @@
       flex-shrink: 0;
     }
 
+    /* ✅ CAMBIADO: additional info con más espacio */
     .main .info-grid .info-item {
-      padding: 1px 0;
+      padding: 4px 0;
       border-bottom: 1px solid #f0f2f4;
     }
 
@@ -478,11 +477,12 @@
       min-width: 65px;
     }
 
+    /* ✅ CAMBIADO: personal statement con más espacio y mejor legibilidad */
     .main .personal-statement {
       font-size: 10px;
       color: #3a3a4a;
-      line-height: 1.4;
-      margin-top: 1px;
+      line-height: 1.75;
+      margin-top: 8px;
       flex-shrink: 0;
     }
 
@@ -490,9 +490,9 @@
       flex: 1;
     }
 
-    /* ✅ FOOTER - Igual */
+    /* ✅ CAMBIADO: footer al final automáticamente */
     .footer {
-      margin-top: 3px;
+      margin-top: auto;
       padding-top: 3px;
       border-top: 1px solid #eef0f2;
       text-align: center;
