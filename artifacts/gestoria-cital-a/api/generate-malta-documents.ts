@@ -667,10 +667,13 @@ Generate a COMPLETE, PROFESSIONAL CV with these sections:
 - ATS-friendly.
 - Fill the available layout space without unnecessary repetition.
 
-2. PROFESSIONAL PROFILE (45-55 words):
-- EXACTLY 45-55 words.
-- Exactly 3 sentences.
-- Keep it professional and concise.
+2. PROFESSIONAL PROFILE
+- EXACTLY 80-95 words.
+- Exactly 6 lines when rendered in the CV.
+- 6-7 sentences.
+- Fill the Personal Statement section naturally.
+- Do not repeat ideas.
+- End with the candidate's motivation to relocate to Malta.
 
 3. KEY ACHIEVEMENTS:
 - Exactly 6 bullet points.
@@ -1115,7 +1118,7 @@ function generateCVHtml(
     "{{WHATSAPP}}": data.whatsapp || "",
     "{{EMAIL}}": data.email || "",
     "{{NATIONALITY}}": nationality,
-    "{{LOCATION}}": data.pais_residencia || "Malta",
+    "{{LOCATION}}": city ? `${city}, ${nationality}` : nationality,
     "{{LANGUAGES}}": languagesHtml,
     "{{KEY_STRENGTHS}}": keyStrengthsHtml,
     "{{DRIVER_LICENSE}}": license,
