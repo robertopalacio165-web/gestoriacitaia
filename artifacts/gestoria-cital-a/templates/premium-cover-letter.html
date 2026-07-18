@@ -18,9 +18,9 @@
     }
 
     body {
-      font-family: 'Georgia', 'Times New Roman', serif;
-      background: #e8e4de;
-      color: #222;
+      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+      background: #eae8e4;
+      color: #2c3e50;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -34,133 +34,124 @@
       min-height: 297mm;
       max-height: 297mm;
       background: #ffffff;
-      border-radius: 12px;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+      border-radius: 8px;
+      box-shadow: 0 15px 50px rgba(0, 0, 0, 0.12);
       overflow: hidden;
       display: flex;
-      flex-direction: column;
+      flex-direction: row;
       flex-shrink: 0;
-      padding: 24px 36px 20px 36px;
-      position: relative;
     }
 
-    /* ============================================
-       BORDES PREMIUM
-    ============================================ */
-    .page::before {
-      content: "";
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 5px;
-      background: linear-gradient(90deg, #0f2a1e 0%, #c9a84c 30%, #d4af37 50%, #c9a84c 70%, #0f2a1e 100%);
-      box-shadow: 0 2px 15px rgba(201, 168, 76, 0.3);
+    /* ===== SIDEBAR ===== */
+    .sidebar {
+      width: 110px;
+      min-width: 110px;
+      max-width: 110px;
+      background: #1a3a2e;
+      padding: 32px 16px 28px 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      flex-shrink: 0;
     }
 
-    .page::after {
-      content: "";
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      height: 5px;
-      background: linear-gradient(90deg, #0f2a1e 0%, #c9a84c 30%, #d4af37 50%, #c9a84c 70%, #0f2a1e 100%);
-      box-shadow: 0 -2px 15px rgba(201, 168, 76, 0.3);
+    .sidebar .initials-circle {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.12);
+      border: 2px solid rgba(255, 255, 255, 0.25);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 18px;
     }
 
-    .page .border-line-top {
-      position: absolute;
-      top: 10px;
-      left: 16px;
-      right: 16px;
-      height: 1px;
-      background: linear-gradient(90deg, transparent, rgba(201, 168, 76, 0.12), transparent);
+    .sidebar .initials-circle span {
+      color: #ffffff;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 1px;
     }
 
-    .page .border-line-bottom {
-      position: absolute;
-      bottom: 10px;
-      left: 16px;
-      right: 16px;
-      height: 1px;
-      background: linear-gradient(90deg, transparent, rgba(201, 168, 76, 0.12), transparent);
+    .sidebar .divider {
+      width: 30px;
+      height: 2px;
+      background: rgba(255, 255, 255, 0.15);
+      margin: 6px 0;
     }
 
-    .corner {
-      position: absolute;
-      width: 25px;
-      height: 25px;
-      border-color: #c9a84c;
-      border-style: solid;
-      border-width: 0;
-      opacity: 0.35;
-    }
-
-    .corner-tl {
-      top: 12px;
-      left: 12px;
-      border-top-width: 2px;
-      border-left-width: 2px;
-      border-radius: 2px 0 0 0;
-    }
-
-    .corner-tr {
-      top: 12px;
-      right: 12px;
-      border-top-width: 2px;
-      border-right-width: 2px;
-      border-radius: 0 2px 0 0;
-    }
-
-    .corner-bl {
-      bottom: 12px;
-      left: 12px;
-      border-bottom-width: 2px;
-      border-left-width: 2px;
-      border-radius: 0 0 0 2px;
-    }
-
-    .corner-br {
-      bottom: 12px;
-      right: 12px;
-      border-bottom-width: 2px;
-      border-right-width: 2px;
-      border-radius: 0 0 2px 0;
-    }
-
-    /* ============================================
-       HEADER
-    ============================================ */
-    .header-block {
+    .sidebar .sidebar-label {
+      color: rgba(255, 255, 255, 0.5);
+      font-size: 7px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-top: 8px;
       text-align: center;
-      margin-bottom: 10px;
+      line-height: 1.6;
+    }
+
+    .sidebar .sidebar-label strong {
+      color: rgba(255, 255, 255, 0.7);
+      font-weight: 600;
+      display: block;
+      font-size: 8px;
+      letter-spacing: 1.5px;
+    }
+
+    .sidebar .sidebar-label .value {
+      color: rgba(255, 255, 255, 0.6);
+      font-size: 7.5px;
+      font-weight: 400;
+    }
+
+    .sidebar .spacer {
+      flex: 1;
+    }
+
+    .sidebar .sidebar-footer {
+      color: rgba(255, 255, 255, 0.2);
+      font-size: 6px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      text-align: center;
+      writing-mode: vertical-rl;
+      opacity: 0.4;
+    }
+
+    /* ===== MAIN ===== */
+    .main {
+      flex: 1;
+      padding: 24px 36px 20px 32px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ===== HEADER ===== */
+    .header-block {
+      margin-bottom: 12px;
       padding-bottom: 10px;
-      border-bottom: 2px solid #0f2a1e;
+      border-bottom: 2px solid #1a3a2e;
       position: relative;
     }
 
     .header-block::after {
-      content: "✦";
+      content: "";
       position: absolute;
-      bottom: -8px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: white;
-      padding: 0 10px;
-      color: #d4af37;
-      font-size: 12px;
-      text-shadow: 0 0 20px rgba(212, 175, 55, 0.3);
+      bottom: -4px;
+      left: 0;
+      width: 50px;
+      height: 2px;
+      background: #c9a84c;
     }
 
     .header-block .name {
-      font-size: 24px;
-      font-weight: 700;
-      letter-spacing: 2px;
+      font-size: 26px;
+      font-weight: 800;
+      letter-spacing: 3px;
       text-transform: uppercase;
-      color: #0f2a1e;
-      margin-bottom: 1px;
-      font-family: 'Segoe UI', Arial, sans-serif;
+      color: #1a3a2e;
+      margin-bottom: 2px;
     }
 
     .header-block .title {
@@ -168,84 +159,50 @@
       color: #7a8a82;
       font-weight: 600;
       text-transform: uppercase;
-      letter-spacing: 3px;
-      margin-top: 1px;
-      font-family: 'Segoe UI', Arial, sans-serif;
+      letter-spacing: 4px;
     }
 
     .header-block .contact-line {
-      font-size: 9px;
-      color: #aaaaaa;
+      font-size: 9.5px;
+      color: #8a9a92;
       margin-top: 5px;
-      font-family: 'Segoe UI', Arial, sans-serif;
       letter-spacing: 0.3px;
     }
 
     .header-block .contact-line .sep {
-      color: #d4af37;
+      color: #c9a84c;
       margin: 0 6px;
       font-size: 4px;
       vertical-align: middle;
-      opacity: 0.6;
     }
 
-    /* ============================================
-       TO / DATE / SUBJECT
-    ============================================ */
+    /* ===== META ===== */
     .letter-meta {
-      margin-bottom: 10px;
-      font-size: 9.5px;
-      color: #3a4a42;
-      line-height: 1.6;
-      font-family: 'Segoe UI', Arial, sans-serif;
-      background: linear-gradient(145deg, #faf8f4 0%, #f0ece6 100%);
-      padding: 8px 14px;
+      background: #f7f6f2;
+      padding: 8px 16px;
       border-radius: 4px;
-      border-left: 4px solid #d4af37;
-      border-right: 1px solid rgba(201, 168, 76, 0.08);
-      border-top: 1px solid rgba(201, 168, 76, 0.05);
-      border-bottom: 1px solid rgba(201, 168, 76, 0.05);
-      position: relative;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
-    }
-
-    .letter-meta::before {
-      content: "";
-      position: absolute;
-      top: 0;
-      right: 0;
-      width: 35px;
-      height: 35px;
-      background: radial-gradient(circle at top right, rgba(212, 175, 55, 0.03), transparent 70%);
-      border-radius: 0 4px 0 0;
+      margin-bottom: 12px;
+      border-left: 4px solid #c9a84c;
+      font-size: 10px;
+      display: grid;
+      grid-template-columns: 55px 1fr;
+      gap: 1px 8px;
+      color: #3a4a42;
     }
 
     .letter-meta .meta-label {
       font-weight: 700;
-      color: #0f2a1e;
-      display: inline-block;
-      min-width: 55px;
+      color: #1a3a2e;
       letter-spacing: 0.5px;
       font-size: 9px;
-    }
-
-    .letter-meta .meta-line {
-      margin-bottom: 0px;
-      position: relative;
-      z-index: 1;
-    }
-
-    .letter-meta .meta-line:last-child {
-      margin-bottom: 0;
+      text-transform: uppercase;
     }
 
     .letter-meta .meta-value {
-      color: #2a3a32;
+      color: #3a4a42;
     }
 
-    /* ============================================
-       CONTENIDO
-    ============================================ */
+    /* ===== CONTENIDO ===== */
     .letter-content {
       flex: 1;
       display: flex;
@@ -253,94 +210,75 @@
     }
 
     .letter-content .greeting {
-      font-size: 11px;
-      color: #0f2a1e;
+      font-size: 12px;
+      color: #1a3a2e;
       font-weight: 600;
       margin-bottom: 6px;
-      font-family: 'Segoe UI', Arial, sans-serif;
-      letter-spacing: 0.3px;
     }
 
     .letter-content p {
-      font-size: 9.5px;
-      line-height: 1.6;
-      color: #3a4a42;
+      font-size: 11px;
+      line-height: 1.8;
+      color: #2d3d3a;
       margin-bottom: 6px;
       text-align: justify;
-      font-family: 'Georgia', serif;
-    }
-
-    .letter-content p:first-of-type {
-      margin-top: 0;
+      font-family: 'Georgia', 'Times New Roman', serif;
     }
 
     .letter-content p:last-of-type {
       margin-bottom: 0;
     }
 
+    /* ===== FIRMA ===== */
     .letter-content .signature {
-      margin-top: 14px;
-      padding-top: 8px;
-      border-top: 2px solid #0f2a1e;
+      margin-top: 8px;
+      padding-top: 10px;
+      border-top: 2px solid #e8e6e0;
       position: relative;
     }
 
-    .letter-content .signature::after {
+    .letter-content .signature::before {
       content: "✦";
       position: absolute;
-      top: -7px;
+      top: -9px;
       left: 0;
       background: white;
       padding-right: 8px;
-      color: #d4af37;
+      color: #c9a84c;
       font-size: 10px;
-      text-shadow: 0 0 20px rgba(212, 175, 55, 0.2);
     }
 
     .letter-content .signature .signature-closing {
-      font-size: 10.5px;
+      font-size: 11px;
       color: #3a4a42;
       font-weight: 400;
-      margin-bottom: 2px;
+      margin-bottom: 1px;
       font-family: 'Georgia', serif;
       font-style: italic;
     }
 
     .letter-content .signature .signature-name {
-      font-size: 14px;
+      font-size: 16px;
       font-weight: 700;
-      color: #0f2a1e;
-      margin-top: 2px;
-      font-family: 'Segoe UI', Arial, sans-serif;
-      letter-spacing: 1px;
+      color: #1a3a2e;
+      margin-top: 1px;
+      letter-spacing: 1.5px;
     }
 
     .letter-content .signature .signature-title {
-      font-size: 9.5px;
+      font-size: 10px;
       color: #7a8a82;
       margin-top: 1px;
       font-weight: 500;
-      font-family: 'Segoe UI', Arial, sans-serif;
       letter-spacing: 0.5px;
     }
 
-    /* ============================================
-       IMPRESIÓN
-    ============================================ */
+    /* ===== RESPONSIVE ===== */
     @media print {
-      html, body {
-        height: 100%;
-        margin: 0;
-        padding: 0;
-      }
-
       body {
         background: #ffffff;
         padding: 0;
-        margin: 0;
-        display: block;
       }
-
       .page {
         border-radius: 0;
         box-shadow: none;
@@ -348,12 +286,12 @@
         height: 100vh;
         max-height: 100vh;
         min-height: 100vh;
-        page-break-after: avoid;
-        page-break-inside: avoid;
-        overflow: hidden;
-        padding: 24px 36px 20px 36px;
       }
-
+      .sidebar {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+      }
       .letter-meta {
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
@@ -361,110 +299,133 @@
       }
     }
 
-    @media screen and (max-width: 800px) {
+    @media screen and (max-width: 820px) {
       .page {
-        padding: 18px 16px 14px 16px;
+        flex-direction: column;
         height: auto;
         min-height: 100vh;
         max-height: none;
         width: 100%;
         border-radius: 0;
       }
-
-      .header-block .name {
-        font-size: 20px;
-        line-height: 22px;
+      .sidebar {
+        width: 100%;
+        min-width: unset;
+        max-width: unset;
+        flex-direction: row;
+        padding: 12px 16px;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 4px 12px;
       }
-
-      .letter-content p {
-        font-size: 9.5px;
-        line-height: 1.5;
+      .sidebar .initials-circle {
+        width: 40px;
+        height: 40px;
+        margin-bottom: 0;
       }
-
-      .header-block .contact-line {
-        font-size: 8px;
+      .sidebar .initials-circle span {
+        font-size: 14px;
       }
-
-      .letter-meta {
-        padding: 6px 10px;
-        font-size: 9px;
-      }
-
-      .corner {
+      .sidebar .sidebar-label,
+      .sidebar .sidebar-footer,
+      .sidebar .divider {
         display: none;
+      }
+      .main {
+        padding: 16px 16px 12px 16px;
+      }
+      .header-block .name {
+        font-size: 22px;
+        line-height: 24px;
+      }
+      .letter-content p {
+        font-size: 10.5px;
+        line-height: 1.7;
+      }
+      .letter-meta {
+        grid-template-columns: 45px 1fr;
+        font-size: 9px;
+        padding: 6px 10px;
       }
     }
   </style>
 </head>
 <body>
-
 <div class="page">
-
-  <!-- LÍNEAS DECORATIVAS INTERNAS -->
-  <div class="border-line-top"></div>
-  <div class="border-line-bottom"></div>
-
-  <!-- ESQUINAS DORADAS -->
-  <div class="corner corner-tl"></div>
-  <div class="corner corner-tr"></div>
-  <div class="corner corner-bl"></div>
-  <div class="corner corner-br"></div>
-
-  <!-- ============================================
-  HEADER
-  ============================================ -->
-  <div class="header-block">
-    <div class="name">{{FULL_NAME}}</div>
-    <div class="title">{{JOB_TITLE}}</div>
-    <div class="contact-line">
-      <span>{{EMAIL}}</span>
-      <span class="sep">◆</span>
-      <span>{{PHONE}}</span>
-      <span class="sep">◆</span>
-      <span>{{NATIONALITY}}</span>
-      <span class="sep">◆</span>
-      <span>{{LOCATION}}</span>
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="initials-circle"><span>{{INITIALS}}</span></div>
+    <div class="divider"></div>
+    <div class="sidebar-label">
+      <strong>{{ROLE_SHORT}}</strong>
+      <span class="value">{{ROLE_VALUE}}</span>
     </div>
-  </div>
+    <div class="divider"></div>
+    <div class="sidebar-label">
+      <strong>{{INDUSTRY}}</strong>
+      <span class="value">{{INDUSTRY_VALUE}}</span>
+    </div>
+    <div class="divider"></div>
+    <div class="sidebar-label">
+      <strong>{{RELOCATING}}</strong>
+      <span class="value">{{RELOCATING_VALUE}}</span>
+    </div>
+    <div class="spacer"></div>
+    <div class="sidebar-footer">Cover Letter</div>
+  </aside>
 
-  <!-- ============================================
-  TO / DATE / SUBJECT
-  ============================================ -->
-  <div class="letter-meta">
-    <div class="meta-line"><span class="meta-label">TO</span> <span class="meta-value">{{TO_COMPANY}}</span></div>
-    <div class="meta-line"><span class="meta-label"></span> <span class="meta-value">{{COMPANY_NAME}}</span></div>
-    <div class="meta-line"><span class="meta-label"></span> <span class="meta-value">{{COMPANY_ADDRESS}}</span></div>
-    <div class="meta-line" style="margin-top:3px;"><span class="meta-label">DATE</span> <span class="meta-value">{{DATE}}</span></div>
-    <div class="meta-line"><span class="meta-label">SUBJECT</span> <span class="meta-value">Application for the Position of {{JOB_TITLE}}</span></div>
-  </div>
-
-  <!-- ============================================
-  CONTENIDO
-  ============================================ -->
-  <div class="letter-content">
-
-    <p class="greeting">Dear Hiring Manager,</p>
-
-    <p>{{INTRODUCTION}}</p>
-
-    <p>{{BODY_1}}</p>
-
-    <p>{{BODY_2}}</p>
-
-    <p>{{BODY_3}}</p>
-
-    <p>{{CLOSING}}</p>
-
-    <!-- FIRMA -->
-    <div class="signature">
-      <div class="signature-closing">Yours sincerely,</div>
-      <div class="signature-name">{{FULL_NAME}}</div>
-      <div class="signature-title">{{JOB_TITLE}}</div>
+  <!-- MAIN -->
+  <main class="main">
+    <!-- HEADER -->
+    <div class="header-block">
+      <div class="name">{{FULL_NAME}}</div>
+      <div class="title">{{JOB_TITLE}}</div>
+      <div class="contact-line">
+        <span>{{EMAIL}}</span>
+        <span class="sep">◆</span>
+        <span>{{PHONE}}</span>
+        <span class="sep">◆</span>
+        <span>{{NATIONALITY}}</span>
+        <span class="sep">◆</span>
+        <span>{{LOCATION}}</span>
+      </div>
     </div>
 
-  </div>
+    <!-- META -->
+    <div class="letter-meta">
+      <span class="meta-label">TO</span>
+      <span class="meta-value">{{COMPANY_SECTION}}</span>
+      <span class="meta-label">DATE</span>
+      <span class="meta-value">{{DATE}}</span>
+      <span class="meta-label">SUBJECT</span>
+      <span class="meta-value">Application for the Position of {{JOB_TITLE}}</span>
+    </div>
 
+    <!-- CONTENIDO -->
+    <div class="letter-content">
+      <div>
+        <p class="greeting">Dear Hiring Manager,</p>
+
+        <p>{{INTRODUCTION}}</p>
+
+        <p>{{BODY_1}}</p>
+
+        <p>{{BODY_2}}</p>
+
+        <p>{{BODY_3}}</p>
+
+        <p>{{CLOSING}}</p>
+      </div>
+
+      <!-- FIRMA -->
+      <div class="signature">
+        <div class="signature-closing">Yours sincerely,</div>
+        <div class="signature-name">{{FULL_NAME}}</div>
+        <div class="signature-title">{{JOB_TITLE}}</div>
+      </div>
+    </div>
+  </main>
 </div>
-
 </body>
 </html>
