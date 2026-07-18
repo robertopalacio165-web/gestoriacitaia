@@ -316,7 +316,7 @@ function getExperienceLabel(value: string): string {
 
 function getEducationLabel(value: string): string {
   const map: Record<string, string> = {
-    sin_estudios: "No formal education",
+    sin_estudios: "Foundational Education",
     secundaria: "Secondary Education",
     fp: "Vocational Training",
     diploma: "Diploma",
@@ -503,7 +503,6 @@ async function generateContent(prompt: string): Promise<{ text: string; tokens?:
 
 function getCityDescription(city: string): string {
   const cityContexts: Record<string, string> = {
-    // Grandes ciudades
     "Casablanca": "Casablanca, Morocco's economic capital with a vibrant hospitality and restaurant scene",
     "Rabat": "Rabat, the political and administrative capital with a growing tourism sector",
     "Tangier": "Tangier, the historic port city with strong Mediterranean tourism and hospitality",
@@ -511,8 +510,6 @@ function getCityDescription(city: string): string {
     "Marrakech": "Marrakech, the world-famous tourist hub with luxury hotels and international cuisine",
     "Fes": "Fes, the cultural and spiritual heart with traditional Moroccan hospitality",
     "Meknes": "Meknes, the imperial city with rich historical tourism",
-    
-    // Ciudades medianas
     "Oujda": "Oujda, the eastern gateway with a developing hospitality sector",
     "Kenitra": "Kenitra, the northwestern city with commercial and industrial activity",
     "Tetouan": "Tetouan, the northern city with Andalusian heritage and Mediterranean tourism",
@@ -528,8 +525,6 @@ function getCityDescription(city: string): string {
     "Sidi Kacem": "Sidi Kacem, the northern agricultural city with growing services",
     "Khemisset": "Khemisset, the central city with artisan and commercial activities",
     "Mohammedia": "Mohammedia, the coastal industrial city with a developing hospitality sector",
-    
-    // Ciudades pequeñas y turísticas
     "Essaouira": "Essaouira, the coastal city with traditional fishing and growing tourism",
     "Ouarzazate": "Ouarzazate, the gateway to the desert with film and tourism industries",
     "Dakhla": "Dakhla, the southern coastal city with windsurfing and eco-tourism",
@@ -554,41 +549,78 @@ function getCityDescription(city: string): string {
   return cityContexts[city] || `${city}, a city in Morocco with a developing hospitality and service sector`;
 }
 
-function getCitySectors(city: string): string {
-  const sectorMap: Record<string, string> = {
-    "Casablanca": "hospitality, restaurants, cafés, commerce, tourism, corporate services, and international business",
-    "Rabat": "government services, tourism, hospitality, restaurants, and cultural institutions",
-    "Tangier": "tourism, hospitality, shipping, commerce, and international trade",
-    "Agadir": "tourism, hotels, restaurants, beach resorts, and coastal hospitality",
-    "Marrakech": "luxury hospitality, tourism, restaurants, riads, and international cuisine",
-    "Fes": "cultural tourism, traditional hospitality, artisan crafts, and historical tourism",
-    "Meknes": "historical tourism, agriculture, and traditional commerce",
-    "Oujda": "commerce, agriculture, and developing hospitality",
-    "Kenitra": "industry, commerce, and hospitality services",
-    "Tetouan": "tourism, crafts, and Mediterranean hospitality",
-    "Safi": "fishing industry, pottery, and coastal tourism",
-    "El Jadida": "coastal tourism, fishing, and Portuguese heritage tourism",
-    "Settat": "agriculture, commerce, and services",
-    "Khouribga": "mining industry and developing services",
-    "Beni Mellal": "agriculture, mountain tourism, and local commerce",
-    "Nador": "fishing, coastal tourism, and cross-border commerce",
-    "Taza": "mountain tourism, agriculture, and local commerce",
-    "Larache": "fishing, coastal tourism, and agriculture",
-    "Essaouira": "cultural tourism, fishing, and windsurfing",
-    "Ouarzazate": "film tourism, desert tourism, and cultural heritage",
-    "Dakhla": "water sports, eco-tourism, and fishing",
-    "Chefchaouen": "international tourism, crafts, and mountain hospitality",
-    "Ifrane": "mountain tourism, eco-tourism, and winter sports",
-  };
+// ============================================
+// FUNCIÓN PARA GENERAR FECHAS DE EXPERIENCIA
+// ============================================
 
-  return sectorMap[city] || "hospitality, local commerce, services, and community-oriented businesses";
+function generateExperienceDates(expYears: string): string[] {
+  const currentYear = new Date().getFullYear();
+  
+  const dateRanges: Record<string, string[]> = {
+    "sin_experiencia": [`${currentYear} - Present`],
+    "menos_1": [`${currentYear - 1} - Present`],
+    "1_2": [`${currentYear - 1} - Present`],
+    "3_5": [`${currentYear - 2} - Present`],
+    "mas_5": [`${currentYear - 3} - Present`],
+  };
+  
+  const ranges = dateRanges[expYears] || [`${currentYear} - Present`];
+  
+  const dates: string[] = [];
+  for (let i = 0; i < 3; i++) {
+    if (i === 0) {
+      dates.push(ranges[0]);
+    } else if (i === 1) {
+      const year = currentYear - (3 + i);
+      dates.push(`${year} - ${year + 2}`);
+    } else {
+      const year = currentYear - (6 + i);
+      dates.push(`${year} - ${year + 2}`);
+    }
+  }
+  
+  return dates;
 }
 
 // ============================================
-// PROMPT PARA CV - VERSIÓN DETERMINISTA CON LONGITUD FIJA
+// FUNCIÓN PARA GENERAR AÑO DE EDUCACIÓN
 // ============================================
 
-function getPremiumCVPrompt(data: any, company: Company): string {
+function generateEducationYear(expYears: string, fechaNacimiento: string | null): string {
+  const currentYear = new Date().getFullYear();
+  
+  if (fechaNacimiento) {
+    try {
+      const birthYear = parseInt(fechaNacimiento.split('-')[0]);
+      if (!isNaN(birthYear) && birthYear > 1900 && birthYear < 2010) {
+        const age = currentYear - birthYear;
+        if (age >= 30) return String(currentYear - 10);
+        if (age >= 25) return String(currentYear - 5);
+        if (age >= 22) return String(currentYear - 3);
+        return String(currentYear - 2);
+      }
+    } catch {
+      // Si falla, usar años de experiencia
+    }
+  }
+  
+  const expMap: Record<string, number> = {
+    "sin_experiencia": 2,
+    "menos_1": 3,
+    "1_2": 4,
+    "3_5": 6,
+    "mas_5": 8,
+  };
+  
+  const yearsAgo = expMap[expYears] || 3;
+  return String(currentYear - yearsAgo);
+}
+
+// ============================================
+// PROMPT PARA CV - SISTEMA PROFESIONAL DEFINITIVO
+// ============================================
+
+function getPremiumCVPrompt(data: any): string {
   const sector = data.sectores ? data.sectores.split(",")[0]?.trim()?.toLowerCase() : "default";
   const template = SECTOR_TEMPLATES[sector] || SECTOR_TEMPLATES.default;
 
@@ -603,54 +635,115 @@ function getPremiumCVPrompt(data: any, company: Company): string {
   const expLabel = expMap[expYears] || expYears;
 
   const availability = getAvailabilityLabel(data.disponibilidad_inicio || "inmediato");
-  const passport = normalizePassport(data.pasaporte_valido);
-  const video = normalizeVideo(data.entrevista_video);
   const workPermit = normalizeWorkPermit(data.permiso_trabajo);
   const userExperience = validateWorkExperience(data.experiencia_laboral);
   const city = data.current_city || data.ciudad_actual || "Morocco";
   const country = data.pais_residencia || "Morocco";
-  const education = data.estudios || "No formal education";
+  const education = data.estudios || "Foundational Education";
 
   const cityDescription = getCityDescription(city);
-  const citySectors = getCitySectors(city);
 
   return `
-You are a senior recruitment consultant with 20+ years of experience in the Maltese hospitality and labour market. You write professional, ATS-optimised CVs that sound human, unique, and tailored to each candidate.
+You are a Senior International Recruitment Consultant with more than 20 years of experience helping international candidates secure employment in Malta.
 
-📌 CRITICAL RULES:
-1. The candidate is from ${city}, ${country}. Use this to add authentic regional context to their profile.
-2. The candidate is applying for jobs in MALTA. Always mention Malta as the target destination.
-3. IMPORTANT: Never invent employers, restaurant names, cafés, hotels, addresses or companies. Describe the local labour market and the candidate's familiarity with sectors such as hospitality, cafés, restaurants, retail or tourism based on the city of origin, but never claim employment at a specific business unless the candidate explicitly provided it.
-4. If the user has NO work experience, write a compelling entry-level profile using realistic responsibilities.
-5. Use professional, natural British English.
-6. AVOID generic phrases like "hard-working" or "dedicated" without context.
-7. Every CV must be unique. Never generate the same professional summary twice. Rewrite the structure, wording and examples for every candidate.
-8. Explain how the candidate developed transferable skills in Morocco before seeking professional growth in Malta.
+Your only objective is to maximise the candidate's chances of being invited to a job interview while remaining 100% truthful.
 
-ABOUT THE CANDIDATE'S CITY:
-The candidate is from ${city}, ${cityDescription}. This background provides valuable experience and transferable skills for the Maltese market, including:
-- Familiarity with the local hospitality, café and restaurant culture in ${city}
-- Understanding of customer service in a busy urban environment
-- Experience with diverse clientele and multicultural interactions
-- Knowledge of food safety and hygiene practices common in ${city}
-- The local economy in ${city} includes sectors such as ${citySectors}
+Every sentence must increase credibility, professionalism and employability.
+
+Every document must look as if it was written personally by an experienced recruiter, never by artificial intelligence.
+
+📌 GENERAL RULES:
+- Use only natural British English.
+- Never sound like AI.
+- Never use robotic wording.
+- Never repeat ideas.
+- Never invent information.
+- Never invent employers.
+- Never invent qualifications.
+- Never invent certificates.
+- Never invent languages.
+- Never invent experience.
+- Never invent companies.
+- Never invent hotels.
+- Never invent restaurants.
+- Never invent addresses.
+- Never invent dates.
+- Only use information provided by the candidate.
+
+📌 CV RULES:
+The CV represents the candidate. It is NOT written for any specific company.
+
+Therefore:
+- Never mention any company in Malta.
+- Never mention any employer.
+- Never mention any address.
+
+The CV must be suitable for sending to hundreds of different employers without any modification.
+
+📌 CITY PERSONALISATION:
+Use the candidate's city naturally.
+
+Examples:
+- "Coming from ${city}, Morocco's economic capital..."
+- "Based in ${city}, I have developed strong customer service skills..."
+- "My experience in ${city} has prepared me to adapt quickly..."
+
+Never repeat the city more than two times. Never force it.
+
+📌 HUMAN STYLE:
+- The recruiter must believe a human wrote the document.
+- Avoid AI expressions.
+- Avoid clichés.
+- Avoid exaggerated language.
+- Avoid repetitive vocabulary.
+- Every document must feel unique.
+
+📌 ATS:
+- Optimise naturally for ATS.
+- Never force keywords.
+- Never perform keyword stuffing.
+
+📌 EXPERIENCE:
+If experience exists: Use it naturally.
+If experience does not exist: Never write "No experience". Instead highlight: willingness to learn, adaptability, reliability, motivation, transferable skills.
+
+📌 PROFESSIONAL TONE:
+The recruiter should think: "This candidate looks professional." Not: "This looks AI generated."
+
+📌 SIZE:
+- Always exactly the same structure.
+- Always exactly one page.
+- Never overflow.
+- Never become shorter.
+- Always fit perfectly.
+
+📌 UNIQUENESS:
+Even if 100 candidates apply for the same role:
+- Every CV must be different.
+- Different vocabulary.
+- Different sentence structure.
+- Different examples.
+- Same professional quality.
+
+📌 FINAL OBJECTIVE:
+The recruiter should finish reading the CV thinking: "I would like to invite this person for an interview."
 
 ---
+
+ABOUT THE CANDIDATE'S CITY:
+The candidate is from ${city}, ${cityDescription}. This background provides valuable experience and transferable skills for the Maltese market.
 
 CANDIDATE PROFILE:
 - Full Name: ${data.full_name || "N/A"}
 - Target Role: ${template.title}
-- Target Company: ${company.name} (${company.city}, MALTA)
 - Experience Level: ${expLabel}
 - Education: ${education}
 - City of Origin: ${city}
 - Country of Residence: ${country}
 - Availability: ${availability}
-- Passport: ${passport}
 - Work Permit: ${workPermit}
-- Video Interview: ${video}
 
-${userExperience ? `REAL WORK EXPERIENCE PROVIDED BY CANDIDATE:\n${userExperience}\n\n⚠️ IMPORTANT: Use this as the foundation for the Professional Experience section. If the candidate mentions a specific company, you CAN use that company name. Otherwise, describe the experience generically.` : ''}
+${userExperience ? `REAL WORK EXPERIENCE PROVIDED BY CANDIDATE:\n${userExperience}\n\n⚠️ IMPORTANT: Use this as the foundation for the Professional Experience section. If the candidate mentions a specific company, you CAN use that company name. Otherwise, describe the experience generically. If fewer than three positions exist, divide the candidate's real experience into relevant responsibilities or career stages. Never invent employers or employment history.` : ''}
 
 ATS KEYWORDS FOR THIS ROLE:
 ${template.atsKeywords.map(k => `- ${k}`).join("\n")}
@@ -663,22 +756,19 @@ Generate a COMPLETE, PROFESSIONAL CV with EXACTLY these lengths:
 - EXACTLY 80 words.
 - Exactly 5 sentences.
 - Each sentence must be 15-17 words.
-- Write naturally.
-- ATS-friendly.
-- Fill the available layout space without unnecessary repetition.
+- Mention the city once naturally.
 
 2. PROFESSIONAL PROFILE:
 - EXACTLY 90 words.
-- Exactly 6 lines when rendered in the CV.
+- Exactly 6 lines when rendered.
 - 6-7 sentences.
-- Fill the Personal Statement section naturally.
 - Do not repeat ideas.
-- End with the candidate's motivation to relocate to Malta.
+- End with motivation to relocate to Malta.
+- Mention the city once naturally.
 
 3. KEY ACHIEVEMENTS:
 - Exactly 6 bullet points.
 - EXACTLY 6 words per bullet.
-- Never exceed 6 words.
 - One line only.
 
 4. PROFESSIONAL EXPERIENCE:
@@ -688,13 +778,10 @@ Generate a COMPLETE, PROFESSIONAL CV with EXACTLY these lengths:
 - Never leave positions empty.
 - Keep every bullet on one line.
 
-IMPORTANT LAYOUT RULES:
-
-- The CV MUST fit on a single A4 page.
-- Keep every section concise.
-- Never exceed the requested limits.
-- Never generate unnecessary text.
-- Prioritize short, professional sentences.
+IMPORTANT RULES:
+- Never mention any specific company in Malta.
+- If the user provided real experience, use it. If fewer than three positions exist, divide the candidate's real experience into relevant responsibilities or career stages. Never invent employers or employment history.
+- The CV must be universal.
 - The final CV must contain EXACTLY 420 ± 10 words total.
 
 Return ONLY valid JSON:
@@ -707,8 +794,8 @@ Return ONLY valid JSON:
 `;
 }
 
-async function generatePremiumCV(data: any, company: Company): Promise<CVContent> {
-  const prompt = getPremiumCVPrompt(data, company);
+async function generatePremiumCV(data: any): Promise<CVContent> {
+  const prompt = getPremiumCVPrompt(data);
   const result = await generateContent(prompt);
   
   try {
@@ -742,62 +829,127 @@ async function generatePremiumCV(data: any, company: Company): Promise<CVContent
 }
 
 // ============================================
-// PROMPT PARA COVER LETTER - VERSIÓN DETERMINISTA CON LONGITUD FIJA
+// PROMPT PARA COVER LETTER - SISTEMA PROFESIONAL DEFINITIVO
 // ============================================
 
-function getPremiumCoverLetterPrompt(data: any, company: Company): string {
+function getPremiumCoverLetterPrompt(data: any): string {
   const sector = data.sectores ? data.sectores.split(",")[0]?.trim()?.toLowerCase() : "default";
   const template = SECTOR_TEMPLATES[sector] || SECTOR_TEMPLATES.default;
 
   const availability = getAvailabilityLabel(data.disponibilidad_inicio || "inmediato");
-  const license = getDriverLicenseLabel(data.carnet_conducir || "");
-  const passport = normalizePassport(data.pasaporte_valido);
-  const video = normalizeVideo(data.entrevista_video);
-  const workPermit = normalizeWorkPermit(data.permiso_trabajo);
   const userExperience = validateWorkExperience(data.experiencia_laboral);
   const city = data.current_city || data.ciudad_actual || "Morocco";
   const country = data.pais_residencia || "Morocco";
 
   const cityDescription = getCityDescription(city);
-  const citySectors = getCitySectors(city);
 
   return `
-You are a professional cover letter writer specialising in the Maltese job market. You write natural, human-sounding letters that are unique to each candidate and company.
+You are a Senior International Recruitment Consultant with more than 20 years of experience helping international candidates secure employment in Malta.
 
-📌 CRITICAL RULES:
-1. The candidate is from ${city}, ${country} and wants to work in MALTA. This is essential - mention the move from ${city} to Malta.
-2. Write a compelling career story: how the candidate's experience in ${city} prepared them for the Maltese market.
-3. Write ONLY the BODY paragraphs of the cover letter.
-4. DO NOT include: name, address, date, subject line, greeting, signature, phone, email.
-5. DO NOT mention languages, passport, driving licence, or work permit - these are in the CV.
-6. Make each letter DIFFERENT for each candidate and company. Never use identical text for different candidates.
-7. Use natural, professional British English.
-8. Never use generic phrases like "I am writing to apply for".
-9. Never invent employers, restaurant names, cafés, hotels, addresses or companies.
-10. Mention why the candidate wants to build a long-term career in Malta rather than simply finding a temporary job.
+Your only objective is to maximise the candidate's chances of being invited to a job interview while remaining 100% truthful.
+
+Every sentence must increase credibility, professionalism and employability.
+
+Every document must look as if it was written personally by an experienced recruiter, never by artificial intelligence.
+
+📌 GENERAL RULES:
+- Use only natural British English.
+- Never sound like AI.
+- Never use robotic wording.
+- Never repeat ideas.
+- Never invent information.
+- Never invent employers.
+- Never invent qualifications.
+- Never invent certificates.
+- Never invent languages.
+- Never invent experience.
+- Never invent companies.
+- Never invent hotels.
+- Never invent restaurants.
+- Never invent addresses.
+- Never invent dates.
+- Only use information provided by the candidate.
+
+📌 COVER LETTER RULES:
+The Cover Letter is universal. It is NOT addressed to a specific employer.
+
+Therefore:
+- Never mention company names.
+- Never mention hotel names.
+- Never mention restaurant names.
+- Never mention addresses.
+- Never mention Maltese cities.
+- Never mention departments.
+- Never mention HR teams.
+
+Always begin with: "Dear Hiring Manager,"
+
+The letter must be suitable for any employer in Malta.
+
+📌 CITY PERSONALISATION:
+Use the candidate's city naturally.
+
+Examples:
+- "Coming from ${city}, Morocco's economic capital..."
+- "Based in ${city}, I have developed strong customer service skills..."
+- "My experience in ${city} has prepared me to adapt quickly..."
+
+Never repeat the city more than two times. Never force it.
+
+📌 HUMAN STYLE:
+- The recruiter must believe a human wrote the document.
+- Avoid AI expressions.
+- Avoid clichés.
+- Avoid exaggerated language.
+- Avoid repetitive vocabulary.
+- Every document must feel unique.
+
+📌 ATS:
+- Optimise naturally for ATS.
+- Never force keywords.
+- Never perform keyword stuffing.
+
+📌 EXPERIENCE:
+If experience exists: Use it naturally.
+If experience does not exist: Never write "No experience". Instead highlight: willingness to learn, adaptability, reliability, motivation, transferable skills.
+
+📌 PROFESSIONAL TONE:
+The recruiter should think: "This candidate looks professional." Not: "This looks AI generated."
+
+📌 SIZE:
+- Always exactly the same structure.
+- Always exactly one page.
+- Never overflow.
+- Never leave empty space.
+- Always fit perfectly.
+
+📌 UNIQUENESS:
+Even if 100 candidates apply for the same role:
+- Every Cover Letter must be different.
+- Different vocabulary.
+- Different sentence structure.
+- Different examples.
+- Same professional quality.
+
+📌 FINAL OBJECTIVE:
+The recruiter should finish reading the Cover Letter thinking: "I would like to invite this person for an interview."
+
+---
 
 ABOUT THE CANDIDATE'S BACKGROUND:
 - From ${cityDescription}
 - Familiar with the hospitality, café and restaurant culture in ${city}
-- The local economy in ${city} includes sectors such as ${citySectors}
 - Motivated to bring their skills to the Maltese market
-- Ready to relocate and contribute to ${company.name}
+- Ready to relocate to Malta
 - Seeking long-term professional growth in Malta's hospitality industry
-
----
 
 CANDIDATE PROFILE:
 - Full Name: ${data.full_name || "N/A"}
 - Target Role: ${template.title}
-- Target Company: ${company.name} (${company.city}, MALTA)
 - Experience Level: ${data.anos_experiencia || "Entry level"}
 - Education: ${data.estudios || "N/A"}
 - City of Origin: ${city}, ${country}
 - Availability: ${availability}
-- Passport: ${passport}
-- Video Interview: ${video}
-- Work Permit: ${workPermit}
-- Driver's License: ${license}
 
 ${userExperience ? `REAL WORK EXPERIENCE PROVIDED BY CANDIDATE:\n${userExperience}\n\nUse this as the foundation for the body paragraphs.` : ''}
 
@@ -807,30 +959,27 @@ Generate EXACTLY these sections with EXACT word counts:
 
 1. INTRODUCTION:
 - EXACTLY 75 words.
-- Compelling opening about moving from ${city} to Malta to pursue career goals.
-- Mention the specific company (${company.name}) and position (${template.title}).
-- Show genuine enthusiasm and research about the company.
-- Establish why the candidate is interested in this role in Malta.
+- Opening about moving from ${city} to Malta to pursue career goals.
+- Show genuine enthusiasm.
+- Establish why the candidate is interested in working in Malta.
 
 2. BODY 1:
 - EXACTLY 80 words.
 - Highlight relevant skills and experience developed in ${city}.
-- Connect background from ${city} directly to the needs of the role in Malta.
-- Show understanding of the Maltese hospitality industry.
-- Be specific and demonstrate knowledge of the role.
+- Connect background from ${city} directly to the needs of the role.
+- Show understanding of the hospitality industry.
 
 3. BODY 2:
 - EXACTLY 80 words.
-- Explain WHY this company (${company.name}) in Malta.
-- Show thorough research into the company's values or reputation.
-- Connect personal values to the company's mission.
+- Explain why the candidate wants to build a career in Malta.
+- Connect personal values to the opportunity.
 - Demonstrate genuine interest in working in Malta long-term.
 
 4. BODY 3:
 - EXACTLY 80 words.
 - Address availability and relocation from ${city} to Malta.
-- Mention willingness to relocate immediately (${availability}).
-- Express readiness to contribute in the Maltese market.
+- Mention willingness to relocate immediately.
+- Express readiness to contribute.
 - Show flexibility and commitment.
 
 5. CLOSING:
@@ -839,11 +988,12 @@ Generate EXACTLY these sections with EXACT word counts:
 - Strong call to action for interview.
 - Express appreciation.
 - Reiterate enthusiasm for the opportunity in Malta.
-- Mention long-term career aspirations in Malta.
 
-TOTAL: EXACTLY 370 words.
-
-Never exceed these limits. Never generate additional sentences. The text must fit the HTML template without overflow.
+IMPORTANT RULES:
+- Never mention any specific company in Malta.
+- Never mention "Dear Hiring Manager" in the JSON (it's added by the template).
+- The letter must be universal.
+- TOTAL: EXACTLY 370 words.
 
 Return ONLY valid JSON:
 {
@@ -856,12 +1006,8 @@ Return ONLY valid JSON:
 `;
 }
 
-// ============================================
-// GENERAR COVER LETTER - LLAMA A OPENAI CON EL PROMPT
-// ============================================
-
-async function generatePremiumCoverLetter(data: any, company: Company): Promise<LetterContent> {
-  const prompt = getPremiumCoverLetterPrompt(data, company);
+async function generatePremiumCoverLetter(data: any): Promise<LetterContent> {
+  const prompt = getPremiumCoverLetterPrompt(data);
   const result = await generateContent(prompt);
   
   try {
@@ -925,14 +1071,10 @@ async function renderPdfFromHtml(html: string): Promise<Buffer> {
 }
 
 // ============================================
-// GENERAR HTML DEL CV - CORREGIDO
+// GENERAR HTML DEL CV - SIN PASSPORT, WORK PERMIT, VIDEO INTERVIEW
 // ============================================
 
-function generateCVHtml(
-  data: any,
-  content: CVContent,
-  company: Company
-): string {
+function generateCVHtml(data: any, content: CVContent): string {
   let template = readTemplate("premium-cv.html");
   
   const nameParts = (data.full_name || "Candidate").trim().split(" ");
@@ -945,14 +1087,11 @@ function generateCVHtml(
 
   const availability = getAvailabilityLabel(data.disponibilidad_inicio || "inmediato");
   const license = getDriverLicenseLabel(data.carnet_conducir || "");
-  const passport = normalizePassport(data.pasaporte_valido);
-  const video = normalizeVideo(data.entrevista_video);
-  const workPermit = normalizeWorkPermit(data.permiso_trabajo);
   const relocate = normalizeRelocate(data.reubicacion);
   const expLabel = getExperienceLabel(validateExperienceYears(data.anos_experiencia));
   const nationality = data.nacionalidad || data.nationality || "Morocco";
   const city = data.current_city || data.ciudad_actual || "Morocco";
-  const education = data.estudios || "No formal education";
+  const education = data.estudios || "Foundational Education";
 
   const initials = getInitials(data.full_name);
   const photoHtml = data.photo_url 
@@ -988,18 +1127,14 @@ function generateCVHtml(
     `;
   }
 
-  // --- KEY STRENGTHS ---
+  // --- KEY STRENGTHS (exactamente 6) ---
   const keyStrengths = [
     `Immediate Availability: ${availability}`,
     `Willing to Relocate to Malta: ${relocate}`,
     `Team Player`,
     `Flexible Schedule`,
-    `Eligible to Work in Malta: ${workPermit}`,
+    `Driving License: ${license}`,
     `Adaptable to New Environments`,
-    `Strong Work Ethic`,
-    `Quick Learner`,
-    `Attention to Detail`,
-    `Reliable and Punctual`,
   ];
   const keyStrengthsHtml = keyStrengths.map(h => `<li>${h}</li>`).join("");
 
@@ -1015,23 +1150,27 @@ function generateCVHtml(
     return `<span>${comp}</span>`;
   }).join("");
 
-  // --- EXPERIENCE LIST - CORREGIDO (muestra ciudad, no empresa de Malta) ---
+  // --- GENERAR FECHAS REALISTAS PARA EXPERIENCIA ---
+  const expYears = validateExperienceYears(data.anos_experiencia);
+  const dateRanges = generateExperienceDates(expYears);
+
+  // --- EXPERIENCE LIST ---
   let experienceHtml = "";
   if (content.experience && content.experience.length > 0) {
-    const expItems = content.experience.map((exp: string) => {
+    const expItems = content.experience.map((exp: string, index: number) => {
       const parts = exp.split(":");
       const title = parts[0] || templateData.title;
       const bullets = parts.slice(1).join(":").trim() || exp;
       
-      // ✅ CORREGIDO: Mostrar la ciudad de origen y sector, NO la empresa de Malta
       const expLocation = `${city} Hospitality Sector`;
+      const dateRange = dateRanges[index % dateRanges.length] || `${new Date().getFullYear() - 1} - Present`;
       
       return `
         <div class="experience-item">
           <div class="exp-header">
             <span class="exp-title">${title}</span>
             <span class="exp-company">${expLocation}</span>
-            <span class="exp-date">Present</span>
+            <span class="exp-date">${dateRange}</span>
           </div>
           <div class="exp-description">
             <ul>
@@ -1046,17 +1185,18 @@ function generateCVHtml(
 
   // --- EDUCATION ---
   const educationLabel = getEducationLabel(education);
+  const educationYear = generateEducationYear(expYears, data.fechaNacimiento || null);
   const educationHtml = `
     <div class="education-item">
       <div class="edu-header">
         <span class="edu-degree">${educationLabel}</span>
-        <span class="edu-institution">${education}</span>
-        <span class="edu-date">Present</span>
+        <span class="edu-institution">${educationLabel}</span>
+        <span class="edu-date">${educationYear}</span>
       </div>
     </div>
   `;
 
-  // --- PROFESSIONAL SKILLS - DETERMINISTAS ---
+  // --- PROFESSIONAL SKILLS ---
   let professionalSkillsHtml = "";
   const skills = templateData.skills || [];
   while (skills.length < 8) {
@@ -1066,7 +1206,6 @@ function generateCVHtml(
     }
   }
   
-  // ✅ CORREGIDO: Porcentajes deterministas basados en experiencia
   const expLevel = validateExperienceYears(data.anos_experiencia);
   const basePercentage = expLevel === "sin_experiencia" ? 50 :
                          expLevel === "menos_1" ? 60 :
@@ -1109,11 +1248,11 @@ function generateCVHtml(
     `;
   }
 
-  // --- TAGLINE & PERSONAL STATEMENT - CORREGIDO ---
-  const tagline = `${templateData.title} professional from ${city} seeking opportunities in Malta`;
+  // --- TAGLINE ---
+  const tagline = `Motivated ${templateData.title} based in ${city}, ready to relocate to Malta and contribute to a professional team.`;
   const personalStatement = content.profile || content.summary || `${templateData.title} professional with practical experience, strong motivation to relocate to Malta, excellent teamwork skills and a commitment to delivering high-quality results in a professional environment.`;
 
-  // --- REPLACEMENTS ---
+  // --- REPLACEMENTS (eliminados: PASSPORT, WORK_PERMIT, VIDEO_INTERVIEW) ---
   const replacements: Record<string, string> = {
     "{{PHOTO_HTML}}": photoHtml,
     "{{FULL_NAME}}": fullName,
@@ -1126,11 +1265,8 @@ function generateCVHtml(
     "{{LANGUAGES}}": languagesHtml,
     "{{KEY_STRENGTHS}}": keyStrengthsHtml,
     "{{DRIVER_LICENSE}}": license,
-    "{{PASSPORT}}": passport,
-    "{{WORK_PERMIT}}": workPermit,
     "{{AVAILABILITY}}": availability,
     "{{RELOCATE}}": relocate,
-    "{{VIDEO_INTERVIEW}}": video,
     "{{CORE_COMPETENCIES}}": coreCompetenciesHtml,
     "{{EXPERIENCE_LIST}}": experienceHtml,
     "{{EDUCATION_LIST}}": educationHtml,
@@ -1149,11 +1285,7 @@ function generateCVHtml(
 // GENERAR HTML DE LA COVER LETTER
 // ============================================
 
-function generateCoverHtml(
-  data: any,
-  content: LetterContent,
-  company: Company
-): string {
+function generateCoverHtml(data: any, content: LetterContent): string {
   let template = readTemplate("premium-cover-letter.html");
 
   const sector = data.sectores ? data.sectores.split(",")[0]?.trim()?.toLowerCase() : "default";
@@ -1181,7 +1313,6 @@ function generateCoverHtml(
   const phone = data.whatsapp || "";
   const email = data.email || "";
 
-  // ✅ NUEVAS VARIABLES AÑADIDAS
   const relocate = normalizeRelocate(data.reubicacion);
 
   const roleShort = "ROLE";
@@ -1196,21 +1327,13 @@ function generateCoverHtml(
       ? "Ready for Malta"
       : "Not Available";
 
-  const companySection = company.name ? `
-    <div class="company">
-      <strong>${company.name}</strong><br />
-      <div class="department">${company.department || "Human Resources Department"}</div>
-      <div class="address-line">${company.address || ""}</div>
-    </div>
-  ` : "";
-
   // --- REPLACEMENTS ---
   const replacements: Record<string, string> = {
     "{{PHOTO_HTML}}": photoHtml,
     "{{FULL_NAME}}": fullName,
     "{{JOB_TITLE}}": templateData.title,
     "{{DATE}}": dateStr,
-    "{{COMPANY_SECTION}}": companySection,
+    "{{COMPANY_SECTION}}": "",
     "{{GREETING}}": "Dear Hiring Manager,",
     "{{INTRODUCTION}}": content.introduction || "",
     "{{BODY_1}}": content.body1 || "",
@@ -1222,7 +1345,6 @@ function generateCoverHtml(
     "{{NATIONALITY}}": nationality,
     "{{LOCATION}}": location,
     "{{PHONE}}": phone,
-    // ✅ NUEVAS LÍNEAS AÑADIDAS
     "{{INITIALS}}": initials,
     "{{ROLE_SHORT}}": roleShort,
     "{{ROLE_VALUE}}": roleValue,
@@ -1273,7 +1395,7 @@ async function uploadPDF(pdfBytes: Buffer, fileName: string): Promise<string> {
 }
 
 // ============================================
-// HANDLER PRINCIPAL - CORREGIDO
+// HANDLER PRINCIPAL
 // ============================================
 
 export default async function handler(
@@ -1333,26 +1455,25 @@ export default async function handler(
     }
     
     const selectedCompany = template.companies[Math.floor(Math.random() * template.companies.length)];
-    console.log(`🏢 Selected company: ${selectedCompany.name} (${selectedCompany.city})`);
+    console.log(`🏢 Selected company (for tracking only): ${selectedCompany.name} (${selectedCompany.city})`);
 
-    // ✅ CORREGIDO: Solo construir el prompt, NO llamar a OpenAI
-    const cvPromptFull = getPremiumCVPrompt(application, selectedCompany);
-    const coverPromptFull = getPremiumCoverLetterPrompt(application, selectedCompany);
+    const cvPromptFull = getPremiumCVPrompt(application);
+    const coverPromptFull = getPremiumCoverLetterPrompt(application);
 
     console.log("🤖 Generating premium CV content...");
-    const cvContent = await generatePremiumCV(application, selectedCompany);
+    const cvContent = await generatePremiumCV(application);
     console.log(`✅ CV content generated`);
 
     console.log("🤖 Generating premium Cover Letter content...");
-    const letterContent = await generatePremiumCoverLetter(application, selectedCompany);
+    const letterContent = await generatePremiumCoverLetter(application);
     console.log(`✅ Cover Letter content generated`);
 
     console.log("📄 Generating CV HTML from template...");
-    const cvHtml = generateCVHtml(application, cvContent, selectedCompany);
+    const cvHtml = generateCVHtml(application, cvContent);
     console.log(`✅ CV HTML generated (${cvHtml.length} chars)`);
 
     console.log("📄 Generating Cover Letter HTML from template...");
-    const coverHtml = generateCoverHtml(application, letterContent, selectedCompany);
+    const coverHtml = generateCoverHtml(application, letterContent);
     console.log(`✅ Cover Letter HTML generated (${coverHtml.length} chars)`);
 
     console.log("🖨️ Converting CV HTML to PDF...");
@@ -1377,7 +1498,6 @@ export default async function handler(
 
     const totalTime = Date.now() - startTime;
 
-    // ✅ CORREGIDO: Guardar el prompt completo (sin límite si es TEXT en Supabase)
     const updateData: any = {
       cv_generated: true,
       letter_generated: true,
