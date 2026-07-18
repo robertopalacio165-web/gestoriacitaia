@@ -6,6 +6,11 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
+// ✅ URL del webhook de Make para WhatsApp de bienvenida
+const MAKE_WEBHOOK_MALTA =
+  process.env.MAKE_WEBHOOK_MALTA ||
+  "https://hook.eu1.make.com/noxce8cky0r0jr7ujf62fywggn3l824b";
+
 export default async function handler(
   req: VercelRequest,
   res: VercelResponse
@@ -100,6 +105,49 @@ export default async function handler(
     }
 
     console.log(`✅ Aplicación creada en modo DEV: ${data.id}`);
+
+    // ============================================
+    // ✅ ENVIAR WHATSAPP DE BIENVENIDA
+    // ============================================
+    fetch(MAKE_WEBHOOK_MALTA, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        tipo: "malta_bienvenida",
+
+        id: data.id,
+
+        nombre: fullName,
+        whatsapp: whatsapp,
+        email: email,
+
+        plan: plan || "monthly",
+
+        profesion: profesion,
+        puesto: preferred_position,
+
+        mensaje:
+          `👋 Hola ${fullName}. Hemos recibido correctamente tu solicitud para Trabajo en Malta. En unos minutos comenzaremos a generar tu CV profesional y tu carta de presentación mediante IA. Después empezaremos a buscar ofertas adaptadas a tu perfil.`,
+
+        fecha: new Date().toISOString(),
+      }),
+    })
+    .then(async (response) => {
+      if (!response.ok) {
+        console.error(
+          "❌ MAKE MALTA:",
+          response.status,
+          await response.text()
+        );
+      } else {
+        console.log("✅ WhatsApp de bienvenida enviado");
+      }
+    })
+    .catch((err) => {
+      console.error("❌ Error enviando WhatsApp:", err);
+    });
 
     // ✅ Añadir a la cola de trabajo
     const { error: queueError } = await supabase
