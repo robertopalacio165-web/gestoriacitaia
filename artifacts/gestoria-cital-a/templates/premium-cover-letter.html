@@ -136,7 +136,7 @@
       flex-direction: column;
     }
 
-    /* ===== HEADER - LIMPIO ===== */
+    /* ===== HEADER - SOLO NOMBRE Y PUESTO ===== */
     .header-block {
       margin-bottom: 14px;
       padding-bottom: 12px;
@@ -169,20 +169,6 @@
       font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 5px;
-    }
-
-    .header-block .contact-line {
-      font-size: 10.5px;
-      color: #8a9a92;
-      margin-top: 6px;
-      letter-spacing: 0.3px;
-    }
-
-    .header-block .contact-line .sep {
-      color: #c9a84c;
-      margin: 0 8px;
-      font-size: 4px;
-      vertical-align: middle;
     }
 
     /* ===== META - SOLO DATE Y SUBJECT ===== */
@@ -389,15 +375,10 @@
 
   <!-- MAIN -->
   <main class="main">
-    <!-- HEADER - LIMPIO SIN CIUDAD/PAÍS -->
+    <!-- HEADER - SOLO NOMBRE Y PUESTO -->
     <div class="header-block">
       <div class="name">{{FULL_NAME}}</div>
       <div class="title">{{JOB_TITLE}}</div>
-      <div class="contact-line">
-        <span>{{EMAIL}}</span>
-        <span class="sep">◆</span>
-        <span>{{PHONE}}</span>
-      </div>
     </div>
 
     <!-- META - SOLO DATE Y SUBJECT -->
