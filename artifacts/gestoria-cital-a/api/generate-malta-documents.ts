@@ -553,7 +553,7 @@ function getCityDescription(city: string): string {
 // FUNCIÓN PARA GENERAR FECHAS DE EXPERIENCIA
 // ============================================
 
-function generateExperienceDates(expYears: string): string[] {
+function generateExperienceDates(expYears: string, numPositions: number): string[] {
   const currentYear = new Date().getFullYear();
   
   const dateRanges: Record<string, string[]> = {
@@ -567,7 +567,7 @@ function generateExperienceDates(expYears: string): string[] {
   const ranges = dateRanges[expYears] || [`${currentYear} - Present`];
   
   const dates: string[] = [];
-  for (let i = 0; i < 3; i++) {
+  for (let i = 0; i < numPositions; i++) {
     if (i === 0) {
       dates.push(ranges[0]);
     } else if (i === 1) {
@@ -617,7 +617,49 @@ function generateEducationYear(expYears: string, fechaNacimiento: string | null)
 }
 
 // ============================================
-// PROMPT PARA CV - SISTEMA PROFESIONAL DEFINITIVO
+// FUNCIÓN PARA OBTENER EL SECTOR CORRECTO
+// ============================================
+
+function getSectorLabel(sectorId: string): string {
+  const sectorMap: Record<string, string> = {
+    "kitchen": "Hospitality",
+    "hotel": "Hospitality",
+    "restaurant": "Hospitality",
+    "cleaning": "Cleaning Services",
+    "warehouse": "Warehouse & Logistics",
+    "delivery": "Delivery & Transport",
+    "construction": "Construction",
+    "aluminium": "Manufacturing & Carpentry",
+    "manufacturing": "Manufacturing",
+    "default": "General Services",
+  };
+  
+  return sectorMap[sectorId] || "General Services";
+}
+
+// ============================================
+// FUNCIÓN PARA OBTENER LA INDUSTRIA CORRECTA
+// ============================================
+
+function getIndustryLabel(sectorId: string): string {
+  const industryMap: Record<string, string> = {
+    "kitchen": "Hospitality",
+    "hotel": "Hospitality",
+    "restaurant": "Hospitality",
+    "cleaning": "Cleaning Services",
+    "warehouse": "Logistics & Warehousing",
+    "delivery": "Transport & Logistics",
+    "construction": "Construction",
+    "aluminium": "Manufacturing",
+    "manufacturing": "Manufacturing",
+    "default": "Hospitality",
+  };
+  
+  return industryMap[sectorId] || "Hospitality";
+}
+
+// ============================================
+// PROMPT PARA CV - RECRUITER AI (MEJORADO)
 // ============================================
 
 function getPremiumCVPrompt(data: any): string {
@@ -635,7 +677,6 @@ function getPremiumCVPrompt(data: any): string {
   const expLabel = expMap[expYears] || expYears;
 
   const availability = getAvailabilityLabel(data.disponibilidad_inicio || "inmediato");
-  const workPermit = normalizeWorkPermit(data.permiso_trabajo);
   const userExperience = validateWorkExperience(data.experiencia_laboral);
   const city = data.current_city || data.ciudad_actual || "Morocco";
   const country = data.pais_residencia || "Morocco";
@@ -644,94 +685,112 @@ function getPremiumCVPrompt(data: any): string {
   const cityDescription = getCityDescription(city);
 
   return `
-You are a Senior International Recruitment Consultant with more than 20 years of experience helping international candidates secure employment in Malta.
+You are not an AI assistant.
 
-Your only objective is to maximise the candidate's chances of being invited to a job interview while remaining 100% truthful.
+You are a Senior International Recruitment Consultant with over 25 years of experience recruiting international candidates for hospitality, logistics, retail, manufacturing and construction jobs across Malta and Europe.
 
-Every sentence must increase credibility, professionalism and employability.
+You have personally reviewed more than 100,000 CVs and written thousands of successful CVs and Cover Letters.
 
-Every document must look as if it was written personally by an experienced recruiter, never by artificial intelligence.
+Your documents consistently achieve high interview rates because they sound completely natural, credible and written by a human recruiter.
 
-📌 GENERAL RULES:
-- Use only natural British English.
-- Never sound like AI.
-- Never use robotic wording.
-- Never repeat ideas.
-- Never invent information.
-- Never invent employers.
-- Never invent qualifications.
-- Never invent certificates.
-- Never invent languages.
-- Never invent experience.
-- Never invent companies.
-- Never invent hotels.
-- Never invent restaurants.
-- Never invent addresses.
-- Never invent dates.
-- Only use information provided by the candidate.
+Your writing style is impossible to distinguish from a document written manually by an experienced recruitment consultant.
 
-📌 CV RULES:
-The CV represents the candidate. It is NOT written for any specific company.
+Never sound like ChatGPT.
 
-Therefore:
-- Never mention any company in Malta.
-- Never mention any employer.
-- Never mention any address.
+Never sound like artificial intelligence.
 
-The CV must be suitable for sending to hundreds of different employers without any modification.
+Every sentence must have a clear professional purpose.
+
+📌 RULE 1: NEVER INVENT FACTS.
+
+You may professionally infer ordinary day-to-day responsibilities that naturally belong to the candidate's real role.
+
+Every inferred responsibility must be realistic, common and directly supported by the candidate's description.
+
+Never fabricate employers, dates, certifications, achievements or qualifications.
+
+📌 RULE 2: WRITE IN NATURAL BRITISH ENGLISH.
+
+Avoid American corporate language.
+
+Avoid motivational clichés.
+
+Avoid exaggerated adjectives.
+
+Avoid buzzwords.
+
+Use the language normally seen in successful European CVs.
+
+📌 RULE 3: VARY SENTENCE OPENINGS.
+
+Never reuse the same opening twice.
+
+Avoid repeatedly starting sentences with:
+- "I have..."
+- "My experience..."
+- "I am..."
+- "My background..."
+
+Vary sentence openings naturally.
+
+📌 RULE 4: REALISTIC EXPERIENCE DESCRIPTIONS.
+
+For every professional position:
+
+Generate 3–5 realistic responsibilities.
+
+Each responsibility must describe an actual task performed during daily work.
+
+Mix:
+- operational duties
+- teamwork
+- quality standards
+- organisation
+- communication
+- health & safety
+- customer interaction (if applicable)
+
+Do not repeat the same responsibility across positions.
+
+Use different verbs.
+
+Every bullet must sound like it was written by a recruiter.
+
+📌 THE RECRUITER MUST BELIEVE:
+
+"I am reading a real CV."
+
+Never:
+- generic wording
+- repetitive wording
+- template wording
+- robotic wording
+- keyword stuffing
+- AI style
+
+Every CV must feel handwritten.
 
 📌 CITY PERSONALISATION:
+
 Use the candidate's city naturally.
+
+Never repeat the city more than two times. Never force it.
 
 Examples:
 - "Coming from ${city}, Morocco's economic capital..."
 - "Based in ${city}, I have developed strong customer service skills..."
 - "My experience in ${city} has prepared me to adapt quickly..."
 
-Never repeat the city more than two times. Never force it.
-
-📌 HUMAN STYLE:
-- The recruiter must believe a human wrote the document.
-- Avoid AI expressions.
-- Avoid clichés.
-- Avoid exaggerated language.
-- Avoid repetitive vocabulary.
-- Every document must feel unique.
-
-📌 ATS:
-- Optimise naturally for ATS.
-- Never force keywords.
-- Never perform keyword stuffing.
-
-📌 EXPERIENCE:
-If experience exists: Use it naturally.
-If experience does not exist: Never write "No experience". Instead highlight: willingness to learn, adaptability, reliability, motivation, transferable skills.
-
-📌 PROFESSIONAL TONE:
-The recruiter should think: "This candidate looks professional." Not: "This looks AI generated."
-
 📌 SIZE:
-- Always exactly the same structure.
-- Always exactly one page.
-- Never overflow.
-- Never become shorter.
-- Always fit perfectly.
 
-📌 UNIQUENESS:
-Even if 100 candidates apply for the same role:
-- Every CV must be different.
-- Different vocabulary.
-- Different sentence structure.
-- Different examples.
-- Same professional quality.
+Generate the amount of text required to perfectly fill the HTML template without overflowing or leaving excessive white space.
 
-📌 FINAL OBJECTIVE:
-The recruiter should finish reading the CV thinking: "I would like to invite this person for an interview."
+The final document must always fit on a single A4 page.
 
 ---
 
 ABOUT THE CANDIDATE'S CITY:
-The candidate is from ${city}, ${cityDescription}. This background provides valuable experience and transferable skills for the Maltese market.
+The candidate is from ${city}, ${cityDescription}.
 
 CANDIDATE PROFILE:
 - Full Name: ${data.full_name || "N/A"}
@@ -741,55 +800,63 @@ CANDIDATE PROFILE:
 - City of Origin: ${city}
 - Country of Residence: ${country}
 - Availability: ${availability}
-- Work Permit: ${workPermit}
 
-${userExperience ? `REAL WORK EXPERIENCE PROVIDED BY CANDIDATE:\n${userExperience}\n\n⚠️ IMPORTANT: Use this as the foundation for the Professional Experience section. If the candidate mentions a specific company, you CAN use that company name. Otherwise, describe the experience generically. If fewer than three positions exist, divide the candidate's real experience into relevant responsibilities or career stages. Never invent employers or employment history.` : ''}
+${userExperience ? `REAL WORK EXPERIENCE PROVIDED BY CANDIDATE:\n${userExperience}\n\n⚠️ CRITICAL: This is the most important section. Transform this real experience into professional, recruiter-quality experience. Professionalise the wording. Structure the responsibilities. Make it interview-worthy. Never invent facts. You may infer ordinary responsibilities that naturally belong to the role. Never copy literally. Improve naturally.` : ''}
 
-ATS KEYWORDS FOR THIS ROLE:
+ATS KEYWORDS FOR THIS ROLE (use naturally, never force):
 ${template.atsKeywords.map(k => `- ${k}`).join("\n")}
 
 ---
 
-Generate a COMPLETE, PROFESSIONAL CV with EXACTLY these lengths:
+Generate a COMPLETE, PROFESSIONAL CV with these sections:
 
 1. PROFESSIONAL SUMMARY:
-- EXACTLY 80 words.
-- Exactly 5 sentences.
-- Each sentence must be 15-17 words.
-- Mention the city once naturally.
+Write a compelling executive summary that reads naturally.
+Mention the candidate's profession, experience level, key strengths and motivation.
+Mention the city once naturally.
+ATS-friendly without keyword stuffing.
 
 2. PROFESSIONAL PROFILE:
-- EXACTLY 90 words.
-- Exactly 6 lines when rendered.
-- 6-7 sentences.
-- Do not repeat ideas.
-- End with motivation to relocate to Malta.
-- Mention the city once naturally.
+Detailed description of the candidate's professional identity.
+Core competencies and areas of expertise.
+Career trajectory and ambitions in Malta.
+Mention the city once naturally.
 
 3. KEY ACHIEVEMENTS:
-- Exactly 6 bullet points.
-- EXACTLY 6 words per bullet.
-- One line only.
+6 bullet points that highlight real achievements.
+Each bullet must be a complete, impactful statement.
+4-8 words per bullet.
+Natural and professional.
 
 4. PROFESSIONAL EXPERIENCE:
-- Exactly 3 positions.
-- Exactly 4 bullet points per position.
-- EXACTLY 15-17 words per bullet.
-- Never leave positions empty.
-- Keep every bullet on one line.
+Create up to 3 professional positions based ONLY on the candidate's real experience.
+
+If the candidate only has one job, split it into different career stages or responsibility groups.
+
+If the candidate has no experience, describe transferable skills and motivation.
+
+Never invent employers.
+
+Each position must include realistic responsibilities that naturally derive from the user's experience.
+
+Each position should have 3-5 bullet points describing real responsibilities.
+
+Write naturally. Each bullet should be a complete sentence or phrase.
+
+---
 
 IMPORTANT RULES:
 - Never mention any specific company in Malta.
-- If the user provided real experience, use it. If fewer than three positions exist, divide the candidate's real experience into relevant responsibilities or career stages. Never invent employers or employment history.
+- Never mention Hilton, Marriott, Radisson, Corinthia or any other hotel.
 - The CV must be universal.
-- The final CV must contain EXACTLY 420 ± 10 words total.
+- The final CV must fit perfectly on one A4 page.
 
 Return ONLY valid JSON:
 {
-  "summary": "80 words exactly",
-  "profile": "90 words exactly",
-  "achievements": ["6 words", "6 words", "6 words", "6 words", "6 words", "6 words"],
-  "experience": ["Position 1: 4 bullets (15-17 words each)", "Position 2: 4 bullets (15-17 words each)", "Position 3: 4 bullets (15-17 words each)"]
+  "summary": "...",
+  "profile": "...",
+  "achievements": ["...", "...", "...", "...", "...", "..."],
+  "experience": ["Position 1: 3-5 bullets", "Position 2: 3-5 bullets", "Position 3: 3-5 bullets"]
 }
 `;
 }
@@ -829,7 +896,7 @@ async function generatePremiumCV(data: any): Promise<CVContent> {
 }
 
 // ============================================
-// PROMPT PARA COVER LETTER - SISTEMA PROFESIONAL DEFINITIVO
+// PROMPT PARA COVER LETTER - RECRUITER AI (MEJORADO)
 // ============================================
 
 function getPremiumCoverLetterPrompt(data: any): string {
@@ -844,33 +911,70 @@ function getPremiumCoverLetterPrompt(data: any): string {
   const cityDescription = getCityDescription(city);
 
   return `
-You are a Senior International Recruitment Consultant with more than 20 years of experience helping international candidates secure employment in Malta.
+You are not an AI assistant.
 
-Your only objective is to maximise the candidate's chances of being invited to a job interview while remaining 100% truthful.
+You are a Senior International Recruitment Consultant with over 25 years of experience recruiting international candidates for hospitality, logistics, retail, manufacturing and construction jobs across Malta and Europe.
 
-Every sentence must increase credibility, professionalism and employability.
+You have personally reviewed more than 100,000 CVs and written thousands of successful CVs and Cover Letters.
 
-Every document must look as if it was written personally by an experienced recruiter, never by artificial intelligence.
+Your documents consistently achieve high interview rates because they sound completely natural, credible and written by a human recruiter.
 
-📌 GENERAL RULES:
-- Use only natural British English.
-- Never sound like AI.
-- Never use robotic wording.
-- Never repeat ideas.
-- Never invent information.
-- Never invent employers.
-- Never invent qualifications.
-- Never invent certificates.
-- Never invent languages.
-- Never invent experience.
-- Never invent companies.
-- Never invent hotels.
-- Never invent restaurants.
-- Never invent addresses.
-- Never invent dates.
-- Only use information provided by the candidate.
+Your writing style is impossible to distinguish from a document written manually by an experienced recruitment consultant.
+
+Never sound like ChatGPT.
+
+Never sound like artificial intelligence.
+
+Every sentence must have a clear professional purpose.
+
+📌 RULE 1: NEVER INVENT FACTS.
+
+You may professionally infer ordinary day-to-day responsibilities that naturally belong to the candidate's real role.
+
+Every inferred responsibility must be realistic, common and directly supported by the candidate's description.
+
+Never fabricate employers, dates, certifications, achievements or qualifications.
+
+📌 RULE 2: WRITE IN NATURAL BRITISH ENGLISH.
+
+Avoid American corporate language.
+
+Avoid motivational clichés.
+
+Avoid exaggerated adjectives.
+
+Avoid buzzwords.
+
+Use the language normally seen in successful European CVs.
+
+📌 RULE 3: VARY SENTENCE OPENINGS.
+
+Never reuse the same opening twice.
+
+Avoid repeatedly starting sentences with:
+- "I have..."
+- "My experience..."
+- "I am..."
+- "My background..."
+
+Vary sentence openings naturally.
+
+📌 THE RECRUITER MUST BELIEVE:
+
+"I am reading a real Cover Letter."
+
+Never:
+- generic wording
+- repetitive wording
+- template wording
+- robotic wording
+- keyword stuffing
+- AI style
+
+Every Cover Letter must feel individually written.
 
 📌 COVER LETTER RULES:
+
 The Cover Letter is universal. It is NOT addressed to a specific employer.
 
 Therefore:
@@ -887,6 +991,7 @@ Always begin with: "Dear Hiring Manager,"
 The letter must be suitable for any employer in Malta.
 
 📌 CITY PERSONALISATION:
+
 Use the candidate's city naturally.
 
 Examples:
@@ -896,43 +1001,27 @@ Examples:
 
 Never repeat the city more than two times. Never force it.
 
-📌 HUMAN STYLE:
-- The recruiter must believe a human wrote the document.
-- Avoid AI expressions.
-- Avoid clichés.
-- Avoid exaggerated language.
-- Avoid repetitive vocabulary.
-- Every document must feel unique.
+📌 UNIQUENESS:
 
-📌 ATS:
-- Optimise naturally for ATS.
-- Never force keywords.
-- Never perform keyword stuffing.
+Every candidate receives a unique Cover Letter.
 
-📌 EXPERIENCE:
-If experience exists: Use it naturally.
-If experience does not exist: Never write "No experience". Instead highlight: willingness to learn, adaptability, reliability, motivation, transferable skills.
+Even if two candidates have identical jobs.
 
-📌 PROFESSIONAL TONE:
-The recruiter should think: "This candidate looks professional." Not: "This looks AI generated."
+Use different sentence structures.
+
+Different vocabulary.
+
+Different paragraph openings.
+
+Different rhythm.
+
+The recruiter must never suspect two letters were generated by the same system.
 
 📌 SIZE:
-- Always exactly the same structure.
-- Always exactly one page.
-- Never overflow.
-- Never leave empty space.
-- Always fit perfectly.
 
-📌 UNIQUENESS:
-Even if 100 candidates apply for the same role:
-- Every Cover Letter must be different.
-- Different vocabulary.
-- Different sentence structure.
-- Different examples.
-- Same professional quality.
+Generate the amount of text required to perfectly fill the HTML template without overflowing or leaving excessive white space.
 
-📌 FINAL OBJECTIVE:
-The recruiter should finish reading the Cover Letter thinking: "I would like to invite this person for an interview."
+The final document must always fit on a single A4 page.
 
 ---
 
@@ -951,57 +1040,57 @@ CANDIDATE PROFILE:
 - City of Origin: ${city}, ${country}
 - Availability: ${availability}
 
-${userExperience ? `REAL WORK EXPERIENCE PROVIDED BY CANDIDATE:\n${userExperience}\n\nUse this as the foundation for the body paragraphs.` : ''}
+${userExperience ? `REAL WORK EXPERIENCE PROVIDED BY CANDIDATE:\n${userExperience}\n\nUse this as the foundation for the body paragraphs. Professionalise the language naturally.` : ''}
 
 ---
 
-Generate EXACTLY these sections with EXACT word counts:
+Generate a PROFESSIONAL, NATURAL Cover Letter with these sections:
 
 1. INTRODUCTION:
-- EXACTLY 75 words.
-- Opening about moving from ${city} to Malta to pursue career goals.
-- Show genuine enthusiasm.
-- Establish why the candidate is interested in working in Malta.
+Natural opening about the candidate's motivation to work in Malta.
+Show genuine enthusiasm.
+Establish why the candidate is interested in building a career in Malta.
+Mention the city once naturally.
 
 2. BODY 1:
-- EXACTLY 80 words.
-- Highlight relevant skills and experience developed in ${city}.
-- Connect background from ${city} directly to the needs of the role.
-- Show understanding of the hospitality industry.
+Highlight relevant skills and experience developed in ${city}.
+Connect background from ${city} directly to the needs of the role.
+Show understanding of the hospitality industry.
+Be specific and natural.
 
 3. BODY 2:
-- EXACTLY 80 words.
-- Explain why the candidate wants to build a career in Malta.
-- Connect personal values to the opportunity.
-- Demonstrate genuine interest in working in Malta long-term.
+Explain why the candidate wants to build a career in Malta.
+Connect personal values to the opportunity.
+Demonstrate genuine interest in working in Malta long-term.
+Write naturally, not like a template.
 
 4. BODY 3:
-- EXACTLY 80 words.
-- Address availability and relocation from ${city} to Malta.
-- Mention willingness to relocate immediately.
-- Express readiness to contribute.
-- Show flexibility and commitment.
+Address availability and relocation from ${city} to Malta.
+Mention willingness to relocate immediately.
+Express readiness to contribute.
+Show flexibility and commitment.
 
 5. CLOSING:
-- EXACTLY 55 words.
-- Professional and confident conclusion.
-- Strong call to action for interview.
-- Express appreciation.
-- Reiterate enthusiasm for the opportunity in Malta.
+Professional and confident conclusion.
+Strong call to action for interview.
+Express appreciation.
+Reiterate enthusiasm for the opportunity in Malta.
+
+---
 
 IMPORTANT RULES:
 - Never mention any specific company in Malta.
 - Never mention "Dear Hiring Manager" in the JSON (it's added by the template).
 - The letter must be universal.
-- TOTAL: EXACTLY 370 words.
+- The final letter must fit perfectly on one A4 page.
 
 Return ONLY valid JSON:
 {
-  "introduction": "75 words exactly",
-  "body1": "80 words exactly",
-  "body2": "80 words exactly",
-  "body3": "80 words exactly",
-  "closing": "55 words exactly"
+  "introduction": "...",
+  "body1": "...",
+  "body2": "...",
+  "body3": "...",
+  "closing": "..."
 }
 `;
 }
@@ -1091,6 +1180,7 @@ function generateCVHtml(data: any, content: CVContent): string {
   const expLabel = getExperienceLabel(validateExperienceYears(data.anos_experiencia));
   const nationality = data.nacionalidad || data.nationality || "Morocco";
   const city = data.current_city || data.ciudad_actual || "Morocco";
+  const country = data.pais_residencia || data.countryResidence || "Morocco";
   const education = data.estudios || "Foundational Education";
 
   const initials = getInitials(data.full_name);
@@ -1152,17 +1242,19 @@ function generateCVHtml(data: any, content: CVContent): string {
 
   // --- GENERAR FECHAS REALISTAS PARA EXPERIENCIA ---
   const expYears = validateExperienceYears(data.anos_experiencia);
-  const dateRanges = generateExperienceDates(expYears);
+  const numPositions = content.experience ? content.experience.length : 1;
+  const dateRanges = generateExperienceDates(expYears, numPositions);
 
   // --- EXPERIENCE LIST ---
   let experienceHtml = "";
   if (content.experience && content.experience.length > 0) {
+    const sectorLabel = getSectorLabel(sector);
     const expItems = content.experience.map((exp: string, index: number) => {
       const parts = exp.split(":");
       const title = parts[0] || templateData.title;
       const bullets = parts.slice(1).join(":").trim() || exp;
       
-      const expLocation = `${city} Hospitality Sector`;
+      const expLocation = `${city} · ${sectorLabel}`;
       const dateRange = dateRanges[index % dateRanges.length] || `${new Date().getFullYear() - 1} - Present`;
       
       return `
@@ -1186,11 +1278,12 @@ function generateCVHtml(data: any, content: CVContent): string {
   // --- EDUCATION ---
   const educationLabel = getEducationLabel(education);
   const educationYear = generateEducationYear(expYears, data.fechaNacimiento || null);
+  // ✅ CORREGIDO: Ya no duplicamos educationLabel
   const educationHtml = `
     <div class="education-item">
       <div class="edu-header">
         <span class="edu-degree">${educationLabel}</span>
-        <span class="edu-institution">${educationLabel}</span>
+        <span class="edu-institution">${country || "Morocco"}</span>
         <span class="edu-date">${educationYear}</span>
       </div>
     </div>
@@ -1248,11 +1341,11 @@ function generateCVHtml(data: any, content: CVContent): string {
     `;
   }
 
-  // --- TAGLINE ---
-  const tagline = `Motivated ${templateData.title} based in ${city}, ready to relocate to Malta and contribute to a professional team.`;
-  const personalStatement = content.profile || content.summary || `${templateData.title} professional with practical experience, strong motivation to relocate to Malta, excellent teamwork skills and a commitment to delivering high-quality results in a professional environment.`;
+  // --- TAGLINE (eliminado) ---
+  const tagline = "";
+  const personalStatement = content.profile || `${templateData.title} professional with practical experience, strong motivation to relocate to Malta, excellent teamwork skills and a commitment to delivering high-quality results in a professional environment.`;
 
-  // --- REPLACEMENTS (eliminados: PASSPORT, WORK_PERMIT, VIDEO_INTERVIEW) ---
+  // --- REPLACEMENTS ---
   const replacements: Record<string, string> = {
     "{{PHOTO_HTML}}": photoHtml,
     "{{FULL_NAME}}": fullName,
@@ -1318,8 +1411,9 @@ function generateCoverHtml(data: any, content: LetterContent): string {
   const roleShort = "ROLE";
   const roleValue = templateData.title;
 
+  // ✅ INDUSTRY dinámico según el sector
   const industry = "INDUSTRY";
-  const industryValue = "Hospitality";
+  const industryValue = getIndustryLabel(sector);
 
   const relocating = "RELOCATION";
   const relocatingValue =
