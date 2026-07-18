@@ -28,7 +28,6 @@
       padding: 20px;
     }
 
-    /* ===== PÁGINA A4 ===== */
     .page {
       width: 210mm;
       height: 297mm;
@@ -44,7 +43,7 @@
     }
 
     /* ============================================
-       SIDEBAR - 240px (más ancho)
+       SIDEBAR - 240px
     ============================================ */
     .sidebar {
       width: 240px;
@@ -189,27 +188,12 @@
       border-radius: 3px;
     }
 
-    /* ===== ADDITIONAL INFO (sidebar) ===== */
-    .sidebar .additional-info .info-item {
-      font-size: 10px;
-      line-height: 1.5;
-      color: #c8d0dc;
-      padding: 1px 0;
-    }
-
-    .sidebar .additional-info .info-item strong {
-      color: #ffffff;
-      font-weight: 500;
-      display: inline-block;
-      min-width: 72px;
-    }
-
     .sidebar .spacer {
       flex: 1;
     }
 
     /* ============================================
-       MAIN CONTENT - más espacio
+       MAIN CONTENT
     ============================================ */
     .main {
       flex: 1;
@@ -222,7 +206,7 @@
 
     /* ===== HEADER ===== */
     .main .header-block {
-      margin-bottom: 5px;
+      margin-bottom: 8px;
       flex-shrink: 0;
     }
 
@@ -233,7 +217,32 @@
       line-height: 1.1;
       text-transform: uppercase;
       color: #0a1a2e;
-      margin-bottom: 2px;
+    }
+
+    /* ===== LÍNEA FINA DE INFORMACIÓN RÁPIDA ===== */
+    .main .header-block .quick-info {
+      font-size: 10.5px;
+      color: #6d7077;
+      letter-spacing: 0.5px;
+      margin-top: 2px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid #e8eaed;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 2px 14px;
+    }
+
+    .main .header-block .quick-info .qi-item {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .main .header-block .quick-info .qi-item .qi-icon {
+      width: 12px;
+      height: 12px;
+      fill: #8f9db0;
+      flex-shrink: 0;
     }
 
     .main .header-block .title {
@@ -242,7 +251,7 @@
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 3px;
-      margin-top: 1px;
+      margin-top: 2px;
     }
 
     .main .header-block .tagline {
@@ -301,7 +310,7 @@
     }
 
     /* ============================================
-       EXPERIENCIA - más espacio entre items
+       EXPERIENCE
     ============================================ */
     .main .experience-item {
       margin-bottom: 20px;
@@ -418,7 +427,7 @@
     }
 
     /* ============================================
-       SKILLS
+       PROFESSIONAL SKILLS
     ============================================ */
     .main .skills-container {
       display: grid;
@@ -457,9 +466,9 @@
     }
 
     /* ============================================
-       ADDITIONAL INFO (main) - grid más amplio
+       PROFESSIONAL PROFILE (6 elementos)
     ============================================ */
-    .main .info-grid {
+    .main .profile-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 0 20px;
@@ -470,25 +479,25 @@
       flex-shrink: 0;
     }
 
-    .main .info-grid .info-item {
+    .main .profile-grid .profile-item {
       padding: 8px 0;
       border-bottom: 1px solid #f0f2f4;
     }
 
-    .main .info-grid .info-item:nth-last-child(1),
-    .main .info-grid .info-item:nth-last-child(2) {
+    .main .profile-grid .profile-item:nth-last-child(1),
+    .main .profile-grid .profile-item:nth-last-child(2) {
       border-bottom: none;
     }
 
-    .main .info-grid .info-item strong {
+    .main .profile-grid .profile-item strong {
       color: #0a1a2e;
       font-weight: 600;
       display: inline-block;
-      min-width: 72px;
+      min-width: 110px;
     }
 
     /* ============================================
-       PERSONAL STATEMENT - más espacio y legibilidad
+       PERSONAL STATEMENT
     ============================================ */
     .main .personal-statement {
       font-size: 10.5px;
@@ -594,19 +603,24 @@
         line-height: 1.2;
       }
 
+      .main .header-block .quick-info {
+        font-size: 9.5px;
+        gap: 2px 10px;
+      }
+
       .main .skills-container {
         grid-template-columns: 1fr;
       }
 
-      .main .info-grid {
+      .main .profile-grid {
         grid-template-columns: 1fr;
       }
 
-      .main .info-grid .info-item {
+      .main .profile-grid .profile-item {
         border-bottom: 1px solid #f0f2f4;
       }
 
-      .main .info-grid .info-item:nth-last-child(1) {
+      .main .profile-grid .profile-item:nth-last-child(1) {
         border-bottom: none;
       }
 
@@ -684,19 +698,6 @@
       {{KEY_STRENGTHS}}
     </ul>
 
-    <h2>
-      <svg class="icon" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
-      ADDITIONAL INFO
-    </h2>
-    <div class="additional-info">
-      <div class="info-item"><strong>Passport:</strong> {{PASSPORT}}</div>
-      <div class="info-item"><strong>Driving Licence:</strong> {{DRIVER_LICENSE}}</div>
-      <div class="info-item"><strong>Work Permit:</strong> {{WORK_PERMIT}}</div>
-      <div class="info-item"><strong>Availability:</strong> {{AVAILABILITY}}</div>
-      <div class="info-item"><strong>Willing to relocate:</strong> {{RELOCATE}}</div>
-      <div class="info-item"><strong>Interview via video:</strong> {{VIDEO_INTERVIEW}}</div>
-    </div>
-
     <div class="spacer"></div>
 
   </aside>
@@ -709,6 +710,24 @@
     <div class="header-block">
       <div class="name">{{FULL_NAME}}</div>
       <div class="title">{{JOB_TITLE}}</div>
+      <div class="quick-info">
+        <span class="qi-item">
+          <svg class="qi-icon" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+          {{LOCATION}}
+        </span>
+        <span class="qi-item">
+          <svg class="qi-icon" viewBox="0 0 24 24"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
+          {{PHONE}}
+        </span>
+        <span class="qi-item">
+          <svg class="qi-icon" viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
+          {{EMAIL}}
+        </span>
+        <span class="qi-item">
+          <svg class="qi-icon" viewBox="0 0 24 24"><path d="M20 6h-4V4c0-1.11-.89-2-2-2h-4c-1.11 0-2 .89-2 2v2H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.1 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-6 0h-4V4h4v2z"/></svg>
+          {{AVAILABILITY}}
+        </span>
+      </div>
       <div class="tagline">{{TAGLINE}}</div>
     </div>
 
@@ -721,7 +740,7 @@
     </div>
 
     <h2>
-      <svg class="icon" viewBox="0 0 24 24"><path d="M20 6h-4V4c0-1.11-.89-2-2-2h-4c-1.11 0-2 .89-2 2v2H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-6 0h-4V4h4v2z"/></svg>
+      <svg class="icon" viewBox="0 0 24 24"><path d="M20 6h-4V4c0-1.11-.89-2-2-2h-4c-1.11 0-2 .89-2 2v2H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.1 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-6 0h-4V4h4v2z"/></svg>
       EXPERIENCE
     </h2>
     {{EXPERIENCE_LIST}}
@@ -742,15 +761,15 @@
 
     <h2>
       <svg class="icon" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
-      ADDITIONAL INFORMATION
+      PROFESSIONAL PROFILE
     </h2>
-    <div class="info-grid">
-      <div class="info-item"><strong>Passport</strong> {{PASSPORT}}</div>
-      <div class="info-item"><strong>Driving Licence</strong> {{DRIVER_LICENSE}}</div>
-      <div class="info-item"><strong>Work Permit</strong> {{WORK_PERMIT}}</div>
-      <div class="info-item"><strong>Interview via Video</strong> {{VIDEO_INTERVIEW}}</div>
-      <div class="info-item"><strong>Availability</strong> {{AVAILABILITY}}</div>
-      <div class="info-item"><strong>Willing to Relocate</strong> {{RELOCATE}}</div>
+    <div class="profile-grid">
+      <div class="profile-item"><strong>Driving Licence</strong> {{DRIVER_LICENSE}}</div>
+      <div class="profile-item"><strong>Availability</strong> {{AVAILABILITY}}</div>
+      <div class="profile-item"><strong>Relocation</strong> {{RELOCATE}}</div>
+      <div class="profile-item"><strong>Work Schedule</strong> {{WORK_SCHEDULE}}</div>
+      <div class="profile-item"><strong>Work Style</strong> {{WORK_STYLE}}</div>
+      <div class="profile-item"><strong>Professional Attitude</strong> {{PROFESSIONAL_ATTITUDE}}</div>
     </div>
 
     <h2>
