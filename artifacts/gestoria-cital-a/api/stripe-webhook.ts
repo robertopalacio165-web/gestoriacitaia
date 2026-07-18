@@ -11,8 +11,13 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-// ✅ URL del webhook de Make
+// ✅ URL del webhook de Make para notificaciones de nuevo trabajo
 const MAKE_WEBHOOK_URL = process.env.MAKE_WEBHOOK_URL || "https://hook.eu1.make.com/5ugo16vgnvx2rhhu3mwjfag553d1g0ij";
+
+// ✅ URL del webhook de Make para WhatsApp de bienvenida
+const MAKE_WEBHOOK_MALTA =
+  process.env.MAKE_WEBHOOK_MALTA ||
+  "https://hook.eu1.make.com/noxce8cky0r0jr7ujf62fywggn3l824b";
 
 export const config = {
   api: {
@@ -77,11 +82,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const aleman_nivel = metadata.aleman_nivel || "";
     
     // ============================================
-    // 3. EXPERIENCIA - ✅ CAMBIO 1: Añadido estudios
+    // 3. EXPERIENCIA
     // ============================================
     const profesion = metadata.profesion || "";
     const anosExperiencia = metadata.anosExperiencia || "";
-    const estudios = metadata.estudios || ""; // ✅ AÑADIDO
+    const estudios = metadata.estudios || "";
     const educationLevel = metadata.education_level || "";
     const sectores = metadata.sectores || "";
     
@@ -118,7 +123,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     console.log("  - currentCity:", currentCity);
     console.log("  - photoUrl:", photoUrl);
     console.log("  - cvUrl:", cvUrl);
-    console.log("  - estudios:", estudios); // ✅ AÑADIDO: log de estudios
+    console.log("  - estudios:", estudios);
 
     // ============================================
     // ✅ 8. VERIFICAR SI YA EXISTE (ANTES DE INSERTAR)
@@ -159,9 +164,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         arabe_nivel: arabe_nivel,
         aleman_nivel: aleman_nivel,
         profesion: profesion,
-        // ✅ CAMBIO 2: Orden correcto con estudios
         anos_experiencia: anosExperiencia,
-        estudios: estudios, // ✅ AÑADIDO
+        estudios: estudios,
         education_level: educationLevel,
         sectores: sectores,
         carnet_conducir: carnetConducir,
@@ -181,7 +185,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         updateData.stripe_payment_intent = session.payment_intent as string;
       }
 
-      // ✅ CAMBIO 3: Añadir stripe_customer_id al update
       if (session.customer) {
         updateData.stripe_customer_id = session.customer as string;
       }
@@ -223,9 +226,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           arabe_nivel: arabe_nivel,
           aleman_nivel: aleman_nivel,
           profesion: profesion,
-          // ✅ CAMBIO 4: Orden correcto con estudios en INSERT
           anos_experiencia: anosExperiencia,
-          estudios: estudios, // ✅ AÑADIDO
+          estudios: estudios,
           education_level: educationLevel,
           sectores: sectores,
           carnet_conducir: carnetConducir,
@@ -238,7 +240,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           pdf_url: pdfUrl,
           plan: plan,
           stripe_session_id: session.id,
-          // ✅ CAMBIO 5: Añadir stripe_customer_id al INSERT
           stripe_customer_id: session.customer as string,
           stripe_payment_intent: session.payment_intent as string,
           paid: true,
@@ -261,7 +262,52 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // ============================================
-    // ✅ 11. AÑADIR A LA COLA DE TRABAJO (SOLO SI ES NUEVO)
+    // ✅ 11. ENVIAR WHATSAPP DE BIENVENIDA (SOLO SI ES NUEVO)
+    // ============================================
+    if (isNew) {
+      console.log(`📲 Enviando WhatsApp de bienvenida para ${applicationId}`);
+      
+      fetch(MAKE_WEBHOOK_MALTA, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          tipo: "malta_bienvenida",
+
+          id: applicationId,
+
+          nombre: fullName,
+          whatsapp: whatsapp,
+          email: email,
+
+          plan: plan,
+
+          profesion: profesion,
+          puesto: preferredPosition,
+
+          mensaje:
+            `👋 Hola ${fullName}. Hemos recibido correctamente tu solicitud para Trabajo en Malta. En unos minutos comenzaremos a generar tu CV profesional y tu carta de presentación mediante IA. Después empezaremos a buscar ofertas adaptadas a tu perfil.`,
+
+          fecha: new Date().toISOString(),
+        }),
+      })
+      .then(async (response) => {
+        if (!response.ok) {
+          console.error("❌ MAKE MALTA:", response.status, await response.text());
+        } else {
+          console.log("✅ WhatsApp de bienvenida enviado");
+        }
+      })
+      .catch((err) => {
+        console.error("❌ Error enviando WhatsApp:", err);
+      });
+    } else {
+      console.log(`⏳ Aplicación ${applicationId} ya existe, no se envía WhatsApp`);
+    }
+
+    // ============================================
+    // ✅ 12. AÑADIR A LA COLA DE TRABAJO (SOLO SI ES NUEVO)
     // ============================================
     if (isNew) {
       try {
@@ -287,7 +333,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // ============================================
-    // ✅ 12. NOTIFICAR A MAKE (WEBHOOK)
+    // ✅ 13. NOTIFICAR A MAKE (WEBHOOK)
     // ============================================
     try {
       await fetch(MAKE_WEBHOOK_URL, {
@@ -315,7 +361,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // ============================================
-    // ✅ 13. RESPONDER RÁPIDO (NO ESPERAR GENERACIÓN)
+    // ✅ 14. RESPONDER RÁPIDO (NO ESPERAR GENERACIÓN)
     // ============================================
     return res.status(200).json({
       received: true,
