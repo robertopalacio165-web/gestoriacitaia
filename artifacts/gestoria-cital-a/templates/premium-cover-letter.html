@@ -55,23 +55,33 @@
       flex-shrink: 0;
     }
 
-    .sidebar .initials-circle {
+    /* ===== FOTO ===== */
+    .sidebar .photo {
       width: 60px;
       height: 60px;
+      overflow: hidden;
       border-radius: 50%;
-      background: rgba(255, 255, 255, 0.12);
-      border: 2px solid rgba(255, 255, 255, 0.25);
       display: flex;
       align-items: center;
       justify-content: center;
-      margin-bottom: 18px;
+      margin: 0 auto 18px;
+      border: 2px solid rgba(255, 255, 255, 0.25);
+      background: rgba(255, 255, 255, 0.12);
+      flex-shrink: 0;
     }
 
-    .sidebar .initials-circle span {
+    .sidebar .photo img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center top;
+    }
+
+    .sidebar .photo .initials {
       color: #ffffff;
       font-size: 18px;
       font-weight: 700;
-      letter-spacing: 1px;
     }
 
     .sidebar .divider {
@@ -319,13 +329,10 @@
         flex-wrap: wrap;
         gap: 4px 12px;
       }
-      .sidebar .initials-circle {
+      .sidebar .photo {
         width: 40px;
         height: 40px;
-        margin-bottom: 0;
-      }
-      .sidebar .initials-circle span {
-        font-size: 14px;
+        margin: 0;
       }
       .sidebar .sidebar-label,
       .sidebar .sidebar-footer,
@@ -355,7 +362,7 @@
 <div class="page">
   <!-- SIDEBAR -->
   <aside class="sidebar">
-<div class="initials-circle">{{PHOTO_HTML}}</div>
+    <div class="photo">{{PHOTO_HTML}}</div>
     <div class="divider"></div>
     <div class="sidebar-label">
       <strong>{{ROLE_SHORT}}</strong>
