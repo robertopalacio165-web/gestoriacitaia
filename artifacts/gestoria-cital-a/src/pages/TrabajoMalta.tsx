@@ -41,7 +41,7 @@ type ProfileRow = {
   nie: string | null;
 };
 
-// ✅ Tipo final - Eliminados: countryResidence, willing_to_relocate, tieneCV, cvFile, cvUrl, estudios, work_preference
+// ✅ Tipo final - Eliminados: countryResidence, willing_to_relocate, tieneCV, cvFile, cvUrl, estudios, work_preference, sectores
 type MaltaFormData = {
   // Datos personales
   fullName: string;
@@ -64,9 +64,6 @@ type MaltaFormData = {
   profesion: string;
   anosExperiencia: string;
   education_level: string;
-  
-  // Sectores
-  sectores: string;
   
   // Carnet de conducir
   carnetConducir: "None" | "A" | "B" | "C" | "D" | "B+C" | "B+C+E";
@@ -241,20 +238,6 @@ function OfficialBrowserBox({
     { id: "Hotel", label: isMa ? "الفندق" : isEn ? "Hotel" : "Hotel" },
     { id: "Factory", label: isMa ? "المصنع" : isEn ? "Factory" : "Fábrica" },
     { id: "Other", label: isMa ? "آخر" : isEn ? "Other" : "Otro" },
-  ];
-
-  // ✅ SECTORES
-  const sectoresOptions = [
-    { id: "Kitchen", label: isMa ? "المطبخ" : isEn ? "Kitchen" : "Cocina" },
-    { id: "Housekeeping", label: isMa ? "التدبير المنزلي" : isEn ? "Housekeeping" : "Housekeeping" },
-    { id: "Restaurant", label: isMa ? "المطعم" : isEn ? "Restaurant" : "Restaurante" },
-    { id: "Food & Beverage", label: isMa ? "الطعام والشراب" : isEn ? "Food & Beverage" : "Food & Beverage" },
-    { id: "Cleaning", label: isMa ? "التنظيف" : isEn ? "Cleaning" : "Limpieza" },
-    { id: "Warehouse", label: isMa ? "المستودع" : isEn ? "Warehouse" : "Almacén" },
-    { id: "Delivery", label: isMa ? "التوصيل" : isEn ? "Delivery" : "Delivery" },
-    { id: "Construction", label: isMa ? "البناء" : isEn ? "Construction" : "Construcción" },
-    { id: "Manufacturing", label: isMa ? "التصنيع" : isEn ? "Manufacturing" : "Fabricación" },
-    { id: "Retail", label: isMa ? "بيع بالتجزئة" : isEn ? "Retail" : "Venta al por menor" },
   ];
 
   // ✅ AÑOS DE EXPERIENCIA
@@ -642,7 +625,7 @@ function OfficialBrowserBox({
                   </div>
 
                   {/* ============================================ */}
-                  {/* 3. IDIOMAS - CORREGIDO */}
+                  {/* 3. IDIOMAS */}
                   {/* ============================================ */}
                   
                   <div className="col-span-1 lg:col-span-2">
@@ -783,59 +766,7 @@ function OfficialBrowserBox({
                   </div>
 
                   {/* ============================================ */}
-                  {/* 5. SECTORES */}
-                  {/* ============================================ */}
-                  
-                  <div className="col-span-1 lg:col-span-2">
-                    <label className="block text-white text-[13px] mb-2">
-                      {isMa ? "في أي قطاعات لديك خبرة؟ (اختر 2 كحد أقصى)" : isEn ? "In which sectors do you have experience? (Max 2)" : "¿En qué sectores tienes experiencia? (Máx 2)"}
-                    </label>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                      {sectoresOptions.map((sector) => {
-                        const selected = formData.sectores?.split(",").filter(Boolean) || [];
-                        const isSelected = selected.includes(sector.id);
-                        const isDisabled = !isSelected && selected.length >= 2;
-                        return (
-                          <label
-                            key={sector.id}
-                            className={`flex items-center gap-2 p-2 rounded-xl border transition-colors cursor-pointer ${
-                              isSelected
-                                ? "border-yellow-500 bg-yellow-500/10"
-                                : isDisabled
-                                ? "border-white/5 bg-[#060b16] opacity-40 cursor-not-allowed"
-                                : "border-white/10 bg-[#060b16] hover:border-yellow-500/50"
-                            }`}
-                          >
-                            <input
-                              type="checkbox"
-                              value={sector.id}
-                              checked={isSelected}
-                              disabled={isDisabled}
-                              onChange={(e) => {
-                                const currentSelected = formData.sectores?.split(",").filter(Boolean) || [];
-                                let newSelected: string[];
-                                if (e.target.checked) {
-                                  if (currentSelected.length >= 2) return;
-                                  newSelected = [...currentSelected, sector.id];
-                                } else {
-                                  newSelected = currentSelected.filter((s) => s !== sector.id);
-                                }
-                                onFormChange("sectores", newSelected.join(","));
-                              }}
-                              className="w-4 h-4 rounded border-white/20 bg-[#060b16] text-yellow-500 focus:ring-yellow-500 focus:ring-offset-0 shrink-0"
-                            />
-                            <span className="text-white/80 text-[11px] sm:text-[12px]">{sector.label}</span>
-                          </label>
-                        );
-                      })}
-                    </div>
-                    <p className="text-white/40 text-[10px] mt-1">
-                      {isMa ? "يمكنك اختيار قطاعين كحد أقصى" : isEn ? "You can select up to 2 sectors" : "Puedes seleccionar hasta 2 sectores"}
-                    </p>
-                  </div>
-
-                  {/* ============================================ */}
-                  {/* 6. CARNET DE CONDUCIR */}
+                  {/* 5. CARNET DE CONDUCIR */}
                   {/* ============================================ */}
                   
                   <div>
@@ -854,7 +785,7 @@ function OfficialBrowserBox({
                   </div>
 
                   {/* ============================================ */}
-                  {/* 7. DOCUMENTOS OPCIONALES */}
+                  {/* 6. DOCUMENTOS OPCIONALES */}
                   {/* ============================================ */}
                   
                   <div className="col-span-1 lg:col-span-2 mt-2 rounded-2xl border border-white/10 bg-[#060b16] p-4">
@@ -940,7 +871,7 @@ function OfficialBrowserBox({
                   </div>
 
                   {/* ============================================ */}
-                  {/* 8. PLANES */}
+                  {/* 7. PLANES */}
                   {/* ============================================ */}
                   
                   {/* Plan Semanal */}
@@ -1027,7 +958,7 @@ function OfficialBrowserBox({
                   </div>
 
                   {/* ============================================ */}
-                  {/* 9. CHECKBOX + BOTÓN DE PAGO */}
+                  {/* 8. CHECKBOX + BOTÓN DE PAGO */}
                   {/* ============================================ */}
                   
                   <div className="col-span-1 lg:col-span-2 mt-2">
@@ -1144,7 +1075,7 @@ export default function TrabajoMalta() {
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<"weekly" | "monthly">("monthly");
   
-  // ✅ FormData final - Eliminados: countryResidence, willing_to_relocate, tieneCV, cvFile, cvUrl, estudios, work_preference
+  // ✅ FormData final - Eliminados: countryResidence, willing_to_relocate, tieneCV, cvFile, cvUrl, estudios, work_preference, sectores
   const [formData, setFormData] = useState<MaltaFormData>({
     fullName: "",
     whatsapp: "+34 ",
@@ -1165,9 +1096,6 @@ export default function TrabajoMalta() {
     profesion: "",
     anosExperiencia: "",
     education_level: "",
-    
-    // Sectores
-    sectores: "",
     
     carnetConducir: "None",
     
@@ -1606,9 +1534,6 @@ export default function TrabajoMalta() {
     if (!formData.profesion.trim()) {
       errors.push(isMa ? "الخبرة العملية مطلوبة" : isEn ? "Work experience is required" : "Experiencia laboral es requerida");
     }
-    if (!formData.sectores) {
-      errors.push(isMa ? "خاصك تختار قطاع على الأقل" : isEn ? "You must select at least one sector" : "Debes seleccionar al menos un sector");
-    }
     if (!acceptTerms) {
       errors.push(isMa ? "خاصك توافق على الشروط" : isEn ? "You must accept the terms" : "Debes aceptar los términos");
     }
@@ -1641,7 +1566,7 @@ export default function TrabajoMalta() {
       const isAdmin =
         user?.email?.toLowerCase() === "robertopalacio165@gmail.com";
 
-      // ✅ Payload final - Eliminados: countryResidence, willing_to_relocate, tieneCV, cvUrl, estudios, work_preference
+      // ✅ Payload final - Eliminados: countryResidence, willing_to_relocate, tieneCV, cvUrl, estudios, work_preference, sectores
       const payload = {
         plan,
 
@@ -1665,7 +1590,6 @@ export default function TrabajoMalta() {
         anosExperiencia: formData.anosExperiencia,
         education_level: formData.education_level,
 
-        sectores: formData.sectores,
         carnetConducir: formData.carnetConducir,
 
         preferred_position: formData.preferred_position,
