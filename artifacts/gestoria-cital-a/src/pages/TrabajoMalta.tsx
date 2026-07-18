@@ -41,7 +41,7 @@ type ProfileRow = {
   nie: string | null;
 };
 
-// ✅ Tipo actualizado con todos los nuevos campos
+// ✅ Tipo final - Eliminados: countryResidence, willing_to_relocate, tieneCV, cvFile, cvUrl, estudios, work_preference
 type MaltaFormData = {
   // Datos personales
   fullName: string;
@@ -49,7 +49,6 @@ type MaltaFormData = {
   email: string;
   nationality: string;
   currentCity: string;
-  countryResidence: string;
   fechaNacimiento: string;
   
   // Idiomas con niveles
@@ -64,7 +63,6 @@ type MaltaFormData = {
   // Experiencia
   profesion: string;
   anosExperiencia: string;
-  estudios: string;
   education_level: string;
   
   // Sectores
@@ -75,13 +73,6 @@ type MaltaFormData = {
   
   // Preferencias
   preferred_position: string;
-  work_preference: string;
-  willing_to_relocate: "Yes" | "No";
-  
-  // CV
-  tieneCV: "Yes" | "No";
-  cvFile: File | null;
-  cvUrl: string;
   
   // Documentos opcionales
   photoFile: File | null;
@@ -161,7 +152,6 @@ function OfficialBrowserBox({
   const isMa = language === "ma";
   const isEn = language === "en";
   const { toast } = useToast();
-  const [uploadingCV, setUploadingCV] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [uploadingPdf, setUploadingPdf] = useState(false);
   const [progressSteps] = useState([
@@ -206,18 +196,6 @@ function OfficialBrowserBox({
     { id: "Other", label: isMa ? "أخرى" : isEn ? "Other" : "Otro" },
   ];
 
-  // ✅ PAÍSES DE RESIDENCIA
-  const countryResidenceOptions = [
-    { id: "Morocco", label: isMa ? "المغرب" : isEn ? "Morocco" : "Marruecos" },
-    { id: "Spain", label: isMa ? "إسبانيا" : isEn ? "Spain" : "España" },
-    { id: "France", label: isMa ? "فرنسا" : isEn ? "France" : "Francia" },
-    { id: "Belgium", label: isMa ? "بلجيكا" : isEn ? "Belgium" : "Bélgica" },
-    { id: "Netherlands", label: isMa ? "هولندا" : isEn ? "Netherlands" : "Países Bajos" },
-    { id: "Italy", label: isMa ? "إيطاليا" : isEn ? "Italy" : "Italia" },
-    { id: "Germany", label: isMa ? "ألمانيا" : isEn ? "Germany" : "Alemania" },
-    { id: "Other", label: isMa ? "أخرى" : isEn ? "Other" : "Otro" },
-  ];
-
   // ✅ POSICIONES PREFERIDAS
   const preferredPositionOptions = [
     { id: "Kitchen Assistant", label: isMa ? "مساعد مطبخ" : isEn ? "Kitchen Assistant" : "Ayudante de cocina" },
@@ -228,18 +206,6 @@ function OfficialBrowserBox({
     { id: "Factory Operator", label: isMa ? "عامل مصنع" : isEn ? "Factory Operator" : "Operario de fábrica" },
     { id: "Construction Labourer", label: isMa ? "عامل بناء" : isEn ? "Construction Labourer" : "Peón de construcción" },
     { id: "Delivery Driver", label: isMa ? "سائق توصيل" : isEn ? "Delivery Driver" : "Conductor de reparto" },
-    { id: "Other", label: isMa ? "أخرى" : isEn ? "Other" : "Otro" },
-  ];
-
-  // ✅ PREFERENCIA DE TRABAJO
-  const workPreferenceOptions = [
-    { id: "Hotel", label: isMa ? "فندق" : isEn ? "Hotel" : "Hotel" },
-    { id: "Restaurant", label: isMa ? "مطعم" : isEn ? "Restaurant" : "Restaurante" },
-    { id: "Warehouse", label: isMa ? "مستودع" : isEn ? "Warehouse" : "Almacén" },
-    { id: "Construction", label: isMa ? "بناء" : isEn ? "Construction" : "Construcción" },
-    { id: "Factory", label: isMa ? "مصنع" : isEn ? "Factory" : "Fábrica" },
-    { id: "Cleaning", label: isMa ? "تنظيف" : isEn ? "Cleaning" : "Limpieza" },
-    { id: "Retail", label: isMa ? "بيع بالتجزئة" : isEn ? "Retail" : "Venta al por menor" },
     { id: "Other", label: isMa ? "أخرى" : isEn ? "Other" : "Otro" },
   ];
 
@@ -319,47 +285,14 @@ function OfficialBrowserBox({
     { id: "Native", label: isMa ? "لغة أم" : isEn ? "Native" : "Nativo" },
   ];
 
-  // handleCVUpload - Solo guarda el archivo, no sube a Supabase
-  const handleCVUpload = async (file: File) => {
-    if (!file) return;
-    
-    const validTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
-    if (!validTypes.includes(file.type)) {
-      toast({
-        title: isMa ? "خطأ" : isEn ? "Error" : "Error",
-        description: isMa ? "يرجى رفع ملف PDF أو DOCX" : isEn ? "Please upload a PDF or DOCX file" : "Por favor sube un archivo PDF o DOCX",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (file.size > 5 * 1024 * 1024) {
-      toast({
-        title: isMa ? "خطأ" : isEn ? "Error" : "Error",
-        description: isMa ? "الملف كبير جداً (الحد الأقصى 5 ميجابايت)" : isEn ? "File too large (max 5MB)" : "Archivo demasiado grande (máx 5MB)",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setUploadingCV(true);
-    try {
-      onFormChange("cvFile", file);
-      
-      toast({
-        title: isMa ? "✅ تم التحميل" : isEn ? "✅ File ready" : "✅ Archivo listo",
-        description: isMa ? `تم تحميل سيرتك الذاتية` : isEn ? `Your CV has been loaded` : `Tu CV ha sido cargado`,
-      });
-    } catch (error) {
-      console.error("Error handling CV upload:", error);
-      toast({
-        title: isMa ? "خطأ" : isEn ? "Error" : "Error",
-        description: isMa ? "حدث خطأ أثناء تحميل الملف" : isEn ? "Error loading file" : "Error al cargar el archivo",
-        variant: "destructive",
-      });
-    } finally {
-      setUploadingCV(false);
-    }
+  // ✅ Mapeo de idiomas a nombres de campos correctos
+  const languageFieldMap: Record<string, keyof MaltaFormData> = {
+    "English": "ingles_nivel",
+    "French": "frances_nivel",
+    "Arabic": "arabe_nivel",
+    "Spanish": "espanol_nivel",
+    "German": "aleman_nivel",
+    "Italian": "italiano_nivel",
   };
 
   // ✅ handlePhotoUpload - Sube la foto a Supabase y guarda la URL
@@ -387,7 +320,6 @@ function OfficialBrowserBox({
     
     setUploadingPhoto(true);
     try {
-      // ✅ Subir la foto a Supabase Storage
       const timestamp = Date.now();
       const fileName = `photo_${timestamp}_${file.name.replace(/[^a-zA-Z0-9.]/g, "_")}`;
       
@@ -406,7 +338,6 @@ function OfficialBrowserBox({
 
       const photoUrl = publicUrlData.publicUrl;
 
-      // ✅ Guardar el archivo y la URL en el estado
       onFormChange("photoFile", file);
       onFormChange("photoUrl", photoUrl);
       
@@ -426,7 +357,7 @@ function OfficialBrowserBox({
     }
   };
 
-  // handlePdfUpload - Solo guarda el archivo, no sube a Supabase
+  // handlePdfUpload - Solo guarda el archivo
   const handlePdfUpload = async (file: File) => {
     if (!file) return;
     
@@ -676,23 +607,6 @@ function OfficialBrowserBox({
                     </select>
                   </div>
 
-                  {/* País de residencia */}
-                  <div>
-                    <label className="block text-white text-[13px] mb-2">
-                      {isMa ? "بلد الإقامة" : isEn ? "Country of residence" : "País de residencia"}
-                    </label>
-                    <select
-                      value={formData.countryResidence}
-                      onChange={(e) => onFormChange("countryResidence", e.target.value)}
-                      className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white focus:outline-none focus:border-yellow-400"
-                    >
-                      <option value="">{isMa ? "اختر البلد" : isEn ? "Select country" : "Selecciona país"}</option>
-                      {countryResidenceOptions.map((opt) => (
-                        <option key={opt.id} value={opt.id}>{opt.label}</option>
-                      ))}
-                    </select>
-                  </div>
-
                   {/* Fecha nacimiento */}
                   <div className="min-w-0">
                     <label className="block text-white text-[13px] mb-2">
@@ -707,7 +621,7 @@ function OfficialBrowserBox({
                   </div>
 
                   {/* ============================================ */}
-                  {/* 2. PREFERENCIAS LABORALES */}
+                  {/* 2. PUESTO QUE BUSCAS */}
                   {/* ============================================ */}
                   
                   {/* Posición preferida */}
@@ -727,40 +641,8 @@ function OfficialBrowserBox({
                     </select>
                   </div>
 
-                  {/* Preferencia de trabajo */}
-                  <div>
-                    <label className="block text-white text-[13px] mb-2">
-                      {isMa ? "مجال العمل المفضل" : isEn ? "Work Preference" : "Preferencia de trabajo"}
-                    </label>
-                    <select
-                      value={formData.work_preference}
-                      onChange={(e) => onFormChange("work_preference", e.target.value)}
-                      className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white focus:outline-none focus:border-yellow-400"
-                    >
-                      <option value="">{isMa ? "اختر المجال" : isEn ? "Select preference" : "Selecciona preferencia"}</option>
-                      {workPreferenceOptions.map((opt) => (
-                        <option key={opt.id} value={opt.id}>{opt.label}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* ¿Desea reubicarse? */}
-                  <div>
-                    <label className="block text-white text-[13px] mb-2">
-                      {isMa ? "هل ترغب في الانتقال إلى مالطا؟" : isEn ? "Willing to relocate to Malta?" : "¿Desea reubicarse en Malta?"}
-                    </label>
-                    <select
-                      value={formData.willing_to_relocate}
-                      onChange={(e) => onFormChange("willing_to_relocate", e.target.value as "Yes" | "No")}
-                      className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white focus:outline-none focus:border-yellow-400"
-                    >
-                      <option value="Yes">{isMa ? "نعم" : isEn ? "Yes" : "Sí"}</option>
-                      <option value="No">{isMa ? "لا" : isEn ? "No" : "No"}</option>
-                    </select>
-                  </div>
-
                   {/* ============================================ */}
-                  {/* 3. IDIOMAS */}
+                  {/* 3. IDIOMAS - CORREGIDO */}
                   {/* ============================================ */}
                   
                   <div className="col-span-1 lg:col-span-2">
@@ -768,43 +650,46 @@ function OfficialBrowserBox({
                       {isMa ? "ما هي اللغات التي تتحدثها؟" : isEn ? "What languages do you speak?" : "¿Qué idiomas hablas?"}
                     </label>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      {idiomasDisponibles.map((idioma) => (
-                        <div key={idioma.id} className="rounded-xl border border-white/10 bg-[#060b16] p-3">
-                          <div className="flex items-center gap-2 mb-2">
-                            <input
-                              type="checkbox"
-                              id={`idioma_${idioma.id}`}
-                              checked={formData.idiomas?.includes(idioma.id) || false}
-                              onChange={(e) => {
-                                const currentIdiomas = formData.idiomas?.split(",").filter(Boolean) || [];
-                                let newIdiomas: string[];
-                                if (e.target.checked) {
-                                  newIdiomas = [...currentIdiomas, idioma.id];
-                                } else {
-                                  newIdiomas = currentIdiomas.filter((s) => s !== idioma.id);
-                                }
-                                onFormChange("idiomas", newIdiomas.join(","));
-                              }}
-                              className="w-4 h-4 rounded border-white/20 bg-[#060b16] text-yellow-500 focus:ring-yellow-500 focus:ring-offset-0 shrink-0"
-                            />
-                            <label htmlFor={`idioma_${idioma.id}`} className="text-white text-[13px] font-medium">
-                              {idioma.label}
-                            </label>
+                      {idiomasDisponibles.map((idioma) => {
+                        const fieldName = languageFieldMap[idioma.id];
+                        return (
+                          <div key={idioma.id} className="rounded-xl border border-white/10 bg-[#060b16] p-3">
+                            <div className="flex items-center gap-2 mb-2">
+                              <input
+                                type="checkbox"
+                                id={`idioma_${idioma.id}`}
+                                checked={formData.idiomas?.includes(idioma.id) || false}
+                                onChange={(e) => {
+                                  const currentIdiomas = formData.idiomas?.split(",").filter(Boolean) || [];
+                                  let newIdiomas: string[];
+                                  if (e.target.checked) {
+                                    newIdiomas = [...currentIdiomas, idioma.id];
+                                  } else {
+                                    newIdiomas = currentIdiomas.filter((s) => s !== idioma.id);
+                                  }
+                                  onFormChange("idiomas", newIdiomas.join(","));
+                                }}
+                                className="w-4 h-4 rounded border-white/20 bg-[#060b16] text-yellow-500 focus:ring-yellow-500 focus:ring-offset-0 shrink-0"
+                              />
+                              <label htmlFor={`idioma_${idioma.id}`} className="text-white text-[13px] font-medium">
+                                {idioma.label}
+                              </label>
+                            </div>
+                            {formData.idiomas?.includes(idioma.id) && fieldName && (
+                              <select
+                                value={(formData[fieldName] as string) || ""}
+                                onChange={(e) => onFormChange(fieldName, e.target.value)}
+                                className="w-full h-[36px] rounded-lg border border-white/10 bg-[#0a0f1a] px-3 text-[12px] text-white focus:outline-none focus:border-yellow-400"
+                              >
+                                <option value="">{isMa ? "اختر المستوى" : isEn ? "Select level" : "Selecciona nivel"}</option>
+                                {nivelesIdiomas.map((nivel) => (
+                                  <option key={nivel.id} value={nivel.id}>{nivel.label}</option>
+                                ))}
+                              </select>
+                            )}
                           </div>
-                          {formData.idiomas?.includes(idioma.id) && (
-                            <select
-                              value={formData[`${idioma.id.toLowerCase()}_nivel` as keyof MaltaFormData] as string || ""}
-                              onChange={(e) => onFormChange(`${idioma.id.toLowerCase()}_nivel` as keyof MaltaFormData, e.target.value)}
-                              className="w-full h-[36px] rounded-lg border border-white/10 bg-[#0a0f1a] px-3 text-[12px] text-white focus:outline-none focus:border-yellow-400"
-                            >
-                              <option value="">{isMa ? "اختر المستوى" : isEn ? "Select level" : "Selecciona nivel"}</option>
-                              {nivelesIdiomas.map((nivel) => (
-                                <option key={nivel.id} value={nivel.id}>{nivel.label}</option>
-                              ))}
-                            </select>
-                          )}
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                     <p className="text-white/40 text-[10px] mt-1">
                       {isMa ? "اختر اللغات التي تتحدثها ومستوى كل منها" : isEn ? "Select the languages you speak and their level" : "Selecciona los idiomas que hablas y su nivel"}
@@ -969,62 +854,7 @@ function OfficialBrowserBox({
                   </div>
 
                   {/* ============================================ */}
-                  {/* 7. CV EN INGLÉS */}
-                  {/* ============================================ */}
-                  
-                  <div>
-                    <label className="block text-white text-[13px] mb-2">
-                      {isMa ? "هل لديك سيرة ذاتية بالإنجليزية؟" : isEn ? "Do you have a CV in English?" : "¿Ya tienes un CV en inglés?"}
-                    </label>
-                    <select
-                      value={formData.tieneCV}
-                      onChange={(e) => onFormChange("tieneCV", e.target.value as "Yes" | "No")}
-                      className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white focus:outline-none focus:border-yellow-400"
-                    >
-                      <option value="Yes">{isMa ? "نعم" : isEn ? "Yes" : "Sí"}</option>
-                      <option value="No">{isMa ? "لا" : isEn ? "No" : "No"}</option>
-                    </select>
-                    {formData.tieneCV === "Yes" && (
-                      <div className="mt-2 p-3 rounded-xl border border-yellow-500/30 bg-yellow-500/10">
-                        <p className="text-yellow-400 text-[11px] font-semibold">
-                          {isMa ? "📄 ارفع سيرتك الذاتية هنا (PDF أو DOCX)" : isEn ? "📄 Upload your CV here (PDF or DOCX)" : "📄 Sube tu CV aquí (PDF o DOCX)"}
-                        </p>
-                        <div className="mt-2 flex items-center gap-2">
-                          <input
-                            type="file"
-                            accept=".pdf,.docx"
-                            className="flex-1 text-[11px] text-white/70 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:bg-yellow-500/20 file:text-yellow-400 file:text-xs file:font-semibold hover:file:bg-yellow-500/30"
-                            onChange={(e) => {
-                              const file = e.target.files?.[0];
-                              if (file) handleCVUpload(file);
-                            }}
-                            disabled={uploadingCV}
-                          />
-                          {uploadingCV && (
-                            <Loader2 className="w-5 h-5 text-yellow-400 animate-spin" />
-                          )}
-                        </div>
-                        {formData.cvFile && (
-                          <div className="mt-2 p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
-                            <p className="text-emerald-400 text-[11px] font-semibold">
-                              ✅ {isMa ? "تم تحميل الملف" : isEn ? "File loaded" : "Archivo cargado"}
-                            </p>
-                            <p className="text-emerald-400/70 text-[10px] truncate">
-                              {formData.cvFile.name}
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                    {formData.tieneCV === "No" && (
-                      <p className="text-emerald-400 text-[11px] mt-1">
-                        {isMa ? "🤖 سنقوم بإنشاء سيرة ذاتية احترافية لك باستخدام الذكاء الاصطناعي" : isEn ? "🤖 We will create a professional CV for you using AI" : "🤖 Crearemos un CV profesional para ti con IA"}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* ============================================ */}
-                  {/* 8. DOCUMENTOS OPCIONALES */}
+                  {/* 7. DOCUMENTOS OPCIONALES */}
                   {/* ============================================ */}
                   
                   <div className="col-span-1 lg:col-span-2 mt-2 rounded-2xl border border-white/10 bg-[#060b16] p-4">
@@ -1110,7 +940,7 @@ function OfficialBrowserBox({
                   </div>
 
                   {/* ============================================ */}
-                  {/* 9. PLANES */}
+                  {/* 8. PLANES */}
                   {/* ============================================ */}
                   
                   {/* Plan Semanal */}
@@ -1197,7 +1027,7 @@ function OfficialBrowserBox({
                   </div>
 
                   {/* ============================================ */}
-                  {/* 10. CHECKBOX + BOTÓN DE PAGO */}
+                  {/* 9. CHECKBOX + BOTÓN DE PAGO */}
                   {/* ============================================ */}
                   
                   <div className="col-span-1 lg:col-span-2 mt-2">
@@ -1314,14 +1144,13 @@ export default function TrabajoMalta() {
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<"weekly" | "monthly">("monthly");
   
-  // ✅ FormData actualizado con todos los nuevos campos
+  // ✅ FormData final - Eliminados: countryResidence, willing_to_relocate, tieneCV, cvFile, cvUrl, estudios, work_preference
   const [formData, setFormData] = useState<MaltaFormData>({
     fullName: "",
     whatsapp: "+34 ",
     email: "",
     nationality: "",
     currentCity: "",
-    countryResidence: "",
     fechaNacimiento: "",
     
     // Idiomas
@@ -1335,21 +1164,15 @@ export default function TrabajoMalta() {
     
     profesion: "",
     anosExperiencia: "",
-    estudios: "",
     education_level: "",
     
     // Sectores
     sectores: "",
     
     carnetConducir: "None",
-    tieneCV: "Yes",
-    cvFile: null,
-    cvUrl: "",
     
-    // Nuevas preferencias
+    // Preferencias
     preferred_position: "",
-    work_preference: "",
-    willing_to_relocate: "Yes",
     
     // Documentos opcionales
     photoFile: null,
@@ -1777,14 +1600,8 @@ export default function TrabajoMalta() {
     if (!formData.currentCity) {
       errors.push(isMa ? "المدينة الحالية مطلوبة" : isEn ? "Current city is required" : "Ciudad actual es requerida");
     }
-    if (!formData.countryResidence) {
-      errors.push(isMa ? "بلد الإقامة مطلوب" : isEn ? "Country of residence is required" : "País de residencia es requerido");
-    }
     if (!formData.preferred_position) {
       errors.push(isMa ? "المنصب المفضل مطلوب" : isEn ? "Preferred position is required" : "Posición preferida es requerida");
-    }
-    if (!formData.work_preference) {
-      errors.push(isMa ? "مجال العمل المفضل مطلوب" : isEn ? "Work preference is required" : "Preferencia de trabajo es requerida");
     }
     if (!formData.profesion.trim()) {
       errors.push(isMa ? "الخبرة العملية مطلوبة" : isEn ? "Work experience is required" : "Experiencia laboral es requerida");
@@ -1817,7 +1634,6 @@ export default function TrabajoMalta() {
     }
 
     try {
-      // ✅ Obtener usuario actual y verificar si es admin
       const {
         data: { user },
       } = await supabase.auth.getUser();
@@ -1825,47 +1641,41 @@ export default function TrabajoMalta() {
       const isAdmin =
         user?.email?.toLowerCase() === "robertopalacio165@gmail.com";
 
-      // ✅ Creamos el payload con todos los datos
-   const payload = {
-  plan,
+      // ✅ Payload final - Eliminados: countryResidence, willing_to_relocate, tieneCV, cvUrl, estudios, work_preference
+      const payload = {
+        plan,
 
-  fullName: formData.fullName,
-  whatsapp: formData.whatsapp,
-  email: formData.email,
+        fullName: formData.fullName,
+        whatsapp: formData.whatsapp,
+        email: formData.email,
 
-  nationality: formData.nationality,
-  currentCity: formData.currentCity,
-  countryResidence: formData.countryResidence,
-  fechaNacimiento: formData.fechaNacimiento,
+        nationality: formData.nationality,
+        currentCity: formData.currentCity,
+        fechaNacimiento: formData.fechaNacimiento,
 
-  idiomas: formData.idiomas,
-  ingles_nivel: formData.ingles_nivel,
-  frances_nivel: formData.frances_nivel,
-  italiano_nivel: formData.italiano_nivel,
-  espanol_nivel: formData.espanol_nivel,
-  arabe_nivel: formData.arabe_nivel,
-  aleman_nivel: formData.aleman_nivel,
+        idiomas: formData.idiomas,
+        ingles_nivel: formData.ingles_nivel,
+        frances_nivel: formData.frances_nivel,
+        italiano_nivel: formData.italiano_nivel,
+        espanol_nivel: formData.espanol_nivel,
+        arabe_nivel: formData.arabe_nivel,
+        aleman_nivel: formData.aleman_nivel,
 
-  profesion: formData.profesion,
-  anosExperiencia: formData.anosExperiencia,
-  estudios: formData.estudios,
-  education_level: formData.education_level,
+        profesion: formData.profesion,
+        anosExperiencia: formData.anosExperiencia,
+        education_level: formData.education_level,
 
-  sectores: formData.sectores,
-  carnetConducir: formData.carnetConducir,
+        sectores: formData.sectores,
+        carnetConducir: formData.carnetConducir,
 
-  preferred_position: formData.preferred_position,
-  work_preference: formData.work_preference,
-  willing_to_relocate: formData.willing_to_relocate,
+        preferred_position: formData.preferred_position,
 
-  tieneCV: formData.tieneCV,
+        photoUrl: formData.photoUrl,
+        pdfUrl: formData.pdfUrl,
+        
+        willing_to_relocate: "Yes",
+      };
 
-  cvUrl: formData.cvUrl,
-  photoUrl: formData.photoUrl,
-  pdfUrl: formData.pdfUrl,
-};
-
-      // ✅ Seleccionar endpoint según si es admin o no
       const endpoint = isAdmin
         ? "/api/dev-create-application"
         : "/api/create-checkout-malta";
@@ -1893,7 +1703,6 @@ export default function TrabajoMalta() {
     }
   };
 
-  // ✅ HANDLE FORM CHANGE
   const handleFormChange = (field: keyof MaltaFormData, value: string | File | null) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
@@ -2000,7 +1809,6 @@ export default function TrabajoMalta() {
           />
         </div>
 
-        {/* Barra inferior */}
         <div className="hidden lg:block sticky bottom-0 z-30 glass-panel-heavy border-t border-white/10 py-3">
           <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
             <div className="flex gap-3">
@@ -2031,7 +1839,6 @@ export default function TrabajoMalta() {
           </div>
         </div>
 
-        {/* Panel documentos */}
         <AnimatePresence>
           {showDocs && (
             <motion.div
@@ -2063,7 +1870,6 @@ export default function TrabajoMalta() {
           )}
         </AnimatePresence>
 
-        {/* Panel formularios */}
         <AnimatePresence>
           {showForms && (
             <motion.div
