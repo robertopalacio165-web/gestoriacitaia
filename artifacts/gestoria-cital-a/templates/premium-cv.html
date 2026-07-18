@@ -20,7 +20,7 @@
     body {
       font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
       background: #eef2f6;
-      color: #222;
+      color: #1e1e2a;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -28,6 +28,7 @@
       padding: 20px;
     }
 
+    /* ===== PÁGINA A4 ===== */
     .page {
       width: 210mm;
       height: 297mm;
@@ -35,44 +36,43 @@
       max-height: 297mm;
       background: #ffffff;
       border-radius: 8px;
-      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 12px 48px rgba(0, 0, 0, 0.12);
       display: flex;
       flex-direction: row;
       flex-shrink: 0;
+      overflow: hidden;
     }
 
     /* ============================================
-       SIDEBAR - 225px FIJO
+       SIDEBAR - 240px (más ancho)
     ============================================ */
     .sidebar {
-      width: 225px;
-      min-width: 225px;
-      max-width: 225px;
-      background: #10284a;
-      color: #c8d0d8;
-      padding: 18px 15px 14px 15px;
+      width: 240px;
+      min-width: 240px;
+      max-width: 240px;
+      background: #0f2744;
+      color: #d0d8e0;
+      padding: 22px 18px 18px 18px;
       flex-shrink: 0;
       height: 100%;
       display: flex;
       flex-direction: column;
     }
 
-    /* ============================================
-       FOTO - 100x100 CON COVER
-    ============================================ */
+    /* ===== FOTO ===== */
     .sidebar .photo {
-      width: 100px;
-      height: 100px;
+      width: 110px;
+      height: 110px;
       overflow: hidden;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      margin: 0 auto 12px;
+      margin: 0 auto 14px;
       border: 4px solid #ffffff;
-      box-shadow: 0 0 0 4px #0d2445;
+      box-shadow: 0 0 0 4px #0d1f3a;
       flex-shrink: 0;
-      background: #1a2a3e;
+      background: #1f3147;
     }
 
     .sidebar .photo img {
@@ -84,52 +84,55 @@
     }
 
     .sidebar .photo .initials {
-      font-size: 36px;
+      font-size: 38px;
       font-weight: 700;
       color: #ffffff;
       letter-spacing: 1px;
     }
 
+    /* ===== TÍTULOS SIDEBAR ===== */
     .sidebar h2 {
-      font-size: 10px;
+      font-size: 11px;
       text-transform: uppercase;
-      letter-spacing: 1.5px;
+      letter-spacing: 1.8px;
       color: #ffffff;
       font-weight: 700;
-      margin: 10px 0 4px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-      padding-bottom: 3px;
+      margin: 12px 0 5px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding-bottom: 4px;
       display: flex;
       align-items: center;
-      gap: 5px;
+      gap: 6px;
     }
 
     .sidebar h2 .icon {
-      width: 12px;
-      height: 12px;
+      width: 14px;
+      height: 14px;
       flex-shrink: 0;
       fill: #ffffff;
       opacity: 0.7;
     }
 
+    /* ===== CONTACT ===== */
     .sidebar .contact-item {
-      font-size: 10px;
-      line-height: 1.4;
-      color: #c0c8d8;
-      margin-bottom: 0;
-      word-break: break-word;
+      font-size: 10.5px;
+      line-height: 1.5;
+      color: #c8d0dc;
+      margin-bottom: 2px;
       display: flex;
       align-items: center;
-      gap: 5px;
+      gap: 6px;
+      word-break: break-word;
     }
 
     .sidebar .contact-item .icon {
-      width: 11px;
-      height: 11px;
+      width: 13px;
+      height: 13px;
       flex-shrink: 0;
-      fill: #8a9aaa;
+      fill: #8f9db0;
     }
 
+    /* ===== KEY STRENGTHS ===== */
     .sidebar .highlight-list {
       list-style: none;
       padding: 0;
@@ -137,10 +140,10 @@
     }
 
     .sidebar .highlight-list li {
-      font-size: 10px;
-      line-height: 1.4;
-      color: #c0c8d8;
-      padding: 0.5px 0 0.5px 10px;
+      font-size: 10.5px;
+      line-height: 1.5;
+      color: #c8d0dc;
+      padding: 1px 0 1px 12px;
       position: relative;
     }
 
@@ -152,11 +155,12 @@
       font-weight: 700;
     }
 
+    /* ===== LANGUAGES ===== */
     .sidebar .languages .lang-item {
-      font-size: 10px;
-      line-height: 1.4;
-      color: #c0c8d8;
-      margin-bottom: 0;
+      font-size: 10.5px;
+      line-height: 1.5;
+      color: #c8d0dc;
+      margin-bottom: 4px;
     }
 
     .sidebar .languages .lang-item strong {
@@ -165,15 +169,15 @@
     }
 
     .sidebar .languages .lang-item .level {
-      color: #8a9aaa;
-      font-size: 9px;
+      color: #8f9db0;
+      font-size: 9.5px;
     }
 
     .sidebar .languages .lang-item .lang-bar {
       width: 100%;
-      height: 2px;
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 2px;
+      height: 3px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 3px;
       margin-top: 1px;
       overflow: hidden;
     }
@@ -182,20 +186,22 @@
       display: block;
       height: 100%;
       background: #ffffff;
-      border-radius: 2px;
+      border-radius: 3px;
     }
 
+    /* ===== ADDITIONAL INFO (sidebar) ===== */
     .sidebar .additional-info .info-item {
       font-size: 10px;
-      line-height: 1.4;
-      color: #c0c8d8;
+      line-height: 1.5;
+      color: #c8d0dc;
+      padding: 1px 0;
     }
 
     .sidebar .additional-info .info-item strong {
       color: #ffffff;
       font-weight: 500;
       display: inline-block;
-      min-width: 65px;
+      min-width: 72px;
     }
 
     .sidebar .spacer {
@@ -203,63 +209,65 @@
     }
 
     /* ============================================
-       MAIN CONTENT - RESTO DEL ESPACIO
+       MAIN CONTENT - más espacio
     ============================================ */
     .main {
       flex: 1;
-      padding: 18px 20px 14px 20px;
+      padding: 22px 24px 18px 24px;
       background: white;
       height: 100%;
       display: flex;
       flex-direction: column;
     }
 
+    /* ===== HEADER ===== */
     .main .header-block {
-      margin-bottom: 3px;
+      margin-bottom: 5px;
       flex-shrink: 0;
     }
 
     .main .header-block .name {
-      font-size: 36px;
+      font-size: 40px;
       font-weight: 900;
       letter-spacing: -0.5px;
-      line-height: 37px;
+      line-height: 1.1;
       text-transform: uppercase;
       color: #0a1a2e;
-      margin-bottom: 1px;
+      margin-bottom: 2px;
     }
 
     .main .header-block .title {
-      font-size: 15px;
+      font-size: 17px;
       color: #6d7077;
       font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 2.5px;
+      letter-spacing: 3px;
       margin-top: 1px;
     }
 
     .main .header-block .tagline {
       max-width: 95%;
-      line-height: 1.35;
-      font-size: 11px;
+      line-height: 1.4;
+      font-size: 12px;
       color: #4e5560;
-      margin-top: 2px;
+      margin-top: 4px;
     }
 
+    /* ===== TÍTULOS MAIN ===== */
     .main h2 {
-      font-size: 13px;
+      font-size: 14px;
       text-transform: uppercase;
-      letter-spacing: 1.5px;
+      letter-spacing: 1.8px;
       color: #0a1a2e;
       font-weight: 700;
-      border-bottom: 2px solid #10284a;
-      padding-bottom: 3px;
-      margin-top: 9px;
-      margin-bottom: 4px;
+      border-bottom: 2px solid #0f2744;
+      padding-bottom: 4px;
+      margin-top: 12px;
+      margin-bottom: 6px;
       flex-shrink: 0;
       display: flex;
       align-items: center;
-      gap: 5px;
+      gap: 6px;
     }
 
     .main h2:first-of-type {
@@ -267,38 +275,38 @@
     }
 
     .main h2 .icon {
-      width: 13px;
-      height: 13px;
+      width: 15px;
+      height: 15px;
       flex-shrink: 0;
-      fill: #10284a;
+      fill: #0f2744;
     }
 
+    /* ===== CORE COMPETENCIES ===== */
     .main .competencies {
       display: flex;
       flex-wrap: wrap;
-      gap: 3px 4px;
-      margin-bottom: 1px;
+      gap: 4px 6px;
+      margin-bottom: 2px;
       flex-shrink: 0;
     }
 
     .main .competencies span {
-      padding: 3px 10px;
-      font-size: 10px;
+      padding: 4px 12px;
+      font-size: 10.5px;
       font-weight: 700;
-      border-radius: 5px;
-      background: #f5f6f8;
-      color: #2b2b2b;
+      border-radius: 6px;
+      background: #f0f2f6;
+      color: #1e1e2a;
       letter-spacing: 0.2px;
     }
 
     /* ============================================
-       EXPERIENCIA - CON MÁS ESPACIO
+       EXPERIENCIA - más espacio entre items
     ============================================ */
-    /* ✅ CAMBIADO: margin-bottom de 4px a 10px */
     .main .experience-item {
-      margin-bottom: 10px;
-      padding-left: 10px;
-      border-left: 2px solid #10284a;
+      margin-bottom: 20px;
+      padding-left: 12px;
+      border-left: 2px solid #0f2744;
       position: relative;
       flex-shrink: 0;
     }
@@ -306,14 +314,14 @@
     .main .experience-item::before {
       content: "";
       position: absolute;
-      left: -4px;
+      left: -5px;
       top: 2px;
-      width: 5px;
-      height: 5px;
-      background: #10284a;
+      width: 6px;
+      height: 6px;
+      background: #0f2744;
       border-radius: 50%;
       border: 2px solid #ffffff;
-      box-shadow: 0 0 0 2px #10284a;
+      box-shadow: 0 0 0 2px #0f2744;
     }
 
     .main .experience-item:last-child {
@@ -324,60 +332,61 @@
       display: flex;
       flex-wrap: wrap;
       align-items: baseline;
-      gap: 2px 6px;
+      gap: 2px 8px;
     }
 
     .main .experience-item .exp-title {
-      font-size: 13px;
+      font-size: 14px;
       font-weight: 800;
       color: #0a1a2e;
     }
 
     .main .experience-item .exp-company {
-      font-size: 11px;
+      font-size: 12px;
       font-weight: 600;
-      color: #666666;
+      color: #666;
       font-style: italic;
     }
 
     .main .experience-item .exp-date {
-      font-size: 10px;
+      font-size: 10.5px;
       font-weight: 600;
-      color: #888888;
+      color: #888;
       margin-left: auto;
     }
 
     .main .experience-item .exp-description {
-      font-size: 10px;
-      color: #3a3a4a;
-      line-height: 1.35;
-      margin-top: 1px;
+      font-size: 10.5px;
+      color: #2d2d3a;
+      line-height: 1.5;
+      margin-top: 2px;
     }
 
     .main .experience-item .exp-description ul {
       list-style: none;
       padding: 0;
-      margin: 1px 0 0;
+      margin: 2px 0 0;
     }
 
-    /* ✅ CAMBIADO: bullets con más espacio */
     .main .experience-item .exp-description ul li {
-      padding: 2px 0 2px 12px;
+      padding: 4px 0 4px 14px;
       position: relative;
-      font-size: 10px;
-      line-height: 1.55;
+      font-size: 10.5px;
+      line-height: 1.6;
     }
 
     .main .experience-item .exp-description ul li::before {
       content: "—";
       position: absolute;
       left: 0;
-      color: #10284a;
+      color: #0f2744;
     }
 
-    /* ✅ CAMBIADO: education con más espacio */
+    /* ============================================
+       EDUCATION
+    ============================================ */
     .main .education-item {
-      margin-bottom: 8px;
+      margin-bottom: 18px;
       flex-shrink: 0;
     }
 
@@ -385,87 +394,88 @@
       display: flex;
       flex-wrap: wrap;
       align-items: baseline;
-      gap: 2px 6px;
+      gap: 2px 8px;
     }
 
     .main .education-item .edu-degree {
-      font-size: 13px;
+      font-size: 14px;
       font-weight: 700;
       color: #0a1a2e;
     }
 
     .main .education-item .edu-institution {
-      font-size: 11px;
-      color: #666666;
+      font-size: 12px;
+      color: #666;
       font-weight: 500;
       font-style: italic;
     }
 
     .main .education-item .edu-date {
-      font-size: 10px;
+      font-size: 10.5px;
       font-weight: 600;
-      color: #888888;
+      color: #888;
       margin-left: auto;
     }
 
+    /* ============================================
+       SKILLS
+    ============================================ */
     .main .skills-container {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 1px 14px;
-      margin-top: 1px;
+      gap: 2px 18px;
+      margin-top: 2px;
       flex-shrink: 0;
     }
 
-    /* ✅ CAMBIADO: skill bars con más espacio */
     .main .skill-bar {
-      margin-bottom: 5px;
+      margin-bottom: 12px;
       display: flex;
       align-items: center;
-      gap: 3px;
+      gap: 4px;
     }
 
     .main .skill-bar .skill-label {
-      font-size: 10px;
+      font-size: 10.5px;
       font-weight: 600;
       color: #0a1a2e;
-      min-width: 65px;
+      min-width: 70px;
     }
 
     .main .skill-bar .skill-track {
       flex: 1;
-      height: 4px;
+      height: 5px;
       background: #eef2f6;
-      border-radius: 2px;
+      border-radius: 3px;
       overflow: hidden;
     }
 
     .main .skill-bar .skill-track .skill-fill {
       height: 100%;
-      background: #10284a;
-      border-radius: 2px;
+      background: #0f2744;
+      border-radius: 3px;
     }
 
+    /* ============================================
+       ADDITIONAL INFO (main) - grid más amplio
+    ============================================ */
     .main .info-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 0;
-      font-size: 10px;
-      color: #2b2b2b;
-      line-height: 1.4;
-      margin-top: 1px;
+      gap: 0 20px;
+      font-size: 10.5px;
+      color: #1e1e2a;
+      line-height: 1.6;
+      margin-top: 2px;
       flex-shrink: 0;
     }
 
-    /* ✅ CAMBIADO: additional info con más espacio */
     .main .info-grid .info-item {
-      padding: 4px 0;
+      padding: 8px 0;
       border-bottom: 1px solid #f0f2f4;
     }
 
-    .main .info-grid .info-item:nth-last-child(1) {
-      border-bottom: none;
-    }
-
+    .main .info-grid .info-item:nth-last-child(1),
     .main .info-grid .info-item:nth-last-child(2) {
       border-bottom: none;
     }
@@ -474,15 +484,17 @@
       color: #0a1a2e;
       font-weight: 600;
       display: inline-block;
-      min-width: 65px;
+      min-width: 72px;
     }
 
-    /* ✅ CAMBIADO: personal statement con más espacio y mejor legibilidad */
+    /* ============================================
+       PERSONAL STATEMENT - más espacio y legibilidad
+    ============================================ */
     .main .personal-statement {
-      font-size: 10px;
-      color: #3a3a4a;
-      line-height: 1.75;
-      margin-top: 8px;
+      font-size: 10.5px;
+      color: #2d2d3a;
+      line-height: 2;
+      margin-top: 14px;
       flex-shrink: 0;
     }
 
@@ -490,31 +502,32 @@
       flex: 1;
     }
 
-    /* ✅ CAMBIADO: footer al final automáticamente */
+    /* ===== FOOTER ===== */
     .footer {
       margin-top: auto;
-      padding-top: 3px;
+      padding-top: 6px;
       border-top: 1px solid #eef0f2;
       text-align: center;
-      font-size: 6.5px;
-      color: #B5BDC7;
-      line-height: 1.5;
-      letter-spacing: 0.3px;
+      font-size: 7px;
+      color: #b0b8c4;
+      letter-spacing: 0.5px;
       flex-shrink: 0;
     }
 
+    /* ============================================
+       PRINT
+    ============================================ */
     @media print {
       html, body {
         height: 100%;
         margin: 0;
         padding: 0;
+        background: #ffffff;
       }
 
       body {
-        background: #ffffff;
-        padding: 0;
-        margin: 0;
         display: block;
+        padding: 0;
       }
 
       .page {
@@ -534,42 +547,12 @@
         color-adjust: exact !important;
       }
 
-      .sidebar h2 .icon {
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-        color-adjust: exact !important;
-      }
-
-      .main h2 .icon {
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-        color-adjust: exact !important;
-      }
-
-      .sidebar .contact-item .icon {
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-        color-adjust: exact !important;
-      }
-
-      .main .competencies span {
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-        color-adjust: exact !important;
-      }
-
-      .main .skill-bar .skill-track .skill-fill {
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-        color-adjust: exact !important;
-      }
-
-      .main .experience-item::before {
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-        color-adjust: exact !important;
-      }
-
+      .sidebar h2 .icon,
+      .main h2 .icon,
+      .sidebar .contact-item .icon,
+      .main .competencies span,
+      .main .skill-bar .skill-track .skill-fill,
+      .main .experience-item::before,
       .sidebar .languages .lang-item .lang-bar span {
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
@@ -577,40 +560,38 @@
       }
     }
 
-    @media screen and (max-width: 800px) {
+    /* ============================================
+       RESPONSIVE
+    ============================================ */
+    @media screen and (max-width: 820px) {
       .page {
         flex-direction: column;
         min-height: auto;
         max-height: none;
         height: auto;
         width: 100%;
+        border-radius: 0;
       }
 
       .sidebar {
         width: 100%;
         min-width: unset;
         max-width: unset;
-        padding: 14px;
+        padding: 16px;
       }
 
       .sidebar .photo {
-        width: 80px;
-        height: 80px;
-      }
-
-      .sidebar .photo img {
-        max-width: 80px;
-        max-height: 80px;
+        width: 90px;
+        height: 90px;
       }
 
       .main {
-        flex: 1;
-        padding: 14px;
+        padding: 16px;
       }
 
       .main .header-block .name {
-        font-size: 24px;
-        line-height: 26px;
+        font-size: 28px;
+        line-height: 1.2;
       }
 
       .main .skills-container {
@@ -629,13 +610,9 @@
         border-bottom: none;
       }
 
-      .main .spacer {
-        display: none;
-      }
-
       .main .experience-item .exp-header {
         flex-direction: column;
-        gap: 1px;
+        gap: 2px;
       }
 
       .main .experience-item .exp-date {
@@ -644,11 +621,15 @@
 
       .main .education-item .edu-header {
         flex-direction: column;
-        gap: 1px;
+        gap: 2px;
       }
 
       .main .education-item .edu-date {
         margin-left: 0;
+      }
+
+      .main .spacer {
+        display: none;
       }
     }
   </style>
@@ -658,7 +639,7 @@
 <div class="page">
 
   <!-- ============================================
-  SIDEBAR - 225px FIJO
+  SIDEBAR
   ============================================ -->
   <aside class="sidebar">
 
