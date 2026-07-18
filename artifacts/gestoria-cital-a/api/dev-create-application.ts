@@ -18,6 +18,26 @@ export default async function handler(
     // ✅ Obtener el body
     const body = req.body;
 
+    // ============================================
+    // BLOQUE DE DEPURACIÓN - AÑADIDO TEMPORALMENTE
+    // ============================================
+    console.log("========== BODY RECIBIDO ==========");
+    console.log(JSON.stringify(body, null, 2));
+
+    console.log("ingles_nivel:", body.ingles_nivel);
+    console.log("frances_nivel:", body.frances_nivel);
+    console.log("italiano_nivel:", body.italiano_nivel);
+    console.log("espanol_nivel:", body.espanol_nivel);
+    console.log("arabe_nivel:", body.arabe_nivel);
+    console.log("aleman_nivel:", body.aleman_nivel);
+
+    console.log("estudios:", body.estudios);
+    console.log("sectores:", body.sectores);
+    console.log("experiencia_laboral:", body.experiencia_laboral);
+
+    console.log("==================================");
+    // ============================================
+
     console.log("========== DEV CREATE APPLICATION ==========");
     console.log("📦 Body recibido:", JSON.stringify(body, null, 2));
     console.log("============================================");
