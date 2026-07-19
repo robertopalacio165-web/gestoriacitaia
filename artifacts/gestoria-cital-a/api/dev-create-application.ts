@@ -9,7 +9,7 @@ const supabase = createClient(
 // ✅ URL del webhook de Make para WhatsApp de bienvenida
 const MAKE_WEBHOOK_MALTA =
   process.env.MAKE_WEBHOOK_MALTA ||
-  "https://hook.eu1.make.com/5ugo16vgnvx2rhhu3mwjfag553d1g0ij";
+  "https://hook.eu1.make.com/noxce8cky0r0jr7ujf62fywggn3l824b";
 
 export default async function handler(
   req: VercelRequest,
