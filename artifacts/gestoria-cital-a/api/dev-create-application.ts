@@ -107,55 +107,47 @@ export default async function handler(
     console.log(`✅ Aplicación creada en modo DEV: ${data.id}`);
 
     // ============================================
-    // 🔍 LOGS DE DEPURACIÓN PARA WHATSAPP
+    // ✅ ENVIAR WHATSAPP DE BIENVENIDA
     // ============================================
-    console.log("========== WHATSAPP MAKE ==========");
-    console.log("Nombre:", fullName);
-    console.log("WhatsApp:", whatsapp);
-    console.log("Email:", email);
-    console.log("Webhook:", MAKE_WEBHOOK_MALTA);
-    console.log("==================================");
-
-    // ============================================
-    // ✅ ENVIAR WHATSAPP DE BIENVENIDA (CON LOGS)
-    // ============================================
-    const payload = {
-      tipo: "malta_bienvenida",
-      id: data.id,
-      nombre: fullName,
-      whatsapp: whatsapp,
-      email: email,
-      plan: plan || "monthly",
-      profesion: profesion,
-      puesto: preferred_position,
-      mensaje: `👋 Hola ${fullName}. Hemos recibido correctamente tu solicitud para Trabajo en Malta. En unos minutos comenzaremos a generar tu CV profesional y tu carta de presentación mediante IA. Después empezaremos a buscar ofertas adaptadas a tu perfil.`,
-      fecha: new Date().toISOString(),
-    };
-
-    console.log("📤 Payload enviado a Make:");
-    console.log(JSON.stringify(payload, null, 2));
-
     fetch(MAKE_WEBHOOK_MALTA, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(payload),
+      body: JSON.stringify({
+        tipo: "malta_bienvenida",
+
+        id: data.id,
+
+        nombre: fullName,
+        whatsapp: whatsapp,
+        email: email,
+
+        plan: plan || "monthly",
+
+        profesion: profesion,
+        puesto: preferred_position,
+
+        mensaje:
+          `👋 Hola ${fullName}. Hemos recibido correctamente tu solicitud para Trabajo en Malta. En unos minutos comenzaremos a generar tu CV profesional y tu carta de presentación mediante IA. Después empezaremos a buscar ofertas adaptadas a tu perfil.`,
+
+        fecha: new Date().toISOString(),
+      }),
     })
-      .then(async (response) => {
-        if (!response.ok) {
-          console.error(
-            "❌ MAKE MALTA:",
-            response.status,
-            await response.text()
-          );
-        } else {
-          console.log("✅ WhatsApp de bienvenida enviado");
-        }
-      })
-      .catch((err) => {
-        console.error("❌ Error enviando WhatsApp:", err);
-      });
+    .then(async (response) => {
+      if (!response.ok) {
+        console.error(
+          "❌ MAKE MALTA:",
+          response.status,
+          await response.text()
+        );
+      } else {
+        console.log("✅ WhatsApp de bienvenida enviado");
+      }
+    })
+    .catch((err) => {
+      console.error("❌ Error enviando WhatsApp:", err);
+    });
 
     // ✅ Añadir a la cola de trabajo
     const { error: queueError } = await supabase
@@ -188,6 +180,7 @@ export default async function handler(
         }
       );
 
+      // ✅ Mejor control de errores
       if (!response.ok) {
         const errorText = await response.text();
         console.error("❌ Error generate-malta-documents:", errorText);
@@ -206,6 +199,7 @@ export default async function handler(
       message: "Application created in dev mode",
       url: `${process.env.NEXT_PUBLIC_URL}/trabajo-malta?success=true&dev=true`,
     });
+
   } catch (error: any) {
     console.error("❌ Error en dev-create-application:", error);
     return res.status(500).json({ error: error.message });
