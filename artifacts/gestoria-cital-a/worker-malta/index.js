@@ -11,19 +11,24 @@ async function start() {
     // Buscar ofertas nuevas
     await searchJobs();
 
-    // Obtener clientes activos
+    // Leer clientes activos
     const applications = await queue.getPendingApplications();
 
     log(`Clientes activos: ${applications.length}`);
 
-    applications.forEach(app => {
+    for (const app of applications) {
 
-        log(
-            `${app.full_name} | ${app.plan}`
-        );
+        log("--------------------------------");
+        log(`Nombre: ${app.full_name}`);
+        log(`Email: ${app.email}`);
+        log(`WhatsApp: ${app.whatsapp}`);
+        log(`País: ${app.country}`);
+        log(`Nacionalidad: ${app.nationality}`);
+        log(`Plan: ${app.plan}`);
+        log("--------------------------------");
 
-    });
+    }
 
 }
 
-start();
+start().catch(console.error);
