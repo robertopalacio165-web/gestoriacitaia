@@ -1,5 +1,4 @@
 const supabase = require("./supabase");
-const config = require("./config");
 const log = require("./logger");
 
 async function getPendingApplications() {
@@ -11,11 +10,14 @@ async function getPendingApplications() {
         .eq("status", "active");
 
     if (error) {
+
         log(error.message);
         return [];
+
     }
 
     return data || [];
+
 }
 
 module.exports = {
