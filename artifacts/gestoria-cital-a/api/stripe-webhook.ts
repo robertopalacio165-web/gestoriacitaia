@@ -56,6 +56,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     console.log("=========================================");
     console.log("📦 METADATA COMPLETA RECIBIDA:");
     console.log(JSON.stringify(metadata, null, 2));
+    console.log("📦 trabajo_busca:", metadata.trabajo_busca);
+    console.log("📦 experiencia_previa:", metadata.experiencia_previa);
     console.log("=========================================");
     console.log("✅ Checkout completado:", session.id);
 
@@ -140,6 +142,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         whatsapp: whatsapp,
         email: email,
         nacionalidad: nationality,
+        nationality: nationality,
         current_city: currentCity,
         fecha_nacimiento: fechaNacimiento || null,
         idiomas: idiomas,
@@ -151,8 +154,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         aleman_nivel: aleman_nivel,
         trabajo_busca: trabajo_busca,
         experiencia_previa: experiencia_previa,
+        // Compatibilidad con columnas antiguas
+        profesion: trabajo_busca,
+        sectores: experiencia_previa,
         anos_experiencia: anos_experiencia,
         education_level: educationLevel,
+        estudios: educationLevel,
         carnet_conducir: carnetConducir,
         photo_url: photoUrl,
         pdf_url: pdfUrl,
@@ -195,6 +202,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           whatsapp: whatsapp,
           email: email,
           nacionalidad: nationality,
+          nationality: nationality,
           current_city: currentCity,
           fecha_nacimiento: fechaNacimiento || null,
           idiomas: idiomas,
@@ -206,8 +214,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           aleman_nivel: aleman_nivel,
           trabajo_busca: trabajo_busca,
           experiencia_previa: experiencia_previa,
+          // Compatibilidad con columnas antiguas
+          profesion: trabajo_busca,
+          sectores: experiencia_previa,
           anos_experiencia: anos_experiencia,
           education_level: educationLevel,
+          estudios: educationLevel,
           carnet_conducir: carnetConducir,
           photo_url: photoUrl,
           pdf_url: pdfUrl,
