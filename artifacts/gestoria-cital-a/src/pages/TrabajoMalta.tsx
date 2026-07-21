@@ -61,9 +61,9 @@ type MaltaFormData = {
   aleman_nivel: string;
   
   // Experiencia
-  trabajoBusca: string; // Lo que busca (máx 2)
-  experienciaPrevia: string; // Experiencia previa (máx 2)
-  anosExperiencia: string;
+  trabajo_busca: string; // Lo que busca (máx 2)
+  experiencia_previa: string; // Experiencia previa (máx 2)
+  anos_experiencia: string;
   education_level: string;
   
   // Carnet de conducir
@@ -655,7 +655,7 @@ function OfficialBrowserBox({
                   {/* ============================================ */}
                   
                   <CategoriaSelector
-                    field="trabajoBusca"
+                    field="trabajo_busca"
                     label={isMa ? "🔍 فين كاتبحث على خدمة؟ (اختر 2 كحد أقصى)" : isEn ? "🔍 What job are you looking for? (Max 2)" : "🔍 ¿Qué trabajo buscas? (Máx 2)"}
                     description={isMa ? "اختر المجالات التي تبحث عن عمل فيها" : isEn ? "Select the fields you are looking for work in" : "Selecciona los campos en los que buscas trabajo"}
                   />
@@ -665,7 +665,7 @@ function OfficialBrowserBox({
                   {/* ============================================ */}
                   
                   <CategoriaSelector
-                    field="experienciaPrevia"
+                    field="experiencia_previa"
                     label={isMa ? "💼 في ماذا اشتغلت قبل؟ (اختر 2 كحد أقصى)" : isEn ? "💼 What have you worked in before? (Max 2)" : "💼 ¿En qué has trabajado antes? (Máx 2)"}
                     description={isMa ? "اختر المجالات التي لديك خبرة فيها" : isEn ? "Select the fields you have experience in" : "Selecciona los campos en los que tienes experiencia"}
                   />
@@ -735,8 +735,8 @@ function OfficialBrowserBox({
                       {isMa ? "سنوات الخبرة" : isEn ? "Years of experience" : "Años de experiencia"}
                     </label>
                     <select
-                      value={formData.anosExperiencia}
-                      onChange={(e) => onFormChange("anosExperiencia", e.target.value)}
+                      value={formData.anos_experiencia}
+                      onChange={(e) => onFormChange("anos_experiencia", e.target.value)}
                       className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white focus:outline-none focus:border-yellow-400"
                     >
                       <option value="">{isMa ? "اختر المدة" : isEn ? "Select" : "Selecciona"}</option>
@@ -1073,7 +1073,7 @@ export default function TrabajoMalta() {
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<"weekly" | "monthly">("monthly");
   
-  // ✅ FormData actualizado - eliminado preferred_position
+  // ✅ FormData actualizado - snake_case
   const [formData, setFormData] = useState<MaltaFormData>({
     fullName: "",
     whatsapp: "+34 ",
@@ -1091,9 +1091,9 @@ export default function TrabajoMalta() {
     arabe_nivel: "",
     aleman_nivel: "",
     
-    trabajoBusca: "",
-    experienciaPrevia: "",
-    anosExperiencia: "",
+    trabajo_busca: "",
+    experiencia_previa: "",
+    anos_experiencia: "",
     education_level: "",
     
     carnetConducir: "None",
@@ -1500,7 +1500,7 @@ export default function TrabajoMalta() {
     }
   };
 
-  // ✅ Validación completa antes del pago - Actualizada
+  // ✅ Validación completa antes del pago - Actualizada con snake_case
   const validateForm = (): boolean => {
     const errors: string[] = [];
 
@@ -1524,10 +1524,10 @@ export default function TrabajoMalta() {
     if (!formData.currentCity) {
       errors.push(isMa ? "المدينة الحالية مطلوبة" : isEn ? "Current city is required" : "Ciudad actual es requerida");
     }
-    if (!formData.trabajoBusca.trim()) {
+    if (!formData.trabajo_busca.trim()) {
       errors.push(isMa ? "اختر العمل الذي تبحث عنه" : isEn ? "Select the job you are looking for" : "Selecciona el trabajo que buscas");
     }
-    if (!formData.experienciaPrevia.trim()) {
+    if (!formData.experiencia_previa.trim()) {
       errors.push(isMa ? "اختر تجربتك السابقة" : isEn ? "Select your previous experience" : "Selecciona tu experiencia previa");
     }
     if (!acceptTerms) {
@@ -1548,7 +1548,7 @@ export default function TrabajoMalta() {
     return true;
   };
 
-  // ✅ handlePay - Con detección de admin - Actualizado
+  // ✅ handlePay - Con detección de admin - Actualizado con snake_case
   const handlePay = async (plan: "weekly" | "monthly") => {
     if (!validateForm()) {
       return;
@@ -1562,7 +1562,7 @@ export default function TrabajoMalta() {
       const isAdmin =
         user?.email?.toLowerCase() === "robertopalacio165@gmail.com";
 
-      // ✅ Payload actualizado - eliminado preferred_position, añadidos trabajoBusca y experienciaPrevia
+      // ✅ Payload actualizado - snake_case
       const payload = {
         plan,
 
@@ -1582,9 +1582,9 @@ export default function TrabajoMalta() {
         arabe_nivel: formData.arabe_nivel,
         aleman_nivel: formData.aleman_nivel,
 
-        trabajoBusca: formData.trabajoBusca,
-        experienciaPrevia: formData.experienciaPrevia,
-        anosExperiencia: formData.anosExperiencia,
+        trabajo_busca: formData.trabajo_busca,
+        experiencia_previa: formData.experiencia_previa,
+        anos_experiencia: formData.anos_experiencia,
         education_level: formData.education_level,
 
         carnetConducir: formData.carnetConducir,
