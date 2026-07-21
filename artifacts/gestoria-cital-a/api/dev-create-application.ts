@@ -27,7 +27,7 @@ export default async function handler(
     console.log("📦 Body recibido:", JSON.stringify(body, null, 2));
     console.log("============================================");
 
-    // ✅ Desestructurar todos los campos
+    // ✅ Desestructurar todos los campos - ACTUALIZADO
     const {
       plan,
       fullName,
@@ -35,7 +35,6 @@ export default async function handler(
       email,
       nationality,
       currentCity,
-      countryResidence,
       fechaNacimiento,
       idiomas,
       ingles_nivel,
@@ -44,22 +43,16 @@ export default async function handler(
       espanol_nivel,
       arabe_nivel,
       aleman_nivel,
-      profesion,
-      anosExperiencia,
-      estudios,
+      trabajo_busca,
+      experiencia_previa,
+      anos_experiencia,
       education_level,
-      sectores,
       carnetConducir,
-      preferred_position,
-      work_preference,
-      willing_to_relocate,
-      tieneCV,
-      cvUrl,
       photoUrl,
       pdfUrl,
     } = body;
 
-    // ✅ Insertar directamente en Supabase (modo desarrollo)
+    // ✅ Insertar directamente en Supabase (modo desarrollo) - ACTUALIZADO
     const { data, error } = await supabase
       .from("malta_applications")
       .insert({
@@ -67,8 +60,8 @@ export default async function handler(
         whatsapp: whatsapp || "",
         email: email || "",
         nacionalidad: nationality || "",
+        nationality: nationality || "",
         current_city: currentCity || "",
-        pais_residencia: countryResidence || "",
         fecha_nacimiento: fechaNacimiento || null,
         idiomas: idiomas || "",
         ingles_nivel: ingles_nivel || "",
@@ -77,17 +70,16 @@ export default async function handler(
         espanol_nivel: espanol_nivel || "",
         arabe_nivel: arabe_nivel || "",
         aleman_nivel: aleman_nivel || "",
-        profesion: profesion || "",
-        anos_experiencia: anosExperiencia || "",
-        estudios: estudios || "",
+        // Nuevos campos
+        trabajo_busca: trabajo_busca || "",
+        experiencia_previa: experiencia_previa || "",
+        // Compatibilidad con columnas antiguas
+        profesion: trabajo_busca || "",
+        sectores: experiencia_previa || "",
+        anos_experiencia: anos_experiencia || "",
         education_level: education_level || "",
-        sectores: sectores || "",
+        estudios: education_level || "",
         carnet_conducir: carnetConducir || "",
-        preferred_position: preferred_position || "",
-        work_preference: work_preference || "",
-        willing_to_relocate: willing_to_relocate === "Yes",
-        tiene_cv: tieneCV === "Yes" || tieneCV === "Sí",
-        cv_url: cvUrl || "",
         photo_url: photoUrl || "",
         pdf_url: pdfUrl || "",
         plan: plan || "monthly",
@@ -107,7 +99,7 @@ export default async function handler(
     console.log(`✅ Aplicación creada en modo DEV: ${data.id}`);
 
     // ============================================
-    // ✅ ENVIAR WHATSAPP DE BIENVENIDA
+    // ✅ ENVIAR WHATSAPP DE BIENVENIDA - ACTUALIZADO
     // ============================================
     fetch(MAKE_WEBHOOK_MALTA, {
       method: "POST",
@@ -125,8 +117,8 @@ export default async function handler(
 
         plan: plan || "monthly",
 
-        profesion: profesion,
-        puesto: preferred_position,
+        trabajo_busca: trabajo_busca,
+        experiencia_previa: experiencia_previa,
 
         mensaje:
           `👋 Hola ${fullName}. Hemos recibido correctamente tu solicitud para Trabajo en Malta. En unos minutos comenzaremos a generar tu CV profesional y tu carta de presentación mediante IA. Después empezaremos a buscar ofertas adaptadas a tu perfil.`,
