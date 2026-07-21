@@ -81,11 +81,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const aleman_nivel = metadata.aleman_nivel || "";
     
     // ============================================
-    // 3. EXPERIENCIA - ACTUALIZADO
+    // 3. EXPERIENCIA - ACTUALIZADO con snake_case
     // ============================================
-    const trabajoBusca = metadata.trabajoBusca || "";
-    const experienciaPrevia = metadata.experienciaPrevia || "";
-    const anosExperiencia = metadata.anosExperiencia || "";
+    const trabajo_busca = metadata.trabajo_busca || "";
+    const experiencia_previa = metadata.experiencia_previa || "";
+    const anos_experiencia = metadata.anos_experiencia || "";
     const educationLevel = metadata.education_level || "";
     
     // ============================================
@@ -109,8 +109,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     console.log("  - nationality:", nationality);
     console.log("  - currentCity:", currentCity);
     console.log("  - photoUrl:", photoUrl);
-    console.log("  - trabajoBusca:", trabajoBusca);
-    console.log("  - experienciaPrevia:", experienciaPrevia);
+    console.log("  - trabajo_busca:", trabajo_busca);
+    console.log("  - experiencia_previa:", experiencia_previa);
 
     // ============================================
     // ✅ 7. VERIFICAR SI YA EXISTE (ANTES DE INSERTAR)
@@ -149,9 +149,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         espanol_nivel: espanol_nivel,
         arabe_nivel: arabe_nivel,
         aleman_nivel: aleman_nivel,
-        trabajo_busca: trabajoBusca,
-        experiencia_previa: experienciaPrevia,
-        anos_experiencia: anosExperiencia,
+        trabajo_busca: trabajo_busca,
+        experiencia_previa: experiencia_previa,
+        anos_experiencia: anos_experiencia,
         education_level: educationLevel,
         carnet_conducir: carnetConducir,
         photo_url: photoUrl,
@@ -204,9 +204,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           espanol_nivel: espanol_nivel,
           arabe_nivel: arabe_nivel,
           aleman_nivel: aleman_nivel,
-          trabajo_busca: trabajoBusca,
-          experiencia_previa: experienciaPrevia,
-          anos_experiencia: anosExperiencia,
+          trabajo_busca: trabajo_busca,
+          experiencia_previa: experiencia_previa,
+          anos_experiencia: anos_experiencia,
           education_level: educationLevel,
           carnet_conducir: carnetConducir,
           photo_url: photoUrl,
@@ -256,8 +256,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
           plan: plan,
 
-          trabajoBusca: trabajoBusca,
-          experienciaPrevia: experienciaPrevia,
+          trabajo_busca: trabajo_busca,
+          experiencia_previa: experiencia_previa,
 
           mensaje:
             `👋 Hola ${fullName}. Hemos recibido correctamente tu solicitud para Trabajo en Malta. En unos minutos comenzaremos a generar tu CV profesional y tu carta de presentación mediante IA. Después empezaremos a buscar ofertas adaptadas a tu perfil.`,
@@ -324,8 +324,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           plan: plan,
           nationality: nationality,
           currentCity: currentCity,
-          trabajoBusca: trabajoBusca,
-          experienciaPrevia: experienciaPrevia,
+          trabajo_busca: trabajo_busca,
+          experiencia_previa: experiencia_previa,
           timestamp: new Date().toISOString(),
         }),
       });
