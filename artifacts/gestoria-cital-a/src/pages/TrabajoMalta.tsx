@@ -41,7 +41,7 @@ type ProfileRow = {
   nie: string | null;
 };
 
-// ✅ Tipo final - Eliminados: countryResidence, willing_to_relocate, tieneCV, cvFile, cvUrl, estudios, work_preference, sectores
+// ✅ Tipo final - Eliminados: preferred_position
 type MaltaFormData = {
   // Datos personales
   fullName: string;
@@ -61,15 +61,13 @@ type MaltaFormData = {
   aleman_nivel: string;
   
   // Experiencia
-  profesion: string;
+  trabajoBusca: string; // Lo que busca (máx 2)
+  experienciaPrevia: string; // Experiencia previa (máx 2)
   anosExperiencia: string;
   education_level: string;
   
   // Carnet de conducir
   carnetConducir: "None" | "A" | "B" | "C" | "D" | "B+C" | "B+C+E";
-  
-  // Preferencias
-  preferred_position: string;
   
   // Documentos opcionales
   photoFile: File | null;
@@ -193,16 +191,18 @@ function OfficialBrowserBox({
     { id: "Other", label: isMa ? "أخرى" : isEn ? "Other" : "Otro" },
   ];
 
-  // ✅ POSICIONES PREFERIDAS
-  const preferredPositionOptions = [
-    { id: "Kitchen Assistant", label: isMa ? "مساعد مطبخ" : isEn ? "Kitchen Assistant" : "Ayudante de cocina" },
-    { id: "Waiter", label: isMa ? "نادل" : isEn ? "Waiter" : "Camarero" },
-    { id: "Housekeeping", label: isMa ? "التدبير المنزلي" : isEn ? "Housekeeping" : "Housekeeping" },
-    { id: "Cleaner", label: isMa ? "عامل نظافة" : isEn ? "Cleaner" : "Limpiador" },
-    { id: "Warehouse Worker", label: isMa ? "عامل مستودع" : isEn ? "Warehouse Worker" : "Operario de almacén" },
-    { id: "Factory Operator", label: isMa ? "عامل مصنع" : isEn ? "Factory Operator" : "Operario de fábrica" },
-    { id: "Construction Labourer", label: isMa ? "عامل بناء" : isEn ? "Construction Labourer" : "Peón de construcción" },
-    { id: "Delivery Driver", label: isMa ? "سائق توصيل" : isEn ? "Delivery Driver" : "Conductor de reparto" },
+  // ✅ CATEGORÍAS DE TRABAJO (se usan para ambos campos)
+  const categoriaOptions = [
+    { id: "Kitchen", label: isMa ? "🍽️ المطبخ" : isEn ? "🍽️ Kitchen" : "🍽️ Cocina" },
+    { id: "Restaurant", label: isMa ? "🍺 المطعم" : isEn ? "🍺 Restaurant" : "🍺 Restaurante" },
+    { id: "Cleaning", label: isMa ? "🧹 التنظيف" : isEn ? "🧹 Cleaning" : "🧹 Limpieza" },
+    { id: "Hotel", label: isMa ? "🏨 الفندق" : isEn ? "🏨 Hotel" : "🏨 Hotel" },
+    { id: "Construction", label: isMa ? "🏗️ البناء" : isEn ? "🏗️ Construction" : "🏗️ Construcción" },
+    { id: "Factory", label: isMa ? "🏭 المصنع" : isEn ? "🏭 Factory" : "🏭 Fábrica" },
+    { id: "Warehouse", label: isMa ? "📦 المستودع" : isEn ? "📦 Warehouse" : "📦 Almacén" },
+    { id: "Delivery", label: isMa ? "🚚 التوصيل" : isEn ? "🚚 Delivery" : "🚚 Reparto" },
+    { id: "Care", label: isMa ? "👵 رعاية" : isEn ? "👵 Care" : "👵 Cuidado de personas" },
+    { id: "Agriculture", label: isMa ? "🚜 الزراعة" : isEn ? "🚜 Agriculture" : "🚜 Agricultura" },
     { id: "Other", label: isMa ? "أخرى" : isEn ? "Other" : "Otro" },
   ];
 
@@ -227,20 +227,7 @@ function OfficialBrowserBox({
     { id: "Other", label: isMa ? "أخرى" : isEn ? "Other" : "Otro" },
   ];
 
-  // ✅ OPCIONES DE EXPERIENCIA LABORAL
-  const profesionOptions = [
-    { id: "Kitchen", label: isMa ? "المطبخ" : isEn ? "Kitchen" : "Cocina" },
-    { id: "Construction", label: isMa ? "البناء" : isEn ? "Construction" : "Construcción" },
-    { id: "Cleaning", label: isMa ? "التنظيف" : isEn ? "Cleaning" : "Limpieza" },
-    { id: "Warehouse", label: isMa ? "المستودع" : isEn ? "Warehouse" : "Almacén" },
-    { id: "Restaurant", label: isMa ? "المطعم" : isEn ? "Restaurant" : "Restaurante" },
-    { id: "Delivery", label: isMa ? "التوصيل" : isEn ? "Delivery" : "Delivery" },
-    { id: "Hotel", label: isMa ? "الفندق" : isEn ? "Hotel" : "Hotel" },
-    { id: "Factory", label: isMa ? "المصنع" : isEn ? "Factory" : "Fábrica" },
-    { id: "Other", label: isMa ? "آخر" : isEn ? "Other" : "Otro" },
-  ];
-
-  // ✅ AÑOS DE EXPERIENCIA (eliminado "No experience")
+  // ✅ AÑOS DE EXPERIENCIA
   const anosExperienciaOptions = [
     { id: "Less than 1 year", label: isMa ? "أقل من سنة" : isEn ? "Less than 1 year" : "Menos de 1 año" },
     { id: "1-2 years", label: isMa ? "1-2 سنة" : isEn ? "1-2 years" : "1-2 años" },
@@ -402,6 +389,67 @@ function OfficialBrowserBox({
     : isEn
     ? "Job search service in Malta using Artificial Intelligence. Fill in the form and we will find the right job for you."
     : "Servicio de búsqueda de empleo en Malta con Inteligencia Artificial. Rellena el formulario y nosotros buscamos el trabajo adecuado para ti.";
+
+  // Componente reutilizable para selección de categorías (máx 2)
+  const CategoriaSelector = ({ 
+    field, 
+    label, 
+    description 
+  }: { 
+    field: keyof MaltaFormData; 
+    label: string; 
+    description: string;
+  }) => {
+    const selected = (formData[field] as string)?.split(",").filter(Boolean) || [];
+    
+    return (
+      <div className="col-span-1 lg:col-span-2">
+        <label className="block text-white text-[13px] mb-2">
+          {label}
+        </label>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          {categoriaOptions.map((opt) => {
+            const isSelected = selected.includes(opt.id);
+            const isDisabled = !isSelected && selected.length >= 2;
+            return (
+              <label
+                key={opt.id}
+                className={`flex items-center gap-2 p-2 rounded-xl border transition-colors cursor-pointer ${
+                  isSelected
+                    ? "border-yellow-500 bg-yellow-500/10"
+                    : isDisabled
+                    ? "border-white/5 bg-[#060b16] opacity-40 cursor-not-allowed"
+                    : "border-white/10 bg-[#060b16] hover:border-yellow-500/50"
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  value={opt.id}
+                  checked={isSelected}
+                  disabled={isDisabled}
+                  onChange={(e) => {
+                    let newSelected: string[];
+                    if (e.target.checked) {
+                      if (selected.length >= 2) return;
+                      newSelected = [...selected, opt.id];
+                    } else {
+                      newSelected = selected.filter((s) => s !== opt.id);
+                    }
+                    onFormChange(field, newSelected.join(","));
+                  }}
+                  className="w-4 h-4 rounded border-white/20 bg-[#060b16] text-yellow-500 focus:ring-yellow-500 focus:ring-offset-0 shrink-0"
+                />
+                <span className="text-white/80 text-[11px] sm:text-[12px]">{opt.label}</span>
+              </label>
+            );
+          })}
+        </div>
+        <p className="text-white/40 text-[10px] mt-1">
+          {description}
+        </p>
+      </div>
+    );
+  };
 
   return (
     <motion.div
@@ -603,28 +651,27 @@ function OfficialBrowserBox({
                   </div>
 
                   {/* ============================================ */}
-                  {/* 2. PUESTO QUE BUSCAS */}
+                  {/* 2. TRABAJO QUE BUSCA (máx 2) */}
                   {/* ============================================ */}
                   
-                  {/* Posición preferida */}
-                  <div>
-                    <label className="block text-white text-[13px] mb-2">
-                      {isMa ? "المنصب المفضل" : isEn ? "Preferred Position" : "Posición preferida"}
-                    </label>
-                    <select
-                      value={formData.preferred_position}
-                      onChange={(e) => onFormChange("preferred_position", e.target.value)}
-                      className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white focus:outline-none focus:border-yellow-400"
-                    >
-                      <option value="">{isMa ? "اختر المنصب" : isEn ? "Select position" : "Selecciona posición"}</option>
-                      {preferredPositionOptions.map((opt) => (
-                        <option key={opt.id} value={opt.id}>{opt.label}</option>
-                      ))}
-                    </select>
-                  </div>
+                  <CategoriaSelector
+                    field="trabajoBusca"
+                    label={isMa ? "🔍 فين كاتبحث على خدمة؟ (اختر 2 كحد أقصى)" : isEn ? "🔍 What job are you looking for? (Max 2)" : "🔍 ¿Qué trabajo buscas? (Máx 2)"}
+                    description={isMa ? "اختر المجالات التي تبحث عن عمل فيها" : isEn ? "Select the fields you are looking for work in" : "Selecciona los campos en los que buscas trabajo"}
+                  />
 
                   {/* ============================================ */}
-                  {/* 3. IDIOMAS */}
+                  {/* 3. EXPERIENCIA PREVIA (máx 2) */}
+                  {/* ============================================ */}
+                  
+                  <CategoriaSelector
+                    field="experienciaPrevia"
+                    label={isMa ? "💼 في ماذا اشتغلت قبل؟ (اختر 2 كحد أقصى)" : isEn ? "💼 What have you worked in before? (Max 2)" : "💼 ¿En qué has trabajado antes? (Máx 2)"}
+                    description={isMa ? "اختر المجالات التي لديك خبرة فيها" : isEn ? "Select the fields you have experience in" : "Selecciona los campos en los que tienes experiencia"}
+                  />
+
+                  {/* ============================================ */}
+                  {/* 4. IDIOMAS */}
                   {/* ============================================ */}
                   
                   <div className="col-span-1 lg:col-span-2">
@@ -679,57 +726,9 @@ function OfficialBrowserBox({
                   </div>
 
                   {/* ============================================ */}
-                  {/* 4. EXPERIENCIA */}
+                  {/* 5. AÑOS DE EXPERIENCIA Y EDUCACIÓN */}
                   {/* ============================================ */}
                   
-                  <div className="col-span-1 lg:col-span-2">
-                    <label className="block text-white text-[13px] mb-2">
-                      {isMa ? "في ماذا اشتغلت قبل؟ (اختر 2 كحد أقصى)" : isEn ? "What have you worked in before? (Max 2)" : "¿En qué has trabajado antes? (Máx 2)"}
-                    </label>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                      {profesionOptions.map((opt) => {
-                        const selected = formData.profesion?.split(",").filter(Boolean) || [];
-                        const isSelected = selected.includes(opt.id);
-                        const isDisabled = !isSelected && selected.length >= 2;
-                        return (
-                          <label
-                            key={opt.id}
-                            className={`flex items-center gap-2 p-2 rounded-xl border transition-colors cursor-pointer ${
-                              isSelected
-                                ? "border-yellow-500 bg-yellow-500/10"
-                                : isDisabled
-                                ? "border-white/5 bg-[#060b16] opacity-40 cursor-not-allowed"
-                                : "border-white/10 bg-[#060b16] hover:border-yellow-500/50"
-                            }`}
-                          >
-                            <input
-                              type="checkbox"
-                              value={opt.id}
-                              checked={isSelected}
-                              disabled={isDisabled}
-                              onChange={(e) => {
-                                const currentSelected = formData.profesion?.split(",").filter(Boolean) || [];
-                                let newSelected: string[];
-                                if (e.target.checked) {
-                                  if (currentSelected.length >= 2) return;
-                                  newSelected = [...currentSelected, opt.id];
-                                } else {
-                                  newSelected = currentSelected.filter((s) => s !== opt.id);
-                                }
-                                onFormChange("profesion", newSelected.join(","));
-                              }}
-                              className="w-4 h-4 rounded border-white/20 bg-[#060b16] text-yellow-500 focus:ring-yellow-500 focus:ring-offset-0 shrink-0"
-                            />
-                            <span className="text-white/80 text-[11px] sm:text-[12px]">{opt.label}</span>
-                          </label>
-                        );
-                      })}
-                    </div>
-                    <p className="text-white/40 text-[10px] mt-1">
-                      {isMa ? "يمكنك اختيار مجالين كحد أقصى" : isEn ? "You can select up to 2 fields" : "Puedes seleccionar hasta 2 campos"}
-                    </p>
-                  </div>
-
                   {/* Años de experiencia */}
                   <div>
                     <label className="block text-white text-[13px] mb-2">
@@ -765,7 +764,7 @@ function OfficialBrowserBox({
                   </div>
 
                   {/* ============================================ */}
-                  {/* 5. CARNET DE CONDUCIR */}
+                  {/* 6. CARNET DE CONDUCIR */}
                   {/* ============================================ */}
                   
                   <div>
@@ -784,7 +783,7 @@ function OfficialBrowserBox({
                   </div>
 
                   {/* ============================================ */}
-                  {/* 6. DOCUMENTOS OPCIONALES */}
+                  {/* 7. DOCUMENTOS OPCIONALES */}
                   {/* ============================================ */}
                   
                   <div className="col-span-1 lg:col-span-2 mt-2 rounded-2xl border border-white/10 bg-[#060b16] p-4">
@@ -870,7 +869,7 @@ function OfficialBrowserBox({
                   </div>
 
                   {/* ============================================ */}
-                  {/* 7. PLANES */}
+                  {/* 8. PLANES */}
                   {/* ============================================ */}
                   
                   {/* Plan Semanal */}
@@ -957,7 +956,7 @@ function OfficialBrowserBox({
                   </div>
 
                   {/* ============================================ */}
-                  {/* 8. CHECKBOX + BOTÓN DE PAGO */}
+                  {/* 9. CHECKBOX + BOTÓN DE PAGO */}
                   {/* ============================================ */}
                   
                   <div className="col-span-1 lg:col-span-2 mt-2">
@@ -1074,7 +1073,7 @@ export default function TrabajoMalta() {
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<"weekly" | "monthly">("monthly");
   
-  // ✅ FormData final - Eliminados: countryResidence, willing_to_relocate, tieneCV, cvFile, cvUrl, estudios, work_preference, sectores
+  // ✅ FormData actualizado - eliminado preferred_position
   const [formData, setFormData] = useState<MaltaFormData>({
     fullName: "",
     whatsapp: "+34 ",
@@ -1092,14 +1091,12 @@ export default function TrabajoMalta() {
     arabe_nivel: "",
     aleman_nivel: "",
     
-    profesion: "",
+    trabajoBusca: "",
+    experienciaPrevia: "",
     anosExperiencia: "",
     education_level: "",
     
     carnetConducir: "None",
-    
-    // Preferencias
-    preferred_position: "",
     
     // Documentos opcionales
     photoFile: null,
@@ -1503,7 +1500,7 @@ export default function TrabajoMalta() {
     }
   };
 
-  // ✅ Validación completa antes del pago
+  // ✅ Validación completa antes del pago - Actualizada
   const validateForm = (): boolean => {
     const errors: string[] = [];
 
@@ -1527,11 +1524,11 @@ export default function TrabajoMalta() {
     if (!formData.currentCity) {
       errors.push(isMa ? "المدينة الحالية مطلوبة" : isEn ? "Current city is required" : "Ciudad actual es requerida");
     }
-    if (!formData.preferred_position) {
-      errors.push(isMa ? "المنصب المفضل مطلوب" : isEn ? "Preferred position is required" : "Posición preferida es requerida");
+    if (!formData.trabajoBusca.trim()) {
+      errors.push(isMa ? "اختر العمل الذي تبحث عنه" : isEn ? "Select the job you are looking for" : "Selecciona el trabajo que buscas");
     }
-    if (!formData.profesion.trim()) {
-      errors.push(isMa ? "الخبرة العملية مطلوبة" : isEn ? "Work experience is required" : "Experiencia laboral es requerida");
+    if (!formData.experienciaPrevia.trim()) {
+      errors.push(isMa ? "اختر تجربتك السابقة" : isEn ? "Select your previous experience" : "Selecciona tu experiencia previa");
     }
     if (!acceptTerms) {
       errors.push(isMa ? "خاصك توافق على الشروط" : isEn ? "You must accept the terms" : "Debes aceptar los términos");
@@ -1551,7 +1548,7 @@ export default function TrabajoMalta() {
     return true;
   };
 
-  // ✅ handlePay - Con detección de admin
+  // ✅ handlePay - Con detección de admin - Actualizado
   const handlePay = async (plan: "weekly" | "monthly") => {
     if (!validateForm()) {
       return;
@@ -1565,7 +1562,7 @@ export default function TrabajoMalta() {
       const isAdmin =
         user?.email?.toLowerCase() === "robertopalacio165@gmail.com";
 
-      // ✅ Payload final - Eliminados: countryResidence, willing_to_relocate, tieneCV, cvUrl, estudios, work_preference, sectores
+      // ✅ Payload actualizado - eliminado preferred_position, añadidos trabajoBusca y experienciaPrevia
       const payload = {
         plan,
 
@@ -1585,13 +1582,12 @@ export default function TrabajoMalta() {
         arabe_nivel: formData.arabe_nivel,
         aleman_nivel: formData.aleman_nivel,
 
-        profesion: formData.profesion,
+        trabajoBusca: formData.trabajoBusca,
+        experienciaPrevia: formData.experienciaPrevia,
         anosExperiencia: formData.anosExperiencia,
         education_level: formData.education_level,
 
         carnetConducir: formData.carnetConducir,
-
-        preferred_position: formData.preferred_position,
 
         photoUrl: formData.photoUrl,
         pdfUrl: formData.pdfUrl,
