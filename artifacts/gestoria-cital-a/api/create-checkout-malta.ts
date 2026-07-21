@@ -25,7 +25,7 @@ export default async function handler(
     console.log(body);
     console.log("==================================");
 
-    // ✅ 2. DESESTRUCTURACIÓN ACTUALIZADA con todos los nuevos campos usando 'body'
+    // ✅ 2. DESESTRUCTURACIÓN ACTUALIZADA - Eliminados campos obsoletos
     const {
       fullName,
       whatsapp,
@@ -33,7 +33,6 @@ export default async function handler(
 
       nationality,
       currentCity,
-      countryResidence,
 
       fechaNacimiento,
 
@@ -45,20 +44,13 @@ export default async function handler(
       arabe_nivel,
       aleman_nivel,
 
-      profesion,
+      trabajoBusca,
+      experienciaPrevia,
       anosExperiencia,
-      estudios, // ✅ AÑADIDO: estudios
       education_level,
 
-      sectores,
       carnetConducir,
 
-      preferred_position,
-      work_preference,
-      willing_to_relocate,
-
-      tieneCV,
-      cvUrl,
       photoUrl,
       pdfUrl,
 
@@ -71,16 +63,13 @@ export default async function handler(
 
     console.log("========== DOCUMENTOS ==========");
     console.log("photoUrl:", photoUrl);
-    console.log("cvUrl:", cvUrl);
     console.log("pdfUrl:", pdfUrl);
     console.log("nationality:", nationality);
     console.log("currentCity:", currentCity);
-    console.log("countryResidence:", countryResidence);
-    console.log("preferred_position:", preferred_position);
-    console.log("work_preference:", work_preference);
-    console.log("willing_to_relocate:", willing_to_relocate);
+    console.log("trabajoBusca:", trabajoBusca);
+    console.log("experienciaPrevia:", experienciaPrevia);
+    console.log("anosExperiencia:", anosExperiencia);
     console.log("education_level:", education_level);
-    console.log("estudios:", estudios); // ✅ AÑADIDO: log de estudios
     console.log("=================================");
 
     const session = await stripe.checkout.sessions.create({
@@ -105,45 +94,36 @@ export default async function handler(
       ],
       success_url: `${process.env.NEXT_PUBLIC_URL}/trabajo-malta?success=true&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.NEXT_PUBLIC_URL}/trabajo-malta?canceled=true`,
-      // ✅ 3. METADATA ACTUALIZADA con todos los nuevos campos
+      // ✅ 3. METADATA ACTUALIZADA - Limpia y sin espacios
       metadata: {
-        fullName: fullName || "",
-        whatsapp: whatsapp || "",
-        email: email || "",
+        fullName: fullName?.trim() || "",
+        whatsapp: whatsapp?.trim() || "",
+        email: email?.trim().toLowerCase() || "",
 
-        nationality: nationality || "",
-        currentCity: currentCity || "",
-        countryResidence: countryResidence || "",
+        nationality: nationality?.trim() || "",
+        currentCity: currentCity?.trim() || "",
 
-        fechaNacimiento: fechaNacimiento || "",
+        fechaNacimiento: fechaNacimiento?.trim() || "",
 
-        idiomas: idiomas || "",
-        ingles_nivel: ingles_nivel || "",
-        frances_nivel: frances_nivel || "",
-        italiano_nivel: italiano_nivel || "",
-        espanol_nivel: espanol_nivel || "",
-        arabe_nivel: arabe_nivel || "",
-        aleman_nivel: aleman_nivel || "",
+        idiomas: idiomas?.trim() || "",
+        ingles_nivel: ingles_nivel?.trim() || "",
+        frances_nivel: frances_nivel?.trim() || "",
+        italiano_nivel: italiano_nivel?.trim() || "",
+        espanol_nivel: espanol_nivel?.trim() || "",
+        arabe_nivel: arabe_nivel?.trim() || "",
+        aleman_nivel: aleman_nivel?.trim() || "",
 
-        profesion: profesion || "",
-        anosExperiencia: anosExperiencia || "",
-        estudios: estudios || "", // ✅ AÑADIDO: estudios en metadata
-        education_level: education_level || "",
+        trabajoBusca: trabajoBusca?.trim() || "",
+        experienciaPrevia: experienciaPrevia?.trim() || "",
+        anosExperiencia: anosExperiencia?.trim() || "",
+        education_level: education_level?.trim() || "",
 
-        sectores: sectores || "",
-        carnetConducir: carnetConducir || "",
+        carnetConducir: carnetConducir?.trim() || "",
 
-        preferred_position: preferred_position || "",
-        work_preference: work_preference || "",
-        willing_to_relocate: willing_to_relocate || "Yes",
+        photoUrl: photoUrl?.trim() || "",
+        pdfUrl: pdfUrl?.trim() || "",
 
-        tieneCV: tieneCV || "",
-
-        cvUrl: cvUrl || "",
-        photoUrl: photoUrl || "",
-        pdfUrl: pdfUrl || "",
-
-        plan: plan || "monthly",
+        plan: plan?.trim() || "monthly",
       },
     });
 
