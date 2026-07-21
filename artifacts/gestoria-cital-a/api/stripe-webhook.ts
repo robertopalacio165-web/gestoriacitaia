@@ -67,7 +67,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const email = metadata.email || "";
     const nationality = metadata.nationality || "";
     const currentCity = metadata.currentCity || "";
-    const countryResidence = metadata.countryResidence || "";
     const fechaNacimiento = metadata.fechaNacimiento || "";
     
     // ============================================
@@ -82,13 +81,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const aleman_nivel = metadata.aleman_nivel || "";
     
     // ============================================
-    // 3. EXPERIENCIA
+    // 3. EXPERIENCIA - ACTUALIZADO
     // ============================================
-    const profesion = metadata.profesion || "";
+    const trabajoBusca = metadata.trabajoBusca || "";
+    const experienciaPrevia = metadata.experienciaPrevia || "";
     const anosExperiencia = metadata.anosExperiencia || "";
-    const estudios = metadata.estudios || "";
     const educationLevel = metadata.education_level || "";
-    const sectores = metadata.sectores || "";
     
     // ============================================
     // 4. CARNET
@@ -96,24 +94,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const carnetConducir = metadata.carnetConducir || "";
     
     // ============================================
-    // 5. PREFERENCIAS
+    // 5. CV Y DOCUMENTOS
     // ============================================
-    const preferredPosition = metadata.preferred_position || "";
-    const workPreference = metadata.work_preference || "";
-    const willingToRelocate = metadata.willing_to_relocate === "Yes";
-    
-    // ============================================
-    // 6. CV Y DOCUMENTOS
-    // ============================================
-    const tieneCV =
-      metadata.tieneCV === "Yes" ||
-      metadata.tieneCV === "Sí";
-    const cvUrl = metadata.cvUrl || "";
     const photoUrl = metadata.photoUrl || "";
     const pdfUrl = metadata.pdfUrl || "";
     
     // ============================================
-    // 7. PLAN
+    // 6. PLAN
     // ============================================
     const plan = metadata.plan || "monthly";
 
@@ -122,11 +109,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     console.log("  - nationality:", nationality);
     console.log("  - currentCity:", currentCity);
     console.log("  - photoUrl:", photoUrl);
-    console.log("  - cvUrl:", cvUrl);
-    console.log("  - estudios:", estudios);
+    console.log("  - trabajoBusca:", trabajoBusca);
+    console.log("  - experienciaPrevia:", experienciaPrevia);
 
     // ============================================
-    // ✅ 8. VERIFICAR SI YA EXISTE (ANTES DE INSERTAR)
+    // ✅ 7. VERIFICAR SI YA EXISTE (ANTES DE INSERTAR)
     // ============================================
     const { data: existing, error: checkError } = await supabase
       .from("malta_applications")
@@ -142,7 +129,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     let isNew = false;
 
     // ============================================
-    // ✅ 9. SI YA EXISTE -> ACTUALIZAR
+    // ✅ 8. SI YA EXISTE -> ACTUALIZAR
     // ============================================
     if (existing) {
       applicationId = existing.id;
@@ -154,7 +141,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         email: email,
         nacionalidad: nationality,
         current_city: currentCity,
-        pais_residencia: countryResidence,
         fecha_nacimiento: fechaNacimiento || null,
         idiomas: idiomas,
         ingles_nivel: ingles_nivel,
@@ -163,17 +149,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         espanol_nivel: espanol_nivel,
         arabe_nivel: arabe_nivel,
         aleman_nivel: aleman_nivel,
-        profesion: profesion,
+        trabajo_busca: trabajoBusca,
+        experiencia_previa: experienciaPrevia,
         anos_experiencia: anosExperiencia,
-        estudios: estudios,
         education_level: educationLevel,
-        sectores: sectores,
         carnet_conducir: carnetConducir,
-        preferred_position: preferredPosition,
-        work_preference: workPreference,
-        willing_to_relocate: willingToRelocate,
-        tiene_cv: tieneCV,
-        cv_url: cvUrl,
         photo_url: photoUrl,
         pdf_url: pdfUrl,
         plan: plan,
@@ -203,7 +183,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     } else {
       // ============================================
-      // ✅ 10. SI NO EXISTE -> INSERTAR
+      // ✅ 9. SI NO EXISTE -> INSERTAR
       // ============================================
       isNew = true;
       console.log("🆕 Creando nueva aplicación");
@@ -216,7 +196,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           email: email,
           nacionalidad: nationality,
           current_city: currentCity,
-          pais_residencia: countryResidence,
           fecha_nacimiento: fechaNacimiento || null,
           idiomas: idiomas,
           ingles_nivel: ingles_nivel,
@@ -225,17 +204,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           espanol_nivel: espanol_nivel,
           arabe_nivel: arabe_nivel,
           aleman_nivel: aleman_nivel,
-          profesion: profesion,
+          trabajo_busca: trabajoBusca,
+          experiencia_previa: experienciaPrevia,
           anos_experiencia: anosExperiencia,
-          estudios: estudios,
           education_level: educationLevel,
-          sectores: sectores,
           carnet_conducir: carnetConducir,
-          preferred_position: preferredPosition,
-          work_preference: workPreference,
-          willing_to_relocate: willingToRelocate,
-          tiene_cv: tieneCV,
-          cv_url: cvUrl,
           photo_url: photoUrl,
           pdf_url: pdfUrl,
           plan: plan,
@@ -262,7 +235,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // ============================================
-    // ✅ 11. ENVIAR WHATSAPP DE BIENVENIDA (SOLO SI ES NUEVO)
+    // ✅ 10. ENVIAR WHATSAPP DE BIENVENIDA (SOLO SI ES NUEVO)
     // ============================================
     if (isNew) {
       console.log(`📲 Enviando WhatsApp de bienvenida para ${applicationId}`);
@@ -283,8 +256,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
           plan: plan,
 
-          profesion: profesion,
-          puesto: preferredPosition,
+          trabajoBusca: trabajoBusca,
+          experienciaPrevia: experienciaPrevia,
 
           mensaje:
             `👋 Hola ${fullName}. Hemos recibido correctamente tu solicitud para Trabajo en Malta. En unos minutos comenzaremos a generar tu CV profesional y tu carta de presentación mediante IA. Después empezaremos a buscar ofertas adaptadas a tu perfil.`,
@@ -307,7 +280,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // ============================================
-    // ✅ 12. AÑADIR A LA COLA DE TRABAJO (SOLO SI ES NUEVO)
+    // ✅ 11. AÑADIR A LA COLA DE TRABAJO (SOLO SI ES NUEVO)
     // ============================================
     if (isNew) {
       try {
@@ -333,7 +306,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // ============================================
-    // ✅ 13. NOTIFICAR A MAKE (WEBHOOK)
+    // ✅ 12. NOTIFICAR A MAKE (WEBHOOK)
     // ============================================
     try {
       await fetch(MAKE_WEBHOOK_URL, {
@@ -351,7 +324,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           plan: plan,
           nationality: nationality,
           currentCity: currentCity,
-          preferredPosition: preferredPosition,
+          trabajoBusca: trabajoBusca,
+          experienciaPrevia: experienciaPrevia,
           timestamp: new Date().toISOString(),
         }),
       });
@@ -361,7 +335,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // ============================================
-    // ✅ 14. RESPONDER RÁPIDO (NO ESPERAR GENERACIÓN)
+    // ✅ 13. RESPONDER RÁPIDO (NO ESPERAR GENERACIÓN)
     // ============================================
     return res.status(200).json({
       received: true,
