@@ -1606,6 +1606,10 @@ export default function TrabajoMalta() {
         },
         body: JSON.stringify(payload),
       });
+      console.log("========== FORMDATA ==========");
+console.log("education_level:", formData.education_level);
+console.log(payload);
+console.log("==============================");
 
       const data = await res.json();
       if (data.url) {
