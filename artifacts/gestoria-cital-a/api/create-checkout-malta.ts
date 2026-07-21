@@ -25,7 +25,7 @@ export default async function handler(
     console.log(body);
     console.log("==================================");
 
-    // ✅ 2. DESESTRUCTURACIÓN ACTUALIZADA - Eliminados campos obsoletos
+    // ✅ 2. DESESTRUCTURACIÓN ACTUALIZADA - snake_case
     const {
       fullName,
       whatsapp,
@@ -44,9 +44,9 @@ export default async function handler(
       arabe_nivel,
       aleman_nivel,
 
-      trabajoBusca,
-      experienciaPrevia,
-      anosExperiencia,
+      trabajo_busca,
+      experiencia_previa,
+      anos_experiencia,
       education_level,
 
       carnetConducir,
@@ -66,9 +66,9 @@ export default async function handler(
     console.log("pdfUrl:", pdfUrl);
     console.log("nationality:", nationality);
     console.log("currentCity:", currentCity);
-    console.log("trabajoBusca:", trabajoBusca);
-    console.log("experienciaPrevia:", experienciaPrevia);
-    console.log("anosExperiencia:", anosExperiencia);
+    console.log("trabajo_busca:", trabajo_busca);
+    console.log("experiencia_previa:", experiencia_previa);
+    console.log("anos_experiencia:", anos_experiencia);
     console.log("education_level:", education_level);
     console.log("=================================");
 
@@ -94,7 +94,7 @@ export default async function handler(
       ],
       success_url: `${process.env.NEXT_PUBLIC_URL}/trabajo-malta?success=true&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.NEXT_PUBLIC_URL}/trabajo-malta?canceled=true`,
-      // ✅ 3. METADATA ACTUALIZADA - Limpia y sin espacios
+      // ✅ 3. METADATA ACTUALIZADA - snake_case
       metadata: {
         fullName: fullName?.trim() || "",
         whatsapp: whatsapp?.trim() || "",
@@ -113,9 +113,9 @@ export default async function handler(
         arabe_nivel: arabe_nivel?.trim() || "",
         aleman_nivel: aleman_nivel?.trim() || "",
 
-        trabajoBusca: trabajoBusca?.trim() || "",
-        experienciaPrevia: experienciaPrevia?.trim() || "",
-        anosExperiencia: anosExperiencia?.trim() || "",
+        trabajo_busca: trabajo_busca?.trim() || "",
+        experiencia_previa: experiencia_previa?.trim() || "",
+        anos_experiencia: anos_experiencia?.trim() || "",
         education_level: education_level?.trim() || "",
 
         carnetConducir: carnetConducir?.trim() || "",
