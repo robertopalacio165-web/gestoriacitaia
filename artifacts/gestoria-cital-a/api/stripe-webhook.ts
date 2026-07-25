@@ -1,6 +1,7 @@
 import Stripe from "stripe";
 import { createClient } from "@supabase/supabase-js";
 import type { VercelRequest, VercelResponse } from "@vercel/node";
+import { sendWelcomeEmail } from "../lib/sendWelcomeEmail"; // ✅ NUEVA IMPORTACIÓN
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
   apiVersion: "2025-08-27.basil",
@@ -247,7 +248,28 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // ============================================
-    // ✅ 10. ENVIAR WHATSAPP DE BIENVENIDA (SOLO SI ES NUEVO)
+    // ✅ 10. ENVIAR EMAIL DE BIENVENIDA (SOLO SI ES NUEVO)
+    // ============================================
+    if (isNew) {
+      console.log(`📧 Enviando email de bienvenida para ${applicationId}`);
+      
+      try {
+        await sendWelcomeEmail({
+          email,
+          name: fullName,
+          plan
+        });
+        console.log(`✅ Email de bienvenida enviado a ${email}`);
+      } catch (emailError) {
+        console.error("❌ Error enviando email de bienvenida:", emailError);
+        // No fallamos el webhook si el email falla, solo logueamos
+      }
+    } else {
+      console.log(`⏳ Aplicación ${applicationId} ya existe, no se envía email`);
+    }
+
+    // ============================================
+    // ✅ 11. ENVIAR WHATSAPP DE BIENVENIDA (SOLO SI ES NUEVO)
     // ============================================
     if (isNew) {
       console.log(`📲 Enviando WhatsApp de bienvenida para ${applicationId}`);
@@ -292,7 +314,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // ============================================
-    // ✅ 11. AÑADIR A LA COLA DE TRABAJO (SOLO SI ES NUEVO)
+    // ✅ 12. AÑADIR A LA COLA DE TRABAJO (SOLO SI ES NUEVO)
     // ============================================
     if (isNew) {
       try {
@@ -318,7 +340,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // ============================================
-    // ✅ 12. NOTIFICAR A MAKE (WEBHOOK)
+    // ✅ 13. NOTIFICAR A MAKE (WEBHOOK)
     // ============================================
     try {
       await fetch(MAKE_WEBHOOK_URL, {
@@ -347,7 +369,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // ============================================
-    // ✅ 13. RESPONDER RÁPIDO (NO ESPERAR GENERACIÓN)
+    // ✅ 14. RESPONDER RÁPIDO (NO ESPERAR GENERACIÓN)
     // ============================================
     return res.status(200).json({
       received: true,
