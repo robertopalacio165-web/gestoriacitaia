@@ -1,15 +1,11 @@
 import { createClient } from "@supabase/supabase-js";
 import type { VercelRequest, VercelResponse } from "@vercel/node";
+import nodemailer from "nodemailer"; // ✅ NUEVO IMPORT
 
 const supabase = createClient(
   process.env.VITE_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
-
-// ✅ URL del webhook de Make para WhatsApp de bienvenida
-const MAKE_WEBHOOK_MALTA =
-  process.env.MAKE_WEBHOOK_MALTA ||
-  "https://hook.eu1.make.com/noxce8cky0r0jr7ujf62fywggn3l824b";
 
 export default async function handler(
   req: VercelRequest,
@@ -99,47 +95,68 @@ export default async function handler(
     console.log(`✅ Aplicación creada en modo DEV: ${data.id}`);
 
     // ============================================
-    // ✅ ENVIAR WHATSAPP DE BIENVENIDA - ACTUALIZADO
+    // ✅ ENVIAR EMAIL DE BIENVENIDA
     // ============================================
-    fetch(MAKE_WEBHOOK_MALTA, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        tipo: "malta_bienvenida",
+    try {
+      const transporter = nodemailer.createTransport({
+        service: "gmail",
+        auth: {
+          user: process.env.GMAIL_USER,
+          pass: process.env.GMAIL_PASS,
+        },
+      });
 
-        id: data.id,
+      await transporter.sendMail({
+        from: `"GestoriaCitaIA" <${process.env.GMAIL_USER}>`,
+        to: email,
+        subject: "✅ Welcome to Malta Jobs",
 
-        nombre: fullName,
-        whatsapp: whatsapp,
-        email: email,
+        html: `
+          <h2>🇲🇦 السلام عليكم ${fullName}</h2>
 
-        plan: plan || "monthly",
+          <p>
+          شكراً بزاف على الثقة ديالك فـ <b>GestoriaCitaIA</b>.
+          </p>
 
-        trabajo_busca: trabajo_busca,
-        experiencia_previa: experiencia_previa,
+          <p>
+          توصلنا بالأداء ديالك بنجاح، وغادي نبداو نحضرو ليك:
+          </p>
 
-        mensaje:
-          `👋 Hola ${fullName}. Hemos recibido correctamente tu solicitud para Trabajo en Malta. En unos minutos comenzaremos a generar tu CV profesional y tu carta de presentación mediante IA. Después empezaremos a buscar ofertas adaptadas a tu perfil.`,
+          <ul>
+            <li>✅ CV احترافي باللغة الإنجليزية</li>
+            <li>✅ Cover Letter احترافية</li>
+            <li>✅ إرسال الترشيحات للشركات في مالطا</li>
+          </ul>
 
-        fecha: new Date().toISOString(),
-      }),
-    })
-    .then(async (response) => {
-      if (!response.ok) {
-        console.error(
-          "❌ MAKE MALTA:",
-          response.status,
-          await response.text()
-        );
-      } else {
-        console.log("✅ WhatsApp de bienvenida enviado");
-      }
-    })
-    .catch((err) => {
-      console.error("❌ Error enviando WhatsApp:", err);
-    });
+          <hr>
+
+          <h2>🇬🇧 Hello ${fullName}</h2>
+
+          <p>
+          Thank you for choosing <b>GestoriaCitaIA</b>.
+          </p>
+
+          <p>
+          Your payment has been received successfully.
+          We are now preparing your professional CV and Cover Letter.
+          Afterwards we will start applying to suitable employers in Malta.
+          </p>
+
+          <p><b>Your plan:</b> ${plan}</p>
+
+          <p>
+            <a href="https://gestoriacitaia.com">
+              https://gestoriacitaia.com
+            </a>
+          </p>
+        `,
+      });
+
+      console.log("✅ Email de bienvenida enviado");
+
+    } catch (err) {
+      console.error("❌ Error enviando email:", err);
+    }
 
     // ✅ Añadir a la cola de trabajo
     const { error: queueError } = await supabase
