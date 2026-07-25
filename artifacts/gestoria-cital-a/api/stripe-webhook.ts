@@ -1,7 +1,7 @@
 import Stripe from "stripe";
 import { createClient } from "@supabase/supabase-js";
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { sendWelcomeEmail } from "./sendWelcomeEmail";
+import nodemailer from "nodemailer";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
   apiVersion: "2025-08-27.basil",
@@ -249,11 +249,51 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       console.log(`📧 Enviando email de bienvenida para ${applicationId}`);
       
       try {
-        await sendWelcomeEmail({
-          email,
-          name: fullName,
-          plan
-        });
+   const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.GMAIL_USER,
+    pass: process.env.GMAIL_PASS,
+  },
+});
+
+await transporter.sendMail({
+  from: `"GestoriaCitaIA" <${process.env.GMAIL_USER}>`,
+  to: email,
+  subject: "✅ Welcome to Malta Jobs",
+
+  html: `
+    <h2>🇲🇦 السلام عليكم ${fullName}</h2>
+
+    <p>شكراً بزاف على الثقة ديالك فـ <b>GestoriaCitaIA</b>.</p>
+
+    <p>
+      توصلنا بالأداء ديالك بنجاح.
+      غادي نبداو نحضرو ليك CV احترافي و Cover Letter
+      ومن بعد غادي نبداو نرسلو الترشيحات للشركات فمالطا.
+    </p>
+
+    <hr>
+
+    <h2>🇬🇧 Hello ${fullName}</h2>
+
+    <p>Thank you for choosing <b>GestoriaCitaIA</b>.</p>
+
+    <p>
+      Your payment has been received successfully.
+      We are now preparing your professional CV and Cover Letter.
+      Afterwards we will start applying to suitable employers in Malta.
+    </p>
+
+    <p><b>Plan:</b> ${plan}</p>
+
+    <p>
+      <a href="https://gestoriacitaia.com">
+        https://gestoriacitaia.com
+      </a>
+    </p>
+  `,
+});
         console.log(`✅ Email de bienvenida enviado a ${email}`);
       } catch (emailError) {
         console.error("❌ Error enviando email de bienvenida:", emailError);
