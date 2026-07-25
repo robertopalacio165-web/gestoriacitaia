@@ -1,7 +1,7 @@
 import Stripe from "stripe";
 import { createClient } from "@supabase/supabase-js";
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { sendWelcomeEmail } from "../lib/sendWelcomeEmail"; // ✅ NUEVA IMPORTACIÓN
+import { sendWelcomeEmail } from "../lib/sendWelcomeEmail";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
   apiVersion: "2025-08-27.basil",
@@ -14,11 +14,6 @@ const supabase = createClient(
 
 // ✅ URL del webhook de Make para notificaciones de nuevo trabajo
 const MAKE_WEBHOOK_URL = process.env.MAKE_WEBHOOK_URL || "https://hook.eu1.make.com/5ugo16vgnvx2rhhu3mwjfag553d1g0ij";
-
-// ✅ URL del webhook de Make para WhatsApp de bienvenida
-const MAKE_WEBHOOK_MALTA =
-  process.env.MAKE_WEBHOOK_MALTA ||
-  "https://hook.eu1.make.com/noxce8cky0r0jr7ujf62fywggn3l824b";
 
 export const config = {
   api: {
@@ -269,52 +264,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // ============================================
-    // ✅ 11. ENVIAR WHATSAPP DE BIENVENIDA (SOLO SI ES NUEVO)
-    // ============================================
-    if (isNew) {
-      console.log(`📲 Enviando WhatsApp de bienvenida para ${applicationId}`);
-      
-      fetch(MAKE_WEBHOOK_MALTA, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          tipo: "malta_bienvenida",
-
-          id: applicationId,
-
-          nombre: fullName,
-          whatsapp: whatsapp,
-          email: email,
-
-          plan: plan,
-
-          trabajo_busca: trabajo_busca,
-          experiencia_previa: experiencia_previa,
-
-          mensaje:
-            `👋 Hola ${fullName}. Hemos recibido correctamente tu solicitud para Trabajo en Malta. En unos minutos comenzaremos a generar tu CV profesional y tu carta de presentación mediante IA. Después empezaremos a buscar ofertas adaptadas a tu perfil.`,
-
-          fecha: new Date().toISOString(),
-        }),
-      })
-      .then(async (response) => {
-        if (!response.ok) {
-          console.error("❌ MAKE MALTA:", response.status, await response.text());
-        } else {
-          console.log("✅ WhatsApp de bienvenida enviado");
-        }
-      })
-      .catch((err) => {
-        console.error("❌ Error enviando WhatsApp:", err);
-      });
-    } else {
-      console.log(`⏳ Aplicación ${applicationId} ya existe, no se envía WhatsApp`);
-    }
-
-    // ============================================
-    // ✅ 12. AÑADIR A LA COLA DE TRABAJO (SOLO SI ES NUEVO)
+    // ✅ 11. AÑADIR A LA COLA DE TRABAJO (SOLO SI ES NUEVO)
     // ============================================
     if (isNew) {
       try {
@@ -340,7 +290,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // ============================================
-    // ✅ 13. NOTIFICAR A MAKE (WEBHOOK)
+    // ✅ 12. NOTIFICAR A MAKE (WEBHOOK)
     // ============================================
     try {
       await fetch(MAKE_WEBHOOK_URL, {
@@ -369,7 +319,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // ============================================
-    // ✅ 14. RESPONDER RÁPIDO (NO ESPERAR GENERACIÓN)
+    // ✅ 13. RESPONDER RÁPIDO (NO ESPERAR GENERACIÓN)
     // ============================================
     return res.status(200).json({
       received: true,
