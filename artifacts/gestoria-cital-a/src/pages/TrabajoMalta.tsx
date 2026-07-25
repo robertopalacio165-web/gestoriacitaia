@@ -1544,34 +1544,65 @@ export default function TrabajoMalta() {
 
       const isAdmin =
         user?.email?.toLowerCase() === "robertopalacio165@gmail.com";
+      
       let photoUrl = "";
-let pdfUrl = "";
-if (formData.photoFile) {
-  const photoPath = `photos/${crypto.randomUUID()}-${formData.photoFile.name}`;
+      let pdfUrl = "";
+      
+      // ✅ SUBIR FOTO CON LOGS DE DEPURACIÓN
+      if (formData.photoFile) {
+        const photoPath = `photos/${crypto.randomUUID()}-${formData.photoFile.name}`;
 
-  const { error } = await supabase.storage
-    .from("malta-temp")
-    .upload(photoPath, formData.photoFile);
+        console.log("📸 SUBIENDO FOTO:");
+        console.log("  - photoPath:", photoPath);
+        console.log("  - file name:", formData.photoFile.name);
+        console.log("  - file size:", formData.photoFile.size);
+        console.log("  - file type:", formData.photoFile.type);
 
-  if (error) {
-    throw error;
-  }
+        const { data, error } = await supabase.storage
+          .from("malta-temp")
+          .upload(photoPath, formData.photoFile);
 
-  photoUrl = photoPath;
-}
-if (formData.pdfFile) {
-  const pdfPath = `pdfs/${crypto.randomUUID()}-${formData.pdfFile.name}`;
+        console.log("📸 RESULTADO SUBIDA FOTO:");
+        console.log("  - data:", data);
+        console.log("  - error:", error);
 
-  const { error } = await supabase.storage
-    .from("malta-temp")
-    .upload(pdfPath, formData.pdfFile);
+        if (error) {
+          console.error("❌ Error subiendo foto:", error);
+          alert(`Error subiendo foto: ${error.message}`);
+          throw error;
+        }
 
-  if (error) {
-    throw error;
-  }
+        photoUrl = photoPath;
+        console.log("✅ Foto subida correctamente:", photoUrl);
+      }
+      
+      // ✅ SUBIR PDF CON LOGS DE DEPURACIÓN
+      if (formData.pdfFile) {
+        const pdfPath = `pdfs/${crypto.randomUUID()}-${formData.pdfFile.name}`;
 
-  pdfUrl = pdfPath;
-}
+        console.log("📄 SUBIENDO PDF:");
+        console.log("  - pdfPath:", pdfPath);
+        console.log("  - file name:", formData.pdfFile.name);
+        console.log("  - file size:", formData.pdfFile.size);
+        console.log("  - file type:", formData.pdfFile.type);
+
+        const { data, error } = await supabase.storage
+          .from("malta-temp")
+          .upload(pdfPath, formData.pdfFile);
+
+        console.log("📄 RESULTADO SUBIDA PDF:");
+        console.log("  - data:", data);
+        console.log("  - error:", error);
+
+        if (error) {
+          console.error("❌ Error subiendo PDF:", error);
+          alert(`Error subiendo PDF: ${error.message}`);
+          throw error;
+        }
+
+        pdfUrl = pdfPath;
+        console.log("✅ PDF subido correctamente:", pdfUrl);
+      }
       
       // ✅ Payload actualizado - snake_case
       const payload = {
@@ -1600,8 +1631,8 @@ if (formData.pdfFile) {
 
         carnetConducir: formData.carnetConducir,
 
-  photoUrl,
-pdfUrl,
+        photoUrl,
+        pdfUrl,
         
         willing_to_relocate: "Yes",
       };
@@ -1618,9 +1649,9 @@ pdfUrl,
         body: JSON.stringify(payload),
       });
       console.log("========== FORMDATA ==========");
-console.log("education_level:", formData.education_level);
-console.log(payload);
-console.log("==============================");
+      console.log("education_level:", formData.education_level);
+      console.log(payload);
+      console.log("==============================");
 
       const data = await res.json();
       if (data.url) {
