@@ -1,6 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { sendWelcomeEmail } from "../lib/sendWelcomeEmail"; // ✅ NUEVO IMPORT
+import { sendWelcomeEmail } from "../src/lib/sendWelcomeEmail";
 
 const supabase = createClient(
   process.env.VITE_SUPABASE_URL!,
