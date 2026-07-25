@@ -92,7 +92,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const carnetConducir = metadata.carnetConducir || "";
     
     // ============================================
-    // 5. PLAN
+    // 5. DOCUMENTOS - Recibir desde metadata
+    // ============================================
+    const photoUrl = metadata.photoUrl || null;
+    const pdfUrl = metadata.pdfUrl || null;
+    
+    // ============================================
+    // 6. PLAN
     // ============================================
     const plan = metadata.plan || "monthly";
 
@@ -100,6 +106,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     console.log("  - fullName:", fullName);
     console.log("  - nationality:", nationality);
     console.log("  - currentCity:", currentCity);
+    console.log("  - photoUrl:", photoUrl);
+    console.log("  - pdfUrl:", pdfUrl);
     console.log("  - trabajo_busca:", trabajo_busca);
     console.log("  - experiencia_previa:", experiencia_previa);
 
@@ -150,8 +158,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         education_level: educationLevel,
         estudios: educationLevel,
         carnet_conducir: carnetConducir,
-        photo_url: existing.photo_url,
-        pdf_url: existing.pdf_url,
+        // ✅ Usar nuevos valores si vienen, sino mantener los existentes
+        photo_url: photoUrl || existing.photo_url,
+        pdf_url: pdfUrl || existing.pdf_url,
         plan: plan,
         paid: true,
         updated_at: new Date().toISOString(),
@@ -210,8 +219,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           education_level: educationLevel,
           estudios: educationLevel,
           carnet_conducir: carnetConducir,
-          photo_url: null,
-          pdf_url: null,
+          // ✅ Usar valores recibidos de metadata
+          photo_url: photoUrl,
+          pdf_url: pdfUrl,
           plan: plan,
           stripe_session_id: session.id,
           stripe_customer_id: session.customer as string,
@@ -232,6 +242,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       applicationId = newApp.id;
       console.log(`✅ Registro creado en Supabase: ${applicationId}`);
+      console.log("📸 photo_url guardada:", newApp.photo_url);
+      console.log("📄 pdf_url guardada:", newApp.pdf_url);
     }
 
     // ============================================
