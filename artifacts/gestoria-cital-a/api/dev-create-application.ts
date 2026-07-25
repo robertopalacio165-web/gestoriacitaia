@@ -1,6 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import nodemailer from "nodemailer"; // ✅ NUEVO IMPORT
+import nodemailer from "nodemailer";
 
 const supabase = createClient(
   process.env.VITE_SUPABASE_URL!,
@@ -98,6 +98,17 @@ export default async function handler(
     // ✅ ENVIAR EMAIL DE BIENVENIDA
     // ============================================
     try {
+      // ✅ Validar que hay email
+      if (!email) {
+        throw new Error("No email provided");
+      }
+
+      // ✅ Convertir plan a nombre amigable
+      const planName =
+        plan === "weekly"
+          ? "Weekly Plan (7 days)"
+          : "Monthly Plan (30 days)";
+
       const transporter = nodemailer.createTransport({
         service: "gmail",
         auth: {
@@ -109,46 +120,213 @@ export default async function handler(
       await transporter.sendMail({
         from: `"GestoriaCitaIA" <${process.env.GMAIL_USER}>`,
         to: email,
-        subject: "✅ Welcome to Malta Jobs",
+        subject: `🇲🇹 Welcome ${fullName}! Your Malta Job Journey Starts Today`,
 
         html: `
-          <h2>🇲🇦 السلام عليكم ${fullName}</h2>
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f6f9;padding:40px 0;font-family:Arial,sans-serif;">
+<tr>
+<td align="center">
 
-          <p>
-          شكراً بزاف على الثقة ديالك فـ <b>GestoriaCitaIA</b>.
-          </p>
+<table width="700" cellpadding="0" cellspacing="0" style="width:100%;max-width:700px;background:#ffffff;border-radius:12px;overflow:hidden;">
 
-          <p>
-          توصلنا بالأداء ديالك بنجاح، وغادي نبداو نحضرو ليك:
-          </p>
+<tr>
+<td style="background:#0B57D0;padding:35px;text-align:center;color:#fff;">
 
-          <ul>
-            <li>✅ CV احترافي باللغة الإنجليزية</li>
-            <li>✅ Cover Letter احترافية</li>
-            <li>✅ إرسال الترشيحات للشركات في مالطا</li>
-          </ul>
+<h1 style="margin:0;">GestoriaCitaIA</h1>
 
-          <hr>
+<p style="margin-top:10px;font-size:18px;">
+🇲🇹 Malta Jobs
+</p>
 
-          <h2>🇬🇧 Hello ${fullName}</h2>
+</td>
+</tr>
 
-          <p>
-          Thank you for choosing <b>GestoriaCitaIA</b>.
-          </p>
+<tr>
+<td style="padding:40px;">
 
-          <p>
-          Your payment has been received successfully.
-          We are now preparing your professional CV and Cover Letter.
-          Afterwards we will start applying to suitable employers in Malta.
-          </p>
+<div dir="rtl" style="direction:rtl;text-align:right;">
 
-          <p><b>Your plan:</b> ${plan}</p>
+<h2 style="margin-top:0;">
+🇲🇦 🇲🇹 السلام عليكم ${fullName}
+</h2>
 
-          <p>
-            <a href="https://gestoriacitaia.com">
-              https://gestoriacitaia.com
-            </a>
-          </p>
+<div style="background:#EAF3FF;border-right:5px solid #0B57D0;padding:18px;margin:25px 0;border-radius:8px;text-align:right;">
+
+<b>⏳ شحال غادي ياخذ الوقت؟</b><br><br>
+
+📄 تحضير CV و Cover Letter خلال 24 ساعة.<br>
+📤 من بعد غادي نبداو نرسلو الترشيحات كل نهار.<br>
+📩 إلى جاك أي استدعاء أو مقابلة غادي نخبرك مباشرة.
+
+</div>
+
+<p style="font-size:18px;line-height:32px;">
+
+شكراً بزاف على الثقة ديالك فـ
+<b>GestoriaCitaIA</b>.
+
+</p>
+
+<p style="font-size:18px;line-height:32px;">
+
+🌟 حلمك تخدم فمالطا غادي يتحقق معانا إن شاء الله.
+
+</p>
+
+<p style="font-size:18px;line-height:32px;">
+
+من اليوم فريقنا غادي يبدا يخدم على الملف ديالك ويرسل الترشيحات يومياً حتى تلقى أفضل فرصة عمل.
+
+</p>
+
+<p style="font-size:18px;">
+<b>الباقة ديالك:</b> ${planName}
+</p>
+
+<p style="line-height:34px;font-size:18px;">
+
+✅ غادي نحضرو ليك CV احترافي باللغة الإنجليزية.
+
+<br><br>
+
+✅ غادي نحضرو ليك Cover Letter احترافية.
+
+<br><br>
+
+✅ غادي نرسلو الترشيح ديالك حتى لـ <b>10 شركات كل نهار</b> حسب الباقة ديالك.
+
+<br><br>
+
+✅ وإنت مرتاح، فريقنا هو اللي غادي يخدم عليك كل يوم.
+
+</p>
+
+<p style="font-size:20px;color:#0B57D0;font-weight:bold;">
+
+استمتع بوقتك وخلي الخدمة علينا ✈️
+
+</p>
+
+<p style="font-size:18px;">
+
+أول ما توصلنا أي مقابلة أو عرض عمل غادي نخبرك مباشرة.
+
+</p>
+
+</div>
+
+<hr style="margin:45px 0;">
+
+<div style="text-align:left;">
+
+<h2>
+🇬🇧 🇲🇹 Hello ${fullName},
+</h2>
+
+<div style="background:#EAF3FF;border-left:5px solid #0B57D0;padding:18px;margin:25px 0;border-radius:8px;">
+
+<b>⏳ Estimated processing time</b><br><br>
+
+📄 CV & Cover Letter: within 24 hours.<br>
+📤 Daily applications: immediately after your documents are ready.<br>
+📩 Interview invitations: we will notify you immediately.
+
+</div>
+
+<p style="font-size:18px;line-height:30px;">
+
+Thank you for choosing
+<b>GestoriaCitaIA</b>.
+
+</p>
+
+<p style="font-size:20px;color:#0B57D0;font-weight:bold;">
+
+🌟 Your dream to work in Malta starts today.
+
+</p>
+
+<p style="font-size:18px;line-height:30px;">
+
+From today our recruitment team starts working on your profile and will submit your application every day until you receive the best job opportunity in Malta.
+
+</p>
+
+<p style="font-size:18px;">
+<b>Your plan:</b> ${planName}
+</p>
+
+<p style="font-size:18px;line-height:34px;">
+
+✅ Professional CV in English
+
+<br><br>
+
+✅ Professional Cover Letter
+
+<br><br>
+
+✅ We submit your application to <b>up to 10 companies every day</b> depending on your plan.
+
+<br><br>
+
+✅ While you enjoy your holidays, our team works every day to find the best employer for you.
+
+</p>
+
+<p style="font-size:20px;color:#0B57D0;font-weight:bold;">
+
+Relax while our team works for you every single day. 🌴
+
+</p>
+
+<p style="font-size:18px;">
+
+As soon as an employer contacts us or invites you for an interview, we will notify you immediately.
+
+</p>
+
+<div style="text-align:center;margin-top:45px;">
+
+<a href="https://gestoriacitaia.com"
+style="background:#0B57D0;color:white;text-decoration:none;padding:18px 36px;border-radius:8px;font-size:18px;font-weight:bold;display:inline-block;">
+
+Visit GestoriaCitaIA
+
+</a>
+
+</div>
+
+</div>
+
+</td>
+</tr>
+
+<tr>
+
+<td style="background:#f5f5f5;padding:20px;text-align:center;color:#666;">
+
+<p style="font-size:14px;color:#777;line-height:24px;text-align:center;">
+
+Questions?<br>
+
+📧 gestoriacitaia@gmail.com
+
+</p>
+
+© 2026 GestoriaCitaIA · Malta Recruitment
+
+</td>
+
+</tr>
+
+</table>
+
+</td>
+
+</tr>
+
+</table>
         `,
       });
 
