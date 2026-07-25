@@ -1,7 +1,7 @@
 import Stripe from "stripe";
 import { createClient } from "@supabase/supabase-js";
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { sendWelcomeEmail } from "../lib/sendWelcomeEmail";
+import { sendWelcomeEmail } from "./sendWelcomeEmail";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
   apiVersion: "2025-08-27.basil",
