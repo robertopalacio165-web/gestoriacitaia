@@ -1407,6 +1407,11 @@ function generateCVHtml(data: any, content: CVContent): string {
       .map(item => `<li>${item}</li>`)
       .join("");
 
+  // --- PASSPORT, WORK PERMIT, VIDEO INTERVIEW ---
+  const passport = normalizePassport(data.passport);
+  const workPermit = normalizeWorkPermit(data.work_permit);
+  const videoInterview = normalizeVideo(data.video_interview);
+
   // --- REPLACEMENTS ---
   const replacements: Record<string, string> = {
     "{{PHOTO_HTML}}": photoHtml,
@@ -1428,6 +1433,10 @@ function generateCVHtml(data: any, content: CVContent): string {
     "{{PROFESSIONAL_SKILLS}}": professionalSkillsHtml,
     "{{PROFESSIONAL_HIGHLIGHTS}}": professionalHighlightsHtml,
     "{{PERSONAL_STATEMENT}}": personalStatement,
+    // NUEVO
+    "{{PASSPORT}}": passport,
+    "{{WORK_PERMIT}}": workPermit,
+    "{{VIDEO_INTERVIEW}}": videoInterview,
   };
 
   for (const [key, value] of Object.entries(replacements)) {
