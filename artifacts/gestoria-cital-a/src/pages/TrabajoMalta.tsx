@@ -1548,7 +1548,7 @@ export default function TrabajoMalta() {
       let photoUrl = "";
       let pdfUrl = "";
       
-      // ✅ SUBIR FOTO CON LOGS DE DEPURACIÓN
+      // ✅ SUBIR FOTO Y OBTENER URL PÚBLICA
       if (formData.photoFile) {
         const photoPath = `photos/${crypto.randomUUID()}-${formData.photoFile.name}`;
 
@@ -1572,11 +1572,16 @@ export default function TrabajoMalta() {
           throw error;
         }
 
-        photoUrl = photoPath;
+        // ✅ OBTENER URL PÚBLICA
+        const { data: publicUrlData } = supabase.storage
+          .from("malta-temp")
+          .getPublicUrl(photoPath);
+
+        photoUrl = publicUrlData.publicUrl;
         console.log("✅ Foto subida correctamente:", photoUrl);
       }
       
-      // ✅ SUBIR PDF CON LOGS DE DEPURACIÓN
+      // ✅ SUBIR PDF Y OBTENER URL PÚBLICA
       if (formData.pdfFile) {
         const pdfPath = `pdfs/${crypto.randomUUID()}-${formData.pdfFile.name}`;
 
@@ -1600,7 +1605,12 @@ export default function TrabajoMalta() {
           throw error;
         }
 
-        pdfUrl = pdfPath;
+        // ✅ OBTENER URL PÚBLICA
+        const { data: publicUrlData } = supabase.storage
+          .from("malta-temp")
+          .getPublicUrl(pdfPath);
+
+        pdfUrl = publicUrlData.publicUrl;
         console.log("✅ PDF subido correctamente:", pdfUrl);
       }
       
