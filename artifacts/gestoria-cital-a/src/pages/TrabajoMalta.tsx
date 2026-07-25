@@ -1544,7 +1544,35 @@ export default function TrabajoMalta() {
 
       const isAdmin =
         user?.email?.toLowerCase() === "robertopalacio165@gmail.com";
+      let photoUrl = "";
+let pdfUrl = "";
+if (formData.photoFile) {
+  const photoPath = `photos/${crypto.randomUUID()}-${formData.photoFile.name}`;
 
+  const { error } = await supabase.storage
+    .from("malta-temp")
+    .upload(photoPath, formData.photoFile);
+
+  if (error) {
+    throw error;
+  }
+
+  photoUrl = photoPath;
+}
+if (formData.pdfFile) {
+  const pdfPath = `pdfs/${crypto.randomUUID()}-${formData.pdfFile.name}`;
+
+  const { error } = await supabase.storage
+    .from("malta-temp")
+    .upload(pdfPath, formData.pdfFile);
+
+  if (error) {
+    throw error;
+  }
+
+  pdfUrl = pdfPath;
+}
+      
       // ✅ Payload actualizado - snake_case
       const payload = {
         plan,
@@ -1572,8 +1600,8 @@ export default function TrabajoMalta() {
 
         carnetConducir: formData.carnetConducir,
 
-        photoUrl: formData.photoUrl,
-        pdfUrl: formData.pdfUrl,
+  photoUrl,
+pdfUrl,
         
         willing_to_relocate: "Yes",
       };
