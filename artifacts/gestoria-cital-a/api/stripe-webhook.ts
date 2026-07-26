@@ -253,18 +253,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       console.log(`📧 Enviando email de bienvenida para ${applicationId}`);
       
       try {
+        // ✅ CAMBIO 1: Usar SMTP de Brevo
         const transporter = nodemailer.createTransport({
-          service: "gmail",
+          host: process.env.SMTP_HOST,
+          port: 587,
+          secure: false,
+          requireTLS: true,
           auth: {
-            user: process.env.GMAIL_USER,
-            pass: process.env.GMAIL_PASS,
+            user: process.env.SMTP_USER,
+            pass: process.env.SMTP_PASS,
           },
         });
 
         const planName = plan === "weekly" ? "Weekly Plan (7 days)" : "Monthly Plan (30 days)";
 
+        // ✅ CAMBIO 2: Usar FROM_EMAIL
         await transporter.sendMail({
-          from: `"GestoriaCitaIA" <${process.env.GMAIL_USER}>`,
+          from: `"GestoriaCitaIA" <${process.env.FROM_EMAIL}>`,
           to: email,
           subject: `🇲🇹 Welcome ${fullName}! Your Malta Job Journey Starts Today`,
 
