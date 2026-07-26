@@ -291,7 +291,6 @@ function OfficialBrowserBox({
     try {
       // ✅ SOLO guardar en memoria - NO subir a Supabase
       onFormChange("photoFile", file);
-      // ✅ photoUrl se queda vacío - se subirá después del pago
       
       toast({
         title: isMa ? "✅ تم الرفع" : isEn ? "✅ Uploaded" : "✅ Subida",
@@ -1647,6 +1646,10 @@ export default function TrabajoMalta() {
         willing_to_relocate: "Yes",
       };
 
+      console.log("========== PAYLOAD ==========");
+      console.log(JSON.stringify(payload, null, 2));
+      console.log("==============================");
+
       const endpoint = isAdmin
         ? "/api/dev-create-application"
         : "/api/create-checkout-malta";
@@ -1658,15 +1661,13 @@ export default function TrabajoMalta() {
         },
         body: JSON.stringify(payload),
       });
-      console.log("========== FORMDATA ==========");
-      console.log("education_level:", formData.education_level);
-      console.log(payload);
-      console.log("==============================");
 
       const data = await res.json();
       if (data.url) {
         localStorage.setItem("maltaPaid", "1");
         window.location.href = data.url;
+      } else {
+        throw new Error(data.error || "No se recibió URL de pago");
       }
     } catch (error) {
       console.error(error);
