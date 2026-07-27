@@ -1,112 +1,40 @@
-import { useState } from "react";
-import { motion } from "framer-motion";
-import { Navbar } from "@/components/Navbar";
-import { AgentCard } from "@/components/AgentCard";
-import { Button } from "@/components/ui/button";
-import { PaymentModal } from "@/components/PaymentModal";
-import { LegalDisclaimer } from "@/components/LegalDisclaimer";
-import { useLang } from "@/contexts/LanguageContext";
-import {
-  CheckCircle2,
-  FileText,
-  Shield,
-  Bell,
-  ArrowRight,
-} from "lucide-react";
-import { Link } from "wouter";
-import { supabase } from "@/lib/supabaseClient";
-
-type PlanItem = {
-  id: string;
-  price: string;
-  period: string;
-  color: string;
-  border: string;
-  btnClass: string;
-  badge: string | null;
-  free: boolean;
-  shadow: boolean;
-  features: string[];
-};
-
 function getPlans(t: (k: string) => string): PlanItem[] {
   return [
     {
-      id: "free",
-      price: "0€",
-      period: "",
-      color: "from-white/5 to-white/[0.02]",
-      border: "border-white/10",
-      btnClass:
-        "bg-white/8 hover:bg-white/15 text-white border border-white/15",
-      badge: null,
-      free: true,
-      shadow: false,
-      features: [
-        t("plan_free_f1"),
-        t("plan_free_f2"),
-        t("plan_free_f3"),
-        t("plan_free_f4"),
-      ],
-    },
-    {
-      id: "cita",
-      price: "9.99€",
-      period: "/mes",
-      color: "from-green-900/30 to-green-950/10",
-      border: "border-green-600/20",
-      btnClass:
-        "bg-white/8 hover:bg-white/15 text-white border border-white/15",
-      badge: null,
-      free: false,
-      shadow: false,
-      features: [
-        t("plan_cita_f1"),
-        t("plan_cita_f2"),
-        t("plan_cita_f3"),
-        t("plan_cita_f4"),
-        t("plan_cita_f5"),
-        t("plan_cita_f6"),
-      ],
-    },
-    {
-      id: "reg",
-      price: "9.99€",
-      period: "/mes",
-      color: "from-orange-900/25 to-orange-950/10",
-      border: "border-orange-500/25",
-      btnClass:
-        "bg-white/8 hover:bg-white/15 text-white border border-white/15",
-      badge: null,
-      free: false,
-      shadow: false,
-      features: [
-        t("plan_reg_f1"),
-        t("plan_reg_f2"),
-        t("plan_reg_f3"),
-        t("plan_reg_f4"),
-        t("plan_reg_f5"),
-      ],
-    },
-    {
-      id: "std",
-      price: "19.99€",
-      period: "/mes",
+      id: "weekly",
+      price: "14,99€",
+      period: "7 días",
       color: "from-blue-900/40 to-blue-950/20",
       border: "border-blue-400/35",
       btnClass:
-        "bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/30",
-      badge: "POPULAR",
+        "bg-blue-500 hover:bg-blue-400 text-white shadow-lg shadow-blue-500/30",
+      badge: null,
       free: false,
       shadow: true,
       features: [
-        t("plan_std_f1"),
-        t("plan_std_f2"),
-        t("plan_std_f3"),
-        t("plan_std_f4"),
-        t("plan_std_f5"),
-        t("plan_std_f6"),
-        t("plan_std_f7"),
+        "CV profesional con IA",
+        "Carta de motivación en inglés",
+        "Hasta 70 candidaturas",
+        "Notificaciones WhatsApp",
+      ],
+    },
+    {
+      id: "monthly",
+      price: "24,99€",
+      period: "30 días",
+      color: "from-yellow-900/30 to-yellow-950/20",
+      border: "border-yellow-400/40",
+      btnClass:
+        "bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/30",
+      badge: "MÁS POPULAR",
+      free: false,
+      shadow: true,
+      features: [
+        "Todo el plan semanal",
+        "30 días de búsqueda",
+        "Hasta 300 candidaturas",
+        "Mayor probabilidad de entrevistas",
+        "Soporte prioritario WhatsApp",
       ],
     },
   ];
@@ -157,21 +85,6 @@ export default function Landing() {
   const PLANS = getPlans(t);
 
   const handlePlanClick = (plan: PlanItem) => {
-    if (plan.free) {
-      goWithGoogleAuth("/buscar-citas");
-      return;
-    }
-
-    if (plan.id === "reg") {
-      goWithGoogleAuth("/regularizacion-2026");
-      return;
-    }
-
-    if (plan.id === "cita") {
-      goWithGoogleAuth("/buscar-citas");
-      return;
-    }
-
     setShowPayment(true);
   };
 
@@ -334,16 +247,12 @@ export default function Landing() {
             <p className="text-sm text-muted-foreground">{t("plans_sub")}</p>
           </div>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-6xl mx-auto items-stretch">
+          <div className="grid sm:grid-cols-2 gap-4 max-w-2xl mx-auto items-stretch">
             {PLANS.map((plan) => {
               const nameKey =
-                plan.id === "free"
-                  ? "plan_free_name"
-                  : plan.id === "cita"
-                  ? "plan_cita_name"
-                  : plan.id === "reg"
-                  ? "plan_reg_name"
-                  : "plan_std_name";
+                plan.id === "weekly"
+                  ? "plan_weekly_name"
+                  : "plan_monthly_name";
 
               return (
                 <div
@@ -391,7 +300,7 @@ export default function Landing() {
                     className={`w-full py-2.5 rounded-xl text-sm font-bold uppercase tracking-wider transition-all ${plan.btnClass}`}
                     type="button"
                   >
-                    {plan.free ? t("plan_free_btn") : t("plan_btn")}
+                    {t("plan_btn")}
                   </button>
                 </div>
               );
