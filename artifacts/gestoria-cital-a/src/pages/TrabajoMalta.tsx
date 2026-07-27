@@ -874,7 +874,7 @@ function OfficialBrowserBox({
                       </div>
                       <div className="text-right">
                         <p className="text-blue-400 text-[28px] sm:text-[34px] font-black leading-none drop-shadow-[0_0_10px_rgba(59,130,246,0.35)]">
-                          19,99€
+              14,99€
                         </p>
                         <p className="text-blue-300 text-[11px] font-semibold">
                           {isMa ? "7 أيام" : "7 days"}
@@ -915,7 +915,7 @@ function OfficialBrowserBox({
                       </div>
                       <div className="text-right">
                         <p className="text-yellow-400 text-[28px] sm:text-[34px] font-black leading-none drop-shadow-[0_0_10px_rgba(255,215,0,0.35)]">
-                          29,99€
+                          24,99€
                         </p>
                         <p className="text-yellow-300 text-[11px] font-semibold">
                           {isMa ? "30 يوم" : "30 days"}
