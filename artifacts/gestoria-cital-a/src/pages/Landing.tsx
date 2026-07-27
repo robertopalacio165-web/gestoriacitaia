@@ -3,7 +3,6 @@ import { motion } from "framer-motion";
 import { Navbar } from "@/components/Navbar";
 import { AgentCard } from "@/components/AgentCard";
 import { Button } from "@/components/ui/button";
-import { PaymentModal } from "@/components/PaymentModal";
 import { LegalDisclaimer } from "@/components/LegalDisclaimer";
 import { useLang } from "@/contexts/LanguageContext";
 import {
@@ -43,10 +42,10 @@ function getPlans(t: (k: string) => string): PlanItem[] {
       free: false,
       shadow: true,
       features: [
-        "CV profesional con IA",
-        "Carta de motivación en inglés",
-        "Hasta 70 candidaturas",
-        "Notificaciones WhatsApp",
+        t("plan_malta_weekly_f1"),
+        t("plan_malta_weekly_f2"),
+        t("plan_malta_weekly_f3"),
+        t("plan_malta_weekly_f4"),
       ],
     },
     {
@@ -61,11 +60,11 @@ function getPlans(t: (k: string) => string): PlanItem[] {
       free: false,
       shadow: true,
       features: [
-        "Todo el plan semanal",
-        "30 días de búsqueda",
-        "Hasta 300 candidaturas",
-        "Mayor probabilidad de entrevistas",
-        "Soporte prioritario WhatsApp",
+        t("plan_malta_monthly_f1"),
+        t("plan_malta_monthly_f2"),
+        t("plan_malta_monthly_f3"),
+        t("plan_malta_monthly_f4"),
+        t("plan_malta_monthly_f5"),
       ],
     },
   ];
@@ -115,7 +114,7 @@ export default function Landing() {
 
   const PLANS = getPlans(t);
 
-  // ✅ NUEVO: Redirige directamente a la página de planes de Malta
+  // ✅ Redirige directamente a la página de planes de Malta
   const handleMaltaPlanClick = () => {
     setLocation("/trabajo-malta");
   };
@@ -274,8 +273,8 @@ export default function Landing() {
             {PLANS.map((plan) => {
               const nameKey =
                 plan.id === "weekly"
-                  ? "plan_weekly_name"
-                  : "plan_monthly_name";
+                  ? "plan_malta_weekly_title"
+                  : "plan_malta_monthly_title";
 
               return (
                 <div
@@ -307,6 +306,11 @@ export default function Landing() {
                         {plan.period}
                       </span>
                     </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {plan.id === "weekly" 
+                        ? t("plan_malta_weekly_subtitle")
+                        : t("plan_malta_monthly_subtitle")}
+                    </p>
                   </div>
 
                   <ul className="flex-1 space-y-2.5 mb-6">
@@ -324,7 +328,9 @@ export default function Landing() {
                     className={`w-full py-2.5 rounded-xl text-sm font-bold uppercase tracking-wider transition-all ${plan.btnClass}`}
                     type="button"
                   >
-                    {t("plan_btn")}
+                    {plan.id === "weekly" 
+                      ? t("plan_malta_weekly_button")
+                      : t("plan_malta_monthly_button")}
                   </button>
                 </div>
               );
