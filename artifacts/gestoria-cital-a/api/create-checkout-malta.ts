@@ -78,7 +78,9 @@ const planName = plan === "weekly" ? "Semanal" : "Mensual";
       mode: "payment",
        customer_email: email?.trim().toLowerCase(),
     customer_creation: "always",
-customer_email: email,
+ invoice_creation: {
+    enabled: true,
+  },
       phone_number_collection: {
         enabled: false,
       },
