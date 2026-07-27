@@ -974,10 +974,10 @@ function OfficialBrowserBox({
                       disabled={!acceptTerms}
                     >
                       {isMa
-                        ? `🚀 ابدأ البحث الآن (${selectedPlan === "weekly" ? "19,99€" : "29,99€"})`
-                        : isEn
-                        ? `🚀 Start search now (${selectedPlan === "weekly" ? "19,99€" : "29,99€"})`
-                        : `🚀 Empezar búsqueda ahora (${selectedPlan === "weekly" ? "19,99€" : "29,99€"})`}
+  ? `🚀 ابدأ البحث الآن (${selectedPlan === "weekly" ? "14,99€" : "24,99€"})`
+  : isEn
+  ? `🚀 Start search now (${selectedPlan === "weekly" ? "14,99€" : "24,99€"})`
+  : `🚀 Empezar búsqueda ahora (${selectedPlan === "weekly" ? "14,99€" : "24,99€"})`}
                     </button>
 
                     <div className="mt-4 flex items-center justify-center gap-2 text-[11px] text-gray-300">
