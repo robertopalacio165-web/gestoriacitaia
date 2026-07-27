@@ -79,7 +79,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const aleman_nivel = metadata.aleman_nivel || "";
     
     // ============================================
-    // 3. EXPERIENCIA
+    // 3. EXPERIENCIA - ACTUALIZADO con snake_case
     // ============================================
     const trabajo_busca = metadata.trabajo_busca || "";
     const experiencia_previa = metadata.experiencia_previa || "";
@@ -92,7 +92,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const carnetConducir = metadata.carnetConducir || "";
     
     // ============================================
-    // 5. DOCUMENTOS
+    // 5. DOCUMENTOS - Recibir desde metadata
     // ============================================
     const photoUrl = metadata.photoUrl || null;
     const pdfUrl = metadata.pdfUrl || null;
@@ -112,7 +112,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     console.log("  - experiencia_previa:", experiencia_previa);
 
     // ============================================
-    // ✅ 7. VERIFICAR SI YA EXISTE
+    // ✅ 7. VERIFICAR SI YA EXISTE (ANTES DE INSERTAR)
     // ============================================
     const { data: existing, error: checkError } = await supabase
       .from("malta_applications")
@@ -151,12 +151,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         aleman_nivel: aleman_nivel,
         trabajo_busca: trabajo_busca,
         experiencia_previa: experiencia_previa,
+        // Compatibilidad con columnas antiguas
         profesion: trabajo_busca,
         sectores: experiencia_previa,
         anos_experiencia: anos_experiencia,
         education_level: educationLevel,
         estudios: educationLevel,
         carnet_conducir: carnetConducir,
+        // ✅ Usar nuevos valores si vienen, sino mantener los existentes
         photo_url: photoUrl || existing.photo_url,
         pdf_url: pdfUrl || existing.pdf_url,
         plan: plan,
@@ -210,12 +212,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           aleman_nivel: aleman_nivel,
           trabajo_busca: trabajo_busca,
           experiencia_previa: experiencia_previa,
+          // Compatibilidad con columnas antiguas
           profesion: trabajo_busca,
           sectores: experiencia_previa,
           anos_experiencia: anos_experiencia,
           education_level: educationLevel,
           estudios: educationLevel,
           carnet_conducir: carnetConducir,
+          // ✅ Usar valores recibidos de metadata
           photo_url: photoUrl,
           pdf_url: pdfUrl,
           plan: plan,
@@ -242,94 +246,34 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       console.log("📄 pdf_url guardada:", newApp.pdf_url);
     }
 
-    // ============================================================
-    // ✅ 10. RESPONDER A STRIPE INMEDIATAMENTE
-    // ============================================================
-    console.log(`⚡ Respondiendo a Stripe rápidamente para ${applicationId}`);
-    
-    res.status(200).json({
-      received: true,
-      applicationId,
-      isNew,
-      message: isNew ? "Application created and queued" : "Application updated",
-    });
-
-    // ============================================================
-    // ✅ 11. PROCESAR EN SEGUNDO PLANO (NO BLOQUEAR)
-    // ============================================================
+    // ============================================
+    // ✅ 10. ENVIAR EMAIL DE BIENVENIDA (SOLO SI ES NUEVO)
+    // ============================================
     if (isNew) {
-      console.log(`🚀 Iniciando procesamiento en segundo plano para ${applicationId}`);
+      console.log(`📧 Enviando email de bienvenida para ${applicationId}`);
       
-      let cvUrl: string | null = null;
-      let letterUrl: string | null = null;
-
-      // 11a. GENERAR DOCUMENTOS PRIMERO
       try {
-        console.log(`📄 Generando documentos para ${applicationId}`);
-        const docsResponse = await fetch(`${process.env.NEXT_PUBLIC_URL}/api/generate-malta-documents`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
+        // ✅ CAMBIO 1: Usar SMTP de Brevo
+        const transporter = nodemailer.createTransport({
+          host: process.env.SMTP_HOST,
+          port: 587,
+          secure: false,
+          requireTLS: true,
+          auth: {
+            user: process.env.SMTP_USER,
+            pass: process.env.SMTP_PASS,
           },
-          body: JSON.stringify({
-            applicationId: applicationId,
-          }),
         });
 
-        if (!docsResponse.ok) {
-          const errorText = await docsResponse.text();
-          console.error("❌ Error generando documentos:", errorText);
-        } else {
-          const result = await docsResponse.json();
-          console.log("✅ Documentos generados:", result);
-          cvUrl = result.cvUrl || null;
-          letterUrl = result.letterUrl || null;
-        }
-      } catch (docsError) {
-        console.error("❌ Error en generate-malta-documents:", docsError);
-      }
+        const planName = plan === "weekly" ? "Weekly Plan (7 days)" : "Monthly Plan (30 days)";
 
-      // 11b. ENVIAR EMAIL DE BIENVENIDA CON ADJUNTOS (DESPUÉS DE GENERAR DOCS)
-      (async () => {
-        try {
-          console.log(`📧 Enviando email de bienvenida para ${applicationId}`);
-          
-          const transporter = nodemailer.createTransport({
-            host: process.env.SMTP_HOST,
-            port: 587,
-            secure: false,
-            requireTLS: true,
-            auth: {
-              user: process.env.SMTP_USER,
-              pass: process.env.SMTP_PASS,
-            },
-          });
+        // ✅ CAMBIO 2: Usar FROM_EMAIL
+        await transporter.sendMail({
+          from: `"GestoriaCitaIA" <${process.env.FROM_EMAIL}>`,
+          to: email,
+          subject: `🇲🇹 Welcome ${fullName}! Your Malta Job Journey Starts Today`,
 
-          const planName = plan === "weekly" ? "Weekly Plan (7 days)" : "Monthly Plan (30 days)";
-
-          // ✅ CONSTRUIR ADJUNTOS
-          const attachments = [];
-          
-          if (cvUrl) {
-            attachments.push({
-              filename: `CV_${fullName.replace(/\s/g, '_')}.pdf`,
-              path: cvUrl,
-            });
-          }
-          
-          if (letterUrl) {
-            attachments.push({
-              filename: `Cover_Letter_${fullName.replace(/\s/g, '_')}.pdf`,
-              path: letterUrl,
-            });
-          }
-
-          await transporter.sendMail({
-            from: `"GestoriaCitaIA" <${process.env.FROM_EMAIL}>`,
-            to: email,
-            subject: `🇲🇹 Welcome ${fullName}! Your Malta Job Journey Starts Today`,
-            attachments: attachments.length > 0 ? attachments : undefined,
-            html: `
+          html: `
 <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f6f9;padding:40px 0;font-family:Arial,sans-serif;">
 <tr>
 <td align="center">
@@ -490,11 +434,13 @@ Visit GestoriaCitaIA
 </tr>
 
 <tr>
+
 <td style="background:#f5f5f5;padding:20px;text-align:center;color:#666;">
 
 <p style="font-size:14px;color:#777;line-height:24px;text-align:center;">
 
 Questions?<br>
+
 📧 gestoriacitaia@gmail.com
 
 </p>
@@ -502,84 +448,113 @@ Questions?<br>
 © 2026 GestoriaCitaIA · Malta Recruitment
 
 </td>
+
 </tr>
 
 </table>
 
 </td>
+
 </tr>
 
 </table>
 `,
+        });
+
+        console.log(`✅ Email de bienvenida enviado a ${email}`);
+      } catch (emailError) {
+        console.error("❌ Error enviando email de bienvenida:", emailError);
+      }
+
+      // ============================================
+      // ✅ 11. GENERAR DOCUMENTOS (SOLO SI ES NUEVO)
+      // ============================================
+      try {
+        console.log(`📄 Generando documentos para ${applicationId}`);
+        const docsResponse = await fetch(`${process.env.NEXT_PUBLIC_URL}/api/generate-malta-documents`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            applicationId: applicationId,
+          }),
+        });
+
+        if (!docsResponse.ok) {
+          const errorText = await docsResponse.text();
+          console.error("❌ Error generando documentos:", errorText);
+        } else {
+          const result = await docsResponse.json();
+          console.log("✅ Documentos generados:", result);
+        }
+      } catch (docsError) {
+        console.error("❌ Error en generate-malta-documents:", docsError);
+      }
+
+      // ============================================
+      // ✅ 12. AÑADIR A LA COLA DE TRABAJO (SOLO SI ES NUEVO)
+      // ============================================
+      try {
+        const { error: queueError } = await supabase
+          .from("worker_queue")
+          .insert({
+            application_id: applicationId,
+            status: "pending",
+            priority: 1,
+            created_at: new Date().toISOString(),
           });
 
-          console.log(`✅ Email de bienvenida enviado a ${email} con ${attachments.length} adjuntos`);
-        } catch (emailError) {
-          console.error("❌ Error enviando email de bienvenida:", emailError);
+        if (queueError) {
+          console.error("❌ Error adding to worker queue:", queueError);
+        } else {
+          console.log(`✅ Añadido a la cola de trabajo: ${applicationId}`);
         }
-      })();
-
-      // 11c. AÑADIR A LA COLA DE TRABAJO
-      (async () => {
-        try {
-          const { error: queueError } = await supabase
-            .from("worker_queue")
-            .insert({
-              application_id: applicationId,
-              status: "pending",
-              priority: 1,
-              created_at: new Date().toISOString(),
-            });
-
-          if (queueError) {
-            console.error("❌ Error adding to worker queue:", queueError);
-          } else {
-            console.log(`✅ Añadido a la cola de trabajo: ${applicationId}`);
-            console.log(`🚀 Cliente pagado, enviado a worker: ${fullName}`);
-          }
-        } catch (queueErr) {
-          console.error("❌ Worker queue exception:", queueErr);
-        }
-      })();
-
-      // 11d. NOTIFICAR A MAKE
-      (async () => {
-        try {
-          await fetch(MAKE_WEBHOOK_URL, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              event: "new_job",
-              applicationId: applicationId,
-              isNew: isNew,
-              fullName: fullName,
-              whatsapp: whatsapp,
-              email: email,
-              plan: plan,
-              nationality: nationality,
-              currentCity: currentCity,
-              trabajo_busca: trabajo_busca,
-              experiencia_previa: experiencia_previa,
-              timestamp: new Date().toISOString(),
-            }),
-          });
-          console.log(`✅ Notificado a Make: ${applicationId}`);
-        } catch (err) {
-          console.error("❌ Error notificando a Make:", err);
-        }
-      })();
-
-      console.log(`✅ Procesamiento en segundo plano iniciado para ${applicationId}`);
+      } catch (queueErr) {
+        console.error("❌ Worker queue exception:", queueErr);
+      }
     } else {
       console.log(`⏳ Aplicación ${applicationId} ya existe, no se procesa`);
     }
 
-    return;
+    // ============================================
+    // ✅ 13. NOTIFICAR A MAKE (WEBHOOK)
+    // ============================================
+    try {
+      await fetch(MAKE_WEBHOOK_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          event: "new_job",
+          applicationId: applicationId,
+          isNew: isNew,
+          fullName: fullName,
+          whatsapp: whatsapp,
+          email: email,
+          plan: plan,
+          nationality: nationality,
+          currentCity: currentCity,
+          trabajo_busca: trabajo_busca,
+          experiencia_previa: experiencia_previa,
+          timestamp: new Date().toISOString(),
+        }),
+      });
+      console.log(`✅ Notificado a Make: ${applicationId}`);
+    } catch (err) {
+      console.error("❌ Error notificando a Make:", err);
+    }
 
-  } else {
-    return res.status(200).json({ received: true });
+    // ============================================
+    // ✅ 14. RESPONDER RÁPIDO (NO ESPERAR GENERACIÓN)
+    // ============================================
+    return res.status(200).json({
+      received: true,
+      applicationId,
+      isNew,
+      message: isNew ? "Application created and queued" : "Application updated",
+    });
   }
 
   return res.status(200).json({ received: true });
