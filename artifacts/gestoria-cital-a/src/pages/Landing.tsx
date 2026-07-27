@@ -1,3 +1,34 @@
+import { useState } from "react";
+import { motion } from "framer-motion";
+import { Navbar } from "@/components/Navbar";
+import { AgentCard } from "@/components/AgentCard";
+import { Button } from "@/components/ui/button";
+import { PaymentModal } from "@/components/PaymentModal";
+import { LegalDisclaimer } from "@/components/LegalDisclaimer";
+import { useLang } from "@/contexts/LanguageContext";
+import {
+  CheckCircle2,
+  FileText,
+  Shield,
+  Bell,
+  ArrowRight,
+} from "lucide-react";
+import { Link } from "wouter";
+import { supabase } from "@/lib/supabaseClient";
+
+type PlanItem = {
+  id: string;
+  price: string;
+  period: string;
+  color: string;
+  border: string;
+  btnClass: string;
+  badge: string | null;
+  free: boolean;
+  shadow: boolean;
+  features: string[];
+};
+
 function getPlans(t: (k: string) => string): PlanItem[] {
   return [
     {
