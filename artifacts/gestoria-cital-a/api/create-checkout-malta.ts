@@ -76,11 +76,7 @@ const planName = plan === "weekly" ? "Semanal" : "Mensual";
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       mode: "payment",
-       customer_email: email?.trim().toLowerCase(),
-    customer_creation: "always",
- invoice_creation: {
-    enabled: true,
-  },
+      customer_creation: "if_required",
       phone_number_collection: {
         enabled: false,
       },
