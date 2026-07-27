@@ -1723,6 +1723,12 @@ export default async function handler(
     const totalTime = Date.now() - startTime;
 
     const updateData: any = {
+      console.log("========== RESULTADO GENERACION ==========");
+console.log("CV URL GENERADA:", cvUrl);
+console.log("COVER LETTER URL GENERADA:", letterUrl);
+console.log("PHOTO URL:", application.photo_url);
+console.log("PDF URL:", application.pdf_url);
+console.log("==========================================");
       cv_generated: true,
       letter_generated: true,
       cv_generado_url: cvUrl,
