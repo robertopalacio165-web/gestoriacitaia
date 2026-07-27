@@ -92,7 +92,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const carnetConducir = metadata.carnetConducir || "";
     
     // ============================================
-    // 5. DOCUMENTOS
+    // 5. DOCUMENTOS - Recibir desde metadata (NO SE TOCA)
     // ============================================
     const photoUrl = metadata.photoUrl || null;
     const pdfUrl = metadata.pdfUrl || null;
@@ -245,9 +245,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // ============================================================
     // ✅ 10. ¡RESPONDER A STRIPE INMEDIATAMENTE!
     // ============================================================
-    // Esto es lo CRÍTICO. Stripe necesita respuesta rápida.
-    // Todo el trabajo pesado se ejecutará en segundo plano.
-    // ============================================================
     console.log(`⚡ Respondiendo a Stripe rápidamente para ${applicationId}`);
     
     // Respondemos a Stripe con 200 OK
@@ -261,14 +258,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // ============================================================
     // ✅ 11. PROCESAR EN SEGUNDO PLANO (NO BLOQUEAR)
     // ============================================================
-    // IMPORTANTE: Todo lo que sigue NO usa await para no bloquear
+    // IMPORTANTE: Todo lo que sigue se ejecuta en segundo plano
     // La respuesta a Stripe ya fue enviada.
     // ============================================================
     
     if (isNew) {
       console.log(`🚀 Iniciando procesamiento en segundo plano para ${applicationId}`);
       
-      // 11a. ENVIAR EMAIL (sin await)
+      // 11a. ENVIAR EMAIL DE BIENVENIDA (sin await)
       (async () => {
         try {
           console.log(`📧 Enviando email de bienvenida para ${applicationId}`);
@@ -484,31 +481,9 @@ Questions?<br>
         }
       })();
 
-      // 11b. GENERAR DOCUMENTOS (sin await)
-      (async () => {
-        try {
-          console.log(`📄 Generando documentos para ${applicationId}`);
-          const docsResponse = await fetch(`${process.env.NEXT_PUBLIC_URL}/api/generate-malta-documents`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              applicationId: applicationId,
-            }),
-          });
-
-          if (!docsResponse.ok) {
-            const errorText = await docsResponse.text();
-            console.error("❌ Error generando documentos:", errorText);
-          } else {
-            const result = await docsResponse.json();
-            console.log("✅ Documentos generados:", result);
-          }
-        } catch (docsError) {
-          console.error("❌ Error en generate-malta-documents:", docsError);
-        }
-      })();
+      // 11b. GENERAR DOCUMENTOS - ELIMINADO DEL WEBOOK
+      // AHORA LO HACE EL WORKER
+      console.log(`📄 Los documentos se generarán desde el worker para ${applicationId}`);
 
       // 11c. AÑADIR A LA COLA DE TRABAJO (sin await)
       (async () => {
@@ -526,6 +501,7 @@ Questions?<br>
             console.error("❌ Error adding to worker queue:", queueError);
           } else {
             console.log(`✅ Añadido a la cola de trabajo: ${applicationId}`);
+            console.log(`🚀 Cliente pagado, enviado a worker: ${fullName}`);
           }
         } catch (queueErr) {
           console.error("❌ Worker queue exception:", queueErr);
