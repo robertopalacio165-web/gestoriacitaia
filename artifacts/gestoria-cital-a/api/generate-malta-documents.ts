@@ -851,8 +851,7 @@ Every highlight must sound natural and recruiter-written.
 Possible topics include:
 - Teamwork
 - Adaptability
-- Reliability- Safety Awareness- Time Management
-- Customer Service
+- Reliability- Safety Awareness- Time Management- Customer Service
 - Food Hygiene
 - Warehouse Operations
 - Cleaning Standards
@@ -1432,7 +1431,6 @@ function generateCVHtml(data: any, content: CVContent): string {
     "{{PROFESSIONAL_SKILLS}}": professionalSkillsHtml,
     "{{PROFESSIONAL_HIGHLIGHTS}}": professionalHighlightsHtml,
     "{{PERSONAL_STATEMENT}}": personalStatement,
-    // NUEVO
     "{{PASSPORT}}": passport,
     "{{WORK_PERMIT}}": workPermit,
     "{{VIDEO_INTERVIEW}}": videoInterview,
@@ -1722,16 +1720,19 @@ export default async function handler(
 
     const totalTime = Date.now() - startTime;
 
+    // ✅ CORREGIDO: Los console.log están fuera del objeto
+    console.log("========== RESULTADO GENERACION ==========");
+    console.log("CV URL GENERADA:", cvUrl);
+    console.log("COVER LETTER URL GENERADA:", letterUrl);
+    console.log("PHOTO URL:", application.photo_url);
+    console.log("PDF URL:", application.pdf_url);
+    console.log("==========================================");
+
+    // ✅ CORREGIDO: Objeto válido sin console.log dentro
     const updateData: any = {
-      console.log("========== RESULTADO GENERACION ==========");
-console.log("CV URL GENERADA:", cvUrl);
-console.log("COVER LETTER URL GENERADA:", letterUrl);
-console.log("PHOTO URL:", application.photo_url);
-console.log("PDF URL:", application.pdf_url);
-console.log("==========================================");
       cv_generated: true,
       letter_generated: true,
-   cv_url: cvUrl,
+      cv_url: cvUrl,
       cover_letter_url: letterUrl,
       cv_text: cvContent.summary || '',
       letter_text: `${letterContent.introduction || ''}\n${letterContent.body1 || ''}\n${letterContent.body2 || ''}\n${letterContent.body3 || ''}\n${letterContent.closing || ''}`,
