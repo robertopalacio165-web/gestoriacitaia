@@ -4,11 +4,15 @@ export async function sendWelcomeEmail({
   email,
   name,
   plan,
+  cvUrl,
+  letterUrl,
 }: {
   email: string;
   name: string;
   plan: string;
-}) {
+  cvUrl?: string;
+  letterUrl?: string;
+})
   const transporter = nodemailer.createTransport({
     service: "gmail",
     auth: {
@@ -21,7 +25,25 @@ export async function sendWelcomeEmail({
     from: `"GestoriaCitaIA" <${process.env.GMAIL_USER}>`,
     to: email,
     subject: "✅ Welcome to Malta Jobs",
+attachments: [
+  ...(cvUrl
+    ? [
+        {
+          filename: "CV-Malta.pdf",
+          path: cvUrl,
+        },
+      ]
+    : []),
 
+  ...(letterUrl
+    ? [
+        {
+          filename: "Cover-Letter-Malta.pdf",
+          path: letterUrl,
+        },
+      ]
+    : []),
+],
     html: `
 <!DOCTYPE html>
 <html>
