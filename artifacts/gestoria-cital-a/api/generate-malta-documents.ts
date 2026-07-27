@@ -1731,7 +1731,7 @@ console.log("PDF URL:", application.pdf_url);
 console.log("==========================================");
       cv_generated: true,
       letter_generated: true,
-      cv_generado_url: cvUrl,
+   cv_url: cvUrl,
       cover_letter_url: letterUrl,
       cv_text: cvContent.summary || '',
       letter_text: `${letterContent.introduction || ''}\n${letterContent.body1 || ''}\n${letterContent.body2 || ''}\n${letterContent.body3 || ''}\n${letterContent.closing || ''}`,
