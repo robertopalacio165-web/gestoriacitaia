@@ -22,6 +22,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useLang } from "@/contexts/LanguageContext";
 import { supabase } from "@/lib/supabaseClient";
 
+// ✅ CORREGIDO: Nombres de campos coinciden con la tabla de Supabase
 type ProfileRow = {
   id: string;
   email: string | null;
@@ -30,8 +31,8 @@ type ProfileRow = {
   plan: string | null;
   plan_start_date: string | null;
   plan_end_date: string | null;
-  cv_url: string | null;
-  letter_url: string | null;
+  cv_generado_url: string | null;        // ✅ Cambiado
+  cover_letter_url: string | null;       // ✅ Cambiado
   cv_generated: boolean;
   letter_generated: boolean;
   applications_sent: number;
@@ -286,25 +287,25 @@ export default function PanelMalta() {
             <div>
               <h2 className="text-sm font-bold text-white mb-3">{t("my_documents")}</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {/* CV */}
+                {/* CV - CORREGIDO */}
                 <div className="bg-white/5 border border-white/[0.06] rounded-xl p-4">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm font-bold text-white">{t("cv")}</span>
-                    <span className={`text-xs font-semibold ${profile?.cv_generated ? 'text-green-400' : 'text-yellow-400'}`}>
-                      {profile?.cv_generated ? `✅ ${t("generated")}` : `⏳ ${t("generating")}`}
+                    <span className={`text-xs font-semibold ${profile?.cv_generado_url ? 'text-green-400' : 'text-yellow-400'}`}>
+                      {profile?.cv_generado_url ? `✅ ${t("generated")}` : `⏳ ${t("generating")}`}
                     </span>
                   </div>
                   <div className="flex gap-2">
-                    {profile?.cv_url ? (
+                    {profile?.cv_generado_url ? (
                       <>
                         <button
-                          onClick={() => window.open(profile.cv_url || "", "_blank")}
+                          onClick={() => window.open(profile.cv_generado_url || "", "_blank")}
                           className="flex-1 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs font-semibold transition-colors flex items-center justify-center gap-1"
                         >
                           <Eye className="w-3 h-3" /> {t("view")}
                         </button>
                         <button
-                          onClick={() => window.open(profile.cv_url || "", "_blank")}
+                          onClick={() => window.open(profile.cv_generado_url || "", "_blank")}
                           className="flex-1 py-1.5 rounded-lg bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 text-xs font-semibold transition-colors flex items-center justify-center gap-1"
                         >
                           <Download className="w-3 h-3" /> {t("download")}
@@ -316,25 +317,25 @@ export default function PanelMalta() {
                   </div>
                 </div>
 
-                {/* Motivation Letter */}
+                {/* Motivation Letter - CORREGIDO */}
                 <div className="bg-white/5 border border-white/[0.06] rounded-xl p-4">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm font-bold text-white">{t("motivation_letter")}</span>
-                    <span className={`text-xs font-semibold ${profile?.letter_generated ? 'text-green-400' : 'text-yellow-400'}`}>
-                      {profile?.letter_generated ? `✅ ${t("generated")}` : `⏳ ${t("generating")}`}
+                    <span className={`text-xs font-semibold ${profile?.cover_letter_url ? 'text-green-400' : 'text-yellow-400'}`}>
+                      {profile?.cover_letter_url ? `✅ ${t("generated")}` : `⏳ ${t("generating")}`}
                     </span>
                   </div>
                   <div className="flex gap-2">
-                    {profile?.letter_url ? (
+                    {profile?.cover_letter_url ? (
                       <>
                         <button
-                          onClick={() => window.open(profile.letter_url || "", "_blank")}
+                          onClick={() => window.open(profile.cover_letter_url || "", "_blank")}
                           className="flex-1 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs font-semibold transition-colors flex items-center justify-center gap-1"
                         >
                           <Eye className="w-3 h-3" /> {t("view")}
                         </button>
                         <button
-                          onClick={() => window.open(profile.letter_url || "", "_blank")}
+                          onClick={() => window.open(profile.cover_letter_url || "", "_blank")}
                           className="flex-1 py-1.5 rounded-lg bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 text-xs font-semibold transition-colors flex items-center justify-center gap-1"
                         >
                           <Download className="w-3 h-3" /> {t("download")}
@@ -508,7 +509,7 @@ export default function PanelMalta() {
         )}
 
         {/* ============================================ */}
-        {/* TAB: DOCUMENTOS */}
+        {/* TAB: DOCUMENTOS - CORREGIDO */}
         {/* ============================================ */}
         {activeTab === "documentos" && (
           <div className="space-y-4">
@@ -521,7 +522,7 @@ export default function PanelMalta() {
               )}
             </div>
             
-            {/* CV */}
+            {/* CV - CORREGIDO */}
             <div className={`bg-white/5 border rounded-xl p-4 ${planStatus === "expired" ? 'border-orange-500/20' : 'border-white/[0.06]'}`}>
               <div className="flex items-center justify-between flex-wrap gap-3">
                 <div className="flex items-center gap-3">
@@ -530,22 +531,22 @@ export default function PanelMalta() {
                   </div>
                   <div>
                     <p className="text-sm font-bold text-white">{t("cv")}</p>
-                    <p className={`text-xs ${profile?.cv_generated ? 'text-green-400' : 'text-yellow-400'}`}>
-                      {profile?.cv_generated ? `✅ ${t("generated")}` : `⏳ ${t("generating")}`}
+                    <p className={`text-xs ${profile?.cv_generado_url ? 'text-green-400' : 'text-yellow-400'}`}>
+                      {profile?.cv_generado_url ? `✅ ${t("generated")}` : `⏳ ${t("generating")}`}
                     </p>
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  {profile?.cv_url ? (
+                  {profile?.cv_generado_url ? (
                     <>
                       <button
-                        onClick={() => window.open(profile.cv_url || "", "_blank")}
+                        onClick={() => window.open(profile.cv_generado_url || "", "_blank")}
                         className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs font-semibold transition-colors flex items-center gap-1"
                       >
                         <Eye className="w-3 h-3" /> {t("view")}
                       </button>
                       <button
-                        onClick={() => window.open(profile.cv_url || "", "_blank")}
+                        onClick={() => window.open(profile.cv_generado_url || "", "_blank")}
                         className="px-3 py-1.5 rounded-lg bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 text-xs font-semibold transition-colors flex items-center gap-1"
                       >
                         <Download className="w-3 h-3" /> {t("download")}
@@ -558,7 +559,7 @@ export default function PanelMalta() {
               </div>
             </div>
 
-            {/* Motivation Letter */}
+            {/* Motivation Letter - CORREGIDO */}
             <div className={`bg-white/5 border rounded-xl p-4 ${planStatus === "expired" ? 'border-orange-500/20' : 'border-white/[0.06]'}`}>
               <div className="flex items-center justify-between flex-wrap gap-3">
                 <div className="flex items-center gap-3">
@@ -567,22 +568,22 @@ export default function PanelMalta() {
                   </div>
                   <div>
                     <p className="text-sm font-bold text-white">{t("motivation_letter")}</p>
-                    <p className={`text-xs ${profile?.letter_generated ? 'text-green-400' : 'text-yellow-400'}`}>
-                      {profile?.letter_generated ? `✅ ${t("generated")}` : `⏳ ${t("generating")}`}
+                    <p className={`text-xs ${profile?.cover_letter_url ? 'text-green-400' : 'text-yellow-400'}`}>
+                      {profile?.cover_letter_url ? `✅ ${t("generated")}` : `⏳ ${t("generating")}`}
                     </p>
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  {profile?.letter_url ? (
+                  {profile?.cover_letter_url ? (
                     <>
                       <button
-                        onClick={() => window.open(profile.letter_url || "", "_blank")}
+                        onClick={() => window.open(profile.cover_letter_url || "", "_blank")}
                         className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs font-semibold transition-colors flex items-center gap-1"
                       >
                         <Eye className="w-3 h-3" /> {t("view")}
                       </button>
                       <button
-                        onClick={() => window.open(profile.letter_url || "", "_blank")}
+                        onClick={() => window.open(profile.cover_letter_url || "", "_blank")}
                         className="px-3 py-1.5 rounded-lg bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 text-xs font-semibold transition-colors flex items-center gap-1"
                       >
                         <Download className="w-3 h-3" /> {t("download")}
