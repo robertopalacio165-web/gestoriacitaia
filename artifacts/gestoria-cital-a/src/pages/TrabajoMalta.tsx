@@ -950,13 +950,13 @@ function OfficialBrowserBox({
                         onChange={(e) => setAcceptTerms(e.target.checked)}
                         className="mt-1 w-4 h-4 rounded border-white/20 bg-[#060b16] text-yellow-500 focus:ring-yellow-500 focus:ring-offset-0 shrink-0"
                       />
-                      <label htmlFor="acceptTerms" className="text-white/70 text-[11px] sm:text-[12px] leading-relaxed">
-                        {isMa
-                          ? "☑️ نوافق على أن تستخدم GestoriaCitaIA بياناتي وتشارك سيرتي الذاتية مع شركات ووكالات التوظيف في مالطا لإدارة بحثي عن عمل، وفقاً لسياسة الخصوصية."
-                          : isEn
-                          ? "☑️ I agree that GestoriaCitaIA may use my data and share my CV with companies and employment agencies in Malta to manage my job search, in accordance with the Privacy Policy."
-                          : "☑️ Acepto que GestoriaCitaIA utilice mis datos y comparta mi CV con empresas y agencias de empleo en Malta para gestionar mi búsqueda de trabajo, de acuerdo con la Política de Privacidad."}
-                      </label>
+                   <label htmlFor="acceptTerms" className="text-white/70 text-[11px] sm:text-[12px] leading-relaxed">
+  {isMa
+    ? "☑️ كنوافق أن GestoriaCitaIA تستعمل معلوماتي وتشارك CV ديالي مع شركات ووكالات التوظيف فمالطا. كنفاهم أن الخدمة غير كتساعد فإرسال الترشيحات وما كتقدمش عقد عمل وما كتضمنش التوظيف."
+    : isEn
+    ? "☑️ I agree that GestoriaCitaIA may use my data and share my CV with companies and employment agencies in Malta. I understand that this service only submits applications and does not provide employment contracts or guarantee hiring."
+    : "☑️ Acepto que GestoriaCitaIA utilice mis datos y comparta mi CV con empresas y agencias de empleo en Malta. Entiendo que este servicio solo envía candidaturas y no ofrece contratos de trabajo ni garantiza la contratación."}
+</label>
                     </div>
 
                     <p className="text-white/30 text-[10px] text-center mb-3">
