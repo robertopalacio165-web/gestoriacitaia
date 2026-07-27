@@ -13,7 +13,7 @@ import {
   Bell,
   ArrowRight,
 } from "lucide-react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { supabase } from "@/lib/supabaseClient";
 
 type PlanItem = {
@@ -72,7 +72,7 @@ function getPlans(t: (k: string) => string): PlanItem[] {
 }
 
 export default function Landing() {
-  const [showPayment, setShowPayment] = useState(false);
+  const [, setLocation] = useLocation();
   const { t } = useLang();
 
   const tr = (key: string, fallback: string) => {
@@ -115,21 +115,13 @@ export default function Landing() {
 
   const PLANS = getPlans(t);
 
-  const handlePlanClick = (plan: PlanItem) => {
-    setShowPayment(true);
+  // ✅ NUEVO: Redirige directamente a la página de planes de Malta
+  const handleMaltaPlanClick = () => {
+    setLocation("/trabajo-malta");
   };
 
   return (
     <div className="min-h-screen bg-background text-foreground relative overflow-x-hidden">
-      <PaymentModal
-        open={showPayment}
-        onClose={() => setShowPayment(false)}
-        onSelectPlan={() => {
-          setShowPayment(false);
-          goWithGoogleAuth("/panel");
-        }}
-      />
-
       <Navbar />
 
       <main className="relative z-10 pt-24 pb-20 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto">
@@ -326,8 +318,9 @@ export default function Landing() {
                     ))}
                   </ul>
 
+                  {/* ✅ BOTÓN: Redirige a /trabajo-malta */}
                   <button
-                    onClick={() => handlePlanClick(plan)}
+                    onClick={handleMaltaPlanClick}
                     className={`w-full py-2.5 rounded-xl text-sm font-bold uppercase tracking-wider transition-all ${plan.btnClass}`}
                     type="button"
                   >
