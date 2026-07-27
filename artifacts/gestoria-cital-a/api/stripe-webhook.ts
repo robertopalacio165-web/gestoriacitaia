@@ -79,7 +79,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const aleman_nivel = metadata.aleman_nivel || "";
     
     // ============================================
-    // 3. EXPERIENCIA - ACTUALIZADO con snake_case
+    // 3. EXPERIENCIA
     // ============================================
     const trabajo_busca = metadata.trabajo_busca || "";
     const experiencia_previa = metadata.experiencia_previa || "";
@@ -92,7 +92,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const carnetConducir = metadata.carnetConducir || "";
     
     // ============================================
-    // 5. DOCUMENTOS - Recibir desde metadata
+    // 5. DOCUMENTOS
     // ============================================
     const photoUrl = metadata.photoUrl || null;
     const pdfUrl = metadata.pdfUrl || null;
@@ -112,7 +112,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     console.log("  - experiencia_previa:", experiencia_previa);
 
     // ============================================
-    // ✅ 7. VERIFICAR SI YA EXISTE (ANTES DE INSERTAR)
+    // ✅ 7. VERIFICAR SI YA EXISTE
     // ============================================
     const { data: existing, error: checkError } = await supabase
       .from("malta_applications")
@@ -151,14 +151,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         aleman_nivel: aleman_nivel,
         trabajo_busca: trabajo_busca,
         experiencia_previa: experiencia_previa,
-        // Compatibilidad con columnas antiguas
         profesion: trabajo_busca,
         sectores: experiencia_previa,
         anos_experiencia: anos_experiencia,
         education_level: educationLevel,
         estudios: educationLevel,
         carnet_conducir: carnetConducir,
-        // ✅ Usar nuevos valores si vienen, sino mantener los existentes
         photo_url: photoUrl || existing.photo_url,
         pdf_url: pdfUrl || existing.pdf_url,
         plan: plan,
@@ -212,14 +210,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           aleman_nivel: aleman_nivel,
           trabajo_busca: trabajo_busca,
           experiencia_previa: experiencia_previa,
-          // Compatibilidad con columnas antiguas
           profesion: trabajo_busca,
           sectores: experiencia_previa,
           anos_experiencia: anos_experiencia,
           education_level: educationLevel,
           estudios: educationLevel,
           carnet_conducir: carnetConducir,
-          // ✅ Usar valores recibidos de metadata
           photo_url: photoUrl,
           pdf_url: pdfUrl,
           plan: plan,
@@ -246,34 +242,55 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       console.log("📄 pdf_url guardada:", newApp.pdf_url);
     }
 
-    // ============================================
-    // ✅ 10. ENVIAR EMAIL DE BIENVENIDA (SOLO SI ES NUEVO)
-    // ============================================
+    // ============================================================
+    // ✅ 10. ¡RESPONDER A STRIPE INMEDIATAMENTE!
+    // ============================================================
+    // Esto es lo CRÍTICO. Stripe necesita respuesta rápida.
+    // Todo el trabajo pesado se ejecutará en segundo plano.
+    // ============================================================
+    console.log(`⚡ Respondiendo a Stripe rápidamente para ${applicationId}`);
+    
+    // Respondemos a Stripe con 200 OK
+    res.status(200).json({
+      received: true,
+      applicationId,
+      isNew,
+      message: isNew ? "Application created and queued" : "Application updated",
+    });
+
+    // ============================================================
+    // ✅ 11. PROCESAR EN SEGUNDO PLANO (NO BLOQUEAR)
+    // ============================================================
+    // IMPORTANTE: Todo lo que sigue NO usa await para no bloquear
+    // La respuesta a Stripe ya fue enviada.
+    // ============================================================
+    
     if (isNew) {
-      console.log(`📧 Enviando email de bienvenida para ${applicationId}`);
+      console.log(`🚀 Iniciando procesamiento en segundo plano para ${applicationId}`);
       
-      try {
-        // ✅ CAMBIO 1: Usar SMTP de Brevo
-        const transporter = nodemailer.createTransport({
-          host: process.env.SMTP_HOST,
-          port: 587,
-          secure: false,
-          requireTLS: true,
-          auth: {
-            user: process.env.SMTP_USER,
-            pass: process.env.SMTP_PASS,
-          },
-        });
+      // 11a. ENVIAR EMAIL (sin await)
+      (async () => {
+        try {
+          console.log(`📧 Enviando email de bienvenida para ${applicationId}`);
+          
+          const transporter = nodemailer.createTransport({
+            host: process.env.SMTP_HOST,
+            port: 587,
+            secure: false,
+            requireTLS: true,
+            auth: {
+              user: process.env.SMTP_USER,
+              pass: process.env.SMTP_PASS,
+            },
+          });
 
-        const planName = plan === "weekly" ? "Weekly Plan (7 days)" : "Monthly Plan (30 days)";
+          const planName = plan === "weekly" ? "Weekly Plan (7 days)" : "Monthly Plan (30 days)";
 
-        // ✅ CAMBIO 2: Usar FROM_EMAIL
-        await transporter.sendMail({
-          from: `"GestoriaCitaIA" <${process.env.FROM_EMAIL}>`,
-          to: email,
-          subject: `🇲🇹 Welcome ${fullName}! Your Malta Job Journey Starts Today`,
-
-          html: `
+          await transporter.sendMail({
+            from: `"GestoriaCitaIA" <${process.env.FROM_EMAIL}>`,
+            to: email,
+            subject: `🇲🇹 Welcome ${fullName}! Your Malta Job Journey Starts Today`,
+            html: `
 <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f6f9;padding:40px 0;font-family:Arial,sans-serif;">
 <tr>
 <td align="center">
@@ -459,104 +476,107 @@ Questions?<br>
 
 </table>
 `,
-        });
-
-        console.log(`✅ Email de bienvenida enviado a ${email}`);
-      } catch (emailError) {
-        console.error("❌ Error enviando email de bienvenida:", emailError);
-      }
-
-      // ============================================
-      // ✅ 11. GENERAR DOCUMENTOS (SOLO SI ES NUEVO)
-      // ============================================
-      try {
-        console.log(`📄 Generando documentos para ${applicationId}`);
-        const docsResponse = await fetch(`${process.env.NEXT_PUBLIC_URL}/api/generate-malta-documents`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            applicationId: applicationId,
-          }),
-        });
-
-        if (!docsResponse.ok) {
-          const errorText = await docsResponse.text();
-          console.error("❌ Error generando documentos:", errorText);
-        } else {
-          const result = await docsResponse.json();
-          console.log("✅ Documentos generados:", result);
-        }
-      } catch (docsError) {
-        console.error("❌ Error en generate-malta-documents:", docsError);
-      }
-
-      // ============================================
-      // ✅ 12. AÑADIR A LA COLA DE TRABAJO (SOLO SI ES NUEVO)
-      // ============================================
-      try {
-        const { error: queueError } = await supabase
-          .from("worker_queue")
-          .insert({
-            application_id: applicationId,
-            status: "pending",
-            priority: 1,
-            created_at: new Date().toISOString(),
           });
 
-        if (queueError) {
-          console.error("❌ Error adding to worker queue:", queueError);
-        } else {
-          console.log(`✅ Añadido a la cola de trabajo: ${applicationId}`);
+          console.log(`✅ Email de bienvenida enviado a ${email}`);
+        } catch (emailError) {
+          console.error("❌ Error enviando email de bienvenida:", emailError);
         }
-      } catch (queueErr) {
-        console.error("❌ Worker queue exception:", queueErr);
-      }
+      })();
+
+      // 11b. GENERAR DOCUMENTOS (sin await)
+      (async () => {
+        try {
+          console.log(`📄 Generando documentos para ${applicationId}`);
+          const docsResponse = await fetch(`${process.env.NEXT_PUBLIC_URL}/api/generate-malta-documents`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              applicationId: applicationId,
+            }),
+          });
+
+          if (!docsResponse.ok) {
+            const errorText = await docsResponse.text();
+            console.error("❌ Error generando documentos:", errorText);
+          } else {
+            const result = await docsResponse.json();
+            console.log("✅ Documentos generados:", result);
+          }
+        } catch (docsError) {
+          console.error("❌ Error en generate-malta-documents:", docsError);
+        }
+      })();
+
+      // 11c. AÑADIR A LA COLA DE TRABAJO (sin await)
+      (async () => {
+        try {
+          const { error: queueError } = await supabase
+            .from("worker_queue")
+            .insert({
+              application_id: applicationId,
+              status: "pending",
+              priority: 1,
+              created_at: new Date().toISOString(),
+            });
+
+          if (queueError) {
+            console.error("❌ Error adding to worker queue:", queueError);
+          } else {
+            console.log(`✅ Añadido a la cola de trabajo: ${applicationId}`);
+          }
+        } catch (queueErr) {
+          console.error("❌ Worker queue exception:", queueErr);
+        }
+      })();
+
+      // 11d. NOTIFICAR A MAKE (sin await)
+      (async () => {
+        try {
+          await fetch(MAKE_WEBHOOK_URL, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              event: "new_job",
+              applicationId: applicationId,
+              isNew: isNew,
+              fullName: fullName,
+              whatsapp: whatsapp,
+              email: email,
+              plan: plan,
+              nationality: nationality,
+              currentCity: currentCity,
+              trabajo_busca: trabajo_busca,
+              experiencia_previa: experiencia_previa,
+              timestamp: new Date().toISOString(),
+            }),
+          });
+          console.log(`✅ Notificado a Make: ${applicationId}`);
+        } catch (err) {
+          console.error("❌ Error notificando a Make:", err);
+        }
+      })();
+
+      console.log(`✅ Procesamiento en segundo plano iniciado para ${applicationId}`);
     } else {
       console.log(`⏳ Aplicación ${applicationId} ya existe, no se procesa`);
     }
 
-    // ============================================
-    // ✅ 13. NOTIFICAR A MAKE (WEBHOOK)
-    // ============================================
-    try {
-      await fetch(MAKE_WEBHOOK_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          event: "new_job",
-          applicationId: applicationId,
-          isNew: isNew,
-          fullName: fullName,
-          whatsapp: whatsapp,
-          email: email,
-          plan: plan,
-          nationality: nationality,
-          currentCity: currentCity,
-          trabajo_busca: trabajo_busca,
-          experiencia_previa: experiencia_previa,
-          timestamp: new Date().toISOString(),
-        }),
-      });
-      console.log(`✅ Notificado a Make: ${applicationId}`);
-    } catch (err) {
-      console.error("❌ Error notificando a Make:", err);
-    }
+    // ============================================================
+    // ✅ YA RESPONDIMOS, NO HACEMOS MÁS RETURNS
+    // ============================================================
+    return;
 
-    // ============================================
-    // ✅ 14. RESPONDER RÁPIDO (NO ESPERAR GENERACIÓN)
-    // ============================================
-    return res.status(200).json({
-      received: true,
-      applicationId,
-      isNew,
-      message: isNew ? "Application created and queued" : "Application updated",
-    });
+  } else {
+    // Otros eventos de Stripe (no checkout.session.completed)
+    return res.status(200).json({ received: true });
   }
 
+  // Fallback (nunca debería llegar aquí)
   return res.status(200).json({ received: true });
 }
 
