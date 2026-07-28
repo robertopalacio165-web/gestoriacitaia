@@ -192,16 +192,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       // ============================================
       isNew = true;
       console.log("🆕 Creando nueva aplicación");
-const { data: existing } = await supabase
-  .from("malta_applications")
-  .select("id")
-  .eq("stripe_session_id", session.id)
-  .single();
-
-if (existing) {
-  console.log("Ya existe esta aplicación");
-  return res.status(200).json({success:true});
-}
       const { data: newApp, error: insertError } = await supabase
         .from("malta_applications")
         .insert({
@@ -259,10 +249,49 @@ if (existing) {
     // ✅ 10. ENVIAR EMAIL DE BIENVENIDA (SOLO SI ES NUEVO)
     // ============================================
     if (isNew) {
+      console.log(`📄 Generando documentos para ${applicationId}`);
+
+      let cvUrl = "";
+      let letterUrl = "";
+
+      try {
+        const docsResponse = await fetch(
+          `${process.env.NEXT_PUBLIC_URL}/api/generate-malta-documents`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              applicationId: applicationId,
+            }),
+          }
+        );
+
+        if (docsResponse.ok) {
+          const docs = await docsResponse.json();
+          cvUrl = docs.cvUrl || "";
+          letterUrl = docs.letterUrl || "";
+          console.log("✅ CV y carta generados:", {
+            cvUrl,
+            letterUrl
+          });
+        } else {
+          console.error(
+            "❌ Error generando documentos",
+            await docsResponse.text()
+          );
+        }
+      } catch(error){
+        console.error(
+          "❌ Error generate-malta-documents:",
+          error
+        );
+      }
+
       console.log(`📧 Enviando email de bienvenida para ${applicationId}`);
       
       try {
-        // ✅ CAMBIO 1: Usar SMTP de Brevo
         const transporter = nodemailer.createTransport({
           host: process.env.SMTP_HOST,
           port: 587,
@@ -276,11 +305,24 @@ if (existing) {
 
         const planName = plan === "weekly" ? "Weekly Plan (7 days)" : "Monthly Plan (30 days)";
 
-        // ✅ CAMBIO 2: Usar FROM_EMAIL
         await transporter.sendMail({
           from: `"GestoriaCitaIA" <${process.env.FROM_EMAIL}>`,
           to: email,
           subject: `🇲🇹 Welcome ${fullName}! Your Malta Job Journey Starts Today`,
+          attachments: [
+            {
+              filename: "CV-Malta.pdf",
+              content: Buffer.from(
+                await (await fetch(cvUrl)).arrayBuffer()
+              ),
+            },
+            {
+              filename: "Cover-Letter-Malta.pdf",
+              content: Buffer.from(
+                await (await fetch(letterUrl)).arrayBuffer()
+              ),
+            },
+          ],
 
           html: `
 <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f6f9;padding:40px 0;font-family:Arial,sans-serif;">
@@ -470,39 +512,13 @@ Questions?<br>
 `,
         });
 
-        console.log(`✅ Email de bienvenida enviado a ${email}`);
+        console.log(`✅ Email de bienvenida enviado a ${email} con CV y Cover Letter adjuntos`);
       } catch (emailError) {
         console.error("❌ Error enviando email de bienvenida:", emailError);
       }
 
       // ============================================
-      // ✅ 11. GENERAR DOCUMENTOS (SOLO SI ES NUEVO)
-      // ============================================
-      try {
-        console.log(`📄 Generando documentos para ${applicationId}`);
-        const docsResponse = await fetch(`${process.env.NEXT_PUBLIC_URL}/api/generate-malta-documents`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            applicationId: applicationId,
-          }),
-        });
-
-        if (!docsResponse.ok) {
-          const errorText = await docsResponse.text();
-          console.error("❌ Error generando documentos:", errorText);
-        } else {
-          const result = await docsResponse.json();
-          console.log("✅ Documentos generados:", result);
-        }
-      } catch (docsError) {
-        console.error("❌ Error en generate-malta-documents:", docsError);
-      }
-
-      // ============================================
-      // ✅ 12. AÑADIR A LA COLA DE TRABAJO (SOLO SI ES NUEVO)
+      // ✅ 11. AÑADIR A LA COLA DE TRABAJO (SOLO SI ES NUEVO)
       // ============================================
       try {
         const { error: queueError } = await supabase
@@ -527,7 +543,7 @@ Questions?<br>
     }
 
     // ============================================
-    // ✅ 13. NOTIFICAR A MAKE (WEBHOOK)
+    // ✅ 12. NOTIFICAR A MAKE (WEBHOOK)
     // ============================================
     try {
       await fetch(MAKE_WEBHOOK_URL, {
@@ -556,7 +572,7 @@ Questions?<br>
     }
 
     // ============================================
-    // ✅ 14. RESPONDER RÁPIDO (NO ESPERAR GENERACIÓN)
+    // ✅ 13. RESPONDER RÁPIDO (NO ESPERAR GENERACIÓN)
     // ============================================
     return res.status(200).json({
       received: true,
