@@ -1,6 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-
+import axios from "axios";
 
 const supabase = createClient(
   process.env.VITE_SUPABASE_URL!,
