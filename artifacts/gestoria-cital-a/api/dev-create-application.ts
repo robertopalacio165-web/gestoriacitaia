@@ -1,6 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import nodemailer from "nodemailer";
+import axios from "axios";
 
 const supabase = createClient(
   process.env.VITE_SUPABASE_URL!,
@@ -131,7 +131,7 @@ export default async function handler(
     }
 
     // ============================================
-    // ✅ ENVIAR EMAIL DE BIENVENIDA CON ADJUNTOS
+    // ✅ ENVIAR EMAIL DE BIENVENIDA CON BREVO
     // ============================================
     try {
       // ✅ Validar que hay email
@@ -145,38 +145,39 @@ export default async function handler(
           ? "Weekly Plan (7 days)"
           : "Monthly Plan (30 days)";
 
-      const transporter = nodemailer.createTransport({
-        service: "gmail",
-        auth: {
-          user: process.env.GMAIL_USER,
-          pass: process.env.GMAIL_PASS,
-        },
-      });
-
-      // ✅ Preparar adjuntos si existen
+      // ✅ Preparar adjuntos para Brevo
       const attachments = [];
       
       if (cvUrl) {
         attachments.push({
-          filename: "CV-Malta.pdf",
-          path: cvUrl,
+          name: "CV-Malta.pdf",
+          url: cvUrl
         });
       }
       
       if (letterUrl) {
         attachments.push({
-          filename: "Cover-Letter-Malta.pdf",
-          path: letterUrl,
+          name: "Cover-Letter-Malta.pdf",
+          url: letterUrl
         });
       }
 
-      await transporter.sendMail({
-        from: `"GestoriaCitaIA" <${process.env.GMAIL_USER}>`,
-        to: email,
-        subject: `🇲🇹 Welcome ${fullName}! Your Malta Job Journey Starts Today`,
-        attachments: attachments.length > 0 ? attachments : undefined,
-
-        html: `
+      // ✅ Enviar con Brevo
+      await axios.post(
+        "https://api.brevo.com/v3/smtp/email",
+        {
+          sender: {
+            name: "GestoriaCitaIA",
+            email: process.env.BREVO_EMAIL
+          },
+          to: [
+            {
+              email: email,
+              name: fullName
+            }
+          ],
+          subject: `🇲🇹 Welcome ${fullName}! Your Malta Job Journey Starts Today`,
+          htmlContent: `
 <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f6f9;padding:40px 0;font-family:Arial,sans-serif;">
 <tr>
 <td align="center">
@@ -381,13 +382,21 @@ Questions?<br>
 </tr>
 
 </table>
-        `,
-      });
+          `,
+          attachment: attachments
+        },
+        {
+          headers: {
+            "api-key": process.env.BREVO_API_KEY,
+            "content-type": "application/json"
+          }
+        }
+      );
 
-      console.log("✅ Email de bienvenida enviado");
+      console.log("✅ Email de bienvenida enviado con Brevo");
 
     } catch (err) {
-      console.error("❌ Error enviando email:", err);
+      console.error("❌ Error enviando email con Brevo:", err);
     }
 
     // ✅ Añadir a la cola de trabajo
