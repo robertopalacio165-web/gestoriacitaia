@@ -10,15 +10,18 @@ export async function sendWelcomeEmail({
   plan: string;
 }) {
   const transporter = nodemailer.createTransport({
-    service: "gmail",
+    host: process.env.SMTP_HOST,
+    port: 587,
+    secure: false,
+    requireTLS: true,
     auth: {
-      user: process.env.GMAIL_USER,
-      pass: process.env.GMAIL_PASS,
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS,
     },
   });
 
   await transporter.sendMail({
-    from: `"GestoriaCitaIA" <${process.env.GMAIL_USER}>`,
+    from: `"GestoriaCitaIA" <${process.env.FROM_EMAIL}>`,
     to: email,
     subject: "✅ Welcome to Malta Jobs",
 
