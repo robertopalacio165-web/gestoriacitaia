@@ -192,7 +192,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       // ============================================
       isNew = true;
       console.log("🆕 Creando nueva aplicación");
+const { data: existing } = await supabase
+  .from("malta_applications")
+  .select("id")
+  .eq("stripe_session_id", session.id)
+  .single();
 
+if (existing) {
+  console.log("Ya existe esta aplicación");
+  return res.status(200).json({success:true});
+}
       const { data: newApp, error: insertError } = await supabase
         .from("malta_applications")
         .insert({
