@@ -1,6 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import axios from "axios";
 
 const supabase = createClient(
   process.env.VITE_SUPABASE_URL!,
@@ -94,14 +93,21 @@ export default async function handler(
 
     console.log(`✅ Aplicación creada en modo DEV: ${data.id}`);
 
-    // ✅ Generar CV y carta inmediatamente (modo administrador)
-    let cvUrl = "";
-    let letterUrl = "";
-    
+    // ============================================
+    // ✅ GENERAR CV + CARTA Y ENVIAR CON BREVO
+    // ============================================
     try {
+      if (!email) {
+        throw new Error("No email provided");
+      }
+
+      let cvUrl = "";
+      let letterUrl = "";
+
+      // 1️⃣ Generar documentos
       console.log(`📄 Generando documentos para ${data.id}`);
       
-      const response = await fetch(
+      const docResponse = await fetch(
         `${process.env.NEXT_PUBLIC_URL}/api/generate-malta-documents`,
         {
           method: "POST",
@@ -114,48 +120,26 @@ export default async function handler(
         }
       );
 
-      // ✅ Mejor control de errores
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error("❌ Error generate-malta-documents:", errorText);
+      if (docResponse.ok) {
+        const docs = await docResponse.json();
+        cvUrl = docs.cvUrl || "";
+        letterUrl = docs.letterUrl || "";
+        console.log("✅ CV y carta generados:", { cvUrl, letterUrl });
       } else {
-        const result = await response.json();
-        console.log("✅ Documentos generados:", result);
-        
-        // Guardar URLs para el email
-        cvUrl = result.cvUrl || "";
-        letterUrl = result.letterUrl || "";
-      }
-    } catch (err) {
-      console.error("❌ Error generando documentos:", err);
-    }
-
-    // ============================================
-    // ✅ ENVIAR EMAIL DE BIENVENIDA CON BREVO
-    // ============================================
-    try {
-      // ✅ Validar que hay email
-      if (!email) {
-        throw new Error("No email provided");
+        const errorText = await docResponse.text();
+        console.error("❌ Error generate-malta-documents:", errorText);
       }
 
-      // ✅ Convertir plan a nombre amigable
-      const planName =
-        plan === "weekly"
-          ? "Weekly Plan (7 days)"
-          : "Monthly Plan (30 days)";
-
-      // ✅ Preparar adjuntos para Brevo (convertir URLs a Base64)
+      // 2️⃣ Preparar adjuntos en Base64
       const attachments: any[] = [];
 
       if (cvUrl) {
         try {
-          const cvFile = await axios.get(cvUrl, {
-            responseType: "arraybuffer"
-          });
+          const cv = await fetch(cvUrl);
+          const cvBuffer = await cv.arrayBuffer();
           attachments.push({
             name: "CV-Malta.pdf",
-            content: Buffer.from(cvFile.data).toString("base64")
+            content: Buffer.from(cvBuffer).toString("base64"),
           });
           console.log("✅ CV adjuntado correctamente");
         } catch (err) {
@@ -165,12 +149,11 @@ export default async function handler(
 
       if (letterUrl) {
         try {
-          const letterFile = await axios.get(letterUrl, {
-            responseType: "arraybuffer"
-          });
+          const letter = await fetch(letterUrl);
+          const letterBuffer = await letter.arrayBuffer();
           attachments.push({
             name: "Cover-Letter-Malta.pdf",
-            content: Buffer.from(letterFile.data).toString("base64")
+            content: Buffer.from(letterBuffer).toString("base64"),
           });
           console.log("✅ Cover Letter adjuntada correctamente");
         } catch (err) {
@@ -178,22 +161,34 @@ export default async function handler(
         }
       }
 
-      // ✅ Enviar con Brevo
-      await axios.post(
+      // 3️⃣ Convertir plan a nombre amigable
+      const planName =
+        plan === "weekly"
+          ? "Weekly Plan (7 days)"
+          : "Monthly Plan (30 days)";
+
+      // 4️⃣ Enviar con Brevo
+      const brevoResponse = await fetch(
         "https://api.brevo.com/v3/smtp/email",
         {
-          sender: {
-            name: "GestoriaCitaIA",
-            email: process.env.BREVO_EMAIL
+          method: "POST",
+          headers: {
+            "api-key": process.env.BREVO_API_KEY!,
+            "Content-Type": "application/json",
           },
-          to: [
-            {
-              email: email,
-              name: fullName
-            }
-          ],
-          subject: `🇲🇹 Welcome ${fullName}! Your Malta Job Journey Starts Today`,
-          htmlContent: `
+          body: JSON.stringify({
+            sender: {
+              name: "GestoriaCitaIA",
+              email: process.env.BREVO_EMAIL,
+            },
+            to: [
+              {
+                email: email,
+                name: fullName,
+              },
+            ],
+            subject: `🇲🇹 Welcome ${fullName}! Your Malta Job Journey Starts Today`,
+            htmlContent: `
 <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f6f9;padding:40px 0;font-family:Arial,sans-serif;">
 <tr>
 <td align="center">
@@ -396,23 +391,21 @@ Questions?<br>
 </td>
 
 </tr>
-
 </table>
-          `,
-          attachment: attachments
-        },
-        {
-          headers: {
-            "api-key": process.env.BREVO_API_KEY,
-            "content-type": "application/json"
-          }
+            `,
+            attachment: attachments,
+          }),
         }
       );
 
-      console.log("✅ Email de bienvenida enviado con Brevo");
-
+      if (brevoResponse.ok) {
+        console.log("✅ Email enviado con Brevo + CV + Cover Letter");
+      } else {
+        const errorText = await brevoResponse.text();
+        console.error("❌ Error enviando con Brevo:", errorText);
+      }
     } catch (err) {
-      console.error("❌ Error enviando email con Brevo:", err);
+      console.error("❌ Error en el proceso de Brevo:", err);
     }
 
     // ✅ Añadir a la cola de trabajo
