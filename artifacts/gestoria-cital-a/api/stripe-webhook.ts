@@ -525,7 +525,7 @@ Questions?<br>
           .from("worker_queue")
           .insert({
             application_id: applicationId,
-            status: "pending",
+          status: "ready",
             priority: 1,
             created_at: new Date().toISOString(),
           });
