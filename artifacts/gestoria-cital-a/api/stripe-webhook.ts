@@ -226,7 +226,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           stripe_customer_id: session.customer as string,
           stripe_payment_intent: session.payment_intent as string,
           paid: true,
-          worker_status: "pending",
+      worker_status: "ready",
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         })
