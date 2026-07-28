@@ -1055,6 +1055,28 @@ export default function TrabajoMalta() {
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<"weekly" | "monthly">("monthly");
   
+  // ✅ useEffect para limpiar parámetros después del éxito
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+
+    if (params.get("success") === "true") {
+      const timer = setTimeout(() => {
+        localStorage.removeItem("maltaPaid");
+        localStorage.removeItem("malta_form");
+
+        window.history.replaceState(
+          {},
+          document.title,
+          "/trabajo-malta"
+        );
+
+        window.location.reload();
+      }, 6000);
+
+      return () => clearTimeout(timer);
+    }
+  }, []);
+
   // ✅ FormData actualizado - snake_case
   const [formData, setFormData] = useState<MaltaFormData>({
     fullName: "",
