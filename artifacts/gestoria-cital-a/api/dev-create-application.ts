@@ -94,8 +94,44 @@ export default async function handler(
 
     console.log(`✅ Aplicación creada en modo DEV: ${data.id}`);
 
+    // ✅ Generar CV y carta inmediatamente (modo administrador)
+    let cvUrl = "";
+    let letterUrl = "";
+    
+    try {
+      console.log(`📄 Generando documentos para ${data.id}`);
+      
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_URL}/api/generate-malta-documents`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            applicationId: data.id,
+          }),
+        }
+      );
+
+      // ✅ Mejor control de errores
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("❌ Error generate-malta-documents:", errorText);
+      } else {
+        const result = await response.json();
+        console.log("✅ Documentos generados:", result);
+        
+        // Guardar URLs para el email
+        cvUrl = result.cvUrl || "";
+        letterUrl = result.letterUrl || "";
+      }
+    } catch (err) {
+      console.error("❌ Error generando documentos:", err);
+    }
+
     // ============================================
-    // ✅ ENVIAR EMAIL DE BIENVENIDA
+    // ✅ ENVIAR EMAIL DE BIENVENIDA CON ADJUNTOS
     // ============================================
     try {
       // ✅ Validar que hay email
@@ -117,10 +153,28 @@ export default async function handler(
         },
       });
 
+      // ✅ Preparar adjuntos si existen
+      const attachments = [];
+      
+      if (cvUrl) {
+        attachments.push({
+          filename: "CV-Malta.pdf",
+          path: cvUrl,
+        });
+      }
+      
+      if (letterUrl) {
+        attachments.push({
+          filename: "Cover-Letter-Malta.pdf",
+          path: letterUrl,
+        });
+      }
+
       await transporter.sendMail({
         from: `"GestoriaCitaIA" <${process.env.GMAIL_USER}>`,
         to: email,
         subject: `🇲🇹 Welcome ${fullName}! Your Malta Job Journey Starts Today`,
+        attachments: attachments.length > 0 ? attachments : undefined,
 
         html: `
 <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f6f9;padding:40px 0;font-family:Arial,sans-serif;">
@@ -350,33 +404,6 @@ Questions?<br>
       console.error("❌ Error añadiendo a worker_queue:", queueError);
     } else {
       console.log(`✅ Añadido a la cola de trabajo: ${data.id}`);
-    }
-
-    // ✅ Generar CV y carta inmediatamente (modo administrador)
-    try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_URL}/api/generate-malta-documents`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            applicationId: data.id,
-          }),
-        }
-      );
-
-      // ✅ Mejor control de errores
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error("❌ Error generate-malta-documents:", errorText);
-      } else {
-        const result = await response.json();
-        console.log("✅ Documentos generados:", result);
-      }
-    } catch (err) {
-      console.error("❌ Error generando documentos:", err);
     }
 
     // ✅ Responder con éxito
