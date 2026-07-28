@@ -145,21 +145,37 @@ export default async function handler(
           ? "Weekly Plan (7 days)"
           : "Monthly Plan (30 days)";
 
-      // ✅ Preparar adjuntos para Brevo
-      const attachments = [];
-      
+      // ✅ Preparar adjuntos para Brevo (convertir URLs a Base64)
+      const attachments: any[] = [];
+
       if (cvUrl) {
-        attachments.push({
-          name: "CV-Malta.pdf",
-          url: cvUrl
-        });
+        try {
+          const cvFile = await axios.get(cvUrl, {
+            responseType: "arraybuffer"
+          });
+          attachments.push({
+            name: "CV-Malta.pdf",
+            content: Buffer.from(cvFile.data).toString("base64")
+          });
+          console.log("✅ CV adjuntado correctamente");
+        } catch (err) {
+          console.error("❌ Error descargando CV:", err);
+        }
       }
-      
+
       if (letterUrl) {
-        attachments.push({
-          name: "Cover-Letter-Malta.pdf",
-          url: letterUrl
-        });
+        try {
+          const letterFile = await axios.get(letterUrl, {
+            responseType: "arraybuffer"
+          });
+          attachments.push({
+            name: "Cover-Letter-Malta.pdf",
+            content: Buffer.from(letterFile.data).toString("base64")
+          });
+          console.log("✅ Cover Letter adjuntada correctamente");
+        } catch (err) {
+          console.error("❌ Error descargando Cover Letter:", err);
+        }
       }
 
       // ✅ Enviar con Brevo
