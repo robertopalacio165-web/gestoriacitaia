@@ -537,10 +537,10 @@ function OfficialBrowserBox({
                     <div className="flex gap-2 min-w-0">
                       <select
                         className="w-[92px] shrink-0 h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-2 text-center text-white"
-                        value={formData.whatsapp.split(" ")[0] || "+34"}
+                 value={formData.whatsapp.split(" ")[0] || ""}
                         onChange={(e) => {
                           const currentNumber = formData.whatsapp.replace(/^\+\d+\s*/, "");
-                          onFormChange("whatsapp", e.target.value + " " + currentNumber);
+                     onFormChange("whatsapp", currentNumber ? e.target.value + " " + currentNumber : "");
                         }}
                       >
                         <option value="+34">🇪🇸 +34</option>
@@ -559,7 +559,7 @@ function OfficialBrowserBox({
                         placeholder="644403748"
                         value={formData.whatsapp.replace(/^\+\d+\s*/, "")}
                         onChange={(e) => {
-                          const prefix = formData.whatsapp.split(" ")[0] || "+34";
+                     const prefix = formData.whatsapp.split(" ")[0] || "";
                           const number = e.target.value.replace(/\D/g, "");
                           if (number.length <= 15) {
                             onFormChange("whatsapp", prefix + " " + number);
@@ -1080,7 +1080,7 @@ export default function TrabajoMalta() {
   // ✅ FormData actualizado - snake_case
   const [formData, setFormData] = useState<MaltaFormData>({
     fullName: "",
-    whatsapp: "+34 ",
+ whatsapp: "",
     email: "",
     nationality: "",
     currentCity: "",
