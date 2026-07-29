@@ -874,7 +874,7 @@ function OfficialBrowserBox({
                       </div>
                       <div className="text-right">
                         <p className="text-blue-400 text-[28px] sm:text-[34px] font-black leading-none drop-shadow-[0_0_10px_rgba(59,130,246,0.35)]">
-              14,99€
+                          9,99€
                         </p>
                         <p className="text-blue-300 text-[11px] font-semibold">
                           {isMa ? "7 أيام" : "7 days"}
@@ -915,7 +915,7 @@ function OfficialBrowserBox({
                       </div>
                       <div className="text-right">
                         <p className="text-yellow-400 text-[28px] sm:text-[34px] font-black leading-none drop-shadow-[0_0_10px_rgba(255,215,0,0.35)]">
-                          24,99€
+                          19,99€
                         </p>
                         <p className="text-yellow-300 text-[11px] font-semibold">
                           {isMa ? "30 يوم" : "30 days"}
@@ -974,10 +974,10 @@ function OfficialBrowserBox({
                       disabled={!acceptTerms}
                     >
                       {isMa
-  ? `🚀 ابدأ البحث الآن (${selectedPlan === "weekly" ? "14,99€" : "24,99€"})`
+  ? `🚀 ابدأ البحث الآن (${selectedPlan === "weekly" ? "9,99€" : "19,99€"})`
   : isEn
-  ? `🚀 Start search now (${selectedPlan === "weekly" ? "14,99€" : "24,99€"})`
-  : `🚀 Empezar búsqueda ahora (${selectedPlan === "weekly" ? "14,99€" : "24,99€"})`}
+  ? `🚀 Start search now (${selectedPlan === "weekly" ? "9.99€" : "19.99€"})`
+  : `🚀 Empezar búsqueda ahora (${selectedPlan === "weekly" ? "9,99€" : "19,99€"})`}
                     </button>
 
                     <div className="mt-4 flex items-center justify-center gap-2 text-[11px] text-gray-300">
