@@ -783,7 +783,7 @@ export default function BuscarCitas() {
     setFormData((prev) => ({
       ...prev,
       fullName: profile?.full_name?.trim() || prev.fullName,
-      phone: profile?.phone?.trim() || prev.phone,
+    phone: "",
       nie: profile?.nie?.trim() || prev.nie,
     }));
   }, [profile?.full_name, profile?.phone, profile?.nie]);
