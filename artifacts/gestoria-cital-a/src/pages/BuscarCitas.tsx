@@ -213,7 +213,7 @@ function OfficialBrowserBox({
                       </select>
                       <input
                         type="text"
-                        placeholder="34644403748"
+               placeholder="Número de WhatsApp"
                         value={formData.phone}
                         onChange={(e) => onFormChange("phone", e.target.value)}
                         className="min-w-0 flex-1 h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white"
