@@ -59,8 +59,11 @@ export default async function handler(
     
       } = body;
       // Determinar precio según el plan
-const unitAmount = 1499;
-const planName = plan === "weekly" ? "Semanal" : "Mensual";
+const unitAmount = plan === "weekly" ? 999 : 1999;
+
+const planName = plan === "weekly"
+  ? "Semanal"
+  : "Mensual";
 
     console.log("========== DOCUMENTOS ==========");
     console.log("photoUrl:", photoUrl);
