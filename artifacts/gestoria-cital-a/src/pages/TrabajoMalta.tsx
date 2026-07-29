@@ -556,7 +556,7 @@ function OfficialBrowserBox({
                       </select>
                       <input
                         type="text"
-                        placeholder="644403748"
+                   placeholder="Número de WhatsApp"
                         value={formData.whatsapp.replace(/^\+\d+\s*/, "")}
                         onChange={(e) => {
                      const prefix = formData.whatsapp.split(" ")[0] || "";
