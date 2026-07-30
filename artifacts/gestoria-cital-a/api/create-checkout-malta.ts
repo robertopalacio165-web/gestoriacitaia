@@ -57,12 +57,11 @@ export default async function handler(
     
     } = body;
 
-    // ✅ DETECCIÓN SIMPLE Y ROBUSTA
+    // ✅ DETECCIÓN DE MONEDA POR PAÍS
     const paisCliente = (pais || "")
       .trim()
       .toLowerCase();
 
-    // ✅ Si el formulario siempre envía "Morocco"
     const CURRENCY = paisCliente === "morocco"
       ? "mad"
       : "eur";
@@ -107,12 +106,12 @@ export default async function handler(
         enabled: true,
       },
       
-      // ✅ Actualización automática de datos
-      customer_update: {
-        address: "auto",
-        name: "auto",
-        shipping: "auto",
-      },
+      // ✅ customer_update ELIMINADO - causa error sin customer existente
+      // customer_update: {
+      //   address: "auto",
+      //   name: "auto",
+      //   shipping: "auto",
+      // },
       
       // ✅ Configuración adicional
       consent_collection: {
