@@ -1,11 +1,6 @@
 import Stripe from "stripe";
 
-const stripe = new Stripe(
-  process.env.STRIPE_SECRET_KEY as string,
-  {
-    apiVersion: "2025-08-27.basil",
-  }
-);
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, { apiVersion: "2025-08-27.basil" });
 
 export default async function handler(
   req: any,
@@ -100,8 +95,22 @@ const planName = plan === "weekly"
           quantity: 1,
         },
       ],
+      
+      // ✅ CAMBIO 1: Forzar 3D Secure para tarjetas marroquíes
+      payment_method_options: {
+        card: {
+          request_three_d_secure: "automatic",
+        },
+      },
+      
+      // ✅ CAMBIO 2: Habilitar impuestos automáticos para que Stripe active el precio adaptativo (MAD)
+      automatic_tax: {
+        enabled: true,
+      },
+
       success_url: `${process.env.NEXT_PUBLIC_URL}/trabajo-malta?success=true&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.NEXT_PUBLIC_URL}/trabajo-malta?canceled=true`,
+      
       // ✅ 3. METADATA ACTUALIZADA - snake_case
       metadata: {
         fullName: fullName?.trim() || "",
