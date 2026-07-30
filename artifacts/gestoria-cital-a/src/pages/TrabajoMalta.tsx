@@ -815,46 +815,40 @@ function OfficialBrowserBox({
                         </p>
                       </div>
                       
-             {/* Documentos adicionales */}
-<div className="rounded-xl border border-white/10 bg-[#0a0f1a] p-3">
-  <label className="block text-white/80 text-[12px] font-medium mb-2">
-    {isMa
-      ? "📄 وثائق إضافية (اختياري)"
-      : isEn
-      ? "📄 Additional Documents (optional)"
-      : "📄 Documentos adicionales (opcional)"}
-  </label>
-
-  <p className="text-white/40 text-[11px] mb-3">
-    {isMa
-      ? "يمكنك رفع حتى 3 ملفات: سيرة ذاتية، شهادات، دبلومات، دورات أو أي وثائق مفيدة."
-      : isEn
-      ? "Upload up to 3 files: CV, certificates, diplomas, courses or any useful documents."
-      : "Sube hasta 3 archivos: CV, certificados, diplomas, cursos u otros documentos importantes para tu candidatura."}
-  </p>
-
-  <input
-    type="file"
-    multiple
-    accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.webp"
-    className="w-full text-[11px] text-white/70 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:bg-yellow-500/20 file:text-yellow-400 file:text-xs file:font-semibold hover:file:bg-yellow-500/30"
-    onChange={(e) => {
-      const files = e.target.files;
-      if (files?.length) {
-        handlePdfUpload(files[0]); // cambia esta función más adelante si quieres guardar los 3
-      }
-    }}
-    disabled={uploadingPdf}
-  />
-
-  <p className="text-white/30 text-[9px] mt-2">
-    {isMa
-      ? "حتى 3 ملفات • PDF • DOC • DOCX • JPG • PNG • WEBP"
-      : isEn
-      ? "Up to 3 files • PDF • DOC • DOCX • JPG • PNG • WEBP"
-      : "Hasta 3 archivos • PDF • DOC • DOCX • JPG • PNG • WEBP"}
-  </p>
-</div>
+                      {/* PDF opcional */}
+                      <div className="rounded-xl border border-white/10 bg-[#0a0f1a] p-3">
+                        <label className="block text-white/80 text-[12px] font-medium mb-2">
+                          {isMa ? "📄 ملف PDF إضافي (اختياري)" : isEn ? "📄 Additional PDF (optional)" : "📄 PDF adicional (opcional)"}
+                        </label>
+                        <input
+                          type="file"
+                          accept=".pdf"
+                          className="w-full text-[11px] text-white/70 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:bg-yellow-500/20 file:text-yellow-400 file:text-xs file:font-semibold hover:file:bg-yellow-500/30"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) handlePdfUpload(file);
+                          }}
+                          disabled={uploadingPdf}
+                        />
+                        {uploadingPdf && (
+                          <div className="mt-2 flex items-center gap-2">
+                            <Loader2 className="w-4 h-4 text-yellow-400 animate-spin" />
+                            <span className="text-yellow-400 text-[10px]">{isMa ? "جاري التحميل..." : isEn ? "Loading..." : "Cargando..."}</span>
+                          </div>
+                        )}
+                        {formData.pdfFile && (
+                          <div className="mt-2 p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                            <p className="text-emerald-400 text-[10px] font-semibold truncate">
+                              ✅ {isMa ? "تم التحميل" : isEn ? "Loaded" : "Cargado"}
+                            </p>
+                          </div>
+                        )}
+                        <p className="text-white/30 text-[9px] mt-1">
+                          {isMa ? "PDF - حد أقصى 10 ميجابايت" : isEn ? "PDF - max 10MB" : "PDF - máx 10MB"}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
 
                   {/* ============================================ */}
                   {/* 8. PLANES */}
