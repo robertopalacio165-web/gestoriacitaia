@@ -537,10 +537,10 @@ function OfficialBrowserBox({
                     <div className="flex gap-2 min-w-0">
                       <select
                         className="w-[92px] shrink-0 h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-2 text-center text-white"
-                 value={formData.whatsapp.split(" ")[0] || ""}
+                        value={formData.whatsapp.split(" ")[0] || ""}
                         onChange={(e) => {
                           const currentNumber = formData.whatsapp.replace(/^\+\d+\s*/, "");
-                     onFormChange("whatsapp", currentNumber ? e.target.value + " " + currentNumber : "");
+                          onFormChange("whatsapp", currentNumber ? e.target.value + " " + currentNumber : "");
                         }}
                       >
                         <option value="+34">🇪🇸 +34</option>
@@ -556,10 +556,10 @@ function OfficialBrowserBox({
                       </select>
                       <input
                         type="text"
-                   placeholder="Número de WhatsApp"
+                        placeholder="Número de WhatsApp"
                         value={formData.whatsapp.replace(/^\+\d+\s*/, "")}
                         onChange={(e) => {
-                     const prefix = formData.whatsapp.split(" ")[0] || "";
+                          const prefix = formData.whatsapp.split(" ")[0] || "";
                           const number = e.target.value.replace(/\D/g, "");
                           if (number.length <= 15) {
                             onFormChange("whatsapp", prefix + " " + number);
@@ -950,13 +950,13 @@ function OfficialBrowserBox({
                         onChange={(e) => setAcceptTerms(e.target.checked)}
                         className="mt-1 w-4 h-4 rounded border-white/20 bg-[#060b16] text-yellow-500 focus:ring-yellow-500 focus:ring-offset-0 shrink-0"
                       />
-                   <label htmlFor="acceptTerms" className="text-white/70 text-[11px] sm:text-[12px] leading-relaxed">
-  {isMa
-    ? "☑️ كنوافق أن GestoriaCitaIA تستعمل معلوماتي وتشارك CV ديالي مع شركات ووكالات التوظيف فمالطا. كنفاهم أن الخدمة غير كتساعد فإرسال الترشيحات وما كتقدمش عقد عمل وما كتضمنش التوظيف."
-    : isEn
-    ? "☑️ I agree that GestoriaCitaIA may use my data and share my CV with companies and employment agencies in Malta. I understand that this service only submits applications and does not provide employment contracts or guarantee hiring."
-    : "☑️ Acepto que GestoriaCitaIA utilice mis datos y comparta mi CV con empresas y agencias de empleo en Malta. Entiendo que este servicio solo envía candidaturas y no ofrece contratos de trabajo ni garantiza la contratación."}
-</label>
+                      <label htmlFor="acceptTerms" className="text-white/70 text-[11px] sm:text-[12px] leading-relaxed">
+                        {isMa
+                          ? "☑️ كنوافق أن GestoriaCitaIA تستعمل معلوماتي وتشارك CV ديالي مع شركات ووكالات التوظيف فمالطا. كنفاهم أن الخدمة غير كتساعد فإرسال الترشيحات وما كتقدمش عقد عمل وما كتضمنش التوظيف."
+                          : isEn
+                          ? "☑️ I agree that GestoriaCitaIA may use my data and share my CV with companies and employment agencies in Malta. I understand that this service only submits applications and does not provide employment contracts or guarantee hiring."
+                          : "☑️ Acepto que GestoriaCitaIA utilice mis datos y comparta mi CV con empresas y agencias de empleo en Malta. Entiendo que este servicio solo envía candidaturas y no ofrece contratos de trabajo ni garantiza la contratación."}
+                      </label>
                     </div>
 
                     <p className="text-white/30 text-[10px] text-center mb-3">
@@ -974,10 +974,10 @@ function OfficialBrowserBox({
                       disabled={!acceptTerms}
                     >
                       {isMa
-  ? `🚀 ابدأ البحث الآن (${selectedPlan === "weekly" ? "9,99€" : "19,99€"})`
-  : isEn
-  ? `🚀 Start search now (${selectedPlan === "weekly" ? "9.99€" : "19.99€"})`
-  : `🚀 Empezar búsqueda ahora (${selectedPlan === "weekly" ? "9,99€" : "19,99€"})`}
+                        ? `🚀 ابدأ البحث الآن (${selectedPlan === "weekly" ? "9,99€" : "19,99€"})`
+                        : isEn
+                        ? `🚀 Start search now (${selectedPlan === "weekly" ? "9.99€" : "19.99€"})`
+                        : `🚀 Empezar búsqueda ahora (${selectedPlan === "weekly" ? "9,99€" : "19,99€"})`}
                     </button>
 
                     <div className="mt-4 flex items-center justify-center gap-2 text-[11px] text-gray-300">
@@ -1045,9 +1045,10 @@ export default function TrabajoMalta() {
 
   const [location] = useLocation();
   const [muted, setMuted] = useState(false);
-  const [confirmed, setConfirmed] = useState(
-    new URLSearchParams(window.location.search).get("success") === "true"
-  );
+  
+  // ✅ ESTADO INICIAL CORREGIDO - SIEMPRE false
+  const [confirmed, setConfirmed] = useState(false);
+  
   const [showDocs, setShowDocs] = useState(false);
   const [showForms, setShowForms] = useState(false);
   const [profile, setProfile] = useState<ProfileRow | null>(null);
@@ -1055,11 +1056,14 @@ export default function TrabajoMalta() {
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<"weekly" | "monthly">("monthly");
   
-  // ✅ useEffect para limpiar parámetros después del éxito
+  // ✅ useEffect CORREGIDO
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
 
     if (params.get("success") === "true") {
+      // Pagó correctamente
+      setConfirmed(true);
+
       const timer = setTimeout(() => {
         localStorage.removeItem("maltaPaid");
         localStorage.removeItem("malta_form");
@@ -1070,17 +1074,29 @@ export default function TrabajoMalta() {
           "/trabajo-malta"
         );
 
+        setConfirmed(false);
         window.location.reload();
       }, 6000);
 
       return () => clearTimeout(timer);
     }
+
+    // Si no pagó o canceló Stripe
+    setConfirmed(false);
+
+    localStorage.removeItem("maltaPaid");
+
+    window.history.replaceState(
+      {},
+      document.title,
+      "/trabajo-malta"
+    );
   }, []);
 
   // ✅ FormData actualizado - snake_case
   const [formData, setFormData] = useState<MaltaFormData>({
     fullName: "",
- whatsapp: "",
+    whatsapp: "",
     email: "",
     nationality: "",
     currentCity: "",
