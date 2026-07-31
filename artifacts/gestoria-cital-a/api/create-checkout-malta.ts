@@ -1,6 +1,11 @@
 import Stripe from "stripe";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, { apiVersion: "2025-08-27.basil" });
+const stripe = new Stripe(
+  process.env.STRIPE_SECRET_KEY as string,
+  {
+    apiVersion: "2025-08-27.basil",
+  }
+);
 
 export default async function handler(
   req: any,
@@ -13,14 +18,12 @@ export default async function handler(
   }
 
   try {
-    // ✅ 1. OBTENER EL BODY PRIMERO
     const body = req.body;
 
     console.log("========== BODY RECIBIDO ==========");
     console.log(body);
     console.log("==================================");
 
-    // ✅ 2. DESESTRUCTURACIÓN ACTUALIZADA - snake_case
     const {
       fullName,
       whatsapp,
@@ -28,6 +31,7 @@ export default async function handler(
 
       nationality,
       currentCity,
+      pais,
 
       fechaNacimiento,
 
@@ -49,45 +53,110 @@ export default async function handler(
       photoUrl,
       pdfUrl,
 
-
       plan,
     
-      } = body;
-      // Determinar precio según el plan
-const unitAmount = plan === "weekly" ? 999 : 1999;
+    } = body;
 
-const planName = plan === "weekly"
-  ? "Semanal"
-  : "Mensual";
+    // ✅ 1. DETECCIÓN DE PAÍS (usando pais o nationality)
+    const paisCliente = (pais || nationality || "")
+      .trim()
+      .toLowerCase();
 
-    console.log("========== DOCUMENTOS ==========");
-    console.log("photoUrl:", photoUrl);
-    console.log("pdfUrl:", pdfUrl);
-    console.log("nationality:", nationality);
-    console.log("currentCity:", currentCity);
-    console.log("trabajo_busca:", trabajo_busca);
-    console.log("experiencia_previa:", experiencia_previa);
-    console.log("anos_experiencia:", anos_experiencia);
-    console.log("education_level:", education_level);
-    console.log("=================================");
+    // ✅ 2. MONEDA: MAD para Marruecos, EUR para el resto
+    const esMarruecos = ["morocco", "marruecos", "maroc"].includes(paisCliente);
+    const CURRENCY = esMarruecos ? "mad" : "eur";
 
+    // ✅ 3. PRECIOS DINÁMICOS
+    const PRICES = {
+      eur: {
+        weekly: 999,   // 9.99 €
+        monthly: 1999, // 19.99 €
+      },
+      mad: {
+        weekly: 10000,  // 100.00 MAD
+        monthly: 20000, // 200.00 MAD
+      }
+    };
+
+    const unitAmount = plan === "weekly" 
+      ? PRICES[CURRENCY as keyof typeof PRICES].weekly
+      : PRICES[CURRENCY as keyof typeof PRICES].monthly;
+
+    const planName = plan === "weekly" ? "Semanal" : "Mensual";
+    const currencySymbol = CURRENCY === "mad" ? "MAD" : "€";
+
+    console.log("========== CONFIGURACIÓN DE PAGO ==========");
+    console.log(`País detectado: ${paisCliente || "No especificado"}`);
+    console.log(`Moneda: ${CURRENCY.toUpperCase()}`);
+    console.log(`Plan: ${planName}`);
+    console.log(`Precio: ${unitAmount / 100} ${currencySymbol}`);
+    console.log("===========================================");
+
+    // ✅ 4. CREAR SESIÓN CON TODAS LAS MEJORAS
     const session = await stripe.checkout.sessions.create({
+      // Configuración básica
       payment_method_types: ["card"],
       mode: "payment",
-       customer_email: email?.trim().toLowerCase(),
-    customer_creation: "always",
- invoice_creation: {
-    enabled: true,
-  },
+      
+      // ✅ MEJORA 1: Dirección de facturación OBLIGATORIA
+      billing_address_collection: "required",
+      
+      // ✅ MEJORA 2: Teléfono OBLIGATORIO
       phone_number_collection: {
-        enabled: false,
+        enabled: true,
       },
+      
+      // ✅ MEJORA 3: Recoger nombre del cliente
+      name_collection: {
+        enabled: true,
+      },
+      
+      // ✅ MEJORA 4: Idioma automático
+      locale: "auto",
+      
+      // ✅ MEJORA 5: Forzar 3D Secure SIEMPRE (no automático)
+      payment_method_options: {
+        card: {
+          request_three_d_secure: "any", // 👈 "any" fuerza 3DS siempre
+          // Para tarjetas marroquíes, esto ayuda a autorizar
+        },
+      },
+      
+      // ✅ MEJORA 6: Descripción clara en el extracto bancario
+      payment_intent_data: {
+        statement_descriptor: "EMPLEO-MALTA",
+        statement_descriptor_suffix: planName.toUpperCase(),
+      },
+      
+      // ✅ MEJORA 7: Datos del cliente
+      customer_email: email?.trim().toLowerCase(),
+      customer_creation: "always",
+      
+      // ✅ MEJORA 8: Facturación
+      invoice_creation: {
+        enabled: true,
+      },
+      
+      // ✅ MEJORA 9: Consentimiento promocional
+      consent_collection: {
+        promotions: "auto",
+      },
+      
+      // ✅ MEJORA 10: Códigos promocionales
+      allow_promotion_codes: true,
+      
+      // ✅ MEJORA 11: Impuestos automáticos (para Adaptive Pricing)
+      automatic_tax: {
+        enabled: true,
+      },
+      
+      // ✅ Líneas de producto con moneda dinámica
       line_items: [
         {
           price_data: {
-            currency: "eur",
+            currency: CURRENCY,
             product_data: {
-              name: `Búsqueda de Empleo Malta - Plan ${planName}`,
+              name: `Empleo Malta - Plan ${planName}`,
               description: `Plan ${planName} de búsqueda de empleo en Malta con IA`,
             },
             unit_amount: unitAmount,
@@ -96,22 +165,11 @@ const planName = plan === "weekly"
         },
       ],
       
-      // ✅ CAMBIO 1: Forzar 3D Secure para tarjetas marroquíes
-      payment_method_options: {
-        card: {
-          request_three_d_secure: "automatic",
-        },
-      },
-      
-      // ✅ CAMBIO 2: Habilitar impuestos automáticos para que Stripe active el precio adaptativo (MAD)
-      automatic_tax: {
-        enabled: true,
-      },
-
+      // ✅ URLs de redirección
       success_url: `${process.env.NEXT_PUBLIC_URL}/trabajo-malta?success=true&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.NEXT_PUBLIC_URL}/trabajo-malta?canceled=true`,
       
-      // ✅ 3. METADATA ACTUALIZADA - snake_case
+      // ✅ Metadatos COMPLETOS
       metadata: {
         fullName: fullName?.trim() || "",
         whatsapp: whatsapp?.trim() || "",
@@ -119,6 +177,7 @@ const planName = plan === "weekly"
 
         nationality: nationality?.trim() || "",
         currentCity: currentCity?.trim() || "",
+        pais: pais?.trim() || "",
 
         fechaNacimiento: fechaNacimiento?.trim() || "",
 
@@ -141,12 +200,24 @@ const planName = plan === "weekly"
         pdfUrl: pdfUrl?.trim() || "",
 
         plan: plan?.trim() || "monthly",
+        
+        // ✅ Información de moneda
+        currency: CURRENCY,
+        detected_country: paisCliente || "not_detected",
+        is_morocco: esMarruecos ? "true" : "false",
       },
     });
+
+    console.log("========== SESIÓN CREADA ==========");
+    console.log(`Session ID: ${session.id}`);
+    console.log(`URL: ${session.url}`);
+    console.log("===================================");
 
     return res.status(200).json({
       url: session.url,
       sessionId: session.id,
+      currency: CURRENCY,
+      detected_country: paisCliente || "not_detected",
     });
 
   } catch (error: any) {
