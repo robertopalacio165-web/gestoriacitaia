@@ -32,7 +32,7 @@ export default async function handler(
 
     const amount =
       body.plan === "weekly"
-        ? "9.99"
+        ? "1.00"
         : "19.99";
 
     // CREAR ORDEN
