@@ -158,7 +158,7 @@ function OfficialBrowserBox({
     isMa ? "⏳ انتظار الردود" : isEn ? "⏳ Waiting for responses" : "⏳ Esperando respuestas",
   ]);
   const [progressStep, setProgressStep] = useState(0);
-
+const [showPaymentModal, setShowPaymentModal] = useState(false);
   // ✅ NACIONALIDADES
   const nationalityOptions = [
     { id: "Morocco", label: isMa ? "المغرب" : isEn ? "Morocco" : "Marruecos" },
@@ -1124,7 +1124,7 @@ export default function TrabajoMalta() {
   const [profileLoading, setProfileLoading] = useState(true);
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<"weekly" | "monthly">("monthly");
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  
   
   // ✅ useEffect CORREGIDO
   useEffect(() => {
