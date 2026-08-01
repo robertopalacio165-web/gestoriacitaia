@@ -171,7 +171,7 @@ function OfficialBrowserBox({
    else if (method === "paypal") {
   alert("PayPal está temporalmente deshabilitado. Por favor utiliza Stripe.");
   return;
-}
+
   method: "POST",
   headers: {
     "Content-Type": "application/json",
