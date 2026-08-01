@@ -1111,7 +1111,7 @@ function OfficialBrowserBox({
 
         {/* ✅ PAYPAL */}
         <button
-          onClick={() => {
+         onClick={async () => {
             setShowPaymentModal(false);
          const res = await fetch("/api/crear-pedido-de-paypal", {
   method: "POST",
