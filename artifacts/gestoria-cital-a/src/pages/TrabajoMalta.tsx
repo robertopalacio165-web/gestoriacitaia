@@ -1078,10 +1078,10 @@ function OfficialBrowserBox({
         
         {/* ✅ STRIPE - TARJETA */}
         <button
-          onClick={() => {
-            setShowPaymentModal(false);
-            handlePay("stripe", selectedPlan);
-          }}
+         onClick={() => {
+  setShowPaymentModal(false);
+  onPay(selectedPlan);
+}}
           className="w-full rounded-xl border-2 border-yellow-500/80 bg-[#1a1a1a] p-2.5 hover:bg-[#222] transition hover:shadow-[0_0_25px_rgba(255,215,0,.12)] group relative"
         >
           <div className="flex items-center gap-2.5">
