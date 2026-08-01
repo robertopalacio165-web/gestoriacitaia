@@ -1152,7 +1152,7 @@ if (data.url) {
                 <img src="https://img.icons8.com/color/48/paypal.png" className="h-4 w-auto" alt="PayPal" />
                 <img src="https://img.icons8.com/color/48/visa.png" className="h-4 w-auto" alt="Visa" />
                 <img src="https://img.icons8.com/color/48/mastercard-logo.png" className="h-4 w-auto" alt="Mastercard" />
-                <img src="https://img.icons8.com/color/48/american-express.png" className="h-4 w-auto" alt="American Express" />
+              
               </div>
             </div>
           </div>
