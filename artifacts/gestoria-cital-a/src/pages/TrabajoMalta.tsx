@@ -967,18 +967,37 @@ function OfficialBrowserBox({
                         : "🔒 Tu información solo será compartida con empresas y agencias de empleo en Malta para buscar trabajo."}
                     </p>
 
-                    <button
-                      type="button"
-                      onClick={() => onPay(selectedPlan)}
-                      className="w-full min-h-[56px] rounded-[20px] bg-gradient-to-r from-yellow-400 via-yellow-500 to-amber-500 px-4 py-2 text-[15px] leading-tight font-black text-black shadow-[0_0_30px_rgba(255,215,0,0.35)] transition-all duration-300 hover:scale-[1.01] disabled:opacity-50 disabled:cursor-not-allowed"
-                      disabled={!acceptTerms}
-                    >
-                      {isMa
-                        ? `🚀 ابدأ البحث الآن (${selectedPlan === "weekly" ? "9,99€" : "19,99€"})`
-                        : isEn
-                        ? `🚀 Start search now (${selectedPlan === "weekly" ? "9.99€" : "19.99€"})`
-                        : `🚀 Empezar búsqueda ahora (${selectedPlan === "weekly" ? "9,99€" : "19,99€"})`}
-                    </button>
+                <details className="w-full">
+  <summary className="list-none cursor-pointer w-full min-h-[56px] rounded-[20px] bg-gradient-to-r from-yellow-400 via-yellow-500 to-amber-500 px-4 py-4 text-[15px] font-black text-black shadow-[0_0_30px_rgba(255,215,0,0.35)] text-center">
+    🚀 Empezar búsqueda ahora
+  </summary>
+
+  <div className="mt-3 space-y-2">
+
+    <button
+      type="button"
+      onClick={() => onPay(selectedPlan)}
+      className="w-full rounded-xl bg-yellow-500 py-3 font-bold text-black"
+    >
+      💳 Tarjeta (Stripe)
+    </button>
+
+    <button
+      type="button"
+      className="w-full rounded-xl bg-[#0070BA] py-3 font-bold text-white"
+    >
+      🟦 PayPal
+    </button>
+
+    <button
+      type="button"
+      className="w-full rounded-xl bg-neutral-900 border border-white/20 py-3 font-bold text-white"
+    >
+      🏦 Transferencia bancaria
+    </button>
+
+  </div>
+</details>
 
                     <div className="mt-4 flex items-center justify-center gap-2 text-[11px] text-gray-300">
                       <Shield className="w-3 h-3 text-yellow-400" />
