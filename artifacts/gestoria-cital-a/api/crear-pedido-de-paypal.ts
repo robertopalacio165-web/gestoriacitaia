@@ -54,7 +54,7 @@ export default async function handler(
         ],
         application_context: {
           return_url:
-            `${process.env.NEXT_PUBLIC_URL}/paypal-success`,
+        `${process.env.NEXT_PUBLIC_URL}/api/capturar-pago-paypal`,
           cancel_url:
             `${process.env.NEXT_PUBLIC_URL}/trabajo-malta?cancel=true`,
           user_action: "PAY_NOW",
