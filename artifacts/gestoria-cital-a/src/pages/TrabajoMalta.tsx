@@ -966,8 +966,9 @@ function OfficialBrowserBox({
                         ? "🔒 Your information will only be shared with companies and employment agencies in Malta to find work."
                         : "🔒 Tu información solo será compartida con empresas y agencias de empleo en Malta para buscar trabajo."}
                     </p>
-
-                <details className="w-full">
+<details
+  className={`w-full ${!acceptTerms ? "pointer-events-none opacity-50" : ""}`}
+>
   <summary className="list-none cursor-pointer w-full min-h-[56px] rounded-[20px] bg-gradient-to-r from-yellow-400 via-yellow-500 to-amber-500 px-4 py-4 text-[15px] font-black text-black shadow-[0_0_30px_rgba(255,215,0,0.35)] text-center">
     🚀 Empezar búsqueda ahora
   </summary>
