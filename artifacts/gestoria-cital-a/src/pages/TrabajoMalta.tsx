@@ -1030,34 +1030,46 @@ function OfficialBrowserBox({
         )}
       </div>
 
-      {/* ✅ POPUP PROFESIONAL DE PAGO */}
+      {/* ✅ POPUP PROFESIONAL DE PAGO - VERSIÓN PREMIUM */}
       {showPaymentModal && (
         <div className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-md rounded-3xl bg-[#111827] border border-white/10 shadow-2xl overflow-hidden">
-            <div className="flex items-center justify-between px-6 pt-6">
-              <h2 className="text-white text-2xl font-bold">
-                {isMa ? "اختر طريقة الدفع" : isEn ? "Select payment method" : "Selecciona tu método de pago"}
-              </h2>
-              <button
-                onClick={() => setShowPaymentModal(false)}
-                className="text-white/60 hover:text-white text-3xl transition"
-              >
-                ×
-              </button>
+          <div className="w-full max-w-lg overflow-hidden rounded-[32px] bg-gradient-to-b from-[#1a2336] via-[#121827] to-[#0b1120] border border-yellow-400/60 shadow-[0_25px_80px_rgba(0,0,0,.65),0_0_40px_rgba(255,215,0,.18)] backdrop-blur-xl">
+            
+            {/* HEADER CON TÍTULO Y CIERRE */}
+            <div className="px-8 pt-8">
+              <div className="flex items-center justify-between">
+                <h2 className="text-center text-[34px] font-black tracking-tight text-white flex-1">
+                  {isMa ? "اختر طريقة الدفع" : isEn ? "Select payment method" : "Selecciona método de pago"}
+                </h2>
+                <button
+                  onClick={() => setShowPaymentModal(false)}
+                  className="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition shrink-0"
+                >
+                  <span className="text-white text-2xl">✕</span>
+                </button>
+              </div>
+              
+              <p className="text-center text-white/60 mt-3 text-[15px]">
+                {isMa ? "دفع آمن • تشفير 256 بت • بدون عمولات مخفية" : isEn ? "Secure payment • 256-bit encryption • No hidden fees" : "Pago protegido • SSL 256 bits • Sin comisiones ocultas"}
+              </p>
             </div>
 
-            <p className="text-center text-white/60 text-sm mb-6">
-              {isMa ? "اختر كيف تفضل الدفع بأمان" : isEn ? "Choose how you prefer to pay securely" : "Elige cómo prefieres pagar de forma segura"}
-            </p>
+            {/* BADGE DE SEGURIDAD */}
+            <div className="mt-5 flex justify-center px-8">
+              <div className="rounded-full bg-emerald-500/15 border border-emerald-500/30 px-4 py-2 text-emerald-400 text-sm font-semibold">
+                🔒 {isMa ? "اتصال مشفر SSL • PCI DSS • دفع آمن 100%" : isEn ? "SSL encrypted • PCI DSS • 100% secure payment" : "Conexión cifrada SSL • PCI DSS • Pago 100% seguro"}
+              </div>
+            </div>
 
-            <div className="space-y-4 px-5 pb-6">
+            {/* OPCIONES DE PAGO */}
+            <div className="space-y-4 px-5 pb-6 mt-6">
               {/* ✅ STRIPE */}
               <button
                 onClick={() => {
                   setShowPaymentModal(false);
                   onPay(selectedPlan);
                 }}
-                className="w-full rounded-2xl border-2 border-yellow-500 bg-[#1a1a1a] p-5 hover:bg-[#222] transition"
+                className="w-full rounded-2xl border-2 border-yellow-500 bg-[#1a1a1a] p-5 hover:bg-[#222] transition hover:shadow-[0_0_30px_rgba(255,215,0,.15)]"
               >
                 <div className="flex items-center gap-4">
                   <div className="text-3xl">💳</div>
@@ -1070,6 +1082,9 @@ function OfficialBrowserBox({
                     </div>
                   </div>
                 </div>
+                <div className="mt-3 flex items-center gap-2 text-green-400 text-sm">
+                  ✔️ {isMa ? "دفع فوري" : isEn ? "Instant payment" : "Pago inmediato"}
+                </div>
               </button>
 
               {/* ✅ PAYPAL */}
@@ -1078,7 +1093,7 @@ function OfficialBrowserBox({
                   setShowPaymentModal(false);
                   window.location.href = "/api/create-paypal-order?plan=" + selectedPlan;
                 }}
-                className="w-full rounded-2xl border border-white/10 bg-[#111827] p-5 hover:bg-[#182233] transition"
+                className="w-full rounded-2xl border border-white/10 bg-[#111827] p-5 hover:bg-[#182233] transition hover:border-blue-500/50"
               >
                 <div className="flex items-center gap-4">
                   <div className="text-3xl">🅿️</div>
@@ -1089,6 +1104,9 @@ function OfficialBrowserBox({
                     </div>
                   </div>
                 </div>
+                <div className="mt-3 flex items-center gap-2 text-blue-400 text-sm">
+                  ✔️ {isMa ? "يقبل أيضًا رصيد PayPal" : isEn ? "Also accepts PayPal balance" : "También acepta saldo PayPal"}
+                </div>
               </button>
 
               {/* ✅ TRANSFERENCIA BANCARIA */}
@@ -1097,7 +1115,7 @@ function OfficialBrowserBox({
                   setShowPaymentModal(false);
                   window.location.href = "/transferencia?plan=" + selectedPlan;
                 }}
-                className="w-full rounded-2xl border border-white/10 bg-[#111827] p-5 hover:bg-[#222] transition"
+                className="w-full rounded-2xl border border-white/10 bg-[#111827] p-5 hover:bg-[#222] transition hover:border-emerald-500/50"
               >
                 <div className="flex items-center gap-4">
                   <div className="text-3xl">🏦</div>
@@ -1106,17 +1124,28 @@ function OfficialBrowserBox({
                       {isMa ? "تحويل بنكي" : isEn ? "Bank Transfer" : "Transferencia bancaria"}
                     </div>
                     <div className="text-white/60 text-sm">
-                      {isMa ? "تحويل SEPA" : isEn ? "SEPA Transfer" : "Transferencia SEPA"}
+                      {isMa ? "تحويل SEPA أوروبي" : isEn ? "SEPA European Transfer" : "Transferencia SEPA europea"}
                     </div>
                   </div>
                 </div>
+                <div className="mt-3 flex items-center gap-2 text-emerald-400 text-sm">
+                  ✔️ {isMa ? "تحويل SEPA أوروبي" : isEn ? "SEPA European transfer" : "Transferencia SEPA europea"}
+                </div>
               </button>
 
-              <div className="flex items-center justify-center gap-2 mt-5 text-green-400 text-sm">
-                🔒
-                <span>
-                  {isMa ? "دفع آمن 100%" : isEn ? "100% secure payment" : "Pago 100% seguro"}
-                </span>
+              {/* LOGOS DE TARJETAS Y MARCAS */}
+              <div className="mt-8 border-t border-white/10 pt-6">
+                <div className="flex flex-wrap justify-center gap-3">
+                  <img src="https://img.icons8.com/color/96/visa.png" className="h-8" alt="Visa" />
+                  <img src="https://img.icons8.com/color/96/mastercard-logo.png" className="h-8" alt="Mastercard" />
+                  <img src="https://img.icons8.com/color/96/apple-pay.png" className="h-8" alt="Apple Pay" />
+                  <img src="https://img.icons8.com/color/96/google-pay.png" className="h-8" alt="Google Pay" />
+                  <img src="https://img.icons8.com/color/96/paypal.png" className="h-8" alt="PayPal" />
+                  <img src="https://img.icons8.com/color/96/american-express.png" className="h-8" alt="American Express" />
+                </div>
+                <p className="text-center text-white/40 text-xs mt-5">
+                  {isMa ? "جميع المدفوعات محمية بتشفير SSL 256 بت" : isEn ? "All payments are protected with 256-bit SSL encryption" : "Todos los pagos están protegidos mediante cifrado SSL de 256 bits."}
+                </p>
               </div>
             </div>
           </div>
