@@ -1113,7 +1113,43 @@ function OfficialBrowserBox({
         <button
           onClick={() => {
             setShowPaymentModal(false);
-            handlePay("paypal", selectedPlan);
+         const res = await fetch("/api/crear-pedido-de-paypal", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    plan: selectedPlan,
+    fullName,
+    whatsapp,
+    email,
+    nationality,
+    currentCity,
+    fechaNacimiento,
+    idiomas,
+    ingles_nivel,
+    frances_nivel,
+    italiano_nivel,
+    espanol_nivel,
+    arabe_nivel,
+    aleman_nivel,
+    trabajo_busca,
+    experiencia_previa,
+    anos_experiencia,
+    education_level,
+    carnetConducir,
+    photoUrl,
+    pdfUrl,
+  }),
+});
+
+const data = await res.json();
+
+if (data.url) {
+  window.location.href = data.url;
+} else {
+  alert("Error al crear el pago de PayPal.");
+}
           }}
           className="w-full rounded-xl border border-white/10 bg-[#111827] p-2.5 hover:bg-[#182233] transition hover:border-blue-500/40 group relative"
         >
