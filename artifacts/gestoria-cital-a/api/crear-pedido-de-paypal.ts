@@ -29,7 +29,15 @@ export default async function handler(
     const token = await tokenRes.json();
 
     const body = req.body;
+const returnUrl = new URL(
+  `${process.env.NEXT_PUBLIC_URL}/api/paypal-return`
+);
 
+Object.entries(body).forEach(([key, value]) => {
+  if (value !== undefined && value !== null) {
+    returnUrl.searchParams.append(key, String(value));
+  }
+});
     const amount =
       body.plan === "weekly"
         ? "0.02"
@@ -53,8 +61,8 @@ export default async function handler(
           },
         ],
         application_context: {
-         return_url:
-`${process.env.NEXT_PUBLIC_URL}/api/paypal-return`,
+         return_url: returnUrl.toString(),
+
           cancel_url:
             `${process.env.NEXT_PUBLIC_URL}/trabajo-malta?cancel=true`,
           user_action: "PAY_NOW",
