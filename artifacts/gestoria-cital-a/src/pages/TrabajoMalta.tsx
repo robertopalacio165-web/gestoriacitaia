@@ -170,7 +170,20 @@ function OfficialBrowserBox({
       onPay(plan);
     } else if (method === "paypal") {
       // ✅ Redirige a PayPal
-      window.location.href = "/api/create-paypal-order?plan=" + plan;
+   const response = await fetch("/api/crear-pedido-de-paypal", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    ...formData,
+    plan,
+  }),
+});
+
+const data = await response.json();
+
+window.location.href = data.url;
     } else if (method === "transfer") {
       // ✅ Temporal - muestra mensaje
       toast({
