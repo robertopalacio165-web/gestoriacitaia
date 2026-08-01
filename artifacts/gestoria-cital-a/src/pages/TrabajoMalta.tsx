@@ -158,6 +158,7 @@ function OfficialBrowserBox({
     isMa ? "⏳ انتظار الردود" : isEn ? "⏳ Waiting for responses" : "⏳ Esperando respuestas",
   ]);
   const [progressStep, setProgressStep] = useState(0);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
 
   // ✅ NACIONALIDADES
   const nationalityOptions = [
@@ -966,39 +967,16 @@ function OfficialBrowserBox({
                         ? "🔒 Your information will only be shared with companies and employment agencies in Malta to find work."
                         : "🔒 Tu información solo será compartida con empresas y agencias de empleo en Malta para buscar trabajo."}
                     </p>
-<details
-  className={`w-full ${!acceptTerms ? "pointer-events-none opacity-50" : ""}`}
->
-  <summary className="list-none cursor-pointer w-full min-h-[56px] rounded-[20px] bg-gradient-to-r from-yellow-400 via-yellow-500 to-amber-500 px-4 py-4 text-[15px] font-black text-black shadow-[0_0_30px_rgba(255,215,0,0.35)] text-center">
-    🚀 Empezar búsqueda ahora
-  </summary>
 
-  <div className="mt-3 space-y-2">
-
-    <button
-      type="button"
-      onClick={() => onPay(selectedPlan)}
-      className="w-full rounded-xl bg-yellow-500 py-3 font-bold text-black"
-    >
-      💳 Tarjeta (Stripe)
-    </button>
-
-    <button
-      type="button"
-      className="w-full rounded-xl bg-[#0070BA] py-3 font-bold text-white"
-    >
-      🟦 PayPal
-    </button>
-
-    <button
-      type="button"
-      className="w-full rounded-xl bg-neutral-900 border border-white/20 py-3 font-bold text-white"
-    >
-      🏦 Transferencia bancaria
-    </button>
-
-  </div>
-</details>
+                    {/* ✅ BOTÓN AMARILLO - ABRE EL POPUP */}
+                    <button
+                      type="button"
+                      onClick={() => setShowPaymentModal(true)}
+                      disabled={!acceptTerms}
+                      className="w-full min-h-[56px] rounded-[20px] bg-gradient-to-r from-yellow-400 via-yellow-500 to-amber-500 px-4 py-2 text-[15px] font-black text-black shadow-[0_0_30px_rgba(255,215,0,.35)] disabled:opacity-50 disabled:cursor-not-allowed hover:scale-[1.02] transition"
+                    >
+                      🚀 Empezar búsqueda ahora
+                    </button>
 
                     <div className="mt-4 flex items-center justify-center gap-2 text-[11px] text-gray-300">
                       <Shield className="w-3 h-3 text-yellow-400" />
@@ -1051,6 +1029,99 @@ function OfficialBrowserBox({
           </div>
         )}
       </div>
+
+      {/* ✅ POPUP PROFESIONAL DE PAGO */}
+      {showPaymentModal && (
+        <div className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="w-full max-w-md rounded-3xl bg-[#111827] border border-white/10 shadow-2xl overflow-hidden">
+            <div className="flex items-center justify-between px-6 pt-6">
+              <h2 className="text-white text-2xl font-bold">
+                {isMa ? "اختر طريقة الدفع" : isEn ? "Select payment method" : "Selecciona tu método de pago"}
+              </h2>
+              <button
+                onClick={() => setShowPaymentModal(false)}
+                className="text-white/60 hover:text-white text-3xl transition"
+              >
+                ×
+              </button>
+            </div>
+
+            <p className="text-center text-white/60 text-sm mb-6">
+              {isMa ? "اختر كيف تفضل الدفع بأمان" : isEn ? "Choose how you prefer to pay securely" : "Elige cómo prefieres pagar de forma segura"}
+            </p>
+
+            <div className="space-y-4 px-5 pb-6">
+              {/* ✅ STRIPE */}
+              <button
+                onClick={() => {
+                  setShowPaymentModal(false);
+                  onPay(selectedPlan);
+                }}
+                className="w-full rounded-2xl border-2 border-yellow-500 bg-[#1a1a1a] p-5 hover:bg-[#222] transition"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="text-3xl">💳</div>
+                  <div className="text-left flex-1">
+                    <div className="text-white font-bold text-lg">
+                      {isMa ? "بطاقة (Stripe)" : isEn ? "Card (Stripe)" : "Stripe (Tarjeta)"}
+                    </div>
+                    <div className="text-white/60 text-sm">
+                      {isMa ? "فيزا · ماستركارد · آبل باي · جوجل باي" : isEn ? "Visa · Mastercard · Apple Pay · Google Pay" : "Visa · Mastercard · Apple Pay · Google Pay"}
+                    </div>
+                  </div>
+                </div>
+              </button>
+
+              {/* ✅ PAYPAL */}
+              <button
+                onClick={() => {
+                  setShowPaymentModal(false);
+                  window.location.href = "/api/create-paypal-order?plan=" + selectedPlan;
+                }}
+                className="w-full rounded-2xl border border-white/10 bg-[#111827] p-5 hover:bg-[#182233] transition"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="text-3xl">🅿️</div>
+                  <div className="text-left flex-1">
+                    <div className="text-white font-bold text-lg">PayPal</div>
+                    <div className="text-white/60 text-sm">
+                      {isMa ? "ادفع بسرعة وأمان مع PayPal" : isEn ? "Pay quickly and securely with PayPal" : "Paga rápida y seguramente con PayPal"}
+                    </div>
+                  </div>
+                </div>
+              </button>
+
+              {/* ✅ TRANSFERENCIA BANCARIA */}
+              <button
+                onClick={() => {
+                  setShowPaymentModal(false);
+                  window.location.href = "/transferencia?plan=" + selectedPlan;
+                }}
+                className="w-full rounded-2xl border border-white/10 bg-[#111827] p-5 hover:bg-[#222] transition"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="text-3xl">🏦</div>
+                  <div className="text-left flex-1">
+                    <div className="text-white font-bold text-lg">
+                      {isMa ? "تحويل بنكي" : isEn ? "Bank Transfer" : "Transferencia bancaria"}
+                    </div>
+                    <div className="text-white/60 text-sm">
+                      {isMa ? "تحويل SEPA" : isEn ? "SEPA Transfer" : "Transferencia SEPA"}
+                    </div>
+                  </div>
+                </div>
+              </button>
+
+              <div className="flex items-center justify-center gap-2 mt-5 text-green-400 text-sm">
+                🔒
+                <span>
+                  {isMa ? "دفع آمن 100%" : isEn ? "100% secure payment" : "Pago 100% seguro"}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </motion.div>
   );
 }
