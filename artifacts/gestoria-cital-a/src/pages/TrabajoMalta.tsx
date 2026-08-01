@@ -966,20 +966,89 @@ function OfficialBrowserBox({
                         ? "🔒 Your information will only be shared with companies and employment agencies in Malta to find work."
                         : "🔒 Tu información solo será compartida con empresas y agencias de empleo en Malta para buscar trabajo."}
                     </p>
+<div className="space-y-3">
 
-                    <button
-                      type="button"
-                      onClick={() => onPay(selectedPlan)}
-                      className="w-full min-h-[56px] rounded-[20px] bg-gradient-to-r from-yellow-400 via-yellow-500 to-amber-500 px-4 py-2 text-[15px] leading-tight font-black text-black shadow-[0_0_30px_rgba(255,215,0,0.35)] transition-all duration-300 hover:scale-[1.01] disabled:opacity-50 disabled:cursor-not-allowed"
-                      disabled={!acceptTerms}
-                    >
-                      {isMa
-                        ? `🚀 ابدأ البحث الآن (${selectedPlan === "weekly" ? "9,99€" : "19,99€"})`
-                        : isEn
-                        ? `🚀 Start search now (${selectedPlan === "weekly" ? "9.99€" : "19.99€"})`
-                        : `🚀 Empezar búsqueda ahora (${selectedPlan === "weekly" ? "9,99€" : "19,99€"})`}
-                    </button>
+  <button
+    type="button"
+  onClick={() => setShowPaymentModal(true)}
+    disabled={!acceptTerms}
+    className="w-full rounded-2xl bg-gradient-to-r from-yellow-400 to-yellow-500 py-4 text-black font-bold"
+  >
+    💳 Tarjeta (Stripe)
+    <div className="text-xs">
+      Visa • Mastercard • Apple Pay • Google Pay
+    </div>
+  </button>
 
+  <button
+    type="button"
+    disabled={!acceptTerms}
+    className="w-full rounded-2xl bg-[#0070BA] py-4 text-white font-bold"
+  >
+    🟦 PayPal
+    <div className="text-xs">
+      Paga con PayPal
+    </div>
+  </button>
+
+  <button
+    type="button"
+    disabled={!acceptTerms}
+    className="w-full rounded-2xl bg-neutral-900 border border-white/20 py-4 text-white font-bold"
+  >
+    🏦 Transferencia bancaria
+    <div className="text-xs text-white/70">
+      Transferencia SEPA
+    </div>
+  </button>
+
+</div>
+{showPaymentModal && (
+  <div className="fixed inset-0 z-[9999] bg-black/70 flex items-center justify-center p-4">
+
+    <div className="w-full max-w-md rounded-3xl bg-[#10131d] border border-white/10 p-6">
+
+      <h2 className="text-center text-2xl font-bold text-white">
+        Selecciona método de pago
+      </h2>
+
+      <div className="mt-6 space-y-3">
+
+        <button
+          onClick={() => {
+            setShowPaymentModal(false);
+            onPay(selectedPlan);
+          }}
+          className="w-full rounded-2xl bg-yellow-500 py-4 font-bold text-black"
+        >
+          💳 Tarjeta (Stripe)
+        </button>
+
+        <button
+          className="w-full rounded-2xl bg-[#0070BA] py-4 font-bold text-white"
+        >
+          🟦 PayPal
+        </button>
+
+        <button
+          className="w-full rounded-2xl bg-neutral-900 border border-white/20 py-4 font-bold text-white"
+        >
+          🏦 Transferencia bancaria
+        </button>
+
+      </div>
+
+      <button
+        onClick={() => setShowPaymentModal(false)}
+        className="mt-6 w-full rounded-xl bg-red-600 py-3 font-bold text-white"
+      >
+        Cancelar
+      </button>
+
+    </div>
+
+  </div>
+)}
                     <div className="mt-4 flex items-center justify-center gap-2 text-[11px] text-gray-300">
                       <Shield className="w-3 h-3 text-yellow-400" />
                       <span>
@@ -1055,6 +1124,7 @@ export default function TrabajoMalta() {
   const [profileLoading, setProfileLoading] = useState(true);
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<"weekly" | "monthly">("monthly");
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
   
   // ✅ useEffect CORREGIDO
   useEffect(() => {
