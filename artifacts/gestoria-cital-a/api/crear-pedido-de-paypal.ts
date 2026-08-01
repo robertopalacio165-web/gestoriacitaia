@@ -63,7 +63,11 @@ export default async function handler(
     });
 
     const order = await orderRes.json();
-
+console.log("PAYPAL RESPONSE:");
+console.log(order);
+    if (!order.links) {
+  return res.status(500).json(order);
+}
     const approve = order.links.find(
       (x: any) => x.rel === "approve"
     );
