@@ -168,9 +168,10 @@ function OfficialBrowserBox({
     if (method === "stripe") {
       // ✅ Llama al flujo existente de Stripe
       onPay(plan);
-    } else if (method === "paypal") {
-      // ✅ Redirige a PayPal
-   const response = await fetch("/api/crear-pedido-de-paypal", {
+   else if (method === "paypal") {
+  alert("PayPal está temporalmente deshabilitado. Por favor utiliza Stripe.");
+  return;
+}
   method: "POST",
   headers: {
     "Content-Type": "application/json",
