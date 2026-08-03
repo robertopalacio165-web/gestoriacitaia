@@ -177,10 +177,20 @@ function OfficialBrowserBox({
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        ...formData,
-        plan,
-      }),
+  const fd = new FormData();
+
+Object.entries(formData).forEach(([k, v]) => {
+  if (v !== null && v !== undefined) {
+    fd.append(k, v as any);
+  }
+});
+
+fd.append("plan", plan);
+
+const response = await fetch("/api/crear-pedido-de-paypal", {
+  method: "POST",
+  body: fd,
+});
     });
 
     const data = await response.json();
