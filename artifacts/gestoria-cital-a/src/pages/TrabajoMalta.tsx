@@ -170,44 +170,12 @@ function OfficialBrowserBox({
       onPay(plan);
 } else if (method === "paypal") {
   setShowPaymentModal(false);
-  
-  try {
-   
-await uploadPhotoIfNeeded();
-await uploadPdfIfNeeded();
 
-const response = await fetch("/api/crear-pedido-de-paypal", {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json",
-  },
-  body: JSON.stringify({
-    ...formData,
-    plan,
-  }),
-});
-
-
-    const data = await response.json();
-
-    if (data.url) {
-      window.location.href = data.url;
-    } else {
-      toast({
-        title: isMa ? "خطأ" : isEn ? "Error" : "Error",
-        description: isMa ? "حدث خطأ في إنشاء طلب PayPal" : isEn ? "Error creating PayPal order" : "Error al crear el pago de PayPal",
-        variant: "destructive",
-      });
-    }
-  } catch (error) {
-    console.error("❌ Error en PayPal:", error);
-    toast({
-      title: isMa ? "خطأ" : isEn ? "Error" : "Error",
-      description: isMa ? "حدث خطأ في الاتصال" : isEn ? "Connection error" : "Error de conexión",
-      variant: "destructive",
-    });
-  }
-
+  toast({
+    title: "PayPal",
+    description: "Próximamente..."
+  });
+}
     } else if (method === "transfer") {
       // ✅ Temporal - muestra mensaje
       toast({
@@ -1145,36 +1113,34 @@ const response = await fetch("/api/crear-pedido-de-paypal", {
                 </div>
               </button>
 
-{/* ✅ PAYPAL - ACTIVADO */}
-<button
-  onClick={() => {
-    setShowPaymentModal(false);
-    handlePay("paypal", selectedPlan);
-  }}
-  className="w-full rounded-xl border border-white/10 bg-[#111827] p-2.5 hover:bg-[#182233] transition hover:border-blue-500/40 group relative"
->
-  <div className="flex items-center gap-2.5">
-    <div className="w-4 h-4 rounded-full border-2 border-white/20 flex items-center justify-center shrink-0 group-hover:border-blue-500/50">
-      <div className="w-2 h-2 rounded-full bg-blue-500 opacity-0 group-hover:opacity-100 transition" />
-    </div>
-    <div className="w-9 h-9 rounded-xl bg-blue-500/15 flex items-center justify-center shrink-0">
-      <svg className="w-5 h-5 text-blue-400" fill="currentColor" viewBox="0 0 24 24">
-        <path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.026.382 5.474 0 5.998 0h7.46c2.57 0 4.578.543 5.69 1.81 1.112 1.267 1.363 2.877 1.015 4.556-.335 1.598-1.17 2.926-2.268 3.787-.814.635-1.819 1.045-2.872 1.107-.334.019-.673.028-1.014.028h-3.19c-.435 0-.826.308-.932.731l-.43 1.873-.168.733-.164.717a.641.641 0 0 1-.633.74h-2.09l.467-2.064Z"/>
-      </svg>
-    </div>
-    <div className="text-left flex-1 min-w-0">
-      <div className="text-white font-bold text-[14px]">PayPal</div>
-      <div className="text-white/50 text-[10px]">
-        {isMa ? "ادفع بسرعة وأمان" : isEn ? "Pay quickly and securely" : "Paga rápida y seguramente"}
-      </div>
-      <div className="flex items-center gap-1 mt-1">
-        <img src="https://img.icons8.com/color/48/paypal.png" className="h-4 w-auto" alt="PayPal" />
-        <img src="https://img.icons8.com/color/48/visa.png" className="h-4 w-auto" alt="Visa" />
-        <img src="https://img.icons8.com/color/48/mastercard-logo.png" className="h-4 w-auto" alt="Mastercard" />
-      </div>
-    </div>
-  </div>
-</button>
+              {/* ✅ PAYPAL - DESACTIVADO TEMPORALMENTE */}
+              <button
+                type="button"
+                disabled
+                className="w-full rounded-xl border border-gray-700 bg-gray-800/50 p-2.5 opacity-50 cursor-not-allowed"
+              >
+                <div className="flex items-center gap-2.5">
+                  <div className="w-4 h-4 rounded-full border-2 border-gray-600 flex items-center justify-center shrink-0">
+                    <div className="w-2 h-2 rounded-full bg-gray-600" />
+                  </div>
+                  <div className="w-9 h-9 rounded-xl bg-gray-600/20 flex items-center justify-center shrink-0">
+                    <svg className="w-5 h-5 text-gray-500" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.026.382 5.474 0 5.998 0h7.46c2.57 0 4.578.543 5.69 1.81 1.112 1.267 1.363 2.877 1.015 4.556-.335 1.598-1.17 2.926-2.268 3.787-.814.635-1.819 1.045-2.872 1.107-.334.019-.673.028-1.014.028h-3.19c-.435 0-.826.308-.932.731l-.43 1.873-.168.733-.164.717a.641.641 0 0 1-.633.74h-2.09l.467-2.064Z"/>
+                    </svg>
+                  </div>
+                  <div className="text-left flex-1 min-w-0">
+                    <div className="text-white font-bold text-[14px]">PayPal</div>
+                    <div className="text-red-400 text-[10px]">
+                      {isMa ? "غير متاح حالياً" : isEn ? "Temporarily unavailable" : "Temporalmente no disponible"}
+                    </div>
+                    <div className="flex items-center gap-1 mt-1">
+                      <img src="https://img.icons8.com/color/48/paypal.png" className="h-4 w-auto opacity-50" alt="PayPal" />
+                      <img src="https://img.icons8.com/color/48/visa.png" className="h-4 w-auto opacity-50" alt="Visa" />
+                      <img src="https://img.icons8.com/color/48/mastercard-logo.png" className="h-4 w-auto opacity-50" alt="Mastercard" />
+                    </div>
+                  </div>
+                </div>
+              </button>
 
               {/* ✅ TRANSFERENCIA BANCARIA */}
               <button
