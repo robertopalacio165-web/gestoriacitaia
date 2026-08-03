@@ -119,7 +119,12 @@ export default async function handler(
 
     // ✅ 5. ENVIAR TODOS LOS DATOS A capturar-pago-paypal (POST)
     console.log("📤 Enviando datos a capturar-pago-paypal...");
-
+console.log("=========================================");
+console.log("📷 PHOTO URL RECIBIDA:");
+console.log(photoUrl);
+console.log("📄 PDF URL RECIBIDA:");
+console.log(pdfUrl);
+console.log("=========================================");
     const payload = {
       plan: plan || "monthly",
       fullName: fullName || "",
