@@ -28,10 +28,7 @@ res: VercelResponse
 
     const token = await tokenRes.json();
 
-  const body =
-  req.body instanceof Object
-    ? req.body
-    : {};
+    const body = req.body;
 const returnUrl = new URL(
   `${process.env.NEXT_PUBLIC_URL}/api/paypal-return`
 );
