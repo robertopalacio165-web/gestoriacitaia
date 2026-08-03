@@ -1,167 +1,204 @@
-import Stripe from "stripe";
-import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { saveMaltaApplication } from "../../lib/saveMaltaApplication";
+import { createClient } from "@supabase/supabase-js";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
-  apiVersion: "2025-08-27.basil",
-});
+const supabase = createClient(
+  process.env.VITE_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
-
-export default async function handler(req: VercelRequest, res: VercelResponse) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
-  }
-
-  const sig = req.headers["stripe-signature"] as string;
-  const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
-
-  if (!endpointSecret) {
-    console.error("❌ STRIPE_WEBHOOK_SECRET no configurado");
-    return res.status(500).json({ error: "Webhook secret not configured" });
-  }
-
-  const rawBody = await getRawBody(req);
-
-  let event: Stripe.Event;
-
-  try {
-    event = stripe.webhooks.constructEvent(rawBody, sig, endpointSecret);
-  } catch (err: any) {
-    console.error("❌ Webhook signature verification failed:", err.message);
-    return res.status(400).json({ error: `Webhook Error: ${err.message}` });
-  }
-
-  if (event.type === "checkout.session.completed") {
-    const session = event.data.object as Stripe.Checkout.Session;
-    const metadata = session.metadata || {};
-
-    console.log("=========================================");
-    console.log("✅ Checkout completado:", session.id);
-    console.log("📦 METADATA COMPLETA RECIBIDA:");
-    console.log(JSON.stringify(metadata, null, 2));
-    console.log("=========================================");
-
-    // ============================================
-    // 1. DATOS PERSONALES
-    // ============================================
-    const fullName = metadata.fullName || "";
-    const whatsapp = metadata.whatsapp || "";
-    const email = metadata.email || "";
-    const nationality = metadata.nationality || "";
-    const currentCity = metadata.currentCity || "";
-    const fechaNacimiento = metadata.fechaNacimiento || "";
-    
-    // ============================================
-    // 2. IDIOMAS
-    // ============================================
-    const idiomas = metadata.idiomas || "";
-    const ingles_nivel = metadata.ingles_nivel || "";
-    const frances_nivel = metadata.frances_nivel || "";
-    const italiano_nivel = metadata.italiano_nivel || "";
-    const espanol_nivel = metadata.espanol_nivel || "";
-    const arabe_nivel = metadata.arabe_nivel || "";
-    const aleman_nivel = metadata.aleman_nivel || "";
-    
-    // ============================================
-    // 3. EXPERIENCIA
-    // ============================================
-    const trabajo_busca = metadata.trabajo_busca || "";
-    const experiencia_previa = metadata.experiencia_previa || "";
-    const anos_experiencia = metadata.anos_experiencia || "";
-    const education_level = metadata.education_level || "";
-    
-    // ============================================
-    // 4. CARNET
-    // ============================================
-    const carnetConducir = metadata.carnetConducir || "";
-    
-    // ============================================
-    // 5. DOCUMENTOS
-    // ============================================
-    const photoUrl = metadata.photoUrl || null;
-    const pdfUrl = metadata.pdfUrl || null;
-    
-    // ============================================
-    // 6. PLAN
-    // ============================================
-    const plan = (metadata.plan || "monthly") as "weekly" | "monthly";
-
-    console.log("📋 DATOS PROCESADOS:");
-    console.log("  - fullName:", fullName);
-    console.log("  - email:", email);
-    console.log("  - plan:", plan);
-    console.log("  - trabajo_busca:", trabajo_busca);
-    console.log("  - experiencia_previa:", experiencia_previa);
-
-    // ============================================
-    // ✅ 7. LLAMAR A LA FUNCIÓN COMPARTIDA
-    // ============================================
-    try {
-      const result = await saveMaltaApplication({
-        plan,
-        fullName,
-        whatsapp,
-        email,
-        nationality,
-        currentCity,
-        fechaNacimiento,
-        idiomas,
-        ingles_nivel,
-        frances_nivel,
-        italiano_nivel,
-        espanol_nivel,
-        arabe_nivel,
-        aleman_nivel,
-        trabajo_busca,
-        experiencia_previa,
-        anos_experiencia,
-        education_level,
-        carnetConducir,
-        photoUrl,
-        pdfUrl,
-        payment_method: "stripe",
-        payment_id: session.id,
-        payment_customer_id: session.customer as string || undefined,
-        payment_intent: session.payment_intent as string || undefined,
-      });
-
-      console.log(`✅ Aplicación procesada: ${result.applicationId} (${result.isNew ? "nueva" : "actualizada"})`);
-
-      return res.status(200).json({
-        received: true,
-        applicationId: result.applicationId,
-        isNew: result.isNew,
-        message: result.isNew ? "Application created and queued" : "Application updated",
-      });
-
-    } catch (error) {
-      console.error("❌ Error saving application:", error);
-      return res.status(500).json({ 
-        error: "Failed to save application",
-        details: error instanceof Error ? error.message : "Unknown error"
-      });
-    }
-  }
-
-  return res.status(200).json({ received: true });
+export interface MaltaApplicationData {
+  plan: "weekly" | "monthly";
+  fullName: string;
+  whatsapp: string;
+  email: string;
+  nationality: string;
+  currentCity: string;
+  fechaNacimiento: string;
+  idiomas: string;
+  ingles_nivel: string;
+  frances_nivel: string;
+  italiano_nivel: string;
+  espanol_nivel: string;
+  arabe_nivel: string;
+  aleman_nivel: string;
+  trabajo_busca: string;
+  experiencia_previa: string;
+  anos_experiencia: string;
+  education_level: string;
+  carnetConducir: string;
+  photoUrl: string | null;
+  pdfUrl: string | null;
+  payment_method: "stripe" | "paypal";
+  payment_id: string;
+  payment_customer_id?: string;
+  payment_intent?: string;
 }
 
-async function getRawBody(req: VercelRequest): Promise<string> {
-  return new Promise((resolve, reject) => {
-    let body = "";
-    req.on("data", (chunk: Buffer) => {
-      body += chunk.toString();
-    });
-    req.on("end", () => {
-      resolve(body);
-    });
-    req.on("error", (err) => {
-      reject(err);
-    });
-  });
+export interface SaveResult {
+  applicationId: string;
+  isNew: boolean;
+}
+
+export async function saveMaltaApplication(data: MaltaApplicationData): Promise<SaveResult> {
+  console.log("=========================================");
+  console.log("📦 saveMaltaApplication RECIBIDO:");
+  console.log(`  - payment_method: ${data.payment_method}`);
+  console.log(`  - payment_id: ${data.payment_id}`);
+  console.log(`  - fullName: ${data.fullName}`);
+  console.log(`  - email: ${data.email}`);
+  console.log("=========================================");
+
+  try {
+    // ✅ 1. VERIFICAR SI YA EXISTE
+    let query;
+    
+    if (data.payment_method === "stripe") {
+      query = supabase
+        .from("malta_applications")
+        .select("id")
+        .eq("stripe_session_id", data.payment_id);
+    } else {
+      query = supabase
+        .from("malta_applications")
+        .select("id")
+        .eq("paypal_order_id", data.payment_id);
+    }
+
+    const { data: existing } = await query.maybeSingle();
+
+    let applicationId: string;
+    let isNew = false;
+
+    // ✅ 2. SI EXISTE → ACTUALIZAR
+    if (existing) {
+      applicationId = existing.id;
+      console.log(`🔄 Actualizando aplicación existente: ${applicationId}`);
+      
+      const updateData: any = {
+        full_name: data.fullName,
+        whatsapp: data.whatsapp,
+        email: data.email,
+        nacionalidad: data.nationality,
+        nationality: data.nationality,
+        current_city: data.currentCity,
+        fecha_nacimiento: data.fechaNacimiento || null,
+        idiomas: data.idiomas,
+        ingles_nivel: data.ingles_nivel,
+        frances_nivel: data.frances_nivel,
+        italiano_nivel: data.italiano_nivel,
+        espanol_nivel: data.espanol_nivel,
+        arabe_nivel: data.arabe_nivel,
+        aleman_nivel: data.aleman_nivel,
+        profesion: data.trabajo_busca,
+        sectores: data.experiencia_previa,
+        anos_experiencia: data.anos_experiencia,
+        education_level: data.education_level,
+        carnet_conducir: data.carnetConducir,
+        photo_url: data.photoUrl,
+        pdf_url: data.pdfUrl,
+        plan: data.plan,
+        paid: true,
+        updated_at: new Date().toISOString(),
+      };
+
+      if (data.payment_method === "stripe") {
+        if (data.payment_customer_id) updateData.stripe_customer_id = data.payment_customer_id;
+      } else {
+        if (data.payment_customer_id) updateData.paypal_payer_id = data.payment_customer_id;
+      }
+
+      const { error } = await supabase
+        .from("malta_applications")
+        .update(updateData)
+        .eq("id", applicationId);
+
+      if (error) throw error;
+
+      console.log(`✅ Aplicación ${applicationId} actualizada`);
+
+    } else {
+      // ✅ 3. SI NO EXISTE → INSERTAR
+      isNew = true;
+      console.log("🆕 Creando nueva aplicación");
+
+      const insertData: any = {
+        full_name: data.fullName,
+        whatsapp: data.whatsapp,
+        email: data.email,
+        nacionalidad: data.nationality,
+        nationality: data.nationality,
+        current_city: data.currentCity,
+        fecha_nacimiento: data.fechaNacimiento || null,
+        idiomas: data.idiomas,
+        ingles_nivel: data.ingles_nivel,
+        frances_nivel: data.frances_nivel,
+        italiano_nivel: data.italiano_nivel,
+        espanol_nivel: data.espanol_nivel,
+        arabe_nivel: data.arabe_nivel,
+        aleman_nivel: data.aleman_nivel,
+        profesion: data.trabajo_busca,
+        sectores: data.experiencia_previa,
+        anos_experiencia: data.anos_experiencia,
+        education_level: data.education_level,
+        carnet_conducir: data.carnetConducir,
+        photo_url: data.photoUrl,
+        pdf_url: data.pdfUrl,
+        plan: data.plan,
+        paid: true,
+        worker_status: "ready",
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+
+      if (data.payment_method === "stripe") {
+        insertData.stripe_session_id = data.payment_id;
+        if (data.payment_customer_id) insertData.stripe_customer_id = data.payment_customer_id;
+        if (data.payment_intent) insertData.stripe_payment_intent = data.payment_intent;
+      } else {
+        insertData.paypal_order_id = data.payment_id;
+        if (data.payment_customer_id) insertData.paypal_payer_id = data.payment_customer_id;
+      }
+
+      const { data: newApp, error } = await supabase
+        .from("malta_applications")
+        .insert(insertData)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      applicationId = newApp.id;
+      console.log(`✅ Registro creado: ${applicationId}`);
+    }
+
+    // ✅ 4. AÑADIR A LA COLA DE TRABAJO (SOLO SI ES NUEVO)
+    if (isNew) {
+      try {
+        const { error: queueError } = await supabase
+          .from("worker_queue")
+          .insert({
+            application_id: applicationId,
+            status: "ready",
+            priority: 1,
+            created_at: new Date().toISOString(),
+          });
+
+        if (queueError) {
+          console.error("❌ Error en worker_queue:", queueError);
+        } else {
+          console.log(`✅ Añadido a worker_queue: ${applicationId}`);
+        }
+      } catch (err) {
+        console.error("❌ Error en worker_queue:", err);
+      }
+    }
+
+    return {
+      applicationId,
+      isNew,
+    };
+
+  } catch (error) {
+    console.error("❌ Error en saveMaltaApplication:", error);
+    throw error;
+  }
 }
