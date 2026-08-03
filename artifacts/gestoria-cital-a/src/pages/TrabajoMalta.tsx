@@ -172,11 +172,7 @@ function OfficialBrowserBox({
   setShowPaymentModal(false);
   
   try {
-    const response = await fetch("/api/crear-pedido-de-paypal", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+   
   const fd = new FormData();
 
 Object.entries(formData).forEach(([k, v]) => {
@@ -191,7 +187,7 @@ const response = await fetch("/api/crear-pedido-de-paypal", {
   method: "POST",
   body: fd,
 });
-    });
+
 
     const data = await response.json();
 
