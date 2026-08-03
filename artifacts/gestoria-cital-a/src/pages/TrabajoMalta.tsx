@@ -173,7 +173,7 @@ function OfficialBrowserBox({
   
   try {
    
-await uploadPhotoIfNeeded();
+
 await uploadPdfIfNeeded();
 
 const response = await fetch("/api/crear-pedido-de-paypal", {
