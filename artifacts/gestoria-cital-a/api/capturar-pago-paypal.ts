@@ -108,9 +108,7 @@ try {
     );
   }
 
-} catch (err) {
-  console.error("❌ generate-malta-documents:", err);
-}
+
    } catch (err) {
   console.error("❌ generate-malta-documents:", err);
 }
