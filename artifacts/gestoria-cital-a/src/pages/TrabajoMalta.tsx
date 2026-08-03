@@ -168,12 +168,14 @@ function OfficialBrowserBox({
     if (method === "stripe") {
       // ✅ Llama al flujo existente de Stripe
       onPay(plan);
-    } else if (method === "paypal") {
-      // ✅ PayPal desactivado temporalmente
-      toast({
-        title: isMa ? "غير متاح" : isEn ? "Unavailable" : "No disponible",
-        description: isMa ? "خدمة PayPal غير متاحة حالياً" : isEn ? "PayPal service is currently unavailable" : "El servicio de PayPal no está disponible actualmente",
-      });
+} else if (method === "paypal") {
+  setShowPaymentModal(false);
+
+  toast({
+    title: "PayPal",
+    description: "Próximamente..."
+  });
+}
     } else if (method === "transfer") {
       // ✅ Temporal - muestra mensaje
       toast({
