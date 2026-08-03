@@ -31,6 +31,7 @@ export interface MaltaApplicationData {
   payment_id: string;
   payment_customer_id?: string;
   payment_intent?: string;
+   skipQueue?: boolean;
 }
 
 export interface SaveResult {
@@ -171,7 +172,7 @@ export async function saveMaltaApplication(data: MaltaApplicationData): Promise<
     }
 
     // ✅ 4. AÑADIR A LA COLA DE TRABAJO (SOLO SI ES NUEVO)
-    if (isNew) {
+if (isNew && !data.skipQueue) {
       try {
         const { error: queueError } = await supabase
           .from("worker_queue")
