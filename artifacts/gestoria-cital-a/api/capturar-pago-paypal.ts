@@ -67,7 +67,84 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       payment_id: paypal_order_id,
       payment_customer_id: paypal_payer_id || undefined,
       payment_intent: undefined,
+       skipQueue: true,
     });
+
+// ============================================
+// ✅ GENERAR CV + COVER LETTER (IGUAL QUE STRIPE)
+// ============================================
+
+let cvUrl = "";
+let letterUrl = "";
+
+try {
+  const docsResponse = await fetch(
+    `${process.env.NEXT_PUBLIC_URL}/api/generate-malta-documents`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        applicationId: result.applicationId,
+      }),
+    }
+  );
+
+  if (docsResponse.ok) {
+    const docs = await docsResponse.json();
+
+    cvUrl = docs.cvUrl || "";
+    letterUrl = docs.letterUrl || "";
+
+    console.log("✅ CV y carta generados desde PayPal");
+    console.log(cvUrl);
+    console.log(letterUrl);
+
+  } else {
+    console.error(
+      "❌ Error generando documentos:",
+      await docsResponse.text()
+    );
+  }
+
+} catch (err) {
+  console.error("❌ generate-malta-documents:", err);
+}
+   } catch (err) {
+  console.error("❌ generate-malta-documents:", err);
+}
+
+// ============================================
+// ✅ AÑADIR A WORKER_QUEUE DESPUÉS DE GENERAR DOCUMENTOS
+// ============================================
+
+try {
+  const { createClient } = await import("@supabase/supabase-js");
+
+  const supabase = createClient(
+    process.env.VITE_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+
+  const { error: queueError } = await supabase
+    .from("worker_queue")
+    .insert({
+      application_id: result.applicationId,
+      status: "ready",
+      priority: 1,
+      created_at: new Date().toISOString(),
+    });
+
+  if (queueError) {
+    console.error("❌ Error añadiendo a worker_queue:", queueError);
+  } else {
+    console.log("✅ Añadido a worker_queue después de generar documentos");
+  }
+
+} catch (err) {
+  console.error("❌ Error creando worker_queue:", err);
+} 
 
     console.log(`✅ Aplicación procesada: ${result.applicationId} (${result.isNew ? "nueva" : "actualizada"})`);
 
