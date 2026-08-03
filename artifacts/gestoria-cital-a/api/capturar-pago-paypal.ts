@@ -77,12 +77,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       isNew: result.isNew,
       message: result.isNew ? "Application created and queued" : "Application updated",
     });
+} catch (error: any) {
+  console.error("=========================================");
+  console.error("❌ ERROR EN capturar-pago-paypal");
+  console.error("=========================================");
+  console.error("Mensaje:", error?.message);
+  console.error("Stack:");
+  console.error(error?.stack);
+  console.error("Objeto completo:");
+  console.error(error);
+  console.error("=========================================");
 
-  } catch (error) {
-    console.error("❌ Error en capturar-pago-paypal:", error);
-    return res.status(500).json({ 
-      error: "Internal server error",
-      details: error instanceof Error ? error.message : "Unknown error"
-    });
-  }
+  return res.status(500).json({
+    success: false,
+    error: error?.message || "Unknown error",
+    stack: error?.stack || null,
+  });
+}
+
 }
