@@ -170,11 +170,38 @@ function OfficialBrowserBox({
       onPay(plan);
 } else if (method === "paypal") {
   setShowPaymentModal(false);
+  
+  try {
+    const response = await fetch("/api/crear-pedido-de-paypal", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        ...formData,
+        plan,
+      }),
+    });
 
-  toast({
-    title: "PayPal",
-    description: "Próximamente..."
-  });
+    const data = await response.json();
+
+    if (data.url) {
+      window.location.href = data.url;
+    } else {
+      toast({
+        title: isMa ? "خطأ" : isEn ? "Error" : "Error",
+        description: isMa ? "حدث خطأ في إنشاء طلب PayPal" : isEn ? "Error creating PayPal order" : "Error al crear el pago de PayPal",
+        variant: "destructive",
+      });
+    }
+  } catch (error) {
+    console.error("❌ Error en PayPal:", error);
+    toast({
+      title: isMa ? "خطأ" : isEn ? "Error" : "Error",
+      description: isMa ? "حدث خطأ في الاتصال" : isEn ? "Connection error" : "Error de conexión",
+      variant: "destructive",
+    });
+  }
 
     } else if (method === "transfer") {
       // ✅ Temporal - muestra mensaje
