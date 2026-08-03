@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { saveMaltaApplication } from "./saveMaltaApplication";
+import { saveMaltaApplication } from "./saveMaltaApplication.js";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== "POST") {
