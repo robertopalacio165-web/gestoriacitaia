@@ -175,7 +175,7 @@ function OfficialBrowserBox({
     title: "PayPal",
     description: "Próximamente..."
   });
-}
+
     } else if (method === "transfer") {
       // ✅ Temporal - muestra mensaje
       toast({
