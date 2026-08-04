@@ -1297,35 +1297,33 @@ carnetConducir: isMa ? "اختر رخصة القيادة" : isEn ? "Select drivi
                 </div>
               </button>
 
-              {/* ✅ PAYPAL - ACTIVO (Método actualizado) */}
+                        {/* ✅ STRIPE - TARJETA */}
               <button
-                type="button"
                 onClick={() => {
-                 if (!validateForm()) return;
-
-  setShowPaymentModal(false);
-  handlePay("paypal", selectedPlan);
+                  setShowPaymentModal(false);
+                  onPay(selectedPlan);
                 }}
-                className="w-full rounded-xl border border-white/10 bg-[#111827] p-2.5 hover:bg-[#222] transition hover:border-yellow-500/40 group relative"
+                className="w-full rounded-xl border-2 border-yellow-500/80 bg-[#1a1a1a] p-2.5 hover:bg-[#222] transition hover:shadow-[0_0_25px_rgba(255,215,0,.12)] group relative"
               >
                 <div className="flex items-center gap-2.5">
-                  <div className="w-4 h-4 rounded-full border-2 border-white/20 flex items-center justify-center shrink-0 group-hover:border-yellow-500/50">
-                    <div className="w-2 h-2 rounded-full bg-yellow-500 opacity-0 group-hover:opacity-100 transition" />
+                  <div className="w-4 h-4 rounded-full border-2 border-yellow-500 flex items-center justify-center shrink-0">
+                    <div className="w-2 h-2 rounded-full bg-yellow-500" />
                   </div>
-                  <div className="w-9 h-9 rounded-xl bg-blue-500/15 flex items-center justify-center shrink-0">
-                    <svg className="w-5 h-5 text-blue-400" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.026.382 5.474 0 5.998 0h7.46c2.57 0 4.578.543 5.69 1.81 1.112 1.267 1.363 2.877 1.015 4.556-.335 1.598-1.17 2.926-2.268 3.787-.814.635-1.819 1.045-2.872 1.107-.334.019-.673.028-1.014.028h-3.19c-.435 0-.826.308-.932.731l-.43 1.873-.168.733-.164.717a.641.641 0 0 1-.633.74h-2.09l.467-2.064Z"/>
-                    </svg>
+                  <div className="w-9 h-9 rounded-xl bg-yellow-500/15 flex items-center justify-center shrink-0">
+                    <CreditCard className="w-5 h-5 text-yellow-400" />
                   </div>
                   <div className="text-left flex-1 min-w-0">
-                    <div className="text-white font-bold text-[14px]">PayPal</div>
+                    <div className="text-white font-bold text-[14px]">
+                      {isMa ? "بطاقة (Stripe)" : isEn ? "Card (Stripe)" : "Tarjeta (Stripe)"}
+                    </div>
                     <div className="text-white/50 text-[10px]">
-                      {isMa ? "ادفع بأمان" : isEn ? "Pay securely" : "Pago 100% seguro"}
+                      {isMa ? "ادفع بأمان ببطاقتك" : isEn ? "Pay securely with your card" : "Pago 100% seguro con tu tarjeta"}
                     </div>
                     <div className="flex items-center gap-1 mt-1">
-                      <img src="https://img.icons8.com/color/48/paypal.png" className="h-4 w-auto" alt="PayPal" />
                       <img src="https://img.icons8.com/color/48/visa.png" className="h-4 w-auto" alt="Visa" />
                       <img src="https://img.icons8.com/color/48/mastercard-logo.png" className="h-4 w-auto" alt="Mastercard" />
+                      <img src="https://img.icons8.com/color/48/apple-pay.png" className="h-4 w-auto" alt="Apple Pay" />
+                      <img src="https://img.icons8.com/color/48/google-pay.png" className="h-4 w-auto" alt="Google Pay" />
                     </div>
                   </div>
                 </div>
