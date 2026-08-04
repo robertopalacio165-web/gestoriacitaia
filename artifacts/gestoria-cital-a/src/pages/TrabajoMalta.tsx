@@ -168,15 +168,38 @@ function OfficialBrowserBox({
     if (method === "stripe") {
       // ✅ Llama al flujo existente de Stripe
       onPay(plan);
-    } else if (method === "paypal") {
-           // 💳 Lógica para activar PayPal
-      onPay(plan);
-      // ✅ Temporal - muestra mensaje
-      toast({
-        title: isMa ? "قريباً" : isEn ? "Coming soon" : "Próximamente",
-        description: isMa ? "خدمة التحويل البنكي قريباً" : isEn ? "Bank transfer service coming soon" : "Servicio de transferencia bancaria próximamente",
-      });
+ } else if (method === "paypal") {
+  try {
+    const response = await fetch("/api/create-paypal-order", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        ...formData,
+        plan,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "Error creando la orden de PayPal");
     }
+
+    window.location.href = data.approvalUrl;
+    return;
+
+  } catch (err) {
+    console.error(err);
+
+    toast({
+      title: "Error",
+      description: "No se pudo iniciar el pago con PayPal.",
+      variant: "destructive",
+    });
+  }
+
   };
 
   // ✅ NACIONALIDADES
@@ -1109,7 +1132,7 @@ function OfficialBrowserBox({
               {/* ✅ PAYPAL - ACTIVO */}
               <button
                 type="button"
-   onClick={() => {
+  onClick={() => {
   setShowPaymentModal(false);
   handlePay("paypal", selectedPlan);
 }}
