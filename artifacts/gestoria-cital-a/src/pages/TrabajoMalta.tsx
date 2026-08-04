@@ -44,14 +44,17 @@ type ProfileRow = {
   nie: string | null;
 };
 
-// ✅ Tipo final
+// ✅ Tipo final - Eliminados: preferred_position
 type MaltaFormData = {
+  // Datos personales
   fullName: string;
   whatsapp: string;
   email: string;
   nationality: string;
   currentCity: string;
   fechaNacimiento: string;
+  
+  // Idiomas con niveles
   idiomas: string;
   ingles_nivel: string;
   frances_nivel: string;
@@ -59,15 +62,23 @@ type MaltaFormData = {
   espanol_nivel: string;
   arabe_nivel: string;
   aleman_nivel: string;
-  trabajo_busca: string;
-  experiencia_previa: string;
+  
+  // Experiencia
+  trabajo_busca: string; // Lo que busca (máx 2)
+  experiencia_previa: string; // Experiencia previa (máx 2)
   anos_experiencia: string;
   education_level: string;
+  
+  // Carnet de conducir
   carnetConducir: "None" | "A" | "B" | "C" | "D" | "B+C" | "B+C+E";
+  
+  // Documentos opcionales
   photoFile: File | null;
   photoUrl: string;
   pdfFile: File | null;
   pdfUrl: string;
+  
+  // Plan
   plan: "weekly" | "monthly";
 };
 
@@ -166,10 +177,10 @@ function OfficialBrowserBox({
     }
   }, [errorField]);
 
-  // ✅ Función unificada de pago (Con Stripe funcionando y PayPal funcionando)
+  // ✅ Función unificada de pago
   const handlePay = async (method: "stripe" | "paypal" | "transfer", plan: "weekly" | "monthly") => {
     if (method === "stripe") {
-      // ✅ Llama al flujo existente de Stripe (El mismo que el código 1)
+      // ✅ Llama al flujo existente de Stripe
       onPay(plan);
     } else if (method === "paypal") {
       try {
@@ -543,11 +554,11 @@ function OfficialBrowserBox({
         if (!emailRegex.test(formData.email)) firstError = "email";
         else if (!formData.nationality) firstError = "nationality";
         else if (!formData.currentCity) firstError = "currentCity";
-        else if (!formData.fechaNacimiento) firstError = "fechaNacimiento";
-        else if (!formData.idiomas.trim()) firstError = "idiomas";
-        else if (!formData.anos_experiencia) firstError = "anos_experiencia";
-        else if (!formData.education_level) firstError = "education_level";
-        else if (!formData.carnetConducir) firstError = "carnetConducir";
+          else if (!formData.fechaNacimiento) firstError = "fechaNacimiento";
+else if (!formData.idiomas.trim()) firstError = "idiomas";
+else if (!formData.anos_experiencia) firstError = "anos_experiencia";
+else if (!formData.education_level) firstError = "education_level";
+else if (!formData.carnetConducir) firstError = "carnetConducir";
         else if (!formData.trabajo_busca.trim()) firstError = "trabajo_busca";
         else if (!formData.experiencia_previa.trim()) firstError = "experiencia_previa";
         else if (!acceptTerms) firstError = "acceptTerms";
@@ -565,10 +576,10 @@ function OfficialBrowserBox({
         nationality: isMa ? "الجنسية مطلوبة" : isEn ? "Nationality is required" : "Nacionalidad es requerida",
         currentCity: isMa ? "المدينة الحالية مطلوبة" : isEn ? "Current city is required" : "Ciudad actual es requerida",
         fechaNacimiento: isMa ? "تاريخ الميلاد مطلوب" : isEn ? "Birth date is required" : "La fecha de nacimiento es requerida",
-        idiomas: isMa ? "اختر اللغات" : isEn ? "Select languages" : "Selecciona los idiomas",
-        anos_experiencia: isMa ? "اختر سنوات الخبرة" : isEn ? "Select years of experience" : "Selecciona los años de experiencia",
-        education_level: isMa ? "اختر المستوى الدراسي" : isEn ? "Select education level" : "Selecciona el nivel educativo",
-        carnetConducir: isMa ? "اختر رخصة القيادة" : isEn ? "Select driving licence" : "Selecciona el carnet de conducir",
+idiomas: isMa ? "اختر اللغات" : isEn ? "Select languages" : "Selecciona los idiomas",
+anos_experiencia: isMa ? "اختر سنوات الخبرة" : isEn ? "Select years of experience" : "Selecciona los años de experiencia",
+education_level: isMa ? "اختر المستوى الدراسي" : isEn ? "Select education level" : "Selecciona el nivel educativo",
+carnetConducir: isMa ? "اختر رخصة القيادة" : isEn ? "Select driving licence" : "Selecciona el carnet de conducir",
         trabajo_busca: isMa ? "اختر العمل الذي تبحث عنه" : isEn ? "Select the job you are looking for" : "Selecciona el trabajo que buscas",
         experiencia_previa: isMa ? "اختر تجربتك السابقة" : isEn ? "Select your previous experience" : "Selecciona tu experiencia previa",
         acceptTerms: isMa ? "خاصك توافق على الشروط" : isEn ? "You must accept the terms" : "Debes aceptar los términos",
@@ -1166,8 +1177,9 @@ function OfficialBrowserBox({
                     <button
                       type="button"
                       onClick={() => {
-                         if (!validateForm()) return;
-                         setShowPaymentModal(true);
+                        // 🛑 Validación AQUÍ (antes de abrir el popup). Esto arregla el error en Stripe y PayPal.
+                        if (!validateForm()) return;
+                        setShowPaymentModal(true);
                       }}
                       disabled={!acceptTerms}
                       className="w-full min-h-[56px] rounded-[20px] bg-gradient-to-r from-yellow-400 via-yellow-500 to-amber-500 px-4 py-2 text-[15px] font-black text-black shadow-[0_0_30px_rgba(255,215,0,.35)] disabled:opacity-50 disabled:cursor-not-allowed hover:scale-[1.02] transition"
@@ -1253,7 +1265,7 @@ function OfficialBrowserBox({
             {/* OPCIONES DE PAGO */}
             <div className="space-y-2 px-3 pb-4 mt-2">
               
-              {/* ✅ STRIPE - TARJETA (REPARADO Y FUNCIONANDO) */}
+              {/* ✅ STRIPE - TARJETA (FLUJO ORIGINAL, NO TOCADO) */}
               <button
                 onClick={() => {
                   setShowPaymentModal(false);
@@ -1285,11 +1297,10 @@ function OfficialBrowserBox({
                 </div>
               </button>
 
-              {/* ✅ PAYPAL - ACTIVO (Método actualizado) */}
+              {/* ✅ PAYPAL - ACTIVO (Solo ejecuta el flujo, la validación ya se hizo antes) */}
               <button
                 type="button"
                 onClick={() => {
-                  if (!validateForm()) return;
                   setShowPaymentModal(false);
                   handlePay("paypal", selectedPlan);
                 }}
@@ -1857,6 +1868,54 @@ export default function TrabajoMalta() {
       stopListening();
       toast({ title: "Error realtime", description: error?.message || "No se pudo iniciar Sara realtime", variant: "destructive" });
     }
+  };
+
+  // ✅ Validación completa antes del pago - Actualizada con snake_case
+  const validateForm = (): boolean => {
+    const errors: string[] = [];
+
+    if (!formData.fullName.trim()) {
+      errors.push(isMa ? "الاسم الكامل مطلوب" : isEn ? "Full name is required" : "Nombre completo es requerido");
+    }
+    
+    const whatsappNumber = formData.whatsapp.replace(/\D/g, "");
+    if (whatsappNumber.length < 8 || whatsappNumber.length > 15) {
+      errors.push(isMa ? "رقم واتساب يجب أن يكون بين 8 و 15 رقم" : isEn ? "WhatsApp must be between 8 and 15 digits" : "WhatsApp debe tener entre 8 y 15 dígitos");
+    }
+    
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      errors.push(isMa ? "البريد الإلكتروني غير صحيح" : isEn ? "Invalid email" : "Email inválido");
+    }
+    
+    if (!formData.nationality) {
+      errors.push(isMa ? "الجنسية مطلوبة" : isEn ? "Nationality is required" : "Nacionalidad es requerida");
+    }
+    if (!formData.currentCity) {
+      errors.push(isMa ? "المدينة الحالية مطلوبة" : isEn ? "Current city is required" : "Ciudad actual es requerida");
+    }
+    if (!formData.trabajo_busca.trim()) {
+      errors.push(isMa ? "اختر العمل الذي تبحث عنه" : isEn ? "Select the job you are looking for" : "Selecciona el trabajo que buscas");
+    }
+    if (!formData.experiencia_previa.trim()) {
+      errors.push(isMa ? "اختر تجربتك السابقة" : isEn ? "Select your previous experience" : "Selecciona tu experiencia previa");
+    }
+    if (!acceptTerms) {
+      errors.push(isMa ? "خاصك توافق على الشروط" : isEn ? "You must accept the terms" : "Debes aceptar los términos");
+    }
+
+    if (errors.length > 0) {
+      errors.forEach((err) => {
+        toast({
+          title: ui.missingTitle,
+          description: err,
+          variant: "destructive",
+        });
+      });
+      return false;
+    }
+
+    return true;
   };
 
   // ✅ handlePay - Con detección de admin - Actualizado con snake_case
