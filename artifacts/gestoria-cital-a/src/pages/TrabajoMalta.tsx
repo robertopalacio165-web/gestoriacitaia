@@ -168,83 +168,81 @@ function OfficialBrowserBox({
     if (method === "stripe") {
       // ✅ Llama al flujo existente de Stripe
       onPay(plan);
+    } else if (method === "paypal") {
+      try {
+        let photoUrl = "";
+        let pdfUrl = "";
 
-let photoUrl = "";
-let pdfUrl = "";
+        // ============================
+        // SUBIR FOTO
+        // ============================
+        if (formData.photoFile) {
+          const photoPath = `photos/${crypto.randomUUID()}-${formData.photoFile.name}`;
+          const { error } = await supabase.storage
+            .from("malta-temp")
+            .upload(photoPath, formData.photoFile);
 
-// ============================
-// SUBIR FOTO
-// ============================
-if (formData.photoFile) {
-  const photoPath = `photos/${crypto.randomUUID()}-${formData.photoFile.name}`;
+          if (error) throw error;
 
-  const { error } = await supabase.storage
-    .from("malta-temp")
-    .upload(photoPath, formData.photoFile);
+          const { data } = supabase.storage
+            .from("malta-temp")
+            .getPublicUrl(photoPath);
 
-  if (error) throw error;
+          photoUrl = data.publicUrl;
+        }
 
-  const { data } = supabase.storage
-    .from("malta-temp")
-    .getPublicUrl(photoPath);
+        // ============================
+        // SUBIR PDF
+        // ============================
+        if (formData.pdfFile) {
+          const pdfPath = `pdfs/${crypto.randomUUID()}-${formData.pdfFile.name}`;
 
-  photoUrl = data.publicUrl;
-}
+          const { error } = await supabase.storage
+            .from("malta-temp")
+            .upload(pdfPath, formData.pdfFile);
 
-// ============================
-// SUBIR PDF
-// ============================
-if (formData.pdfFile) {
-  const pdfPath = `pdfs/${crypto.randomUUID()}-${formData.pdfFile.name}`;
+          if (error) throw error;
 
-  const { error } = await supabase.storage
-    .from("malta-temp")
-    .upload(pdfPath, formData.pdfFile);
+          const { data } = supabase.storage
+            .from("malta-temp")
+            .getPublicUrl(pdfPath);
 
-  if (error) throw error;
+          pdfUrl = data.publicUrl;
+        }
 
-  const { data } = supabase.storage
-    .from("malta-temp")
-    .getPublicUrl(pdfPath);
+        // ============================
+        // CREAR PEDIDO PAYPAL
+        // ============================
+        const response = await fetch("/api/crear-pedido-de-paypal", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            ...formData,
+            photoUrl,
+            pdfUrl,
+            plan,
+          }),
+        });
 
-  pdfUrl = data.publicUrl;
-}
+        const data = await response.json();
 
-// ============================
-// CREAR PEDIDO PAYPAL
-// ============================
+        if (!response.ok) {
+          throw new Error(data.error || "Error creando la orden PayPal");
+        }
 
-const response = await fetch("/api/crear-pedido-de-paypal", {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json",
-  },
-  body: JSON.stringify({
-    ...formData,
-    photoUrl,
-    pdfUrl,
-    plan,
-  }),
-});
-
-const data = await response.json();
-
-if (!response.ok) {
-  throw new Error(data.error || "Error creando la orden PayPal");
-}
-
-window.location.href = data.approvalUrl;
-return;
-  } catch (err) {
-    console.error(err);
-
-    toast({
-      title: "Error",
-      description: "No se pudo iniciar el pago con PayPal.",
-      variant: "destructive",
-    });
-  }
-}
+        window.location.href = data.approvalUrl;
+        return;
+      } catch (err) {
+        console.error(err);
+        toast({
+          title: "Error",
+          description: "No se pudo iniciar el pago con PayPal.",
+          variant: "destructive",
+        });
+      }
+    }
   };
 
   // ✅ NACIONALIDADES
