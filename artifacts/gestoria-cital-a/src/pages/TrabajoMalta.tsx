@@ -183,14 +183,15 @@ const response = await fetch("/api/crear-pedido-de-paypal", {
       }),
     });
 
-const text = await response.text();
-console.log(text);
-return;
-    if (!response.ok) {
-      throw new Error(data.error || "Error creando la orden de PayPal");
-    }
 
-    window.location.href = data.approvalUrl;
+const data = await response.json();
+console.log(data);
+
+if (!response.ok) {
+  throw new Error(data.error || "Error creando la orden de PayPal");
+}
+
+window.location.href = data.approvalUrl;
     return;
 
   } catch (err) {
