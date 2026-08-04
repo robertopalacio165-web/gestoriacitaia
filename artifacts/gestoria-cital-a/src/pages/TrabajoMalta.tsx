@@ -150,6 +150,18 @@ function OfficialBrowserBox({
   const isMa = language === "ma";
   const isEn = language === "en";
   const { toast } = useToast();
+  const formIsValid =
+  formData.fullName.trim() !== "" &&
+  formData.whatsapp.trim() !== "" &&
+  formData.email.trim() !== "" &&
+  formData.nationality !== "" &&
+  formData.currentCity !== "" &&
+  formData.fechaNacimiento !== "" &&
+  formData.trabajo_busca !== "" &&
+  formData.experiencia_previa !== "" &&
+  formData.idiomas !== "" &&
+  formData.anos_experiencia !== "" &&
+  formData.education_level !== "";
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [uploadingPdf, setUploadingPdf] = useState(false);
   const [progressSteps] = useState([
@@ -1056,7 +1068,10 @@ function OfficialBrowserBox({
                     {/* ✅ BOTÓN AMARILLO - ABRE EL POPUP */}
                     <button
                       type="button"
-                      onClick={() => setShowPaymentModal(true)}
+                  onClick={() => {
+  if (!validateForm()) return;
+  setShowPaymentModal(true);
+}}
                       disabled={!acceptTerms}
                       className="w-full min-h-[56px] rounded-[20px] bg-gradient-to-r from-yellow-400 via-yellow-500 to-amber-500 px-4 py-2 text-[15px] font-black text-black shadow-[0_0_30px_rgba(255,215,0,.35)] disabled:opacity-50 disabled:cursor-not-allowed hover:scale-[1.02] transition"
                     >
