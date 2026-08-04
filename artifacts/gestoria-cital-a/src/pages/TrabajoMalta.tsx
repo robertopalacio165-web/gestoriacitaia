@@ -169,7 +169,9 @@ function OfficialBrowserBox({
       // ✅ Llama al flujo existente de Stripe
       onPay(plan);
  } else if (method === "paypal") {
+      console.log("PAYPAL 1");
   try {
+     console.log("PAYPAL 2");
     const response = await fetch("/api/create-paypal-order", {
       method: "POST",
       headers: {
