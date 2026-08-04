@@ -163,99 +163,23 @@ function OfficialBrowserBox({
   const [progressStep, setProgressStep] = useState(0);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
 
-  // 🆕 Estados para la validación visual y el scroll automático
-  const [errorField, setErrorField] = useState<keyof MaltaFormData | "acceptTerms" | null>(null);
-  const errorRefs = useRef<Record<string, HTMLDivElement | null>>({});
-
-  // 🆕 Efecto para hacer scroll automático al campo con error
-  useEffect(() => {
-    if (errorField) {
-      const element = errorRefs.current[errorField];
-      if (element) {
-        element.scrollIntoView({ behavior: "smooth", block: "center" });
-      }
-    }
-  }, [errorField]);
-
   // ✅ Función unificada de pago
   const handlePay = async (method: "stripe" | "paypal" | "transfer", plan: "weekly" | "monthly") => {
     if (method === "stripe") {
       // ✅ Llama al flujo existente de Stripe
       onPay(plan);
     } else if (method === "paypal") {
-      try {
-        let photoUrl = "";
-        let pdfUrl = "";
-
-        // ============================
-        // SUBIR FOTO
-        // ============================
-        if (formData.photoFile) {
-          const photoPath = `photos/${crypto.randomUUID()}-${formData.photoFile.name}`;
-          const { error } = await supabase.storage
-            .from("malta-temp")
-            .upload(photoPath, formData.photoFile);
-
-          if (error) throw error;
-
-          const { data } = supabase.storage
-            .from("malta-temp")
-            .getPublicUrl(photoPath);
-
-          photoUrl = data.publicUrl;
-        }
-
-        // ============================
-        // SUBIR PDF
-        // ============================
-        if (formData.pdfFile) {
-          const pdfPath = `pdfs/${crypto.randomUUID()}-${formData.pdfFile.name}`;
-
-          const { error } = await supabase.storage
-            .from("malta-temp")
-            .upload(pdfPath, formData.pdfFile);
-
-          if (error) throw error;
-
-          const { data } = supabase.storage
-            .from("malta-temp")
-            .getPublicUrl(pdfPath);
-
-          pdfUrl = data.publicUrl;
-        }
-
-        // ============================
-        // CREAR PEDIDO PAYPAL
-        // ============================
-        const response = await fetch("/api/crear-pedido-de-paypal", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            ...formData,
-            photoUrl,
-            pdfUrl,
-            plan,
-          }),
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data.error || "Error creando la orden PayPal");
-        }
-
-        window.location.href = data.approvalUrl;
-        return;
-      } catch (err) {
-        console.error(err);
-        toast({
-          title: "Error",
-          description: "No se pudo iniciar el pago con PayPal.",
-          variant: "destructive",
-        });
-      }
+      // ✅ PayPal desactivado temporalmente
+      toast({
+        title: isMa ? "غير متاح" : isEn ? "Unavailable" : "No disponible",
+        description: isMa ? "خدمة PayPal غير متاحة حالياً" : isEn ? "PayPal service is currently unavailable" : "El servicio de PayPal no está disponible actualmente",
+      });
+    } else if (method === "transfer") {
+      // ✅ Temporal - muestra mensaje
+      toast({
+        title: isMa ? "قريباً" : isEn ? "Coming soon" : "Próximamente",
+        description: isMa ? "خدمة التحويل البنكي قريباً" : isEn ? "Bank transfer service coming soon" : "Servicio de transferencia bancaria próximamente",
+      });
     }
   };
 
@@ -485,10 +409,7 @@ function OfficialBrowserBox({
     const selected = (formData[field] as string)?.split(",").filter(Boolean) || [];
     
     return (
-      <div 
-        className="col-span-1 lg:col-span-2"
-        ref={(el) => { errorRefs.current[field] = el; }} // 🆕 Referencia para el scroll
-      >
+      <div className="col-span-1 lg:col-span-2">
         <label className="block text-white text-[13px] mb-2">
           {label}
         </label>
@@ -504,8 +425,6 @@ function OfficialBrowserBox({
                     ? "border-yellow-500 bg-yellow-500/10"
                     : isDisabled
                     ? "border-white/5 bg-[#060b16] opacity-40 cursor-not-allowed"
-                    : errorField === field // 🆕 Lógica del borde rojo
-                    ? "border-red-500 bg-[#060b16]"
                     : "border-white/10 bg-[#060b16] hover:border-yellow-500/50"
                 }`}
               >
@@ -515,9 +434,6 @@ function OfficialBrowserBox({
                   checked={isSelected}
                   disabled={isDisabled}
                   onChange={(e) => {
-                    // 🆕 Al cambiar, borramos el error de este campo
-                    if (errorField === field) setErrorField(null);
-                    
                     let newSelected: string[];
                     if (e.target.checked) {
                       if (selected.length >= 2) return;
@@ -539,61 +455,6 @@ function OfficialBrowserBox({
         </p>
       </div>
     );
-  };
-
-  // 🆕 Función de validación con resaltado visual
-  const validateForm = (): boolean => {
-    let firstError: keyof MaltaFormData | "acceptTerms" | null = null;
-
-    if (!formData.fullName.trim()) firstError = "fullName";
-    else {
-      const whatsappNumber = formData.whatsapp.replace(/\D/g, "");
-      if (whatsappNumber.length < 8 || whatsappNumber.length > 15) firstError = "whatsapp";
-      else {
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(formData.email)) firstError = "email";
-        else if (!formData.nationality) firstError = "nationality";
-        else if (!formData.currentCity) firstError = "currentCity";
-          else if (!formData.fechaNacimiento) firstError = "fechaNacimiento";
-else if (!formData.idiomas.trim()) firstError = "idiomas";
-else if (!formData.anos_experiencia) firstError = "anos_experiencia";
-else if (!formData.education_level) firstError = "education_level";
-else if (!formData.carnetConducir) firstError = "carnetConducir";
-        else if (!formData.trabajo_busca.trim()) firstError = "trabajo_busca";
-        else if (!formData.experiencia_previa.trim()) firstError = "experiencia_previa";
-        else if (!acceptTerms) firstError = "acceptTerms";
-      }
-    }
-
-    if (firstError) {
-      setErrorField(firstError);
-      
-      // Mostramos un único Toast con el primer error
-      const errorMessages: Record<string, string> = {
-        fullName: isMa ? "الاسم الكامل مطلوب" : isEn ? "Full name is required" : "Nombre completo es requerido",
-        whatsapp: isMa ? "رقم واتساب يجب أن يكون entre 8 y 15 رقم" : isEn ? "WhatsApp must be between 8 and 15 digits" : "WhatsApp debe tener entre 8 y 15 dígitos",
-        email: isMa ? "البريد الإلكتروني غير صحيح" : isEn ? "Invalid email" : "Email inválido",
-        nationality: isMa ? "الجنسية مطلوبة" : isEn ? "Nationality is required" : "Nacionalidad es requerida",
-        currentCity: isMa ? "المدينة الحالية مطلوبة" : isEn ? "Current city is required" : "Ciudad actual es requerida",
-        fechaNacimiento: isMa ? "تاريخ الميلاد مطلوب" : isEn ? "Birth date is required" : "La fecha de nacimiento es requerida",
-idiomas: isMa ? "اختر اللغات" : isEn ? "Select languages" : "Selecciona los idiomas",
-anos_experiencia: isMa ? "اختر سنوات الخبرة" : isEn ? "Select years of experience" : "Selecciona los años de experiencia",
-education_level: isMa ? "اختر المستوى الدراسي" : isEn ? "Select education level" : "Selecciona el nivel educativo",
-carnetConducir: isMa ? "اختر رخصة القيادة" : isEn ? "Select driving licence" : "Selecciona el carnet de conducir",
-        trabajo_busca: isMa ? "اختر العمل الذي تبحث عنه" : isEn ? "Select the job you are looking for" : "Selecciona el trabajo que buscas",
-        experiencia_previa: isMa ? "اختر تجربتك السابقة" : isEn ? "Select your previous experience" : "Selecciona tu experiencia previa",
-        acceptTerms: isMa ? "خاصك توافق على الشروط" : isEn ? "You must accept the terms" : "Debes aceptar los términos",
-      };
-
-      toast({
-        title: ui.missingTitle,
-        description: errorMessages[firstError] || "Faltan datos",
-        variant: "destructive",
-      });
-      return false;
-    }
-
-    return true;
   };
 
   return (
@@ -679,10 +540,7 @@ carnetConducir: isMa ? "اختر رخصة القيادة" : isEn ? "Select drivi
                   {/* ============================================ */}
                   
                   {/* Nombre completo */}
-                  <div 
-                    className="col-span-1 md:col-span-1"
-                    ref={(el) => { errorRefs.current["fullName"] = el; }} // 🆕 Referencia
-                  >
+                  <div className="col-span-1 md:col-span-1">
                     <label className="block text-white text-[13px] mb-2">
                       {isMa ? "الاسم الكامل" : isEn ? "Full name" : "Nombre completo"}
                     </label>
@@ -690,21 +548,13 @@ carnetConducir: isMa ? "اختر رخصة القيادة" : isEn ? "Select drivi
                       type="text"
                       placeholder={isMa ? "دخل سميتك" : isEn ? "Your name" : "Escribe tu nombre"}
                       value={formData.fullName}
-                      onChange={(e) => {
-                        if (errorField === "fullName") setErrorField(null); // 🆕 Limpiar error al escribir
-                        onFormChange("fullName", e.target.value);
-                      }}
-                      className={`w-full h-[52px] rounded-2xl border bg-[#060b16] px-4 text-[14px] text-white placeholder:text-white/30 focus:outline-none focus:border-yellow-400 ${
-                        errorField === "fullName" ? "border-red-500" : "border-white/10"
-                      }`} // 🆕 Borde rojo condicional
+                      onChange={(e) => onFormChange("fullName", e.target.value)}
+                      className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-[14px] text-white placeholder:text-white/30 focus:outline-none focus:border-yellow-400"
                     />
                   </div>
 
                   {/* WhatsApp */}
-                  <div 
-                    className="col-span-1 md:col-span-1"
-                    ref={(el) => { errorRefs.current["whatsapp"] = el; }} // 🆕 Referencia
-                  >
+                  <div className="col-span-1 md:col-span-1">
                     <label className="block text-white text-[13px] mb-2">
                       WhatsApp
                     </label>
@@ -733,16 +583,13 @@ carnetConducir: isMa ? "اختر رخصة القيادة" : isEn ? "Select drivi
                         placeholder="Número de WhatsApp"
                         value={formData.whatsapp.replace(/^\+\d+\s*/, "")}
                         onChange={(e) => {
-                          if (errorField === "whatsapp") setErrorField(null); // 🆕 Limpiar error
                           const prefix = formData.whatsapp.split(" ")[0] || "";
                           const number = e.target.value.replace(/\D/g, "");
                           if (number.length <= 15) {
                             onFormChange("whatsapp", prefix + " " + number);
                           }
                         }}
-                        className={`min-w-0 flex-1 h-[52px] rounded-2xl border bg-[#060b16] px-4 text-white focus:outline-none focus:border-yellow-400 ${
-                          errorField === "whatsapp" ? "border-red-500" : "border-white/10"
-                        }`} // 🆕 Borde rojo condicional
+                        className="min-w-0 flex-1 h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white"
                       />
                     </div>
                     <p className="text-white/30 text-[10px] mt-1">
@@ -751,40 +598,26 @@ carnetConducir: isMa ? "اختر رخصة القيادة" : isEn ? "Select drivi
                   </div>
 
                   {/* Email */}
-                  <div
-                    ref={(el) => { errorRefs.current["email"] = el; }} // 🆕 Referencia
-                  >
+                  <div>
                     <label className="block text-white text-[13px] mb-2">Email</label>
                     <input
                       type="email"
                       placeholder="tu@email.com"
                       value={formData.email}
-                      onChange={(e) => {
-                        if (errorField === "email") setErrorField(null); // 🆕 Limpiar error
-                        onFormChange("email", e.target.value);
-                      }}
-                      className={`w-full h-[52px] rounded-2xl border bg-[#060b16] px-4 text-[14px] text-white placeholder:text-white/30 focus:outline-none focus:border-yellow-400 ${
-                        errorField === "email" ? "border-red-500" : "border-white/10"
-                      }`} // 🆕 Borde rojo condicional
+                      onChange={(e) => onFormChange("email", e.target.value)}
+                      className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-[14px] text-white placeholder:text-white/30 focus:outline-none focus:border-yellow-400"
                     />
                   </div>
 
                   {/* Nacionalidad */}
-                  <div
-                    ref={(el) => { errorRefs.current["nationality"] = el; }} // 🆕 Referencia
-                  >
+                  <div>
                     <label className="block text-white text-[13px] mb-2">
                       {isMa ? "الجنسية" : isEn ? "Nationality" : "Nacionalidad"}
                     </label>
                     <select
                       value={formData.nationality}
-                      onChange={(e) => {
-                        if (errorField === "nationality") setErrorField(null); // 🆕 Limpiar error
-                        onFormChange("nationality", e.target.value);
-                      }}
-                      className={`w-full h-[52px] rounded-2xl border bg-[#060b16] px-4 text-white focus:outline-none focus:border-yellow-400 ${
-                        errorField === "nationality" ? "border-red-500" : "border-white/10"
-                      }`} // 🆕 Borde rojo condicional
+                      onChange={(e) => onFormChange("nationality", e.target.value)}
+                      className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white focus:outline-none focus:border-yellow-400"
                     >
                       <option value="">{isMa ? "اختر الجنسية" : isEn ? "Select nationality" : "Selecciona nacionalidad"}</option>
                       {nationalityOptions.map((opt) => (
@@ -794,21 +627,14 @@ carnetConducir: isMa ? "اختر رخصة القيادة" : isEn ? "Select drivi
                   </div>
 
                   {/* Ciudad actual */}
-                  <div
-                    ref={(el) => { errorRefs.current["currentCity"] = el; }} // 🆕 Referencia
-                  >
+                  <div>
                     <label className="block text-white text-[13px] mb-2">
                       {isMa ? "المدينة الحالية" : isEn ? "Current City" : "Ciudad actual"}
                     </label>
                     <select
                       value={formData.currentCity}
-                      onChange={(e) => {
-                        if (errorField === "currentCity") setErrorField(null); // 🆕 Limpiar error
-                        onFormChange("currentCity", e.target.value);
-                      }}
-                      className={`w-full h-[52px] rounded-2xl border bg-[#060b16] px-4 text-white focus:outline-none focus:border-yellow-400 ${
-                        errorField === "currentCity" ? "border-red-500" : "border-white/10"
-                      }`} // 🆕 Borde rojo condicional
+                      onChange={(e) => onFormChange("currentCity", e.target.value)}
+                      className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white focus:outline-none focus:border-yellow-400"
                     >
                       <option value="">{isMa ? "اختر المدينة" : isEn ? "Select city" : "Selecciona ciudad"}</option>
                       {cityOptions.map((opt) => (
@@ -1139,24 +965,16 @@ carnetConducir: isMa ? "اختر رخصة القيادة" : isEn ? "Select drivi
                   {/* 9. CHECKBOX + BOTÓN DE PAGO */}
                   {/* ============================================ */}
                   
-                  <div 
-                    className="col-span-1 lg:col-span-2 mt-2"
-                    ref={(el) => { errorRefs.current["acceptTerms"] = el; }} // 🆕 Referencia
-                  >
+                  <div className="col-span-1 lg:col-span-2 mt-2">
                     <div className="flex items-start gap-3 mb-4">
                       <input
                         type="checkbox"
                         id="acceptTerms"
                         checked={acceptTerms}
-                        onChange={(e) => {
-                          if (errorField === "acceptTerms") setErrorField(null); // 🆕 Limpiar error
-                          setAcceptTerms(e.target.checked);
-                        }}
-                        className={`mt-1 w-4 h-4 rounded border bg-[#060b16] text-yellow-500 focus:ring-yellow-500 focus:ring-offset-0 shrink-0 ${
-                          errorField === "acceptTerms" ? "border-red-500" : "border-white/20"
-                        }`} // 🆕 Borde rojo condicional
+                        onChange={(e) => setAcceptTerms(e.target.checked)}
+                        className="mt-1 w-4 h-4 rounded border-white/20 bg-[#060b16] text-yellow-500 focus:ring-yellow-500 focus:ring-offset-0 shrink-0"
                       />
-                      <label htmlFor="acceptTerms" className={`text-[11px] sm:text-[12px] leading-relaxed ${errorField === "acceptTerms" ? "text-red-400" : "text-white/70"}`}>
+                      <label htmlFor="acceptTerms" className="text-white/70 text-[11px] sm:text-[12px] leading-relaxed">
                         {isMa
                           ? "☑️ كنوافق أن GestoriaCitaIA تستعمل معلوماتي وتشارك CV ديالي مع شركات ووكالات التوظيف فمالطا. كنفاهم أن الخدمة غير كتساعد فإرسال الترشيحات وما كتقدمش عقد عمل وما كتضمنش التوظيف."
                           : isEn
@@ -1176,11 +994,7 @@ carnetConducir: isMa ? "اختر رخصة القيادة" : isEn ? "Select drivi
                     {/* ✅ BOTÓN AMARILLO - ABRE EL POPUP */}
                     <button
                       type="button"
-                      onClick={() => {
-                         if (!validateForm()) return;
-  setShowPaymentModal(true);
-                    
-                      }}
+                      onClick={() => setShowPaymentModal(true)}
                       disabled={!acceptTerms}
                       className="w-full min-h-[56px] rounded-[20px] bg-gradient-to-r from-yellow-400 via-yellow-500 to-amber-500 px-4 py-2 text-[15px] font-black text-black shadow-[0_0_30px_rgba(255,215,0,.35)] disabled:opacity-50 disabled:cursor-not-allowed hover:scale-[1.02] transition"
                     >
@@ -1239,7 +1053,7 @@ carnetConducir: isMa ? "اختر رخصة القيادة" : isEn ? "Select drivi
         )}
       </div>
 
-      {/* ✅ POPUP PROFESIONAL */}
+      {/* ✅ POPUP PROFESIONAL - CON PAYPAL DESACTIVADO */}
       {showPaymentModal && (
         <div className="fixed inset-0 z-[9999] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="w-full max-w-[340px] overflow-hidden rounded-2xl bg-gradient-to-b from-[#1a2336] via-[#121827] to-[#0b1120] border border-yellow-400/60 shadow-[0_25px_80px_rgba(0,0,0,.65),0_0_40px_rgba(255,215,0,.15)]">
@@ -1265,39 +1079,7 @@ carnetConducir: isMa ? "اختر رخصة القيادة" : isEn ? "Select drivi
             {/* OPCIONES DE PAGO */}
             <div className="space-y-2 px-3 pb-4 mt-2">
               
-          {/* ✅ STRIPE - TARJETA */}
-<button
-  onClick={() => {
-    setShowPaymentModal(false);
-    onPay(selectedPlan);
-  }}
-  className="w-full rounded-xl border-2 border-yellow-500/80 bg-[#1a1a1a] p-2.5 hover:bg-[#222] transition hover:shadow-[0_0_25px_rgba(255,215,0,.12)] group relative"
->
-                <div className="flex items-center gap-2.5">
-                  <div className="w-4 h-4 rounded-full border-2 border-yellow-500 flex items-center justify-center shrink-0">
-                    <div className="w-2 h-2 rounded-full bg-yellow-500" />
-                  </div>
-                  <div className="w-9 h-9 rounded-xl bg-yellow-500/15 flex items-center justify-center shrink-0">
-                    <CreditCard className="w-5 h-5 text-yellow-400" />
-                  </div>
-                  <div className="text-left flex-1 min-w-0">
-                    <div className="text-white font-bold text-[14px]">
-                      {isMa ? "بطاقة (Stripe)" : isEn ? "Card (Stripe)" : "Tarjeta (Stripe)"}
-                    </div>
-                    <div className="text-white/50 text-[10px]">
-                      {isMa ? "ادفع بأمان ببطاقتك" : isEn ? "Pay securely with your card" : "Pago 100% seguro con tu tarjeta"}
-                    </div>
-                    <div className="flex items-center gap-1 mt-1">
-                      <img src="https://img.icons8.com/color/48/visa.png" className="h-4 w-auto" alt="Visa" />
-                      <img src="https://img.icons8.com/color/48/mastercard-logo.png" className="h-4 w-auto" alt="Mastercard" />
-                      <img src="https://img.icons8.com/color/48/apple-pay.png" className="h-4 w-auto" alt="Apple Pay" />
-                      <img src="https://img.icons8.com/color/48/google-pay.png" className="h-4 w-auto" alt="Google Pay" />
-                    </div>
-                  </div>
-                </div>
-              </button>
-
-                        {/* ✅ STRIPE - TARJETA */}
+              {/* ✅ STRIPE - TARJETA */}
               <button
                 onClick={() => {
                   setShowPaymentModal(false);
@@ -1324,6 +1106,35 @@ carnetConducir: isMa ? "اختر رخصة القيادة" : isEn ? "Select drivi
                       <img src="https://img.icons8.com/color/48/mastercard-logo.png" className="h-4 w-auto" alt="Mastercard" />
                       <img src="https://img.icons8.com/color/48/apple-pay.png" className="h-4 w-auto" alt="Apple Pay" />
                       <img src="https://img.icons8.com/color/48/google-pay.png" className="h-4 w-auto" alt="Google Pay" />
+                    </div>
+                  </div>
+                </div>
+              </button>
+
+              {/* ✅ PAYPAL - DESACTIVADO TEMPORALMENTE */}
+              <button
+                type="button"
+                disabled
+                className="w-full rounded-xl border border-gray-700 bg-gray-800/50 p-2.5 opacity-50 cursor-not-allowed"
+              >
+                <div className="flex items-center gap-2.5">
+                  <div className="w-4 h-4 rounded-full border-2 border-gray-600 flex items-center justify-center shrink-0">
+                    <div className="w-2 h-2 rounded-full bg-gray-600" />
+                  </div>
+                  <div className="w-9 h-9 rounded-xl bg-gray-600/20 flex items-center justify-center shrink-0">
+                    <svg className="w-5 h-5 text-gray-500" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.026.382 5.474 0 5.998 0h7.46c2.57 0 4.578.543 5.69 1.81 1.112 1.267 1.363 2.877 1.015 4.556-.335 1.598-1.17 2.926-2.268 3.787-.814.635-1.819 1.045-2.872 1.107-.334.019-.673.028-1.014.028h-3.19c-.435 0-.826.308-.932.731l-.43 1.873-.168.733-.164.717a.641.641 0 0 1-.633.74h-2.09l.467-2.064Z"/>
+                    </svg>
+                  </div>
+                  <div className="text-left flex-1 min-w-0">
+                    <div className="text-white font-bold text-[14px]">PayPal</div>
+                    <div className="text-red-400 text-[10px]">
+                      {isMa ? "غير متاح حالياً" : isEn ? "Temporarily unavailable" : "Temporalmente no disponible"}
+                    </div>
+                    <div className="flex items-center gap-1 mt-1">
+                      <img src="https://img.icons8.com/color/48/paypal.png" className="h-4 w-auto opacity-50" alt="PayPal" />
+                      <img src="https://img.icons8.com/color/48/visa.png" className="h-4 w-auto opacity-50" alt="Visa" />
+                      <img src="https://img.icons8.com/color/48/mastercard-logo.png" className="h-4 w-auto opacity-50" alt="Mastercard" />
                     </div>
                   </div>
                 </div>
@@ -1870,9 +1681,56 @@ export default function TrabajoMalta() {
     }
   };
 
+  // ✅ Validación completa antes del pago - Actualizada con snake_case
+  const validateForm = (): boolean => {
+    const errors: string[] = [];
+
+    if (!formData.fullName.trim()) {
+      errors.push(isMa ? "الاسم الكامل مطلوب" : isEn ? "Full name is required" : "Nombre completo es requerido");
+    }
+    
+    const whatsappNumber = formData.whatsapp.replace(/\D/g, "");
+    if (whatsappNumber.length < 8 || whatsappNumber.length > 15) {
+      errors.push(isMa ? "رقم واتساب يجب أن يكون بين 8 و 15 رقم" : isEn ? "WhatsApp must be between 8 and 15 digits" : "WhatsApp debe tener entre 8 y 15 dígitos");
+    }
+    
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      errors.push(isMa ? "البريد الإلكتروني غير صحيح" : isEn ? "Invalid email" : "Email inválido");
+    }
+    
+    if (!formData.nationality) {
+      errors.push(isMa ? "الجنسية مطلوبة" : isEn ? "Nationality is required" : "Nacionalidad es requerida");
+    }
+    if (!formData.currentCity) {
+      errors.push(isMa ? "المدينة الحالية مطلوبة" : isEn ? "Current city is required" : "Ciudad actual es requerida");
+    }
+    if (!formData.trabajo_busca.trim()) {
+      errors.push(isMa ? "اختر العمل الذي تبحث عنه" : isEn ? "Select the job you are looking for" : "Selecciona el trabajo que buscas");
+    }
+    if (!formData.experiencia_previa.trim()) {
+      errors.push(isMa ? "اختر تجربتك السابقة" : isEn ? "Select your previous experience" : "Selecciona tu experiencia previa");
+    }
+    if (!acceptTerms) {
+      errors.push(isMa ? "خاصك توافق على الشروط" : isEn ? "You must accept the terms" : "Debes aceptar los términos");
+    }
+
+    if (errors.length > 0) {
+      errors.forEach((err) => {
+        toast({
+          title: ui.missingTitle,
+          description: err,
+          variant: "destructive",
+        });
+      });
+      return false;
+    }
+
+    return true;
+  };
+
   // ✅ handlePay - Con detección de admin - Actualizado con snake_case
   const handlePay = async (plan: "weekly" | "monthly") => {
-    // 🆕 Llamada a la validación visual
     if (!validateForm()) {
       return;
     }
