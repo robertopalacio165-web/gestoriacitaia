@@ -554,6 +554,11 @@ function OfficialBrowserBox({
         if (!emailRegex.test(formData.email)) firstError = "email";
         else if (!formData.nationality) firstError = "nationality";
         else if (!formData.currentCity) firstError = "currentCity";
+          else if (!formData.fechaNacimiento) firstError = "fechaNacimiento";
+else if (!formData.idiomas.trim()) firstError = "idiomas";
+else if (!formData.anos_experiencia) firstError = "anos_experiencia";
+else if (!formData.education_level) firstError = "education_level";
+else if (!formData.carnetConducir) firstError = "carnetConducir";
         else if (!formData.trabajo_busca.trim()) firstError = "trabajo_busca";
         else if (!formData.experiencia_previa.trim()) firstError = "experiencia_previa";
         else if (!acceptTerms) firstError = "acceptTerms";
@@ -570,6 +575,11 @@ function OfficialBrowserBox({
         email: isMa ? "البريد الإلكتروني غير صحيح" : isEn ? "Invalid email" : "Email inválido",
         nationality: isMa ? "الجنسية مطلوبة" : isEn ? "Nationality is required" : "Nacionalidad es requerida",
         currentCity: isMa ? "المدينة الحالية مطلوبة" : isEn ? "Current city is required" : "Ciudad actual es requerida",
+        fechaNacimiento: isMa ? "تاريخ الميلاد مطلوب" : isEn ? "Birth date is required" : "La fecha de nacimiento es requerida",
+idiomas: isMa ? "اختر اللغات" : isEn ? "Select languages" : "Selecciona los idiomas",
+anos_experiencia: isMa ? "اختر سنوات الخبرة" : isEn ? "Select years of experience" : "Selecciona los años de experiencia",
+education_level: isMa ? "اختر المستوى الدراسي" : isEn ? "Select education level" : "Selecciona el nivel educativo",
+carnetConducir: isMa ? "اختر رخصة القيادة" : isEn ? "Select driving licence" : "Selecciona el carnet de conducir",
         trabajo_busca: isMa ? "اختر العمل الذي تبحث عنه" : isEn ? "Select the job you are looking for" : "Selecciona el trabajo que buscas",
         experiencia_previa: isMa ? "اختر تجربتك السابقة" : isEn ? "Select your previous experience" : "Selecciona tu experiencia previa",
         acceptTerms: isMa ? "خاصك توافق على الشروط" : isEn ? "You must accept the terms" : "Debes aceptar los términos",
@@ -1167,8 +1177,9 @@ function OfficialBrowserBox({
                     <button
                       type="button"
                       onClick={() => {
-                        setErrorField(null); // Limpiamos errores visuales previos al hacer clic
-                        setShowPaymentModal(true);
+                         if (!validateForm()) return;
+  setShowPaymentModal(true);
+                    
                       }}
                       disabled={!acceptTerms}
                       className="w-full min-h-[56px] rounded-[20px] bg-gradient-to-r from-yellow-400 via-yellow-500 to-amber-500 px-4 py-2 text-[15px] font-black text-black shadow-[0_0_30px_rgba(255,215,0,.35)] disabled:opacity-50 disabled:cursor-not-allowed hover:scale-[1.02] transition"
@@ -1290,8 +1301,10 @@ function OfficialBrowserBox({
               <button
                 type="button"
                 onClick={() => {
-                  setShowPaymentModal(false);
-                  handlePay("paypal", selectedPlan);
+                 if (!validateForm()) return;
+
+  setShowPaymentModal(false);
+  handlePay("paypal", selectedPlan);
                 }}
                 className="w-full rounded-xl border border-white/10 bg-[#111827] p-2.5 hover:bg-[#222] transition hover:border-yellow-500/40 group relative"
               >
