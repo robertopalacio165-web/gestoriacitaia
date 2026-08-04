@@ -1066,10 +1066,16 @@ function OfficialBrowserBox({
                     </p>
 
                     {/* ✅ BOTÓN AMARILLO - ABRE EL POPUP */}
-                    <button
-                      type="button"
-                  onClick={() => {
-  if (!validateForm()) return;
+          onClick={() => {
+  if (!formIsValid) {
+    toast({
+      title: "Formulario incompleto",
+      description: "Completa todos los campos obligatorios antes de continuar.",
+      variant: "destructive",
+    });
+    return;
+  }
+
   setShowPaymentModal(true);
 }}
                       disabled={!acceptTerms}
