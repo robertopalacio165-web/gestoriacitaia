@@ -118,11 +118,13 @@ try {
 // ============================================
 
 try {
-  await sendWelcomeEmail({
-    email: email || "",
-    name: fullName || "",
-    plan: String(plan || "monthly"),
-  });
+await sendWelcomeEmail({
+  email: email || "",
+  name: fullName || "",
+  plan: String(plan || "monthly"),
+  cvUrl,
+  letterUrl,
+});
 
   console.log("✅ Email de bienvenida enviado (PayPal)");
 
