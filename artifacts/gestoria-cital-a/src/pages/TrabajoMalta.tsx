@@ -1265,14 +1265,14 @@ carnetConducir: isMa ? "اختر رخصة القيادة" : isEn ? "Select drivi
             {/* OPCIONES DE PAGO */}
             <div className="space-y-2 px-3 pb-4 mt-2">
               
-              {/* ✅ STRIPE - TARJETA */}
-              <button
-                onClick={() => {
-                  setShowPaymentModal(false);
-                  onPay(selectedPlan);
-                }}
-                className="w-full rounded-xl border-2 border-yellow-500/80 bg-[#1a1a1a] p-2.5 hover:bg-[#222] transition hover:shadow-[0_0_25px_rgba(255,215,0,.12)] group relative"
-              >
+          {/* ✅ STRIPE - TARJETA */}
+<button
+  onClick={() => {
+    setShowPaymentModal(false);
+    onPay(selectedPlan);
+  }}
+  className="w-full rounded-xl border-2 border-yellow-500/80 bg-[#1a1a1a] p-2.5 hover:bg-[#222] transition hover:shadow-[0_0_25px_rgba(255,215,0,.12)] group relative"
+>
                 <div className="flex items-center gap-2.5">
                   <div className="w-4 h-4 rounded-full border-2 border-yellow-500 flex items-center justify-center shrink-0">
                     <div className="w-2 h-2 rounded-full bg-yellow-500" />
