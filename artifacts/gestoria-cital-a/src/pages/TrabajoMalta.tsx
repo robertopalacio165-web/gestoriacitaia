@@ -168,32 +168,73 @@ function OfficialBrowserBox({
     if (method === "stripe") {
       // ✅ Llama al flujo existente de Stripe
       onPay(plan);
- } else if (method === "paypal") {
-      console.log("PAYPAL 1");
-  try {
-     console.log("PAYPAL 2");
-const response = await fetch("/api/crear-pedido-de-paypal", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        ...formData,
-        plan,
-      }),
-    });
 
+let photoUrl = "";
+let pdfUrl = "";
+
+// ============================
+// SUBIR FOTO
+// ============================
+if (formData.photoFile) {
+  const photoPath = `photos/${crypto.randomUUID()}-${formData.photoFile.name}`;
+
+  const { error } = await supabase.storage
+    .from("malta-temp")
+    .upload(photoPath, formData.photoFile);
+
+  if (error) throw error;
+
+  const { data } = supabase.storage
+    .from("malta-temp")
+    .getPublicUrl(photoPath);
+
+  photoUrl = data.publicUrl;
+}
+
+// ============================
+// SUBIR PDF
+// ============================
+if (formData.pdfFile) {
+  const pdfPath = `pdfs/${crypto.randomUUID()}-${formData.pdfFile.name}`;
+
+  const { error } = await supabase.storage
+    .from("malta-temp")
+    .upload(pdfPath, formData.pdfFile);
+
+  if (error) throw error;
+
+  const { data } = supabase.storage
+    .from("malta-temp")
+    .getPublicUrl(pdfPath);
+
+  pdfUrl = data.publicUrl;
+}
+
+// ============================
+// CREAR PEDIDO PAYPAL
+// ============================
+
+const response = await fetch("/api/crear-pedido-de-paypal", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    ...formData,
+    photoUrl,
+    pdfUrl,
+    plan,
+  }),
+});
 
 const data = await response.json();
-console.log(data);
 
 if (!response.ok) {
-  throw new Error(data.error || "Error creando la orden de PayPal");
+  throw new Error(data.error || "Error creando la orden PayPal");
 }
 
 window.location.href = data.approvalUrl;
-    return;
-
+return;
   } catch (err) {
     console.error(err);
 
