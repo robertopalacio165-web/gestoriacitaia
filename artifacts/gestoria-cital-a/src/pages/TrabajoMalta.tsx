@@ -172,7 +172,7 @@ function OfficialBrowserBox({
       console.log("PAYPAL 1");
   try {
      console.log("PAYPAL 2");
-    const response = await fetch("/api/create-paypal-order", {
+const response = await fetch("/api/crear-pedido-de-paypal", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
