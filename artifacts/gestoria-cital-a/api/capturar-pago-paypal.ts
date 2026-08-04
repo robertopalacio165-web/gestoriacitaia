@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { saveMaltaApplication } from "./saveMaltaApplication.js";
+import { sendWelcomeEmail } from "./sendWelcomeEmail.js";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== "POST") {
@@ -112,7 +113,22 @@ try {
    } catch (err) {
   console.error("❌ generate-malta-documents:", err);
 }
+// ============================================
+// ✅ ENVIAR EMAIL DE BIENVENIDA (PAYPAL)
+// ============================================
 
+try {
+  await sendWelcomeEmail({
+    email: email || "",
+    name: fullName || "",
+    plan: String(plan || "monthly"),
+  });
+
+  console.log("✅ Email de bienvenida enviado (PayPal)");
+
+} catch (err) {
+  console.error("❌ Error enviando email de bienvenida:", err);
+}
 // ============================================
 // ✅ AÑADIR A WORKER_QUEUE DESPUÉS DE GENERAR DOCUMENTOS
 // ============================================
