@@ -183,8 +183,9 @@ function OfficialBrowserBox({
       }),
     });
 
-    const data = await response.json();
-
+const text = await response.text();
+console.log(text);
+return;
     if (!response.ok) {
       throw new Error(data.error || "Error creando la orden de PayPal");
     }
