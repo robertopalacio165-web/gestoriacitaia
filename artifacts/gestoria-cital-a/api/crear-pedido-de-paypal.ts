@@ -80,9 +80,9 @@ console.log(order);
       (x: any) => x.rel === "approve"
     );
 
-    return res.status(200).json({
-      url: approve.href,
-    });
+return res.status(200).json({
+  approvalUrl: approve.href,
+});
 
   } catch (e: any) {
     res.status(500).json({
