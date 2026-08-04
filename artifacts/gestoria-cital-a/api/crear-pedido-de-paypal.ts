@@ -44,7 +44,7 @@ Object.entries(body).forEach(([key, value]) => {
 });
     const amount =
       body.plan === "weekly"
-        ? "9.99"
+        ? "0,02"
         : "19.99";
 
     // CREAR ORDEN
