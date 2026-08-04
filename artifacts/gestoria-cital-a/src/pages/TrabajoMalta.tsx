@@ -1109,9 +1109,9 @@ function OfficialBrowserBox({
               {/* ✅ PAYPAL - ACTIVO */}
               <button
                 type="button"
-          onClick={() => {
+   onClick={() => {
   setShowPaymentModal(false);
-  onPay(selectedPlan); // 👈 CAMBIA handlePay por onPay
+  handlePay("paypal", selectedPlan);
 }}
                 className="w-full rounded-xl border border-white/10 bg-[#111827] p-2.5 hover:bg-[#222] transition hover:border-yellow-500/40 group relative"
               >
