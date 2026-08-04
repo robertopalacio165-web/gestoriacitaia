@@ -2,6 +2,9 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 
 const PAYPAL_BASE = "https://api-m.paypal.com";
 
+
+
+
 export default async function handler(
  req: VercelRequest,
 res: VercelResponse
@@ -44,7 +47,7 @@ Object.entries(body).forEach(([key, value]) => {
 });
     const amount =
       body.plan === "weekly"
-        ? "0.02"
+        ? "9.99"
         : "19.99";
 
     // CREAR ORDEN
