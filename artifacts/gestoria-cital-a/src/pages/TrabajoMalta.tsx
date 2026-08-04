@@ -611,7 +611,9 @@ function OfficialBrowserBox({
                       placeholder={isMa ? "دخل سميتك" : isEn ? "Your name" : "Escribe tu nombre"}
                       value={formData.fullName}
                       onChange={(e) => onFormChange("fullName", e.target.value)}
-                      className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-[14px] text-white placeholder:text-white/30 focus:outline-none focus:border-yellow-400"
+                    className={`w-full h-[52px] rounded-2xl px-4 text-[14px] text-white placeholder:text-white/30 focus:outline-none focus:border-yellow-400 ${
+  !formData.fullName.trim() ? "border-red-500" : "border-white/10"
+} bg-[#060b16]`}
                     />
                   </div>
 
@@ -1054,12 +1056,14 @@ function OfficialBrowserBox({
                     </p>
 
                     {/* ✅ BOTÓN AMARILLO - ABRE EL POPUP */}
-                    <button
-                      type="button"
-                      onClick={() => setShowPaymentModal(true)}
-                      disabled={!acceptTerms}
-                      className="w-full min-h-[56px] rounded-[20px] bg-gradient-to-r from-yellow-400 via-yellow-500 to-amber-500 px-4 py-2 text-[15px] font-black text-black shadow-[0_0_30px_rgba(255,215,0,.35)] disabled:opacity-50 disabled:cursor-not-allowed hover:scale-[1.02] transition"
-                    >
+                 <button
+  type="button"
+  onClick={() => {
+    if (!formReady) return;
+    setShowPaymentModal(true);
+  }}
+  disabled={!acceptTerms || !formReady}
+>
                       🚀 Empezar búsqueda ahora
                     </button>
 
