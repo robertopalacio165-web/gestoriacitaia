@@ -1352,8 +1352,7 @@ export default function TrabajoMalta() {
     plan: "monthly",
   });
   const formReady = validateForm();
-    localStorage.getItem("maltaPaid") === "1"
-  );
+    
   const [voiceSupported, setVoiceSupported] = useState(true);
   const [isListening, setIsListening] = useState(false);
   const [waitingSara, setWaitingSara] = useState(false);
