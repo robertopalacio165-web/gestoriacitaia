@@ -18,6 +18,7 @@ import AuthCallback from "@/pages/AuthCallback";
 import Confirmar from "@/pages/Confirmar";
 import KhalidExtranjeria from "@/pages/KhalidExtranjeria";
 import TrabajoMalta from "@/pages/TrabajoMalta"; // ✅ NUEVA IMPORTACIÓN
+import Contacto from "@/pages/Contacto";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -60,6 +61,10 @@ function Router() {
       <Route path="/privacidad" component={Privacidad} />
 
       <Route path="/cookies" component={CookiesPage} />
+      <Route
+  path="/contacto"
+  component={Contacto}
+/>
 
       <Route
         path="/checkout/success"
