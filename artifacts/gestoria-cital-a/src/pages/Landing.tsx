@@ -454,10 +454,23 @@ export default function Landing() {
             <Link href="/cookies" className="hover:text-white transition-colors">
               {tr("footer_cookies", "Cookies")}
             </Link>
+            <span>·</span>
+
+<Link href="/contacto" className="hover:text-white transition-colors">
+  Contacto
+</Link>
           </div>
 
-          <div className="text-xs text-muted-foreground">© 2026 GestoriaCitaIA</div>
-        </div>
+        <div className="text-xs text-muted-foreground flex flex-col items-end gap-1">
+  <div>© 2026 GestoriaCitaIA</div>
+
+  <a
+    href="mailto:jobs@gestoriacitaia.com"
+    className="hover:text-white transition-colors"
+  >
+    📧 jobs@gestoriacitaia.com
+  </a>
+</div>  
       </footer>
     </div>
   );
