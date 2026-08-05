@@ -471,6 +471,7 @@ export default function Landing() {
     📧 jobs@gestoriacitaia.com
   </a>
 </div>  
+       </div>   
       </footer>
     </div>
   );
