@@ -461,16 +461,19 @@ export default function Landing() {
 </Link>
           </div>
 
-        <div className="text-xs text-muted-foreground flex flex-col items-end gap-1">
+       <div className="text-xs text-muted-foreground flex flex-col items-end gap-1">
   <div>© 2026 GestoriaCitaIA</div>
 
-  <a
-    href="mailto:jobs@gestoriacitaia.com"
-    className="hover:text-white transition-colors"
-  >
-    📧 jobs@gestoriacitaia.com
-  </a>
-</div>  
+  <div>
+    Contacto:{" "}
+    <a
+      href="mailto:jobs@gestoriacitaia.com"
+      className="hover:text-white transition-colors"
+    >
+      jobs@gestoriacitaia.com
+    </a>
+  </div>
+</div> 
        </div>   
       </footer>
     </div>
