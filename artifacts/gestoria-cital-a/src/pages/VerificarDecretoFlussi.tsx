@@ -82,7 +82,7 @@ const generateSessionId = () => {
   return sessionId;
 };
 
-// ✅ Países disponibles
+// ✅ Países disponibles (SOLO MARRUECOS E ITALIA)
 const PAISES = [
   { value: "🇲🇦 Marruecos", label: "Marruecos", flag: "🇲🇦", emoji: "🇲🇦" },
   { value: "🇮🇹 Italia", label: "Italia", flag: "🇮🇹", emoji: "🇮🇹" },
@@ -678,14 +678,18 @@ function OfficialBrowserBox({
                     )}
                   </div>
 
-                  {/* ✅ PAÍS - SELECTOR PERSONALIZADO CON BANDERAS */}
+                  {/* ✅ PAÍS - CON BANDERAS AL LADO DE LA ETIQUETA */}
                   <div 
                     ref={el => errorRefs.current["pais"] = el}
                     className="col-span-1 lg:col-span-2"
                   >
-                    <label className="block text-white text-[13px] mb-2">
-                      {isMa ? "الدولة" : isEn ? "Country" : "País"}
-                    </label>
+                    <div className="flex items-center gap-3 mb-2">
+                      <label className="text-white text-[13px]">
+                        {isMa ? "الدولة" : isEn ? "Country" : "País"}
+                      </label>
+                      <span className="text-xl">🇲🇦</span>
+                      <span className="text-xl">🇮🇹</span>
+                    </div>
                     
                     <PaisSelector
                       value={formData.pais}
