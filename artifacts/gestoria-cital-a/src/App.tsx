@@ -8,7 +8,7 @@ import NotFound from "@/pages/not-found";
 import Landing from "@/pages/Landing";
 import Panel from "@/pages/Panel";
 import BuscarCitas from "@/pages/BuscarCitas";
-import Regularizacion2026 from "@/pages/Regularizacion2026";
+import VerificarDecretoFlussi from "@/pages/VerificarDecretoFlussi";
 import AvisoLegal from "@/pages/AvisoLegal";
 import Privacidad from "@/pages/Privacidad";
 import CookiesPage from "@/pages/Cookies";
@@ -40,10 +40,10 @@ function Router() {
 
       <Route path="/buscar-citas" component={BuscarCitas} />
 
-      <Route
-        path="/regularizacion-2026"
-        component={Regularizacion2026}
-      />
+    <Route
+  path="/verificar-decreto-flussi"
+  component={VerificarDecretoFlussi}
+/>
 
       <Route
         path="/khalid-extranjeria"
