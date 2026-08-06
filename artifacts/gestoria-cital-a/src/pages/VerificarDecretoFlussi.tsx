@@ -82,13 +82,13 @@ const generateSessionId = () => {
   return sessionId;
 };
 
-// ✅ Países disponibles (SOLO MARRUECOS E ITALIA)
+// ✅ Países disponibles con banderas reales
 const PAISES = [
-  { value: "🇲🇦 Marruecos", label: "Marruecos", flag: "🇲🇦", emoji: "🇲🇦" },
-  { value: "🇮🇹 Italia", label: "Italia", flag: "🇮🇹", emoji: "🇮🇹" },
+  { value: "🇲🇦 Marruecos", label: "Marruecos", flag: "🇲🇦", flagUrl: "https://flagcdn.com/w40/ma.png" },
+  { value: "🇮🇹 Italia", label: "Italia", flag: "🇮🇹", flagUrl: "https://flagcdn.com/w40/it.png" },
 ];
 
-// ✅ Componente Selector de País personalizado
+// ✅ Componente Selector de País personalizado con banderas reales
 function PaisSelector({
   value,
   onChange,
@@ -139,7 +139,11 @@ function PaisSelector({
         <div className="flex items-center gap-3">
           {selectedCountry ? (
             <>
-              <span className="text-2xl">{selectedCountry.flag}</span>
+              <img
+                src={selectedCountry.flagUrl}
+                alt={selectedCountry.label}
+                className="w-6 h-4 rounded object-cover"
+              />
               <span className="text-[14px] text-white/90">
                 {getLabel(selectedCountry)}
               </span>
@@ -169,7 +173,11 @@ function PaisSelector({
               }`}
             >
               <div className="flex items-center gap-3">
-                <span className="text-2xl">{pais.flag}</span>
+                <img
+                  src={pais.flagUrl}
+                  alt={pais.label}
+                  className="w-6 h-4 rounded object-cover"
+                />
                 <span className={`text-[14px] ${value === pais.value ? 'text-yellow-400' : 'text-white/80'}`}>
                   {getLabel(pais)}
                 </span>
@@ -678,7 +686,7 @@ function OfficialBrowserBox({
                     )}
                   </div>
 
-                  {/* ✅ PAÍS - CON BANDERAS AL LADO DE LA ETIQUETA */}
+                  {/* ✅ PAÍS - CON BANDERAS REALES AL LADO DE LA ETIQUETA */}
                   <div 
                     ref={el => errorRefs.current["pais"] = el}
                     className="col-span-1 lg:col-span-2"
@@ -687,8 +695,16 @@ function OfficialBrowserBox({
                       <label className="text-white text-[13px]">
                         {isMa ? "الدولة" : isEn ? "Country" : "País"}
                       </label>
-                      <span className="text-xl">🇲🇦</span>
-                      <span className="text-xl">🇮🇹</span>
+                      <img
+                        src="https://flagcdn.com/w40/ma.png"
+                        alt="Marruecos"
+                        className="w-6 h-4 rounded object-cover"
+                      />
+                      <img
+                        src="https://flagcdn.com/w40/it.png"
+                        alt="Italia"
+                        className="w-6 h-4 rounded object-cover"
+                      />
                     </div>
                     
                     <PaisSelector
