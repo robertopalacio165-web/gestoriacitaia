@@ -574,94 +574,67 @@ function OfficialBrowserBox({
                     )}
                   </div>
 
-                  {/* ✅ PAÍS - CON BANDERAS GRANDES Y ESTILIZADAS */}
-                  <div 
-                    ref={el => errorRefs.current["pais"] = el}
-                    className="col-span-1 lg:col-span-2"
-                  >
-                    <label className="block text-white text-[13px] mb-2">
-                      {isMa ? "الدولة" : isEn ? "Country" : "País"}
-                    </label>
-                    
-                    <div className="grid grid-cols-2 gap-3">
-                      {/* Marruecos */}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          handleInputChange("pais", "🇲🇦 Marruecos");
-                          if (errorField === "pais") setErrorField(null);
-                        }}
-                        className={`h-[52px] rounded-2xl border-2 transition-all duration-200 flex items-center justify-center gap-3 ${
-                          formData.pais === "🇲🇦 Marruecos" 
-                            ? "border-emerald-500 bg-emerald-500/10 shadow-lg shadow-emerald-500/20" 
-                            : "border-white/10 bg-[#060b16] hover:border-white/30"
-                        }`}
-                      >
-                        <span className="text-3xl">🇲🇦</span>
-                        <span className={`font-medium ${formData.pais === "🇲🇦 Marruecos" ? "text-emerald-400" : "text-white/70"}`}>
-                          {isMa ? "المغرب" : isEn ? "Morocco" : "Marruecos"}
-                        </span>
-                        {formData.pais === "🇲🇦 Marruecos" && (
-                          <CheckCircle2 className="w-5 h-5 text-emerald-400 ml-auto" />
-                        )}
-                      </button>
+           {/* ✅ PAÍS - CON BANDERAS GRANDES Y ESTILIZADAS - CORREGIDO */}
+<div 
+  ref={el => errorRefs.current["pais"] = el}
+  className="col-span-1 lg:col-span-2"
+>
+  <label className="block text-white text-[13px] mb-2">
+    {isMa ? "الدولة" : isEn ? "Country" : "País"}
+  </label>
+  
+  <div className="grid grid-cols-2 gap-3">
+    {/* Marruecos */}
+    <button
+      type="button"
+      onClick={() => {
+        handleInputChange("pais", "🇲🇦 Marruecos");
+        if (errorField === "pais") setErrorField(null);
+      }}
+      className={`h-[52px] rounded-2xl border-2 transition-all duration-200 flex items-center justify-center gap-2 px-3 ${
+        formData.pais === "🇲🇦 Marruecos" 
+          ? "border-emerald-500 bg-emerald-500/10 shadow-lg shadow-emerald-500/20" 
+          : "border-white/10 bg-[#060b16] hover:border-white/30"
+      }`}
+    >
+      <span className="text-2xl">🇲🇦</span>
+      <span className={`font-medium text-sm ${formData.pais === "🇲🇦 Marruecos" ? "text-emerald-400" : "text-white/70"}`}>
+        {isMa ? "المغرب" : isEn ? "Morocco" : "Marruecos"}
+      </span>
+      {formData.pais === "🇲🇦 Marruecos" && (
+        <CheckCircle2 className="w-4 h-4 text-emerald-400 ml-1" />
+      )}
+    </button>
 
-                      {/* Italia */}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          handleInputChange("pais", "🇮🇹 Italia");
-                          if (errorField === "pais") setErrorField(null);
-                        }}
-                        className={`h-[52px] rounded-2xl border-2 transition-all duration-200 flex items-center justify-center gap-3 ${
-                          formData.pais === "🇮🇹 Italia" 
-                            ? "border-blue-500 bg-blue-500/10 shadow-lg shadow-blue-500/20" 
-                            : "border-white/10 bg-[#060b16] hover:border-white/30"
-                        }`}
-                      >
-                        <span className="text-3xl">🇮🇹</span>
-                        <span className={`font-medium ${formData.pais === "🇮🇹 Italia" ? "text-blue-400" : "text-white/70"}`}>
-                          {isMa ? "إيطاليا" : isEn ? "Italy" : "Italia"}
-                        </span>
-                        {formData.pais === "🇮🇹 Italia" && (
-                          <CheckCircle2 className="w-5 h-5 text-blue-400 ml-auto" />
-                        )}
-                      </button>
-                    </div>
-                    
-                    {errorField === "pais" && (
-                      <p className="text-red-400 text-xs mt-1">
-                        {isMa ? "الدولة مطلوبة" : isEn ? "Country is required" : "País es requerido"}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Tipo de documento */}
-                  <div 
-                    ref={el => errorRefs.current["tipoDocumento"] = el}
-                    className="col-span-1 lg:col-span-2"
-                  >
-                    <label className="block text-white text-[13px] mb-2">
-                      {isMa ? "نوع الوثيقة" : isEn ? "Document type" : "Tipo de documento"}
-                    </label>
-                    <select
-                      className={`w-full h-[52px] rounded-2xl border ${errorField === "tipoDocumento" ? "border-red-500" : "border-white/10"} bg-[#060b16] px-4 text-white focus:outline-none focus:border-yellow-400`}
-                      value={formData.tipoDocumento || ""}
-                      onChange={(e) => handleInputChange("tipoDocumento", e.target.value)}
-                    >
-                      <option value="">{isMa ? "اختر النوع" : isEn ? "Select type" : "Selecciona tipo"}</option>
-                      <option value="contrato">{isMa ? "عقد العمل" : isEn ? "Employment Contract" : "Contrato de trabajo"}</option>
-                      <option value="decreto_flussi">{isMa ? "مرسوم فلوسي" : isEn ? "Decreto Flussi" : "Decreto Flussi"}</option>
-                      <option value="nulla_osta">{isMa ? "تصريح العمل" : isEn ? "Nulla Osta" : "Nulla Osta"}</option>
-                      <option value="resguardo">{isMa ? "إيصال التسجيل" : isEn ? "Registration receipt" : "Resguardo"}</option>
-                      <option value="otro">{isMa ? "أخرى" : isEn ? "Other" : "Otro"}</option>
-                    </select>
-                    {errorField === "tipoDocumento" && (
-                      <p className="text-red-400 text-xs mt-1">
-                        {isMa ? "نوع الوثيقة مطلوب" : isEn ? "Document type is required" : "Tipo de documento es requerido"}
-                      </p>
-                    )}
-                  </div>
+    {/* Italia */}
+    <button
+      type="button"
+      onClick={() => {
+        handleInputChange("pais", "🇮🇹 Italia");
+        if (errorField === "pais") setErrorField(null);
+      }}
+      className={`h-[52px] rounded-2xl border-2 transition-all duration-200 flex items-center justify-center gap-2 px-3 ${
+        formData.pais === "🇮🇹 Italia" 
+          ? "border-blue-500 bg-blue-500/10 shadow-lg shadow-blue-500/20" 
+          : "border-white/10 bg-[#060b16] hover:border-white/30"
+      }`}
+    >
+      <span className="text-2xl">🇮🇹</span>
+      <span className={`font-medium text-sm ${formData.pais === "🇮🇹 Italia" ? "text-blue-400" : "text-white/70"}`}>
+        {isMa ? "إيطاليا" : isEn ? "Italy" : "Italia"}
+      </span>
+      {formData.pais === "🇮🇹 Italia" && (
+        <CheckCircle2 className="w-4 h-4 text-blue-400 ml-1" />
+      )}
+    </button>
+  </div>
+  
+  {errorField === "pais" && (
+    <p className="text-red-400 text-xs mt-1">
+      {isMa ? "الدولة مطلوبة" : isEn ? "Country is required" : "País es requerido"}
+    </p>
+  )}
+</div>
 
                   {/* ✅ SUBIR DOCUMENTOS - SOLO PDF, MÁXIMO 5 */}
                   <div 
