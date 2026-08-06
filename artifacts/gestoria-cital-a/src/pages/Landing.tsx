@@ -152,7 +152,7 @@ export default function Landing() {
             {/* ✅ BOTÓN SARA */}
             <Button
               className="w-full sm:w-auto rounded-full px-7 py-3 shadow-lg shadow-blue-500/30 bg-blue-600 hover:bg-blue-500 text-white text-base font-bold border-0 min-h-[52px]"
-              onClick={() => goWithGoogleAuth("/buscar-citas")}
+     onClick={() => window.location.href = "/verificar-decreto-flussi"}
             >
               {t("hero_btn_sara")}
               <ArrowRight className="w-4 h-4 ml-1" />
