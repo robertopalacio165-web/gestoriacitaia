@@ -106,6 +106,9 @@ function OfficialBrowserBox({
   verificationProgress,
   onDownloadReport,
   isReportReady,
+  errorField,
+  errorRefs,
+  setErrorField,
 }: {
   language: string;
   avatarImage: string;
@@ -129,6 +132,9 @@ function OfficialBrowserBox({
   verificationProgress: number;
   onDownloadReport: () => void;
   isReportReady: boolean;
+  errorField: string | null;
+  errorRefs: React.MutableRefObject<Record<string, HTMLDivElement | null>>;
+  setErrorField: (field: string | null) => void;
 }) {
   const isMa = language === "ma";
   const isEn = language === "en";
@@ -143,26 +149,22 @@ function OfficialBrowserBox({
   // ✅ Función para subir documentos a Supabase Storage (BUCKET PRIVADO)
   const uploadDocument = async (file: File, userId: string): Promise<UploadedFile> => {
     try {
-      // Validar tipo de archivo
       const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg'];
       if (!allowedTypes.includes(file.type)) {
         throw new Error('Tipo de archivo no permitido. Solo PDF, JPG, JPEG, PNG');
       }
 
-      // Validar tamaño (máximo 10MB)
       if (file.size > 10 * 1024 * 1024) {
         throw new Error('El archivo no puede superar 10MB');
       }
 
-      // Generar nombre único con carpeta por usuario
       const fileExt = file.name.split('.').pop();
       const timestamp = Date.now();
       const randomId = Math.random().toString(36).substring(2, 9);
       const fileName = `${userId}/${timestamp}-${randomId}.${fileExt}`;
 
-      // ✅ Subir a Supabase Storage (bucket privado)
       const { data, error } = await supabase.storage
-        .from('documentos-flussi-privado') // 🔒 BUCKET PRIVADO
+        .from('documentos-flussi-privado')
         .upload(fileName, file, {
           cacheControl: '3600',
           upsert: false,
@@ -171,7 +173,6 @@ function OfficialBrowserBox({
 
       if (error) throw error;
 
-      // ✅ NO GUARDAMOS URL PÚBLICA - solo el path
       return {
         name: file.name,
         path: fileName,
@@ -206,7 +207,6 @@ function OfficialBrowserBox({
     setIsUploading(true);
     
     try {
-      // Obtener userId de la sesión o generar uno temporal
       const { data: sessionData } = await supabase.auth.getSession();
       const userId = sessionData?.session?.user?.id || generateSessionId();
 
@@ -216,16 +216,18 @@ function OfficialBrowserBox({
       
       const uploaded = await Promise.all(uploadPromises);
       
-      // Actualizar estado con los archivos subidos
       const newUploadedFiles = [...uploadedFiles, ...uploaded];
       setUploadedFiles(newUploadedFiles);
       
-      // Guardar paths en el estado (NO URLs públicas)
       const filePaths = newUploadedFiles.map(f => f.path);
       const fileNames = newUploadedFiles.map(f => f.name).join(', ');
       
       onFormChange("documentos", fileNames);
       onFormChange("documentosUrls", JSON.stringify(filePaths));
+      
+      if (errorField === "documents") {
+        setErrorField(null);
+      }
       
       toast({
         title: isMa ? "✅ تم رفع الملفات" : isEn ? "✅ Files uploaded" : "✅ Archivos subidos",
@@ -243,7 +245,6 @@ function OfficialBrowserBox({
       });
     } finally {
       setIsUploading(false);
-      // Resetear el input
       e.target.value = '';
     }
   };
@@ -253,10 +254,8 @@ function OfficialBrowserBox({
     const fileToRemove = uploadedFiles[index];
     if (!fileToRemove) return;
 
-    // Eliminar del Storage
     await deleteDocument(fileToRemove.path);
 
-    // Eliminar del estado
     const newFiles = uploadedFiles.filter((_, i) => i !== index);
     setUploadedFiles(newFiles);
     
@@ -310,8 +309,6 @@ function OfficialBrowserBox({
       },
     };
 
-    const currentStatus = statusMessages[verificationStatus] || statusMessages.pending;
-
     return (
       <div className="mt-4 rounded-2xl border border-white/10 bg-[#050816] p-4">
         <h3 className="text-white font-bold mb-3 text-sm">
@@ -360,6 +357,21 @@ function OfficialBrowserBox({
         )}
       </div>
     );
+  };
+
+  // ✅ Handlers con limpieza de errores
+  const handleInputChange = (field: keyof ClientFormData, value: string) => {
+    onFormChange(field, value);
+    if (errorField === field) {
+      setErrorField(null);
+    }
+  };
+
+  const handleAcceptTermsChange = (checked: boolean) => {
+    setAcceptTerms(checked);
+    if (checked && errorField === "acceptTerms") {
+      setErrorField(null);
+    }
   };
 
   return (
@@ -443,7 +455,10 @@ function OfficialBrowserBox({
               <div className="w-full">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 mb-5">
                   {/* Nombre */}
-                  <div className="col-span-1 md:col-span-1">
+                  <div 
+                    ref={el => errorRefs.current["fullName"] = el}
+                    className="col-span-1 md:col-span-1"
+                  >
                     <label className="block text-white text-[13px] mb-2">
                       {isMa ? "الاسم" : isEn ? "First Name" : "Nombre"}
                     </label>
@@ -451,13 +466,21 @@ function OfficialBrowserBox({
                       type="text"
                       placeholder={isMa ? "دخل اسمك" : isEn ? "Your name" : "Tu nombre"}
                       value={formData.fullName}
-                      onChange={(e) => onFormChange("fullName", e.target.value)}
-                      className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-[14px] text-white placeholder:text-white/30 focus:outline-none focus:border-yellow-400"
+                      onChange={(e) => handleInputChange("fullName", e.target.value)}
+                      className={`w-full h-[52px] rounded-2xl border ${errorField === "fullName" ? "border-red-500" : "border-white/10"} bg-[#060b16] px-4 text-[14px] text-white placeholder:text-white/30 focus:outline-none focus:border-yellow-400`}
                     />
+                    {errorField === "fullName" && (
+                      <p className="text-red-400 text-xs mt-1">
+                        {isMa ? "الاسم مطلوب" : isEn ? "Name is required" : "Nombre es requerido"}
+                      </p>
+                    )}
                   </div>
 
                   {/* Apellidos */}
-                  <div className="col-span-1 md:col-span-1">
+                  <div 
+                    ref={el => errorRefs.current["apellidos"] = el}
+                    className="col-span-1 md:col-span-1"
+                  >
                     <label className="block text-white text-[13px] mb-2">
                       {isMa ? "اللقب" : isEn ? "Last Name" : "Apellidos"}
                     </label>
@@ -465,13 +488,21 @@ function OfficialBrowserBox({
                       type="text"
                       placeholder={isMa ? "دخل لقبك" : isEn ? "Your surname" : "Tus apellidos"}
                       value={formData.apellidos || ""}
-                      onChange={(e) => onFormChange("apellidos", e.target.value)}
-                      className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-[14px] text-white placeholder:text-white/30 focus:outline-none focus:border-yellow-400"
+                      onChange={(e) => handleInputChange("apellidos", e.target.value)}
+                      className={`w-full h-[52px] rounded-2xl border ${errorField === "apellidos" ? "border-red-500" : "border-white/10"} bg-[#060b16] px-4 text-[14px] text-white placeholder:text-white/30 focus:outline-none focus:border-yellow-400`}
                     />
+                    {errorField === "apellidos" && (
+                      <p className="text-red-400 text-xs mt-1">
+                        {isMa ? "اللقب مطلوب" : isEn ? "Last name is required" : "Apellidos son requeridos"}
+                      </p>
+                    )}
                   </div>
 
-                  {/* WhatsApp - SIN ESPAÑA */}
-                  <div className="col-span-1 lg:col-span-2">
+                  {/* WhatsApp */}
+                  <div 
+                    ref={el => errorRefs.current["phone"] = el}
+                    className="col-span-1 lg:col-span-2"
+                  >
                     <label className="block text-white text-[13px] mb-2">
                       {isMa ? "واتساب" : isEn ? "WhatsApp" : "WhatsApp"}
                     </label>
@@ -479,7 +510,7 @@ function OfficialBrowserBox({
                       <select
                         className="w-[92px] shrink-0 h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-2 text-center text-white"
                         value={formData.preferredOffice}
-                        onChange={(e) => onFormChange("preferredOffice", e.target.value)}
+                        onChange={(e) => handleInputChange("preferredOffice", e.target.value)}
                       >
                         <option value="+39">🇮🇹 +39</option>
                         <option value="+212">🇲🇦 +212</option>
@@ -494,14 +525,21 @@ function OfficialBrowserBox({
                         type="text"
                         placeholder={isMa ? "رقم الهاتف" : isEn ? "Phone number" : "Número de teléfono"}
                         value={formData.phone}
-                        onChange={(e) => onFormChange("phone", e.target.value)}
-                        className="min-w-0 flex-1 h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white"
+                        onChange={(e) => handleInputChange("phone", e.target.value)}
+                        className={`min-w-0 flex-1 h-[52px] rounded-2xl border ${errorField === "phone" ? "border-red-500" : "border-white/10"} bg-[#060b16] px-4 text-white focus:outline-none focus:border-yellow-400`}
                       />
                     </div>
+                    {errorField === "phone" && (
+                      <p className="text-red-400 text-xs mt-1">
+                        {isMa ? "رقم الهاتف مطلوب" : isEn ? "Phone number is required" : "Teléfono es requerido"}
+                      </p>
+                    )}
                   </div>
 
-                  {/* Gmail / Email */}
-                  <div>
+                  {/* Email */}
+                  <div 
+                    ref={el => errorRefs.current["email"] = el}
+                  >
                     <label className="block text-white text-[13px] mb-2">
                       Gmail
                     </label>
@@ -509,13 +547,20 @@ function OfficialBrowserBox({
                       type="email"
                       placeholder="tuemail@gmail.com"
                       value={formData.email}
-                      onChange={(e) => onFormChange("email", e.target.value)}
-                      className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-[14px] text-white placeholder:text-white/30 focus:outline-none focus:border-yellow-400"
+                      onChange={(e) => handleInputChange("email", e.target.value)}
+                      className={`w-full h-[52px] rounded-2xl border ${errorField === "email" ? "border-red-500" : "border-white/10"} bg-[#060b16] px-4 text-[14px] text-white placeholder:text-white/30 focus:outline-none focus:border-yellow-400`}
                     />
+                    {errorField === "email" && (
+                      <p className="text-red-400 text-xs mt-1">
+                        {isMa ? "الإيميل مطلوب" : isEn ? "Email is required" : "Email es requerido"}
+                      </p>
+                    )}
                   </div>
 
                   {/* Ciudad */}
-                  <div>
+                  <div 
+                    ref={el => errorRefs.current["ciudad"] = el}
+                  >
                     <label className="block text-white text-[13px] mb-2">
                       {isMa ? "المدينة" : isEn ? "City" : "Ciudad"}
                     </label>
@@ -523,13 +568,20 @@ function OfficialBrowserBox({
                       type="text"
                       placeholder="Roma"
                       value={formData.ciudad || ""}
-                      onChange={(e) => onFormChange("ciudad", e.target.value)}
-                      className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white"
+                      onChange={(e) => handleInputChange("ciudad", e.target.value)}
+                      className={`w-full h-[52px] rounded-2xl border ${errorField === "ciudad" ? "border-red-500" : "border-white/10"} bg-[#060b16] px-4 text-white focus:outline-none focus:border-yellow-400`}
                     />
+                    {errorField === "ciudad" && (
+                      <p className="text-red-400 text-xs mt-1">
+                        {isMa ? "المدينة مطلوبة" : isEn ? "City is required" : "Ciudad es requerida"}
+                      </p>
+                    )}
                   </div>
 
                   {/* País */}
-                  <div>
+                  <div 
+                    ref={el => errorRefs.current["pais"] = el}
+                  >
                     <label className="block text-white text-[13px] mb-2">
                       {isMa ? "الدولة" : isEn ? "Country" : "País"}
                     </label>
@@ -537,13 +589,20 @@ function OfficialBrowserBox({
                       type="text"
                       placeholder="Italia"
                       value={formData.pais || ""}
-                      onChange={(e) => onFormChange("pais", e.target.value)}
-                      className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white"
+                      onChange={(e) => handleInputChange("pais", e.target.value)}
+                      className={`w-full h-[52px] rounded-2xl border ${errorField === "pais" ? "border-red-500" : "border-white/10"} bg-[#060b16] px-4 text-white focus:outline-none focus:border-yellow-400`}
                     />
+                    {errorField === "pais" && (
+                      <p className="text-red-400 text-xs mt-1">
+                        {isMa ? "الدولة مطلوبة" : isEn ? "Country is required" : "País es requerido"}
+                      </p>
+                    )}
                   </div>
 
                   {/* Nacionalidad */}
-                  <div>
+                  <div 
+                    ref={el => errorRefs.current["nacionalidad"] = el}
+                  >
                     <label className="block text-white text-[13px] mb-2">
                       {isMa ? "الجنسية" : isEn ? "Nationality" : "Nacionalidad"}
                     </label>
@@ -551,20 +610,27 @@ function OfficialBrowserBox({
                       type="text"
                       placeholder={isMa ? "مثلا: مغربي" : isEn ? "e.g. Moroccan" : "Ej: Marroquí"}
                       value={formData.nacionalidad || ""}
-                      onChange={(e) => onFormChange("nacionalidad", e.target.value)}
-                      className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white"
+                      onChange={(e) => handleInputChange("nacionalidad", e.target.value)}
+                      className={`w-full h-[52px] rounded-2xl border ${errorField === "nacionalidad" ? "border-red-500" : "border-white/10"} bg-[#060b16] px-4 text-white focus:outline-none focus:border-yellow-400`}
                     />
+                    {errorField === "nacionalidad" && (
+                      <p className="text-red-400 text-xs mt-1">
+                        {isMa ? "الجنسية مطلوبة" : isEn ? "Nationality is required" : "Nacionalidad es requerida"}
+                      </p>
+                    )}
                   </div>
 
                   {/* Tipo de documento */}
-                  <div>
+                  <div 
+                    ref={el => errorRefs.current["tipoDocumento"] = el}
+                  >
                     <label className="block text-white text-[13px] mb-2">
                       {isMa ? "نوع الوثيقة" : isEn ? "Document type" : "Tipo de documento"}
                     </label>
                     <select
-                      className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white"
+                      className={`w-full h-[52px] rounded-2xl border ${errorField === "tipoDocumento" ? "border-red-500" : "border-white/10"} bg-[#060b16] px-4 text-white focus:outline-none focus:border-yellow-400`}
                       value={formData.tipoDocumento || ""}
-                      onChange={(e) => onFormChange("tipoDocumento", e.target.value)}
+                      onChange={(e) => handleInputChange("tipoDocumento", e.target.value)}
                     >
                       <option value="">{isMa ? "اختر النوع" : isEn ? "Select type" : "Selecciona tipo"}</option>
                       <option value="contrato">{isMa ? "عقد العمل" : isEn ? "Employment Contract" : "Contrato de trabajo"}</option>
@@ -573,14 +639,22 @@ function OfficialBrowserBox({
                       <option value="resguardo">{isMa ? "إيصال التسجيل" : isEn ? "Registration receipt" : "Resguardo"}</option>
                       <option value="otro">{isMa ? "أخرى" : isEn ? "Other" : "Otro"}</option>
                     </select>
+                    {errorField === "tipoDocumento" && (
+                      <p className="text-red-400 text-xs mt-1">
+                        {isMa ? "نوع الوثيقة مطلوب" : isEn ? "Document type is required" : "Tipo de documento es requerido"}
+                      </p>
+                    )}
                   </div>
 
-                  {/* SUBIR DOCUMENTOS - CON SUBIDA REAL A SUPABASE (BUCKET PRIVADO) */}
-                  <div className="col-span-1 lg:col-span-2">
+                  {/* SUBIR DOCUMENTOS */}
+                  <div 
+                    ref={el => errorRefs.current["documents"] = el}
+                    className="col-span-1 lg:col-span-2"
+                  >
                     <label className="block text-white text-[13px] mb-2">
                       {isMa ? "رفع المستندات" : isEn ? "Upload documents" : "Subir documento(s)"}
                     </label>
-                    <div className={`relative w-full min-h-[52px] rounded-2xl border-2 border-dashed ${uploadedFiles.length > 0 ? 'border-emerald-500/50 bg-emerald-500/5' : 'border-white/20 bg-[#060b16]'} flex flex-col items-center justify-center hover:border-yellow-400 transition-colors p-3`}>
+                    <div className={`relative w-full min-h-[52px] rounded-2xl border-2 border-dashed ${errorField === "documents" ? "border-red-500 bg-red-500/5" : uploadedFiles.length > 0 ? 'border-emerald-500/50 bg-emerald-500/5' : 'border-white/20 bg-[#060b16]'} flex flex-col items-center justify-center hover:border-yellow-400 transition-colors p-3`}>
                       <input
                         type="file"
                         multiple
@@ -608,6 +682,11 @@ function OfficialBrowserBox({
                         </div>
                       ) : null}
                     </div>
+                    {errorField === "documents" && (
+                      <p className="text-red-400 text-xs mt-1">
+                        {isMa ? "يجب رفع مستند واحد على الأقل" : isEn ? "You must upload at least one document" : "Debes subir al menos un documento"}
+                      </p>
+                    )}
                     
                     {/* Lista de archivos subidos */}
                     {uploadedFiles.length > 0 && (
@@ -697,15 +776,18 @@ function OfficialBrowserBox({
                     </div>
 
                     {/* Checkbox de aceptación */}
-                    <div className="flex items-start gap-3 mb-3">
+                    <div 
+                      ref={el => errorRefs.current["acceptTerms"] = el}
+                      className="flex items-start gap-3 mb-3"
+                    >
                       <input
                         type="checkbox"
                         id="acceptTerms"
                         checked={acceptTerms}
-                        onChange={(e) => setAcceptTerms(e.target.checked)}
+                        onChange={(e) => handleAcceptTermsChange(e.target.checked)}
                         className="mt-1 w-4 h-4 rounded border-white/20 bg-[#060b16] text-yellow-500 focus:ring-yellow-500 focus:ring-offset-0"
                       />
-                      <label htmlFor="acceptTerms" className="text-white/70 text-[12px] leading-relaxed">
+                      <label htmlFor="acceptTerms" className={`text-[12px] leading-relaxed ${errorField === "acceptTerms" ? "text-red-400" : "text-white/70"}`}>
                         {isMa
                           ? "☑️ أوافق على أن تقوم GestoriaCitaIA بتحليل وثائقي والتحقق من السجلات العامة الإيطالية."
                           : isEn
@@ -713,13 +795,17 @@ function OfficialBrowserBox({
                           : "☑️ Acepto que GestoriaCitaIA analice mis documentos y consulte registros públicos italianos."}
                       </label>
                     </div>
+                    {errorField === "acceptTerms" && (
+                      <p className="text-red-400 text-xs mt-0 mb-2">
+                        {isMa ? "يجب الموافقة على الشروط" : isEn ? "You must accept the terms" : "Debes aceptar los términos"}
+                      </p>
+                    )}
 
-                    {/* BOTÓN ACTUALIZADO */}
+                    {/* ✅ BOTÓN - SIN DISABLED */}
                     <button
                       type="button"
                       onClick={onPay}
-                      className="w-full min-h-[56px] rounded-[20px] bg-gradient-to-r from-yellow-400 via-yellow-500 to-amber-500 px-4 py-2 text-[15px] leading-tight font-black text-black shadow-[0_0_30px_rgba(255,215,0,0.35)] transition-all duration-300 hover:scale-[1.01] disabled:opacity-50 disabled:cursor-not-allowed"
-                      disabled={!acceptTerms || uploadedFiles.length === 0}
+                      className="w-full min-h-[56px] rounded-[20px] bg-gradient-to-r from-yellow-400 via-yellow-500 to-amber-500 px-4 py-2 text-[15px] leading-tight font-black text-black shadow-[0_0_30px_rgba(255,215,0,0.35)] transition-all duration-300 hover:scale-[1.01]"
                     >
                       {isMa 
                         ? "🔐 تحقق الآن مقابل 21.99€" 
@@ -727,17 +813,6 @@ function OfficialBrowserBox({
                         ? "🔐 Verify now for only €21.99" 
                         : "🔐 Verificar ahora por solo 21,99 €"}
                     </button>
-
-                    {/* Mostrar advertencia si no hay documentos subidos */}
-                    {uploadedFiles.length === 0 && (
-                      <p className="text-yellow-400 text-[11px] text-center mt-2">
-                        {isMa 
-                          ? "⚠️ يجب رفع المستندات للمتابعة"
-                          : isEn 
-                          ? "⚠️ You must upload documents to continue"
-                          : "⚠️ Debes subir documentos para continuar"}
-                      </p>
-                    )}
 
                     <div className="mt-5 flex items-center justify-center gap-2 text-[11px] text-gray-300">
                       <Shield className="w-3 h-3 text-yellow-400" />
@@ -911,7 +986,10 @@ export default function VerificarDecretoFlussi() {
     preferredOffice: "+39",
   });
   
-  // ✅ ELIMINADA DEPENDENCIA DE localStorage - solo usamos BD
+  // ✅ Estado para el campo con error
+  const [errorField, setErrorField] = useState<string | null>(null);
+  const errorRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  
   const [formReady, setFormReady] = useState(false);
   
   const [voiceSupported, setVoiceSupported] = useState(true);
@@ -1058,7 +1136,20 @@ export default function VerificarDecretoFlussi() {
     return `gestoriacitaia_flussi_voice_${userId}`;
   }, [profile?.id]);
 
-  // ✅ Suscribirse a cambios de estado de verificación (única fuente de verdad)
+  // ✅ Scroll automático al campo con error
+  useEffect(() => {
+    if (!errorField) return;
+
+    const element = errorRefs.current[errorField];
+    if (element) {
+      element.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+    }
+  }, [errorField]);
+
+  // ✅ Suscribirse a cambios de estado de verificación
   useEffect(() => {
     const userId = profile?.id;
     if (!userId) return;
@@ -1118,14 +1209,12 @@ export default function VerificarDecretoFlussi() {
         throw new Error('No se encontró el informe');
       }
 
-      // ✅ Generar URL firmada para descarga segura
       const { data: signedUrlData, error: signedUrlError } = await supabase.storage
         .from('informes-flussi-privado')
-        .createSignedUrl(data.report_path, 3600); // 1 hora de validez
+        .createSignedUrl(data.report_path, 3600);
 
       if (signedUrlError) throw signedUrlError;
 
-      // Abrir en nueva ventana para descarga
       window.open(signedUrlData.signedUrl, '_blank');
 
     } catch (error: any) {
@@ -1168,7 +1257,6 @@ export default function VerificarDecretoFlussi() {
           const profileData = (data as ProfileRow | null) ?? null;
           setProfile(profileData);
           
-          // ✅ SOLO CONSULTAR BD - NADA DE localStorage
           const { data: verificationData } = await supabase
             .from('verificaciones')
             .select('payment_status, status, report_path')
@@ -1178,7 +1266,6 @@ export default function VerificarDecretoFlussi() {
           if (verificationData?.payment_status === 'paid') {
             setFormReady(true);
             
-            // Si ya tiene informe, marcar como listo
             if (verificationData?.report_path) {
               setIsReportReady(true);
               setVerificationStatus('report_ready');
@@ -1409,71 +1496,87 @@ export default function VerificarDecretoFlussi() {
     }
   };
 
-  // ✅ VALIDACIÓN COMPLETA CON EMAIL Y TELÉFONO
+  // ✅ VALIDACIÓN - TODOS LOS CAMPOS OBLIGATORIOS EN ORDEN
   const validateForm = (): boolean => {
-    const errors: string[] = [];
-
+    // 1. Nombre
     if (!formData.fullName.trim() || formData.fullName.length < 2) {
-      errors.push(isMa ? "الاسم مطلوب (حرفين على الأقل)" : isEn ? "First name is required (min 2 chars)" : "Nombre es requerido (mín 2 caracteres)");
-    }
-    if (!formData.apellidos.trim() || formData.apellidos.length < 2) {
-      errors.push(isMa ? "اللقب مطلوب (حرفين على الأقل)" : isEn ? "Last name is required (min 2 chars)" : "Apellidos son requeridos (mín 2 caracteres)");
-    }
-    
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!formData.email.trim() || !emailRegex.test(formData.email.trim())) {
-      errors.push(isMa ? "الإيميل غير صحيح" : isEn ? "Invalid email" : "Email inválido");
-    }
-    
-    const phoneClean = formData.phone.replace(/\s/g, '');
-    const phoneRegex = /^\+?[0-9]{9,15}$/;
-    if (!phoneClean || !phoneRegex.test(phoneClean)) {
-      errors.push(isMa ? "رقم الهاتف غير صحيح (9-15 رقم)" : isEn ? "Invalid phone number (9-15 digits)" : "Teléfono inválido (9-15 dígitos)");
-    }
-
-    if (!formData.ciudad.trim() || formData.ciudad.length < 2) {
-      errors.push(isMa ? "المدينة مطلوبة" : isEn ? "City is required" : "Ciudad es requerida");
-    }
-    if (!formData.pais.trim() || formData.pais.length < 2) {
-      errors.push(isMa ? "الدولة مطلوبة" : isEn ? "Country is required" : "País es requerido");
-    }
-    if (!formData.nacionalidad.trim() || formData.nacionalidad.length < 2) {
-      errors.push(isMa ? "الجنسية مطلوبة" : isEn ? "Nationality is required" : "Nacionalidad es requerida");
-    }
-    if (!formData.tipoDocumento.trim()) {
-      errors.push(isMa ? "نوع الوثيقة مطلوب" : isEn ? "Document type is required" : "Tipo de documento es requerido");
-    }
-    
-    if (uploadedFiles.length === 0) {
-      errors.push(isMa ? "يجب رفع مستند واحد على الأقل" : isEn ? "You must upload at least one document" : "Debes subir al menos un documento");
-    }
-    
-    if (!acceptTerms) {
-      errors.push(isMa ? "خاصك توافق على الشروط" : isEn ? "You must accept the terms" : "Debes aceptar los términos");
-    }
-
-    if (errors.length > 0) {
-      errors.forEach((err) => {
-        toast({
-          title: ui.missingTitle,
-          description: err,
-          variant: "destructive",
-        });
-      });
+      setErrorField("fullName");
       return false;
     }
 
+    // 2. Apellidos
+    if (!formData.apellidos.trim() || formData.apellidos.length < 2) {
+      setErrorField("apellidos");
+      return false;
+    }
+
+    // 3. WhatsApp
+    const phoneClean = formData.phone.replace(/\s/g, '');
+    const phoneRegex = /^\+?[0-9]{9,15}$/;
+    if (!phoneClean || !phoneRegex.test(phoneClean)) {
+      setErrorField("phone");
+      return false;
+    }
+
+    // 4. Email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!formData.email.trim() || !emailRegex.test(formData.email.trim())) {
+      setErrorField("email");
+      return false;
+    }
+
+    // 5. Ciudad
+    if (!formData.ciudad.trim() || formData.ciudad.length < 2) {
+      setErrorField("ciudad");
+      return false;
+    }
+
+    // 6. País
+    if (!formData.pais.trim() || formData.pais.length < 2) {
+      setErrorField("pais");
+      return false;
+    }
+
+    // 7. Nacionalidad
+    if (!formData.nacionalidad.trim() || formData.nacionalidad.length < 2) {
+      setErrorField("nacionalidad");
+      return false;
+    }
+
+    // 8. Tipo de documento
+    if (!formData.tipoDocumento.trim()) {
+      setErrorField("tipoDocumento");
+      return false;
+    }
+
+    // 9. Documentos subidos
+    if (uploadedFiles.length === 0) {
+      setErrorField("documents");
+      return false;
+    }
+
+    // 10. Aceptación de términos
+    if (!acceptTerms) {
+      setErrorField("acceptTerms");
+      return false;
+    }
+
+    // ✅ Todos los campos están correctos
+    setErrorField(null);
     return true;
   };
 
-  // ✅ HANDLE PAY - SOLO CREA CHECKOUT, NO GUARDA ESTADO LOCAL
-  const handlePay = async () => {
+  // ✅ HANDLE PAY - ejecuta validate y luego payStripe
+  const handlePay = () => {
     if (!validateForm()) {
       return;
     }
+    payStripe();
+  };
 
+  // ✅ Función que llama a Stripe
+  const payStripe = async () => {
     try {
-      // Obtener userId de la sesión o generar uno temporal
       const { data: sessionData } = await supabase.auth.getSession();
       const userId = sessionData?.session?.user?.id || generateSessionId();
 
@@ -1493,14 +1596,13 @@ export default function VerificarDecretoFlussi() {
           nacionalidad: formData.nacionalidad,
           tipoDocumento: formData.tipoDocumento,
           documentos: formData.documentos,
-          documentosPaths: formData.documentosUrls, // Solo paths, no URLs públicas
+          documentosPaths: formData.documentosUrls,
           preferredOffice: formData.preferredOffice,
         }),
       });
 
       const data = await res.json();
       if (data.url) {
-        // ❌ ELIMINADO: localStorage.setItem("flussiPaid", "1")
         window.location.href = data.url;
       } else {
         throw new Error(data.error || 'Error al crear el checkout');
@@ -1625,6 +1727,9 @@ export default function VerificarDecretoFlussi() {
             verificationProgress={verificationProgress}
             onDownloadReport={handleDownloadReport}
             isReportReady={isReportReady}
+            errorField={errorField}
+            errorRefs={errorRefs}
+            setErrorField={setErrorField}
           />
         </div>
 
