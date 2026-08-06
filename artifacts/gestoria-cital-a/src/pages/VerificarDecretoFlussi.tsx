@@ -22,6 +22,7 @@ import {
   File,
   Image,
   Download,
+  ChevronDown,
 } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 
@@ -80,6 +81,109 @@ const generateSessionId = () => {
   }
   return sessionId;
 };
+
+// ✅ Países disponibles
+const PAISES = [
+  { value: "🇲🇦 Marruecos", label: "Marruecos", flag: "🇲🇦", emoji: "🇲🇦" },
+  { value: "🇮🇹 Italia", label: "Italia", flag: "🇮🇹", emoji: "🇮🇹" },
+];
+
+// ✅ Componente Selector de País personalizado
+function PaisSelector({
+  value,
+  onChange,
+  error,
+  isMa,
+  isEn,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  error: boolean;
+  isMa: boolean;
+  isEn: boolean;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Cerrar al hacer clic fuera
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const selectedCountry = PAISES.find(p => p.value === value);
+
+  const getLabel = (pais: typeof PAISES[0]) => {
+    if (isMa) {
+      return pais.value === "🇲🇦 Marruecos" ? "المغرب" : "إيطاليا";
+    }
+    if (isEn) {
+      return pais.value === "🇲🇦 Marruecos" ? "Morocco" : "Italy";
+    }
+    return pais.label;
+  };
+
+  return (
+    <div className="relative w-full" ref={dropdownRef}>
+      {/* Botón selector */}
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className={`w-full h-[52px] rounded-2xl border ${error ? "border-red-500" : "border-white/10"} bg-[#060b16] px-4 text-white flex items-center justify-between hover:border-yellow-400 transition-colors focus:outline-none focus:border-yellow-400`}
+      >
+        <div className="flex items-center gap-3">
+          {selectedCountry ? (
+            <>
+              <span className="text-2xl">{selectedCountry.flag}</span>
+              <span className="text-[14px] text-white/90">
+                {getLabel(selectedCountry)}
+              </span>
+            </>
+          ) : (
+            <span className="text-[14px] text-white/40">
+              {isMa ? "اختر الدولة" : isEn ? "Select country" : "Selecciona país"}
+            </span>
+          )}
+        </div>
+        <ChevronDown className={`w-4 h-4 text-white/40 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+      </button>
+
+      {/* Dropdown */}
+      {isOpen && (
+        <div className="absolute top-[56px] left-0 right-0 z-50 mt-1 rounded-2xl border border-white/10 bg-[#0a0f1a] shadow-2xl shadow-black/50 overflow-hidden">
+          {PAISES.map((pais) => (
+            <button
+              key={pais.value}
+              type="button"
+              onClick={() => {
+                onChange(pais.value);
+                setIsOpen(false);
+              }}
+              className={`w-full h-[48px] px-4 flex items-center justify-between hover:bg-white/5 transition-colors ${
+                value === pais.value ? 'bg-white/5' : ''
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <span className="text-2xl">{pais.flag}</span>
+                <span className={`text-[14px] ${value === pais.value ? 'text-yellow-400' : 'text-white/80'}`}>
+                  {getLabel(pais)}
+                </span>
+              </div>
+              {value === pais.value && (
+                <CheckCircle2 className="w-4 h-4 text-yellow-400" />
+              )}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 function OfficialBrowserBox({
   language,
@@ -574,71 +678,58 @@ function OfficialBrowserBox({
                     )}
                   </div>
 
-{/* ✅ PAÍS - CON BANDERAS DENTRO DE UN CUADRO ESTILIZADO */}
-<div 
-  ref={el => errorRefs.current["pais"] = el}
-  className="col-span-1 lg:col-span-2"
->
-  <label className="block text-white text-[13px] mb-2">
-    {isMa ? "الدولة" : isEn ? "Country" : "País"}
-  </label>
-  
-  <div className="grid grid-cols-2 gap-3">
-    {/* Marruecos */}
-    <button
-      type="button"
-      onClick={() => {
-        handleInputChange("pais", "🇲🇦 Marruecos");
-        if (errorField === "pais") setErrorField(null);
-      }}
-      className={`h-[52px] rounded-2xl border-2 transition-all duration-200 flex items-center justify-center gap-2 px-3 ${
-        formData.pais === "🇲🇦 Marruecos" 
-          ? "border-emerald-500 bg-emerald-500/10 shadow-lg shadow-emerald-500/20" 
-          : "border-white/10 bg-[#060b16] hover:border-white/30"
-      }`}
-    >
-      <div className="flex items-center gap-2">
-        <span className="text-2xl">🇲🇦</span>
-        <span className={`font-medium text-sm ${formData.pais === "🇲🇦 Marruecos" ? "text-emerald-400" : "text-white/70"}`}>
-          {isMa ? "المغرب" : isEn ? "Morocco" : "Marruecos"}
-        </span>
-      </div>
-      {formData.pais === "🇲🇦 Marruecos" && (
-        <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-      )}
-    </button>
+                  {/* ✅ PAÍS - SELECTOR PERSONALIZADO CON BANDERAS */}
+                  <div 
+                    ref={el => errorRefs.current["pais"] = el}
+                    className="col-span-1 lg:col-span-2"
+                  >
+                    <label className="block text-white text-[13px] mb-2">
+                      {isMa ? "الدولة" : isEn ? "Country" : "País"}
+                    </label>
+                    
+                    <PaisSelector
+                      value={formData.pais}
+                      onChange={(value) => {
+                        handleInputChange("pais", value);
+                      }}
+                      error={errorField === "pais"}
+                      isMa={isMa}
+                      isEn={isEn}
+                    />
+                    
+                    {errorField === "pais" && (
+                      <p className="text-red-400 text-xs mt-1">
+                        {isMa ? "الدولة مطلوبة" : isEn ? "Country is required" : "País es requerido"}
+                      </p>
+                    )}
+                  </div>
 
-    {/* Italia */}
-    <button
-      type="button"
-      onClick={() => {
-        handleInputChange("pais", "🇮🇹 Italia");
-        if (errorField === "pais") setErrorField(null);
-      }}
-      className={`h-[52px] rounded-2xl border-2 transition-all duration-200 flex items-center justify-center gap-2 px-3 ${
-        formData.pais === "🇮🇹 Italia" 
-          ? "border-blue-500 bg-blue-500/10 shadow-lg shadow-blue-500/20" 
-          : "border-white/10 bg-[#060b16] hover:border-white/30"
-      }`}
-    >
-      <div className="flex items-center gap-2">
-        <span className="text-2xl">🇮🇹</span>
-        <span className={`font-medium text-sm ${formData.pais === "🇮🇹 Italia" ? "text-blue-400" : "text-white/70"}`}>
-          {isMa ? "إيطاليا" : isEn ? "Italy" : "Italia"}
-        </span>
-      </div>
-      {formData.pais === "🇮🇹 Italia" && (
-        <CheckCircle2 className="w-4 h-4 text-blue-400" />
-      )}
-    </button>
-  </div>
-  
-  {errorField === "pais" && (
-    <p className="text-red-400 text-xs mt-1">
-      {isMa ? "الدولة مطلوبة" : isEn ? "Country is required" : "País es requerido"}
-    </p>
-  )}
-</div>
+                  {/* Tipo de documento */}
+                  <div 
+                    ref={el => errorRefs.current["tipoDocumento"] = el}
+                    className="col-span-1 lg:col-span-2"
+                  >
+                    <label className="block text-white text-[13px] mb-2">
+                      {isMa ? "نوع الوثيقة" : isEn ? "Document type" : "Tipo de documento"}
+                    </label>
+                    <select
+                      className={`w-full h-[52px] rounded-2xl border ${errorField === "tipoDocumento" ? "border-red-500" : "border-white/10"} bg-[#060b16] px-4 text-white focus:outline-none focus:border-yellow-400`}
+                      value={formData.tipoDocumento || ""}
+                      onChange={(e) => handleInputChange("tipoDocumento", e.target.value)}
+                    >
+                      <option value="">{isMa ? "اختر النوع" : isEn ? "Select type" : "Selecciona tipo"}</option>
+                      <option value="contrato">{isMa ? "عقد العمل" : isEn ? "Employment Contract" : "Contrato de trabajo"}</option>
+                      <option value="decreto_flussi">{isMa ? "مرسوم فلوسي" : isEn ? "Decreto Flussi" : "Decreto Flussi"}</option>
+                      <option value="nulla_osta">{isMa ? "تصريح العمل" : isEn ? "Nulla Osta" : "Nulla Osta"}</option>
+                      <option value="resguardo">{isMa ? "إيصال التسجيل" : isEn ? "Registration receipt" : "Resguardo"}</option>
+                      <option value="otro">{isMa ? "أخرى" : isEn ? "Other" : "Otro"}</option>
+                    </select>
+                    {errorField === "tipoDocumento" && (
+                      <p className="text-red-400 text-xs mt-1">
+                        {isMa ? "نوع الوثيقة مطلوب" : isEn ? "Document type is required" : "Tipo de documento es requerido"}
+                      </p>
+                    )}
+                  </div>
 
                   {/* ✅ SUBIR DOCUMENTOS - SOLO PDF, MÁXIMO 5 */}
                   <div 
