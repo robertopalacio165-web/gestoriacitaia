@@ -216,8 +216,9 @@ export default function Landing() {
           />
 
           <AgentCard
-            name="Sara"
-            role={t("agent_sara_role")}
+         name="Sara"
+
+role="Especialista en Verificación de Contratos"
             imagePath={`${import.meta.env.BASE_URL}images/sara.png`}
             delay={0.2}
           />
