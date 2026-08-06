@@ -574,7 +574,7 @@ function OfficialBrowserBox({
                     )}
                   </div>
 
-           {/* ✅ PAÍS - CON BANDERAS GRANDES Y ESTILIZADAS - CORREGIDO */}
+{/* ✅ PAÍS - CON BANDERAS DENTRO DE UN CUADRO ESTILIZADO */}
 <div 
   ref={el => errorRefs.current["pais"] = el}
   className="col-span-1 lg:col-span-2"
@@ -597,12 +597,14 @@ function OfficialBrowserBox({
           : "border-white/10 bg-[#060b16] hover:border-white/30"
       }`}
     >
-      <span className="text-2xl">🇲🇦</span>
-      <span className={`font-medium text-sm ${formData.pais === "🇲🇦 Marruecos" ? "text-emerald-400" : "text-white/70"}`}>
-        {isMa ? "المغرب" : isEn ? "Morocco" : "Marruecos"}
-      </span>
+      <div className="flex items-center gap-2">
+        <span className="text-2xl">🇲🇦</span>
+        <span className={`font-medium text-sm ${formData.pais === "🇲🇦 Marruecos" ? "text-emerald-400" : "text-white/70"}`}>
+          {isMa ? "المغرب" : isEn ? "Morocco" : "Marruecos"}
+        </span>
+      </div>
       {formData.pais === "🇲🇦 Marruecos" && (
-        <CheckCircle2 className="w-4 h-4 text-emerald-400 ml-1" />
+        <CheckCircle2 className="w-4 h-4 text-emerald-400" />
       )}
     </button>
 
@@ -619,12 +621,14 @@ function OfficialBrowserBox({
           : "border-white/10 bg-[#060b16] hover:border-white/30"
       }`}
     >
-      <span className="text-2xl">🇮🇹</span>
-      <span className={`font-medium text-sm ${formData.pais === "🇮🇹 Italia" ? "text-blue-400" : "text-white/70"}`}>
-        {isMa ? "إيطاليا" : isEn ? "Italy" : "Italia"}
-      </span>
+      <div className="flex items-center gap-2">
+        <span className="text-2xl">🇮🇹</span>
+        <span className={`font-medium text-sm ${formData.pais === "🇮🇹 Italia" ? "text-blue-400" : "text-white/70"}`}>
+          {isMa ? "إيطاليا" : isEn ? "Italy" : "Italia"}
+        </span>
+      </div>
       {formData.pais === "🇮🇹 Italia" && (
-        <CheckCircle2 className="w-4 h-4 text-blue-400 ml-1" />
+        <CheckCircle2 className="w-4 h-4 text-blue-400" />
       )}
     </button>
   </div>
