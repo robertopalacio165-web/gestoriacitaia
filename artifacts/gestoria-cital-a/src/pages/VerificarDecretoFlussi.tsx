@@ -574,7 +574,7 @@ function OfficialBrowserBox({
                     )}
                   </div>
 
-                  {/* ✅ PAÍS - SOLO MARRUECOS O ITALIA */}
+                  {/* ✅ PAÍS - CON BANDERAS GRANDES Y ESTILIZADAS */}
                   <div 
                     ref={el => errorRefs.current["pais"] = el}
                     className="col-span-1 lg:col-span-2"
@@ -582,15 +582,53 @@ function OfficialBrowserBox({
                     <label className="block text-white text-[13px] mb-2">
                       {isMa ? "الدولة" : isEn ? "Country" : "País"}
                     </label>
-                    <select
-                      className={`w-full h-[52px] rounded-2xl border ${errorField === "pais" ? "border-red-500" : "border-white/10"} bg-[#060b16] px-4 text-white focus:outline-none focus:border-yellow-400`}
-                      value={formData.pais || ""}
-                      onChange={(e) => handleInputChange("pais", e.target.value)}
-                    >
-                      <option value="">{isMa ? "اختر الدولة" : isEn ? "Select country" : "Selecciona país"}</option>
-                      <option value="🇲🇦 Marruecos">{isMa ? "المغرب" : isEn ? "Morocco" : "🇲🇦 Marruecos"}</option>
-                      <option value="🇮🇹 Italia">{isMa ? "إيطاليا" : isEn ? "Italy" : "🇮🇹 Italia"}</option>
-                    </select>
+                    
+                    <div className="grid grid-cols-2 gap-3">
+                      {/* Marruecos */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          handleInputChange("pais", "🇲🇦 Marruecos");
+                          if (errorField === "pais") setErrorField(null);
+                        }}
+                        className={`h-[52px] rounded-2xl border-2 transition-all duration-200 flex items-center justify-center gap-3 ${
+                          formData.pais === "🇲🇦 Marruecos" 
+                            ? "border-emerald-500 bg-emerald-500/10 shadow-lg shadow-emerald-500/20" 
+                            : "border-white/10 bg-[#060b16] hover:border-white/30"
+                        }`}
+                      >
+                        <span className="text-3xl">🇲🇦</span>
+                        <span className={`font-medium ${formData.pais === "🇲🇦 Marruecos" ? "text-emerald-400" : "text-white/70"}`}>
+                          {isMa ? "المغرب" : isEn ? "Morocco" : "Marruecos"}
+                        </span>
+                        {formData.pais === "🇲🇦 Marruecos" && (
+                          <CheckCircle2 className="w-5 h-5 text-emerald-400 ml-auto" />
+                        )}
+                      </button>
+
+                      {/* Italia */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          handleInputChange("pais", "🇮🇹 Italia");
+                          if (errorField === "pais") setErrorField(null);
+                        }}
+                        className={`h-[52px] rounded-2xl border-2 transition-all duration-200 flex items-center justify-center gap-3 ${
+                          formData.pais === "🇮🇹 Italia" 
+                            ? "border-blue-500 bg-blue-500/10 shadow-lg shadow-blue-500/20" 
+                            : "border-white/10 bg-[#060b16] hover:border-white/30"
+                        }`}
+                      >
+                        <span className="text-3xl">🇮🇹</span>
+                        <span className={`font-medium ${formData.pais === "🇮🇹 Italia" ? "text-blue-400" : "text-white/70"}`}>
+                          {isMa ? "إيطاليا" : isEn ? "Italy" : "Italia"}
+                        </span>
+                        {formData.pais === "🇮🇹 Italia" && (
+                          <CheckCircle2 className="w-5 h-5 text-blue-400 ml-auto" />
+                        )}
+                      </button>
+                    </div>
+                    
                     {errorField === "pais" && (
                       <p className="text-red-400 text-xs mt-1">
                         {isMa ? "الدولة مطلوبة" : isEn ? "Country is required" : "País es requerido"}
