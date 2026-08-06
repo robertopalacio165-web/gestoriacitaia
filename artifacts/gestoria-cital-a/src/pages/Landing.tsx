@@ -11,12 +11,6 @@ import {
   Shield,
   Bell,
   ArrowRight,
-  Briefcase,
-  FileSearch,
-  UserCheck,
-  Globe,
-  Clock,
-  Award,
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { supabase } from "@/lib/supabaseClient";
@@ -120,12 +114,9 @@ export default function Landing() {
 
   const PLANS = getPlans(t);
 
+  // ✅ Redirige directamente a la página de planes de Malta
   const handleMaltaPlanClick = () => {
     setLocation("/trabajo-malta");
-  };
-
-  const handleFlussiClick = () => {
-    window.location.href = "/verificar-decreto-flussi";
   };
 
   return (
@@ -139,46 +130,35 @@ export default function Landing() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
         >
-          {/* ✅ BADGE ACTUALIZADO - SIN IA */}
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/25 text-primary text-xs font-semibold mb-5">
             <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-            🇪🇺 Verificación profesional de documentos
+            {t("hero_badge")}
           </div>
 
-          {/* ✅ TÍTULO ACTUALIZADO */}
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold font-display leading-tight mb-4 max-w-3xl mx-auto">
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-white to-white/80">
-              Verifica contratos, documentos y oportunidades
+              {t("hero_title_1")}{" "}
             </span>
-            <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-green-400 to-blue-400">
-              de trabajo en Europa
+              {t("hero_title_2")}
             </span>
           </h1>
 
-          {/* ✅ SUBTÍTULO ACTUALIZADO - SIN IA */}
           <p className="text-sm sm:text-base text-muted-foreground max-w-2xl mx-auto mb-6 leading-relaxed">
-            Verificamos contratos, documentos y oportunidades de trabajo en España, Italia y Malta.
+            {t("hero_sub")}
           </p>
 
-          <div className="flex flex-col sm:flex-row flex-wrap justify-center items-stretch gap-3 mb-5 max-w-3xl mx-auto">
-            {/* ✅ BOTÓN VERIFICAR CONTRATO Y DECRETO FLUSSI - TEXTO ACTUALIZADO */}
+          <div className="flex flex-col sm:flex-row flex-wrap justify-center items-stretch gap-3 mb-5 max-w-2xl mx-auto">
+            {/* ✅ BOTÓN SARA */}
             <Button
-              className="w-full sm:w-auto rounded-full px-8 py-4 min-h-[56px]
-              bg-gradient-to-r from-blue-600 via-blue-500 to-blue-600
-              hover:scale-[1.04] hover:shadow-2xl hover:shadow-blue-500/50
-              transition-all duration-300
-              text-white text-base font-extrabold
-              shadow-2xl shadow-blue-500/40
-              border-0
-              tracking-wide"
-              onClick={handleFlussiClick}
+              className="w-full sm:w-auto rounded-full px-7 py-3 shadow-lg shadow-blue-500/30 bg-blue-600 hover:bg-blue-500 text-white text-base font-bold border-0 min-h-[52px]"
+              onClick={() => goWithGoogleAuth("/buscar-citas")}
             >
-              🇮🇹 Verificar Contrato y Decreto Flussi
-              <ArrowRight className="w-5 h-5 ml-2" />
+              {t("hero_btn_sara")}
+              <ArrowRight className="w-4 h-4 ml-1" />
             </Button>
 
-            {/* ✅ BOTÓN KHALID - NARANJA */}
+            {/* ✅ BOTÓN KHALID */}
             <Button
               className="w-full sm:w-auto rounded-full px-7 py-3 min-h-[52px]
               bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500
@@ -186,30 +166,30 @@ export default function Landing() {
               text-black font-bold shadow-xl shadow-orange-500/30 border-0"
               onClick={() => goWithGoogleAuth("/khalid-extranjeria")}
             >
-              🟨 Consulta con Khalid
+              {t("hero_btn_khalid")}
               <ArrowRight className="w-4 h-4 ml-1" />
             </Button>
 
-            {/* ✅ BOTÓN TRABAJO EN MALTA - VERDE */}
+            {/* ✅ BOTÓN TRABAJO EN MALTA - VERDE LLAMATIVO Y TEXTO GRANDE */}
             <Button
-              className="w-full sm:w-auto rounded-full px-8 py-4 min-h-[56px]
+              className="w-full sm:w-auto rounded-full px-8 py-4 min-h-[60px]
               bg-gradient-to-r from-green-500 via-emerald-500 to-green-600
-              hover:scale-[1.04] hover:shadow-2xl hover:shadow-green-500/50
+              hover:scale-[1.05] hover:shadow-2xl hover:shadow-green-500/50
               transition-all duration-300
-              text-white text-base font-extrabold
+              text-white text-xl font-extrabold
               shadow-2xl shadow-green-500/40
               border-0
               tracking-wide"
-              onClick={handleMaltaPlanClick}
+              onClick={() => window.location.href = "/trabajo-malta"}
             >
-              🇲🇹 Mi Trabajo en Malta
+              🇲🇹 {t("hero_btn_malta")}
               <ArrowRight className="w-5 h-5 ml-2" />
             </Button>
           </div>
 
           <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
             <div className="flex -space-x-2">
-              {["🇮🇹", "🇲🇹", "🇪🇸", "🇲🇦", "🇸🇳"].map((flag, i) => (
+              {["🇲🇦", "🇸🇳", "🇩🇿", "🇨🇴", "🇵🇰"].map((flag, i) => (
                 <span
                   key={i}
                   className="w-6 h-6 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-[10px]"
@@ -218,40 +198,7 @@ export default function Landing() {
                 </span>
               ))}
             </div>
-            <span>Más de 5.000 usuarios confían en nosotros</span>
-          </div>
-        </motion.div>
-
-        {/* ✅ NUEVA SECCIÓN DE SERVICIOS DESTACADOS - TEXTO ACTUALIZADO */}
-        <motion.div
-          className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-12 max-w-4xl mx-auto"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.1 }}
-        >
-          <div className="glass-panel rounded-2xl p-5 border border-blue-500/20 bg-blue-500/5 text-center hover:border-blue-400 transition-colors cursor-pointer" onClick={handleFlussiClick}>
-            <div className="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center mx-auto mb-3">
-              <FileSearch className="w-6 h-6 text-blue-400" />
-            </div>
-            <h3 className="text-white font-bold text-sm mb-1">🇮🇹 Decreto Flussi</h3>
-            {/* ✅ TEXTO ACTUALIZADO - SIN IA */}
-            <p className="text-white/60 text-xs">Analizamos contratos, resguardos y documentos del Decreto Flussi</p>
-          </div>
-
-          <div className="glass-panel rounded-2xl p-5 border border-green-500/20 bg-green-500/5 text-center hover:border-green-400 transition-colors cursor-pointer" onClick={handleMaltaPlanClick}>
-            <div className="w-12 h-12 rounded-xl bg-green-500/20 flex items-center justify-center mx-auto mb-3">
-              <Briefcase className="w-6 h-6 text-green-400" />
-            </div>
-            <h3 className="text-white font-bold text-sm mb-1">🇲🇹 Trabajo en Malta</h3>
-            <p className="text-white/60 text-xs">Planes de suscripción para encontrar trabajo en Malta</p>
-          </div>
-
-          <div className="glass-panel rounded-2xl p-5 border border-orange-500/20 bg-orange-500/5 text-center hover:border-orange-400 transition-colors cursor-pointer" onClick={() => goWithGoogleAuth("/khalid-extranjeria")}>
-            <div className="w-12 h-12 rounded-xl bg-orange-500/20 flex items-center justify-center mx-auto mb-3">
-              <UserCheck className="w-6 h-6 text-orange-400" />
-            </div>
-            <h3 className="text-white font-bold text-sm mb-1">🇪🇸 Regularización</h3>
-            <p className="text-white/60 text-xs">Asesoría con Khalid para extranjería en España</p>
+            <span>{t("hero_trust")}</span>
           </div>
         </motion.div>
 
@@ -270,8 +217,7 @@ export default function Landing() {
 
           <AgentCard
             name="Sara"
-            // ✅ ROL ACTUALIZADO - SIN IA
-            role="Especialista en Verificación Documental"
+            role={t("agent_sara_role")}
             imagePath={`${import.meta.env.BASE_URL}images/sara.png`}
             delay={0.2}
           />
@@ -283,12 +229,7 @@ export default function Landing() {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.4 }}
         >
-          {[
-            "✅ Verificación profesional de documentos",
-            "✅ Análisis detallado de contratos",
-            "✅ Resultados en menos de 24 horas",
-            "✅ Soporte en español, inglés y árabe",
-          ].map((f, i) => (
+          {[t("feat1"), t("feat2"), t("feat3"), t("feat4")].map((f, i) => (
             <div key={i} className="flex items-center gap-2 text-white/75 text-sm">
               <CheckCircle2 className="w-4 h-4 text-accent shrink-0 mt-0.5" />
               <span>{f}</span>
@@ -315,7 +256,6 @@ export default function Landing() {
           </div>
         </motion.div>
 
-        {/* SECCIÓN DE PLANES DE MALTA */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -324,11 +264,9 @@ export default function Landing() {
         >
           <div className="text-center mb-10">
             <h2 className="text-2xl sm:text-3xl font-display font-bold text-white mb-2">
-              🇲🇹 Planes para Trabajar en Malta
+              {t("plans_title")}
             </h2>
-            <p className="text-sm text-muted-foreground">
-              Elige el plan que mejor se adapte a tus necesidades
-            </p>
+            <p className="text-sm text-muted-foreground">{t("plans_sub")}</p>
           </div>
 
           <div className="grid sm:grid-cols-2 gap-4 max-w-2xl mx-auto items-stretch">
@@ -351,7 +289,7 @@ export default function Landing() {
                   {plan.badge && (
                     <div className="absolute top-0 right-0 overflow-hidden w-20 h-20">
                       <div className="absolute top-3 right-[-20px] w-24 text-center bg-primary text-white text-[10px] font-bold py-1 rotate-45 shadow-sm">
-                        MÁS POPULAR
+                        {t("plan_popular")}
                       </div>
                     </div>
                   )}
@@ -384,6 +322,7 @@ export default function Landing() {
                     ))}
                   </ul>
 
+                  {/* ✅ BOTÓN: Redirige a /trabajo-malta */}
                   <button
                     onClick={handleMaltaPlanClick}
                     className={`w-full py-2.5 rounded-xl text-sm font-bold uppercase tracking-wider transition-all ${plan.btnClass}`}
@@ -408,11 +347,9 @@ export default function Landing() {
         >
           <div className="text-center mb-8">
             <h2 className="text-2xl sm:text-3xl font-display font-bold text-white mb-2">
-              🇪🇺 Servicios de Verificación
+              {t("sara_services_title")}
             </h2>
-            <p className="text-sm text-muted-foreground">
-              Análisis profesional para tus documentos europeos
-            </p>
+            <p className="text-sm text-muted-foreground">{t("sara_services_sub")}</p>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-4xl mx-auto">
@@ -420,14 +357,13 @@ export default function Landing() {
               initial={{ opacity: 0, y: 10 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="glass-panel border border-blue-500/20 rounded-xl p-4 flex flex-col items-center gap-3 text-center bg-blue-500/5 hover:border-blue-400 transition-colors cursor-pointer"
-              onClick={handleFlussiClick}
+              className="glass-panel border border-yellow-500/20 rounded-xl p-4 flex flex-col items-center gap-3 text-center bg-yellow-500/5"
             >
-              <div className="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center">
-                <FileText className="w-6 h-6 text-blue-400" />
+              <div className="w-12 h-12 rounded-xl bg-yellow-500/20 flex items-center justify-center">
+                <FileText className="w-6 h-6 text-yellow-400" />
               </div>
               <span className="text-xs font-medium text-white/80 leading-tight">
-                🇮🇹 Decreto Flussi
+                {t("sara_service_1")}
               </span>
             </motion.div>
 
@@ -435,13 +371,13 @@ export default function Landing() {
               initial={{ opacity: 0, y: 10 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="glass-panel border border-green-500/20 rounded-xl p-4 flex flex-col items-center gap-3 text-center bg-green-500/5 hover:border-green-400 transition-colors"
+              className="glass-panel border border-green-500/20 rounded-xl p-4 flex flex-col items-center gap-3 text-center bg-green-500/5"
             >
               <div className="w-12 h-12 rounded-xl bg-green-500/20 flex items-center justify-center">
                 <CheckCircle2 className="w-6 h-6 text-green-400" />
               </div>
               <span className="text-xs font-medium text-white/80 leading-tight">
-                ✅ Verificación de contratos
+                {t("sara_service_2")}
               </span>
             </motion.div>
 
@@ -449,60 +385,29 @@ export default function Landing() {
               initial={{ opacity: 0, y: 10 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="glass-panel border border-purple-500/20 rounded-xl p-4 flex flex-col items-center gap-3 text-center bg-purple-500/5 hover:border-purple-400 transition-colors"
+              className="glass-panel border border-blue-500/20 rounded-xl p-4 flex flex-col items-center gap-3 text-center bg-blue-500/5"
+            >
+              <div className="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center">
+                <Shield className="w-6 h-6 text-blue-400" />
+              </div>
+              <span className="text-xs font-medium text-white/80 leading-tight">
+                {t("sara_service_3")}
+              </span>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="glass-panel border border-purple-500/20 rounded-xl p-4 flex flex-col items-center gap-3 text-center bg-purple-500/5"
             >
               <div className="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center">
-                <Shield className="w-6 h-6 text-purple-400" />
+                <Bell className="w-6 h-6 text-purple-400" />
               </div>
               <span className="text-xs font-medium text-white/80 leading-tight">
-                🛡️ Verificación de empresa
+                {t("sara_service_4")}
               </span>
             </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="glass-panel border border-yellow-500/20 rounded-xl p-4 flex flex-col items-center gap-3 text-center bg-yellow-500/5 hover:border-yellow-400 transition-colors"
-            >
-              <div className="w-12 h-12 rounded-xl bg-yellow-500/20 flex items-center justify-center">
-                <Clock className="w-6 h-6 text-yellow-400" />
-              </div>
-              <span className="text-xs font-medium text-white/80 leading-tight">
-                ⏱️ Resultados en 24h
-              </span>
-            </motion.div>
-          </div>
-        </motion.div>
-
-        {/* SECCIÓN DE PAÍSES */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="mb-12"
-        >
-          <div className="text-center mb-6">
-            <h3 className="text-lg font-bold text-white">
-              🌍 Países donde operamos
-            </h3>
-          </div>
-          <div className="flex flex-wrap justify-center gap-4">
-            {[
-              { flag: "🇮🇹", name: "Italia", color: "blue", onClick: handleFlussiClick },
-              { flag: "🇲🇹", name: "Malta", color: "green", onClick: handleMaltaPlanClick },
-              { flag: "🇪🇸", name: "España", color: "orange", onClick: () => goWithGoogleAuth("/khalid-extranjeria") },
-            ].map((country, i) => (
-              <div
-                key={i}
-                className={`glass-panel rounded-xl px-5 py-3 border border-${country.color}-500/20 bg-${country.color}-500/5 hover:border-${country.color}-400 transition-colors cursor-pointer`}
-                onClick={country.onClick}
-              >
-                <span className="text-white font-medium">
-                  {country.flag} {country.name}
-                </span>
-              </div>
-            ))}
           </div>
         </motion.div>
       </main>
@@ -510,7 +415,7 @@ export default function Landing() {
       <section className="relative z-10 border-t border-white/[0.06] py-5 px-4">
         <div className="max-w-4xl mx-auto flex flex-col items-center gap-4">
           <p className="text-[11px] text-muted-foreground font-medium tracking-wide uppercase">
-            Pago seguro · Métodos aceptados
+            {tr("secure_payment_methods", "Pago seguro · Métodos aceptados")}
           </p>
 
           <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
@@ -525,7 +430,10 @@ export default function Landing() {
               <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
               <path d="M7 11V7a5 5 0 0 1 10 0v4" />
             </svg>
-            Pagos procesados con cifrado SSL 256-bit · PCI DSS Compliant
+            {tr(
+              "ssl_payment_text",
+              "Pagos procesados con cifrado SSL 256-bit · PCI DSS Compliant"
+            )}
           </div>
         </div>
       </section>
@@ -534,37 +442,39 @@ export default function Landing() {
 
       <footer className="relative z-10 border-t border-white/[0.07] bg-[hsl(222,47%,4%,0.8)] backdrop-blur-lg">
         <div className="max-w-6xl mx-auto px-4 py-6 flex flex-col md:flex-row items-center justify-between gap-3">
-          <div className="text-xs text-muted-foreground flex gap-3 flex-wrap justify-center">
+          <div className="text-xs text-muted-foreground flex gap-3">
             <Link href="/aviso-legal" className="hover:text-white transition-colors">
-              Aviso legal
+              {tr("footer_legal", "Aviso legal")}
             </Link>
             <span>·</span>
             <Link href="/privacidad" className="hover:text-white transition-colors">
-              Privacidad
+              {tr("footer_privacy", "Privacidad")}
             </Link>
             <span>·</span>
             <Link href="/cookies" className="hover:text-white transition-colors">
-              Cookies
+              {tr("footer_cookies", "Cookies")}
             </Link>
             <span>·</span>
-            <Link href="/contacto" className="hover:text-white transition-colors">
-              Contacto
-            </Link>
+
+<Link href="/contacto" className="hover:text-white transition-colors">
+  Contacto
+</Link>
           </div>
 
-          <div className="text-xs text-muted-foreground flex flex-col items-end gap-1">
-            <div>© 2026 GestoriaCitaIA</div>
-            <div>
-              Contacto:{" "}
-              <a
-                href="mailto:jobs@gestoriacitaia.com"
-                className="hover:text-white transition-colors"
-              >
-                jobs@gestoriacitaia.com
-              </a>
-            </div>
-          </div>
-        </div>
+       <div className="text-xs text-muted-foreground flex flex-col items-end gap-1">
+  <div>© 2026 GestoriaCitaIA</div>
+
+  <div>
+    Contacto:{" "}
+    <a
+      href="mailto:jobs@gestoriacitaia.com"
+      className="hover:text-white transition-colors"
+    >
+      jobs@gestoriacitaia.com
+    </a>
+  </div>
+</div> 
+       </div>   
       </footer>
     </div>
   );
