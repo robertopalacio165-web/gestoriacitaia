@@ -1,0 +1,1735 @@
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useLocation } from "wouter";
+import { Navbar } from "@/components/Navbar";
+import { useLang } from "@/contexts/LanguageContext";
+import { useToast } from "@/hooks/use-toast";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  FileText,
+  Settings,
+  Mic,
+  MicOff,
+  RefreshCw,
+  Shield,
+  Bell,
+  CheckCircle2,
+  ExternalLink,
+  Volume2,
+  VolumeX,
+  Clock,
+  Upload,
+  X,
+  File,
+  Image,
+  Download,
+} from "lucide-react";
+import { supabase } from "@/lib/supabaseClient";
+
+interface ChatMsg {
+  from: "agent" | "user";
+  text: string;
+  ts?: number;
+}
+
+type DocState = "ok" | "warn" | "missing";
+
+type DocItem = {
+  nombre: string;
+  estado: DocState;
+};
+
+type FormItem = {
+  nombre: string;
+  codigo: string;
+  url: string;
+};
+
+type ProfileRow = {
+  id: string;
+  email: string | null;
+  full_name: string | null;
+  phone: string | null;
+  nie: string | null;
+};
+
+type ClientFormData = {
+  fullName: string;
+  apellidos: string;
+  phone: string;
+  email: string;
+  ciudad: string;
+  pais: string;
+  nacionalidad: string;
+  tipoDocumento: string;
+  documentos: string;
+  documentosUrls: string;
+  preferredOffice: string;
+};
+
+type UploadedFile = {
+  name: string;
+  path: string;
+  size: number;
+  type: string;
+};
+
+// Generar ID de sesión único para visitantes
+const generateSessionId = () => {
+  let sessionId = sessionStorage.getItem('flussi_session_id');
+  if (!sessionId) {
+    sessionId = `guest_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+    sessionStorage.setItem('flussi_session_id', sessionId);
+  }
+  return sessionId;
+};
+
+function OfficialBrowserBox({
+  language,
+  avatarImage,
+  title,
+  url,
+  profileLoading,
+  ui,
+  confirmed,
+  formData,
+  onFormChange,
+  onFormSubmit,
+  formReady,
+  onPay,
+  acceptTerms,
+  setAcceptTerms,
+  uploadedFiles,
+  setUploadedFiles,
+  isUploading,
+  setIsUploading,
+  verificationStatus,
+  verificationProgress,
+  onDownloadReport,
+  isReportReady,
+}: {
+  language: string;
+  avatarImage: string;
+  title: string;
+  url: string;
+  profileLoading: boolean;
+  ui: any;
+  confirmed: boolean;
+  formData: ClientFormData;
+  onFormChange: (field: keyof ClientFormData, value: string) => void;
+  onFormSubmit: () => void;
+  formReady: boolean;
+  onPay: () => void;
+  acceptTerms: boolean;
+  setAcceptTerms: (value: boolean) => void;
+  uploadedFiles: UploadedFile[];
+  setUploadedFiles: (files: UploadedFile[]) => void;
+  isUploading: boolean;
+  setIsUploading: (value: boolean) => void;
+  verificationStatus: string;
+  verificationProgress: number;
+  onDownloadReport: () => void;
+  isReportReady: boolean;
+}) {
+  const isMa = language === "ma";
+  const isEn = language === "en";
+  const { toast } = useToast();
+
+  const formIntro = isMa
+    ? "للتحقق من عقد عملك أو وثائق Decreto Flussi، املأ النموذج وسنرسل لك التقرير خلال 24 ساعة."
+    : isEn
+    ? "To verify your employment contract or Decreto Flussi documents, fill in the form and we will send you the report within 24 hours."
+    : "Para verificar tu contrato de trabajo o documentos del Decreto Flussi, completa el formulario y te enviaremos el informe en 24 horas.";
+
+  // ✅ Función para subir documentos a Supabase Storage (BUCKET PRIVADO)
+  const uploadDocument = async (file: File, userId: string): Promise<UploadedFile> => {
+    try {
+      // Validar tipo de archivo
+      const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg'];
+      if (!allowedTypes.includes(file.type)) {
+        throw new Error('Tipo de archivo no permitido. Solo PDF, JPG, JPEG, PNG');
+      }
+
+      // Validar tamaño (máximo 10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        throw new Error('El archivo no puede superar 10MB');
+      }
+
+      // Generar nombre único con carpeta por usuario
+      const fileExt = file.name.split('.').pop();
+      const timestamp = Date.now();
+      const randomId = Math.random().toString(36).substring(2, 9);
+      const fileName = `${userId}/${timestamp}-${randomId}.${fileExt}`;
+
+      // ✅ Subir a Supabase Storage (bucket privado)
+      const { data, error } = await supabase.storage
+        .from('documentos-flussi-privado') // 🔒 BUCKET PRIVADO
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: false,
+          contentType: file.type,
+        });
+
+      if (error) throw error;
+
+      // ✅ NO GUARDAMOS URL PÚBLICA - solo el path
+      return {
+        name: file.name,
+        path: fileName,
+        size: file.size,
+        type: file.type,
+      };
+    } catch (error: any) {
+      console.error('Error subiendo documento:', error);
+      throw error;
+    }
+  };
+
+  // ✅ Eliminar documento de Storage
+  const deleteDocument = async (filePath: string) => {
+    try {
+      const { error } = await supabase.storage
+        .from('documentos-flussi-privado')
+        .remove([filePath]);
+
+      if (error) throw error;
+      return true;
+    } catch (error) {
+      console.error('Error eliminando documento:', error);
+      return false;
+    }
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    setIsUploading(true);
+    
+    try {
+      // Obtener userId de la sesión o generar uno temporal
+      const { data: sessionData } = await supabase.auth.getSession();
+      const userId = sessionData?.session?.user?.id || generateSessionId();
+
+      const uploadPromises = Array.from(files).map(file => 
+        uploadDocument(file, userId)
+      );
+      
+      const uploaded = await Promise.all(uploadPromises);
+      
+      // Actualizar estado con los archivos subidos
+      const newUploadedFiles = [...uploadedFiles, ...uploaded];
+      setUploadedFiles(newUploadedFiles);
+      
+      // Guardar paths en el estado (NO URLs públicas)
+      const filePaths = newUploadedFiles.map(f => f.path);
+      const fileNames = newUploadedFiles.map(f => f.name).join(', ');
+      
+      onFormChange("documentos", fileNames);
+      onFormChange("documentosUrls", JSON.stringify(filePaths));
+      
+      toast({
+        title: isMa ? "✅ تم رفع الملفات" : isEn ? "✅ Files uploaded" : "✅ Archivos subidos",
+        description: isMa 
+          ? `تم رفع ${uploaded.length} ملف(ات) بنجاح`
+          : isEn 
+          ? `${uploaded.length} file(s) uploaded successfully`
+          : `${uploaded.length} archivo(s) subido(s) correctamente`,
+      });
+    } catch (error: any) {
+      toast({
+        title: isMa ? "❌ خطأ في الرفع" : isEn ? "❌ Upload error" : "❌ Error al subir",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
+      // Resetear el input
+      e.target.value = '';
+    }
+  };
+
+  // ✅ Eliminar archivo del estado Y del Storage
+  const removeFile = async (index: number) => {
+    const fileToRemove = uploadedFiles[index];
+    if (!fileToRemove) return;
+
+    // Eliminar del Storage
+    await deleteDocument(fileToRemove.path);
+
+    // Eliminar del estado
+    const newFiles = uploadedFiles.filter((_, i) => i !== index);
+    setUploadedFiles(newFiles);
+    
+    const filePaths = newFiles.map(f => f.path);
+    const fileNames = newFiles.map(f => f.name).join(', ');
+    
+    onFormChange("documentos", fileNames);
+    onFormChange("documentosUrls", JSON.stringify(filePaths));
+  };
+
+  const getFileIcon = (type: string) => {
+    if (type.includes('pdf')) return <File className="w-4 h-4 text-red-400" />;
+    if (type.includes('image')) return <Image className="w-4 h-4 text-blue-400" />;
+    return <File className="w-4 h-4 text-gray-400" />;
+  };
+
+  // Componente de estado de verificación
+  const VerificationStatusComponent = () => {
+    const statusMessages: Record<string, { label: string; icon: string }> = {
+      pending: { 
+        label: isMa ? "في الانتظار..." : isEn ? "Pending..." : "En espera...",
+        icon: "⏳"
+      },
+      downloading_documents: { 
+        label: isMa ? "جاري تحميل المستندات..." : isEn ? "Downloading documents..." : "Descargando documentos...",
+        icon: "📥"
+      },
+      extracting_text: { 
+        label: isMa ? "استخراج النص (OCR)..." : isEn ? "Extracting text (OCR)..." : "Extrayendo texto (OCR)...",
+        icon: "📄"
+      },
+      analyzing_with_ai: { 
+        label: isMa ? "تحليل بالذكاء الاصطناعي..." : isEn ? "Analyzing with AI..." : "Analizando con IA...",
+        icon: "🧠"
+      },
+      verifying_company: { 
+        label: isMa ? "التحقق من الشركة..." : isEn ? "Verifying company..." : "Verificando empresa...",
+        icon: "🏢"
+      },
+      generating_report: { 
+        label: isMa ? "إنشاء التقرير..." : isEn ? "Generating report..." : "Generando informe...",
+        icon: "📊"
+      },
+      report_ready: { 
+        label: isMa ? "✅ التقرير جاهز" : isEn ? "✅ Report ready" : "✅ Informe listo",
+        icon: "✅"
+      },
+      error: { 
+        label: isMa ? "❌ حدث خطأ" : isEn ? "❌ Error occurred" : "❌ Error en el proceso",
+        icon: "❌"
+      },
+    };
+
+    const currentStatus = statusMessages[verificationStatus] || statusMessages.pending;
+
+    return (
+      <div className="mt-4 rounded-2xl border border-white/10 bg-[#050816] p-4">
+        <h3 className="text-white font-bold mb-3 text-sm">
+          {isMa ? 'حالة التحقق' : isEn ? 'Verification Status' : 'Estado de verificación'}
+        </h3>
+        
+        <div className="space-y-2">
+          {Object.entries(statusMessages).map(([key, value]) => {
+            const isActive = key === verificationStatus;
+            const isCompleted = verificationStatus !== 'pending' && 
+                              Object.keys(statusMessages).indexOf(key) < 
+                              Object.keys(statusMessages).indexOf(verificationStatus) &&
+                              verificationStatus !== 'error';
+            
+            return (
+              <div key={key} className="flex items-center gap-3">
+                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs
+                  ${isActive ? 'bg-yellow-500/20 text-yellow-400' : 
+                    isCompleted ? 'bg-emerald-500/20 text-emerald-400' : 
+                    'bg-white/5 text-white/30'}`}>
+                  {isActive ? (
+                    <RefreshCw className="w-3 h-3 animate-spin" />
+                  ) : isCompleted ? (
+                    <CheckCircle2 className="w-3 h-3" />
+                  ) : (
+                    <span className="text-xs">{value.icon}</span>
+                  )}
+                </div>
+                <span className={`text-xs ${isActive ? 'text-yellow-400 font-medium' : 
+                  isCompleted ? 'text-emerald-400' : 'text-white/40'}`}>
+                  {value.label}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+
+        {isReportReady && (
+          <button 
+            onClick={onDownloadReport}
+            className="mt-3 w-full py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-green-600 text-white font-bold text-sm flex items-center justify-center gap-2 hover:scale-[1.02] transition-transform"
+          >
+            <Download className="w-4 h-4" />
+            {isMa ? "📥 تحميل التقرير" : isEn ? "📥 Download Report" : "📥 Descargar Informe"}
+          </button>
+        )}
+      </div>
+    );
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, x: 20 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ delay: 0.15 }}
+      className="flex-1 flex flex-col overflow-hidden bg-transparent"
+    >
+      <div className="flex-1 overflow-y-auto bg-transparent p-4 sm:p-6 text-black">
+        {confirmed ? (
+          <div className="rounded-[26px] border border-emerald-500/40 bg-[#07111f] px-6 py-8 text-center">
+            <h2 className="text-emerald-400 text-3xl font-black mb-4">
+              {isMa
+                ? "🎉 مبروك! تم التحقق"
+                : isEn
+                ? "🎉 VERIFICATION COMPLETED!"
+                : "🎉 ¡VERIFICACIÓN COMPLETADA!"}
+            </h2>
+            <p className="text-white text-lg font-bold mb-4">
+              {isMa
+                ? "شكراً على ثقتك في GestoriaCitaIA."
+                : isEn
+                ? "Thank you for trusting GestoriaCitaIA."
+                : "Gracias por confiar en GestoriaCitaIA."}
+            </p>
+            <p className="text-white/80">
+              {isMa
+                ? "تم التحقق من وثائقك بنجاح."
+                : isEn
+                ? "Your documents have been successfully verified."
+                : "Tus documentos han sido verificados correctamente."}
+            </p>
+            <p className="text-white/80 mt-2">
+              {isMa
+                ? "ستتلقى التقرير المفصل عبر البريد الإلكتروني."
+                : isEn
+                ? "You will receive the detailed report by email."
+                : "Recibirás el informe detallado por correo electrónico."}
+            </p>
+            <p className="text-yellow-400 font-bold mt-4">
+              {isMa
+                ? "✅ اكتملت العملية"
+                : isEn
+                ? "✅ Process completed"
+                : "✅ Proceso completado"}
+            </p>
+            <p className="text-white/70 mt-6">
+              {isMa
+                ? "نتمنى لك التوفيق."
+                : isEn
+                ? "We wish you the best of luck."
+                : "Te deseamos mucha suerte."}
+            </p>
+          </div>
+        ) : !confirmed && !formReady ? (
+          <>
+            <div className="mt-3 mx-[-4px] rounded-[24px] border-2 border-yellow-500/60 bg-gradient-to-b from-[#0b0b0b] to-[#050505] px-3 py-3 shadow-[0_0_35px_rgba(255,200,0,0.18)]">
+              <div className="mb-3 grid grid-cols-[32px_1fr_32px] items-center gap-2">
+                <span />
+                <h2 className="text-center text-yellow-400 text-[18px] sm:text-[20px] font-black leading-tight">
+                  {isMa 
+                    ? "التحقق من عقود العمل ومرسوم Decreto Flussi الإيطالي" 
+                    : isEn 
+                    ? "Italian Employment Contract & Decreto Flussi Verification" 
+                    : "Verificación de Contratos y Decreto Flussi"}
+                </h2>
+                <img
+                  src="https://upload.wikimedia.org/wikipedia/en/0/03/Flag_of_Italy.svg"
+                  alt="Italia"
+                  className="h-5 w-8 rounded-[3px] object-cover shadow-[0_0_10px_rgba(255,255,255,0.20)]"
+                />
+              </div>
+              <p className="text-white/80 text-[13px] leading-relaxed mb-5">
+                {isMa 
+                  ? "نحلل عقد عملك أو إيصال التسجيل أو وثائق Decreto Flussi عبر الذكاء الاصطناعي ونتحقق من الشركة الإيطالية للكشف عن المخاطر المحتملة."
+                  : isEn 
+                  ? "We analyze your employment contract, registration receipt or Decreto Flussi documentation using AI and verify the Italian company to detect potential risks or irregularities."
+                  : "Analizamos tu contrato de trabajo, resguardo o documentación del Decreto Flussi mediante IA y verificamos la empresa italiana para detectar posibles riesgos o irregularidades."}
+              </p>
+              <div className="w-full">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 mb-5">
+                  {/* Nombre */}
+                  <div className="col-span-1 md:col-span-1">
+                    <label className="block text-white text-[13px] mb-2">
+                      {isMa ? "الاسم" : isEn ? "First Name" : "Nombre"}
+                    </label>
+                    <input
+                      type="text"
+                      placeholder={isMa ? "دخل اسمك" : isEn ? "Your name" : "Tu nombre"}
+                      value={formData.fullName}
+                      onChange={(e) => onFormChange("fullName", e.target.value)}
+                      className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-[14px] text-white placeholder:text-white/30 focus:outline-none focus:border-yellow-400"
+                    />
+                  </div>
+
+                  {/* Apellidos */}
+                  <div className="col-span-1 md:col-span-1">
+                    <label className="block text-white text-[13px] mb-2">
+                      {isMa ? "اللقب" : isEn ? "Last Name" : "Apellidos"}
+                    </label>
+                    <input
+                      type="text"
+                      placeholder={isMa ? "دخل لقبك" : isEn ? "Your surname" : "Tus apellidos"}
+                      value={formData.apellidos || ""}
+                      onChange={(e) => onFormChange("apellidos", e.target.value)}
+                      className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-[14px] text-white placeholder:text-white/30 focus:outline-none focus:border-yellow-400"
+                    />
+                  </div>
+
+                  {/* WhatsApp - SIN ESPAÑA */}
+                  <div className="col-span-1 lg:col-span-2">
+                    <label className="block text-white text-[13px] mb-2">
+                      {isMa ? "واتساب" : isEn ? "WhatsApp" : "WhatsApp"}
+                    </label>
+                    <div className="flex gap-2 min-w-0">
+                      <select
+                        className="w-[92px] shrink-0 h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-2 text-center text-white"
+                        value={formData.preferredOffice}
+                        onChange={(e) => onFormChange("preferredOffice", e.target.value)}
+                      >
+                        <option value="+39">🇮🇹 +39</option>
+                        <option value="+212">🇲🇦 +212</option>
+                        <option value="+31">🇳🇱 +31</option>
+                        <option value="+32">🇧🇪 +32</option>
+                        <option value="+33">🇫🇷 +33</option>
+                        <option value="+49">🇩🇪 +49</option>
+                        <option value="+44">🇬🇧 +44</option>
+                        <option value="+1">🇺🇸 +1</option>
+                      </select>
+                      <input
+                        type="text"
+                        placeholder={isMa ? "رقم الهاتف" : isEn ? "Phone number" : "Número de teléfono"}
+                        value={formData.phone}
+                        onChange={(e) => onFormChange("phone", e.target.value)}
+                        className="min-w-0 flex-1 h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Gmail / Email */}
+                  <div>
+                    <label className="block text-white text-[13px] mb-2">
+                      Gmail
+                    </label>
+                    <input
+                      type="email"
+                      placeholder="tuemail@gmail.com"
+                      value={formData.email}
+                      onChange={(e) => onFormChange("email", e.target.value)}
+                      className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-[14px] text-white placeholder:text-white/30 focus:outline-none focus:border-yellow-400"
+                    />
+                  </div>
+
+                  {/* Ciudad */}
+                  <div>
+                    <label className="block text-white text-[13px] mb-2">
+                      {isMa ? "المدينة" : isEn ? "City" : "Ciudad"}
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Roma"
+                      value={formData.ciudad || ""}
+                      onChange={(e) => onFormChange("ciudad", e.target.value)}
+                      className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white"
+                    />
+                  </div>
+
+                  {/* País */}
+                  <div>
+                    <label className="block text-white text-[13px] mb-2">
+                      {isMa ? "الدولة" : isEn ? "Country" : "País"}
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Italia"
+                      value={formData.pais || ""}
+                      onChange={(e) => onFormChange("pais", e.target.value)}
+                      className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white"
+                    />
+                  </div>
+
+                  {/* Nacionalidad */}
+                  <div>
+                    <label className="block text-white text-[13px] mb-2">
+                      {isMa ? "الجنسية" : isEn ? "Nationality" : "Nacionalidad"}
+                    </label>
+                    <input
+                      type="text"
+                      placeholder={isMa ? "مثلا: مغربي" : isEn ? "e.g. Moroccan" : "Ej: Marroquí"}
+                      value={formData.nacionalidad || ""}
+                      onChange={(e) => onFormChange("nacionalidad", e.target.value)}
+                      className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white"
+                    />
+                  </div>
+
+                  {/* Tipo de documento */}
+                  <div>
+                    <label className="block text-white text-[13px] mb-2">
+                      {isMa ? "نوع الوثيقة" : isEn ? "Document type" : "Tipo de documento"}
+                    </label>
+                    <select
+                      className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-white"
+                      value={formData.tipoDocumento || ""}
+                      onChange={(e) => onFormChange("tipoDocumento", e.target.value)}
+                    >
+                      <option value="">{isMa ? "اختر النوع" : isEn ? "Select type" : "Selecciona tipo"}</option>
+                      <option value="contrato">{isMa ? "عقد العمل" : isEn ? "Employment Contract" : "Contrato de trabajo"}</option>
+                      <option value="decreto_flussi">{isMa ? "مرسوم فلوسي" : isEn ? "Decreto Flussi" : "Decreto Flussi"}</option>
+                      <option value="nulla_osta">{isMa ? "تصريح العمل" : isEn ? "Nulla Osta" : "Nulla Osta"}</option>
+                      <option value="resguardo">{isMa ? "إيصال التسجيل" : isEn ? "Registration receipt" : "Resguardo"}</option>
+                      <option value="otro">{isMa ? "أخرى" : isEn ? "Other" : "Otro"}</option>
+                    </select>
+                  </div>
+
+                  {/* SUBIR DOCUMENTOS - CON SUBIDA REAL A SUPABASE (BUCKET PRIVADO) */}
+                  <div className="col-span-1 lg:col-span-2">
+                    <label className="block text-white text-[13px] mb-2">
+                      {isMa ? "رفع المستندات" : isEn ? "Upload documents" : "Subir documento(s)"}
+                    </label>
+                    <div className={`relative w-full min-h-[52px] rounded-2xl border-2 border-dashed ${uploadedFiles.length > 0 ? 'border-emerald-500/50 bg-emerald-500/5' : 'border-white/20 bg-[#060b16]'} flex flex-col items-center justify-center hover:border-yellow-400 transition-colors p-3`}>
+                      <input
+                        type="file"
+                        multiple
+                        accept=".pdf,.jpg,.jpeg,.png"
+                        className="absolute opacity-0 w-full h-full cursor-pointer"
+                        onChange={handleFileUpload}
+                        disabled={isUploading}
+                      />
+                      {isUploading ? (
+                        <div className="flex items-center gap-2">
+                          <RefreshCw className="w-4 h-4 animate-spin text-yellow-400" />
+                          <p className="text-yellow-400 text-sm">
+                            {isMa ? "جاري الرفع..." : isEn ? "Uploading..." : "Subiendo..."}
+                          </p>
+                        </div>
+                      ) : uploadedFiles.length === 0 ? (
+                        <div className="text-center">
+                          <Upload className="w-6 h-6 text-white/30 mx-auto mb-1" />
+                          <p className="text-white/40 text-sm">
+                            {isMa ? "📎 اختر الملفات (PDF, JPG, PNG)" : isEn ? "📎 Choose files (PDF, JPG, PNG)" : "📎 Seleccionar archivos (PDF, JPG, PNG)"}
+                          </p>
+                          <p className="text-white/20 text-[10px] mt-1">
+                            {isMa ? "الحد الأقصى 10MB لكل ملف" : isEn ? "Max 10MB per file" : "Máximo 10MB por archivo"}
+                          </p>
+                        </div>
+                      ) : null}
+                    </div>
+                    
+                    {/* Lista de archivos subidos */}
+                    {uploadedFiles.length > 0 && (
+                      <div className="mt-2 space-y-1">
+                        {uploadedFiles.map((file, index) => (
+                          <div key={index} className="flex items-center gap-2 bg-white/5 rounded-lg px-3 py-2 border border-white/10">
+                            {getFileIcon(file.type)}
+                            <span className="text-white/80 text-xs flex-1 truncate">{file.name}</span>
+                            <span className="text-white/30 text-[10px]">{(file.size / 1024).toFixed(0)}KB</span>
+                            <button
+                              onClick={() => removeFile(index)}
+                              className="text-white/30 hover:text-red-400 transition-colors"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Caja de pago con Checkbox */}
+                  <div className="col-span-1 lg:col-span-2 mt-4 rounded-[28px] border-2 border-yellow-500 bg-gradient-to-b from-[#0b0b0b] to-[#050505] p-4 shadow-[0_0_35px_rgba(255,200,0,0.18)]">
+                    <div className="flex items-start justify-between mb-4 pt-2">
+                      <div>
+                        <p className="text-white text-[15px] font-bold">
+                          {isMa
+                            ? "التحقق من العقد ومرسوم فلوسي"
+                            : isEn
+                            ? "Contract & Decreto Flussi Verification"
+                            : "Verificación de Contrato y Decreto Flussi"}
+                        </p>
+                        <span className="inline-flex mt-1 rounded-full bg-gradient-to-r from-yellow-400 to-yellow-600 px-3 py-1 text-[10px] font-black uppercase tracking-wide text-black shadow-[0_0_15px_rgba(255,215,0,0.25)]">
+                          Premium
+                        </span>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-yellow-400 text-[34px] font-black leading-none drop-shadow-[0_0_10px_rgba(255,215,0,0.35)]">
+                          21,99€
+                        </p>
+                        <p className="text-yellow-300 text-[11px] font-semibold">
+                          {isMa ? "خلاص مرة وحدة" : isEn ? "One-time payment" : "Pago único"}
+                        </p>
+                      </div>
+                    </div>
+
+                    <p className="text-gray-300 text-[13px] mb-5 leading-relaxed">
+                      {isMa
+                        ? "نظامنا يحلل عقدك أو وثائق Decreto Flussi باستخدام الذكاء الاصطناعي. نتحقق من تماسك الوثائق ونتحقق من الشركة باستخدام المصادر العامة المتاحة. ستتلقى تقريراً مفصلاً عبر البريد الإلكتروني."
+                        : isEn
+                        ? "Our system analyzes your contract or Decreto Flussi documents using artificial intelligence. We check document consistency and verify the company using available public sources. You will receive a detailed report by email."
+                        : "Nuestro sistema analiza tu contrato o documento del Decreto Flussi mediante inteligencia artificial. Comprobamos la coherencia documental y verificamos la empresa utilizando fuentes públicas disponibles. Recibirás un informe detallado por correo electrónico."}
+                    </p>
+
+                    {/* CONTADOR DE VERIFICACIÓN */}
+                    <div className="mb-5 grid grid-cols-2 gap-2">
+                      <div className="flex items-center gap-2 bg-white/5 rounded-xl px-3 py-2 border border-white/10">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                        <span className="text-white/80 text-[11px] font-medium">
+                          {isMa ? "تحليل العقد" : isEn ? "Contract analyzed" : "Contrato analizado"}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 bg-white/5 rounded-xl px-3 py-2 border border-white/10">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                        <span className="text-white/80 text-[11px] font-medium">
+                          {isMa ? "التحقق من الشركة" : isEn ? "Company verified" : "Empresa verificada"}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 bg-white/5 rounded-xl px-3 py-2 border border-white/10">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                        <span className="text-white/80 text-[11px] font-medium">
+                          {isMa ? "مراجعة الوثائق" : isEn ? "Document reviewed" : "Documento revisado"}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 bg-white/5 rounded-xl px-3 py-2 border border-white/10">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                        <span className="text-white/80 text-[11px] font-medium">
+                          {isMa ? "تقرير PDF" : isEn ? "PDF Report" : "Informe PDF"}
+                        </span>
+                      </div>
+                      <div className="col-span-2 flex items-center gap-2 bg-yellow-500/10 rounded-xl px-3 py-2 border border-yellow-500/30">
+                        <Clock className="w-4 h-4 text-yellow-400 shrink-0" />
+                        <span className="text-yellow-300 text-[11px] font-medium">
+                          {isMa ? "النتيجة في أقل من 24 ساعة" : isEn ? "Result in less than 24 hours" : "Resultado en menos de 24 horas"}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Checkbox de aceptación */}
+                    <div className="flex items-start gap-3 mb-3">
+                      <input
+                        type="checkbox"
+                        id="acceptTerms"
+                        checked={acceptTerms}
+                        onChange={(e) => setAcceptTerms(e.target.checked)}
+                        className="mt-1 w-4 h-4 rounded border-white/20 bg-[#060b16] text-yellow-500 focus:ring-yellow-500 focus:ring-offset-0"
+                      />
+                      <label htmlFor="acceptTerms" className="text-white/70 text-[12px] leading-relaxed">
+                        {isMa
+                          ? "☑️ أوافق على أن تقوم GestoriaCitaIA بتحليل وثائقي والتحقق من السجلات العامة الإيطالية."
+                          : isEn
+                          ? "☑️ I agree that GestoriaCitaIA analyzes my documents and checks Italian public records."
+                          : "☑️ Acepto que GestoriaCitaIA analice mis documentos y consulte registros públicos italianos."}
+                      </label>
+                    </div>
+
+                    {/* BOTÓN ACTUALIZADO */}
+                    <button
+                      type="button"
+                      onClick={onPay}
+                      className="w-full min-h-[56px] rounded-[20px] bg-gradient-to-r from-yellow-400 via-yellow-500 to-amber-500 px-4 py-2 text-[15px] leading-tight font-black text-black shadow-[0_0_30px_rgba(255,215,0,0.35)] transition-all duration-300 hover:scale-[1.01] disabled:opacity-50 disabled:cursor-not-allowed"
+                      disabled={!acceptTerms || uploadedFiles.length === 0}
+                    >
+                      {isMa 
+                        ? "🔐 تحقق الآن مقابل 21.99€" 
+                        : isEn 
+                        ? "🔐 Verify now for only €21.99" 
+                        : "🔐 Verificar ahora por solo 21,99 €"}
+                    </button>
+
+                    {/* Mostrar advertencia si no hay documentos subidos */}
+                    {uploadedFiles.length === 0 && (
+                      <p className="text-yellow-400 text-[11px] text-center mt-2">
+                        {isMa 
+                          ? "⚠️ يجب رفع المستندات للمتابعة"
+                          : isEn 
+                          ? "⚠️ You must upload documents to continue"
+                          : "⚠️ Debes subir documentos para continuar"}
+                      </p>
+                    )}
+
+                    <div className="mt-5 flex items-center justify-center gap-2 text-[11px] text-gray-300">
+                      <Shield className="w-3 h-3 text-yellow-400" />
+                      <span>
+                        {isMa
+                          ? "دفع آمن عبر Stripe"
+                          : isEn
+                          ? "Secure payment with Stripe"
+                          : "Pago seguro con Stripe"}
+                      </span>
+                    </div>
+
+                    <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
+                      <span className="rounded-full bg-white px-3 py-1 text-[11px] font-bold text-[#1434CB]">VISA</span>
+                      <span className="rounded-full bg-white px-3 py-1 text-[11px] font-bold text-[#EB001B]">Mastercard</span>
+                      <span className="rounded-full bg-white px-3 py-1 text-[11px] font-bold text-black">Pay</span>
+                      <span className="rounded-full bg-white px-3 py-1 text-[11px] font-bold text-black">G Pay</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Mostrar estado de verificación si está en progreso */}
+            {formReady && verificationStatus !== 'pending' && (
+              <VerificationStatusComponent />
+            )}
+          </>
+        ) : (
+          <>
+            <div className="rounded-[26px] border border-emerald-500/40 bg-[#07111f] px-5 py-7 mb-5 shadow-[0_0_30px_rgba(16,185,129,0.08)]">
+              <div className="flex justify-center mb-4">
+                <div className="w-14 h-14 rounded-full border-2 border-emerald-400 bg-emerald-500/15 flex items-center justify-center shadow-[0_0_20px_rgba(16,185,129,0.35)]">
+                  <CheckCircle2 className="w-8 h-8 text-emerald-400" />
+                </div>
+              </div>
+              <h3 className="text-center text-white text-[18px] font-semibold leading-tight mb-3">
+                {isMa
+                  ? "مبروك 🎉 بدأنا مراجعة وثائقك. ستتلقى التقرير خلال 24 ساعة."
+                  : isEn
+                  ? "Congratulations 🎉 We have started reviewing your documents. You will receive the verification report within 24 hours."
+                  : "Felicidades 🎉 Hemos empezado a revisar tus documentos. Recibirás el informe de verificación en 24 horas."}
+              </h3>
+              <p className="text-center text-white/70 text-[14px] leading-relaxed">
+                {isMa
+                  ? "سنخبرك هنا عندما يكون هناك جديد بشأن وثائقك."
+                  : isEn
+                  ? "We will notify you here when there is news about your documents."
+                  : "Te avisaremos aquí cuando haya novedades sobre tus documentos."}
+              </p>
+
+              <div className="mt-5 rounded-2xl border border-yellow-500/20 bg-yellow-500/10 p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-2.5 h-2.5 rounded-full bg-yellow-400 animate-pulse" />
+                  <p className="text-yellow-300 font-bold text-sm">
+                    {isMa
+                      ? "النظام يحلل وثائقك"
+                      : isEn
+                      ? "System analyzing your documents"
+                      : "Sistema analizando tus documentos"}
+                  </p>
+                </div>
+                <p className="text-white/70 text-xs leading-relaxed">
+                  {isMa
+                    ? "نظامنا يحلل عقدك أو وثائق Decreto Flussi باستخدام الذكاء الاصطناعي. نتحقق من تماسك الوثائق ونتحقق من الشركة باستخدام المصادر العامة المتاحة. ستتلقى تقريراً مفصلاً عبر البريد الإلكتروني."
+                    : isEn
+                    ? "Our system analyzes your contract or Decreto Flussi documents using artificial intelligence. We check document consistency and verify the company using available public sources. You will receive a detailed report by email."
+                    : "Nuestro sistema analiza tu contrato o documento del Decreto Flussi mediante inteligencia artificial. Comprobamos la coherencia documental y verificamos la empresa utilizando fuentes públicas disponibles. Recibirás un informe detallado por correo electrónico."}
+                </p>
+              </div>
+
+              {/* Mostrar estado de verificación si está en progreso */}
+              {verificationStatus !== 'pending' && (
+                <VerificationStatusComponent />
+              )}
+            </div>
+
+            <div className="rounded-[30px] overflow-hidden border border-yellow-500/30 bg-[#050816] shadow-[0_0_40px_rgba(255,200,0,0.10)]">
+              <div className="px-6 py-8 bg-[radial-gradient(circle_at_top,rgba(255,200,0,0.12),transparent_60%)]">
+                <div className="flex justify-center mb-5">
+                  <img
+                    src="https://upload.wikimedia.org/wikipedia/en/0/03/Flag_of_Italy.svg"
+                    alt="Italia"
+                    className="w-20 h-14 object-cover rounded-lg shadow-[0_0_15px_rgba(255,255,255,0.15)] border border-white/20"
+                  />
+                </div>
+
+                <h2 className="text-center text-[#f6d06f] text-[36px] leading-[42px] font-black mb-5">
+                  {isMa
+                    ? "التحقق من العقود بثقة"
+                    : isEn
+                    ? "Contract Verification with Confidence"
+                    : "Verificación de contratos con confianza"}
+                </h2>
+
+                <p className="text-center text-white/75 text-[15px] leading-relaxed mb-8">
+                  {isMa
+                    ? "نساعدك في التحقق من عقود العمل ووثائق Decreto Flussi بطريقة آمنة."
+                    : isEn
+                    ? "We help you verify employment contracts and Decreto Flussi documents securely."
+                    : "Te ayudamos a verificar contratos de trabajo y documentos del Decreto Flussi de forma segura."}
+                </p>
+
+                <div className="grid grid-cols-3 gap-3 text-center">
+                  <div>
+                    <Shield className="w-8 h-8 text-[#f6d06f] mx-auto mb-3" />
+                    <p className="text-white/80 text-[13px] leading-snug">
+                      {isMa ? "تحليل ذكي" : isEn ? "Smart analysis" : "Análisis inteligente"}
+                    </p>
+                  </div>
+                  <div>
+                    <Bell className="w-8 h-8 text-[#f6d06f] mx-auto mb-3" />
+                    <p className="text-white/80 text-[13px] leading-snug">
+                      {isMa ? "تقرير مفصل" : isEn ? "Detailed report" : "Informe detallado"}
+                    </p>
+                  </div>
+                  <div>
+                    <CheckCircle2 className="w-8 h-8 text-[#f6d06f] mx-auto mb-3" />
+                    <p className="text-white/80 text-[13px] leading-snug">
+                      {isMa ? "نتائج موثوقة" : isEn ? "Reliable results" : "Resultados fiables"}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-8 text-center text-[#f6d06f] text-[24px] font-bold">
+                  {isMa
+                    ? "« التحقق من وثائقك يبدأ هنا. »"
+                    : isEn
+                    ? "\" Your document verification starts here. \""
+                    : "\" Tu verificación de documentos empieza aquí. \""}
+                </div>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+    </motion.div>
+  );
+}
+
+export default function VerificarDecretoFlussi() {
+  const { lang } = useLang();
+  const language = lang === "darija" ? "ma" : lang;
+
+  const [location] = useLocation();
+  const [muted, setMuted] = useState(false);
+  const [confirmed, setConfirmed] = useState(
+    new URLSearchParams(window.location.search).get("success") === "true"
+  );
+  const [showDocs, setShowDocs] = useState(false);
+  const [showForms, setShowForms] = useState(false);
+  const [profile, setProfile] = useState<ProfileRow | null>(null);
+  const [profileLoading, setProfileLoading] = useState(true);
+  const [acceptTerms, setAcceptTerms] = useState(false);
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
+  const [verificationStatus, setVerificationStatus] = useState('pending');
+  const [verificationProgress, setVerificationProgress] = useState(0);
+  const [isReportReady, setIsReportReady] = useState(false);
+  const [formData, setFormData] = useState<ClientFormData>({
+    fullName: "",
+    apellidos: "",
+    phone: "",
+    email: "",
+    ciudad: "",
+    pais: "",
+    nacionalidad: "",
+    tipoDocumento: "",
+    documentos: "",
+    documentosUrls: "[]",
+    preferredOffice: "+39",
+  });
+  
+  // ✅ ELIMINADA DEPENDENCIA DE localStorage - solo usamos BD
+  const [formReady, setFormReady] = useState(false);
+  
+  const [voiceSupported, setVoiceSupported] = useState(true);
+  const [isListening, setIsListening] = useState(false);
+  const [waitingSara, setWaitingSara] = useState(false);
+  const [voiceHistory, setVoiceHistory] = useState<ChatMsg[]>([]);
+  const [lastUserTranscript, setLastUserTranscript] = useState("");
+
+  const remoteAudioRef = useRef<HTMLAudioElement | null>(null);
+  const realtimePcRef = useRef<RTCPeerConnection | null>(null);
+  const realtimeDcRef = useRef<RTCDataChannel | null>(null);
+  const realtimeLocalStreamRef = useRef<MediaStream | null>(null);
+  const assistantTextBufferRef = useRef("");
+  const lastUserTranscriptRef = useRef("");
+  const lastAssistantTextRef = useRef("");
+  const shouldKickoffSaraRef = useRef(false);
+
+  const { toast } = useToast();
+
+  const isMa = language === "ma";
+  const isEn = language === "en";
+
+  const voiceTexts = useMemo(
+    () => ({
+      initialVoice:
+        "السلام عليكم مرحبا بك في هيستوريا إي آي أنا سارة غادي نعاونك باش تتحقق من عقد العمل أو وثائق Decreto Flussi. املأ ليا الفورمولار وغادي نبداو التحليل.",
+      savedLeadReply:
+        "مزيان دابا توصلنا بالمعلومات ديالك غادي نبداو نحلل وثائقك 24/24.",
+      confirmMsg:
+        "مبروك عليك تأكدات الوثائق ديالك شكرا على الثقة ديالك في هيستوريا إي آي",
+    }),
+    []
+  );
+
+  const ui = useMemo(() => {
+    return {
+      docsByTramite: {
+        tie: [
+          { nombre: "Contrato de trabajo o Decreto Flussi", estado: "ok" as DocState },
+          { nombre: "Documento de identidad vigente", estado: "ok" as DocState },
+        ],
+      } as Record<string, DocItem[]>,
+
+      formsByTramite: {
+        tie: [
+          { nombre: "Formulario Decreto Flussi", codigo: "FLUSSI-01", url: "https://example.com" },
+        ],
+      } as Record<string, FormItem[]>,
+
+      online: isMa ? "أونلاين" : isEn ? "Online" : "En línea",
+
+      agentRole: isMa
+        ? "التحقق من العقود"
+        : isEn
+        ? "Contract Verification Assistant"
+        : "Asesora de Verificación de Contratos",
+
+      loadingUserData: isMa
+        ? "جاري تحميل المعلومات..."
+        : isEn
+        ? "Loading user data..."
+        : "Cargando datos del usuario...",
+
+      govSmall: "verificación:",
+      govTitle: "CONTRATO · DECRETO FLUSSI · NULLA OST",
+      govLine1: "VERIFICACIÓN DE DOCUMENTOS",
+      govLine2: "AUTOMÁTICA 24/24",
+      govLine3: "INFORME POR EMAIL",
+
+      confirmTitle: isMa ? "تم تأكيد الوثائق!" : isEn ? "DOCUMENTS CONFIRMED!" : "¡DOCUMENTOS CONFIRMADOS!",
+
+      date: isMa ? "التاريخ" : isEn ? "Date" : "Fecha",
+      time: isMa ? "الوقت" : isEn ? "Time" : "Hora",
+      office: isMa ? "المكتب" : isEn ? "Office" : "Oficina",
+      appointmentNumber: isMa ? "رقم الملف" : isEn ? "File Number" : "Nº Expediente",
+
+      reservationSaved: isMa
+        ? "تم حفظ الوثائق"
+        : isEn
+        ? "Documents saved"
+        : "Documentos guardados correctamente",
+
+      sourceLabel: isMa ? "المصدر الرسمي" : isEn ? "Official source" : "Fuente oficial",
+
+      voiceButton: isMa
+        ? "تكلم مع سارة حول وثائقك"
+        : isEn
+        ? "Talk with Sara about your documents"
+        : "Hablar con Sara sobre tus documentos",
+      stopButton: isMa ? "وقف الميكرو" : isEn ? "Stop microphone" : "Parar micrófono",
+
+      latestReply: isMa ? "آخر رد من سارة" : isEn ? "Latest Sara reply" : "Última respuesta de Sara",
+      yourVoice: isMa ? "آخر كلام ديالك" : isEn ? "Your latest voice" : "Tu última respuesta por voz",
+      listening: isMa ? "سارة كتسمع ليك..." : isEn ? "Sara is listening..." : "Sara te está escuchando ahora...",
+
+      saveTitle: isMa ? "تم حفظ المعلومات" : isEn ? "Data saved" : "Datos guardados",
+      saveDesc: isMa ? "سارة غادي تكمل معاك" : isEn ? "Sara can continue now." : "Sara ya puede continuar contigo.",
+
+      missingTitle: isMa ? "معلومات ناقصة" : isEn ? "Missing data" : "Faltan datos",
+      missingDesc: isMa
+        ? "دخل الاسم والهاتف والإيميل"
+        : isEn
+        ? "Fill name, phone and email."
+        : "Rellena nombre, teléfono y email.",
+
+      openRealtimeError: isMa
+        ? "المتصفح ما كيدعمش الصوت"
+        : isEn
+        ? "Browser does not support audio."
+        : "Este navegador no soporta audio. Usa Chrome moderno.",
+
+      docsButton: isMa ? "الوثائق" : isEn ? "Documents" : "Documentos",
+      formsButton: isMa ? "الاستمارات" : isEn ? "Forms" : "Formularios",
+      docsRequiredTitle: isMa ? "الوثائق المطلوبة" : isEn ? "Required documents" : "Documentos requeridos",
+      formsOfficialTitle: isMa ? "الاستمارات الرسمية" : isEn ? "Official forms" : "Formularios oficiales",
+
+      pageTitle: isMa
+        ? "التحقق من العقود ومرسوم فلوسي"
+        : isEn
+        ? "Contract & Decreto Flussi Verification"
+        : "Verificación de Contratos y Decreto Flussi",
+
+      agentSavedMsg: isMa
+        ? "مزيان. دابا غادي نبداو نحلل وثائقك. غادي توصلك التقرير على الإيميل في أقل من 24 ساعة."
+        : isEn
+        ? "Perfect. We are already analyzing your documents. You will receive the report by email within 24 hours."
+        : "Perfecto. Ya estamos analizando tus documentos. Recibirás el informe por email en menos de 24h.",
+
+      stripeErrorTitle: isMa ? "خطأ في الدفع" : isEn ? "Payment error" : "Error Stripe",
+      stripeErrorDesc: isMa ? "ما قدرناش نفتحو الدفع" : isEn ? "Could not open payment." : "No se pudo abrir el pago",
+
+      saveErrorTitle: isMa ? "خطأ" : isEn ? "Error" : "Error",
+      saveErrorDesc: isMa ? "ما قدرناش نحفظو المعلومات" : isEn ? "Could not save data." : "No se pudo guardar el cliente",
+
+      panelUpdated: isMa ? "تحدث اللوحة" : isEn ? "Panel updated" : "Panel actualizado",
+    };
+  }, [language]);
+
+  const docsForSelectedTramite = ui.docsByTramite.tie;
+  const formsForSelectedTramite = ui.formsByTramite.tie;
+
+  const voiceStorageKey = useMemo(() => {
+    const userId = profile?.id || "guest";
+    return `gestoriacitaia_flussi_voice_${userId}`;
+  }, [profile?.id]);
+
+  // ✅ Suscribirse a cambios de estado de verificación (única fuente de verdad)
+  useEffect(() => {
+    const userId = profile?.id;
+    if (!userId) return;
+
+    const subscription = supabase
+      .channel('verification_status')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'verificaciones',
+          filter: `user_id=eq.${userId}`,
+        },
+        (payload) => {
+          setVerificationStatus(payload.new.status || 'pending');
+          setVerificationProgress(payload.new.progress || 0);
+          
+          if (payload.new.status === 'report_ready') {
+            setIsReportReady(true);
+            toast({
+              title: isMa ? "✅ التقرير جاهز" : isEn ? "✅ Report ready" : "✅ Informe listo",
+              description: isMa 
+                ? "يمكنك تحميل التقرير من لوحة التحكم"
+                : isEn 
+                ? "You can download the report from the dashboard"
+                : "Puedes descargar el informe desde el panel",
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => subscription.unsubscribe();
+  }, [profile?.id, isMa, isEn, toast]);
+
+  // ✅ Función para descargar el informe (con URL firmada)
+  const handleDownloadReport = async () => {
+    try {
+      const userId = profile?.id;
+      if (!userId) {
+        toast({
+          title: isMa ? "❌ خطأ" : isEn ? "❌ Error" : "❌ Error",
+          description: isMa ? "يجب تسجيل الدخول أولاً" : isEn ? "Please login first" : "Debes iniciar sesión primero",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from('verificaciones')
+        .select('report_path')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      if (error || !data?.report_path) {
+        throw new Error('No se encontró el informe');
+      }
+
+      // ✅ Generar URL firmada para descarga segura
+      const { data: signedUrlData, error: signedUrlError } = await supabase.storage
+        .from('informes-flussi-privado')
+        .createSignedUrl(data.report_path, 3600); // 1 hora de validez
+
+      if (signedUrlError) throw signedUrlError;
+
+      // Abrir en nueva ventana para descarga
+      window.open(signedUrlData.signedUrl, '_blank');
+
+    } catch (error: any) {
+      toast({
+        title: isMa ? "❌ خطأ في التحميل" : isEn ? "❌ Download error" : "❌ Error al descargar",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  useEffect(() => {
+    const supported =
+      typeof window !== "undefined" &&
+      typeof window.RTCPeerConnection !== "undefined" &&
+      typeof navigator !== "undefined" &&
+      !!navigator.mediaDevices?.getUserMedia;
+    setVoiceSupported(Boolean(supported));
+  }, []);
+
+  useEffect(() => {
+    const loadProfile = async () => {
+      try {
+        setProfileLoading(true);
+        const { data: sessionData } = await supabase.auth.getSession();
+        const user = sessionData?.session?.user;
+        if (!user?.id) {
+          setProfile(null);
+          setProfileLoading(false);
+          return;
+        }
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("id,email,full_name,phone,nie")
+          .eq("id", user.id)
+          .maybeSingle();
+        if (error) {
+          setProfile(null);
+        } else {
+          const profileData = (data as ProfileRow | null) ?? null;
+          setProfile(profileData);
+          
+          // ✅ SOLO CONSULTAR BD - NADA DE localStorage
+          const { data: verificationData } = await supabase
+            .from('verificaciones')
+            .select('payment_status, status, report_path')
+            .eq('user_id', user.id)
+            .maybeSingle();
+            
+          if (verificationData?.payment_status === 'paid') {
+            setFormReady(true);
+            
+            // Si ya tiene informe, marcar como listo
+            if (verificationData?.report_path) {
+              setIsReportReady(true);
+              setVerificationStatus('report_ready');
+            }
+          }
+          
+          if (
+            profileData?.email?.toLowerCase() ===
+            "robertopalacio165@gmail.com"
+          ) {
+            setFormReady(true);
+          }
+        }
+      } catch {
+        setProfile(null);
+      } finally {
+        setProfileLoading(false);
+      }
+    };
+    loadProfile();
+  }, []);
+
+  useEffect(() => {
+    setFormData((prev) => ({
+      ...prev,
+      fullName: profile?.full_name?.trim() || prev.fullName,
+      phone: "",
+    }));
+  }, [profile?.full_name, profile?.phone]);
+
+  useEffect(() => {
+    if (!voiceStorageKey) return;
+    try {
+      const raw = localStorage.getItem(voiceStorageKey);
+      if (raw) {
+        const parsed = JSON.parse(raw) as ChatMsg[];
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setVoiceHistory(parsed);
+          return;
+        }
+      }
+      setVoiceHistory([{ from: "agent", text: voiceTexts.initialVoice, ts: Date.now() }]);
+    } catch {
+      setVoiceHistory([{ from: "agent", text: voiceTexts.initialVoice, ts: Date.now() }]);
+    }
+  }, [voiceStorageKey, voiceTexts.initialVoice]);
+
+  useEffect(() => {
+    if (!voiceStorageKey || voiceHistory.length === 0) return;
+    localStorage.setItem(voiceStorageKey, JSON.stringify(voiceHistory));
+  }, [voiceHistory, voiceStorageKey]);
+
+  const pushAgentMessage = (text: string) => {
+    if (!text?.trim()) return;
+    setVoiceHistory((prev) => [...prev, { from: "agent", text, ts: Date.now() }]);
+    lastAssistantTextRef.current = text;
+  };
+
+  const pushUserMessage = (text: string) => {
+    if (!text?.trim()) return;
+    setVoiceHistory((prev) => [...prev, { from: "user", text, ts: Date.now() }]);
+    setLastUserTranscript(text);
+  };
+
+  const finalizeAssistantBuffer = () => {
+    const text = assistantTextBufferRef.current.trim();
+    if (!text) return;
+    assistantTextBufferRef.current = "";
+    if (text === "..." || text === "…") return;
+    if (text === lastAssistantTextRef.current) return;
+    pushAgentMessage(text);
+  };
+
+  const sendSaraSpokenMessage = (message: string) => {
+    if (!message.trim()) return;
+    if (!realtimeDcRef.current || realtimeDcRef.current.readyState !== "open") return;
+    if (!realtimePcRef.current || !realtimePcRef.current.remoteDescription) return;
+    setWaitingSara(true);
+    assistantTextBufferRef.current = "";
+    realtimeDcRef.current.send(
+      JSON.stringify({
+        type: "conversation.item.create",
+        item: {
+          type: "message",
+          role: "user",
+          content: [
+            {
+              type: "input_text",
+              text: `ابدئي أنتِ الكلام الآن مباشرة. لا تنتظري العميل. قولي الآن هذا الكلام بصوت طبيعي وبشكل بشري: ${message}`,
+            },
+          ],
+        },
+      })
+    );
+    realtimeDcRef.current.send(
+      JSON.stringify({ type: "response.create", response: { modalities: ["audio", "text"] } })
+    );
+  };
+
+  const kickoffSara = () => {
+    setIsListening(true);
+    setWaitingSara(true);
+    setLastUserTranscript("");
+    lastUserTranscriptRef.current = "";
+    assistantTextBufferRef.current = "";
+    const firstMessage = formReady ? voiceTexts.savedLeadReply : voiceTexts.initialVoice;
+    sendSaraSpokenMessage(firstMessage);
+  };
+
+  const stopListening = () => {
+    try {
+      realtimeDcRef.current?.close();
+      realtimeDcRef.current = null;
+      realtimePcRef.current?.close();
+      realtimePcRef.current = null;
+      if (realtimeLocalStreamRef.current) {
+        realtimeLocalStreamRef.current.getTracks().forEach((track) => track.stop());
+        realtimeLocalStreamRef.current = null;
+      }
+      if (remoteAudioRef.current) {
+        remoteAudioRef.current.pause();
+        remoteAudioRef.current.srcObject = null;
+      }
+    } catch (error) {
+      console.error("Error deteniendo realtime Sara:", error);
+    } finally {
+      setIsListening(false);
+      setWaitingSara(false);
+    }
+  };
+
+  const startListening = async () => {
+    if (!voiceSupported) {
+      toast({ title: "Error", description: ui.openRealtimeError, variant: "destructive" });
+      return;
+    }
+    try {
+      stopListening();
+      assistantTextBufferRef.current = "";
+      setWaitingSara(true);
+      const sessionRes = await fetch("/api/realtime-session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ assistant: "sara" }),
+      });
+      const sessionData = await sessionRes.json();
+      if (!sessionRes.ok) throw new Error(sessionData?.error || "Error creando sesión realtime");
+      const ephemeralKey = sessionData?.client_secret?.value || sessionData?.value || "";
+      if (!ephemeralKey) throw new Error("No llegó client secret desde /api/realtime-session");
+
+      const pc = new RTCPeerConnection();
+      realtimePcRef.current = pc;
+      pc.ontrack = (event) => {
+        const [remoteStream] = event.streams;
+        if (remoteStream && remoteAudioRef.current) {
+          remoteAudioRef.current.srcObject = remoteStream;
+          remoteAudioRef.current.autoplay = true;
+          remoteAudioRef.current.playsInline = true;
+          remoteAudioRef.current.muted = false;
+          remoteAudioRef.current.volume = 1;
+          remoteAudioRef.current.play().catch((err) => console.error("Sara audio play error:", err));
+        }
+      };
+      const localStream = await navigator.mediaDevices.getUserMedia({
+        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+      });
+      realtimeLocalStreamRef.current = localStream;
+      for (const track of localStream.getTracks()) pc.addTrack(track, localStream);
+
+      const dc = pc.createDataChannel("oai-events");
+      realtimeDcRef.current = dc;
+      dc.onopen = () => { shouldKickoffSaraRef.current = true; };
+      dc.onmessage = (event) => {
+        try {
+          const msg = JSON.parse(event.data);
+          const userTranscript =
+            msg?.transcript ||
+            msg?.item?.transcript ||
+            msg?.item?.content?.[0]?.transcript ||
+            "";
+          if (
+            (msg.type === "conversation.item.input_audio_transcription.completed" ||
+              msg.type === "input_audio_buffer.transcription.completed") &&
+            typeof userTranscript === "string" &&
+            userTranscript.trim()
+          ) {
+            const transcript = userTranscript.trim();
+            if (transcript !== lastUserTranscriptRef.current) {
+              lastUserTranscriptRef.current = transcript;
+              pushUserMessage(transcript);
+            }
+          }
+          if (msg.type === "response.output_text.delta" && typeof msg.delta === "string") {
+            assistantTextBufferRef.current += msg.delta;
+          }
+          if (msg.type === "response.output_text.done" && typeof msg.text === "string" && msg.text.trim()) {
+            assistantTextBufferRef.current = msg.text.trim();
+          }
+          if (msg.type === "response.done") { finalizeAssistantBuffer(); setWaitingSara(false); }
+          if (msg.type === "response.created") { setWaitingSara(true); }
+        } catch (err) {
+          console.error("Realtime Sara parse error:", err);
+        }
+      };
+      dc.onerror = (err) => console.error("Realtime Sara data channel error:", err);
+
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+      const sdpRes = await fetch("https://api.openai.com/v1/realtime/calls", {
+        method: "POST",
+        body: offer.sdp,
+        headers: { Authorization: `Bearer ${ephemeralKey}`, "Content-Type": "application/sdp" },
+      });
+      if (!sdpRes.ok) {
+        const errText = await sdpRes.text();
+        throw new Error(errText || "Error negociando WebRTC con OpenAI");
+      }
+      const answerSdp = await sdpRes.text();
+      await pc.setRemoteDescription({ type: "answer", sdp: answerSdp });
+      if (shouldKickoffSaraRef.current) {
+        shouldKickoffSaraRef.current = false;
+        setTimeout(() => kickoffSara(), 150);
+      }
+    } catch (error: any) {
+      console.error("Error iniciando realtime Sara:", error);
+      stopListening();
+      toast({ title: "Error realtime", description: error?.message || "No se pudo iniciar Sara realtime", variant: "destructive" });
+    }
+  };
+
+  // ✅ VALIDACIÓN COMPLETA CON EMAIL Y TELÉFONO
+  const validateForm = (): boolean => {
+    const errors: string[] = [];
+
+    if (!formData.fullName.trim() || formData.fullName.length < 2) {
+      errors.push(isMa ? "الاسم مطلوب (حرفين على الأقل)" : isEn ? "First name is required (min 2 chars)" : "Nombre es requerido (mín 2 caracteres)");
+    }
+    if (!formData.apellidos.trim() || formData.apellidos.length < 2) {
+      errors.push(isMa ? "اللقب مطلوب (حرفين على الأقل)" : isEn ? "Last name is required (min 2 chars)" : "Apellidos son requeridos (mín 2 caracteres)");
+    }
+    
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!formData.email.trim() || !emailRegex.test(formData.email.trim())) {
+      errors.push(isMa ? "الإيميل غير صحيح" : isEn ? "Invalid email" : "Email inválido");
+    }
+    
+    const phoneClean = formData.phone.replace(/\s/g, '');
+    const phoneRegex = /^\+?[0-9]{9,15}$/;
+    if (!phoneClean || !phoneRegex.test(phoneClean)) {
+      errors.push(isMa ? "رقم الهاتف غير صحيح (9-15 رقم)" : isEn ? "Invalid phone number (9-15 digits)" : "Teléfono inválido (9-15 dígitos)");
+    }
+
+    if (!formData.ciudad.trim() || formData.ciudad.length < 2) {
+      errors.push(isMa ? "المدينة مطلوبة" : isEn ? "City is required" : "Ciudad es requerida");
+    }
+    if (!formData.pais.trim() || formData.pais.length < 2) {
+      errors.push(isMa ? "الدولة مطلوبة" : isEn ? "Country is required" : "País es requerido");
+    }
+    if (!formData.nacionalidad.trim() || formData.nacionalidad.length < 2) {
+      errors.push(isMa ? "الجنسية مطلوبة" : isEn ? "Nationality is required" : "Nacionalidad es requerida");
+    }
+    if (!formData.tipoDocumento.trim()) {
+      errors.push(isMa ? "نوع الوثيقة مطلوب" : isEn ? "Document type is required" : "Tipo de documento es requerido");
+    }
+    
+    if (uploadedFiles.length === 0) {
+      errors.push(isMa ? "يجب رفع مستند واحد على الأقل" : isEn ? "You must upload at least one document" : "Debes subir al menos un documento");
+    }
+    
+    if (!acceptTerms) {
+      errors.push(isMa ? "خاصك توافق على الشروط" : isEn ? "You must accept the terms" : "Debes aceptar los términos");
+    }
+
+    if (errors.length > 0) {
+      errors.forEach((err) => {
+        toast({
+          title: ui.missingTitle,
+          description: err,
+          variant: "destructive",
+        });
+      });
+      return false;
+    }
+
+    return true;
+  };
+
+  // ✅ HANDLE PAY - SOLO CREA CHECKOUT, NO GUARDA ESTADO LOCAL
+  const handlePay = async () => {
+    if (!validateForm()) {
+      return;
+    }
+
+    try {
+      // Obtener userId de la sesión o generar uno temporal
+      const { data: sessionData } = await supabase.auth.getSession();
+      const userId = sessionData?.session?.user?.id || generateSessionId();
+
+      const res = await fetch("/api/create-checkout-flussi", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId,
+          fullName: formData.fullName,
+          apellidos: formData.apellidos,
+          phone: formData.phone,
+          email: formData.email,
+          ciudad: formData.ciudad,
+          pais: formData.pais,
+          nacionalidad: formData.nacionalidad,
+          tipoDocumento: formData.tipoDocumento,
+          documentos: formData.documentos,
+          documentosPaths: formData.documentosUrls, // Solo paths, no URLs públicas
+          preferredOffice: formData.preferredOffice,
+        }),
+      });
+
+      const data = await res.json();
+      if (data.url) {
+        // ❌ ELIMINADO: localStorage.setItem("flussiPaid", "1")
+        window.location.href = data.url;
+      } else {
+        throw new Error(data.error || 'Error al crear el checkout');
+      }
+    } catch (error: any) {
+      console.error(error);
+      toast({
+        title: ui.stripeErrorTitle,
+        description: error.message || ui.stripeErrorDesc,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleFormChange = (field: keyof ClientFormData, value: string) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  return (
+    <div className="min-h-screen bg-background text-foreground relative flex flex-col">
+      <div
+        className="fixed inset-0 z-0 opacity-30 pointer-events-none"
+        style={{
+          backgroundImage:
+            "radial-gradient(ellipse 80% 50% at 50% -20%, rgba(34,197,94,0.08), transparent), radial-gradient(ellipse 60% 40% at 80% 80%, rgba(59,130,246,0.07), transparent)",
+        }}
+      />
+
+      <Navbar />
+
+      <main className="flex-1 relative z-10 flex flex-col pt-16 pb-0">
+        <h1 className="text-xl font-display font-bold px-4 sm:px-6 py-3 max-w-7xl mx-auto w-full">
+          {ui.pageTitle}
+        </h1>
+
+        <div className="flex-1 flex flex-col lg:flex-row gap-4 px-4 sm:px-6 max-w-7xl mx-auto w-full pb-4">
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="lg:w-[340px] xl:w-[380px] shrink-0 flex flex-col gap-3"
+          >
+            <div
+              className="relative rounded-2xl overflow-hidden border border-primary/20 shadow-[0_0_30px_-5px_hsl(var(--primary)/0.25)] bg-black"
+              style={{ height: "280px" }}
+            >
+              <div className="relative w-full h-full">
+                <video
+                  id="sara-video"
+                  playsInline
+                  preload="metadata"
+                  poster="/images/sara.png"
+                  className="w-full h-full object-cover object-top"
+                  onPlay={() => {
+                    const btn = document.getElementById("play-button-sara");
+                    if (btn) btn.style.display = "none";
+                  }}
+                >
+                  <source src="/sara-presentacion.mp4" type="video/mp4" />
+                </video>
+
+                <button
+                  id="play-button-sara"
+                  type="button"
+                  className="absolute inset-0 flex items-center justify-center"
+                  onClick={() => {
+                    const video = document.getElementById(
+                      "sara-video"
+                    ) as HTMLVideoElement;
+                    if (video) {
+                      video.play();
+                    }
+                  }}
+                >
+                  <div className="bg-black/10 backdrop-blur-[1px] rounded-full w-12 h-12 flex items-center justify-center">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="white">
+                      <path d="M8 5v14l11-7z" />
+                    </svg>
+                  </div>
+                </button>
+              </div>
+
+              {!muted && (
+                <div className="absolute bottom-14 left-4 flex items-end gap-0.5 h-5">
+                  {[3, 6, 4, 8, 5, 7, 3].map((h, i) => (
+                    <motion.div
+                      key={i}
+                      className="w-1 bg-primary rounded-full"
+                      animate={{ height: [`${h}px`, `${h * 2}px`, `${h}px`] }}
+                      transition={{ duration: 0.5, repeat: Infinity, delay: i * 0.07 }}
+                    />
+                  ))}
+                </div>
+              )}
+
+              <div className="absolute bottom-14 right-3 text-right">
+                <p className="text-white font-bold text-sm drop-shadow-lg">Sara</p>
+                <p className="text-white/70 text-xs drop-shadow-lg">{ui.agentRole}</p>
+              </div>
+            </div>
+          </motion.div>
+
+          <OfficialBrowserBox
+            language={language}
+            avatarImage={`${import.meta.env.BASE_URL}images/avatar-sara.png`}
+            title={ui.pageTitle}
+            url="verifica.italia.it"
+            profileLoading={profileLoading}
+            ui={ui}
+            confirmed={confirmed}
+            formData={formData}
+            onFormChange={handleFormChange}
+            onFormSubmit={() => {}}
+            formReady={formReady}
+            onPay={handlePay}
+            acceptTerms={acceptTerms}
+            setAcceptTerms={setAcceptTerms}
+            uploadedFiles={uploadedFiles}
+            setUploadedFiles={setUploadedFiles}
+            isUploading={isUploading}
+            setIsUploading={setIsUploading}
+            verificationStatus={verificationStatus}
+            verificationProgress={verificationProgress}
+            onDownloadReport={handleDownloadReport}
+            isReportReady={isReportReady}
+          />
+        </div>
+
+        {/* Barra inferior */}
+        <div className="hidden lg:block sticky bottom-0 z-30 glass-panel-heavy border-t border-white/10 py-3">
+          <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
+            <div className="flex gap-3">
+              <button
+                onClick={() => { setShowDocs(true); setShowForms(false); }}
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold border transition-colors ${
+                  showDocs ? "bg-primary/20 border-primary/40 text-primary" : "bg-white/5 border-white/10 text-white/80 hover:bg-white/10"
+                }`}
+                type="button"
+              >
+                <FileText className="w-4 h-4 text-primary" />
+                {ui.docsButton}
+              </button>
+              <button
+                onClick={() => { setShowForms(true); setShowDocs(false); }}
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold border transition-colors ${
+                  showForms ? "bg-secondary/20 border-secondary/40 text-secondary" : "bg-white/5 border-white/10 text-white/80 hover:bg-white/10"
+                }`}
+                type="button"
+              >
+                <Settings className="w-4 h-4 text-secondary" />
+                {ui.formsButton}
+              </button>
+            </div>
+            <div className="px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-[10px] text-white/60">
+              © 2026 GestoriaCitaIA
+            </div>
+          </div>
+        </div>
+
+        {/* Panel documentos */}
+        <AnimatePresence>
+          {showDocs && (
+            <motion.div
+              initial={{ opacity: 0, y: 40 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 40 }}
+              className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 w-full max-w-md px-4"
+            >
+              <div className="rounded-2xl border border-white/15 shadow-2xl overflow-hidden" style={{ background: "#1a2236" }}>
+                <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
+                  <div className="flex items-center gap-2">
+                    <FileText className="w-4 h-4 text-primary" />
+                    <span className="font-bold text-sm text-white">{ui.docsRequiredTitle}</span>
+                  </div>
+                  <button onClick={() => setShowDocs(false)} className="w-6 h-6 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/60 text-xs" type="button">✕</button>
+                </div>
+                <div className="px-5 py-4 space-y-2.5 max-h-72 overflow-y-auto">
+                  {docsForSelectedTramite.map((doc, i) => (
+                    <div key={i} className="flex items-center gap-3">
+                      <span className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 text-xs font-bold ${doc.estado === "ok" ? "bg-green-500/20 text-green-400" : doc.estado === "warn" ? "bg-yellow-500/20 text-yellow-400" : "bg-red-500/20 text-red-400"}`}>
+                        {doc.estado === "ok" ? "✓" : doc.estado === "warn" ? "!" : "✗"}
+                      </span>
+                      <span className="text-sm text-white/90">{doc.nombre}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Panel formularios */}
+        <AnimatePresence>
+          {showForms && (
+            <motion.div
+              initial={{ opacity: 0, y: 40 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 40 }}
+              className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 w-full max-w-md px-4"
+            >
+              <div className="rounded-2xl border border-white/15 shadow-2xl overflow-hidden" style={{ background: "#1a2236" }}>
+                <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
+                  <div className="flex items-center gap-2">
+                    <Settings className="w-4 h-4 text-secondary" />
+                    <span className="font-bold text-sm text-white">{ui.formsOfficialTitle}</span>
+                  </div>
+                  <button onClick={() => setShowForms(false)} className="w-6 h-6 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/60 text-xs" type="button">✕</button>
+                </div>
+                <div className="px-5 py-4 space-y-3">
+                  {formsForSelectedTramite.map((form, i) => (
+                    <a key={i} href={form.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-colors group">
+                      <div className="w-9 h-9 rounded-lg bg-primary/15 border border-primary/30 flex items-center justify-center shrink-0">
+                        <FileText className="w-4 h-4 text-primary" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-bold text-primary">{form.codigo}</p>
+                        <p className="text-sm text-white/80 truncate">{form.nombre}</p>
+                      </div>
+                      <span className="text-[10px] font-semibold text-white/40 group-hover:text-primary transition-colors shrink-0">PDF ↓</span>
+                    </a>
+                  ))}
+                  <p className="text-[10px] text-white/30 text-center pt-1">{ui.sourceLabel}</p>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <audio ref={remoteAudioRef} autoPlay playsInline className="hidden" />
+      </main>
+    </div>
+  );
+}
