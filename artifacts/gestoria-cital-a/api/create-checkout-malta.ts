@@ -1,6 +1,8 @@
 import Stripe from "stripe";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, { apiVersion: "2025-08-27.basil" });
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
+  apiVersion: "2025-08-27.basil",
+});
 
 export default async function handler(
   req: any,
@@ -13,14 +15,14 @@ export default async function handler(
   }
 
   try {
-    // ✅ 1. OBTENER EL BODY PRIMERO
+    // 1. Obtener el body
     const body = req.body;
 
     console.log("========== BODY RECIBIDO ==========");
     console.log(body);
     console.log("==================================");
 
-    // ✅ 2. DESESTRUCTURACIÓN ACTUALIZADA - snake_case
+    // 2. Desestructuración
     const {
       fullName,
       whatsapp,
@@ -49,16 +51,16 @@ export default async function handler(
       photoUrl,
       pdfUrl,
 
-
       plan,
-    
-      } = body;
-      // Determinar precio según el plan
-const unitAmount = plan === "weekly" ? 999 : 1999;
+    } = body;
 
-const planName = plan === "weekly"
-  ? "Semanal"
-  : "Mensual";
+    // 3. Determinar precio según el plan
+    const unitAmount = plan === "weekly" ? 999 : 1999;
+
+    const planName =
+      plan === "weekly"
+        ? "Semanal"
+        : "Mensual";
 
     console.log("========== DOCUMENTOS ==========");
     console.log("photoUrl:", photoUrl);
@@ -71,47 +73,53 @@ const planName = plan === "weekly"
     console.log("education_level:", education_level);
     console.log("=================================");
 
+    // 4. Crear sesión de Stripe Checkout
     const session = await stripe.checkout.sessions.create({
-      payment_method_types: ["card"],
       mode: "payment",
-       customer_email: email?.trim().toLowerCase(),
-    customer_creation: "always",
- invoice_creation: {
-    enabled: true,
-  },
+
+      customer_email: email?.trim().toLowerCase(),
+
+      customer_creation: "always",
+
+      invoice_creation: {
+        enabled: true,
+      },
+
       phone_number_collection: {
         enabled: false,
       },
+
       line_items: [
         {
           price_data: {
             currency: "eur",
+
             product_data: {
               name: `Búsqueda de Empleo Malta - Plan ${planName}`,
               description: `Plan ${planName} de búsqueda de empleo en Malta con IA`,
             },
+
             unit_amount: unitAmount,
           },
+
           quantity: 1,
         },
       ],
-      
-      // ✅ CAMBIO 1: Forzar 3D Secure para tarjetas marroquíes
+
+      // 3D Secure automático
       payment_method_options: {
         card: {
           request_three_d_secure: "automatic",
         },
       },
-      
-      // ✅ CAMBIO 2: Habilitar impuestos automáticos para que Stripe active el precio adaptativo (MAD)
-      automatic_tax: {
-        enabled: true,
-      },
 
-      success_url: `${process.env.NEXT_PUBLIC_URL}/trabajo-malta?success=true&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.NEXT_PUBLIC_URL}/trabajo-malta?canceled=true`,
-      
-      // ✅ 3. METADATA ACTUALIZADA - snake_case
+      success_url:
+        `${process.env.NEXT_PUBLIC_URL}/trabajo-malta?success=true&session_id={CHECKOUT_SESSION_ID}`,
+
+      cancel_url:
+        `${process.env.NEXT_PUBLIC_URL}/trabajo-malta?canceled=true`,
+
+      // 5. Metadata
       metadata: {
         fullName: fullName?.trim() || "",
         whatsapp: whatsapp?.trim() || "",
@@ -150,7 +158,11 @@ const planName = plan === "weekly"
     });
 
   } catch (error: any) {
-    console.error("❌ Error creating Stripe session:", error);
+    console.error(
+      "❌ Error creating Stripe session:",
+      error
+    );
+
     return res.status(500).json({
       error: error.message,
     });
