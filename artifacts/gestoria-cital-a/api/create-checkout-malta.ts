@@ -106,12 +106,7 @@ export default async function handler(
         },
       ],
 
-      // 3D Secure automático
-      payment_method_options: {
-        card: {
-          request_three_d_secure: "automatic",
-        },
-      },
+     
 
       success_url:
         `${process.env.NEXT_PUBLIC_URL}/trabajo-malta?success=true&session_id={CHECKOUT_SESSION_ID}`,
