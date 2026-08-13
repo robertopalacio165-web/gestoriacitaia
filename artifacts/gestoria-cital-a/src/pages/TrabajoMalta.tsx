@@ -727,6 +727,14 @@ carnetConducir: isMa ? "اختر رخصة القيادة" : isEn ? "Select drivi
                         <option value="+44">🇬🇧 +44</option>
                         <option value="+1">🇺🇸 +1</option>
                         <option value="+356">🇲🇹 +356</option>
+                        
+{/* 🌍 GOLFO */}
+<option value="+971">🇦🇪 +971</option>
+<option value="+974">🇶🇦 +974</option>
+<option value="+966">🇸🇦 +966</option>
+<option value="+965">🇰🇼 +965</option>
+<option value="+973">🇧🇭 +973</option>
+<option value="+968">🇴🇲 +968</option>
                       </select>
                       <input
                         type="text"
