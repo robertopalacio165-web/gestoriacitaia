@@ -22,7 +22,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useLang } from "@/contexts/LanguageContext";
 import { supabase } from "@/lib/supabaseClient";
 
-// ✅ CORREGIDO: Nombres de campos coinciden con la tabla de Supabase
+// ✅ Tipos ampliados para soportar ambos nombres de columna
 type ProfileRow = {
   id: string;
   email: string | null;
@@ -31,10 +31,16 @@ type ProfileRow = {
   plan: string | null;
   plan_start_date: string | null;
   plan_end_date: string | null;
-  cv_generado_url: string | null;        // ✅ Cambiado
-  cover_letter_url: string | null;       // ✅ Cambiado
+  // CV
+  cv_generado_url: string | null;
+  cv_url_generated: string | null;   // ← posible nombre alternativo
+  // Carta
+  cover_letter_url: string | null;
+  letter_url: string | null;         // ← posible nombre alternativo
+  // Estado
   cv_generated: boolean;
   letter_generated: boolean;
+  // Aplicaciones
   applications_sent: number;
   applications_total: number;
   applications_daily: number;
@@ -94,45 +100,86 @@ export default function PanelMalta() {
   const { toast } = useToast();
   const { t } = useLang();
 
-  // Cargar perfil del usuario
+  // ============================================
+  // 🔧 CORRECCIÓN: usar getSession y ordenar por created_at
+  // ============================================
   useEffect(() => {
+    let mounted = true;
+
     const loadProfile = async () => {
       try {
         setLoading(true);
-        const {
-          data: { user },
-          error: userError,
-        } = await supabase.auth.getUser();
 
-        if (userError || !user) {
-          setLocation("/");
+        // 1. Obtener sesión actual
+        const {
+          data: { session },
+          error: sessionError,
+        } = await supabase.auth.getSession();
+
+        if (sessionError) {
+          console.error("Error obteniendo sesión:", sessionError);
+          if (mounted) setLoading(false);
           return;
         }
 
-        // Obtener avatar de Google (no se guarda en la base de datos)
-        const userAvatar = user.user_metadata?.avatar_url || user.user_metadata?.picture || null;
-        setAvatarUrl(userAvatar);
+        // 2. Si no hay sesión, redirigir al landing
+        if (!session?.user) {
+          console.warn("No hay sesión activa");
+          if (mounted) {
+            setLoading(false);
+            setLocation("/");
+          }
+          return;
+        }
 
+        const user = session.user;
+
+        // 3. Avatar de Google
+        const userAvatar =
+          user.user_metadata?.avatar_url ||
+          user.user_metadata?.picture ||
+          null;
+
+        if (mounted) {
+          setAvatarUrl(userAvatar);
+        }
+
+        // 4. Obtener la solicitud más reciente de este usuario
         const { data, error } = await supabase
           .from("malta_applications")
           .select("*")
           .eq("email", user.email)
+          .order("created_at", { ascending: false })
+          .limit(1)
           .maybeSingle();
 
         if (error) {
           console.error("Error loading profile:", error);
+          if (mounted) {
+            setProfile(null);
+            setLoading(false);
+          }
           return;
         }
 
-        setProfile(data as ProfileRow);
+        if (mounted) {
+          setProfile(data as ProfileRow);
+          setLoading(false);
+        }
+
       } catch (error) {
-        console.error("Error:", error);
-      } finally {
-        setLoading(false);
+        console.error("Error cargando Panel:", error);
+        if (mounted) {
+          setLoading(false);
+        }
       }
     };
 
     loadProfile();
+
+    return () => {
+      mounted = false;
+    };
   }, [setLocation]);
 
   // Cerrar sesión
@@ -170,6 +217,58 @@ export default function PanelMalta() {
   const applicationsProgress = profile?.applications_total 
     ? Math.round((profile.applications_sent / profile.applications_total) * 100)
     : 0;
+
+  // ============================================
+  // 📄 Obtener URLs de los documentos (cualquiera de los dos nombres)
+  // ============================================
+  const cvUrl =
+    profile?.cv_generado_url ||
+    profile?.cv_url_generated ||
+    "";
+
+  const letterUrl =
+    profile?.cover_letter_url ||
+    profile?.letter_url ||
+    "";
+
+  // ============================================
+  // ⬇️ Función para descargar realmente el archivo
+  // ============================================
+  const handleDownload = async (url: string, filename: string) => {
+    if (!url) {
+      toast({
+        title: "Error",
+        description: "No hay documento disponible para descargar.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error("No se pudo descargar el archivo");
+      }
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      console.error("Download error:", error);
+      toast({
+        title: "Error",
+        description: "No se pudo descargar el documento.",
+        variant: "destructive",
+      });
+    }
+  };
 
   // Tabs del menú - SOLO 3
   const TABS: { key: TabKey; label: string; icon: any }[] = [
@@ -287,25 +386,25 @@ export default function PanelMalta() {
             <div>
               <h2 className="text-sm font-bold text-white mb-3">{t("my_documents")}</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {/* CV - CORREGIDO */}
+                {/* CV - CON URL CORRECTA */}
                 <div className="bg-white/5 border border-white/[0.06] rounded-xl p-4">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm font-bold text-white">{t("cv")}</span>
-                    <span className={`text-xs font-semibold ${profile?.cv_generado_url ? 'text-green-400' : 'text-yellow-400'}`}>
-                      {profile?.cv_generado_url ? `✅ ${t("generated")}` : `⏳ ${t("generating")}`}
+                    <span className={`text-xs font-semibold ${cvUrl ? 'text-green-400' : 'text-yellow-400'}`}>
+                      {cvUrl ? `✅ ${t("generated")}` : `⏳ ${t("generating")}`}
                     </span>
                   </div>
                   <div className="flex gap-2">
-                    {profile?.cv_generado_url ? (
+                    {cvUrl ? (
                       <>
                         <button
-                          onClick={() => window.open(profile.cv_generado_url || "", "_blank")}
+                          onClick={() => window.open(cvUrl, "_blank")}
                           className="flex-1 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs font-semibold transition-colors flex items-center justify-center gap-1"
                         >
                           <Eye className="w-3 h-3" /> {t("view")}
                         </button>
                         <button
-                          onClick={() => window.open(profile.cv_generado_url || "", "_blank")}
+                          onClick={() => handleDownload(cvUrl, "CV-Malta.pdf")}
                           className="flex-1 py-1.5 rounded-lg bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 text-xs font-semibold transition-colors flex items-center justify-center gap-1"
                         >
                           <Download className="w-3 h-3" /> {t("download")}
@@ -317,25 +416,25 @@ export default function PanelMalta() {
                   </div>
                 </div>
 
-                {/* Motivation Letter - CORREGIDO */}
+                {/* Carta de motivación - CON URL CORRECTA */}
                 <div className="bg-white/5 border border-white/[0.06] rounded-xl p-4">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm font-bold text-white">{t("motivation_letter")}</span>
-                    <span className={`text-xs font-semibold ${profile?.cover_letter_url ? 'text-green-400' : 'text-yellow-400'}`}>
-                      {profile?.cover_letter_url ? `✅ ${t("generated")}` : `⏳ ${t("generating")}`}
+                    <span className={`text-xs font-semibold ${letterUrl ? 'text-green-400' : 'text-yellow-400'}`}>
+                      {letterUrl ? `✅ ${t("generated")}` : `⏳ ${t("generating")}`}
                     </span>
                   </div>
                   <div className="flex gap-2">
-                    {profile?.cover_letter_url ? (
+                    {letterUrl ? (
                       <>
                         <button
-                          onClick={() => window.open(profile.cover_letter_url || "", "_blank")}
+                          onClick={() => window.open(letterUrl, "_blank")}
                           className="flex-1 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs font-semibold transition-colors flex items-center justify-center gap-1"
                         >
                           <Eye className="w-3 h-3" /> {t("view")}
                         </button>
                         <button
-                          onClick={() => window.open(profile.cover_letter_url || "", "_blank")}
+                          onClick={() => handleDownload(letterUrl, "Carta-de-motivacion-Malta.pdf")}
                           className="flex-1 py-1.5 rounded-lg bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 text-xs font-semibold transition-colors flex items-center justify-center gap-1"
                         >
                           <Download className="w-3 h-3" /> {t("download")}
@@ -522,7 +621,7 @@ export default function PanelMalta() {
               )}
             </div>
             
-            {/* CV - CORREGIDO */}
+            {/* CV - CON URL CORRECTA */}
             <div className={`bg-white/5 border rounded-xl p-4 ${planStatus === "expired" ? 'border-orange-500/20' : 'border-white/[0.06]'}`}>
               <div className="flex items-center justify-between flex-wrap gap-3">
                 <div className="flex items-center gap-3">
@@ -531,22 +630,22 @@ export default function PanelMalta() {
                   </div>
                   <div>
                     <p className="text-sm font-bold text-white">{t("cv")}</p>
-                    <p className={`text-xs ${profile?.cv_generado_url ? 'text-green-400' : 'text-yellow-400'}`}>
-                      {profile?.cv_generado_url ? `✅ ${t("generated")}` : `⏳ ${t("generating")}`}
+                    <p className={`text-xs ${cvUrl ? 'text-green-400' : 'text-yellow-400'}`}>
+                      {cvUrl ? `✅ ${t("generated")}` : `⏳ ${t("generating")}`}
                     </p>
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  {profile?.cv_generado_url ? (
+                  {cvUrl ? (
                     <>
                       <button
-                        onClick={() => window.open(profile.cv_generado_url || "", "_blank")}
+                        onClick={() => window.open(cvUrl, "_blank")}
                         className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs font-semibold transition-colors flex items-center gap-1"
                       >
                         <Eye className="w-3 h-3" /> {t("view")}
                       </button>
                       <button
-                        onClick={() => window.open(profile.cv_generado_url || "", "_blank")}
+                        onClick={() => handleDownload(cvUrl, "CV-Malta.pdf")}
                         className="px-3 py-1.5 rounded-lg bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 text-xs font-semibold transition-colors flex items-center gap-1"
                       >
                         <Download className="w-3 h-3" /> {t("download")}
@@ -559,7 +658,7 @@ export default function PanelMalta() {
               </div>
             </div>
 
-            {/* Motivation Letter - CORREGIDO */}
+            {/* Carta de motivación - CON URL CORRECTA */}
             <div className={`bg-white/5 border rounded-xl p-4 ${planStatus === "expired" ? 'border-orange-500/20' : 'border-white/[0.06]'}`}>
               <div className="flex items-center justify-between flex-wrap gap-3">
                 <div className="flex items-center gap-3">
@@ -568,22 +667,22 @@ export default function PanelMalta() {
                   </div>
                   <div>
                     <p className="text-sm font-bold text-white">{t("motivation_letter")}</p>
-                    <p className={`text-xs ${profile?.cover_letter_url ? 'text-green-400' : 'text-yellow-400'}`}>
-                      {profile?.cover_letter_url ? `✅ ${t("generated")}` : `⏳ ${t("generating")}`}
+                    <p className={`text-xs ${letterUrl ? 'text-green-400' : 'text-yellow-400'}`}>
+                      {letterUrl ? `✅ ${t("generated")}` : `⏳ ${t("generating")}`}
                     </p>
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  {profile?.cover_letter_url ? (
+                  {letterUrl ? (
                     <>
                       <button
-                        onClick={() => window.open(profile.cover_letter_url || "", "_blank")}
+                        onClick={() => window.open(letterUrl, "_blank")}
                         className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs font-semibold transition-colors flex items-center gap-1"
                       >
                         <Eye className="w-3 h-3" /> {t("view")}
                       </button>
                       <button
-                        onClick={() => window.open(profile.cover_letter_url || "", "_blank")}
+                        onClick={() => handleDownload(letterUrl, "Carta-de-motivacion-Malta.pdf")}
                         className="px-3 py-1.5 rounded-lg bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 text-xs font-semibold transition-colors flex items-center gap-1"
                       >
                         <Download className="w-3 h-3" /> {t("download")}
