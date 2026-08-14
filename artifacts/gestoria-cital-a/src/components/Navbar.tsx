@@ -267,13 +267,7 @@ export function Navbar() {
       icon: CalendarSearch,
       color: "text-primary",
     },
-    {
-      href: "/regularizacion-2026",
-      label: t("nav_reg"),
-      icon: FileText,
-      color: "text-amber-400",
-      badge: true,
-    },
+
     {
       href: "/trabajo-malta",
       label: lang === "darija" ? "عمل في مالطا" : lang === "en" ? "Work in Malta" : "Trabajo en Malta",
@@ -683,12 +677,7 @@ export function Navbar() {
                           href: "/buscar-citas",
                           color: "text-secondary",
                         },
-                        {
-                          icon: FileText,
-                          label: t("nav_reg"),
-                          href: "/regularizacion-2026",
-                          color: "text-amber-400",
-                        },
+                     
                         {
                           icon: Briefcase,
                           label: lang === "darija" ? "عمل في مالطا" : lang === "en" ? "Work in Malta" : "Trabajo en Malta",
