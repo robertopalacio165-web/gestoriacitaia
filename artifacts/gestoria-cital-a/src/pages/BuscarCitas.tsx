@@ -1122,19 +1122,21 @@ export default function BuscarCitas() {
               style={{ height: "280px" }}
             >
               <div className="relative w-full h-full">
-                <video
-                  id="sara-video"
-                  playsInline
-                  preload="metadata"
-                  poster="/images/sara.png"
-                  className="w-full h-full object-cover object-top"
-                  onPlay={() => {
-                    const btn = document.getElementById("play-button-sara");
-                    if (btn) btn.style.display = "none";
-                  }}
-                >
-                  <source src="/sara-presentacion.mp4" type="video/mp4" />
-                </video>
+  <video
+    id="sara-video"
+    playsInline
+    preload="none"
+    poster="/images/sara.png"
+    controls={false}
+    className="w-full h-full object-cover object-top"
+    onPlay={(e) => {
+      e.currentTarget.pause();
+      e.currentTarget.currentTime = 0;
+    }}
+  >
+    <source src="/sara-presentacion.mp4" type="video/mp4" />
+  </video>
+</div>
 
                 <button
                   id="play-button-sara"
