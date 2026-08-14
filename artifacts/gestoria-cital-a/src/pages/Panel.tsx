@@ -94,51 +94,25 @@ export default function PanelMalta() {
   const { toast } = useToast();
   const { t } = useLang();
 
-  // ============================================
-  // 🔧 CORRECCIÓN: usar getSession en lugar de getUser
-  // ============================================
+  // Cargar perfil del usuario
   useEffect(() => {
-    let mounted = true;
-
     const loadProfile = async () => {
       try {
         setLoading(true);
-
-        // Usamos getSession para recuperar la sesión actual
         const {
-          data: { session },
-          error: sessionError,
-        } = await supabase.auth.getSession();
+          data: { user },
+          error: userError,
+        } = await supabase.auth.getUser();
 
-        if (sessionError) {
-          console.error("Error obteniendo sesión:", sessionError);
-          if (mounted) setLoading(false);
+        if (userError || !user) {
+          setLocation("/");
           return;
         }
 
-        // Si realmente no hay sesión, entonces sí mandamos al inicio
-        if (!session?.user) {
-          console.warn("No hay sesión activa");
-          if (mounted) {
-            setLoading(false);
-            setLocation("/");
-          }
-          return;
-        }
+        // Obtener avatar de Google (no se guarda en la base de datos)
+        const userAvatar = user.user_metadata?.avatar_url || user.user_metadata?.picture || null;
+        setAvatarUrl(userAvatar);
 
-        const user = session.user;
-
-        // Avatar de Google
-        const userAvatar =
-          user.user_metadata?.avatar_url ||
-          user.user_metadata?.picture ||
-          null;
-
-        if (mounted) {
-          setAvatarUrl(userAvatar);
-        }
-
-        // Cargar datos de la aplicación de Malta
         const { data, error } = await supabase
           .from("malta_applications")
           .select("*")
@@ -147,34 +121,18 @@ export default function PanelMalta() {
 
         if (error) {
           console.error("Error loading profile:", error);
-
-          if (mounted) {
-            setProfile(null);
-            setLoading(false);
-          }
-
           return;
         }
 
-        if (mounted) {
-          setProfile(data as ProfileRow);
-          setLoading(false);
-        }
-
+        setProfile(data as ProfileRow);
       } catch (error) {
-        console.error("Error cargando Panel:", error);
-
-        if (mounted) {
-          setLoading(false);
-        }
+        console.error("Error:", error);
+      } finally {
+        setLoading(false);
       }
     };
 
     loadProfile();
-
-    return () => {
-      mounted = false;
-    };
   }, [setLocation]);
 
   // Cerrar sesión
