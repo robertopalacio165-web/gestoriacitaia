@@ -1250,7 +1250,7 @@ const translations: AllTranslations = {
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [lang, setLangState] = useState<Lang>("es");
+const [lang, setLangState] = useState<Lang>("darija");
 
   useEffect(() => {
     const savedLang = localStorage.getItem(STORAGE_KEY) as Lang | null;
