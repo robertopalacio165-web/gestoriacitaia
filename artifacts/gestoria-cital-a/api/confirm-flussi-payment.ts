@@ -3,26 +3,18 @@ import Stripe from "stripe";
 
 const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
 
-if (!stripeSecretKey) {
-  console.warn(
-    "STRIPE_SECRET_KEY no está configurada."
-  );
-}
-
 const stripe = stripeSecretKey
   ? new Stripe(stripeSecretKey)
   : null;
+
+const EXPECTED_AMOUNT = 2199;
+const EXPECTED_CURRENCY = "eur";
+const EXPECTED_PRODUCT = "decreto_flussi";
 
 export default async function handler(
   req: VercelRequest,
   res: VercelResponse
 ) {
-  /*
-   * ============================================================
-   * SOLO POST
-   * ============================================================
-   */
-
   if (req.method !== "POST") {
     return res.status(405).json({
       ok: false,
@@ -30,12 +22,6 @@ export default async function handler(
       error: "Method not allowed",
     });
   }
-
-  /*
-   * ============================================================
-   * STRIPE CONFIG
-   * ============================================================
-   */
 
   if (!stripe) {
     return res.status(500).json({
@@ -47,12 +33,6 @@ export default async function handler(
   }
 
   try {
-    /*
-     * ============================================================
-     * SESSION ID
-     * ============================================================
-     */
-
     const sessionId =
       typeof req.body?.session_id === "string"
         ? req.body.session_id.trim()
@@ -69,15 +49,7 @@ export default async function handler(
 
     /*
      * ============================================================
-     * OBTENER SESIÓN REAL DE STRIPE
-     *
-     * NO confiamos en:
-     *
-     * ?success=true
-     *
-     * ni en ningún dato enviado por el navegador.
-     *
-     * Stripe es la fuente de verdad.
+     * OBTENER SESIÓN REAL DESDE STRIPE
      * ============================================================
      */
 
@@ -92,70 +64,58 @@ export default async function handler(
         }
       );
 
-    /*
-     * ============================================================
-     * COMPROBAR QUE ESTA SESIÓN ES DE NUESTRO PRODUCTO
-     * ============================================================
-     *
-     * Si tu create-checkout-flussi ya guarda metadata,
-     * comprobamos que sea una sesión Flussi.
-     *
-     * Si todavía no la guarda, no bloqueamos el pago.
-     * Lo añadiremos en el siguiente paso.
-     * ============================================================
-     */
-
     const metadata =
       session.metadata || {};
 
-    const product =
-      metadata.product ||
-      metadata.service ||
-      metadata.type ||
-      "";
+    /*
+     * ============================================================
+     * COMPROBAR PRODUCTO
+     *
+     * NO aceptamos una sesión sin producto.
+     * Tiene que ser exactamente Decreto Flussi.
+     * ============================================================
+     */
 
-    const isFlussiProduct =
-      !product ||
-      product === "flussi" ||
-      product === "decreto_flussi" ||
-      product === "verificacion_flussi" ||
-      product === "italy_flussi";
+    if (
+      metadata.product !==
+      EXPECTED_PRODUCT
+    ) {
+      console.error(
+        "FLUSSI PRODUCT MISMATCH:",
+        {
+          sessionId,
+          product:
+            metadata.product || null,
+        }
+      );
 
-    if (!isFlussiProduct) {
       return res.status(403).json({
         ok: false,
         paid: false,
         error:
-          "La sesión de Stripe no corresponde al servicio Decreto Flussi.",
+          "Esta sesión de Stripe no corresponde al servicio Decreto Flussi.",
       });
     }
 
     /*
      * ============================================================
-     * COMPROBAR PRECIO
-     * ============================================================
-     *
-     * Nuestro precio esperado:
-     *
-     * 21,99 EUR
-     * = 2199 céntimos
-     *
-     * No aceptamos otra cantidad.
+     * COMPROBAR IMPORTE
      * ============================================================
      */
-
-    const EXPECTED_AMOUNT = 2199;
-    const EXPECTED_CURRENCY = "eur";
 
     const amountTotal =
       session.amount_total ?? null;
 
     const currency =
-      (session.currency || "").toLowerCase();
+      (
+        session.currency || ""
+      ).toLowerCase();
 
     if (
-      amountTotal !== EXPECTED_AMOUNT ||
-      currency !== EXPECTED_CURRENCY
+      amountTotal !==
+        EXPECTED_AMOUNT ||
+      currency !==
+        EXPECTED_CURRENCY
     ) {
       console.error(
         "FLUSSI PAYMENT AMOUNT MISMATCH:",
@@ -170,31 +130,28 @@ export default async function handler(
         ok: false,
         paid: false,
         error:
-          "El importe del pago no coincide con el servicio de 21,99 €.",
+          "El importe del pago no coincide con 21,99 €.",
       });
     }
 
     /*
      * ============================================================
-     * COMPROBAR ESTADO DEL CHECKOUT
+     * COMPROBAR ESTADO REAL DEL PAGO
      * ============================================================
      */
 
-    const checkoutPaid =
-      session.payment_status === "paid";
+    const paid =
+      session.payment_status ===
+      "paid";
 
-    /*
-     * ============================================================
-     * COMPROBAR PAYMENT INTENT
-     * ============================================================
-     */
-
-    let paymentIntentStatus: string | null =
-      null;
+    let paymentIntentStatus:
+      | string
+      | null = null;
 
     if (
       session.payment_intent &&
-      typeof session.payment_intent !== "string"
+      typeof session.payment_intent !==
+        "string"
     ) {
       paymentIntentStatus =
         session.payment_intent.status;
@@ -202,11 +159,11 @@ export default async function handler(
 
     /*
      * ============================================================
-     * PAGO NO CONFIRMADO
+     * PAGO TODAVÍA NO CONFIRMADO
      * ============================================================
      */
 
-    if (!checkoutPaid) {
+    if (!paid) {
       return res.status(402).json({
         ok: true,
         paid: false,
@@ -220,6 +177,9 @@ export default async function handler(
         payment_intent_status:
           paymentIntentStatus,
 
+        documents_upload_allowed:
+          false,
+
         message:
           "El pago todavía no ha sido confirmado por Stripe.",
       });
@@ -227,30 +187,56 @@ export default async function handler(
 
     /*
      * ============================================================
-     * PAGO CONFIRMADO
-     * ============================================================
-     *
-     * A PARTIR DE AQUÍ podemos permitir:
-     *
-     * - guardar documentos
-     * - crear verificación
-     * - iniciar worker
-     * - analizar documentos
-     *
-     * PERO ESTE ENDPOINT TODAVÍA NO SUBE DOCUMENTOS.
+     * DATOS DEL CLIENTE
      * ============================================================
      */
 
     const customerEmail =
-      session.customer_details?.email ||
+      session.customer_details
+        ?.email ||
       session.customer_email ||
+      metadata.email ||
       null;
 
     const customerName =
-      session.customer_details?.name ||
+      session.customer_details
+        ?.name ||
+      metadata.fullName ||
       null;
 
-    const result = {
+    /*
+     * ============================================================
+     * PAGO CONFIRMADO
+     * ============================================================
+     *
+     * IMPORTANTE:
+     *
+     * Aquí todavía NO subimos documentos.
+     *
+     * Solamente autorizamos la siguiente fase.
+     * ============================================================
+     */
+
+    console.log(
+      "✅ FLUSSI PAYMENT CONFIRMED",
+      {
+        sessionId:
+          session.id,
+
+        email:
+          customerEmail,
+
+        amount:
+          amountTotal,
+
+        currency,
+
+        product:
+          metadata.product,
+      }
+    );
+
+    return res.status(200).json({
       ok: true,
 
       paid: true,
@@ -281,46 +267,32 @@ export default async function handler(
       metadata,
 
       /*
-       * Esta bandera será utilizada por el
-       * frontend para permitir la siguiente fase.
+       * El frontend puede continuar,
+       * pero cualquier endpoint posterior
+       * volverá a comprobar Stripe.
        */
-      documents_upload_allowed: true,
+
+      documents_upload_allowed:
+        true,
 
       message:
-        "Pago confirmado correctamente por Stripe. Ya se puede continuar con la subida de documentos.",
-    };
-
-    console.log(
-      "✅ FLUSSI PAYMENT CONFIRMED:",
-      {
-        sessionId: session.id,
-        email: customerEmail,
-        amount: amountTotal,
-        currency,
-      }
-    );
-
-    return res.status(200).json(result);
+        "Pago de 21,99 € confirmado correctamente. Puedes continuar con la subida de documentos.",
+    });
   } catch (error: any) {
     console.error(
       "❌ CONFIRM FLUSSI PAYMENT ERROR:",
       error
     );
 
-    /*
-     * Stripe puede devolver errores específicos
-     * si la sesión no existe o no es accesible.
-     */
-
     if (
       error?.type ===
-        "StripeInvalidRequestError"
+      "StripeInvalidRequestError"
     ) {
       return res.status(400).json({
         ok: false,
         paid: false,
         error:
-          "La sesión de pago de Stripe no es válida o no existe.",
+          "La sesión de Stripe no es válida o no existe.",
       });
     }
 
