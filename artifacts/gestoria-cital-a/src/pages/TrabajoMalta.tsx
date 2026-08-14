@@ -2108,27 +2108,16 @@ export default function TrabajoMalta() {
               style={{ height: "280px" }}
             >
               <div className="relative w-full h-full">
-           <video
+<video
   id="malta-video"
   playsInline
   preload="none"
   poster="/images/malta-poster.png"
   className="w-full h-full object-cover object-top"
-  controls={false}
-  onPlay={(e) => {
-    e.currentTarget.pause();
-    e.currentTarget.currentTime = 0;
-  }}
 >
   <source src="/malta-presentacion.mp4" type="video/mp4" />
 </video>
-                  onPlay={() => {
-                    const btn = document.getElementById("play-button-malta");
-                    if (btn) btn.style.display = "none";
-                  }}
-                >
-                  <source src="/malta-presentacion.mp4" type="video/mp4" />
-                </video>
+             
 
              <button
   id="play-button-malta"
