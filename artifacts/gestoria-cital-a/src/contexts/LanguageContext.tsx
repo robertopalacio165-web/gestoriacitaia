@@ -1252,12 +1252,15 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 export function LanguageProvider({ children }: { children: ReactNode }) {
 const [lang, setLangState] = useState<Lang>("darija");
 
-  useEffect(() => {
-    const savedLang = localStorage.getItem(STORAGE_KEY) as Lang | null;
-    if (savedLang === "es" || savedLang === "en" || savedLang === "darija") {
-      setLangState(savedLang);
-    }
-  }, []);
+useEffect(() => {
+  const savedLang = localStorage.getItem(STORAGE_KEY) as Lang | null;
+
+  if (savedLang === "darija" || savedLang === "es" || savedLang === "en") {
+    setLangState(savedLang);
+  } else {
+    setLangState("darija");
+  }
+}, []);
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, lang);
