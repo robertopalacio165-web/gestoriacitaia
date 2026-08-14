@@ -1121,43 +1121,20 @@ export default function BuscarCitas() {
               className="relative rounded-2xl overflow-hidden border border-primary/20 shadow-[0_0_30px_-5px_hsl(var(--primary)/0.25)] bg-black"
               style={{ height: "280px" }}
             >
+              {/* ===== BLOQUE DE VÍDEO CORREGIDO ===== */}
               <div className="relative w-full h-full">
-  <video
-    id="sara-video"
-    playsInline
-    preload="none"
-    poster="/images/sara.png"
-    controls={false}
-    className="w-full h-full object-cover object-top"
-    onPlay={(e) => {
-      e.currentTarget.pause();
-      e.currentTarget.currentTime = 0;
-    }}
-  >
-    <source src="/sara-presentacion.mp4" type="video/mp4" />
-  </video>
-</div>
-
-                <button
-                  id="play-button-sara"
-                  type="button"
-                  className="absolute inset-0 flex items-center justify-center"
-                  onClick={() => {
-                    const video = document.getElementById(
-                      "sara-video"
-                    ) as HTMLVideoElement;
-                    if (video) {
-                      video.play();
-                    }
-                  }}
+                <video
+                  id="sara-video"
+                  playsInline
+                  preload="none"
+                  poster="/images/sara.png"
+                  controls={false}
+                  className="w-full h-full object-cover object-top"
                 >
-                  <div className="bg-black/10 backdrop-blur-[1px] rounded-full w-12 h-12 flex items-center justify-center">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="white">
-                      <path d="M8 5v14l11-7z" />
-                    </svg>
-                  </div>
-                </button>
+                  <source src="/sara-presentacion.mp4" type="video/mp4" />
+                </video>
               </div>
+              {/* ===== FIN BLOQUE CORREGIDO ===== */}
 
               {!muted && (
                 <div className="absolute bottom-14 left-4 flex items-end gap-0.5 h-5">
