@@ -2108,12 +2108,20 @@ export default function TrabajoMalta() {
               style={{ height: "280px" }}
             >
               <div className="relative w-full h-full">
-                <video
-                  id="malta-video"
-                  playsInline
-                  preload="metadata"
-                  poster="/images/malta-poster.png"
-                  className="w-full h-full object-cover object-top"
+           <video
+  id="malta-video"
+  playsInline
+  preload="none"
+  poster="/images/malta-poster.png"
+  className="w-full h-full object-cover object-top"
+  controls={false}
+  onPlay={(e) => {
+    e.currentTarget.pause();
+    e.currentTarget.currentTime = 0;
+  }}
+>
+  <source src="/malta-presentacion.mp4" type="video/mp4" />
+</video>
                   onPlay={() => {
                     const btn = document.getElementById("play-button-malta");
                     if (btn) btn.style.display = "none";
@@ -2122,8 +2130,9 @@ export default function TrabajoMalta() {
                   <source src="/malta-presentacion.mp4" type="video/mp4" />
                 </video>
 
-                <button
-                  id="play-button-malta"
+             <button
+  id="play-button-malta"
+  disabled
                   type="button"
                   className="absolute inset-0 flex items-center justify-center"
                   onClick={() => {
