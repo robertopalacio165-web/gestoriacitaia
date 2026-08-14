@@ -32,7 +32,7 @@ function getPlans(t: (k: string) => string): PlanItem[] {
   return [
     {
       id: "weekly",
-      price: "14,99€",
+   price: "9,99€",   // semanal
       period: "7 días",
       color: "from-blue-900/40 to-blue-950/20",
       border: "border-blue-400/35",
@@ -50,7 +50,7 @@ function getPlans(t: (k: string) => string): PlanItem[] {
     },
     {
       id: "monthly",
-      price: "24,99€",
+   price: "19,99€",  // mensual
       period: "30 días",
       color: "from-yellow-900/30 to-yellow-950/20",
       border: "border-yellow-400/40",
