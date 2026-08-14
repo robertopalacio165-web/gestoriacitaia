@@ -645,7 +645,7 @@ function OfficialBrowserBox({
                     )}
                   </div>
 
-                  {/* Tipo de documento */}
+                  {/* 🔥 TIPO DE DOCUMENTO - SOLO 3 OPCIONES (REEMPLAZADO) */}
                   <div 
                     ref={el => errorRefs.current["tipoDocumento"] = el}
                     className="col-span-1 lg:col-span-2"
@@ -658,16 +658,76 @@ function OfficialBrowserBox({
                       value={formData.tipoDocumento || ""}
                       onChange={(e) => handleInputChange("tipoDocumento", e.target.value)}
                     >
-                      <option value="">{isMa ? "اختر النوع" : isEn ? "Select type" : "Selecciona tipo"}</option>
-                      <option value="contrato">{isMa ? "عقد العمل" : isEn ? "Employment Contract" : "Contrato de trabajo"}</option>
-                      <option value="decreto_flussi">{isMa ? "مرسوم فلوسي" : isEn ? "Decreto Flussi" : "Decreto Flussi"}</option>
-                      <option value="nulla_osta">{isMa ? "تصريح العمل" : isEn ? "Nulla Osta" : "Nulla Osta"}</option>
-                      <option value="resguardo">{isMa ? "إيصال التسجيل" : isEn ? "Registration receipt" : "Resguardo"}</option>
-                      <option value="otro">{isMa ? "أخرى" : isEn ? "Other" : "Otro"}</option>
+                      <option value="">
+                        {isMa ? "اختر النوع" : isEn ? "Select type" : "Selecciona tipo"}
+                      </option>
+                      <option value="contrato">
+                        {isMa ? "عقد العمل (مرسوم فلوسي)" : isEn ? "Employment contract (Decreto Flussi)" : "Contrato de trabajo (Decreto Flussi)"}
+                      </option>
+                      <option value="nulla_osta">
+                        {isMa ? "تصريح العمل (Nulla Osta)" : isEn ? "Nulla Osta" : "Nulla Osta"}
+                      </option>
+                      <option value="otro">
+                        {isMa ? "وثيقة أخرى / لا أعرف نوعها" : isEn ? "Other / I don't know what it is" : "Otro / No sé qué es"}
+                      </option>
                     </select>
+
+                    {/* EXPLICACIÓN PARA EL CLIENTE */}
+                    <div className="mt-3 rounded-xl border border-yellow-500/20 bg-yellow-500/5 px-4 py-3">
+                      <p className="text-white/75 text-[12px] leading-relaxed">
+                        {isMa ? (
+                          <>
+                            <span className="text-yellow-400 font-bold">
+                              📌 إلا كانت الوثيقة ديالك هي عقد العمل باش تجي تخدم فإيطاليا،
+                            </span>{" "}
+                            اختار الاختيار الأول. إلا كانت الوثيقة هي{" "}
+                            <span className="text-yellow-400 font-semibold">
+                              Nulla Osta
+                            </span>
+                            ، اختار الثاني. إلا ما كنتيش متأكد شنو هي الوثيقة، اختار{" "}
+                            <span className="text-yellow-400 font-semibold">
+                              "أخرى"
+                            </span>{" "}
+                            وحنا نحللوها ليك.
+                          </>
+                        ) : isEn ? (
+                          <>
+                            <span className="text-yellow-400 font-bold">
+                              📌 If your document is the employment contract to come and work in Italy,
+                            </span>{" "}
+                            select the first option. If it is the{" "}
+                            <span className="text-yellow-400 font-semibold">
+                              Nulla Osta
+                            </span>
+                            , select the second. If you are not sure what the document is,
+                            select{" "}
+                            <span className="text-yellow-400 font-semibold">
+                              "Other"
+                            </span>{" "}
+                            and we will analyze it for you.
+                          </>
+                        ) : (
+                          <>
+                            <span className="text-yellow-400 font-bold">
+                              📌 Si tu documento es el contrato para venir a trabajar a Italia, selecciona la primera opción.
+                            </span>{" "}
+                            Si es la autorización{" "}
+                            <span className="text-yellow-400 font-semibold">
+                              Nulla Osta
+                            </span>
+                            , selecciona la segunda. Si no estás seguro de qué documento es, selecciona{" "}
+                            <span className="text-yellow-400 font-semibold">
+                              "Otro"
+                            </span>{" "}
+                            y lo analizamos igualmente.
+                          </>
+                        )}
+                      </p>
+                    </div>
+
                     {errorField === "tipoDocumento" && (
                       <p className="text-red-400 text-xs mt-1">
-                        {isMa ? "نوع الوثيقة مطلوب" : isEn ? "Document type is required" : "Tipo de documento es requerido"}
+                        {isMa ? "نوع الوثيقة مطلوب" : isEn ? "Document type is required" : "Debes seleccionar el tipo de documento"}
                       </p>
                     )}
                   </div>
