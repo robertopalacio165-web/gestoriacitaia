@@ -31,8 +31,6 @@ type ProfileRow = {
   plan: string | null;
   plan_start_date: string | null;
   plan_end_date: string | null;
-  plan_days: number | null;
-  payment_status: string | null;
   // CV
   cv_generado_url: string | null;
   cv_url_generated: string | null;   // ← posible nombre alternativo
@@ -42,13 +40,16 @@ type ProfileRow = {
   // Estado
   cv_generated: boolean;
   letter_generated: boolean;
-  // Aplicaciones
+  // Aplicaciones / entrega
   applications_sent: number | null;
   applications_limit: number | null;
   daily_sent: number | null;
   responses: number | null;
   whatsapp: string | null;
   paid: boolean;
+  worker_finished: boolean | null;
+  last_worker_run: string | null;
+  updated_at: string | null;
   created_at: string;
 };
 
@@ -147,20 +148,16 @@ export default function PanelMalta() {
         }
 
         // 4. Obtener la solicitud más reciente de este usuario
-        //    desde malta_applications.
-        const userEmail = user.email?.trim().toLowerCase();
-
         const { data, error } = await supabase
           .from("malta_applications")
           .select("*")
-          .eq("email", userEmail)
+          .eq("email", user.email)
           .order("created_at", { ascending: false })
           .limit(1)
           .maybeSingle();
 
         if (error) {
-          console.error("❌ Error loading malta_applications:", error);
-          console.error("❌ Email buscado:", userEmail);
+          console.error("Error loading profile:", error);
           if (mounted) {
             setProfile(null);
             setLoading(false);
@@ -168,14 +165,8 @@ export default function PanelMalta() {
           return;
         }
 
-        if (!data) {
-          console.warn("⚠️ No existe malta_applications para:", userEmail);
-        } else {
-          console.log("✅ Malta application encontrada:", data);
-        }
-
         if (mounted) {
-          setProfile(data as ProfileRow | null);
+          setProfile(data as ProfileRow);
           setLoading(false);
         }
 
@@ -205,70 +196,91 @@ export default function PanelMalta() {
   };
 
   // ============================================
-  // 🇲🇹 PLANES MALTA ACTUALES
-  // ============================================
+  // 🇲🇹 ESTADO ACTUAL DEL SERVICIO MALTA
   // 9,99 €  → 50 contactos
   // 19,99 € → 80 contactos
-  // Incluye Gmail + WhatsApp + Web
-  // Un único email con todos los contactos.
-  //
-  // IMPORTANTE:
-  // No usamos la lógica antigua de 7/30 días para mostrar el producto.
-  // Supabase sigue guardando plan_start_date / plan_end_date internamente,
-  // pero el cliente ve únicamente su plan y sus contactos.
+  // Entrega única: Gmail + WhatsApp + Web
+  // ============================================
 
-  const isPlan999 =
-    profile?.plan === "weekly" ||
-    profile?.plan === "9.99" ||
-    profile?.plan === "9,99";
-
-  const isPlan1999 =
-    profile?.plan === "monthly" ||
-    profile?.plan === "19.99" ||
-    profile?.plan === "19,99";
-
-  const isPaid =
-    profile?.paid === true ||
-    profile?.payment_status === "paid";
-
-  const planName = isPlan999
-    ? "9,99 € · 50 contactos"
-    : isPlan1999
-      ? "19,99 € · 80 contactos"
-      : "Sin plan";
+  const isWeekly = profile?.plan === "weekly";
+  const isMonthly = profile?.plan === "monthly";
 
   const applicationsTotal =
     profile?.applications_limit ??
-    (isPlan999 ? 50 : isPlan1999 ? 80 : 0);
+    (isWeekly ? 50 : isMonthly ? 80 : 0);
 
   const applicationsSent = profile?.applications_sent ?? 0;
 
+  // El worker marca worker_finished cuando la entrega ha terminado.
+  // En ese momento mostramos el total real entregado aunque
+  // applications_sent todavía no se haya actualizado.
+  const deliveryCompleted =
+    profile?.worker_finished === true;
+
+  const deliveredContacts = deliveryCompleted
+    ? applicationsTotal
+    : Math.min(applicationsSent, applicationsTotal);
+
   const applicationsRemaining = Math.max(
     0,
-    applicationsTotal - applicationsSent
+    applicationsTotal - deliveredContacts
   );
 
   const applicationsProgress =
     applicationsTotal > 0
       ? Math.min(
           100,
-          Math.round((applicationsSent / applicationsTotal) * 100)
+          Math.round((deliveredContacts / applicationsTotal) * 100)
         )
       : 0;
 
+  const planName = isWeekly
+    ? "9,99 € · 50 contactos"
+    : isMonthly
+      ? "19,99 € · 80 contactos"
+      : "Sin plan";
+
+  // El nuevo servicio no depende de una cuenta atrás de 7/30 días.
+  // El estado se basa en el pago + plan contratado.
   const getPlanStatus = (): "active" | "expired" | "none" => {
     if (!profile) return "none";
 
-    if (!isPaid) return "none";
+    const paid =
+      profile.paid === true ||
+      (profile as any).payment_status === "paid";
 
-    if (!isPlan999 && !isPlan1999) return "none";
+    if (!paid || (!isWeekly && !isMonthly)) {
+      return "none";
+    }
 
-    // El nuevo producto no depende de mostrar duración al cliente.
-    // Si el pago y el plan son válidos, se muestra como activo.
     return "active";
   };
 
   const planStatus = getPlanStatus();
+
+  const deliveryDate =
+    profile?.last_worker_run ||
+    profile?.updated_at ||
+    profile?.created_at ||
+    null;
+
+  const formatDeliveryDate = (value: string | null) => {
+    if (!value) return "Pendiente";
+
+    try {
+      return new Intl.DateTimeFormat("es-ES", {
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      }).format(new Date(value));
+    } catch {
+      return value;
+    }
+  };
+
+  const deliveryLabel = formatDeliveryDate(deliveryDate);
 
   // ============================================
   // 📄 Obtener URLs de los documentos (cualquiera de los dos nombres)
@@ -412,14 +424,18 @@ export default function PanelMalta() {
                 <p className="text-sm font-bold text-white">{planName}</p>
               </div>
               <div>
-                <p className="text-[10px] text-muted-foreground uppercase">Contactos</p>
-                <p className="text-sm font-bold text-primary">
-                  {applicationsSent}/{applicationsTotal}
+                <p className="text-[10px] text-muted-foreground uppercase">
+                  Estado
+                </p>
+                <p className={`text-sm font-bold ${
+                  deliveryCompleted ? "text-green-400" : "text-yellow-400"
+                }`}>
+                  {deliveryCompleted ? "✅ Entregado" : "⏳ Preparando"}
                 </p>
               </div>
             </div>
             <p className="text-[11px] text-muted-foreground text-center mt-3">
-              📧 Gmail + 📱 WhatsApp + 🌐 Web · un único envío
+              📧 Gmail + 📱 WhatsApp + 🌐 Web · entrega única
             </p>
           </div>
         )}
@@ -514,74 +530,77 @@ export default function PanelMalta() {
               </div>
             </div>
 
-            {/* 💼 Solicitudes */}
+            {/* 💼 ENTREGA DE CONTACTOS */}
             <div>
-              <h2 className="text-sm font-bold text-white mb-3">{t("applications")}</h2>
+              <h2 className="text-sm font-bold text-white mb-3">
+                Entrega de contactos
+              </h2>
+
               <div className={`bg-white/5 border rounded-xl p-4 ${
-                planStatus === "expired" ? 'border-orange-500/30' : 
-                planStatus === "none" ? 'border-yellow-500/30' : 
-                'border-white/[0.06]'
+                deliveryCompleted
+                  ? "border-green-500/20"
+                  : planStatus === "active"
+                    ? "border-yellow-500/30"
+                    : "border-white/[0.06]"
               }`}>
-                {!cvUrl && !letterUrl && (planStatus === "expired" || planStatus === "none") && (
-                  <div className={`flex items-center gap-2 mb-3 p-2 rounded-lg ${
-                    planStatus === "expired" 
-                      ? 'bg-orange-500/10 border border-orange-500/20' 
-                      : 'bg-yellow-500/10 border border-yellow-500/20'
-                  }`}>
-                    {planStatus === "expired" ? (
-                      <Lock className="w-4 h-4 text-orange-400" />
-                    ) : (
-                      <Clock className="w-4 h-4 text-yellow-400" />
-                    )}
-                    <span className={`text-xs font-semibold ${
-                      planStatus === "expired" ? 'text-orange-400' : 'text-yellow-400'
-                    }`}>
-                      {planStatus === "expired" ? t("paused") : t("waiting_plan")}
-                    </span>
-                  </div>
-                )}
-                
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm text-white/70">{t("companies_contacted")}</span>
+                  <span className="text-sm text-white/70">
+                    Contactos entregados
+                  </span>
                   <span className="text-sm font-bold text-white">
-                    {applicationsSent} / {applicationsTotal}
+                    {deliveredContacts} / {applicationsTotal}
                   </span>
                 </div>
+
                 <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
                   <motion.div
                     className={`h-full rounded-full ${
-                      planStatus === "expired" ? 'bg-orange-400' : 
-                      planStatus === "none" ? 'bg-yellow-400' : 
-                      'bg-gradient-to-r from-primary to-green-400'
+                      deliveryCompleted
+                        ? "bg-green-400"
+                        : "bg-gradient-to-r from-primary to-green-400"
                     }`}
                     initial={{ width: 0 }}
                     animate={{ width: `${applicationsProgress}%` }}
                     transition={{ duration: 0.8 }}
                   />
                 </div>
-                <div className="grid grid-cols-3 gap-2 mt-3 text-center">
+
+                <div className="grid grid-cols-2 gap-2 mt-3 text-center">
                   <div className="bg-white/5 rounded-lg p-2">
-                    <p className="text-xs text-muted-foreground">{t("today")}</p>
-                    <p className="text-sm font-bold text-white">
-                      {planStatus === "active" ? (profile?.daily_sent || 0) : '—'}
+                    <p className="text-xs text-muted-foreground">
+                      Estado
                     </p>
-                  </div>
-                  <div className="bg-white/5 rounded-lg p-2">
-                    <p className="text-xs text-muted-foreground">{t("total")}</p>
-                    <p className="text-sm font-bold text-white">{profile?.applications_sent || 0}</p>
-                  </div>
-                  <div className="bg-white/5 rounded-lg p-2">
-                    <p className="text-xs text-muted-foreground">{t("remaining")}</p>
                     <p className={`text-sm font-bold ${
-                      planStatus === "expired" ? 'text-orange-400' : 
-                      planStatus === "none" ? 'text-yellow-400' : 
-                      'text-yellow-400'
+                      deliveryCompleted
+                        ? "text-green-400"
+                        : "text-yellow-400"
                     }`}>
-                      {planStatus === "expired" || planStatus === "none"
-                        ? '—'
-                        : applicationsRemaining}
+                      {deliveryCompleted ? "Entregado" : "En preparación"}
                     </p>
                   </div>
+
+                  <div className="bg-white/5 rounded-lg p-2">
+                    <p className="text-xs text-muted-foreground">
+                      Restantes
+                    </p>
+                    <p className={`text-sm font-bold ${
+                      deliveryCompleted ? "text-green-400" : "text-yellow-400"
+                    }`}>
+                      {applicationsRemaining}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-3 pt-3 border-t border-white/[0.06]">
+                  <p className="text-xs text-muted-foreground">
+                    📧 Gmail · 📱 WhatsApp · 🌐 Web
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {deliveryCompleted
+                      ? `Entrega realizada: ${deliveryLabel}`
+                      : "La entrega aparecerá aquí cuando termine."
+                    }
+                  </p>
                 </div>
               </div>
             </div>
@@ -605,9 +624,9 @@ export default function PanelMalta() {
                   </div>
                 </div>
                 <p className="text-xs text-muted-foreground mt-2">
-                  {planStatus === "expired" || planStatus === "none"
-                    ? t("notify_renew")
-                    : t("notify_whatsapp")}
+                  {planStatus === "active"
+                    ? t("notify_whatsapp")
+                    : t("notify_renew")}
                 </p>
               </div>
             </div>
@@ -636,37 +655,56 @@ export default function PanelMalta() {
               </div>
             </div>
 
-            {/* ⏰ Próximo envío */}
+            {/* ✅ ENTREGA REALIZADA */}
             <div>
-              <h2 className="text-sm font-bold text-white mb-3">{t("next_send")}</h2>
+              <h2 className="text-sm font-bold text-white mb-3">
+                Entrega
+              </h2>
+
               <div className={`bg-white/5 border rounded-xl p-4 ${
-                planStatus === "expired" ? 'border-orange-500/30' : 
-                planStatus === "none" ? 'border-yellow-500/30' : 
-                'border-white/[0.06]'
+                deliveryCompleted
+                  ? "border-green-500/20"
+                  : "border-white/[0.06]"
               }`}>
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between gap-4">
                   <div>
-                    <p className="text-sm text-white/70">{t("next_auto_send")}</p>
-                    {planStatus === "active" ? (
-                      <p className="text-lg font-bold text-white">{t("today_20h")}</p>
-                    ) : planStatus === "expired" ? (
-                      <p className="text-lg font-bold text-orange-400">{t("paused")}</p>
+                    <p className="text-sm text-white/70">
+                      Estado del servicio
+                    </p>
+
+                    {deliveryCompleted ? (
+                      <>
+                        <p className="text-lg font-bold text-green-400">
+                          ✅ Entregado
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {deliveryLabel}
+                        </p>
+                      </>
                     ) : (
-                      <p className="text-lg font-bold text-yellow-400">{t("waiting")}</p>
+                      <>
+                        <p className="text-lg font-bold text-yellow-400">
+                          ⏳ Preparando
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Estamos preparando tu entrega.
+                        </p>
+                      </>
                     )}
                   </div>
-                  <Clock className={`w-6 h-6 ${
-                    planStatus === "expired" ? 'text-orange-400' : 
-                    planStatus === "none" ? 'text-yellow-400' : 
-                    'text-yellow-400'
-                  }`} />
+
+                  {deliveryCompleted ? (
+                    <CheckCircle2 className="w-7 h-7 text-green-400 shrink-0" />
+                  ) : (
+                    <Clock className="w-7 h-7 text-yellow-400 shrink-0" />
+                  )}
                 </div>
-                <p className="text-xs text-muted-foreground mt-2">
-                  {planStatus === "active" 
-                    ? t("daily_sends")
-                    : planStatus === "expired"
-                    ? t("paused_message")
-                    : t("no_plan_message")}
+
+                <p className="text-xs text-muted-foreground mt-3">
+                  {deliveryCompleted
+                    ? `${deliveredContacts} contactos entregados por Gmail, WhatsApp y Web.`
+                    : "Recibirás la entrega cuando el servicio termine."
+                  }
                 </p>
               </div>
             </div>
