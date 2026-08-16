@@ -41,10 +41,10 @@ type ProfileRow = {
   cv_generated: boolean;
   letter_generated: boolean;
   // Aplicaciones
-  applications_sent: number;
-  applications_total: number;
-  applications_daily: number;
-  responses: number;
+  applications_sent: number | null;
+  applications_limit: number | null;
+  daily_sent: number | null;
+  responses: number | null;
   whatsapp: string | null;
   paid: boolean;
   created_at: string;
@@ -213,10 +213,24 @@ export default function PanelMalta() {
 
   const planStatus = getPlanStatus();
   const daysRemaining = getDaysRemaining();
-  const planName = profile?.plan === "weekly" ? t("weekly") : t("monthly");
-  const applicationsProgress = profile?.applications_total 
-    ? Math.round((profile.applications_sent / profile.applications_total) * 100)
-    : 0;
+
+  // PLANES ACTUALES:
+  // 9,99 € = semanal = 7 días = 50 contactos
+  // 19,99 € = mensual = 30 días = 80 contactos
+  const isWeekly = profile?.plan === "weekly";
+  const planName = isWeekly ? "9,99 € · Semanal" : "19,99 € · Mensual";
+  const planDays = (profile as any)?.plan_days ?? (isWeekly ? 7 : 30);
+  const applicationsTotal =
+    profile?.applications_limit ?? (isWeekly ? 50 : 80);
+  const applicationsSent = profile?.applications_sent ?? 0;
+  const applicationsRemaining = Math.max(
+    0,
+    applicationsTotal - applicationsSent
+  );
+  const applicationsProgress =
+    applicationsTotal > 0
+      ? Math.min(100, Math.round((applicationsSent / applicationsTotal) * 100))
+      : 0;
 
   // ============================================
   // 📄 Obtener URLs de los documentos (cualquiera de los dos nombres)
@@ -358,6 +372,28 @@ export default function PanelMalta() {
         {/* ============================================ */}
         {/* TABS - MENÚ NAVEGACIÓN (SOLO 3) - SOLO PC */}
         {/* ============================================ */}
+        {planStatus === "active" && (
+          <div className="mb-6 bg-white/5 border border-primary/20 rounded-xl p-4">
+            <div className="grid grid-cols-3 gap-3 text-center">
+              <div>
+                <p className="text-[10px] text-muted-foreground uppercase">Plan</p>
+                <p className="text-sm font-bold text-white">{planName}</p>
+              </div>
+              <div>
+                <p className="text-[10px] text-muted-foreground uppercase">Duración</p>
+                <p className="text-sm font-bold text-white">{planDays} días</p>
+              </div>
+              <div>
+                <p className="text-[10px] text-muted-foreground uppercase">Contactos</p>
+                <p className="text-sm font-bold text-primary">{applicationsSent}/{applicationsTotal}</p>
+              </div>
+            </div>
+            <p className="text-[11px] text-muted-foreground text-center mt-3">
+              📧 Gmail + 📱 WhatsApp + 🌐 Web · contactos incluidos en el plan
+            </p>
+          </div>
+        )}
+
         <div className="hidden md:flex border-b border-white/[0.06] mb-6">
           {TABS.map((tab) => (
             <button
@@ -456,7 +492,7 @@ export default function PanelMalta() {
                 planStatus === "none" ? 'border-yellow-500/30' : 
                 'border-white/[0.06]'
               }`}>
-                {(planStatus === "expired" || planStatus === "none") && (
+                {!cvUrl && !letterUrl && (planStatus === "expired" || planStatus === "none") && (
                   <div className={`flex items-center gap-2 mb-3 p-2 rounded-lg ${
                     planStatus === "expired" 
                       ? 'bg-orange-500/10 border border-orange-500/20' 
@@ -513,7 +549,7 @@ export default function PanelMalta() {
                     }`}>
                       {planStatus === "expired" || planStatus === "none"
                         ? '—'
-                        : ((profile?.applications_total || 300) - (profile?.applications_sent || 0))}
+                        : applicationsRemaining}
                     </p>
                   </div>
                 </div>
