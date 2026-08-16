@@ -31,6 +31,8 @@ type ProfileRow = {
   plan: string | null;
   plan_start_date: string | null;
   plan_end_date: string | null;
+  plan_days: number | null;
+  payment_status: string | null;
   // CV
   cv_generado_url: string | null;
   cv_url_generated: string | null;   // ← posible nombre alternativo
@@ -145,16 +147,20 @@ export default function PanelMalta() {
         }
 
         // 4. Obtener la solicitud más reciente de este usuario
+        //    desde malta_applications.
+        const userEmail = user.email?.trim().toLowerCase();
+
         const { data, error } = await supabase
           .from("malta_applications")
           .select("*")
-          .eq("email", user.email)
+          .eq("email", userEmail)
           .order("created_at", { ascending: false })
           .limit(1)
           .maybeSingle();
 
         if (error) {
-          console.error("Error loading profile:", error);
+          console.error("❌ Error loading malta_applications:", error);
+          console.error("❌ Email buscado:", userEmail);
           if (mounted) {
             setProfile(null);
             setLoading(false);
@@ -162,8 +168,14 @@ export default function PanelMalta() {
           return;
         }
 
+        if (!data) {
+          console.warn("⚠️ No existe malta_applications para:", userEmail);
+        } else {
+          console.log("✅ Malta application encontrada:", data);
+        }
+
         if (mounted) {
-          setProfile(data as ProfileRow);
+          setProfile(data as ProfileRow | null);
           setLoading(false);
         }
 
@@ -192,45 +204,71 @@ export default function PanelMalta() {
     });
   };
 
-  // Calcular días restantes del plan
-  const getDaysRemaining = () => {
-    if (!profile?.plan_end_date) return 0;
-    const end = new Date(profile.plan_end_date);
-    const now = new Date();
-    const diff = Math.ceil((end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-    return Math.max(0, diff);
-  };
+  // ============================================
+  // 🇲🇹 PLANES MALTA ACTUALES
+  // ============================================
+  // 9,99 €  → 50 contactos
+  // 19,99 € → 80 contactos
+  // Incluye Gmail + WhatsApp + Web
+  // Un único email con todos los contactos.
+  //
+  // IMPORTANTE:
+  // No usamos la lógica antigua de 7/30 días para mostrar el producto.
+  // Supabase sigue guardando plan_start_date / plan_end_date internamente,
+  // pero el cliente ve únicamente su plan y sus contactos.
 
-  // Verificar estado del plan
-  const getPlanStatus = (): "active" | "expired" | "none" => {
-    if (!profile) return "none";
-    if (!profile.plan_end_date) return "none";
-    if (!profile.paid) return "expired";
-    const end = new Date(profile.plan_end_date);
-    const now = new Date();
-    return end > now ? "active" : "expired";
-  };
+  const isPlan999 =
+    profile?.plan === "weekly" ||
+    profile?.plan === "9.99" ||
+    profile?.plan === "9,99";
 
-  const planStatus = getPlanStatus();
-  const daysRemaining = getDaysRemaining();
+  const isPlan1999 =
+    profile?.plan === "monthly" ||
+    profile?.plan === "19.99" ||
+    profile?.plan === "19,99";
 
-  // PLANES ACTUALES:
-  // 9,99 € = semanal = 7 días = 50 contactos
-  // 19,99 € = mensual = 30 días = 80 contactos
-  const isWeekly = profile?.plan === "weekly";
-  const planName = isWeekly ? "9,99 € · Semanal" : "19,99 € · Mensual";
-  const planDays = (profile as any)?.plan_days ?? (isWeekly ? 7 : 30);
+  const isPaid =
+    profile?.paid === true ||
+    profile?.payment_status === "paid";
+
+  const planName = isPlan999
+    ? "9,99 € · 50 contactos"
+    : isPlan1999
+      ? "19,99 € · 80 contactos"
+      : "Sin plan";
+
   const applicationsTotal =
-    profile?.applications_limit ?? (isWeekly ? 50 : 80);
+    profile?.applications_limit ??
+    (isPlan999 ? 50 : isPlan1999 ? 80 : 0);
+
   const applicationsSent = profile?.applications_sent ?? 0;
+
   const applicationsRemaining = Math.max(
     0,
     applicationsTotal - applicationsSent
   );
+
   const applicationsProgress =
     applicationsTotal > 0
-      ? Math.min(100, Math.round((applicationsSent / applicationsTotal) * 100))
+      ? Math.min(
+          100,
+          Math.round((applicationsSent / applicationsTotal) * 100)
+        )
       : 0;
+
+  const getPlanStatus = (): "active" | "expired" | "none" => {
+    if (!profile) return "none";
+
+    if (!isPaid) return "none";
+
+    if (!isPlan999 && !isPlan1999) return "none";
+
+    // El nuevo producto no depende de mostrar duración al cliente.
+    // Si el pago y el plan son válidos, se muestra como activo.
+    return "active";
+  };
+
+  const planStatus = getPlanStatus();
 
   // ============================================
   // 📄 Obtener URLs de los documentos (cualquiera de los dos nombres)
@@ -341,15 +379,9 @@ export default function PanelMalta() {
                 {planStatus === "none" ? (
                   <span className="text-sm font-bold text-yellow-400">{t("no_plan")}</span>
                 ) : planStatus === "active" ? (
-                  <>
-                    <span className="text-sm font-bold text-primary">🇲🇹 {planName}</span>
-                    <span className="text-sm text-muted-foreground hidden sm:inline">·</span>
-                    <span className="text-sm text-muted-foreground flex items-center gap-1">
-                      <Clock className="w-3.5 h-3.5 text-yellow-400" />
-                      <span className="text-yellow-400 font-semibold">{daysRemaining}</span>
-                      <span className="text-muted-foreground">{t("days_left")}</span>
-                    </span>
-                  </>
+                  <span className="text-sm font-bold text-primary">
+                    🇲🇹 {planName}
+                  </span>
                 ) : (
                   <span className="text-sm font-bold text-orange-400">{t("expired")}</span>
                 )}
@@ -374,22 +406,20 @@ export default function PanelMalta() {
         {/* ============================================ */}
         {planStatus === "active" && (
           <div className="mb-6 bg-white/5 border border-primary/20 rounded-xl p-4">
-            <div className="grid grid-cols-3 gap-3 text-center">
+            <div className="grid grid-cols-2 gap-3 text-center">
               <div>
                 <p className="text-[10px] text-muted-foreground uppercase">Plan</p>
                 <p className="text-sm font-bold text-white">{planName}</p>
               </div>
               <div>
-                <p className="text-[10px] text-muted-foreground uppercase">Duración</p>
-                <p className="text-sm font-bold text-white">{planDays} días</p>
-              </div>
-              <div>
                 <p className="text-[10px] text-muted-foreground uppercase">Contactos</p>
-                <p className="text-sm font-bold text-primary">{applicationsSent}/{applicationsTotal}</p>
+                <p className="text-sm font-bold text-primary">
+                  {applicationsSent}/{applicationsTotal}
+                </p>
               </div>
             </div>
             <p className="text-[11px] text-muted-foreground text-center mt-3">
-              📧 Gmail + 📱 WhatsApp + 🌐 Web · contactos incluidos en el plan
+              📧 Gmail + 📱 WhatsApp + 🌐 Web · un único envío
             </p>
           </div>
         )}
@@ -514,7 +544,7 @@ export default function PanelMalta() {
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm text-white/70">{t("companies_contacted")}</span>
                   <span className="text-sm font-bold text-white">
-                    {profile?.applications_sent || 0} / {profile?.applications_total || 300}
+                    {applicationsSent} / {applicationsTotal}
                   </span>
                 </div>
                 <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
@@ -533,7 +563,7 @@ export default function PanelMalta() {
                   <div className="bg-white/5 rounded-lg p-2">
                     <p className="text-xs text-muted-foreground">{t("today")}</p>
                     <p className="text-sm font-bold text-white">
-                      {planStatus === "expired" || planStatus === "none" ? '—' : (profile?.applications_daily || 0)}
+                      {planStatus === "active" ? (profile?.daily_sent || 0) : '—'}
                     </p>
                   </div>
                   <div className="bg-white/5 rounded-lg p-2">
