@@ -1,95 +1,130 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import Stripe from "stripe";
 
+/**
+ * ============================================================
+ * GESTORIACITAIA
+ * DECRETO FLUSSI - CREATE STRIPE CHECKOUT
+ * ============================================================
+ *
+ * IMPORTANTE:
+ *
+ * - Este endpoint SOLO crea el Checkout de Stripe.
+ * - NO guarda documentos en Supabase.
+ * - NO guarda datos del cliente en Supabase.
+ * - NO confía en el navegador para confirmar el pago.
+ * - La confirmación real se hará posteriormente mediante Stripe.
+ *
+ * Precio:
+ * 21,99 EUR
+ * ============================================================
+ */
+
 const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+
+if (!stripeSecretKey) {
+  console.warn(
+    "⚠️ STRIPE_SECRET_KEY no está configurada."
+  );
+}
 
 const stripe = stripeSecretKey
   ? new Stripe(stripeSecretKey)
   : null;
 
-const FLUSSI_PRICE = 2199;
+/**
+ * ============================================================
+ * CONFIGURACIÓN
+ * ============================================================
+ */
+
+const FLUSSI_PRICE_CENTS = 2199;
 const FLUSSI_CURRENCY = "eur";
 
-function cleanString(value: unknown): string {
-  if (typeof value !== "string") return "";
-  return value.trim();
-}
+const FLUSSI_PRODUCT = "decreto_flussi";
 
-function limitMetadata(
+const MAX_DOCUMENTS = 5;
+
+/**
+ * ============================================================
+ * HELPERS
+ * ============================================================
+ */
+
+function cleanString(
   value: unknown,
-  max = 450
+  maxLength = 500
 ): string {
-  const text = cleanString(value);
-
-  if (!text) return "";
-
-  return text.substring(0, max);
-}
-
-function getBaseUrl(req: VercelRequest): string {
-  /*
-   * Preferimos una URL configurada en Vercel.
-   */
-  const configuredUrl =
-    process.env.NEXT_PUBLIC_SITE_URL ||
-    process.env.SITE_URL ||
-    process.env.VERCEL_PROJECT_PRODUCTION_URL;
-
-  if (configuredUrl) {
-    return configuredUrl.startsWith("http")
-      ? configuredUrl
-      : `https://${configuredUrl}`;
+  if (typeof value !== "string") {
+    return "";
   }
 
-  /*
-   * Fallback para Vercel.
-   */
-  const host =
-    req.headers["x-forwarded-host"] ||
-    req.headers.host;
-
-  const protocol =
-    req.headers["x-forwarded-proto"] ||
-    "https";
-
-  if (host) {
-    return `${protocol}://${host}`;
-  }
-
-  /*
-   * Último fallback.
-   */
-  return "https://gestoriacitaia.com";
+  return value
+    .trim()
+    .replace(/\s+/g, " ")
+    .slice(0, maxLength);
 }
+
+function cleanEmail(value: unknown): string {
+  return cleanString(value, 320).toLowerCase();
+}
+
+function isValidEmail(email: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+function cleanPhone(value: unknown): string {
+  return cleanString(value, 40);
+}
+
+function cleanCountry(value: unknown): string {
+  return cleanString(value, 100);
+}
+
+function cleanDocumentType(value: unknown): string {
+  const allowed = [
+    "Contrato de trabajo (Decreto Flussi)",
+    "Nulla Osta",
+    "Otro / No sé qué es",
+  ];
+
+  const valueClean = cleanString(value, 100);
+
+  return allowed.includes(valueClean)
+    ? valueClean
+    : "";
+}
+
+/**
+ * ============================================================
+ * HANDLER
+ * ============================================================
+ */
 
 export default async function handler(
   req: VercelRequest,
   res: VercelResponse
 ) {
-  /*
-   * ============================================================
+  /**
+   * ----------------------------------------------------------
    * SOLO POST
-   * ============================================================
+   * ----------------------------------------------------------
    */
 
   if (req.method !== "POST") {
     return res.status(405).json({
       ok: false,
-      error: "Method not allowed",
+      error: "Método no permitido.",
     });
   }
 
-  /*
-   * ============================================================
-   * STRIPE CONFIGURATION
-   * ============================================================
+  /**
+   * ----------------------------------------------------------
+   * STRIPE CONFIG
+   * ----------------------------------------------------------
    */
 
   if (!stripe) {
-    console.error(
-      "STRIPE_SECRET_KEY no está configurada."
-    );
-
     return res.status(500).json({
       ok: false,
       error:
@@ -98,190 +133,329 @@ export default async function handler(
   }
 
   try {
-    /*
-     * ============================================================
-     * DATOS DEL FORMULARIO
-     * ============================================================
+    /**
+     * ========================================================
+     * LEER DATOS DEL FORMULARIO
+     * ========================================================
      */
 
     const body = req.body || {};
 
-    const userId =
-      cleanString(body.userId);
-
-    const fullName =
-      cleanString(body.fullName);
-
-    const apellidos =
-      cleanString(body.apellidos);
-
-    const phone =
-      cleanString(body.phone);
-
-    const email =
-      cleanString(body.email);
-
-    const pais =
-      cleanString(body.pais);
-
-    const tipoDocumento =
-      cleanString(body.tipoDocumento);
-
-    const documentos =
-      cleanString(body.documentos);
-
-    const preferredOffice =
-      cleanString(body.preferredOffice) ||
-      "+39";
-
-    /*
-     * ============================================================
-     * VALIDACIÓN
-     * ============================================================
+    /**
+     * --------------------------------------------------------
+     * DATOS DEL CLIENTE
+     * --------------------------------------------------------
      */
 
-    if (!fullName) {
-      return res.status(400).json({
-        ok: false,
-        error: "El nombre es obligatorio.",
-      });
+    const clientName = cleanString(
+      body.client_name ??
+        body.clientName ??
+        body.nombre,
+      100
+    );
+
+    const clientSurname = cleanString(
+      body.client_surname ??
+        body.clientSurname ??
+        body.apellidos,
+      150
+    );
+
+    const email = cleanEmail(
+      body.email ??
+        body.gmail
+    );
+
+    const whatsapp = cleanPhone(
+      body.whatsapp ??
+        body.phone ??
+        body.telefono
+    );
+
+    const country = cleanCountry(
+      body.country ??
+        body.pais
+    );
+
+    /**
+     * --------------------------------------------------------
+     * PERSONA / EMPLEADOR
+     * --------------------------------------------------------
+     */
+
+    const employerName = cleanString(
+      body.employer_name ??
+        body.employerName ??
+        body.nombre_empleador ??
+        body.person_name,
+      200
+    );
+
+    const employerCity = cleanString(
+      body.employer_city ??
+        body.employerCity ??
+        body.ciudad_italia ??
+        body.city,
+      120
+    );
+
+    const employerBirthDate = cleanString(
+      body.employer_birth_date ??
+        body.employerBirthDate ??
+        body.fecha_nacimiento_empleador,
+      30
+    );
+
+    /**
+     * --------------------------------------------------------
+     * TIPO DE SERVICIO
+     * --------------------------------------------------------
+     */
+
+    const documentType = cleanDocumentType(
+      body.document_type ??
+        body.documentType ??
+        body.tipo_documento
+    );
+
+    /**
+     * --------------------------------------------------------
+     * SOLO BÚSQUEDA DE PERSONA
+     * --------------------------------------------------------
+     *
+     * true:
+     * El cliente no tiene documento y quiere investigar
+     * solamente a la persona.
+     *
+     * false:
+     * El cliente tiene documento para analizar.
+     * --------------------------------------------------------
+     */
+
+    const searchPersonOnly =
+      body.search_person_only === true ||
+      body.searchPersonOnly === true ||
+      body.search_person_only === "true" ||
+      body.searchPersonOnly === "true";
+
+    /**
+     * --------------------------------------------------------
+     * ARCHIVOS
+     * --------------------------------------------------------
+     *
+     * IMPORTANTE:
+     *
+     * Este endpoint NO recibe ni guarda los archivos.
+     *
+     * Solo recibimos información básica sobre ellos para
+     * conservarla en metadata de Stripe.
+     *
+     * El archivo real se procesará después de confirmar
+     * correctamente el pago.
+     * --------------------------------------------------------
+     */
+
+    let documentCount = 0;
+
+    if (Array.isArray(body.document_files)) {
+      documentCount = body.document_files.length;
+    } else if (Array.isArray(body.documents)) {
+      documentCount = body.documents.length;
+    } else if (Array.isArray(body.files)) {
+      documentCount = body.files.length;
     }
 
-    if (!apellidos) {
+    if (documentCount > MAX_DOCUMENTS) {
       return res.status(400).json({
         ok: false,
         error:
-          "Los apellidos son obligatorios.",
+          `Puedes seleccionar un máximo de ${MAX_DOCUMENTS} documentos.`,
       });
     }
 
-    if (!phone) {
+    /**
+     * ========================================================
+     * VALIDACIONES
+     * ========================================================
+     */
+
+    if (!clientName) {
       return res.status(400).json({
         ok: false,
-        error:
-          "El WhatsApp es obligatorio.",
+        error: "El nombre del cliente es obligatorio.",
+      });
+    }
+
+    if (!clientSurname) {
+      return res.status(400).json({
+        ok: false,
+        error: "Los apellidos del cliente son obligatorios.",
       });
     }
 
     if (!email) {
       return res.status(400).json({
         ok: false,
-        error:
-          "El Gmail/email es obligatorio.",
+        error: "El Gmail es obligatorio.",
       });
     }
 
-    if (!pais) {
+    if (!isValidEmail(email)) {
       return res.status(400).json({
         ok: false,
-        error:
-          "El país es obligatorio.",
+        error: "El Gmail introducido no es válido.",
       });
     }
 
-    if (!tipoDocumento) {
+    if (!whatsapp) {
       return res.status(400).json({
         ok: false,
-        error:
-          "El tipo de documento es obligatorio.",
+        error: "El WhatsApp es obligatorio.",
       });
     }
 
-    /*
-     * IMPORTANTE:
-     *
-     * documentosPaths NO se recibe ni se guarda.
-     *
-     * Los archivos todavía están en IndexedDB
-     * del navegador.
-     *
-     * Solamente recibimos los nombres de los archivos.
+    if (!country) {
+      return res.status(400).json({
+        ok: false,
+        error: "El país es obligatorio.",
+      });
+    }
+
+    /**
+     * El nombre de la persona/empleador es obligatorio
+     * tanto para una búsqueda como para una verificación.
      */
 
-    /*
-     * ============================================================
-     * URLS
-     * ============================================================
+    if (!employerName) {
+      return res.status(400).json({
+        ok: false,
+        error:
+          "El nombre y apellidos de la persona o empleador son obligatorios.",
+      });
+    }
+
+    /**
+     * Si NO es búsqueda solamente de persona,
+     * exigimos tipo de documento.
+     */
+
+    if (!searchPersonOnly && !documentType) {
+      return res.status(400).json({
+        ok: false,
+        error:
+          "Selecciona el tipo de documento que quieres verificar.",
+      });
+    }
+
+    /**
+     * Si el cliente ha seleccionado documento,
+     * debe haber al menos un archivo.
+     *
+     * IMPORTANTE:
+     * No recibimos el PDF aquí.
+     * Solo comprobamos que el frontend indique que existe.
+     */
+
+    if (!searchPersonOnly && documentCount === 0) {
+      return res.status(400).json({
+        ok: false,
+        error:
+          "Debes seleccionar al menos un documento para realizar la verificación.",
+      });
+    }
+
+    /**
+     * ========================================================
+     * URL DE LA WEB
+     * ========================================================
      */
 
     const baseUrl =
-      getBaseUrl(req);
+      process.env.NEXT_PUBLIC_URL ||
+      process.env.NEXT_PUBLIC_SITE_URL ||
+      "https://gestoriacitaia.com";
 
-    const successUrl =
-      `${baseUrl}/verificar-decreto-flussi?success=true&session_id={CHECKOUT_SESSION_ID}`;
+    const normalizedBaseUrl =
+      baseUrl.replace(/\/+$/, "");
 
-    const cancelUrl =
-      `${baseUrl}/verificar-decreto-flussi?canceled=true`;
-
-    /*
-     * ============================================================
+    /**
+     * ========================================================
      * METADATA DE STRIPE
-     * ============================================================
+     * ========================================================
      *
-     * IMPORTANTE:
+     * Stripe limita el tamaño de metadata.
+     * Por eso guardamos solamente datos pequeños.
      *
-     * Stripe permite metadata limitada.
-     * No guardamos documentos ni contenido sensible aquí.
-     *
-     * Solamente identificadores y datos necesarios
-     * para recuperar el proceso después del pago.
-     * ============================================================
+     * El documento NO se mete en metadata.
+     * ========================================================
      */
 
     const metadata: Record<string, string> = {
-      product:
-        "decreto_flussi",
+      product: FLUSSI_PRODUCT,
 
-      service:
-        "verificacion_decreto_flussi",
+      service: "verificacion_decreto_flussi",
 
-      version:
-        "italy-v1",
+      client_name: clientName.slice(0, 100),
 
-      userId:
-        limitMetadata(userId),
+      client_surname:
+        clientSurname.slice(0, 150),
 
-      fullName:
-        limitMetadata(fullName),
+      email: email.slice(0, 300),
 
-      apellidos:
-        limitMetadata(apellidos),
+      whatsapp:
+        whatsapp.slice(0, 40),
 
-      phone:
-        limitMetadata(phone),
+      country:
+        country.slice(0, 100),
 
-      email:
-        limitMetadata(email),
+      employer_name:
+        employerName.slice(0, 200),
 
-      pais:
-        limitMetadata(pais),
+      employer_city:
+        employerCity.slice(0, 120),
 
-      tipoDocumento:
-        limitMetadata(tipoDocumento),
+      employer_birth_date:
+        employerBirthDate.slice(0, 30),
 
-      documentos:
-        limitMetadata(documentos),
+      search_person_only:
+        searchPersonOnly ? "true" : "false",
 
-      preferredOffice:
-        limitMetadata(preferredOffice),
+      document_type:
+        documentType.slice(0, 100),
+
+      document_count:
+        String(documentCount),
     };
 
-    /*
-     * ============================================================
+    /**
+     * ========================================================
      * CREAR CHECKOUT STRIPE
-     * ============================================================
+     * ========================================================
      */
 
     const session =
       await stripe.checkout.sessions.create({
         mode: "payment",
 
-        /*
-         * PRECIO FIJO:
-         *
-         * 21,99 €
-         *
-         * El cliente no puede modificarlo.
+        payment_method_types: [
+          "card",
+        ],
+
+        /**
+         * Email del cliente mostrado por Stripe.
+         */
+
+        customer_email: email,
+
+        /**
+         * Identificador interno.
+         */
+
+        client_reference_id:
+          `FLUSSI-${Date.now()}`,
+
+        /**
+         * Producto.
          */
 
         line_items: [
@@ -292,149 +466,101 @@ export default async function handler(
 
               product_data: {
                 name:
-                  "Verificación de Contrato y Decreto Flussi — Italia",
+                  "Verificación de Contrato y Decreto Flussi",
 
                 description:
-                  "Análisis de contrato, Nulla Osta o documentación relacionada con Decreto Flussi mediante IA y verificación de empresa italiana.",
+                  "Análisis documental, comprobación de datos empresariales y generación de informe de verificación.",
               },
 
               unit_amount:
-                FLUSSI_PRICE,
+                FLUSSI_PRICE_CENTS,
             },
 
             quantity: 1,
           },
         ],
 
-        /*
-         * Email del cliente.
-         */
-        customer_email:
-          email,
-
-        /*
-         * Metadata.
-         */
-        metadata,
-
-        /*
-         * También la ponemos en payment_intent
-         * para conservarla asociada al pago.
-         */
-        payment_intent_data: {
-          metadata,
-          description:
-            "Verificación de Contrato y Decreto Flussi — Italia",
-        },
-
-        /*
+        /**
          * URLs.
-         *
-         * Stripe sustituirá:
-         *
-         * {CHECKOUT_SESSION_ID}
-         *
-         * por el ID real.
          */
 
         success_url:
-          successUrl,
+          `${normalizedBaseUrl}/verificar-decreto-flussi?payment=success&session_id={CHECKOUT_SESSION_ID}`,
 
         cancel_url:
-          cancelUrl,
+          `${normalizedBaseUrl}/verificar-decreto-flussi?payment=cancelled`,
 
-        /*
-         * Idioma de Checkout.
-         *
-         * Stripe mostrará automáticamente
-         * la interfaz apropiada cuando sea posible.
+        /**
+         * Metadata.
          */
 
-        locale: "auto",
+        metadata,
 
-        /*
-         * Permitir códigos promocionales
-         * si en el futuro los necesitamos.
+        /**
+         * Datos adicionales de metadata también en PaymentIntent.
+         * Esto nos permite recuperar la información desde el
+         * webhook aunque posteriormente trabajemos con el
+         * PaymentIntent.
          */
-        allow_promotion_codes: true,
+
+        payment_intent_data: {
+          metadata,
+        },
+
+        /**
+         * Stripe Checkout.
+         */
+
+        billing_address_collection:
+          "auto",
+
+        allow_promotion_codes:
+          false,
+
+        submit_type:
+          "pay",
       });
 
-    /*
-     * ============================================================
-     * COMPROBAR QUE STRIPE DEVOLVIÓ URL
-     * ============================================================
-     */
-
-    if (!session.url) {
-      console.error(
-        "Stripe no devolvió checkout URL:",
-        session.id
-      );
-
-      return res.status(500).json({
-        ok: false,
-        error:
-          "Stripe no devolvió la URL de pago.",
-      });
-    }
-
-    /*
-     * ============================================================
-     * LOG SERVIDOR
-     * ============================================================
-     *
-     * NO imprimimos documentos ni datos sensibles.
+    /**
+     * ========================================================
+     * RESPUESTA
+     * ========================================================
      */
 
     console.log(
-      "✅ FLUSSI CHECKOUT CREATED",
+      "✅ FLUSSI STRIPE CHECKOUT CREATED:",
       {
-        sessionId:
-          session.id,
-
-        userId:
-          userId || null,
-
-        email:
-          email,
-
-        amount:
-          FLUSSI_PRICE,
-
-        currency:
-          FLUSSI_CURRENCY,
-
-        product:
-          "decreto_flussi",
+        sessionId: session.id,
+        email,
+        employerName,
+        documentType,
+        searchPersonOnly,
       }
     );
-
-    /*
-     * ============================================================
-     * RESPUESTA
-     * ============================================================
-     */
 
     return res.status(200).json({
       ok: true,
 
-      url:
-        session.url,
-
       session_id:
         session.id,
 
+      checkout_url:
+        session.url,
+
       amount:
-        FLUSSI_PRICE,
+        FLUSSI_PRICE_CENTS,
 
       currency:
         FLUSSI_CURRENCY,
 
       product:
-        "decreto_flussi",
+        FLUSSI_PRODUCT,
+
+      paid:
+        false,
 
       message:
-        "Checkout Stripe creado correctamente.",
+        "Checkout de Stripe creado correctamente. El pago todavía no está confirmado.",
     });
   } catch (error: any) {
     console.error(
@@ -442,27 +568,11 @@ export default async function handler(
       error
     );
 
-    /*
-     * Errores específicos de Stripe.
-     */
-
-    if (
-      error?.type ===
-      "StripeInvalidRequestError"
-    ) {
-      return res.status(400).json({
-        ok: false,
-        error:
-          error?.message ||
-          "Stripe rechazó los datos del checkout.",
-      });
-    }
-
     return res.status(500).json({
       ok: false,
       error:
         error?.message ||
-        "No se pudo crear el pago con Stripe.",
+        "No se pudo crear el pago de Stripe.",
     });
   }
 }
