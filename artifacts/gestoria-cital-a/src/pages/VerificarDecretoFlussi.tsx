@@ -61,6 +61,10 @@ type ClientFormData = {
   pais: string;
   tipoDocumento: string;
   documentos: string;
+  empleadorNombre: string;
+  empleadorCiudad: string;
+  empleadorFechaNacimiento: string;
+  buscarSoloPersona: boolean;
   documentosUrls: string;
   preferredOffice: string;
 };
@@ -81,6 +85,78 @@ const generateSessionId = () => {
   }
   return sessionId;
 };
+
+// ============================================================
+// PENDING FLUSSI FILES
+// Los documentos se quedan en el navegador hasta que Stripe
+// confirme el pago. Solo después se suben a Supabase Storage.
+// ============================================================
+const FLUSSI_PENDING_DB = "gestoriacitaia-flussi-pending";
+const FLUSSI_PENDING_STORE = "files";
+
+type PendingFlussiFile = {
+  id: string;
+  name: string;
+  type: string;
+  size: number;
+  file: Blob;
+};
+
+function openFlussiDB(): Promise<IDBDatabase> {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(FLUSSI_PENDING_DB, 1);
+    request.onupgradeneeded = () => {
+      const db = request.result;
+      if (!db.objectStoreNames.contains(FLUSSI_PENDING_STORE)) {
+        db.createObjectStore(FLUSSI_PENDING_STORE, { keyPath: "id" });
+      }
+    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error || new Error("No se pudo abrir el almacenamiento local"));
+  });
+}
+
+async function savePendingFlussiFiles(files: File[]): Promise<PendingFlussiFile[]> {
+  const db = await openFlussiDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(FLUSSI_PENDING_STORE, "readwrite");
+    const store = tx.objectStore(FLUSSI_PENDING_STORE);
+    const saved: PendingFlussiFile[] = [];
+    for (const file of files) {
+      const item: PendingFlussiFile = {
+        id: `${Date.now()}_${Math.random().toString(36).slice(2, 10)}`,
+        name: file.name,
+        type: file.type,
+        size: file.size,
+        file,
+      };
+      store.put(item);
+      saved.push(item);
+    }
+    tx.oncomplete = () => { db.close(); resolve(saved); };
+    tx.onerror = () => { db.close(); reject(tx.error || new Error("No se pudieron guardar los documentos")); };
+  });
+}
+
+async function getPendingFlussiFiles(): Promise<PendingFlussiFile[]> {
+  const db = await openFlussiDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(FLUSSI_PENDING_STORE, "readonly");
+    const request = tx.objectStore(FLUSSI_PENDING_STORE).getAll();
+    request.onsuccess = () => { db.close(); resolve(request.result || []); };
+    request.onerror = () => { db.close(); reject(request.error || new Error("No se pudieron recuperar los documentos")); };
+  });
+}
+
+async function clearPendingFlussiFiles(): Promise<void> {
+  const db = await openFlussiDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(FLUSSI_PENDING_STORE, "readwrite");
+    tx.objectStore(FLUSSI_PENDING_STORE).clear();
+    tx.oncomplete = () => { db.close(); resolve(); };
+    tx.onerror = () => { db.close(); reject(tx.error || new Error("No se pudieron limpiar los documentos")); };
+  });
+}
 
 function OfficialBrowserBox({
   language,
@@ -117,7 +193,7 @@ function OfficialBrowserBox({
   ui: any;
   confirmed: boolean;
   formData: ClientFormData;
-  onFormChange: (field: keyof ClientFormData, value: string) => void;
+  onFormChange: (field: keyof ClientFormData, value: string | boolean) => void;
   onFormSubmit: () => void;
   formReady: boolean;
   onPay: () => void;
@@ -147,145 +223,113 @@ function OfficialBrowserBox({
     ? "To verify your employment contract or Decreto Flussi documents, fill in the form and we will send you the report within 24 hours."
     : "Para verificar tu contrato de trabajo o documentos del Decreto Flussi, completa el formulario y te enviaremos el informe en 24 horas.";
 
-  // ✅ Función para subir documentos a Supabase Storage (BUCKET PRIVADO)
-  const uploadDocument = async (file: File, userId: string): Promise<UploadedFile> => {
-    try {
-      // ✅ SOLO PDF
-      if (file.type !== 'application/pdf') {
-        throw new Error('Solo se permiten archivos PDF');
-      }
-
-      // Validar tamaño (máximo 10MB)
-      if (file.size > 10 * 1024 * 1024) {
-        throw new Error('El archivo no puede superar 10MB');
-      }
-
-      // Generar nombre único con carpeta por usuario
-      const fileExt = 'pdf';
-      const timestamp = Date.now();
-      const randomId = Math.random().toString(36).substring(2, 9);
-      const fileName = `${userId}/${timestamp}-${randomId}.${fileExt}`;
-
-      // ✅ Subir a Supabase Storage (bucket privado)
-      const { data, error } = await supabase.storage
-        .from('documentos-flussi-privado')
-        .upload(fileName, file, {
-          cacheControl: '3600',
-          upsert: false,
-          contentType: 'application/pdf',
-        });
-
-      if (error) throw error;
-
-      return {
-        name: file.name,
-        path: fileName,
-        size: file.size,
-        type: file.type,
-      };
-    } catch (error: any) {
-      console.error('Error subiendo documento:', error);
-      throw error;
-    }
-  };
-
-  // ✅ Eliminar documento de Storage
-  const deleteDocument = async (filePath: string) => {
-    try {
-      const { error } = await supabase.storage
-        .from('documentos-flussi-privado')
-        .remove([filePath]);
-
-      if (error) throw error;
-      return true;
-    } catch (error) {
-      console.error('Error eliminando documento:', error);
-      return false;
-    }
-  };
-
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
-    // ✅ Verificar límite de 5 archivos
+    if (formData.buscarSoloPersona) {
+      e.target.value = "";
+      return;
+    }
+
     if (uploadedFiles.length + files.length > MAX_FILES) {
       toast({
         title: isMa ? "❌ خطأ" : isEn ? "❌ Error" : "❌ Error",
-        description: isMa 
-          ? `يمكنك رفع ${MAX_FILES} ملفات كحد أقصى`
-          : isEn 
-          ? `You can upload a maximum of ${MAX_FILES} files`
-          : `Puedes subir un máximo de ${MAX_FILES} archivos`,
+        description: isMa ? `يمكنك رفع ${MAX_FILES} ملفات كحد أقصى` : isEn ? `You can upload a maximum of ${MAX_FILES} files` : `Puedes subir un máximo de ${MAX_FILES} archivos`,
         variant: "destructive",
       });
-      e.target.value = '';
+      e.target.value = "";
       return;
     }
 
     setIsUploading(true);
-    
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const userId = sessionData?.session?.user?.id || generateSessionId();
+      const selectedFiles = Array.from(files);
+      const allowedTypes = new Set([
+        "application/pdf",
+        "image/jpeg",
+        "image/png",
+        "image/webp",
+      ]);
 
-      const uploadPromises = Array.from(files).map(file => 
-        uploadDocument(file, userId)
-      );
-      
-      const uploaded = await Promise.all(uploadPromises);
-      
-      const newUploadedFiles = [...uploadedFiles, ...uploaded];
-      setUploadedFiles(newUploadedFiles);
-      
-      const filePaths = newUploadedFiles.map(f => f.path);
-      const fileNames = newUploadedFiles.map(f => f.name).join(', ');
-      
-      onFormChange("documentos", fileNames);
-      onFormChange("documentosUrls", JSON.stringify(filePaths));
-      
-      if (errorField === "documents") {
-        setErrorField(null);
+      for (const file of selectedFiles) {
+        if (!allowedTypes.has(file.type)) {
+          throw new Error(
+            isMa
+              ? "مسموح غير PDF أو JPG أو PNG أو WEBP"
+              : isEn
+              ? "Only PDF, JPG, PNG or WEBP files are allowed"
+              : "Solo se permiten archivos PDF, JPG, PNG o WEBP"
+          );
+        }
+
+        if (file.size > 10 * 1024 * 1024) {
+          throw new Error(
+            isMa
+              ? `${file.name} كيتجاوز 10MB`
+              : isEn
+              ? `${file.name} exceeds 10MB`
+              : `${file.name} supera los 10MB`
+          );
+        }
       }
-      
+
+      // IMPORTANTE: antes del pago no se usa Supabase Storage.
+      await savePendingFlussiFiles(selectedFiles);
+
+      const newUploadedFiles: UploadedFile[] = [
+        ...uploadedFiles,
+        ...selectedFiles.map((file) => ({ name: file.name, path: "", size: file.size, type: file.type })),
+      ];
+      setUploadedFiles(newUploadedFiles);
+      onFormChange("documentos", newUploadedFiles.map((file) => file.name).join(", "));
+      onFormChange("documentosUrls", "[]");
+      if (errorField === "documents") setErrorField(null);
+
       toast({
-        title: isMa ? "✅ تم رفع الملفات" : isEn ? "✅ Files uploaded" : "✅ Archivos subidos",
-        description: isMa 
-          ? `تم رفع ${uploaded.length} ملف(ات) بنجاح`
-          : isEn 
-          ? `${uploaded.length} file(s) uploaded successfully`
-          : `${uploaded.length} archivo(s) subido(s) correctamente`,
+        title: isMa ? "✅ تم اختيار الملفات" : isEn ? "✅ Files selected" : "✅ Archivos seleccionados",
+        description: isMa ? "الملفات باقين غير فالمتصفح حتى يتأكد الأداء." : isEn ? "Files stay in your browser until payment is confirmed." : "Los archivos permanecen en tu navegador hasta confirmar el pago.",
       });
     } catch (error: any) {
-      toast({
-        title: isMa ? "❌ خطأ في الرفع" : isEn ? "❌ Upload error" : "❌ Error al subir",
-        description: error.message,
-        variant: "destructive",
-      });
+      console.error("Error seleccionando documentos:", error);
+      toast({ title: isMa ? "❌ خطأ" : isEn ? "❌ Error" : "❌ Error", description: error?.message || "No se pudieron seleccionar los documentos", variant: "destructive" });
     } finally {
       setIsUploading(false);
-      e.target.value = '';
+      e.target.value = "";
     }
   };
 
-  // ✅ Eliminar archivo del estado Y del Storage
   const removeFile = async (index: number) => {
-    const fileToRemove = uploadedFiles[index];
-    if (!fileToRemove) return;
-
-    await deleteDocument(fileToRemove.path);
-
-    const newFiles = uploadedFiles.filter((_, i) => i !== index);
-    setUploadedFiles(newFiles);
-    
-    const filePaths = newFiles.map(f => f.path);
-    const fileNames = newFiles.map(f => f.name).join(', ');
-    
-    onFormChange("documentos", fileNames);
-    onFormChange("documentosUrls", JSON.stringify(filePaths));
+    try {
+      const pendingFiles = await getPendingFlussiFiles();
+      const fileToRemove = uploadedFiles[index];
+      if (fileToRemove) {
+        await clearPendingFlussiFiles();
+        const remaining = pendingFiles.filter((file) => file.name !== fileToRemove.name || file.size !== fileToRemove.size);
+        if (remaining.length > 0) {
+          const db = await openFlussiDB();
+          await new Promise<void>((resolve, reject) => {
+            const tx = db.transaction(FLUSSI_PENDING_STORE, "readwrite");
+            const store = tx.objectStore(FLUSSI_PENDING_STORE);
+            for (const file of remaining) store.put(file);
+            tx.oncomplete = () => { db.close(); resolve(); };
+            tx.onerror = () => { db.close(); reject(tx.error); };
+          });
+        }
+      }
+      const newFiles = uploadedFiles.filter((_, i) => i !== index);
+      setUploadedFiles(newFiles);
+      onFormChange("documentos", newFiles.map((file) => file.name).join(", "));
+      onFormChange("documentosUrls", "[]");
+    } catch (error) {
+      console.error("Error eliminando documento pendiente:", error);
+    }
   };
 
   const getFileIcon = (type: string) => {
+    if (type.startsWith("image/")) {
+      return <Image className="w-4 h-4 text-blue-400" />;
+    }
     return <File className="w-4 h-4 text-red-400" />;
   };
 
@@ -732,27 +776,135 @@ function OfficialBrowserBox({
                     )}
                   </div>
 
-                  {/* ✅ SUBIR DOCUMENTOS - SOLO PDF, MÁXIMO 5 */}
+                  {/* 🟢 PERSONA / EMPLEADOR A COMPROBAR */}
+                  <div
+                    ref={el => errorRefs.current["empleadorNombre"] = el}
+                    className="col-span-1 lg:col-span-2 rounded-2xl border-2 border-emerald-500/40 bg-emerald-500/5 p-4 shadow-[0_0_25px_rgba(16,185,129,0.08)]"
+                  >
+                    <div className="flex items-start gap-3 mb-3">
+                      <div className="w-9 h-9 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center shrink-0">
+                        <Shield className="w-5 h-5 text-emerald-400" />
+                      </div>
+                      <div>
+                        <h3 className="text-emerald-400 font-black text-[14px]">
+                          {isMa ? "👤 معلومات المشغّل أو الشخص المراد التحقق منه" : isEn ? "👤 Employer / person to verify" : "👤 Persona / empleador a comprobar"}
+                        </h3>
+                        <p className="text-white/60 text-[11px] leading-relaxed mt-1">
+                          {isMa
+                            ? "دخل الاسم والنسب ديال الشخص. المدينة وتاريخ الازدياد اختياريين."
+                            : isEn
+                            ? "Enter the person's full name. City and date of birth are optional."
+                            : "Introduce el nombre y apellidos de la persona. La ciudad y la fecha de nacimiento son opcionales."}
+                        </p>
+                      </div>
+                    </div>
+
+                    <label className="block text-white text-[12px] mb-2">
+                      {isMa ? "الاسم الكامل" : isEn ? "Full name" : "Nombre y apellidos"}
+                      <span className="text-red-400 ml-1">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.empleadorNombre}
+                      onChange={(e) => handleInputChange("empleadorNombre", e.target.value)}
+                      placeholder={isMa ? "مثال: Mario Rossi" : isEn ? "e.g. Mario Rossi" : "Ej. Mario Rossi"}
+                      className={`w-full h-[52px] rounded-2xl border ${errorField === "empleadorNombre" ? "border-red-500" : "border-emerald-500/25"} bg-[#060b16] px-4 text-[14px] text-white placeholder:text-white/30 focus:outline-none focus:border-emerald-400`}
+                    />
+                    {errorField === "empleadorNombre" && (
+                      <p className="text-red-400 text-xs mt-1">
+                        {isMa ? "الاسم الكامل مطلوب" : isEn ? "Full name is required" : "El nombre y apellidos son obligatorios"}
+                      </p>
+                    )}
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
+                      <div>
+                        <label className="block text-white text-[12px] mb-2">
+                          {isMa ? "المدينة في إيطاليا (اختياري)" : isEn ? "City in Italy (optional)" : "Ciudad en Italia (opcional)"}
+                        </label>
+                        <input
+                          type="text"
+                          value={formData.empleadorCiudad}
+                          onChange={(e) => handleInputChange("empleadorCiudad", e.target.value)}
+                          placeholder={isMa ? "مثال: Roma" : isEn ? "e.g. Rome" : "Ej. Roma"}
+                          className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-[14px] text-white placeholder:text-white/30 focus:outline-none focus:border-emerald-400"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-white text-[12px] mb-2">
+                          {isMa ? "تاريخ الازدياد (اختياري)" : isEn ? "Date of birth (optional)" : "Fecha de nacimiento (opcional)"}
+                        </label>
+                        <input
+                          type="date"
+                          value={formData.empleadorFechaNacimiento}
+                          onChange={(e) => handleInputChange("empleadorFechaNacimiento", e.target.value)}
+                          className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-[14px] text-white focus:outline-none focus:border-emerald-400"
+                        />
+                      </div>
+                    </div>
+
+                    <label className="mt-4 flex items-start gap-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={formData.buscarSoloPersona}
+                        onChange={(e) => {
+                          const checked = e.target.checked;
+                          handleInputChange("buscarSoloPersona", checked);
+                          if (checked) {
+                            // Si ya había documentos subidos, eliminarlos porque esta modalidad no necesita PDF.
+                            if (uploadedFiles.length > 0) {
+                              void clearPendingFlussiFiles();
+                              setUploadedFiles([]);
+                              onFormChange("documentos", "");
+                              onFormChange("documentosUrls", "[]");
+                            }
+                            setErrorField(null);
+                          }
+                        }}
+                        className="mt-1 w-4 h-4 rounded border-white/20 bg-[#060b16] text-emerald-500 focus:ring-emerald-500 focus:ring-offset-0"
+                      />
+                      <span className="text-white/70 text-[12px] leading-relaxed">
+                        {isMa
+                          ? "ما عنديش عقد ولا Nulla Osta. بغيت غير نقلبو على هاد الشخص أو المشغّل في المصادر العمومية المتاحة."
+                          : isEn
+                          ? "I do not have a contract or Nulla Osta. I only want to search for this person/employer using available public sources."
+                          : "No tengo contrato ni Nulla Osta. Solo quiero buscar a esta persona o empleador en las fuentes públicas disponibles."}
+                      </span>
+                    </label>
+                  </div>
+
+                  {/* ✅ SUBIR DOCUMENTOS - SOLO SI HAY DOCUMENTO */}
                   <div 
                     ref={el => errorRefs.current["documents"] = el}
-                    className="col-span-1 lg:col-span-2"
+                    className={`col-span-1 lg:col-span-2 ${formData.buscarSoloPersona ? "opacity-60" : ""}`}
                   >
                     <label className="block text-white text-[13px] mb-2">
-                      {isMa ? "رفع المستندات (PDF)" : isEn ? "Upload documents (PDF)" : "Subir documento(s) (PDF)"}
+                      {formData.buscarSoloPersona
+                        ? (isMa ? "📄 لا حاجة لرفع وثيقة" : isEn ? "📄 No document upload needed" : "📄 No necesitas subir un documento")
+                        : (isMa ? "رفع المستندات (PDF)" : isEn ? "Upload documents (PDF)" : "Subir documento(s) (PDF)")}
                       <span className="text-white/40 text-[11px] ml-2">
                         {isMa ? `(حد أقصى ${MAX_FILES} ملفات)` : isEn ? `(max ${MAX_FILES} files)` : `(máx ${MAX_FILES} archivos)`}
                       </span>
                     </label>
-                    <div className={`relative w-full min-h-[52px] rounded-2xl border-2 border-dashed ${errorField === "documents" ? "border-red-500 bg-red-500/5" : uploadedFiles.length > 0 ? 'border-emerald-500/50 bg-emerald-500/5' : 'border-white/20 bg-[#060b16]'} flex flex-col items-center justify-center hover:border-yellow-400 transition-colors p-3`}>
+                    <div className={`relative w-full min-h-[52px] rounded-2xl border-2 border-dashed ${formData.buscarSoloPersona ? "border-emerald-500/30 bg-emerald-500/5" : errorField === "documents" ? "border-red-500 bg-red-500/5" : uploadedFiles.length > 0 ? 'border-emerald-500/50 bg-emerald-500/5' : 'border-white/20 bg-[#060b16]'} flex flex-col items-center justify-center hover:border-yellow-400 transition-colors p-3`}>
                       <input
                         type="file"
                         multiple
-                        accept=".pdf"
+                        accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp"
                         className="absolute opacity-0 w-full h-full cursor-pointer"
                         onChange={handleFileUpload}
-                        disabled={isUploading || uploadedFiles.length >= MAX_FILES}
+                        disabled={formData.buscarSoloPersona || isUploading || uploadedFiles.length >= MAX_FILES}
                       />
-                      {isUploading ? (
+                      {formData.buscarSoloPersona ? (
+                        <div className="text-center py-2">
+                          <CheckCircle2 className="w-6 h-6 text-emerald-400 mx-auto mb-1" />
+                          <p className="text-emerald-400 text-sm font-medium">
+                            {isMa ? "لا تحتاج ترفع وثيقة" : isEn ? "No document required" : "No necesitas subir un documento"}
+                          </p>
+                          <p className="text-white/40 text-[10px] mt-1">
+                            {isMa ? "غادي نعتمدو على المعلومات ديال الشخص والمصادر العمومية." : isEn ? "We will use the person's information and available public sources." : "Trabajaremos con los datos de la persona y las fuentes públicas disponibles."}
+                          </p>
+                        </div>
+                      ) : isUploading ? (
                         <div className="flex items-center gap-2">
                           <RefreshCw className="w-4 h-4 animate-spin text-yellow-400" />
                           <p className="text-yellow-400 text-sm">
@@ -763,16 +915,16 @@ function OfficialBrowserBox({
                         <div className="text-center">
                           <Upload className="w-6 h-6 text-white/30 mx-auto mb-1" />
                           <p className="text-white/40 text-sm">
-                            {isMa ? "📎 اختر ملفات PDF" : isEn ? "📎 Choose PDF files" : "📎 Seleccionar archivos PDF"}
+                            {isMa ? "📎 اختر PDF أو صورة" : isEn ? "📎 Choose PDF or image" : "📎 Seleccionar PDF o imagen"}
                           </p>
                           <p className="text-white/20 text-[10px] mt-1">
-                            {isMa ? `الحد الأقصى ${MAX_FILES} ملفات · 10MB لكل ملف` : isEn ? `Max ${MAX_FILES} files · 10MB each` : `Máximo ${MAX_FILES} archivos · 10MB cada uno`}
+                            {isMa ? `الحد الأقصى ${MAX_FILES} ملفات · 10MB لكل ملف · PDF/JPG/PNG/WEBP` : isEn ? `Max ${MAX_FILES} files · 10MB each · PDF/JPG/PNG/WEBP` : `Máximo ${MAX_FILES} archivos · 10MB cada uno · PDF/JPG/PNG/WEBP`}
                           </p>
                         </div>
                       ) : (
                         <div className="text-center">
                           <p className="text-emerald-400 text-sm font-medium">
-                            {isMa ? `✅ تم رفع ${uploadedFiles.length}/${MAX_FILES} ملفات` : isEn ? `✅ ${uploadedFiles.length}/${MAX_FILES} files uploaded` : `✅ ${uploadedFiles.length}/${MAX_FILES} archivos subidos`}
+                            {isMa ? `✅ تم اختيار ${uploadedFiles.length}/${MAX_FILES} ملفات` : isEn ? `✅ ${uploadedFiles.length}/${MAX_FILES} files selected` : `✅ ${uploadedFiles.length}/${MAX_FILES} archivos seleccionados`}
                           </p>
                           {uploadedFiles.length < MAX_FILES && (
                             <p className="text-white/30 text-[10px] mt-1">
@@ -785,6 +937,15 @@ function OfficialBrowserBox({
                     {errorField === "documents" && (
                       <p className="text-red-400 text-xs mt-1">
                         {isMa ? "يجب رفع مستند واحد على الأقل" : isEn ? "You must upload at least one document" : "Debes subir al menos un documento"}
+                      </p>
+                    )}
+                    {!formData.buscarSoloPersona && (
+                      <p className="mt-2 text-[10px] leading-relaxed text-white/40">
+                        {isMa
+                          ? "🔒 الملفات كيبقاو غير فالمتصفح حتى يتأكد الأداء. من بعد الأداء فقط كيتحفظو في التخزين الخاص."
+                          : isEn
+                          ? "🔒 Files remain only in your browser until payment is confirmed. They are stored privately only after payment."
+                          : "🔒 Los archivos permanecen solo en tu navegador hasta confirmar el pago. Solo después del pago se guardan en almacenamiento privado."}
                       </p>
                     )}
                     
@@ -1080,6 +1241,10 @@ export default function VerificarDecretoFlussi() {
     pais: "",
     tipoDocumento: "",
     documentos: "",
+    empleadorNombre: "",
+    empleadorCiudad: "",
+    empleadorFechaNacimiento: "",
+    buscarSoloPersona: false,
     documentosUrls: "[]",
     preferredOffice: "+39",
   });
@@ -1089,6 +1254,7 @@ export default function VerificarDecretoFlussi() {
   const errorRefs = useRef<Record<string, HTMLDivElement | null>>({});
   
   const [formReady, setFormReady] = useState(false);
+  const [paymentConfirmed, setPaymentConfirmed] = useState(false);
   
   const [voiceSupported, setVoiceSupported] = useState(true);
   const [isListening, setIsListening] = useState(false);
@@ -1265,6 +1431,10 @@ export default function VerificarDecretoFlussi() {
         (payload) => {
           setVerificationStatus(payload.new.status || 'pending');
           setVerificationProgress(payload.new.progress || 0);
+          if (payload.new.payment_status === 'paid') {
+            setPaymentConfirmed(true);
+            setFormReady(true);
+          }
           
           if (payload.new.status === 'report_ready') {
             setIsReportReady(true);
@@ -1362,6 +1532,7 @@ export default function VerificarDecretoFlussi() {
             .maybeSingle();
             
           if (verificationData?.payment_status === 'paid') {
+            setPaymentConfirmed(true);
             setFormReady(true);
             
             if (verificationData?.report_path) {
@@ -1393,6 +1564,67 @@ export default function VerificarDecretoFlussi() {
       phone: "",
     }));
   }, [profile?.full_name, profile?.phone]);
+
+  // Después de que el servidor confirme payment_status=paid, subimos los PDF
+  // que seguían únicamente en IndexedDB y guardamos sus rutas en verificaciones.
+  useEffect(() => {
+    if (!profile?.id || !paymentConfirmed || formData.buscarSoloPersona) return;
+
+    const uploadPaidFiles = async () => {
+      try {
+        const pending = await getPendingFlussiFiles();
+        if (pending.length === 0) return;
+
+        const uploaded: UploadedFile[] = [];
+        for (const item of pending) {
+          const extension = item.name.includes(".")
+            ? item.name.split(".").pop()?.toLowerCase() || "bin"
+            : item.type === "application/pdf"
+            ? "pdf"
+            : item.type === "image/jpeg"
+            ? "jpg"
+            : item.type === "image/png"
+            ? "png"
+            : item.type === "image/webp"
+            ? "webp"
+            : "bin";
+
+          const fileName = `${profile.id}/${Date.now()}-${Math.random().toString(36).slice(2, 9)}.${extension}`;
+          const file = item.file instanceof File
+            ? item.file
+            : new File([item.file], item.name, { type: item.type || "application/octet-stream" });
+
+          const { error } = await supabase.storage
+            .from("documentos-flussi-privado")
+            .upload(fileName, file, {
+              cacheControl: "3600",
+              upsert: false,
+              contentType: item.type || "application/octet-stream",
+            });
+          if (error) throw error;
+          uploaded.push({ name: item.name, path: fileName, size: item.size, type: item.type || "application/pdf" });
+        }
+
+        const paths = uploaded.map((file) => file.path);
+        const names = uploaded.map((file) => file.name).join(", ");
+        const { error: updateError } = await supabase
+          .from("verificaciones")
+          .update({ documentos: names, documentos_paths: paths })
+          .eq("user_id", profile.id)
+          .eq("payment_status", "paid");
+
+        if (updateError) throw updateError;
+        await clearPendingFlussiFiles();
+        setUploadedFiles(uploaded);
+        onFormChange("documentos", names);
+        onFormChange("documentosUrls", JSON.stringify(paths));
+      } catch (error) {
+        console.error("Error subiendo documentos después del pago:", error);
+      }
+    };
+
+    void uploadPaidFiles();
+  }, [profile?.id, paymentConfirmed, formData.buscarSoloPersona]);
 
   useEffect(() => {
     if (!voiceStorageKey) return;
@@ -1629,19 +1861,25 @@ export default function VerificarDecretoFlussi() {
       return false;
     }
 
-    // 6. Tipo de documento
-    if (!formData.tipoDocumento.trim()) {
+    // 6. Nombre completo del empleador/persona a comprobar
+    if (!formData.empleadorNombre.trim() || formData.empleadorNombre.trim().length < 2) {
+      setErrorField("empleadorNombre");
+      return false;
+    }
+
+    // 7. Tipo de documento: solo es obligatorio si NO se busca únicamente a la persona
+    if (!formData.buscarSoloPersona && !formData.tipoDocumento.trim()) {
       setErrorField("tipoDocumento");
       return false;
     }
 
-    // 7. Documentos subidos
-    if (uploadedFiles.length === 0) {
+    // 8. Documento: obligatorio solo cuando el cliente ha elegido una comprobación documental
+    if (!formData.buscarSoloPersona && uploadedFiles.length === 0) {
       setErrorField("documents");
       return false;
     }
 
-    // 8. Aceptación de términos
+    // 9. Aceptación de términos
     if (!acceptTerms) {
       setErrorField("acceptTerms");
       return false;
@@ -1663,6 +1901,13 @@ export default function VerificarDecretoFlussi() {
   // ✅ Función que llama a Stripe
   const payStripe = async () => {
     try {
+      if (!formData.buscarSoloPersona) {
+        const pendingFiles = await getPendingFlussiFiles();
+        if (pendingFiles.length === 0) {
+          throw new Error(isMa ? "خاصك تختار الوثائق أولا" : isEn ? "Please select your documents first" : "Primero debes seleccionar los documentos");
+        }
+      }
+
       const { data: sessionData } = await supabase.auth.getSession();
       const userId = sessionData?.session?.user?.id || generateSessionId();
 
@@ -1678,10 +1923,15 @@ export default function VerificarDecretoFlussi() {
           phone: formData.phone,
           email: formData.email,
           pais: formData.pais,
-          tipoDocumento: formData.tipoDocumento,
+          tipoDocumento: formData.tipoDocumento || null,
           documentos: formData.documentos,
-          documentosPaths: formData.documentosUrls,
+          // Nunca enviamos rutas de Supabase antes de confirmar el pago.
+          documentosPaths: "[]",
           preferredOffice: formData.preferredOffice,
+          empleadorNombre: formData.empleadorNombre,
+          empleadorCiudad: formData.empleadorCiudad || null,
+          empleadorFechaNacimiento: formData.empleadorFechaNacimiento || null,
+          buscarSoloPersona: formData.buscarSoloPersona,
         }),
       });
 
@@ -1701,7 +1951,7 @@ export default function VerificarDecretoFlussi() {
     }
   };
 
-  const handleFormChange = (field: keyof ClientFormData, value: string) => {
+  const handleFormChange = (field: keyof ClientFormData, value: string | boolean) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
