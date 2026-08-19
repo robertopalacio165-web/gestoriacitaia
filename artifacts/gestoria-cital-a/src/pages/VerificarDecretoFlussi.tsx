@@ -223,14 +223,12 @@ function OfficialBrowserBox({
     ? "To verify your employment contract or Decreto Flussi documents, fill in the form and we will send you the report within 24 hours."
     : "Para verificar tu contrato de trabajo o documentos del Decreto Flussi, completa el formulario y te enviaremos el informe en 24 horas.";
 
+  // ✅ handleFileUpload - ELIMINADO el return cuando buscarSoloPersona es true
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
-    if (formData.buscarSoloPersona) {
-      e.target.value = "";
-      return;
-    }
+    // ❌ ELIMINADO: if (formData.buscarSoloPersona) { e.target.value = ""; return; }
 
     if (uploadedFiles.length + files.length > MAX_FILES) {
       toast({
@@ -689,7 +687,7 @@ function OfficialBrowserBox({
                     )}
                   </div>
 
-                  {/* 🔥 TIPO DE DOCUMENTO - SOLO 3 OPCIONES (REEMPLAZADO) */}
+                  {/* 🔥 TIPO DE DOCUMENTO - SOLO 3 OPCIONES */}
                   <div 
                     ref={el => errorRefs.current["tipoDocumento"] = el}
                     className="col-span-1 lg:col-span-2"
@@ -776,10 +774,114 @@ function OfficialBrowserBox({
                     )}
                   </div>
 
-                  {/* 🟢 PERSONA / EMPLEADOR A COMPROBAR */}
+                  {/* ============================================================
+                      📎 SUBIR DOCUMENTO - AHORA FUERA DEL BLOQUE DEL EMPLEADOR
+                      ============================================================ */}
+                  <div 
+                    ref={el => errorRefs.current["documents"] = el}
+                    className="col-span-1 lg:col-span-2"
+                  >
+                    <label className="block text-white text-[13px] mb-2">
+                      {formData.buscarSoloPersona
+                        ? (isMa ? "📄 وثيقة اختيارية" : isEn ? "📄 Optional document" : "📄 Documento opcional")
+                        : (isMa ? "رفع المستندات" : isEn ? "Upload documents" : "Subir documento(s)")}
+                      <span className="text-white/40 text-[11px] ml-2">
+                        {isMa ? `(حد أقصى ${MAX_FILES} ملفات)` : isEn ? `(max ${MAX_FILES} files)` : `(máx ${MAX_FILES} archivos)`}
+                      </span>
+                    </label>
+
+                    {formData.buscarSoloPersona && (
+                      <div className="mb-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-2">
+                        <p className="text-emerald-400 text-sm font-medium flex items-center gap-2">
+                          <CheckCircle2 className="w-4 h-4" />
+                          {isMa 
+                            ? "🟢 الوثيقة اختيارية - يمكنك رفع أي وثيقة لديك، وإذا لم ترفع شيئاً، سنبحث باستخدام الاسم والبيانات المتاحة." 
+                            : isEn 
+                            ? "🟢 Document is optional - you can upload any document you have. If you don't upload anything, we will search using the name and available data." 
+                            : "🟢 Documento opcional - puedes subir cualquier documento que tengas. Si no subes nada, realizaremos la búsqueda utilizando el nombre y los datos disponibles."}
+                        </p>
+                      </div>
+                    )}
+
+                    <div className={`relative w-full min-h-[52px] rounded-2xl border-2 border-dashed ${formData.buscarSoloPersona ? "border-emerald-500/30 bg-emerald-500/5" : errorField === "documents" ? "border-red-500 bg-red-500/5" : uploadedFiles.length > 0 ? 'border-emerald-500/50 bg-emerald-500/5' : 'border-white/20 bg-[#060b16]'} flex flex-col items-center justify-center hover:border-yellow-400 transition-colors p-3`}>
+                      <input
+                        type="file"
+                        multiple
+                        accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp"
+                        className="absolute opacity-0 w-full h-full cursor-pointer"
+                        onChange={handleFileUpload}
+                        disabled={isUploading || uploadedFiles.length >= MAX_FILES}
+                      />
+                      {isUploading ? (
+                        <div className="flex items-center gap-2">
+                          <RefreshCw className="w-4 h-4 animate-spin text-yellow-400" />
+                          <p className="text-yellow-400 text-sm">
+                            {isMa ? "جاري الرفع..." : isEn ? "Uploading..." : "Subiendo..."}
+                          </p>
+                        </div>
+                      ) : uploadedFiles.length === 0 ? (
+                        <div className="text-center">
+                          <Upload className="w-6 h-6 text-white/30 mx-auto mb-1" />
+                          <p className="text-white/40 text-sm">
+                            {isMa ? "📎 اختر PDF أو صورة" : isEn ? "📎 Choose PDF or image" : "📎 Seleccionar PDF o imagen"}
+                          </p>
+                          <p className="text-white/20 text-[10px] mt-1">
+                            {isMa ? `الحد الأقصى ${MAX_FILES} ملفات · 10MB لكل ملف · PDF/JPG/PNG/WEBP` : isEn ? `Max ${MAX_FILES} files · 10MB each · PDF/JPG/PNG/WEBP` : `Máximo ${MAX_FILES} archivos · 10MB cada uno · PDF/JPG/PNG/WEBP`}
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="text-center">
+                          <p className="text-emerald-400 text-sm font-medium">
+                            {isMa ? `✅ تم اختيار ${uploadedFiles.length}/${MAX_FILES} ملفات` : isEn ? `✅ ${uploadedFiles.length}/${MAX_FILES} files selected` : `✅ ${uploadedFiles.length}/${MAX_FILES} archivos seleccionados`}
+                          </p>
+                          {uploadedFiles.length < MAX_FILES && (
+                            <p className="text-white/30 text-[10px] mt-1">
+                              {isMa ? "📎 أضف المزيد (اختر ملفات إضافية)" : isEn ? "📎 Add more (select additional files)" : "📎 Añadir más (selecciona archivos adicionales)"}
+                            </p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                    {errorField === "documents" && (
+                      <p className="text-red-400 text-xs mt-1">
+                        {isMa ? "يجب رفع مستند واحد على الأقل" : isEn ? "You must upload at least one document" : "Debes subir al menos un documento"}
+                      </p>
+                    )}
+                    
+                    <p className="mt-2 text-[10px] leading-relaxed text-white/40">
+                      {isMa
+                        ? "🔒 الملفات كيبقاو غير فالمتصفح حتى يتأكد الأداء. من بعد الأداء فقط كيتحفظو في التخزين الخاص."
+                        : isEn
+                        ? "🔒 Files remain only in your browser until payment is confirmed. They are stored privately only after payment."
+                        : "🔒 Los archivos permanecen solo en tu navegador hasta confirmar el pago. Solo después del pago se guardan en almacenamiento privado."}
+                    </p>
+                    
+                    {/* Lista de archivos subidos */}
+                    {uploadedFiles.length > 0 && (
+                      <div className="mt-2 space-y-1">
+                        {uploadedFiles.map((file, index) => (
+                          <div key={index} className="flex items-center gap-2 bg-white/5 rounded-lg px-3 py-2 border border-white/10">
+                            {getFileIcon(file.type)}
+                            <span className="text-white/80 text-xs flex-1 truncate">{file.name}</span>
+                            <span className="text-white/30 text-[10px]">{(file.size / 1024).toFixed(0)}KB</span>
+                            <button
+                              onClick={() => removeFile(index)}
+                              className="text-white/30 hover:text-red-400 transition-colors"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* ============================================================
+                      👤 INFORMACIÓN DEL EMPLEADOR - AHORA DESPUÉS DEL UPLOADER
+                      ============================================================ */}
                   <div
                     ref={el => errorRefs.current["empleadorNombre"] = el}
-                    className="col-span-1 lg:col-span-2 rounded-2xl border-2 border-emerald-500/40 bg-emerald-500/5 p-4 shadow-[0_0_25px_rgba(16,185,129,0.08)]"
+                    className="col-span-1 lg:col-span-2 mt-1 rounded-2xl border-2 border-emerald-500/40 bg-emerald-500/5 p-4 shadow-[0_0_25px_rgba(16,185,129,0.08)]"
                   >
                     <div className="flex items-start gap-3 mb-3">
                       <div className="w-9 h-9 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center shrink-0">
@@ -842,6 +944,7 @@ function OfficialBrowserBox({
                       </div>
                     </div>
 
+                    {/* ✅ CHECKBOX "No tengo contrato ni Nulla Osta" - SIN BORRAR DOCUMENTOS */}
                     <label className="mt-4 flex items-start gap-3 cursor-pointer">
                       <input
                         type="checkbox"
@@ -849,14 +952,11 @@ function OfficialBrowserBox({
                         onChange={(e) => {
                           const checked = e.target.checked;
                           handleInputChange("buscarSoloPersona", checked);
+                          // ❌ ELIMINADO: No borramos documentos cuando se marca
+                          // if (checked) {
+                          //   if (uploadedFiles.length > 0) { ... }
+                          // }
                           if (checked) {
-                            // Si ya había documentos subidos, eliminarlos porque esta modalidad no necesita PDF.
-                            if (uploadedFiles.length > 0) {
-                              void clearPendingFlussiFiles();
-                              setUploadedFiles([]);
-                              onFormChange("documentos", "");
-                              onFormChange("documentosUrls", "[]");
-                            }
                             setErrorField(null);
                           }
                         }}
@@ -870,103 +970,6 @@ function OfficialBrowserBox({
                           : "No tengo contrato ni Nulla Osta. Solo quiero buscar a esta persona o empleador en las fuentes públicas disponibles."}
                       </span>
                     </label>
-                  </div>
-
-                  {/* ✅ SUBIR DOCUMENTOS - SOLO SI HAY DOCUMENTO */}
-                  <div 
-                    ref={el => errorRefs.current["documents"] = el}
-                    className={`col-span-1 lg:col-span-2 ${formData.buscarSoloPersona ? "opacity-60" : ""}`}
-                  >
-                    <label className="block text-white text-[13px] mb-2">
-                      {formData.buscarSoloPersona
-                        ? (isMa ? "📄 لا حاجة لرفع وثيقة" : isEn ? "📄 No document upload needed" : "📄 No necesitas subir un documento")
-                        : (isMa ? "رفع المستندات (PDF)" : isEn ? "Upload documents (PDF)" : "Subir documento(s) (PDF)")}
-                      <span className="text-white/40 text-[11px] ml-2">
-                        {isMa ? `(حد أقصى ${MAX_FILES} ملفات)` : isEn ? `(max ${MAX_FILES} files)` : `(máx ${MAX_FILES} archivos)`}
-                      </span>
-                    </label>
-                    <div className={`relative w-full min-h-[52px] rounded-2xl border-2 border-dashed ${formData.buscarSoloPersona ? "border-emerald-500/30 bg-emerald-500/5" : errorField === "documents" ? "border-red-500 bg-red-500/5" : uploadedFiles.length > 0 ? 'border-emerald-500/50 bg-emerald-500/5' : 'border-white/20 bg-[#060b16]'} flex flex-col items-center justify-center hover:border-yellow-400 transition-colors p-3`}>
-                      <input
-                        type="file"
-                        multiple
-                        accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp"
-                        className="absolute opacity-0 w-full h-full cursor-pointer"
-                        onChange={handleFileUpload}
-                        disabled={formData.buscarSoloPersona || isUploading || uploadedFiles.length >= MAX_FILES}
-                      />
-                      {formData.buscarSoloPersona ? (
-                        <div className="text-center py-2">
-                          <CheckCircle2 className="w-6 h-6 text-emerald-400 mx-auto mb-1" />
-                          <p className="text-emerald-400 text-sm font-medium">
-                            {isMa ? "لا تحتاج ترفع وثيقة" : isEn ? "No document required" : "No necesitas subir un documento"}
-                          </p>
-                          <p className="text-white/40 text-[10px] mt-1">
-                            {isMa ? "غادي نعتمدو على المعلومات ديال الشخص والمصادر العمومية." : isEn ? "We will use the person's information and available public sources." : "Trabajaremos con los datos de la persona y las fuentes públicas disponibles."}
-                          </p>
-                        </div>
-                      ) : isUploading ? (
-                        <div className="flex items-center gap-2">
-                          <RefreshCw className="w-4 h-4 animate-spin text-yellow-400" />
-                          <p className="text-yellow-400 text-sm">
-                            {isMa ? "جاري الرفع..." : isEn ? "Uploading..." : "Subiendo..."}
-                          </p>
-                        </div>
-                      ) : uploadedFiles.length === 0 ? (
-                        <div className="text-center">
-                          <Upload className="w-6 h-6 text-white/30 mx-auto mb-1" />
-                          <p className="text-white/40 text-sm">
-                            {isMa ? "📎 اختر PDF أو صورة" : isEn ? "📎 Choose PDF or image" : "📎 Seleccionar PDF o imagen"}
-                          </p>
-                          <p className="text-white/20 text-[10px] mt-1">
-                            {isMa ? `الحد الأقصى ${MAX_FILES} ملفات · 10MB لكل ملف · PDF/JPG/PNG/WEBP` : isEn ? `Max ${MAX_FILES} files · 10MB each · PDF/JPG/PNG/WEBP` : `Máximo ${MAX_FILES} archivos · 10MB cada uno · PDF/JPG/PNG/WEBP`}
-                          </p>
-                        </div>
-                      ) : (
-                        <div className="text-center">
-                          <p className="text-emerald-400 text-sm font-medium">
-                            {isMa ? `✅ تم اختيار ${uploadedFiles.length}/${MAX_FILES} ملفات` : isEn ? `✅ ${uploadedFiles.length}/${MAX_FILES} files selected` : `✅ ${uploadedFiles.length}/${MAX_FILES} archivos seleccionados`}
-                          </p>
-                          {uploadedFiles.length < MAX_FILES && (
-                            <p className="text-white/30 text-[10px] mt-1">
-                              {isMa ? "📎 أضف المزيد (اختر ملفات إضافية)" : isEn ? "📎 Add more (select additional files)" : "📎 Añadir más (selecciona archivos adicionales)"}
-                            </p>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                    {errorField === "documents" && (
-                      <p className="text-red-400 text-xs mt-1">
-                        {isMa ? "يجب رفع مستند واحد على الأقل" : isEn ? "You must upload at least one document" : "Debes subir al menos un documento"}
-                      </p>
-                    )}
-                    {!formData.buscarSoloPersona && (
-                      <p className="mt-2 text-[10px] leading-relaxed text-white/40">
-                        {isMa
-                          ? "🔒 الملفات كيبقاو غير فالمتصفح حتى يتأكد الأداء. من بعد الأداء فقط كيتحفظو في التخزين الخاص."
-                          : isEn
-                          ? "🔒 Files remain only in your browser until payment is confirmed. They are stored privately only after payment."
-                          : "🔒 Los archivos permanecen solo en tu navegador hasta confirmar el pago. Solo después del pago se guardan en almacenamiento privado."}
-                      </p>
-                    )}
-                    
-                    {/* Lista de archivos subidos */}
-                    {uploadedFiles.length > 0 && (
-                      <div className="mt-2 space-y-1">
-                        {uploadedFiles.map((file, index) => (
-                          <div key={index} className="flex items-center gap-2 bg-white/5 rounded-lg px-3 py-2 border border-white/10">
-                            {getFileIcon(file.type)}
-                            <span className="text-white/80 text-xs flex-1 truncate">{file.name}</span>
-                            <span className="text-white/30 text-[10px]">{(file.size / 1024).toFixed(0)}KB</span>
-                            <button
-                              onClick={() => removeFile(index)}
-                              className="text-white/30 hover:text-red-400 transition-colors"
-                            >
-                              <X className="w-3 h-3" />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
                   </div>
 
                   {/* Caja de pago con Checkbox */}
@@ -1983,14 +1986,11 @@ export default function VerificarDecretoFlussi() {
               style={{ height: "280px" }}
             >
               <div className="relative w-full h-full">
-               <img
-  src="/images/sara.png"
-  alt="Sara"
-  className="w-full h-full object-cover object-top"
-/>
-
-               
-          
+                <img
+                  src="/images/sara.png"
+                  alt="Sara"
+                  className="w-full h-full object-cover object-top"
+                />
               </div>
 
               {!muted && (
