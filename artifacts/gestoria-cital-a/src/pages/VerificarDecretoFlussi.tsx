@@ -774,107 +774,157 @@ function OfficialBrowserBox({
                     )}
                   </div>
 
-                  {/* ============================================================
-                      📎 SUBIR DOCUMENTO - AHORA FUERA DEL BLOQUE DEL EMPLEADOR
-                      ============================================================ */}
-                  <div 
-                    ref={el => errorRefs.current["documents"] = el}
-                    className="col-span-1 lg:col-span-2"
-                  >
-                    <label className="block text-white text-[13px] mb-2">
-                      {formData.buscarSoloPersona
-                        ? (isMa ? "📄 وثيقة اختيارية" : isEn ? "📄 Optional document" : "📄 Documento opcional")
-                        : (isMa ? "رفع المستندات" : isEn ? "Upload documents" : "Subir documento(s)")}
-                      <span className="text-white/40 text-[11px] ml-2">
-                        {isMa ? `(حد أقصى ${MAX_FILES} ملفات)` : isEn ? `(max ${MAX_FILES} files)` : `(máx ${MAX_FILES} archivos)`}
-                      </span>
-                    </label>
+              {/* ============================================================
+    📎 SUBIR DOCUMENTOS
+    SOLO SI NO ESTÁ EN MODO "SOLO NOMBRE"
+    ============================================================ */}
 
-                    {formData.buscarSoloPersona && (
-                      <div className="mb-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-2">
-                        <p className="text-emerald-400 text-sm font-medium flex items-center gap-2">
-                          <CheckCircle2 className="w-4 h-4" />
-                          {isMa 
-                            ? "🟢 الوثيقة اختيارية - يمكنك رفع أي وثيقة لديك، وإذا لم ترفع شيئاً، سنبحث باستخدام الاسم والبيانات المتاحة." 
-                            : isEn 
-                            ? "🟢 Document is optional - you can upload any document you have. If you don't upload anything, we will search using the name and available data." 
-                            : "🟢 Documento opcional - puedes subir cualquier documento que tengas. Si no subes nada, realizaremos la búsqueda utilizando el nombre y los datos disponibles."}
-                        </p>
-                      </div>
-                    )}
+{!formData.buscarSoloPersona && (
+  <div
+    ref={el => errorRefs.current["documents"] = el}
+    className="col-span-1 lg:col-span-2"
+  >
+    <label className="block text-white text-[13px] mb-2">
+      {isMa
+        ? "رفع المستندات"
+        : isEn
+        ? "Upload documents"
+        : "Subir documento(s)"}
 
-                    <div className={`relative w-full min-h-[52px] rounded-2xl border-2 border-dashed ${formData.buscarSoloPersona ? "border-emerald-500/30 bg-emerald-500/5" : errorField === "documents" ? "border-red-500 bg-red-500/5" : uploadedFiles.length > 0 ? 'border-emerald-500/50 bg-emerald-500/5' : 'border-white/20 bg-[#060b16]'} flex flex-col items-center justify-center hover:border-yellow-400 transition-colors p-3`}>
-                      <input
-                        type="file"
-                        multiple
-                        accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp"
-                        className="absolute opacity-0 w-full h-full cursor-pointer"
-                        onChange={handleFileUpload}
-                        disabled={isUploading || uploadedFiles.length >= MAX_FILES}
-                      />
-                      {isUploading ? (
-                        <div className="flex items-center gap-2">
-                          <RefreshCw className="w-4 h-4 animate-spin text-yellow-400" />
-                          <p className="text-yellow-400 text-sm">
-                            {isMa ? "جاري الرفع..." : isEn ? "Uploading..." : "Subiendo..."}
-                          </p>
-                        </div>
-                      ) : uploadedFiles.length === 0 ? (
-                        <div className="text-center">
-                          <Upload className="w-6 h-6 text-white/30 mx-auto mb-1" />
-                          <p className="text-white/40 text-sm">
-                            {isMa ? "📎 اختر PDF أو صورة" : isEn ? "📎 Choose PDF or image" : "📎 Seleccionar PDF o imagen"}
-                          </p>
-                          <p className="text-white/20 text-[10px] mt-1">
-                            {isMa ? `الحد الأقصى ${MAX_FILES} ملفات · 10MB لكل ملف · PDF/JPG/PNG/WEBP` : isEn ? `Max ${MAX_FILES} files · 10MB each · PDF/JPG/PNG/WEBP` : `Máximo ${MAX_FILES} archivos · 10MB cada uno · PDF/JPG/PNG/WEBP`}
-                          </p>
-                        </div>
-                      ) : (
-                        <div className="text-center">
-                          <p className="text-emerald-400 text-sm font-medium">
-                            {isMa ? `✅ تم اختيار ${uploadedFiles.length}/${MAX_FILES} ملفات` : isEn ? `✅ ${uploadedFiles.length}/${MAX_FILES} files selected` : `✅ ${uploadedFiles.length}/${MAX_FILES} archivos seleccionados`}
-                          </p>
-                          {uploadedFiles.length < MAX_FILES && (
-                            <p className="text-white/30 text-[10px] mt-1">
-                              {isMa ? "📎 أضف المزيد (اختر ملفات إضافية)" : isEn ? "📎 Add more (select additional files)" : "📎 Añadir más (selecciona archivos adicionales)"}
-                            </p>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                    {errorField === "documents" && (
-                      <p className="text-red-400 text-xs mt-1">
-                        {isMa ? "يجب رفع مستند واحد على الأقل" : isEn ? "You must upload at least one document" : "Debes subir al menos un documento"}
-                      </p>
-                    )}
-                    
-                    <p className="mt-2 text-[10px] leading-relaxed text-white/40">
-                      {isMa
-                        ? "🔒 الملفات كيبقاو غير فالمتصفح حتى يتأكد الأداء. من بعد الأداء فقط كيتحفظو في التخزين الخاص."
-                        : isEn
-                        ? "🔒 Files remain only in your browser until payment is confirmed. They are stored privately only after payment."
-                        : "🔒 Los archivos permanecen solo en tu navegador hasta confirmar el pago. Solo después del pago se guardan en almacenamiento privado."}
-                    </p>
-                    
-                    {/* Lista de archivos subidos */}
-                    {uploadedFiles.length > 0 && (
-                      <div className="mt-2 space-y-1">
-                        {uploadedFiles.map((file, index) => (
-                          <div key={index} className="flex items-center gap-2 bg-white/5 rounded-lg px-3 py-2 border border-white/10">
-                            {getFileIcon(file.type)}
-                            <span className="text-white/80 text-xs flex-1 truncate">{file.name}</span>
-                            <span className="text-white/30 text-[10px]">{(file.size / 1024).toFixed(0)}KB</span>
-                            <button
-                              onClick={() => removeFile(index)}
-                              className="text-white/30 hover:text-red-400 transition-colors"
-                            >
-                              <X className="w-3 h-3" />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
+      <span className="text-white/40 text-[11px] ml-2">
+        {isMa
+          ? `(حد أقصى ${MAX_FILES} ملفات)`
+          : isEn
+          ? `(max ${MAX_FILES} files)`
+          : `(máx ${MAX_FILES} archivos)`}
+      </span>
+    </label>
+
+    <div
+      className={`relative w-full min-h-[52px] rounded-2xl border-2 border-dashed ${
+        errorField === "documents"
+          ? "border-red-500 bg-red-500/5"
+          : uploadedFiles.length > 0
+          ? "border-emerald-500/50 bg-emerald-500/5"
+          : "border-white/20 bg-[#060b16]"
+      } flex flex-col items-center justify-center hover:border-yellow-400 transition-colors p-3`}
+    >
+      <input
+        type="file"
+        multiple
+        accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp"
+        className="absolute opacity-0 w-full h-full cursor-pointer"
+        onChange={handleFileUpload}
+        disabled={
+          isUploading ||
+          uploadedFiles.length >= MAX_FILES ||
+          formData.buscarSoloPersona
+        }
+      />
+
+      {isUploading ? (
+        <div className="flex items-center gap-2">
+          <RefreshCw className="w-4 h-4 animate-spin text-yellow-400" />
+
+          <p className="text-yellow-400 text-sm">
+            {isMa
+              ? "جاري الرفع..."
+              : isEn
+              ? "Uploading..."
+              : "Subiendo..."}
+          </p>
+        </div>
+      ) : uploadedFiles.length === 0 ? (
+        <div className="text-center">
+          <Upload className="w-6 h-6 text-white/30 mx-auto mb-1" />
+
+          <p className="text-white/40 text-sm">
+            {isMa
+              ? "📎 اختر PDF أو صورة"
+              : isEn
+              ? "📎 Choose PDF or image"
+              : "📎 Seleccionar PDF o imagen"}
+          </p>
+
+          <p className="text-white/20 text-[10px] mt-1">
+            {isMa
+              ? `الحد الأقصى ${MAX_FILES} ملفات · 10MB لكل ملف · PDF/JPG/PNG/WEBP`
+              : isEn
+              ? `Max ${MAX_FILES} files · 10MB each · PDF/JPG/PNG/WEBP`
+              : `Máximo ${MAX_FILES} archivos · 10MB cada uno · PDF/JPG/PNG/WEBP`}
+          </p>
+        </div>
+      ) : (
+        <div className="text-center">
+          <p className="text-emerald-400 text-sm font-medium">
+            {isMa
+              ? `✅ تم اختيار ${uploadedFiles.length}/${MAX_FILES} ملفات`
+              : isEn
+              ? `✅ ${uploadedFiles.length}/${MAX_FILES} files selected`
+              : `✅ ${uploadedFiles.length}/${MAX_FILES} archivos seleccionados`}
+          </p>
+
+          {uploadedFiles.length < MAX_FILES && (
+            <p className="text-white/30 text-[10px] mt-1">
+              {isMa
+                ? "📎 أضف المزيد"
+                : isEn
+                ? "📎 Add more"
+                : "📎 Añadir más"}
+            </p>
+          )}
+        </div>
+      )}
+    </div>
+
+    {errorField === "documents" && (
+      <p className="text-red-400 text-xs mt-1">
+        {isMa
+          ? "يجب رفع مستند واحد على الأقل"
+          : isEn
+          ? "You must upload at least one document"
+          : "Debes subir al menos un documento"}
+      </p>
+    )}
+
+    <p className="mt-2 text-[10px] leading-relaxed text-white/40">
+      {isMa
+        ? "🔒 الملفات كيبقاو غير فالمتصفح حتى يتأكد الأداء."
+        : isEn
+        ? "🔒 Files remain only in your browser until payment is confirmed."
+        : "🔒 Los archivos permanecen solo en el navegador hasta confirmar el pago."}
+    </p>
+
+    {uploadedFiles.length > 0 && (
+      <div className="mt-2 space-y-1">
+        {uploadedFiles.map((file, index) => (
+          <div
+            key={index}
+            className="flex items-center gap-2 bg-white/5 rounded-lg px-3 py-2 border border-white/10"
+          >
+            {getFileIcon(file.type)}
+
+            <span className="text-white/80 text-xs flex-1 truncate">
+              {file.name}
+            </span>
+
+            <span className="text-white/30 text-[10px]">
+              {(file.size / 1024).toFixed(0)}KB
+            </span>
+
+            <button
+              type="button"
+              onClick={() => removeFile(index)}
+              className="text-white/30 hover:text-red-400 transition-colors"
+            >
+              <X className="w-3 h-3" />
+            </button>
+          </div>
+        ))}
+      </div>
+    )}
+  </div>
+)}
 
                   {/* ============================================================
                       👤 INFORMACIÓN DEL EMPLEADOR - AHORA DESPUÉS DEL UPLOADER
@@ -957,8 +1007,19 @@ function OfficialBrowserBox({
                           //   if (uploadedFiles.length > 0) { ... }
                           // }
                           if (checked) {
-                            setErrorField(null);
-                          }
+  setErrorField(null);
+
+  // Modo SOLO NOMBRE:
+  // borrar documentos seleccionados de esta sesión
+  setUploadedFiles([]);
+
+  // Limpiar nombres/rutas de documentos
+  handleInputChange("documentos", "");
+  handleInputChange("documentosUrls", "[]");
+
+  // Limpiar archivos guardados temporalmente en IndexedDB
+  void clearPendingFlussiFiles();
+}
                         }}
                         className="mt-1 w-4 h-4 rounded border-white/20 bg-[#060b16] text-emerald-500 focus:ring-emerald-500 focus:ring-offset-0"
                       />
