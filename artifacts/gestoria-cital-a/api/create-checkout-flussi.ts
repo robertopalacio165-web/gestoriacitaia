@@ -614,33 +614,32 @@ export default async function handler(
      */
 
     return res.status(200).json({
-      ok: true,
+  ok: true,
 
-      session_id:
-        session.id,
+  session_id: session.id,
 
-      checkout_url:
-        session.url,
+  // Compatibilidad con el frontend
+  checkout_url: session.url,
+  checkoutUrl: session.url,
+  url: session.url,
 
-      reference,
+  reference,
 
-      amount:
-        FLUSSI_PRICE_CENTS,
+  amount: FLUSSI_PRICE_CENTS,
 
-      currency:
-        FLUSSI_CURRENCY,
+  currency: FLUSSI_CURRENCY,
 
-      product:
-        FLUSSI_PRODUCT,
+  product: FLUSSI_PRODUCT,
 
-      paid:
-        false,
+  paid: false,
 
-      searchPersonOnly,
+  searchPersonOnly,
 
-      message:
-        "Checkout de Stripe creado correctamente. El pago todavía no está confirmado.",
-    });
+  message:
+    "Checkout de Stripe creado correctamente. El pago todavía no está confirmado.",
+});
+
+   
 
   } catch (error: any) {
 
