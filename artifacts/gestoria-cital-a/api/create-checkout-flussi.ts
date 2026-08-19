@@ -7,26 +7,27 @@ import Stripe from "stripe";
  * DECRETO FLUSSI - CREATE STRIPE CHECKOUT
  * ============================================================
  *
+ * FLUJO:
+ *
+ * FORMULARIO
+ *    ↓
+ * ARCHIVOS TEMPORALES (si existen)
+ *    ↓
+ * STRIPE CHECKOUT
+ *    ↓
+ * PAGO CONFIRMADO
+ *    ↓
+ * WEBHOOK
+ *    ↓
+ * SUPABASE
+ *
  * IMPORTANTE:
- *
- * - Este endpoint SOLO crea el Checkout de Stripe.
- * - NO guarda documentos en Supabase.
- * - NO guarda datos del cliente en Supabase.
- * - NO confía en el navegador para confirmar el pago.
- * - La confirmación real se hará posteriormente mediante Stripe.
- *
- * Precio:
- * 21,99 EUR
+ * Este endpoint NO guarda datos en Supabase.
+ * La confirmación real del pago se hará mediante Stripe Webhook.
  * ============================================================
  */
 
 const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
-
-if (!stripeSecretKey) {
-  console.warn(
-    "⚠️ STRIPE_SECRET_KEY no está configurada."
-  );
-}
 
 const stripe = stripeSecretKey
   ? new Stripe(stripeSecretKey)
@@ -38,7 +39,15 @@ const stripe = stripeSecretKey
  * ============================================================
  */
 
-const FLUSSI_PRICE = 1; // 0,01 €
+/**
+ * PRUEBA:
+ * 1 = 0,01 €
+ *
+ * Cuando termines las pruebas:
+ * 2199 = 21,99 €
+ */
+const FLUSSI_PRICE_CENTS = 1;
+
 const FLUSSI_CURRENCY = "eur";
 
 const FLUSSI_PRODUCT = "decreto_flussi";
@@ -96,6 +105,19 @@ function cleanDocumentType(value: unknown): string {
 }
 
 /**
+ * Convierte diferentes valores enviados por el frontend
+ * a boolean de forma segura.
+ */
+function toBoolean(value: unknown): boolean {
+  return (
+    value === true ||
+    value === "true" ||
+    value === 1 ||
+    value === "1"
+  );
+}
+
+/**
  * ============================================================
  * HANDLER
  * ============================================================
@@ -120,11 +142,15 @@ export default async function handler(
 
   /**
    * ----------------------------------------------------------
-   * STRIPE CONFIG
+   * STRIPE
    * ----------------------------------------------------------
    */
 
   if (!stripe) {
+    console.error(
+      "❌ STRIPE_SECRET_KEY no está configurada."
+    );
+
     return res.status(500).json({
       ok: false,
       error:
@@ -135,29 +161,31 @@ export default async function handler(
   try {
     /**
      * ========================================================
-     * LEER DATOS DEL FORMULARIO
+     * BODY
      * ========================================================
      */
 
     const body = req.body || {};
 
     /**
-     * --------------------------------------------------------
+     * ========================================================
      * DATOS DEL CLIENTE
-     * --------------------------------------------------------
+     * ========================================================
      */
 
     const clientName = cleanString(
       body.client_name ??
         body.clientName ??
-        body.nombre,
+        body.nombre ??
+        body.fullName,
       100
     );
 
     const clientSurname = cleanString(
       body.client_surname ??
         body.clientSurname ??
-        body.apellidos,
+        body.apellidos ??
+        body.surname,
       150
     );
 
@@ -178,22 +206,28 @@ export default async function handler(
     );
 
     /**
-     * --------------------------------------------------------
+     * ========================================================
      * PERSONA / EMPLEADOR
-     * --------------------------------------------------------
+     * ========================================================
+     *
+     * Aceptamos tanto los nombres nuevos como los que utiliza
+     * actualmente tu formulario.
      */
 
     const employerName = cleanString(
       body.employer_name ??
         body.employerName ??
+        body.empleadorNombre ??
         body.nombre_empleador ??
-        body.person_name,
+        body.person_name ??
+        body.nombrePersona,
       200
     );
 
     const employerCity = cleanString(
       body.employer_city ??
         body.employerCity ??
+        body.empleadorCiudad ??
         body.ciudad_italia ??
         body.city,
       120
@@ -202,57 +236,57 @@ export default async function handler(
     const employerBirthDate = cleanString(
       body.employer_birth_date ??
         body.employerBirthDate ??
+        body.empleadorFechaNacimiento ??
         body.fecha_nacimiento_empleador,
       30
     );
 
     /**
-     * --------------------------------------------------------
-     * TIPO DE SERVICIO
-     * --------------------------------------------------------
+     * ========================================================
+     * TIPO DE DOCUMENTO
+     * ========================================================
      */
 
     const documentType = cleanDocumentType(
       body.document_type ??
         body.documentType ??
-        body.tipo_documento
+        body.tipo_documento ??
+        body.tipoDocumento
     );
 
     /**
-     * --------------------------------------------------------
-     * SOLO BÚSQUEDA DE PERSONA
-     * --------------------------------------------------------
+     * ========================================================
+     * BÚSQUEDA SOLO POR PERSONA
+     * ========================================================
      *
-     * true:
-     * El cliente no tiene documento y quiere investigar
-     * solamente a la persona.
+     * Si es true:
      *
-     * false:
-     * El cliente tiene documento para analizar.
-     * --------------------------------------------------------
+     * - NO necesita contrato
+     * - NO necesita Nulla Osta
+     * - NO necesita PDF
+     *
+     * Solo necesitamos los datos de la persona/empleador.
      */
 
-    const searchPersonOnly =
-      body.search_person_only === true ||
-      body.searchPersonOnly === true ||
-      body.search_person_only === "true" ||
-      body.searchPersonOnly === "true";
+    const searchPersonOnly = toBoolean(
+      body.search_person_only ??
+        body.searchPersonOnly ??
+        body.buscarSoloPersona ??
+        body.buscar_solo_persona
+    );
 
     /**
-     * --------------------------------------------------------
-     * ARCHIVOS
-     * --------------------------------------------------------
+     * ========================================================
+     * DOCUMENTOS
+     * ========================================================
      *
-     * IMPORTANTE:
+     * Aquí NO subimos los archivos a Supabase.
      *
-     * Este endpoint NO recibe ni guarda los archivos.
+     * Solamente comprobamos cuántos archivos seleccionó
+     * el usuario.
      *
-     * Solo recibimos información básica sobre ellos para
-     * conservarla en metadata de Stripe.
-     *
-     * El archivo real se procesará después de confirmar
-     * correctamente el pago.
-     * --------------------------------------------------------
+     * Los archivos reales deben estar en el bucket temporal
+     * y pasarán al proceso definitivo después del pago.
      */
 
     let documentCount = 0;
@@ -261,9 +295,17 @@ export default async function handler(
       documentCount = body.document_files.length;
     } else if (Array.isArray(body.documents)) {
       documentCount = body.documents.length;
+    } else if (Array.isArray(body.documentos)) {
+      documentCount = body.documentos.length;
     } else if (Array.isArray(body.files)) {
       documentCount = body.files.length;
+    } else if (Array.isArray(body.uploadedFiles)) {
+      documentCount = body.uploadedFiles.length;
     }
+
+    /**
+     * Máximo 5 documentos.
+     */
 
     if (documentCount > MAX_DOCUMENTS) {
       return res.status(400).json({
@@ -275,55 +317,62 @@ export default async function handler(
 
     /**
      * ========================================================
-     * VALIDACIONES
+     * VALIDACIONES CLIENTE
      * ========================================================
      */
 
     if (!clientName) {
       return res.status(400).json({
         ok: false,
-        error: "El nombre del cliente es obligatorio.",
+        error:
+          "El nombre del cliente es obligatorio.",
       });
     }
 
     if (!clientSurname) {
       return res.status(400).json({
         ok: false,
-        error: "Los apellidos del cliente son obligatorios.",
+        error:
+          "Los apellidos del cliente son obligatorios.",
       });
     }
 
     if (!email) {
       return res.status(400).json({
         ok: false,
-        error: "El Gmail es obligatorio.",
+        error:
+          "El Gmail es obligatorio.",
       });
     }
 
     if (!isValidEmail(email)) {
       return res.status(400).json({
         ok: false,
-        error: "El Gmail introducido no es válido.",
+        error:
+          "El Gmail introducido no es válido.",
       });
     }
 
     if (!whatsapp) {
       return res.status(400).json({
         ok: false,
-        error: "El WhatsApp es obligatorio.",
+        error:
+          "El WhatsApp es obligatorio.",
       });
     }
 
     if (!country) {
       return res.status(400).json({
         ok: false,
-        error: "El país es obligatorio.",
+        error:
+          "El país es obligatorio.",
       });
     }
 
     /**
-     * El nombre de la persona/empleador es obligatorio
-     * tanto para una búsqueda como para una verificación.
+     * ========================================================
+     * VALIDACIÓN PERSONA / EMPLEADOR
+     * ========================================================
      */
 
     if (!employerName) {
@@ -335,8 +384,11 @@ export default async function handler(
     }
 
     /**
-     * Si NO es búsqueda solamente de persona,
-     * exigimos tipo de documento.
+     * ========================================================
+     * VALIDACIÓN DOCUMENTO
+     * ========================================================
+     *
+     * SOLO si NO estamos haciendo búsqueda por persona.
      */
 
     if (!searchPersonOnly && !documentType) {
@@ -348,12 +400,8 @@ export default async function handler(
     }
 
     /**
-     * Si el cliente ha seleccionado documento,
-     * debe haber al menos un archivo.
-     *
-     * IMPORTANTE:
-     * No recibimos el PDF aquí.
-     * Solo comprobamos que el frontend indique que existe.
+     * Si hay documento que verificar,
+     * debe existir al menos un archivo.
      */
 
     if (!searchPersonOnly && documentCount === 0) {
@@ -366,7 +414,7 @@ export default async function handler(
 
     /**
      * ========================================================
-     * URL DE LA WEB
+     * URL WEB
      * ========================================================
      */
 
@@ -380,27 +428,39 @@ export default async function handler(
 
     /**
      * ========================================================
-     * METADATA DE STRIPE
+     * REFERENCIA INTERNA
      * ========================================================
-     *
-     * Stripe limita el tamaño de metadata.
-     * Por eso guardamos solamente datos pequeños.
-     *
-     * El documento NO se mete en metadata.
+     */
+
+    const reference =
+      `FLUSSI-${Date.now()}-${Math.random()
+        .toString(36)
+        .substring(2, 8)
+        .toUpperCase()}`;
+
+    /**
+     * ========================================================
+     * METADATA STRIPE
      * ========================================================
      */
 
     const metadata: Record<string, string> = {
-      product: FLUSSI_PRODUCT,
+      product:
+        FLUSSI_PRODUCT,
 
-      service: "verificacion_decreto_flussi",
+      service:
+        "verificacion_decreto_flussi",
 
-      client_name: clientName.slice(0, 100),
+      reference,
+
+      client_name:
+        clientName.slice(0, 100),
 
       client_surname:
         clientSurname.slice(0, 150),
 
-      email: email.slice(0, 300),
+      email:
+        email.slice(0, 300),
 
       whatsapp:
         whatsapp.slice(0, 40),
@@ -418,7 +478,9 @@ export default async function handler(
         employerBirthDate.slice(0, 30),
 
       search_person_only:
-        searchPersonOnly ? "true" : "false",
+        searchPersonOnly
+          ? "true"
+          : "false",
 
       document_type:
         documentType.slice(0, 100),
@@ -441,22 +503,11 @@ export default async function handler(
           "card",
         ],
 
-        /**
-         * Email del cliente mostrado por Stripe.
-         */
-
-        customer_email: email,
-
-        /**
-         * Identificador interno.
-         */
+        customer_email:
+          email,
 
         client_reference_id:
-          `FLUSSI-${Date.now()}`,
-
-        /**
-         * Producto.
-         */
+          reference,
 
         line_items: [
           {
@@ -469,9 +520,14 @@ export default async function handler(
                   "Verificación de Contrato y Decreto Flussi",
 
                 description:
-                  "Análisis documental, comprobación de datos empresariales y generación de informe de verificación.",
+                  searchPersonOnly
+                    ? "Análisis de la persona o empleador relacionado con una posible contratación Decreto Flussi."
+                    : "Análisis documental y comprobación de datos relacionados con Decreto Flussi.",
               },
 
+              /**
+               * 0,01 € durante las pruebas.
+               */
               unit_amount:
                 FLUSSI_PRICE_CENTS,
             },
@@ -481,7 +537,9 @@ export default async function handler(
         ],
 
         /**
-         * URLs.
+         * ====================================================
+         * RETURN URLS
+         * ====================================================
          */
 
         success_url:
@@ -491,25 +549,16 @@ export default async function handler(
           `${normalizedBaseUrl}/verificar-decreto-flussi?payment=cancelled`,
 
         /**
-         * Metadata.
+         * ====================================================
+         * METADATA
+         * ====================================================
          */
 
         metadata,
 
-        /**
-         * Datos adicionales de metadata también en PaymentIntent.
-         * Esto nos permite recuperar la información desde el
-         * webhook aunque posteriormente trabajemos con el
-         * PaymentIntent.
-         */
-
         payment_intent_data: {
           metadata,
         },
-
-        /**
-         * Stripe Checkout.
-         */
 
         billing_address_collection:
           "auto",
@@ -523,20 +572,46 @@ export default async function handler(
 
     /**
      * ========================================================
-     * RESPUESTA
+     * LOG
      * ========================================================
      */
 
     console.log(
-      "✅ FLUSSI STRIPE CHECKOUT CREATED:",
-      {
-        sessionId: session.id,
-        email,
-        employerName,
-        documentType,
-        searchPersonOnly,
-      }
+      "✅ FLUSSI STRIPE CHECKOUT CREATED",
     );
+
+    console.log({
+      sessionId:
+        session.id,
+
+      reference,
+
+      email,
+
+      employerName,
+
+      employerCity,
+
+      employerBirthDate,
+
+      documentType,
+
+      documentCount,
+
+      searchPersonOnly,
+
+      amount:
+        FLUSSI_PRICE_CENTS,
+
+      currency:
+        FLUSSI_CURRENCY,
+    });
+
+    /**
+     * ========================================================
+     * RESPUESTA
+     * ========================================================
+     */
 
     return res.status(200).json({
       ok: true,
@@ -546,6 +621,8 @@ export default async function handler(
 
       checkout_url:
         session.url,
+
+      reference,
 
       amount:
         FLUSSI_PRICE_CENTS,
@@ -559,10 +636,14 @@ export default async function handler(
       paid:
         false,
 
+      searchPersonOnly,
+
       message:
         "Checkout de Stripe creado correctamente. El pago todavía no está confirmado.",
     });
+
   } catch (error: any) {
+
     console.error(
       "❌ CREATE FLUSSI CHECKOUT ERROR:",
       error
@@ -570,6 +651,7 @@ export default async function handler(
 
     return res.status(500).json({
       ok: false,
+
       error:
         error?.message ||
         "No se pudo crear el pago de Stripe.",
