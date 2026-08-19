@@ -7,7 +7,7 @@ const stripe = stripeSecretKey
   ? new Stripe(stripeSecretKey)
   : null;
 
-const EXPECTED_AMOUNT = 2199;
+const EXPECTED_AMOUNT = 1; // 0,01 €
 const EXPECTED_CURRENCY = "eur";
 const EXPECTED_PRODUCT = "decreto_flussi";
 
