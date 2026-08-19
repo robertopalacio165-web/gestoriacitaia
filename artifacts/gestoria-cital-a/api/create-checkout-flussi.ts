@@ -46,7 +46,7 @@ const stripe = stripeSecretKey
  * Cuando termines las pruebas:
  * 2199 = 21,99 €
  */
-const FLUSSI_PRICE_CENTS = 1;
+const FLUSSI_PRICE_CENTS = 50;
 
 const FLUSSI_CURRENCY = "eur";
 
