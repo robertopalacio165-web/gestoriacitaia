@@ -1980,23 +1980,32 @@ export default function VerificarDecretoFlussi() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          userId,
-          fullName: formData.fullName,
-          apellidos: formData.apellidos,
-          phone: formData.phone,
-          email: formData.email,
-          pais: formData.pais,
-          tipoDocumento: formData.tipoDocumento || null,
-          documentos: formData.documentos,
-          // Nunca enviamos rutas de Supabase antes de confirmar el pago.
-          documentosPaths: "[]",
-          preferredOffice: formData.preferredOffice,
-          empleadorNombre: formData.empleadorNombre,
-          empleadorCiudad: formData.empleadorCiudad || null,
-          empleadorFechaNacimiento: formData.empleadorFechaNacimiento || null,
-          buscarSoloPersona: formData.buscarSoloPersona,
-        }),
+ body: JSON.stringify({
+  userId,
+
+  // Nombre del cliente que está pagando
+  clientName: `${formData.fullName} ${formData.apellidos}`.trim(),
+  nombreCliente: `${formData.fullName} ${formData.apellidos}`.trim(),
+
+  fullName: formData.fullName,
+  apellidos: formData.apellidos,
+  phone: formData.phone,
+  email: formData.email,
+  pais: formData.pais,
+  tipoDocumento: formData.tipoDocumento || null,
+  documentos: formData.documentos,
+
+  documentosPaths: "[]",
+
+  preferredOffice: formData.preferredOffice,
+
+  empleadorNombre: formData.empleadorNombre,
+  empleadorCiudad: formData.empleadorCiudad || null,
+  empleadorFechaNacimiento:
+    formData.empleadorFechaNacimiento || null,
+
+  buscarSoloPersona: formData.buscarSoloPersona,
+}),
       });
 
       const data = await res.json();
