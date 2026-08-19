@@ -1169,7 +1169,7 @@ carnetConducir: isMa ? "اختر رخصة القيادة" : isEn ? "Select drivi
                       </p>
                     </div>
 
-                    {/* ✅ NUEVO CHECKBOX - AUTORIZACIÓN DEL SERVICIO MALTA */}
+                    {/* ✅ CHECKBOX CON TEXTO COLAPSABLE */}
                     <div className="mt-4 rounded-xl border border-white/10 bg-white/[0.03] p-4">
                       <label className="flex items-start gap-3 cursor-pointer">
                         <input
@@ -1185,134 +1185,160 @@ carnetConducir: isMa ? "اختر رخصة القيادة" : isEn ? "Select drivi
                         />
 
                         <span className="text-sm leading-relaxed text-white/80">
-                          {isMa ? (
-                            <>
-                              <strong className="text-white">
-                                كنوافق أن GestoriaCitaIA تستخدم المعطيات اللي دخلتهم
-                                باش تولد لي السيرة الذاتية ورسالة التحفيز بالنجليزية وتجهز
-                                المعلومات على فرص الشغل المنشورة بشكل عام في مالطا.
-                              </strong>
+                          {/* 🔹 TEXTO CORTO SIEMPRE VISIBLE */}
+                          <span>
+                            {isMa ? (
+                              <>
+                                <strong className="text-white">
+                                  كنوافق أن GestoriaCitaIA تستخدم المعطيات اللي دخلتهم باش تولد لي السيرة الذاتية ورسالة التحفيز.
+                                </strong>
+                              </>
+                            ) : isEn ? (
+                              <>
+                                <strong className="text-white">
+                                  I agree that GestoriaCitaIA uses the data I have provided to generate my CV and motivation letter.
+                                </strong>
+                              </>
+                            ) : (
+                              <>
+                                <strong className="text-white">
+                                  Acepto que GestoriaCitaIA utilice los datos que he proporcionado para generar mi CV y carta de motivación.
+                                </strong>
+                              </>
+                            )}
+                          </span>
 
-                              <br />
-                              <br />
+                          {/* 🔹 BOTÓN "LEER MÁS" - Toggle con estado local */}
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              const content = document.getElementById('termsFullText');
+                              const btn = document.getElementById('termsToggleBtn');
+                              if (content && btn) {
+                                const isHidden = content.classList.contains('hidden');
+                                if (isHidden) {
+                                  content.classList.remove('hidden');
+                                  btn.textContent = isMa ? '🔺 إقرأ أقل' : isEn ? '🔺 Read less' : '🔺 Leer menos';
+                                } else {
+                                  content.classList.add('hidden');
+                                  btn.textContent = isMa ? '🔽 إقرأ المزيد' : isEn ? '🔽 Read more' : '🔽 Leer más';
+                                }
+                              }
+                            }}
+                            id="termsToggleBtn"
+                            className="text-yellow-400 hover:text-yellow-300 text-xs font-semibold underline ml-1 cursor-pointer"
+                          >
+                            {isMa ? '🔽 إقرأ المزيد' : isEn ? '🔽 Read more' : '🔽 Leer más'}
+                          </button>
 
-                              غادي ناخد <strong className="text-white">السيرة الذاتية ورسالة التحفيز</strong>
-                              ديالي باش نستعملهم كيفما بغيت، مع معلومات على الشركات وفرص
-                              الشغل، بما في ذلك <strong className="text-white">
-                                المواقع، الإيميلات وأرقام الهواتف المهنية المنشورة بشكل عام
-                              </strong>.
+                          {/* 🔹 TEXTO COMPLETO - OCULTO POR DEFECTO */}
+                          <div id="termsFullText" className="hidden mt-2 space-y-2">
+                            {isMa ? (
+                              <>
+                                <br />
+                                غادي ناخد <strong className="text-white">السيرة الذاتية ورسالة التحفيز</strong>
+                                ديالي باش نستعملهم كيفما بغيت، مع معلومات على الشركات وفرص
+                                الشغل، بما في ذلك <strong className="text-white">
+                                  المواقع، الإيميلات وأرقام الهواتف المهنية المنشورة بشكل عام
+                                </strong>.
 
-                              <br />
-                              <br />
+                                <br />
+                                <br />
 
-                              <strong className="text-white">
-                                GestoriaCitaIA ما كتبعثش السيرة الذاتية ديالي للشركات، ما كتتواصلش مع
-                                أرباب العمل بإسمي وما كتقدمش طلبات الشغل نيابة عني.
-                              </strong>
-                              أنا لي كاتقرر مع أي شركة نتواصل و أنا لي كتبعث طلباتي بنفسي.
+                                <strong className="text-white">
+                                  GestoriaCitaIA ما كتبعثش السيرة الذاتية ديالي للشركات، ما كتتواصلش مع
+                                  أرباب العمل بإسمي وما كتقدمش طلبات الشغل نيابة عني.
+                                </strong>
+                                أنا لي كاتقرر مع أي شركة نتواصل و أنا لي كتبعث طلباتي بنفسي.
 
-                              <br />
-                              <br />
+                                <br />
+                                <br />
 
-                              <span className="text-green-400">
-                                🔒 المعطيات الشخصية ديالي ما كتنباعش ولا كتتبعت للشركات كجزء
-                                من هاد الخدمة.
-                              </span>
+                                <span className="text-green-400">
+                                  🔒 المعطيات الشخصية ديالي ما كتنباعش ولا كتتبعت للشركات كجزء
+                                  من هاد الخدمة.
+                                </span>
 
-                              <br />
-                              <br />
+                                <br />
+                                <br />
 
-                              <span className="text-white/60 text-xs">
-                                ℹ️ GestoriaCitaIA ما هياش المشغلة، ما كتضمنش المقابلات ولا
-                                التوظيف وما كتضمنش الحصول على منصب شغل.
-                              </span>
-                            </>
-                          ) : isEn ? (
-                            <>
-                              <strong className="text-white">
-                                I agree that GestoriaCitaIA uses the data I have provided
-                                to generate my CV and motivation letter in English and to prepare
-                                information about publicly published job opportunities in Malta.
-                              </strong>
+                                <span className="text-white/60 text-xs">
+                                  ℹ️ GestoriaCitaIA ما هياش المشغلة، ما كتضمنش المقابلات ولا
+                                  التوظيف وما كتضمنش الحصول على منصب شغل.
+                                </span>
+                              </>
+                            ) : isEn ? (
+                              <>
+                                <br />
+                                I will receive my <strong className="text-white">CV and motivation letter</strong>
+                                for my own use, along with information about companies and job
+                                opportunities, including <strong className="text-white">
+                                  publicly published professional websites, emails and phone numbers
+                                </strong>.
 
-                              <br />
-                              <br />
+                                <br />
+                                <br />
 
-                              I will receive my <strong className="text-white">CV and motivation letter</strong>
-                              for my own use, along with information about companies and job
-                              opportunities, including <strong className="text-white">
-                                publicly published professional websites, emails and phone numbers
-                              </strong>.
+                                <strong className="text-white">
+                                  GestoriaCitaIA does not send my CV to companies, does not contact
+                                  employers on my behalf and does not submit applications for me.
+                                </strong>
+                                I decide which companies to contact and I personally submit my application.
 
-                              <br />
-                              <br />
+                                <br />
+                                <br />
 
-                              <strong className="text-white">
-                                GestoriaCitaIA does not send my CV to companies, does not contact
-                                employers on my behalf and does not submit applications for me.
-                              </strong>
-                              I decide which companies to contact and I personally submit my application.
+                                <span className="text-green-400">
+                                  🔒 My personal data is not sold or sent to companies as
+                                  part of this service.
+                                </span>
 
-                              <br />
-                              <br />
+                                <br />
+                                <br />
 
-                              <span className="text-green-400">
-                                🔒 My personal data is not sold or sent to companies as
-                                part of this service.
-                              </span>
+                                <span className="text-white/60 text-xs">
+                                  ℹ️ GestoriaCitaIA is not the employer, does not guarantee
+                                  interviews or hiring and does not guarantee obtaining a job position.
+                                </span>
+                              </>
+                            ) : (
+                              <>
+                                <br />
+                                Recibiré mi <strong className="text-white">CV y carta de motivación</strong>
+                                para mi propio uso, junto con información de empresas y oportunidades
+                                de empleo, incluyendo <strong className="text-white">
+                                  webs, emails y teléfonos profesionales publicados públicamente
+                                </strong>.
 
-                              <br />
-                              <br />
+                                <br />
+                                <br />
 
-                              <span className="text-white/60 text-xs">
-                                ℹ️ GestoriaCitaIA is not the employer, does not guarantee
-                                interviews or hiring and does not guarantee obtaining a job position.
-                              </span>
-                            </>
-                          ) : (
-                            <>
-                              <strong className="text-white">
-                                Acepto que GestoriaCitaIA utilice los datos que he proporcionado
-                                para generar mi CV y carta de motivación en inglés y preparar
-                                información sobre oportunidades de empleo publicadas públicamente
-                                en Malta.
-                              </strong>
+                                <strong className="text-white">
+                                  GestoriaCitaIA no envía mi CV a empresas, no contacta con empleadores
+                                  en mi nombre y no presenta candidaturas por mí.
+                                </strong>
+                                Yo decido a qué empresas contactar y envío personalmente mi candidatura.
 
-                              <br />
-                              <br />
+                                <br />
+                                <br />
 
-                              Recibiré mi <strong className="text-white">CV y carta de motivación</strong>
-                              para mi propio uso, junto con información de empresas y oportunidades
-                              de empleo, incluyendo <strong className="text-white">
-                                webs, emails y teléfonos profesionales publicados públicamente
-                              </strong>.
+                                <span className="text-green-400">
+                                  🔒 Mis datos personales no se venden ni se envían a empresas como
+                                  parte de este servicio.
+                                </span>
 
-                              <br />
-                              <br />
+                                <br />
+                                <br />
 
-                              <strong className="text-white">
-                                GestoriaCitaIA no envía mi CV a empresas, no contacta con empleadores
-                                en mi nombre y no presenta candidaturas por mí.
-                              </strong>
-                              Yo decido a qué empresas contactar y envío personalmente mi candidatura.
-
-                              <br />
-                              <br />
-
-                              <span className="text-green-400">
-                                🔒 Mis datos personales no se venden ni se envían a empresas como
-                                parte de este servicio.
-                              </span>
-
-                              <br />
-                              <br />
-
-                              <span className="text-white/60 text-xs">
-                                ℹ️ GestoriaCitaIA no es el empleador, no garantiza entrevistas ni
-                                contratación y no garantiza la obtención de un puesto de trabajo.
-                              </span>
-                            </>
-                          )}
+                                <span className="text-white/60 text-xs">
+                                  ℹ️ GestoriaCitaIA no es el empleador, no garantiza entrevistas ni
+                                  contratación y no garantiza la obtención de un puesto de trabajo.
+                                </span>
+                              </>
+                            )}
+                          </div>
                         </span>
                       </label>
                     </div>
