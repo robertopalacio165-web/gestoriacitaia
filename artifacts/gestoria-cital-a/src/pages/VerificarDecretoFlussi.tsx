@@ -1983,39 +1983,14 @@ export default function VerificarDecretoFlussi() {
               style={{ height: "280px" }}
             >
               <div className="relative w-full h-full">
-                <video
-                  id="sara-video"
-                  playsInline
-                  preload="metadata"
-                  poster="/images/sara.png"
-                  className="w-full h-full object-cover object-top"
-                  onPlay={() => {
-                    const btn = document.getElementById("play-button-sara");
-                    if (btn) btn.style.display = "none";
-                  }}
-                >
-                  <source src="/sara-presentacion.mp4" type="video/mp4" />
-                </video>
+               <img
+  src="/images/sara.png"
+  alt="Sara"
+  className="w-full h-full object-cover object-top"
+/>
 
-                <button
-                  id="play-button-sara"
-                  type="button"
-                  className="absolute inset-0 flex items-center justify-center"
-                  onClick={() => {
-                    const video = document.getElementById(
-                      "sara-video"
-                    ) as HTMLVideoElement;
-                    if (video) {
-                      video.play();
-                    }
-                  }}
-                >
-                  <div className="bg-black/10 backdrop-blur-[1px] rounded-full w-12 h-12 flex items-center justify-center">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="white">
-                      <path d="M8 5v14l11-7z" />
-                    </svg>
-                  </div>
-                </button>
+               
+          
               </div>
 
               {!muted && (
