@@ -1143,54 +1143,93 @@ carnetConducir: isMa ? "اختر رخصة القيادة" : isEn ? "Select drivi
                     )}
                   </div>
 
-                  {/* ============================================ */}
+                                   {/* ============================================ */}
                   {/* 9. CHECKBOX + BOTÓN DE PAGO */}
                   {/* ============================================ */}
                   
                   <div 
                     className="col-span-1 lg:col-span-2 mt-2"
-                    ref={(el) => { errorRefs.current["acceptTerms"] = el; }} // 🆕 Referencia
+                    ref={(el) => { errorRefs.current["acceptTerms"] = el; }}
                   >
-                    <div className="flex items-start gap-3 mb-4">
-                      <input
-                        type="checkbox"
-                        id="acceptTerms"
-                        checked={acceptTerms}
-                        onChange={(e) => {
-                          if (errorField === "acceptTerms") setErrorField(null); // 🆕 Limpiar error
-                          setAcceptTerms(e.target.checked);
-                        }}
-                        className={`mt-1 w-4 h-4 rounded border bg-[#060b16] text-yellow-500 focus:ring-yellow-500 focus:ring-offset-0 shrink-0 ${
-                          errorField === "acceptTerms" ? "border-red-500" : "border-white/20"
-                        }`} // 🆕 Borde rojo condicional
-                      />
-                      <label htmlFor="acceptTerms" className={`text-[11px] sm:text-[12px] leading-relaxed ${errorField === "acceptTerms" ? "text-red-400" : "text-white/70"}`}>
-                        {isMa
-                          ? "☑️ كنوافق أن GestoriaCitaIA تستعمل معلوماتي وتشارك CV ديالي مع شركات ووكالات التوظيف فمالطا. كنفاهم أن الخدمة غير كتساعد فإرسال الترشيحات وما كتقدمش عقد عمل وما كتضمنش التوظيف."
-                          : isEn
-                          ? "☑️ I agree that GestoriaCitaIA may use my data and share my CV with companies and employment agencies in Malta. I understand that this service only submits applications and does not provide employment contracts or guarantee hiring."
-                          : "☑️ Acepto que GestoriaCitaIA utilice mis datos y comparta mi CV con empresas y agencias de empleo en Malta. Entiendo que este servicio solo envía candidaturas y no ofrece contratos de trabajo ni garantiza la contratación."}
-                      </label>
+                    {/* ✅ FRASE PROMOCIONAL ENCIMA DEL CHECKBOX */}
+                    <div className="mb-4 text-center">
+                      <p className="text-sm sm:text-base font-semibold text-white">
+                        🚀 Tú recibes el CV y la carta preparados.
+                      </p>
+                      <p className="text-xs sm:text-sm text-muted-foreground mt-1">
+                        Nosotros buscamos las empresas y oportunidades. Tú eliges dónde enviar tu candidatura.
+                      </p>
                     </div>
 
-                    <p className="text-white/30 text-[10px] text-center mb-3">
-                      {isMa
-                        ? "🔒 سيتم مشاركة معلوماتك فقط مع الشركات ووكالات التوظيف في مالطا للبحث عن عمل."
-                        : isEn
-                        ? "🔒 Your information will only be shared with companies and employment agencies in Malta to find work."
-                        : "🔒 Tu información solo será compartida con empresas y agencias de empleo en Malta para buscar trabajo."}
-                    </p>
+                    {/* ✅ NUEVO CHECKBOX - AUTORIZACIÓN DEL SERVICIO MALTA */}
+                    <div className="mt-4 rounded-xl border border-white/10 bg-white/[0.03] p-4">
+                      <label className="flex items-start gap-3 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={acceptTerms}
+                          onChange={(e) => {
+                            if (errorField === "acceptTerms") setErrorField(null);
+                            setAcceptTerms(e.target.checked);
+                          }}
+                          className={`mt-1 h-5 w-5 shrink-0 rounded border-white/30 bg-white/10 accent-green-500 ${
+                            errorField === "acceptTerms" ? "border-red-500" : "border-white/20"
+                          }`}
+                        />
+
+                        <span className="text-sm leading-relaxed text-white/80">
+                          <strong className="text-white">
+                            Acepto que GestoriaCitaIA utilice los datos que he proporcionado
+                            para generar mi CV y carta de motivación en inglés y preparar
+                            información sobre oportunidades de empleo publicadas públicamente
+                            en Malta.
+                          </strong>
+
+                          <br />
+                          <br />
+
+                          Recibiré mi <strong className="text-white">CV y carta de motivación</strong>
+                          para mi propio uso, junto con información de empresas y oportunidades
+                          de empleo, incluyendo <strong className="text-white">
+                            webs, emails y teléfonos profesionales publicados públicamente
+                          </strong>.
+
+                          <br />
+                          <br />
+
+                          <strong className="text-white">
+                            GestoriaCitaIA no envía mi CV a empresas, no contacta con empleadores
+                            en mi nombre y no presenta candidaturas por mí.
+                          </strong>
+                          Yo decido a qué empresas contactar y envío personalmente mi candidatura.
+
+                          <br />
+                          <br />
+
+                          <span className="text-green-400">
+                            🔒 Mis datos personales no se venden ni se envían a empresas como
+                            parte de este servicio.
+                          </span>
+
+                          <br />
+                          <br />
+
+                          <span className="text-white/60 text-xs">
+                            ℹ️ GestoriaCitaIA no es el empleador, no garantiza entrevistas ni
+                            contratación y no garantiza la obtención de un puesto de trabajo.
+                          </span>
+                        </span>
+                      </label>
+                    </div>
 
                     {/* ✅ BOTÓN AMARILLO - ABRE EL POPUP */}
                     <button
                       type="button"
                       onClick={() => {
-                        // 🛑 Validación AQUÍ (antes de abrir el popup). Esto arregla el error en Stripe y PayPal.
                         if (!validateForm()) return;
                         setShowPaymentModal(true);
                       }}
                       disabled={!acceptTerms}
-                      className="w-full min-h-[56px] rounded-[20px] bg-gradient-to-r from-yellow-400 via-yellow-500 to-amber-500 px-4 py-2 text-[15px] font-black text-black shadow-[0_0_30px_rgba(255,215,0,.35)] disabled:opacity-50 disabled:cursor-not-allowed hover:scale-[1.02] transition"
+                      className="w-full min-h-[56px] rounded-[20px] bg-gradient-to-r from-yellow-400 via-yellow-500 to-amber-500 px-4 py-2 text-[15px] font-black text-black shadow-[0_0_30px_rgba(255,215,0,.35)] disabled:opacity-50 disabled:cursor-not-allowed hover:scale-[1.02] transition mt-4"
                     >
                       🚀 Empezar búsqueda ahora
                     </button>
