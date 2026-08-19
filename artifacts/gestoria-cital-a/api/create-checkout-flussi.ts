@@ -38,7 +38,7 @@ const stripe = stripeSecretKey
  * ============================================================
  */
 
-const FLUSSI_PRICE_CENTS = 2199;
+const FLUSSI_PRICE = 1; // 0,01 €
 const FLUSSI_CURRENCY = "eur";
 
 const FLUSSI_PRODUCT = "decreto_flussi";
