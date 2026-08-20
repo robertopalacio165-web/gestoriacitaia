@@ -217,18 +217,16 @@ function OfficialBrowserBox({
 
   const MAX_FILES = 5;
 
-  const formIntro = isMa
-    ? "للتحقق من عقد عملك أو وثائق Decreto Flussi، املأ النموذج وسنرسل لك التقرير خلال 24 ساعة."
-    : isEn
-    ? "To verify your employment contract or Decreto Flussi documents, fill in the form and we will send you the report within 24 hours."
-    : "Para verificar tu contrato de trabajo o documentos del Decreto Flussi, completa el formulario y te enviaremos el informe en 24 horas.";
-
-  // ✅ handleFileUpload - ELIMINADO el return cuando buscarSoloPersona es true
+  // ✅ handleFileUpload - SOLO se ejecuta si NO está en modo "solo persona"
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
-    // ❌ ELIMINADO: if (formData.buscarSoloPersona) { e.target.value = ""; return; }
+    // Si está en modo solo persona, no permitir subir archivos
+    if (formData.buscarSoloPersona) {
+      e.target.value = "";
+      return;
+    }
 
     if (uploadedFiles.length + files.length > MAX_FILES) {
       toast({
@@ -687,247 +685,244 @@ function OfficialBrowserBox({
                     )}
                   </div>
 
-                  {/* 🔥 TIPO DE DOCUMENTO - SOLO 3 OPCIONES */}
-                  <div 
-                    ref={el => errorRefs.current["tipoDocumento"] = el}
-                    className="col-span-1 lg:col-span-2"
-                  >
-                    <label className="block text-white text-[13px] mb-2">
-                      {isMa ? "نوع الوثيقة" : isEn ? "Document type" : "Tipo de documento"}
-                    </label>
-                    <select
-                      className={`w-full h-[52px] rounded-2xl border ${errorField === "tipoDocumento" ? "border-red-500" : "border-white/10"} bg-[#060b16] px-4 text-white focus:outline-none focus:border-yellow-400`}
-                      value={formData.tipoDocumento || ""}
-                      onChange={(e) => handleInputChange("tipoDocumento", e.target.value)}
+                  {/* ============================================================
+                      🔥 TIPO DE DOCUMENTO - SOLO 3 OPCIONES
+                      SOLO SE MUESTRA SI NO ESTÁ EN MODO "SOLO PERSONA"
+                      ============================================================ */}
+                  {!formData.buscarSoloPersona && (
+                    <div 
+                      ref={el => errorRefs.current["tipoDocumento"] = el}
+                      className="col-span-1 lg:col-span-2"
                     >
-                      <option value="">
-                        {isMa ? "اختر النوع" : isEn ? "Select type" : "Selecciona tipo"}
-                      </option>
-                      <option value="contrato">
-                        {isMa ? "عقد العمل (مرسوم فلوسي)" : isEn ? "Employment contract (Decreto Flussi)" : "Contrato de trabajo (Decreto Flussi)"}
-                      </option>
-                      <option value="nulla_osta">
-                        {isMa ? "تصريح العمل (Nulla Osta)" : isEn ? "Nulla Osta" : "Nulla Osta"}
-                      </option>
-                      <option value="otro">
-                        {isMa ? "وثيقة أخرى / لا أعرف نوعها" : isEn ? "Other / I don't know what it is" : "Otro / No sé qué es"}
-                      </option>
-                    </select>
+                      <label className="block text-white text-[13px] mb-2">
+                        {isMa ? "نوع الوثيقة" : isEn ? "Document type" : "Tipo de documento"}
+                      </label>
+                      <select
+                        className={`w-full h-[52px] rounded-2xl border ${errorField === "tipoDocumento" ? "border-red-500" : "border-white/10"} bg-[#060b16] px-4 text-white focus:outline-none focus:border-yellow-400`}
+                        value={formData.tipoDocumento || ""}
+                        onChange={(e) => handleInputChange("tipoDocumento", e.target.value)}
+                      >
+                        <option value="">
+                          {isMa ? "اختر النوع" : isEn ? "Select type" : "Selecciona tipo"}
+                        </option>
+                        <option value="contrato">
+                          {isMa ? "عقد العمل (مرسوم فلوسي)" : isEn ? "Employment contract (Decreto Flussi)" : "Contrato de trabajo (Decreto Flussi)"}
+                        </option>
+                        <option value="nulla_osta">
+                          {isMa ? "تصريح العمل (Nulla Osta)" : isEn ? "Nulla Osta" : "Nulla Osta"}
+                        </option>
+                        <option value="otro">
+                          {isMa ? "وثيقة أخرى / لا أعرف نوعها" : isEn ? "Other / I don't know what it is" : "Otro / No sé qué es"}
+                        </option>
+                      </select>
 
-                    {/* EXPLICACIÓN PARA EL CLIENTE */}
-                    <div className="mt-3 rounded-xl border border-yellow-500/20 bg-yellow-500/5 px-4 py-3">
-                      <p className="text-white/75 text-[12px] leading-relaxed">
-                        {isMa ? (
-                          <>
-                            <span className="text-yellow-400 font-bold">
-                              📌 إلا كانت الوثيقة ديالك هي عقد العمل باش تجي تخدم فإيطاليا،
-                            </span>{" "}
-                            اختار الاختيار الأول. إلا كانت الوثيقة هي{" "}
-                            <span className="text-yellow-400 font-semibold">
-                              Nulla Osta
-                            </span>
-                            ، اختار الثاني. إلا ما كنتيش متأكد شنو هي الوثيقة، اختار{" "}
-                            <span className="text-yellow-400 font-semibold">
-                              "أخرى"
-                            </span>{" "}
-                            وحنا نحللوها ليك.
-                          </>
-                        ) : isEn ? (
-                          <>
-                            <span className="text-yellow-400 font-bold">
-                              📌 If your document is the employment contract to come and work in Italy,
-                            </span>{" "}
-                            select the first option. If it is the{" "}
-                            <span className="text-yellow-400 font-semibold">
-                              Nulla Osta
-                            </span>
-                            , select the second. If you are not sure what the document is,
-                            select{" "}
-                            <span className="text-yellow-400 font-semibold">
-                              "Other"
-                            </span>{" "}
-                            and we will analyze it for you.
-                          </>
-                        ) : (
-                          <>
-                            <span className="text-yellow-400 font-bold">
-                              📌 Si tu documento es el contrato para venir a trabajar a Italia, selecciona la primera opción.
-                            </span>{" "}
-                            Si es la autorización{" "}
-                            <span className="text-yellow-400 font-semibold">
-                              Nulla Osta
-                            </span>
-                            , selecciona la segunda. Si no estás seguro de qué documento es, selecciona{" "}
-                            <span className="text-yellow-400 font-semibold">
-                              "Otro"
-                            </span>{" "}
-                            y lo analizamos igualmente.
-                          </>
-                        )}
-                      </p>
+                      {/* EXPLICACIÓN PARA EL CLIENTE */}
+                      <div className="mt-3 rounded-xl border border-yellow-500/20 bg-yellow-500/5 px-4 py-3">
+                        <p className="text-white/75 text-[12px] leading-relaxed">
+                          {isMa ? (
+                            <>
+                              <span className="text-yellow-400 font-bold">
+                                📌 إلا كانت الوثيقة ديالك هي عقد العمل باش تجي تخدم فإيطاليا،
+                              </span>{" "}
+                              اختار الاختيار الأول. إلا كانت الوثيقة هي{" "}
+                              <span className="text-yellow-400 font-semibold">
+                                Nulla Osta
+                              </span>
+                              ، اختار الثاني. إلا ما كنتيش متأكد شنو هي الوثيقة، اختار{" "}
+                              <span className="text-yellow-400 font-semibold">
+                                "أخرى"
+                              </span>{" "}
+                              وحنا نحللوها ليك.
+                            </>
+                          ) : isEn ? (
+                            <>
+                              <span className="text-yellow-400 font-bold">
+                                📌 If your document is the employment contract to come and work in Italy,
+                              </span>{" "}
+                              select the first option. If it is the{" "}
+                              <span className="text-yellow-400 font-semibold">
+                                Nulla Osta
+                              </span>
+                              , select the second. If you are not sure what the document is,
+                              select{" "}
+                              <span className="text-yellow-400 font-semibold">
+                                "Other"
+                              </span>{" "}
+                              and we will analyze it for you.
+                            </>
+                          ) : (
+                            <>
+                              <span className="text-yellow-400 font-bold">
+                                📌 Si tu documento es el contrato para venir a trabajar a Italia, selecciona la primera opción.
+                              </span>{" "}
+                              Si es la autorización{" "}
+                              <span className="text-yellow-400 font-semibold">
+                                Nulla Osta
+                              </span>
+                              , selecciona la segunda. Si no estás seguro de qué documento es, selecciona{" "}
+                              <span className="text-yellow-400 font-semibold">
+                                "Otro"
+                              </span>{" "}
+                              y lo analizamos igualmente.
+                            </>
+                          )}
+                        </p>
+                      </div>
+
+                      {errorField === "tipoDocumento" && (
+                        <p className="text-red-400 text-xs mt-1">
+                          {isMa ? "نوع الوثيقة مطلوب" : isEn ? "Document type is required" : "Debes seleccionar el tipo de documento"}
+                        </p>
+                      )}
                     </div>
-
-                    {errorField === "tipoDocumento" && (
-                      <p className="text-red-400 text-xs mt-1">
-                        {isMa ? "نوع الوثيقة مطلوب" : isEn ? "Document type is required" : "Debes seleccionar el tipo de documento"}
-                      </p>
-                    )}
-                  </div>
-
-              {/* ============================================================
-    📎 SUBIR DOCUMENTOS
-    SOLO SI NO ESTÁ EN MODO "SOLO NOMBRE"
-    ============================================================ */}
-
-{!formData.buscarSoloPersona && (
-  <div
-    ref={el => errorRefs.current["documents"] = el}
-    className="col-span-1 lg:col-span-2"
-  >
-    <label className="block text-white text-[13px] mb-2">
-      {isMa
-        ? "رفع المستندات"
-        : isEn
-        ? "Upload documents"
-        : "Subir documento(s)"}
-
-      <span className="text-white/40 text-[11px] ml-2">
-        {isMa
-          ? `(حد أقصى ${MAX_FILES} ملفات)`
-          : isEn
-          ? `(max ${MAX_FILES} files)`
-          : `(máx ${MAX_FILES} archivos)`}
-      </span>
-    </label>
-
-    <div
-      className={`relative w-full min-h-[52px] rounded-2xl border-2 border-dashed ${
-        errorField === "documents"
-          ? "border-red-500 bg-red-500/5"
-          : uploadedFiles.length > 0
-          ? "border-emerald-500/50 bg-emerald-500/5"
-          : "border-white/20 bg-[#060b16]"
-      } flex flex-col items-center justify-center hover:border-yellow-400 transition-colors p-3`}
-    >
-      <input
-        type="file"
-        multiple
-        accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp"
-        className="absolute opacity-0 w-full h-full cursor-pointer"
-        onChange={handleFileUpload}
-        disabled={
-          isUploading ||
-          uploadedFiles.length >= MAX_FILES ||
-          formData.buscarSoloPersona
-        }
-      />
-
-      {isUploading ? (
-        <div className="flex items-center gap-2">
-          <RefreshCw className="w-4 h-4 animate-spin text-yellow-400" />
-
-          <p className="text-yellow-400 text-sm">
-            {isMa
-              ? "جاري الرفع..."
-              : isEn
-              ? "Uploading..."
-              : "Subiendo..."}
-          </p>
-        </div>
-      ) : uploadedFiles.length === 0 ? (
-        <div className="text-center">
-          <Upload className="w-6 h-6 text-white/30 mx-auto mb-1" />
-
-          <p className="text-white/40 text-sm">
-            {isMa
-              ? "📎 اختر PDF أو صورة"
-              : isEn
-              ? "📎 Choose PDF or image"
-              : "📎 Seleccionar PDF o imagen"}
-          </p>
-
-          <p className="text-white/20 text-[10px] mt-1">
-            {isMa
-              ? `الحد الأقصى ${MAX_FILES} ملفات · 10MB لكل ملف · PDF/JPG/PNG/WEBP`
-              : isEn
-              ? `Max ${MAX_FILES} files · 10MB each · PDF/JPG/PNG/WEBP`
-              : `Máximo ${MAX_FILES} archivos · 10MB cada uno · PDF/JPG/PNG/WEBP`}
-          </p>
-        </div>
-      ) : (
-        <div className="text-center">
-          <p className="text-emerald-400 text-sm font-medium">
-            {isMa
-              ? `✅ تم اختيار ${uploadedFiles.length}/${MAX_FILES} ملفات`
-              : isEn
-              ? `✅ ${uploadedFiles.length}/${MAX_FILES} files selected`
-              : `✅ ${uploadedFiles.length}/${MAX_FILES} archivos seleccionados`}
-          </p>
-
-          {uploadedFiles.length < MAX_FILES && (
-            <p className="text-white/30 text-[10px] mt-1">
-              {isMa
-                ? "📎 أضف المزيد"
-                : isEn
-                ? "📎 Add more"
-                : "📎 Añadir más"}
-            </p>
-          )}
-        </div>
-      )}
-    </div>
-
-    {errorField === "documents" && (
-      <p className="text-red-400 text-xs mt-1">
-        {isMa
-          ? "يجب رفع مستند واحد على الأقل"
-          : isEn
-          ? "You must upload at least one document"
-          : "Debes subir al menos un documento"}
-      </p>
-    )}
-
-    <p className="mt-2 text-[10px] leading-relaxed text-white/40">
-      {isMa
-        ? "🔒 الملفات كيبقاو غير فالمتصفح حتى يتأكد الأداء."
-        : isEn
-        ? "🔒 Files remain only in your browser until payment is confirmed."
-        : "🔒 Los archivos permanecen solo en el navegador hasta confirmar el pago."}
-    </p>
-
-    {uploadedFiles.length > 0 && (
-      <div className="mt-2 space-y-1">
-        {uploadedFiles.map((file, index) => (
-          <div
-            key={index}
-            className="flex items-center gap-2 bg-white/5 rounded-lg px-3 py-2 border border-white/10"
-          >
-            {getFileIcon(file.type)}
-
-            <span className="text-white/80 text-xs flex-1 truncate">
-              {file.name}
-            </span>
-
-            <span className="text-white/30 text-[10px]">
-              {(file.size / 1024).toFixed(0)}KB
-            </span>
-
-            <button
-              type="button"
-              onClick={() => removeFile(index)}
-              className="text-white/30 hover:text-red-400 transition-colors"
-            >
-              <X className="w-3 h-3" />
-            </button>
-          </div>
-        ))}
-      </div>
-    )}
-  </div>
-)}
+                  )}
 
                   {/* ============================================================
-                      👤 INFORMACIÓN DEL EMPLEADOR - AHORA DESPUÉS DEL UPLOADER
+                      📎 SUBIR DOCUMENTOS
+                      SOLO SI NO ESTÁ EN MODO "SOLO PERSONA"
+                      ============================================================ */}
+                  {!formData.buscarSoloPersona && (
+                    <div
+                      ref={el => errorRefs.current["documents"] = el}
+                      className="col-span-1 lg:col-span-2"
+                    >
+                      <label className="block text-white text-[13px] mb-2">
+                        {isMa
+                          ? "رفع المستندات"
+                          : isEn
+                          ? "Upload documents"
+                          : "Subir documento(s)"}
+
+                        <span className="text-white/40 text-[11px] ml-2">
+                          {isMa
+                            ? `(حد أقصى ${MAX_FILES} ملفات)`
+                            : isEn
+                            ? `(max ${MAX_FILES} files)`
+                            : `(máx ${MAX_FILES} archivos)`}
+                        </span>
+                      </label>
+
+                      <div
+                        className={`relative w-full min-h-[52px] rounded-2xl border-2 border-dashed ${
+                          errorField === "documents"
+                            ? "border-red-500 bg-red-500/5"
+                            : uploadedFiles.length > 0
+                            ? "border-emerald-500/50 bg-emerald-500/5"
+                            : "border-white/20 bg-[#060b16]"
+                        } flex flex-col items-center justify-center hover:border-yellow-400 transition-colors p-3`}
+                      >
+                        <input
+                          type="file"
+                          multiple
+                          accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp"
+                          className="absolute opacity-0 w-full h-full cursor-pointer"
+                          onChange={handleFileUpload}
+                          disabled={
+                            isUploading ||
+                            uploadedFiles.length >= MAX_FILES ||
+                            formData.buscarSoloPersona
+                          }
+                        />
+
+                        {isUploading ? (
+                          <div className="flex items-center gap-2">
+                            <RefreshCw className="w-4 h-4 animate-spin text-yellow-400" />
+                            <p className="text-yellow-400 text-sm">
+                              {isMa
+                                ? "جاري الرفع..."
+                                : isEn
+                                ? "Uploading..."
+                                : "Subiendo..."}
+                            </p>
+                          </div>
+                        ) : uploadedFiles.length === 0 ? (
+                          <div className="text-center">
+                            <Upload className="w-6 h-6 text-white/30 mx-auto mb-1" />
+                            <p className="text-white/40 text-sm">
+                              {isMa
+                                ? "📎 اختر PDF أو صورة"
+                                : isEn
+                                ? "📎 Choose PDF or image"
+                                : "📎 Seleccionar PDF o imagen"}
+                            </p>
+                            <p className="text-white/20 text-[10px] mt-1">
+                              {isMa
+                                ? `الحد الأقصى ${MAX_FILES} ملفات · 10MB لكل ملف · PDF/JPG/PNG/WEBP`
+                                : isEn
+                                ? `Max ${MAX_FILES} files · 10MB each · PDF/JPG/PNG/WEBP`
+                                : `Máximo ${MAX_FILES} archivos · 10MB cada uno · PDF/JPG/PNG/WEBP`}
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="text-center">
+                            <p className="text-emerald-400 text-sm font-medium">
+                              {isMa
+                                ? `✅ تم اختيار ${uploadedFiles.length}/${MAX_FILES} ملفات`
+                                : isEn
+                                ? `✅ ${uploadedFiles.length}/${MAX_FILES} files selected`
+                                : `✅ ${uploadedFiles.length}/${MAX_FILES} archivos seleccionados`}
+                            </p>
+                            {uploadedFiles.length < MAX_FILES && (
+                              <p className="text-white/30 text-[10px] mt-1">
+                                {isMa
+                                  ? "📎 أضف المزيد"
+                                  : isEn
+                                  ? "📎 Add more"
+                                  : "📎 Añadir más"}
+                              </p>
+                            )}
+                          </div>
+                        )}
+                      </div>
+
+                      {errorField === "documents" && (
+                        <p className="text-red-400 text-xs mt-1">
+                          {isMa
+                            ? "يجب رفع مستند واحد على الأقل"
+                            : isEn
+                            ? "You must upload at least one document"
+                            : "Debes subir al menos un documento"}
+                        </p>
+                      )}
+
+                      <p className="mt-2 text-[10px] leading-relaxed text-white/40">
+                        {isMa
+                          ? "🔒 الملفات كيبقاو غير فالمتصفح حتى يتأكد الأداء."
+                          : isEn
+                          ? "🔒 Files remain only in your browser until payment is confirmed."
+                          : "🔒 Los archivos permanecen solo en el navegador hasta confirmar el pago."}
+                      </p>
+
+                      {uploadedFiles.length > 0 && (
+                        <div className="mt-2 space-y-1">
+                          {uploadedFiles.map((file, index) => (
+                            <div
+                              key={index}
+                              className="flex items-center gap-2 bg-white/5 rounded-lg px-3 py-2 border border-white/10"
+                            >
+                              {getFileIcon(file.type)}
+                              <span className="text-white/80 text-xs flex-1 truncate">
+                                {file.name}
+                              </span>
+                              <span className="text-white/30 text-[10px]">
+                                {(file.size / 1024).toFixed(0)}KB
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => removeFile(index)}
+                                className="text-white/30 hover:text-red-400 transition-colors"
+                              >
+                                <X className="w-3 h-3" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* ============================================================
+                      👤 INFORMACIÓN DEL EMPLEADOR/PERSONA - SIEMPRE VISIBLE
                       ============================================================ */}
                   <div
                     ref={el => errorRefs.current["empleadorNombre"] = el}
@@ -994,7 +989,7 @@ function OfficialBrowserBox({
                       </div>
                     </div>
 
-                    {/* ✅ CHECKBOX "No tengo contrato ni Nulla Osta" - SIN BORRAR DOCUMENTOS */}
+                    {/* ✅ CHECKBOX "No tengo contrato ni Nulla Osta" */}
                     <label className="mt-4 flex items-start gap-3 cursor-pointer">
                       <input
                         type="checkbox"
@@ -1002,24 +997,16 @@ function OfficialBrowserBox({
                         onChange={(e) => {
                           const checked = e.target.checked;
                           handleInputChange("buscarSoloPersona", checked);
-                          // ❌ ELIMINADO: No borramos documentos cuando se marca
-                          // if (checked) {
-                          //   if (uploadedFiles.length > 0) { ... }
-                          // }
+                          
                           if (checked) {
-  setErrorField(null);
-
-  // Modo SOLO NOMBRE:
-  // borrar documentos seleccionados de esta sesión
-  setUploadedFiles([]);
-
-  // Limpiar nombres/rutas de documentos
-  handleInputChange("documentos", "");
-  handleInputChange("documentosUrls", "[]");
-
-  // Limpiar archivos guardados temporalmente en IndexedDB
-  void clearPendingFlussiFiles();
-}
+                            // ✅ Modo SOLO PERSONA: limpiar documentos y tipo de documento
+                            setUploadedFiles([]);
+                            handleInputChange("documentos", "");
+                            handleInputChange("documentosUrls", "[]");
+                            handleInputChange("tipoDocumento", "");
+                            void clearPendingFlussiFiles();
+                            setErrorField(null);
+                          }
                         }}
                         className="mt-1 w-4 h-4 rounded border-white/20 bg-[#060b16] text-emerald-500 focus:ring-emerald-500 focus:ring-offset-0"
                       />
@@ -1031,6 +1018,32 @@ function OfficialBrowserBox({
                           : "No tengo contrato ni Nulla Osta. Solo quiero buscar a esta persona o empleador en las fuentes públicas disponibles."}
                       </span>
                     </label>
+
+                    {/* ✅ Mensaje informativo cuando está en modo SOLO PERSONA */}
+                    {formData.buscarSoloPersona && (
+                      <div className="mt-3 rounded-xl border border-blue-500/30 bg-blue-500/10 px-4 py-3">
+                        <p className="text-blue-300 text-[12px] leading-relaxed flex items-start gap-2">
+                          <span className="text-blue-400 text-base">🔍</span>
+                          <span>
+                            {isMa
+                              ? "غادي نبحثو على المعلومات المتاحة علنيا حول هاد الشخص: النشاط التجاري، الشركة، أو أي بيانات عامة أخرى متعلقة."
+                              : isEn
+                              ? "We will search for publicly available information about this person: business activity, company, or any other relevant public data."
+                              : "Buscaremos información públicamente disponible sobre esta persona: actividad empresarial, empresa o cualquier otro dato público relevante."}
+                          </span>
+                        </p>
+                        <p className="text-blue-300/70 text-[11px] leading-relaxed mt-2 flex items-start gap-2">
+                          <span className="text-blue-400/70 text-base">⚠️</span>
+                          <span>
+                            {isMa
+                              ? "تنبيه: مجرد العثور على اسم أو نشاط تجاري لا يعني تلقائياً أن هذه الشخص يمكنه توظيفك عبر Decreto Flussi. يجب التحقق من المتطلبات والمصادر الرسمية."
+                              : isEn
+                              : "Note: Finding a name or business activity does not automatically mean this person can hire you through Decreto Flussi. Official requirements and sources must be checked."
+                              : "Nota: Encontrar un nombre o actividad comercial no significa automáticamente que esta persona pueda contratarte mediante Decreto Flussi. Se deben verificar los requisitos y fuentes oficiales."}
+                          </span>
+                        </p>
+                      </div>
+                    )}
                   </div>
 
                   {/* Caja de pago con Checkbox */}
@@ -1038,11 +1051,17 @@ function OfficialBrowserBox({
                     <div className="flex items-start justify-between mb-4 pt-2">
                       <div>
                         <p className="text-white text-[15px] font-bold">
-                          {isMa
-                            ? "التحقق من العقد ومرسوم فلوسي"
-                            : isEn
-                            ? "Contract & Decreto Flussi Verification"
-                            : "Verificación de Contrato y Decreto Flussi"}
+                          {formData.buscarSoloPersona
+                            ? isMa
+                              ? "البحث عن شخص"
+                              : isEn
+                              ? "Person Search"
+                              : "Búsqueda de persona"
+                            : isMa
+                              ? "التحقق من العقد ومرسوم فلوسي"
+                              : isEn
+                              ? "Contract & Decreto Flussi Verification"
+                              : "Verificación de Contrato y Decreto Flussi"}
                         </p>
                         <span className="inline-flex mt-1 rounded-full bg-gradient-to-r from-yellow-400 to-yellow-600 px-3 py-1 text-[10px] font-black uppercase tracking-wide text-black shadow-[0_0_15px_rgba(255,215,0,0.25)]">
                           Premium
@@ -1060,32 +1079,63 @@ function OfficialBrowserBox({
 
                     <p className="text-gray-300 text-[13px] mb-5 leading-relaxed">
                       {isMa
-                        ? "نظامنا يحلل عقدك أو وثائق Decreto Flussi باستخدام الذكاء الاصطناعي. نتحقق من تماسك الوثائق ونتحقق من الشركة باستخدام المصادر العامة المتاحة. ستتلقى تقريراً مفصلاً عبر البريد الإلكتروني."
+                        ? formData.buscarSoloPersona
+                          ? "سنبحث عن المعلومات المتاحة علنيا حول الشخص المطلوب. ستتلقى تقريراً مفصلاً عبر البريد الإلكتروني."
+                          : "نظامنا يحلل عقدك أو وثائق Decreto Flussi باستخدام الذكاء الاصطناعي. نتحقق من تماسك الوثائق ونتحقق من الشركة باستخدام المصادر العامة المتاحة. ستتلقى تقريراً مفصلاً عبر البريد الإلكتروني."
                         : isEn
-                        ? "Our system analyzes your contract or Decreto Flussi documents using artificial intelligence. We check document consistency and verify the company using available public sources. You will receive a detailed report by email."
-                        : "Nuestro sistema analiza tu contrato o documento del Decreto Flussi mediante inteligencia artificial. Comprobamos la coherencia documental y verificamos la empresa utilizando fuentes públicas disponibles. Recibirás un informe detallado por correo electrónico."}
+                        ? formData.buscarSoloPersona
+                          ? "We will search for publicly available information about the person. You will receive a detailed report by email."
+                          : "Our system analyzes your contract or Decreto Flussi documents using artificial intelligence. We check document consistency and verify the company using available public sources. You will receive a detailed report by email."
+                        : formData.buscarSoloPersona
+                          ? "Buscaremos información públicamente disponible sobre la persona. Recibirás un informe detallado por correo electrónico."
+                          : "Nuestro sistema analiza tu contrato o documento del Decreto Flussi mediante inteligencia artificial. Comprobamos la coherencia documental y verificamos la empresa utilizando fuentes públicas disponibles. Recibirás un informe detallado por correo electrónico."}
                     </p>
 
                     {/* CONTADOR DE VERIFICACIÓN */}
                     <div className="mb-5 grid grid-cols-2 gap-2">
-                      <div className="flex items-center gap-2 bg-white/5 rounded-xl px-3 py-2 border border-white/10">
-                        <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                        <span className="text-white/80 text-[11px] font-medium">
-                          {isMa ? "تحليل العقد" : isEn ? "Contract analyzed" : "Contrato analizado"}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2 bg-white/5 rounded-xl px-3 py-2 border border-white/10">
-                        <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                        <span className="text-white/80 text-[11px] font-medium">
-                          {isMa ? "التحقق من الشركة" : isEn ? "Company verified" : "Empresa verificada"}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2 bg-white/5 rounded-xl px-3 py-2 border border-white/10">
-                        <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                        <span className="text-white/80 text-[11px] font-medium">
-                          {isMa ? "مراجعة الوثائق" : isEn ? "Document reviewed" : "Documento revisado"}
-                        </span>
-                      </div>
+                      {!formData.buscarSoloPersona ? (
+                        <>
+                          <div className="flex items-center gap-2 bg-white/5 rounded-xl px-3 py-2 border border-white/10">
+                            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                            <span className="text-white/80 text-[11px] font-medium">
+                              {isMa ? "تحليل العقد" : isEn ? "Contract analyzed" : "Contrato analizado"}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2 bg-white/5 rounded-xl px-3 py-2 border border-white/10">
+                            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                            <span className="text-white/80 text-[11px] font-medium">
+                              {isMa ? "التحقق من الشركة" : isEn ? "Company verified" : "Empresa verificada"}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2 bg-white/5 rounded-xl px-3 py-2 border border-white/10">
+                            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                            <span className="text-white/80 text-[11px] font-medium">
+                              {isMa ? "مراجعة الوثائق" : isEn ? "Document reviewed" : "Documento revisado"}
+                            </span>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div className="flex items-center gap-2 bg-white/5 rounded-xl px-3 py-2 border border-white/10">
+                            <CheckCircle2 className="w-4 h-4 text-blue-400 shrink-0" />
+                            <span className="text-white/80 text-[11px] font-medium">
+                              {isMa ? "بحث عن الشخص" : isEn ? "Person search" : "Búsqueda de persona"}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2 bg-white/5 rounded-xl px-3 py-2 border border-white/10">
+                            <CheckCircle2 className="w-4 h-4 text-blue-400 shrink-0" />
+                            <span className="text-white/80 text-[11px] font-medium">
+                              {isMa ? "تحليل النشاط" : isEn ? "Activity analysis" : "Análisis de actividad"}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2 bg-white/5 rounded-xl px-3 py-2 border border-white/10">
+                            <CheckCircle2 className="w-4 h-4 text-blue-400 shrink-0" />
+                            <span className="text-white/80 text-[11px] font-medium">
+                              {isMa ? "معلومات عامة" : isEn ? "Public info" : "Información pública"}
+                            </span>
+                          </div>
+                        </>
+                      )}
                       <div className="flex items-center gap-2 bg-white/5 rounded-xl px-3 py-2 border border-white/10">
                         <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
                         <span className="text-white/80 text-[11px] font-medium">
@@ -1194,18 +1244,30 @@ function OfficialBrowserBox({
                   <div className="w-2.5 h-2.5 rounded-full bg-yellow-400 animate-pulse" />
                   <p className="text-yellow-300 font-bold text-sm">
                     {isMa
-                      ? "النظام يحلل وثائقك"
+                      ? formData.buscarSoloPersona
+                        ? "جاري البحث عن المعلومات"
+                        : "النظام يحلل وثائقك"
                       : isEn
-                      ? "System analyzing your documents"
-                      : "Sistema analizando tus documentos"}
+                      ? formData.buscarSoloPersona
+                        ? "Searching for information"
+                        : "System analyzing your documents"
+                      : formData.buscarSoloPersona
+                        ? "Buscando información"
+                        : "Sistema analizando tus documentos"}
                   </p>
                 </div>
                 <p className="text-white/70 text-xs leading-relaxed">
                   {isMa
-                    ? "نظامنا يحلل عقدك أو وثائق Decreto Flussi باستخدام الذكاء الاصطناعي. نتحقق من تماسك الوثائق ونتحقق من الشركة باستخدام المصادر العامة المتاحة. ستتلقى تقريراً مفصلاً عبر البريد الإلكتروني."
+                    ? formData.buscarSoloPersona
+                      ? "نبحث عن المعلومات المتاحة علنيا حول الشخص المطلوب. سيتم إرسال التقرير المفصل عبر البريد الإلكتروني."
+                      : "نظامنا يحلل عقدك أو وثائق Decreto Flussi باستخدام الذكاء الاصطناعي. نتحقق من تماسك الوثائق ونتحقق من الشركة باستخدام المصادر العامة المتاحة. ستتلقى تقريراً مفصلاً عبر البريد الإلكتروني."
                     : isEn
-                    ? "Our system analyzes your contract or Decreto Flussi documents using artificial intelligence. We check document consistency and verify the company using available public sources. You will receive a detailed report by email."
-                    : "Nuestro sistema analiza tu contrato o documento del Decreto Flussi mediante inteligencia artificial. Comprobamos la coherencia documental y verificamos la empresa utilizando fuentes públicas disponibles. Recibirás un informe detallado por correo electrónico."}
+                    ? formData.buscarSoloPersona
+                      ? "We are searching for publicly available information about the person. You will receive a detailed report by email."
+                      : "Our system analyzes your contract or Decreto Flussi documents using artificial intelligence. We check document consistency and verify the company using available public sources. You will receive a detailed report by email."
+                    : formData.buscarSoloPersona
+                      ? "Buscamos información públicamente disponible sobre la persona. Recibirás un informe detallado por correo electrónico."
+                      : "Nuestro sistema analiza tu contrato o documento del Decreto Flussi mediante inteligencia artificial. Comprobamos la coherencia documental y verificamos la empresa utilizando fuentes públicas disponibles. Recibirás un informe detallado por correo electrónico."}
                 </p>
               </div>
 
@@ -1925,19 +1987,19 @@ export default function VerificarDecretoFlussi() {
       return false;
     }
 
-    // 6. Nombre completo del empleador/persona a comprobar
+    // 6. ✅ Nombre completo del empleador/persona - SIEMPRE OBLIGATORIO
     if (!formData.empleadorNombre.trim() || formData.empleadorNombre.trim().length < 2) {
       setErrorField("empleadorNombre");
       return false;
     }
 
-    // 7. Tipo de documento: solo es obligatorio si NO se busca únicamente a la persona
+    // 7. ✅ Tipo de documento: solo obligatorio si NO está en modo "solo persona"
     if (!formData.buscarSoloPersona && !formData.tipoDocumento.trim()) {
       setErrorField("tipoDocumento");
       return false;
     }
 
-    // 8. Documento: obligatorio solo cuando el cliente ha elegido una comprobación documental
+    // 8. ✅ Documento: obligatorio solo cuando NO está en modo "solo persona"
     if (!formData.buscarSoloPersona && uploadedFiles.length === 0) {
       setErrorField("documents");
       return false;
@@ -1965,6 +2027,7 @@ export default function VerificarDecretoFlussi() {
   // ✅ Función que llama a Stripe
   const payStripe = async () => {
     try {
+      // Solo verificar documentos si NO está en modo "solo persona"
       if (!formData.buscarSoloPersona) {
         const pendingFiles = await getPendingFlussiFiles();
         if (pendingFiles.length === 0) {
@@ -1980,32 +2043,24 @@ export default function VerificarDecretoFlussi() {
         headers: {
           "Content-Type": "application/json",
         },
- body: JSON.stringify({
-  userId,
-
-  // Nombre del cliente que está pagando
-  clientName: `${formData.fullName} ${formData.apellidos}`.trim(),
-  nombreCliente: `${formData.fullName} ${formData.apellidos}`.trim(),
-
-  fullName: formData.fullName,
-  apellidos: formData.apellidos,
-  phone: formData.phone,
-  email: formData.email,
-  pais: formData.pais,
-  tipoDocumento: formData.tipoDocumento || null,
-  documentos: formData.documentos,
-
-  documentosPaths: "[]",
-
-  preferredOffice: formData.preferredOffice,
-
-  empleadorNombre: formData.empleadorNombre,
-  empleadorCiudad: formData.empleadorCiudad || null,
-  empleadorFechaNacimiento:
-    formData.empleadorFechaNacimiento || null,
-
-  buscarSoloPersona: formData.buscarSoloPersona,
-}),
+        body: JSON.stringify({
+          userId,
+          clientName: `${formData.fullName} ${formData.apellidos}`.trim(),
+          nombreCliente: `${formData.fullName} ${formData.apellidos}`.trim(),
+          fullName: formData.fullName,
+          apellidos: formData.apellidos,
+          phone: formData.phone,
+          email: formData.email,
+          pais: formData.pais,
+          tipoDocumento: formData.tipoDocumento || null,
+          documentos: formData.documentos,
+          documentosPaths: "[]",
+          preferredOffice: formData.preferredOffice,
+          empleadorNombre: formData.empleadorNombre,
+          empleadorCiudad: formData.empleadorCiudad || null,
+          empleadorFechaNacimiento: formData.empleadorFechaNacimiento || null,
+          buscarSoloPersona: formData.buscarSoloPersona,
+        }),
       });
 
       const data = await res.json();
