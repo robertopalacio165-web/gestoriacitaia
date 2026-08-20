@@ -1034,8 +1034,8 @@ function OfficialBrowserBox({
                         </p>
                         <p className="text-blue-300/70 text-[11px] leading-relaxed mt-2 flex items-start gap-2">
                           <span className="text-blue-400/70 text-base">⚠️</span>
-                          <span>
-                            {isMa
+                          
+
 
 {isMa
   ? "تنبيه: مجرد العثور على اسم أو نشاط تجاري لا يعني تلقائياً أن هذه الشخص يمكنه توظيفك عبر Decreto Flussi. يجب التحقق من المتطلبات والمصادر الرسمية."
