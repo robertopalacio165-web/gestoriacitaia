@@ -1036,11 +1036,15 @@ function OfficialBrowserBox({
                           <span className="text-blue-400/70 text-base">⚠️</span>
                           <span>
                             {isMa
-                              ? "تنبيه: مجرد العثور على اسم أو نشاط تجاري لا يعني تلقائياً أن هذه الشخص يمكنه توظيفك عبر Decreto Flussi. يجب التحقق من المتطلبات والمصادر الرسمية."
-                              : isEn
-                              : "Note: Finding a name or business activity does not automatically mean this person can hire you through Decreto Flussi. Official requirements and sources must be checked."
-                              : "Nota: Encontrar un nombre o actividad comercial no significa automáticamente que esta persona pueda contratarte mediante Decreto Flussi. Se deben verificar los requisitos y fuentes oficiales."}
-                          </span>
+
+{isMa
+  ? "تنبيه: مجرد العثور على اسم أو نشاط تجاري لا يعني تلقائياً أن هذه الشخص يمكنه توظيفك عبر Decreto Flussi. يجب التحقق من المتطلبات والمصادر الرسمية."
+  : isEn
+  ? "Note: Finding a name or business activity does not automatically mean this person can hire you through Decreto Flussi. Official requirements and sources must be checked."
+  : "Nota: Encontrar un nombre o actividad comercial no significa automáticamente que esta persona pueda contratarte mediante Decreto Flussi. Se deben verificar los requisitos y fuentes oficiales."
+}
+
+                              
                         </p>
                       </div>
                     )}
