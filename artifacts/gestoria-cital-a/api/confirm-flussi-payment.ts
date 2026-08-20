@@ -7,7 +7,7 @@ const stripe = stripeSecretKey
   ? new Stripe(stripeSecretKey)
   : null;
 
-const EXPECTED_AMOUNT = 1; // 0,01 €
+const EXPECTED_AMOUNT = 50; // 0,50 € de prueba
 const EXPECTED_CURRENCY = "eur";
 const EXPECTED_PRODUCT = "decreto_flussi";
 
@@ -130,7 +130,8 @@ export default async function handler(
         ok: false,
         paid: false,
         error:
-          "El importe del pago no coincide con 21,99 €.",
+
+  "El importe del pago no coincide con 0,50 €.",
       });
     }
 
@@ -276,7 +277,8 @@ export default async function handler(
         true,
 
       message:
-        "Pago de 21,99 € confirmado correctamente. Puedes continuar con la subida de documentos.",
+    
+  "Pago de 0,50 € confirmado correctamente. Puedes continuar con el análisis.",
     });
   } catch (error: any) {
     console.error(
