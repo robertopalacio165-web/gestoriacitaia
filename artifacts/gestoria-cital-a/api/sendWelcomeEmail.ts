@@ -124,7 +124,7 @@ export async function sendWelcomeEmail({
 
 <br><br>
 
-✅ غادي نرسلو الترشيح ديالك حتى لـ <b>10 شركات كل نهار</b> حسب الباقة ديالك.
+✅ غادي نرسلو ليك بين <b>50 و80 عرض عمل جديد</b> خلال هاد الشهر، ومع كل عرض غادي نعطيوك <b>رقم الهاتف ديال الشركة</b>.
 
 <br><br>
 
@@ -187,7 +187,7 @@ From today our recruitment team starts working on your profile and will submit y
 
 <br><br>
 
-✅ We submit your application to <b>up to 10 companies every day</b> depending on your plan.
+✅ We will send you between <b>50 and 80 new job offers</b> during this month, with the <b>company phone number</b> for each offer.
 
 <br><br>
 
