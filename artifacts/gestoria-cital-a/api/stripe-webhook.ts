@@ -163,6 +163,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         pdf_url: pdfUrl || existing.pdf_url,
         plan: plan,
         paid: true,
+        worker_ready: true,
+worker_started: false,
+worker_finished: false,
         updated_at: new Date().toISOString(),
       };
 
