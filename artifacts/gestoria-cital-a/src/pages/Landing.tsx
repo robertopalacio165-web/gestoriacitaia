@@ -158,17 +158,17 @@ export default function Landing() {
               <ArrowRight className="w-4 h-4 ml-1" />
             </Button>
 
-            {/* ✅ BOTÓN KHALID */}
-            <Button
-              className="w-full sm:w-auto rounded-full px-7 py-3 min-h-[52px]
-              bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500
-              hover:scale-[1.02] transition-all duration-300
-              text-black font-bold shadow-xl shadow-orange-500/30 border-0"
-              onClick={() => goWithGoogleAuth("/khalid-extranjeria")}
-            >
-              {t("hero_btn_khalid")}
-              <ArrowRight className="w-4 h-4 ml-1" />
-            </Button>
+        {/* 🇲🇹 BOTÓN ESTUDIAR EN MALTA 2027 */}
+<Button
+  className="w-full sm:w-auto rounded-full px-7 py-3 min-h-[52px]
+  bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500
+  hover:scale-[1.02] transition-all duration-300
+  text-black font-bold shadow-xl shadow-orange-500/30 border-0"
+  onClick={() => window.location.href = "/estudiar-en-malta-2027"}
+>
+  🇲🇹 دراسة في مالطا 2027
+  <ArrowRight className="w-4 h-4 ml-1" />
+</Button>
 
             {/* ✅ BOTÓN TRABAJO EN MALTA - VERDE LLAMATIVO Y TEXTO GRANDE */}
             <Button
