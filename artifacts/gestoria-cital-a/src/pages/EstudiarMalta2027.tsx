@@ -206,7 +206,11 @@ export default function EstudiarMalta2027() {
         <h1 className="text-xl font-display font-bold px-4 sm:px-6 py-3 max-w-7xl mx-auto w-full">{ui.title}</h1>
         <div className="max-w-5xl mx-auto px-4 sm:px-6">
           <div className="relative rounded-2xl overflow-hidden border border-primary/20 shadow-[0_0_30px_-5px_hsl(var(--primary)/0.25)] bg-black h-[250px] sm:h-[330px] mb-5">
-            <img src="/images/malta-study-poster.png" alt="Study in Malta 2027" className="w-full h-full object-cover" />
+      <img
+  src="/images/malta-estudiar-2027.png"
+  alt="Study in Malta 2027"
+  className="w-full h-full object-cover"
+/>
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
             <div className="absolute bottom-5 left-5 right-5"><p className="text-yellow-400 font-black text-2xl sm:text-4xl">{ui.title}</p><p className="text-white/80 mt-1">🇲🇹 Malta · 2027</p></div>
           </div>
