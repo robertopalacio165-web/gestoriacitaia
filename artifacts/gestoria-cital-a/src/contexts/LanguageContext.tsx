@@ -41,8 +41,7 @@ const translations: AllTranslations = {
     hero_btn1: "Regularización con Soufiane",
     hero_btn2: "Ir al panel",
     hero_btn_sara: "Expediente con Sara",
-    hero_btn_khalid: "Consulta con Khalid",
-    hero_btn_malta: "Trabajo en Malta",
+    hero_btn_study_malta: "Estudiar en Malta 2027",
     hero_trust: "Miles de personas ya usan GestoriaCitaIA",
 
     // ============================================
@@ -118,19 +117,6 @@ const translations: AllTranslations = {
     plan_malta_monthly_f4: "✅ Mayor probabilidad de entrevistas",
     plan_malta_monthly_f5: "✅ Soporte prioritario WhatsApp",
 
-    plan_khalid_title: "Khalid Extranjería",
-    plan_khalid_subtitle: "Asistente IA",
-    plan_khalid_price: "14,99€",
-    plan_khalid_period: "/mes",
-    plan_khalid_badge: "IA 24/7",
-    plan_khalid_button: "Hablar con Khalid",
-    plan_khalid_f1: "✅ Chat IA ilimitado 24/7",
-    plan_khalid_f2: "✅ Consultas de extranjería",
-    plan_khalid_f3: "✅ Permisos de residencia",
-    plan_khalid_f4: "✅ Arraigo · Renovaciones",
-    plan_khalid_f5: "✅ Nacionalidad · Reagrupación familiar",
-    plan_khalid_f6: "✅ Revisión de documentos",
-    plan_khalid_f7: "✅ Ayuda en todos los trámites de España",
 
     // ============================================
     // TRÁMITES
@@ -353,18 +339,6 @@ const translations: AllTranslations = {
     reg_payment_agent_message:
       "Para continuar con tu Regularización 2026 y presentar tu solicitud, activa tu plan.",
 
-    // ============================================
-    // KHALID
-    // ============================================
-    khalidDescription:
-      "Especialista profesional en extranjería española para marroquíes en España. Pregunta sobre residencia, papeles, policía, nacionalidad, arraigo, trabajo, estudios y cualquier problema legal relacionado con inmigración.",
-    unlockKhalid: "Desbloquea a Khalid",
-    premiumDescription:
-      "Acceso ilimitado a respuestas y asesoría personalizada.",
-    unlockNow: "Desbloquear ahora",
-    securePayment: "Pago seguro con Stripe",
-    endConversation: "Finalizar conversación",
-    talkToKhalid: "Hablar con Khalid",
     onlineNow: "En línea",
 
     // ============================================
@@ -478,8 +452,7 @@ const translations: AllTranslations = {
     hero_btn1: "Regularization with Soufiane",
     hero_btn2: "Go to panel",
     hero_btn_sara: "File with Sara",
-    hero_btn_khalid: "Consult with Khalid",
-    hero_btn_malta: "Work in Malta",
+    hero_btn_study_malta: "Study in Malta 2027",
     hero_trust: "Thousands of people already use GestoriaCitaIA",
 
     // ============================================
@@ -555,19 +528,6 @@ const translations: AllTranslations = {
     plan_malta_monthly_f4: "✅ Higher chance of interviews",
     plan_malta_monthly_f5: "✅ Priority WhatsApp support",
 
-    plan_khalid_title: "Khalid AI Assistant",
-    plan_khalid_subtitle: "AI Assistant",
-    plan_khalid_price: "€14.99",
-    plan_khalid_period: "/month",
-    plan_khalid_badge: "24/7 AI",
-    plan_khalid_button: "Start Chat",
-    plan_khalid_f1: "✅ Unlimited 24/7 AI Chat",
-    plan_khalid_f2: "✅ Immigration consultations",
-    plan_khalid_f3: "✅ Residence permits",
-    plan_khalid_f4: "✅ Arraigo · Renewals",
-    plan_khalid_f5: "✅ Nationality · Family reunification",
-    plan_khalid_f6: "✅ Document review",
-    plan_khalid_f7: "✅ Help with all Spain procedures",
 
     // ============================================
     // TRÁMITES
@@ -751,18 +711,6 @@ const translations: AllTranslations = {
     reg_payment_agent_message:
       "To continue with your Regularization 2026 and submit your application, activate your plan.",
 
-    // ============================================
-    // KHALID
-    // ============================================
-    khalidDescription:
-      "Professional Spanish immigration specialist for Moroccans in Spain. Ask about residency, police, nationality, work, studies or any immigration legal issue.",
-    unlockKhalid: "Unlock Khalid",
-    premiumDescription:
-      "Unlimited access to answers and personalized assistance.",
-    unlockNow: "Unlock now",
-    securePayment: "Secure payment with Stripe",
-    endConversation: "End conversation",
-    talkToKhalid: "Talk to Khalid",
     onlineNow: "Online",
 
     // ============================================
@@ -876,8 +824,7 @@ const translations: AllTranslations = {
     hero_btn1: "التسوية مع سفيان",
     hero_btn2: "دخل للبانيل",
     hero_btn_sara: "الملف مع سارة",
-    hero_btn_khalid: "استشارة مع خالد",
-    hero_btn_malta: "الخدمة فمالطا",
+    hero_btn_study_malta: "قرا فمالطا 2027",
     hero_trust: "آلاف الناس كيستعملو GestoriaCitaIA",
 
     // ============================================
@@ -953,19 +900,6 @@ const translations: AllTranslations = {
     plan_malta_monthly_f4: "✅ احتمالية أكبر للمقابلات",
     plan_malta_monthly_f5: "✅ دعم أولوية عبر واتساب",
 
-    plan_khalid_title: "خالد - الهجرة",
-    plan_khalid_subtitle: "مساعد ذكاء اصطناعي",
-    plan_khalid_price: "14,99€",
-    plan_khalid_period: "/شهر",
-    plan_khalid_badge: "ذكاء اصطناعي 24/7",
-    plan_khalid_button: "تحدث مع خالد",
-    plan_khalid_f1: "✅ شات ذكاء اصطناعي غير محدود 24/7",
-    plan_khalid_f2: "✅ استشارات الهجرة",
-    plan_khalid_f3: "✅ تصاريح الإقامة",
-    plan_khalid_f4: "✅ التثبيت · التجديدات",
-    plan_khalid_f5: "✅ الجنسية · لم شمل العائلة",
-    plan_khalid_f6: "✅ مراجعة الوثائق",
-    plan_khalid_f7: "✅ المساعدة في جميع إجراءات إسبانيا",
 
     // ============================================
     // TRÁMITES
@@ -1149,18 +1083,6 @@ const translations: AllTranslations = {
     reg_payment_agent_message:
       "باش تكمل التسوية ديالك 2026 وتقدم الطلب ديالك، فعّل الخطة.",
 
-    // ============================================
-    // KHALID
-    // ============================================
-    khalidDescription:
-      "خبير فالهجرة والأوراق القانونية فإسبانيا للمغاربة. سول على الإقامة، البوليس، الجنسية، الخدمة، الدراسة وأي مشكل متعلق بالهجرة.",
-    unlockKhalid: "فتح خالد",
-    premiumDescription:
-      "ولوج كامل للأجوبة والمساعدة الخاصة.",
-    unlockNow: "فتح الآن",
-    securePayment: "دفع آمن عبر Stripe",
-    endConversation: "إنهاء المحادثة",
-    talkToKhalid: "تكلم مع خالد",
     onlineNow: "متصل الآن",
 
     // ============================================
