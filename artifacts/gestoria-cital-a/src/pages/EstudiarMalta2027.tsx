@@ -473,13 +473,19 @@ export default function EstudiarMalta2027() {
         <div className="max-w-5xl mx-auto px-4 sm:px-6">
 
           {/* FOTO SIN TEXTO ENCIMA */}
-          <div className="relative rounded-2xl overflow-hidden border border-primary/20 shadow-[0_0_30px_-5px_hsl(var(--primary)/0.25)] bg-black h-[250px] sm:h-[330px] mb-5">
- <img
-  src="/images/malta-estudiar-2027.png"
-  alt="Study in Malta 2027"
-  className="w-full h-full object-cover"
-/>
-          </div>
+   <div className="relative rounded-2xl overflow-hidden border border-primary/20 shadow-[0_0_30px_-5px_hsl(var(--primary)/0.25)] bg-black h-[250px] sm:h-[330px] mb-5">
+  <img
+    src="/images/malta-estudiar-2027.png"
+    alt="Study in Malta 2027"
+    className="w-full h-full object-cover"
+  />
+
+  <div className="absolute inset-0 flex items-center justify-center">
+    <h2 className="text-yellow-400 text-2xl sm:text-4xl font-black text-center drop-shadow-[0_3px_8px_rgba(0,0,0,0.9)]">
+      {ui.title}
+    </h2>
+  </div>
+</div>
 
           {paid ? (
             <div className="rounded-[26px] border border-emerald-500/40 bg-[#07111f] px-6 py-10 text-center">
