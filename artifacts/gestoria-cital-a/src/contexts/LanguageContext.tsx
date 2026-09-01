@@ -41,7 +41,7 @@ const translations: AllTranslations = {
     hero_btn1: "Regularización con Soufiane",
     hero_btn2: "Ir al panel",
     hero_btn_sara: "Expediente con Sara",
-    hero_btn_khalid: "Consulta con Khalid",
+   hero_btn_study_malta: "Estudiar en Malta 2027",
     hero_btn_malta: "Trabajo en Malta",
     hero_trust: "Miles de personas ya usan GestoriaCitaIA",
 
@@ -478,7 +478,7 @@ const translations: AllTranslations = {
     hero_btn1: "Regularization with Soufiane",
     hero_btn2: "Go to panel",
     hero_btn_sara: "File with Sara",
-    hero_btn_khalid: "Consult with Khalid",
+hero_btn_study_malta: "Study in Malta 2027",
     hero_btn_malta: "Work in Malta",
     hero_trust: "Thousands of people already use GestoriaCitaIA",
 
@@ -876,7 +876,7 @@ const translations: AllTranslations = {
     hero_btn1: "التسوية مع سفيان",
     hero_btn2: "دخل للبانيل",
     hero_btn_sara: "الملف مع سارة",
-    hero_btn_khalid: "استشارة مع خالد",
+hero_btn_study_malta: "قرا فمالطا 2027",
     hero_btn_malta: "الخدمة فمالطا",
     hero_trust: "آلاف الناس كيستعملو GestoriaCitaIA",
 
