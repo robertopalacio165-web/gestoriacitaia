@@ -16,8 +16,8 @@ import CheckoutSuccess from "@/pages/CheckoutSuccess";
 import CheckoutCancel from "@/pages/CheckoutCancel";
 import AuthCallback from "@/pages/AuthCallback";
 import Confirmar from "@/pages/Confirmar";
-import KhalidExtranjeria from "@/pages/KhalidExtranjeria";
-import TrabajoMalta from "@/pages/TrabajoMalta"; // ✅ NUEVA IMPORTACIÓN
+import TrabajoMalta from "@/pages/TrabajoMalta";
+import EstudiarMalta2027 from "@/pages/EstudiarMalta2027";
 import Contacto from "@/pages/Contacto";
 
 const queryClient = new QueryClient({
@@ -32,40 +32,50 @@ const queryClient = new QueryClient({
 function Router() {
   return (
     <Switch>
+      {/* LANDING */}
       <Route path="/" component={Landing} />
 
+      {/* AUTENTICACIÓN */}
       <Route path="/auth/callback" component={AuthCallback} />
 
+      {/* PANEL */}
       <Route path="/panel" component={Panel} />
 
+      {/* CITAS */}
       <Route path="/buscar-citas" component={BuscarCitas} />
 
-    <Route
-  path="/verificar-decreto-flussi"
-  component={VerificarDecretoFlussi}
-/>
-
+      {/* DECRETO FLUSSI */}
       <Route
-        path="/khalid-extranjeria"
-        component={KhalidExtranjeria}
+        path="/verificar-decreto-flussi"
+        component={VerificarDecretoFlussi}
       />
 
-      {/* ✅ NUEVA RUTA PARA TRABAJO MALTA */}
+      {/* TRABAJO EN MALTA */}
       <Route
         path="/trabajo-malta"
         component={TrabajoMalta}
       />
 
+      {/* ESTUDIAR EN MALTA 2027 */}
+      <Route
+        path="/estudiar-en-malta-2027"
+        component={EstudiarMalta2027}
+      />
+
+      {/* PÁGINAS LEGALES */}
       <Route path="/aviso-legal" component={AvisoLegal} />
 
       <Route path="/privacidad" component={Privacidad} />
 
       <Route path="/cookies" component={CookiesPage} />
-      <Route
-  path="/contacto"
-  component={Contacto}
-/>
 
+      {/* CONTACTO */}
+      <Route
+        path="/contacto"
+        component={Contacto}
+      />
+
+      {/* CHECKOUT */}
       <Route
         path="/checkout/success"
         component={CheckoutSuccess}
