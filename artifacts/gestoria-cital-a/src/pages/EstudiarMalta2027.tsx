@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+
 import { Navbar } from "@/components/Navbar";
 import { useLang } from "@/contexts/LanguageContext";
 import { useToast } from "@/hooks/use-toast";
@@ -316,12 +316,64 @@ export default function EstudiarMalta2027() {
         data: { user },
       } = await supabase.auth.getUser();
 
+      const email =
+        user?.email?.trim().toLowerCase() ||
+        formData.email?.trim().toLowerCase() ||
+        "";
+
+      const isTestUser =
+        email === "robertopalacio165@gmail.com";
+
       const payload = {
         service: "study_malta_2027",
         price: 19.99,
         userId: user?.id || null,
         ...formData,
+        email,
       };
+
+      if (isTestUser) {
+        console.log(
+          "🧪 MODO PRUEBA — ESTUDIAR MALTA 2027 — SIN STRIPE"
+        );
+
+        const res = await fetch(
+          "/api/test-estudia-malta-email",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(payload),
+          }
+        );
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(
+            data.error ||
+              "No se pudo enviar el email de prueba."
+          );
+        }
+
+        setShowPayment(false);
+
+        toast({
+          title: text(
+            "✅ Prueba enviada",
+            "✅ Test email sent",
+            "✅ تصيفط الإيميل بنجاح"
+          ),
+          description: text(
+            "Revisa robertopalacio165@gmail.com. Se ha enviado el email con el PDF.",
+            "Check robertopalacio165@gmail.com. The email with the PDF has been sent.",
+            "شوف robertopalacio165@gmail.com، تصيفط ليك الإيميل ومعاه الـ PDF."
+          ),
+        });
+
+        return;
+      }
 
       const res = await fetch(
         "/api/create-checkout-study-malta",
@@ -473,19 +525,13 @@ export default function EstudiarMalta2027() {
         <div className="max-w-5xl mx-auto px-4 sm:px-6">
 
           {/* FOTO SIN TEXTO ENCIMA */}
-   <div className="relative rounded-2xl overflow-hidden border border-primary/20 shadow-[0_0_30px_-5px_hsl(var(--primary)/0.25)] bg-black h-[250px] sm:h-[330px] mb-5">
-  <img
-    src="/images/malta-estudiar-2027.png"
-    alt="Study in Malta 2027"
-    className="w-full h-full object-cover"
-  />
-
-  <div className="absolute inset-0 flex items-center justify-center">
-    <h2 className="text-yellow-400 text-2xl sm:text-4xl font-black text-center drop-shadow-[0_3px_8px_rgba(0,0,0,0.9)]">
-      {ui.title}
-    </h2>
-  </div>
-</div>
+          <div className="relative rounded-2xl overflow-hidden border border-primary/20 shadow-[0_0_30px_-5px_hsl(var(--primary)/0.25)] bg-black h-[250px] sm:h-[330px] mb-5">
+      <img
+  src="/malta-estudiar-2027.png"
+  alt="Study in Malta 2027"
+  className="w-full h-full object-cover"
+/>
+          </div>
 
           {paid ? (
             <div className="rounded-[26px] border border-emerald-500/40 bg-[#07111f] px-6 py-10 text-center">
