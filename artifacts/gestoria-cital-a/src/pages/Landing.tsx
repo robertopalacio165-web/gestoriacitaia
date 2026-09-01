@@ -158,7 +158,7 @@ export default function Landing() {
               <ArrowRight className="w-4 h-4 ml-1" />
             </Button>
 
-        {/* 🇲🇹 BOTÓN ESTUDIAR EN MALTA 2027 */}
+{/* 🇲🇹 BOTÓN ESTUDIAR EN MALTA 2027 */}
 <Button
   className="w-full sm:w-auto rounded-full px-7 py-3 min-h-[52px]
   bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500
@@ -166,7 +166,7 @@ export default function Landing() {
   text-black font-bold shadow-xl shadow-orange-500/30 border-0"
   onClick={() => window.location.href = "/estudiar-en-malta-2027"}
 >
-  🇲🇹 دراسة في مالطا 2027
+  🇲🇹 {t("hero_btn_study_malta")}
   <ArrowRight className="w-4 h-4 ml-1" />
 </Button>
 
