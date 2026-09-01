@@ -527,7 +527,7 @@ export default function EstudiarMalta2027() {
           {/* FOTO SIN TEXTO ENCIMA */}
           <div className="relative rounded-2xl overflow-hidden border border-primary/20 shadow-[0_0_30px_-5px_hsl(var(--primary)/0.25)] bg-black h-[250px] sm:h-[330px] mb-5">
       <img
-  src="/malta-estudiar-2027.png"
+ src="/images/malta-estudiar-2027.png"
   alt="Study in Malta 2027"
   className="w-full h-full object-cover"
 />
