@@ -1,5 +1,4 @@
-import { useState } from "react";
-import { useEffect } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Navbar } from "@/components/Navbar";
 import { AgentCard } from "@/components/AgentCard";
@@ -75,25 +74,60 @@ export default function Landing() {
   const [, setLocation] = useLocation();
   const { t } = useLang();
 
-  /* 🟡 CONTADOR REAL DE USUARIOS */
+  /* ============================================================
+     🟡 CONTADOR REAL DE USUARIOS - SUPABASE
+     ============================================================ */
+
   const [registeredUsers, setRegisteredUsers] = useState(0);
 
   useEffect(() => {
-    let channel: any;
+    let channel: any = null;
+    let mounted = true;
 
     const loadRegisteredUsers = async () => {
-      const { count, error } = await supabase
-        .from("profiles")
-        .select("*", { count: "exact", head: true });
+      try {
+        const { data, error } = await supabase.rpc(
+          "get_registered_users_count"
+        );
 
-      if (!error) {
-        setRegisteredUsers(count || 0);
-      } else {
-        console.error("Error contando usuarios:", error);
+        if (!error && mounted) {
+          setRegisteredUsers(Number(data) || 0);
+          return;
+        }
+
+        /*
+         * Fallback por si la función RPC todavía no existe.
+         * No rompe la página.
+         */
+        const { count, error: countError } = await supabase
+          .from("profiles")
+          .select("*", {
+            count: "exact",
+            head: true,
+          });
+
+        if (!countError && mounted) {
+          setRegisteredUsers(count || 0);
+        }
+
+        if (error && countError) {
+          console.error(
+            "Error contando usuarios:",
+            error,
+            countError
+          );
+        }
+      } catch (error) {
+        console.error("Error contador usuarios:", error);
       }
     };
 
     loadRegisteredUsers();
+
+    /* ============================================================
+       🔴 SUPABASE REALTIME
+       Detecta nuevos registros en profiles
+       ============================================================ */
 
     channel = supabase
       .channel("live-registered-users")
@@ -105,17 +139,94 @@ export default function Landing() {
           table: "profiles",
         },
         () => {
-          setRegisteredUsers((current) => current + 1);
+          if (mounted) {
+            setRegisteredUsers((current) => current + 1);
+          }
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log(
+          "Realtime contador usuarios:",
+          status
+        );
+      });
 
     return () => {
+      mounted = false;
+
       if (channel) {
         supabase.removeChannel(channel);
       }
     };
   }, []);
+
+  /* ============================================================
+     🌍 IDIOMAS
+     Darija / Español / English
+     ============================================================ */
+
+  const getLiveLanguage = () => {
+    if (typeof document === "undefined") {
+      return "es";
+    }
+
+    const htmlLang =
+      document.documentElement.lang?.toLowerCase() || "";
+
+    const storedLanguage =
+      localStorage.getItem("language")?.toLowerCase() ||
+      localStorage.getItem("lang")?.toLowerCase() ||
+      "";
+
+    const language =
+      htmlLang || storedLanguage || navigator.language?.toLowerCase() || "es";
+
+    if (
+      language.startsWith("ar") ||
+      language.startsWith("ma") ||
+      language.startsWith("darija")
+    ) {
+      return "darija";
+    }
+
+    if (
+      language.startsWith("en") ||
+      language.startsWith("uk") ||
+      language.startsWith("us")
+    ) {
+      return "en";
+    }
+
+    return "es";
+  };
+
+  const liveLanguage = getLiveLanguage();
+
+  const liveTexts = {
+    darija: {
+      live: "مباشر",
+      title: "شخص مسجل ف GestoriaCitaIA",
+      realtime: "تحديث فالوقت الحقيقي",
+    },
+
+    es: {
+      live: "EN DIRECTO",
+      title: "Personas registradas en GestoriaCitaIA",
+      realtime: "Actualización en tiempo real",
+    },
+
+    en: {
+      live: "LIVE",
+      title: "People registered on GestoriaCitaIA",
+      realtime: "Real-time update",
+    },
+  };
+
+  const liveText =
+    liveTexts[liveLanguage as keyof typeof liveTexts] ||
+    liveTexts.es;
+
+  /* ============================================================ */
 
   const tr = (key: string, fallback: string) => {
     const value = t(key);
@@ -147,11 +258,21 @@ export default function Landing() {
 
       if (error) {
         console.error("Google login error:", error);
-        alert(tr("google_login_error", "Error al iniciar sesión con Google"));
+        alert(
+          tr(
+            "google_login_error",
+            "Error al iniciar sesión con Google"
+          )
+        );
       }
     } catch (error) {
       console.error("goWithGoogleAuth error:", error);
-      alert(tr("google_login_failed", "No se pudo iniciar sesión con Google"));
+      alert(
+        tr(
+          "google_login_failed",
+          "No se pudo iniciar sesión con Google"
+        )
+      );
     }
   };
 
@@ -182,6 +303,7 @@ export default function Landing() {
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-white to-white/80">
               {t("hero_title_1")}{" "}
             </span>
+
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-green-400 to-blue-400">
               {t("hero_title_2")}
             </span>
@@ -196,7 +318,8 @@ export default function Landing() {
             <Button
               className="w-full sm:w-auto rounded-full px-7 py-3 shadow-lg shadow-blue-500/30 bg-blue-600 hover:bg-blue-500 text-white text-base font-bold border-0 min-h-[52px]"
               onClick={() =>
-                (window.location.href = "/verificar-decreto-flussi")
+                (window.location.href =
+                  "/verificar-decreto-flussi")
               }
             >
               {t("hero_btn_sara")}
@@ -210,14 +333,15 @@ export default function Landing() {
               hover:scale-[1.02] transition-all duration-300
               text-black font-bold shadow-xl shadow-orange-500/30 border-0"
               onClick={() =>
-                (window.location.href = "/estudiar-en-malta-2027")
+                (window.location.href =
+                  "/estudiar-en-malta-2027")
               }
             >
               🇲🇹 {t("hero_btn_study_malta")}
               <ArrowRight className="w-4 h-4 ml-1" />
             </Button>
 
-            {/* ✅ BOTÓN TRABAJO EN MALTA - VERDE LLAMATIVO Y TEXTO GRANDE */}
+            {/* ✅ BOTÓN TRABAJO EN MALTA */}
             <Button
               className="w-full sm:w-auto rounded-full px-8 py-4 min-h-[60px]
               bg-gradient-to-r from-green-500 via-emerald-500 to-green-600
@@ -238,15 +362,18 @@ export default function Landing() {
 
           <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
             <div className="flex -space-x-2">
-              {["🇲🇦", "🇸🇳", "🇩🇿", "🇨🇴", "🇵🇰"].map((flag, i) => (
-                <span
-                  key={i}
-                  className="w-6 h-6 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-[10px]"
-                >
-                  {flag}
-                </span>
-              ))}
+              {["🇲🇦", "🇸🇳", "🇩🇿", "🇨🇴", "🇵🇰"].map(
+                (flag, i) => (
+                  <span
+                    key={i}
+                    className="w-6 h-6 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-[10px]"
+                  >
+                    {flag}
+                  </span>
+                )
+              )}
             </div>
+
             <span>{t("hero_trust")}</span>
           </div>
         </motion.div>
@@ -278,23 +405,29 @@ export default function Landing() {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.4 }}
         >
-          {[t("feat1"), t("feat2"), t("feat3"), t("feat4")].map((f, i) => (
-            <div
-              key={i}
-              className="flex items-center gap-2 text-white/75 text-sm"
-            >
-              <CheckCircle2 className="w-4 h-4 text-accent shrink-0 mt-0.5" />
-              <span>{f}</span>
-            </div>
-          ))}
+          {[t("feat1"), t("feat2"), t("feat3"), t("feat4")].map(
+            (f, i) => (
+              <div
+                key={i}
+                className="flex items-center gap-2 text-white/75 text-sm"
+              >
+                <CheckCircle2 className="w-4 h-4 text-accent shrink-0 mt-0.5" />
+                <span>{f}</span>
+              </div>
+            )
+          )}
         </motion.div>
+
+        {/* =====================================================
+            🖼️ FOTO GRANDE MALTA
+           ===================================================== */}
 
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="mb-16"
+          className="mb-8"
         >
           <div className="relative rounded-2xl overflow-hidden glass-panel aspect-video max-w-3xl mx-auto border border-white/10 shadow-2xl shadow-primary/10">
             <img
@@ -305,63 +438,128 @@ export default function Landing() {
           </div>
         </motion.div>
 
-        {/* 🟡 CONTADOR DE USUARIOS EN TIEMPO REAL */}
+        {/* =====================================================
+            🟡 CONTADOR DE USUARIOS
+            COMPACTO / HORIZONTAL / RESPONSIVE
+           ===================================================== */}
+
         <motion.div
-          initial={{ opacity: 0, y: 15 }}
+          initial={{ opacity: 0, y: 10 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
+          transition={{ duration: 0.4 }}
           className="mb-10 max-w-3xl mx-auto"
         >
           <div
             className="
-              relative rounded-2xl
-              border border-yellow-400/70
-              bg-yellow-500/[0.04]
-              px-5 py-4
-              shadow-[0_0_30px_rgba(250,204,21,0.12)]
+              w-full
+              min-h-[76px]
+              rounded-2xl
+              border border-yellow-400/80
+              bg-[#111111]
+              shadow-[0_0_25px_rgba(250,204,21,0.10)]
+              flex items-center
+              justify-center
+              px-4 sm:px-7
+              py-3
             "
           >
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-5">
+            <div
+              className="
+                flex
+                items-center
+                justify-center
+                gap-3
+                sm:gap-5
+                w-full
+              "
+            >
+              {/* 🟡 DIRECTO */}
+              <div className="flex flex-col items-center justify-center shrink-0">
+                <div className="flex items-center gap-1.5">
+                  <span
+                    className="
+                      w-2.5 h-2.5
+                      rounded-full
+                      bg-yellow-400
+                      animate-pulse
+                      shadow-[0_0_8px_rgba(250,204,21,0.9)]
+                    "
+                  />
 
-              <div className="flex items-center gap-2">
-                <span
-                  className="
-                    w-2.5 h-2.5 rounded-full
-                    bg-yellow-400
-                    animate-pulse
-                    shadow-[0_0_10px_rgba(250,204,21,0.9)]
-                  "
-                />
-
-                <span className="text-yellow-400 text-xs sm:text-sm font-bold">
-                  مباشر
-                </span>
+                  <span
+                    className="
+                      text-yellow-400
+                      text-[9px]
+                      sm:text-[10px]
+                      font-bold
+                    "
+                  >
+                    {liveText.live}
+                  </span>
+                </div>
               </div>
 
-              <div className="flex items-center gap-3">
-                <span className="text-2xl sm:text-3xl">
+              {/* 👥 ICONO + NÚMERO */}
+              <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+                <span className="text-2xl sm:text-3xl leading-none">
                   👥
                 </span>
 
-                <span className="text-3xl sm:text-4xl font-black text-white tracking-tight">
-                  {registeredUsers.toLocaleString("es-ES")}
+                <span
+                  className="
+                    text-3xl
+                    sm:text-4xl
+                    font-black
+                    text-white
+                    leading-none
+                    tabular-nums
+                  "
+                >
+                  {registeredUsers.toLocaleString(
+                    liveLanguage === "en" ? "en-US" : "es-ES"
+                  )}
                 </span>
               </div>
 
-              <div className="text-center sm:text-left">
-                <div className="text-sm sm:text-base font-bold text-white">
-                  شخص مسجل في GestoriaCitaIA
-                </div>
+              {/* SEPARADOR */}
+              <div className="h-10 w-px bg-yellow-400/20 shrink-0" />
 
-                <div className="text-[10px] sm:text-xs text-yellow-400/80 mt-0.5">
-                  تحديث في الوقت الحقيقي
-                </div>
+              {/* TEXTO */}
+              <div className="flex flex-col justify-center min-w-0">
+                <span
+                  className="
+                    text-white
+                    text-[10px]
+                    sm:text-xs
+                    md:text-sm
+                    font-bold
+                    leading-tight
+                  "
+                >
+                  {liveText.title}
+                </span>
+
+                <span
+                  className="
+                    text-yellow-400
+                    text-[8px]
+                    sm:text-[9px]
+                    md:text-[10px]
+                    mt-1
+                    leading-tight
+                  "
+                >
+                  {liveText.realtime}
+                </span>
               </div>
-
             </div>
           </div>
         </motion.div>
+
+        {/* =====================================================
+            PLANES
+           ===================================================== */}
 
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -438,7 +636,7 @@ export default function Landing() {
                     ))}
                   </ul>
 
-                  {/* ✅ BOTÓN: Redirige a /trabajo-malta */}
+                  {/* ✅ BOTÓN */}
                   <button
                     onClick={handleMaltaPlanClick}
                     className={`w-full py-2.5 rounded-xl text-sm font-bold uppercase tracking-wider transition-all ${plan.btnClass}`}
@@ -454,7 +652,10 @@ export default function Landing() {
           </div>
         </motion.div>
 
-        {/* SECCIÓN DE SERVICIOS SARA */}
+        {/* =====================================================
+            SERVICIOS SARA
+           ===================================================== */}
+
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -535,10 +736,17 @@ export default function Landing() {
         </motion.div>
       </main>
 
+      {/* =====================================================
+          PAGOS
+         ===================================================== */}
+
       <section className="relative z-10 border-t border-white/[0.06] py-5 px-4">
         <div className="max-w-4xl mx-auto flex flex-col items-center gap-4">
           <p className="text-[11px] text-muted-foreground font-medium tracking-wide uppercase">
-            {tr("secure_payment_methods", "Pago seguro · Métodos aceptados")}
+            {tr(
+              "secure_payment_methods",
+              "Pago seguro · Métodos aceptados"
+            )}
           </p>
 
           <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
@@ -550,7 +758,14 @@ export default function Landing() {
               stroke="currentColor"
               strokeWidth="2"
             >
-              <rect x="3" y="11" width="18" height="11" rx="2" />
+              <rect
+                x="3"
+                y="11"
+                width="18"
+                height="11"
+                rx="2"
+              />
+
               <path d="M7 11V7a5 5 0 0 1 10 0v4" />
             </svg>
 
@@ -563,6 +778,10 @@ export default function Landing() {
       </section>
 
       <LegalDisclaimer />
+
+      {/* =====================================================
+          FOOTER
+         ===================================================== */}
 
       <footer className="relative z-10 border-t border-white/[0.07] bg-[hsl(222,47%,4%,0.8)] backdrop-blur-lg">
         <div className="max-w-6xl mx-auto px-4 py-6 flex flex-col md:flex-row items-center justify-between gap-3">
