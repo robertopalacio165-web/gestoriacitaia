@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+
 import { Navbar } from "@/components/Navbar";
 import { useLang } from "@/contexts/LanguageContext";
 import { useToast } from "@/hooks/use-toast";
@@ -18,10 +18,6 @@ interface StudyMaltaFormData {
   hasBac: "" | "yes" | "no";
   bacYear: string;
   lastDiploma: string;
-  specialty: string;
-  diplomaYear: string;
-  institution: string;
-  grade: string;
   otherDiplomas: "" | "yes" | "no";
   otherDiplomasDetails: string;
   isWorking: "" | "yes" | "no";
@@ -34,10 +30,6 @@ interface StudyMaltaFormData {
   sponsorProfession: string;
   sponsorIncome: string;
   sponsorCountry: string;
-  hasAccommodation: "" | "yes" | "no";
-  hostName: string;
-  hostRelation: string;
-  hostAddress: string;
   previouslyAppliedVisa: "" | "yes" | "no";
   previousVisaCountry: string;
   previousVisaType: string;
@@ -48,8 +40,6 @@ interface StudyMaltaFormData {
   refusalReason: string;
   previouslyObtainedVisa: "" | "yes" | "no";
   previousObtainedVisaDetails: string;
-  travelledAbroad: "" | "yes" | "no";
-  stayedInStudyCountry: "" | "yes" | "no";
   studyCountry: string;
   studyField: string;
   studyReason: string;
@@ -70,10 +60,6 @@ const initialForm: StudyMaltaFormData = {
   hasBac: "",
   bacYear: "",
   lastDiploma: "",
-  specialty: "",
-  diplomaYear: "",
-  institution: "",
-  grade: "",
   otherDiplomas: "",
   otherDiplomasDetails: "",
   isWorking: "",
@@ -86,10 +72,6 @@ const initialForm: StudyMaltaFormData = {
   sponsorProfession: "",
   sponsorIncome: "",
   sponsorCountry: "",
-  hasAccommodation: "",
-  hostName: "",
-  hostRelation: "",
-  hostAddress: "",
   previouslyAppliedVisa: "",
   previousVisaCountry: "",
   previousVisaType: "",
@@ -100,8 +82,6 @@ const initialForm: StudyMaltaFormData = {
   refusalReason: "",
   previouslyObtainedVisa: "",
   previousObtainedVisaDetails: "",
-  travelledAbroad: "",
-  stayedInStudyCountry: "",
   studyCountry: "Malta",
   studyField: "",
   studyReason: "",
@@ -196,8 +176,6 @@ export default function EstudiarMalta2027() {
       "previouslyAppliedVisa",
       "visaRefused",
       "previouslyObtainedVisa",
-      "travelledAbroad",
-      "stayedInStudyCountry",
       "studyField",
       "studyReason",
       "careerGoal",
@@ -432,26 +410,32 @@ export default function EstudiarMalta2027() {
     }
   }, []);
 
-  const Field = ({
-    name,
-    label,
-    children,
-  }: {
-    name: string;
-    label: string;
-    children: React.ReactNode;
-  }) => (
-    <div
-      ref={(el) => {
-        refs.current[name] = el;
-      }}
-    >
-      <label className="block text-white text-[13px] mb-2">
-        {label}
-      </label>
+  // IMPORTANTE: Field queda estable entre renders para que el teclado
+  // del móvil no pierda el foco mientras el usuario escribe.
+  const Field = useMemo(
+    () =>
+      ({
+        name,
+        label,
+        children,
+      }: {
+        name: string;
+        label: string;
+        children: React.ReactNode;
+      }) => (
+        <div
+          ref={(el) => {
+            refs.current[name] = el;
+          }}
+        >
+          <label className="block text-white text-[13px] mb-2">
+            {label}
+          </label>
 
-      {children}
-    </div>
+          {children}
+        </div>
+      ),
+    []
   );
 
   const input = (
@@ -745,50 +729,6 @@ export default function EstudiarMalta2027() {
                     ["master", "Master"],
                     ["other", "Other"],
                   ])}
-                </Field>
-
-                <Field
-                  name="specialty"
-                  label={text(
-                    "Especialidad / rama",
-                    "Specialty / field",
-                    "التخصص / الشعبة"
-                  )}
-                >
-                  {input("specialty")}
-                </Field>
-
-                <Field
-                  name="diplomaYear"
-                  label={text(
-                    "Año de obtención",
-                    "Year obtained",
-                    "عام الحصول عليه"
-                  )}
-                >
-                  {input("diplomaYear")}
-                </Field>
-
-                <Field
-                  name="institution"
-                  label={text(
-                    "Centro educativo",
-                    "Institution",
-                    "المؤسسة التعليمية"
-                  )}
-                >
-                  {input("institution")}
-                </Field>
-
-                <Field
-                  name="grade"
-                  label={text(
-                    "Nota / mención",
-                    "Grade / distinction",
-                    "النقطة / الميزة"
-                  )}
-                >
-                  {input("grade")}
                 </Field>
 
                 <Field
@@ -1091,89 +1031,6 @@ export default function EstudiarMalta2027() {
                         "previousObtainedVisaDetails"
                       )}
                     </Field>
-                  </div>
-                )}
-
-                <h2 className="lg:col-span-2 text-yellow-400 text-lg font-black mt-5">
-                  6.{" "}
-                  {text(
-                    "Viajes y alojamiento",
-                    "Travel and accommodation",
-                    "السفر والسكن"
-                  )}
-                </h2>
-
-                <Field
-                  name="travelledAbroad"
-                  label={text(
-                    "¿Has viajado anteriormente al extranjero?",
-                    "Have you travelled abroad before?",
-                    "واش سبق ليك سافرت لبرّا؟"
-                  )}
-                >
-                  {yesNo("travelledAbroad")}
-                </Field>
-
-                <Field
-                  name="stayedInStudyCountry"
-                  label={text(
-                    "¿Has estado anteriormente en el país donde quieres estudiar?",
-                    "Have you stayed before in the country where you want to study?",
-                    "واش سبق ليك مشيتي للبلد اللي بغيتي تقرا فيه؟"
-                  )}
-                >
-                  {yesNo("stayedInStudyCountry")}
-                </Field>
-
-                <Field
-                  name="hasAccommodation"
-                  label={text(
-                    "¿Tienes alojamiento en Malta?",
-                    "Do you already have accommodation in Malta?",
-                    "واش عندك السكن ف مالطا؟"
-                  )}
-                >
-                  {yesNo("hasAccommodation")}
-                </Field>
-
-                {formData.hasAccommodation === "yes" && (
-                  <div className="lg:col-span-2 grid grid-cols-1 lg:grid-cols-2 gap-3">
-
-                    <Field
-                      name="hostName"
-                      label={text(
-                        "Nombre del anfitrión",
-                        "Host name",
-                        "اسم اللي غادي تسكن عندو"
-                      )}
-                    >
-                      {input("hostName")}
-                    </Field>
-
-                    <Field
-                      name="hostRelation"
-                      label={text(
-                        "Relación",
-                        "Relationship",
-                        "صلة القرابة"
-                      )}
-                    >
-                      {input("hostRelation")}
-                    </Field>
-
-                    <div className="lg:col-span-2">
-                      <Field
-                        name="hostAddress"
-                        label={text(
-                          "Dirección",
-                          "Address",
-                          "العنوان"
-                        )}
-                      >
-                        {input("hostAddress")}
-                      </Field>
-                    </div>
-
                   </div>
                 )}
 
