@@ -158,29 +158,27 @@ export default function EstudiarMalta2027() {
   ) => (isMa ? ma : isEn ? en : es);
 
   const validate = () => {
-    const required: Array<keyof StudyMaltaFormData> = [
-      "fullName",
-      "dateOfBirth",
-      "placeOfBirth",
-      "nationality",
-      "passportNumber",
-      "passportExpiry",
-      "address",
-      "whatsapp",
-      "email",
-      "hasBac",
-      "lastDiploma",
-      "isWorking",
-      "isStudent",
-      "hasFinancialSponsor",
-      "previouslyAppliedVisa",
-      "visaRefused",
-      "previouslyObtainedVisa",
-      "studyField",
-      "studyReason",
-      "careerGoal",
-      "returnAfterStudies",
-    ];
+   const required: Array<keyof StudyMaltaFormData> = [
+  "fullName",
+  "dateOfBirth",
+  "placeOfBirth",
+  "nationality",
+  "passportNumber",
+  "passportExpiry",
+  "address",
+  "whatsapp",
+  "email",
+  "hasBac",
+  "lastDiploma",
+  "isWorking",
+  "isStudent",
+  "hasFinancialSponsor",
+  "previouslyAppliedVisa",
+  "visaRefused",
+  "previouslyObtainedVisa",
+  "travelledAbroad",
+  "stayedInStudyCountry",
+];
 
     for (const field of required) {
       if (!String(formData[field]).trim()) {
