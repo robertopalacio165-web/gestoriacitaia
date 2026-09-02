@@ -7,7 +7,7 @@ import { LegalDisclaimer } from "@/components/LegalDisclaimer";
 import { useLang } from "@/contexts/LanguageContext";
 import {
   CheckCircle2,
-  FileText,f
+  FileText,
   Shield,
   Bell,
   ArrowRight,
