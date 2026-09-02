@@ -4,7 +4,7 @@ import nodemailer from "nodemailer";
 const TEST_EMAIL = "robertopalacio165@gmail.com";
 
 const DEFAULT_PDF_URL =
-  "https://gestoriacitaia.com/images/GestoriaCitaIA_Malta_Confirmation_FIXED.pdf";
+  "https://gestoriacitaia.com/images/GestoriaCitaIA_Malta_Darija_FINAL.pdf";
 
 function escapeHtml(value: unknown = "") {
   return String(value)
