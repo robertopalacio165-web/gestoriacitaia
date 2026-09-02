@@ -7,7 +7,7 @@ import { LegalDisclaimer } from "@/components/LegalDisclaimer";
 import { useLang } from "@/contexts/LanguageContext";
 import {
   CheckCircle2,
-  FileText,
+  FileText,f
   Shield,
   Bell,
   ArrowRight,
@@ -442,120 +442,174 @@ export default function Landing() {
             🟡 CONTADOR DE USUARIOS
             COMPACTO / HORIZONTAL / RESPONSIVE
            ===================================================== */}
+{/* 🟡 CONTADOR DE USUARIOS — DISEÑO PREMIUM */}
+<motion.div
+  initial={{ opacity: 0, y: 10 }}
+  whileInView={{ opacity: 1, y: 0 }}
+  viewport={{ once: true }}
+  transition={{ duration: 0.4 }}
+  className="mb-10 w-full max-w-3xl mx-auto"
+>
+  <div
+    className="
+      relative
+      w-full
+      min-h-[105px]
+      sm:min-h-[115px]
+      rounded-2xl
+      border-2 border-yellow-400
+      bg-[#101010]
+      shadow-[0_0_30px_rgba(250,204,21,0.16)]
+      overflow-hidden
+    "
+  >
+    <div
+      className="
+        flex items-center
+        justify-center
+        w-full h-full
+        px-4 sm:px-8
+        py-4
+        gap-4 sm:gap-7
+      "
+    >
 
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.4 }}
-          className="mb-10 max-w-3xl mx-auto"
-        >
-          <div
+      {/* 🟡 ESTADO EN DIRECTO */}
+      <div className="flex flex-col items-center justify-center shrink-0">
+        <div className="flex items-center gap-1.5">
+          <span
             className="
-              w-full
-              min-h-[76px]
-              rounded-2xl
-              border border-yellow-400/80
-              bg-[#111111]
-              shadow-[0_0_25px_rgba(250,204,21,0.10)]
-              flex items-center
-              justify-center
-              px-4 sm:px-7
-              py-3
+              w-2.5 h-2.5
+              rounded-full
+              bg-yellow-400
+              animate-pulse
+              shadow-[0_0_12px_rgba(250,204,21,1)]
+            "
+          />
+
+          <span
+            className="
+              text-yellow-400
+              text-[9px]
+              sm:text-[11px]
+              font-extrabold
+              uppercase
             "
           >
-            <div
-              className="
-                flex
-                items-center
-                justify-center
-                gap-3
-                sm:gap-5
-                w-full
-              "
-            >
-              {/* 🟡 DIRECTO */}
-              <div className="flex flex-col items-center justify-center shrink-0">
-                <div className="flex items-center gap-1.5">
-                  <span
-                    className="
-                      w-2.5 h-2.5
-                      rounded-full
-                      bg-yellow-400
-                      animate-pulse
-                      shadow-[0_0_8px_rgba(250,204,21,0.9)]
-                    "
-                  />
+            {t("live_registered_live")}
+          </span>
+        </div>
+      </div>
 
-                  <span
-                    className="
-                      text-yellow-400
-                      text-[9px]
-                      sm:text-[10px]
-                      font-bold
-                    "
-                  >
-                    {liveText.live}
-                  </span>
-                </div>
-              </div>
+      {/* 👥 USUARIOS + NÚMERO */}
+      <div className="flex flex-col items-center justify-center shrink-0">
 
-              {/* 👥 ICONO + NÚMERO */}
-              <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-                <span className="text-2xl sm:text-3xl leading-none">
-                  👥
-                </span>
+        <div className="flex items-center gap-2 sm:gap-3">
 
-                <span
-                  className="
-                    text-3xl
-                    sm:text-4xl
-                    font-black
-                    text-white
-                    leading-none
-                    tabular-nums
-                  "
-                >
-                  {registeredUsers.toLocaleString(
-                    liveLanguage === "en" ? "en-US" : "es-ES"
-                  )}
-                </span>
-              </div>
+          {/* ICONO */}
+          <svg
+            viewBox="0 0 64 64"
+            className="
+              w-9 h-9
+              sm:w-11 sm:h-11
+              text-yellow-400
+              fill-yellow-400
+              drop-shadow-[0_0_8px_rgba(250,204,21,0.35)]
+            "
+          >
+            <circle cx="32" cy="20" r="9" />
+            <path d="M14 52c0-10 7-17 18-17s18 7 18 17H14z" />
+            <circle cx="13" cy="25" r="6" />
+            <path d="M3 48c1-8 5-13 12-13 4 0 7 1 9 4-7 2-11 6-12 13H3z" />
+            <circle cx="51" cy="25" r="6" />
+            <path d="M61 48c-1-8-5-13-12-13-4 0-7 1-9 4 7 2 11 6 12 13h9z" />
+          </svg>
 
-              {/* SEPARADOR */}
-              <div className="h-10 w-px bg-yellow-400/20 shrink-0" />
+          {/* NÚMERO */}
+          <span
+            className="
+              text-yellow-400
+              text-4xl
+              sm:text-5xl
+              font-black
+              leading-none
+              tracking-tight
+              tabular-nums
+              drop-shadow-[0_0_10px_rgba(250,204,21,0.25)]
+            "
+          >
+            {registeredUsers.toLocaleString(
+              liveLanguage === "en" ? "en-US" : "es-ES"
+            )}
+          </span>
+        </div>
 
-              {/* TEXTO */}
-              <div className="flex flex-col justify-center min-w-0">
-                <span
-                  className="
-                    text-white
-                    text-[10px]
-                    sm:text-xs
-                    md:text-sm
-                    font-bold
-                    leading-tight
-                  "
-                >
-                  {liveText.title}
-                </span>
+        {/* TEXTO DE USUARIOS */}
+        <span
+          className="
+            mt-2
+            text-white
+            text-[10px]
+            sm:text-xs
+            font-bold
+            text-center
+            whitespace-nowrap
+          "
+        >
+          {t("live_registered_title")}
+        </span>
+      </div>
 
-                <span
-                  className="
-                    text-yellow-400
-                    text-[8px]
-                    sm:text-[9px]
-                    md:text-[10px]
-                    mt-1
-                    leading-tight
-                  "
-                >
-                  {liveText.realtime}
-                </span>
-              </div>
-            </div>
-          </div>
-        </motion.div>
+      {/* SEPARADOR */}
+      <div
+        className="
+          h-14
+          sm:h-16
+          w-px
+          bg-yellow-400/25
+          shrink-0
+        "
+      />
+
+      {/* 📈 ACTUALIZACIÓN */}
+      <div className="flex flex-col items-center justify-center text-center shrink-0">
+
+        <svg
+          viewBox="0 0 24 24"
+          className="
+            w-7 h-7
+            sm:w-8 sm:h-8
+            text-white/80
+            mb-1
+          "
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.7"
+        >
+          <path d="M4 19V5" />
+          <path d="M4 19h16" />
+          <path d="M7 15l4-4 3 2 5-6" />
+          <path d="M15 7h4v4" />
+        </svg>
+
+        <span
+          className="
+            text-yellow-400
+            text-[9px]
+            sm:text-[10px]
+            font-bold
+            leading-tight
+            max-w-[85px]
+          "
+        >
+          {t("live_registered_realtime")}
+        </span>
+      </div>
+
+    </div>
+  </div>
+</motion.div>
+      
 
         {/* =====================================================
             PLANES
