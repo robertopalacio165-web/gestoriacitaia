@@ -44,6 +44,9 @@ const translations: AllTranslations = {
    hero_btn_study_malta: "Estudiar en Malta 2027",
     hero_btn_malta: "Trabajo en Malta",
     hero_trust: "Miles de personas ya usan GestoriaCitaIA",
+    live_registered_live: "EN DIRECTO",
+    live_registered_title: "Personas registradas en GestoriaCitaIA",
+    live_registered_realtime: "Actualización en tiempo real",
 
     // ============================================
     // FEATURES
@@ -481,6 +484,9 @@ const translations: AllTranslations = {
 hero_btn_study_malta: "Study in Malta 2027",
     hero_btn_malta: "Work in Malta",
     hero_trust: "Thousands of people already use GestoriaCitaIA",
+    live_registered_live: "LIVE",
+    live_registered_title: "People registered on GestoriaCitaIA",
+    live_registered_realtime: "Real-time update",
 
     // ============================================
     // FEATURES
@@ -879,6 +885,9 @@ hero_btn_study_malta: "Study in Malta 2027",
 hero_btn_study_malta: "قرا فمالطا 2027",
     hero_btn_malta: "الخدمة فمالطا",
     hero_trust: "آلاف الناس كيستعملو GestoriaCitaIA",
+    live_registered_live: "مباشر",
+    live_registered_title: "الناس المسجلين ف GestoriaCitaIA",
+    live_registered_realtime: "تحديث فالوقت الحقيقي",
 
     // ============================================
     // FEATURES
