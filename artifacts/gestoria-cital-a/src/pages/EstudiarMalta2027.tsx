@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Navbar } from "@/components/Navbar";
 import { useLang } from "@/contexts/LanguageContext";
 import { useToast } from "@/hooks/use-toast";
-import { CreditCard, Shield, CheckCircle2, X } from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 
 interface StudyMaltaFormData {
@@ -101,7 +101,6 @@ export default function EstudiarMalta2027() {
     useState<StudyMaltaFormData>(initialForm);
 
   const [acceptTerms, setAcceptTerms] = useState(false);
-  const [showPayment, setShowPayment] = useState(false);
   const [paid, setPaid] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [errorField, setErrorField] = useState<string | null>(null);
@@ -176,8 +175,6 @@ export default function EstudiarMalta2027() {
   "previouslyAppliedVisa",
   "visaRefused",
   "previouslyObtainedVisa",
-  "travelledAbroad",
-  "stayedInStudyCountry",
 ];
 
     for (const field of required) {
@@ -288,102 +285,81 @@ export default function EstudiarMalta2027() {
     setSubmitting(true);
 
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      const email =
-        user?.email?.trim().toLowerCase() ||
-        formData.email?.trim().toLowerCase() ||
-        "";
-
-      const isTestUser =
-        email === "robertopalacio165@gmail.com";
+      const email = formData.email?.trim().toLowerCase() || "";
+      const isTestUser = email === "robertopalacio165@gmail.com";
 
       const payload = {
         service: "study_malta_2027",
         price: 19.99,
-        userId: user?.id || null,
         ...formData,
         email,
       };
 
+      // CUENTA DE PRUEBA: no abre Stripe. Envía directamente el email + PDF por Brevo.
       if (isTestUser) {
-        console.log(
-          "🧪 MODO PRUEBA — ESTUDIAR MALTA 2027 — SIN STRIPE"
-        );
+        console.log("🧪 MODO PRUEBA — ESTUDIAR MALTA 2027 — SIN STRIPE");
 
-        const res = await fetch(
-          "/api/test-estudia-malta-email",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(payload),
-          }
-        );
+        const res = await fetch("/api/test-estudia-malta-email", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        });
 
         const data = await res.json();
 
         if (!res.ok) {
-          throw new Error(
-            data.error ||
-              "No se pudo enviar el email de prueba."
-          );
+          throw new Error(data.error || "No se pudo enviar el email de prueba.");
         }
 
-        setShowPayment(false);
+        setPaid(true);
 
         toast({
           title: text(
-            "✅ Prueba enviada",
-            "✅ Test email sent",
-            "✅ تصيفط الإيميل بنجاح"
+            "✅ Solicitud enviada",
+            "✅ Application sent",
+            "✅ تصيفط الطلب بنجاح"
           ),
           description: text(
-            "Revisa robertopalacio165@gmail.com. Se ha enviado el email con el PDF.",
-            "Check robertopalacio165@gmail.com. The email with the PDF has been sent.",
-            "شوف robertopalacio165@gmail.com، تصيفط ليك الإيميل ومعاه الـ PDF."
+            "Se ha enviado el email con el PDF a robertopalacio165@gmail.com.",
+            "The email with the PDF was sent to robertopalacio165@gmail.com.",
+            "تصيفط الإيميل ومعاه الـ PDF لـ robertopalacio165@gmail.com."
           ),
         });
 
         return;
       }
 
-      const res = await fetch(
-        "/api/create-checkout-study-malta",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(payload),
-        }
-      );
+      // FLUJO NORMAL: para cualquier otro email seguimos usando Stripe.
+      const res = await fetch("/api/create-checkout-study-malta", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
 
       const data = await res.json();
 
       if (!res.ok || !data.url) {
-        throw new Error(
-          data.error || "Payment URL not received"
-        );
+        throw new Error(data.error || "Payment URL not received");
       }
 
       window.location.href = data.url;
-    } catch (error) {
-      console.error(error);
+    } catch (error: any) {
+      console.error("❌ Error Estudios Malta:", error);
 
       toast({
         title: text(
-          "Error de pago",
-          "Payment error",
-          "خطأ فالأداء"
+          "Error",
+          "Error",
+          "خطأ"
         ),
-        description: text(
-          "No se pudo abrir el pago.",
-          "Could not open payment.",
-          "ما قدرناش نفتحو الأداء."
+        description: error?.message || text(
+          "No se pudo procesar la solicitud.",
+          "The request could not be processed.",
+          "ما قدرناش نعالجو الطلب ديالك."
         ),
         variant: "destructive",
       });
@@ -1086,24 +1062,24 @@ export default function EstudiarMalta2027() {
 
                   <button
                     type="button"
-                    onClick={() => {
-                      if (validate()) {
-                        setShowPayment(true);
-                      }
-                    }}
+                    onClick={startPayment}
                     className="w-full min-h-[58px] mt-4 rounded-2xl bg-gradient-to-r from-yellow-400 via-yellow-500 to-amber-500 text-black font-black text-base shadow-[0_0_30px_rgba(255,215,0,.30)] hover:scale-[1.01] transition disabled:opacity-50"
-                    disabled={!acceptTerms}
+                    disabled={!acceptTerms || submitting}
                   >
-                    {ui.pay}
+                    {submitting
+                      ? text(
+                          "Enviando solicitud...",
+                          "Sending application...",
+                          "كنصيفطو الطلب..."
+                        )
+                      : ui.pay}
                   </button>
 
-                  <div className="mt-3 flex justify-center items-center gap-2 text-[11px] text-white/60">
-                    <Shield className="w-3 h-3 text-yellow-400" />
-
+                  <div className="mt-3 text-center text-[11px] text-white/60">
                     {text(
-                      "Pago seguro mediante Stripe",
-                      "Secure payment via Stripe",
-                      "أداء آمن عبر Stripe"
+                      "Tras el envío, recibirás la confirmación por email.",
+                      "After submission, you will receive confirmation by email.",
+                      "من بعد الإرسال غادي توصلك رسالة تأكيد فالإيميل."
                     )}
                   </div>
 
@@ -1114,70 +1090,6 @@ export default function EstudiarMalta2027() {
           )}
         </div>
       </main>
-
-      {showPayment && (
-        <div className="fixed inset-0 z-[9999] bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
-
-          <div className="w-full max-w-[380px] rounded-3xl border border-yellow-400/50 bg-[#111827] shadow-2xl p-5">
-
-            <div className="flex items-center justify-between mb-5">
-
-              <h2 className="text-white text-lg font-black">
-                {text(
-                  "Confirmar pago",
-                  "Confirm payment",
-                  "أكد الأداء"
-                )}
-              </h2>
-
-              <button
-                onClick={() => setShowPayment(false)}
-                className="w-8 h-8 rounded-full bg-white/10 text-white/70 flex items-center justify-center"
-              >
-                <X className="w-4 h-4" />
-              </button>
-
-            </div>
-
-            <div className="rounded-2xl border border-yellow-500/40 bg-black/30 p-4 mb-4 text-center">
-
-              <p className="text-white/60 text-xs">
-                {ui.title}
-              </p>
-
-              <p className="text-yellow-400 text-3xl font-black">
-                19,99€
-              </p>
-
-            </div>
-
-            <button
-              disabled={submitting}
-              onClick={startPayment}
-              className="w-full rounded-2xl bg-yellow-500 hover:bg-yellow-400 text-black font-black py-4 flex items-center justify-center gap-2 disabled:opacity-50"
-            >
-              <CreditCard className="w-5 h-5" />
-
-              {submitting
-                ? text(
-                    "Abriendo pago...",
-                    "Opening payment...",
-                    "كنفتحو الأداء..."
-                  )
-                : text(
-                    "Pagar con tarjeta",
-                    "Pay by card",
-                    "خلص بالكارت"
-                  )}
-            </button>
-
-            <p className="text-white/40 text-[10px] text-center mt-3">
-              Stripe · Visa · Mastercard · Apple Pay · Google Pay
-            </p>
-
-          </div>
-        </div>
-      )}
 
     </div>
   );
