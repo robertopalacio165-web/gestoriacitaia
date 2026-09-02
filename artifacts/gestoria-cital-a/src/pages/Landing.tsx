@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useEffect } from "react";
 import { motion } from "framer-motion";
 import { Navbar } from "@/components/Navbar";
 import { AgentCard } from "@/components/AgentCard";
@@ -32,7 +33,7 @@ function getPlans(t: (k: string) => string): PlanItem[] {
   return [
     {
       id: "weekly",
-   price: "9,99€",   // semanal
+      price: "9,99€",
       period: "7 días",
       color: "from-blue-900/40 to-blue-950/20",
       border: "border-blue-400/35",
@@ -50,7 +51,7 @@ function getPlans(t: (k: string) => string): PlanItem[] {
     },
     {
       id: "monthly",
-   price: "19,99€",  // mensual
+      price: "19,99€",
       period: "30 días",
       color: "from-yellow-900/30 to-yellow-950/20",
       border: "border-yellow-400/40",
@@ -73,6 +74,48 @@ function getPlans(t: (k: string) => string): PlanItem[] {
 export default function Landing() {
   const [, setLocation] = useLocation();
   const { t } = useLang();
+
+  /* 🟡 CONTADOR REAL DE USUARIOS */
+  const [registeredUsers, setRegisteredUsers] = useState(0);
+
+  useEffect(() => {
+    let channel: any;
+
+    const loadRegisteredUsers = async () => {
+      const { count, error } = await supabase
+        .from("profiles")
+        .select("*", { count: "exact", head: true });
+
+      if (!error) {
+        setRegisteredUsers(count || 0);
+      } else {
+        console.error("Error contando usuarios:", error);
+      }
+    };
+
+    loadRegisteredUsers();
+
+    channel = supabase
+      .channel("live-registered-users")
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "profiles",
+        },
+        () => {
+          setRegisteredUsers((current) => current + 1);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      if (channel) {
+        supabase.removeChannel(channel);
+      }
+    };
+  }, []);
 
   const tr = (key: string, fallback: string) => {
     const value = t(key);
@@ -152,23 +195,27 @@ export default function Landing() {
             {/* ✅ BOTÓN SARA */}
             <Button
               className="w-full sm:w-auto rounded-full px-7 py-3 shadow-lg shadow-blue-500/30 bg-blue-600 hover:bg-blue-500 text-white text-base font-bold border-0 min-h-[52px]"
-     onClick={() => window.location.href = "/verificar-decreto-flussi"}
+              onClick={() =>
+                (window.location.href = "/verificar-decreto-flussi")
+              }
             >
               {t("hero_btn_sara")}
               <ArrowRight className="w-4 h-4 ml-1" />
             </Button>
 
-{/* 🇲🇹 BOTÓN ESTUDIAR EN MALTA 2027 */}
-<Button
-  className="w-full sm:w-auto rounded-full px-7 py-3 min-h-[52px]
-  bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500
-  hover:scale-[1.02] transition-all duration-300
-  text-black font-bold shadow-xl shadow-orange-500/30 border-0"
-  onClick={() => window.location.href = "/estudiar-en-malta-2027"}
->
-  🇲🇹 {t("hero_btn_study_malta")}
-  <ArrowRight className="w-4 h-4 ml-1" />
-</Button>
+            {/* 🇲🇹 BOTÓN ESTUDIAR EN MALTA 2027 */}
+            <Button
+              className="w-full sm:w-auto rounded-full px-7 py-3 min-h-[52px]
+              bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500
+              hover:scale-[1.02] transition-all duration-300
+              text-black font-bold shadow-xl shadow-orange-500/30 border-0"
+              onClick={() =>
+                (window.location.href = "/estudiar-en-malta-2027")
+              }
+            >
+              🇲🇹 {t("hero_btn_study_malta")}
+              <ArrowRight className="w-4 h-4 ml-1" />
+            </Button>
 
             {/* ✅ BOTÓN TRABAJO EN MALTA - VERDE LLAMATIVO Y TEXTO GRANDE */}
             <Button
@@ -180,7 +227,9 @@ export default function Landing() {
               shadow-2xl shadow-green-500/40
               border-0
               tracking-wide"
-              onClick={() => window.location.href = "/trabajo-malta"}
+              onClick={() =>
+                (window.location.href = "/trabajo-malta")
+              }
             >
               🇲🇹 {t("hero_btn_malta")}
               <ArrowRight className="w-5 h-5 ml-2" />
@@ -216,9 +265,8 @@ export default function Landing() {
           />
 
           <AgentCard
-         name="Sara"
-
-role="Especialista en Verificación de Contratos"
+            name="Sara"
+            role="Especialista en Verificación de Contratos"
             imagePath={`${import.meta.env.BASE_URL}images/sara.png`}
             delay={0.2}
           />
@@ -231,7 +279,10 @@ role="Especialista en Verificación de Contratos"
           transition={{ delay: 0.4 }}
         >
           {[t("feat1"), t("feat2"), t("feat3"), t("feat4")].map((f, i) => (
-            <div key={i} className="flex items-center gap-2 text-white/75 text-sm">
+            <div
+              key={i}
+              className="flex items-center gap-2 text-white/75 text-sm"
+            >
               <CheckCircle2 className="w-4 h-4 text-accent shrink-0 mt-0.5" />
               <span>{f}</span>
             </div>
@@ -246,12 +297,70 @@ role="Especialista en Verificación de Contratos"
           className="mb-16"
         >
           <div className="relative rounded-2xl overflow-hidden glass-panel aspect-video max-w-3xl mx-auto border border-white/10 shadow-2xl shadow-primary/10">
-  <img
-    src="/video12-thumb.png"
-    alt="GestoriaCitaIA"
-    className="w-full h-full object-cover"
-  />
-</div>
+            <img
+              src="/video12-thumb.png"
+              alt="GestoriaCitaIA"
+              className="w-full h-full object-cover"
+            />
+          </div>
+        </motion.div>
+
+        {/* 🟡 CONTADOR DE USUARIOS EN TIEMPO REAL */}
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5 }}
+          className="mb-10 max-w-3xl mx-auto"
+        >
+          <div
+            className="
+              relative rounded-2xl
+              border border-yellow-400/70
+              bg-yellow-500/[0.04]
+              px-5 py-4
+              shadow-[0_0_30px_rgba(250,204,21,0.12)]
+            "
+          >
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-5">
+
+              <div className="flex items-center gap-2">
+                <span
+                  className="
+                    w-2.5 h-2.5 rounded-full
+                    bg-yellow-400
+                    animate-pulse
+                    shadow-[0_0_10px_rgba(250,204,21,0.9)]
+                  "
+                />
+
+                <span className="text-yellow-400 text-xs sm:text-sm font-bold">
+                  مباشر
+                </span>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <span className="text-2xl sm:text-3xl">
+                  👥
+                </span>
+
+                <span className="text-3xl sm:text-4xl font-black text-white tracking-tight">
+                  {registeredUsers.toLocaleString("es-ES")}
+                </span>
+              </div>
+
+              <div className="text-center sm:text-left">
+                <div className="text-sm sm:text-base font-bold text-white">
+                  شخص مسجل في GestoriaCitaIA
+                </div>
+
+                <div className="text-[10px] sm:text-xs text-yellow-400/80 mt-0.5">
+                  تحديث في الوقت الحقيقي
+                </div>
+              </div>
+
+            </div>
+          </div>
         </motion.div>
 
         <motion.div
@@ -264,7 +373,10 @@ role="Especialista en Verificación de Contratos"
             <h2 className="text-2xl sm:text-3xl font-display font-bold text-white mb-2">
               {t("plans_title")}
             </h2>
-            <p className="text-sm text-muted-foreground">{t("plans_sub")}</p>
+
+            <p className="text-sm text-muted-foreground">
+              {t("plans_sub")}
+            </p>
           </div>
 
           <div className="grid sm:grid-cols-2 gap-4 max-w-2xl mx-auto items-stretch">
@@ -296,16 +408,19 @@ role="Especialista en Verificación de Contratos"
                     <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-3">
                       {t(nameKey)}
                     </p>
+
                     <div className="flex items-end gap-1 mb-1">
                       <span className="text-4xl font-display font-black text-white">
                         {plan.price}
                       </span>
+
                       <span className="text-sm text-muted-foreground mb-1">
                         {plan.period}
                       </span>
                     </div>
+
                     <p className="text-xs text-muted-foreground mt-1">
-                      {plan.id === "weekly" 
+                      {plan.id === "weekly"
                         ? t("plan_malta_weekly_subtitle")
                         : t("plan_malta_monthly_subtitle")}
                     </p>
@@ -313,7 +428,10 @@ role="Especialista en Verificación de Contratos"
 
                   <ul className="flex-1 space-y-2.5 mb-6">
                     {plan.features.map((f, i) => (
-                      <li key={i} className="flex items-start gap-2.5 text-sm text-white/80">
+                      <li
+                        key={i}
+                        className="flex items-start gap-2.5 text-sm text-white/80"
+                      >
                         <CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5" />
                         {f}
                       </li>
@@ -326,7 +444,7 @@ role="Especialista en Verificación de Contratos"
                     className={`w-full py-2.5 rounded-xl text-sm font-bold uppercase tracking-wider transition-all ${plan.btnClass}`}
                     type="button"
                   >
-                    {plan.id === "weekly" 
+                    {plan.id === "weekly"
                       ? t("plan_malta_weekly_button")
                       : t("plan_malta_monthly_button")}
                   </button>
@@ -347,7 +465,10 @@ role="Especialista en Verificación de Contratos"
             <h2 className="text-2xl sm:text-3xl font-display font-bold text-white mb-2">
               {t("sara_services_title")}
             </h2>
-            <p className="text-sm text-muted-foreground">{t("sara_services_sub")}</p>
+
+            <p className="text-sm text-muted-foreground">
+              {t("sara_services_sub")}
+            </p>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-4xl mx-auto">
@@ -360,6 +481,7 @@ role="Especialista en Verificación de Contratos"
               <div className="w-12 h-12 rounded-xl bg-yellow-500/20 flex items-center justify-center">
                 <FileText className="w-6 h-6 text-yellow-400" />
               </div>
+
               <span className="text-xs font-medium text-white/80 leading-tight">
                 {t("sara_service_1")}
               </span>
@@ -374,6 +496,7 @@ role="Especialista en Verificación de Contratos"
               <div className="w-12 h-12 rounded-xl bg-green-500/20 flex items-center justify-center">
                 <CheckCircle2 className="w-6 h-6 text-green-400" />
               </div>
+
               <span className="text-xs font-medium text-white/80 leading-tight">
                 {t("sara_service_2")}
               </span>
@@ -388,6 +511,7 @@ role="Especialista en Verificación de Contratos"
               <div className="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center">
                 <Shield className="w-6 h-6 text-blue-400" />
               </div>
+
               <span className="text-xs font-medium text-white/80 leading-tight">
                 {t("sara_service_3")}
               </span>
@@ -402,6 +526,7 @@ role="Especialista en Verificación de Contratos"
               <div className="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center">
                 <Bell className="w-6 h-6 text-purple-400" />
               </div>
+
               <span className="text-xs font-medium text-white/80 leading-tight">
                 {t("sara_service_4")}
               </span>
@@ -425,9 +550,10 @@ role="Especialista en Verificación de Contratos"
               stroke="currentColor"
               strokeWidth="2"
             >
-              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+              <rect x="3" y="11" width="18" height="11" rx="2" />
               <path d="M7 11V7a5 5 0 0 1 10 0v4" />
             </svg>
+
             {tr(
               "ssl_payment_text",
               "Pagos procesados con cifrado SSL 256-bit · PCI DSS Compliant"
@@ -441,38 +567,55 @@ role="Especialista en Verificación de Contratos"
       <footer className="relative z-10 border-t border-white/[0.07] bg-[hsl(222,47%,4%,0.8)] backdrop-blur-lg">
         <div className="max-w-6xl mx-auto px-4 py-6 flex flex-col md:flex-row items-center justify-between gap-3">
           <div className="text-xs text-muted-foreground flex gap-3">
-            <Link href="/aviso-legal" className="hover:text-white transition-colors">
+            <Link
+              href="/aviso-legal"
+              className="hover:text-white transition-colors"
+            >
               {tr("footer_legal", "Aviso legal")}
             </Link>
+
             <span>·</span>
-            <Link href="/privacidad" className="hover:text-white transition-colors">
+
+            <Link
+              href="/privacidad"
+              className="hover:text-white transition-colors"
+            >
               {tr("footer_privacy", "Privacidad")}
             </Link>
+
             <span>·</span>
-            <Link href="/cookies" className="hover:text-white transition-colors">
+
+            <Link
+              href="/cookies"
+              className="hover:text-white transition-colors"
+            >
               {tr("footer_cookies", "Cookies")}
             </Link>
+
             <span>·</span>
 
-<Link href="/contacto" className="hover:text-white transition-colors">
-  Contacto
-</Link>
+            <Link
+              href="/contacto"
+              className="hover:text-white transition-colors"
+            >
+              Contacto
+            </Link>
           </div>
 
-       <div className="text-xs text-muted-foreground flex flex-col items-end gap-1">
-  <div>© 2026 GestoriaCitaIA</div>
+          <div className="text-xs text-muted-foreground flex flex-col items-end gap-1">
+            <div>© 2026 GestoriaCitaIA</div>
 
-  <div>
-    Contacto:{" "}
-    <a
-      href="mailto:jobs@gestoriacitaia.com"
-      className="hover:text-white transition-colors"
-    >
-      jobs@gestoriacitaia.com
-    </a>
-  </div>
-</div> 
-       </div>   
+            <div>
+              Contacto:{" "}
+              <a
+                href="mailto:jobs@gestoriacitaia.com"
+                className="hover:text-white transition-colors"
+              >
+                jobs@gestoriacitaia.com
+              </a>
+            </div>
+          </div>
+        </div>
       </footer>
     </div>
   );
