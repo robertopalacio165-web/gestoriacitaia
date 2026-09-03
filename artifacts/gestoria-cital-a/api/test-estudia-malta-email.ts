@@ -1,19 +1,30 @@
-
+import type { VercelRequest, VercelResponse } from "@vercel/node";
 import nodemailer from "nodemailer";
+import chromium from "@sparticuz/chromium";
+import { chromium as playwrightChromium } from "playwright-core";
 
 const TEST_EMAIL = "robertopalacio165@gmail.com";
 
+// ============================================================
+// BREVO SMTP — NO BREVO API
+// ============================================================
 const SMTP_HOST = process.env.SMTP_HOST || "smtp-relay.brevo.com";
 const SMTP_PORT = Number(process.env.SMTP_PORT || 587);
 const SMTP_USER = process.env.SMTP_USER || "";
 const SMTP_PASS = process.env.SMTP_PASS || "";
-const FROM_EMAIL = process.env.FROM_EMAIL || process.env.BREVO_SENDER_EMAIL || "gestoriacitaia@gmail.com";
-const FROM_NAME = process.env.FROM_NAME || "GestoriaCitaIA · Estudios Malta 2027";
 
-// PDF fijo de confirmación. Súbelo a public/images/ con este nombre.
-// También puedes cambiarlo en Vercel con STUDY_MALTA_CONFIRMATION_PDF_URL.
-const DEFAULT_PDF_URL =
-  "https://gestoriacitaia.com/images/GestoriaCitaIA_Malta_Confirmation_FIXED.pdf";
+const FROM_EMAIL =
+  process.env.FROM_EMAIL ||
+  process.env.BREVO_SENDER_EMAIL ||
+  "gestoriacitaia@gmail.com";
+
+const FROM_NAME =
+  process.env.FROM_NAME ||
+  "GestoriaCitaIA · Estudios Malta 2027";
+
+const LOGO_URL =
+  process.env.GESTORIA_LOGO_URL ||
+  "https://gestoriacitaia.com/images/gestoriacitaia-logo.png";
 
 function escapeHtml(value: unknown = "") {
   return String(value)
@@ -32,117 +43,30 @@ function cleanFileName(value: string) {
     .slice(0, 80) || "Cliente";
 }
 
-export default async function handler(
-  req: VercelRequest,
-  res: VercelResponse
-) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
-  }
+function value(v: unknown) {
+  const s = String(v ?? "").trim();
+  return s || "—";
+}
 
-  try {
-    if (!SMTP_USER || !SMTP_PASS) {
-      console.error("❌ Faltan SMTP_USER o SMTP_PASS en Vercel");
-      return res.status(500).json({
-        error: "Brevo SMTP no está configurado",
-      });
-    }
+// ============================================================
+// MISMO MENSAJE GMAIL — NO CAMBIAR EL CONTENIDO
+// ============================================================
+function buildEmailHtml(data: {
+  fullName: string;
+  whatsapp: string;
+  email: string;
+  dateOfBirth: string;
+  nationality: string;
+  passportNumber: string;
+}) {
+  const safeName = escapeHtml(data.fullName);
+  const safeWhatsapp = escapeHtml(data.whatsapp);
+  const safeEmail = escapeHtml(data.email);
+  const safeDob = escapeHtml(data.dateOfBirth);
+  const safeNationality = escapeHtml(data.nationality);
+  const safePassport = escapeHtml(data.passportNumber);
 
-    const body =
-      typeof req.body === "string" ? JSON.parse(req.body) : req.body || {};
-
-    const {
-      fullName,
-      dateOfBirth,
-      placeOfBirth,
-      nationality,
-      passportNumber,
-      passportExpiry,
-      address,
-      whatsapp,
-      email,
-      hasBac,
-      bacYear,
-      lastDiploma,
-      otherDiplomas,
-      otherDiplomasDetails,
-      isWorking,
-      company,
-      jobTitle,
-      isStudent,
-      hasFinancialSponsor,
-      sponsorName,
-      sponsorRelation,
-      sponsorProfession,
-      sponsorIncome,
-      sponsorCountry,
-      previouslyAppliedVisa,
-      previousVisaCountry,
-      previousVisaType,
-      previousVisaDate,
-      visaRefused,
-      refusalCountry,
-      refusalDate,
-      refusalReason,
-      previouslyObtainedVisa,
-      previousObtainedVisaDetails,
-      pdfUrl,
-    } = body;
-
-    const normalizedEmail = String(email || "").trim().toLowerCase();
-
-    if (!fullName) {
-      return res.status(400).json({ error: "Falta el nombre del cliente" });
-    }
-
-    if (!normalizedEmail) {
-      return res.status(400).json({ error: "Falta el email del cliente" });
-    }
-
-    // Esta ruta es SOLO para las pruebas del propietario.
-    if (normalizedEmail !== TEST_EMAIL) {
-      return res.status(403).json({
-        error: "Esta API de prueba solamente está disponible para la cuenta autorizada.",
-      });
-    }
-
-    const safeName = escapeHtml(fullName);
-    const safeWhatsapp = escapeHtml(whatsapp || "");
-    const safeEmail = escapeHtml(normalizedEmail);
-    const safeDob = escapeHtml(dateOfBirth || "");
-    const safeNationality = escapeHtml(nationality || "");
-    const safePassport = escapeHtml(passportNumber || "");
-
-    // ============================================================
-    // PDF DE CONFIRMACIÓN
-    // ============================================================
-    const confirmationPdfUrl = String(
-      pdfUrl || process.env.STUDY_MALTA_CONFIRMATION_PDF_URL || DEFAULT_PDF_URL
-    ).trim();
-
-    console.log("📄 Descargando PDF de confirmación:", confirmationPdfUrl);
-
-    const pdfResponse = await fetch(confirmationPdfUrl);
-
-    if (!pdfResponse.ok) {
-      throw new Error(
-        `No se pudo descargar el PDF de confirmación. HTTP ${pdfResponse.status}. URL: ${confirmationPdfUrl}`
-      );
-    }
-
-    const pdfBuffer = Buffer.from(await pdfResponse.arrayBuffer());
-
-    if (pdfBuffer.length < 1000) {
-      throw new Error("El PDF descargado parece estar vacío o no es válido.");
-    }
-
-    const pdfFileName =
-      `GestoriaCitaIA-Estudiar-Malta-2027-${cleanFileName(fullName)}.pdf`;
-
-    // ============================================================
-    // EMAIL HTML PROFESIONAL EN DARIJA
-    // ============================================================
-    const htmlContent = `
+  return `
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -159,7 +83,7 @@ export default async function handler(
 
 <tr>
 <td style="background:#07111f;padding:32px 24px;text-align:center;border-bottom:4px solid #20d46b;">
-<img src="https://gestoriacitaia.com/images/gestoriacitaia-logo.png" alt="GestoriaCitaIA" style="width:300px;max-width:90%;height:auto;display:block;margin:0 auto 18px auto;" />
+<img src="${LOGO_URL}" alt="GestoriaCitaIA" style="width:300px;max-width:90%;height:auto;display:block;margin:0 auto 18px auto;" />
 <h1 style="margin:0;color:#ffffff;font-size:25px;line-height:1.4;">طلب الدراسة فمالطا 2027 🇲🇹</h1>
 <p style="color:#c4ccd8;font-size:14px;margin:10px 0 0;">تأكيد الطلب وبداية مسطرة التسجيل فمركز اللغة الإنجليزية</p>
 </td>
@@ -254,10 +178,464 @@ gestoriacitaia@gmail.com
 </body>
 </html>
 `;
+}
 
-    // ============================================================
-    // BREVO SMTP — NO API
-    // ============================================================
+// ============================================================
+// PDF — MISMO ESTILO DEL GMAIL, PERO COMPACTADO A UNA SOLA A4
+// ============================================================
+function buildPdfHtml(data: {
+  fullName: string;
+  whatsapp: string;
+  email: string;
+  dateOfBirth: string;
+  nationality: string;
+  passportNumber: string;
+}) {
+  const n = escapeHtml(value(data.fullName));
+  const w = escapeHtml(value(data.whatsapp));
+  const e = escapeHtml(value(data.email));
+  const dob = escapeHtml(value(data.dateOfBirth));
+  const nat = escapeHtml(value(data.nationality));
+  const pass = escapeHtml(value(data.passportNumber));
+
+  return `<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<style>
+@page{size:A4;margin:0}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;width:210mm;height:297mm}
+body{
+  background:#eef2f7;
+  color:#172033;
+  font-family:"Noto Naskh Arabic","Noto Sans Arabic","DejaVu Sans",Arial,sans-serif;
+  direction:rtl;
+}
+.page{
+  width:210mm;
+  height:297mm;
+  background:#fff;
+  position:relative;
+  overflow:hidden;
+}
+.header{
+  height:48mm;
+  background:#07111f;
+  padding:5mm 12mm 3.5mm;
+  border-bottom:1.5mm solid #20d46b;
+  text-align:center;
+}
+.logo{
+  width:78mm;
+  height:16mm;
+  object-fit:contain;
+  display:block;
+  margin:0 auto 1.5mm;
+}
+.header h1{
+  color:#fff;
+  font-size:17pt;
+  line-height:1.2;
+  margin:0.5mm 0 1mm;
+  font-weight:900;
+}
+.header p{
+  color:#c4ccd8;
+  font-size:8.5pt;
+  margin:0;
+  line-height:1.4;
+}
+.content{
+  padding:6mm 12mm 15mm;
+}
+.badge{
+  background:#eaf8ef;
+  border:1px solid #b9ebcc;
+  color:#07853f;
+  border-radius:7mm;
+  padding:2.3mm 4mm;
+  text-align:center;
+  font-size:9.5pt;
+  font-weight:900;
+  margin-bottom:4mm;
+}
+.greeting{
+  font-size:13pt;
+  font-weight:900;
+  margin:0 0 1.5mm;
+}
+.intro{
+  font-size:9.5pt;
+  line-height:1.55;
+  margin:0 0 4mm;
+}
+.client{
+  width:100%;
+  border:1px solid #dfe6ef;
+  border-radius:3.5mm;
+  border-collapse:separate;
+  overflow:hidden;
+  margin-bottom:4mm;
+}
+.client td{
+  width:33.333%;
+  padding:2.3mm 3mm;
+  border-left:1px solid #e8edf3;
+  vertical-align:top;
+}
+.client td:last-child{border-left:0}
+.label{
+  color:#667085;
+  font-size:7pt;
+  margin-bottom:.6mm;
+}
+.value{
+  color:#111827;
+  font-size:9pt;
+  font-weight:900;
+  line-height:1.25;
+}
+.client2{
+  width:100%;
+  border:1px solid #e5e7eb;
+  background:#f8fafc;
+  border-radius:3.5mm;
+  border-collapse:separate;
+  margin-top:3mm;
+  margin-bottom:4mm;
+}
+.client2 td{
+  width:33.333%;
+  padding:2mm 3mm;
+  border-left:1px solid #e5e7eb;
+}
+.client2 td:last-child{border-left:0}
+.blue{
+  background:#f1f7ff;
+  border:1px solid #c9ddf6;
+  border-right:1.5mm solid #0b57d0;
+  border-radius:3.5mm;
+  padding:3mm 4mm;
+  margin-bottom:4mm;
+}
+.blue h2{
+  color:#0b57d0;
+  font-size:11.5pt;
+  margin:0 0 1.2mm;
+  font-weight:900;
+}
+.blue p{
+  font-size:8.5pt;
+  line-height:1.55;
+  margin:0;
+}
+.steps h2{
+  color:#0b57d0;
+  font-size:11.5pt;
+  margin:0 0 1.8mm;
+  font-weight:900;
+}
+.step{
+  display:table;
+  width:100%;
+  margin:1.6mm 0;
+  direction:rtl;
+}
+.num{
+  display:table-cell;
+  width:7mm;
+  vertical-align:middle;
+}
+.num span{
+  display:block;
+  width:5.5mm;
+  height:5.5mm;
+  border-radius:50%;
+  background:#20d46b;
+  color:#07111f;
+  text-align:center;
+  font-family:Arial,sans-serif;
+  font-size:7.5pt;
+  font-weight:900;
+  line-height:5.5mm;
+}
+.steptext{
+  display:table-cell;
+  vertical-align:middle;
+  font-size:8pt;
+  line-height:1.45;
+  padding-right:1.5mm;
+}
+.note{
+  background:#fff8e8;
+  border:1px solid #f2d48b;
+  border-radius:3mm;
+  padding:2.5mm 3.5mm;
+  margin-top:3mm;
+  text-align:center;
+  font-size:7.5pt;
+  line-height:1.45;
+}
+.thanks{
+  text-align:center;
+  color:#0b57d0;
+  font-size:9.5pt;
+  font-weight:900;
+  margin-top:2.5mm;
+}
+.footer{
+  position:absolute;
+  left:0;right:0;bottom:0;
+  height:12mm;
+  background:#07111f;
+  color:#aeb9c8;
+  text-align:center;
+  padding:2mm;
+  font-size:6.5pt;
+  line-height:1.35;
+}
+.footer strong{
+  display:block;
+  color:#fff;
+  font-family:Arial,sans-serif;
+  font-size:8pt;
+  margin-bottom:.4mm;
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+<header class="header">
+<img class="logo" src="${LOGO_URL}">
+<h1>طلب الدراسة فمالطا 2027 🇲🇹</h1>
+<p>تأكيد الطلب وبداية مسطرة التسجيل فمركز اللغة الإنجليزية</p>
+</header>
+
+<main class="content">
+
+<div class="badge">✓ توصلنا بالطلب ديالك بنجاح</div>
+
+<p class="greeting">السلام عليكم ${n}،</p>
+<p class="intro">
+كنأكدّو ليك باللي توصلنا بالطلب ديالك ديال خدمة
+<strong>الدراسة فمالطا 2027 🇲🇹</strong>.
+</p>
+
+<table class="client" cellpadding="0" cellspacing="0">
+<tr>
+<td><div class="label">الاسم والنسب</div><div class="value">${n}</div></td>
+<td><div class="label">رقم الهاتف / WhatsApp</div><div class="value" dir="ltr">${w}</div></td>
+<td><div class="label">البريد الإلكتروني</div><div class="value" dir="ltr">${e}</div></td>
+</tr>
+</table>
+
+<table class="client2" cellpadding="0" cellspacing="0">
+<tr>
+<td><div class="label">تاريخ الازدياد</div><div class="value">${dob}</div></td>
+<td><div class="label">الجنسية</div><div class="value">${nat}</div></td>
+<td><div class="label">رقم الباسبور</div><div class="value">${pass}</div></td>
+</tr>
+</table>
+
+<section class="blue">
+<h2>⏱️ شنو غادي يوقع دابا؟</h2>
+<p>
+فمدة أقصاها <strong style="color:#07853f">24 ساعة ديال الخدمة</strong>،
+غادي نتاصلو بيك فالرقم اللي عطيتينا باش نراجعو معاك المعلومات ونبداو
+<strong>مسطرة التسجيل فـ مركز ديال اللغة الإنجليزية فمالطا 🇲🇹</strong>.
+</p>
+</section>
+
+<section class="steps">
+<h2>المراحل الجاية</h2>
+
+<div class="step"><div class="num"><span>1</span></div><div class="steptext">الفريق ديالنا كيراجع المعلومات اللي عمرتي فالطلب.</div></div>
+<div class="step"><div class="num"><span>2</span></div><div class="steptext">غادي نتاصلو بيك فمدة أقصاها 24 ساعة ديال الخدمة.</div></div>
+<div class="step"><div class="num"><span>3</span></div><div class="steptext">غادي نبداو إجراءات التسجيل والتوجيه نحو مركز اللغة الإنجليزية فمالطا.</div></div>
+<div class="step"><div class="num"><span>4</span></div><div class="steptext">غادي نشرحو ليك فالمكالمة الوثائق والخطوات اللي خاصك تكمل من بعد.</div></div>
+
+</section>
+
+<div class="note">
+📄 <strong>الوثيقة ديالك مرفقة مع هاد الإيميل.</strong>
+غادي تلقى فيها المعلومات الأساسية والخطوات الأولى ديال المسطرة.
+</div>
+
+<div class="thanks">🇲🇦 🇲🇹 شكراً بزاف على الثقة ديالك فـ GestoriaCitaIA</div>
+
+</main>
+
+<footer class="footer">
+<strong>GestoriaCitaIA</strong>
+خدمة الدراسة فمالطا 2027 · gestoriacitaia@gmail.com
+</footer>
+
+</div>
+</body>
+</html>`;
+}
+
+// ============================================================
+// PDF DINÁMICO — SIEMPRE UNA SOLA A4
+// ============================================================
+async function createOnePagePdf(data: {
+  fullName: string;
+  whatsapp: string;
+  email: string;
+  dateOfBirth: string;
+  nationality: string;
+  passportNumber: string;
+}) {
+  const browser = await playwrightChromium.launch({
+    args: chromium.args,
+    executablePath: await chromium.executablePath(),
+    headless: true,
+  });
+
+  try {
+    const page = await browser.newPage({
+      viewport: { width: 794, height: 1123 },
+      deviceScaleFactor: 1,
+    });
+
+    const pdfHtml = buildPdfHtml(data);
+
+    await page.setContent(pdfHtml, {
+      waitUntil: "networkidle",
+    });
+
+    await page.emulateMedia({ media: "screen" });
+
+    await page.evaluate(async () => {
+      await Promise.all(
+        Array.from(document.images).map(
+          (img) =>
+            img.complete
+              ? Promise.resolve()
+              : new Promise<void>((resolve) => {
+                  img.onload = () => resolve();
+                  img.onerror = () => resolve();
+                })
+        )
+      );
+
+      // Espera las fuentes disponibles sin bloquear si una fuente externa falla.
+      if (document.fonts?.ready) {
+        await document.fonts.ready;
+      }
+    });
+
+    // El diseño tiene altura A4 fija y overflow:hidden:
+    // nunca puede crear una segunda página.
+    const pdfBuffer = await page.pdf({
+      format: "A4",
+      printBackground: true,
+      preferCSSPageSize: true,
+      margin: {
+        top: "0",
+        right: "0",
+        bottom: "0",
+        left: "0",
+      },
+      pageRanges: "1",
+      scale: 1,
+    });
+
+    if (!pdfBuffer || pdfBuffer.length < 10000) {
+      throw new Error("El PDF generado no es válido.");
+    }
+
+    return pdfBuffer;
+  } finally {
+    await browser.close();
+  }
+}
+
+// ============================================================
+// API
+// ============================================================
+export default async function handler(
+  req: VercelRequest,
+  res: VercelResponse
+) {
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Method not allowed" });
+  }
+
+  try {
+    // IMPORTANTE:
+    // NO BREVO_API_KEY.
+    // NO api.brevo.com.
+    if (!SMTP_USER || !SMTP_PASS) {
+      console.error("❌ Faltan SMTP_USER o SMTP_PASS en Vercel");
+      return res.status(500).json({
+        error: "Brevo SMTP no está configurado",
+      });
+    }
+
+    const body =
+      typeof req.body === "string"
+        ? JSON.parse(req.body)
+        : req.body || {};
+
+    const fullName = String(body.fullName || "").trim();
+    const email = String(body.email || "").trim().toLowerCase();
+    const whatsapp = String(body.whatsapp || "").trim();
+    const dateOfBirth = String(body.dateOfBirth || "").trim();
+    const nationality = String(body.nationality || "").trim();
+    const passportNumber = String(body.passportNumber || "").trim();
+
+    if (!fullName) {
+      return res.status(400).json({
+        error: "Falta el nombre del cliente",
+      });
+    }
+
+    if (!email) {
+      return res.status(400).json({
+        error: "Falta el email del cliente",
+      });
+    }
+
+    // SOLO prueba del propietario.
+    if (email !== TEST_EMAIL) {
+      return res.status(403).json({
+        error:
+          "Esta API de prueba solamente está disponible para la cuenta autorizada.",
+      });
+    }
+
+    console.log("==========================================");
+    console.log("🇲🇹 ESTUDIAR MALTA 2027 — PRUEBA");
+    console.log("📧 BREVO SMTP — NO API");
+    console.log("👤 Cliente:", fullName);
+    console.log("📨 Destino:", TEST_EMAIL);
+    console.log("==========================================");
+
+    const data = {
+      fullName,
+      whatsapp,
+      email,
+      dateOfBirth,
+      nationality,
+      passportNumber,
+    };
+
+    // 1. Generar PDF LLENO con los datos del formulario.
+    const pdfBuffer = await createOnePagePdf(data);
+
+    const pdfFileName =
+      `GestoriaCitaIA-Estudiar-Malta-2027-${cleanFileName(fullName)}.pdf`;
+
+    console.log("📄 PDF generado:", pdfFileName);
+    console.log("📄 PDF bytes:", pdfBuffer.length);
+
+    // 2. Mismo mensaje Gmail original.
+    const htmlContent = buildEmailHtml(data);
+
+    // 3. BREVO SMTP — exactamente por SMTP, no API.
     const transporter = nodemailer.createTransport({
       host: SMTP_HOST,
       port: SMTP_PORT,
@@ -272,28 +650,31 @@ gestoriacitaia@gmail.com
       socketTimeout: 60000,
     });
 
-    console.log("📧 Enviando Estudios Malta mediante Brevo SMTP...");
-    console.log("👤 Cliente:", fullName);
-    console.log("📱 WhatsApp:", whatsapp || "");
-    console.log("📨 Destino de prueba:", TEST_EMAIL);
-    console.log("📄 PDF:", pdfFileName);
+    await transporter.verify();
+
+    console.log("✅ Brevo SMTP conectado");
 
     const mailResult = await transporter.sendMail({
       from: `"${FROM_NAME}" <${FROM_EMAIL}>`,
       to: TEST_EMAIL,
-      subject: `🇲🇹 Confirmación Estudios Malta 2027 - ${String(fullName)}`,
+      subject: `🇲🇹 Confirmación Estudios Malta 2027 - ${fullName}`,
       html: htmlContent,
       attachments: [
         {
           filename: pdfFileName,
           content: pdfBuffer,
           contentType: "application/pdf",
+          contentDisposition: "attachment",
         },
       ],
     });
 
-    console.log("✅ EMAIL ESTUDIOS MALTA ENVIADO POR BREVO SMTP");
+    console.log("==========================================");
+    console.log("✅ EMAIL + PDF ENVIADOS");
+    console.log("📧 Método: BREVO SMTP");
     console.log("📨 Message ID:", mailResult.messageId);
+    console.log("📄 PDF: 1 página A4");
+    console.log("==========================================");
 
     return res.status(200).json({
       success: true,
@@ -303,13 +684,17 @@ gestoriacitaia@gmail.com
       name: fullName,
       pdfAttached: true,
       pdfFileName,
+      pdfPages: 1,
+      transport: "brevo-smtp",
       messageId: mailResult.messageId || null,
     });
   } catch (error: any) {
     console.error("❌ ERROR TEST ESTUDIA MALTA:", error);
 
     return res.status(500).json({
-      error: error?.message || "Error enviando email de prueba",
+      error:
+        error?.message ||
+        "Error enviando email de prueba",
     });
   }
 }
