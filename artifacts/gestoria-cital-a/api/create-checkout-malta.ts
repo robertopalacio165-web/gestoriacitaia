@@ -79,11 +79,17 @@ export default async function handler(
 
       customer_email: email?.trim().toLowerCase(),
 
-      customer_creation: "always",
+    customer_creation: "always",
 
-      invoice_creation: {
-        enabled: true,
-      },
+payment_method_options: {
+  card: {
+    request_three_d_secure: "automatic",
+  },
+},
+
+invoice_creation: {
+  enabled: true,
+},
 
       phone_number_collection: {
         enabled: false,
