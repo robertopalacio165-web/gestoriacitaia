@@ -74,12 +74,12 @@ function buildEmailHtml(data: {
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>GestoriaCitaIA · Estudiar en Malta 2027</title>
 </head>
-<body style="margin:0;padding:0;background:#eef2f7;font-family:Arial,Helvetica,sans-serif;color:#172033;">
+<body dir="rtl" style="margin:0;padding:0;background:#eef2f7;font-family:Arial,Helvetica,sans-serif;color:#172033;direction:rtl;text-align:right;">
 
 <table width="100%" cellpadding="0" cellspacing="0" style="background:#eef2f7;padding:25px 0;">
 <tr><td align="center">
 
-<table width="680" cellpadding="0" cellspacing="0" style="width:100%;max-width:680px;background:#ffffff;border-radius:18px;overflow:hidden;">
+<table dir="rtl" width="680" cellpadding="0" cellspacing="0" style="width:100%;max-width:680px;background:#ffffff;border-radius:18px;overflow:hidden;direction:rtl;">
 
 <tr>
 <td style="background:#07111f;padding:32px 24px;text-align:center;border-bottom:4px solid #20d46b;">
@@ -90,7 +90,7 @@ function buildEmailHtml(data: {
 </tr>
 
 <tr>
-<td style="padding:35px 40px;">
+<td dir="rtl" align="right" style="padding:35px 40px;direction:rtl;text-align:right;">
 
 <div style="background:#eaf8ef;border:1px solid #b9ebcc;color:#07853f;padding:12px 18px;border-radius:30px;text-align:center;font-weight:bold;">
 ✓ توصلنا بالطلب ديالك بنجاح
@@ -103,28 +103,28 @@ function buildEmailHtml(data: {
 <strong>الدراسة فمالطا 2027 🇲🇹</strong>.
 </p>
 
-<table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #dfe6ef;border-radius:14px;margin:20px 0 25px;">
+<table dir="rtl" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #dfe6ef;border-radius:14px;margin:20px 0 25px;direction:rtl;text-align:right;">
 <tr>
-<td style="padding:16px 20px;border-bottom:1px solid #e8edf3;">
+<td dir="rtl" align="right" style="padding:16px 20px;border-bottom:1px solid #e8edf3;direction:rtl;text-align:right;">
 <div style="font-size:12px;color:#667085;margin-bottom:5px;">الاسم والنسب</div>
 <strong style="font-size:17px;">${safeName}</strong>
 </td>
 </tr>
 <tr>
-<td style="padding:16px 20px;border-bottom:1px solid #e8edf3;">
+<td dir="rtl" align="right" style="padding:16px 20px;border-bottom:1px solid #e8edf3;direction:rtl;text-align:right;">
 <div style="font-size:12px;color:#667085;margin-bottom:5px;">رقم الهاتف / WhatsApp</div>
 <strong dir="ltr" style="font-size:17px;">${safeWhatsapp}</strong>
 </td>
 </tr>
 <tr>
-<td style="padding:16px 20px;">
+<td dir="rtl" align="right" style="padding:16px 20px;direction:rtl;text-align:right;">
 <div style="font-size:12px;color:#667085;margin-bottom:5px;">البريد الإلكتروني</div>
 <strong dir="ltr" style="font-size:17px;">${safeEmail}</strong>
 </td>
 </tr>
 </table>
 
-<div style="background:#f1f7ff;border-right:5px solid #0b57d0;padding:21px;border-radius:12px;margin:25px 0;">
+<div dir="rtl" align="right" style="direction:rtl;text-align:right;background:#f1f7ff;border-right:5px solid #0b57d0;padding:21px;border-radius:12px;margin:25px 0;">
 <h2 style="margin:0 0 12px;color:#0b57d0;font-size:19px;">⏱️ شنو غادي يوقع دابا؟</h2>
 <p style="font-size:16px;line-height:1.9;margin:0;">
 فمدة أقصاها <strong style="color:#07853f;">24 ساعة ديال الخدمة</strong>،
@@ -133,21 +133,21 @@ function buildEmailHtml(data: {
 </p>
 </div>
 
-<h3 style="font-size:19px;margin:28px 0 15px;">المراحل الجاية</h3>
+<h3 dir="rtl" style="font-size:19px;margin:28px 0 15px;direction:rtl;text-align:right;">المراحل الجاية</h3>
 
-<p style="font-size:15px;line-height:1.9;margin:0;">
+<p dir="rtl" style="font-size:15px;line-height:1.9;margin:0;direction:rtl;text-align:right;">
 🟢 <strong>المرحلة 1:</strong> الفريق ديالنا كيراجع المعلومات اللي عمرتي فالطلب.<br><br>
 🟢 <strong>المرحلة 2:</strong> غادي نتاصلو بيك فمدة أقصاها 24 ساعة ديال الخدمة.<br><br>
 🟢 <strong>المرحلة 3:</strong> غادي نبداو إجراءات التسجيل والتوجيه نحو مركز اللغة الإنجليزية فمالطا.<br><br>
 🟢 <strong>المرحلة 4:</strong> غادي نشرحو ليك فالمكالمة الوثائق والخطوات اللي خاصك تكمل من بعد.
 </p>
 
-<div style="background:#fff8e8;border:1px solid #f2d48b;border-radius:10px;padding:17px;margin-top:28px;font-size:14px;line-height:1.8;">
+<div dir="rtl" align="right" style="direction:rtl;text-align:right;background:#fff8e8;border:1px solid #f2d48b;border-radius:10px;padding:17px;margin-top:28px;font-size:14px;line-height:1.8;">
 📄 <strong>الوثيقة ديالك مرفقة مع هاد الإيميل.</strong><br>
 غادي تلقى فيها المعلومات الأساسية والخطوات الأولى ديال المسطرة.
 </div>
 
-<div style="background:#f8fafc;border:1px solid #e5e7eb;border-radius:12px;padding:16px;margin-top:22px;font-size:13px;line-height:1.8;">
+<div dir="rtl" align="right" style="direction:rtl;text-align:right;background:#f8fafc;border:1px solid #e5e7eb;border-radius:12px;padding:16px;margin-top:22px;font-size:13px;line-height:1.8;">
 <strong>معلومات الطلب:</strong><br>
 تاريخ الازدياد: ${safeDob || "—"}<br>
 الجنسية: ${safeNationality || "—"}<br>
@@ -291,7 +291,11 @@ body{
   line-height:1.4;
 }
 .content{
-  padding:6mm 12mm 15mm;
+  padding:6mm 12mm 8mm;
+  min-height:237mm;
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
 }
 .badge{
   background:#eaf8ef;
@@ -580,53 +584,33 @@ async function createOnePagePdf(data: {
     // nunca puede crear una segunda página.
     
 // Ajuste final: comprueba que TODO el contenido entre en una única A4.
-// Reduce únicamente la escala visual del contenido si fuese necesario;
-// no cambia el HTML del email ni el transporte SMTP.
+// El contenido se reparte verticalmente para evitar un hueco visual grande.
 await page.evaluate(() => {
   const root = document.querySelector(".page") as HTMLElement | null;
-  if (!root) return;
+  const content = document.querySelector(".content") as HTMLElement | null;
+  const footer = document.querySelector(".footer") as HTMLElement | null;
+  if (!root || !content || !footer) return;
 
-  const footer = root.querySelector(".footer") as HTMLElement | null;
-  const content = root.querySelector(".content") as HTMLElement | null;
-
-  const target = 297 * 3.779527559; // 297mm en px CSS
-  const margin = 2 * 3.779527559;
-  const maxHeight = target - margin;
-
-  // Compactación suave antes de escalar.
-  root.style.boxSizing = "border-box";
   root.style.overflow = "hidden";
+  footer.style.position = "absolute";
+  footer.style.left = "0";
+  footer.style.right = "0";
+  footer.style.bottom = "0";
 
-  const all = root.querySelectorAll<HTMLElement>(
-    ".content, .client, .client2, .blue, .steps, .step, .note, .thanks"
-  );
-  all.forEach((el) => {
-    el.style.boxSizing = "border-box";
-  });
+  // A4 CSS pixels at 96dpi: 1122.52px. Keep a small safety margin.
+  const pageBottom = root.getBoundingClientRect().bottom - 8;
+  const contentBottom = content.getBoundingClientRect().bottom;
+  const footerTop = footer.getBoundingClientRect().top;
 
-  // Reservar el footer dentro de la A4.
-  if (footer) footer.style.position = "absolute";
-
-  // Medir el contenido real.
-  const contentBottom = content
-    ? content.getBoundingClientRect().bottom
-    : root.getBoundingClientRect().bottom;
-  const footerTop = footer
-    ? footer.getBoundingClientRect().top
-    : maxHeight;
-
-  const used = Math.max(contentBottom, footerTop);
-  const available = maxHeight;
-
-  // Si queda fuera, reducir el contenido completo de forma proporcional.
-  if (used > available) {
-    const scale = Math.max(0.82, Math.min(1, available / used));
-    if (content) {
-      content.style.transformOrigin = "top center";
-      content.style.transform = `scale(${scale})`;
-      content.style.width = `${100 / scale}%`;
-      content.style.marginLeft = `${(100 - 100 / scale) / 2}%`;
-    }
+  // Only shrink in the exceptional case that a long field pushes content into the footer.
+  if (contentBottom > footerTop - 4) {
+    const available = footerTop - content.getBoundingClientRect().top - 6;
+    const used = contentBottom - content.getBoundingClientRect().top;
+    const scale = Math.max(0.86, Math.min(1, available / used));
+    content.style.transformOrigin = "top center";
+    content.style.transform = `scale(${scale})`;
+    content.style.width = `${100 / scale}%`;
+    content.style.marginLeft = `${(100 - 100 / scale) / 2}%`;
   }
 });
 
