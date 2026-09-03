@@ -18,62 +18,59 @@ export default async function handler(
   }
 
   try {
-    // ============================================
-    // 1. BODY RECIBIDO
-    // ============================================
-
     const body = req.body;
 
-    console.log(
-      "========== ESTUDIAR MALTA 2027 =========="
-    );
-
-    console.log(
-      "BODY RECIBIDO:",
-      body
-    );
-
-    console.log(
-      "=========================================="
-    );
-
-    // ============================================
-    // 2. DATOS DEL CLIENTE
-    // ============================================
+    console.log("========== ESTUDIAR MALTA 2027 ==========");
+    console.log("BODY RECIBIDO:", body);
+    console.log("==========================================");
 
     const {
       fullName,
+      dateOfBirth,
+      placeOfBirth,
+      nationality,
+      passportNumber,
+      passportExpiry,
+      address,
       whatsapp,
       email,
 
-      nationality,
-      currentCity,
+      hasBac,
+      bacYear,
+      lastDiploma,
+      otherDiplomas,
+      otherDiplomasDetails,
 
-      fechaNacimiento,
+      isWorking,
+      company,
+      jobTitle,
+      isStudent,
 
-      idiomas,
-      ingles_nivel,
-      frances_nivel,
-      italiano_nivel,
-      espanol_nivel,
-      arabe_nivel,
-      aleman_nivel,
+      hasFinancialSponsor,
+      sponsorName,
+      sponsorRelation,
+      sponsorProfession,
+      sponsorIncome,
+      sponsorCountry,
 
-      trabajo_busca,
-      experiencia_previa,
-      anos_experiencia,
-      education_level,
+      previouslyAppliedVisa,
+      previousVisaCountry,
+      previousVisaType,
+      previousVisaDate,
 
-      carnetConducir,
+      visaRefused,
+      refusalCountry,
+      refusalDate,
+      refusalReason,
 
-      photoUrl,
-      pdfUrl,
+      previouslyObtainedVisa,
+      previousObtainedVisaDetails,
 
       plan,
     } = body;
 
     // ============================================
-    // 3. COMPROBAR DATOS MÍNIMOS
+    // DATOS MÍNIMOS
     // ============================================
 
     if (!fullName) {
@@ -89,75 +86,21 @@ export default async function handler(
     }
 
     // ============================================
-    // 4. PRECIO ESTUDIOS MALTA
+    // PRECIO DE PRUEBA
+    // 50 = 0,50 €
     // ============================================
-
-    /*
-     * PRUEBA:
-     *
-     * Stripe cobrará solamente 0,50 €
-     *
-     * Stripe trabaja en céntimos:
-     *
-     * 50 = 0,50 €
-     */
 
     const unitAmount = 50;
 
-    const planName =
-      plan === "weekly"
-        ? "Semanal"
-        : "Mensual";
+    console.log("========== ESTUDIAR MALTA ==========");
+    console.log("Nombre:", fullName);
+    console.log("Email:", email);
+    console.log("WhatsApp:", whatsapp);
+    console.log("💰 PRECIO DE PRUEBA: 0,50 €");
+    console.log("====================================");
 
     // ============================================
-    // 5. LOGS
-    // ============================================
-
-    console.log(
-      "========== ESTUDIOS MALTA =========="
-    );
-
-    console.log(
-      "Nombre:",
-      fullName
-    );
-
-    console.log(
-      "WhatsApp:",
-      whatsapp
-    );
-
-    console.log(
-      "Email:",
-      email
-    );
-
-    console.log(
-      "Plan:",
-      planName
-    );
-
-    console.log(
-      "💰 PRECIO DE PRUEBA:",
-      "0,50 €"
-    );
-
-    console.log(
-      "photoUrl:",
-      photoUrl
-    );
-
-    console.log(
-      "pdfUrl:",
-      pdfUrl
-    );
-
-    console.log(
-      "===================================="
-    );
-
-    // ============================================
-    // 6. CREAR CHECKOUT STRIPE
+    // STRIPE CHECKOUT
     // ============================================
 
     const session =
@@ -165,54 +108,35 @@ export default async function handler(
 
         mode: "payment",
 
-        // ========================================
-        // EMAIL
-        // ========================================
-
         customer_email:
           email
             ?.trim()
             .toLowerCase(),
 
-        customer_creation:
-          "always",
-
-        // ========================================
-        // FACTURA
-        // ========================================
+        customer_creation: "always",
 
         invoice_creation: {
           enabled: true,
         },
 
-        // ========================================
-        // TELÉFONO
-        // ========================================
-
         phone_number_collection: {
           enabled: false,
         },
 
-        // ========================================
-        // PRODUCTO
-        // ========================================
-
         line_items: [
           {
             price_data: {
-
               currency: "eur",
 
               product_data: {
-                name:
-                  `Estudiar en Malta 2027 - Plan ${planName}`,
+                name: "Estudiar en Malta 2027",
 
                 description:
-                  `Servicio de orientación y asistencia para iniciar el procedimiento de inscripción en un centro de idioma inglés en Malta.`,
+                  "Servicio de orientación y asistencia para iniciar el procedimiento de inscripción en un centro de idioma inglés en Malta.",
               },
 
               // ==================================
-              // 0,50 € = 50 CÉNTIMOS
+              // PRUEBA: 0,50 €
               // ==================================
 
               unit_amount: 50,
@@ -222,152 +146,147 @@ export default async function handler(
           },
         ],
 
-        // ========================================
-        // URL ÉXITO
-        // ========================================
+        // ============================================
+        // IMPORTANTE:
+        // Esta es la ruta REAL del formulario actual
+        // ============================================
 
         success_url:
-          `${process.env.NEXT_PUBLIC_URL}/estudiar-en-malta-2027?success=true&session_id={CHECKOUT_SESSION_ID}`,
-
-        // ========================================
-        // URL CANCELADO
-        // ========================================
+          `${process.env.NEXT_PUBLIC_URL}/estudiar-malta-2027?success=true&session_id={CHECKOUT_SESSION_ID}`,
 
         cancel_url:
-          `${process.env.NEXT_PUBLIC_URL}/estudiar-en-malta-2027?canceled=true`,
+          `${process.env.NEXT_PUBLIC_URL}/estudiar-malta-2027?canceled=true`,
 
-        // ========================================
+        // ============================================
         // METADATA
-        // ========================================
+        // CAMPOS REALES DEL FORMULARIO
+        // ============================================
 
         metadata: {
 
-          // IDENTIFICADOR DEL SERVICIO
-          service:
-            "study_malta_2027",
+          service: "study_malta_2027",
 
-          // DATOS PERSONALES
           fullName:
-            fullName
-              ?.trim() || "",
+            fullName?.trim() || "",
 
-          whatsapp:
-            whatsapp
-              ?.trim() || "",
+          dateOfBirth:
+            dateOfBirth?.trim() || "",
 
-          email:
-            email
-              ?.trim()
-              .toLowerCase() || "",
+          placeOfBirth:
+            placeOfBirth?.trim() || "",
 
           nationality:
-            nationality
-              ?.trim() || "",
+            nationality?.trim() || "",
 
-          currentCity:
-            currentCity
-              ?.trim() || "",
+          passportNumber:
+            passportNumber?.trim() || "",
 
-          fechaNacimiento:
-            fechaNacimiento
-              ?.trim() || "",
+          passportExpiry:
+            passportExpiry?.trim() || "",
 
-          // IDIOMAS
-          idiomas:
-            idiomas
-              ?.trim() || "",
+          address:
+            address?.trim() || "",
 
-          ingles_nivel:
-            ingles_nivel
-              ?.trim() || "",
+          whatsapp:
+            whatsapp?.trim() || "",
 
-          frances_nivel:
-            frances_nivel
-              ?.trim() || "",
+          email:
+            email?.trim().toLowerCase() || "",
 
-          italiano_nivel:
-            italiano_nivel
-              ?.trim() || "",
+          // ESTUDIOS
 
-          espanol_nivel:
-            espanol_nivel
-              ?.trim() || "",
+          hasBac:
+            hasBac?.trim() || "",
 
-          arabe_nivel:
-            arabe_nivel
-              ?.trim() || "",
+          bacYear:
+            bacYear?.trim() || "",
 
-          aleman_nivel:
-            aleman_nivel
-              ?.trim() || "",
+          lastDiploma:
+            lastDiploma?.trim() || "",
 
-          // EXPERIENCIA
-          trabajo_busca:
-            trabajo_busca
-              ?.trim() || "",
+          otherDiplomas:
+            otherDiplomas?.trim() || "",
 
-          experiencia_previa:
-            experiencia_previa
-              ?.trim() || "",
+          otherDiplomasDetails:
+            otherDiplomasDetails?.trim() || "",
 
-          anos_experiencia:
-            anos_experiencia
-              ?.trim() || "",
+          // SITUACIÓN ACTUAL
 
-          education_level:
-            education_level
-              ?.trim() || "",
+          isWorking:
+            isWorking?.trim() || "",
 
-          // CARNET
-          carnetConducir:
-            carnetConducir
-              ?.trim() || "",
+          company:
+            company?.trim() || "",
 
-          // DOCUMENTOS
-          photoUrl:
-            photoUrl
-              ?.trim() || "",
+          jobTitle:
+            jobTitle?.trim() || "",
 
-          pdfUrl:
-            pdfUrl
-              ?.trim() || "",
+          isStudent:
+            isStudent?.trim() || "",
 
-          // PLAN
+          // GARANTE
+
+          hasFinancialSponsor:
+            hasFinancialSponsor?.trim() || "",
+
+          sponsorName:
+            sponsorName?.trim() || "",
+
+          sponsorRelation:
+            sponsorRelation?.trim() || "",
+
+          sponsorProfession:
+            sponsorProfession?.trim() || "",
+
+          sponsorIncome:
+            sponsorIncome?.trim() || "",
+
+          sponsorCountry:
+            sponsorCountry?.trim() || "",
+
+          // HISTORIAL DE VISADOS
+
+          previouslyAppliedVisa:
+            previouslyAppliedVisa?.trim() || "",
+
+          previousVisaCountry:
+            previousVisaCountry?.trim() || "",
+
+          previousVisaType:
+            previousVisaType?.trim() || "",
+
+          previousVisaDate:
+            previousVisaDate?.trim() || "",
+
+          visaRefused:
+            visaRefused?.trim() || "",
+
+          refusalCountry:
+            refusalCountry?.trim() || "",
+
+          refusalDate:
+            refusalDate?.trim() || "",
+
+          refusalReason:
+            refusalReason?.trim() || "",
+
+          previouslyObtainedVisa:
+            previouslyObtainedVisa?.trim() || "",
+
+          previousObtainedVisaDetails:
+            previousObtainedVisaDetails?.trim() || "",
+
           plan:
-            plan
-              ?.trim() || "monthly",
+            plan?.trim() || "monthly",
         },
       });
 
-    // ============================================
-    // 7. RESPUESTA
-    // ============================================
-
-    console.log(
-      "=========================================="
-    );
-
-    console.log(
-      "✅ CHECKOUT ESTUDIAR MALTA CREADO"
-    );
-
-    console.log(
-      "💰 IMPORTE: 0,50 €"
-    );
-
-    console.log(
-      "Session ID:",
-      session.id
-    );
-
-    console.log(
-      "URL:",
-      session.url
-    );
-
-    console.log(
-      "=========================================="
-    );
+    console.log("==========================================");
+    console.log("✅ CHECKOUT ESTUDIAR MALTA CREADO");
+    console.log("💰 IMPORTE: 0,50 €");
+    console.log("Session ID:", session.id);
+    console.log("URL:", session.url);
+    console.log("==========================================");
 
     return res.status(200).json({
       url: session.url,
