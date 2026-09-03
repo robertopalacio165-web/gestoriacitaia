@@ -1,4 +1,4 @@
-import type { VercelRequest, VercelResponse } from "@vercel/node";
+
 import nodemailer from "nodemailer";
 import chromium from "@sparticuz/chromium";
 import { chromium as playwrightChromium } from "playwright-core";
@@ -203,6 +203,7 @@ function buildPdfHtml(data: {
 <head>
 <meta charset="UTF-8">
 <style>
+@import url("https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic:wght@400;500;600;700;800&display=swap");
 @page{size:A4;margin:0}
 *{box-sizing:border-box}
 html,body{margin:0;padding:0;width:210mm;height:297mm}
@@ -211,8 +212,51 @@ body{
   color:#172033;
   font-family:"Noto Naskh Arabic","Noto Sans Arabic","DejaVu Sans",Arial,sans-serif;
   direction:rtl;
+  -webkit-font-smoothing:antialiased;
 }
-.page{
+.page,.page *{
+  font-family:"Noto Naskh Arabic","Noto Sans Arabic","DejaVu Sans",Arial,sans-serif;
+  direction:rtl;
+  unicode-bidi:plaintext;
+  text-align:right;
+}
+.header,
+.badge,
+.thanks,
+.footer{
+  text-align:center;
+}
+.header img{
+  margin-left:auto;
+  margin-right:auto;
+}
+.client,
+.client2{
+  direction:rtl;
+}
+.client td,
+.client2 td{
+  direction:rtl;
+  text-align:right;
+}
+.blue h2,
+.blue p,
+.steps h2,
+.steptext,
+.note{
+  direction:rtl;
+  text-align:right;
+}
+.value{
+  direction:rtl;
+  unicode-bidi:plaintext;
+}
+[dir="ltr"]{
+  direction:ltr !important;
+  unicode-bidi:isolate;
+  text-align:left !important;
+}
+.page{box-sizing:border-box;
   width:210mm;
   height:297mm;
   background:#fff;
@@ -242,7 +286,7 @@ body{
 }
 .header p{
   color:#c4ccd8;
-  font-size:8.5pt;
+  font-size:9pt;
   margin:0;
   line-height:1.4;
 }
@@ -256,7 +300,7 @@ body{
   border-radius:7mm;
   padding:2.3mm 4mm;
   text-align:center;
-  font-size:9.5pt;
+  font-size:10pt;
   font-weight:900;
   margin-bottom:4mm;
 }
@@ -326,7 +370,7 @@ body{
   font-weight:900;
 }
 .blue p{
-  font-size:8.5pt;
+  font-size:9pt;
   line-height:1.55;
   margin:0;
 }
@@ -363,7 +407,7 @@ body{
 .steptext{
   display:table-cell;
   vertical-align:middle;
-  font-size:8pt;
+  font-size:8.5pt;
   line-height:1.45;
   padding-right:1.5mm;
 }
@@ -374,7 +418,7 @@ body{
   padding:2.5mm 3.5mm;
   margin-top:3mm;
   text-align:center;
-  font-size:7.5pt;
+  font-size:8pt;
   line-height:1.45;
 }
 .thanks{
@@ -404,8 +448,8 @@ body{
 }
 </style>
 </head>
-<body>
-<div class="page">
+<body dir="rtl">
+<div class="page" dir="rtl">
 
 <header class="header">
 <img class="logo" src="${LOGO_URL}">
@@ -417,8 +461,8 @@ body{
 
 <div class="badge">✓ توصلنا بالطلب ديالك بنجاح</div>
 
-<p class="greeting">السلام عليكم ${n}،</p>
-<p class="intro">
+<p class="greeting" dir="rtl">السلام عليكم ${n}،</p>
+<p class="intro" dir="rtl">
 كنأكدّو ليك باللي توصلنا بالطلب ديالك ديال خدمة
 <strong>الدراسة فمالطا 2027 🇲🇹</strong>.
 </p>
@@ -439,7 +483,7 @@ body{
 </tr>
 </table>
 
-<section class="blue">
+<section class="blue" dir="rtl">
 <h2>⏱️ شنو غادي يوقع دابا؟</h2>
 <p>
 فمدة أقصاها <strong style="color:#07853f">24 ساعة ديال الخدمة</strong>،
@@ -448,7 +492,7 @@ body{
 </p>
 </section>
 
-<section class="steps">
+<section class="steps" dir="rtl">
 <h2>المراحل الجاية</h2>
 
 <div class="step"><div class="num"><span>1</span></div><div class="steptext">الفريق ديالنا كيراجع المعلومات اللي عمرتي فالطلب.</div></div>
@@ -525,11 +569,68 @@ async function createOnePagePdf(data: {
       if (document.fonts?.ready) {
         await document.fonts.ready;
       }
+
+      try {
+        await document.fonts.load('700 24px "Noto Naskh Arabic"');
+        await document.fonts.load('400 16px "Noto Naskh Arabic"');
+      } catch {}
     });
 
     // El diseño tiene altura A4 fija y overflow:hidden:
     // nunca puede crear una segunda página.
-    const pdfBuffer = await page.pdf({
+    
+// Ajuste final: comprueba que TODO el contenido entre en una única A4.
+// Reduce únicamente la escala visual del contenido si fuese necesario;
+// no cambia el HTML del email ni el transporte SMTP.
+await page.evaluate(() => {
+  const root = document.querySelector(".page") as HTMLElement | null;
+  if (!root) return;
+
+  const footer = root.querySelector(".footer") as HTMLElement | null;
+  const content = root.querySelector(".content") as HTMLElement | null;
+
+  const target = 297 * 3.779527559; // 297mm en px CSS
+  const margin = 2 * 3.779527559;
+  const maxHeight = target - margin;
+
+  // Compactación suave antes de escalar.
+  root.style.boxSizing = "border-box";
+  root.style.overflow = "hidden";
+
+  const all = root.querySelectorAll<HTMLElement>(
+    ".content, .client, .client2, .blue, .steps, .step, .note, .thanks"
+  );
+  all.forEach((el) => {
+    el.style.boxSizing = "border-box";
+  });
+
+  // Reservar el footer dentro de la A4.
+  if (footer) footer.style.position = "absolute";
+
+  // Medir el contenido real.
+  const contentBottom = content
+    ? content.getBoundingClientRect().bottom
+    : root.getBoundingClientRect().bottom;
+  const footerTop = footer
+    ? footer.getBoundingClientRect().top
+    : maxHeight;
+
+  const used = Math.max(contentBottom, footerTop);
+  const available = maxHeight;
+
+  // Si queda fuera, reducir el contenido completo de forma proporcional.
+  if (used > available) {
+    const scale = Math.max(0.82, Math.min(1, available / used));
+    if (content) {
+      content.style.transformOrigin = "top center";
+      content.style.transform = `scale(${scale})`;
+      content.style.width = `${100 / scale}%`;
+      content.style.marginLeft = `${(100 - 100 / scale) / 2}%`;
+    }
+  }
+});
+
+const pdfBuffer = await page.pdf({
       format: "A4",
       printBackground: true,
       preferCSSPageSize: true,
@@ -566,8 +667,8 @@ export default async function handler(
 
   try {
     // IMPORTANTE:
-    // NO BREVO_API_KEY.
-    // NO api.brevo.com.
+    // NO SMTP.
+    // NO SMTP.
     if (!SMTP_USER || !SMTP_PASS) {
       console.error("❌ Faltan SMTP_USER o SMTP_PASS en Vercel");
       return res.status(500).json({
