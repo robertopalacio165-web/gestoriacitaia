@@ -93,18 +93,16 @@ export default async function handler(
     // ============================================
 
     /*
-     * IMPORTANTE:
+     * PRUEBA:
      *
-     * Aquí mantenemos dos planes separados.
+     * Stripe cobrará solamente 0,50 €
      *
-     * Cambia solamente estos precios si tus precios
-     * reales de Estudiar Malta 2027 son diferentes.
+     * Stripe trabaja en céntimos:
+     *
+     * 50 = 0,50 €
      */
 
-    const unitAmount =
-      plan === "weekly"
-        ? 999
-        : 1999;
+    const unitAmount = 50;
 
     const planName =
       plan === "weekly"
@@ -137,6 +135,11 @@ export default async function handler(
     console.log(
       "Plan:",
       planName
+    );
+
+    console.log(
+      "💰 PRECIO DE PRUEBA:",
+      "0,50 €"
     );
 
     console.log(
@@ -208,8 +211,11 @@ export default async function handler(
                   `Servicio de orientación y asistencia para iniciar el procedimiento de inscripción en un centro de idioma inglés en Malta.`,
               },
 
-              unit_amount:
-                unitAmount,
+              // ==================================
+              // 0,50 € = 50 CÉNTIMOS
+              // ==================================
+
+              unit_amount: 50,
             },
 
             quantity: 1,
@@ -346,6 +352,10 @@ export default async function handler(
     );
 
     console.log(
+      "💰 IMPORTE: 0,50 €"
+    );
+
+    console.log(
       "Session ID:",
       session.id
     );
@@ -363,6 +373,8 @@ export default async function handler(
       url: session.url,
       sessionId: session.id,
       service: "study_malta_2027",
+      amount: 50,
+      currency: "eur",
     });
 
   } catch (error: any) {
