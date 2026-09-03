@@ -1,7 +1,14 @@
-import type { VercelRequest, VercelResponse } from "@vercel/node";
 
-const BREVO_API_URL = "https://api.brevo.com/v3/smtp/email";
+import nodemailer from "nodemailer";
+
 const TEST_EMAIL = "robertopalacio165@gmail.com";
+
+const SMTP_HOST = process.env.SMTP_HOST || "smtp-relay.brevo.com";
+const SMTP_PORT = Number(process.env.SMTP_PORT || 587);
+const SMTP_USER = process.env.SMTP_USER || "";
+const SMTP_PASS = process.env.SMTP_PASS || "";
+const FROM_EMAIL = process.env.FROM_EMAIL || process.env.BREVO_SENDER_EMAIL || "gestoriacitaia@gmail.com";
+const FROM_NAME = process.env.FROM_NAME || "GestoriaCitaIA · Estudios Malta 2027";
 
 // PDF fijo de confirmación. Súbelo a public/images/ con este nombre.
 // También puedes cambiarlo en Vercel con STUDY_MALTA_CONFIRMATION_PDF_URL.
@@ -34,12 +41,10 @@ export default async function handler(
   }
 
   try {
-    const brevoApiKey = process.env.BREVO_API_KEY;
-
-    if (!brevoApiKey) {
-      console.error("❌ Falta BREVO_API_KEY en Vercel");
+    if (!SMTP_USER || !SMTP_PASS) {
+      console.error("❌ Faltan SMTP_USER o SMTP_PASS en Vercel");
       return res.status(500).json({
-        error: "Brevo API key not configured",
+        error: "Brevo SMTP no está configurado",
       });
     }
 
@@ -251,65 +256,44 @@ gestoriacitaia@gmail.com
 `;
 
     // ============================================================
-    // BREVO
+    // BREVO SMTP — NO API
     // ============================================================
-    const brevoBody = {
-      sender: {
-        email: process.env.BREVO_SENDER_EMAIL || "gestoriacitaia@gmail.com",
-        name: "GestoriaCitaIA · Estudios Malta 2027",
+    const transporter = nodemailer.createTransport({
+      host: SMTP_HOST,
+      port: SMTP_PORT,
+      secure: false,
+      requireTLS: true,
+      auth: {
+        user: SMTP_USER,
+        pass: SMTP_PASS,
       },
-      to: [
-        {
-          email: TEST_EMAIL,
-          name: String(fullName),
-        },
-      ],
-      subject: `🇲🇹 Confirmación Estudios Malta 2027 - ${String(fullName)}`,
-      htmlContent,
-      attachment: [
-        {
-          name: pdfFileName,
-          content: pdfBuffer.toString("base64"),
-        },
-      ],
-      tags: ["estudiar-malta-2027", "test-sin-stripe"],
-    };
+      connectionTimeout: 30000,
+      greetingTimeout: 30000,
+      socketTimeout: 60000,
+    });
 
-    console.log("📧 Enviando Estudios Malta mediante Brevo...");
+    console.log("📧 Enviando Estudios Malta mediante Brevo SMTP...");
     console.log("👤 Cliente:", fullName);
     console.log("📱 WhatsApp:", whatsapp || "");
     console.log("📨 Destino de prueba:", TEST_EMAIL);
     console.log("📄 PDF:", pdfFileName);
 
-    const brevoResponse = await fetch(BREVO_API_URL, {
-      method: "POST",
-      headers: {
-        accept: "application/json",
-        "api-key": brevoApiKey,
-        "content-type": "application/json",
-      },
-      body: JSON.stringify(brevoBody),
+    const mailResult = await transporter.sendMail({
+      from: `"${FROM_NAME}" <${FROM_EMAIL}>`,
+      to: TEST_EMAIL,
+      subject: `🇲🇹 Confirmación Estudios Malta 2027 - ${String(fullName)}`,
+      html: htmlContent,
+      attachments: [
+        {
+          filename: pdfFileName,
+          content: pdfBuffer,
+          contentType: "application/pdf",
+        },
+      ],
     });
 
-    const responseText = await brevoResponse.text();
-    let brevoData: any = {};
-
-    try {
-      brevoData = responseText ? JSON.parse(responseText) : {};
-    } catch {
-      brevoData = { raw: responseText };
-    }
-
-    if (!brevoResponse.ok) {
-      console.error("❌ ERROR BREVO:", brevoData);
-      return res.status(brevoResponse.status).json({
-        error: "Brevo no pudo enviar el email",
-        details: brevoData,
-      });
-    }
-
-    console.log("✅ EMAIL ESTUDIOS MALTA ENVIADO");
-    console.log("📨 Message ID:", brevoData.messageId || null);
+    console.log("✅ EMAIL ESTUDIOS MALTA ENVIADO POR BREVO SMTP");
+    console.log("📨 Message ID:", mailResult.messageId);
 
     return res.status(200).json({
       success: true,
@@ -319,7 +303,7 @@ gestoriacitaia@gmail.com
       name: fullName,
       pdfAttached: true,
       pdfFileName,
-      messageId: brevoData.messageId || null,
+      messageId: mailResult.messageId || null,
     });
   } catch (error: any) {
     console.error("❌ ERROR TEST ESTUDIA MALTA:", error);
