@@ -72,15 +72,15 @@ function getPlans(t: (k: string) => string): PlanItem[] {
 
 export default function Landing() {
   const [, setLocation] = useLocation();
-  const { t } = useLang();
+  const { t, lang } = useLang();
 
   /* ============================================================
      🟡 CONTADOR REAL DE USUARIOS - SUPABASE
      ============================================================ */
 
-  const [registeredUsers, setRegisteredUsers] = useState(0);
+  const [registeredUsers, setRegisteredUsers] = React.useState(0);
 
-  useEffect(() => {
+  React.useEffect(() => {
     let channel: any = null;
     let mounted = true;
 
@@ -162,69 +162,11 @@ export default function Landing() {
 
   /* ============================================================
      🌍 IDIOMAS
-     Darija / Español / English
+     El idioma SIEMPRE viene del LanguageContext.
+     No usamos document/localStorage/navigator para el contenido.
      ============================================================ */
 
-  const getLiveLanguage = () => {
-    if (typeof document === "undefined") {
-      return "es";
-    }
-
-    const htmlLang =
-      document.documentElement.lang?.toLowerCase() || "";
-
-    const storedLanguage =
-      localStorage.getItem("language")?.toLowerCase() ||
-      localStorage.getItem("lang")?.toLowerCase() ||
-      "";
-
-    const language =
-      htmlLang || storedLanguage || navigator.language?.toLowerCase() || "es";
-
-    if (
-      language.startsWith("ar") ||
-      language.startsWith("ma") ||
-      language.startsWith("darija")
-    ) {
-      return "darija";
-    }
-
-    if (
-      language.startsWith("en") ||
-      language.startsWith("uk") ||
-      language.startsWith("us")
-    ) {
-      return "en";
-    }
-
-    return "es";
-  };
-
-  const liveLanguage = getLiveLanguage();
-
-  const liveTexts = {
-    darija: {
-      live: "مباشر",
-      title: "شخص مسجل ف GestoriaCitaIA",
-      realtime: "تحديث فالوقت الحقيقي",
-    },
-
-    es: {
-      live: "EN DIRECTO",
-      title: "Personas registradas en GestoriaCitaIA",
-      realtime: "Actualización en tiempo real",
-    },
-
-    en: {
-      live: "LIVE",
-      title: "People registered on GestoriaCitaIA",
-      realtime: "Real-time update",
-    },
-  };
-
-  const liveText =
-    liveTexts[liveLanguage as keyof typeof liveTexts] ||
-    liveTexts.es;
+  const liveLanguage = lang;
 
   /* ============================================================ */
 
@@ -300,12 +242,12 @@ export default function Landing() {
           </div>
 
           {/* =====================================================
-              🔥 TITULAR — USA EL IDIOMA REAL DEL CONTEXT
+              🔥 NUEVO TITULAR — ESPAÑOL / DARIJA / ENGLISH
               ===================================================== */}
 
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold font-display leading-tight mb-4 max-w-3xl mx-auto">
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-white to-white/80">
-              {t("hero_title_1")}{" "}
+              {t("hero_title_1")} {" "}
             </span>
 
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-green-400 to-blue-400">
@@ -541,7 +483,7 @@ export default function Landing() {
                     "
                   >
                     {registeredUsers.toLocaleString(
-                      liveLanguage === "en" ? "en-US" : "es-ES"
+                      lang === "en" ? "en-US" : lang === "darija" ? "ar-MA" : "es-ES"
                     )}
                   </span>
                 </div>
