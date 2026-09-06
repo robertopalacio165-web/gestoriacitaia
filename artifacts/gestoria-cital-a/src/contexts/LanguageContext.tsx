@@ -34,8 +34,8 @@ const translations: AllTranslations = {
     // HERO
     // ============================================
     hero_badge: "Agente IA de Extranjería — 100% legal y seguro",
-    hero_title_1: "Descubre si puedes",
-    hero_title_2: "regularizarte en España",
+    hero_title_1: "Tu oportunidad",
+    hero_title_2: "Entra rápido",
     hero_sub:
       "Nuestro agente IA analiza tu situación, revisa tus documentos y te guía paso a paso de forma clara, rápida y segura.",
     hero_btn1: "Regularización con Soufiane",
@@ -101,7 +101,7 @@ const translations: AllTranslations = {
     // ============================================
     plan_malta_weekly_title: "Trabajo en Malta",
     plan_malta_weekly_subtitle: "Semanal",
-    plan_malta_weekly_price: "14,99€",
+    plan_malta_weekly_price: "19,99€",
     plan_malta_weekly_period: "/semana",
     plan_malta_weekly_button: "Empezar ahora",
     plan_malta_weekly_f1: "✅ CV profesional con IA",
@@ -111,7 +111,7 @@ const translations: AllTranslations = {
 
     plan_malta_monthly_title: "Trabajo en Malta",
     plan_malta_monthly_subtitle: "Mensual",
-    plan_malta_monthly_price: "24,99€",
+    plan_malta_monthly_price: "29,99€",
     plan_malta_monthly_period: "/mes",
     plan_malta_monthly_badge: "⭐ MÁS POPULAR",
     plan_malta_monthly_button: "Empezar ahora",
@@ -474,8 +474,8 @@ const translations: AllTranslations = {
     // HERO
     // ============================================
     hero_badge: "Immigration AI Agent — 100% legal and secure",
-    hero_title_1: "Find out if you can",
-    hero_title_2: "regularize your status in Spain",
+    hero_title_1: "Your opportunity",
+    hero_title_2: "Enter now",
     hero_sub:
       "Our AI agent analyzes your situation, reviews your documents, and guides you step by step clearly, quickly, and securely.",
     hero_btn1: "Regularization with Soufiane",
@@ -875,8 +875,8 @@ hero_btn_study_malta: "Study in Malta 2027",
     // HERO
     // ============================================
     hero_badge: "مساعد الذكاء الاصطناعي ديال الهجرة — قانوني وآمن 100%",
-    hero_title_1: "عرف واش تقدر",
-    hero_title_2: "تسوي الوضعية ديالك فإسبانيا",
+    hero_title_1: "الفرصة ديالك",
+    hero_title_2: "دخل دابا",
     hero_sub:
       "المساعد ديالنا كايحلل الحالة ديالك، كايشوف الوثائق ديالك، وكايوجهك مرحلة بمرحلة بطريقة واضحة وسريعة وآمنة.",
     hero_btn1: "التسوية مع سفيان",
@@ -942,7 +942,7 @@ hero_btn_study_malta: "قرا فمالطا 2027",
     // ============================================
     plan_malta_weekly_title: "خدمة العمل فمالطا",
     plan_malta_weekly_subtitle: "أسبوعي",
-    plan_malta_weekly_price: "14,99€",
+    plan_malta_weekly_price: "19,99€",
     plan_malta_weekly_period: "/أسبوع",
     plan_malta_weekly_button: "ابدأ الآن",
     plan_malta_weekly_f1: "✅ سيرة ذاتية احترافية بالذكاء الاصطناعي",
@@ -952,7 +952,7 @@ hero_btn_study_malta: "قرا فمالطا 2027",
 
     plan_malta_monthly_title: "خدمة العمل فمالطا",
     plan_malta_monthly_subtitle: "شهري",
-    plan_malta_monthly_price: "24,99€",
+    plan_malta_monthly_price: "29,99€",
     plan_malta_monthly_period: "/شهر",
     plan_malta_monthly_badge: "⭐ الأكثر طلباً",
     plan_malta_monthly_button: "ابدأ الآن",
