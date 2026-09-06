@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+
 import { motion } from "framer-motion";
 import { Navbar } from "@/components/Navbar";
 import { AgentCard } from "@/components/AgentCard";
@@ -300,24 +300,16 @@ export default function Landing() {
           </div>
 
           {/* =====================================================
-              🔥 NUEVO TITULAR — ESPAÑOL / DARIJA / ENGLISH
+              🔥 TITULAR — USA EL IDIOMA REAL DEL CONTEXT
               ===================================================== */}
 
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold font-display leading-tight mb-4 max-w-3xl mx-auto">
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-white to-white/80">
-              {liveLanguage === "darija"
-                ? "الفرصة ديالك"
-                : liveLanguage === "en"
-                ? "Your opportunity"
-                : "Tu oportunidad"}{" "}
+              {t("hero_title_1")}{" "}
             </span>
 
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-green-400 to-blue-400">
-              {liveLanguage === "darija"
-                ? "دخل دابا"
-                : liveLanguage === "en"
-                ? "Enter now"
-                : "Entra rápido"}
+              {t("hero_title_2")}
             </span>
           </h1>
 
