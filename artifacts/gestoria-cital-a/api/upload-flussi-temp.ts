@@ -51,6 +51,16 @@ const SERVICE_ROLE_KEY =
 const STRIPE_SECRET_KEY =
   process.env.STRIPE_SECRET_KEY;
 
+// 🧪 MODO PRUEBA FLUSSI
+const FLUSSI_TEST_EMAIL =
+  (process.env.FLUSSI_TEST_EMAIL ||
+    "robertopalacio165@gmail.com")
+    .trim()
+    .toLowerCase();
+
+const FLUSSI_TEST_SECRET =
+  process.env.FLUSSI_TEST_SECRET || "";
+
 /**
  * ============================================================
  * CONFIGURACIÓN
@@ -141,6 +151,17 @@ function clean(
       "_"
     )
     .slice(0, max);
+}
+
+/**
+ * ============================================================
+ * SESIÓN DE PRUEBA
+ * ============================================================
+ */
+function isFlussiTestSession(
+  sessionId: string
+): boolean {
+  return sessionId.startsWith("FLUSSI_TEST_");
 }
 
 /**
@@ -267,20 +288,9 @@ export default async function handler(
    * ----------------------------------------------------------
    * STRIPE
    * ----------------------------------------------------------
+   * Stripe solo es obligatorio para clientes normales.
+   * Las sesiones FLUSSI_TEST_ no consultan Stripe.
    */
-
-  if (!stripe) {
-
-    console.error(
-      "❌ STRIPE_SECRET_KEY missing"
-    );
-
-    return res.status(500).json({
-      ok: false,
-      error:
-        "Stripe no está configurado correctamente en el servidor.",
-    });
-  }
 
   try {
 
@@ -322,107 +332,107 @@ export default async function handler(
         120
       );
 
-    /**
-     * ========================================================
-     * COMPROBAR SESIÓN REAL DE STRIPE
-     * ========================================================
-     *
-     * IMPORTANTE:
-     *
-     * NO exigimos payment_status = paid.
-     *
-     * El archivo debe poder estar temporalmente
-     * antes del pago.
-     *
-     * Pero sí comprobamos que la sesión:
-     *
-     * - existe
-     * - pertenece a Decreto Flussi
-     * - tiene el importe esperado
-     * - usa EUR
-     *
-     * El pago real se comprobará después.
-     * ========================================================
-     */
+    // ============================================================
+    // 🧪 MODO PRUEBA / 💳 STRIPE REAL
+    // ============================================================
 
-    const session =
-      await stripe.checkout.sessions.retrieve(
-        safeSessionId
-      );
+    const isTestSession =
+      isFlussiTestSession(safeSessionId);
 
-    const metadata =
-      session.metadata || {};
+    let paymentStatus = "unpaid";
+    let paid = false;
 
-    /**
-     * ========================================================
-     * COMPROBAR PRODUCTO
-     * ========================================================
-     */
+    if (isTestSession) {
+      // El secreto SOLO se valida en el servidor.
+      if (!FLUSSI_TEST_SECRET) {
+        console.error("❌ FLUSSI_TEST_SECRET missing");
 
-    if (
-      metadata.product !==
-      EXPECTED_PRODUCT
-    ) {
+        return res.status(500).json({
+          ok: false,
+          error:
+            "El modo de prueba de Decreto Flussi no está configurado correctamente.",
+        });
+      }
 
-      console.error(
-        "❌ FLUSSI PRODUCT MISMATCH",
+      paymentStatus = "paid";
+      paid = true;
+
+      console.log(
+        "🧪 FLUSSI TEST UPLOAD AUTHORIZED",
         {
-          sessionId:
-            safeSessionId,
-
-          product:
-            metadata.product ||
-            null,
+          email: FLUSSI_TEST_EMAIL,
+          session_id: safeSessionId,
         }
       );
+    } else {
+      if (!stripe) {
+        console.error("❌ STRIPE_SECRET_KEY missing");
 
-      return res.status(403).json({
-        ok: false,
-        error:
-          "La sesión de Stripe no corresponde al servicio Decreto Flussi.",
-      });
-    }
+        return res.status(500).json({
+          ok: false,
+          error:
+            "Stripe no está configurado correctamente en el servidor.",
+        });
+      }
 
-    /**
-     * ========================================================
-     * COMPROBAR IMPORTE
-     * ========================================================
-     */
+      const session =
+        await stripe.checkout.sessions.retrieve(
+          safeSessionId
+        );
 
-    const amountTotal =
-      session.amount_total ??
-      null;
+      const metadata =
+        session.metadata || {};
 
-    const currency =
-      (
-        session.currency ||
-        ""
-      ).toLowerCase();
+      if (
+        metadata.product !==
+        EXPECTED_PRODUCT
+      ) {
+        console.error(
+          "❌ FLUSSI PRODUCT MISMATCH",
+          {
+            sessionId: safeSessionId,
+            product: metadata.product || null,
+          }
+        );
 
-    if (
-      amountTotal !==
-        EXPECTED_AMOUNT ||
-      currency !==
-        EXPECTED_CURRENCY
-    ) {
+        return res.status(403).json({
+          ok: false,
+          error:
+            "La sesión de Stripe no corresponde al servicio Decreto Flussi.",
+        });
+      }
 
-      console.error(
-        "❌ FLUSSI PAYMENT AMOUNT MISMATCH",
-        {
-          sessionId:
-            safeSessionId,
+      const amountTotal =
+        session.amount_total ?? null;
 
-          amountTotal,
+      const currency =
+        (session.currency || "").toLowerCase();
 
-          currency,
-        }
-      );
+      if (
+        amountTotal !== EXPECTED_AMOUNT ||
+        currency !== EXPECTED_CURRENCY
+      ) {
+        console.error(
+          "❌ FLUSSI PAYMENT AMOUNT MISMATCH",
+          {
+            sessionId: safeSessionId,
+            amountTotal,
+            currency,
+          }
+        );
 
-      return res.status(400).json({
-        ok: false,
-        error:
-          "El importe de la sesión de Stripe no coincide con el precio configurado para la prueba.",
-      });
+        return res.status(400).json({
+          ok: false,
+          error:
+            "El importe de la sesión de Stripe no coincide con el precio configurado para la prueba.",
+        });
+      }
+
+      paymentStatus =
+        session.payment_status || "unpaid";
+
+      paid =
+        session.payment_status === "paid";
     }
 
     /**
@@ -603,7 +613,10 @@ export default async function handler(
           numericSize,
 
         payment_status:
-          session.payment_status,
+          paymentStatus,
+
+        test_mode:
+          isTestSession,
       }
     );
 
@@ -652,11 +665,17 @@ export default async function handler(
         safeSessionId,
 
       payment_status:
-        session.payment_status,
+        paymentStatus,
 
-      paid:
-        session.payment_status ===
-        "paid",
+      paid,
+
+      test_mode:
+        isTestSession,
+
+      test_email:
+        isTestSession
+          ? FLUSSI_TEST_EMAIL
+          : null,
 
       message:
         "Archivo preparado correctamente para almacenamiento temporal.",
