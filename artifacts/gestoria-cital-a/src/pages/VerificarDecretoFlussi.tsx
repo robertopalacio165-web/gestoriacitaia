@@ -1181,11 +1181,11 @@ function OfficialBrowserBox({
                     )}
 
                     {/* ✅ BOTÓN - SIN DISABLED */}
-                    <button
-                      type="button"
-                      onClick={onPay}
-                      className="w-full min-h-[56px] rounded-[20px] bg-gradient-to-r from-yellow-400 via-yellow-500 to-amber-500 px-4 py-2 text-[15px] leading-tight font-black text-black shadow-[0_0_30px_rgba(255,215,0,0.35)] transition-all duration-300 hover:scale-[1.01]"
-                    >
+            <button
+  type="button"
+  disabled
+  className="w-full min-h-[56px] rounded-[20px] bg-gray-500/40 px-4 py-2 text-[15px] leading-tight font-black text-white/50 cursor-not-allowed opacity-60"
+>
                       {isMa 
                         ? "🔐 تحقق الآن مقابل 21.99€" 
                         : isEn 
