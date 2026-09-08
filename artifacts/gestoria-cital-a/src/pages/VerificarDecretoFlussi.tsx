@@ -2035,7 +2035,13 @@ export default function VerificarDecretoFlussi() {
       if (!formData.buscarSoloPersona) {
         const pendingFiles = await getPendingFlussiFiles();
         if (pendingFiles.length === 0) {
-          throw new Error(isMa ? "خاصك تختار الوثائق أولا" : isEn ? "Please select your documents first" : "Primero debes seleccionar los documentos");
+          throw new Error(
+            isMa
+              ? "خاصك تختار الوثائق أولا"
+              : isEn
+              ? "Please select your documents first"
+              : "Primero debes seleccionar los documentos"
+          );
         }
       }
 
@@ -2068,16 +2074,73 @@ export default function VerificarDecretoFlussi() {
       });
 
       const data = await res.json();
-      if (data.url) {
-        window.location.href = data.url;
-      } else {
-        throw new Error(data.error || 'Error al crear el checkout');
+
+      console.log("🧪 FLUSSI CHECKOUT RESPONSE:", data);
+
+      if (!res.ok) {
+        throw new Error(
+          data?.error || "Error creando el proceso de pago."
+        );
       }
+
+      // ============================================================
+      // 🧪 USUARIO DE PRUEBA
+      // El servidor devuelve test_mode=true para el email autorizado.
+      // NO se abre Stripe.
+      // ============================================================
+      if (data?.test_mode === true) {
+        console.log("🧪 FLUSSI TEST MODE ACTIVADO", {
+          email: formData.email,
+          session_id: data.session_id || null,
+          reference: data.reference || null,
+        });
+
+        setPaymentConfirmed(true);
+        setFormReady(true);
+        setVerificationStatus("pending");
+        setVerificationProgress(0);
+
+        toast({
+          title: isMa
+            ? "✅ تم تأكيد الأداء التجريبي"
+            : isEn
+            ? "✅ Test payment confirmed"
+            : "✅ Pago de prueba confirmado",
+          description: isMa
+            ? "هاد العملية تجريبية وما كاين حتى اقتطاع من Stripe."
+            : isEn
+            ? "This is a test transaction. No Stripe payment was charged."
+            : "Esta es una operación de prueba. No se ha realizado ningún cobro en Stripe.",
+        });
+
+        return;
+      }
+
+      // ============================================================
+      // 💳 STRIPE NORMAL
+      // ============================================================
+      const checkoutUrl =
+        data?.url ||
+        data?.checkout_url ||
+        data?.checkoutUrl ||
+        "";
+
+      if (checkoutUrl) {
+        console.log("💳 REDIRIGIENDO A STRIPE:", checkoutUrl);
+        window.location.href = checkoutUrl;
+        return;
+      }
+
+      throw new Error(
+        data?.error ||
+        "El servidor no devolvió una URL de Stripe."
+      );
     } catch (error: any) {
-      console.error(error);
+      console.error("❌ ERROR FLUSSI CHECKOUT:", error);
+
       toast({
         title: ui.stripeErrorTitle,
-        description: error.message || ui.stripeErrorDesc,
+        description: error?.message || ui.stripeErrorDesc,
         variant: "destructive",
       });
     }
@@ -2168,111 +2231,3 @@ export default function VerificarDecretoFlussi() {
             errorField={errorField}
             errorRefs={errorRefs}
             setErrorField={setErrorField}
-          />
-        </div>
-
-        {/* Barra inferior */}
-        <div className="hidden lg:block sticky bottom-0 z-30 glass-panel-heavy border-t border-white/10 py-3">
-          <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
-            <div className="flex gap-3">
-              <button
-                onClick={() => { setShowDocs(true); setShowForms(false); }}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold border transition-colors ${
-                  showDocs ? "bg-primary/20 border-primary/40 text-primary" : "bg-white/5 border-white/10 text-white/80 hover:bg-white/10"
-                }`}
-                type="button"
-              >
-                <FileText className="w-4 h-4 text-primary" />
-                {ui.docsButton}
-              </button>
-              <button
-                onClick={() => { setShowForms(true); setShowDocs(false); }}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold border transition-colors ${
-                  showForms ? "bg-secondary/20 border-secondary/40 text-secondary" : "bg-white/5 border-white/10 text-white/80 hover:bg-white/10"
-                }`}
-                type="button"
-              >
-                <Settings className="w-4 h-4 text-secondary" />
-                {ui.formsButton}
-              </button>
-            </div>
-            <div className="px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-[10px] text-white/60">
-              © 2026 GestoriaCitaIA
-            </div>
-          </div>
-        </div>
-
-        {/* Panel documentos */}
-        <AnimatePresence>
-          {showDocs && (
-            <motion.div
-              initial={{ opacity: 0, y: 40 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 40 }}
-              className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 w-full max-w-md px-4"
-            >
-              <div className="rounded-2xl border border-white/15 shadow-2xl overflow-hidden" style={{ background: "#1a2236" }}>
-                <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
-                  <div className="flex items-center gap-2">
-                    <FileText className="w-4 h-4 text-primary" />
-                    <span className="font-bold text-sm text-white">{ui.docsRequiredTitle}</span>
-                  </div>
-                  <button onClick={() => setShowDocs(false)} className="w-6 h-6 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/60 text-xs" type="button">✕</button>
-                </div>
-                <div className="px-5 py-4 space-y-2.5 max-h-72 overflow-y-auto">
-                  {docsForSelectedTramite.map((doc, i) => (
-                    <div key={i} className="flex items-center gap-3">
-                      <span className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 text-xs font-bold ${doc.estado === "ok" ? "bg-green-500/20 text-green-400" : doc.estado === "warn" ? "bg-yellow-500/20 text-yellow-400" : "bg-red-500/20 text-red-400"}`}>
-                        {doc.estado === "ok" ? "✓" : doc.estado === "warn" ? "!" : "✗"}
-                      </span>
-                      <span className="text-sm text-white/90">{doc.nombre}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Panel formularios */}
-        <AnimatePresence>
-          {showForms && (
-            <motion.div
-              initial={{ opacity: 0, y: 40 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 40 }}
-              className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 w-full max-w-md px-4"
-            >
-              <div className="rounded-2xl border border-white/15 shadow-2xl overflow-hidden" style={{ background: "#1a2236" }}>
-                <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
-                  <div className="flex items-center gap-2">
-                    <Settings className="w-4 h-4 text-secondary" />
-                    <span className="font-bold text-sm text-white">{ui.formsOfficialTitle}</span>
-                  </div>
-                  <button onClick={() => setShowForms(false)} className="w-6 h-6 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/60 text-xs" type="button">✕</button>
-                </div>
-                <div className="px-5 py-4 space-y-3">
-                  {formsForSelectedTramite.map((form, i) => (
-                    <a key={i} href={form.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-colors group">
-                      <div className="w-9 h-9 rounded-lg bg-primary/15 border border-primary/30 flex items-center justify-center shrink-0">
-                        <FileText className="w-4 h-4 text-primary" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-bold text-primary">{form.codigo}</p>
-                        <p className="text-sm text-white/80 truncate">{form.nombre}</p>
-                      </div>
-                      <span className="text-[10px] font-semibold text-white/40 group-hover:text-primary transition-colors shrink-0">PDF ↓</span>
-                    </a>
-                  ))}
-                  <p className="text-[10px] text-white/30 text-center pt-1">{ui.sourceLabel}</p>
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        <audio ref={remoteAudioRef} autoPlay playsInline className="hidden" />
-      </main>
-    </div>
-  );
-}
