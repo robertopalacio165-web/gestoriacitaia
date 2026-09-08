@@ -1,5 +1,12 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import Stripe from "stripe";
+import crypto from "crypto";
+
+const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+
+const stripe = stripeSecretKey
+  ? new Stripe(stripeSecretKey)
+  : null;
 
 /**
  * ============================================================
@@ -21,17 +28,19 @@ import Stripe from "stripe";
  *    ↓
  * SUPABASE
  *
+ * MODO PRUEBA:
+ *
+ * robertopalacio165@gmail.com
+ *    ↓
+ * SIN STRIPE
+ *    ↓
+ * paid: true
+ *
  * IMPORTANTE:
  * Este endpoint NO guarda datos en Supabase.
  * La confirmación real del pago se hará mediante Stripe Webhook.
  * ============================================================
  */
-
-const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
-
-const stripe = stripeSecretKey
-  ? new Stripe(stripeSecretKey)
-  : null;
 
 /**
  * ============================================================
@@ -41,10 +50,10 @@ const stripe = stripeSecretKey
 
 /**
  * PRUEBA:
- * 1 = 0,01 €
+ * 50 = 0,50 €
  *
  * Cuando termines las pruebas:
- * 2199 = 21,99 €
+ * cambia al precio definitivo.
  */
 const FLUSSI_PRICE_CENTS = 50;
 
@@ -53,6 +62,60 @@ const FLUSSI_CURRENCY = "eur";
 const FLUSSI_PRODUCT = "decreto_flussi";
 
 const MAX_DOCUMENTS = 5;
+
+/**
+ * ============================================================
+ * MODO PRUEBA
+ * ============================================================
+ *
+ * Estas variables vienen de Vercel Environment Variables.
+ *
+ * FLUSSI_TEST_EMAIL
+ * FLUSSI_TEST_SECRET
+ *
+ * NO poner la clave secreta directamente en GitHub.
+ */
+
+const FLUSSI_TEST_EMAIL = (
+  process.env.FLUSSI_TEST_EMAIL || ""
+)
+  .trim()
+  .toLowerCase();
+
+const FLUSSI_TEST_SECRET =
+  process.env.FLUSSI_TEST_SECRET || "";
+
+/**
+ * ============================================================
+ * CREAR TOKEN SEGURO DE PRUEBA
+ * ============================================================
+ *
+ * El token solamente puede ser creado por el servidor
+ * porque utiliza FLUSSI_TEST_SECRET.
+ */
+
+function createTestToken(
+  email: string,
+  reference: string
+): string {
+  const payload = Buffer.from(
+    JSON.stringify({
+      email,
+      reference,
+      created_at: Date.now(),
+    })
+  ).toString("base64url");
+
+  const signature = crypto
+    .createHmac(
+      "sha256",
+      FLUSSI_TEST_SECRET
+    )
+    .update(payload)
+    .digest("hex");
+
+  return `FLUSSI_TEST_${payload}.${signature}`;
+}
 
 /**
  * ============================================================
@@ -105,9 +168,14 @@ function cleanDocumentType(value: unknown): string {
 }
 
 /**
+ * ============================================================
+ * BOOLEAN
+ * ============================================================
+ *
  * Convierte diferentes valores enviados por el frontend
  * a boolean de forma segura.
  */
+
 function toBoolean(value: unknown): boolean {
   return (
     value === true ||
@@ -137,24 +205,6 @@ export default async function handler(
     return res.status(405).json({
       ok: false,
       error: "Método no permitido.",
-    });
-  }
-
-  /**
-   * ----------------------------------------------------------
-   * STRIPE
-   * ----------------------------------------------------------
-   */
-
-  if (!stripe) {
-    console.error(
-      "❌ STRIPE_SECRET_KEY no está configurada."
-    );
-
-    return res.status(500).json({
-      ok: false,
-      error:
-        "Stripe no está configurado correctamente en el servidor.",
     });
   }
 
@@ -193,6 +243,16 @@ export default async function handler(
       body.email ??
         body.gmail
     );
+
+    /**
+     * ========================================================
+     * COMPROBAR SI ES USUARIO DE PRUEBA
+     * ========================================================
+     */
+
+    const isFlussiTestUser =
+      !!FLUSSI_TEST_EMAIL &&
+      email === FLUSSI_TEST_EMAIL;
 
     const whatsapp = cleanPhone(
       body.whatsapp ??
@@ -304,7 +364,9 @@ export default async function handler(
     }
 
     /**
-     * Máximo 5 documentos.
+     * ========================================================
+     * MÁXIMO 5 DOCUMENTOS
+     * ========================================================
      */
 
     if (documentCount > MAX_DOCUMENTS) {
@@ -391,7 +453,10 @@ export default async function handler(
      * SOLO si NO estamos haciendo búsqueda por persona.
      */
 
-    if (!searchPersonOnly && !documentType) {
+    if (
+      !searchPersonOnly &&
+      !documentType
+    ) {
       return res.status(400).json({
         ok: false,
         error:
@@ -400,11 +465,15 @@ export default async function handler(
     }
 
     /**
-     * Si hay documento que verificar,
-     * debe existir al menos un archivo.
+     * ========================================================
+     * VALIDACIÓN ARCHIVOS
+     * ========================================================
      */
 
-    if (!searchPersonOnly && documentCount === 0) {
+    if (
+      !searchPersonOnly &&
+      documentCount === 0
+    ) {
       return res.status(400).json({
         ok: false,
         error:
@@ -437,6 +506,181 @@ export default async function handler(
         .toString(36)
         .substring(2, 8)
         .toUpperCase()}`;
+
+    /**
+     * ========================================================
+     * MODO PRUEBA
+     * ========================================================
+     *
+     * SOLO:
+     *
+     * robertopalacio165@gmail.com
+     *
+     * No crea Checkout de Stripe.
+     *
+     * Devuelve directamente paid: true.
+     */
+
+    if (isFlussiTestUser) {
+      /**
+       * ------------------------------------------------------
+       * COMPROBAR SECRETO
+       * ------------------------------------------------------
+       */
+
+      if (!FLUSSI_TEST_SECRET) {
+        console.error(
+          "❌ FLUSSI_TEST_SECRET no está configurado."
+        );
+
+        return res.status(500).json({
+          ok: false,
+          error:
+            "El modo prueba de Flussi no está configurado correctamente.",
+        });
+      }
+
+      /**
+       * ------------------------------------------------------
+       * CREAR TOKEN DE PRUEBA
+       * ------------------------------------------------------
+       */
+
+      const testSessionId =
+        createTestToken(
+          email,
+          reference
+        );
+
+      console.log(
+        "🧪 FLUSSI TEST USER — STRIPE BYPASS",
+        {
+          email,
+          reference,
+          searchPersonOnly,
+          documentCount,
+        }
+      );
+
+      /**
+       * ------------------------------------------------------
+       * RESPUESTA DIRECTA
+       * ------------------------------------------------------
+       */
+
+      return res.status(200).json({
+        ok: true,
+
+        session_id:
+          testSessionId,
+
+        checkout_url:
+          null,
+
+        checkoutUrl:
+          null,
+
+        url:
+          null,
+
+        reference,
+
+        amount:
+          FLUSSI_PRICE_CENTS,
+
+        currency:
+          FLUSSI_CURRENCY,
+
+        product:
+          FLUSSI_PRODUCT,
+
+        paid:
+          true,
+
+        test_mode:
+          true,
+
+        searchPersonOnly,
+
+        documents_upload_allowed:
+          true,
+
+        customer_email:
+          email,
+
+        customer_name:
+          `${clientName} ${clientSurname}`.trim(),
+
+        metadata: {
+          product:
+            FLUSSI_PRODUCT,
+
+          service:
+            "verificacion_decreto_flussi",
+
+          reference,
+
+          client_name:
+            clientName,
+
+          client_surname:
+            clientSurname,
+
+          email,
+
+          whatsapp,
+
+          country,
+
+          employer_name:
+            employerName,
+
+          employer_city:
+            employerCity,
+
+          employer_birth_date:
+            employerBirthDate,
+
+          search_person_only:
+            searchPersonOnly
+              ? "true"
+              : "false",
+
+          document_type:
+            documentType,
+
+          document_count:
+            String(documentCount),
+
+          test_mode:
+            "true",
+        },
+
+        message:
+          "Modo prueba activado. No es necesario realizar el pago de Stripe.",
+      });
+    }
+
+    /**
+     * ========================================================
+     * STRIPE
+     * ========================================================
+     *
+     * Todos los usuarios que NO son el email de prueba
+     * pasan por Stripe normalmente.
+     */
+
+    if (!stripe) {
+      console.error(
+        "❌ STRIPE_SECRET_KEY no está configurada."
+      );
+
+      return res.status(500).json({
+        ok: false,
+        error:
+          "Stripe no está configurado correctamente en el servidor.",
+      });
+    }
 
     /**
      * ========================================================
@@ -526,8 +770,9 @@ export default async function handler(
               },
 
               /**
-               * 0,01 € durante las pruebas.
+               * 0,50 € durante las pruebas.
                */
+
               unit_amount:
                 FLUSSI_PRICE_CENTS,
             },
@@ -577,7 +822,7 @@ export default async function handler(
      */
 
     console.log(
-      "✅ FLUSSI STRIPE CHECKOUT CREATED",
+      "✅ FLUSSI STRIPE CHECKOUT CREATED"
     );
 
     console.log({
@@ -614,35 +859,44 @@ export default async function handler(
      */
 
     return res.status(200).json({
-  ok: true,
+      ok: true,
 
-  session_id: session.id,
+      session_id:
+        session.id,
 
-  // Compatibilidad con el frontend
-  checkout_url: session.url,
-  checkoutUrl: session.url,
-  url: session.url,
+      // Compatibilidad con el frontend
+      checkout_url:
+        session.url,
 
-  reference,
+      checkoutUrl:
+        session.url,
 
-  amount: FLUSSI_PRICE_CENTS,
+      url:
+        session.url,
 
-  currency: FLUSSI_CURRENCY,
+      reference,
 
-  product: FLUSSI_PRODUCT,
+      amount:
+        FLUSSI_PRICE_CENTS,
 
-  paid: false,
+      currency:
+        FLUSSI_CURRENCY,
 
-  searchPersonOnly,
+      product:
+        FLUSSI_PRODUCT,
 
-  message:
-    "Checkout de Stripe creado correctamente. El pago todavía no está confirmado.",
-});
+      paid:
+        false,
 
-   
+      test_mode:
+        false,
 
+      searchPersonOnly,
+
+      message:
+        "Checkout de Stripe creado correctamente. El pago todavía no está confirmado.",
+    });
   } catch (error: any) {
-
     console.error(
       "❌ CREATE FLUSSI CHECKOUT ERROR:",
       error
