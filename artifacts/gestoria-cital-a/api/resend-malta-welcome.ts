@@ -7,100 +7,30 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-export default async function handler(
-  req: VercelRequest,
-  res: VercelResponse
-) {
-  let currentQueueId: string | null = null;
+const CONCURRENCY = 5;
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function processOne(queue: any) {
+  const queueId = queue.id;
+  const applicationId = queue.application_id;
+
+  // Claim this queue item. If another invocation already claimed it, skip it.
+  const { data: claimed, error: claimError } = await supabase
+    .from("welcome_email_resend_queue")
+    .update({ status: "processing", error_message: null })
+    .eq("id", queueId)
+    .eq("status", "pending")
+    .select("id")
+    .maybeSingle();
+
+  if (claimError) throw claimError;
+  if (!claimed) return { skipped: true };
 
   try {
-    // =====================================================
-    // 1. MÉTODO
-    // =====================================================
-
-    if (req.method !== "GET" && req.method !== "POST") {
-      return res.status(405).json({
-        ok: false,
-        error: "Method not allowed",
-      });
-    }
-
-    console.log("========================================");
-    console.log("🇲🇹 RESEND MALTA WELCOME EMAIL");
-    console.log("========================================");
-
-    // =====================================================
-    // 2. BUSCAR PRIMER EMAIL PENDING
-    // =====================================================
-
-    const { data: queue, error: queueError } =
-      await supabase
-        .from("welcome_email_resend_queue")
-        .select(`
-          id,
-          application_id,
-          status,
-          created_at
-        `)
-        .eq("status", "pending")
-        .order("created_at", { ascending: true })
-        .limit(1)
-        .maybeSingle();
-
-    if (queueError) {
-      console.error("❌ Queue error:", queueError);
-
-      return res.status(500).json({
-        ok: false,
-        error: queueError.message,
-      });
-    }
-
-    if (!queue) {
-      return res.status(200).json({
-        ok: true,
-        message: "No hay emails pendientes.",
-      });
-    }
-
-    currentQueueId = queue.id;
-
-    console.log("📦 Queue ID:", queue.id);
-    console.log("📦 Application ID:", queue.application_id);
-
-    // =====================================================
-    // 3. MARCAR PROCESSING
-    // =====================================================
-
-    const { error: processingError } = await supabase
-      .from("welcome_email_resend_queue")
-      .update({
-        status: "processing",
-        error_message: null,
-      })
-      .eq("id", queue.id)
-      .eq("status", "pending");
-
-    if (processingError) {
-      console.error(
-        "❌ Error marcando processing:",
-        processingError
-      );
-
-      return res.status(500).json({
-        ok: false,
-        error: processingError.message,
-      });
-    }
-
-    // =====================================================
-    // 4. OBTENER CLIENTE
-    // =====================================================
-
-    const {
-      data: application,
-      error: applicationError,
-    } = await supabase
+    const { data: application, error: applicationError } = await supabase
       .from("malta_applications")
       .select(`
         id,
@@ -113,242 +43,79 @@ export default async function handler(
         welcome_email_sent_at,
         welcome_email_message_id
       `)
-      .eq("id", queue.application_id)
+      .eq("id", applicationId)
       .maybeSingle();
 
     if (applicationError || !application) {
-      const message =
-        applicationError?.message ||
-        "Application not found.";
-
-      await supabase
-        .from("welcome_email_resend_queue")
-        .update({
-          status: "failed",
-          error_message: message,
-        })
-        .eq("id", queue.id);
-
-      return res.status(404).json({
-        ok: false,
-        error: message,
-      });
+      throw new Error(applicationError?.message || "Application not found.");
     }
 
-    // =====================================================
-    // 5. COMPROBAR PAGO
-    // =====================================================
+    if (!application.paid) throw new Error("Application is not paid.");
+    if (!application.email?.trim()) throw new Error("Application has no email.");
 
-    if (!application.paid) {
-      const message = "Application is not paid.";
-
-      await supabase
-        .from("welcome_email_resend_queue")
-        .update({
-          status: "failed",
-          error_message: message,
-        })
-        .eq("id", queue.id);
-
-      return res.status(400).json({
-        ok: false,
-        error: message,
-      });
-    }
-
-    // =====================================================
-    // 6. COMPROBAR EMAIL
-    // =====================================================
-
-    if (!application.email) {
-      const message = "Application has no email.";
-
-      await supabase
-        .from("welcome_email_resend_queue")
-        .update({
-          status: "failed",
-          error_message: message,
-        })
-        .eq("id", queue.id);
-
-      return res.status(400).json({
-        ok: false,
-        error: message,
-      });
-    }
-
-    console.log("👤 Cliente:", application.full_name);
-    console.log("📧 Email:", application.email);
-    console.log("💳 Paid:", application.paid);
-    console.log("📋 Plan:", application.plan);
-    console.log("📄 CV actual:", application.pdf_url);
-    console.log(
-      "📄 Cover Letter actual:",
-      application.cover_letter_url
-    );
-
-    // =====================================================
-    // 7. SI NO EXISTE CV -> GENERAR DOCUMENTOS
-    // =====================================================
+    console.log(`\\n🇲🇹 Processing ${application.email}`);
 
     let cvUrl = application.pdf_url || "";
     let letterUrl = application.cover_letter_url || "";
 
-    if (!cvUrl) {
-      console.log(
-        "⚠️ El cliente no tiene CV. Generando documentos..."
-      );
-
+    // IMPORTANT: generate if EITHER document is missing.
+    if (!cvUrl || !letterUrl) {
       const baseUrl =
-        process.env.NEXT_PUBLIC_URL ||
-        "https://gestoriacitaia.com";
+        process.env.NEXT_PUBLIC_URL || "https://gestoriacitaia.com";
 
-      try {
-        const docsResponse = await fetch(
-          `${baseUrl}/api/generate-malta-documents`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              applicationId: application.id,
-            }),
-          }
-        );
+      console.log(`📄 Missing document(s). Generating for ${application.id}...`);
 
-        const responseText =
-          await docsResponse.text();
-
-        console.log(
-          "📄 generate-malta-documents status:",
-          docsResponse.status
-        );
-
-        if (!docsResponse.ok) {
-          throw new Error(
-            `generate-malta-documents failed (${docsResponse.status}): ${responseText}`
-          );
+      const docsResponse = await fetch(
+        `${baseUrl}/api/generate-malta-documents`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ applicationId: application.id }),
         }
-
-        let docs: any;
-
-        try {
-          docs = JSON.parse(responseText);
-        } catch {
-          throw new Error(
-            `Respuesta inválida de generate-malta-documents: ${responseText}`
-          );
-        }
-
-        cvUrl = docs.cvUrl || "";
-        letterUrl =
-          docs.letterUrl ||
-          docs.coverLetterUrl ||
-          letterUrl;
-
-        console.log("✅ Documentos generados:");
-        console.log("CV:", cvUrl);
-        console.log("Letter:", letterUrl);
-
-      } catch (error: any) {
-        console.error(
-          "❌ Error generando documentos:",
-          error
-        );
-
-        const message =
-          error?.message ||
-          String(error);
-
-        await supabase
-          .from("welcome_email_resend_queue")
-          .update({
-            status: "failed",
-            error_message:
-              `Error generando documentos: ${message}`,
-          })
-          .eq("id", queue.id);
-
-        return res.status(500).json({
-          ok: false,
-          error:
-            `No se pudo generar el CV: ${message}`,
-        });
-      }
-    } else {
-      console.log(
-        "✅ El cliente ya tiene CV. No se genera otro."
       );
+
+      const responseText = await docsResponse.text();
+
+      if (!docsResponse.ok) {
+        throw new Error(
+          `generate-malta-documents failed (${docsResponse.status}): ${responseText}`
+        );
+      }
+
+      let docs: any;
+      try {
+        docs = JSON.parse(responseText);
+      } catch {
+        throw new Error(
+          `Respuesta inválida de generate-malta-documents: ${responseText}`
+        );
+      }
+
+      cvUrl = docs.cvUrl || cvUrl;
+      letterUrl =
+        docs.letterUrl ||
+        docs.coverLetterUrl ||
+        letterUrl;
     }
 
-    // =====================================================
-    // 8. GUARDAR URLS GENERADAS
-    // =====================================================
+    // NEVER send a Welcome email without BOTH documents.
+    if (!cvUrl) throw new Error("Falta el CV.");
+    if (!letterUrl) throw new Error("Falta el Cover Letter.");
 
+    // Save document URLs.
     const documentUpdate: any = {};
-
-    if (cvUrl && cvUrl !== application.pdf_url) {
-      documentUpdate.pdf_url = cvUrl;
-    }
-
-    if (
-      letterUrl &&
-      letterUrl !== application.cover_letter_url
-    ) {
+    if (cvUrl !== application.pdf_url) documentUpdate.pdf_url = cvUrl;
+    if (letterUrl !== application.cover_letter_url) {
       documentUpdate.cover_letter_url = letterUrl;
     }
 
-    if (Object.keys(documentUpdate).length > 0) {
-      console.log(
-        "💾 Guardando URLs de documentos..."
-      );
-
-      const { error: documentUpdateError } =
-        await supabase
-          .from("malta_applications")
-          .update(documentUpdate)
-          .eq("id", application.id);
-
-      if (documentUpdateError) {
-        console.error(
-          "⚠️ Error guardando documentos:",
-          documentUpdateError
-        );
-      } else {
-        console.log(
-          "✅ URLs guardadas correctamente."
-        );
-      }
+    if (Object.keys(documentUpdate).length) {
+      const { error } = await supabase
+        .from("malta_applications")
+        .update(documentUpdate)
+        .eq("id", application.id);
+      if (error) throw new Error(`Error guardando documentos: ${error.message}`);
     }
-
-    // =====================================================
-    // 9. COMPROBAR QUE TENEMOS CV
-    // =====================================================
-
-    if (!cvUrl) {
-      const message =
-        "No se pudo obtener el CV.";
-
-      await supabase
-        .from("welcome_email_resend_queue")
-        .update({
-          status: "failed",
-          error_message: message,
-        })
-        .eq("id", queue.id);
-
-      return res.status(500).json({
-        ok: false,
-        error: message,
-      });
-    }
-
-    // =====================================================
-    // 10. CREAR SMTP BREVO
-    // =====================================================
-
-    console.log("📨 Conectando con Brevo SMTP...");
 
     const transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST,
@@ -363,105 +130,50 @@ export default async function handler(
 
     await transporter.verify();
 
-    console.log("✅ Brevo SMTP conectado.");
-
-    // =====================================================
-    // 11. DESCARGAR ADJUNTOS
-    // =====================================================
-
-    const attachments: any[] = [];
-
-    // ---------------- CV ----------------
-
-    console.log("📥 Descargando CV...");
-
+    // Download and validate BOTH PDFs before sending.
+    console.log("📥 Downloading CV...");
     const cvResponse = await fetch(cvUrl);
-
     if (!cvResponse.ok) {
+      throw new Error(`No se pudo descargar el CV (${cvResponse.status})`);
+    }
+    const cvBuffer = Buffer.from(await cvResponse.arrayBuffer());
+
+    console.log("📥 Downloading Cover Letter...");
+    const letterResponse = await fetch(letterUrl);
+    if (!letterResponse.ok) {
       throw new Error(
-        `No se pudo descargar el CV (${cvResponse.status})`
+        `No se pudo descargar Cover Letter (${letterResponse.status})`
       );
     }
+    const letterBuffer = Buffer.from(await letterResponse.arrayBuffer());
 
-    const cvBuffer = Buffer.from(
-      await cvResponse.arrayBuffer()
-    );
-
-    attachments.push({
-      filename: "CV-Malta.pdf",
-      content: cvBuffer,
-      contentType: "application/pdf",
-    });
-
-    console.log("✅ CV adjuntado.");
-
-    // ---------------- COVER LETTER ----------------
-
-    if (letterUrl) {
-      console.log(
-        "📥 Descargando Cover Letter..."
-      );
-
-      const letterResponse =
-        await fetch(letterUrl);
-
-      if (letterResponse.ok) {
-        const letterBuffer = Buffer.from(
-          await letterResponse.arrayBuffer()
-        );
-
-        attachments.push({
-          filename: "Cover-Letter-Malta.pdf",
-          content: letterBuffer,
-          contentType: "application/pdf",
-        });
-
-        console.log(
-          "✅ Cover Letter adjuntada."
-        );
-      } else {
-        console.warn(
-          "⚠️ No se pudo descargar Cover Letter:",
-          letterResponse.status
-        );
-      }
-    }
-
-    // =====================================================
-    // 12. DATOS DEL EMAIL
-    // =====================================================
-
-    const fullName =
-      application.full_name?.trim() ||
-      "there";
-
+    const fullName = application.full_name?.trim() || "there";
     const planName =
       application.plan === "weekly"
         ? "Weekly Plan (7 days)"
         : "Monthly Plan (30 days)";
 
-    // =====================================================
-    // 13. ENVIAR EMAIL
-    // =====================================================
+    const attachments = [
+      {
+        filename: "CV-Malta.pdf",
+        content: cvBuffer,
+        contentType: "application/pdf",
+      },
+      {
+        filename: "Cover-Letter-Malta.pdf",
+        content: letterBuffer,
+        contentType: "application/pdf",
+      },
+    ];
 
-    console.log(
-      "📧 Enviando email a:",
-      application.email
-    );
+    console.log(`📧 Sending Welcome to ${application.email}...`);
 
-    const mailResult =
-      await transporter.sendMail({
-        from:
-          `"GestoriaCitaIA" <${process.env.FROM_EMAIL}>`,
-
-        to: application.email,
-
-        subject:
-          `🇲🇹 Welcome ${fullName}! Your Malta Job Journey Starts Today`,
-
-        attachments,
-
-        html: `
+    const mailResult = await transporter.sendMail({
+      from: `"GestoriaCitaIA" <${process.env.FROM_EMAIL}>`,
+      to: application.email,
+      subject: `🇲🇹 Welcome ${fullName}! Your Malta Job Journey Starts Today`,
+      attachments,
+      html: `
 <table width="100%" cellpadding="0" cellspacing="0"
 style="background:#f4f6f9;padding:40px 0;font-family:Arial,sans-serif;">
 <tr>
@@ -676,149 +388,145 @@ Questions?
 </tr>
 </table>
 `,
-      });
+    });
 
-    // =====================================================
-    // 14. ÉXITO
-    // =====================================================
+    const sentAt = new Date().toISOString();
 
-    const sentAt =
-      new Date().toISOString();
-
-    console.log("========================================");
-    console.log("✅ EMAIL ENVIADO");
-    console.log("📧:", application.email);
-    console.log("🆔:", mailResult.messageId);
-    console.log(
-      "📎:",
-      attachments.map(
-        (a) => a.filename
-      )
-    );
-    console.log("========================================");
-
-    // =====================================================
-    // 15. GUARDAR EN APPLICATION
-    // =====================================================
-
-    const applicationUpdate: any = {
-      welcome_email_sent_at: sentAt,
-      welcome_email_message_id:
-        mailResult.messageId,
-    };
-
-    if (cvUrl) {
-      applicationUpdate.pdf_url = cvUrl;
-    }
-
-    if (letterUrl) {
-      applicationUpdate.cover_letter_url =
-        letterUrl;
-    }
-
-    const {
-      error: applicationUpdateError,
-    } = await supabase
+    await supabase
       .from("malta_applications")
-      .update(applicationUpdate)
+      .update({
+        welcome_email_sent_at: sentAt,
+        welcome_email_message_id: mailResult.messageId,
+        pdf_url: cvUrl,
+        cover_letter_url: letterUrl,
+      })
       .eq("id", application.id);
 
-    if (applicationUpdateError) {
-      console.error(
-        "⚠️ Error actualizando application:",
-        applicationUpdateError
-      );
-    }
-
-    // =====================================================
-    // 16. MARCAR QUEUE COMO SENT
-    // =====================================================
-
-    const {
-      error: queueUpdateError,
-    } = await supabase
+    await supabase
       .from("welcome_email_resend_queue")
       .update({
         status: "sent",
         sent_at: sentAt,
-        message_id:
-          mailResult.messageId,
+        message_id: mailResult.messageId,
         error_message: null,
       })
-      .eq("id", queue.id);
+      .eq("id", queueId);
 
-    if (queueUpdateError) {
-      console.error(
-        "⚠️ Error actualizando queue:",
-        queueUpdateError
-      );
+    console.log(`✅ SENT ${application.email} | ${mailResult.messageId}`);
+
+    return {
+      sent: true,
+      email: application.email,
+      messageId: mailResult.messageId,
+    };
+  } catch (error: any) {
+    const message = error?.message || String(error);
+
+    console.error(`❌ FAILED ${applicationId}:`, message);
+
+    await supabase
+      .from("welcome_email_resend_queue")
+      .update({
+        status: "failed",
+        error_message: message,
+      })
+      .eq("id", queueId);
+
+    return {
+      sent: false,
+      email: applicationId,
+      error: message,
+    };
+  }
+}
+
+export default async function handler(
+  req: VercelRequest,
+  res: VercelResponse
+) {
+  if (req.method !== "GET" && req.method !== "POST") {
+    return res.status(405).json({
+      ok: false,
+      error: "Method not allowed",
+    });
+  }
+
+  console.log("========================================");
+  console.log("🇲🇹 RESEND ALL MALTA WELCOME EMAILS");
+  console.log("========================================");
+
+  try {
+    // Take ALL currently pending rows.
+    const { data: queue, error: queueError } = await supabase
+      .from("welcome_email_resend_queue")
+      .select("id, application_id, status, created_at")
+      .eq("status", "pending")
+      .order("created_at", { ascending: true })
+      .limit(300);
+
+    if (queueError) {
+      return res.status(500).json({ ok: false, error: queueError.message });
     }
 
-    // =====================================================
-    // 17. RESPUESTA
-    // =====================================================
+    if (!queue?.length) {
+      return res.status(200).json({
+        ok: true,
+        message: "No hay emails pendientes.",
+        total: 0,
+      });
+    }
 
-    return res.status(200).json({
-      ok: true,
-      message:
-        "Welcome email sent successfully.",
+    console.log(`📦 Pendientes encontrados: ${queue.length}`);
+    console.log(`⚡ Concurrencia: ${CONCURRENCY}`);
 
-      applicationId:
-        application.id,
+    const results: any[] = [];
 
-      queueId:
-        queue.id,
+    // Process in small parallel batches so 236 can be sent in this invocation
+    // without opening 236 SMTP connections simultaneously.
+    for (let i = 0; i < queue.length; i += CONCURRENCY) {
+      const batch = queue.slice(i, i + CONCURRENCY);
 
-      email:
-        application.email,
+      console.log(
+        `\\n🚀 Batch ${Math.floor(i / CONCURRENCY) + 1} / ${Math.ceil(queue.length / CONCURRENCY)}`
+      );
 
-      messageId:
-        mailResult.messageId,
+      const batchResults = await Promise.all(
+        batch.map((item) => processOne(item))
+      );
 
-      cvUrl,
+      results.push(...batchResults);
 
-      letterUrl,
-
-      attachments:
-        attachments.map(
-          (a) => a.filename
-        ),
-    });
-
-  } catch (error: any) {
-
-    console.error("========================================");
-    console.error(
-      "❌ ERROR RESEND MALTA WELCOME"
-    );
-    console.error(error);
-    console.error("========================================");
-
-    // Marcar failed si conocemos la cola
-    if (currentQueueId) {
-      try {
-        await supabase
-          .from("welcome_email_resend_queue")
-          .update({
-            status: "failed",
-            error_message:
-              error?.message ||
-              String(error),
-          })
-          .eq("id", currentQueueId);
-      } catch (queueError) {
-        console.error(
-          "❌ Error actualizando failed:",
-          queueError
-        );
+      // Small pause between batches to be gentle with SMTP/Brevo.
+      if (i + CONCURRENCY < queue.length) {
+        await sleep(300);
       }
     }
 
+    const sent = results.filter((r) => r.sent).length;
+    const failed = results.filter((r) => r.sent === false).length;
+    const skipped = results.filter((r) => r.skipped).length;
+
+    console.log("========================================");
+    console.log(`✅ ENVIADOS: ${sent}`);
+    console.log(`❌ FALLIDOS: ${failed}`);
+    console.log(`⏭️ OMITIDOS: ${skipped}`);
+    console.log("========================================");
+
+    return res.status(200).json({
+      ok: true,
+      message: "Procesamiento terminado.",
+      total: queue.length,
+      sent,
+      failed,
+      skipped,
+      results,
+    });
+  } catch (error: any) {
+    console.error("❌ FATAL:", error);
+
     return res.status(500).json({
       ok: false,
-      error:
-        error?.message ||
-        String(error),
+      error: error?.message || String(error),
     });
   }
 }
