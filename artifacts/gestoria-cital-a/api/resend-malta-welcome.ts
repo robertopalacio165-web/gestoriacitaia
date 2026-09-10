@@ -7,7 +7,8 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-const CONCURRENCY = 5;
+const CONCURRENCY = 2;
+const MAX_TOTAL_ATTACHMENT_BYTES = 18 * 1024 * 1024;
 
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -22,7 +23,7 @@ async function processOne(queue: any) {
     .from("welcome_email_resend_queue")
     .update({ status: "processing", error_message: null })
     .eq("id", queueId)
-    .eq("status", "pending")
+    .eq("status", "failed")
     .select("id")
     .maybeSingle();
 
@@ -58,12 +59,11 @@ async function processOne(queue: any) {
     let cvUrl = application.pdf_url || "";
     let letterUrl = application.cover_letter_url || "";
 
-    // IMPORTANT: generate if EITHER document is missing.
-    if (!cvUrl || !letterUrl) {
-      const baseUrl =
-        process.env.NEXT_PUBLIC_URL || "https://gestoriacitaia.com";
+    const baseUrl =
+      process.env.NEXT_PUBLIC_URL || "https://gestoriacitaia.com";
 
-      console.log(`📄 Missing document(s). Generating for ${application.id}...`);
+    async function generateDocuments() {
+      console.log(`📄 Generating documents for ${application.id}...`);
 
       const docsResponse = await fetch(
         `${baseUrl}/api/generate-malta-documents`,
@@ -92,17 +92,17 @@ async function processOne(queue: any) {
       }
 
       cvUrl = docs.cvUrl || cvUrl;
-      letterUrl =
-        docs.letterUrl ||
-        docs.coverLetterUrl ||
-        letterUrl;
+      letterUrl = docs.letterUrl || docs.coverLetterUrl || letterUrl;
     }
 
-    // NEVER send a Welcome email without BOTH documents.
+    // Generate if either URL is missing.
+    if (!cvUrl || !letterUrl) {
+      await generateDocuments();
+    }
+
     if (!cvUrl) throw new Error("Falta el CV.");
     if (!letterUrl) throw new Error("Falta el Cover Letter.");
 
-    // Save document URLs.
     const documentUpdate: any = {};
     if (cvUrl !== application.pdf_url) documentUpdate.pdf_url = cvUrl;
     if (letterUrl !== application.cover_letter_url) {
@@ -130,22 +130,66 @@ async function processOne(queue: any) {
 
     await transporter.verify();
 
-    // Download and validate BOTH PDFs before sending.
-    console.log("📥 Downloading CV...");
-    const cvResponse = await fetch(cvUrl);
-    if (!cvResponse.ok) {
-      throw new Error(`No se pudo descargar el CV (${cvResponse.status})`);
+    async function downloadPdf(url: string, label: string) {
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`No se pudo descargar ${label} (${response.status})`);
+      }
+      const buffer = Buffer.from(await response.arrayBuffer());
+      if (buffer.length < 100) {
+        throw new Error(`${label} descargado pero parece vacío.`);
+      }
+      return buffer;
     }
-    const cvBuffer = Buffer.from(await cvResponse.arrayBuffer());
 
-    console.log("📥 Downloading Cover Letter...");
-    const letterResponse = await fetch(letterUrl);
-    if (!letterResponse.ok) {
+    let cvBuffer: Buffer;
+    let letterBuffer: Buffer;
+
+    try {
+      console.log("📥 Downloading CV...");
+      cvBuffer = await downloadPdf(cvUrl, "el CV");
+      console.log("📥 Downloading Cover Letter...");
+      letterBuffer = await downloadPdf(letterUrl, "el Cover Letter");
+    } catch (downloadError: any) {
+      // The old URL can be stale (400/404). Regenerate once, then retry both files.
+      console.warn(`⚠️ Document download failed: ${downloadError?.message || downloadError}`);
+      console.log("♻️ Regenerating CV + Cover Letter and retrying...");
+
+      await generateDocuments();
+
+      if (!cvUrl || !letterUrl) {
+        throw new Error("Después de regenerar siguen faltando CV o Cover Letter.");
+      }
+
+      const updateAfterRegeneration: any = {
+        pdf_url: cvUrl,
+        cover_letter_url: letterUrl,
+      };
+      const { error: updateError } = await supabase
+        .from("malta_applications")
+        .update(updateAfterRegeneration)
+        .eq("id", application.id);
+      if (updateError) {
+        throw new Error(`Error guardando documentos regenerados: ${updateError.message}`);
+      }
+
+      console.log("📥 Retrying CV...");
+      cvBuffer = await downloadPdf(cvUrl, "el CV regenerado");
+      console.log("📥 Retrying Cover Letter...");
+      letterBuffer = await downloadPdf(letterUrl, "el Cover Letter regenerado");
+    }
+
+    const totalBytes = cvBuffer.length + letterBuffer.length;
+    console.log(`📦 Attachments: ${(totalBytes / 1024 / 1024).toFixed(2)} MB`);
+
+    // Brevo/SMTP rejects messages above 20 MB. Keep a safety margin for the
+    // MIME envelope so we don't waste an SMTP attempt that will be rejected.
+    if (totalBytes > MAX_TOTAL_ATTACHMENT_BYTES) {
       throw new Error(
-        `No se pudo descargar Cover Letter (${letterResponse.status})`
+        `Adjuntos demasiado grandes: ${(totalBytes / 1024 / 1024).toFixed(2)} MB. ` +
+        `Límite seguro para este envío: 18 MB.`
       );
     }
-    const letterBuffer = Buffer.from(await letterResponse.arrayBuffer());
 
     const fullName = application.full_name?.trim() || "there";
     const planName =
@@ -452,15 +496,15 @@ export default async function handler(
   }
 
   console.log("========================================");
-  console.log("🇲🇹 RESEND ALL MALTA WELCOME EMAILS");
+  console.log("🇲🇹 RETRY FAILED MALTA WELCOME EMAILS");
   console.log("========================================");
 
   try {
-    // Take ALL currently pending rows.
+    // Take ONLY failed rows for a controlled retry.
     const { data: queue, error: queueError } = await supabase
       .from("welcome_email_resend_queue")
       .select("id, application_id, status, created_at")
-      .eq("status", "pending")
+      .eq("status", "failed")
       .order("created_at", { ascending: true })
       .limit(300);
 
@@ -471,12 +515,12 @@ export default async function handler(
     if (!queue?.length) {
       return res.status(200).json({
         ok: true,
-        message: "No hay emails pendientes.",
+        message: "No hay emails fallidos pendientes de reintento.",
         total: 0,
       });
     }
 
-    console.log(`📦 Pendientes encontrados: ${queue.length}`);
+    console.log(`📦 Fallidos encontrados: ${queue.length}`);
     console.log(`⚡ Concurrencia: ${CONCURRENCY}`);
 
     const results: any[] = [];
