@@ -116,7 +116,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // ============================================
     const { data: existing, error: checkError } = await supabase
       .from("malta_applications")
-      .select("id, worker_status, photo_url, pdf_url")
+    .select(`
+  id,
+  worker_status,
+  photo_url,
+  pdf_url,
+  cv_url,
+  letter_url,
+  cover_letter_url,
+  welcome_email_sent_at,
+  welcome_email_message_id
+`)
       .eq("stripe_session_id", session.id)
       .maybeSingle();
 
@@ -249,90 +259,388 @@ worker_finished: false,
     }
 
     // ============================================
-    // ✅ 10. ENVIAR EMAIL DE BIENVENIDA (SOLO SI ES NUEVO)
+    // ✅ 10. WELCOME EMAIL ROBUSTO
+    //    - Genera documentos si faltan
+    //    - Reintenta si hay error
+    //    - Comprueba que CV + carta existen
+    //    - Evita duplicar Welcome
+    //    - Si los PDFs son demasiado grandes,
+    //      manda enlaces en lugar de adjuntos
+    //    - Si falla el envío, devuelve ERROR
+    //      para que Stripe pueda reintentar
     // ============================================
-    if (isNew) {
-      console.log(`📄 Generando documentos para ${applicationId}`);
 
-      let cvUrl = "";
-      let letterUrl = "";
+    // Recuperar estado actual de los documentos y Welcome
+    const { data: currentApplication, error: currentApplicationError } =
+      await supabase
+        .from("malta_applications")
+        .select(`
+          id,
+          email,
+          full_name,
+          plan,
+          pdf_url,
+          cv_url,
+          letter_url,
+          cover_letter_url,
+          welcome_email_sent_at,
+          welcome_email_message_id
+        `)
+        .eq("id", applicationId)
+        .single();
 
-      try {
-        const docsResponse = await fetch(
-          `${process.env.NEXT_PUBLIC_URL}/api/generate-malta-documents`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              applicationId: applicationId,
-            }),
+    if (currentApplicationError || !currentApplication) {
+      console.error(
+        "❌ No se pudo recuperar la aplicación:",
+        currentApplicationError
+      );
+
+      return res.status(500).json({
+        error: "Could not retrieve Malta application",
+        applicationId,
+      });
+    }
+
+    // ------------------------------------------------
+    // Si el Welcome ya fue enviado correctamente,
+    // NO volver a enviarlo.
+    // ------------------------------------------------
+    if (currentApplication.welcome_email_sent_at) {
+      console.log(
+        `✅ Welcome ya enviado anteriormente: ${applicationId}`
+      );
+    } else {
+
+      console.log(
+        `📧 Welcome pendiente. Preparando documentos y email: ${applicationId}`
+      );
+
+      let cvUrl =
+        currentApplication.cv_url ||
+        currentApplication.pdf_url ||
+        "";
+
+      let letterUrl =
+        currentApplication.letter_url ||
+        currentApplication.cover_letter_url ||
+        "";
+
+      // ------------------------------------------------
+      // FUNCIÓN: generar documentos con reintentos
+      // ------------------------------------------------
+      async function generateDocumentsWithRetry(
+        applicationId: string,
+        attempts = 3
+      ) {
+        let lastError: any = null;
+
+        for (let attempt = 1; attempt <= attempts; attempt++) {
+          try {
+            console.log(
+              `📄 Generando documentos - intento ${attempt}/${attempts}`
+            );
+
+            const baseUrl =
+              process.env.NEXT_PUBLIC_URL ||
+              "https://www.gestoriacitaia.com";
+
+            const response = await fetch(
+              `${baseUrl}/api/generate-malta-documents`,
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  applicationId,
+                }),
+              }
+            );
+
+            const responseText = await response.text();
+
+            if (!response.ok) {
+              throw new Error(
+                `Document generation HTTP ${response.status}: ${responseText}`
+              );
+            }
+
+            let result: any = {};
+
+            try {
+              result = JSON.parse(responseText);
+            } catch {
+              throw new Error(
+                "Document generation returned invalid JSON"
+              );
+            }
+
+            const generatedCvUrl =
+              result.cvUrl ||
+              result.cv_url ||
+              "";
+
+            const generatedLetterUrl =
+              result.letterUrl ||
+              result.letter_url ||
+              result.coverLetterUrl ||
+              result.cover_letter_url ||
+              "";
+
+            if (generatedCvUrl) {
+              cvUrl = generatedCvUrl;
+            }
+
+            if (generatedLetterUrl) {
+              letterUrl = generatedLetterUrl;
+            }
+
+            if (!cvUrl || !letterUrl) {
+              throw new Error(
+                `Documents incomplete. CV=${!!cvUrl}, Letter=${!!letterUrl}`
+              );
+            }
+
+            console.log("✅ CV y Cover Letter preparados");
+
+            return {
+              cvUrl,
+              letterUrl,
+            };
+
+          } catch (error) {
+            lastError = error;
+
+            console.error(
+              `❌ Error generando documentos intento ${attempt}/${attempts}:`,
+              error
+            );
+
+            if (attempt < attempts) {
+              await new Promise((resolve) =>
+                setTimeout(resolve, attempt * 3000)
+              );
+            }
           }
-        );
-
-        if (docsResponse.ok) {
-          const docs = await docsResponse.json();
-          cvUrl = docs.cvUrl || "";
-          letterUrl = docs.letterUrl || "";
-          console.log("✅ CV y carta generados:", {
-            cvUrl,
-            letterUrl
-          });
-        } else {
-          console.error(
-            "❌ Error generando documentos",
-            await docsResponse.text()
-          );
         }
-      } catch(error){
-        console.error(
-          "❌ Error generate-malta-documents:",
-          error
-        );
+
+        throw lastError || new Error("Document generation failed");
       }
 
-      console.log(`📧 Enviando email de bienvenida para ${applicationId}`);
-      
+      // ------------------------------------------------
+      // Si falta CV o carta, generarlos.
+      // ------------------------------------------------
+      if (!cvUrl || !letterUrl) {
+        try {
+          const generated = await generateDocumentsWithRetry(
+            applicationId,
+            3
+          );
+
+          cvUrl = generated.cvUrl;
+          letterUrl = generated.letterUrl;
+
+        } catch (generationError) {
+          console.error(
+            "❌❌ NO SE PUDO GENERAR CV + COVER LETTER:",
+            generationError
+          );
+
+          // IMPORTANTE:
+          // NO continuamos al email.
+          // Stripe recibirá 500 y podrá reintentar.
+          return res.status(500).json({
+            error: "Malta documents could not be generated",
+            applicationId,
+          });
+        }
+      }
+
+      // ------------------------------------------------
+      // FUNCIÓN: descargar documento con reintentos
+      // ------------------------------------------------
+      async function downloadFileWithRetry(
+        url: string,
+        name: string,
+        attempts = 3
+      ): Promise<Buffer> {
+        let lastError: any = null;
+
+        for (let attempt = 1; attempt <= attempts; attempt++) {
+          try {
+            console.log(
+              `📥 Descargando ${name} - intento ${attempt}/${attempts}`
+            );
+
+            const response = await fetch(url);
+
+            if (!response.ok) {
+              throw new Error(
+                `${name}: HTTP ${response.status}`
+              );
+            }
+
+            const arrayBuffer = await response.arrayBuffer();
+
+            if (!arrayBuffer || arrayBuffer.byteLength === 0) {
+              throw new Error(
+                `${name}: archivo vacío`
+              );
+            }
+
+            console.log(
+              `✅ ${name} descargado: ${(
+                arrayBuffer.byteLength /
+                1024 /
+                1024
+              ).toFixed(2)} MB`
+            );
+
+            return Buffer.from(arrayBuffer);
+
+          } catch (error) {
+            lastError = error;
+
+            console.error(
+              `❌ Error descargando ${name} intento ${attempt}/${attempts}:`,
+              error
+            );
+
+            if (attempt < attempts) {
+              await new Promise((resolve) =>
+                setTimeout(resolve, attempt * 2000)
+              );
+            }
+          }
+        }
+
+        throw lastError || new Error(`${name} download failed`);
+      }
+
+      // ------------------------------------------------
+      // Descargar CV + carta
+      // ------------------------------------------------
+      let cvBuffer: Buffer;
+      let letterBuffer: Buffer;
+
       try {
-        const transporter = nodemailer.createTransport({
-          host: process.env.SMTP_HOST,
-          port: 587,
-          secure: false,
-          requireTLS: true,
-          auth: {
-            user: process.env.SMTP_USER,
-            pass: process.env.SMTP_PASS,
-          },
+        cvBuffer = await downloadFileWithRetry(
+          cvUrl,
+          "CV-Malta.pdf",
+          3
+        );
+
+        letterBuffer = await downloadFileWithRetry(
+          letterUrl,
+          "Cover-Letter-Malta.pdf",
+          3
+        );
+
+      } catch (downloadError) {
+        console.error(
+          "❌❌ No se pudieron descargar los documentos:",
+          downloadError
+        );
+
+        return res.status(500).json({
+          error: "Malta documents could not be downloaded",
+          applicationId,
         });
+      }
 
-        const planName = plan === "weekly" ? "Weekly Plan (7 days)" : "Monthly Plan (30 days)";
+      // ------------------------------------------------
+      // LÍMITE SEGURO PARA SMTP
+      //
+      // Brevo tiene límite de tamaño de email.
+      // Usamos 12 MB de archivos como límite seguro
+      // para evitar problemas de MIME/base64.
+      // ------------------------------------------------
+      const MAX_ATTACHMENT_BYTES =
+        12 * 1024 * 1024;
 
-        await transporter.sendMail({
-          from: `"GestoriaCitaIA" <${process.env.FROM_EMAIL}>`,
-          to: email,
-          subject: `🇲🇹 Welcome ${fullName}! Your Malta Job Journey Starts Today`,
-          attachments: [
+      const totalDocumentBytes =
+        cvBuffer.length +
+        letterBuffer.length;
+
+      const canAttachDocuments =
+        totalDocumentBytes <= MAX_ATTACHMENT_BYTES;
+
+      console.log(
+        `📦 Tamaño total documentos: ${(
+          totalDocumentBytes /
+          1024 /
+          1024
+        ).toFixed(2)} MB`
+      );
+
+      console.log(
+        `📎 Adjuntos permitidos: ${canAttachDocuments}`
+      );
+
+      // ------------------------------------------------
+      // PLAN
+      // ------------------------------------------------
+      const planName =
+        plan === "weekly"
+          ? "Weekly Plan (7 days)"
+          : "Monthly Plan (30 days)";
+
+      // ------------------------------------------------
+      // HTML
+      // ------------------------------------------------
+      const documentLinksHtml = `
+        <div style="background:#F5F8FC;border:1px solid #DCE6F2;padding:22px;margin:25px 0;border-radius:8px;">
+          <h3 style="margin-top:0;color:#0B57D0;">
+            📄 Your Malta Documents
+          </h3>
+
+          <p style="font-size:16px;line-height:28px;">
+            Your CV and Cover Letter are ready.
+          </p>
+
+          <p style="margin:18px 0;">
+            <a href="${cvUrl}"
+              style="background:#0B57D0;color:white;text-decoration:none;padding:14px 22px;border-radius:7px;font-weight:bold;display:inline-block;">
+              📄 Download CV
+            </a>
+          </p>
+
+          <p style="margin:18px 0;">
+            <a href="${letterUrl}"
+              style="background:#0B57D0;color:white;text-decoration:none;padding:14px 22px;border-radius:7px;font-weight:bold;display:inline-block;">
+              📄 Download Cover Letter
+            </a>
+          </p>
+        </div>
+      `;
+
+      const attachments = canAttachDocuments
+        ? [
             {
               filename: "CV-Malta.pdf",
-              content: Buffer.from(
-                await (await fetch(cvUrl)).arrayBuffer()
-              ),
+              content: cvBuffer,
+              contentType: "application/pdf",
             },
             {
               filename: "Cover-Letter-Malta.pdf",
-              content: Buffer.from(
-                await (await fetch(letterUrl)).arrayBuffer()
-              ),
+              content: letterBuffer,
+              contentType: "application/pdf",
             },
-          ],
+          ]
+        : [];
 
-          html: `
-<table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f6f9;padding:40px 0;font-family:Arial,sans-serif;">
+      // ------------------------------------------------
+      // EMAIL HTML
+      // ------------------------------------------------
+      const emailHtml = `
+<table width="100%" cellpadding="0" cellspacing="0"
+style="background:#f4f6f9;padding:40px 0;font-family:Arial,sans-serif;">
+
 <tr>
 <td align="center">
 
-<table width="700" cellpadding="0" cellspacing="0" style="width:100%;max-width:700px;background:#ffffff;border-radius:12px;overflow:hidden;">
+<table width="700" cellpadding="0" cellspacing="0"
+style="width:100%;max-width:700px;background:#ffffff;border-radius:12px;overflow:hidden;">
 
 <tr>
 <td style="background:#0B57D0;padding:35px;text-align:center;color:#fff;">
@@ -347,6 +655,7 @@ worker_finished: false,
 </tr>
 
 <tr>
+
 <td style="padding:40px;">
 
 <div dir="rtl" style="direction:rtl;text-align:right;">
@@ -471,6 +780,8 @@ Relax while our team works for you every single day. 🌴
 As soon as an employer contacts us or invites you for an interview, we will notify you immediately.
 </p>
 
+${!canAttachDocuments ? documentLinksHtml : ""}
+
 <div style="text-align:center;margin-top:45px;">
 
 <a href="https://gestoriacitaia.com"
@@ -508,17 +819,155 @@ Questions?<br>
 </table>
 
 </td>
-
 </tr>
 
 </table>
-`,
-        });
+`;
 
-        console.log(`✅ Email de bienvenida enviado a ${email} con CV y Cover Letter adjuntos`);
-      } catch (emailError) {
-        console.error("❌ Error enviando email de bienvenida:", emailError);
+      // ------------------------------------------------
+      // FUNCIÓN: enviar email con reintentos
+      // ------------------------------------------------
+      async function sendWelcomeWithRetry(
+        attempts = 3
+      ) {
+        let lastError: any = null;
+
+        for (let attempt = 1; attempt <= attempts; attempt++) {
+          let transporter: nodemailer.Transporter | null =
+            null;
+
+          try {
+            console.log(
+              `📧 Enviando Welcome - intento ${attempt}/${attempts}`
+            );
+
+            transporter = nodemailer.createTransport({
+              host: process.env.SMTP_HOST,
+              port: 587,
+              secure: false,
+              requireTLS: true,
+              connectionTimeout: 30000,
+              greetingTimeout: 30000,
+              socketTimeout: 60000,
+              auth: {
+                user: process.env.SMTP_USER,
+                pass: process.env.SMTP_PASS,
+              },
+            });
+
+            // Comprobar conexión SMTP antes de enviar
+            await transporter.verify();
+
+            const info = await transporter.sendMail({
+              from: `"GestoriaCitaIA" <${process.env.FROM_EMAIL}>`,
+              to: email,
+              subject:
+                `🇲🇹 Welcome ${fullName}! Your Malta Job Journey Starts Today`,
+              attachments,
+              html: emailHtml,
+            });
+
+            console.log(
+              `✅ Welcome enviado correctamente a ${email}`
+            );
+
+            console.log(
+              `📨 Message-ID: ${info.messageId}`
+            );
+
+            return info;
+
+          } catch (error) {
+            lastError = error;
+
+            console.error(
+              `❌ Error SMTP intento ${attempt}/${attempts}:`,
+              error
+            );
+
+            if (attempt < attempts) {
+              await new Promise((resolve) =>
+                setTimeout(resolve, attempt * 5000)
+              );
+            }
+
+          } finally {
+            if (transporter) {
+              try {
+                transporter.close();
+              } catch {}
+            }
+          }
+        }
+
+        throw lastError || new Error("Welcome email failed");
       }
+
+      // ------------------------------------------------
+      // ENVIAR
+      // ------------------------------------------------
+      try {
+        const mailInfo =
+          await sendWelcomeWithRetry(3);
+
+        // ------------------------------------------------
+        // MUY IMPORTANTE:
+        // Solo marcamos como enviado DESPUÉS de
+        // que Brevo/SMTP confirme correctamente.
+        // ------------------------------------------------
+        const { error: welcomeUpdateError } =
+          await supabase
+            .from("malta_applications")
+            .update({
+              welcome_email_sent_at:
+                new Date().toISOString(),
+              welcome_email_message_id:
+                mailInfo.messageId || null,
+              cv_url: cvUrl,
+              letter_url: letterUrl,
+              cover_letter_url: letterUrl,
+              cv_generated: true,
+              letter_generated: true,
+              updated_at:
+                new Date().toISOString(),
+            })
+            .eq("id", applicationId);
+
+        if (welcomeUpdateError) {
+          console.error(
+            "❌ Email enviado pero error guardando estado Welcome:",
+            welcomeUpdateError
+          );
+
+          // El email YA fue enviado.
+          // No devolvemos 500 para evitar duplicarlo.
+          console.log(
+            "⚠️ Welcome enviado correctamente aunque no se pudo guardar el marcador."
+          );
+
+        } else {
+          console.log(
+            `✅ Welcome marcado como enviado: ${applicationId}`
+          );
+        }
+
+      } catch (emailError) {
+
+        console.error(
+          "❌❌❌ ERROR DEFINITIVO EN WELCOME:",
+          emailError
+        );
+
+        // IMPORTANTE:
+        // NO ocultamos el error.
+        // Stripe recibirá 500 y podrá reintentar
+        // el webhook automáticamente.
+        return res.status(500).json({
+          error: "Welcome email could not be sent",
+          applicationId,
+        });
+      }
+    }
 
       // ============================================
       // ✅ 11. AÑADIR A LA COLA DE TRABAJO (SOLO SI ES NUEVO)
