@@ -9,7 +9,7 @@ const supabase = createClient(
 
 const MAX_SINGLE_FILE_BYTES = 18 * 1024 * 1024;
 const MAX_COMBINED_BYTES = 18 * 1024 * 1024;
-const MAX_PER_RUN = 8; // 8 por ejecución para evitar timeout y problemas de Chromium
+const MAX_PER_RUN = 5;
 
 function mb(bytes: number) {
   return (bytes / 1024 / 1024).toFixed(2);
@@ -84,38 +84,92 @@ async function getDocuments(application: any) {
   let cvUrl = application.pdf_url || "";
   let letterUrl = application.cover_letter_url || "";
 
-  // First try existing documents.
-  if (cvUrl && letterUrl) {
+  let cv: Buffer | null = null;
+  let letter: Buffer | null = null;
+
+  // Try each existing document independently. A large PDF is still valid;
+  // it should be sent by link if SMTP cannot safely attach it.
+  if (cvUrl) {
     try {
-      const cv = await downloadPdf(cvUrl, "el CV");
-      const letter = await downloadPdf(letterUrl, "el Cover Letter");
-      return { cvUrl, letterUrl, cv, letter };
-    } catch (error: any) {
-      console.warn(
-        `⚠️ URLs existentes fallaron: ${error?.message || error}. Regenerando...`
-      );
+      cv = await downloadPdf(cvUrl, "el CV");
+    } catch (e: any) {
+      console.warn(`⚠️ CV URL failed: ${e?.message || e}`);
+      cv = null;
     }
   }
 
-  // Missing/broken document: generate both.
-  const generated = await generateDocuments(application.id);
-  cvUrl = generated.cvUrl;
-  letterUrl = generated.letterUrl;
-
-  const { error } = await supabase
-    .from("malta_applications")
-    .update({
-      pdf_url: cvUrl,
-      cover_letter_url: letterUrl,
-    })
-    .eq("id", application.id);
-
-  if (error) {
-    throw new Error(`Error guardando documentos regenerados: ${error.message}`);
+  if (letterUrl) {
+    try {
+      letter = await downloadPdf(letterUrl, "el Cover Letter");
+    } catch (e: any) {
+      console.warn(`⚠️ Cover Letter URL failed: ${e?.message || e}`);
+      letter = null;
+    }
   }
 
-  const cv = await downloadPdf(cvUrl, "el CV regenerado");
-  const letter = await downloadPdf(letterUrl, "el Cover Letter regenerado");
+  // Only generate when one/both documents are genuinely unavailable.
+  if (!cv || !letter) {
+    // The generator reads full_name from the database. Never block generation
+    // because the old application row has an empty name.
+    const safeName =
+      application.full_name?.trim() ||
+      application.email?.split("@")[0] ||
+      "Malta Applicant";
+
+    if (!application.full_name?.trim()) {
+      const { error: nameError } = await supabase
+        .from("malta_applications")
+        .update({ full_name: safeName })
+        .eq("id", application.id);
+
+      if (nameError) {
+        throw new Error(`No se pudo completar el nombre: ${nameError.message}`);
+      }
+
+      application.full_name = safeName;
+    }
+
+    let generated: { cvUrl: string; letterUrl: string } | null = null;
+    let lastError: any = null;
+
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        generated = await generateDocuments(application.id);
+        break;
+      } catch (e: any) {
+        lastError = e;
+        console.warn(`⚠️ Generación ${attempt}/3: ${e?.message || e}`);
+        if (attempt < 3) await sleep(3500);
+      }
+    }
+
+    if (!generated) {
+      throw lastError || new Error("No se pudieron generar los documentos.");
+    }
+
+    cvUrl = generated.cvUrl;
+    letterUrl = generated.letterUrl;
+
+    const { error: saveError } = await supabase
+      .from("malta_applications")
+      .update({
+        pdf_url: cvUrl,
+        cover_letter_url: letterUrl,
+      })
+      .eq("id", application.id);
+
+    if (saveError) {
+      throw new Error(`Error guardando documentos regenerados: ${saveError.message}`);
+    }
+
+    // Download the missing/broken documents again from the new URLs.
+    if (!cv) cv = await downloadPdf(cvUrl, "el CV generado");
+    if (!letter) letter = await downloadPdf(letterUrl, "el Cover Letter generado");
+  }
+
+  if (!cv || !letter) {
+    throw new Error("No se pudieron obtener CV y Cover Letter.");
+  }
 
   return { cvUrl, letterUrl, cv, letter };
 }
@@ -123,7 +177,7 @@ async function getDocuments(application: any) {
 async function sendMail(
   transporter: nodemailer.Transporter,
   application: any,
-  attachments: any[] = [],
+  attachments: any[],
   documentLinks: { cvUrl?: string; letterUrl?: string } = {}
 ) {
   const fullName = application.full_name?.trim() || "there";
@@ -131,24 +185,6 @@ async function sendMail(
     application.plan === "weekly"
       ? "Weekly Plan (7 days)"
       : "Monthly Plan (30 days)";
-
-  const linksHtml =
-    documentLinks.cvUrl || documentLinks.letterUrl
-      ? `
-<div style="background:#FFF8E1;border-left:5px solid #F4B400;padding:18px;margin:25px 0;border-radius:8px;">
-  <h3 style="margin-top:0;">📥 Download your documents</h3>
-  ${
-    documentLinks.cvUrl
-      ? `<p>📄 <a href="${documentLinks.cvUrl}" target="_blank" style="color:#0B57D0;font-weight:bold;">Download CV-Malta.pdf</a></p>`
-      : ""
-  }
-  ${
-    documentLinks.letterUrl
-      ? `<p>📄 <a href="${documentLinks.letterUrl}" target="_blank" style="color:#0B57D0;font-weight:bold;">Download Cover-Letter-Malta.pdf</a></p>`
-      : ""
-  }
-</div>`
-      : "";
 
   return transporter.sendMail({
     from: `"GestoriaCitaIA" <${process.env.FROM_EMAIL}>`,
@@ -176,7 +212,7 @@ style="width:100%;max-width:700px;background:#ffffff;border-radius:12px;overflow
 </div>
 <p style="font-size:18px;line-height:32px;">شكراً بزاف على الثقة ديالك فـ <b>GestoriaCitaIA</b>.</p>
 <p style="font-size:20px;color:#0B57D0;font-weight:bold;">🌟 حلمك تخدم فمالطا غادي يتحقق معانا إن شاء الله.</p>
-<p style="font-size:18px;line-height:32px;">من اليوم فريقنا غادي يبدا يخدم على الملف ديالك ويرسل الترشيحات يومياً حتى تلقى أفضل فرصة عمل فمالطا.</p>
+<p style="font-size:18px;line-height:32px;">من اليوم فريقنا غادي يبدا يخدم على الملف ديالك ويرسل الترشيحات يومياً حتى تلقى أفضل فرصة عمل.</p>
 <p style="font-size:18px;"><b>الباقة ديالك:</b> ${planName}</p>
 <p style="font-size:18px;line-height:34px;">
 ✅ غادي نحضرو ليك CV احترافي باللغة الإنجليزية.<br><br>
@@ -186,7 +222,6 @@ style="width:100%;max-width:700px;background:#ffffff;border-radius:12px;overflow
 </p>
 <p style="font-size:20px;color:#0B57D0;font-weight:bold;">استمتع بوقتك وخلي الخدمة علينا ✈️</p>
 <p style="font-size:18px;">أول ما توصلنا أي مقابلة أو عرض عمل غادي نخبرك مباشرة.</p>
-${linksHtml}
 </div>
 <hr style="margin:45px 0;">
 <div style="text-align:left;">
@@ -209,13 +244,18 @@ ${linksHtml}
 </p>
 <p style="font-size:20px;color:#0B57D0;font-weight:bold;">Relax while our team works for you every single day. 🌴</p>
 <p style="font-size:18px;">As soon as an employer contacts us or invites you for an interview, we will notify you immediately.</p>
-${linksHtml}
 <div style="text-align:center;margin-top:45px;">
 <a href="https://gestoriacitaia.com"
 style="background:#0B57D0;color:white;text-decoration:none;padding:18px 36px;border-radius:8px;font-size:18px;font-weight:bold;display:inline-block;">
 Visit GestoriaCitaIA
 </a>
 </div>
+${documentLinks.cvUrl || documentLinks.letterUrl ? `
+<div style="margin-top:30px;padding:20px;background:#FFF7E6;border-radius:10px;">
+  <h3 style="margin-top:0;">📥 Your documents</h3>
+  ${documentLinks.cvUrl ? `<p><a href="${documentLinks.cvUrl}">📄 Download CV</a></p>` : ""}
+  ${documentLinks.letterUrl ? `<p><a href="${documentLinks.letterUrl}">📄 Download Cover Letter</a></p>` : ""}
+</div>` : ""}
 </div>
 </td></tr>
 <tr><td style="background:#f5f5f5;padding:20px;text-align:center;color:#666;">
@@ -273,95 +313,49 @@ async function processOne(queue: any, transporter: nodemailer.Transporter) {
       `📦 CV ${mb(cvSize)} MB | Letter ${mb(letterSize)} MB | Total ${mb(combined)} MB`
     );
 
-    // 1) Best case: both documents fit in one email.
-    if (
-      cvSize <= MAX_SINGLE_FILE_BYTES &&
-      letterSize <= MAX_SINGLE_FILE_BYTES &&
-      combined <= MAX_COMBINED_BYTES
-    ) {
-      const result = await sendMail(transporter, application, [
-        {
-          filename: "CV-Malta.pdf",
-          content: docs.cv,
-          contentType: "application/pdf",
-        },
-        {
-          filename: "Cover-Letter-Malta.pdf",
-          content: docs.letter,
-          contentType: "application/pdf",
-        },
-      ]);
+    // IMPORTANT: SMTP/Brevo has a 20 MB message limit and attachments
+    // are base64 encoded. Keep raw attachments conservatively below 12 MB.
+    // Always send ONE email per client. Anything too large is provided by link.
+    const MAX_SAFE_ATTACHMENT_BYTES = 12 * 1024 * 1024;
 
-      const sentAt = new Date().toISOString();
-
-      await supabase
-        .from("malta_applications")
-        .update({
-          welcome_email_sent_at: sentAt,
-          welcome_email_message_id: result.messageId,
-          pdf_url: docs.cvUrl,
-          cover_letter_url: docs.letterUrl,
-        })
-        .eq("id", application.id);
-
-      await supabase
-        .from("welcome_email_resend_queue")
-        .update({
-          status: "sent",
-          sent_at: sentAt,
-          message_id: result.messageId,
-          error_message: null,
-        })
-        .eq("id", queueId);
-
-      return { sent: true, email: application.email, mode: "both_attachments" };
-    }
-
-    // 2) The SMTP server rejects large messages. Never send two separate
-    // emails because a partial success could create duplicates on retry.
-    // Instead send ONE Welcome email: attach the smaller document when it fits,
-    // and provide a direct download link for the oversized document.
     const attachments: any[] = [];
     const links: { cvUrl?: string; letterUrl?: string } = {};
 
-    if (cvSize <= MAX_SINGLE_FILE_BYTES && letterSize > MAX_SINGLE_FILE_BYTES) {
-      attachments.push({
-        filename: "CV-Malta.pdf",
+    const candidates = [
+      {
+        key: "cvUrl" as const,
+        name: "CV-Malta.pdf",
         content: docs.cv,
-        contentType: "application/pdf",
-      });
-      links.letterUrl = docs.letterUrl;
-      console.log(
-        `📧 CV adjunto (${mb(cvSize)} MB); Cover Letter por enlace (${mb(letterSize)} MB).`
-      );
-    } else if (
-      letterSize <= MAX_SINGLE_FILE_BYTES &&
-      cvSize > MAX_SINGLE_FILE_BYTES
-    ) {
-      attachments.push({
-        filename: "Cover-Letter-Malta.pdf",
+      },
+      {
+        key: "letterUrl" as const,
+        name: "Cover-Letter-Malta.pdf",
         content: docs.letter,
-        contentType: "application/pdf",
-      });
-      links.cvUrl = docs.cvUrl;
-      console.log(
-        `📧 Cover Letter adjunta (${mb(letterSize)} MB); CV por enlace (${mb(cvSize)} MB).`
-      );
-    } else {
-      // Both are too large individually: send both as links.
-      links.cvUrl = docs.cvUrl;
-      links.letterUrl = docs.letterUrl;
-      console.log(
-        `📧 Ambos PDFs son demasiado grandes para adjuntar. Enviando enlaces. CV=${mb(cvSize)} MB | Letter=${mb(letterSize)} MB.`
-      );
-    }
+      },
+    ];
 
-    if (!attachments.length && !links.cvUrl && !links.letterUrl) {
-      throw new Error("No hay documentos ni enlaces disponibles para enviar.");
+    // Prefer the smaller files first so we can attach as much as safely fits.
+    candidates.sort((a, b) => a.content.length - b.content.length);
+
+    let attachmentBytes = 0;
+
+    for (const doc of candidates) {
+      if (
+        doc.content.length <= MAX_SAFE_ATTACHMENT_BYTES &&
+        attachmentBytes + doc.content.length <= MAX_SAFE_ATTACHMENT_BYTES
+      ) {
+        attachments.push({
+          filename: doc.name,
+          content: doc.content,
+          contentType: "application/pdf",
+        });
+        attachmentBytes += doc.content.length;
+      } else {
+        links[doc.key] = doc.key === "cvUrl" ? docs.cvUrl : docs.letterUrl;
+      }
     }
 
     const result = await sendMail(transporter, application, attachments, links);
-
     const sentAt = new Date().toISOString();
 
     await supabase
@@ -387,7 +381,9 @@ async function processOne(queue: any, transporter: nodemailer.Transporter) {
     return {
       sent: true,
       email: application.email,
-      mode: attachments.length ? "attachment_plus_link" : "links_only",
+      mode: attachments.length === 2 ? "both_attachments"
+        : attachments.length === 1 ? "one_attachment_one_link"
+        : "links_only",
     };
 
   } catch (error: any) {
@@ -423,7 +419,7 @@ export default async function handler(
   }
 
   console.log("========================================");
-  console.log("🇲🇹 FINAL RETRY — FAILED WELCOME EMAILS");
+  console.log("🇲🇹 ROBUST RETRY — FAILED WELCOME EMAILS");
   console.log("========================================");
 
   try {
@@ -476,7 +472,7 @@ export default async function handler(
 
     return res.status(200).json({
       ok: true,
-      message: "Retry terminado. Se procesaron los siguientes fallidos.",
+      message: "Retry terminado. Solo se procesaron fallidos.",
       total: queue.length,
       sent,
       failed,
