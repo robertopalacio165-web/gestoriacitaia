@@ -228,8 +228,12 @@ worker_finished: false,
           stripe_session_id: session.id,
           stripe_customer_id: session.customer as string,
           stripe_payment_intent: session.payment_intent as string,
+        
           paid: true,
-      worker_status: "ready",
+worker_status: "ready",
+worker_ready: true,
+worker_started: false,
+worker_finished: false,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         })
