@@ -22,7 +22,7 @@ import nodemailer from "nodemailer";
  *
  * Vercel ENV:
  *   STRIPE_SECRET_KEY
- *   STRIPE_WEBHOOK_SECRET
+ *   FLUSSI_STRIPE_WEBHOOK_SECRET
  *
  * Brevo:
  *   BREVO_SMTP_USER   = Login SMTP de Brevo
@@ -380,14 +380,14 @@ export default async function handler(
   }
 
   const webhookSecret = clean(
-    process.env.STRIPE_WEBHOOK_SECRET
+    process.env.FLUSSI_STRIPE_WEBHOOK_SECRET
   );
 
   if (!webhookSecret) {
     return res.status(500).json({
       ok: false,
       error:
-        "STRIPE_WEBHOOK_SECRET no está configurada en Vercel.",
+        "FLUSSI_STRIPE_WEBHOOK_SECRET no está configurada en Vercel.",
     });
   }
 
