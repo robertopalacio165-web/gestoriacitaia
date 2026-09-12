@@ -250,9 +250,7 @@ export default async function handler(
      * ========================================================
      */
 
-    const isFlussiTestUser =
-      !!FLUSSI_TEST_EMAIL &&
-      email === FLUSSI_TEST_EMAIL;
+    const isFlussiTestUser = false;
 
     const whatsapp = cleanPhone(
       body.whatsapp ??
