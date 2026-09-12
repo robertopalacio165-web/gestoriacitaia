@@ -1,4 +1,4 @@
-import type { VercelRequest, VercelResponse } from "@vercel/node";
+mport type { VercelRequest, VercelResponse } from "@vercel/node";
 import nodemailer from "nodemailer";
 import QRCode from "qrcode";
 import puppeteer from "puppeteer-core";
@@ -9,9 +9,9 @@ type AnyData = Record<string, any>;
 const supabaseUrl = process.env.VITE_SUPABASE_URL || "";
 const publicUrl =
   process.env.NEXT_PUBLIC_URL ||
-  process.env.VERCEL_URL
+  (process.env.VERCEL_URL
     ? `https://${process.env.VERCEL_URL}`
-    : "https://gestoriacitaia.com";
+    : "https://gestoriacitaia.com");
 
 function esc(value: any): string {
   return String(value ?? "")
@@ -379,19 +379,26 @@ async function sendEmail(
   reference: string,
   pdf: Buffer
 ) {
+  const brevoUser = process.env.BREVO_SMTP_USER || "";
+  const brevoKey = process.env.BREVO_SMTP_KEY || "";
+  const fromEmail = process.env.BREVO_FROM_EMAIL || "";
+  const fromName = process.env.BREVO_FROM_NAME || "GestoriaCitaIA";
+  const replyTo = process.env.BREVO_REPLY_TO || "";
+
   const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
+    host: "smtp-relay.brevo.com",
     port: 587,
     secure: false,
     requireTLS: true,
     auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
+      user: brevoUser,
+      pass: brevoKey,
     },
   });
 
   await transporter.sendMail({
-    from: `"GestoriaCitaIA" <${process.env.FROM_EMAIL}>`,
+    from: `"${esc(fromName)}" <${fromEmail}>`,
+    ...(replyTo ? { replyTo } : {}),
     to,
     subject: `🇮🇹 Resultado de verificación Decreto Flussi - ${reference}`,
     text:
@@ -441,11 +448,11 @@ export default async function handler(
       });
     }
 
-    if (!process.env.SMTP_HOST || !process.env.SMTP_USER ||
-        !process.env.SMTP_PASS || !process.env.FROM_EMAIL) {
+    if (!process.env.BREVO_SMTP_USER || !process.env.BREVO_SMTP_KEY ||
+        !process.env.BREVO_FROM_EMAIL) {
       return res.status(500).json({
         ok: false,
-        error: "Faltan variables SMTP en Vercel.",
+        error: "Faltan variables BREVO_SMTP_USER, BREVO_SMTP_KEY o BREVO_FROM_EMAIL en Vercel.",
       });
     }
 
