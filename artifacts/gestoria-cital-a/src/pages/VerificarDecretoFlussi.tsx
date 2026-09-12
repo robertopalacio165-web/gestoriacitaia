@@ -1183,8 +1183,8 @@ function OfficialBrowserBox({
                     {/* ✅ BOTÓN - SIN DISABLED */}
             <button
   type="button"
-  disabled
-  className="w-full min-h-[56px] rounded-[20px] bg-gray-500/40 px-4 py-2 text-[15px] leading-tight font-black text-white/50 cursor-not-allowed opacity-60"
+onClick={onPay}
+  className="w-full min-h-[56px] rounded-[20px] bg-gradient-to-r from-yellow-400 to-yellow-600 px-4 py-2 text-[15px] leading-tight font-black text-black hover:scale-[1.01] transition-transform"
 >
                       {isMa 
                         ? "🔐 تحقق الآن مقابل 21.99€" 
