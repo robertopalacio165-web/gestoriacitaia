@@ -9,7 +9,7 @@ const supabase = createClient(
 
 const MAX_SINGLE_FILE_BYTES = 18 * 1024 * 1024;
 const MAX_COMBINED_BYTES = 18 * 1024 * 1024;
-const MAX_PER_RUN = 5;
+const MAX_PER_RUN = 10;
 
 function mb(bytes: number) {
   return (bytes / 1024 / 1024).toFixed(2);
@@ -276,7 +276,7 @@ async function processOne(queue: any, transporter: nodemailer.Transporter) {
     .from("welcome_email_resend_queue")
     .update({ status: "processing", error_message: null })
     .eq("id", queueId)
-    .eq("status", "failed")
+  .eq("status", "pending")
     .select("id")
     .maybeSingle();
 
@@ -426,7 +426,7 @@ export default async function handler(
     const { data: queue, error: queueError } = await supabase
       .from("welcome_email_resend_queue")
       .select("id, application_id, status, created_at")
-      .eq("status", "failed")
+   .eq("status", "pending")
       .order("created_at", { ascending: true })
       .limit(MAX_PER_RUN);
 
