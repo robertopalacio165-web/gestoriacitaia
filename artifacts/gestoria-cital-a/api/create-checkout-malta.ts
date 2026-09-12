@@ -80,7 +80,9 @@ export default async function handler(
       customer_email: email?.trim().toLowerCase(),
 
       customer_creation: "always",
-
+payment_intent_data: {
+  receipt_email: email?.trim().toLowerCase(),
+},
       invoice_creation: {
         enabled: true,
       },
