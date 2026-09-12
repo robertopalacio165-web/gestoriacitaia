@@ -4,12 +4,15 @@ import Stripe from "stripe";
 const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
 
 const stripe = stripeSecretKey
-  ? new Stripe(stripeSecretKey)
+  ? new Stripe(stripeSecretKey, {
+      apiVersion: "2025-08-27.basil",
+    })
   : null;
 
-const EXPECTED_AMOUNT = 50; // 0,50 € de prueba
+const EXPECTED_AMOUNT = 50; // 0,50 €
 const EXPECTED_CURRENCY = "eur";
 const EXPECTED_PRODUCT = "decreto_flussi";
+const EXPECTED_SERVICE = "verificacion_decreto_flussi";
 
 export default async function handler(
   req: VercelRequest,
@@ -18,17 +21,14 @@ export default async function handler(
   if (req.method !== "POST") {
     return res.status(405).json({
       ok: false,
-      paid: false,
-      error: "Method not allowed",
+      error: "Método no permitido.",
     });
   }
 
   if (!stripe) {
     return res.status(500).json({
       ok: false,
-      paid: false,
-      error:
-        "Stripe no está configurado en el servidor.",
+      error: "Stripe no está configurado correctamente en el servidor.",
     });
   }
 
@@ -42,268 +42,125 @@ export default async function handler(
       return res.status(400).json({
         ok: false,
         paid: false,
-        error:
-          "Falta session_id de Stripe.",
+        error: "Falta session_id.",
       });
     }
 
-    /*
-     * ============================================================
-     * OBTENER SESIÓN REAL DESDE STRIPE
-     * ============================================================
-     */
+    // Recuperamos la sesión directamente desde Stripe.
+    // El frontend NO puede decidir si el pago está confirmado.
+    const session = await stripe.checkout.sessions.retrieve(sessionId, {
+      expand: ["payment_intent", "customer"],
+    });
 
-    const session =
-      await stripe.checkout.sessions.retrieve(
-        sessionId,
-        {
-          expand: [
-            "payment_intent",
-            "customer",
-          ],
-        }
-      );
+    const metadata = session.metadata || {};
 
-    const metadata =
-      session.metadata || {};
-
-    /*
-     * ============================================================
-     * COMPROBAR PRODUCTO
-     *
-     * NO aceptamos una sesión sin producto.
-     * Tiene que ser exactamente Decreto Flussi.
-     * ============================================================
-     */
-
+    // Comprobamos que esta sesión pertenece al servicio Decreto Flussi.
     if (
-      metadata.product !==
-      EXPECTED_PRODUCT
+      metadata.product !== EXPECTED_PRODUCT ||
+      metadata.service !== EXPECTED_SERVICE
     ) {
-      console.error(
-        "FLUSSI PRODUCT MISMATCH:",
-        {
-          sessionId,
-          product:
-            metadata.product || null,
-        }
-      );
-
       return res.status(403).json({
         ok: false,
         paid: false,
-        error:
-          "Esta sesión de Stripe no corresponde al servicio Decreto Flussi.",
+        error: "La sesión de Stripe no pertenece al servicio Decreto Flussi.",
       });
     }
 
-    /*
-     * ============================================================
-     * COMPROBAR IMPORTE
-     * ============================================================
-     */
-
-    const amountTotal =
-      session.amount_total ?? null;
-
-    const currency =
-      (
-        session.currency || ""
-      ).toLowerCase();
+    // Verificación exacta de importe y moneda.
+    const amountTotal = session.amount_total ?? null;
+    const currency = (session.currency || "").toLowerCase();
 
     if (
-      amountTotal !==
-        EXPECTED_AMOUNT ||
-      currency !==
-        EXPECTED_CURRENCY
+      amountTotal !== EXPECTED_AMOUNT ||
+      currency !== EXPECTED_CURRENCY
     ) {
-      console.error(
-        "FLUSSI PAYMENT AMOUNT MISMATCH:",
-        {
-          sessionId,
-          amountTotal,
-          currency,
-        }
-      );
-
       return res.status(400).json({
         ok: false,
         paid: false,
-        error:
-
-  "El importe del pago no coincide con 0,50 €.",
+        error: "El importe o la moneda del pago no coinciden.",
+        expected_amount: EXPECTED_AMOUNT,
+        received_amount: amountTotal,
+        expected_currency: EXPECTED_CURRENCY,
+        received_currency: currency || null,
       });
     }
 
-    /*
-     * ============================================================
-     * COMPROBAR ESTADO REAL DEL PAGO
-     * ============================================================
-     */
+    const paid = session.payment_status === "paid";
 
-    const paid =
-      session.payment_status ===
-      "paid";
-
-    let paymentIntentStatus:
-      | string
-      | null = null;
+    let paymentIntentStatus: string | null = null;
 
     if (
       session.payment_intent &&
-      typeof session.payment_intent !==
-        "string"
+      typeof session.payment_intent !== "string"
     ) {
-      paymentIntentStatus =
-        session.payment_intent.status;
+      paymentIntentStatus = session.payment_intent.status;
     }
 
-    /*
-     * ============================================================
-     * PAGO TODAVÍA NO CONFIRMADO
-     * ============================================================
-     */
-
+    // No desbloquear documentos si Stripe todavía no confirma el pago.
     if (!paid) {
       return res.status(402).json({
         ok: true,
         paid: false,
-
-        payment_status:
-          session.payment_status,
-
-        checkout_status:
-          session.status,
-
-        payment_intent_status:
-          paymentIntentStatus,
-
-        documents_upload_allowed:
-          false,
-
-        message:
-          "El pago todavía no ha sido confirmado por Stripe.",
+        payment_status: session.payment_status,
+        checkout_status: session.status,
+        payment_intent_status: paymentIntentStatus,
+        documents_upload_allowed: false,
       });
     }
 
-    /*
-     * ============================================================
-     * DATOS DEL CLIENTE
-     * ============================================================
-     */
-
     const customerEmail =
-      session.customer_details
-        ?.email ||
+      session.customer_details?.email ||
       session.customer_email ||
       metadata.email ||
       null;
 
     const customerName =
-      session.customer_details
-        ?.name ||
-      metadata.fullName ||
+      session.customer_details?.name ||
+      `${metadata.client_name || ""} ${metadata.client_surname || ""}`.trim() ||
       null;
 
-    /*
-     * ============================================================
-     * PAGO CONFIRMADO
-     * ============================================================
-     *
-     * IMPORTANTE:
-     *
-     * Aquí todavía NO subimos documentos.
-     *
-     * Solamente autorizamos la siguiente fase.
-     * ============================================================
-     */
-
-    console.log(
-      "✅ FLUSSI PAYMENT CONFIRMED",
-      {
-        sessionId:
-          session.id,
-
-        email:
-          customerEmail,
-
-        amount:
-          amountTotal,
-
-        currency,
-
-        product:
-          metadata.product,
-      }
-    );
+    console.log("✅ DECRETO FLUSSI PAYMENT CONFIRMED", {
+      session_id: session.id,
+      reference: metadata.reference || null,
+      email: customerEmail,
+      amount: amountTotal,
+      currency,
+      payment_status: session.payment_status,
+      payment_intent_status: paymentIntentStatus,
+    });
 
     return res.status(200).json({
       ok: true,
-
       paid: true,
 
-      payment_status:
-        session.payment_status,
-
-      checkout_status:
-        session.status,
-
-      amount_total:
-        amountTotal,
-
+      amount: amountTotal,
       currency,
 
-      payment_intent_status:
-        paymentIntentStatus,
+      session_id: session.id,
+      reference: metadata.reference || null,
 
-      session_id:
-        session.id,
+      customer_email: customerEmail,
+      customer_name: customerName,
 
-      customer_email:
-        customerEmail,
+      product: metadata.product,
+      service: metadata.service,
 
-      customer_name:
-        customerName,
+      searchPersonOnly:
+        metadata.search_person_only === "true",
+
+      documents_upload_allowed: true,
 
       metadata,
-
-      /*
-       * El frontend puede continuar,
-       * pero cualquier endpoint posterior
-       * volverá a comprobar Stripe.
-       */
-
-      documents_upload_allowed:
-        true,
-
-      message:
-    
-  "Pago de 0,50 € confirmado correctamente. Puedes continuar con el análisis.",
     });
   } catch (error: any) {
-    console.error(
-      "❌ CONFIRM FLUSSI PAYMENT ERROR:",
-      error
-    );
-
-    if (
-      error?.type ===
-      "StripeInvalidRequestError"
-    ) {
-      return res.status(400).json({
-        ok: false,
-        paid: false,
-        error:
-          "La sesión de Stripe no es válida o no existe.",
-      });
-    }
+    console.error("❌ CONFIRM FLUSSI PAYMENT ERROR:", error);
 
     return res.status(500).json({
       ok: false,
       paid: false,
       error:
         error?.message ||
-        "No se pudo comprobar el pago con Stripe.",
+        "No se pudo verificar el pago de Stripe.",
     });
   }
 }
