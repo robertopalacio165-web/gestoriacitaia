@@ -801,6 +801,8 @@ export default async function handler(
 
         payment_intent_data: {
           metadata,
+          // Stripe sends the payment receipt to this address for live payments.
+          receipt_email: email,
         },
 
         billing_address_collection:
