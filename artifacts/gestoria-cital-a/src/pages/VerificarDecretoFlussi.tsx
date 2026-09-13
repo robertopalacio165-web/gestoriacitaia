@@ -1183,7 +1183,7 @@ function OfficialBrowserBox({
                     {/* ✅ BOTÓN - SIN DISABLED */}
             <button
   type="button"
-onClick={() => {}}
+onClick={onPay}
   className="w-full min-h-[56px] rounded-[20px] bg-gradient-to-r from-yellow-400 to-yellow-600 px-4 py-2 text-[15px] leading-tight font-black text-black hover:scale-[1.01] transition-transform"
 >
                       {isMa 
