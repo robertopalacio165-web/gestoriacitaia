@@ -182,6 +182,120 @@ gestoriacitaia@gmail.com
 }
 
 // ============================================================
+// EMAIL ESCUELA — MENSAJE DIFERENTE AL DEL CLIENTE
+// ============================================================
+function buildSchoolEmailHtml(data: {
+  fullName: string;
+  whatsapp: string;
+  email: string;
+  dateOfBirth: string;
+  nationality: string;
+  passportNumber: string;
+}) {
+  const safeName = escapeHtml(data.fullName);
+  const safeWhatsapp = escapeHtml(data.whatsapp);
+  const safeEmail = escapeHtml(data.email);
+  const safeDob = escapeHtml(data.dateOfBirth);
+  const safeNationality = escapeHtml(data.nationality);
+  const safePassport = escapeHtml(data.passportNumber);
+
+  return `
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nueva solicitud · Estudios Malta 2027</title>
+</head>
+<body style="margin:0;padding:0;background:#eef2f7;font-family:Arial,Helvetica,sans-serif;color:#172033;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#eef2f7;padding:25px 0;">
+<tr><td align="center">
+<table width="680" cellpadding="0" cellspacing="0" style="width:100%;max-width:680px;background:#ffffff;border-radius:18px;overflow:hidden;">
+<tr>
+<td style="background:#07111f;padding:30px 24px;text-align:center;border-bottom:4px solid #20d46b;">
+<img src="${LOGO_URL}" alt="GestoriaCitaIA" style="width:260px;max-width:90%;height:auto;display:block;margin:0 auto 15px;">
+<h1 style="margin:0;color:#ffffff;font-size:24px;">🇲🇹 NUEVA SOLICITUD — ESTUDIOS EN MALTA 2027</h1>
+<p style="color:#c4ccd8;font-size:14px;margin:10px 0 0;">Información de un nuevo cliente para contacto y seguimiento</p>
+</td>
+</tr>
+
+<tr>
+<td style="padding:32px 35px;">
+
+<div style="background:#eaf8ef;border:1px solid #b9ebcc;color:#07853f;padding:14px 18px;border-radius:10px;text-align:center;font-weight:bold;font-size:17px;">
+✓ NUEVO CLIENTE CON SOLICITUD RECIBIDA
+</div>
+
+<h2 style="font-size:21px;margin:26px 0 8px;">Datos del candidato</h2>
+<p style="font-size:14px;color:#667085;margin:0 0 20px;">
+El cliente ha realizado una solicitud para <strong>Estudiar en Malta 2027</strong>.
+Puedes utilizar los datos siguientes para contactar con él/ella.
+</p>
+
+<table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #dfe6ef;border-radius:12px;overflow:hidden;">
+<tr>
+<td style="padding:14px 16px;border-bottom:1px solid #e8edf3;"><strong>Nombre completo</strong></td>
+<td style="padding:14px 16px;border-bottom:1px solid #e8edf3;">${safeName}</td>
+</tr>
+<tr>
+<td style="padding:14px 16px;border-bottom:1px solid #e8edf3;"><strong>WhatsApp</strong></td>
+<td style="padding:14px 16px;border-bottom:1px solid #e8edf3;" dir="ltr">${safeWhatsapp}</td>
+</tr>
+<tr>
+<td style="padding:14px 16px;border-bottom:1px solid #e8edf3;"><strong>Email</strong></td>
+<td style="padding:14px 16px;border-bottom:1px solid #e8edf3;" dir="ltr">${safeEmail}</td>
+</tr>
+<tr>
+<td style="padding:14px 16px;border-bottom:1px solid #e8edf3;"><strong>Fecha de nacimiento</strong></td>
+<td style="padding:14px 16px;border-bottom:1px solid #e8edf3;">${safeDob}</td>
+</tr>
+<tr>
+<td style="padding:14px 16px;border-bottom:1px solid #e8edf3;"><strong>Nacionalidad</strong></td>
+<td style="padding:14px 16px;border-bottom:1px solid #e8edf3;">${safeNationality}</td>
+</tr>
+<tr>
+<td style="padding:14px 16px;"><strong>Número de pasaporte</strong></td>
+<td style="padding:14px 16px;">${safePassport}</td>
+</tr>
+</table>
+
+<div style="background:#f1f7ff;border:1px solid #c9ddf6;border-left:5px solid #0b57d0;border-radius:10px;padding:18px;margin-top:24px;">
+<h3 style="margin:0 0 10px;color:#0b57d0;">📞 Contacto del candidato</h3>
+<p style="margin:0;font-size:15px;line-height:1.8;">
+<strong>WhatsApp:</strong> ${safeWhatsapp}<br>
+<strong>Email:</strong> ${safeEmail}
+</p>
+</div>
+
+<div style="background:#fff8e8;border:1px solid #f2d48b;border-radius:10px;padding:17px;margin-top:22px;font-size:14px;line-height:1.7;">
+📄 <strong>PDF adjunto:</strong> encontrarás el documento generado con la información de la solicitud.
+</div>
+
+<p style="text-align:center;margin:28px 0 0;font-size:15px;">
+🇲🇦 🇲🇹<br><br>
+<strong>GestoriaCitaIA</strong><br>
+Estudios en Malta 2027
+</p>
+
+</td>
+</tr>
+
+<tr>
+<td style="background:#07111f;padding:20px;text-align:center;color:#aeb9c8;font-size:12px;">
+<strong style="color:#ffffff;font-size:14px;">GestoriaCitaIA</strong><br>
+Nueva solicitud · Estudios Malta 2027<br>
+gestoriacitaia@gmail.com
+</td>
+</tr>
+</table>
+</td></tr>
+</table>
+</body>
+</html>
+`;
+}
+
+// ============================================================
 // PDF — MISMO ESTILO DEL GMAIL, PERO COMPACTADO A UNA SOLA A4
 // ============================================================
 function buildPdfHtml(data: {
@@ -757,11 +871,13 @@ export default async function handler(
 
     // 4. SEGUNDO EMAIL DE PRUEBA — ESCUELA.
     // MISMO contenido y mismos datos del formulario. No se modifica el email del cliente.
+    const schoolHtmlContent = buildSchoolEmailHtml(data);
+
     const schoolMailResult = await transporter.sendMail({
       from: `"${FROM_NAME}" <${FROM_EMAIL}>`,
       to: SCHOOL_EMAIL,
       subject: `🇲🇹 NUEVA SOLICITUD ESTUDIOS MALTA 2027 - ${fullName}`,
-      html: htmlContent,
+      html: schoolHtmlContent,
       attachments: [
         {
           filename: pdfFileName,
