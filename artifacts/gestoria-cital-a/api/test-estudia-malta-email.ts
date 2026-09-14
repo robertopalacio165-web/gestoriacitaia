@@ -182,40 +182,125 @@ gestoriacitaia@gmail.com
 }
 
 // ============================================================
-// EMAIL ESCUELA — MENSAJE DIFERENTE AL DEL CLIENTE
+// EMAIL ESCUELA — TODOS LOS DATOS DEL FORMULARIO
 // ============================================================
-function buildSchoolEmailHtml(data: {
-  fullName: string;
-  whatsapp: string;
-  email: string;
-  dateOfBirth: string;
-  nationality: string;
-  passportNumber: string;
-}) {
-  const safeName = escapeHtml(data.fullName);
-  const safeWhatsapp = escapeHtml(data.whatsapp);
-  const safeEmail = escapeHtml(data.email);
-  const safeDob = escapeHtml(data.dateOfBirth);
-  const safeNationality = escapeHtml(data.nationality);
-  const safePassport = escapeHtml(data.passportNumber);
+function buildSchoolEmailHtml(data: Record<string, unknown>) {
+  const labels: Record<string, string> = {
+    fullName: "Nombre completo",
+    whatsapp: "WhatsApp / Teléfono",
+    email: "Email del cliente",
+    dateOfBirth: "Fecha de nacimiento",
+    nationality: "Nacionalidad",
+    countryOfResidence: "País de residencia",
+    residenceCountry: "País de residencia",
+    nivelIngles: "Nivel de inglés",
+    nivel_ingles: "Nivel de inglés",
+    englishLevel: "Nivel de inglés",
+    otherLanguages: "Otros idiomas",
+    otrosIdiomas: "Otros idiomas",
+    otros_idiomas: "Otros idiomas",
+    profession: "Profesión",
+    profesion: "Profesión",
+    yearsExperience: "Años de experiencia",
+    anosExperiencia: "Años de experiencia",
+    anos_experiencia: "Años de experiencia",
+    estudios: "Estudios",
+    education: "Estudios",
+    drivingLicense: "Carnet de conducir",
+    carnetConducir: "Carnet de conducir",
+    carnet_conducir: "Carnet de conducir",
+    tieneCv: "Tiene CV",
+    tieneCV: "Tiene CV",
+    tiene_cv: "Tiene CV",
+    hasCv: "Tiene CV",
+    puestoBusca: "Puesto / curso que busca",
+    puesto_busca: "Puesto / curso que busca",
+    desiredPosition: "Puesto / curso que busca",
+    disponibilidadViajar: "Disponibilidad para viajar",
+    disponibilidad_viajar: "Disponibilidad para viajar",
+    travelAvailability: "Disponibilidad para viajar",
+    fechaDisponible: "Fecha disponible",
+    fecha_disponible: "Fecha disponible",
+    availableDate: "Fecha disponible",
+    passportNumber: "Número de pasaporte",
+    plan: "Plan",
+    planName: "Nombre del plan",
+    plan_name: "Nombre del plan",
+  };
+
+  // Datos internos que NO deben aparecer en el correo de la escuela.
+  const excluded = new Set([
+    "stripe_session_id",
+    "stripe_customer_id",
+    "stripeSessionId",
+    "stripeCustomerId",
+    "paid",
+    "test",
+  ]);
+
+  const entries = Object.entries(data).filter(([key, v]) => {
+    if (excluded.has(key)) return false;
+    if (v === null || v === undefined) return false;
+    if (typeof v === "string" && !v.trim()) return false;
+    return true;
+  });
+
+  const rows = entries.map(([key, v]) => {
+    const label =
+      labels[key] ||
+      key
+        .replace(/([A-Z])/g, " $1")
+        .replace(/[_-]/g, " ")
+        .replace(/^./, (c) => c.toUpperCase());
+
+    let display: string;
+    if (typeof v === "object") {
+      try {
+        display = JSON.stringify(v, null, 2);
+      } catch {
+        display = String(v);
+      }
+    } else {
+      display = String(v);
+    }
+
+    return `
+      <tr>
+        <td style="padding:13px 15px;border-bottom:1px solid #e8edf3;width:38%;background:#f8fafc;color:#667085;font-size:13px;font-weight:bold;">
+          ${escapeHtml(label)}
+        </td>
+        <td style="padding:13px 15px;border-bottom:1px solid #e8edf3;color:#111827;font-size:14px;white-space:pre-wrap;">
+          ${escapeHtml(display)}
+        </td>
+      </tr>`;
+  }).join("");
+
+  const safeName = escapeHtml(value(data.fullName));
+  const safeEmail = escapeHtml(value(data.email));
+  const safeWhatsapp = escapeHtml(value(data.whatsapp));
 
   return `
 <!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Nueva solicitud · Estudios Malta 2027</title>
 </head>
-<body style="margin:0;padding:0;background:#eef2f7;font-family:Arial,Helvetica,sans-serif;color:#172033;">
-<table width="100%" cellpadding="0" cellspacing="0" style="background:#eef2f7;padding:25px 0;">
+<body style="margin:0;padding:25px 0;background:#eef2f7;font-family:Arial,Helvetica,sans-serif;color:#172033;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#eef2f7;">
 <tr><td align="center">
 <table width="680" cellpadding="0" cellspacing="0" style="width:100%;max-width:680px;background:#ffffff;border-radius:18px;overflow:hidden;">
+
 <tr>
 <td style="background:#07111f;padding:30px 24px;text-align:center;border-bottom:4px solid #20d46b;">
-<img src="${LOGO_URL}" alt="GestoriaCitaIA" style="width:260px;max-width:90%;height:auto;display:block;margin:0 auto 15px;">
-<h1 style="margin:0;color:#ffffff;font-size:24px;">🇲🇹 NUEVA SOLICITUD — ESTUDIOS EN MALTA 2027</h1>
-<p style="color:#c4ccd8;font-size:14px;margin:10px 0 0;">Información de un nuevo cliente para contacto y seguimiento</p>
+<img src="${LOGO_URL}" alt="GestoriaCitaIA" style="width:270px;max-width:90%;height:auto;display:block;margin:0 auto 16px;">
+<h1 style="margin:0;color:#ffffff;font-size:24px;line-height:1.4;">
+🇲🇹 NUEVA SOLICITUD — ESTUDIOS EN MALTA 2027
+</h1>
+<p style="color:#c4ccd8;font-size:14px;margin:10px 0 0;">
+Datos completos del formulario del candidato
+</p>
 </td>
 </tr>
 
@@ -223,52 +308,33 @@ function buildSchoolEmailHtml(data: {
 <td style="padding:32px 35px;">
 
 <div style="background:#eaf8ef;border:1px solid #b9ebcc;color:#07853f;padding:14px 18px;border-radius:10px;text-align:center;font-weight:bold;font-size:17px;">
-✓ NUEVO CLIENTE CON SOLICITUD RECIBIDA
+✓ NUEVO CLIENTE — SOLICITUD RECIBIDA
 </div>
 
-<h2 style="font-size:21px;margin:26px 0 8px;">Datos del candidato</h2>
-<p style="font-size:14px;color:#667085;margin:0 0 20px;">
-El cliente ha realizado una solicitud para <strong>Estudiar en Malta 2027</strong>.
-Puedes utilizar los datos siguientes para contactar con él/ella.
+<h2 style="font-size:21px;margin:26px 0 8px;">
+Datos completos del candidato
+</h2>
+
+<p style="font-size:14px;color:#667085;line-height:1.7;margin:0 0 20px;">
+El cliente ha enviado el formulario para <strong>Estudiar en Malta 2027</strong>.
+A continuación aparecen todos los datos recibidos del formulario para que el centro pueda revisar la solicitud y contactar con el candidato.
 </p>
 
 <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #dfe6ef;border-radius:12px;overflow:hidden;">
-<tr>
-<td style="padding:14px 16px;border-bottom:1px solid #e8edf3;"><strong>Nombre completo</strong></td>
-<td style="padding:14px 16px;border-bottom:1px solid #e8edf3;">${safeName}</td>
-</tr>
-<tr>
-<td style="padding:14px 16px;border-bottom:1px solid #e8edf3;"><strong>WhatsApp</strong></td>
-<td style="padding:14px 16px;border-bottom:1px solid #e8edf3;" dir="ltr">${safeWhatsapp}</td>
-</tr>
-<tr>
-<td style="padding:14px 16px;border-bottom:1px solid #e8edf3;"><strong>Email</strong></td>
-<td style="padding:14px 16px;border-bottom:1px solid #e8edf3;" dir="ltr">${safeEmail}</td>
-</tr>
-<tr>
-<td style="padding:14px 16px;border-bottom:1px solid #e8edf3;"><strong>Fecha de nacimiento</strong></td>
-<td style="padding:14px 16px;border-bottom:1px solid #e8edf3;">${safeDob}</td>
-</tr>
-<tr>
-<td style="padding:14px 16px;border-bottom:1px solid #e8edf3;"><strong>Nacionalidad</strong></td>
-<td style="padding:14px 16px;border-bottom:1px solid #e8edf3;">${safeNationality}</td>
-</tr>
-<tr>
-<td style="padding:14px 16px;"><strong>Número de pasaporte</strong></td>
-<td style="padding:14px 16px;">${safePassport}</td>
-</tr>
+${rows}
 </table>
 
 <div style="background:#f1f7ff;border:1px solid #c9ddf6;border-left:5px solid #0b57d0;border-radius:10px;padding:18px;margin-top:24px;">
-<h3 style="margin:0 0 10px;color:#0b57d0;">📞 Contacto del candidato</h3>
+<h3 style="margin:0 0 10px;color:#0b57d0;">📞 Contacto directo del candidato</h3>
 <p style="margin:0;font-size:15px;line-height:1.8;">
+<strong>Nombre:</strong> ${safeName}<br>
 <strong>WhatsApp:</strong> ${safeWhatsapp}<br>
 <strong>Email:</strong> ${safeEmail}
 </p>
 </div>
 
 <div style="background:#fff8e8;border:1px solid #f2d48b;border-radius:10px;padding:17px;margin-top:22px;font-size:14px;line-height:1.7;">
-📄 <strong>PDF adjunto:</strong> encontrarás el documento generado con la información de la solicitud.
+📄 <strong>PDF adjunto:</strong> se adjunta el documento generado con los datos básicos de la solicitud.
 </div>
 
 <p style="text-align:center;margin:28px 0 0;font-size:15px;">
@@ -287,6 +353,7 @@ Nueva solicitud · Estudios Malta 2027<br>
 gestoriacitaia@gmail.com
 </td>
 </tr>
+
 </table>
 </td></tr>
 </table>
@@ -871,7 +938,18 @@ export default async function handler(
 
     // 4. SEGUNDO EMAIL DE PRUEBA — ESCUELA.
     // MISMO contenido y mismos datos del formulario. No se modifica el email del cliente.
-    const schoolHtmlContent = buildSchoolEmailHtml(data);
+    // Para la escuela enviamos TODOS los campos que llegaron desde el formulario.
+    const formData: Record<string, unknown> = {
+      ...body,
+      fullName,
+      email,
+      whatsapp,
+      dateOfBirth,
+      nationality,
+      passportNumber,
+    };
+
+    const schoolHtmlContent = buildSchoolEmailHtml(formData);
 
     const schoolMailResult = await transporter.sendMail({
       from: `"${FROM_NAME}" <${FROM_EMAIL}>`,
