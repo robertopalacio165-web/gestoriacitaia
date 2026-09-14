@@ -365,20 +365,101 @@ gestoriacitaia@gmail.com
 // ============================================================
 // PDF — MISMO ESTILO DEL GMAIL, PERO COMPACTADO A UNA SOLA A4
 // ============================================================
-function buildPdfHtml(data: {
-  fullName: string;
-  whatsapp: string;
-  email: string;
-  dateOfBirth: string;
-  nationality: string;
-  passportNumber: string;
-}) {
+function buildPdfHtml(data: Record<string, unknown>) {
   const n = escapeHtml(value(data.fullName));
   const w = escapeHtml(value(data.whatsapp));
   const e = escapeHtml(value(data.email));
   const dob = escapeHtml(value(data.dateOfBirth));
   const nat = escapeHtml(value(data.nationality));
   const pass = escapeHtml(value(data.passportNumber));
+
+  // El PDF de la escuela debe contener los mismos datos completos
+  // que recibe el email de la escuela.
+  const pdfLabels: Record<string, string> = {
+    fullName: "Nombre completo",
+    whatsapp: "WhatsApp / Teléfono",
+    email: "Email del cliente",
+    dateOfBirth: "Fecha de nacimiento",
+    nationality: "Nacionalidad",
+    countryOfResidence: "País de residencia",
+    residenceCountry: "País de residencia",
+    nivelIngles: "Nivel de inglés",
+    nivel_ingles: "Nivel de inglés",
+    englishLevel: "Nivel de inglés",
+    otherLanguages: "Otros idiomas",
+    otrosIdiomas: "Otros idiomas",
+    otros_idiomas: "Otros idiomas",
+    profession: "Profesión",
+    profesion: "Profesión",
+    yearsExperience: "Años de experiencia",
+    anosExperiencia: "Años de experiencia",
+    anos_experiencia: "Años de experiencia",
+    estudios: "Estudios",
+    education: "Estudios",
+    drivingLicense: "Carnet de conducir",
+    carnetConducir: "Carnet de conducir",
+    carnet_conducir: "Carnet de conducir",
+    tieneCv: "Tiene CV",
+    tieneCV: "Tiene CV",
+    tiene_cv: "Tiene CV",
+    hasCv: "Tiene CV",
+    puestoBusca: "Puesto / curso que busca",
+    puesto_busca: "Puesto / curso que busca",
+    desiredPosition: "Puesto / curso que busca",
+    disponibilidadViajar: "Disponibilidad para viajar",
+    disponibilidad_viajar: "Disponibilidad para viajar",
+    travelAvailability: "Disponibilidad para viajar",
+    fechaDisponible: "Fecha disponible",
+    fecha_disponible: "Fecha disponible",
+    availableDate: "Fecha disponible",
+    passportNumber: "Número de pasaporte",
+    plan: "Plan",
+    planName: "Nombre del plan",
+    plan_name: "Nombre del plan",
+  };
+
+  const excludedPdfFields = new Set([
+    "stripe_session_id",
+    "stripe_customer_id",
+    "stripeSessionId",
+    "stripeCustomerId",
+    "paid",
+    "test",
+  ]);
+
+  const completePdfRows = Object.entries(data)
+    .filter(([key, v]) => {
+      if (excludedPdfFields.has(key)) return false;
+      if (v === null || v === undefined) return false;
+      if (typeof v === "string" && !v.trim()) return false;
+      return true;
+    })
+    .map(([key, v]) => {
+      const label =
+        pdfLabels[key] ||
+        key
+          .replace(/([A-Z])/g, " $1")
+          .replace(/[_-]/g, " ")
+          .replace(/^./, (c) => c.toUpperCase());
+
+      let display: string;
+      if (typeof v === "object") {
+        try {
+          display = JSON.stringify(v);
+        } catch {
+          display = String(v);
+        }
+      } else {
+        display = String(v);
+      }
+
+      return `
+      <tr>
+        <td class="pdf-field-label">${escapeHtml(label)}</td>
+        <td class="pdf-field-value">${escapeHtml(display)}</td>
+      </tr>`;
+    })
+    .join("");
 
   return `<!doctype html>
 <html lang="ar" dir="rtl">
@@ -614,6 +695,40 @@ body{
   font-weight:900;
   margin-top:2.5mm;
 }
+.complete-title{
+  color:#0b57d0;
+  font-size:11.5pt;
+  margin:3mm 0 1.5mm;
+  font-weight:900;
+}
+.complete-table{
+  width:100%;
+  border:1px solid #dfe6ef;
+  border-collapse:collapse;
+  margin-top:1mm;
+  direction:rtl;
+}
+.complete-table td{
+  border-bottom:1px solid #e8edf3;
+  padding:1.5mm 2.2mm;
+  vertical-align:top;
+  line-height:1.2;
+}
+.pdf-field-label{
+  width:35%;
+  background:#f8fafc;
+  color:#667085;
+  font-size:6.7pt;
+  font-weight:900;
+}
+.pdf-field-value{
+  color:#111827;
+  font-size:7.2pt;
+  font-weight:700;
+  word-break:break-word;
+  direction:ltr;
+  text-align:left !important;
+}
 .footer{
   position:absolute;
   left:0;right:0;bottom:0;
@@ -667,6 +782,11 @@ body{
 <td><div class="label">الجنسية</div><div class="value">${nat}</div></td>
 <td><div class="label">رقم الباسبور</div><div class="value">${pass}</div></td>
 </tr>
+</table>
+
+<h3 class="complete-title" dir="rtl">البيانات الكاملة ديال الطلب</h3>
+<table class="complete-table" cellpadding="0" cellspacing="0">
+${completePdfRows}
 </table>
 
 <section class="blue" dir="rtl">
@@ -890,8 +1010,19 @@ export default async function handler(
       passportNumber,
     };
 
-    // 1. Generar PDF LLENO con los datos del formulario.
-    const pdfBuffer = await createOnePagePdf(data);
+    // TODOS los datos originales del formulario se conservan para el PDF de la escuela.
+    const formData: Record<string, unknown> = {
+      ...body,
+      fullName,
+      email,
+      whatsapp,
+      dateOfBirth,
+      nationality,
+      passportNumber,
+    };
+
+    // 1. Generar PDF con TODOS los datos del formulario.
+    const pdfBuffer = await createOnePagePdf(formData);
 
     const pdfFileName =
       `GestoriaCitaIA-Estudiar-Malta-2027-${cleanFileName(fullName)}.pdf`;
@@ -939,16 +1070,6 @@ export default async function handler(
     // 4. SEGUNDO EMAIL DE PRUEBA — ESCUELA.
     // MISMO contenido y mismos datos del formulario. No se modifica el email del cliente.
     // Para la escuela enviamos TODOS los campos que llegaron desde el formulario.
-    const formData: Record<string, unknown> = {
-      ...body,
-      fullName,
-      email,
-      whatsapp,
-      dateOfBirth,
-      nationality,
-      passportNumber,
-    };
-
     const schoolHtmlContent = buildSchoolEmailHtml(formData);
 
     const schoolMailResult = await transporter.sendMail({
