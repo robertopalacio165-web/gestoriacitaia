@@ -4,9 +4,6 @@ import chromium from "@sparticuz/chromium";
 import { chromium as playwrightChromium } from "playwright-core";
 
 const TEST_EMAIL = "robertopalacio165@gmail.com";
-
-// 🧪 PRUEBA: por ahora la escuela usa el mismo Gmail del propietario.
-// Cuando todo esté probado, cambia SCHOOL_EMAIL al Gmail real de la escuela.
 const SCHOOL_EMAIL = "robertopalacio165@gmail.com";
 
 // ============================================================
@@ -182,106 +179,6 @@ gestoriacitaia@gmail.com
 </body>
 </html>
 `;
-}
-
-// ============================================================
-// EMAIL 2 — ESCUELA / CENTRO
-// 🧪 En pruebas se envía al mismo Gmail de Roberto.
-// En producción solo hay que cambiar SCHOOL_EMAIL.
-// ============================================================
-function buildSchoolEmailHtml(data: Record<string, unknown>) {
-  const labels: Record<string, string> = {
-    fullName: "Nombre completo",
-    whatsapp: "WhatsApp / Teléfono",
-    email: "Email del cliente",
-    dateOfBirth: "Fecha de nacimiento",
-    nationality: "Nacionalidad",
-    countryOfResidence: "País de residencia",
-    residenceCountry: "País de residencia",
-    nivelIngles: "Nivel de inglés",
-    englishLevel: "Nivel de inglés",
-    otherLanguages: "Otros idiomas",
-    otrosIdiomas: "Otros idiomas",
-    profession: "Profesión",
-    profesion: "Profesión",
-    yearsExperience: "Años de experiencia",
-    anosExperiencia: "Años de experiencia",
-    estudios: "Estudios",
-    education: "Estudios",
-    drivingLicense: "Carnet de conducir",
-    carnetConducir: "Carnet de conducir",
-    tieneCv: "Tiene CV",
-    hasCv: "Tiene CV",
-    puestoBusca: "Puesto / curso que busca",
-    desiredPosition: "Puesto / curso que busca",
-    disponibilidadViajar: "Disponibilidad para viajar",
-    travelAvailability: "Disponibilidad para viajar",
-    fechaDisponible: "Fecha disponible",
-    availableDate: "Fecha disponible",
-    passportNumber: "Número de pasaporte",
-  };
-
-  const excluded = new Set([
-    "stripe_session_id",
-    "stripe_customer_id",
-    "stripeSessionId",
-    "stripeCustomerId",
-    "paid",
-    "plan",
-    "test",
-  ]);
-
-  const entries = Object.entries(data).filter(([key, v]) => {
-    if (excluded.has(key)) return false;
-    if (v === null || v === undefined || String(v).trim() === "") return false;
-    return true;
-  });
-
-  const rows = entries.map(([key, v]) => {
-    const label = labels[key] || key.replace(/([A-Z])/g, " $1").replace(/[_-]/g, " ").replace(/^./, c => c.toUpperCase());
-    let display = typeof v === "object" ? JSON.stringify(v, null, 2) : String(v);
-    return `
-      <tr>
-        <td style="padding:13px 15px;border-bottom:1px solid #e8edf3;width:38%;background:#f8fafc;color:#667085;font-size:13px;font-weight:bold;">${escapeHtml(label)}</td>
-        <td style="padding:13px 15px;border-bottom:1px solid #e8edf3;color:#111827;font-size:14px;white-space:pre-wrap;">${escapeHtml(display)}</td>
-      </tr>`;
-  }).join("");
-
-  const safeName = escapeHtml(value(data.fullName));
-  const safeEmail = escapeHtml(value(data.email));
-  const safeWhatsapp = escapeHtml(value(data.whatsapp));
-
-  return `
-<!DOCTYPE html>
-<html lang="es">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
-<body style="margin:0;padding:25px 0;background:#eef2f7;font-family:Arial,Helvetica,sans-serif;color:#172033;">
-<table width="100%" cellpadding="0" cellspacing="0">
-<tr><td align="center">
-<table width="680" cellpadding="0" cellspacing="0" style="width:100%;max-width:680px;background:#fff;border-radius:18px;overflow:hidden;">
-<tr><td style="background:#07111f;padding:28px 24px;text-align:center;border-bottom:4px solid #20d46b;">
-<img src="${LOGO_URL}" alt="GestoriaCitaIA" style="width:280px;max-width:90%;height:auto;display:block;margin:0 auto 15px;">
-<h1 style="margin:0;color:#fff;font-size:24px;">🇲🇹 Nueva solicitud · Estudiar en Malta 2027</h1>
-<p style="color:#c4ccd8;font-size:14px;margin:10px 0 0;">Nuevo cliente recibido después del pago</p>
-</td></tr>
-<tr><td style="padding:30px;">
-<div style="background:#eaf8ef;border:1px solid #b9ebcc;color:#07853f;padding:13px 17px;border-radius:12px;text-align:center;font-weight:bold;margin-bottom:22px;">✓ NUEVA SOLICITUD PAGADA</div>
-<h2 style="margin:0 0 8px;font-size:22px;">${safeName}</h2>
-<p style="margin:0 0 22px;color:#667085;line-height:1.7;">El cliente ha completado el formulario y ha realizado el pago. Estos son los datos recibidos para poder contactar con él/ella.</p>
-<table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #dfe6ef;border-radius:12px;overflow:hidden;border-collapse:separate;">
-${rows || '<tr><td style="padding:15px;">No se recibieron datos adicionales.</td></tr>'}
-</table>
-<div style="margin-top:22px;background:#f1f7ff;border-right:5px solid #0b57d0;padding:18px;border-radius:10px;">
-<strong style="color:#0b57d0;">Contacto del cliente</strong><br><br>
-📧 <span dir="ltr">${safeEmail}</span><br>
-📱 <span dir="ltr">${safeWhatsapp}</span>
-</div>
-<p style="text-align:center;color:#667085;font-size:12px;line-height:1.7;margin:25px 0 0;">GestoriaCitaIA · Estudiar en Malta 2027<br>Este email ha sido generado automáticamente después del pago.</p>
-</td></tr>
-</table>
-</td></tr>
-</table>
-</body></html>`;
 }
 
 // ============================================================
@@ -776,10 +673,6 @@ export default async function handler(
     const nationality = String(body.nationality || "").trim();
     const passportNumber = String(body.passportNumber || "").trim();
 
-    // Conservamos TODOS los campos recibidos del formulario para el email de la escuela.
-    // Los 6 campos principales siguen normalizados como hasta ahora.
-    const formData: Record<string, unknown> = { ...body, fullName, email, whatsapp, dateOfBirth, nationality, passportNumber };
-
     if (!fullName) {
       return res.status(400).json({
         error: "Falta el nombre del cliente",
@@ -804,8 +697,7 @@ export default async function handler(
     console.log("🇲🇹 ESTUDIAR MALTA 2027 — PRUEBA");
     console.log("📧 BREVO SMTP — NO API");
     console.log("👤 Cliente:", fullName);
-    console.log("📨 Cliente:", TEST_EMAIL);
-    console.log("🏫 Escuela (PRUEBA):", SCHOOL_EMAIL);
+    console.log("📨 Destino:", TEST_EMAIL);
     console.log("==========================================");
 
     const data = {
@@ -848,10 +740,7 @@ export default async function handler(
 
     console.log("✅ Brevo SMTP conectado");
 
-    // ========================================================
-    // EMAIL 1 — CLIENTE (PRUEBA)
-    // ========================================================
-    const clientMailResult = await transporter.sendMail({
+    const mailResult = await transporter.sendMail({
       from: `"${FROM_NAME}" <${FROM_EMAIL}>`,
       to: TEST_EMAIL,
       subject: `🇲🇹 Confirmación Estudios Malta 2027 - ${fullName}`,
@@ -866,20 +755,13 @@ export default async function handler(
       ],
     });
 
-    console.log("✅ Email cliente enviado:", clientMailResult.messageId);
-
-    // ========================================================
-    // EMAIL 2 — ESCUELA (PRUEBA)
-    // Mismo Gmail de Roberto por ahora.
-    // Incluye TODOS los campos recibidos del formulario + PDF.
-    // ========================================================
-    const schoolHtml = buildSchoolEmailHtml(formData);
-
+    // 4. SEGUNDO EMAIL DE PRUEBA — ESCUELA.
+    // MISMO contenido y mismos datos del formulario. No se modifica el email del cliente.
     const schoolMailResult = await transporter.sendMail({
       from: `"${FROM_NAME}" <${FROM_EMAIL}>`,
       to: SCHOOL_EMAIL,
-      subject: `🇲🇹 NUEVA SOLICITUD PAGADA - ${fullName}`,
-      html: schoolHtml,
+      subject: `🇲🇹 NUEVA SOLICITUD ESTUDIOS MALTA 2027 - ${fullName}`,
+      html: htmlContent,
       attachments: [
         {
           filename: pdfFileName,
@@ -890,12 +772,11 @@ export default async function handler(
       ],
     });
 
-    console.log("✅ Email escuela enviado:", schoolMailResult.messageId);
     console.log("==========================================");
-    console.log("✅ 2 EMAILS + PDF ENVIADOS");
+    console.log("✅ EMAIL + PDF ENVIADOS");
     console.log("📧 Método: BREVO SMTP");
-    console.log("📨 Cliente:", TEST_EMAIL);
-    console.log("🏫 Escuela (PRUEBA):", SCHOOL_EMAIL);
+    console.log("📨 Message ID cliente:", mailResult.messageId);
+    console.log("📨 Message ID escuela:", schoolMailResult.messageId);
     console.log("📄 PDF: 1 página A4");
     console.log("==========================================");
 
@@ -903,14 +784,13 @@ export default async function handler(
       success: true,
       service: "study_malta_2027",
       test: true,
-      clientEmail: TEST_EMAIL,
-      schoolEmail: SCHOOL_EMAIL,
+      email: TEST_EMAIL,
       name: fullName,
       pdfAttached: true,
       pdfFileName,
       pdfPages: 1,
       transport: "brevo-smtp",
-      clientMessageId: clientMailResult.messageId || null,
+      messageId: mailResult.messageId || null,
       schoolMessageId: schoolMailResult.messageId || null,
     });
   } catch (error: any) {
