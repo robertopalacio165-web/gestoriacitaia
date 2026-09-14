@@ -286,7 +286,6 @@ export default function EstudiarMalta2027() {
 
     try {
       const email = formData.email?.trim().toLowerCase() || "";
-      const isTestUser = email === "robertopalacio165@gmail.com";
 
       const payload = {
         service: "study_malta_2027",
@@ -295,43 +294,7 @@ export default function EstudiarMalta2027() {
         email,
       };
 
-      // CUENTA DE PRUEBA: no abre Stripe. Envía directamente el email + PDF por Brevo.
-      if (isTestUser) {
-        console.log("🧪 MODO PRUEBA — ESTUDIAR MALTA 2027 — SIN STRIPE");
-
-        const res = await fetch("/api/test-estudia-malta-email", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(payload),
-        });
-
-        const data = await res.json();
-
-        if (!res.ok) {
-          throw new Error(data.error || "No se pudo enviar el email de prueba.");
-        }
-
-        setPaid(true);
-
-        toast({
-          title: text(
-            "✅ Solicitud enviada",
-            "✅ Application sent",
-            "✅ تصيفط الطلب بنجاح"
-          ),
-          description: text(
-            "Se ha enviado el email con el PDF a robertopalacio165@gmail.com.",
-            "The email with the PDF was sent to robertopalacio165@gmail.com.",
-            "تصيفط الإيميل ومعاه الـ PDF لـ robertopalacio165@gmail.com."
-          ),
-        });
-
-        return;
-      }
-
-      // FLUJO NORMAL: para cualquier otro email seguimos usando Stripe.
+      // FLUJO NORMAL: TODOS los usuarios pasan por Stripe.
       const res = await fetch("/api/create-checkout-study-malta", {
         method: "POST",
         headers: {
