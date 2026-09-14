@@ -362,104 +362,24 @@ gestoriacitaia@gmail.com
 `;
 }
 
+
 // ============================================================
 // PDF — MISMO ESTILO DEL GMAIL, PERO COMPACTADO A UNA SOLA A4
 // ============================================================
-function buildPdfHtml(data: Record<string, unknown>) {
+function buildPdfHtml(data: {
+  fullName: string;
+  whatsapp: string;
+  email: string;
+  dateOfBirth: string;
+  nationality: string;
+  passportNumber: string;
+}) {
   const n = escapeHtml(value(data.fullName));
   const w = escapeHtml(value(data.whatsapp));
   const e = escapeHtml(value(data.email));
   const dob = escapeHtml(value(data.dateOfBirth));
   const nat = escapeHtml(value(data.nationality));
   const pass = escapeHtml(value(data.passportNumber));
-
-  // El PDF de la escuela debe contener los mismos datos completos
-  // que recibe el email de la escuela.
-  const pdfLabels: Record<string, string> = {
-    fullName: "Nombre completo",
-    whatsapp: "WhatsApp / Teléfono",
-    email: "Email del cliente",
-    dateOfBirth: "Fecha de nacimiento",
-    nationality: "Nacionalidad",
-    countryOfResidence: "País de residencia",
-    residenceCountry: "País de residencia",
-    nivelIngles: "Nivel de inglés",
-    nivel_ingles: "Nivel de inglés",
-    englishLevel: "Nivel de inglés",
-    otherLanguages: "Otros idiomas",
-    otrosIdiomas: "Otros idiomas",
-    otros_idiomas: "Otros idiomas",
-    profession: "Profesión",
-    profesion: "Profesión",
-    yearsExperience: "Años de experiencia",
-    anosExperiencia: "Años de experiencia",
-    anos_experiencia: "Años de experiencia",
-    estudios: "Estudios",
-    education: "Estudios",
-    drivingLicense: "Carnet de conducir",
-    carnetConducir: "Carnet de conducir",
-    carnet_conducir: "Carnet de conducir",
-    tieneCv: "Tiene CV",
-    tieneCV: "Tiene CV",
-    tiene_cv: "Tiene CV",
-    hasCv: "Tiene CV",
-    puestoBusca: "Puesto / curso que busca",
-    puesto_busca: "Puesto / curso que busca",
-    desiredPosition: "Puesto / curso que busca",
-    disponibilidadViajar: "Disponibilidad para viajar",
-    disponibilidad_viajar: "Disponibilidad para viajar",
-    travelAvailability: "Disponibilidad para viajar",
-    fechaDisponible: "Fecha disponible",
-    fecha_disponible: "Fecha disponible",
-    availableDate: "Fecha disponible",
-    passportNumber: "Número de pasaporte",
-    plan: "Plan",
-    planName: "Nombre del plan",
-    plan_name: "Nombre del plan",
-  };
-
-  const excludedPdfFields = new Set([
-    "stripe_session_id",
-    "stripe_customer_id",
-    "stripeSessionId",
-    "stripeCustomerId",
-    "paid",
-    "test",
-  ]);
-
-  const completePdfRows = Object.entries(data)
-    .filter(([key, v]) => {
-      if (excludedPdfFields.has(key)) return false;
-      if (v === null || v === undefined) return false;
-      if (typeof v === "string" && !v.trim()) return false;
-      return true;
-    })
-    .map(([key, v]) => {
-      const label =
-        pdfLabels[key] ||
-        key
-          .replace(/([A-Z])/g, " $1")
-          .replace(/[_-]/g, " ")
-          .replace(/^./, (c) => c.toUpperCase());
-
-      let display: string;
-      if (typeof v === "object") {
-        try {
-          display = JSON.stringify(v);
-        } catch {
-          display = String(v);
-        }
-      } else {
-        display = String(v);
-      }
-
-      return `
-      <tr>
-        <td class="pdf-field-label">${escapeHtml(label)}</td>
-        <td class="pdf-field-value">${escapeHtml(display)}</td>
-      </tr>`;
-    })
-    .join("");
 
   return `<!doctype html>
 <html lang="ar" dir="rtl">
@@ -695,40 +615,6 @@ body{
   font-weight:900;
   margin-top:2.5mm;
 }
-.complete-title{
-  color:#0b57d0;
-  font-size:11.5pt;
-  margin:3mm 0 1.5mm;
-  font-weight:900;
-}
-.complete-table{
-  width:100%;
-  border:1px solid #dfe6ef;
-  border-collapse:collapse;
-  margin-top:1mm;
-  direction:rtl;
-}
-.complete-table td{
-  border-bottom:1px solid #e8edf3;
-  padding:1.5mm 2.2mm;
-  vertical-align:top;
-  line-height:1.2;
-}
-.pdf-field-label{
-  width:35%;
-  background:#f8fafc;
-  color:#667085;
-  font-size:6.7pt;
-  font-weight:900;
-}
-.pdf-field-value{
-  color:#111827;
-  font-size:7.2pt;
-  font-weight:700;
-  word-break:break-word;
-  direction:ltr;
-  text-align:left !important;
-}
 .footer{
   position:absolute;
   left:0;right:0;bottom:0;
@@ -782,11 +668,6 @@ body{
 <td><div class="label">الجنسية</div><div class="value">${nat}</div></td>
 <td><div class="label">رقم الباسبور</div><div class="value">${pass}</div></td>
 </tr>
-</table>
-
-<h3 class="complete-title" dir="rtl">البيانات الكاملة ديال الطلب</h3>
-<table class="complete-table" cellpadding="0" cellspacing="0">
-${completePdfRows}
 </table>
 
 <section class="blue" dir="rtl">
@@ -941,6 +822,146 @@ const pdfBuffer = await page.pdf({
 }
 
 // ============================================================
+// PDF ESCUELA — SOLO ESTE PDF LLEVA TODOS LOS DATOS DEL FORMULARIO
+// El PDF del cliente NO usa esta función.
+// ============================================================
+function buildSchoolPdfHtml(data: Record<string, unknown>) {
+  const labels: Record<string, string> = {
+    fullName: "Nombre completo",
+    whatsapp: "WhatsApp / Teléfono",
+    email: "Email del cliente",
+    dateOfBirth: "Fecha de nacimiento",
+    placeOfBirth: "Lugar de nacimiento",
+    nationality: "Nacionalidad",
+    countryOfResidence: "País de residencia",
+    residenceCountry: "País de residencia",
+    address: "Dirección",
+    passportNumber: "Número de pasaporte",
+    passportExpiry: "Caducidad del pasaporte",
+    nivelIngles: "Nivel de inglés",
+    nivel_ingles: "Nivel de inglés",
+    englishLevel: "Nivel de inglés",
+    otherLanguages: "Otros idiomas",
+    otrosIdiomas: "Otros idiomas",
+    otros_idiomas: "Otros idiomas",
+    profession: "Profesión",
+    profesion: "Profesión",
+    yearsExperience: "Años de experiencia",
+    anosExperiencia: "Años de experiencia",
+    anos_experiencia: "Años de experiencia",
+    estudios: "Estudios",
+    education: "Estudios",
+    drivingLicense: "Carnet de conducir",
+    carnetConducir: "Carnet de conducir",
+    carnet_conducir: "Carnet de conducir",
+    tieneCv: "Tiene CV",
+    tieneCV: "Tiene CV",
+    tiene_cv: "Tiene CV",
+    hasCv: "Tiene CV",
+    puestoBusca: "Puesto / curso que busca",
+    puesto_busca: "Puesto / curso que busca",
+    desiredPosition: "Puesto / curso que busca",
+    disponibilidadViajar: "Disponibilidad para viajar",
+    disponibilidad_viajar: "Disponibilidad para viajar",
+    travelAvailability: "Disponibilidad para viajar",
+    fechaDisponible: "Fecha disponible",
+    fecha_disponible: "Fecha disponible",
+    availableDate: "Fecha disponible",
+    hasBac: "Tiene Bachillerato",
+    bacYear: "Año de Bachillerato",
+    lastDiploma: "Último diploma",
+    otherDiplomas: "Otros diplomas",
+    otherDiplomasDetails: "Detalles de otros diplomas",
+    isWorking: "Está trabajando",
+    company: "Empresa",
+    jobTitle: "Puesto de trabajo",
+    isStudent: "Es estudiante",
+    hasFinancialSponsor: "Tiene patrocinador económico",
+    sponsorName: "Nombre del patrocinador",
+    sponsorRelation: "Relación con el patrocinador",
+    sponsorProfession: "Profesión del patrocinador",
+    sponsorIncome: "Ingresos del patrocinador",
+    sponsorCountry: "País del patrocinador",
+    previouslyAppliedVisa: "Ha solicitado un visado anteriormente",
+    previousVisaCountry: "País del visado anterior",
+    previousVisaType: "Tipo de visado anterior",
+    previousVisaDate: "Fecha del visado anterior",
+    visaRefused: "Visado rechazado",
+    refusalCountry: "País de rechazo",
+    refusalDate: "Fecha de rechazo",
+    refusalReason: "Motivo del rechazo",
+    previouslyObtainedVisa: "Ha obtenido un visado anteriormente",
+    previousObtainedVisaDetails: "Detalles del visado obtenido anteriormente",
+    pdfUrl: "PDF / documento",
+  };
+
+  const excluded = new Set([
+    "stripe_session_id", "stripe_customer_id", "stripeSessionId",
+    "stripeCustomerId", "paid", "test"
+  ]);
+
+  const rows = Object.entries(data)
+    .filter(([key, v]) => {
+      if (excluded.has(key)) return false;
+      if (v === null || v === undefined) return false;
+      if (typeof v === "string" && !v.trim()) return false;
+      return true;
+    })
+    .map(([key, v]) => {
+      const label = labels[key] || key.replace(/([A-Z])/g, " $1").replace(/[_-]/g, " ").replace(/^./, c => c.toUpperCase());
+      let display: string;
+      if (typeof v === "object") {
+        try { display = JSON.stringify(v, null, 2); } catch { display = String(v); }
+      } else display = String(v);
+      return `<tr><td class="k">${escapeHtml(label)}</td><td class="v">${escapeHtml(display)}</td></tr>`;
+    }).join("");
+
+  const name = escapeHtml(value(data.fullName));
+  return `<!doctype html>
+<html lang="es"><head><meta charset="UTF-8"><style>
+@page{size:A4;margin:0}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:#eef2f7;color:#172033;font-family:Arial,Helvetica,sans-serif}
+.page{width:210mm;min-height:297mm;background:#fff;padding:14mm 13mm 16mm}
+.header{background:#07111f;color:#fff;border-radius:5mm;padding:7mm;text-align:center;border-bottom:1.5mm solid #20d46b}
+.header img{width:55mm;max-width:80%;height:auto;display:block;margin:0 auto 4mm}
+.header h1{margin:0;font-size:18pt}.header p{margin:2mm 0 0;color:#c4ccd8;font-size:9pt}
+.title{font-size:13pt;margin:7mm 0 2mm}.intro{font-size:9pt;color:#667085;margin:0 0 4mm}
+table{width:100%;border-collapse:collapse;border:1px solid #dfe6ef}
+td{border-bottom:1px solid #e8edf3;padding:2.2mm 2.5mm;vertical-align:top;font-size:8.5pt;line-height:1.35}
+td.k{width:38%;background:#f8fafc;color:#667085;font-weight:bold}td.v{color:#111827;white-space:pre-wrap;word-break:break-word}
+.footer{margin-top:6mm;background:#07111f;color:#aeb9c8;text-align:center;padding:4mm;font-size:7.5pt}.footer strong{color:#fff;display:block;font-size:10pt;margin-bottom:1mm}
+</style></head><body><div class="page">
+<div class="header"><img src="${LOGO_URL}" alt="GestoriaCitaIA"><h1>🇲🇹 NUEVA SOLICITUD — ESTUDIOS EN MALTA 2027</h1><p>Datos completos del formulario del candidato</p></div>
+<div class="title">Datos completos del candidato</div><p class="intro">Candidato: <strong>${name}</strong>. Este PDF contiene los mismos datos recibidos en el formulario y enviados en el email de la escuela.</p>
+<table>${rows}</table>
+<div class="footer"><strong>GestoriaCitaIA</strong>Estudios en Malta 2027 · gestoriacitaia@gmail.com</div>
+</div></body></html>`;
+}
+
+async function createSchoolPdf(data: Record<string, unknown>) {
+  const browser = await playwrightChromium.launch({
+    args: chromium.args,
+    executablePath: await chromium.executablePath(),
+    headless: true,
+  });
+  try {
+    const page = await browser.newPage({ viewport: { width: 794, height: 1123 }, deviceScaleFactor: 1 });
+    await page.setContent(buildSchoolPdfHtml(data), { waitUntil: "networkidle" });
+    await page.emulateMedia({ media: "screen" });
+    await page.evaluate(async () => {
+      await Promise.all(Array.from(document.images).map(img => img.complete ? Promise.resolve() : new Promise<void>(resolve => { img.onload=()=>resolve(); img.onerror=()=>resolve(); })));
+      if (document.fonts?.ready) await document.fonts.ready;
+    });
+    const pdfBuffer = await page.pdf({ format:"A4", printBackground:true, preferCSSPageSize:true, margin:{top:"0",right:"0",bottom:"0",left:"0"} });
+    if (!pdfBuffer || pdfBuffer.length < 10000) throw new Error("El PDF de la escuela no es válido.");
+    return pdfBuffer;
+  } finally {
+    await browser.close();
+  }
+}
+
+// ============================================================
 // API
 // ============================================================
 export default async function handler(
@@ -1010,19 +1031,23 @@ export default async function handler(
       passportNumber,
     };
 
-    // TODOS los datos originales del formulario se conservan para el PDF de la escuela.
+    // IMPORTANTE: estos datos completos SOLO se usan para el email/PDF de la escuela.
+    // El PDF del cliente sigue usando exactamente `data` y createOnePagePdf(data).
     const formData: Record<string, unknown> = {
       ...body,
       fullName,
-      email,
       whatsapp,
+      email,
       dateOfBirth,
       nationality,
       passportNumber,
     };
 
-    // 1. Generar PDF con TODOS los datos del formulario.
-    const pdfBuffer = await createOnePagePdf(formData);
+    // 1. PDF DEL CLIENTE — NO CAMBIAR.
+    const pdfBuffer = await createOnePagePdf(data);
+
+    // 1B. PDF DE LA ESCUELA — separado y con todos los datos del formulario.
+    const schoolPdfBuffer = await createSchoolPdf(formData);
 
     const pdfFileName =
       `GestoriaCitaIA-Estudiar-Malta-2027-${cleanFileName(fullName)}.pdf`;
@@ -1068,8 +1093,8 @@ export default async function handler(
     });
 
     // 4. SEGUNDO EMAIL DE PRUEBA — ESCUELA.
-    // MISMO contenido y mismos datos del formulario. No se modifica el email del cliente.
-    // Para la escuela enviamos TODOS los campos que llegaron desde el formulario.
+    // Este email lleva TODOS los datos del formulario.
+    // Su PDF es independiente del PDF del cliente.
     const schoolHtmlContent = buildSchoolEmailHtml(formData);
 
     const schoolMailResult = await transporter.sendMail({
@@ -1080,7 +1105,7 @@ export default async function handler(
       attachments: [
         {
           filename: pdfFileName,
-          content: Buffer.from(pdfBuffer),
+          content: schoolPdfBuffer,
           contentType: "application/pdf",
           contentDisposition: "attachment",
         },
@@ -1092,7 +1117,8 @@ export default async function handler(
     console.log("📧 Método: BREVO SMTP");
     console.log("📨 Message ID cliente:", mailResult.messageId);
     console.log("📨 Message ID escuela:", schoolMailResult.messageId);
-    console.log("📄 PDF: 1 página A4");
+    console.log("📄 PDF cliente: 1 página A4 (sin cambios)");
+    console.log("📄 PDF escuela: datos completos del formulario");
     console.log("==========================================");
 
     return res.status(200).json({
