@@ -765,7 +765,7 @@ export default async function handler(
       attachments: [
         {
           filename: pdfFileName,
-          content: pdfBuffer,
+          content: Buffer.from(pdfBuffer),
           contentType: "application/pdf",
           contentDisposition: "attachment",
         },
