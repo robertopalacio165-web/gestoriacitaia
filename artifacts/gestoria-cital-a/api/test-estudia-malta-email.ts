@@ -922,15 +922,15 @@ function buildSchoolPdfHtml(data: Record<string, unknown>) {
 @page{size:A4;margin:0}
 *{box-sizing:border-box}
 html,body{margin:0;padding:0;background:#eef2f7;color:#172033;font-family:Arial,Helvetica,sans-serif}
-.page{width:210mm;min-height:297mm;background:#fff;padding:14mm 13mm 16mm}
-.header{background:#07111f;color:#fff;border-radius:5mm;padding:7mm;text-align:center;border-bottom:1.5mm solid #20d46b}
-.header img{width:55mm;max-width:80%;height:auto;display:block;margin:0 auto 4mm}
-.header h1{margin:0;font-size:18pt}.header p{margin:2mm 0 0;color:#c4ccd8;font-size:9pt}
-.title{font-size:13pt;margin:7mm 0 2mm}.intro{font-size:9pt;color:#667085;margin:0 0 4mm}
-table{width:100%;border-collapse:collapse;border:1px solid #dfe6ef}
-td{border-bottom:1px solid #e8edf3;padding:2.2mm 2.5mm;vertical-align:top;font-size:8.5pt;line-height:1.35}
-td.k{width:38%;background:#f8fafc;color:#667085;font-weight:bold}td.v{color:#111827;white-space:pre-wrap;word-break:break-word}
-.footer{margin-top:6mm;background:#07111f;color:#aeb9c8;text-align:center;padding:4mm;font-size:7.5pt}.footer strong{color:#fff;display:block;font-size:10pt;margin-bottom:1mm}
+.page{width:210mm;height:297mm;max-height:297mm;overflow:hidden;background:#fff;padding:7mm 9mm 7mm}
+.header{background:#07111f;color:#fff;border-radius:3mm;padding:3.5mm;text-align:center;border-bottom:1mm solid #20d46b}
+.header img{width:38mm;max-width:70%;height:auto;display:block;margin:0 auto 1.5mm}
+.header h1{margin:0;font-size:12pt;line-height:1.15}.header p{margin:1mm 0 0;color:#c4ccd8;font-size:7pt}
+.title{font-size:9.5pt;margin:3mm 0 1mm}.intro{font-size:6.8pt;color:#667085;margin:0 0 2mm}
+table{width:100%;border-collapse:collapse;border:1px solid #dfe6ef;table-layout:fixed}
+td{border-bottom:1px solid #e8edf3;padding:1mm 1.5mm;vertical-align:top;font-size:6.7pt;line-height:1.12}
+td.k{width:34%;background:#f8fafc;color:#667085;font-weight:bold}td.v{width:66%;color:#111827;white-space:pre-wrap;word-break:break-word}
+.footer{margin-top:2.5mm;background:#07111f;color:#aeb9c8;text-align:center;padding:2mm;font-size:6.2pt}.footer strong{color:#fff;display:block;font-size:7.5pt;margin-bottom:.5mm}
 </style></head><body><div class="page">
 <div class="header"><img src="${LOGO_URL}" alt="GestoriaCitaIA"><h1>🇲🇹 NUEVA SOLICITUD — ESTUDIOS EN MALTA 2027</h1><p>Datos completos del formulario del candidato</p></div>
 <div class="title">Datos completos del candidato</div><p class="intro">Candidato: <strong>${name}</strong>. Este PDF contiene los mismos datos recibidos en el formulario y enviados en el email de la escuela.</p>
@@ -953,7 +953,9 @@ async function createSchoolPdf(data: Record<string, unknown>) {
       await Promise.all(Array.from(document.images).map(img => img.complete ? Promise.resolve() : new Promise<void>(resolve => { img.onload=()=>resolve(); img.onerror=()=>resolve(); })));
       if (document.fonts?.ready) await document.fonts.ready;
     });
-    const pdfBuffer = await page.pdf({ format:"A4", printBackground:true, preferCSSPageSize:true, margin:{top:"0",right:"0",bottom:"0",left:"0"} });
+    // IMPORTANTE: el PDF de la escuela debe ser UNA SOLA HOJA A4.
+    // El PDF del cliente se genera con createOnePagePdf(data) y NO se modifica.
+    const pdfBuffer = await page.pdf({ format:"A4", printBackground:true, preferCSSPageSize:true, margin:{top:"0",right:"0",bottom:"0",left:"0"}, pageRanges:"1" });
     if (!pdfBuffer || pdfBuffer.length < 10000) throw new Error("El PDF de la escuela no es válido.");
     return pdfBuffer;
   } finally {
