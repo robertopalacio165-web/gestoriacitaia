@@ -86,18 +86,19 @@ export default async function handler(
     }
 
     // ============================================
-    // PRECIO DE PRUEBA
-    // 50 = 0,50 €
+    // PRECIO REAL
+    // 1499 = 14,99 €
     // ============================================
 
-    const unitAmount = 50;
+    const unitAmount = 1499;
 
-    console.log("========== ESTUDIAR MALTA ==========");
+    console.log("========== ESTUDIAR MALTA 2027 ==========");
     console.log("Nombre:", fullName);
     console.log("Email:", email);
     console.log("WhatsApp:", whatsapp);
-    console.log("💰 PRECIO DE PRUEBA: 0,50 €");
-    console.log("====================================");
+    console.log("💰 PRECIO: 14,99 €");
+    console.log("Stripe amount:", unitAmount, "céntimos");
+    console.log("==========================================");
 
     // ============================================
     // STRIPE CHECKOUT
@@ -136,10 +137,10 @@ export default async function handler(
               },
 
               // ==================================
-              // PRUEBA: 0,50 €
+              // PRECIO: 14,99 €
               // ==================================
 
-              unit_amount: 50,
+              unit_amount: unitAmount,
             },
 
             quantity: 1,
@@ -147,8 +148,7 @@ export default async function handler(
         ],
 
         // ============================================
-        // IMPORTANTE:
-        // Esta es la ruta REAL del formulario actual
+        // RUTA REAL DEL FORMULARIO
         // ============================================
 
         success_url:
@@ -193,7 +193,9 @@ export default async function handler(
           email:
             email?.trim().toLowerCase() || "",
 
+          // =========================================
           // ESTUDIOS
+          // =========================================
 
           hasBac:
             hasBac?.trim() || "",
@@ -210,7 +212,9 @@ export default async function handler(
           otherDiplomasDetails:
             otherDiplomasDetails?.trim() || "",
 
+          // =========================================
           // SITUACIÓN ACTUAL
+          // =========================================
 
           isWorking:
             isWorking?.trim() || "",
@@ -224,7 +228,9 @@ export default async function handler(
           isStudent:
             isStudent?.trim() || "",
 
+          // =========================================
           // GARANTE
+          // =========================================
 
           hasFinancialSponsor:
             hasFinancialSponsor?.trim() || "",
@@ -244,7 +250,9 @@ export default async function handler(
           sponsorCountry:
             sponsorCountry?.trim() || "",
 
+          // =========================================
           // HISTORIAL DE VISADOS
+          // =========================================
 
           previouslyAppliedVisa:
             previouslyAppliedVisa?.trim() || "",
@@ -276,14 +284,22 @@ export default async function handler(
           previousObtainedVisaDetails:
             previousObtainedVisaDetails?.trim() || "",
 
+          // =========================================
+          // PLAN
+          // =========================================
+
           plan:
             plan?.trim() || "monthly",
         },
       });
 
+    // ============================================
+    // RESULTADO
+    // ============================================
+
     console.log("==========================================");
     console.log("✅ CHECKOUT ESTUDIAR MALTA CREADO");
-    console.log("💰 IMPORTE: 0,50 €");
+    console.log("💰 IMPORTE: 14,99 €");
     console.log("Session ID:", session.id);
     console.log("URL:", session.url);
     console.log("==========================================");
@@ -292,7 +308,7 @@ export default async function handler(
       url: session.url,
       sessionId: session.id,
       service: "study_malta_2027",
-      amount: 50,
+      amount: 1499,
       currency: "eur",
     });
 
