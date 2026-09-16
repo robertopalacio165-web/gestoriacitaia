@@ -48,6 +48,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (event.type === "checkout.session.completed") {
     const session = event.data.object as Stripe.Checkout.Session;
     const metadata = session.metadata || {};
+    // ============================================
+// 🔒 SEGURIDAD — SOLO TRABAJO MALTA
+// ============================================
+
+if (metadata.service !== "malta") {
+  console.log(
+    "⏭️ Evento ignorado: no es Trabajo Malta:",
+    metadata.service
+  );
+
+  return res.status(200).json({
+    received: true,
+    ignored: true,
+    reason: "NOT_WORK_MALTA",
+    service: metadata.service || null,
+  });
+}
 
     console.log("=========================================");
     console.log("📦 METADATA COMPLETA RECIBIDA:");
