@@ -8,11 +8,11 @@ import { createClient } from "@supabase/supabase-js";
 
 import {
   sendEstudiaMaltaEmail,
-} from "./gmailSendEstudiaMalta";
+} from "./gmailSendEstudiaMalta.js";
 
 import {
   sendEstudiaMaltaEscuelaEmail,
-} from "./gmailSendEstudiaMaltaEscuela";
+} from "./gmailSendEstudiaMaltaEscuela.js";
 
 // ==========================================
 // STRIPE
