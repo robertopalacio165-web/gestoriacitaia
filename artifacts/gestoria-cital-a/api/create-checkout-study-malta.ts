@@ -90,7 +90,7 @@ export default async function handler(
     // 1499 = 14,99 €
     // ============================================
 
-    const unitAmount = 50;
+    const unitAmount = 1499;
 
     console.log("========== ESTUDIAR MALTA 2027 ==========");
     console.log("Nombre:", fullName);
