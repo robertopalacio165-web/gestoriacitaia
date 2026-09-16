@@ -7,16 +7,12 @@ import type {
 import { createClient } from "@supabase/supabase-js";
 
 import {
-  sendEstudiaMaltaEmail,
+  sendWelcomeEmail,
 } from "./gmailSendEstudiaMalta.js";
 
 import {
   sendEstudiaMaltaEscuelaEmail,
 } from "./gmailSendEstudiaMaltaEscuela.js";
-
-// ==========================================
-// STRIPE
-// ==========================================
 
 const stripe = new Stripe(
   process.env.STRIPE_SECRET_KEY as string,
@@ -25,18 +21,10 @@ const stripe = new Stripe(
   }
 );
 
-// ==========================================
-// SUPABASE
-// ==========================================
-
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL as string,
   process.env.SUPABASE_SERVICE_ROLE_KEY as string
 );
-
-// ==========================================
-// VERCEL
-// ==========================================
 
 export const config = {
   api: {
@@ -44,61 +32,25 @@ export const config = {
   },
 };
 
-// ==========================================
-// WEBHOOK HANDLER
-// ==========================================
-
-async function handler(
+export default async function handler(
   req: VercelRequest,
   res: VercelResponse
 ) {
-  console.log("");
-  console.log(
-    "=========================================="
-  );
-  console.log(
-    "🇲🇹 STRIPE WEBHOOK — ESTUDIAR MALTA 2027"
-  );
-  console.log(
-    "=========================================="
-  );
-
-  // ==========================================
-  // SOLO POST
-  // ==========================================
-
   if (req.method !== "POST") {
     return res.status(405).json({
       error: "Method not allowed",
     });
   }
 
-  // ==========================================
-  // STRIPE SIGNATURE
-  // ==========================================
-
   const signature =
-    req.headers["stripe-signature"] as
-      | string
-      | undefined;
-
-  if (!signature) {
-    console.error(
-      "❌ Falta stripe-signature"
-    );
-
-    return res.status(400).json({
-      error: "Missing Stripe signature",
-    });
-  }
+    req.headers["stripe-signature"] as string;
 
   const webhookSecret =
-    process.env
-      .STRIPE_WEBHOOK_ESTUDIA_MALTA_SECRET;
+    process.env.STRIPE_WEBHOOK_ESTUDIA_MALTA_SECRET;
 
   if (!webhookSecret) {
     console.error(
-      "❌ STRIPE_WEBHOOK_ESTUDIA_MALTA_SECRET NO CONFIGURADO"
+      "❌ STRIPE_WEBHOOK_ESTUDIA_MALTA_SECRET no configurado"
     );
 
     return res.status(500).json({
@@ -106,10 +58,6 @@ async function handler(
         "Study Malta webhook secret not configured",
     });
   }
-
-  // ==========================================
-  // RAW BODY
-  // ==========================================
 
   let rawBody: string;
 
@@ -126,127 +74,69 @@ async function handler(
     });
   }
 
-  if (!rawBody) {
-    console.error(
-      "❌ RAW BODY VACÍO"
-    );
-
-    return res.status(400).json({
-      error: "Empty webhook body",
-    });
-  }
-
-  // ==========================================
-  // VERIFICAR WEBHOOK STRIPE
-  // ==========================================
-
   let event: Stripe.Event;
 
   try {
-    event =
-      stripe.webhooks.constructEvent(
-        rawBody,
-        signature,
-        webhookSecret
-      );
+    event = stripe.webhooks.constructEvent(
+      rawBody,
+      signature,
+      webhookSecret
+    );
   } catch (error: any) {
     console.error(
-      "❌ ERROR VERIFICANDO WEBHOOK STRIPE:"
-    );
-
-    console.error(
-      error?.message || error
+      "❌ Error verificando webhook:",
+      error.message
     );
 
     return res.status(400).json({
       error:
-        `Webhook Error: ${
-          error?.message ||
-          "Invalid signature"
-        }`,
+        `Webhook Error: ${error.message}`,
     });
   }
 
-  console.log(
-    "✅ Firma Stripe verificada"
-  );
-
-  console.log(
-    "Event ID:",
-    event.id
-  );
-
-  console.log(
-    "Event type:",
-    event.type
-  );
-
   // ==========================================
-  // SOLO checkout.session.completed
+  // SOLO CHECKOUT COMPLETADO
   // ==========================================
 
   if (
     event.type !==
     "checkout.session.completed"
   ) {
-    console.log(
-      "⏭️ Evento ignorado:",
-      event.type
-    );
-
     return res.status(200).json({
       received: true,
-      ignored: true,
-      reason: "NOT_CHECKOUT_COMPLETED",
     });
   }
 
-  // ==========================================
-  // STRIPE SESSION
-  // ==========================================
-
   const session =
-    event.data.object as
-      Stripe.Checkout.Session;
+    event.data.object as Stripe.Checkout.Session;
 
   const metadata =
     session.metadata || {};
 
   console.log(
-    "=========================================="
+    "======================================"
   );
-
   console.log(
     "🇲🇹 ESTUDIAR MALTA 2027"
   );
-
+  console.log(
+    "Evento:",
+    event.type
+  );
   console.log(
     "Session:",
     session.id
   );
-
   console.log(
     "Service:",
     metadata.service
   );
-
   console.log(
     "Payment status:",
     session.payment_status
   );
-
   console.log(
-    "Amount total:",
-    session.amount_total
-  );
-
-  console.log(
-    "Currency:",
-    session.currency
-  );
-
-  console.log(
-    "=========================================="
+    "======================================"
   );
 
   // ==========================================
@@ -264,23 +154,16 @@ async function handler(
     return res.status(200).json({
       received: true,
       ignored: true,
-      reason:
-        "NOT_STUDY_MALTA_2027",
     });
   }
 
-  console.log(
-    "✅ Servicio correcto: study_malta_2027"
-  );
-
   // ==========================================
-  // CONFIRMAR PAGO
+  // CONFIRMAR PAGO REAL
   // ==========================================
 
   if (
     session.payment_status !== "paid" &&
-    session.payment_status !==
-      "no_payment_required"
+    session.payment_status !== "no_payment_required"
   ) {
     console.log(
       "⏭️ Pago todavía no confirmado:",
@@ -289,21 +172,15 @@ async function handler(
 
     return res.status(200).json({
       received: true,
-      service:
-        "study_malta_2027",
+      service: "study_malta_2027",
       paid: false,
       ignored: true,
-      reason:
-        "PAYMENT_NOT_CONFIRMED",
+      reason: "PAYMENT_NOT_CONFIRMED",
     });
   }
 
-  console.log(
-    "💰 PAGO CONFIRMADO"
-  );
-
   // ==========================================
-  // DATOS PRINCIPALES
+  // DATOS DEL CLIENTE
   // ==========================================
 
   const fullName =
@@ -328,33 +205,19 @@ async function handler(
     });
   }
 
-  console.log(
-    "👤 Cliente:",
-    fullName
-  );
-
-  console.log(
-    "📧 Email:",
-    email
-  );
-
-  console.log(
-    "📱 WhatsApp:",
-    whatsapp
-  );
-
   // ==========================================
   // DATOS COMPLETOS PARA LA ESCUELA
-  // ==========================================
   //
+  // IMPORTANTE:
+  // NO seleccionamos solo 6 campos.
   // Pasamos TODA la metadata de Stripe.
-  //
   // ==========================================
 
-  const schoolFormData:
-    Record<string, unknown> = {
+  const schoolFormData: Record<string, unknown> = {
     ...metadata,
 
+    // Aseguramos estos datos aunque Stripe
+    // los haya devuelto de otra forma.
     fullName,
     email,
     whatsapp,
@@ -363,36 +226,29 @@ async function handler(
       session.id,
 
     stripe_customer_id:
-      typeof session.customer ===
-      "string"
+      typeof session.customer === "string"
         ? session.customer
         : "",
 
     payment_status:
       session.payment_status,
-
-    amount_total:
-      session.amount_total,
-
-    currency:
-      session.currency,
   };
 
   console.log(
-    "📋 Campos enviados al email de la escuela:"
-  );
-
-  console.log(
+    "📋 Campos enviados al email de la escuela:",
     Object.keys(schoolFormData)
+      .filter(
+        (key) =>
+          ![
+            "stripe_session_id",
+            "stripe_customer_id",
+          ].includes(key)
+      )
   );
 
   // ==========================================
   // ACTUALIZAR SUPABASE
   // ==========================================
-
-  console.log(
-    "💾 Actualizando estudiar_malta..."
-  );
 
   const {
     data: updatedApplication,
@@ -404,8 +260,7 @@ async function handler(
       status: "paid",
 
       stripe_customer_id:
-        typeof session.customer ===
-        "string"
+        typeof session.customer === "string"
           ? session.customer
           : null,
 
@@ -421,10 +276,7 @@ async function handler(
 
   if (updateError) {
     console.error(
-      "❌ ERROR ACTUALIZANDO estudiar_malta:"
-    );
-
-    console.error(
+      "❌ ERROR ACTUALIZANDO estudiar_malta:",
       updateError
     );
   } else {
@@ -435,18 +287,17 @@ async function handler(
   }
 
   // ==========================================
-  // 1️⃣ EMAIL CLIENTE
+  // 1️⃣ EMAIL DEL CLIENTE
+  //
+  // NO CAMBIAMOS SU FUNCIÓN.
+  // Sigue recibiendo exactamente los mismos
+  // 6 campos y su PDF original.
   // ==========================================
 
-  let clientEmailSent =
-    false;
+  let clientEmailSent = false;
 
   try {
-    console.log(
-      "📧 Enviando email al cliente..."
-    );
-
-    await sendEstudiaMaltaEmail({
+    await sendWelcomeEmail({
       email,
       name: fullName,
       whatsapp,
@@ -464,8 +315,7 @@ async function handler(
         metadata.pdfUrl || "",
     });
 
-    clientEmailSent =
-      true;
+    clientEmailSent = true;
 
     console.log(
       "✅ EMAIL CLIENTE + PDF CLIENTE ENVIADOS"
@@ -473,33 +323,30 @@ async function handler(
 
   } catch (emailError) {
     console.error(
-      "❌ ERROR EMAIL CLIENTE/PDF CLIENTE:"
-    );
-
-    console.error(
+      "❌ ERROR EMAIL CLIENTE/PDF CLIENTE:",
       emailError
     );
   }
 
   // ==========================================
-  // 2️⃣ EMAIL ESCUELA
+  // 2️⃣ EMAIL DE LA ESCUELA
+  //
+  // ARCHIVO SEPARADO:
+  // gmailSendEstudiaMaltaEscuela.ts
+  //
+  // Recibe TODOS los datos.
+  // Genera SU PROPIO PDF.
   // ==========================================
 
-  let schoolEmailSent =
-    false;
+  let schoolEmailSent = false;
 
   try {
-    console.log(
-      "🏫 Enviando email a escuela..."
-    );
-
     const schoolResult =
       await sendEstudiaMaltaEscuelaEmail(
         schoolFormData
       );
 
-    schoolEmailSent =
-      true;
+    schoolEmailSent = true;
 
     console.log(
       "✅ EMAIL ESCUELA + PDF ESCUELA ENVIADOS"
@@ -515,14 +362,9 @@ async function handler(
       schoolResult.pdfFileName
     );
 
-  } catch (
-    schoolEmailError
-  ) {
+  } catch (schoolEmailError) {
     console.error(
-      "❌ ERROR EMAIL ESCUELA/PDF ESCUELA:"
-    );
-
-    console.error(
+      "❌ ERROR EMAIL ESCUELA/PDF ESCUELA:",
       schoolEmailError
     );
   }
@@ -532,79 +374,51 @@ async function handler(
   // ==========================================
 
   console.log(
-    "=========================================="
+    "======================================"
   );
-
   console.log(
     "🇲🇹 ESTUDIAR MALTA 2027 FINALIZADO"
   );
-
   console.log(
     "💰 Pago confirmado:",
     session.payment_status
   );
-
   console.log(
     "💾 Supabase:",
-    updateError
-      ? "ERROR"
-      : "OK"
+    updateError ? "ERROR" : "OK"
   );
-
   console.log(
     "📧 Cliente:",
-    clientEmailSent
-      ? "ENVIADO"
-      : "ERROR"
+    clientEmailSent ? "ENVIADO" : "ERROR"
   );
-
   console.log(
     "🏫 Escuela:",
-    schoolEmailSent
-      ? "ENVIADO"
-      : "ERROR"
+    schoolEmailSent ? "ENVIADO" : "ERROR"
   );
-
   console.log(
-    "=========================================="
+    "======================================"
   );
 
-  // ==========================================
-  // RESPUESTA A STRIPE
-  // ==========================================
+  // Stripe necesita 2xx para considerar
+  // recibido el evento.
   //
-  // IMPORTANTE:
-  // Aunque un email falle, devolvemos 200.
-  // El pago ya está confirmado.
-  //
-  // ==========================================
-
+  // Aunque un email falle, no devolvemos 500:
+  // el pago ya está confirmado y no queremos
+  // provocar reintentos que puedan duplicar emails.
   return res.status(200).json({
     received: true,
-
-    service:
-      "study_malta_2027",
-
+    service: "study_malta_2027",
     paid: true,
 
     supabaseUpdated:
       !updateError,
 
-    applicationId:
-      updatedApplication?.id ||
-      null,
-
     clientEmailSent,
-
     schoolEmailSent,
 
     email,
-
-    name:
-      fullName,
-
-    sessionId:
-      session.id,
+    name: fullName,
+    sessionId: session.id,
   });
 }
 
@@ -616,19 +430,13 @@ async function getRawBody(
   req: VercelRequest
 ): Promise<string> {
   return new Promise(
-    (
-      resolve,
-      reject
-    ) => {
+    (resolve, reject) => {
       let body = "";
 
       req.on(
         "data",
-        (
-          chunk: Buffer
-        ) => {
-          body +=
-            chunk.toString();
+        (chunk: Buffer) => {
+          body += chunk.toString();
         }
       );
 
@@ -641,27 +449,10 @@ async function getRawBody(
 
       req.on(
         "error",
-        (
-          error
-        ) => {
+        (error) => {
           reject(error);
         }
       );
     }
   );
 }
-
-// ==========================================
-// EXPORT VERCEL
-// ==========================================
-//
-// IMPORTANTE:
-// NO usar:
-// export default async function handler()
-//
-// Usamos:
-// export default handler;
-//
-// ==========================================
-
-export default handler;
