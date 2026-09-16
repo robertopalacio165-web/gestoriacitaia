@@ -14,6 +14,10 @@ import {
   sendEstudiaMaltaEscuelaEmail,
 } from "./gmailSendEstudiaMaltaEscuela";
 
+// ==========================================
+// STRIPE
+// ==========================================
+
 const stripe = new Stripe(
   process.env.STRIPE_SECRET_KEY as string,
   {
@@ -21,16 +25,28 @@ const stripe = new Stripe(
   }
 );
 
+// ==========================================
+// SUPABASE
+// ==========================================
+
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL as string,
   process.env.SUPABASE_SERVICE_ROLE_KEY as string
 );
+
+// ==========================================
+// VERCEL
+// ==========================================
 
 export const config = {
   api: {
     bodyParser: false,
   },
 };
+
+// ==========================================
+// WEBHOOK
+// ==========================================
 
 export default async function handler(
   req: VercelRequest,
@@ -82,7 +98,8 @@ export default async function handler(
     );
 
     return res.status(400).json({
-      error: "Could not read webhook body",
+      error:
+        "Could not read webhook body",
     });
   }
 
@@ -93,11 +110,12 @@ export default async function handler(
   let event: Stripe.Event;
 
   try {
-    event = stripe.webhooks.constructEvent(
-      rawBody,
-      signature,
-      webhookSecret
-    );
+    event =
+      stripe.webhooks.constructEvent(
+        rawBody,
+        signature,
+        webhookSecret
+      );
   } catch (error: any) {
     console.error(
       "❌ Error verificando webhook:",
@@ -111,7 +129,7 @@ export default async function handler(
   }
 
   // ==========================================
-  // SOLO CHECKOUT COMPLETED
+  // SOLO CHECKOUT SESSION COMPLETED
   // ==========================================
 
   if (
@@ -129,7 +147,7 @@ export default async function handler(
   }
 
   // ==========================================
-  // SESSION
+  // STRIPE SESSION
   // ==========================================
 
   const session =
@@ -139,7 +157,7 @@ export default async function handler(
     session.metadata || {};
 
   console.log(
-    "======================================"
+    "=========================================="
   );
 
   console.log(
@@ -167,7 +185,7 @@ export default async function handler(
   );
 
   console.log(
-    "======================================"
+    "=========================================="
   );
 
   // ==========================================
@@ -185,11 +203,13 @@ export default async function handler(
     return res.status(200).json({
       received: true,
       ignored: true,
+      reason:
+        "NOT_STUDY_MALTA_2027",
     });
   }
 
   // ==========================================
-  // CONFIRMAR PAGO REAL
+  // CONFIRMAR PAGO
   // ==========================================
 
   if (
@@ -204,7 +224,8 @@ export default async function handler(
 
     return res.status(200).json({
       received: true,
-      service: "study_malta_2027",
+      service:
+        "study_malta_2027",
       paid: false,
       ignored: true,
       reason:
@@ -213,31 +234,19 @@ export default async function handler(
   }
 
   // ==========================================
-  // DATOS DEL CLIENTE
+  // DATOS PRINCIPALES
   // ==========================================
 
   const fullName =
     metadata.fullName || "";
-
-  const whatsapp =
-    metadata.whatsapp || "";
 
   const email =
     metadata.email ||
     session.customer_details?.email ||
     "";
 
-  const dateOfBirth =
-    metadata.dateOfBirth || "";
-
-  const nationality =
-    metadata.nationality || "";
-
-  const passportNumber =
-    metadata.passportNumber || "";
-
-  const pdfUrl =
-    metadata.pdfUrl || "";
+  const whatsapp =
+    metadata.whatsapp || "";
 
   if (!email) {
     console.error(
@@ -250,23 +259,135 @@ export default async function handler(
     });
   }
 
-  console.log(
-    "👤 Nombre:",
-    fullName
-  );
+  // ==========================================
+  // TODOS LOS CAMPOS DEL FORMULARIO
+  // ==========================================
 
-  console.log(
-    "📧 Email:",
-    email
-  );
+  const dateOfBirth =
+    metadata.dateOfBirth || null;
 
-  console.log(
-    "📱 WhatsApp:",
-    whatsapp
-  );
+  const placeOfBirth =
+    metadata.placeOfBirth || null;
+
+  const nationality =
+    metadata.nationality || null;
+
+  const passportNumber =
+    metadata.passportNumber || null;
+
+  const passportExpiry =
+    metadata.passportExpiry || null;
+
+  const address =
+    metadata.address || null;
+
+  const hasBac =
+    metadata.hasBac || null;
+
+  const bacYear =
+    metadata.bacYear || null;
+
+  const lastDiploma =
+    metadata.lastDiploma || null;
+
+  const otherDiplomas =
+    metadata.otherDiplomas || null;
+
+  const otherDiplomasDetails =
+    metadata.otherDiplomasDetails || null;
+
+  const isWorking =
+    metadata.isWorking || null;
+
+  const company =
+    metadata.company || null;
+
+  const jobTitle =
+    metadata.jobTitle || null;
+
+  const isStudent =
+    metadata.isStudent || null;
+
+  const hasFinancialSponsor =
+    metadata.hasFinancialSponsor || null;
+
+  const sponsorName =
+    metadata.sponsorName || null;
+
+  const sponsorRelation =
+    metadata.sponsorRelation || null;
+
+  const sponsorProfession =
+    metadata.sponsorProfession || null;
+
+  const sponsorIncome =
+    metadata.sponsorIncome || null;
+
+  const sponsorCountry =
+    metadata.sponsorCountry || null;
+
+  const previouslyAppliedVisa =
+    metadata.previouslyAppliedVisa ||
+    null;
+
+  const previousVisaCountry =
+    metadata.previousVisaCountry ||
+    null;
+
+  const previousVisaType =
+    metadata.previousVisaType ||
+    null;
+
+  const previousVisaDate =
+    metadata.previousVisaDate ||
+    null;
+
+  const visaRefused =
+    metadata.visaRefused || null;
+
+  const refusalCountry =
+    metadata.refusalCountry || null;
+
+  const refusalDate =
+    metadata.refusalDate || null;
+
+  const refusalReason =
+    metadata.refusalReason || null;
+
+  const previouslyObtainedVisa =
+    metadata.previouslyObtainedVisa ||
+    null;
+
+  const previousObtainedVisaDetails =
+    metadata.previousObtainedVisaDetails ||
+    null;
+
+  const termsAccepted =
+    metadata.termsAccepted || null;
 
   // ==========================================
-  // DATOS COMPLETOS PARA ESCUELA
+  // PDF ORIGINAL DEL CLIENTE
+  // ==========================================
+
+  const pdfUrl =
+    metadata.pdfUrl || "";
+
+  // ==========================================
+  // STRIPE CUSTOMER
+  // ==========================================
+
+  const stripeCustomerId =
+    typeof session.customer === "string"
+      ? session.customer
+      : null;
+
+  const stripePaymentIntent =
+    typeof session.payment_intent === "string"
+      ? session.payment_intent
+      : null;
+
+  // ==========================================
+  // DATOS PARA ESCUELA
   // ==========================================
 
   const schoolFormData:
@@ -281,42 +402,28 @@ export default async function handler(
       session.id,
 
     stripe_customer_id:
-      typeof session.customer ===
-      "string"
-        ? session.customer
-        : "",
+      stripeCustomerId || "",
 
     stripe_payment_intent:
-      typeof session.payment_intent ===
-      "string"
-        ? session.payment_intent
-        : "",
+      stripePaymentIntent || "",
 
     payment_status:
       session.payment_status,
   };
 
   console.log(
-    "📋 Campos enviados al email de la escuela:"
+    "📋 Datos completos preparados para escuela"
   );
 
   console.log(
+    "📊 Número de campos:",
     Object.keys(
       schoolFormData
-    ).filter(
-      (key) =>
-        ![
-          "stripe_session_id",
-          "stripe_customer_id",
-          "stripe_payment_intent",
-        ].includes(key)
-    )
+    ).length
   );
 
   // ==========================================
-  // SUPABASE
-  // ==========================================
-  // BUSCAR PRIMERO POR STRIPE SESSION
+  // BUSCAR REGISTRO EXISTENTE
   // ==========================================
 
   const {
@@ -333,8 +440,15 @@ export default async function handler(
 
   if (findError) {
     console.error(
-      "❌ ERROR BUSCANDO estudiar_malta:",
-      findError
+      "❌ ERROR BUSCANDO estudiar_malta:"
+    );
+
+    console.error(
+      JSON.stringify(
+        findError,
+        null,
+        2
+      )
     );
   }
 
@@ -348,7 +462,7 @@ export default async function handler(
     | "error" = "error";
 
   // ==========================================
-  // SI YA EXISTE
+  // SI EXISTE -> UPDATE
   // ==========================================
 
   if (existingApplication) {
@@ -366,15 +480,119 @@ export default async function handler(
     } = await supabase
       .from("estudiar_malta")
       .update({
-        paid: true,
+        full_name:
+          fullName,
 
-        status: "paid",
+        date_of_birth:
+          dateOfBirth,
+
+        place_of_birth:
+          placeOfBirth,
+
+        nationality:
+          nationality,
+
+        passport_number:
+          passportNumber,
+
+        passport_expiry:
+          passportExpiry,
+
+        address:
+          address,
+
+        whatsapp:
+          whatsapp,
+
+        email:
+          email,
+
+        has_bac:
+          hasBac,
+
+        bac_year:
+          bacYear,
+
+        last_diploma:
+          lastDiploma,
+
+        other_diplomas:
+          otherDiplomas,
+
+        other_diplomas_details:
+          otherDiplomasDetails,
+
+        is_working:
+          isWorking,
+
+        company:
+          company,
+
+        job_title:
+          jobTitle,
+
+        is_student:
+          isStudent,
+
+        has_financial_sponsor:
+          hasFinancialSponsor,
+
+        sponsor_name:
+          sponsorName,
+
+        sponsor_relation:
+          sponsorRelation,
+
+        sponsor_profession:
+          sponsorProfession,
+
+        sponsor_income:
+          sponsorIncome,
+
+        sponsor_country:
+          sponsorCountry,
+
+        previously_applied_visa:
+          previouslyAppliedVisa,
+
+        previous_visa_country:
+          previousVisaCountry,
+
+        previous_visa_type:
+          previousVisaType,
+
+        previous_visa_date:
+          previousVisaDate,
+
+        visa_refused:
+          visaRefused,
+
+        refusal_country:
+          refusalCountry,
+
+        refusal_date:
+          refusalDate,
+
+        refusal_reason:
+          refusalReason,
+
+        previously_obtained_visa:
+          previouslyObtainedVisa,
+
+        previous_obtained_visa_details:
+          previousObtainedVisaDetails,
+
+        terms_accepted:
+          termsAccepted,
+
+        paid:
+          true,
+
+        status:
+          "paid",
 
         stripe_customer_id:
-          typeof session.customer ===
-          "string"
-            ? session.customer
-            : null,
+          stripeCustomerId,
 
         updated_at:
           new Date().toISOString(),
@@ -388,8 +606,15 @@ export default async function handler(
 
     if (updateError) {
       console.error(
-        "❌ ERROR ACTUALIZANDO estudiar_malta:",
-        updateError
+        "❌ ERROR ACTUALIZANDO estudiar_malta:"
+      );
+
+      console.error(
+        JSON.stringify(
+          updateError,
+          null,
+          2
+        )
       );
     } else {
       applicationId =
@@ -399,72 +624,139 @@ export default async function handler(
         "updated";
 
       console.log(
-        "✅ estudiar_malta actualizado:",
+        "✅ Registro actualizado:",
         applicationId
       );
     }
   }
 
   // ==========================================
-  // SI NO EXISTE -> INSERTAR
+  // NO EXISTE -> INSERT
   // ==========================================
 
   else {
     console.log(
-      "🆕 No existe registro para esta sesión."
+      "🆕 No existe registro."
     );
 
     console.log(
-      "📝 Creando registro en estudiar_malta..."
+      "📝 Creando estudiar_malta..."
     );
 
-    /*
-     * IMPORTANTE:
-     *
-     * Usamos los campos principales que
-     * conocemos que pertenecen al flujo.
-     *
-     * Los datos completos siguen estando
-     * disponibles en metadata y se envían
-     * a la escuela.
-     */
-
-    const insertData: Record<
-      string,
-      unknown
-    > = {
+    const insertData = {
       full_name:
         fullName,
 
-      email:
-        email,
+      date_of_birth:
+        dateOfBirth,
+
+      place_of_birth:
+        placeOfBirth,
+
+      nationality:
+        nationality,
+
+      passport_number:
+        passportNumber,
+
+      passport_expiry:
+        passportExpiry,
+
+      address:
+        address,
 
       whatsapp:
         whatsapp,
 
-      date_of_birth:
-        dateOfBirth || null,
+      email:
+        email,
 
-      nationality:
-        nationality || null,
+      has_bac:
+        hasBac,
 
-      passport_number:
-        passportNumber || null,
+      bac_year:
+        bacYear,
 
-      pdf_url:
-        pdfUrl || null,
+      last_diploma:
+        lastDiploma,
+
+      other_diplomas:
+        otherDiplomas,
+
+      other_diplomas_details:
+        otherDiplomasDetails,
+
+      is_working:
+        isWorking,
+
+      company:
+        company,
+
+      job_title:
+        jobTitle,
+
+      is_student:
+        isStudent,
+
+      has_financial_sponsor:
+        hasFinancialSponsor,
+
+      sponsor_name:
+        sponsorName,
+
+      sponsor_relation:
+        sponsorRelation,
+
+      sponsor_profession:
+        sponsorProfession,
+
+      sponsor_income:
+        sponsorIncome,
+
+      sponsor_country:
+        sponsorCountry,
+
+      previously_applied_visa:
+        previouslyAppliedVisa,
+
+      previous_visa_country:
+        previousVisaCountry,
+
+      previous_visa_type:
+        previousVisaType,
+
+      previous_visa_date:
+        previousVisaDate,
+
+      visa_refused:
+        visaRefused,
+
+      refusal_country:
+        refusalCountry,
+
+      refusal_date:
+        refusalDate,
+
+      refusal_reason:
+        refusalReason,
+
+      previously_obtained_visa:
+        previouslyObtainedVisa,
+
+      previous_obtained_visa_details:
+        previousObtainedVisaDetails,
+
+      terms_accepted:
+        termsAccepted,
+
+      paid:
+        true,
 
       stripe_session_id:
         session.id,
 
       stripe_customer_id:
-        typeof session.customer ===
-        "string"
-          ? session.customer
-          : null,
-
-      paid:
-        true,
+        stripeCustomerId,
 
       status:
         "paid",
@@ -497,15 +789,6 @@ export default async function handler(
           2
         )
       );
-
-      /*
-       * NO detenemos los emails aquí.
-       *
-       * El pago ya está confirmado.
-       * Continuamos para que el cliente
-       * y la escuela reciban la información.
-       */
-
     } else {
       applicationId =
         newApplication.id;
@@ -514,36 +797,59 @@ export default async function handler(
         "inserted";
 
       console.log(
-        "✅ NUEVO registro creado en estudiar_malta:",
+        "======================================"
+      );
+
+      console.log(
+        "✅ REGISTRO CREADO EN estudiar_malta"
+      );
+
+      console.log(
+        "🆔 ID:",
         applicationId
+      );
+
+      console.log(
+        "📧 Email:",
+        email
+      );
+
+      console.log(
+        "======================================"
       );
     }
   }
 
   // ==========================================
-  // 1️⃣ EMAIL DEL CLIENTE
+  // 1️⃣ EMAIL CLIENTE
   // ==========================================
 
   let clientEmailSent =
     false;
 
   try {
+    console.log(
+      "📧 Enviando email al cliente..."
+    );
+
     await sendEstudiaMaltaEmail({
-      email,
+      email:
+        email,
 
       name:
         fullName,
 
-      whatsapp,
+      whatsapp:
+        whatsapp,
 
       dateOfBirth:
-        dateOfBirth,
+        dateOfBirth || "",
 
       nationality:
-        nationality,
+        nationality || "",
 
       passportNumber:
-        passportNumber,
+        passportNumber || "",
 
       pdfUrl:
         pdfUrl,
@@ -551,10 +857,6 @@ export default async function handler(
 
     clientEmailSent =
       true;
-
-    console.log(
-      "======================================"
-    );
 
     console.log(
       "✅ EMAIL CLIENTE ENVIADO"
@@ -566,27 +868,33 @@ export default async function handler(
     );
 
     console.log(
-      "📄 PDF ORIGINAL DEL CLIENTE ENVIADO"
-    );
-
-    console.log(
-      "======================================"
+      "📄 PDF ORIGINAL:",
+      pdfUrl
+        ? "ENVIADO"
+        : "NO DISPONIBLE"
     );
   } catch (emailError) {
     console.error(
-      "❌ ERROR EMAIL CLIENTE/PDF CLIENTE:",
+      "❌ ERROR EMAIL CLIENTE:"
+    );
+
+    console.error(
       emailError
     );
   }
 
   // ==========================================
-  // 2️⃣ EMAIL DE LA ESCUELA
+  // 2️⃣ EMAIL ESCUELA
   // ==========================================
 
   let schoolEmailSent =
     false;
 
   try {
+    console.log(
+      "🏫 Enviando email a escuela..."
+    );
+
     const schoolResult =
       await sendEstudiaMaltaEscuelaEmail(
         schoolFormData
@@ -596,31 +904,26 @@ export default async function handler(
       true;
 
     console.log(
-      "======================================"
-    );
-
-    console.log(
       "✅ EMAIL ESCUELA ENVIADO"
     );
 
     console.log(
-      "🏫 Destino escuela:",
+      "🏫 Destino:",
       schoolResult.schoolEmail
     );
 
     console.log(
-      "📄 PDF escuela:",
+      "📄 PDF:",
       schoolResult.pdfFileName
-    );
-
-    console.log(
-      "======================================"
     );
   } catch (
     schoolEmailError
   ) {
     console.error(
-      "❌ ERROR EMAIL ESCUELA/PDF ESCUELA:",
+      "❌ ERROR EMAIL ESCUELA:"
+    );
+
+    console.error(
       schoolEmailError
     );
   }
@@ -630,7 +933,7 @@ export default async function handler(
   // ==========================================
 
   console.log(
-    "======================================"
+    "=========================================="
   );
 
   console.log(
@@ -667,28 +970,30 @@ export default async function handler(
   );
 
   console.log(
-    "======================================"
+    "=========================================="
   );
 
   // ==========================================
-  // RESPONDER A STRIPE
+  // RESPUESTA A STRIPE
   // ==========================================
 
   return res.status(200).json({
-    received: true,
+    received:
+      true,
 
     service:
       "study_malta_2027",
 
-    paid: true,
+    paid:
+      true,
+
+    supabaseOperation,
 
     supabaseUpdated:
       supabaseOperation ===
         "updated" ||
       supabaseOperation ===
         "inserted",
-
-    supabaseOperation,
 
     applicationId,
 
