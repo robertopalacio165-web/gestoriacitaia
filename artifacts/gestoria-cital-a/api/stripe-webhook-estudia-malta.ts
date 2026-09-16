@@ -1,839 +1,891 @@
-import Stripe from "stripe";
-import type {
-  VercelRequest,
-  VercelResponse,
-} from "@vercel/node";
-
-import { createClient } from "@supabase/supabase-js";
-
-// ============================================================
-// EMAIL CLIENTE
-// ============================================================
-
+import chromium from "@sparticuz/chromium";
 import {
-  sendWelcomeEmail,
-} from "./gmailSendEstudiaMalta.js";
+  chromium as playwrightChromium,
+} from "playwright-core";
+import nodemailer from "nodemailer";
+
+type SchoolData = Record<string, unknown>;
 
 // ============================================================
 // EMAIL ESCUELA
 // ============================================================
 
-import {
-  sendEstudiaMaltaEscuelaEmail,
-} from "./gmailSendEstudiaMaltaEscuela.js";
+const SCHOOL_EMAIL =
+  process.env.ESTUDIA_MALTA_SCHOOL_EMAIL ||
+  "gestoriacitaia@gmail.com";
 
 // ============================================================
-// STRIPE
+// LOGO
 // ============================================================
 
-const stripe = new Stripe(
-  process.env.STRIPE_SECRET_KEY as string,
-  {
-    apiVersion: "2025-08-27.basil",
-  }
-);
+const LOGO_URL =
+  process.env.GESTORIA_LOGO_URL ||
+  `${
+    process.env.NEXT_PUBLIC_URL ||
+    "https://gestoriacitaia.com"
+  }/images/gestoriacitaia-logo.png`;
 
 // ============================================================
-// SUPABASE
+// HTML
 // ============================================================
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL as string,
-  process.env.SUPABASE_SERVICE_ROLE_KEY as string
-);
-
-// ============================================================
-// VERCEL
-// ============================================================
-
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
-
-// ============================================================
-// BOOLEAN
-// ============================================================
-
-function toBoolean(value: unknown): boolean {
-  if (typeof value === "boolean") {
-    return value;
-  }
-
-  if (typeof value === "number") {
-    return value === 1;
-  }
-
-  if (typeof value === "string") {
-    const normalized = value.trim().toLowerCase();
-
-    return (
-      normalized === "true" ||
-      normalized === "yes" ||
-      normalized === "1" ||
-      normalized === "si" ||
-      normalized === "sí"
-    );
-  }
-
-  return false;
+function escapeHtml(value: unknown = "") {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }
 
-// ============================================================
-// STRING
-// ============================================================
-
-function valueOrNull(value: unknown): string | null {
-  if (value === undefined || value === null) {
-    return null;
-  }
-
-  const valueString = String(value).trim();
-
-  return valueString === "" ? null : valueString;
+function cleanFileName(value: unknown) {
+  return String(value || "Cliente")
+    .trim()
+    .replace(/[^a-zA-Z0-9À-ÿ _-]/g, "")
+    .replace(/\s+/g, "-")
+    .slice(0, 80) || "Cliente";
 }
 
-// ============================================================
-// WEBHOOK
-// ============================================================
-
-export default async function handler(
-  req: VercelRequest,
-  res: VercelResponse
-) {
-  console.log("");
-  console.log("==================================================");
-  console.log("🇲🇹 STRIPE WEBHOOK — ESTUDIAR MALTA 2027");
-  console.log("==================================================");
-
-  if (req.method !== "POST") {
-    return res.status(405).json({
-      error: "Method not allowed",
-    });
-  }
-
-  // ==========================================================
-  // STRIPE SIGNATURE
-  // ==========================================================
-
-  const signature =
-    req.headers["stripe-signature"] as string | undefined;
-
-  if (!signature) {
-    console.error("❌ Falta stripe-signature");
-
-    return res.status(400).json({
-      error: "Missing Stripe signature",
-    });
-  }
-
-  const webhookSecret =
-    process.env.STRIPE_WEBHOOK_ESTUDIA_MALTA_SECRET;
-
-  if (!webhookSecret) {
-    console.error(
-      "❌ STRIPE_WEBHOOK_ESTUDIA_MALTA_SECRET NO CONFIGURADO"
-    );
-
-    return res.status(500).json({
-      error: "Study Malta webhook secret not configured",
-    });
-  }
-
-  // ==========================================================
-  // RAW BODY
-  // ==========================================================
-
-  let rawBody: string;
-
-  try {
-    rawBody = await getRawBody(req);
-  } catch (error) {
-    console.error("❌ Error leyendo RAW body:", error);
-
-    return res.status(400).json({
-      error: "Could not read webhook body",
-    });
-  }
-
-  if (!rawBody) {
-    console.error("❌ RAW BODY VACÍO");
-
-    return res.status(400).json({
-      error: "Empty webhook body",
-    });
-  }
-
-  // ==========================================================
-  // VERIFICAR STRIPE
-  // ==========================================================
-
-  let event: Stripe.Event;
-
-  try {
-    event = stripe.webhooks.constructEvent(
-      rawBody,
-      signature,
-      webhookSecret
-    );
-  } catch (error: any) {
-    console.error(
-      "❌ ERROR VERIFICANDO WEBHOOK STRIPE:"
-    );
-
-    console.error(error?.message || error);
-
-    return res.status(400).json({
-      error: `Webhook Error: ${
-        error?.message || "Invalid signature"
-      }`,
-    });
-  }
-
-  console.log("✅ Firma Stripe verificada");
-  console.log("Event ID:", event.id);
-  console.log("Event type:", event.type);
-
-  // ==========================================================
-  // SOLO checkout.session.completed
-  // ==========================================================
-
-  if (event.type !== "checkout.session.completed") {
-    console.log("⏭️ Evento ignorado:", event.type);
-
-    return res.status(200).json({
-      received: true,
-      ignored: true,
-      eventType: event.type,
-    });
-  }
-
-  // ==========================================================
-  // SESSION
-  // ==========================================================
-
-  const session =
-    event.data.object as Stripe.Checkout.Session;
-
-  const metadata = session.metadata || {};
-
-  console.log("==================================================");
-  console.log("🇲🇹 ESTUDIAR MALTA 2027");
-  console.log("Session:", session.id);
-  console.log("Payment status:", session.payment_status);
-  console.log("Amount:", session.amount_total);
-  console.log("Currency:", session.currency);
-  console.log("Service:", metadata.service);
-  console.log("Cliente:", metadata.fullName);
-  console.log(
-    "Email:",
-    metadata.email ||
-      session.customer_details?.email
-  );
-  console.log("==================================================");
-
-  // ==========================================================
-  // SOLO STUDY MALTA
-  // ==========================================================
-
-  if (metadata.service !== "study_malta_2027") {
-    console.log("⏭️ NO ES STUDY MALTA 2027");
-    console.log("⛔ No se procesa.");
-
-    return res.status(200).json({
-      received: true,
-      ignored: true,
-      reason: "NOT_STUDY_MALTA_2027",
-    });
-  }
-
-  console.log(
-    "✅ Service correcto: study_malta_2027"
-  );
-
-  // ==========================================================
-  // CONFIRMAR PAGO
-  // ==========================================================
-
+function displayValue(value: unknown) {
   if (
-    session.payment_status !== "paid" &&
-    session.payment_status !== "no_payment_required"
+    value === null ||
+    value === undefined ||
+    value === ""
   ) {
-    console.log(
-      "⏭️ PAGO NO CONFIRMADO:",
-      session.payment_status
-    );
-
-    return res.status(200).json({
-      received: true,
-      service: "study_malta_2027",
-      paid: false,
-      ignored: true,
-      reason: "PAYMENT_NOT_CONFIRMED",
-    });
+    return "—";
   }
 
-  console.log("💰 PAGO CONFIRMADO");
+  if (typeof value === "boolean") {
+    return value ? "Sí" : "No";
+  }
 
-  // ==========================================================
-  // DATOS PRINCIPALES
-  // ==========================================================
+  if (typeof value === "object") {
+    try {
+      return JSON.stringify(value);
+    } catch {
+      return String(value);
+    }
+  }
+
+  return String(value);
+}
+
+function labelFor(key: string) {
+  const labels: Record<string, string> = {
+    fullName: "Nombre y apellidos",
+    dateOfBirth: "Fecha de nacimiento",
+    placeOfBirth: "Lugar de nacimiento",
+    nationality: "Nacionalidad",
+    passportNumber: "Número de pasaporte",
+    passportExpiry: "Caducidad del pasaporte",
+    address: "Dirección",
+    whatsapp: "WhatsApp / Teléfono",
+    email: "Email del cliente",
+
+    hasBac: "Tiene Bachillerato",
+    bacYear: "Año del Bachillerato",
+    lastDiploma: "Último diploma",
+    otherDiplomas: "Otros diplomas",
+    otherDiplomasDetails:
+      "Detalles de otros diplomas",
+
+    isWorking: "Está trabajando",
+    company: "Empresa",
+    jobTitle: "Puesto de trabajo",
+    isStudent: "Es estudiante",
+
+    hasFinancialSponsor:
+      "Tiene patrocinador económico",
+
+    sponsorName:
+      "Nombre del patrocinador",
+
+    sponsorRelation:
+      "Relación con el patrocinador",
+
+    sponsorProfession:
+      "Profesión del patrocinador",
+
+    sponsorIncome:
+      "Ingresos del patrocinador",
+
+    sponsorCountry:
+      "País del patrocinador",
+
+    previouslyAppliedVisa:
+      "Ha solicitado un visado anteriormente",
+
+    previousVisaCountry:
+      "País del visado anterior",
+
+    previousVisaType:
+      "Tipo de visado anterior",
+
+    previousVisaDate:
+      "Fecha del visado anterior",
+
+    visaRefused:
+      "Visado rechazado",
+
+    refusalCountry:
+      "País del rechazo",
+
+    refusalDate:
+      "Fecha del rechazo",
+
+    refusalReason:
+      "Motivo del rechazo",
+
+    previouslyObtainedVisa:
+      "Ha obtenido un visado anteriormente",
+
+    previousObtainedVisaDetails:
+      "Detalles del visado obtenido anteriormente",
+
+    nivelIngles:
+      "Nivel de inglés",
+
+    otrosIdiomas:
+      "Otros idiomas",
+
+    profesion:
+      "Profesión",
+
+    anosExperiencia:
+      "Años de experiencia",
+
+    estudios:
+      "Estudios",
+
+    carnetConducir:
+      "Carnet de conducir",
+
+    tieneCv:
+      "Tiene CV",
+
+    puestoBusca:
+      "Puesto que busca",
+
+    disponibilidadViajar:
+      "Disponibilidad para viajar",
+
+    fechaDisponible:
+      "Fecha disponible",
+
+    countryOfResidence:
+      "País de residencia",
+
+    paisResidencia:
+      "País de residencia",
+
+    plan:
+      "Plan",
+
+    pdfUrl:
+      "PDF del formulario",
+  };
+
+  return (
+    labels[key] ||
+    key
+      .replace(
+        /([a-z])([A-Z])/g,
+        "$1 $2"
+      )
+      .replace(/_/g, " ")
+      .replace(/^./, (m) =>
+        m.toUpperCase()
+      )
+  );
+}
+
+function shouldIncludeField(
+  key: string,
+  value: unknown
+) {
+  const internal = new Set([
+    "stripe_session_id",
+    "stripe_customer_id",
+    "stripeSessionId",
+    "stripeCustomerId",
+    "paid",
+    "test",
+    "service",
+    "userId",
+  ]);
+
+  if (internal.has(key)) {
+    return false;
+  }
+
+  return (
+    value !== null &&
+    value !== undefined &&
+    String(value).trim() !== ""
+  );
+}
+
+function getRows(data: SchoolData) {
+  return Object.entries(data)
+    .filter(([key, value]) =>
+      shouldIncludeField(key, value)
+    )
+    .map(([key, value]) => ({
+      key,
+      label: labelFor(key),
+      value: displayValue(value),
+    }));
+}
+
+// ============================================================
+// EMAIL HTML ESCUELA
+// ============================================================
+
+function buildSchoolEmailHtml(
+  data: SchoolData
+) {
+  const rows = getRows(data);
+
+  const tableRows =
+    rows
+      .map(
+        (row) => `
+<tr>
+<td style="
+padding:9px 10px;
+border-bottom:1px solid #e5e7eb;
+background:#f8fafc;
+font-weight:700;
+color:#475467;
+width:38%;
+">
+${escapeHtml(row.label)}
+</td>
+
+<td style="
+padding:9px 10px;
+border-bottom:1px solid #e5e7eb;
+color:#111827;
+word-break:break-word;
+">
+${escapeHtml(row.value)}
+</td>
+</tr>
+`
+      )
+      .join("");
+
+  const name =
+    escapeHtml(
+      data.fullName ||
+      data.name ||
+      "Cliente"
+    );
+
+  return `
+<!doctype html>
+<html lang="es">
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport"
+content="width=device-width, initial-scale=1.0">
+
+<title>
+Solicitud Estudios Malta 2027
+</title>
+</head>
+
+<body style="
+margin:0;
+padding:24px;
+background:#eef2f7;
+font-family:Arial,Helvetica,sans-serif;
+color:#172033;
+">
+
+<table width="100%"
+cellpadding="0"
+cellspacing="0">
+
+<tr>
+<td align="center">
+
+<table width="720"
+cellpadding="0"
+cellspacing="0"
+style="
+max-width:720px;
+width:100%;
+background:#fff;
+border-radius:16px;
+overflow:hidden;
+">
+
+<tr>
+
+<td style="
+background:#07111f;
+padding:25px;
+text-align:center;
+border-bottom:4px solid #20d46b;
+">
+
+<img
+src="${escapeHtml(LOGO_URL)}"
+alt="GestoriaCitaIA"
+style="
+width:250px;
+max-width:90%;
+height:auto;
+">
+
+<h1 style="
+color:#fff;
+font-size:22px;
+margin:16px 0 4px;
+">
+
+Nueva solicitud — Estudios Malta 2027 🇲🇹
+
+</h1>
+
+<p style="
+color:#c4ccd8;
+margin:0;
+font-size:13px;
+">
+
+Datos completos enviados por el formulario
+
+</p>
+
+</td>
+
+</tr>
+
+<tr>
+
+<td style="padding:28px;">
+
+<p style="
+font-size:16px;
+margin:0 0 18px;
+">
+
+<strong>Cliente:</strong>
+${name}
+
+</p>
+
+<table width="100%"
+cellpadding="0"
+cellspacing="0"
+style="
+border:1px solid #dfe6ef;
+border-collapse:collapse;
+">
+
+${tableRows}
+
+</table>
+
+</td>
+
+</tr>
+
+<tr>
+
+<td style="
+background:#07111f;
+padding:15px;
+text-align:center;
+color:#aeb9c8;
+font-size:11px;
+">
+
+<strong style="color:#fff;">
+GestoriaCitaIA
+</strong>
+
+<br>
+
+Estudios en Malta 2027
+
+</td>
+
+</tr>
+
+</table>
+
+</td>
+</tr>
+
+</table>
+
+</body>
+</html>
+`;
+}
+
+// ============================================================
+// PDF ESCUELA — UNA HOJA A4
+// ============================================================
+
+function buildSchoolPdfHtml(
+  data: SchoolData
+) {
+  const rows = getRows(data);
+
+  const tableRows =
+    rows
+      .map(
+        (row) => `
+<tr>
+<td class="label">
+${escapeHtml(row.label)}
+</td>
+
+<td class="val">
+${escapeHtml(row.value)}
+</td>
+</tr>
+`
+      )
+      .join("");
+
+  return `
+<!doctype html>
+<html lang="es">
+
+<head>
+
+<meta charset="UTF-8">
+
+<style>
+
+@page{
+size:A4;
+margin:0;
+}
+
+*{
+box-sizing:border-box;
+}
+
+html,
+body{
+margin:0;
+padding:0;
+width:210mm;
+height:297mm;
+}
+
+body{
+font-family:Arial,Helvetica,sans-serif;
+background:#fff;
+color:#172033;
+}
+
+.page{
+width:210mm;
+height:297mm;
+overflow:hidden;
+position:relative;
+background:#fff;
+}
+
+.header{
+height:36mm;
+background:#07111f;
+color:#fff;
+padding:5mm 9mm 3mm;
+text-align:center;
+border-bottom:1.5mm solid #20d46b;
+}
+
+.logo{
+width:60mm;
+height:11mm;
+object-fit:contain;
+display:block;
+margin:0 auto 1mm;
+}
+
+h1{
+font-size:14pt;
+margin:1mm 0;
+font-weight:800;
+}
+
+.sub{
+font-size:7.5pt;
+color:#c4ccd8;
+}
+
+.content{
+padding:4mm 8mm 13mm;
+}
+
+.title{
+font-size:10pt;
+font-weight:800;
+margin:0 0 2.5mm;
+}
+
+.table{
+width:100%;
+border-collapse:collapse;
+table-layout:fixed;
+}
+
+.table td{
+border:1px solid #dfe6ef;
+padding:1.15mm 1.8mm;
+vertical-align:top;
+line-height:1.15;
+word-break:break-word;
+}
+
+.label{
+width:34%;
+background:#f3f6fa;
+color:#475467;
+font-size:6.4pt;
+font-weight:700;
+}
+
+.val{
+width:66%;
+font-size:6.6pt;
+color:#111827;
+}
+
+.footer{
+position:absolute;
+left:0;
+right:0;
+bottom:0;
+height:9mm;
+background:#07111f;
+color:#aeb9c8;
+text-align:center;
+padding:1.6mm;
+font-size:5.8pt;
+line-height:1.25;
+}
+
+.footer strong{
+color:#fff;
+font-size:7pt;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="page">
+
+<header class="header">
+
+<img
+class="logo"
+src="${escapeHtml(LOGO_URL)}"
+>
+
+<h1>
+Solicitud de Estudios en Malta 2027 🇲🇹
+</h1>
+
+<div class="sub">
+Ficha completa del candidato
+</div>
+
+</header>
+
+<main class="content">
+
+<p class="title">
+Datos completos del formulario
+</p>
+
+<table class="table">
+
+${tableRows}
+
+</table>
+
+</main>
+
+<footer class="footer">
+
+<strong>
+GestoriaCitaIA
+</strong>
+
+<br>
+
+Estudios en Malta 2027
+
+</footer>
+
+</div>
+
+</body>
+</html>
+`;
+}
+
+// ============================================================
+// CREAR PDF
+// ============================================================
+
+async function createSchoolOnePagePdf(
+  data: SchoolData
+) {
+  const browser =
+    await playwrightChromium.launch({
+      args: chromium.args,
+      executablePath:
+        await chromium.executablePath(),
+      headless: true,
+    });
+
+  try {
+    const page =
+      await browser.newPage({
+        viewport: {
+          width: 794,
+          height: 1123,
+        },
+        deviceScaleFactor: 1,
+      });
+
+    await page.setContent(
+      buildSchoolPdfHtml(data),
+      {
+        waitUntil: "networkidle",
+      }
+    );
+
+    await page.emulateMedia({
+      media: "screen",
+    });
+
+    const pdfBuffer =
+      await page.pdf({
+        format: "A4",
+        printBackground: true,
+        preferCSSPageSize: true,
+
+        margin: {
+          top: "0",
+          right: "0",
+          bottom: "0",
+          left: "0",
+        },
+
+        pageRanges: "1",
+        scale: 1,
+      });
+
+    if (
+      !pdfBuffer ||
+      pdfBuffer.length < 10000
+    ) {
+      throw new Error(
+        "El PDF de la escuela no es válido."
+      );
+    }
+
+    return pdfBuffer;
+
+  } finally {
+    await browser.close();
+  }
+}
+
+// ============================================================
+// FUNCIÓN PÚBLICA
+// ============================================================
+
+export async function sendEstudiaMaltaEscuelaEmail(
+  formData: SchoolData
+) {
+  const data = {
+    ...formData,
+  };
 
   const fullName =
-    String(metadata.fullName || "").trim();
-
-  const whatsapp =
-    String(metadata.whatsapp || "").trim();
+    String(
+      data.fullName ??
+      data.name ??
+      "Cliente"
+    ).trim();
 
   const email =
     String(
-      metadata.email ||
-        session.customer_details?.email ||
-        ""
+      data.email ?? ""
     )
       .trim()
       .toLowerCase();
 
-  if (!email) {
-    console.error(
-      "❌ NO EXISTE EMAIL DEL CLIENTE"
-    );
+  const whatsapp =
+    String(
+      data.whatsapp ?? ""
+    ).trim();
 
-    return res.status(400).json({
-      error: "No customer email found",
-    });
-  }
-
-  // ==========================================================
-  // FORMULARIO
-  // ==========================================================
-
-  const dateOfBirth =
-    valueOrNull(metadata.dateOfBirth);
-
-  const placeOfBirth =
-    valueOrNull(metadata.placeOfBirth);
-
-  const nationality =
-    valueOrNull(metadata.nationality);
-
-  const passportNumber =
-    valueOrNull(metadata.passportNumber);
-
-  const passportExpiry =
-    valueOrNull(metadata.passportExpiry);
-
-  const address =
-    valueOrNull(metadata.address);
-
-  const hasBac =
-    toBoolean(metadata.hasBac);
-
-  const bacYear =
-    valueOrNull(metadata.bacYear);
-
-  const lastDiploma =
-    valueOrNull(metadata.lastDiploma);
-
-  const otherDiplomas =
-    valueOrNull(metadata.otherDiplomas);
-
-  const otherDiplomasDetails =
-    valueOrNull(metadata.otherDiplomasDetails);
-
-  const isWorking =
-    toBoolean(metadata.isWorking);
-
-  const company =
-    valueOrNull(metadata.company);
-
-  const jobTitle =
-    valueOrNull(metadata.jobTitle);
-
-  const isStudent =
-    toBoolean(metadata.isStudent);
-
-  const hasFinancialSponsor =
-    toBoolean(metadata.hasFinancialSponsor);
-
-  const sponsorName =
-    valueOrNull(metadata.sponsorName);
-
-  const sponsorRelation =
-    valueOrNull(metadata.sponsorRelation);
-
-  const sponsorProfession =
-    valueOrNull(metadata.sponsorProfession);
-
-  const sponsorIncome =
-    valueOrNull(metadata.sponsorIncome);
-
-  const sponsorCountry =
-    valueOrNull(metadata.sponsorCountry);
-
-  const previouslyAppliedVisa =
-    valueOrNull(metadata.previouslyAppliedVisa);
-
-  const previousVisaCountry =
-    valueOrNull(metadata.previousVisaCountry);
-
-  const previousVisaType =
-    valueOrNull(metadata.previousVisaType);
-
-  const previousVisaDate =
-    valueOrNull(metadata.previousVisaDate);
-
-  const visaRefused =
-    toBoolean(metadata.visaRefused);
-
-  const refusalCountry =
-    valueOrNull(metadata.refusalCountry);
-
-  const refusalDate =
-    valueOrNull(metadata.refusalDate);
-
-  const refusalReason =
-    valueOrNull(metadata.refusalReason);
-
-  const previouslyObtainedVisa =
-    valueOrNull(metadata.previouslyObtainedVisa);
-
-  const previousObtainedVisaDetails =
-    valueOrNull(
-      metadata.previousObtainedVisaDetails
-    );
-
-  const termsAccepted =
-    toBoolean(metadata.termsAccepted);
-
-  const pdfUrl =
-    String(metadata.pdfUrl || "").trim();
-
-  // ==========================================================
-  // STRIPE IDS
-  // ==========================================================
-
-  const stripeCustomerId =
-    typeof session.customer === "string"
-      ? session.customer
-      : null;
-
-  const stripePaymentIntentId =
-    typeof session.payment_intent === "string"
-      ? session.payment_intent
-      : null;
-
-  // ==========================================================
-  // DATOS ESCUELA
-  // ==========================================================
-
-  const schoolFormData: Record<string, unknown> = {
-    ...metadata,
-
-    fullName,
-    email,
-    whatsapp,
-
-    stripe_session_id: session.id,
-
-    stripe_customer_id:
-      stripeCustomerId || "",
-
-    stripe_payment_intent:
-      stripePaymentIntentId || "",
-
-    payment_status:
-      session.payment_status,
-
-    amount_total:
-      session.amount_total,
-
-    currency:
-      session.currency,
-  };
-
-  // ==========================================================
-  // SUPABASE
-  // ==========================================================
-
-  let existingApplication:
-    { id: string } | null = null;
-
-  try {
-    const result = await supabase
-      .from("estudiar_malta")
-      .select("id")
-      .eq("stripe_session_id", session.id)
-      .maybeSingle();
-
-    existingApplication =
-      result.data || null;
-
-    if (result.error) {
-      console.error(
-        "❌ ERROR BUSCANDO estudiar_malta:"
-      );
-
-      console.error(
-        JSON.stringify(result.error, null, 2)
-      );
-    }
-  } catch (error) {
-    console.error(
-      "❌ EXCEPCIÓN BUSCANDO SUPABASE:",
-      error
+  if (!fullName) {
+    throw new Error(
+      "No se ha recibido el nombre del cliente."
     );
   }
 
-  let applicationId: string | null = null;
+  console.log(
+    "========================================="
+  );
 
-  let supabaseOperation:
-    | "updated"
-    | "inserted"
-    | "error" = "error";
+  console.log(
+    "🏫 GMAIL ESCUELA — ESTUDIOS MALTA 2027"
+  );
 
-  const databaseData = {
-    full_name: fullName,
-    date_of_birth: dateOfBirth,
-    place_of_birth: placeOfBirth,
-    nationality,
-    passport_number: passportNumber,
-    passport_expiry: passportExpiry,
-    address,
-    whatsapp,
-    email,
+  console.log(
+    "========================================="
+  );
 
-    has_bac: hasBac,
-    bac_year: bacYear,
-    last_diploma: lastDiploma,
-    other_diplomas: otherDiplomas,
-    other_diplomas_details:
-      otherDiplomasDetails,
+  console.log(
+    "Cliente:",
+    fullName
+  );
 
-    is_working: isWorking,
-    company,
-    job_title: jobTitle,
-    is_student: isStudent,
+  console.log(
+    "Email cliente:",
+    email
+  );
 
-    has_financial_sponsor:
-      hasFinancialSponsor,
+  console.log(
+    "WhatsApp:",
+    whatsapp
+  );
 
-    sponsor_name: sponsorName,
-    sponsor_relation: sponsorRelation,
-    sponsor_profession: sponsorProfession,
-    sponsor_income: sponsorIncome,
-    sponsor_country: sponsorCountry,
+  console.log(
+    "Destino escuela:",
+    SCHOOL_EMAIL
+  );
 
-    previously_applied_visa:
-      previouslyAppliedVisa,
-
-    previous_visa_country:
-      previousVisaCountry,
-
-    previous_visa_type:
-      previousVisaType,
-
-    previous_visa_date:
-      previousVisaDate,
-
-    visa_refused: visaRefused,
-
-    refusal_country: refusalCountry,
-    refusal_date: refusalDate,
-    refusal_reason: refusalReason,
-
-    previously_obtained_visa:
-      previouslyObtainedVisa,
-
-    previous_obtained_visa_details:
-      previousObtainedVisaDetails,
-
-    terms_accepted: termsAccepted,
-
-    paid: true,
-
-    stripe_session_id:
-      session.id,
-
-    stripe_customer_id:
-      stripeCustomerId,
-
-    status: "paid",
-
-    updated_at:
-      new Date().toISOString(),
-  };
+  console.log(
+    "Campos:",
+    getRows(data).length
+  );
 
   // ==========================================================
-  // UPDATE
+  // PDF
   // ==========================================================
 
-  if (existingApplication) {
-    applicationId =
-      existingApplication.id;
-
-    console.log(
-      "🔄 REGISTRO EXISTENTE:",
-      applicationId
+  const pdfBuffer =
+    await createSchoolOnePagePdf(
+      data
     );
 
-    try {
-      const {
-        data,
-        error,
-      } = await supabase
-        .from("estudiar_malta")
-        .update(databaseData)
-        .eq("id", applicationId)
-        .select("id")
-        .single();
-
-      if (error) {
-        console.error(
-          "❌ ERROR UPDATE estudiar_malta:"
-        );
-
-        console.error(
-          JSON.stringify(error, null, 2)
-        );
-      } else {
-        applicationId = data.id;
-        supabaseOperation = "updated";
-
-        console.log(
-          "✅ SUPABASE UPDATE OK"
-        );
-      }
-    } catch (error) {
-      console.error(
-        "❌ EXCEPCIÓN UPDATE SUPABASE:",
-        error
-      );
-    }
-  }
+  const pdfFileName =
+    `GestoriaCitaIA-Estudios-Malta-2027-ESCUELA-${cleanFileName(fullName)}.pdf`;
 
   // ==========================================================
-  // INSERT
+  // GMAIL SMTP
   // ==========================================================
 
-  else {
-    console.log(
-      "🆕 NO EXISTE REGISTRO"
-    );
+  const transporter =
+    nodemailer.createTransport({
+      host: "smtp.gmail.com",
+      port: 587,
+      secure: false,
+      requireTLS: true,
 
-    try {
-      const {
-        data,
-        error,
-      } = await supabase
-        .from("estudiar_malta")
-        .insert({
-          ...databaseData,
+      auth: {
+        user:
+          process.env.GMAIL_USER,
 
-          created_at:
-            new Date().toISOString(),
-        })
-        .select("id")
-        .single();
+        pass:
+          process.env.GMAIL_PASS,
+      },
 
-      if (error) {
-        console.error(
-          "❌ ERROR INSERT estudiar_malta:"
-        );
-
-        console.error(
-          JSON.stringify(error, null, 2)
-        );
-      } else {
-        applicationId = data.id;
-        supabaseOperation = "inserted";
-
-        console.log(
-          "✅ SUPABASE INSERT OK"
-        );
-      }
-    } catch (error) {
-      console.error(
-        "❌ EXCEPCIÓN INSERT SUPABASE:",
-        error
-      );
-    }
-  }
-
-  // ==========================================================
-  // EMAIL CLIENTE
-  // ==========================================================
-
-  let clientEmailSent = false;
-
-  try {
-    console.log(
-      "📧 ENVIANDO EMAIL AL CLIENTE..."
-    );
-
-    await sendWelcomeEmail({
-      email,
-      name: fullName,
-      whatsapp,
-      dateOfBirth:
-        dateOfBirth || "",
-      nationality:
-        nationality || "",
-      passportNumber:
-        passportNumber || "",
-      pdfUrl,
+      connectionTimeout: 15000,
+      greetingTimeout: 15000,
+      socketTimeout: 20000,
     });
 
-    clientEmailSent = true;
-
-    console.log(
-      "✅ EMAIL CLIENTE ENVIADO"
-    );
-
-    console.log(
-      "📧 Destino:",
-      email
-    );
-  } catch (emailError) {
-    console.error(
-      "❌ ERROR EMAIL CLIENTE:"
-    );
-
-    console.error(emailError);
-  }
+  await transporter.verify();
 
   // ==========================================================
-  // EMAIL ESCUELA
+  // ENVIAR
   // ==========================================================
 
-  let schoolEmailSent = false;
+  const info =
+    await transporter.sendMail({
+      from:
+        `"GestoriaCitaIA" <${process.env.GMAIL_USER}>`,
 
-  try {
-    console.log(
-      "🏫 ENVIANDO EMAIL A ESCUELA..."
-    );
+      to: SCHOOL_EMAIL,
 
-    const schoolResult =
-      await sendEstudiaMaltaEscuelaEmail(
-        schoolFormData
-      );
+      subject:
+        `🇲🇹 Nueva solicitud Estudios Malta 2027 · ${fullName}`,
 
-    schoolEmailSent = true;
+      html:
+        buildSchoolEmailHtml(data),
 
-    console.log(
-      "✅ EMAIL ESCUELA ENVIADO"
-    );
+      attachments: [
+        {
+          filename:
+            pdfFileName,
 
-    console.log(
-      "🏫 Destino:",
-      schoolResult.schoolEmail
-    );
+          content:
+            pdfBuffer,
 
-    console.log(
-      "📄 PDF:",
-      schoolResult.pdfFileName
-    );
-  } catch (schoolEmailError) {
-    console.error(
-      "❌ ERROR EMAIL ESCUELA:"
-    );
+          contentType:
+            "application/pdf",
 
-    console.error(
-      schoolEmailError
-    );
-  }
-
-  // ==========================================================
-  // FINAL
-  // ==========================================================
+          contentDisposition:
+            "attachment",
+        },
+      ],
+    });
 
   console.log(
-    "=================================================="
+    "✅ EMAIL ESCUELA + PDF ENVIADOS"
   );
 
   console.log(
-    "🇲🇹 ESTUDIAR MALTA 2027 FINALIZADO"
+    "Message ID:",
+    info.messageId
   );
 
   console.log(
-    "💰 Pago:",
-    session.payment_status
+    "Destino:",
+    SCHOOL_EMAIL
   );
 
   console.log(
-    "💾 Supabase:",
-    supabaseOperation
+    "PDF: 1 página A4"
   );
 
   console.log(
-    "🆔 Application ID:",
-    applicationId
+    "========================================="
   );
 
-  console.log(
-    "📧 Cliente:",
-    clientEmailSent
-      ? "ENVIADO"
-      : "ERROR"
-  );
+  return {
+    messageId:
+      info.messageId,
 
-  console.log(
-    "🏫 Escuela:",
-    schoolEmailSent
-      ? "ENVIADO"
-      : "ERROR"
-  );
+    schoolEmail:
+      SCHOOL_EMAIL,
 
-  console.log(
-    "=================================================="
-  );
+    pdfFileName,
 
-  return res.status(200).json({
-    received: true,
-    service: "study_malta_2027",
-    paid: true,
-    supabaseOperation,
-    applicationId,
-    clientEmailSent,
-    schoolEmailSent,
-    email,
-    name: fullName,
-    sessionId: session.id,
-  });
-}
+    pdfPages: 1,
 
-// ============================================================
-// RAW BODY
-// ============================================================
-
-async function getRawBody(
-  req: VercelRequest
-): Promise<string> {
-  return new Promise(
-    (resolve, reject) => {
-      let body = "";
-
-      req.on(
-        "data",
-        (chunk: Buffer) => {
-          body += chunk.toString();
-        }
-      );
-
-      req.on(
-        "end",
-        () => {
-          resolve(body);
-        }
-      );
-
-      req.on(
-        "error",
-        (error) => {
-          reject(error);
-        }
-      );
-    }
-  );
+    fields:
+      getRows(data).length,
+  };
 }
