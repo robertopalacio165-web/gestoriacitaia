@@ -56,18 +56,33 @@ function Router() {
         component={TrabajoMalta}
       />
 
-      {/* ESTUDIAR EN MALTA 2027 */}
+      {/* ESTUDIAR EN MALTA 2027 - RUTA PRINCIPAL */}
       <Route
         path="/estudiar-en-malta-2027"
         component={EstudiarMalta2027}
       />
 
+      {/* ESTUDIAR EN MALTA 2027 - RETORNO DESPUÉS DE STRIPE */}
+      <Route
+        path="/estudiar-malta-2027"
+        component={EstudiarMalta2027}
+      />
+
       {/* PÁGINAS LEGALES */}
-      <Route path="/aviso-legal" component={AvisoLegal} />
+      <Route
+        path="/aviso-legal"
+        component={AvisoLegal}
+      />
 
-      <Route path="/privacidad" component={Privacidad} />
+      <Route
+        path="/privacidad"
+        component={Privacidad}
+      />
 
-      <Route path="/cookies" component={CookiesPage} />
+      <Route
+        path="/cookies"
+        component={CookiesPage}
+      />
 
       {/* CONTACTO */}
       <Route
