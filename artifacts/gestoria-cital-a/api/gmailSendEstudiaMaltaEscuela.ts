@@ -6,7 +6,7 @@ type SchoolData = Record<string, unknown>;
 
 const SCHOOL_EMAIL =
   process.env.ESTUDIA_MALTA_SCHOOL_EMAIL ||
-  "student.malte@outlook.com";
+  "gestoriacitaia@gmail.com";
 
 const LOGO_URL =
   process.env.GESTORIA_LOGO_URL ||
