@@ -246,33 +246,136 @@ export default async function handler(
       )
   );
 
-  // ==========================================
-  // ACTUALIZAR SUPABASE
-  // ==========================================
+// ==========================================
+// GUARDAR / ACTUALIZAR SUPABASE
+// ==========================================
 
-  const {
-    data: updatedApplication,
-    error: updateError,
-  } = await supabase
+const applicationData = {
+  full_name: metadata.fullName || "",
+  date_of_birth: metadata.dateOfBirth || "",
+  place_of_birth: metadata.placeOfBirth || "",
+  nationality: metadata.nationality || "",
+  passport_number: metadata.passportNumber || "",
+  passport_expiry: metadata.passportExpiry || "",
+  address: metadata.address || "",
+  whatsapp: metadata.whatsapp || "",
+  email: email.toLowerCase().trim(),
+
+  has_bac: metadata.hasBac || "",
+  bac_year: metadata.bacYear || "",
+  last_diploma: metadata.lastDiploma || "",
+  other_diplomas: metadata.otherDiplomas || "",
+  other_diplomas_details:
+    metadata.otherDiplomasDetails || "",
+
+  is_working: metadata.isWorking || "",
+  company: metadata.company || "",
+  job_title: metadata.jobTitle || "",
+  is_student: metadata.isStudent || "",
+
+  has_financial_sponsor:
+    metadata.hasFinancialSponsor || "",
+  sponsor_name: metadata.sponsorName || "",
+  sponsor_relation: metadata.sponsorRelation || "",
+  sponsor_profession: metadata.sponsorProfession || "",
+  sponsor_income: metadata.sponsorIncome || "",
+  sponsor_country: metadata.sponsorCountry || "",
+
+  previously_applied_visa:
+    metadata.previouslyAppliedVisa || "",
+  previous_visa_country:
+    metadata.previousVisaCountry || "",
+  previous_visa_type:
+    metadata.previousVisaType || "",
+  previous_visa_date:
+    metadata.previousVisaDate || "",
+
+  visa_refused:
+    metadata.visaRefused || "",
+  refusal_country:
+    metadata.refusalCountry || "",
+  refusal_date:
+    metadata.refusalDate || "",
+  refusal_reason:
+    metadata.refusalReason || "",
+
+  previously_obtained_visa:
+    metadata.previouslyObtainedVisa || "",
+  previous_obtained_visa_details:
+    metadata.previousObtainedVisaDetails || "",
+
+  paid: true,
+  stripe_session_id: session.id,
+
+  stripe_customer_id:
+    typeof session.customer === "string"
+      ? session.customer
+      : null,
+
+  status: "paid",
+
+  updated_at:
+    new Date().toISOString(),
+};
+
+// Primero buscamos si ya existe
+const {
+  data: existingApplication,
+  error: findError,
+} = await supabase
+  .from("estudiar_malta")
+  .select("id")
+  .eq("stripe_session_id", session.id)
+  .maybeSingle();
+
+let savedApplication = null;
+let saveError = findError;
+
+if (!findError && existingApplication) {
+
+  // EXISTE → UPDATE
+  const result = await supabase
     .from("estudiar_malta")
-    .update({
-      paid: true,
-      status: "paid",
-
-      stripe_customer_id:
-        typeof session.customer === "string"
-          ? session.customer
-          : null,
-
-      updated_at:
-        new Date().toISOString(),
-    })
-    .eq(
-      "stripe_session_id",
-      session.id
-    )
+    .update(applicationData)
+    .eq("id", existingApplication.id)
     .select("id")
-    .maybeSingle();
+    .single();
+
+  savedApplication = result.data;
+  saveError = result.error;
+
+  console.log(
+    "✅ Solicitud ACTUALIZADA en Supabase:",
+    savedApplication?.id
+  );
+
+} else if (!findError && !existingApplication) {
+
+  // NO EXISTE → INSERT
+  const result = await supabase
+    .from("estudiar_malta")
+    .insert(applicationData)
+    .select("id")
+    .single();
+
+  savedApplication = result.data;
+  saveError = result.error;
+
+  console.log(
+    "✅ Solicitud CREADA en Supabase:",
+    savedApplication?.id
+  );
+}
+
+if (saveError) {
+  console.error(
+    "❌ ERROR GUARDANDO estudiar_malta:",
+    saveError
+  );
+}
+
+const updateError = saveError;
+const updatedApplication = savedApplication;
 
   if (updateError) {
     console.error(
