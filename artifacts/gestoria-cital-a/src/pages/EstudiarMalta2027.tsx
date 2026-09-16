@@ -157,25 +157,25 @@ export default function EstudiarMalta2027() {
   ) => (isMa ? ma : isEn ? en : es);
 
   const validate = () => {
-    const required: Array<keyof StudyMaltaFormData> = [
-      "fullName",
-      "dateOfBirth",
-      "placeOfBirth",
-      "nationality",
-      "passportNumber",
-      "passportExpiry",
-      "address",
-      "whatsapp",
-      "email",
-      "hasBac",
-      "lastDiploma",
-      "isWorking",
-      "isStudent",
-      "hasFinancialSponsor",
-      "previouslyAppliedVisa",
-      "visaRefused",
-      "previouslyObtainedVisa",
-    ];
+   const required: Array<keyof StudyMaltaFormData> = [
+  "fullName",
+  "dateOfBirth",
+  "placeOfBirth",
+  "nationality",
+  "passportNumber",
+  "passportExpiry",
+  "address",
+  "whatsapp",
+  "email",
+  "hasBac",
+  "lastDiploma",
+  "isWorking",
+  "isStudent",
+  "hasFinancialSponsor",
+  "previouslyAppliedVisa",
+  "visaRefused",
+  "previouslyObtainedVisa",
+];
 
     for (const field of required) {
       if (!String(formData[field]).trim()) {
@@ -225,37 +225,6 @@ export default function EstudiarMalta2027() {
       return false;
     }
 
-    const age = Math.floor(
-      (Date.now() -
-        new Date(formData.dateOfBirth).getTime()) /
-        31557600000
-    );
-
-    if (age < 18 || age > 30) {
-      setErrorField("dateOfBirth");
-
-      refs.current.dateOfBirth?.scrollIntoView({
-        behavior: "smooth",
-        block: "center",
-      });
-
-      toast({
-        title: text(
-          "Edad no válida",
-          "Age not eligible",
-          "السن ما مناسبش"
-        ),
-        description: text(
-          "El servicio está dirigido a personas de 18 a 30 años.",
-          "This service is for applicants aged 18 to 30.",
-          "هاد الخدمة موجهة للي بين 18 و30 عام."
-        ),
-        variant: "destructive",
-      });
-
-      return false;
-    }
-
     if (!acceptTerms) {
       setErrorField("terms");
 
@@ -285,8 +254,7 @@ export default function EstudiarMalta2027() {
     setSubmitting(true);
 
     try {
-      const email =
-        formData.email?.trim().toLowerCase() || "";
+      const email = formData.email?.trim().toLowerCase() || "";
 
       const payload = {
         service: "study_malta_2027",
@@ -296,31 +264,23 @@ export default function EstudiarMalta2027() {
       };
 
       // FLUJO NORMAL: TODOS los usuarios pasan por Stripe.
-      const res = await fetch(
-        "/api/create-checkout-study-malta",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(payload),
-        }
-      );
+      const res = await fetch("/api/create-checkout-study-malta", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
 
       const data = await res.json();
 
       if (!res.ok || !data.url) {
-        throw new Error(
-          data.error || "Payment URL not received"
-        );
+        throw new Error(data.error || "Payment URL not received");
       }
 
       window.location.href = data.url;
     } catch (error: any) {
-      console.error(
-        "❌ Error Estudios Malta:",
-        error
-      );
+      console.error("❌ Error Estudios Malta:", error);
 
       toast({
         title: text(
@@ -328,13 +288,11 @@ export default function EstudiarMalta2027() {
           "Error",
           "خطأ"
         ),
-        description:
-          error?.message ||
-          text(
-            "No se pudo procesar la solicitud.",
-            "The request could not be processed.",
-            "ما قدرناش نعالجو الطلب ديالك."
-          ),
+        description: error?.message || text(
+          "No se pudo procesar la solicitud.",
+          "The request could not be processed.",
+          "ما قدرناش نعالجو الطلب ديالك."
+        ),
         variant: "destructive",
       });
     } finally {
@@ -358,6 +316,8 @@ export default function EstudiarMalta2027() {
     }
   }, []);
 
+  // IMPORTANTE: Field queda estable entre renders para que el teclado
+  // del móvil no pierda el foco mientras el usuario escribe.
   const Field = useMemo(
     () =>
       ({
@@ -414,11 +374,7 @@ export default function EstudiarMalta2027() {
       }`}
     >
       <option value="">
-        {text(
-          "Selecciona",
-          "Select",
-          "اختار"
-        )}
+        {text("Selecciona", "Select", "اختار")}
       </option>
 
       {options.map(([v, l]) => (
@@ -458,12 +414,13 @@ export default function EstudiarMalta2027() {
 
         <div className="max-w-5xl mx-auto px-4 sm:px-6">
 
+          {/* FOTO SIN TEXTO ENCIMA */}
           <div className="relative rounded-2xl overflow-hidden border border-primary/20 shadow-[0_0_30px_-5px_hsl(var(--primary)/0.25)] bg-black h-[250px] sm:h-[330px] mb-5">
-            <img
-              src="/images/malta-estudiar-2027.png"
-              alt="Study in Malta 2027"
-              className="w-full h-full object-cover"
-            />
+      <img
+ src="/images/malta-estudiar-2027.png"
+  alt="Study in Malta 2027"
+  className="w-full h-full object-cover"
+/>
           </div>
 
           {paid ? (
@@ -488,6 +445,7 @@ export default function EstudiarMalta2027() {
 
             <div className="rounded-[24px] border-2 border-yellow-500/60 bg-gradient-to-b from-[#0b0b0b] to-[#050505] p-4 sm:p-6 shadow-[0_0_35px_rgba(255,200,0,0.14)]">
 
+              {/* TÍTULO + BANDERA DE MALTA */}
               <div className="flex items-center justify-between gap-3 mb-5">
 
                 <h2 className="text-yellow-400 text-xl sm:text-2xl font-black">
@@ -541,10 +499,7 @@ export default function EstudiarMalta2027() {
                     type="date"
                     value={formData.dateOfBirth}
                     onChange={(e) =>
-                      set(
-                        "dateOfBirth",
-                        e.target.value
-                      )
+                      set("dateOfBirth", e.target.value)
                     }
                     className={`w-full h-[52px] rounded-2xl border bg-[#060b16] px-4 text-white [color-scheme:dark] ${
                       errorField === "dateOfBirth"
@@ -703,9 +658,7 @@ export default function EstudiarMalta2027() {
                         "كتب الدبلومات"
                       )}
                     >
-                      {input(
-                        "otherDiplomasDetails"
-                      )}
+                      {input("otherDiplomasDetails")}
                     </Field>
                   </div>
                 )}
@@ -987,6 +940,8 @@ export default function EstudiarMalta2027() {
                   </div>
                 )}
 
+            
+
                 <div
                   className={`lg:col-span-2 mt-5 rounded-2xl border p-4 ${
                     errorField === "terms"
@@ -1041,9 +996,7 @@ export default function EstudiarMalta2027() {
                     type="button"
                     onClick={startPayment}
                     className="w-full min-h-[58px] mt-4 rounded-2xl bg-gradient-to-r from-yellow-400 via-yellow-500 to-amber-500 text-black font-black text-base shadow-[0_0_30px_rgba(255,215,0,.30)] hover:scale-[1.01] transition disabled:opacity-50"
-                    disabled={
-                      !acceptTerms || submitting
-                    }
+                    disabled={!acceptTerms || submitting}
                   >
                     {submitting
                       ? text(
@@ -1069,6 +1022,7 @@ export default function EstudiarMalta2027() {
           )}
         </div>
       </main>
+
     </div>
   );
 }
