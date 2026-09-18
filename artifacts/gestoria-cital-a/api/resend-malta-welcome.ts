@@ -610,16 +610,11 @@ export default async function handler(
      * Procesamiento secuencial.
      * Máximo 10 por ejecución.
      */
-    for (const item of queue) {
-      const result = await processOne(
-        item,
-        transporter
-      );
+const batchResults = await Promise.all(
+  queue.map((item) => processOne(item, transporter))
+);
 
-      results.push(result);
-
-      await sleep(1500);
-    }
+results.push(...batchResults);
 
     const sent = results.filter(
       (r) => r.sent
