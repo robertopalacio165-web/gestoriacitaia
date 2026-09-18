@@ -117,7 +117,9 @@ payment_intent_data: {
         `${process.env.NEXT_PUBLIC_URL}/trabajo-malta?canceled=true`,
 
       // 5. Metadata
-      metadata: {
+    metadata: {
+  service: "malta",
+  fullName: fullName?.trim() || "",
         fullName: fullName?.trim() || "",
         whatsapp: whatsapp?.trim() || "",
         email: email?.trim().toLowerCase() || "",
