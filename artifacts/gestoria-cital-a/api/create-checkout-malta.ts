@@ -55,7 +55,7 @@ export default async function handler(
     } = body;
 
     // 3. Determinar precio según el plan
-const unitAmount = plan === "weekly" ? 999 : 1999;
+const unitAmount = 50;
 
     const planName =
       plan === "weekly"
