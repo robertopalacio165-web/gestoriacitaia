@@ -940,7 +940,59 @@ export default function EstudiarMalta2027() {
                   </div>
                 )}
 
-            
+            {/* =========================================================
+    AVISO IMPORTANTE — MATRÍCULA Y VISADO
+   ========================================================= */}
+
+<div className="lg:col-span-2 mt-5 rounded-2xl border-2 border-yellow-500/70 bg-yellow-500/10 p-5 shadow-[0_0_25px_rgba(255,200,0,0.12)]">
+  <div className="flex items-start gap-3">
+    <div className="text-2xl shrink-0">
+      ⚠️
+    </div>
+
+    <div className="text-white text-sm leading-relaxed">
+      <h3 className="text-yellow-400 font-black text-lg mb-3">
+        {text(
+          "⚠️ INFORMACIÓN MUY IMPORTANTE ANTES DE CONTINUAR",
+          "⚠️ VERY IMPORTANT INFORMATION BEFORE CONTINUING",
+          "⚠️ معلومات مهمة بزاف قبل ما تكمل"
+        )}
+      </h3>
+
+      <p className="mb-3">
+        {text(
+          "Para estudiar en Malta, debes tener en cuenta que la matrícula puede requerir un pago inicial de aproximadamente el 30% del importe de la matrícula, dependiendo del centro educativo y del curso.",
+          "To study in Malta, you should be aware that the school may require an initial payment of approximately 30% of the tuition fee, depending on the educational institution and the course.",
+          "باش تقرا ف مالطا، خاصك تعرف بلي المؤسسة التعليمية ممكن تطلب منك تخلص دفعة أولى تقريباً 30% من ثمن التسجيل، وهاد الشي كيختلف حسب المدرسة والكورس."
+        )}
+      </p>
+
+      <p className="mb-3">
+        {text(
+          "Los gastos y tasas relacionados con el visado dependen del procedimiento aplicable. La concesión del visado no está garantizada.",
+          "Visa-related fees and costs depend on the applicable procedure. Visa approval is not guaranteed.",
+          "مصاريف وتكاليف الفيزا كيعتمدو على المسطرة اللي غادي تطبق. الحصول على الفيزا ماشي مضمون."
+        )}
+      </p>
+
+      <p className="mb-3">
+        {text(
+          "Antes de realizar cualquier pago relacionado con el visado, debes comprobar las condiciones de devolución aplicables con el consulado correspondiente.",
+          "Before making any payment related to the visa, you should check the applicable refund conditions with the relevant consulate.",
+          "قبل ما تخلص أي مصاريف مرتبطة بالفيزا، خاصك تتأكد من شروط الاسترجاع المطبقة مع القنصلية المختصة."
+        )}
+      </p>
+
+      <p className="text-yellow-300 font-bold">
+        {text(
+          "Gracias por leer esta información antes de continuar.",
+          "Thank you for reading this information before continuing.",
+          "شكراً حيث قريتي هاد المعلومات قبل ما تكمل."
+        )}
+      </p>
+    </div>
+  </div>
+</div>
 
                 <div
                   className={`lg:col-span-2 mt-5 rounded-2xl border p-4 ${
