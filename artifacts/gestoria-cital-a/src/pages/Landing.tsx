@@ -462,13 +462,13 @@ export default function Landing() {
           transition={{ duration: 0.6 }}
           className="mb-8"
         >
-          <div className="relative rounded-2xl overflow-hidden glass-panel aspect-video max-w-3xl mx-auto border border-white/10 shadow-2xl shadow-primary/10">
-            <img
-              src="/video12-thumb.png"
-              alt="GestoriaCitaIA"
-              className="w-full h-full object-cover"
-            />
-          </div>
+      <div className="relative rounded-2xl overflow-hidden glass-panel aspect-video max-w-2xl mx-auto border border-white/10 shadow-2xl shadow-primary/10">
+  <img
+    src="/video12-thumb.png"
+    alt="GestoriaCitaIA"
+    className="w-full h-full object-cover"
+  />
+</div>
         </motion.div>
 
         {/* =====================================================
