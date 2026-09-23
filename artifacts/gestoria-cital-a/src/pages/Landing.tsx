@@ -226,6 +226,14 @@ export default function Landing() {
     liveTexts[liveLanguage as keyof typeof liveTexts] ||
     liveTexts.es;
 
+  /* 🇮🇹 TEXTO DEL BOTÓN DECRETO FLUSSI — 3 IDIOMAS */
+  const flussiButtonText =
+    liveLanguage === "darija"
+      ? "ديكريتو فلوسي 2027"
+      : liveLanguage === "en"
+        ? "DECRETO FLUSSI 2027"
+        : "DECRETO FLUSSI 2027";
+
   /* ============================================================ */
 
   const tr = (key: string, fallback: string) => {
@@ -335,7 +343,7 @@ export default function Landing() {
               }
             >
               <span className="mr-2 text-2xl">🇮🇹</span>
-              DECRETO FLUSSI 2027
+              {flussiButtonText}
               <ArrowRight className="w-5 h-5 ml-2" />
             </Button>
 
