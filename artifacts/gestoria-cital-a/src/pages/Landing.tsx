@@ -318,7 +318,28 @@ export default function Landing() {
           </p>
 
           <div className="flex flex-col sm:flex-row flex-wrap justify-center items-stretch gap-3 mb-5 max-w-2xl mx-auto">
-            {/* ✅ BOTÓN SARA */}
+
+            {/* 🇮🇹 BOTÓN PRINCIPAL — DECRETO FLUSSI 2027 */}
+            <Button
+              className="w-full sm:w-auto rounded-full px-8 py-4 min-h-[62px]
+              bg-gradient-to-r from-green-600 via-white to-red-600
+              hover:scale-[1.04]
+              hover:shadow-[0_0_35px_rgba(255,255,255,0.35)]
+              transition-all duration-300
+              text-black text-lg sm:text-xl font-black
+              shadow-[0_0_25px_rgba(34,197,94,0.35)]
+              border-2 border-white/40
+              tracking-wide"
+              onClick={() =>
+                (window.location.href = "/decreto-flussi-2027")
+              }
+            >
+              <span className="mr-2 text-2xl">🇮🇹</span>
+              DECRETO FLUSSI 2027
+              <ArrowRight className="w-5 h-5 ml-2" />
+            </Button>
+
+            {/* 🔵 BOTÓN SARA */}
             <Button
               className="w-full sm:w-auto rounded-full px-7 py-3 shadow-lg shadow-blue-500/30 bg-blue-600 hover:bg-blue-500 text-white text-base font-bold border-0 min-h-[52px]"
               onClick={() =>
@@ -345,7 +366,7 @@ export default function Landing() {
               <ArrowRight className="w-4 h-4 ml-1" />
             </Button>
 
-            {/* ✅ BOTÓN TRABAJO EN MALTA */}
+            {/* 🇲🇹 BOTÓN TRABAJO EN MALTA */}
             <Button
               className="w-full sm:w-auto rounded-full px-8 py-4 min-h-[60px]
               bg-gradient-to-r from-green-500 via-emerald-500 to-green-600
