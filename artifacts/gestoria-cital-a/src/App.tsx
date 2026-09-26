@@ -9,15 +9,21 @@ import Landing from "@/pages/Landing";
 import Panel from "@/pages/Panel";
 import BuscarCitas from "@/pages/BuscarCitas";
 import VerificarDecretoFlussi from "@/pages/VerificarDecretoFlussi";
+import DecretoFlussi2027 from "@/pages/DecretoFlussi2027";
+
 import AvisoLegal from "@/pages/AvisoLegal";
 import Privacidad from "@/pages/Privacidad";
 import CookiesPage from "@/pages/Cookies";
+
 import CheckoutSuccess from "@/pages/CheckoutSuccess";
 import CheckoutCancel from "@/pages/CheckoutCancel";
+
 import AuthCallback from "@/pages/AuthCallback";
 import Confirmar from "@/pages/Confirmar";
+
 import TrabajoMalta from "@/pages/TrabajoMalta";
 import EstudiarMalta2027 from "@/pages/EstudiarMalta2027";
+
 import Contacto from "@/pages/Contacto";
 
 const queryClient = new QueryClient({
@@ -32,43 +38,104 @@ const queryClient = new QueryClient({
 function Router() {
   return (
     <Switch>
+
+      {/* ======================================== */}
       {/* LANDING */}
-      <Route path="/" component={Landing} />
+      {/* ======================================== */}
 
+      <Route
+        path="/"
+        component={Landing}
+      />
+
+
+      {/* ======================================== */}
       {/* AUTENTICACIÓN */}
-      <Route path="/auth/callback" component={AuthCallback} />
+      {/* ======================================== */}
 
+      <Route
+        path="/auth/callback"
+        component={AuthCallback}
+      />
+
+
+      {/* ======================================== */}
       {/* PANEL */}
-      <Route path="/panel" component={Panel} />
+      {/* ======================================== */}
 
+      <Route
+        path="/panel"
+        component={Panel}
+      />
+
+
+      {/* ======================================== */}
       {/* CITAS */}
-      <Route path="/buscar-citas" component={BuscarCitas} />
+      {/* ======================================== */}
 
-      {/* DECRETO FLUSSI */}
+      <Route
+        path="/buscar-citas"
+        component={BuscarCitas}
+      />
+
+
+      {/* ======================================== */}
+      {/* DECRETO FLUSSI - VERIFICACIÓN */}
+      {/* ======================================== */}
+
       <Route
         path="/verificar-decreto-flussi"
         component={VerificarDecretoFlussi}
       />
 
+
+      {/* ======================================== */}
+      {/* DECRETO FLUSSI 2027 */}
+      {/* NUEVA PÁGINA */}
+      {/* ======================================== */}
+
+      <Route
+        path="/decreto-flussi-2027"
+        component={DecretoFlussi2027}
+      />
+
+
+      {/* ======================================== */}
       {/* TRABAJO EN MALTA */}
+      {/* ======================================== */}
+
       <Route
         path="/trabajo-malta"
         component={TrabajoMalta}
       />
 
-      {/* ESTUDIAR EN MALTA 2027 - RUTA PRINCIPAL */}
+
+      {/* ======================================== */}
+      {/* ESTUDIAR EN MALTA 2027 */}
+      {/* RUTA PRINCIPAL */}
+      {/* ======================================== */}
+
       <Route
         path="/estudiar-en-malta-2027"
         component={EstudiarMalta2027}
       />
 
-      {/* ESTUDIAR EN MALTA 2027 - RETORNO DESPUÉS DE STRIPE */}
+
+      {/* ======================================== */}
+      {/* ESTUDIAR EN MALTA 2027 */}
+      {/* RETORNO DESPUÉS DE STRIPE */}
+      {/* ======================================== */}
+
       <Route
         path="/estudiar-malta-2027"
         component={EstudiarMalta2027}
       />
 
+
+      {/* ======================================== */}
       {/* PÁGINAS LEGALES */}
+      {/* ======================================== */}
+
       <Route
         path="/aviso-legal"
         component={AvisoLegal}
@@ -84,13 +151,21 @@ function Router() {
         component={CookiesPage}
       />
 
+
+      {/* ======================================== */}
       {/* CONTACTO */}
+      {/* ======================================== */}
+
       <Route
         path="/contacto"
         component={Contacto}
       />
 
+
+      {/* ======================================== */}
       {/* CHECKOUT */}
+      {/* ======================================== */}
+
       <Route
         path="/checkout/success"
         component={CheckoutSuccess}
@@ -101,34 +176,59 @@ function Router() {
         component={CheckoutCancel}
       />
 
+
+      {/* ======================================== */}
       {/* CONFIRMAR CITA */}
+      {/* ======================================== */}
+
       <Route
         path="/confirmar-cita"
         component={Confirmar}
       />
 
+
+      {/* ======================================== */}
       {/* 404 */}
-      <Route component={NotFound} />
+      {/* ======================================== */}
+
+      <Route
+        component={NotFound}
+      />
+
     </Switch>
   );
 }
 
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
+
       <LanguageProvider>
-        <div translate="no" className="notranslate">
+
+        <div
+          translate="no"
+          className="notranslate"
+        >
+
           <WouterRouter
             base={import.meta.env.BASE_URL.replace(/\/$/, "")}
           >
+
             <Router />
+
           </WouterRouter>
 
+
           <Toaster />
+
         </div>
+
       </LanguageProvider>
+
     </QueryClientProvider>
   );
 }
+
 
 export default App;
