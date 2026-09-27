@@ -147,13 +147,12 @@ export default function DecretoFlussi2027() {
     workType: isMa ? "نوع الخدمة" : isEn ? "Work type" : "Tipo de trabajo",
     nonSeasonal: isMa ? "خدمة غير موسمية" : isEn ? "Non-seasonal work" : "Trabajo no estacional",
     seasonal: isMa ? "خدمة موسمية" : isEn ? "Seasonal work" : "Trabajo estacional",
-    both: isMa ? "بجوج" : isEn ? "Both" : "Ambos",
     packages: isMa ? "اختار الباكيج ديالك" : isEn ? "Choose your package" : "Elige tu paquete",
     chooseCategory: isMa ? "اختار الفئات" : isEn ? "Choose categories" : "Elige tus categorías",
     categoriesHint: isMa ? "اختار الفئات اللي باغي توصلك عروضها." : isEn ? "Choose the sectors you want to receive offers for." : "Selecciona los sectores de los que quieres recibir ofertas.",
     oneCategory: isMa ? "هاد الباكيج فيه فئة وحدة فقط" : isEn ? "This package allows one category only" : "Este paquete permite una sola categoría",
     seasonalLabel: isMa ? "موسمي" : isEn ? "Seasonal" : "Estacional",
-    terms: isMa ? "كنوافق على شروط الخدمة وسياسة الخصوصية. الخدمة كتقدم معلومات وعروض وما كتضمنش التوظيف أو العقد أو الدخول لإيطاليا." : isEn ? "I accept the terms of service and privacy policy. The service provides information and offers and does not guarantee employment, a contract or entry into Italy." : "Acepto los términos del servicio y la política de privacidad. El servicio proporciona información y ofertas, pero no garantiza empleo, contrato ni entrada en Italia.",
+    terms: isMa ? "كنأكد أنني قريت وفهمت شروط الخدمة وسياسة الخصوصية، وكنوافق على معالجة المعطيات الشخصية اللي قدمت باش يتدبر الطلب ديالي، ويتختارو ليا عروض العمل حسب الاختيارات ديالي، ويتصيفطو ليا العروض عبر القنوات اللي اخترتها خلال مدة الخدمة. المعطيات كتتعالج غير فإطار الأغراض المعلنة ووفق القوانين المعمول بها. الخدمة ما كتضمنش الحصول على عقد عمل، التوظيف أو الدخول لإيطاليا." : isEn ? "I confirm that I have read and understood the Terms of Service and Privacy Policy, and I agree to the processing of the personal data I provide to manage my request, match me with job offers according to my selections, and send me relevant offers through the channels I have chosen during the service period. Personal data will be processed only for the stated purposes and in accordance with applicable law. The service does not guarantee employment, a job contract or entry into Italy." : "Confirmo que he leído y comprendido los Términos del Servicio y la Política de Privacidad, y acepto el tratamiento de los datos personales que facilito para gestionar mi solicitud, seleccionar ofertas de trabajo de acuerdo con mis preferencias y enviarme ofertas relevantes a través de los canales que haya indicado durante el periodo de servicio. Los datos se tratarán únicamente para las finalidades informadas y conforme a la normativa aplicable. El servicio no garantiza la obtención de empleo, contrato de trabajo ni la entrada en Italia.",
     pay: isMa ? "كمل الأداء" : isEn ? "Continue to payment" : "Continuar al pago",
     secure: isMa ? "الأداء آمن. من بعد تأكيد الأداء غادي يتفعل الباكيج." : isEn ? "Secure payment. Your package will activate after payment confirmation." : "Pago seguro. El paquete se activará después de confirmar el pago.",
     loading: isMa ? "جاري تحميل الفئات..." : isEn ? "Loading categories..." : "Cargando categorías...",
@@ -164,6 +163,8 @@ export default function DecretoFlussi2027() {
     missingCategory: isMa ? "اختار على الأقل فئة وحدة." : isEn ? "Select at least one category." : "Selecciona al menos una categoría.",
     oneCategoryError: isMa ? "هاد الباكيج كيسمح بفئة وحدة فقط." : isEn ? "This package allows one category only." : "Este paquete permite una sola categoría.",
     termsRequired: isMa ? "خاصك توافق على الشروط." : isEn ? "You must accept the terms." : "Debes aceptar los términos.",
+    legalTitle: isMa ? "معلومات مهمة حول حماية المعطيات" : isEn ? "Important data protection information" : "Información importante sobre protección de datos",
+    legalBody: isMa ? "المعطيات اللي كتدخل غادي تستعمل لتدبير الخدمة، فلترة عروض العمل حسب الاختيارات ديالك وإرسال العروض ليك بانتظام خلال مدة الباكيج. يمكن استعمال مزودي خدمات تقنيين ضروريين لتقديم الخدمة، وفق سياسة الخصوصية والقوانين المعمول بها. عندك الحقوق اللي كيكفلها القانون بخصوص الولوج للمعطيات، التصحيح، الحذف وغيرها حسب الحالة. الخدمة غير خدمة معلومات وإرسال عروض وما كتضمنش التوظيف أو العقد أو الدخول لإيطاليا.": isEn ? "The data you provide will be used to manage the service, filter job offers according to your selections and send relevant offers regularly during the package period. Necessary technical service providers may process data to deliver the service, in accordance with the Privacy Policy and applicable law. You have the rights provided by law regarding access, rectification, erasure and other applicable rights. This is an information and job-offer service and does not guarantee employment, a contract or entry into Italy." : "Los datos que facilites se utilizarán para gestionar el servicio, filtrar ofertas de trabajo según tus preferencias y enviarte ofertas relevantes de forma periódica durante el periodo del paquete. Podrán intervenir proveedores tecnológicos necesarios para prestar el servicio, de acuerdo con la Política de Privacidad y la normativa aplicable. Puedes ejercer los derechos que reconoce la ley sobre tus datos, como acceso, rectificación, supresión y otros que correspondan. Este servicio es informativo y de envío de ofertas y no garantiza empleo, contrato de trabajo ni entrada en Italia.",
     paymentError: isMa ? "ما قدرناش نبداو الأداء." : isEn ? "Could not start payment." : "No se pudo iniciar el pago.",
     paymentConnecting: isMa ? "جاري تحويلك للأداء..." : isEn ? "Connecting to payment..." : "Conectando con el pago...",
   };
@@ -424,7 +425,6 @@ export default function DecretoFlussi2027() {
                 {[
                   ["non_stagionale", ui.nonSeasonal],
                   ["stagionale", ui.seasonal],
-                  ["entrambi", ui.both],
                 ].map(([value, label]) => (
                   <button key={value} type="button" onClick={() => {
                     updateField("workType", value);
@@ -445,11 +445,7 @@ export default function DecretoFlussi2027() {
               <div className="flex items-center justify-between gap-3 mb-2">
                 <p className="text-white text-[13px] font-semibold">{ui.chooseCategory}</p>
                 <span className="text-[#D4AF37] text-[10px] font-semibold">
-                  {form.workType === "stagionale"
-                    ? ui.seasonalLabel
-                    : form.workType === "non_stagionale"
-                      ? ui.nonSeasonal
-                      : ui.both}
+                  {form.workType === "stagionale" ? ui.seasonalLabel : ui.nonSeasonal}
                 </span>
               </div>
               <p className="text-white/45 text-[10px] mb-3">{ui.categoriesHint}</p>
@@ -562,17 +558,27 @@ export default function DecretoFlussi2027() {
               </div>
             </div>
 
-            <label className="flex items-start gap-3 mb-4 cursor-pointer">
-              <input type="checkbox" checked={acceptTerms} onChange={(e) => setAcceptTerms(e.target.checked)} className="mt-1 w-4 h-4 accent-[#009246]" />
-              <span className="text-white/55 text-[10px] leading-relaxed">
-                Accetto i termini del servizio e l'informativa sulla privacy. Il servizio fornisce informazioni e offerte; non garantisce l'assunzione, il contratto o l'ingresso in Italia.
+            <div className="mb-4 rounded-2xl border border-white/10 bg-[#060b16] p-4">
+              <p className="text-white text-[11px] font-bold mb-2">{ui.legalTitle}</p>
+              <p className="text-white/50 text-[9px] leading-relaxed">{ui.legalBody}</p>
+            </div>
+
+            <label className={`flex items-start gap-3 mb-4 rounded-2xl border p-3 cursor-pointer transition ${acceptTerms ? "border-[#009246]/60 bg-[#009246]/5" : "border-white/10 bg-white/[0.02] hover:border-[#D4AF37]/40"}`}>
+              <input
+                type="checkbox"
+                checked={acceptTerms}
+                onChange={(e) => setAcceptTerms(e.target.checked)}
+                className="mt-1 w-4 h-4 accent-[#009246] shrink-0"
+              />
+              <span className="text-white/70 text-[10px] leading-relaxed">
+                {ui.terms}
               </span>
             </label>
 
-            <button type="button" onClick={handlePay} disabled={submitting}
+            <button type="button" onClick={handlePay} disabled={submitting || !acceptTerms}
               className="w-full h-[56px] rounded-2xl p-[1px] disabled:opacity-60 bg-gradient-to-r from-[#8B6914] via-[#F5D76E] to-[#B8860B] shadow-[0_0_25px_rgba(212,175,55,0.18)]">
               <span className="flex h-full w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-b from-[#17130a] to-[#050505] text-[#F5D76E] font-black">
-                {submitting ? <><Loader2 className="w-5 h-5 animate-spin" /> Connessione al pagamento...</> :
+                {submitting ? <><Loader2 className="w-5 h-5 animate-spin" /> {ui.paymentConnecting}</> :
                   <><CreditCard className="w-5 h-5" /> {ui.pay} · {selectedPackageInfo.price}</>}
               </span>
             </button>
