@@ -347,17 +347,33 @@ export default function Landing() {
               <ArrowRight className="w-5 h-5 ml-2" />
             </Button>
 
-            {/* 🔵 BOTÓN SARA */}
-            <Button
-              className="w-full sm:w-auto rounded-full px-7 py-3 shadow-lg shadow-blue-500/30 bg-blue-600 hover:bg-blue-500 text-white text-base font-bold border-0 min-h-[52px]"
-              onClick={() =>
-                (window.location.href =
-                  "/verificar-decreto-flussi")
-              }
-            >
-              {t("hero_btn_sara")}
-              <ArrowRight className="w-4 h-4 ml-1" />
-            </Button>
+     {/* 🇮🇹 BOTÓN VERIFICACIÓN DE DOCUMENTOS — 3 IDIOMAS */}
+<Button
+  className="
+    w-full sm:w-auto rounded-full px-7 py-3 min-h-[52px]
+    bg-gradient-to-r from-green-600 via-white to-red-600
+    hover:scale-[1.04]
+    hover:shadow-[0_0_30px_rgba(255,255,255,0.30)]
+    transition-all duration-300
+    text-black text-base sm:text-lg font-extrabold
+    shadow-[0_0_25px_rgba(34,197,94,0.30)]
+    border-2 border-white/40
+    tracking-wide
+  "
+  onClick={() =>
+    (window.location.href = "/verificar-decreto-flussi")
+  }
+>
+  <span className="mr-2 text-xl">🇮🇹</span>
+
+  {liveLanguage === "darija"
+    ? "التحقق من الوثائق"
+    : liveLanguage === "en"
+      ? "DOCUMENT VERIFICATION"
+      : "VERIFICAZIONE DI DOCUMENTI"}
+
+  <ArrowRight className="w-4 h-4 ml-2" />
+</Button>
 
             {/* 🇲🇹 BOTÓN ESTUDIAR EN MALTA 2027 */}
             <Button
