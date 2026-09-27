@@ -180,7 +180,7 @@ export default function DecretoFlussi2027() {
     lastName: "",
     email: "",
     phone: "",
-    workType: "non_stagionale",
+    workType: "",
   });
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedPackage, setSelectedPackage] = useState<PackageCode>("monthly");
@@ -209,6 +209,16 @@ export default function DecretoFlussi2027() {
     () => PACKAGE_INFO.find((item) => item.code === selectedPackage)!,
     [selectedPackage],
   );
+
+  const visibleCategories = useMemo(() => {
+    if (form.workType === "stagionale") {
+      return categories.filter((category) => category.is_seasonal);
+    }
+    if (form.workType === "non_stagionale") {
+      return categories.filter((category) => !category.is_seasonal);
+    }
+    return categories;
+  }, [categories, form.workType]);
 
   const updateField = (field: keyof typeof form, value: string) =>
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -242,6 +252,10 @@ export default function DecretoFlussi2027() {
     const digits = form.phone.replace(/\D/g, "");
     if (digits.length < 8 || digits.length > 15) {
       toast({ title: "Numero non valido", description: "Inserisci un numero di telefono valido.", variant: "destructive" });
+      return false;
+    }
+    if (!form.workType) {
+      toast({ title: "Tipo di lavoro mancante", description: "Seleziona il tipo di lavoro.", variant: "destructive" });
       return false;
     }
     if (!selectedCategories.length) {
@@ -372,7 +386,10 @@ export default function DecretoFlussi2027() {
                   ["stagionale", ui.seasonal],
                   ["entrambi", ui.both],
                 ].map(([value, label]) => (
-                  <button key={value} type="button" onClick={() => updateField("workType", value)}
+                  <button key={value} type="button" onClick={() => {
+                    updateField("workType", value);
+                    setSelectedCategories([]);
+                  }}
                     className={form.workType === value
                       ? "rounded-xl border border-[#009246] bg-[#009246]/10 p-3 text-left text-xs text-white"
                       : "rounded-xl border border-white/10 bg-[#060b16] p-3 text-left text-xs text-white/70 hover:border-white/25"}>
@@ -382,7 +399,82 @@ export default function DecretoFlussi2027() {
               </div>
             </div>
 
-            {/* PAQUETES — CADA UNO ABRE SUS CATEGORÍAS */}
+            {/* TRABAJOS — APARECEN AL ELEGIR EL TIPO DE TRABAJO */}
+            {form.workType ? (
+            <div className="mb-6">
+              <div className="flex items-center justify-between gap-3 mb-2">
+                <p className="text-white text-[13px] font-semibold">{ui.chooseCategory}</p>
+                <span className="text-[#D4AF37] text-[10px] font-semibold">
+                  {form.workType === "stagionale"
+                    ? ui.seasonalLabel
+                    : form.workType === "non_stagionale"
+                      ? ui.nonSeasonal
+                      : ui.both}
+                </span>
+              </div>
+              <p className="text-white/45 text-[10px] mb-3">{ui.categoriesHint}</p>
+
+              {loadingCategories ? (
+                <div className="flex items-center justify-center rounded-2xl border border-white/10 bg-[#060b16] py-8 text-white/50 text-sm">
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  {ui.loading}
+                </div>
+              ) : visibleCategories.length === 0 ? (
+                <div className="rounded-2xl border border-white/10 bg-[#060b16] p-4 text-center text-white/50 text-xs">
+                  {ui.noCategories}
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {visibleCategories.map((category) => {
+                    const selectedCategory = selectedCategories.includes(category.code);
+                    const disabled =
+                      selectedPackage === "single_category" &&
+                      !selectedCategory &&
+                      selectedCategories.length >= 1;
+
+                    return (
+                      <button
+                        key={category.code}
+                        type="button"
+                        disabled={disabled}
+                        onClick={() => toggleCategory(category.code)}
+                        className={`flex items-center gap-3 rounded-xl border p-3 text-left transition ${
+                          selectedCategory
+                            ? "border-[#009246] bg-[#009246]/10 shadow-[0_0_12px_rgba(0,146,70,0.10)]"
+                            : disabled
+                              ? "border-white/5 bg-white/[0.02] opacity-30 cursor-not-allowed"
+                              : "border-white/10 bg-[#060b16] hover:border-[#D4AF37]/60 hover:bg-[#D4AF37]/5"
+                        }`}
+                      >
+                        <span className="text-lg shrink-0">
+                          {CATEGORY_ICONS[category.code] || "💼"}
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <span className="block text-white/90 text-[11px] sm:text-[12px]">
+                            {categoryName(category)}
+                          </span>
+                          {category.is_seasonal && (
+                            <span className="text-[9px] text-white/35">
+                              {ui.seasonalLabel}
+                            </span>
+                          )}
+                        </span>
+                        {selectedCategory && (
+                          <CheckCircle2 className="ml-auto w-4 h-4 text-[#009246] shrink-0" />
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+            ) : (
+              <div className="mb-6 rounded-2xl border border-dashed border-[#D4AF37]/30 bg-[#D4AF37]/5 p-4 text-center text-white/45 text-xs">
+                {isMa ? "اختار نوع الخدمة باش يبانولك الأشغال." : isEn ? "Choose a work type above to see the available jobs." : "Elige un tipo de trabajo arriba para ver los trabajos disponibles."}
+              </div>
+            )}
+
+            {/* PAQUETES — SOLO SELECCIONA EL PLAN */}
             <div className="mb-5">
               <p className="text-white text-[13px] mb-2">{ui.packages}</p>
 
@@ -392,115 +484,39 @@ export default function DecretoFlussi2027() {
                   const localized = PACKAGE_TEXT[pkg.code][language];
 
                   return (
-                    <div
+                    <button
                       key={pkg.code}
-                      className={`rounded-[22px] border-2 transition-all overflow-hidden ${
+                      type="button"
+                      onClick={() => selectPackage(pkg.code)}
+                      className={`rounded-[22px] border-2 transition-all overflow-hidden text-left p-4 ${
                         selected
                           ? "border-[#009246] bg-gradient-to-b from-[#0b160f] to-[#050505] shadow-[0_0_30px_rgba(0,146,70,0.14)]"
-                          : "border-white/10 bg-[#060b16]"
+                          : "border-white/10 bg-[#060b16] hover:border-[#D4AF37]/50"
                       }`}
                     >
-                      <button
-                        type="button"
-                        onClick={() => selectPackage(pkg.code)}
-                        className="w-full text-left p-4"
-                      >
-                        <div className="flex items-start justify-between gap-3">
-                          <div>
-                            <p className="text-white text-[14px] font-bold">
-                              {localized.title}
-                            </p>
-                            <p className="text-white/40 text-[10px] mt-1">
-                              {localized.subtitle}
-                            </p>
-                          </div>
-
-                          <p className="text-[#D4AF37] text-[25px] font-black leading-none whitespace-nowrap">
-                            {pkg.price}
-                          </p>
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="text-white text-[14px] font-bold">{localized.title}</p>
+                          <p className="text-white/40 text-[10px] mt-1">{localized.subtitle}</p>
                         </div>
+                        <p className="text-[#D4AF37] text-[25px] font-black leading-none whitespace-nowrap">
+                          {pkg.price}
+                        </p>
+                      </div>
 
-                        <ul className="mt-3 space-y-1.5 text-white/65 text-[11px]">
-                          {localized.features.map((feature) => (
-                            <li key={feature}>✓ {feature}</li>
-                          ))}
-                        </ul>
+                      <ul className="mt-3 space-y-1.5 text-white/65 text-[11px]">
+                        {localized.features.map((feature) => (
+                          <li key={feature}>✓ {feature}</li>
+                        ))}
+                      </ul>
 
-                        <div className="mt-3 flex items-center justify-between text-[10px]">
-                          <span className="text-[#D4AF37] font-semibold">
-                            {selected ? ui.chooseCategory : ""}
-                          </span>
-                          <ChevronDown
-                            className={`w-4 h-4 text-white/50 transition-transform ${
-                              selected ? "rotate-180" : ""
-                            }`}
-                          />
-                        </div>
-                      </button>
-
-                      {selected && (
-                        <div className="border-t border-white/10 px-4 pb-4 pt-3">
-                          <p className="text-white/55 text-[10px] mb-3">
-                            {selectedPackage === "single_category"
-                              ? ui.oneCategory
-                              : ui.categoriesHint}
-                          </p>
-
-                          {loadingCategories ? (
-                            <div className="flex items-center justify-center py-6 text-white/50 text-sm">
-                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                              {ui.loading}
-                            </div>
-                          ) : (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                              {categories.map((category) => {
-                                const selectedCategory = selectedCategories.includes(category.code);
-                                const disabled =
-                                  selectedPackage === "single_category" &&
-                                  !selectedCategory &&
-                                  selectedCategories.length >= 1;
-
-                                return (
-                                  <button
-                                    key={category.code}
-                                    type="button"
-                                    disabled={disabled}
-                                    onClick={() => toggleCategory(category.code)}
-                                    className={`flex items-center gap-3 rounded-xl border p-3 text-left transition ${
-                                      selectedCategory
-                                        ? "border-[#009246] bg-[#009246]/10 shadow-[0_0_12px_rgba(0,146,70,0.10)]"
-                                        : disabled
-                                          ? "border-white/5 bg-white/[0.02] opacity-30 cursor-not-allowed"
-                                          : "border-white/10 bg-[#060b16] hover:border-[#D4AF37]/60 hover:bg-[#D4AF37]/5"
-                                    }`}
-                                  >
-                                    <span className="text-lg shrink-0">
-                                      {CATEGORY_ICONS[category.code] || "💼"}
-                                    </span>
-
-                                    <span className="min-w-0 flex-1">
-                                      <span className="block text-white/90 text-[11px] sm:text-[12px]">
-                                        {categoryName(category)}
-                                      </span>
-
-                                      {category.is_seasonal && (
-                                        <span className="text-[9px] text-white/35">
-                                          {ui.seasonalLabel}
-                                        </span>
-                                      )}
-                                    </span>
-
-                                    {selectedCategory && (
-                                      <CheckCircle2 className="ml-auto w-4 h-4 text-[#009246] shrink-0" />
-                                    )}
-                                  </button>
-                                );
-                              })}
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
+                      <div className="mt-3 flex items-center justify-between text-[10px]">
+                        <span className={selected ? "text-[#D4AF37] font-semibold" : "text-white/35"}>
+                          {selected ? "✓" : ""}
+                        </span>
+                        <span className="text-white/40">{pkg.price}</span>
+                      </div>
+                    </button>
                   );
                 })}
               </div>
