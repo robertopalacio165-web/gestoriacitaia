@@ -186,24 +186,60 @@ export default function DecretoFlussi2027() {
   const [selectedPackage, setSelectedPackage] = useState<PackageCode>("monthly");
   const [acceptTerms, setAcceptTerms] = useState(false);
 
+  // Fallback locale: la pagina deve continuare a mostrare i lavori anche se
+  // Supabase restituisce un errore, una lista vuota o valori booleani serializzati.
+  const FALLBACK_CATEGORIES: Category[] = [
+    { id: 1, code: "agriculture", name_it: "Agricoltura, silvicoltura e pesca", description_it: null, is_seasonal: true },
+    { id: 2, code: "food", name_it: "Industria alimentare", description_it: null, is_seasonal: false },
+    { id: 3, code: "textile", name_it: "Tessile, abbigliamento e calzature", description_it: null, is_seasonal: false },
+    { id: 4, code: "metal", name_it: "Industria metallurgica", description_it: null, is_seasonal: false },
+    { id: 5, code: "other_industry", name_it: "Altre industrie", description_it: null, is_seasonal: false },
+    { id: 6, code: "construction", name_it: "Costruzione", description_it: null, is_seasonal: false },
+    { id: 7, code: "commerce", name_it: "Commercio", description_it: null, is_seasonal: false },
+    { id: 8, code: "hospitality", name_it: "Alberghi e ristorazione", description_it: null, is_seasonal: true },
+    { id: 9, code: "tourism", name_it: "Turismo", description_it: null, is_seasonal: true },
+    { id: 10, code: "transport_logistics", name_it: "Trasporto e logistica", description_it: null, is_seasonal: false },
+    { id: 11, code: "business_support", name_it: "Servizi di supporto alle imprese", description_it: null, is_seasonal: false },
+    { id: 12, code: "health_social", name_it: "Sanità e assistenza sociale", description_it: null, is_seasonal: false },
+    { id: 13, code: "other_services", name_it: "Altri servizi", description_it: null, is_seasonal: false },
+    { id: 14, code: "family_assistance", name_it: "Assistenza familiare", description_it: null, is_seasonal: false },
+  ];
+
   useEffect(() => {
     const loadCategories = async () => {
-      const { data, error } = await supabase
-        .from("flussi_categories")
-        .select("id, code, name_it, description_it, is_seasonal")
-        .eq("is_active", true)
-        .order("id");
+      try {
+        const { data, error } = await supabase
+          .from("flussi_categories")
+          .select("id, code, name_it, description_it, is_seasonal")
+          .eq("is_active", true)
+          .order("id");
 
-      if (error) {
-        console.error(error);
-        toast({ title: "Errore", description: "Non è stato possibile caricare le categorie.", variant: "destructive" });
-      } else {
-        setCategories((data || []) as Category[]);
+        if (error || !data || data.length === 0) {
+          console.error("flussi_categories:", error || "empty result");
+          setCategories(FALLBACK_CATEGORIES);
+        } else {
+          // Normalizza is_seasonal: Supabase/REST può restituirlo come booleano
+          // oppure come stringa ("true"/"false").
+          const normalized = (data as any[]).map((category) => ({
+            ...category,
+            id: Number(category.id),
+            is_seasonal:
+              category.is_seasonal === true ||
+              category.is_seasonal === 1 ||
+              String(category.is_seasonal).toLowerCase() === "true" ||
+              String(category.is_seasonal).toLowerCase() === "1",
+          })) as Category[];
+          setCategories(normalized.length ? normalized : FALLBACK_CATEGORIES);
+        }
+      } catch (error) {
+        console.error("Error loading flussi categories:", error);
+        setCategories(FALLBACK_CATEGORIES);
+      } finally {
+        setLoadingCategories(false);
       }
-      setLoadingCategories(false);
     };
     loadCategories();
-  }, [toast]);
+  }, []);
 
   const selectedPackageInfo = useMemo(
     () => PACKAGE_INFO.find((item) => item.code === selectedPackage)!,
@@ -212,10 +248,14 @@ export default function DecretoFlussi2027() {
 
   const visibleCategories = useMemo(() => {
     if (form.workType === "stagionale") {
-      return categories.filter((category) => category.is_seasonal);
+      return categories.filter((category) =>
+        category.is_seasonal === true || String(category.is_seasonal).toLowerCase() === "true" || String(category.is_seasonal) === "1"
+      );
     }
     if (form.workType === "non_stagionale") {
-      return categories.filter((category) => !category.is_seasonal);
+      return categories.filter((category) =>
+        !(category.is_seasonal === true || String(category.is_seasonal).toLowerCase() === "true" || String(category.is_seasonal) === "1")
+      );
     }
     return categories;
   }, [categories, form.workType]);
