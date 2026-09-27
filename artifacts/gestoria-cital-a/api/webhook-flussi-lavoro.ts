@@ -1,696 +1,219 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import Stripe from "stripe";
 
-/**
- * ============================================================
- * GESTORIACITAIA
- * DECRETO FLUSSI LAVORO
- * STRIPE WEBHOOK
- * ============================================================
- *
- * ARCHIVO:
- *   api/webhook-flussi-lavoro.ts
- *
- * ESTE WEBHOOK ES EXCLUSIVO DEL SERVICIO:
- *   "Decreto Flussi Lavoro"
- *
- * NO procesa:
- *   - Verificación Decreto Flussi
- *   - Malta
- *   - otros productos
- *
- * FLUJO:
- *
- * CLIENTE
- *    ↓
- * create-checkout-flussi-lavoro.ts
- *    ↓
- * Stripe Checkout
- *    ↓
- * checkout.session.completed
- *    ↓
- * ESTE WEBHOOK
- *    ↓
- * comprueba service === "flussi_lavoro"
- *    ↓
- * comprueba payment_status === "paid"
- *    ↓
- * prepara los datos del pedido
- *    ↓
- * llama a:
- *   /api/flussi-lavoro-gmail
- *
- * IMPORTANTE:
- * El pago SOLO se considera confirmado por Stripe.
- * Nunca confiamos en ?payment=success de la web.
- * ============================================================
- */
+export const config = { api: { bodyParser: false } };
 
-const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
-const webhookSecret =
-  process.env.STRIPE_WEBHOOK_SECRET;
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
+  apiVersion: "2026-01-28.clover",
+});
 
-const stripe = stripeSecretKey
-  ? new Stripe(stripeSecretKey)
-  : null;
-
-/**
- * Stripe necesita el body RAW para comprobar la firma.
- */
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
-
-/**
- * Leer el body RAW.
- */
-async function readRawBody(
-  req: VercelRequest
-): Promise<Buffer> {
+function readRawBody(req: VercelRequest): Promise<string> {
   return new Promise((resolve, reject) => {
-    const chunks: Buffer[] = [];
-
-    req.on("data", (chunk) => {
-      chunks.push(
-        Buffer.isBuffer(chunk)
-          ? chunk
-          : Buffer.from(chunk)
-      );
-    });
-
-    req.on("end", () => {
-      resolve(Buffer.concat(chunks));
-    });
-
+    let body = "";
+    req.setEncoding("utf8");
+    req.on("data", (chunk) => (body += chunk));
+    req.on("end", () => resolve(body));
     req.on("error", reject);
   });
 }
 
-/**
- * Convierte un valor a string seguro.
- */
-function cleanString(
-  value: unknown,
-  maxLength = 1000
-): string {
-  if (typeof value !== "string") {
-    return "";
-  }
+const clean = (v: unknown, max = 2000) =>
+  String(v ?? "").trim().slice(0, max);
 
-  return value
-    .trim()
-    .replace(/\s+/g, " ")
-    .slice(0, maxLength);
-}
-
-/**
- * Intenta convertir las categorías guardadas en metadata
- * a una lista.
- */
-function parseCategories(
-  value: unknown
-): string[] {
-  const raw = cleanString(value, 500);
-
-  if (!raw) {
-    return [];
-  }
-
-  return raw
-    .split(",")
-    .map((item) =>
-      item.trim()
-    )
-    .filter(Boolean)
-    .slice(0, 30);
-}
-
-/**
- * Envía el pedido confirmado al archivo exclusivo
- * encargado del Gmail.
- *
- * No se envía ningún email directamente desde este webhook.
- *
- * Así mantenemos:
- *
- * webhook = confirmar pago
- * gmail   = enviar email
- */
-async function triggerFlussiLavoroGmail(
-  payload: Record<string, unknown>
-) {
-  const gmailUrl =
-    process.env.FLUSSI_LAVORO_GMAIL_URL;
-
-  if (!gmailUrl) {
-    console.warn(
-      "⚠️ FLUSSI_LAVORO_GMAIL_URL no está configurada."
-    );
-
-    return {
-      sent: false,
-      skipped: true,
-      reason:
-        "FLUSSI_LAVORO_GMAIL_URL_NOT_CONFIGURED",
-    };
-  }
-
-  const response = await fetch(
-    gmailUrl,
-    {
-      method: "POST",
-
-      headers: {
-        "Content-Type": "application/json",
-
-        /**
-         * Token opcional para proteger el endpoint
-         * de Gmail de llamadas externas.
-         */
-        ...(process.env.FLUSSI_LAVORO_INTERNAL_SECRET
-          ? {
-              "x-flussi-lavoro-secret":
-                process.env
-                  .FLUSSI_LAVORO_INTERNAL_SECRET,
-            }
-          : {}),
-      },
-
-      body: JSON.stringify(payload),
-    }
-  );
-
-  const responseText =
-    await response.text();
-
-  if (!response.ok) {
-    console.error(
-      "❌ FLUSSI LAVORO GMAIL ERROR:",
-      response.status,
-      responseText.slice(0, 1000)
-    );
-
-    throw new Error(
-      `El endpoint Gmail respondió ${response.status}.`
-    );
-  }
-
-  console.log(
-    "✅ FLUSSI LAVORO GMAIL TRIGGERED:",
-    responseText.slice(0, 500)
-  );
-
-  return {
-    sent: true,
-    skipped: false,
-    response: responseText,
-  };
-}
-
-export default async function handler(
-  req: VercelRequest,
-  res: VercelResponse
-) {
-  /**
-   * ----------------------------------------------------------
-   * SOLO POST
-   * ----------------------------------------------------------
-   */
+export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== "POST") {
-    return res.status(405).json({
-      ok: false,
-      error: "Método no permitido.",
-    });
+    return res.status(405).json({ error: "Method not allowed" });
   }
 
-  /**
-   * ----------------------------------------------------------
-   * CONFIGURACIÓN
-   * ----------------------------------------------------------
-   */
-  if (!stripe) {
-    console.error(
-      "❌ STRIPE_SECRET_KEY no está configurada."
-    );
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  const gmailUrl =
+    process.env.FLUSSI_LAVORO_GMAIL_URL ||
+    "https://gestoriacitaia.com/api/flussi-lavoro-gmail";
+  const internalSecret = process.env.FLUSSI_LAVORO_INTERNAL_SECRET;
 
-    return res.status(500).json({
-      ok: false,
-      error:
-        "Stripe no está configurado correctamente.",
-    });
-  }
-
-  if (!webhookSecret) {
-    console.error(
-      "❌ STRIPE_WEBHOOK_SECRET no está configurado."
-    );
-
-    return res.status(500).json({
-      ok: false,
-      error:
-        "Falta STRIPE_WEBHOOK_SECRET.",
-    });
+  if (!process.env.STRIPE_SECRET_KEY || !webhookSecret) {
+    return res.status(500).json({ error: "Stripe configuration missing" });
   }
 
   try {
-    /**
-     * --------------------------------------------------------
-     * BODY RAW
-     * --------------------------------------------------------
-     */
-    const rawBody =
-      await readRawBody(req);
+    const rawBody = await readRawBody(req);
+    const signature = req.headers["stripe-signature"];
 
-    const signature =
-      req.headers[
-        "stripe-signature"
-      ];
-
-    if (
-      typeof signature !== "string" ||
-      !signature
-    ) {
-      console.error(
-        "❌ Falta Stripe-Signature."
-      );
-
-      return res.status(400).json({
-        ok: false,
-        error:
-          "Falta la firma de Stripe.",
-      });
+    if (!signature || Array.isArray(signature)) {
+      return res.status(400).json({ error: "Missing Stripe signature" });
     }
 
-    /**
-     * --------------------------------------------------------
-     * VERIFICAR EVENTO STRIPE
-     * --------------------------------------------------------
-     */
     let event: Stripe.Event;
 
     try {
-      event =
-        stripe.webhooks.constructEvent(
-          rawBody,
-          signature,
-          webhookSecret
-        );
-    } catch (signatureError) {
-      console.error(
-        "❌ FIRMA STRIPE INVÁLIDA:",
-        signatureError
+      event = stripe.webhooks.constructEvent(
+        rawBody,
+        signature,
+        webhookSecret
       );
-
-      return res.status(400).json({
-        ok: false,
-        error:
-          "Firma de Stripe inválida.",
-      });
+    } catch (error) {
+      console.error("Stripe signature verification failed:", error);
+      return res.status(400).json({ error: "Invalid Stripe signature" });
     }
 
-    console.log(
-      "📦 STRIPE EVENT:",
-      event.id,
-      event.type
-    );
-
-    /**
-     * --------------------------------------------------------
-     * SOLO NOS INTERESA:
-     * checkout.session.completed
-     * --------------------------------------------------------
-     */
-    if (
-      event.type !==
-      "checkout.session.completed"
-    ) {
+    if (event.type !== "checkout.session.completed") {
       return res.status(200).json({
-        ok: true,
+        received: true,
         ignored: true,
         event: event.type,
       });
     }
 
-    const session =
-      event.data
-        .object as Stripe.Checkout.Session;
+    const session = event.data.object as Stripe.Checkout.Session;
+    const metadata = session.metadata || {};
 
-    /**
-     * --------------------------------------------------------
-     * FILTRO CRÍTICO:
-     * SOLO FLUSSI LAVORO
-     * --------------------------------------------------------
-     *
-     * Esto evita que este webhook procese pagos
-     * del sistema de verificación u otros productos.
-     */
-    const metadata =
-      session.metadata || {};
-
-    const service =
-      cleanString(
-        metadata.service,
-        100
-      );
-
-    const product =
-      cleanString(
-        metadata.product,
-        100
-      );
-
+    // SOLO Decreto Flussi Lavoro.
+    // No procesa el antiguo servicio Decreto Flussi Verificación.
     if (
-      service !== "flussi_lavoro" ||
-      product !==
-        "decreto_flussi_lavoro"
+      metadata.service !== "flussi_lavoro" ||
+      metadata.product !== "decreto_flussi_lavoro"
     ) {
-      console.log(
-        "ℹ️ Evento ignorado por este webhook:",
-        {
-          eventId: event.id,
-          service,
-          product,
-        }
-      );
-
       return res.status(200).json({
-        ok: true,
+        received: true,
         ignored: true,
-        reason:
-          "NOT_FLUSSI_LAVORO",
+        reason: "not_flussi_lavoro",
       });
     }
 
-    /**
-     * --------------------------------------------------------
-     * COMPROBAR PAGO
-     * --------------------------------------------------------
-     */
-    if (
-      session.payment_status !==
-      "paid"
-    ) {
-      console.warn(
-        "⚠️ FLUSSI LAVORO: checkout completado pero pago no confirmado.",
-        {
-          sessionId: session.id,
-          paymentStatus:
-            session.payment_status,
-        }
-      );
-
+    // El email de bienvenida solo se envía cuando Stripe confirma el pago.
+    if (session.payment_status !== "paid") {
       return res.status(200).json({
-        ok: true,
-        paid: false,
-        reason:
-          "PAYMENT_NOT_CONFIRMED",
+        received: true,
+        ignored: true,
+        reason: "payment_not_paid",
       });
     }
 
-    /**
-     * --------------------------------------------------------
-     * DATOS DEL CLIENTE
-     * --------------------------------------------------------
-     */
-    const email =
-      cleanString(
-        metadata.email ||
-          session.customer_details?.email ||
-          session.customer_email,
-        320
-      ).toLowerCase();
+    const email = clean(
+      metadata.client_email || session.customer_details?.email
+    );
 
-    const firstName =
-      cleanString(
-        metadata.client_name,
-        100
-      );
+    const fullName = clean(
+      metadata.client_name || session.customer_details?.name
+    );
 
-    const lastName =
-      cleanString(
-        metadata.client_surname,
-        150
-      );
+    const firstName = clean(
+      metadata.first_name || fullName.split(" ")[0]
+    );
 
-    const phone =
-      cleanString(
-        metadata.phone,
-        40
-      );
+    const lastName = clean(
+      metadata.last_name || fullName.split(" ").slice(1).join(" ")
+    );
 
-    const workType =
-      cleanString(
-        metadata.work_type,
-        50
-      );
+    if (!email || !firstName || !lastName) {
+      console.error("Missing client data", {
+        email,
+        firstName,
+        lastName,
+        sessionId: session.id,
+      });
 
-    const categories =
-      parseCategories(
-        metadata.categories
-      );
+      return res.status(400).json({
+        error: "Missing client data",
+      });
+    }
+
+    const categories = clean(metadata.categories)
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean);
 
     const packageCode =
-      cleanString(
-        metadata.package_code,
-        50
-      );
+      metadata.package_code === "biweekly"
+        ? "biweekly"
+        : metadata.package_code === "single_category"
+        ? "single_category"
+        : "monthly";
 
-    const packageName =
-      cleanString(
-        metadata.package_name,
-        200
-      );
-
-    const amountCents =
-      Number(
-        metadata.package_amount_cents ||
-          session.amount_total ||
-          0
-      );
-
-    const durationDays =
-      Number(
-        metadata.duration_days ||
-          30
-      );
-
-    const reference =
-      cleanString(
-        metadata.reference ||
-          session.client_reference_id,
-        100
-      );
-
-    /**
-     * --------------------------------------------------------
-     * VALIDACIONES DE SEGURIDAD
-     * --------------------------------------------------------
-     */
-    if (!email) {
-      console.error(
-        "❌ FLUSSI LAVORO: no hay email.",
-        {
-          sessionId: session.id,
-        }
-      );
-
-      return res.status(400).json({
-        ok: false,
-        error:
-          "El pago no contiene email del cliente.",
-      });
-    }
-
-    if (!packageCode) {
-      console.error(
-        "❌ FLUSSI LAVORO: no hay packageCode.",
-        {
-          sessionId: session.id,
-        }
-      );
-
-      return res.status(400).json({
-        ok: false,
-        error:
-          "El pago no contiene el plan.",
-      });
-    }
-
-    /**
-     * --------------------------------------------------------
-     * PAYLOAD PARA GMAIL
-     * --------------------------------------------------------
-     *
-     * Este objeto será utilizado por:
-     *
-     * api/flussi-lavoro-gmail.ts
-     *
-     * para crear el email correspondiente al plan.
-     */
-    const gmailPayload = {
-      source:
-        "webhook-flussi-lavoro",
-
-      eventId:
-        event.id,
-
-      eventType:
-        event.type,
-
-      sessionId:
-        session.id,
-
-      paymentIntentId:
-        typeof session.payment_intent ===
-        "string"
-          ? session.payment_intent
-          : "",
-
+    const payload = {
+      service: "flussi_lavoro",
+      product: "decreto_flussi_lavoro",
       paid: true,
 
-      paymentStatus:
-        session.payment_status,
+      reference:
+        clean(metadata.reference) ||
+        `FL-${session.id.slice(-10).toUpperCase()}`,
 
-      paidAt:
-        new Date().toISOString(),
-
-      amountCents,
-
-      currency:
-        session.currency ||
-        "eur",
-
-      reference,
+      stripeSessionId: session.id,
 
       client: {
         firstName,
         lastName,
         email,
-        phone,
+        phone: clean(metadata.client_phone),
       },
 
-      service:
-        "flussi_lavoro",
-
-      product:
-        "decreto_flussi_lavoro",
-
-      workType,
+      workType:
+        metadata.work_type === "stagionale"
+          ? "stagionale"
+          : "non_stagionale",
 
       categories,
 
-      plan: {
-        code:
-          packageCode,
-
-        name:
-          packageName,
-
-        amountCents,
-
-        durationDays,
-      },
-
-      stripe: {
-        sessionId:
-          session.id,
-
-        paymentIntentId:
-          typeof session.payment_intent ===
-          "string"
-            ? session.payment_intent
-            : "",
-
-        customerId:
-          typeof session.customer ===
-          "string"
-            ? session.customer
-            : "",
-      },
-    };
-
-    /**
-     * --------------------------------------------------------
-     * LLAMAR AL SISTEMA DE GMAIL
-     * --------------------------------------------------------
-     */
-    const gmailResult =
-      await triggerFlussiLavoroGmail(
-        gmailPayload
-      );
-
-    /**
-     * --------------------------------------------------------
-     * LOG FINAL
-     * --------------------------------------------------------
-     */
-    console.log(
-      "✅ FLUSSI LAVORO PAYMENT CONFIRMED",
-      {
-        eventId: event.id,
-        sessionId: session.id,
-        email,
-        packageCode,
-        packageName,
-        amountCents,
-        categories,
-        workType,
-        gmailSent:
-          gmailResult.sent,
-      }
-    );
-
-    /**
-     * --------------------------------------------------------
-     * RESPUESTA
-     * --------------------------------------------------------
-     */
-    return res.status(200).json({
-      ok: true,
-
-      paid: true,
-
-      service:
-        "flussi_lavoro",
-
-      eventId:
-        event.id,
-
-      sessionId:
-        session.id,
-
-      reference,
-
-      email,
-
       packageCode,
 
-      amountCents,
+      packageName: clean(metadata.package_name),
 
-      currency:
-        session.currency ||
-        "eur",
+      packageAmountCents:
+        Number(metadata.package_amount_cents) ||
+        session.amount_total ||
+        0,
 
-      gmail:
-        gmailResult,
+      durationDays:
+        Number(metadata.duration_days) || 30,
+    };
+
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+    };
+
+    if (internalSecret) {
+      headers["x-flussi-lavoro-secret"] = internalSecret;
+    }
+
+    const gmailResponse = await fetch(gmailUrl, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(payload),
     });
-  } catch (error: any) {
-    console.error(
-      "❌ FLUSSI LAVORO WEBHOOK ERROR:",
-      error
-    );
 
-    /**
-     * 500 hace que Stripe pueda reintentar el webhook
-     * cuando realmente ha habido un error del servidor.
-     */
+    const gmailResponseText = await gmailResponse.text();
+
+    if (!gmailResponse.ok) {
+      console.error("Gmail endpoint failed:", {
+        status: gmailResponse.status,
+        response: gmailResponseText,
+        sessionId: session.id,
+      });
+
+      // Stripe volverá a intentar el webhook.
+      return res.status(500).json({
+        error: "Welcome email endpoint failed",
+      });
+    }
+
+    console.log("Flussi Lavoro welcome email sent:", {
+      sessionId: session.id,
+      email,
+      reference: payload.reference,
+    });
+
+    return res.status(200).json({
+      received: true,
+      processed: true,
+      emailSent: true,
+      reference: payload.reference,
+    });
+  } catch (error) {
+    console.error("webhook-flussi-lavoro error:", error);
+
     return res.status(500).json({
-      ok: false,
-      error:
-        error?.message ||
-        "Error procesando el webhook de Flussi Lavoro.",
+      error: "Webhook processing failed",
     });
   }
 }
