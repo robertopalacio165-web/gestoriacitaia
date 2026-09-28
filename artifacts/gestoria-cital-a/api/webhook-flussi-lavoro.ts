@@ -1,5 +1,4 @@
 import Stripe from "stripe";
-import nodemailer from "nodemailer";
 
 export const config = { api: { bodyParser: false } };
 
@@ -54,55 +53,7 @@ function escapeHtml(v: string) {
   return v.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
 }
 
-function createTransporter() {
-  // BREVO SMTP: smtp-relay.brevo.com / port 587 (configured in Vercel).
-  // Uses the existing SMTP_HOST, SMTP_PORT, SMTP_USER and SMTP_PASS variables.
-  const host = process.env.SMTP_HOST;
-  const user = process.env.SMTP_USER;
-  const pass = process.env.SMTP_PASS;
-  if (!host || !user || !pass) throw new Error("SMTP configuration missing");
-  const port = Number(process.env.SMTP_PORT || 587);
-  return nodemailer.createTransport({
-    host,
-    port,
-    secure: port === 465,
-    auth: { user, pass },
-  });
-}
 
-function welcomeHtml(p: {
-  firstName: string; packageName: string; amountCents: number;
-  workType: string; categories: string[]; reference: string;
-  sessionId: string; startsAt: string | null; expiresAt: string | null;
-}) {
-  const amount = `${(p.amountCents / 100).toFixed(2).replace(".", ",")} €`;
-  const duration = "Test €0,50 — servizio attivato";
-  const period = p.startsAt && p.expiresAt
-    ? `${new Date(p.startsAt).toLocaleDateString("it-IT")} → ${new Date(p.expiresAt).toLocaleDateString("it-IT")}`
-    : "Servizio attivato";
-  const type = p.workType === "stagionale" ? "Lavoro stagionale" : "Lavoro non stagionale";
-  const cats = p.categories.length ? p.categories.map(escapeHtml).join(", ") : "Categorie selezionate";
-
-  return `<!doctype html><html lang="it"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;background:#f3f5f7;font-family:Arial,Helvetica,sans-serif;color:#172033">
-<div style="max-width:680px;margin:30px auto;background:#fff;border-radius:18px;overflow:hidden;box-shadow:0 8px 30px rgba(0,0,0,.08)">
-<div style="background:#101827;padding:26px 28px;color:#fff"><div style="font-size:24px;font-weight:800">GestoriaCitaIA</div><div style="margin-top:6px;font-size:13px;color:#cbd5e1">Decreto Flussi Lavoro</div></div>
-<div style="padding:32px 28px"><div style="display:inline-block;background:#eaf8ef;color:#16803c;border-radius:999px;padding:8px 13px;font-size:13px;font-weight:700">✓ PAGAMENTO CONFERMATO</div>
-<h1 style="font-size:27px;margin:22px 0 10px">Ciao ${escapeHtml(p.firstName)},</h1>
-<p style="font-size:16px;line-height:1.7">il tuo acquisto per il servizio <strong>Decreto Flussi Lavoro</strong> è stato confermato correttamente.</p>
-<div style="background:#f7f8fa;border:1px solid #e6e9ee;border-radius:14px;padding:20px;margin:22px 0">
-<div style="font-size:13px;color:#667085">PIANO</div><div style="font-size:20px;font-weight:800;margin-top:5px">${escapeHtml(p.packageName)}</div>
-<div style="margin-top:16px;font-size:14px;color:#667085">Importo</div><div style="font-size:19px;font-weight:800">${amount}</div>
-<div style="margin-top:16px;font-size:14px;color:#667085">Durata</div><div style="font-size:16px;font-weight:700">${duration}</div>
-<div style="margin-top:16px;font-size:14px;color:#667085">Periodo</div><div style="font-size:16px;font-weight:700">${period}</div>
-<div style="margin-top:16px;font-size:14px;color:#667085">Tipo di lavoro</div><div style="font-size:16px;font-weight:700">${type}</div>
-<div style="margin-top:16px;font-size:14px;color:#667085">Categorie</div><div style="font-size:16px;font-weight:700">${cats}</div></div>
-<h2 style="font-size:19px">Cosa succede adesso?</h2><p style="font-size:15px;line-height:1.7;color:#475467">Il tuo ordine è stato registrato. Le offerte di lavoro relative alle categorie selezionate verranno gestite attraverso il servizio Decreto Flussi Lavoro.</p>
-<div style="margin-top:25px;background:#f8fafc;border-left:4px solid #16803c;padding:16px 18px;border-radius:8px"><div style="font-weight:800;margin-bottom:8px">شنو غادي يوقع دابا؟</div><div style="font-size:14px;line-height:1.8;color:#475467">الأداء ديالك تأكد بنجاح، والطلب ديالك تسجل. غادي توصلك عروض العمل المرتبطة بالفئات اللي اخترتي حسب العروض المتوفرة.</div></div>
-<div style="margin-top:25px;padding-top:20px;border-top:1px solid #e5e7eb;font-size:12px;line-height:1.7;color:#667085"><strong>Informazione importante:</strong> GestoriaCitaIA non è uno studio legale e non garantisce l'ottenimento di un contratto di lavoro, nulla osta, visto o permesso di soggiorno. Il servizio riguarda la gestione e l'invio di informazioni e offerte disponibili.</div>
-<div style="margin-top:20px;font-size:12px;color:#98a2b3">Riferimento: ${escapeHtml(p.reference)}<br>Stripe Session: ${escapeHtml(p.sessionId)}</div></div>
-<div style="background:#101827;padding:22px 28px;color:#98a2b3;font-size:12px">GestoriaCitaIA · Decreto Flussi Lavoro</div></div></body></html>`;
-}
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
@@ -132,16 +83,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const session = event.data.object as Stripe.Checkout.Session;
     const metadata = session.metadata || {};
 
-    console.log("🚀 FLUSSI LAVORO WEBHOOK RECEIVED", {
-      event: event.type,
-      sessionId: session.id,
-      service: metadata.service,
-      product: metadata.product,
-      packageCode: metadata.package_code,
-      amountTotal: session.amount_total,
-      paymentStatus: session.payment_status,
-    });
-
     if (metadata.service !== "flussi_lavoro" || metadata.product !== "decreto_flussi_lavoro") {
       return res.status(200).json({ received: true, ignored: true, reason: "not_flussi_lavoro" });
     }
@@ -159,11 +100,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (!firstName || !lastName || !email) return res.status(400).json({ error: "Missing client data" });
 
     const categories = clean(metadata.categories).split(",").map((x) => x.trim()).filter(Boolean);
-    const amountCents = Number(session.amount_total) || Number(metadata.package_amount_cents) || 0;
+    const amountCents = Number(metadata.package_amount_cents) || Number(session.amount_total) || 0;
+
     const packageCode = clean(metadata.package_code);
 
-    // TEMPORARY TEST: all Flussi Lavoro plans are €0.50.
-    // The database table is selected by package_code, NOT by price.
+    // TEMPORARY TEST: all plans cost €0.50.
+    // The database table is selected by packageCode, not by price.
     const table =
       packageCode === "monthly"
         ? "flussi_lavoro_9_99"
@@ -183,7 +125,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (amountCents !== 50) {
       return res.status(400).json({
-        error: "Temporary Flussi Lavoro test accepts only €0.50",
+        error: "Temporary test accepts only €0.50",
         amountCents,
         packageCode,
       });
@@ -193,21 +135,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     if (packageCode === "single_category" && categories.length !== 1) {
-      return res.status(400).json({
-        error: "The single_category package requires exactly one category",
-        categories,
-      });
+      return res.status(400).json({ error: "The 24.99 package requires exactly one category", categories });
     }
 
     const now = new Date();
     const workType = metadata.work_type === "stagionale" ? "stagionale" : "non_stagionale";
     const startsAt = packageCode === "monthly" ? null : now.toISOString();
-    const expiresAt =
-      packageCode === "biweekly"
-        ? addDays(now, 15)
-        : packageCode === "single_category"
-        ? addDays(now, 30)
-        : null;
+    const expiresAt = packageCode === "biweekly" ? addDays(now, 15) : packageCode === "single_category" ? addDays(now, 30) : null;
     const paymentIntent = typeof session.payment_intent === "string" ? session.payment_intent : null;
 
     const record: Record<string, unknown> = {
@@ -248,38 +182,88 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const reference = clean(metadata.reference) || `FL-${session.id.slice(-10).toUpperCase()}`;
     const packageName = clean(metadata.package_name) || (
-      packageCode === "monthly"
-        ? "Decreto Flussi Lavoro — Offerte del mese"
-        : packageCode === "biweekly"
-        ? "Decreto Flussi Lavoro — Aggiornamenti ogni 15 giorni"
-        : "Decreto Flussi Lavoro — Una sola categoria"
+      amountCents === 999 ? "Decreto Flussi Lavoro — 9,99 €" :
+      amountCents === 1999 ? "Decreto Flussi Lavoro — 19,99 €" :
+      "Decreto Flussi Lavoro — 24,99 €"
     );
 
-    const fromEmail = process.env.FROM_EMAIL;
-    if (!fromEmail) throw new Error("FROM_EMAIL is missing");
+    // IMPORTANT:
+    // DO NOT create another welcome-email template here.
+    // Use the existing:
+    //   api/flussi-lavoro-gmail-DARIJA-ITALIANO.ts
+    //
+    // It owns the approved Gmail HTML and Brevo SMTP delivery.
+    // www is used to avoid the 307 redirect seen by Stripe.
+    const gmailUrl =
+      process.env.FLUSSI_LAVORO_GMAIL_URL ||
+      "https://www.gestoriacitaia.com/api/flussi-lavoro-gmail";
 
-    const transporter = createTransporter();
-    console.log("📧 FLUSSI LAVORO: sending welcome email via Brevo SMTP", {
-      host: process.env.SMTP_HOST,
-      port: Number(process.env.SMTP_PORT || 587),
-      from: fromEmail,
-      to: email,
-    });
-    await transporter.sendMail({
-      from: fromEmail,
-      to: email,
-      subject: `Pagamento confermato — Decreto Flussi Lavoro | ${reference}`,
-      html: welcomeHtml({
+    const gmailPayload = {
+      service: "flussi_lavoro",
+      product: "decreto_flussi_lavoro",
+      paid: true,
+      reference,
+      stripeSessionId: session.id,
+      client: {
         firstName,
-        packageName,
-        amountCents,
-        workType,
-        categories,
-        reference,
-        sessionId: session.id,
-        startsAt,
-        expiresAt,
-      }),
+        lastName,
+        email,
+        phone,
+      },
+      workType,
+      categories,
+      packageCode,
+      packageName,
+      // TEMPORARY TEST: payment is €0.50.
+      packageAmountCents: 50,
+      durationDays:
+        packageCode === "biweekly"
+          ? 15
+          : 30,
+    };
+
+    const gmailHeaders: Record<string, string> = {
+      "Content-Type": "application/json",
+    };
+
+    if (process.env.FLUSSI_LAVORO_INTERNAL_SECRET) {
+      gmailHeaders["x-flussi-lavoro-secret"] =
+        process.env.FLUSSI_LAVORO_INTERNAL_SECRET;
+    }
+
+    console.log("📧 Calling EXISTING welcome Gmail file:", {
+      gmailUrl,
+      email,
+      packageCode,
+      amountCents: 50,
+    });
+
+    const gmailResponse = await fetch(gmailUrl, {
+      method: "POST",
+      headers: gmailHeaders,
+      body: JSON.stringify(gmailPayload),
+    });
+
+    const gmailResponseText = await gmailResponse.text();
+
+    if (!gmailResponse.ok) {
+      console.error("❌ Existing welcome Gmail endpoint failed:", {
+        status: gmailResponse.status,
+        response: gmailResponseText.slice(0, 1000),
+      });
+
+      return res.status(500).json({
+        error: "Welcome email endpoint failed",
+        status: gmailResponse.status,
+      });
+    }
+
+    console.log("✅ EXISTING WELCOME EMAIL SENT:", {
+      email,
+      packageCode,
+      table,
+      amountCents: 50,
+      response: gmailResponseText.slice(0, 500),
     });
 
     console.log("Flussi Lavoro completed:", { table, amountCents, email, sessionId: session.id, reference });
