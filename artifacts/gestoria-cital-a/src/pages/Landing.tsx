@@ -351,42 +351,58 @@ export default function Landing() {
               <ArrowRight className="w-5 h-5 ml-2" />
             </Button>
 
-            {/* 🇮🇹 BOTÓN VERIFICACIÓN DE DOCUMENTOS — 3 IDIOMAS */}
-            <Button
-              className="w-full sm:w-auto rounded-full px-7 py-3 min-h-[52px]
-              bg-white
-              hover:bg-gray-100
-              hover:scale-[1.03]
-              transition-all duration-300
-              text-[#111111] text-base sm:text-lg font-extrabold
-              shadow-[0_6px_20px_rgba(255,255,255,0.12)]
-              border-0
-              relative
-              overflow-hidden"
-              onClick={() =>
-                (window.location.href = "/verificar-decreto-flussi")
-              }
-            >
-              <span className="absolute top-0 left-0 right-0 h-[4px] bg-gradient-to-r from-[#009246] via-white to-[#CE2B37]" />
+  {/* 🇮🇹 BOTÓN VERIFICACIÓN DE DOCUMENTOS — 3 IDIOMAS */}
+<Button
+  className="
+    w-full sm:w-auto
+    rounded-full
+    px-7 py-3
+    min-h-[52px]
 
-              <span className="flex items-center justify-center gap-2">
-                <img
-                  src="https://flagcdn.com/w40/it.png"
-                  alt="Italia"
-                  className="w-6 h-4 object-cover rounded-sm"
-                />
+    bg-gradient-to-br
+    from-[#009246]
+    via-[#ffffff]
+    to-[#CE2B37]
 
-                <span>
-                  {liveLanguage === "darija"
-                    ? "التحقق من الوثائق"
-                    : liveLanguage === "en"
-                      ? "DOCUMENT VERIFICATION"
-                      : "VERIFICAZIONE DI DOCUMENTI"}
-                </span>
+    hover:scale-[1.03]
+    hover:shadow-[0_0_28px_rgba(0,146,70,0.35)]
 
-                <ArrowRight className="w-4 h-4 ml-1" />
-              </span>
-            </Button>
+    transition-all duration-300
+
+    text-black
+    text-base sm:text-lg
+    font-extrabold
+
+    border-2
+    border-[#009246]
+
+    shadow-[0_6px_22px_rgba(0,146,70,0.25)]
+
+    relative
+    overflow-hidden
+  "
+  onClick={() =>
+    (window.location.href = "/verificar-decreto-flussi")
+  }
+>
+  <span className="flex items-center justify-center gap-2">
+    <img
+      src="https://flagcdn.com/w40/it.png"
+      alt="Italia"
+      className="w-6 h-4 object-cover rounded-sm"
+    />
+
+    <span>
+      {liveLanguage === "darija"
+        ? "التحقق من الوثائق"
+        : liveLanguage === "en"
+          ? "DOCUMENT VERIFICATION"
+          : "VERIFICAZIONE DI DOCUMENTI"}
+    </span>
+
+    <ArrowRight className="w-4 h-4 ml-1" />
+  </span>
+</Button>
 
             {/* 🇲🇹 BOTÓN ESTUDIAR EN MALTA 2027 */}
             <Button
