@@ -210,10 +210,38 @@ export default function DecretoFlussi2027() {
         </h1>
 
         <div className="flex-1 flex flex-col lg:flex-row gap-4 px-4 sm:px-6 max-w-7xl mx-auto w-full">
-          <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}
-            className="lg:w-[340px] xl:w-[380px] shrink-0 flex flex-col gap-3">
-            <div className="relative rounded-2xl overflow-hidden border border-white/15 shadow-[0_0_30px_-5px_rgba(255,255,255,0.12)] bg-black">
-              <div className="relative aspect-[4/5] min-h-[360px] lg:min-h-[520px]">
+          <motion.div
+  initial={{ opacity: 0, x: -20 }}
+  animate={{ opacity: 1, x: 0 }}
+  className="lg:w-[280px] xl:w-[280px] shrink-0 flex flex-col gap-3"
+>
+  <div className="relative w-full h-[280px] rounded-2xl overflow-hidden border border-white/15 shadow-[0_0_30px_-5px_rgba(255,255,255,0.12)] bg-black">
+    <div className="relative w-full h-full">
+      <img
+        src="/images/decreto-flussi-2027.png"
+        alt="Decreto Flussi 2027"
+        className="absolute inset-0 w-full h-full object-cover"
+      />
+
+      <div className="absolute inset-x-0 top-0 h-1/3 bg-gradient-to-b from-black/40 to-transparent" />
+
+      <div className="absolute top-4 left-4 flex h-8 overflow-hidden rounded-md shadow-lg">
+        <span className="w-3 bg-[#009246]" />
+        <span className="w-3 bg-white" />
+        <span className="w-3 bg-[#CE2B37]" />
+      </div>
+
+      <div className="absolute bottom-0 inset-x-0 p-4 bg-gradient-to-t from-black/90 via-black/45 to-transparent">
+        <p className="text-white/70 text-[10px] uppercase tracking-[0.18em]">
+          Lavoro in Italia
+        </p>
+        <h2 className="text-white text-xl font-black">
+          DECRETO FLUSSI 2027
+        </h2>
+      </div>
+    </div>
+  </div>
+</motion.div>
                 <img
                   src="/images/decreto-flussi-2027.png"
                   alt="Decreto Flussi 2027"
