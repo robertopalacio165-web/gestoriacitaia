@@ -329,55 +329,113 @@ export default function Landing() {
 
             {/* 🇮🇹 BOTÓN PRINCIPAL — DECRETO FLUSSI 2027 */}
             <Button
-              className="w-full sm:w-auto rounded-full px-8 py-4 min-h-[62px]
-              bg-gradient-to-r from-green-600 via-white to-red-600
-              hover:scale-[1.04]
-              hover:shadow-[0_0_35px_rgba(255,255,255,0.35)]
-              transition-all duration-300
-              text-black text-lg sm:text-xl font-black
-              shadow-[0_0_25px_rgba(34,197,94,0.35)]
-              border-2 border-white/40
-              tracking-wide"
+              className="
+                w-full sm:w-auto
+                rounded-full
+                px-8 py-4
+                min-h-[62px]
+                relative
+                overflow-hidden
+                bg-[#006B3C]
+                hover:bg-[#005A32]
+                hover:scale-[1.035]
+                transition-all duration-300
+                text-white
+                text-lg sm:text-xl
+                font-black
+                shadow-[0_8px_30px_rgba(0,107,60,0.40)]
+                border border-[#009246]/60
+                tracking-wide
+              "
               onClick={() =>
                 (window.location.href = "/decreto-flussi-2027")
               }
             >
-              <span className="mr-2 text-2xl">🇮🇹</span>
-              {flussiButtonText}
-              <ArrowRight className="w-5 h-5 ml-2" />
+              {/* Franja italiana superior */}
+              <span
+                className="
+                  absolute
+                  top-0
+                  left-0
+                  right-0
+                  h-1
+                  bg-gradient-to-r
+                  from-[#009246]
+                  via-white
+                  to-[#CE2B37]
+                "
+              />
+
+              <span className="flex items-center justify-center gap-2">
+                <img
+                  src="https://flagcdn.com/w40/it.png"
+                  alt="Italia"
+                  className="w-7 h-5 object-cover rounded-sm shadow-sm"
+                />
+
+                <span>{flussiButtonText}</span>
+
+                <ArrowRight className="w-5 h-5 ml-1" />
+              </span>
             </Button>
 
-     {/* 🇮🇹 BOTÓN VERIFICACIÓN DE DOCUMENTOS — 3 IDIOMAS */}
-<Button
-  className="
-    w-full sm:w-auto rounded-full px-7 py-3 min-h-[52px]
-    bg-gradient-to-r from-green-600 via-white to-red-600
-    hover:scale-[1.04]
-    hover:shadow-[0_0_30px_rgba(255,255,255,0.30)]
-    transition-all duration-300
-    text-black text-base sm:text-lg font-extrabold
-    shadow-[0_0_25px_rgba(34,197,94,0.30)]
-    border-2 border-white/40
-    tracking-wide
-  "
-  onClick={() =>
-    (window.location.href = "/verificar-decreto-flussi")
-  }
->
-<img
-  src="https://flagcdn.com/w40/it.png"
-  alt="Italia"
-  className="w-6 h-4 object-cover rounded-sm mr-2"
-/>
+            {/* 🇮🇹 BOTÓN VERIFICACIÓN DE DOCUMENTOS — 3 IDIOMAS */}
+            <Button
+              className="
+                w-full sm:w-auto
+                rounded-xl
+                px-7 py-3
+                min-h-[52px]
+                bg-[#111827]
+                hover:bg-[#182235]
+                hover:scale-[1.035]
+                transition-all duration-300
+                text-white
+                text-base sm:text-lg
+                font-extrabold
+                shadow-[0_8px_25px_rgba(0,0,0,0.35)]
+                border-2
+                border-[#009246]
+                relative
+                overflow-hidden
+              "
+              onClick={() =>
+                (window.location.href = "/verificar-decreto-flussi")
+              }
+            >
+              {/* Detalle tricolor italiano */}
+              <span
+                className="
+                  absolute
+                  left-0
+                  top-0
+                  bottom-0
+                  w-1.5
+                  bg-gradient-to-b
+                  from-[#009246]
+                  via-white
+                  to-[#CE2B37]
+                "
+              />
 
-  {liveLanguage === "darija"
-    ? "التحقق من الوثائق"
-    : liveLanguage === "en"
-      ? "DOCUMENT VERIFICATION"
-      : "VERIFICAZIONE DI DOCUMENTI"}
+              <span className="flex items-center justify-center gap-2">
+                <img
+                  src="https://flagcdn.com/w40/it.png"
+                  alt="Italia"
+                  className="w-6 h-4 object-cover rounded-sm shadow-sm"
+                />
 
-  <ArrowRight className="w-4 h-4 ml-2" />
-</Button>
+                <span>
+                  {liveLanguage === "darija"
+                    ? "التحقق من الوثائق"
+                    : liveLanguage === "en"
+                      ? "DOCUMENT VERIFICATION"
+                      : "VERIFICAZIONE DI DOCUMENTI"}
+                </span>
+
+                <ArrowRight className="w-4 h-4 ml-1" />
+              </span>
+            </Button>
 
             {/* 🇲🇹 BOTÓN ESTUDIAR EN MALTA 2027 */}
             <Button
