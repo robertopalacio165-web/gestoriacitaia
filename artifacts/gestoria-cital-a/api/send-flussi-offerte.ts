@@ -136,6 +136,7 @@ type OfferRow = {
   company_name?: string | null;
   publication_date?: string | null;
   published_at?: string | null;
+  // flussi_offerte does not have a salary column; kept only for email-template compatibility.
   salary?: string | null;
   city?: string | null;
   province?: string | null;
@@ -352,7 +353,6 @@ async function getOffers(
     "company_name",
     "publication_date",
     "published_at",
-    "salary",
     "city",
     "province",
     "address",
