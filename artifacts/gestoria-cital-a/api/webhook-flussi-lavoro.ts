@@ -130,8 +130,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         packageCode,
       });
     }
-    if (await existsBySession(table, session.id)) {
-      return res.status(200).json({ received: true, processed: true, alreadyExists: true, table, stripeSessionId: session.id });
+    // IMPORTANT: Stripe can resend the same event. If the customer is already
+    // saved in Supabase, DO NOT exit here because the welcome email may not
+    // have been sent yet. We skip the duplicate INSERT but continue to email.
+    const alreadyExists = await existsBySession(table, session.id);
+
+    if (alreadyExists) {
+      console.log("ℹ️ FLUSSI LAVORO: customer already exists; continuing to welcome email", {
+        table,
+        stripeSessionId: session.id,
+        email,
+      });
     }
 
     if (packageCode === "single_category" && categories.length !== 1) {
@@ -169,22 +178,27 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     }
 
-    const insert = await supabaseRequest(table, {
-      method: "POST",
-      headers: { Prefer: "return=representation" },
-      body: JSON.stringify(record),
-    });
-    const insertText = await insert.text();
-    if (!insert.ok) {
-      console.error("Supabase Flussi Lavoro insert failed:", table, insert.status, insertText);
-      return res.status(500).json({ error: "Could not save Flussi Lavoro customer" });
+    if (!alreadyExists) {
+      const insert = await supabaseRequest(table, {
+        method: "POST",
+        headers: { Prefer: "return=representation" },
+        body: JSON.stringify(record),
+      });
+      const insertText = await insert.text();
+      if (!insert.ok) {
+        console.error("Supabase Flussi Lavoro insert failed:", table, insert.status, insertText);
+        return res.status(500).json({ error: "Could not save Flussi Lavoro customer" });
+      }
+      console.log("✅ FLUSSI LAVORO: customer saved in Supabase", { table, email });
     }
 
     const reference = clean(metadata.reference) || `FL-${session.id.slice(-10).toUpperCase()}`;
     const packageName = clean(metadata.package_name) || (
-      amountCents === 999 ? "Decreto Flussi Lavoro — 9,99 €" :
-      amountCents === 1999 ? "Decreto Flussi Lavoro — 19,99 €" :
-      "Decreto Flussi Lavoro — 24,99 €"
+      packageCode === "monthly"
+        ? "Offerte del mese"
+        : packageCode === "biweekly"
+        ? "Aggiornamenti ogni 15 giorni"
+        : "Una sola categoria"
     );
 
     // IMPORTANT:
