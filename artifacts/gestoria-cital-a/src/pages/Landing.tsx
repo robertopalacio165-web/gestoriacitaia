@@ -364,7 +364,11 @@ export default function Landing() {
     (window.location.href = "/verificar-decreto-flussi")
   }
 >
-  <span className="mr-2 text-xl">🇮🇹</span>
+<img
+  src="https://flagcdn.com/w40/it.png"
+  alt="Italia"
+  className="w-6 h-4 object-cover rounded-sm mr-2"
+/>
 
   {liveLanguage === "darija"
     ? "التحقق من الوثائق"
