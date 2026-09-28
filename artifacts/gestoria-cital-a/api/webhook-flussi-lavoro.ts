@@ -1,4 +1,4 @@
-
+import type { VercelRequest, VercelResponse } from "@vercel/node";
 import Stripe from "stripe";
 import nodemailer from "nodemailer";
 
