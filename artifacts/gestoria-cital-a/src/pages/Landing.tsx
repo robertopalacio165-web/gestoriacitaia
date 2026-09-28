@@ -330,14 +330,13 @@ export default function Landing() {
             {/* 🇮🇹 BOTÓN PRINCIPAL — DECRETO FLUSSI 2027 */}
             <Button
               className="w-full sm:w-auto rounded-full px-8 py-4 min-h-[62px]
-              bg-[#009246]
-              hover:bg-[#007f3f]
+              bg-gradient-to-r from-[#009246] via-white to-[#CE2B37]
               hover:scale-[1.04]
-              hover:shadow-[0_0_35px_rgba(0,146,70,0.40)]
+              hover:shadow-[0_0_35px_rgba(206,43,55,0.35)]
               transition-all duration-300
-              text-white text-lg sm:text-xl font-black
+              text-black text-lg sm:text-xl font-black
               shadow-[0_0_25px_rgba(0,146,70,0.35)]
-              border-2 border-[#CE2B37]
+              border-2 border-[#009246]
               tracking-wide"
               onClick={() =>
                 (window.location.href = "/decreto-flussi-2027")
@@ -354,9 +353,9 @@ export default function Landing() {
 
             {/* 🇮🇹 BOTÓN VERIFICACIÓN DE DOCUMENTOS — 3 IDIOMAS */}
             <Button
-              className="w-full sm:w-auto rounded-full px-7 py-3 min-h-[52px]
-              bg-[#0b1220]
-              hover:bg-[#111c2f]
+              className="w-full sm:w-auto rounded-xl px-7 py-3 min-h-[52px]
+              bg-[#07110d]
+              hover:bg-[#0b1914]
               hover:scale-[1.03]
               hover:shadow-[0_0_28px_rgba(0,146,70,0.28)]
               transition-all duration-300
@@ -369,7 +368,7 @@ export default function Landing() {
                 (window.location.href = "/verificar-decreto-flussi")
               }
             >
-              <span className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-[#009246] via-white to-[#CE2B37]" />
+              <span className="absolute bottom-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#009246] via-white to-[#CE2B37]" />
 
               <img
                 src="https://flagcdn.com/w40/it.png"
