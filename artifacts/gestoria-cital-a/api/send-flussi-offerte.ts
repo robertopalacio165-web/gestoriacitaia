@@ -287,7 +287,9 @@ async function getActiveClients(): Promise<Client[]> {
     const select =
       table === "flussi_lavoro_24_99"
         ? "id,first_name,last_name,email,phone,work_type,category,payment_status,expires_at"
-        : "id,first_name,last_name,email,phone,work_type,categories,payment_status,expires_at";
+        : table === "flussi_lavoro_9_99"
+          ? "id,first_name,last_name,email,phone,work_type,categories,payment_status"
+          : "id,first_name,last_name,email,phone,work_type,categories,payment_status,starts_at,expires_at";
 
     const response = await supabaseRequest(
       `${table}?select=${encodeURIComponent(select)}&payment_status=eq.paid`
