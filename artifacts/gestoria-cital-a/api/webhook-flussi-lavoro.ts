@@ -1,4 +1,3 @@
-import type { VercelRequest, VercelResponse } from "@vercel/node";
 import Stripe from "stripe";
 import nodemailer from "nodemailer";
 
@@ -56,6 +55,8 @@ function escapeHtml(v: string) {
 }
 
 function createTransporter() {
+  // BREVO SMTP: smtp-relay.brevo.com / port 587 (configured in Vercel).
+  // Uses the existing SMTP_HOST, SMTP_PORT, SMTP_USER and SMTP_PASS variables.
   const host = process.env.SMTP_HOST;
   const user = process.env.SMTP_USER;
   const pass = process.env.SMTP_PASS;
@@ -75,7 +76,7 @@ function welcomeHtml(p: {
   sessionId: string; startsAt: string | null; expiresAt: string | null;
 }) {
   const amount = `${(p.amountCents / 100).toFixed(2).replace(".", ",")} €`;
-  const duration = p.amountCents === 999 ? "Accesso iniziale" : p.amountCents === 1999 ? "15 giorni" : "30 giorni";
+  const duration = "Test €0,50 — servizio attivato";
   const period = p.startsAt && p.expiresAt
     ? `${new Date(p.startsAt).toLocaleDateString("it-IT")} → ${new Date(p.expiresAt).toLocaleDateString("it-IT")}`
     : "Servizio attivato";
@@ -131,6 +132,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const session = event.data.object as Stripe.Checkout.Session;
     const metadata = session.metadata || {};
 
+    console.log("🚀 FLUSSI LAVORO WEBHOOK RECEIVED", {
+      event: event.type,
+      sessionId: session.id,
+      service: metadata.service,
+      product: metadata.product,
+      packageCode: metadata.package_code,
+      amountTotal: session.amount_total,
+      paymentStatus: session.payment_status,
+    });
+
     if (metadata.service !== "flussi_lavoro" || metadata.product !== "decreto_flussi_lavoro") {
       return res.status(200).json({ received: true, ignored: true, reason: "not_flussi_lavoro" });
     }
@@ -148,29 +159,55 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (!firstName || !lastName || !email) return res.status(400).json({ error: "Missing client data" });
 
     const categories = clean(metadata.categories).split(",").map((x) => x.trim()).filter(Boolean);
-    const amountCents = Number(metadata.package_amount_cents) || Number(session.amount_total) || 0;
+    const amountCents = Number(session.amount_total) || Number(metadata.package_amount_cents) || 0;
+    const packageCode = clean(metadata.package_code);
 
-    const table = amountCents === 999
-      ? "flussi_lavoro_9_99"
-      : amountCents === 1999
-      ? "flussi_lavoro_19_99"
-      : amountCents === 2499
-      ? "flussi_lavoro_24_99"
-      : "";
+    // TEMPORARY TEST: all Flussi Lavoro plans are €0.50.
+    // The database table is selected by package_code, NOT by price.
+    const table =
+      packageCode === "monthly"
+        ? "flussi_lavoro_9_99"
+        : packageCode === "biweekly"
+        ? "flussi_lavoro_19_99"
+        : packageCode === "single_category"
+        ? "flussi_lavoro_24_99"
+        : "";
 
-    if (!table) return res.status(400).json({ error: "Unknown Flussi Lavoro package amount", amountCents });
+    if (!table) {
+      return res.status(400).json({
+        error: "Unknown Flussi Lavoro package",
+        packageCode,
+        amountCents,
+      });
+    }
+
+    if (amountCents !== 50) {
+      return res.status(400).json({
+        error: "Temporary Flussi Lavoro test accepts only €0.50",
+        amountCents,
+        packageCode,
+      });
+    }
     if (await existsBySession(table, session.id)) {
       return res.status(200).json({ received: true, processed: true, alreadyExists: true, table, stripeSessionId: session.id });
     }
 
-    if (amountCents === 2499 && categories.length !== 1) {
-      return res.status(400).json({ error: "The 24.99 package requires exactly one category", categories });
+    if (packageCode === "single_category" && categories.length !== 1) {
+      return res.status(400).json({
+        error: "The single_category package requires exactly one category",
+        categories,
+      });
     }
 
     const now = new Date();
     const workType = metadata.work_type === "stagionale" ? "stagionale" : "non_stagionale";
-    const startsAt = amountCents === 999 ? null : now.toISOString();
-    const expiresAt = amountCents === 1999 ? addDays(now, 15) : amountCents === 2499 ? addDays(now, 30) : null;
+    const startsAt = packageCode === "monthly" ? null : now.toISOString();
+    const expiresAt =
+      packageCode === "biweekly"
+        ? addDays(now, 15)
+        : packageCode === "single_category"
+        ? addDays(now, 30)
+        : null;
     const paymentIntent = typeof session.payment_intent === "string" ? session.payment_intent : null;
 
     const record: Record<string, unknown> = {
@@ -186,13 +223,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       updated_at: now.toISOString(),
     };
 
-    if (amountCents === 2499) {
+    if (packageCode === "single_category") {
       record.category = categories[0];
       record.starts_at = startsAt;
       record.expires_at = expiresAt;
     } else {
       record.categories = categories;
-      if (amountCents === 1999) {
+      if (packageCode === "biweekly") {
         record.starts_at = startsAt;
         record.expires_at = expiresAt;
       }
@@ -211,15 +248,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const reference = clean(metadata.reference) || `FL-${session.id.slice(-10).toUpperCase()}`;
     const packageName = clean(metadata.package_name) || (
-      amountCents === 999 ? "Decreto Flussi Lavoro — 9,99 €" :
-      amountCents === 1999 ? "Decreto Flussi Lavoro — 19,99 €" :
-      "Decreto Flussi Lavoro — 24,99 €"
+      packageCode === "monthly"
+        ? "Decreto Flussi Lavoro — Offerte del mese"
+        : packageCode === "biweekly"
+        ? "Decreto Flussi Lavoro — Aggiornamenti ogni 15 giorni"
+        : "Decreto Flussi Lavoro — Una sola categoria"
     );
 
     const fromEmail = process.env.FROM_EMAIL;
     if (!fromEmail) throw new Error("FROM_EMAIL is missing");
 
     const transporter = createTransporter();
+    console.log("📧 FLUSSI LAVORO: sending welcome email via Brevo SMTP", {
+      host: process.env.SMTP_HOST,
+      port: Number(process.env.SMTP_PORT || 587),
+      from: fromEmail,
+      to: email,
+    });
     await transporter.sendMail({
       from: fromEmail,
       to: email,
