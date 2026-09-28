@@ -300,7 +300,13 @@ export default function DecretoFlussi2027() {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {categories.map((category) => {
+        {categories
+  .filter((category) =>
+    form.workType === "stagionale"
+      ? category.is_seasonal
+      : !category.is_seasonal
+  )
+  .map((category) => {
                     const selected = selectedCategories.includes(category.code);
                     const disabled = selectedPackage === "single_category" && !selected && selectedCategories.length >= 1;
                     return (
