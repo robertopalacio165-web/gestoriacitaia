@@ -61,7 +61,7 @@ const FLUSSI_LAVORO_PRODUCT = "decreto_flussi_lavoro";
  *   9,99 € / 30 días
  *
  * biweekly:
- *   19,99 € / 30 días
+ *   19,99 € / 15 días
  *
  * single_category:
  *   24,99 € / 30 días
@@ -78,7 +78,7 @@ const PLANS = {
     code: "biweekly",
     name: "Aggiornamenti ogni 15 giorni",
     amount: 1999,
-    durationDays: 30,
+    durationDays: 15,
   },
 
   single_category: {
@@ -376,8 +376,6 @@ export default async function handler(
         payment_method_types: [
           "card",
         ],
-
-        customer_email: email,
 
         client_reference_id: reference,
 
