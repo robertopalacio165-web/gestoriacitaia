@@ -356,7 +356,9 @@ export default function DecretoFlussi2027() {
               </span>
             </label>
 
-            <button type="button" onClick={handlePay} disabled={submitting}
+     <button
+  type="button"
+  disabled={true}
               className="w-full h-[54px] rounded-2xl bg-gradient-to-r from-[#009246] via-white to-[#CE2B37] p-[1px] disabled:opacity-60">
               <span className="flex h-full w-full items-center justify-center gap-2 rounded-2xl bg-black text-white font-black">
                 {submitting ? <><Loader2 className="w-5 h-5 animate-spin" /> Connessione al pagamento...</> :
