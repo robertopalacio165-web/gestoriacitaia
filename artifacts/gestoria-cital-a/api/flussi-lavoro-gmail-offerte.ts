@@ -176,9 +176,7 @@ style="max-width:1120px;background:#06131d;border:1px solid #24485b;border-radiu
 <td valign="top">
 
 <div style="font-size:30px;font-weight:900;line-height:31px;">
-<span style="color:#20df91;">G</span>
-<span style="color:#fff;"> gestoria</span>
-<span style="color:#e7bf35;">CitaIA</span>
+<span style="color:#fff;">gestoriacita</span><span style="color:#20df91;">IA</span>
 </div>
 
 <div style="color:#e7bf35;font-size:10px;font-weight:900;letter-spacing:1.5px;">
@@ -364,9 +362,7 @@ ${MA_FLAG}&nbsp;
 <td style="padding:17px 20px 20px;text-align:center;border-top:1px solid #24485b;">
 
 <div style="font-size:21px;font-weight:900;">
-<span style="color:#20df91;">G</span>
-<span style="color:#fff;"> gestoria</span>
-<span style="color:#e7bf35;">CitaIA</span>
+<span style="color:#fff;">gestoriacita</span><span style="color:#20df91;">IA</span>
 </div>
 
 <div style="color:#e7bf35;font-size:10px;font-weight:900;letter-spacing:1.4px;margin-top:3px;">
