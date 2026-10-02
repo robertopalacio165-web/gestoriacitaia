@@ -1,10 +1,10 @@
-
-
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import nodemailer from "nodemailer";
 
 /* ============================================================
-   TIPOS
+   GESTORIACITAIA — DECRETO FLUSSI 2027
+   EMAIL PROFESIONAL GMAIL
+   DESKTOP + MOBILE
    ============================================================ */
 
 type FlussiOffertaEmail = {
@@ -21,6 +21,10 @@ type FlussiOffertaEmail = {
   contractType?: string;
   workType?: string;
   offerUrl?: string;
+
+  /* DETALLES COMPLETOS */
+  details?: string;
+  detailsDarija?: string;
 };
 
 type FlussiOfferteEmailData = {
@@ -29,8 +33,9 @@ type FlussiOfferteEmailData = {
   recipientName?: string;
 };
 
+
 /* ============================================================
-   HELPERS EMAIL
+   HELPERS
    ============================================================ */
 
 const emailEsc = (value: unknown): string =>
@@ -46,59 +51,105 @@ const emailValue = (value: unknown): string => {
   return v || "";
 };
 
+
+/* ============================================================
+   FLAGS
+   ============================================================ */
+
 const IT_FLAG =
-  '<span style="display:inline-block;width:34px;height:23px;vertical-align:middle;border:1px solid #425563;border-radius:2px;background:linear-gradient(to right,#009246 0%,#009246 33.333%,#ffffff 33.333%,#ffffff 66.666%,#ce2b37 66.666%,#ce2b37 100%);"></span>';
+  '<span style="display:inline-block;width:34px;height:23px;vertical-align:middle;border-radius:3px;background:linear-gradient(to right,#009246 0%,#009246 33.333%,#ffffff 33.333%,#ffffff 66.666%,#ce2b37 66.666%,#ce2b37 100%);border:1px solid #38505e;"></span>';
 
 const MA_FLAG =
-  '<span style="display:inline-block;width:34px;height:23px;vertical-align:middle;border:1px solid #425563;border-radius:2px;background:#c1272d;color:#006233;text-align:center;line-height:23px;font-size:15px;font-family:Arial,sans-serif;">★</span>';
+  '<span style="display:inline-block;width:34px;height:23px;vertical-align:middle;border-radius:3px;background:#c1272d;color:#006233;text-align:center;line-height:23px;font-size:14px;font-family:Arial;">★</span>';
+
+
+/* ============================================================
+   DARIJA CATEGORY
+   ============================================================ */
 
 function categoryDarija(category: string): string {
-  const key = category.toLowerCase().trim();
+
+  const key =
+    category
+      .toLowerCase()
+      .trim();
 
   const map: Record<string, string> = {
-    agriculture: "الفلاحة",
-    agricoltura: "الفلاحة",
-    family_assistance: "المساعدة العائلية",
-    "assistenza familiare": "المساعدة العائلية",
-    ristorazione: "المطاعم",
-    restaurant: "المطاعم",
-    pulizia: "النظافة",
-    cleaning: "النظافة",
-    hotel: "الفنادق",
-    fabbrica: "المصانع",
-    factory: "المصانع",
-    costruzione: "البناء",
-    construction: "البناء",
-    delivery: "التوصيل",
-    domestico: "العمل المنزلي",
-    domestic: "العمل المنزلي",
-    caregiving: "رعاية الأشخاص",
-    colf: "العمل المنزلي",
-    badante: "المساعدة العائلية",
+
+    agriculture:
+      "الفلاحة",
+
+    agricoltura:
+      "الفلاحة",
+
+    "assistenza familiare":
+      "المساعدة العائلية",
+
+    family_assistance:
+      "المساعدة العائلية",
+
+    badante:
+      "المساعدة العائلية",
+
+    colf:
+      "العمل المنزلي",
+
+    domestico:
+      "العمل المنزلي",
+
+    domestic:
+      "العمل المنزلي",
+
+    pulizia:
+      "النظافة",
+
+    cleaning:
+      "النظافة",
+
+    ristorazione:
+      "المطاعم",
+
+    restaurant:
+      "المطاعم",
+
+    hotel:
+      "الفنادق",
+
+    fabbrica:
+      "المصانع",
+
+    factory:
+      "المصانع",
+
+    costruzione:
+      "البناء",
+
+    construction:
+      "البناء",
+
+    delivery:
+      "التوصيل",
+
+    caregiving:
+      "رعاية الأشخاص",
   };
 
   return map[key] || category;
 }
 
+
 /* ============================================================
-   PLANTILLA GMAIL
+   CAMPO ITALIANO
    ============================================================ */
 
-function buildFlussiOfferteEmail(
-  data: FlussiOfferteEmailData,
+function fieldIT(
+  icon: string,
+  label: string,
+  value: string,
+  color: string,
 ): string {
-  const offers = data.offers || [];
 
-  /* ----------------------------------------------------------
-     CAMPO ITALIANO
-     ---------------------------------------------------------- */
-
-  const iconBox = (
-    icon: string,
-    label: string,
-    value: string,
-    color: string,
-  ) => `
+  return `
 <table
   role="presentation"
   width="100%"
@@ -110,34 +161,33 @@ function buildFlussiOfferteEmail(
 <tr>
 
 <td
-  width="36"
-  valign="middle"
-  style="width:36px;padding:0 5px 0 0;"
+  width="34"
+  style="width:34px;padding:0 4px 0 0;vertical-align:middle;"
 >
-  <div
-    style="
-      width:30px;
-      height:30px;
-      line-height:30px;
-      text-align:center;
-      background:#102b3e;
-      border:1px solid #214b63;
-      border-radius:9px;
-      font-size:16px;
-    "
-  >
-    ${icon}
-  </div>
+<div
+  style="
+    width:28px;
+    height:28px;
+    line-height:28px;
+    text-align:center;
+    background:#102b3e;
+    border:1px solid #214b63;
+    border-radius:8px;
+    font-size:15px;
+  "
+>
+${icon}
+</div>
 </td>
 
 <td
-  valign="middle"
   style="
     background:#071e2e;
     border:1px solid #214b63;
-    border-radius:9px;
-    padding:5px 8px;
+    border-radius:8px;
+    padding:5px 7px;
     text-align:left;
+    vertical-align:middle;
   "
 >
 
@@ -146,10 +196,10 @@ function buildFlussiOfferteEmail(
     font-size:9px;
     font-weight:800;
     color:${color};
-    line-height:12px;
+    line-height:11px;
   "
 >
-  ${emailEsc(label)}
+${emailEsc(label)}
 </div>
 
 <div
@@ -160,7 +210,7 @@ function buildFlussiOfferteEmail(
     word-break:break-word;
   "
 >
-  ${emailEsc(value || "—")}
+${emailEsc(value || "—")}
 </div>
 
 </td>
@@ -168,17 +218,21 @@ function buildFlussiOfferteEmail(
 </tr>
 </table>
 `;
+}
 
-  /* ----------------------------------------------------------
-     CAMPO DARIJA
-     ---------------------------------------------------------- */
 
-  const iconBoxAr = (
-    icon: string,
-    label: string,
-    value: string,
-    color: string,
-  ) => `
+/* ============================================================
+   CAMPO DARIJA
+   ============================================================ */
+
+function fieldAR(
+  icon: string,
+  label: string,
+  value: string,
+  color: string,
+): string {
+
+  return `
 <table
   role="presentation"
   width="100%"
@@ -191,13 +245,13 @@ function buildFlussiOfferteEmail(
 
 <td
   dir="rtl"
-  valign="middle"
   style="
     background:#071e2e;
     border:1px solid #214b63;
-    border-radius:9px;
-    padding:5px 8px;
+    border-radius:8px;
+    padding:5px 7px;
     text-align:right;
+    vertical-align:middle;
   "
 >
 
@@ -206,10 +260,10 @@ function buildFlussiOfferteEmail(
     font-size:9px;
     font-weight:800;
     color:${color};
-    line-height:12px;
+    line-height:11px;
   "
 >
-  ${emailEsc(label)}
+${emailEsc(label)}
 </div>
 
 <div
@@ -220,147 +274,141 @@ function buildFlussiOfferteEmail(
     word-break:break-word;
   "
 >
-  ${emailEsc(value || "—")}
+${emailEsc(value || "—")}
 </div>
 
 </td>
 
 <td
-  width="36"
-  valign="middle"
-  style="width:36px;padding:0 0 0 5px;"
+  width="34"
+  style="
+    width:34px;
+    padding:0 0 0 4px;
+    vertical-align:middle;
+  "
 >
-  <div
-    style="
-      width:30px;
-      height:30px;
-      line-height:30px;
-      text-align:center;
-      background:#102b3e;
-      border:1px solid #214b63;
-      border-radius:9px;
-      font-size:16px;
-    "
-  >
-    ${icon}
-  </div>
+
+<div
+  style="
+    width:28px;
+    height:28px;
+    line-height:28px;
+    text-align:center;
+    background:#102b3e;
+    border:1px solid #214b63;
+    border-radius:8px;
+    font-size:15px;
+  "
+>
+${icon}
+</div>
+
 </td>
 
 </tr>
 </table>
 `;
+}
 
-  /* ----------------------------------------------------------
-     OFFERTAS
-     ---------------------------------------------------------- */
 
-  const cards = offers.length
-    ? offers
-        .map((offer, index) => {
-          const category =
-            emailValue(offer.category) ||
-            "Offerta di lavoro";
+/* ============================================================
+   EMAIL PRINCIPAL
+   ============================================================ */
 
-          const categoryAr =
-            categoryDarija(category);
+function buildFlussiOfferteEmail(
+  data: FlussiOfferteEmailData,
+): string {
 
-          const title =
-            emailValue(offer.jobTitle) ||
-            "Offerta di lavoro";
+  const offers =
+    data.offers || [];
 
-          const city =
-            emailValue(offer.city) ||
-            "—";
+  const count =
+    offers.length;
 
-          const province =
-            emailValue(offer.province) ||
-            "—";
+  const greeting =
+    emailValue(
+      data.recipientName,
+    ) || "Ciao";
 
-          const address =
-            emailValue(offer.address) ||
-            "—";
 
-          const phone =
-            emailValue(offer.phone) ||
-            "—";
+  /* ==========================================================
+     CARDS
+     ========================================================== */
 
-          const ido =
-            emailValue(offer.email) ||
-            "—";
+  const cards =
+    offers.length
 
-          const contract =
-            emailValue(offer.contractType) ||
-            "—";
+      ? offers
+          .map(
+            (
+              offer,
+              index,
+            ) => {
 
-          const workType =
-            emailValue(offer.workType) ||
-            "—";
+              const category =
+                emailValue(
+                  offer.category,
+                ) ||
+                "Offerta di lavoro";
 
-          const salary =
-            emailValue(offer.salary) ||
-            "—";
+              const categoryAR =
+                categoryDarija(
+                  category,
+                );
 
-          const company =
-            emailValue(offer.companyName);
+              const title =
+                emailValue(
+                  offer.jobTitle,
+                ) ||
+                "Offerta di lavoro";
 
-          const date =
-            emailValue(
-              offer.publicationDate,
-            );
+              const city =
+                emailValue(
+                  offer.city,
+                ) || "—";
 
-          const detailsIt = [
-            contract !== "—"
-              ? `Contratto: ${contract}`
-              : "",
+              const province =
+                emailValue(
+                  offer.province,
+                ) || "—";
 
-            workType !== "—"
-              ? `Tipo: ${workType}`
-              : "",
+              const address =
+                emailValue(
+                  offer.address,
+                ) || "—";
 
-            salary !== "—"
-              ? `Retribuzione: ${salary}`
-              : "",
+              const phone =
+                emailValue(
+                  offer.phone,
+                ) || "—";
 
-            company
-              ? `Azienda: ${company}`
-              : "",
+              const ido =
+                emailValue(
+                  offer.email,
+                ) || "—";
 
-            date
-              ? `Pubblicata: ${date}`
-              : "",
-          ]
-            .filter(Boolean)
-            .join(" · ")
-            ||
-            "Dettagli disponibili nell'offerta.";
 
-          const detailsAr = [
-            contract !== "—"
-              ? `العقد: ${contract}`
-              : "",
+              /*
+               * IMPORTANTISSIMO:
+               * QUESTO È IL QUADRO GIALLO COMPLETO.
+               */
 
-            workType !== "—"
-              ? `النوع: ${workType}`
-              : "",
+              const fullDetails =
+                emailValue(
+                  offer.details,
+                ) ||
+                "Dettagli completi disponibili nell'offerta.";
 
-            salary !== "—"
-              ? `الأجرة: ${salary}`
-              : "",
 
-            company
-              ? `الشركة: ${company}`
-              : "",
+              const detailsAR =
+                emailValue(
+                  offer.detailsDarija,
+                ) ||
+                "تفاصيل الخدمة كاملة كاينة حسب المعطيات المتوفرة فالعرض.";
 
-            date
-              ? `تاريخ النشر: ${date}`
-              : "",
-          ]
-            .filter(Boolean)
-            .join(" • ")
-            ||
-            "تفاصيل العرض متوفرة حسب المعطيات.";
 
-          return `
+              return `
+
 <table
   role="presentation"
   width="100%"
@@ -378,13 +426,11 @@ function buildFlussiOfferteEmail(
 
 <tr>
 
-<td
-  style="
-    padding:12px;
-  "
->
+<td style="padding:11px;">
 
-<!-- TITRE -->
+<!-- ========================================================
+     OFFER TITLE
+     ======================================================== -->
 
 <table
   role="presentation"
@@ -413,16 +459,21 @@ function buildFlussiOfferteEmail(
     font-weight:900;
   "
 >
-✓ OFFERTA ${String(index + 1).padStart(2, "0")}
+✓ OFFERTA ${String(
+                index + 1,
+              ).padStart(
+                2,
+                "0",
+              )}
 </div>
 
 <div
   style="
     margin-top:7px;
-    font-size:16px;
+    font-size:15px;
     font-weight:900;
     color:#ffffff;
-    line-height:20px;
+    line-height:19px;
   "
 >
 ${emailEsc(title)}
@@ -431,7 +482,7 @@ ${emailEsc(title)}
 <div
   style="
     margin-top:2px;
-    font-size:10px;
+    font-size:9px;
     color:#9fb2bf;
   "
 >
@@ -466,10 +517,10 @@ ${emailEsc(category)}
 <div
   style="
     margin-top:7px;
-    font-size:16px;
+    font-size:15px;
     font-weight:900;
     color:#ffffff;
-    line-height:20px;
+    line-height:19px;
   "
 >
 ${emailEsc(title)}
@@ -478,20 +529,23 @@ ${emailEsc(title)}
 <div
   style="
     margin-top:2px;
-    font-size:10px;
+    font-size:9px;
     color:#9fb2bf;
   "
 >
-${emailEsc(categoryAr)}
+${emailEsc(categoryAR)}
 </div>
 
 </td>
 
 </tr>
+
 </table>
 
 
-<!-- CAMPOS -->
+<!-- ========================================================
+     INFORMATION FIELDS
+     ======================================================== -->
 
 <table
   role="presentation"
@@ -499,60 +553,62 @@ ${emailEsc(categoryAr)}
   cellpadding="0"
   cellspacing="0"
   border="0"
-  style="margin-top:9px;"
+  style="margin-top:8px;"
 >
 
 <tr>
 
+
 <td
+  class="offer-col"
   width="50%"
   valign="top"
   style="padding-right:4px;"
 >
 
-${iconBox(
+${fieldIT(
   "📍",
   "Città",
   city,
   "#35bfff",
 )}
 
-${iconBox(
+${fieldIT(
   "🏢",
   "Provincia",
   province,
   "#9d7cff",
 )}
 
-${iconBox(
+${fieldIT(
   "💼",
   "Categoria",
   category,
   "#23e69a",
 )}
 
-${iconBox(
+${fieldIT(
   "👤",
   "Posizione",
   title,
   "#ff8a21",
 )}
 
-${iconBox(
+${fieldIT(
   "📌",
   "Indirizzo",
   address,
   "#ff667a",
 )}
 
-${iconBox(
+${fieldIT(
   "📞",
   "Responsabile",
   phone,
   "#23e69a",
 )}
 
-${iconBox(
+${fieldIT(
   "✉️",
   "IDO",
   ido,
@@ -563,54 +619,55 @@ ${iconBox(
 
 
 <td
+  class="offer-col"
   width="50%"
   valign="top"
   style="padding-left:4px;"
 >
 
-${iconBoxAr(
+${fieldAR(
   "📍",
   "المدينة",
   city,
   "#35bfff",
 )}
 
-${iconBoxAr(
+${fieldAR(
   "🏢",
   "الإقليم",
   province,
   "#9d7cff",
 )}
 
-${iconBoxAr(
+${fieldAR(
   "💼",
   "الفئة",
-  categoryAr,
+  categoryAR,
   "#23e69a",
 )}
 
-${iconBoxAr(
+${fieldAR(
   "👤",
   "العمل",
   title,
   "#ff8a21",
 )}
 
-${iconBoxAr(
+${fieldAR(
   "📌",
   "العنوان",
   address,
   "#ff667a",
 )}
 
-${iconBoxAr(
+${fieldAR(
   "📞",
   "رقم المسؤول",
   phone,
   "#23e69a",
 )}
 
-${iconBoxAr(
+${fieldAR(
   "✉️",
   "الإيميل",
   ido,
@@ -624,7 +681,9 @@ ${iconBoxAr(
 </table>
 
 
-<!-- DETTAGLI -->
+<!-- ========================================================
+     YELLOW DETAILS — FULL JOB INFORMATION
+     ======================================================== -->
 
 <table
   role="presentation"
@@ -637,7 +696,9 @@ ${iconBoxAr(
 
 <tr>
 
+
 <td
+  class="detail-col"
   width="50%"
   valign="top"
   style="padding-right:4px;"
@@ -645,10 +706,11 @@ ${iconBoxAr(
 
 <div
   style="
-    background:#181e05;
-    border:1px solid #776c18;
+    background:#211f04;
+    border:1px solid #d1ad22;
     border-radius:11px;
-    padding:9px 10px;
+    padding:10px;
+    min-height:92px;
   "
 >
 
@@ -657,20 +719,23 @@ ${iconBoxAr(
     font-size:11px;
     font-weight:900;
     color:#ffd429;
-    margin-bottom:4px;
+    margin-bottom:6px;
   "
 >
-📋 Dettagli dell'offerta
+📋 Dettagli completi dell'offerta
 </div>
 
 <div
   style="
     font-size:9px;
-    line-height:14px;
+    line-height:15px;
     color:#ffffff;
+    word-break:break-word;
   "
 >
-${emailEsc(detailsIt)}
+${emailEsc(
+                fullDetails,
+              )}
 </div>
 
 </div>
@@ -679,6 +744,7 @@ ${emailEsc(detailsIt)}
 
 
 <td
+  class="detail-col"
   width="50%"
   valign="top"
   dir="rtl"
@@ -687,10 +753,11 @@ ${emailEsc(detailsIt)}
 
 <div
   style="
-    background:#181e05;
-    border:1px solid #776c18;
+    background:#211f04;
+    border:1px solid #d1ad22;
     border-radius:11px;
-    padding:9px 10px;
+    padding:10px;
+    min-height:92px;
     text-align:right;
   "
 >
@@ -700,20 +767,23 @@ ${emailEsc(detailsIt)}
     font-size:11px;
     font-weight:900;
     color:#ffd429;
-    margin-bottom:4px;
+    margin-bottom:6px;
   "
 >
-تفاصيل العرض 📋
+📋 تفاصيل الخدمة كاملة
 </div>
 
 <div
   style="
     font-size:9px;
-    line-height:14px;
+    line-height:15px;
     color:#ffffff;
+    word-break:break-word;
   "
 >
-${emailEsc(detailsAr)}
+${emailEsc(
+                detailsAR,
+              )}
 </div>
 
 </div>
@@ -724,15 +794,19 @@ ${emailEsc(detailsAr)}
 
 </table>
 
+
 </td>
 
 </tr>
 
 </table>
+
 `;
-        })
-        .join("")
-    : `
+            },
+          )
+          .join("")
+
+      : `
 <div
   style="
     padding:30px;
@@ -744,11 +818,13 @@ Nessuna nuova offerta disponibile al momento.
 </div>
 `;
 
-  /* ============================================================
-     HTML PRINCIPALE
-     ============================================================ */
+
+  /* ==========================================================
+     COMPLETE EMAIL
+     ========================================================== */
 
   return `
+
 <!doctype html>
 
 <html lang="it">
@@ -763,8 +839,62 @@ Nessuna nuova offerta disponibile al momento.
 >
 
 <title>
-GestoriaCitaIA — Decreto Flussi 2027
+Nuove offerte di lavoro — Decreto Flussi 2027
 </title>
+
+
+<style>
+
+@media only screen and (max-width:620px){
+
+  .email-wrap{
+    width:100%!important;
+    max-width:100%!important;
+    border-radius:0!important;
+  }
+
+  .outer-pad{
+    padding:0!important;
+  }
+
+  .mobile-pad{
+    padding-left:10px!important;
+    padding-right:10px!important;
+  }
+
+  .mobile-stack-cell{
+    display:block!important;
+    width:100%!important;
+    max-width:100%!important;
+    padding-left:0!important;
+    padding-right:0!important;
+  }
+
+  .offer-col{
+    display:block!important;
+    width:100%!important;
+    max-width:100%!important;
+    padding-left:0!important;
+    padding-right:0!important;
+  }
+
+  .detail-col{
+    display:block!important;
+    width:100%!important;
+    max-width:100%!important;
+    padding-left:0!important;
+    padding-right:0!important;
+    margin-bottom:7px!important;
+  }
+
+  .header-title{
+    font-size:22px!important;
+    line-height:26px!important;
+  }
+
+}
+
+</style>
 
 </head>
 
@@ -773,20 +903,27 @@ GestoriaCitaIA — Decreto Flussi 2027
   style="
     margin:0;
     padding:0;
-    background:#020b12;
+    background:#edf1f5;
     font-family:Arial,Helvetica,sans-serif;
   "
 >
 
 <center
+  class="outer-pad"
   style="
     width:100%;
-    background:#020b12;
-    padding:10px 0;
+    padding:18px 8px;
+    background:#edf1f5;
   "
 >
 
+
+<!-- ==========================================================
+     MAIN CONTAINER
+     ========================================================== -->
+
 <table
+  class="email-wrap"
   role="presentation"
   width="100%"
   cellpadding="0"
@@ -797,9 +934,12 @@ GestoriaCitaIA — Decreto Flussi 2027
     width:100%;
     background:#031522;
     border:1px solid #16435c;
+    border-radius:18px;
+    overflow:hidden;
     color:#ffffff;
   "
 >
+
 
 <!-- ==========================================================
      HEADER
@@ -809,7 +949,8 @@ GestoriaCitaIA — Decreto Flussi 2027
 
 <td
   style="
-    padding:16px 14px 12px;
+    padding:17px 16px 13px;
+    border-bottom:1px solid #16435c;
   "
 >
 
@@ -824,18 +965,17 @@ GestoriaCitaIA — Decreto Flussi 2027
 <tr>
 
 
-<!-- LOGO -->
-
 <td
-  width="38%"
+  width="55%"
   valign="top"
 >
 
 <div
   style="
-    font-size:17px;
+    font-size:20px;
     font-weight:900;
     color:#ffffff;
+    line-height:23px;
   "
 >
 gestoria<span style="color:#ffd429;">cita</span><span style="color:#24e29a;">ia</span>
@@ -843,70 +983,80 @@ gestoria<span style="color:#ffd429;">cita</span><span style="color:#24e29a;">ia<
 
 <div
   style="
-    margin-top:5px;
+    margin-top:3px;
     font-size:8px;
     font-weight:900;
     color:#ffd429;
-    letter-spacing:1px;
+    letter-spacing:1.3px;
   "
 >
 DECRETO FLUSSI 2027
 </div>
 
-</td>
-
-
-<!-- BANDIERE -->
-
-<td
-  width="24%"
-  align="center"
-  valign="top"
->
-
 <div
   style="
-    font-size:29px;
-    line-height:32px;
+    margin-top:6px;
+    font-size:9px;
+    color:#9fb2bf;
   "
 >
-🇮🇹 🇲🇦
+Servizio informativo e ricerca offerte di lavoro
 </div>
 
 </td>
 
 
-<!-- BADGE DARIJA -->
-
 <td
-  width="38%"
-  dir="rtl"
+  width="45%"
   align="right"
   valign="top"
 >
 
 <div
   style="
-    display:inline-block;
-    background:#07543f;
-    color:#45efad;
-    border-radius:14px;
-    padding:5px 8px;
-    font-size:8px;
-    font-weight:900;
+    font-size:25px;
+    line-height:29px;
   "
 >
-✓ عرض متوفر
+🇮🇹 🇲🇦
+</div>
+
+<div
+  dir="rtl"
+  style="
+    margin-top:4px;
+    font-size:9px;
+    color:#ffd429;
+    font-weight:800;
+  "
+>
+إيطاليا · المغرب
 </div>
 
 </td>
+
 
 </tr>
 
 </table>
 
+</td>
 
-<!-- TITOLI -->
+</tr>
+
+
+<!-- ==========================================================
+     TITLE
+     ========================================================== -->
+
+<tr>
+
+<td
+  class="mobile-pad"
+  style="
+    padding:16px 16px 7px;
+  "
+>
 
 <table
   role="presentation"
@@ -914,29 +1064,48 @@ DECRETO FLUSSI 2027
   cellpadding="0"
   cellspacing="0"
   border="0"
-  style="margin-top:10px;"
 >
 
 <tr>
 
+
 <td
-  width="50%"
-  valign="middle"
+  width="55%"
+  valign="top"
+  class="mobile-stack-cell"
 >
 
 <div
   style="
-    font-size:20px;
+    display:inline-block;
+    background:#07543f;
+    color:#45efad;
+    border-radius:16px;
+    padding:5px 9px;
+    font-size:8px;
     font-weight:900;
-    line-height:23px;
+  "
+>
+✓ ${count} OFFERTE DISPONIBILI
+</div>
+
+
+<div
+  class="header-title"
+  style="
+    margin-top:8px;
+    font-size:23px;
+    font-weight:900;
+    line-height:27px;
     color:#ffffff;
   "
 >
-Nuova offerta di
+Nuove offerte di
 <span style="color:#ffd429;">
 lavoro
 </span>
 </div>
+
 
 <div
   style="
@@ -952,23 +1121,25 @@ Nell'ambito del Decreto Flussi 2027
 
 
 <td
-  width="50%"
+  width="45%"
   dir="rtl"
   align="right"
-  valign="middle"
+  valign="bottom"
+  class="mobile-stack-cell"
+  style="padding-top:8px;"
 >
 
 <div
   style="
-    font-size:20px;
+    font-size:19px;
     font-weight:900;
     line-height:23px;
     color:#ffffff;
   "
 >
-عرض عمل
+عروض عمل
 <span style="color:#ffd429;">
-جديد
+جديدة
 </span>
 </div>
 
@@ -981,6 +1152,138 @@ Nell'ambito del Decreto Flussi 2027
 >
 في إطار ديكريتو فلوسي 2027
 </div>
+
+</td>
+
+
+</tr>
+
+</table>
+
+</td>
+
+</tr>
+
+
+<!-- ==========================================================
+     GREETING
+     ========================================================== -->
+
+<tr>
+
+<td
+  class="mobile-pad"
+  style="
+    padding:7px 16px 12px;
+  "
+>
+
+<table
+  role="presentation"
+  width="100%"
+  cellpadding="0"
+  cellspacing="0"
+  border="0"
+  style="
+    background:#071e2e;
+    border:1px solid #214b63;
+    border-radius:12px;
+  "
+>
+
+<tr>
+
+<td
+  style="
+    padding:11px 12px;
+  "
+>
+
+<table
+  role="presentation"
+  width="100%"
+  cellpadding="0"
+  cellspacing="0"
+  border="0"
+>
+
+<tr>
+
+
+<td
+  width="50%"
+  valign="top"
+  style="padding-right:6px;"
+>
+
+<div
+  style="
+    font-size:12px;
+    font-weight:900;
+    color:#ffffff;
+  "
+>
+Ciao ${emailEsc(greeting)} 👋
+</div>
+
+<div
+  style="
+    margin-top:4px;
+    font-size:9px;
+    line-height:14px;
+    color:#c9d6de;
+  "
+>
+Abbiamo trovato
+<b style="color:#45efad;">
+${count} nuove offerte
+</b>
+disponibili.
+Controlla i dettagli qui sotto.
+</div>
+
+</td>
+
+
+<td
+  width="50%"
+  dir="rtl"
+  valign="top"
+  align="right"
+  style="padding-left:6px;"
+>
+
+<div
+  style="
+    font-size:12px;
+    font-weight:900;
+    color:#ffffff;
+  "
+>
+مرحبا ${emailEsc(greeting)} 👋
+</div>
+
+<div
+  style="
+    margin-top:4px;
+    font-size:9px;
+    line-height:14px;
+    color:#c9d6de;
+  "
+>
+لقينا ليك
+<b style="color:#45efad;">
+${count} عروض عمل جديدة
+</b>
+شوف التفاصيل لتحت.
+</div>
+
+</td>
+
+
+</tr>
+
+</table>
 
 </td>
 
@@ -1000,12 +1303,242 @@ Nell'ambito del Decreto Flussi 2027
 <tr>
 
 <td
+  class="mobile-pad"
   style="
-    padding:0 10px 8px;
+    padding:0 10px 2px;
   "
 >
 
 ${cards}
+
+</td>
+
+</tr>
+
+
+<!-- ==========================================================
+     HOW TO APPLY
+     ========================================================== -->
+
+<tr>
+
+<td
+  class="mobile-pad"
+  style="
+    padding:3px 16px 14px;
+  "
+>
+
+<table
+  role="presentation"
+  width="100%"
+  cellpadding="0"
+  cellspacing="0"
+  border="0"
+  style="
+    background:#06352f;
+    border:1px solid #17cfa0;
+    border-radius:14px;
+  "
+>
+
+<tr>
+
+<td
+  style="
+    padding:13px;
+  "
+>
+
+<table
+  role="presentation"
+  width="100%"
+  cellpadding="0"
+  cellspacing="0"
+  border="0"
+>
+
+<tr>
+
+
+<td
+  width="50%"
+  valign="top"
+  style="padding-right:6px;"
+>
+
+<div
+  style="
+    font-size:13px;
+    font-weight:900;
+    color:#45efad;
+  "
+>
+📩 Come candidarsi
+</div>
+
+<div
+  style="
+    margin-top:4px;
+    font-size:9px;
+    line-height:14px;
+    color:#ffffff;
+  "
+>
+Rispondi a questa email indicando il numero dell'offerta che ti interessa.
+</div>
+
+</td>
+
+
+<td
+  width="50%"
+  dir="rtl"
+  valign="top"
+  align="right"
+  style="padding-left:6px;"
+>
+
+<div
+  style="
+    font-size:13px;
+    font-weight:900;
+    color:#45efad;
+  "
+>
+📩 طريقة التقديم
+</div>
+
+<div
+  style="
+    margin-top:4px;
+    font-size:9px;
+    line-height:14px;
+    color:#ffffff;
+  "
+>
+جاوبنا على هاد الإيميل ورسل لينا رقم العرض اللي مهتم بيه.
+</div>
+
+</td>
+
+</tr>
+
+</table>
+
+
+<div
+  style="
+    text-align:center;
+    margin-top:10px;
+  "
+>
+
+<span
+  style="
+    display:inline-block;
+    background:#20df91;
+    color:#032019;
+    border-radius:20px;
+    padding:8px 17px;
+    font-size:10px;
+    font-weight:900;
+  "
+>
+MI INTERESSA QUESTA OFFERTA →
+</span>
+
+</div>
+
+</td>
+
+</tr>
+
+</table>
+
+</td>
+
+</tr>
+
+
+<!-- ==========================================================
+     IMPORTANT NOTICE
+     ========================================================== -->
+
+<tr>
+
+<td
+  class="mobile-pad"
+  style="
+    padding:0 16px 14px;
+  "
+>
+
+<table
+  role="presentation"
+  width="100%"
+  cellpadding="0"
+  cellspacing="0"
+  border="0"
+  style="
+    background:#211f04;
+    border:1px solid #d1ad22;
+    border-radius:13px;
+  "
+>
+
+<tr>
+
+<td
+  style="
+    padding:12px;
+  "
+>
+
+<div
+  style="
+    font-size:12px;
+    font-weight:900;
+    color:#ffd429;
+  "
+>
+⚠ Informazione importante
+</div>
+
+<div
+  style="
+    margin-top:5px;
+    font-size:9px;
+    line-height:14px;
+    color:#ffffff;
+  "
+>
+GestoriaCitaIA non è un'agenzia di lavoro e non garantisce
+l'ottenimento di un contratto, nulla osta, visto o permesso
+di soggiorno.
+Le offerte vengono ricercate da fonti pubbliche.
+</div>
+
+<div
+  dir="rtl"
+  style="
+    margin-top:7px;
+    font-size:9px;
+    line-height:14px;
+    color:#ffffff;
+  "
+>
+ملاحظة مهمة:
+GestoriaCitaIA ماشي وكالة توظيف وما كتضمنش العقد
+ولا nulla osta ولا الفيزا ولا الإقامة.
+العروض كنقلبو عليها من مصادر عمومية.
+</div>
+
+</td>
+
+</tr>
+
+</table>
 
 </td>
 
@@ -1020,48 +1553,58 @@ ${cards}
 
 <td
   style="
-    padding:12px 14px;
-    border-top:1px solid #16435c;
+    padding:15px 16px 17px;
     text-align:center;
+    border-top:1px solid #16435c;
   "
 >
 
 <div
   style="
-    font-size:10px;
-    color:#b8c8d1;
+    font-size:20px;
+    font-weight:900;
+    color:#ffffff;
   "
 >
-Rispondi indicando il numero dell'offerta che ti interessa
+gestoria<span style="color:#ffd429;">cita</span><span style="color:#24e29a;">ia</span>
 </div>
 
 <div
-  dir="rtl"
   style="
-    font-size:10px;
-    color:#b8c8d1;
     margin-top:3px;
+    font-size:8px;
+    font-weight:900;
+    color:#ffd429;
+    letter-spacing:1.2px;
   "
 >
-جاوبنا برقم العرض اللي مهتم بيه
+DECRETO FLUSSI 2027
 </div>
 
 <div
   style="
-    margin-top:8px;
+    margin-top:6px;
     font-size:8px;
-    color:#627985;
-    line-height:13px;
+    color:#708895;
   "
 >
-GestoriaCitaIA · Servizio informativo e ricerca offerte
-<br>
-ماشي وكالة توظيف وما كاين حتى ضمان للحصول على عقد أو فيزا.
+🇮🇹 Italia · 🇲🇦 Marocco · gestoriacitaia.com
+</div>
+
+<div
+  style="
+    margin-top:4px;
+    font-size:7px;
+    color:#526a77;
+  "
+>
+© 2027 GestoriaCitaIA · Privacy · Termini · Contatti
 </div>
 
 </td>
 
 </tr>
+
 
 </table>
 
@@ -1075,9 +1618,7 @@ GestoriaCitaIA · Servizio informativo e ricerca offerte
 
 
 /* ============================================================
-   GESTORIACITAIA
-   DECRETO FLUSSI 2027
-   ENVÍO MANUAL DE OFERTAS
+   CONFIG
    ============================================================ */
 
 export const config = {
@@ -1086,6 +1627,11 @@ export const config = {
   },
 };
 
+
+/* ============================================================
+   BASIC HELPERS
+   ============================================================ */
+
 const clean = (
   value: unknown,
   max = 2000,
@@ -1093,6 +1639,7 @@ const clean = (
   String(value ?? "")
     .trim()
     .slice(0, max);
+
 
 const normalise = (
   value: unknown,
@@ -1107,7 +1654,9 @@ const normalise = (
    ============================================================ */
 
 const supabaseUrl =
-  clean(process.env.SUPABASE_URL);
+  clean(
+    process.env.SUPABASE_URL,
+  );
 
 const serviceKey =
   clean(
@@ -1179,7 +1728,7 @@ function createTransporter() {
   const port =
     Number(
       process.env.SMTP_PORT ||
-        587,
+      587,
     );
 
   return nodemailer.createTransport({
@@ -1197,10 +1746,11 @@ function createTransporter() {
 
 
 /* ============================================================
-   CLIENTES
+   CLIENT
    ============================================================ */
 
 type Client = {
+
   id: string;
 
   first_name: string;
@@ -1224,7 +1774,7 @@ type Client = {
 
 
 /* ============================================================
-   OFFER ROW
+   OFFER
    ============================================================ */
 
 type OfferRow = {
@@ -1262,34 +1812,45 @@ type OfferRow = {
   is_active?: boolean;
 
   status?: string | null;
+
+  [key: string]: any;
 };
 
 
 /* ============================================================
-   LIST VALUES
+   ARRAY VALUES
    ============================================================ */
 
 function listValues(
   value: unknown,
 ): string[] {
 
-  if (Array.isArray(value)) {
+  if (
+    Array.isArray(
+      value,
+    )
+  ) {
 
     return value
-      .map(normalise)
+      .map(
+        normalise,
+      )
       .filter(Boolean);
-
   }
 
-  return String(value ?? "")
+  return String(
+    value ?? "",
+  )
     .split(",")
-    .map(normalise)
+    .map(
+      normalise,
+    )
     .filter(Boolean);
 }
 
 
 /* ============================================================
-   WORK TYPE MATCHING
+   WORK TYPE MATCH
    ============================================================ */
 
 function workTypeMatches(
@@ -1298,10 +1859,14 @@ function workTypeMatches(
 ): boolean {
 
   const client =
-    normalise(clientType);
+    normalise(
+      clientType,
+    );
 
   const offer =
-    normalise(offerType);
+    normalise(
+      offerType,
+    );
 
   if (
     !offer ||
@@ -1328,15 +1893,23 @@ function workTypeMatches(
     ]);
 
   if (
-    nonSeasonal.has(client) &&
-    nonSeasonal.has(offer)
+    nonSeasonal.has(
+      client,
+    ) &&
+    nonSeasonal.has(
+      offer,
+    )
   ) {
     return true;
   }
 
   if (
-    seasonal.has(client) &&
-    seasonal.has(offer)
+    seasonal.has(
+      client,
+    ) &&
+    seasonal.has(
+      offer,
+    )
   ) {
     return true;
   }
@@ -1346,7 +1919,7 @@ function workTypeMatches(
 
 
 /* ============================================================
-   CATEGORY MATCHING
+   CATEGORY MATCH
    ============================================================ */
 
 function categoryMatches(
@@ -1384,7 +1957,9 @@ function categoryMatches(
   }
 
   return wanted.some(
-    (item) => {
+    (
+      item,
+    ) => {
 
       if (!item) {
         return false;
@@ -1428,7 +2003,7 @@ function categoryMatches(
 
 
 /* ============================================================
-   ACTIVE CLIENT
+   CLIENT ACTIVE
    ============================================================ */
 
 function isClientActive(
@@ -1451,7 +2026,9 @@ function isClientActive(
     return true;
   }
 
-  if (!row.expires_at) {
+  if (
+    !row.expires_at
+  ) {
     return false;
   }
 
@@ -1465,7 +2042,7 @@ function isClientActive(
 
 
 /* ============================================================
-   GET ACTIVE CLIENTS
+   ACTIVE CLIENTS
    ============================================================ */
 
 async function getActiveClients():
@@ -1506,7 +2083,9 @@ async function getActiveClients():
     const responseText =
       await response.text();
 
-    if (!response.ok) {
+    if (
+      !response.ok
+    ) {
 
       throw new Error(
         `Supabase ${table} failed: ${response.status} ${responseText}`,
@@ -1520,7 +2099,9 @@ async function getActiveClients():
 
     for (
       const row of
-        Array.isArray(rows)
+        Array.isArray(
+          rows,
+        )
           ? rows
           : []
     ) {
@@ -1536,6 +2117,7 @@ async function getActiveClients():
       }
 
       all.push({
+
         id:
           row.id,
 
@@ -1598,7 +2180,9 @@ async function getOffers(
       )
       .filter(Boolean);
 
-  if (!ids.length) {
+  if (
+    !ids.length
+  ) {
     return [];
   }
 
@@ -1613,25 +2197,22 @@ async function getOffers(
       )
       .join(",");
 
-  const select = [
-    "id",
-    "job_title",
-    "category",
-    "category_code",
-    "company_name",
-    "publication_date",
-    "published_at",
-    "city",
-    "province",
-    "address",
-    "phone",
-    "email",
-    "source_url",
-    "contract_type",
-    "work_type",
-    "is_active",
-    "status",
-  ].join(",");
+  /*
+   * SELECT *
+   *
+   * Così prendiamo anche:
+   * description
+   * requirements
+   * hours
+   * experience
+   * education
+   * languages
+   * schedule
+   * ecc.
+   */
+
+  const select =
+    "*";
 
   const response =
     await supabaseRequest(
@@ -1641,7 +2222,9 @@ async function getOffers(
   const responseText =
     await response.text();
 
-  if (!response.ok) {
+  if (
+    !response.ok
+  ) {
 
     throw new Error(
       `Supabase flussi_offerte failed: ${response.status} ${responseText}`,
@@ -1654,11 +2237,15 @@ async function getOffers(
     );
 
   return (
-    Array.isArray(rows)
+    Array.isArray(
+      rows,
+    )
       ? rows
       : []
   ).filter(
-    (row) =>
+    (
+      row,
+    ) =>
       row.is_active !== false &&
       normalise(
         row.status,
@@ -1668,14 +2255,16 @@ async function getOffers(
 
 
 /* ============================================================
-   ALREADY DELIVERED
+   DELIVERED
    ============================================================ */
 
 async function getAlreadyDelivered(
   offerIds: string[],
 ): Promise<Set<string>> {
 
-  if (!offerIds.length) {
+  if (
+    !offerIds.length
+  ) {
     return new Set<string>();
   }
 
@@ -1698,7 +2287,9 @@ async function getAlreadyDelivered(
   const responseText =
     await response.text();
 
-  if (!response.ok) {
+  if (
+    !response.ok
+  ) {
 
     throw new Error(
       `Supabase flussi_deliveries failed: ${response.status} ${responseText}`,
@@ -1715,7 +2306,9 @@ async function getAlreadyDelivered(
 
   for (
     const row of
-      Array.isArray(rows)
+      Array.isArray(
+        rows,
+      )
         ? rows
         : []
   ) {
@@ -1738,17 +2331,228 @@ async function getAlreadyDelivered(
 
 
 /* ============================================================
-   EMAIL OFFER
+   CONVERT OFFER
    ============================================================ */
 
 function toEmailOffer(
   row: OfferRow,
 ) {
 
+  const pick = (
+    ...keys: string[]
+  ): string => {
+
+    for (
+      const key of keys
+    ) {
+
+      const value =
+        emailValue(
+          row[key],
+        );
+
+      if (
+        value
+      ) {
+        return value;
+      }
+    }
+
+    return "";
+  };
+
+
+  const parts: string[] = [];
+
+
+  const add = (
+    label: string,
+    ...keys: string[]
+  ) => {
+
+    const value =
+      pick(
+        ...keys,
+      );
+
+    if (
+      value
+    ) {
+
+      parts.push(
+        `${label}: ${value}`,
+      );
+    }
+  };
+
+
+  /*
+   * TODO LO QUE EXISTA EN SUPABASE
+   * SE INTENTA METER EN EL CUADRO AMARILLO.
+   */
+
+  add(
+    "Contratto",
+    "contract_type",
+    "contract",
+    "contratto",
+  );
+
+  add(
+    "Tipo",
+    "work_type",
+    "employment_type",
+    "tipo_contratto",
+  );
+
+  add(
+    "Orario",
+    "hours",
+    "weekly_hours",
+    "hours_per_week",
+    "orario",
+  );
+
+  add(
+    "Stipendio",
+    "salary",
+    "stipendio",
+    "retribuzione",
+    "ral",
+  );
+
+  add(
+    "Posti disponibili",
+    "workers",
+    "number_of_workers",
+    "positions",
+    "posti",
+  );
+
+  add(
+    "Data di inizio",
+    "start_date",
+    "startDate",
+    "data_inizio",
+  );
+
+  add(
+    "Scadenza",
+    "deadline",
+    "expiration_date",
+    "expiry_date",
+    "data_scadenza",
+  );
+
+  add(
+    "Esperienza",
+    "experience",
+    "experience_required",
+    "required_experience",
+    "esperienza",
+  );
+
+  add(
+    "Titolo di studio",
+    "education",
+    "education_required",
+    "qualification",
+    "titolo_studio",
+  );
+
+  add(
+    "Lingue",
+    "languages",
+    "language_requirements",
+    "lingue",
+  );
+
+  add(
+    "Patente",
+    "driving_license",
+    "license",
+    "patente",
+  );
+
+  add(
+    "Requisiti",
+    "requirements",
+    "requirements_text",
+    "requisiti",
+  );
+
+  add(
+    "Mansioni",
+    "description",
+    "job_description",
+    "offer_description",
+    "duties",
+    "tasks",
+    "mansioni",
+  );
+
+  add(
+    "Orari e riposo",
+    "schedule",
+    "working_hours",
+    "work_schedule",
+    "orari",
+  );
+
+
+  const rawDetails =
+    pick(
+      "details",
+      "offer_details",
+      "details_text",
+      "full_description",
+      "description_full",
+    );
+
+
+  if (
+    rawDetails &&
+    !parts.some(
+      (
+        part,
+      ) =>
+        part.includes(
+          rawDetails,
+        ),
+    )
+  ) {
+
+    parts.push(
+      rawDetails,
+    );
+  }
+
+
+  const details =
+    parts.length
+
+      ? parts.join(
+          " · ",
+        )
+
+      : "Dettagli completi disponibili nell'offerta.";
+
+
+  const detailsDarija =
+    pick(
+      "details_darija",
+      "darija_details",
+      "details_ar",
+      "description_darija",
+    ) ||
+    "تفاصيل الخدمة كاملة كاينة حسب المعطيات المتوفرة فالعرض.";
+
+
   return {
 
     jobTitle:
       row.job_title ||
+      row.title ||
       "Offerta di lavoro",
 
     category:
@@ -1758,18 +2562,28 @@ function toEmailOffer(
 
     companyName:
       row.company_name ||
+      row.employer ||
+      row.employer_name ||
       "",
 
     publicationDate:
       row.publication_date ||
       row.published_at ||
+      row.date ||
       "",
 
     salary:
-      "",
+      pick(
+        "salary",
+        "stipendio",
+        "retribuzione",
+        "ral",
+      ),
 
     city:
       row.city ||
+      row.comune ||
+      row.municipality ||
       "",
 
     province:
@@ -1778,27 +2592,52 @@ function toEmailOffer(
 
     address:
       row.address ||
+      row.work_address ||
+      row.indirizzo ||
       "",
 
     phone:
       row.phone ||
+      row.employer_phone ||
+      row.responsible_phone ||
       "",
 
     email:
       row.email ||
+      row.employer_email ||
+      row.ido_email ||
       "",
 
     contractType:
       row.contract_type ||
+      row.contract ||
+      row.contratto ||
       "",
 
     workType:
       row.work_type ||
+      row.employment_type ||
       "",
 
     offerUrl:
       row.source_url ||
+      row.offer_url ||
+      row.url ||
       "",
+
+    details:
+
+      details.slice(
+        0,
+        7000,
+      ),
+
+    detailsDarija:
+
+      detailsDarija.slice(
+        0,
+        5000,
+      ),
   };
 }
 
@@ -1816,7 +2655,9 @@ function getHeaderValue(
     req.headers[name];
 
   if (
-    Array.isArray(value)
+    Array.isArray(
+      value,
+    )
   ) {
     return value[0] || "";
   }
@@ -1839,7 +2680,10 @@ export default async function handler(
     "POST"
   ) {
 
-    return res.status(405).json({
+    return res.status(
+      405,
+    ).json({
+
       error:
         "Method not allowed",
 
@@ -1851,15 +2695,19 @@ export default async function handler(
 
   try {
 
-    /* --------------------------------------------------------
+
+    /* ========================================================
        SECRET
-       -------------------------------------------------------- */
+       ======================================================== */
 
     const internalSecret =
       process.env
         .FLUSSI_LAVORO_INTERNAL_SECRET;
 
-    if (internalSecret) {
+
+    if (
+      internalSecret
+    ) {
 
       const providedSecret =
         getHeaderValue(
@@ -1867,22 +2715,27 @@ export default async function handler(
           "x-flussi-lavoro-secret",
         );
 
+
       if (
         providedSecret !==
         internalSecret
       ) {
 
-        return res.status(401).json({
+        return res.status(
+          401,
+        ).json({
+
           error:
             "Unauthorized",
+
         });
       }
     }
 
 
-    /* --------------------------------------------------------
+    /* ========================================================
        BODY
-       -------------------------------------------------------- */
+       ======================================================== */
 
     const body =
       req.body &&
@@ -1890,6 +2743,7 @@ export default async function handler(
         "object"
 
         ? req.body
+
         : {};
 
 
@@ -1900,7 +2754,9 @@ export default async function handler(
 
         ? body.offerIds
             .map(
-              (id: unknown) =>
+              (
+                id: unknown,
+              ) =>
                 clean(
                   id,
                   100,
@@ -1915,11 +2771,31 @@ export default async function handler(
       body.dryRun === true;
 
 
+    /*
+     * TEST EMAIL
+     *
+     * Esempio:
+     *
+     * "testEmail":
+     * "robertopalacio165@gmail.com"
+     *
+     * In questo caso NON fa matching clienti.
+     * Manda direttamente a quel Gmail.
+     */
+
+    const testEmail =
+      emailValue(
+        body.testEmail,
+      );
+
+
     if (
       !offerIds.length
     ) {
 
-      return res.status(400).json({
+      return res.status(
+        400,
+      ).json({
 
         error:
           "offerIds is required",
@@ -1928,6 +2804,9 @@ export default async function handler(
 
           dryRun:
             true,
+
+          testEmail:
+            "robertopalacio165@gmail.com",
 
           offerIds: [
             "UUID-DE-LA-OFERTA",
@@ -1940,10 +2819,13 @@ export default async function handler(
 
 
     if (
-      offerIds.length > 50
+      offerIds.length >
+      50
     ) {
 
-      return res.status(400).json({
+      return res.status(
+        400,
+      ).json({
 
         error:
           "Maximum 50 offers per bulletin",
@@ -1952,9 +2834,9 @@ export default async function handler(
     }
 
 
-    /* --------------------------------------------------------
-       OFFERS
-       -------------------------------------------------------- */
+    /* ========================================================
+       GET OFFERS
+       ======================================================== */
 
     const offers =
       await getOffers(
@@ -1966,7 +2848,9 @@ export default async function handler(
       !offers.length
     ) {
 
-      return res.status(404).json({
+      return res.status(
+        404,
+      ).json({
 
         error:
           "No active offers found",
@@ -1978,30 +2862,156 @@ export default async function handler(
     }
 
 
-    /* --------------------------------------------------------
-       CLIENTS
-       -------------------------------------------------------- */
+    /* ========================================================
+       DIRECT GMAIL TEST
+       ======================================================== */
+
+    if (
+      testEmail
+    ) {
+
+      const transporter =
+        createTransporter();
+
+
+      const from =
+        process.env
+          .FROM_EMAIL ||
+        process.env
+          .SMTP_USER;
+
+
+      if (
+        !from
+      ) {
+
+        throw new Error(
+          "FROM_EMAIL / SMTP_USER missing",
+        );
+      }
+
+
+      if (
+        dryRun
+      ) {
+
+        return res.status(
+          200,
+        ).json({
+
+          ok:
+            true,
+
+          dryRun:
+            true,
+
+          testEmail,
+
+          selectedOffers:
+            offers.length,
+
+          message:
+            "Test Gmail pronto. Nessuna email inviata.",
+
+        });
+      }
+
+
+      await transporter.verify();
+
+
+      const html =
+        buildFlussiOfferteEmail({
+
+          recipientName:
+            "Roberto",
+
+          offers:
+            offers.map(
+              toEmailOffer,
+            ),
+
+        });
+
+
+      const info =
+        await transporter.sendMail({
+
+          from:
+            `"GestoriaCitaIA" <${from}>`,
+
+          to:
+            testEmail,
+
+          subject:
+            "🇮🇹 🇲🇦 Nuove offerte di lavoro — Decreto Flussi 2027",
+
+          text:
+            "Nuove offerte di lavoro — Decreto Flussi 2027\n\n" +
+            `${offers.length} nuove offerte sono disponibili.`,
+
+          html,
+
+        });
+
+
+      return res.status(
+        200,
+      ).json({
+
+        ok:
+          true,
+
+        dryRun:
+          false,
+
+        testEmail,
+
+        selectedOffers:
+          offers.length,
+
+        sent:
+          1,
+
+        failed:
+          0,
+
+        messageId:
+          info.messageId,
+
+        message:
+          "Test Gmail inviato correttamente.",
+
+      });
+    }
+
+
+    /* ========================================================
+       ACTIVE CLIENTS
+       ======================================================== */
 
     const clients =
       await getActiveClients();
 
 
-    /* --------------------------------------------------------
+    /* ========================================================
        DELIVERED
-       -------------------------------------------------------- */
+       ======================================================== */
 
     const delivered =
       await getAlreadyDelivered(
         offers.map(
-          (offer) =>
+          (
+            offer,
+          ) =>
             offer.id,
         ),
       );
 
 
-    /* --------------------------------------------------------
+    /* ========================================================
        MATCHES
-       -------------------------------------------------------- */
+       ======================================================== */
 
     const matches =
       new Map<
@@ -2014,12 +3024,15 @@ export default async function handler(
 
 
     for (
-      const client of clients
+      const client of
+        clients
     ) {
 
       const matched =
         offers.filter(
-          (offer) => {
+          (
+            offer,
+          ) => {
 
             if (
               !workTypeMatches(
@@ -2066,24 +3079,29 @@ export default async function handler(
             client.email,
           ),
           {
+
             client,
+
             offers:
               matched,
+
           },
         );
       }
     }
 
 
-    /* --------------------------------------------------------
+    /* ========================================================
        PREVIEW
-       -------------------------------------------------------- */
+       ======================================================== */
 
     const preview =
       Array.from(
         matches.values(),
       ).map(
-        (item) => ({
+        (
+          item,
+        ) => ({
 
           email:
             item.client.email,
@@ -2097,7 +3115,9 @@ export default async function handler(
 
           offerIds:
             item.offers.map(
-              (offer) =>
+              (
+                offer,
+              ) =>
                 offer.id,
             ),
 
@@ -2110,6 +3130,7 @@ export default async function handler(
               .work_type,
 
           categories:
+
             item.client
               .source_table ===
             "flussi_lavoro_24_99"
@@ -2122,13 +3143,17 @@ export default async function handler(
       );
 
 
-    /* --------------------------------------------------------
+    /* ========================================================
        DRY RUN
-       -------------------------------------------------------- */
+       ======================================================== */
 
-    if (dryRun) {
+    if (
+      dryRun
+    ) {
 
-      return res.status(200).json({
+      return res.status(
+        200,
+      ).json({
 
         ok:
           true,
@@ -2155,15 +3180,17 @@ export default async function handler(
     }
 
 
-    /* --------------------------------------------------------
-       NO MATCHES
-       -------------------------------------------------------- */
+    /* ========================================================
+       NO MATCH
+       ======================================================== */
 
     if (
       !matches.size
     ) {
 
-      return res.status(200).json({
+      return res.status(
+        200,
+      ).json({
 
         ok:
           true,
@@ -2190,20 +3217,24 @@ export default async function handler(
     }
 
 
-    /* --------------------------------------------------------
+    /* ========================================================
        SMTP
-       -------------------------------------------------------- */
+       ======================================================== */
 
     const transporter =
       createTransporter();
 
 
     const from =
-      process.env.FROM_EMAIL ||
-      process.env.SMTP_USER;
+      process.env
+        .FROM_EMAIL ||
+      process.env
+        .SMTP_USER;
 
 
-    if (!from) {
+    if (
+      !from
+    ) {
 
       throw new Error(
         "FROM_EMAIL / SMTP_USER missing",
@@ -2214,10 +3245,6 @@ export default async function handler(
     await transporter.verify();
 
 
-    /* --------------------------------------------------------
-       RESULTS
-       -------------------------------------------------------- */
-
     let sent =
       0;
 
@@ -2226,13 +3253,17 @@ export default async function handler(
 
 
     const results:
-      Array<Record<string, unknown>> =
-      [];
+      Array<
+        Record<
+          string,
+          unknown
+        >
+      > = [];
 
 
-    /* --------------------------------------------------------
-       SEND
-       -------------------------------------------------------- */
+    /* ========================================================
+       SEND TO CLIENTS
+       ======================================================== */
 
     for (
       const item of
@@ -2247,12 +3278,13 @@ export default async function handler(
 
       const html =
         buildFlussiOfferteEmail({
+
           recipientName:
-            item.client
-              .first_name,
+            item.client.first_name,
 
           offers:
             emailOffers,
+
         });
 
 
@@ -2289,7 +3321,7 @@ export default async function handler(
 
 
         /* ----------------------------------------------------
-           DELIVERY RECORD
+           SAVE DELIVERY
            ---------------------------------------------------- */
 
         for (
@@ -2381,7 +3413,9 @@ export default async function handler(
         const message =
           error instanceof Error
             ? error.message
-            : String(error);
+            : String(
+                error,
+              );
 
 
         results.push({
@@ -2469,11 +3503,13 @@ export default async function handler(
     }
 
 
-    /* --------------------------------------------------------
+    /* ========================================================
        RESPONSE
-       -------------------------------------------------------- */
+       ======================================================== */
 
-    return res.status(200).json({
+    return res.status(
+      200,
+    ).json({
 
       ok:
         true,
@@ -2509,7 +3545,9 @@ export default async function handler(
     );
 
 
-    return res.status(500).json({
+    return res.status(
+      500,
+    ).json({
 
       ok:
         false,
@@ -2520,7 +3558,9 @@ export default async function handler(
       message:
         error instanceof Error
           ? error.message
-          : String(error),
+          : String(
+              error,
+            ),
 
     });
   }
