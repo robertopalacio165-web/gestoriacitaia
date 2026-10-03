@@ -1,6 +1,14 @@
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { CreditCard, Mail, Phone, User } from "lucide-react";
+import {
+  CreditCard,
+  Mail,
+  Phone,
+  User,
+  Users,
+  UserRound,
+  Star,
+} from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { useToast } from "@/hooks/use-toast";
 import { useLang } from "@/contexts/LanguageContext";
@@ -11,7 +19,7 @@ const PACKAGE_TEXT = {
   all_offers: {
     darija: {
       title: "جميع عروض العمل",
-      subtitle: "أداء واحد · وصول مباشر",
+      subtitle: "أداء مرة وحدة · الدخول مباشرة",
       features: [
         "جميع العروض المتاحة",
         "جميع المجالات",
@@ -48,8 +56,8 @@ const PACKAGE_TEXT = {
       features: [
         "عروض جديدة كل 10 أيام",
         "المدة 3 شهور",
-        "6 إرساليات إجمالاً",
-        "إرسال أوتوماتيكي بالإيميل",
+        "6 إرساليات فالمجموع",
+        "الإرسال أوتوماتيكي بالإيميل",
       ],
     },
     es: {
@@ -86,14 +94,66 @@ const PACKAGE_INFO = [
   },
 ];
 
+/* =========================================================
+   LOGOS DE PAGO — SVG/CSS, SIN IMÁGENES EXTERNAS
+========================================================= */
+
+function PaymentLogos() {
+  return (
+    <div className="flex items-center justify-center gap-2 flex-wrap">
+      <div className="h-8 min-w-[48px] px-2 rounded-lg bg-white flex items-center justify-center shadow-md">
+        <span className="text-[#1434CB] font-black italic text-[12px]">
+          VISA
+        </span>
+      </div>
+
+      <div className="h-8 min-w-[58px] px-2 rounded-lg bg-white flex items-center justify-center shadow-md">
+        <div className="flex items-center">
+          <span className="w-4 h-4 rounded-full bg-[#EB001B] -mr-1" />
+          <span className="w-4 h-4 rounded-full bg-[#F79E1B] opacity-90" />
+        </div>
+        <span className="ml-1 text-[#222] text-[7px] font-bold">
+          Mastercard
+        </span>
+      </div>
+
+      <div className="h-8 min-w-[58px] px-2 rounded-lg bg-white flex items-center justify-center shadow-md">
+        <span className="text-[#003087] font-black text-[10px]">
+          PayPal
+        </span>
+      </div>
+
+      <div className="h-8 min-w-[55px] px-2 rounded-lg bg-white flex items-center justify-center shadow-md">
+        <span className="text-[#635BFF] font-black text-[10px]">
+          stripe
+        </span>
+      </div>
+    </div>
+  );
+}
+
 export default function DecretoFlussi2027() {
   const { lang } = useLang();
   const { toast } = useToast();
 
+  /*
+   * NORMALIZAMOS TODOS LOS VALORES POSIBLES DEL LANGUAGE CONTEXT.
+   * Así no vuelve a pasar que cambie el idioma pero esta página
+   * se quede en italiano.
+   */
+  const rawLanguage = String(lang || "")
+    .toLowerCase()
+    .trim();
+
   const language =
-    lang === "darija"
+    rawLanguage === "darija" ||
+    rawLanguage === "ma" ||
+    rawLanguage === "ar" ||
+    rawLanguage === "arabic" ||
+    rawLanguage === "maroc"
       ? "darija"
-      : lang === "en"
+      : rawLanguage === "en" ||
+          rawLanguage === "english"
         ? "en"
         : "es";
 
@@ -144,10 +204,10 @@ export default function DecretoFlussi2027() {
         : "Género",
 
     male: isMa
-      ? "رجل"
+      ? "رجال"
       : isEn
-        ? "Male"
-        : "Hombre",
+        ? "Men"
+        : "Hombres",
 
     both: isMa
       ? "بجوج"
@@ -156,22 +216,22 @@ export default function DecretoFlussi2027() {
         : "Ambos",
 
     female: isMa
-      ? "مرا"
+      ? "نساء"
       : isEn
-        ? "Female"
-        : "Mujer",
+        ? "Women"
+        : "Mujeres",
 
     packages: isMa
-      ? "اختار الباكيج ديالك"
+      ? "اختار الباقة ديالك"
       : isEn
         ? "Choose your package"
         : "Elige tu paquete",
 
     promo: isMa
-      ? "عرض خاص"
+      ? "عرض الشهر"
       : isEn
-        ? "SPECIAL OFFER"
-        : "PROMOCIÓN",
+        ? "MONTHLY PROMOTION"
+        : "PROMOCIÓN DEL MES",
 
     terms: isMa
       ? "كنأكد أنني قريت وفهمت شروط الخدمة وسياسة الخصوصية، وكنوافق على معالجة المعطيات الشخصية اللي قدمت باش يتدبر الطلب ديالي ويتصيفطو ليا عروض العمل حسب الاختيارات ديالي. الخدمة ما كتضمنش الحصول على عقد عمل، التوظيف أو الدخول لإيطاليا."
@@ -183,10 +243,10 @@ export default function DecretoFlussi2027() {
       ? "الأداء غادي يتفعل قريباً"
       : isEn
         ? "Payment will be enabled soon"
-        : "Pago próximamente",
+        : "El pago se activará próximamente",
 
     secure: isMa
-      ? "الأداء الآمن عبر Stripe · Visa · Mastercard · PayPal"
+      ? "أداء آمن عبر Stripe · Visa · Mastercard · PayPal"
       : isEn
         ? "Secure payment via Stripe · Visa · Mastercard · PayPal"
         : "Pago seguro mediante Stripe · Visa · Mastercard · PayPal",
@@ -300,9 +360,7 @@ export default function DecretoFlussi2027() {
   };
 
   /*
-   * PAGAMENTO DISATTIVATO DURANTE LA FASE DI PROVA.
-   *
-   * NON avvia Stripe.
+   * PAGAMENTO DISATTIVATO DURANTE I TEST.
    */
   const handlePay = async () => {
     return;
@@ -325,14 +383,17 @@ export default function DecretoFlussi2027() {
 
       <main className="flex-1 relative z-10 flex flex-col pt-16 pb-8">
 
-        <h1 className="text-xl sm:text-2xl font-display font-bold px-4 sm:px-6 py-4 max-w-7xl mx-auto w-full">
-          {ui.pageTitle}
-        </h1>
+        {/* =====================================================
+            ELIMINADO:
+            h1 "Decreto Flussi 2027" ARRIBA DE LA FOTO
+        ====================================================== */}
 
         <div className="flex-1 flex flex-col lg:flex-row gap-4 px-4 sm:px-6 max-w-7xl mx-auto w-full">
 
           {/* =====================================================
-              LEFT IMAGE
+              FOTO
+              SIN TEXTO DECRETO FLUSSI ARRIBA
+              Y SIN TEXTO DENTRO DE LA FOTO
           ====================================================== */}
 
           <motion.div
@@ -349,7 +410,7 @@ export default function DecretoFlussi2027() {
             <div className="relative rounded-2xl overflow-hidden border border-white/15 shadow-[0_0_30px_-5px_rgba(255,255,255,0.12)] bg-black">
 
               <div
-                className="relative w-full h-full"
+                className="relative w-full"
                 style={{
                   height: "280px",
                 }}
@@ -357,30 +418,26 @@ export default function DecretoFlussi2027() {
 
                 <img
                   src="/images/decreto-flussi-2027.png"
-                  alt="Decreto Flussi 2027"
+                  alt={ui.subtitle}
                   className="w-full h-full object-cover object-top"
                 />
 
-                <div className="absolute inset-x-0 top-0 h-1/3 bg-gradient-to-b from-black/40 to-transparent" />
+                {/* SOLO BANDERA ITALIA */}
 
                 <div className="absolute top-4 left-4 flex h-8 overflow-hidden rounded-md shadow-lg">
+
                   <span className="w-3 bg-[#009246]" />
+
                   <span className="w-3 bg-white" />
+
                   <span className="w-3 bg-[#CE2B37]" />
-                </div>
-
-                <div className="absolute bottom-0 inset-x-0 p-5 bg-gradient-to-t from-black/90 via-black/45 to-transparent">
-
-                  <p className="text-white/70 text-xs uppercase tracking-[0.18em]">
-                    {ui.subtitle}
-                  </p>
-
-                  <h2 className="text-white text-2xl sm:text-3xl font-black">
-                    DECRETO FLUSSI 2027
-                  </h2>
 
                 </div>
+
+                {/* SIN OVERLAY DE TEXTO */}
+
               </div>
+
             </div>
           </motion.div>
 
@@ -405,13 +462,17 @@ export default function DecretoFlussi2027() {
             <div className="mb-5 text-center">
 
               <div className="inline-flex h-7 overflow-hidden rounded-md shadow-[0_0_15px_rgba(255,255,255,0.12)]">
+
                 <span className="w-2.5 bg-[#009246]" />
+
                 <span className="w-2.5 bg-white" />
+
                 <span className="w-2.5 bg-[#CE2B37]" />
+
               </div>
 
               <h2 className="mt-2 text-white text-[20px] sm:text-[24px] font-black">
-                DECRETO FLUSSI 2027
+                {ui.pageTitle}
               </h2>
 
               <p className="text-white/60 text-[12px]">
@@ -421,7 +482,7 @@ export default function DecretoFlussi2027() {
             </div>
 
             {/* =================================================
-                PERSONAL DATA
+                DATI PERSONALI
             ================================================== */}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-5">
@@ -462,6 +523,7 @@ export default function DecretoFlussi2027() {
                   "+212 6 00 00 00 00",
                   Phone,
                 ],
+
               ].map(
                 ([
                   field,
@@ -469,6 +531,7 @@ export default function DecretoFlussi2027() {
                   placeholder,
                   Icon,
                 ]) => (
+
                   <label
                     key={field as string}
                     className={`block ${
@@ -523,15 +586,17 @@ export default function DecretoFlussi2027() {
                       />
 
                     </div>
+
                   </label>
+
                 ),
               )}
 
             </div>
 
             {/* =================================================
-                GENDER
-                SOLO 3 CAMPOS
+                HOMBRES / AMBOS / MUJERES
+                SIEMPRE 3 EN UNA FILA
             ================================================== */}
 
             <div className="mb-5">
@@ -542,63 +607,117 @@ export default function DecretoFlussi2027() {
 
               <div className="grid grid-cols-3 gap-2">
 
-                {[
-                  ["male", ui.male],
-                  ["both", ui.both],
-                  ["female", ui.female],
-                ].map(
-                  ([value, label]) => (
+                {/* HOMBRES */}
 
-                    <button
-                      key={value}
-                      type="button"
-                      onClick={() =>
-                        setGender(
-                          value as
-                            | "male"
-                            | "both"
-                            | "female",
-                        )
-                      }
-                      className={`min-h-[72px] rounded-xl border p-2 text-center transition ${
-                        gender === value
-                          ? "border-[#009246] bg-[#009246]/10 shadow-[0_0_14px_rgba(0,146,70,0.12)]"
-                          : "border-white/10 bg-[#060b16] hover:border-white/25"
-                      }`}
-                    >
+                <button
+                  type="button"
+                  onClick={() =>
+                    setGender("male")
+                  }
+                  className={`min-h-[78px] rounded-xl border p-2 text-center transition-all ${
+                    gender === "male"
+                      ? "border-[#009246] bg-[#009246]/10 shadow-[0_0_18px_rgba(0,146,70,0.15)]"
+                      : "border-white/10 bg-[#060b16] hover:border-white/25"
+                  }`}
+                >
 
-                      <span className="block text-white text-[12px] font-bold">
-                        {label}
-                      </span>
+                  <UserRound
+                    className={`mx-auto w-6 h-6 ${
+                      gender === "male"
+                        ? "text-[#00d878]"
+                        : "text-white/45"
+                    }`}
+                  />
 
-                      <span className="block text-white/40 text-[9px] mt-1">
+                  <span className="block text-white text-[10px] sm:text-[12px] font-bold mt-1">
+                    {ui.male}
+                  </span>
 
-                        {value === "male"
-                          ? "♂"
-                          : value === "female"
-                            ? "♀"
-                            : "♂ + ♀"}
+                  {gender === "male" && (
+                    <span className="block text-[#00d878] text-[9px] mt-1">
+                      ✓
+                    </span>
+                  )}
 
-                      </span>
+                </button>
 
-                      {gender === value && (
-                        <span className="block text-[#009246] text-[10px] mt-1">
-                          ✓
-                        </span>
-                      )}
 
-                    </button>
+                {/* AMBOS */}
 
-                  ),
-                )}
+                <button
+                  type="button"
+                  onClick={() =>
+                    setGender("both")
+                  }
+                  className={`min-h-[78px] rounded-xl border p-2 text-center transition-all ${
+                    gender === "both"
+                      ? "border-[#009246] bg-[#009246]/10 shadow-[0_0_18px_rgba(0,146,70,0.15)]"
+                      : "border-white/10 bg-[#060b16] hover:border-white/25"
+                  }`}
+                >
+
+                  <Users
+                    className={`mx-auto w-7 h-6 ${
+                      gender === "both"
+                        ? "text-[#00d878]"
+                        : "text-white/45"
+                    }`}
+                  />
+
+                  <span className="block text-white text-[10px] sm:text-[12px] font-bold mt-1">
+                    {ui.both}
+                  </span>
+
+                  {gender === "both" && (
+                    <span className="block text-[#00d878] text-[9px] mt-1">
+                      ✓
+                    </span>
+                  )}
+
+                </button>
+
+
+                {/* MUJERES */}
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setGender("female")
+                  }
+                  className={`min-h-[78px] rounded-xl border p-2 text-center transition-all ${
+                    gender === "female"
+                      ? "border-[#009246] bg-[#009246]/10 shadow-[0_0_18px_rgba(0,146,70,0.15)]"
+                      : "border-white/10 bg-[#060b16] hover:border-white/25"
+                  }`}
+                >
+
+                  <UserRound
+                    className={`mx-auto w-6 h-6 ${
+                      gender === "female"
+                        ? "text-[#ff6b9a]"
+                        : "text-white/45"
+                    }`}
+                  />
+
+                  <span className="block text-white text-[10px] sm:text-[12px] font-bold mt-1">
+                    {ui.female}
+                  </span>
+
+                  {gender === "female" && (
+                    <span className="block text-[#ff6b9a] text-[9px] mt-1">
+                      ✓
+                    </span>
+                  )}
+
+                </button>
 
               </div>
 
             </div>
 
             {/* =================================================
-                PACKAGES
-                ONLY TWO
+                PLANES
+                MUCHO MÁS COMPACTOS
             ================================================== */}
 
             <div className="mb-5">
@@ -609,134 +728,159 @@ export default function DecretoFlussi2027() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
 
-                {PACKAGE_INFO.map((pkg) => {
+                {PACKAGE_INFO.map(
+                  (pkg) => {
 
-                  const selected =
-                    selectedPackage ===
-                    pkg.code;
+                    const selected =
+                      selectedPackage ===
+                      pkg.code;
 
-                  const localized =
-                    PACKAGE_TEXT[
-                      pkg.code
-                    ][language];
+                    const localized =
+                      PACKAGE_TEXT[
+                        pkg.code
+                      ][language];
 
-                  const promo =
-                    pkg.code ===
-                    "new_10_days";
+                    const promo =
+                      pkg.code ===
+                      "new_10_days";
 
-                  return (
+                    return (
 
-                    <button
-                      key={pkg.code}
-                      type="button"
-                      onClick={() =>
-                        setSelectedPackage(
-                          pkg.code,
-                        )
-                      }
-                      className={`relative rounded-[18px] border-2 transition-all overflow-hidden text-left p-4 ${
-                        promo
-                          ? selected
-                            ? "border-[#D4AF37] bg-gradient-to-b from-[#211900] to-[#090804] shadow-[0_0_24px_rgba(212,175,55,0.16)]"
-                            : "border-[#8f741d] bg-gradient-to-b from-[#171303] to-[#070706] hover:border-[#D4AF37]"
-                          : selected
-                            ? "border-[#009246] bg-gradient-to-b from-[#0b160f] to-[#050505] shadow-[0_0_24px_rgba(0,146,70,0.14)]"
-                            : "border-white/10 bg-[#060b16] hover:border-[#009246]/50"
-                      }`}
-                    >
-
-                      {/* PROMO BADGE */}
-
-                      {promo && (
-                        <span className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-px rounded-b-lg bg-[#F5D76E] px-3 py-1 text-[9px] font-black text-[#181205] whitespace-nowrap">
-
-                          ⭐ {ui.promo} ⭐
-
-                        </span>
-                      )}
-
-                      {/* PLAN HEADER */}
-
-                      <div
-                        className={`${
+                      <button
+                        key={pkg.code}
+                        type="button"
+                        onClick={() =>
+                          setSelectedPackage(
+                            pkg.code,
+                          )
+                        }
+                        className={`relative text-left rounded-[18px] border-2 overflow-hidden p-3 transition-all ${
                           promo
-                            ? "pt-3"
-                            : ""
-                        } flex items-start justify-between gap-3`}
-                      >
-
-                        <div className="min-w-0">
-
-                          <p className="text-white text-[14px] font-bold leading-tight">
-                            {localized.title}
-                          </p>
-
-                          <p className="text-white/45 text-[10px] mt-1">
-                            {localized.subtitle}
-                          </p>
-
-                        </div>
-
-                        <p
-                          className={`${
-                            promo
-                              ? "text-[#F5D76E]"
-                              : "text-[#00d878]"
-                          } text-[23px] font-black leading-none whitespace-nowrap`}
-                        >
-                          {pkg.price}
-                        </p>
-
-                      </div>
-
-                      {/* FEATURES */}
-
-                      <ul className="mt-3 space-y-1 text-white/65 text-[10px] leading-relaxed">
-
-                        {localized.features.map(
-                          (feature) => (
-                            <li key={feature}>
-                              ✓ {feature}
-                            </li>
-                          ),
-                        )}
-
-                      </ul>
-
-                      {/* SPECIAL BOTTOM BOX */}
-
-                      <div
-                        className={`mt-3 rounded-xl px-3 py-2 text-[9px] ${
-                          promo
-                            ? "bg-[#D4AF37]/10 border border-[#D4AF37]/25 text-[#F5D76E]"
-                            : "bg-[#009246]/5 border border-[#009246]/20 text-white/55"
+                            ? selected
+                              ? "border-[#D4AF37] bg-gradient-to-b from-[#241d00] to-[#090804] shadow-[0_0_30px_rgba(245,215,110,0.20)]"
+                              : "border-[#8f741d] bg-gradient-to-b from-[#171303] to-[#070706]"
+                            : selected
+                              ? "border-[#009246] bg-[#07120c] shadow-[0_0_24px_rgba(0,146,70,0.12)]"
+                              : "border-white/10 bg-[#060b16]"
                         }`}
                       >
 
-                        {promo
-                          ? isMa
-                            ? "عرض ترويجي · 3 شهور · 6 إرساليات"
-                            : isEn
-                              ? "Special promotion · 3 months · 6 deliveries"
-                              : "Promoción especial · 3 meses · 6 envíos"
-                          : isMa
-                            ? "جميع العروض المتاحة · إرسال مباشر"
-                            : isEn
-                              ? "All available offers · direct delivery"
-                              : "Todas las ofertas disponibles · envío directo"}
+                        {/* PROMO ESPECIAL */}
 
-                      </div>
+                        {promo && (
+                          <div className="absolute top-0 left-0 right-0 h-[26px] bg-gradient-to-r from-[#8B6914] via-[#F5D76E] to-[#8B6914] flex items-center justify-center gap-1">
 
-                    </button>
-                  );
-                })}
+                            <Star
+                              className="w-3 h-3 text-[#281c00] fill-[#281c00]"
+                            />
+
+                            <span className="text-[9px] font-black text-[#211800] uppercase">
+                              {ui.promo}
+                            </span>
+
+                            <Star
+                              className="w-3 h-3 text-[#281c00] fill-[#281c00]"
+                            />
+
+                          </div>
+                        )}
+
+                        <div
+                          className={
+                            promo
+                              ? "pt-6"
+                              : ""
+                          }
+                        >
+
+                          <div className="flex items-start justify-between gap-2">
+
+                            <div className="min-w-0">
+
+                              <p className="text-white text-[13px] font-bold leading-tight">
+                                {localized.title}
+                              </p>
+
+                              <p className="text-white/45 text-[9px] mt-1">
+                                {localized.subtitle}
+                              </p>
+
+                            </div>
+
+                            <p
+                              className={`text-[21px] font-black leading-none whitespace-nowrap ${
+                                promo
+                                  ? "text-[#F5D76E]"
+                                  : "text-[#00d878]"
+                              }`}
+                            >
+                              {pkg.price}
+                            </p>
+
+                          </div>
+
+                          <ul className="mt-2 space-y-0.5 text-white/60 text-[9px] leading-relaxed">
+
+                            {localized.features.map(
+                              (feature) => (
+                                <li
+                                  key={feature}
+                                  className="flex gap-1.5"
+                                >
+                                  <span
+                                    className={
+                                      promo
+                                        ? "text-[#F5D76E]"
+                                        : "text-[#00d878]"
+                                    }
+                                  >
+                                    ✓
+                                  </span>
+
+                                  <span>
+                                    {feature}
+                                  </span>
+
+                                </li>
+                              ),
+                            )}
+
+                          </ul>
+
+                          {promo && (
+                            <div className="mt-2 rounded-lg border border-[#D4AF37]/30 bg-[#D4AF37]/10 px-2 py-1.5 text-center">
+
+                              <span className="text-[#F5D76E] text-[8px] font-bold">
+
+                                ⭐{" "}
+
+                                {isMa
+                                  ? "عرض خاص لمدة 3 شهور"
+                                  : isEn
+                                    ? "Special 3-month promotion"
+                                    : "Promoción especial de 3 meses"}
+
+                                {" "}⭐
+
+                              </span>
+
+                            </div>
+                          )}
+
+                        </div>
+
+                      </button>
+
+                    );
+                  },
+                )}
 
               </div>
 
             </div>
 
             {/* =================================================
-                LEGAL INFORMATION
+                INFORMACIÓN LEGAL
             ================================================== */}
 
             <div className="mb-4 rounded-2xl border border-white/10 bg-[#060b16] p-4">
@@ -752,14 +896,14 @@ export default function DecretoFlussi2027() {
             </div>
 
             {/* =================================================
-                TERMS
+                TERMINOS
             ================================================== */}
 
             <label
               className={`flex items-start gap-3 mb-4 rounded-2xl border p-3 cursor-pointer transition ${
                 acceptTerms
                   ? "border-[#009246]/60 bg-[#009246]/5"
-                  : "border-white/10 bg-white/[0.02] hover:border-[#D4AF37]/40"
+                  : "border-white/10 bg-white/[0.02]"
               }`}
             >
 
@@ -781,50 +925,36 @@ export default function DecretoFlussi2027() {
             </label>
 
             {/* =================================================
-                PAYMENT
-                DISABLED FOR TESTING
+                PAGO
+                LOGOS DENTRO DEL MISMO CUADRO
+                BOTÓN APAGADO
             ================================================== */}
 
-            <div className="mt-1 rounded-2xl border border-white/10 bg-[#060b16] p-3">
+            <div className="rounded-2xl border border-white/10 bg-[#060b16] p-3">
 
-              {/* PAYMENT METHODS */}
-
-              <div className="flex flex-wrap items-center justify-center gap-1.5 mb-2">
-
-                {[
-                  "VISA",
-                  "Mastercard",
-                  "PayPal",
-                  "Stripe",
-                ].map(
-                  (brand) => (
-
-                    <span
-                      key={brand}
-                      className="rounded-md bg-white px-2 py-1 text-[8px] font-black text-[#172033] shadow-sm"
-                    >
-                      {brand}
-                    </span>
-
-                  ),
-                )}
-
+              <div className="mb-2">
+                <PaymentLogos />
               </div>
 
-              {/* DISABLED BUTTON */}
+              <p className="text-center text-white/35 text-[8px] mb-2">
+                {ui.secure}
+              </p>
 
               <button
                 type="button"
                 onClick={handlePay}
                 disabled={true}
-                className="w-full h-[52px] rounded-2xl bg-gradient-to-r from-[#8B6914] via-[#F5D76E] to-[#B8860B] opacity-55 cursor-not-allowed shadow-[0_0_18px_rgba(212,175,55,0.10)]"
+                className="w-full h-[50px] rounded-2xl border border-[#8f741d] bg-[#0b0a07] opacity-60 cursor-not-allowed"
               >
 
-                <span className="flex h-full w-full items-center justify-center gap-2 rounded-2xl bg-[#11100b] text-[#F5D76E] font-black text-[12px]">
+                <span className="flex h-full w-full items-center justify-center gap-2 text-[#F5D76E] font-black text-[11px]">
 
                   <CreditCard className="w-4 h-4" />
 
-                  {ui.pay} ·{" "}
+                  {ui.pay}
+
+                  {" · "}
+
                   {selectedPackageInfo.price}
 
                 </span>
@@ -832,12 +962,6 @@ export default function DecretoFlussi2027() {
               </button>
 
             </div>
-
-            {/* SECURE PAYMENT */}
-
-            <p className="text-center text-white/25 text-[9px] mt-3">
-              {ui.secure}
-            </p>
 
           </motion.section>
 
