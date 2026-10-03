@@ -2053,4 +2053,3 @@ export default async function handler(
     });
   }
 }
-EOF
