@@ -1925,76 +1925,51 @@ async function prepareEmailOffers(
    GMAIL
    ============================================================ */
 
-function requireGmailEnv(): {
+function requireSmtpEnv(): {
+  host: string;
+  port: number;
   user: string;
   pass: string;
+  from: string;
 } {
+  const host = process.env.SMTP_HOST || "";
+  const port = Number(process.env.SMTP_PORT || 587);
+  const user = process.env.SMTP_USER || "";
+  const pass = process.env.SMTP_PASS || "";
+  const from = process.env.SMTP_FROM || process.env.FROM_EMAIL || user;
 
-  const user =
-    process.env.GMAIL_USER ||
-    "";
-
-  const pass =
-    process.env.GMAIL_APP_PASSWORD ||
-    "";
-
-  if (
-    !user ||
-    !pass
-  ) {
+  if (!host || !port || !user || !pass || !from) {
     throw new Error(
-      "GMAIL_USER / GMAIL_APP_PASSWORD missing",
+      "SMTP_HOST / SMTP_PORT / SMTP_USER / SMTP_PASS / SMTP_FROM missing",
     );
   }
 
-  return {
-    user,
-    pass,
-  };
+  return { host, port, user, pass, from };
 }
-
 
 function createTransporter() {
-
-  const {
-    user,
-    pass,
-  } =
-    requireGmailEnv();
+  const { host, port, user, pass } = requireSmtpEnv();
 
   return nodemailer.createTransport({
-    service: "gmail",
-
-    auth: {
-      user,
-      pass,
-    },
+    host,
+    port,
+    secure: port === 465,
+    auth: { user, pass },
   });
 }
-
 
 async function sendGmail(
   to: string,
   subject: string,
   html: string,
 ): Promise<void> {
-
-  const {
-    user,
-  } =
-    requireGmailEnv();
-
-  const transporter =
-    createTransporter();
+  const { from } = requireSmtpEnv();
+  const transporter = createTransporter();
 
   await transporter.sendMail({
-    from:
-      `"GestoriaCitaIA" <${user}>`,
-
+    from: `\"GestoriaCitaIA\" <${from}>`,
     to,
-
     subject,
-
     html,
   });
 }
@@ -2029,21 +2004,26 @@ type FlussiEmailClient = {
    HTTP / SECURITY
    ============================================================ */
 
-function checkSecret(req: VercelRequest): void {
-  const configuredSecret = String(
-    process.env.FLUSSI_LAVORO_SECRET || ""
-  ).trim();
+function checkSecret(
+  req: VercelRequest,
+): void {
 
-  const receivedSecret = String(
-    req.headers["x-flussi-lavoro-secret"] || ""
-  ).trim();
+  const received =
+    String(
+      req.headers[
+        "x-flussi-lavoro-secret"
+      ] ||
+      "",
+    );
 
-  if (!configuredSecret) {
-    throw new Error("FLUSSI_LAVORO_SECRET missing");
-  }
-
-  if (!receivedSecret || receivedSecret !== configuredSecret) {
-    throw new Error("Unauthorized");
+  if (
+    !FLUSSI_LAVORO_SECRET ||
+    received !==
+      FLUSSI_LAVORO_SECRET
+  ) {
+    throw new Error(
+      "Unauthorized",
+    );
   }
 }
 
