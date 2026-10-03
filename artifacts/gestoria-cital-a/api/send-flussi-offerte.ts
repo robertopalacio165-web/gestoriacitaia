@@ -1,1319 +1,21 @@
+cat > send-flussi-offerte.ts <<'EOF'
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import nodemailer from "nodemailer";
 
 /* ============================================================
-   GESTORIACITAIA — DECRETO FLUSSI 2027
-   EMAIL PROFESIONAL GMAIL
-   DESKTOP + MOBILE
+   GESTORIACITAIA — SEND FLUSSI OFFERTE
+   VERCEL API
+   SMTP BREVO
+   SUPABASE
+   OPENAI DARIJA
    ============================================================ */
-
-type FlussiOffertaEmail = {
-  jobTitle: string;
-  category?: string;
-  companyName?: string;
-  publicationDate?: string;
-  salary?: string;
-  city?: string;
-  province?: string;
-  address?: string;
-  phone?: string;
-  email?: string;
-  contractType?: string;
-  workType?: string;
-  offerUrl?: string;
-
-  /* DETALLES COMPLETOS */
-  details?: string;
-  detailsDarija?: string;
-};
-
-type FlussiOfferteEmailData = {
-  offers: FlussiOffertaEmail[];
-  logoUrl?: string;
-  recipientName?: string;
-};
 
 
 /* ============================================================
-   HELPERS
+   TYPES
    ============================================================ */
 
-const emailEsc = (value: unknown): string =>
-  String(value ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-
-const emailValue = (value: unknown): string => {
-  const v = String(value ?? "").trim();
-  return v || "";
-};
-
-
-/* ============================================================
-   FLAGS
-   ============================================================ */
-
-const IT_FLAG =
-  '<span style="display:inline-block;width:34px;height:23px;vertical-align:middle;border-radius:3px;background:linear-gradient(to right,#009246 0%,#009246 33.333%,#ffffff 33.333%,#ffffff 66.666%,#ce2b37 66.666%,#ce2b37 100%);border:1px solid #38505e;"></span>';
-
-const MA_FLAG =
-  '<span style="display:inline-block;width:34px;height:23px;vertical-align:middle;border-radius:3px;background:#c1272d;color:#006233;text-align:center;line-height:23px;font-size:14px;font-family:Arial;">★</span>';
-
-
-/* ============================================================
-   DARIJA CATEGORY
-   ============================================================ */
-
-function categoryDarija(category: string): string {
-
-  const key =
-    category
-      .toLowerCase()
-      .trim();
-
-  const map: Record<string, string> = {
-
-    agriculture:
-      "الفلاحة",
-
-    agricoltura:
-      "الفلاحة",
-
-    "assistenza familiare":
-      "المساعدة العائلية",
-
-    family_assistance:
-      "المساعدة العائلية",
-
-    badante:
-      "المساعدة العائلية",
-
-    colf:
-      "العمل المنزلي",
-
-    domestico:
-      "العمل المنزلي",
-
-    domestic:
-      "العمل المنزلي",
-
-    pulizia:
-      "النظافة",
-
-    cleaning:
-      "النظافة",
-
-    ristorazione:
-      "المطاعم",
-
-    restaurant:
-      "المطاعم",
-
-    hotel:
-      "الفنادق",
-
-    fabbrica:
-      "المصانع",
-
-    factory:
-      "المصانع",
-
-    costruzione:
-      "البناء",
-
-    construction:
-      "البناء",
-
-    delivery:
-      "التوصيل",
-
-    caregiving:
-      "رعاية الأشخاص",
-  };
-
-  return map[key] || category;
-}
-
-
-/* ============================================================
-   CAMPO ITALIANO
-   ============================================================ */
-
-function fieldIT(
-  icon: string,
-  label: string,
-  value: string,
-  color: string,
-): string {
-
-  return `
-<table
-  role="presentation"
-  width="100%"
-  cellpadding="0"
-  cellspacing="0"
-  border="0"
-  style="border-collapse:separate;margin:0 0 5px;"
->
-<tr>
-
-<td
-  width="34"
-  style="width:34px;padding:0 4px 0 0;vertical-align:middle;"
->
-<div
-  style="
-    width:28px;
-    height:28px;
-    line-height:28px;
-    text-align:center;
-    background:#102b3e;
-    border:1px solid #214b63;
-    border-radius:8px;
-    font-size:15px;
-  "
->
-${icon}
-</div>
-</td>
-
-<td
-  style="
-    background:#071e2e;
-    border:1px solid #214b63;
-    border-radius:8px;
-    padding:5px 7px;
-    text-align:left;
-    vertical-align:middle;
-  "
->
-
-<div
-  style="
-    font-size:9px;
-    font-weight:800;
-    color:${color};
-    line-height:11px;
-  "
->
-${emailEsc(label)}
-</div>
-
-<div
-  style="
-    font-size:10px;
-    color:#ffffff;
-    line-height:14px;
-    word-break:break-word;
-  "
->
-${emailEsc(value || "—")}
-</div>
-
-</td>
-
-</tr>
-</table>
-`;
-}
-
-
-/* ============================================================
-   CAMPO DARIJA
-   ============================================================ */
-
-function fieldAR(
-  icon: string,
-  label: string,
-  value: string,
-  color: string,
-): string {
-
-  return `
-<table
-  role="presentation"
-  width="100%"
-  cellpadding="0"
-  cellspacing="0"
-  border="0"
-  style="border-collapse:separate;margin:0 0 5px;"
->
-<tr>
-
-<td
-  dir="rtl"
-  style="
-    background:#071e2e;
-    border:1px solid #214b63;
-    border-radius:8px;
-    padding:5px 7px;
-    text-align:right;
-    vertical-align:middle;
-  "
->
-
-<div
-  style="
-    font-size:9px;
-    font-weight:800;
-    color:${color};
-    line-height:11px;
-  "
->
-${emailEsc(label)}
-</div>
-
-<div
-  style="
-    font-size:10px;
-    color:#ffffff;
-    line-height:14px;
-    word-break:break-word;
-  "
->
-${emailEsc(value || "—")}
-</div>
-
-</td>
-
-<td
-  width="34"
-  style="
-    width:34px;
-    padding:0 0 0 4px;
-    vertical-align:middle;
-  "
->
-
-<div
-  style="
-    width:28px;
-    height:28px;
-    line-height:28px;
-    text-align:center;
-    background:#102b3e;
-    border:1px solid #214b63;
-    border-radius:8px;
-    font-size:15px;
-  "
->
-${icon}
-</div>
-
-</td>
-
-</tr>
-</table>
-`;
-}
-
-
-/* ============================================================
-   EMAIL PRINCIPAL
-   ============================================================ */
-
-function buildFlussiOfferteEmail(
-  data: FlussiOfferteEmailData,
-): string {
-
-  const offers =
-    data.offers || [];
-
-  const greeting =
-    emailValue(
-      data.recipientName,
-    ) || "Ciao";
-
-
-  /* ==========================================================
-     CARDS
-     ========================================================== */
-
-  const cards =
-    offers.length
-
-      ? offers
-          .map(
-            (
-              offer,
-              index,
-            ) => {
-
-              const category =
-                emailValue(
-                  offer.category,
-                ) ||
-                "Offerta di lavoro";
-
-              const categoryAR =
-                categoryDarija(
-                  category,
-                );
-
-              const title =
-                emailValue(
-                  offer.jobTitle,
-                ) ||
-                "Offerta di lavoro";
-
-              const city =
-                emailValue(
-                  offer.city,
-                ) || "—";
-
-              const province =
-                emailValue(
-                  offer.province,
-                ) || "—";
-
-              const address =
-                emailValue(
-                  offer.address,
-                ) || "—";
-
-              const phone =
-                emailValue(
-                  offer.phone,
-                ) || "—";
-
-              const ido =
-                emailValue(
-                  offer.email,
-                ) || "—";
-
-
-              /*
-               * IMPORTANTISSIMO:
-               * QUESTO È IL QUADRO GIALLO COMPLETO.
-               */
-
-              const fullDetails =
-                emailValue(
-                  offer.details,
-                ) ||
-                "Dettagli completi disponibili nell'offerta.";
-
-
-              const detailsAR =
-                emailValue(
-                  offer.detailsDarija,
-                ) ||
-                "تفاصيل العرض بالدارجة غادي تبان منين تكون الترجمة متوفرة.";
-
-
-              return `
-
-<table
-  role="presentation"
-  width="100%"
-  cellpadding="0"
-  cellspacing="0"
-  border="0"
-  style="
-    border-collapse:separate;
-    background:#061522;
-    border:1px solid #1d4b63;
-    border-radius:14px;
-    margin:0 0 14px;
-  "
->
-
-<tr>
-
-<td style="padding:11px;">
-
-<!-- ========================================================
-     OFFER TITLE
-     ======================================================== -->
-
-<table
-  role="presentation"
-  width="100%"
-  cellpadding="0"
-  cellspacing="0"
-  border="0"
->
-
-<tr>
-
-<td
-  width="50%"
-  valign="top"
-  style="padding-right:5px;"
->
-
-<div
-  style="
-    display:inline-block;
-    background:#07543f;
-    color:#45efad;
-    border-radius:14px;
-    padding:4px 8px;
-    font-size:9px;
-    font-weight:900;
-  "
->
-✓ OFFERTA ${String(
-                index + 1,
-              ).padStart(
-                2,
-                "0",
-              )}
-</div>
-
-<div
-  style="
-    margin-top:7px;
-    font-size:15px;
-    font-weight:900;
-    color:#ffffff;
-    line-height:19px;
-  "
->
-${emailEsc(title)}
-</div>
-
-<div
-  style="
-    margin-top:2px;
-    font-size:9px;
-    color:#9fb2bf;
-  "
->
-${emailEsc(category)}
-</div>
-
-</td>
-
-
-<td
-  width="50%"
-  dir="rtl"
-  valign="top"
-  align="right"
-  style="padding-left:5px;"
->
-
-<div
-  style="
-    display:inline-block;
-    background:#07543f;
-    color:#45efad;
-    border-radius:14px;
-    padding:4px 8px;
-    font-size:9px;
-    font-weight:900;
-  "
->
-✓ عرض متوفر
-</div>
-
-<div
-  style="
-    margin-top:7px;
-    font-size:15px;
-    font-weight:900;
-    color:#ffffff;
-    line-height:19px;
-  "
->
-${emailEsc(title)}
-</div>
-
-<div
-  style="
-    margin-top:2px;
-    font-size:9px;
-    color:#9fb2bf;
-  "
->
-${emailEsc(categoryAR)}
-</div>
-
-</td>
-
-</tr>
-
-</table>
-
-
-<!-- ========================================================
-     INFORMATION FIELDS
-     ======================================================== -->
-
-<table
-  role="presentation"
-  width="100%"
-  cellpadding="0"
-  cellspacing="0"
-  border="0"
-  style="margin-top:8px;"
->
-
-<tr>
-
-
-<td
-  class="offer-col"
-  width="50%"
-  valign="top"
-  style="padding-right:4px;"
->
-
-${fieldIT(
-  "📍",
-  "Città",
-  city,
-  "#35bfff",
-)}
-
-${fieldIT(
-  "🏢",
-  "Provincia",
-  province,
-  "#9d7cff",
-)}
-
-${fieldIT(
-  "💼",
-  "Categoria",
-  category,
-  "#23e69a",
-)}
-
-${fieldIT(
-  "👤",
-  "Posizione",
-  title,
-  "#ff8a21",
-)}
-
-${fieldIT(
-  "📌",
-  "Indirizzo",
-  address,
-  "#ff667a",
-)}
-
-${fieldIT(
-  "📞",
-  "Responsabile",
-  phone,
-  "#23e69a",
-)}
-
-${fieldIT(
-  "✉️",
-  "IDO",
-  ido,
-  "#a77cff",
-)}
-
-</td>
-
-
-<td
-  class="offer-col"
-  width="50%"
-  valign="top"
-  style="padding-left:4px;"
->
-
-${fieldAR(
-  "📍",
-  "المدينة",
-  city,
-  "#35bfff",
-)}
-
-${fieldAR(
-  "🏢",
-  "الإقليم",
-  province,
-  "#9d7cff",
-)}
-
-${fieldAR(
-  "💼",
-  "الفئة",
-  categoryAR,
-  "#23e69a",
-)}
-
-${fieldAR(
-  "👤",
-  "العمل",
-  title,
-  "#ff8a21",
-)}
-
-${fieldAR(
-  "📌",
-  "العنوان",
-  address,
-  "#ff667a",
-)}
-
-${fieldAR(
-  "📞",
-  "رقم المسؤول",
-  phone,
-  "#23e69a",
-)}
-
-${fieldAR(
-  "✉️",
-  "الإيميل",
-  ido,
-  "#a77cff",
-)}
-
-</td>
-
-</tr>
-
-</table>
-
-
-<!-- ========================================================
-     YELLOW DETAILS — FULL JOB INFORMATION
-     ======================================================== -->
-
-<table
-  role="presentation"
-  width="100%"
-  cellpadding="0"
-  cellspacing="0"
-  border="0"
-  style="margin-top:7px;"
->
-
-<tr>
-
-
-<td
-  class="detail-col"
-  width="50%"
-  valign="top"
-  style="padding-right:4px;"
->
-
-<div
-  style="
-    background:#211f04;
-    border:1px solid #d1ad22;
-    border-radius:11px;
-    padding:10px;
-    min-height:92px;
-  "
->
-
-<div
-  style="
-    font-size:11px;
-    font-weight:900;
-    color:#ffd429;
-    margin-bottom:6px;
-  "
->
-📋 Dettagli completi dell'offerta
-</div>
-
-<div
-  style="
-    font-size:9px;
-    line-height:15px;
-    color:#ffffff;
-    word-break:break-word;
-  "
->
-${emailEsc(
-                fullDetails,
-              )}
-</div>
-
-</div>
-
-</td>
-
-
-<td
-  class="detail-col"
-  width="50%"
-  valign="top"
-  dir="rtl"
-  style="padding-left:4px;"
->
-
-<div
-  style="
-    background:#211f04;
-    border:1px solid #d1ad22;
-    border-radius:11px;
-    padding:10px;
-    min-height:92px;
-    text-align:right;
-  "
->
-
-<div
-  style="
-    font-size:11px;
-    font-weight:900;
-    color:#ffd429;
-    margin-bottom:6px;
-  "
->
-📋 تفاصيل الخدمة كاملة
-</div>
-
-<div
-  style="
-    font-size:9px;
-    line-height:15px;
-    color:#ffffff;
-    word-break:break-word;
-  "
->
-${emailEsc(
-                detailsAR,
-              )}
-</div>
-
-</div>
-
-</td>
-
-</tr>
-
-</table>
-
-
-</td>
-
-</tr>
-
-</table>
-
-`;
-            },
-          )
-          .join("")
-
-      : `
-<div
-  style="
-    padding:30px;
-    text-align:center;
-    color:#ffffff;
-  "
->
-Nessuna nuova offerta disponibile al momento.
-</div>
-`;
-
-
-  /* ==========================================================
-     COMPLETE EMAIL
-     ========================================================== */
-
-  return `
-
-<!doctype html>
-
-<html lang="it">
-
-<head>
-
-<meta charset="utf-8">
-
-<meta
-  name="viewport"
-  content="width=device-width,initial-scale=1"
->
-
-<title>
-Nuove offerte di lavoro — Decreto Flussi 2027
-</title>
-
-
-<style>
-
-@media only screen and (max-width:620px){
-
-  .email-wrap{
-    width:100%!important;
-    max-width:100%!important;
-    border-radius:0!important;
-  }
-
-  .outer-pad{
-    padding:0!important;
-  }
-
-  .mobile-pad{
-    padding-left:10px!important;
-    padding-right:10px!important;
-  }
-
-  .mobile-stack-cell{
-    display:block!important;
-    width:100%!important;
-    max-width:100%!important;
-    padding-left:0!important;
-    padding-right:0!important;
-  }
-
-  .offer-col{
-    display:block!important;
-    width:100%!important;
-    max-width:100%!important;
-    padding-left:0!important;
-    padding-right:0!important;
-  }
-
-  .detail-col{
-    display:block!important;
-    width:100%!important;
-    max-width:100%!important;
-    padding-left:0!important;
-    padding-right:0!important;
-    margin-bottom:7px!important;
-  }
-
-  .header-title{
-    font-size:22px!important;
-    line-height:26px!important;
-  }
-
-}
-
-</style>
-
-</head>
-
-
-<body
-  style="
-    margin:0;
-    padding:0;
-    background:#edf1f5;
-    font-family:Arial,Helvetica,sans-serif;
-  "
->
-
-<center
-  class="outer-pad"
-  style="
-    width:100%;
-    padding:18px 8px;
-    background:#edf1f5;
-  "
->
-
-
-<!-- ==========================================================
-     MAIN CONTAINER
-     ========================================================== -->
-
-<table
-  class="email-wrap"
-  role="presentation"
-  width="100%"
-  cellpadding="0"
-  cellspacing="0"
-  border="0"
-  style="
-    max-width:620px;
-    width:100%;
-    background:#031522;
-    border:1px solid #16435c;
-    border-radius:18px;
-    overflow:hidden;
-    color:#ffffff;
-  "
->
-
-
-<!-- ==========================================================
-     HEADER
-     ========================================================== -->
-
-<tr>
-
-<td
-  style="
-    padding:17px 16px 13px;
-    border-bottom:1px solid #16435c;
-  "
->
-
-<table
-  role="presentation"
-  width="100%"
-  cellpadding="0"
-  cellspacing="0"
-  border="0"
->
-
-<tr>
-
-
-<td
-  width="55%"
-  valign="top"
->
-
-<div
-  style="
-    font-size:20px;
-    font-weight:900;
-    color:#ffffff;
-    line-height:23px;
-  "
->
-gestoria<span style="color:#ffd429;">cita</span><span style="color:#24e29a;">ia</span>
-</div>
-
-<div
-  style="
-    margin-top:3px;
-    font-size:8px;
-    font-weight:900;
-    color:#ffd429;
-    letter-spacing:1.3px;
-  "
->
-DECRETO FLUSSI 2027
-</div>
-
-<div
-  style="
-    margin-top:6px;
-    font-size:9px;
-    color:#9fb2bf;
-  "
->
-Offerte di lavoro verificate
-</div>
-
-</td>
-
-
-<td
-  width="45%"
-  align="right"
-  valign="top"
->
-
-<div
-  style="
-    display:inline-block;
-    background:#0a2b3b;
-    border:1px solid #24536a;
-    border-radius:10px;
-    padding:7px 8px;
-    text-align:center;
-  "
->
-
-<div
-  style="
-    font-size:8px;
-    color:#9fb2bf;
-    font-weight:800;
-  "
->
-ITALIA
-</div>
-
-<div
-  style="
-    margin-top:4px;
-  "
->
-${IT_FLAG}
-</div>
-
-</div>
-
-<div
-  style="
-    display:inline-block;
-    margin-left:4px;
-    background:#0a2b3b;
-    border:1px solid #24536a;
-    border-radius:10px;
-    padding:7px 8px;
-    text-align:center;
-  "
->
-
-<div
-  style="
-    font-size:8px;
-    color:#9fb2bf;
-    font-weight:800;
-  "
->
-MAROCCO
-</div>
-
-<div
-  style="
-    margin-top:4px;
-  "
->
-${MA_FLAG}
-</div>
-
-</div>
-
-</td>
-
-</tr>
-
-</table>
-
-</td>
-
-</tr>
-
-
-<!-- ==========================================================
-     GREETING
-     ========================================================== -->
-
-<tr>
-
-<td
-  class="mobile-pad"
-  style="
-    padding:16px;
-    border-bottom:1px solid #12384d;
-  "
->
-
-<table
-  role="presentation"
-  width="100%"
-  cellpadding="0"
-  cellspacing="0"
-  border="0"
->
-
-<tr>
-
-<td
-  width="50%"
-  valign="top"
-  style="padding-right:6px;"
->
-
-<div
-  style="
-    font-size:12px;
-    font-weight:900;
-    color:#ffffff;
-  "
->
-${emailEsc(greeting)}
-</div>
-
-<div
-  style="
-    margin-top:6px;
-    font-size:10px;
-    line-height:16px;
-    color:#c8d5dc;
-  "
->
-Abbiamo raccolto nuove offerte di lavoro collegate al Decreto Flussi.
-Controlla i dettagli qui sotto e verifica sempre le informazioni con la fonte ufficiale.
-</div>
-
-</td>
-
-
-<td
-  width="50%"
-  valign="top"
-  dir="rtl"
-  align="right"
-  style="padding-left:6px;"
->
-
-<div
-  style="
-    font-size:12px;
-    font-weight:900;
-    color:#ffffff;
-  "
->
-مرحبا
-</div>
-
-<div
-  style="
-    margin-top:6px;
-    font-size:10px;
-    line-height:16px;
-    color:#c8d5dc;
-  "
->
-جمعنا ليك عروض عمل جديدة مرتبطة بـ Decreto Flussi.
-شوف التفاصيل لتحت وتأكد ديما من المعلومات مع المصدر الرسمي.
-</div>
-
-</td>
-
-</tr>
-
-</table>
-
-</td>
-
-</tr>
-
-
-<!-- ==========================================================
-     OFFERS
-     ========================================================== -->
-
-<tr>
-
-<td
-  class="mobile-pad"
-  style="padding:14px 16px 4px;"
->
-
-${cards}
-
-</td>
-
-</tr>
-
-
-<!-- ==========================================================
-     FOOTER
-     ========================================================== -->
-
-<tr>
-
-<td
-  style="
-    padding:16px;
-    border-top:1px solid #16435c;
-  "
->
-
-<table
-  role="presentation"
-  width="100%"
-  cellpadding="0"
-  cellspacing="0"
-  border="0"
->
-
-<tr>
-
-<td
-  style="
-    background:#071e2e;
-    border:1px solid #214b63;
-    border-radius:12px;
-    padding:12px;
-  "
->
-
-<div
-  style="
-    font-size:10px;
-    font-weight:900;
-    color:#ffd429;
-    margin-bottom:6px;
-  "
->
-⚠️ AVVISO IMPORTANTE
-</div>
-
-<div
-  style="
-    font-size:9px;
-    line-height:15px;
-    color:#d7e2e8;
-  "
->
-GestoriaCitaIA è un servizio informativo che ricerca e presenta offerte di lavoro collegate al Decreto Flussi in Italia. Non garantisce l'assunzione, il contratto di lavoro, il rilascio del nulla osta o del visto e non agisce come intermediario tra lavoratore e datore di lavoro. Le informazioni devono essere verificate direttamente con il datore di lavoro o con gli enti competenti.
-</div>
-
-<div
-  dir="rtl"
-  style="
-    margin-top:10px;
-    font-size:10px;
-    font-weight:900;
-    color:#ffd429;
-    margin-bottom:6px;
-    text-align:right;
-  "
->
-⚠️ تنبيه مهم
-</div>
-
-<div
-  dir="rtl"
-  style="
-    font-size:9px;
-    line-height:17px;
-    color:#d7e2e8;
-    text-align:right;
-  "
->
-GestoriaCitaIA غير خدمة معلوماتية كتبحث وكتعرض عروض العمل المرتبطة بـ Decreto Flussi فإيطاليا. الموقع ما كيضمنش الحصول على عقد العمل، وما كيضمنش nulla osta أو الفيزا، وما كيخدمش كوسيط بين العامل والمشغّل. المعلومات خاصها تتأكد مباشرة مع المشغّل أو الجهات المختصة.
-</div>
-
-</td>
-
-</tr>
-
-</table>
-
-<div
-  style="
-    margin-top:10px;
-    text-align:center;
-    font-size:8px;
-    color:#718794;
-    line-height:13px;
-  "
->
-GestoriaCitaIA · Informazione sul lavoro e Decreto Flussi
-</div>
-
-</td>
-
-</tr>
-
-
-</table>
-
-</center>
-
-</body>
-
-</html>
-
-`;
-}
-
-
-/* ============================================================
-   DATABASE TYPES
-   ============================================================ */
+type Gender = "Mujer" | "Hombre" | "Ambos";
 
 type OfferRow = {
   id: string;
@@ -1354,646 +56,31 @@ type OfferRow = {
   details_darija?: string | null;
 };
 
-
-/* ============================================================
-   ENV
-   ============================================================ */
-
-const SUPABASE_URL =
-  process.env.SUPABASE_URL ||
-  "";
-
-const SUPABASE_SERVICE_ROLE_KEY =
-  process.env.SUPABASE_SERVICE_ROLE_KEY ||
-  "";
-
-const FLUSSI_LAVORO_SECRET =
-  process.env.FLUSSI_LAVORO_SECRET ||
-  "";
-
-const OPENAI_API_KEY =
-  process.env.OPENAI_API_KEY ||
-  "";
-
-const OPENAI_DARIJA_MODEL =
-  process.env.OPENAI_DARIJA_MODEL ||
-  "gpt-4.1-mini";
-
-
-/* ============================================================
-   SUPABASE HELPERS
-   ============================================================ */
-
-function requireEnv(): void {
-
-  const missing: string[] = [];
-
-  if (!SUPABASE_URL) {
-    missing.push("SUPABASE_URL");
-  }
-
-  if (!SUPABASE_SERVICE_ROLE_KEY) {
-    missing.push(
-      "SUPABASE_SERVICE_ROLE_KEY",
-    );
-  }
-
-  if (!FLUSSI_LAVORO_SECRET) {
-    missing.push(
-      "FLUSSI_LAVORO_SECRET",
-    );
-  }
-
-  if (!missing.length) {
-    return;
-  }
-
-  throw new Error(
-    `Missing environment variables: ${missing.join(", ")}`,
-  );
-}
-
-
-async function supabaseFetch(
-  path: string,
-  init: RequestInit = {},
-): Promise<Response> {
-
-  requireEnv();
-
-  const headers = new Headers(
-    init.headers || {},
-  );
-
-  headers.set(
-    "apikey",
-    SUPABASE_SERVICE_ROLE_KEY,
-  );
-
-  headers.set(
-    "Authorization",
-    `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
-  );
-
-  headers.set(
-    "Content-Type",
-    "application/json",
-  );
-
-  return fetch(
-    `${SUPABASE_URL}${path}`,
-    {
-      ...init,
-      headers,
-    },
-  );
-}
-
-
-async function getFlussiOffers(
-  gender?: string,
-  limit?: number,
-): Promise<OfferRow[]> {
-
-  const params =
-    new URLSearchParams();
-
-  params.set(
-    "select",
-    [
-      "id",
-      "offer_code",
-      "job_title",
-      "category",
-      "flussi_related",
-      "flussi_year",
-      "province",
-      "city",
-      "address",
-      "zone",
-      "phone",
-      "email",
-      "contact_type",
-      "email_valid",
-      "publication_date",
-      "expiration_date",
-      "cpi",
-      "pdf_url",
-      "source_url",
-      "source_name",
-      "source_type",
-      "status",
-      "company_name",
-      "offer_details",
-      "contract_type",
-      "work_type",
-      "flussi_verified",
-      "is_active",
-      "created_at",
-      "updated_at",
-      "region",
-      "cpi_responsible_phone",
-      "cpi_email",
-      "cpi_pec",
-      "gender_target",
-      "details_darija",
-    ].join(","),
-  );
-
-  params.set(
-    "order",
-    "created_at.desc",
-  );
-
-  params.set(
-    "limit",
-    String(
-      Math.min(
-        Number(limit || 50),
-        50,
-      ),
-    ),
-  );
-
-  const response =
-    await supabaseFetch(
-      `/rest/v1/flussi_offerte?${params.toString()}`,
-    );
-
-  const text =
-    await response.text();
-
-  if (!response.ok) {
-    throw new Error(
-      `Supabase offers error ${response.status}: ${text.slice(0, 500)}`,
-    );
-  }
-
-  const rows =
-    JSON.parse(text);
-
-  let offers: OfferRow[] =
-    Array.isArray(rows)
-      ? rows
-      : [];
-
-  /*
-   * Il piano commerciale usa tutte le offerte Flussi presenti in tabella.
-   * Non filtriamo is_active/status qui: la selezione Mujer/Hombre/Ambos
-   * deve corrispondere al catalogo completo presente in flussi_offerte.
-   */
-
-  if (gender) {
-    const normalizedGender =
-      String(gender)
-        .trim()
-        .toLowerCase();
-
-    if (
-      normalizedGender ===
-      "mujer"
-    ) {
-      offers =
-        offers.filter(
-          (offer) =>
-            String(
-              offer.gender_target ||
-              "",
-            )
-              .trim()
-              .toLowerCase() ===
-            "mujer",
-        );
-    }
-
-    if (
-      normalizedGender ===
-      "hombre"
-    ) {
-      offers =
-        offers.filter(
-          (offer) =>
-            String(
-              offer.gender_target ||
-              "",
-            )
-              .trim()
-              .toLowerCase() ===
-            "hombre",
-        );
-    }
-
-    /*
-     * "Ambos" = tutto il catalogo.
-     */
-  }
-
-  if (
-    Number.isFinite(
-      Number(limit),
-    )
-  ) {
-    offers =
-      offers.slice(
-        0,
-        Math.min(
-          Number(limit),
-          50,
-        ),
-      );
-  }
-
-  return offers;
-}
-
-
-function toEmailOffer(
-  offer: OfferRow,
-): FlussiOffertaEmail {
-
-  return {
-    jobTitle:
-      emailValue(
-        offer.job_title,
-      ) ||
-      "Offerta di lavoro",
-
-    category:
-      emailValue(
-        offer.category,
-      ) ||
-      "Offerta di lavoro",
-
-    companyName:
-      emailValue(
-        offer.company_name,
-      ),
-
-    publicationDate:
-      emailValue(
-        offer.publication_date,
-      ),
-
-    salary:
-      "",
-
-    city:
-      emailValue(
-        offer.city,
-      ),
-
-    province:
-      emailValue(
-        offer.province,
-      ),
-
-    address:
-      emailValue(
-        offer.address,
-      ) ||
-      "Indirizzo preciso non indicato nell'offerta.",
-
-    phone:
-      emailValue(
-        offer.phone,
-      ) ||
-      emailValue(
-        offer.cpi_responsible_phone,
-      ),
-
-    email:
-      emailValue(
-        offer.email,
-      ) ||
-      emailValue(
-        offer.cpi_email,
-      ),
-
-    contractType:
-      emailValue(
-        offer.contract_type,
-      ),
-
-    workType:
-      emailValue(
-        offer.work_type,
-      ),
-
-    offerUrl:
-      emailValue(
-        offer.source_url,
-      ),
-
-    details:
-      emailValue(
-        offer.offer_details,
-      ) ||
-      "Dettagli completi disponibili nell'offerta.",
-
-    detailsDarija:
-      emailValue(
-        offer.details_darija,
-      ),
-  };
-}
-
-
-/* ============================================================
-   OPENAI — TRADUZIONE DARIJA REALE
-   ============================================================ */
-
-async function translateOfferToDarija(
-  title: string,
-  details: string,
-): Promise<string> {
-
-  if (!OPENAI_API_KEY) {
-    throw new Error(
-      "OPENAI_API_KEY missing",
-    );
-  }
-
-  const response =
-    await fetch(
-      "https://api.openai.com/v1/responses",
-      {
-        method: "POST",
-
-        headers: {
-          "Content-Type":
-            "application/json",
-
-          Authorization:
-            `Bearer ${OPENAI_API_KEY}`,
-        },
-
-        body: JSON.stringify({
-          model:
-            OPENAI_DARIJA_MODEL,
-
-          input: [
-            {
-              role: "system",
-
-              content: [
-                {
-                  type:
-                    "input_text",
-
-                  text:
-                    `
-You are a professional Moroccan Darija translator.
-
-Translate the job offer below from Italian into natural Moroccan Darija written in Arabic script.
-
-IMPORTANT RULES:
-- Preserve EVERY factual detail.
-- Do not invent information.
-- Do not remove salary, dates, hours, contract, requirements, experience, address, phone, email, qualifications, duties, application instructions or legal references.
-- Keep company names, place names, email addresses, phone numbers, URLs and official Italian terms exactly as written when appropriate.
-- Keep "Decreto Flussi", "nulla osta", CPI, CCNL and similar official terms unchanged.
-- Use Moroccan Darija, not Modern Standard Arabic.
-- Make the text understandable for Moroccan workers.
-- Do not summarize.
-- Do not add explanations.
-- Return ONLY the translated Darija text.
-
-Job title:
-${title}
-
-Full offer details:
-${details}
-                    `.trim(),
-                },
-              ],
-            },
-          ],
-        }),
-      },
-    );
-
-  const text =
-    await response.text();
-
-  if (!response.ok) {
-    throw new Error(
-      `OpenAI translation error ${response.status}: ${text.slice(0, 500)}`,
-    );
-  }
-
-  const data =
-    JSON.parse(text);
-
-  const outputText =
-    String(
-      data?.output_text ||
-      "",
-    ).trim();
-
-  if (!outputText) {
-    throw new Error(
-      "OpenAI returned empty Darija translation",
-    );
-  }
-
-  return outputText;
-}
-
-
-async function prepareEmailOffers(
-  offers: OfferRow[],
-): Promise<FlussiOffertaEmail[]> {
-
-  const converted =
-    offers.map(
-      toEmailOffer,
-    );
-
-  /*
-   * Traducción concurrente limitada.
-   * Las traducciones nuevas se guardan en Supabase
-   * para no volver a pagar/procesar la misma oferta.
-   */
-
-  const result:
-    FlussiOffertaEmail[] =
-    new Array(
-      converted.length,
-    );
-
-  let cursor = 0;
-
-  async function worker(): Promise<void> {
-
-    while (true) {
-
-      const index =
-        cursor++;
-
-      if (
-        index >=
-        converted.length
-      ) {
-        return;
-      }
-
-      const item =
-        converted[index];
-
-      if (
-        item.detailsDarija
-      ) {
-        result[index] =
-          item;
-        continue;
-      }
-
-      const translated =
-        await translateOfferToDarija(
-          item.jobTitle,
-          item.details ||
-            "",
-        );
-
-      item.detailsDarija =
-        translated;
-
-      const sourceOffer =
-        offers[index];
-
-      if (
-        sourceOffer?.id &&
-        translated
-      ) {
-
-        const patch =
-          await supabaseFetch(
-            `/rest/v1/flussi_offerte?id=eq.${encodeURIComponent(
-              sourceOffer.id,
-            )}`,
-            {
-              method: "PATCH",
-
-              body:
-                JSON.stringify({
-                  details_darija:
-                    translated,
-                }),
-            },
-          );
-
-        if (!patch.ok) {
-          const patchText =
-            await patch.text();
-
-          throw new Error(
-            `Supabase Darija update error ${patch.status}: ${patchText.slice(0, 500)}`,
-          );
-        }
-      }
-
-      result[index] =
-        item;
-    }
-  }
-
-  const concurrency =
-    Math.min(
-      4,
-      Math.max(
-        1,
-        converted.length,
-      ),
-    );
-
-  await Promise.all(
-    Array.from(
-      {
-        length:
-          concurrency,
-      },
-      () =>
-        worker(),
-    ),
-  );
-
-  return result;
-}
-
-
-/* ============================================================
-   GMAIL
-   ============================================================ */
-
-function requireSmtpEnv(): {
-  host: string;
-  port: number;
-  user: string;
-  pass: string;
-  from: string;
-} {
-  const host = process.env.SMTP_HOST || "";
-  const port = Number(process.env.SMTP_PORT || 587);
-  const user = process.env.SMTP_USER || "";
-  const pass = process.env.SMTP_PASS || "";
-  const from = process.env.SMTP_FROM || process.env.FROM_EMAIL || user;
-
-  if (!host || !port || !user || !pass || !from) {
-    throw new Error(
-      "SMTP_HOST / SMTP_PORT / SMTP_USER / SMTP_PASS / SMTP_FROM missing",
-    );
-  }
-
-  return { host, port, user, pass, from };
-}
-
-function createTransporter() {
-  const { host, port, user, pass } = requireSmtpEnv();
-
-  return nodemailer.createTransport({
-    host,
-    port,
-    secure: port === 465,
-    auth: { user, pass },
-  });
-}
-
-async function sendGmail(
-  to: string,
-  subject: string,
-  html: string,
-): Promise<void> {
-  const { from } = requireSmtpEnv();
-  const transporter = createTransporter();
-
-  await transporter.sendMail({
-    from: `\"GestoriaCitaIA\" <${from}>`,
-    to,
-    subject,
-    html,
-  });
-}
-
-
-/* ============================================================
-   CLIENTS
-   ============================================================ */
-
-type FlussiEmailClient = {
+type EmailOffer = {
+  jobTitle: string;
+  category: string;
+  companyName: string;
+  publicationDate: string;
+  city: string;
+  province: string;
+  address: string;
+  phone: string;
+  email: string;
+  contractType: string;
+  workType: string;
+  offerUrl: string;
+  details: string;
+  detailsDarija: string;
+};
+
+type Client = {
   id: string;
   email: string;
   plan: number;
-  gender_target:
-    | "Mujer"
-    | "Hombre"
-    | "Ambos";
+  gender_target: Gender;
   active: boolean;
-  last_sent_at:
-    | string
-    | null;
-  next_send_at:
-    | string
-    | null;
+  last_sent_at: string | null;
+  next_send_at: string | null;
   send_count: number;
   created_at: string;
   updated_at: string;
@@ -2001,7 +88,251 @@ type FlussiEmailClient = {
 
 
 /* ============================================================
-   HTTP / SECURITY
+   ENVIRONMENT
+   ============================================================ */
+
+const SUPABASE_URL =
+  process.env.SUPABASE_URL || "";
+
+const SUPABASE_SERVICE_ROLE_KEY =
+  process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+
+const FLUSSI_LAVORO_SECRET =
+  process.env.FLUSSI_LAVORO_SECRET || "";
+
+const OPENAI_API_KEY =
+  process.env.OPENAI_API_KEY || "";
+
+const OPENAI_DARIJA_MODEL =
+  process.env.OPENAI_DARIJA_MODEL ||
+  "gpt-4.1-mini";
+
+const SMTP_HOST =
+  process.env.SMTP_HOST || "";
+
+const SMTP_PORT =
+  Number(process.env.SMTP_PORT || 587);
+
+const SMTP_USER =
+  process.env.SMTP_USER || "";
+
+const SMTP_PASS =
+  process.env.SMTP_PASS || "";
+
+const SMTP_FROM =
+  process.env.SMTP_FROM ||
+  process.env.FROM_EMAIL ||
+  SMTP_USER;
+
+
+/* ============================================================
+   BASIC HELPERS
+   ============================================================ */
+
+function emailEsc(value: unknown): string {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+
+function value(value: unknown): string {
+  return String(value ?? "").trim();
+}
+
+
+function normalise(value: unknown): string {
+  return String(value ?? "")
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
+
+function normalizeEmail(value: unknown): string {
+  return String(value ?? "")
+    .trim()
+    .toLowerCase();
+}
+
+
+function normalizeGender(value: unknown): Gender {
+  const g = normalise(value);
+
+  if (g === "hombre") {
+    return "Hombre";
+  }
+
+  if (g === "ambos") {
+    return "Ambos";
+  }
+
+  return "Mujer";
+}
+
+
+function normalizePlan(value: unknown): number {
+  const n = Number(value);
+
+  if (Math.abs(n - 24.99) < 0.001) {
+    return 24.99;
+  }
+
+  return 14.99;
+}
+
+
+/* ============================================================
+   ENV VALIDATION
+   ============================================================ */
+
+function requireEnvironment(): void {
+  const missing: string[] = [];
+
+  if (!SUPABASE_URL) {
+    missing.push("SUPABASE_URL");
+  }
+
+  if (!SUPABASE_SERVICE_ROLE_KEY) {
+    missing.push("SUPABASE_SERVICE_ROLE_KEY");
+  }
+
+  if (!FLUSSI_LAVORO_SECRET) {
+    missing.push("FLUSSI_LAVORO_SECRET");
+  }
+
+  if (!missing.length) {
+    return;
+  }
+
+  throw new Error(
+    `Missing environment variables: ${missing.join(", ")}`
+  );
+}
+
+
+function requireSmtpEnvironment(): void {
+  const missing: string[] = [];
+
+  if (!SMTP_HOST) {
+    missing.push("SMTP_HOST");
+  }
+
+  if (!SMTP_USER) {
+    missing.push("SMTP_USER");
+  }
+
+  if (!SMTP_PASS) {
+    missing.push("SMTP_PASS");
+  }
+
+  if (!SMTP_FROM) {
+    missing.push("SMTP_FROM");
+  }
+
+  if (!missing.length) {
+    return;
+  }
+
+  throw new Error(
+    `Missing SMTP environment variables: ${missing.join(", ")}`
+  );
+}
+
+
+/* ============================================================
+   SUPABASE
+   ============================================================ */
+
+async function supabaseRequest(
+  path: string,
+  init: RequestInit = {},
+): Promise<Response> {
+
+  requireEnvironment();
+
+  const headers = new Headers(
+    init.headers || {}
+  );
+
+  headers.set(
+    "apikey",
+    SUPABASE_SERVICE_ROLE_KEY
+  );
+
+  headers.set(
+    "Authorization",
+    `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`
+  );
+
+  headers.set(
+    "Content-Type",
+    "application/json"
+  );
+
+  return fetch(
+    `${SUPABASE_URL}/rest/v1/${path}`,
+    {
+      ...init,
+      headers,
+    }
+  );
+}
+
+
+/* ============================================================
+   BREVO SMTP
+   ============================================================ */
+
+function createTransporter() {
+
+  requireSmtpEnvironment();
+
+  return nodemailer.createTransport({
+    host: SMTP_HOST,
+    port: SMTP_PORT,
+    secure: SMTP_PORT === 465,
+
+    auth: {
+      user: SMTP_USER,
+      pass: SMTP_PASS,
+    },
+
+    connectionTimeout: 15000,
+    greetingTimeout: 15000,
+    socketTimeout: 30000,
+  });
+}
+
+
+async function sendEmail(
+  to: string,
+  subject: string,
+  html: string,
+): Promise<void> {
+
+  const transporter =
+    createTransporter();
+
+  await transporter.sendMail({
+    from:
+      `"GestoriaCitaIA" <${SMTP_FROM}>`,
+
+    to,
+
+    subject,
+
+    html,
+  });
+}
+
+
+/* ============================================================
+   SECURITY
    ============================================================ */
 
 function checkSecret(
@@ -2012,8 +343,7 @@ function checkSecret(
     String(
       req.headers[
         "x-flussi-lavoro-secret"
-      ] ||
-      "",
+      ] || ""
     );
 
   if (
@@ -2021,12 +351,14 @@ function checkSecret(
     received !==
       FLUSSI_LAVORO_SECRET
   ) {
-    throw new Error(
-      "Unauthorized",
-    );
+    throw new Error("Unauthorized");
   }
 }
 
+
+/* ============================================================
+   BODY
+   ============================================================ */
 
 function parseBody(
   req: VercelRequest,
@@ -2034,20 +366,16 @@ function parseBody(
 
   if (
     req.body &&
-    typeof req.body ===
-      "object"
+    typeof req.body === "object"
   ) {
     return req.body;
   }
 
   if (
-    typeof req.body ===
-    "string"
+    typeof req.body === "string"
   ) {
     try {
-      return JSON.parse(
-        req.body,
-      );
+      return JSON.parse(req.body);
     } catch {
       return {};
     }
@@ -2057,1068 +385,8 @@ function parseBody(
 }
 
 
-function normalizeEmail(
-  value: unknown,
-): string {
-
-  return String(
-    value ?? "",
-  )
-    .trim()
-    .toLowerCase();
-}
-
-
-function normalizeGender(
-  value: unknown,
-): "Mujer" | "Hombre" | "Ambos" {
-
-  const gender =
-    String(
-      value ?? "",
-    )
-      .trim()
-      .toLowerCase();
-
-  if (
-    gender ===
-    "hombre"
-  ) {
-    return "Hombre";
-  }
-
-  if (
-    gender ===
-    "ambos"
-  ) {
-    return "Ambos";
-  }
-
-  return "Mujer";
-}
-
-
-function normalizePlan(
-  value: unknown,
-): number {
-
-  const plan =
-    Number(value);
-
-  if (
-    Math.abs(
-      plan - 24.99,
-    ) < 0.001
-  ) {
-    return 24.99;
-  }
-
-  return 14.99;
-}
-
-
 /* ============================================================
-   CLIENT SUPABASE
-   ============================================================ */
-
-async function getClients(
-  emails?: string[],
-): Promise<FlussiEmailClient[]> {
-
-  const params =
-    new URLSearchParams();
-
-  params.set(
-    "select",
-    [
-      "id",
-      "email",
-      "plan",
-      "gender_target",
-      "active",
-      "last_sent_at",
-      "next_send_at",
-      "send_count",
-      "created_at",
-      "updated_at",
-    ].join(","),
-  );
-
-  params.set(
-    "active",
-    "eq.true",
-  );
-
-  params.set(
-    "order",
-    "created_at.asc",
-  );
-
-  if (
-    emails &&
-    emails.length
-  ) {
-    params.set(
-      "email",
-      `in.(${emails
-        .map(
-          (email) =>
-            `"${normalizeEmail(
-              email,
-            )}"`,
-        )
-        .join(",")})`,
-    );
-  }
-
-  const response =
-    await supabaseFetch(
-      `/rest/v1/flussi_email_clients?${params.toString()}`,
-    );
-
-  const text =
-    await response.text();
-
-  if (!response.ok) {
-    throw new Error(
-      `Supabase clients error ${response.status}: ${text.slice(0, 500)}`,
-    );
-  }
-
-  const rows =
-    JSON.parse(text);
-
-  return Array.isArray(
-    rows,
-  )
-    ? rows
-    : [];
-}
-
-
-async function updateClientAfterSend(
-  client: FlussiEmailClient,
-): Promise<void> {
-
-  const now =
-    new Date();
-
-  const next =
-    new Date(
-      now.getTime() +
-        10 *
-          24 *
-          60 *
-          60 *
-          1000,
-    );
-
-  const response =
-    await supabaseFetch(
-      `/rest/v1/flussi_email_clients?id=eq.${encodeURIComponent(
-        client.id,
-      )}`,
-      {
-        method: "PATCH",
-
-        body:
-          JSON.stringify({
-            last_sent_at:
-              now.toISOString(),
-
-            next_send_at:
-              next.toISOString(),
-
-            send_count:
-              Number(
-                client.send_count ||
-                  0,
-              ) + 1,
-
-            updated_at:
-              now.toISOString(),
-          }),
-      },
-    );
-
-  if (!response.ok) {
-    const text =
-      await response.text();
-
-    throw new Error(
-      `Supabase client update error ${response.status}: ${text.slice(0, 500)}`,
-    );
-  }
-}
-    const value =
-      emailValue(
-        offer.category,
-      );
-
-    const category =
-      value ||
-      "Offerta di lavoro";
-
-    const title =
-      emailValue(
-        offer.jobTitle,
-      ) ||
-      "Offerta di lavoro";
-
-    const city =
-      emailValue(
-        offer.city,
-      ) ||
-      "—";
-
-    const province =
-      emailValue(
-        offer.province,
-      ) ||
-      "—";
-
-    const address =
-      emailValue(
-        offer.address,
-      ) ||
-      "Indirizzo preciso non indicato nell'offerta.";
-
-    const phone =
-      emailValue(
-        offer.phone,
-      ) ||
-      "—";
-
-    const ido =
-      emailValue(
-        offer.email,
-      ) ||
-      "—";
-
-    const fullDetails =
-      emailValue(
-        offer.details,
-      ) ||
-      "Dettagli completi disponibili nell'offerta.";
-
-    const detailsAR =
-      emailValue(
-        offer.detailsDarija,
-      ) ||
-      "تفاصيل العرض كاملة غادي تلقاها هنا منين تكون الترجمة متوفرة.";
-
-    return {
-      jobTitle: title,
-      category,
-      city,
-      province,
-      address,
-      phone,
-      email: ido,
-      details: fullDetails,
-      detailsDarija: detailsAR,
-      offerUrl:
-        emailValue(
-          offer.offerUrl,
-        ),
-    };
-  });
-
-
-  /* ==========================================================
-     HEADER
-     ========================================================== */
-
-  const greeting =
-    emailValue(
-      data.recipientName,
-    ) ||
-    "Ciao";
-
-
-  /* ==========================================================
-     EMAIL HTML
-     ========================================================== */
-
-  return `
-<!doctype html>
-<html lang="it">
-
-<head>
-
-<meta charset="utf-8">
-
-<meta
-  name="viewport"
-  content="width=device-width,initial-scale=1"
->
-
-<title>
-Nuove offerte di lavoro — Decreto Flussi 2027
-</title>
-
-<style>
-
-@media only screen and (max-width:620px){
-
-  .email-wrap{
-    width:100%!important;
-    max-width:100%!important;
-    border-radius:0!important;
-  }
-
-  .outer-pad{
-    padding:0!important;
-  }
-
-  .mobile-pad{
-    padding-left:10px!important;
-    padding-right:10px!important;
-  }
-
-  .mobile-stack-cell{
-    display:block!important;
-    width:100%!important;
-    max-width:100%!important;
-    padding-left:0!important;
-    padding-right:0!important;
-  }
-
-  .offer-col{
-    display:block!important;
-    width:100%!important;
-    max-width:100%!important;
-    padding-left:0!important;
-    padding-right:0!important;
-  }
-
-  .detail-col{
-    display:block!important;
-    width:100%!important;
-    max-width:100%!important;
-    padding-left:0!important;
-    padding-right:0!important;
-    margin-bottom:7px!important;
-  }
-
-  .header-title{
-    font-size:22px!important;
-    line-height:26px!important;
-  }
-
-}
-
-</style>
-
-</head>
-
-
-<body
-  style="
-    margin:0;
-    padding:0;
-    background:#edf1f5;
-    font-family:Arial,Helvetica,sans-serif;
-  "
->
-
-<center
-  class="outer-pad"
-  style="
-    width:100%;
-    padding:18px 8px;
-    background:#edf1f5;
-  "
->
-
-<table
-  class="email-wrap"
-  role="presentation"
-  width="100%"
-  cellpadding="0"
-  cellspacing="0"
-  border="0"
-  style="
-    max-width:620px;
-    width:100%;
-    background:#031522;
-    border:1px solid #16435c;
-    border-radius:18px;
-    overflow:hidden;
-    color:#ffffff;
-  "
->
-
-
-<!-- ==========================================================
-     HEADER
-     ========================================================== -->
-
-<tr>
-
-<td
-  style="
-    padding:17px 16px 13px;
-    border-bottom:1px solid #16435c;
-  "
->
-
-<table
-  role="presentation"
-  width="100%"
-  cellpadding="0"
-  cellspacing="0"
-  border="0"
->
-
-<tr>
-
-<td
-  width="55%"
-  valign="top"
->
-
-<div
-  style="
-    font-size:20px;
-    font-weight:900;
-    color:#ffffff;
-    line-height:23px;
-  "
->
-gestoria<span style="color:#ffd429;">cita</span><span style="color:#24e29a;">ia</span>
-</div>
-
-<div
-  style="
-    margin-top:3px;
-    font-size:8px;
-    font-weight:900;
-    color:#ffd429;
-    letter-spacing:1.3px;
-  "
->
-DECRETO FLUSSI 2027
-</div>
-
-<div
-  style="
-    margin-top:6px;
-    font-size:9px;
-    color:#9fb2bf;
-  "
->
-Servizio informativo e ricerca offerte di lavoro
-</div>
-
-</td>
-
-<td
-  width="45%"
-  align="right"
-  valign="top"
->
-
-<div
-  style="
-    font-size:25px;
-    line-height:29px;
-  "
->
-🇮🇹 🇲🇦
-</div>
-
-<div
-  dir="rtl"
-  style="
-    margin-top:4px;
-    font-size:9px;
-    color:#ffd429;
-    font-weight:800;
-  "
->
-إيطاليا · المغرب
-</div>
-
-</td>
-
-</tr>
-
-</table>
-
-</td>
-
-</tr>
-
-
-<!-- ==========================================================
-     TITLE
-     ========================================================== -->
-
-<tr>
-
-<td
-  class="mobile-pad"
-  style="
-    padding:16px 16px 7px;
-  "
->
-
-<table
-  role="presentation"
-  width="100%"
-  cellpadding="0"
-  cellspacing="0"
-  border="0"
->
-
-<tr>
-
-<td
-  width="55%"
-  valign="top"
-  class="mobile-stack-cell"
->
-
-<div
-  class="header-title"
-  style="
-    margin-top:8px;
-    font-size:23px;
-    font-weight:900;
-    line-height:27px;
-    color:#ffffff;
-  "
->
-Nuove offerte di
-<span style="color:#ffd429;">
-lavoro
-</span>
-</div>
-
-<div
-  style="
-    margin-top:3px;
-    font-size:9px;
-    color:#b8c8d1;
-  "
->
-Nell'ambito del Decreto Flussi 2027
-</div>
-
-</td>
-
-
-<td
-  width="45%"
-  dir="rtl"
-  align="right"
-  valign="bottom"
-  class="mobile-stack-cell"
-  style="padding-top:8px;"
->
-
-<div
-  style="
-    font-size:19px;
-    font-weight:900;
-    line-height:23px;
-    color:#ffffff;
-  "
->
-عروض عمل
-<span style="color:#ffd429;">
-جديدة
-</span>
-</div>
-
-<div
-  style="
-    margin-top:3px;
-    font-size:9px;
-    color:#b8c8d1;
-  "
->
-في إطار ديكريتو فلوسي 2027
-</div>
-
-</td>
-
-</tr>
-
-</table>
-
-</td>
-
-</tr>
-
-
-<!-- ==========================================================
-     GREETING
-     ========================================================== -->
-
-<tr>
-
-<td
-  class="mobile-pad"
-  style="
-    padding:7px 16px 12px;
-  "
->
-
-<table
-  role="presentation"
-  width="100%"
-  cellpadding="0"
-  cellspacing="0"
-  border="0"
-  style="
-    background:#071e2e;
-    border:1px solid #214b63;
-    border-radius:12px;
-  "
->
-
-<tr>
-
-<td
-  style="
-    padding:11px 12px;
-  "
->
-
-<table
-  role="presentation"
-  width="100%"
-  cellpadding="0"
-  cellspacing="0"
-  border="0"
->
-
-<tr>
-
-<td
-  width="50%"
-  valign="top"
-  style="padding-right:6px;"
->
-
-<div
-  style="
-    font-size:12px;
-    font-weight:900;
-    color:#ffffff;
-  "
->
-Ciao ${emailEsc(greeting)} 👋
-</div>
-
-<div
-  style="
-    margin-top:4px;
-    font-size:9px;
-    line-height:14px;
-    color:#c9d6de;
-  "
->
-Abbiamo raccolto nuove offerte di lavoro collegate al Decreto Flussi.
-Controlla i dettagli qui sotto e verifica sempre le informazioni con la fonte ufficiale.
-</div>
-
-</td>
-
-
-<td
-  width="50%"
-  dir="rtl"
-  valign="top"
-  align="right"
-  style="padding-left:6px;"
->
-
-<div
-  style="
-    font-size:12px;
-    font-weight:900;
-    color:#ffffff;
-  "
->
-مرحبا ${emailEsc(greeting)} 👋
-</div>
-
-<div
-  style="
-    margin-top:4px;
-    font-size:9px;
-    line-height:14px;
-    color:#c9d6de;
-  "
->
-جمعنا ليك عروض عمل جديدة مرتبطة بـ Decreto Flussi.
-شوف التفاصيل لتحت وتأكد ديما من المعلومات مع المصدر الرسمي.
-</div>
-
-</td>
-
-</tr>
-
-</table>
-
-</td>
-
-</tr>
-
-</table>
-
-</td>
-
-</tr>
-
-
-<!-- ==========================================================
-     OFFERS
-     ========================================================== -->
-
-<tr>
-
-<td
-  class="mobile-pad"
-  style="
-    padding:0 10px 2px;
-  "
->
-
-${cards}
-
-</td>
-
-</tr>
-
-
-<!-- ==========================================================
-     IMPORTANT NOTICE
-     ========================================================== -->
-
-<tr>
-
-<td
-  class="mobile-pad"
-  style="
-    padding:0 16px 14px;
-  "
->
-
-<table
-  role="presentation"
-  width="100%"
-  cellpadding="0"
-  cellspacing="0"
-  border="0"
-  style="
-    background:#211f04;
-    border:1px solid #d1ad22;
-    border-radius:13px;
-  "
->
-
-<tr>
-
-<td
-  style="
-    padding:12px;
-  "
->
-
-<div
-  style="
-    font-size:12px;
-    font-weight:900;
-    color:#ffd429;
-  "
->
-⚠️ AVVISO IMPORTANTE
-</div>
-
-<div
-  style="
-    margin-top:5px;
-    font-size:9px;
-    line-height:14px;
-    color:#ffffff;
-  "
->
-GestoriaCitaIA è un servizio informativo che ricerca e presenta
-offerte di lavoro collegate al Decreto Flussi in Italia.
-Non garantisce l'assunzione, il contratto di lavoro, il rilascio
-del nulla osta o del visto e non agisce come intermediario tra
-lavoratore e datore di lavoro. Le informazioni devono essere
-verificate direttamente con il datore di lavoro o con gli enti competenti.
-</div>
-
-<div
-  dir="rtl"
-  style="
-    margin-top:7px;
-    font-size:9px;
-    line-height:16px;
-    color:#ffffff;
-  "
->
-⚠️ تنبيه مهم<br><br>
-GestoriaCitaIA غير خدمة معلوماتية كتبحث وكتعرض عروض العمل المرتبطة بـ Decreto Flussi فإيطاليا.
-الموقع ما كيضمنش الحصول على عقد العمل، وما كيضمنش nulla osta أو الفيزا، وما كيخدمش كوسيط بين العامل والمشغّل.
-المعلومات خاصها تتأكد مباشرة مع المشغّل أو الجهات المختصة.
-</div>
-
-</td>
-
-</tr>
-
-</table>
-
-</td>
-
-</tr>
-
-
-<!-- ==========================================================
-     FOOTER
-     ========================================================== -->
-
-<tr>
-
-<td
-  style="
-    padding:15px 16px 17px;
-    text-align:center;
-    border-top:1px solid #16435c;
-  "
->
-
-<div
-  style="
-    font-size:20px;
-    font-weight:900;
-    color:#ffffff;
-  "
->
-gestoria<span style="color:#ffd429;">cita</span><span style="color:#24e29a;">ia</span>
-</div>
-
-<div
-  style="
-    margin-top:3px;
-    font-size:8px;
-    font-weight:900;
-    color:#ffd429;
-    letter-spacing:1.2px;
-  "
->
-DECRETO FLUSSI 2027
-</div>
-
-<div
-  style="
-    margin-top:6px;
-    font-size:8px;
-    color:#708895;
-  "
->
-🇮🇹 Italia · 🇲🇦 Marocco · gestoriacitaia.com
-</div>
-
-<div
-  style="
-    margin-top:4px;
-    font-size:7px;
-    color:#526a77;
-  "
->
-© 2027 GestoriaCitaIA · Privacy · Termini · Contatti
-</div>
-
-</td>
-
-</tr>
-
-</table>
-
-</center>
-
-</body>
-
-</html>
-`;
-}
-
-
-/* ============================================================
-   DARIJA TRANSLATION / PREPARATION
-   ============================================================ */
-
-async function prepareDarijaTranslations(
-  offers: OfferRow[],
-): Promise<FlussiOffertaEmail[]> {
-
-  const prepared =
-    offers.map(
-      (offer) =>
-        toEmailOffer(
-          offer,
-        ),
-    );
-
-  let cursor = 0;
-
-  async function processNext(): Promise<void> {
-
-    while (true) {
-
-      const index =
-        cursor++;
-
-      if (
-        index >=
-        prepared.length
-      ) {
-        return;
-      }
-
-      const offer =
-        prepared[index];
-
-      if (
-        offer.detailsDarija &&
-        offer.detailsDarija.trim()
-      ) {
-        continue;
-      }
-
-      const source =
-        offers[index];
-
-      if (
-        !source ||
-        !source.id
-      ) {
-        continue;
-      }
-
-      const translated =
-        await translateOfferToDarija(
-          offer.jobTitle,
-          offer.details ||
-            "",
-        );
-
-      offer.detailsDarija =
-        translated;
-
-      const response =
-        await supabaseRequest(
-          `flussi_offerte?id=eq.${encodeURIComponent(
-            source.id,
-          )}`,
-          {
-            method: "PATCH",
-
-            body:
-              JSON.stringify({
-                details_darija:
-                  translated,
-              }),
-          },
-        );
-
-      if (!response.ok) {
-
-        const errorText =
-          await response.text();
-
-        throw new Error(
-          `Error guardando Darija ${response.status}: ${errorText.slice(
-            0,
-            500,
-          )}`,
-        );
-      }
-    }
-  }
-
-  await Promise.all(
-    Array.from(
-      {
-        length:
-          Math.min(
-            4,
-            Math.max(
-              1,
-              prepared.length,
-            ),
-          ),
-    },
-    () =>
-      processNext(),
-  );
-
-  return prepared;
-}
-
-
-/* ============================================================
-   FILTER OFFERS
-   ============================================================ */
-
-function filterOffersByGender(
-  offers: OfferRow[],
-  gender?: string,
-): OfferRow[] {
-
-  const normalized =
-    normalise(
-      gender,
-    );
-
-  if (
-    !normalized ||
-    normalized ===
-      "ambos"
-  ) {
-    return offers;
-  }
-
-  if (
-    normalized ===
-    "mujer"
-  ) {
-    return offers.filter(
-      (offer) =>
-        normalise(
-          offer.gender_target,
-        ) ===
-        "mujer",
-    );
-  }
-
-  if (
-    normalized ===
-    "hombre"
-  ) {
-    return offers.filter(
-      (offer) =>
-        normalise(
-          offer.gender_target,
-        ) ===
-        "hombre",
-    );
-  }
-
-  return offers;
-}
-
-
-/* ============================================================
-   GET OFFERS
+   SUPABASE OFFERS
    ============================================================ */
 
 async function fetchOffers(
@@ -3168,12 +436,12 @@ async function fetchOffers(
       "cpi_pec",
       "gender_target",
       "details_darija",
-    ].join(","),
+    ].join(",")
   );
 
   params.set(
     "order",
-    "created_at.desc",
+    "created_at.desc"
   );
 
   params.set(
@@ -3181,19 +449,17 @@ async function fetchOffers(
     String(
       Math.min(
         Math.max(
-          Number(
-            limitOffers,
-          ) || 50,
-          1,
+          Number(limitOffers) || 1,
+          1
         ),
-        50,
-      ),
-    ),
+        50
+      )
+    )
   );
 
   const response =
     await supabaseRequest(
-      `flussi_offerte?${params.toString()}`,
+      `flussi_offerte?${params.toString()}`
     );
 
   const body =
@@ -3201,35 +467,922 @@ async function fetchOffers(
 
   if (!response.ok) {
     throw new Error(
-      `Error obteniendo ofertas ${response.status}: ${body.slice(
-        0,
-        500,
-      )}`,
+      `Supabase offers ${response.status}: ${body.slice(0, 1000)}`
     );
   }
 
   const rows =
     JSON.parse(body);
 
-  const offers =
+  const offers: OfferRow[] =
     Array.isArray(rows)
       ? rows
       : [];
 
-  return filterOffersByGender(
-    offers,
-    gender,
+  const normalized =
+    normalise(gender);
+
+  if (
+    normalized === "mujer"
+  ) {
+    return offers.filter(
+      offer =>
+        normalise(
+          offer.gender_target
+        ) === "mujer"
+    );
+  }
+
+  if (
+    normalized === "hombre"
+  ) {
+    return offers.filter(
+      offer =>
+        normalise(
+          offer.gender_target
+        ) === "hombre"
+    );
+  }
+
+  return offers;
+}
+
+
+/* ============================================================
+   OFFER → EMAIL
+   ============================================================ */
+
+function toEmailOffer(
+  offer: OfferRow,
+): EmailOffer {
+
+  return {
+    jobTitle:
+      value(offer.job_title) ||
+      "Offerta di lavoro",
+
+    category:
+      value(offer.category) ||
+      "Offerta di lavoro",
+
+    companyName:
+      value(offer.company_name),
+
+    publicationDate:
+      value(offer.publication_date),
+
+    city:
+      value(offer.city) ||
+      "—",
+
+    province:
+      value(offer.province) ||
+      "—",
+
+    address:
+      value(offer.address) ||
+      "Indirizzo preciso non indicato nell'offerta.",
+
+    phone:
+      value(offer.phone) ||
+      value(offer.cpi_responsible_phone) ||
+      "—",
+
+    email:
+      value(offer.email) ||
+      value(offer.cpi_email) ||
+      "—",
+
+    contractType:
+      value(offer.contract_type),
+
+    workType:
+      value(offer.work_type),
+
+    offerUrl:
+      value(offer.source_url),
+
+    details:
+      value(offer.offer_details) ||
+      "Dettagli completi disponibili nell'offerta.",
+
+    detailsDarija:
+      value(offer.details_darija),
+  };
+}
+
+
+/* ============================================================
+   OPENAI DARIJA
+   ============================================================ */
+
+async function translateToDarija(
+  title: string,
+  details: string,
+): Promise<string> {
+
+  if (!OPENAI_API_KEY) {
+    throw new Error(
+      "OPENAI_API_KEY missing"
+    );
+  }
+
+  const response =
+    await fetch(
+      "https://api.openai.com/v1/responses",
+      {
+        method: "POST",
+
+        headers: {
+          "Content-Type":
+            "application/json",
+
+          Authorization:
+            `Bearer ${OPENAI_API_KEY}`,
+        },
+
+        body:
+          JSON.stringify({
+            model:
+              OPENAI_DARIJA_MODEL,
+
+            input: [
+              {
+                role: "system",
+
+                content: [
+                  {
+                    type:
+                      "input_text",
+
+                    text:
+`You are a professional Moroccan Darija translator.
+
+Translate the Italian job offer into natural Moroccan Darija written in Arabic script.
+
+RULES:
+- Preserve every factual detail.
+- Never invent information.
+- Do not summarize.
+- Keep names, cities, companies, phone numbers, emails, URLs and official terms.
+- Keep Decreto Flussi, nulla osta, CPI and CCNL unchanged.
+- Use Moroccan Darija, not Modern Standard Arabic.
+- Return ONLY the translation.
+
+JOB TITLE:
+${title}
+
+FULL DETAILS:
+${details}`,
+                  },
+                ],
+              },
+            ],
+          }),
+      }
+    );
+
+  const body =
+    await response.text();
+
+  if (!response.ok) {
+    throw new Error(
+      `OpenAI ${response.status}: ${body.slice(0, 1000)}`
+    );
+  }
+
+  const data =
+    JSON.parse(body);
+
+  const result =
+    String(
+      data?.output_text || ""
+    ).trim();
+
+  if (!result) {
+    throw new Error(
+      "OpenAI returned empty translation"
+    );
+  }
+
+  return result;
+}
+
+
+/* ============================================================
+   PREPARE DARIJA
+   ============================================================ */
+
+async function prepareDarija(
+  offers: OfferRow[],
+): Promise<EmailOffer[]> {
+
+  const result =
+    offers.map(toEmailOffer);
+
+  let cursor = 0;
+
+  async function worker() {
+
+    while (true) {
+
+      const index =
+        cursor++;
+
+      if (
+        index >= result.length
+      ) {
+        return;
+      }
+
+      const emailOffer =
+        result[index];
+
+      if (
+        emailOffer.detailsDarija
+      ) {
+        continue;
+      }
+
+      const source =
+        offers[index];
+
+      const translated =
+        await translateToDarija(
+          emailOffer.jobTitle,
+          emailOffer.details
+        );
+
+      emailOffer.detailsDarija =
+        translated;
+
+      if (
+        source?.id
+      ) {
+
+        const patch =
+          await supabaseRequest(
+            `flussi_offerte?id=eq.${encodeURIComponent(source.id)}`,
+            {
+              method: "PATCH",
+
+              body:
+                JSON.stringify({
+                  details_darija:
+                    translated,
+                }),
+            }
+          );
+
+        if (!patch.ok) {
+
+          const text =
+            await patch.text();
+
+          throw new Error(
+            `Supabase Darija ${patch.status}: ${text.slice(0, 1000)}`
+          );
+        }
+      }
+    }
+  }
+
+  const concurrency =
+    Math.min(
+      3,
+      Math.max(
+        1,
+        result.length
+      )
+    );
+
+  await Promise.all(
+    Array.from(
+      {
+        length:
+          concurrency,
+      },
+      () => worker()
+    )
+  );
+
+  return result;
+}
+
+
+/* ============================================================
+   DARIJA CATEGORY
+   ============================================================ */
+
+function categoryDarija(
+  category: string,
+): string {
+
+  const key =
+    normalise(category);
+
+  const map: Record<string,string> = {
+    agriculture:
+      "الفلاحة",
+
+    agricoltura:
+      "الفلاحة",
+
+    badante:
+      "المساعدة العائلية",
+
+    colf:
+      "العمل المنزلي",
+
+    domestico:
+      "العمل المنزلي",
+
+    pulizia:
+      "النظافة",
+
+    cleaning:
+      "النظافة",
+
+    ristorazione:
+      "المطاعم",
+
+    restaurant:
+      "المطاعم",
+
+    hotel:
+      "الفنادق",
+
+    costruzione:
+      "البناء",
+
+    construction:
+      "البناء",
+
+    factory:
+      "المصانع",
+
+    fabbrica:
+      "المصانع",
+  };
+
+  return (
+    map[key] ||
+    category
   );
 }
 
 
 /* ============================================================
-   GET CLIENTS
+   EMAIL FIELD
+   ============================================================ */
+
+function field(
+  label: string,
+  valueText: string,
+  icon: string,
+): string {
+
+  return `
+<div style="
+  background:#071e2e;
+  border:1px solid #214b63;
+  border-radius:8px;
+  padding:7px;
+  margin-bottom:5px;
+">
+  <div style="
+    color:#35bfff;
+    font-size:9px;
+    font-weight:800;
+  ">
+    ${icon} ${emailEsc(label)}
+  </div>
+
+  <div style="
+    color:#ffffff;
+    font-size:10px;
+    line-height:14px;
+    margin-top:2px;
+    word-break:break-word;
+  ">
+    ${emailEsc(valueText || "—")}
+  </div>
+</div>
+`;
+}
+
+
+/* ============================================================
+   EMAIL HTML
+   ============================================================ */
+
+function buildEmail(
+  offers: EmailOffer[],
+  recipientName: string,
+): string {
+
+  const cards =
+    offers.map(
+      (offer, index) => {
+
+        const categoryAR =
+          categoryDarija(
+            offer.category
+          );
+
+        return `
+<table
+  width="100%"
+  cellpadding="0"
+  cellspacing="0"
+  style="
+    background:#061522;
+    border:1px solid #1d4b63;
+    border-radius:14px;
+    margin-bottom:14px;
+  "
+>
+<tr>
+<td style="padding:12px;">
+
+<table
+  width="100%"
+  cellpadding="0"
+  cellspacing="0"
+>
+<tr>
+
+<td width="50%" valign="top"
+    style="padding-right:5px;">
+
+<div style="
+  display:inline-block;
+  background:#07543f;
+  color:#45efad;
+  border-radius:14px;
+  padding:4px 8px;
+  font-size:9px;
+  font-weight:900;
+">
+✓ OFFERTA ${String(index + 1).padStart(2,"0")}
+</div>
+
+<div style="
+  margin-top:7px;
+  color:#ffffff;
+  font-size:15px;
+  line-height:19px;
+  font-weight:900;
+">
+${emailEsc(offer.jobTitle)}
+</div>
+
+<div style="
+  color:#9fb2bf;
+  font-size:9px;
+  margin-top:3px;
+">
+${emailEsc(offer.category)}
+</div>
+
+</td>
+
+<td width="50%" valign="top" dir="rtl"
+    style="padding-left:5px;text-align:right;">
+
+<div style="
+  display:inline-block;
+  background:#07543f;
+  color:#45efad;
+  border-radius:14px;
+  padding:4px 8px;
+  font-size:9px;
+  font-weight:900;
+">
+✓ عرض متوفر
+</div>
+
+<div style="
+  margin-top:7px;
+  color:#ffffff;
+  font-size:15px;
+  line-height:19px;
+  font-weight:900;
+">
+${emailEsc(offer.jobTitle)}
+</div>
+
+<div style="
+  color:#9fb2bf;
+  font-size:9px;
+  margin-top:3px;
+">
+${emailEsc(categoryAR)}
+</div>
+
+</td>
+
+</tr>
+</table>
+
+
+<table
+  width="100%"
+  cellpadding="0"
+  cellspacing="0"
+  style="margin-top:8px;"
+>
+<tr>
+
+<td width="50%" valign="top"
+    style="padding-right:4px;">
+
+${field("Città", offer.city, "📍")}
+${field("Provincia", offer.province, "🏢")}
+${field("Categoria", offer.category, "💼")}
+${field("Posizione", offer.jobTitle, "👤")}
+${field("Indirizzo", offer.address, "📌")}
+${field("Responsabile", offer.phone, "📞")}
+${field("Email", offer.email, "✉️")}
+
+</td>
+
+<td width="50%" valign="top"
+    dir="rtl"
+    style="padding-left:4px;">
+
+${field("المدينة", offer.city, "📍")}
+${field("الإقليم", offer.province, "🏢")}
+${field("الفئة", categoryAR, "💼")}
+${field("العمل", offer.jobTitle, "👤")}
+${field("العنوان", offer.address, "📌")}
+${field("المسؤول", offer.phone, "📞")}
+${field("الإيميل", offer.email, "✉️")}
+
+</td>
+
+</tr>
+</table>
+
+
+<table
+  width="100%"
+  cellpadding="0"
+  cellspacing="0"
+  style="margin-top:7px;"
+>
+<tr>
+
+<td width="50%" valign="top"
+    style="padding-right:4px;">
+
+<div style="
+  background:#211f04;
+  border:1px solid #d1ad22;
+  border-radius:11px;
+  padding:10px;
+">
+<div style="
+  color:#ffd429;
+  font-size:11px;
+  font-weight:900;
+  margin-bottom:6px;
+">
+📋 Dettagli completi
+</div>
+
+<div style="
+  color:#ffffff;
+  font-size:9px;
+  line-height:15px;
+  word-break:break-word;
+">
+${emailEsc(offer.details)}
+</div>
+</div>
+
+</td>
+
+<td width="50%" valign="top"
+    dir="rtl"
+    style="padding-left:4px;">
+
+<div style="
+  background:#211f04;
+  border:1px solid #d1ad22;
+  border-radius:11px;
+  padding:10px;
+  text-align:right;
+">
+<div style="
+  color:#ffd429;
+  font-size:11px;
+  font-weight:900;
+  margin-bottom:6px;
+">
+📋 التفاصيل كاملة
+</div>
+
+<div style="
+  color:#ffffff;
+  font-size:9px;
+  line-height:17px;
+  word-break:break-word;
+">
+${emailEsc(
+  offer.detailsDarija ||
+  "الترجمة بالدارجة غير متوفرة حاليا."
+)}
+</div>
+</div>
+
+</td>
+
+</tr>
+</table>
+
+</td>
+</tr>
+</table>
+`;
+      }
+    )
+    .join("");
+
+
+  return `
+<!doctype html>
+
+<html lang="it">
+
+<head>
+
+<meta charset="utf-8">
+
+<meta
+  name="viewport"
+  content="width=device-width,initial-scale=1"
+>
+
+<title>
+Decreto Flussi 2027
+</title>
+
+<style>
+
+@media only screen and (max-width:620px){
+
+  .container{
+    width:100%!important;
+    border-radius:0!important;
+  }
+
+  .column{
+    display:block!important;
+    width:100%!important;
+    padding:0!important;
+  }
+
+}
+
+</style>
+
+</head>
+
+<body style="
+  margin:0;
+  padding:0;
+  background:#edf1f5;
+  font-family:Arial,Helvetica,sans-serif;
+">
+
+<center style="
+  width:100%;
+  padding:18px 8px;
+  background:#edf1f5;
+">
+
+<table
+  class="container"
+  width="100%"
+  cellpadding="0"
+  cellspacing="0"
+  style="
+    max-width:620px;
+    background:#031522;
+    border:1px solid #16435c;
+    border-radius:18px;
+    overflow:hidden;
+  "
+>
+
+<tr>
+<td style="
+  padding:18px;
+  border-bottom:1px solid #16435c;
+">
+
+<div style="
+  font-size:21px;
+  font-weight:900;
+  color:#ffffff;
+">
+gestoria<span style="color:#ffd429;">cita</span><span style="color:#24e29a;">ia</span>
+</div>
+
+<div style="
+  margin-top:4px;
+  font-size:9px;
+  color:#ffd429;
+  font-weight:900;
+  letter-spacing:1px;
+">
+DECRETO FLUSSI 2027
+</div>
+
+<div style="
+  margin-top:8px;
+  font-size:24px;
+">
+🇮🇹 🇲🇦
+</div>
+
+</td>
+</tr>
+
+
+<tr>
+<td style="padding:16px;">
+
+<table width="100%" cellpadding="0" cellspacing="0">
+<tr>
+
+<td width="50%" valign="top"
+    style="padding-right:6px;">
+
+<div style="
+  color:#ffffff;
+  font-size:13px;
+  font-weight:900;
+">
+Ciao ${emailEsc(recipientName)} 👋
+</div>
+
+<div style="
+  color:#c9d6de;
+  font-size:10px;
+  line-height:15px;
+  margin-top:5px;
+">
+Abbiamo raccolto nuove offerte di lavoro collegate al Decreto Flussi.
+</div>
+
+</td>
+
+<td width="50%" valign="top"
+    dir="rtl"
+    style="padding-left:6px;text-align:right;">
+
+<div style="
+  color:#ffffff;
+  font-size:13px;
+  font-weight:900;
+">
+مرحبا ${emailEsc(recipientName)} 👋
+</div>
+
+<div style="
+  color:#c9d6de;
+  font-size:10px;
+  line-height:17px;
+  margin-top:5px;
+">
+جمعنا ليك عروض عمل جديدة مرتبطة بـ Decreto Flussi.
+</div>
+
+</td>
+
+</tr>
+</table>
+
+</td>
+</tr>
+
+
+<tr>
+<td style="padding:0 10px 8px;">
+
+${cards}
+
+</td>
+</tr>
+
+
+<tr>
+<td style="padding:10px 16px 18px;">
+
+<div style="
+  background:#211f04;
+  border:1px solid #d1ad22;
+  border-radius:12px;
+  padding:12px;
+">
+
+<div style="
+  color:#ffd429;
+  font-size:11px;
+  font-weight:900;
+">
+⚠️ AVVISO IMPORTANTE
+</div>
+
+<div style="
+  color:#ffffff;
+  font-size:9px;
+  line-height:15px;
+  margin-top:5px;
+">
+GestoriaCitaIA è un servizio informativo.
+Non garantisce l'assunzione, il contratto di lavoro,
+il nulla osta o il visto.
+Le informazioni devono essere verificate direttamente
+con il datore di lavoro o gli enti competenti.
+</div>
+
+<div
+  dir="rtl"
+  style="
+    color:#ffd429;
+    font-size:11px;
+    font-weight:900;
+    margin-top:10px;
+"
+>
+⚠️ تنبيه مهم
+</div>
+
+<div
+  dir="rtl"
+  style="
+    color:#ffffff;
+    font-size:9px;
+    line-height:17px;
+    margin-top:5px;
+"
+>
+GestoriaCitaIA غير خدمة معلوماتية كتبحث وكتعرض عروض العمل المرتبطة بـ Decreto Flussi فإيطاليا.
+المعلومات خاصها تتأكد مباشرة مع المشغّل أو الجهات المختصة.
+</div>
+
+</div>
+
+</td>
+</tr>
+
+
+<tr>
+<td style="
+  padding:15px;
+  text-align:center;
+  border-top:1px solid #16435c;
+">
+
+<div style="
+  color:#ffffff;
+  font-size:18px;
+  font-weight:900;
+">
+gestoria<span style="color:#ffd429;">cita</span><span style="color:#24e29a;">ia</span>
+</div>
+
+<div style="
+  color:#718794;
+  font-size:8px;
+  margin-top:4px;
+">
+GestoriaCitaIA · Decreto Flussi 2027
+</div>
+
+</td>
+</tr>
+
+</table>
+
+</center>
+
+</body>
+</html>
+`;
+}
+
+
+/* ============================================================
+   CLIENTS
    ============================================================ */
 
 async function fetchClients(
   emails?: string[],
-): Promise<FlussiEmailClient[]> {
+): Promise<Client[]> {
 
   const params =
     new URLSearchParams();
@@ -3247,17 +1400,17 @@ async function fetchClients(
       "send_count",
       "created_at",
       "updated_at",
-    ].join(","),
+    ].join(",")
   );
 
   params.set(
     "active",
-    "eq.true",
+    "eq.true"
   );
 
   params.set(
     "order",
-    "created_at.asc",
+    "created_at.asc"
   );
 
   if (
@@ -3265,31 +1418,27 @@ async function fetchClients(
     emails.length
   ) {
 
-    const normalizedEmails =
+    const list =
       emails
-        .map(
-          normalizeEmail,
-        )
+        .map(normalizeEmail)
         .filter(Boolean);
 
-    if (
-      normalizedEmails.length
-    ) {
+    if (list.length) {
+
       params.set(
         "email",
-        `in.(${normalizedEmails
+        `in.(${list
           .map(
-            (email) =>
-              `"${email}"`,
+            e => `"${e}"`
           )
-          .join(",")})`,
+          .join(",")})`
       );
     }
   }
 
   const response =
     await supabaseRequest(
-      `flussi_email_clients?${params.toString()}`,
+      `flussi_email_clients?${params.toString()}`
     );
 
   const body =
@@ -3297,10 +1446,7 @@ async function fetchClients(
 
   if (!response.ok) {
     throw new Error(
-      `Error obteniendo clientes ${response.status}: ${body.slice(
-        0,
-        500,
-      )}`,
+      `Supabase clients ${response.status}: ${body.slice(0,1000)}`
     );
   }
 
@@ -3314,42 +1460,63 @@ async function fetchClients(
 
 
 /* ============================================================
-   PLAN / GENDER VALIDATION
+   CLIENT UPDATE
    ============================================================ */
 
-function validatePlanGender(
-  gender: string,
-  plan: number,
-): void {
+async function markClientSent(
+  client: Client,
+): Promise<void> {
 
-  if (
-    gender ===
-      "Mujer" &&
-    Math.abs(
-      plan - 14.99,
-    ) > 0.001
-  ) {
-    throw new Error(
-      "Plan Mujer debe ser 14.99 €",
+  const now =
+    new Date();
+
+  const next =
+    new Date(
+      now.getTime() +
+      10 *
+      24 *
+      60 *
+      60 *
+      1000
     );
-  }
 
-  if (
-    gender ===
-      "Hombre" &&
-    Math.abs(
-      plan - 24.99,
-    ) > 0.001
-  ) {
+  const response =
+    await supabaseRequest(
+      `flussi_email_clients?id=eq.${encodeURIComponent(client.id)}`,
+      {
+        method: "PATCH",
+
+        body:
+          JSON.stringify({
+            last_sent_at:
+              now.toISOString(),
+
+            next_send_at:
+              next.toISOString(),
+
+            send_count:
+              Number(client.send_count || 0) + 1,
+
+            updated_at:
+              now.toISOString(),
+          }),
+      }
+    );
+
+  if (!response.ok) {
+
+    const body =
+      await response.text();
+
     throw new Error(
-      "Plan Hombre debe ser 24.99 €",
+      `Client update ${response.status}: ${body.slice(0,1000)}`
     );
   }
 }
 
 
 /* ============================================================
-   LAST SENT FILTER
+   NEW OFFERS ONLY
    ============================================================ */
 
 function filterNewOffers(
@@ -3365,9 +1532,8 @@ function filterNewOffers(
   }
 
   const last =
-    new Date(
-      lastSentAt,
-    ).getTime();
+    new Date(lastSentAt)
+      .getTime();
 
   if (
     Number.isNaN(last)
@@ -3376,158 +1542,46 @@ function filterNewOffers(
   }
 
   return offers.filter(
-    (offer) => {
+    offer => {
 
       const created =
         new Date(
-          offer.created_at ||
-            "",
+          offer.created_at || ""
         ).getTime();
 
-      if (
-        Number.isNaN(
-          created,
-        )
-      ) {
-        return false;
-      }
-
-      return created > last;
-    },
+      return (
+        !Number.isNaN(created) &&
+        created > last
+      );
+    }
   );
 }
 
 
 /* ============================================================
-   UPDATE CLIENT HISTORY
+   PLAN VALIDATION
    ============================================================ */
 
-async function markClientSent(
-  client: FlussiEmailClient,
-): Promise<void> {
-
-  const now =
-    new Date();
-
-  const next =
-    new Date(
-      now.getTime() +
-        10 *
-          24 *
-          60 *
-          60 *
-          1000,
-    );
-
-  const sendCount =
-    Number(
-      client.send_count ||
-        0,
-    ) + 1;
-
-  const response =
-    await supabaseRequest(
-      `flussi_email_clients?id=eq.${encodeURIComponent(
-        client.id,
-      )}`,
-      {
-        method: "PATCH",
-
-        body:
-          JSON.stringify({
-            last_sent_at:
-              now.toISOString(),
-
-            next_send_at:
-              next.toISOString(),
-
-            send_count:
-              sendCount,
-
-            updated_at:
-              now.toISOString(),
-          }),
-      },
-    );
-
-  if (!response.ok) {
-
-    const body =
-      await response.text();
-
-    throw new Error(
-      `Error actualizando cliente ${response.status}: ${body.slice(
-        0,
-        500,
-      )}`,
-    );
-  }
-}
-
-
-/* ============================================================
-   UPSERT CLIENT
-   ============================================================ */
-
-async function upsertClient(
-  email: string,
-  gender: "Mujer" | "Hombre" | "Ambos",
+function validatePlanGender(
+  gender: Gender,
   plan: number,
-): Promise<void> {
-
-  const normalizedEmail =
-    normalizeEmail(
-      email,
-    );
+): void {
 
   if (
-    !normalizedEmail
+    gender === "Mujer" &&
+    Math.abs(plan - 14.99) > 0.001
   ) {
     throw new Error(
-      "Email obligatorio",
+      "Plan Mujer debe ser 14.99 €"
     );
   }
 
-  const response =
-    await supabaseRequest(
-      "flussi_email_clients?on_conflict=email",
-      {
-        method: "POST",
-
-        headers: {
-          Prefer:
-            "resolution=merge-duplicates,return=minimal",
-        },
-
-        body:
-          JSON.stringify({
-            email:
-              normalizedEmail,
-
-            gender_target:
-              gender,
-
-            plan,
-
-            active:
-              true,
-
-            updated_at:
-              new Date().toISOString(),
-          }),
-      },
-    );
-
-  if (!response.ok) {
-
-    const body =
-      await response.text();
-
+  if (
+    gender === "Hombre" &&
+    Math.abs(plan - 24.99) > 0.001
+  ) {
     throw new Error(
-      `Error guardando cliente ${response.status}: ${body.slice(
-        0,
-        500,
-      )}`,
+      "Plan Hombre debe ser 24.99 €"
     );
   }
 }
@@ -3538,19 +1592,17 @@ async function upsertClient(
    ============================================================ */
 
 function buildSubject(
-  gender?: string,
+  gender: Gender,
 ): string {
 
   if (
-    gender ===
-    "Mujer"
+    gender === "Mujer"
   ) {
     return "🇮🇹 Nuove offerte Decreto Flussi — Piano Donna";
   }
 
   if (
-    gender ===
-    "Hombre"
+    gender === "Hombre"
   ) {
     return "🇮🇹 Nuove offerte Decreto Flussi — Piano Uomo";
   }
@@ -3560,245 +1612,146 @@ function buildSubject(
 
 
 /* ============================================================
-   SEND TO CLIENT
-   ============================================================ */
-
-async function sendOffersToClient(
-  client: FlussiEmailClient,
-  offers: OfferRow[],
-): Promise<void> {
-
-  if (
-    !offers.length
-  ) {
-    return;
-  }
-
-  const prepared =
-    await prepareDarijaTranslations(
-      offers,
-    );
-
-  const html =
-    buildFlussiOfferteEmail({
-      offers:
-        prepared,
-
-      recipientName:
-        client.email,
-    });
-
-  const transporter =
-    createTransporter();
-
-  const from =
-    process.env.SMTP_FROM ||
-    process.env.SMTP_USER ||
-    "GestoriaCitaIA";
-
-  await transporter.sendMail({
-
-    from:
-
-      `"GestoriaCitaIA" <${from}>`,
-
-    to:
-      client.email,
-
-    subject:
-      buildSubject(
-        client.gender_target,
-      ),
-
-    html,
-  });
-}
-
-
-/* ============================================================
    TEST EMAIL
    ============================================================ */
 
 async function sendTestEmail(
   testEmail: string,
-  gender: string,
+  gender: Gender,
   plan: number,
-  limitOffers = 50,
-): Promise<Record<string, any>> {
+  limitOffers: number,
+) {
 
   validatePlanGender(
     gender,
-    plan,
+    plan
   );
 
   const offers =
     await fetchOffers(
       gender,
-      limitOffers,
+      limitOffers
     );
 
   const prepared =
-    await prepareDarijaTranslations(
-      offers,
+    await prepareDarija(
+      offers
     );
 
   const html =
-    buildFlussiOfferteEmail({
-      offers:
-        prepared,
+    buildEmail(
+      prepared,
+      testEmail
+    );
 
-      recipientName:
-        testEmail,
-    });
-
-  const transporter =
-    createTransporter();
-
-  const from =
-    process.env.SMTP_FROM ||
-    process.env.SMTP_USER ||
-    "GestoriaCitaIA";
-
-  await transporter.sendMail({
-
-    from:
-      `"GestoriaCitaIA" <${from}>`,
-
-    to:
-      testEmail,
-
-    subject:
-      `[TEST] ${buildSubject(
-        gender,
-      )}`,
-
-    html,
-  });
+  await sendEmail(
+    testEmail,
+    `[TEST] ${buildSubject(gender)}`,
+    html
+  );
 
   return {
-    ok:
-      true,
-
+    ok: true,
+    action: "test",
     testEmail,
-
+    gender,
+    plan,
     selectedOffers:
       offers.length,
-
-    sent:
-      1,
-
-    failed:
-      0,
-
-    message:
-      "Test Gmail inviato correttamente.",
+    sent: 1,
+    failed: 0,
   };
 }
 
 
 /* ============================================================
-   MAIN SEND
+   SEND CLIENTS
    ============================================================ */
 
 async function executeSend(
   options: {
     emails?: string[];
-    gender?: string;
+    gender?: Gender;
     plan?: number;
     limitOffers?: number;
     dryRun?: boolean;
-  },
-): Promise<Record<string, any>> {
+  }
+) {
 
   const gender =
-    normalizeGender(
-      options.gender,
-    );
+    options.gender ||
+    "Mujer";
 
   const plan =
-    normalizePlan(
-      options.plan,
-    );
+    options.plan ||
+    14.99;
 
   validatePlanGender(
     gender,
-    plan,
+    plan
   );
 
   const clients =
     await fetchClients(
-      options.emails,
+      options.emails
     );
 
-  const selectedClients =
+  const selected =
     clients.filter(
-      (client) => {
+      client => {
 
         if (
-          options.emails &&
-          options.emails.length
-        ) {
-          const requested =
-            new Set(
-              options.emails.map(
-                normalizeEmail,
-              ),
-            );
-
-          if (
-            !requested.has(
-              normalizeEmail(
-                client.email,
-              ),
-            )
-          ) {
-            return false;
-          }
-        }
-
-        if (
-          gender !==
-          "Ambos" &&
-          client.gender_target !==
-            gender
+          gender !== "Ambos" &&
+          client.gender_target !== gender
         ) {
           return false;
         }
 
         if (
           Math.abs(
-            Number(
-              client.plan,
-            ) -
-              plan,
-          ) >
-          0.001
+            Number(client.plan) -
+            Number(plan)
+          ) > 0.001
         ) {
           return false;
         }
 
+        if (
+          options.emails &&
+          options.emails.length
+        ) {
+
+          const requested =
+            options.emails.map(
+              normalizeEmail
+            );
+
+          if (
+            !requested.includes(
+              normalizeEmail(client.email)
+            )
+          ) {
+            return false;
+          }
+        }
+
         return true;
-      },
+      }
     );
 
   const allOffers =
     await fetchOffers(
       gender,
-      options.limitOffers ||
-        50,
+      options.limitOffers || 50
     );
 
   let sent = 0;
-
   let failed = 0;
 
   const errors: any[] = [];
 
-  const details: any[] = [];
-
   for (
-    const client
-    of selectedClients
+    const client of selected
   ) {
 
     try {
@@ -3806,36 +1759,8 @@ async function executeSend(
       const offers =
         filterNewOffers(
           allOffers,
-          client.last_sent_at,
+          client.last_sent_at
         );
-
-      details.push({
-        email:
-          client.email,
-
-        gender:
-          client.gender_target,
-
-        plan:
-          client.plan,
-
-        availableOffers:
-          offers.length,
-
-        lastSentAt:
-          client.last_sent_at,
-
-        dryRun:
-          Boolean(
-            options.dryRun,
-          ),
-      });
-
-      if (
-        options.dryRun
-      ) {
-        continue;
-      }
 
       if (
         !offers.length
@@ -3843,20 +1768,38 @@ async function executeSend(
         continue;
       }
 
-      await sendOffersToClient(
-        client,
-        offers,
+      if (
+        options.dryRun
+      ) {
+        continue;
+      }
+
+      const prepared =
+        await prepareDarija(
+          offers
+        );
+
+      const html =
+        buildEmail(
+          prepared,
+          client.email
+        );
+
+      await sendEmail(
+        client.email,
+        buildSubject(
+          client.gender_target
+        ),
+        html
       );
 
       await markClientSent(
-        client,
+        client
       );
 
       sent++;
 
-    } catch (
-      error
-    ) {
+    } catch (error) {
 
       failed++;
 
@@ -3877,12 +1820,9 @@ async function executeSend(
       failed === 0,
 
     dryRun:
-      Boolean(
-        options.dryRun,
-      ),
+      Boolean(options.dryRun),
 
     gender,
-
     plan,
 
     selectedOffers:
@@ -3892,19 +1832,18 @@ async function executeSend(
       clients.length,
 
     recipientsMatched:
-      selectedClients.length,
+      selected.length,
 
     sent,
-
     failed,
 
     errors,
-
-    details,
   };
-} 
+}
+
+
 /* ============================================================
-   HTTP HANDLER
+   HANDLER
    ============================================================ */
 
 export default async function handler(
@@ -3912,62 +1851,33 @@ export default async function handler(
   res: VercelResponse,
 ): Promise<void> {
 
-  /*
-   * Solo POST.
-   */
-
-  if (
-    req.method !==
-    "POST"
-  ) {
-    res.status(405).json({
-      ok:
-        false,
-
-      error:
-        "Method not allowed",
-    });
-
-    return;
-  }
-
-
   try {
 
-    /*
-     * Seguridad:
-     * el endpoint solo acepta llamadas con
-     * x-flussi-lavoro-secret correcto.
-     */
+    if (
+      req.method !== "POST"
+    ) {
 
-    checkSecret(
-      req,
-    );
+      res.status(405).json({
+        ok: false,
+        error:
+          "Method not allowed",
+      });
+
+      return;
+    }
 
 
-    /*
-     * Body.
-     */
+    checkSecret(req);
+
 
     const body =
-      parseBody(
-        req,
-      );
+      parseBody(req);
 
-
-    /*
-     * Acción.
-     *
-     * test  = manda un email de prueba
-     * send  = manda a clientes
-     * add   = registra cliente
-     * status = consulta clientes
-     */
 
     const action =
       String(
         body.action ||
-        "send",
+        "send"
       )
         .trim()
         .toLowerCase();
@@ -3978,44 +1888,39 @@ export default async function handler(
        ======================================================== */
 
     if (
-      action ===
-      "test"
+      action === "test"
     ) {
 
       const testEmail =
         normalizeEmail(
-          body.testEmail,
+          body.testEmail
         );
 
-      if (
-        !testEmail
-      ) {
-        res.status(400).json({
-          ok:
-            false,
-
-          error:
-            "testEmail obligatorio",
-        });
-
-        return;
+      if (!testEmail) {
+        throw new Error(
+          "testEmail is required"
+        );
       }
 
       const gender =
         normalizeGender(
-          body.gender,
+          body.gender
         );
 
       const plan =
         normalizePlan(
-          body.plan,
+          body.plan
         );
 
       const limitOffers =
-        Number(
-          body.limitOffers ||
-          body.limit ||
-          50,
+        Math.min(
+          Math.max(
+            Number(
+              body.limitOffers
+            ) || 1,
+            1
+          ),
+          50
         );
 
       const result =
@@ -4023,128 +1928,12 @@ export default async function handler(
           testEmail,
           gender,
           plan,
-          limitOffers,
+          limitOffers
         );
 
       res.status(200).json(
-        result,
+        result
       );
-
-      return;
-    }
-
-
-    /* ========================================================
-       ADD CLIENT
-       ======================================================== */
-
-    if (
-      action ===
-      "add"
-    ) {
-
-      const email =
-        normalizeEmail(
-          body.email,
-        );
-
-      if (
-        !email
-      ) {
-        res.status(400).json({
-          ok:
-            false,
-
-          error:
-            "email obligatorio",
-        });
-
-        return;
-      }
-
-      const gender =
-        normalizeGender(
-          body.gender,
-        );
-
-      const plan =
-        normalizePlan(
-          body.plan,
-        );
-
-      /*
-       * Para Ambos no obligamos un plan concreto.
-       * Si llega sin plan, se conserva 14.99 como valor técnico.
-       */
-
-      if (
-        gender !==
-        "Ambos"
-      ) {
-        validatePlanGender(
-          gender,
-          plan,
-        );
-      }
-
-      await upsertClient(
-        email,
-        gender,
-        plan,
-      );
-
-      res.status(200).json({
-        ok:
-          true,
-
-        action:
-          "add",
-
-        email,
-
-        gender,
-
-        plan,
-
-        message:
-          "Cliente registrado correctamente.",
-      });
-
-      return;
-    }
-
-
-    /* ========================================================
-       STATUS
-       ======================================================== */
-
-    if (
-      action ===
-      "status"
-    ) {
-
-      const emails =
-        Array.isArray(
-          body.emails,
-        )
-          ? body.emails
-          : body.email
-            ? [
-                body.email,
-              ]
-            : undefined;
-
-      const clients =
-        await fetchClients(
-          emails,
-        );
-
-      res.status(200).json({
-        ok:
-          true,
-
-        clients,
-      });
 
       return;
     }
@@ -4155,227 +1944,113 @@ export default async function handler(
        ======================================================== */
 
     if (
-      action ===
-      "send"
+      action === "send"
     ) {
 
-      const emails =
-        Array.isArray(
-          body.emails,
-        )
-          ? body.emails
-              .map(
-                normalizeEmail,
-              )
-              .filter(Boolean)
-          : body.email
-            ? [
-                normalizeEmail(
-                  body.email,
-                ),
-              ]
-            : undefined;
-
-
       const gender =
-        body.gender
-          ? normalizeGender(
-              body.gender,
-            )
-          : undefined;
-
+        normalizeGender(
+          body.gender
+        );
 
       const plan =
-        body.plan !==
-        undefined
-          ? normalizePlan(
-              body.plan,
-            )
+        normalizePlan(
+          body.plan
+        );
+
+      const emails =
+        Array.isArray(body.emails)
+          ? body.emails
           : undefined;
-
-
-      /*
-       * Si se especifica género y plan,
-       * se valida la combinación.
-       */
-
-      if (
-        gender &&
-        plan !==
-          undefined &&
-        gender !==
-          "Ambos"
-      ) {
-
-        validatePlanGender(
-          gender,
-          plan,
-        );
-      }
-
-
-      const limitOffers =
-        Number(
-          body.limitOffers ||
-          body.limit ||
-          50,
-        );
-
-
-      const dryRun =
-        Boolean(
-          body.dryRun,
-        );
-
 
       const result =
         await executeSend({
           emails,
-
           gender,
-
           plan,
-
-          limitOffers,
-
-          dryRun,
+          limitOffers:
+            Number(
+              body.limitOffers
+            ) || 50,
+          dryRun:
+            Boolean(body.dryRun),
         });
 
-
       res.status(
-        result.failed
-          ? 207
-          : 200,
-      ).json(
-        result,
-      );
+        result.ok ? 200 : 207
+      ).json(result);
 
       return;
     }
 
 
     /* ========================================================
-       UNKNOWN ACTION
+       STATUS
        ======================================================== */
 
-    res.status(400).json({
-      ok:
-        false,
-
-      error:
-        `Acción no válida: ${action}`,
-
-      allowed:
-        [
-          "test",
-          "send",
-          "add",
-          "status",
-        ],
-    });
-
-  } catch (
-    error
-  ) {
-
-    const message =
-      error instanceof Error
-        ? error.message
-        : String(error);
-
-
-    /*
-     * No mostramos secretos ni valores sensibles.
-     */
-
     if (
-      message ===
-      "Unauthorized"
+      action === "status"
     ) {
 
-      res.status(401).json({
-        ok:
-          false,
+      const clients =
+        await fetchClients();
 
-        error:
-          "Unauthorized",
+      res.status(200).json({
+        ok: true,
+        clients: clients.map(
+          client => ({
+            email:
+              client.email,
+
+            plan:
+              client.plan,
+
+            gender:
+              client.gender_target,
+
+            active:
+              client.active,
+
+            last_sent_at:
+              client.last_sent_at,
+
+            next_send_at:
+              client.next_send_at,
+
+            send_count:
+              client.send_count,
+          })
+        ),
       });
 
       return;
     }
 
 
-    console.error(
-      "send-flussi-offerte error:",
-      error,
+    throw new Error(
+      `Unknown action: ${action}`
     );
 
+  } catch (error) {
 
-    res.status(500).json({
-      ok:
-        false,
+    const message =
+      error instanceof Error
+        ? error.message
+        : String(error);
 
-      error:
-        message,
+    console.error(
+      "FLUSSI API ERROR:",
+      error
+    );
+
+    const status =
+      message === "Unauthorized"
+        ? 401
+        : 500;
+
+    res.status(status).json({
+      ok: false,
+      error: message,
     });
   }
 }
-
-
-/* ============================================================
-   UTILIDADES
-   ============================================================ */
-
-function normalise(
-  value: unknown,
-): string {
-
-  return String(
-    value ?? "",
-  )
-    .trim()
-    .toLowerCase();
-}
-
-
-/* ============================================================
-   SUPABASE REQUEST
-   ============================================================ */
-
-async function supabaseRequest(
-  path: string,
-  options: RequestInit = {},
-): Promise<Response> {
-
-  requireEnv();
-
-  const headers =
-    new Headers(
-      options.headers ||
-        {},
-    );
-
-  headers.set(
-    "apikey",
-    SUPABASE_SERVICE_ROLE_KEY,
-  );
-
-  headers.set(
-    "Authorization",
-    `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
-  );
-
-  headers.set(
-    "Content-Type",
-    "application/json",
-  );
-
-  return fetch(
-    `${SUPABASE_URL}/rest/v1/${path}`,
-    {
-      ...options,
-
-      headers,
-    },
-  );
-}
+EOF
