@@ -1,4 +1,4 @@
-cat > send-flussi-offerte.ts <<'EOF'
+
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import nodemailer from "nodemailer";
 
