@@ -1,289 +1,1149 @@
+import type {
+  VercelRequest,
+  VercelResponse,
+} from "@vercel/node";
+
 import Stripe from "stripe";
 
-export const config = { api: { bodyParser: false } };
+/*
+============================================================
+GESTORIACITAIA
+STRIPE WEBHOOK — DECRETO FLUSSI LAVORO
+============================================================
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
-  apiVersion: "2026-01-28.clover",
-});
+FLUJO:
 
-function readRawBody(req: VercelRequest): Promise<string> {
-  return new Promise((resolve, reject) => {
-    let body = "";
-    req.setEncoding("utf8");
-    req.on("data", (chunk) => (body += chunk));
-    req.on("end", () => resolve(body));
-    req.on("error", reject);
-  });
+CLIENTE
+   ↓
+STRIPE CHECKOUT
+   ↓
+checkout.session.completed
+   ↓
+ESTE WEBHOOK
+   ↓
+comprueba payment_status = paid
+   ↓
+comprueba el plan
+   ↓
+LLAMA DIRECTAMENTE A:
+
+/api/flussi-lavoro-gmail
+
+   ↓
+GMAIL EXISTENTE
+   ↓
+SE ENVÍA EL EMAIL CON LA PLANTILLA ACTUAL
+
+IMPORTANTE:
+
+NO MODIFICAR flussi-lavoro-gmail.ts
+NO GENERAR OTRA PLANTILLA
+NO ENVIAR OTRO EMAIL DESDE ESTE WEBHOOK
+
+============================================================
+*/
+
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};
+
+
+/*
+============================================================
+STRIPE
+============================================================
+*/
+
+const stripeSecretKey =
+  process.env.STRIPE_SECRET_KEY || "";
+
+const stripe =
+  stripeSecretKey
+    ? new Stripe(
+        stripeSecretKey,
+        {
+          apiVersion:
+            "2025-08-27.basil",
+        },
+      )
+    : null;
+
+
+/*
+============================================================
+HELPERS
+============================================================
+*/
+
+function clean(
+  value: unknown,
+  maxLength = 2000,
+): string {
+
+  return String(
+    value ?? "",
+  )
+    .trim()
+    .slice(
+      0,
+      maxLength,
+    );
 }
 
-const clean = (v: unknown, max = 2000) => String(v ?? "").trim().slice(0, max);
-const supabaseUrl = clean(process.env.SUPABASE_URL);
-const serviceKey = clean(process.env.SUPABASE_SERVICE_ROLE_KEY);
 
-async function supabaseRequest(path: string, options: RequestInit = {}) {
-  if (!supabaseUrl || !serviceKey) throw new Error("Supabase configuration missing");
-  return fetch(`${supabaseUrl}/rest/v1/${path}`, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      apikey: serviceKey,
-      Authorization: `Bearer ${serviceKey}`,
-      ...(options.headers || {}),
-    },
-  });
-}
+/*
+============================================================
+RAW BODY
+============================================================
+*/
 
-async function existsBySession(table: string, sessionId: string) {
-  const r = await supabaseRequest(
-    `${table}?select=id&stripe_session_id=eq.${encodeURIComponent(sessionId)}&limit=1`
-  );
-  const text = await r.text();
-  if (!r.ok) throw new Error(`Supabase lookup failed: ${r.status} ${text}`);
-  const rows = JSON.parse(text);
-  return Array.isArray(rows) && rows.length > 0;
-}
+async function readRawBody(
+  req: VercelRequest,
+): Promise<Buffer> {
 
-function addDays(date: Date, days: number) {
-  const d = new Date(date);
-  d.setUTCDate(d.getUTCDate() + days);
-  return d.toISOString();
-}
-
-function escapeHtml(v: string) {
-  return v.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
-}
-
-
-
-export default async function handler(req: VercelRequest, res: VercelResponse) {
-  if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
-
-  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET_FLUSSI_LAVORO;
-  if (!process.env.STRIPE_SECRET_KEY || !webhookSecret) {
-    return res.status(500).json({ error: "Stripe Flussi Lavoro configuration missing" });
+  if (
+    Buffer.isBuffer(
+      req.body,
+    )
+  ) {
+    return req.body;
   }
 
-  try {
-    const rawBody = await readRawBody(req);
-    const signature = req.headers["stripe-signature"];
-    if (!signature || Array.isArray(signature)) return res.status(400).json({ error: "Missing Stripe signature" });
+  if (
+    typeof req.body ===
+    "string"
+  ) {
+    return Buffer.from(
+      req.body,
+    );
+  }
 
-    let event: Stripe.Event;
-    try {
-      event = stripe.webhooks.constructEvent(rawBody, signature, webhookSecret);
-    } catch (error) {
-      console.error("Flussi Lavoro Stripe signature verification failed:", error);
-      return res.status(400).json({ error: "Invalid Stripe signature" });
-    }
+  return new Promise(
+    (
+      resolve,
+      reject,
+    ) => {
 
-    if (event.type !== "checkout.session.completed") {
-      return res.status(200).json({ received: true, ignored: true, event: event.type });
-    }
+      const chunks: Buffer[] =
+        [];
 
-    const session = event.data.object as Stripe.Checkout.Session;
-    const metadata = session.metadata || {};
+      req.on(
+        "data",
+        (chunk) => {
 
-    if (metadata.service !== "flussi_lavoro" || metadata.product !== "decreto_flussi_lavoro") {
-      return res.status(200).json({ received: true, ignored: true, reason: "not_flussi_lavoro" });
-    }
+          chunks.push(
+            Buffer.isBuffer(
+              chunk,
+            )
+              ? chunk
+              : Buffer.from(
+                  chunk,
+                ),
+          );
 
-    if (session.payment_status !== "paid") {
-      return res.status(200).json({ received: true, ignored: true, reason: "payment_not_paid" });
-    }
+        },
+      );
 
-    const fullName = clean(metadata.client_name || metadata.full_name || session.customer_details?.name);
-    const firstName = clean(metadata.first_name || metadata.client_first_name || fullName.split(" ")[0]);
-    const lastName = clean(metadata.last_name || metadata.client_surname || metadata.client_last_name || fullName.split(" ").slice(1).join(" "));
-    const email = clean(metadata.email || metadata.client_email || session.customer_details?.email);
-    const phone = clean(metadata.phone || metadata.client_phone || session.customer_details?.phone);
+      req.on(
+        "end",
+        () => {
 
-    if (!firstName || !lastName || !email) return res.status(400).json({ error: "Missing client data" });
+          resolve(
+            Buffer.concat(
+              chunks,
+            ),
+          );
 
-    const categories = clean(metadata.categories).split(",").map((x) => x.trim()).filter(Boolean);
-    const amountCents = Number(metadata.package_amount_cents) || Number(session.amount_total) || 0;
+        },
+      );
 
-    const packageCode = clean(metadata.package_code);
+      req.on(
+        "error",
+        reject,
+      );
 
-    // TEMPORARY TEST: all plans cost €0.50.
-    // The database table is selected by packageCode, not by price.
-    const table =
-      packageCode === "monthly"
-        ? "flussi_lavoro_9_99"
-        : packageCode === "biweekly"
-        ? "flussi_lavoro_19_99"
-        : packageCode === "single_category"
-        ? "flussi_lavoro_24_99"
-        : "";
+    },
+  );
+}
 
-    if (!table) {
-      return res.status(400).json({
-        error: "Unknown Flussi Lavoro package",
-        packageCode,
-        amountCents,
+
+/*
+============================================================
+PLANES NUEVOS
+============================================================
+*/
+
+const PLANS = {
+
+  all_offers: {
+
+    code:
+      "all_offers",
+
+    amount:
+      50,
+
+    realAmount:
+      1499,
+
+    durationDays:
+      30,
+
+    deliveries:
+      1,
+
+    nameIt:
+      "Tutte le offerte",
+
+    nameEs:
+      "Todas las ofertas",
+
+    nameEn:
+      "All job offers",
+
+    nameMa:
+      "جميع عروض العمل",
+  },
+
+
+  new_10_days: {
+
+    code:
+      "new_10_days",
+
+    amount:
+      2499,
+
+    realAmount:
+      2499,
+
+    durationDays:
+      90,
+
+    deliveries:
+      6,
+
+    nameIt:
+      "Nuove offerte ogni 10 giorni",
+
+    nameEs:
+      "Nuevas ofertas cada 10 días",
+
+    nameEn:
+      "New job offers every 10 days",
+
+    nameMa:
+      "عروض جديدة كل 10 أيام",
+  },
+
+} as const;
+
+
+type PackageCode =
+  keyof typeof PLANS;
+
+
+/*
+============================================================
+HANDLER
+============================================================
+*/
+
+export default async function handler(
+  req: VercelRequest,
+  res: VercelResponse,
+) {
+
+  /*
+  ==========================================================
+  1. SOLO POST
+  ==========================================================
+  */
+
+  if (
+    req.method !==
+    "POST"
+  ) {
+
+    return res
+      .status(405)
+      .json({
+
+        ok: false,
+
+        error:
+          "Method not allowed",
       });
-    }
+  }
 
-    if (amountCents !== 50) {
-      return res.status(400).json({
-        error: "Temporary test accepts only €0.50",
-        amountCents,
-        packageCode,
-      });
-    }
-    // IMPORTANT: Stripe can resend the same event. If the customer is already
-    // saved in Supabase, DO NOT exit here because the welcome email may not
-    // have been sent yet. We skip the duplicate INSERT but continue to email.
-    const alreadyExists = await existsBySession(table, session.id);
 
-    if (alreadyExists) {
-      console.log("ℹ️ FLUSSI LAVORO: customer already exists; continuing to welcome email", {
-        table,
-        stripeSessionId: session.id,
-        email,
-      });
-    }
+  /*
+  ==========================================================
+  2. STRIPE CONFIG
+  ==========================================================
+  */
 
-    if (packageCode === "single_category" && categories.length !== 1) {
-      return res.status(400).json({ error: "The 24.99 package requires exactly one category", categories });
-    }
+  if (!stripe) {
 
-    const now = new Date();
-    const workType = metadata.work_type === "stagionale" ? "stagionale" : "non_stagionale";
-    const startsAt = packageCode === "monthly" ? null : now.toISOString();
-    const expiresAt = packageCode === "biweekly" ? addDays(now, 15) : packageCode === "single_category" ? addDays(now, 30) : null;
-    const paymentIntent = typeof session.payment_intent === "string" ? session.payment_intent : null;
-
-    const record: Record<string, unknown> = {
-      first_name: firstName,
-      last_name: lastName,
-      email,
-      phone,
-      work_type: workType,
-      stripe_session_id: session.id,
-      stripe_payment_intent_id: paymentIntent,
-      payment_status: "paid",
-      purchased_at: now.toISOString(),
-      updated_at: now.toISOString(),
-    };
-
-    if (packageCode === "single_category") {
-      record.category = categories[0];
-      record.starts_at = startsAt;
-      record.expires_at = expiresAt;
-    } else {
-      record.categories = categories;
-      if (packageCode === "biweekly") {
-        record.starts_at = startsAt;
-        record.expires_at = expiresAt;
-      }
-    }
-
-    if (!alreadyExists) {
-      const insert = await supabaseRequest(table, {
-        method: "POST",
-        headers: { Prefer: "return=representation" },
-        body: JSON.stringify(record),
-      });
-      const insertText = await insert.text();
-      if (!insert.ok) {
-        console.error("Supabase Flussi Lavoro insert failed:", table, insert.status, insertText);
-        return res.status(500).json({ error: "Could not save Flussi Lavoro customer" });
-      }
-      console.log("✅ FLUSSI LAVORO: customer saved in Supabase", { table, email });
-    }
-
-    const reference = clean(metadata.reference) || `FL-${session.id.slice(-10).toUpperCase()}`;
-    const packageName = clean(metadata.package_name) || (
-      packageCode === "monthly"
-        ? "Offerte del mese"
-        : packageCode === "biweekly"
-        ? "Aggiornamenti ogni 15 giorni"
-        : "Una sola categoria"
+    console.error(
+      "❌ STRIPE_SECRET_KEY no configurada",
     );
 
-    // IMPORTANT:
-    // DO NOT create another welcome-email template here.
-    // Use the existing:
-    //   api/flussi-lavoro-gmail-DARIJA-ITALIANO.ts
-    //
-    // It owns the approved Gmail HTML and Brevo SMTP delivery.
-    // www is used to avoid the 307 redirect seen by Stripe.
+    return res
+      .status(500)
+      .json({
+
+        ok: false,
+
+        error:
+          "STRIPE_SECRET_KEY no está configurada.",
+      });
+  }
+
+
+  /*
+  ==========================================================
+  3. WEBHOOK SECRET
+  ==========================================================
+  */
+
+  const webhookSecret =
+    clean(
+      process.env
+        .FLUSSI_STRIPE_WEBHOOK_SECRET,
+    );
+
+
+  if (!webhookSecret) {
+
+    console.error(
+      "❌ FLUSSI_STRIPE_WEBHOOK_SECRET no configurada",
+    );
+
+    return res
+      .status(500)
+      .json({
+
+        ok: false,
+
+        error:
+          "FLUSSI_STRIPE_WEBHOOK_SECRET no está configurada.",
+      });
+  }
+
+
+  try {
+
+    /*
+    ========================================================
+    4. RAW BODY
+    ========================================================
+    */
+
+    const rawBody =
+      await readRawBody(
+        req,
+      );
+
+
+    /*
+    ========================================================
+    5. STRIPE SIGNATURE
+    ========================================================
+    */
+
+    const signature =
+      req.headers[
+        "stripe-signature"
+      ];
+
+
+    if (
+      !signature ||
+      Array.isArray(
+        signature,
+      )
+    ) {
+
+      return res
+        .status(400)
+        .json({
+
+          ok: false,
+
+          error:
+            "Missing Stripe signature.",
+        });
+    }
+
+
+    /*
+    ========================================================
+    6. VERIFICAR EVENTO
+    ========================================================
+    */
+
+    let event: Stripe.Event;
+
+
+    try {
+
+      event =
+        stripe.webhooks.constructEvent(
+          rawBody,
+          signature,
+          webhookSecret,
+        );
+
+    } catch (
+      error: any
+    ) {
+
+      console.error(
+        "❌ Stripe signature error:",
+        error?.message ||
+          error,
+      );
+
+      return res
+        .status(400)
+        .json({
+
+          ok: false,
+
+          error:
+            `Webhook Error: ${
+              error?.message ||
+              "Invalid signature"
+            }`,
+        });
+    }
+
+
+    console.log(
+      "📥 STRIPE FLUSSI EVENT:",
+      event.type,
+      event.id,
+    );
+
+
+    /*
+    ========================================================
+    7. SOLO CHECKOUT COMPLETADO
+    ========================================================
+    */
+
+    if (
+      event.type !==
+      "checkout.session.completed"
+    ) {
+
+      return res
+        .status(200)
+        .json({
+
+          ok: true,
+
+          received: true,
+
+          ignored: true,
+
+          event:
+            event.type,
+        });
+    }
+
+
+    /*
+    ========================================================
+    8. SESSION
+    ========================================================
+    */
+
+    const session =
+      event.data
+        .object as
+        Stripe.Checkout.Session;
+
+
+    const metadata =
+      session.metadata ||
+      {};
+
+
+    /*
+    ========================================================
+    9. SEGURIDAD — NUEVO FLUSSI LAVORO
+    ========================================================
+    */
+
+    const service =
+      clean(
+        metadata.service,
+      );
+
+
+    const product =
+      clean(
+        metadata.product,
+      );
+
+
+    if (
+      service !==
+      "flussi_lavoro"
+    ) {
+
+      console.log(
+        "↩️ Evento ignorado — service:",
+        service,
+      );
+
+      return res
+        .status(200)
+        .json({
+
+          ok: true,
+
+          received: true,
+
+          ignored: true,
+
+          reason:
+            "NOT_FLUSSI_LAVORO",
+
+          service,
+        });
+    }
+
+
+    if (
+      product !==
+      "decreto_flussi_lavoro"
+    ) {
+
+      console.log(
+        "↩️ Evento ignorado — product:",
+        product,
+      );
+
+      return res
+        .status(200)
+        .json({
+
+          ok: true,
+
+          received: true,
+
+          ignored: true,
+
+          reason:
+            "NOT_DECRETO_FLUSSI_LAVORO",
+
+          product,
+        });
+    }
+
+
+    /*
+    ========================================================
+    10. COMPROBAR PAGO
+    ========================================================
+    */
+
+    if (
+      session.payment_status !==
+      "paid"
+    ) {
+
+      console.warn(
+        "⚠️ Pago todavía no confirmado:",
+        session.payment_status,
+      );
+
+      return res
+        .status(200)
+        .json({
+
+          ok: true,
+
+          received: true,
+
+          ignored: true,
+
+          reason:
+            "PAYMENT_NOT_PAID",
+
+          payment_status:
+            session.payment_status,
+        });
+    }
+
+
+    /*
+    ========================================================
+    11. PLAN
+    ========================================================
+    */
+
+    const packageCode =
+      clean(
+        metadata.package_code,
+      ) as PackageCode;
+
+
+    if (
+      packageCode !==
+        "all_offers" &&
+      packageCode !==
+        "new_10_days"
+    ) {
+
+      console.error(
+        "❌ PLAN DESCONOCIDO:",
+        packageCode,
+      );
+
+      return res
+        .status(400)
+        .json({
+
+          ok: false,
+
+          error:
+            "Plan Flussi desconocido.",
+
+          packageCode,
+        });
+    }
+
+
+    const plan =
+      PLANS[
+        packageCode
+      ];
+
+
+    /*
+    ========================================================
+    12. COMPROBAR IMPORTE
+    ========================================================
+    */
+
+    const amountTotal =
+      Number(
+        session.amount_total ||
+          0,
+      );
+
+
+    if (
+      amountTotal !==
+      plan.amount
+    ) {
+
+      console.error(
+        "❌ IMPORTE INCORRECTO:",
+        {
+          packageCode,
+
+          esperado:
+            plan.amount,
+
+          recibido:
+            amountTotal,
+        },
+      );
+
+      return res
+        .status(400)
+        .json({
+
+          ok: false,
+
+          error:
+            "Importe de pago incorrecto.",
+
+          packageCode,
+
+          expected:
+            plan.amount,
+
+          received:
+            amountTotal,
+        });
+    }
+
+
+    /*
+    ========================================================
+    13. MONEDA
+    ========================================================
+    */
+
+    if (
+      session.currency &&
+      session.currency
+        .toLowerCase() !==
+        "eur"
+    ) {
+
+      return res
+        .status(400)
+        .json({
+
+          ok: false,
+
+          error:
+            "Moneda incorrecta.",
+
+          currency:
+            session.currency,
+        });
+    }
+
+
+    /*
+    ========================================================
+    14. DATOS CLIENTE
+    ========================================================
+    */
+
+    const firstName =
+      clean(
+        metadata.client_first_name,
+      );
+
+
+    const lastName =
+      clean(
+        metadata.client_last_name,
+      );
+
+
+    const email =
+      (
+        clean(
+          metadata.email,
+        ) ||
+
+        clean(
+          session.customer_details
+            ?.email,
+        ) ||
+
+        clean(
+          session.customer_email,
+        )
+      ).toLowerCase();
+
+
+    const phone =
+      clean(
+        metadata.phone,
+      );
+
+
+    const gender =
+      clean(
+        metadata.gender,
+      );
+
+
+    const reference =
+      clean(
+        metadata.reference,
+      ) ||
+
+      clean(
+        session.client_reference_id,
+      ) ||
+
+      `FLUSSI-${session.id}`;
+
+
+    /*
+    ========================================================
+    15. VALIDAR EMAIL
+    ========================================================
+    */
+
+    if (!email) {
+
+      console.error(
+        "❌ No existe email del cliente.",
+      );
+
+      return res
+        .status(400)
+        .json({
+
+          ok: false,
+
+          error:
+            "No se encontró el email del cliente.",
+        });
+    }
+
+
+    /*
+    ========================================================
+    16. VALIDAR NOMBRE
+    ========================================================
+    */
+
+    if (
+      !firstName ||
+      !lastName
+    ) {
+
+      console.error(
+        "❌ Faltan nombre/apellido:",
+        {
+          firstName,
+          lastName,
+        },
+      );
+
+      return res
+        .status(400)
+        .json({
+
+          ok: false,
+
+          error:
+            "Faltan nombre o apellido.",
+        });
+    }
+
+
+    /*
+    ========================================================
+    17. DATOS PARA TU GMAIL EXISTENTE
+    ========================================================
+
+    IMPORTANTE:
+
+    NO construimos HTML aquí.
+
+    NO enviamos otro email.
+
+    NO tocamos la plantilla.
+
+    Simplemente llamamos:
+
+    /api/flussi-lavoro-gmail
+
+    ========================================================
+    */
+
     const gmailUrl =
-      process.env.FLUSSI_LAVORO_GMAIL_URL ||
-      "https://www.gestoriacitaia.com/api/flussi-lavoro-gmail";
+      clean(
+        process.env
+          .FLUSSI_LAVORO_GMAIL_URL,
+      ) ||
+      "https://gestoriacitaia.com/api/flussi-lavoro-gmail";
+
+
+    const gmailSecret =
+      clean(
+        process.env
+          .FLUSSI_LAVORO_INTERNAL_SECRET,
+      );
+
 
     const gmailPayload = {
-      service: "flussi_lavoro",
-      product: "decreto_flussi_lavoro",
-      paid: true,
+
+      service:
+        "flussi_lavoro",
+
+      product:
+        "decreto_flussi_lavoro",
+
+      paid:
+        true,
+
       reference,
-      stripeSessionId: session.id,
+
+      stripeSessionId:
+        session.id,
+
       client: {
+
         firstName,
+
         lastName,
+
         email,
+
         phone,
       },
-      workType,
-      categories,
+
+      gender,
+
       packageCode,
-      packageName,
-      // TEMPORARY TEST: payment is €0.50.
-      packageAmountCents: 50,
+
+      packageName:
+        plan.nameIt,
+
+      packageNameEs:
+        plan.nameEs,
+
+      packageNameEn:
+        plan.nameEn,
+
+      packageNameMa:
+        plan.nameMa,
+
+      packageAmountCents:
+        plan.amount,
+
       durationDays:
-        packageCode === "biweekly"
-          ? 15
-          : 30,
+        plan.durationDays,
+
+      deliveries:
+        plan.deliveries,
     };
 
-    const gmailHeaders: Record<string, string> = {
-      "Content-Type": "application/json",
+
+    const gmailHeaders:
+      Record<string, string> = {
+
+      "Content-Type":
+        "application/json",
     };
 
-    if (process.env.FLUSSI_LAVORO_INTERNAL_SECRET) {
-      gmailHeaders["x-flussi-lavoro-secret"] =
-        process.env.FLUSSI_LAVORO_INTERNAL_SECRET;
+
+    if (
+      gmailSecret
+    ) {
+
+      gmailHeaders[
+        "x-flussi-lavoro-secret"
+      ] =
+        gmailSecret;
     }
 
-    console.log("📧 Calling EXISTING welcome Gmail file:", {
+
+    /*
+    ========================================================
+    18. LLAMAR DIRECTAMENTE AL GMAIL EXISTENTE
+    ========================================================
+    */
+
+    console.log(
+      "📧 LLAMANDO AL GMAIL EXISTENTE...",
+    );
+
+    console.log({
       gmailUrl,
+
       email,
+
       packageCode,
-      amountCents: 50,
+
+      amount:
+        amountTotal,
+
+      reference,
     });
 
-    const gmailResponse = await fetch(gmailUrl, {
-      method: "POST",
-      headers: gmailHeaders,
-      body: JSON.stringify(gmailPayload),
-    });
 
-    const gmailResponseText = await gmailResponse.text();
+    const gmailResponse =
+      await fetch(
+        gmailUrl,
+        {
 
-    if (!gmailResponse.ok) {
-      console.error("❌ Existing welcome Gmail endpoint failed:", {
-        status: gmailResponse.status,
-        response: gmailResponseText.slice(0, 1000),
-      });
+          method:
+            "POST",
 
-      return res.status(500).json({
-        error: "Welcome email endpoint failed",
-        status: gmailResponse.status,
-      });
+          headers:
+            gmailHeaders,
+
+          body:
+            JSON.stringify(
+              gmailPayload,
+            ),
+        },
+      );
+
+
+    const gmailText =
+      await gmailResponse.text();
+
+
+    /*
+    ========================================================
+    19. COMPROBAR GMAIL
+    ========================================================
+    */
+
+    if (
+      !gmailResponse.ok
+    ) {
+
+      console.error(
+        "❌ EL ARCHIVO GMAIL RESPONDIÓ ERROR:",
+        {
+          status:
+            gmailResponse.status,
+
+          response:
+            gmailText.slice(
+              0,
+              2000,
+            ),
+        },
+      );
+
+
+      /*
+       * El pago YA está confirmado.
+       *
+       * Devolvemos 500 para que Stripe
+       * pueda volver a intentar el webhook
+       * y así intentar enviar el Gmail.
+       */
+
+      return res
+        .status(500)
+        .json({
+
+          ok: false,
+
+          payment_received:
+            true,
+
+          payment_status:
+            session.payment_status,
+
+          email:
+            email,
+
+          packageCode,
+
+          error:
+            "El archivo flussi-lavoro-gmail.ts no pudo enviar el email.",
+
+          gmailStatus:
+            gmailResponse.status,
+
+          gmailResponse:
+            gmailText.slice(
+              0,
+              1000,
+            ),
+        });
     }
 
-    console.log("✅ EXISTING WELCOME EMAIL SENT:", {
+
+    /*
+    ========================================================
+    20. GMAIL ENVIADO
+    ========================================================
+    */
+
+    console.log(
+      "✅ GMAIL ENVIADO CORRECTAMENTE",
+    );
+
+    console.log({
       email,
+
       packageCode,
-      table,
-      amountCents: 50,
-      response: gmailResponseText.slice(0, 500),
+
+      amount:
+        amountTotal,
+
+      reference,
+
+      gmailResponse:
+        gmailText.slice(
+          0,
+          500,
+        ),
     });
 
-    console.log("Flussi Lavoro completed:", { table, amountCents, email, sessionId: session.id, reference });
-    return res.status(200).json({ received: true, processed: true, saved: true, emailSent: true, table, amountCents, reference, stripeSessionId: session.id });
-  } catch (error) {
-    console.error("webhook-flussi-lavoro error:", error);
-    return res.status(500).json({ error: "Webhook processing failed" });
+
+    /*
+    ========================================================
+    21. RESPUESTA FINAL
+    ========================================================
+    */
+
+    return res
+      .status(200)
+      .json({
+
+        ok: true,
+
+        received: true,
+
+        processed: true,
+
+        payment:
+          "paid",
+
+        emailSent:
+          true,
+
+        email,
+
+        firstName,
+
+        lastName,
+
+        phone,
+
+        gender,
+
+        packageCode,
+
+        packageName:
+          plan.nameIt,
+
+        amount:
+          amountTotal,
+
+        currency:
+          session.currency,
+
+        durationDays:
+          plan.durationDays,
+
+        deliveries:
+          plan.deliveries,
+
+        reference,
+
+        stripeSessionId:
+          session.id,
+
+        gmailEndpoint:
+          gmailUrl,
+      });
+
+  } catch (
+    error: any
+  ) {
+
+    console.error(
+      "❌ STRIPE FLUSSI WEBHOOK ERROR:",
+      error?.message ||
+        error,
+    );
+
+    return res
+      .status(500)
+      .json({
+
+        ok: false,
+
+        error:
+          error?.message ||
+          "Internal webhook error",
+      });
   }
 }
