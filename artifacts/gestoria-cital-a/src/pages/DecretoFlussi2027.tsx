@@ -202,7 +202,7 @@ const PACKAGE_TEXT = {
 const PACKAGE_INFO = [
   {
     code: "all_offers" as PackageCode,
-    price: "0,50€",
+price: "14,99€",
   },
 
   {
