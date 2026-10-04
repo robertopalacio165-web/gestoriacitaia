@@ -509,7 +509,7 @@ export default async function handler(
     const expectedAmount =
       packageCode ===
         "all_offers"
-        ? 50
+   ? 1499
         : 2499;
 
     const amountCents =
@@ -556,7 +556,7 @@ export default async function handler(
     const table =
       packageCode ===
         "all_offers"
-        ? "flussi_lavoro_9_99"
+   ? "flussi_lavoro_14_99"
         : "flussi_lavoro_24_99";
 
     /**
