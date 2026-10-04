@@ -792,7 +792,96 @@ export default function DecretoFlussi2027() {
 
           </motion.div>
 
+</motion.div>
 
+
+{/* =================================================
+    PAGO REALIZADO
+================================================= */}
+
+{paymentSuccess && (
+  <motion.div
+    initial={{ opacity: 0, y: 15 }}
+    animate={{ opacity: 1, y: 0 }}
+    className="w-full mt-4"
+  >
+    <div className="max-w-3xl mx-auto rounded-2xl border border-[#D4AF37]/50 bg-gradient-to-r from-[#101a28] via-[#0b1724] to-[#101a28] p-5 text-center shadow-[0_0_30px_rgba(212,175,55,0.12)]">
+
+      {isMa ? (
+        <div dir="rtl">
+          <div className="text-4xl mb-2">🎉</div>
+
+          <h2 className="text-white text-xl font-black">
+            تم الأداء بنجاح!
+          </h2>
+
+          <p className="text-[#F5D76E] text-base font-bold mt-2">
+            مبروك! الخدمة ديالك تفعّلات.
+          </p>
+
+          <p className="text-white/75 text-sm mt-2 leading-7">
+            فأقل من 24 ساعة غادي توصلك عروض العمل الجديدة
+            مباشرة فالإيميل ديالك.
+          </p>
+
+          <p className="text-white/40 text-xs mt-2">
+            تأكد من الإيميل ديالك وحتى مجلد Spam.
+          </p>
+        </div>
+
+      ) : isEn ? (
+        <div>
+          <div className="text-4xl mb-2">🎉</div>
+
+          <h2 className="text-white text-xl font-black">
+            Payment completed successfully!
+          </h2>
+
+          <p className="text-[#F5D76E] text-base font-bold mt-2">
+            Congratulations! Your service is now active.
+          </p>
+
+          <p className="text-white/75 text-sm mt-2 leading-7">
+            Within 24 hours, we will send you the new job
+            offers directly by email.
+          </p>
+
+          <p className="text-white/40 text-xs mt-2">
+            Please also check your spam folder.
+          </p>
+        </div>
+
+      ) : (
+        <div>
+          <div className="text-4xl mb-2">🎉</div>
+
+          <h2 className="text-white text-xl font-black">
+            ¡Pago realizado correctamente!
+          </h2>
+
+          <p className="text-[#F5D76E] text-base font-bold mt-2">
+            ¡Felicidades! Tu servicio está activado.
+          </p>
+
+          <p className="text-white/75 text-sm mt-2 leading-7">
+            En menos de 24 horas te enviaremos las nuevas
+            ofertas de trabajo directamente por email.
+          </p>
+
+          <p className="text-white/40 text-xs mt-2">
+            Revisa también tu carpeta de spam.
+          </p>
+        </div>
+      )}
+
+    </div>
+  </motion.div>
+)}
+
+
+{/* =================================================
+    FORMULARIO
+================================================= */}
           {/* =================================================
               FORMULARIO
           ================================================= */}
