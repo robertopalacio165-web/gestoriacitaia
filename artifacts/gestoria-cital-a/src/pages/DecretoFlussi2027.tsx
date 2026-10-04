@@ -1,13 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import {
-  CheckCircle2,
   CreditCard,
   Loader2,
   Mail,
   Phone,
   User,
-  Users,
 } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { supabase } from "@/lib/supabaseClient";
@@ -24,24 +22,9 @@ type Category = {
 
 type GenderCode = "male" | "both" | "female";
 
-type PackageCode = "all_offers" | "new_10_days";
-
-const CATEGORY_ICONS: Record<string, string> = {
-  agriculture: "🌾",
-  food: "🍝",
-  textile: "👕",
-  metal: "⚙️",
-  other_industry: "🏭",
-  construction: "🏗️",
-  commerce: "🛒",
-  hospitality: "🏨",
-  tourism: "✈️",
-  transport_logistics: "🚛",
-  business_support: "🧹",
-  health_social: "🏥",
-  other_services: "💼",
-  family_assistance: "👩‍👧",
-};
+type PackageCode =
+  | "all_offers"
+  | "new_10_days";
 
 const FALLBACK_CATEGORIES: Category[] = [
   {
@@ -156,6 +139,7 @@ const PACKAGE_TEXT = {
         "الإرسال عبر الإيميل",
       ],
     },
+
     es: {
       title: "Todas las ofertas",
       subtitle: "Pago único · todas las ofertas",
@@ -166,6 +150,7 @@ const PACKAGE_TEXT = {
         "Envío por email",
       ],
     },
+
     en: {
       title: "All job offers",
       subtitle: "One payment · all offers",
@@ -189,6 +174,7 @@ const PACKAGE_TEXT = {
         "الإرسال أوتوماتيكي بالإيميل",
       ],
     },
+
     es: {
       title: "Nuevas ofertas cada 10 días",
       subtitle: "3 meses · 6 envíos",
@@ -199,6 +185,7 @@ const PACKAGE_TEXT = {
         "Envío automático por email",
       ],
     },
+
     en: {
       title: "New offers every 10 days",
       subtitle: "3 months · 6 deliveries",
@@ -215,8 +202,9 @@ const PACKAGE_TEXT = {
 const PACKAGE_INFO = [
   {
     code: "all_offers" as PackageCode,
-    price: "14,99€",
+    price: "0,50€",
   },
+
   {
     code: "new_10_days" as PackageCode,
     price: "24,99€",
@@ -226,6 +214,7 @@ const PACKAGE_INFO = [
 function PaymentLogos() {
   return (
     <div className="flex items-center justify-center gap-2 flex-wrap">
+
       <div className="h-8 min-w-[48px] px-2 rounded-lg bg-white flex items-center justify-center shadow-md">
         <span className="text-[#1434CB] font-black italic text-[12px]">
           VISA
@@ -233,38 +222,51 @@ function PaymentLogos() {
       </div>
 
       <div className="h-8 min-w-[62px] px-2 rounded-lg bg-white flex items-center justify-center shadow-md">
+
         <div className="flex items-center mr-1">
+
           <span className="w-4 h-4 rounded-full bg-[#EB001B] -mr-1" />
+
           <span className="w-4 h-4 rounded-full bg-[#F79E1B] opacity-90" />
+
         </div>
 
         <span className="text-[#222] text-[7px] font-bold">
           Mastercard
         </span>
+
       </div>
 
       <div className="h-8 min-w-[58px] px-2 rounded-lg bg-white flex items-center justify-center shadow-md">
+
         <span className="text-[#003087] font-black text-[10px]">
           PayPal
         </span>
+
       </div>
 
       <div className="h-8 min-w-[55px] px-2 rounded-lg bg-white flex items-center justify-center shadow-md">
+
         <span className="text-[#635BFF] font-black text-[10px]">
           stripe
         </span>
+
       </div>
+
     </div>
   );
 }
 
 export default function DecretoFlussi2027() {
+
   const { lang } = useLang();
+
   const { toast } = useToast();
 
-  const rawLanguage = String(lang || "")
-    .toLowerCase()
-    .trim();
+  const rawLanguage =
+    String(lang || "")
+      .toLowerCase()
+      .trim();
 
   const language =
     rawLanguage === "darija" ||
@@ -278,10 +280,14 @@ export default function DecretoFlussi2027() {
         ? "en"
         : "es";
 
-  const isMa = language === "darija";
-  const isEn = language === "en";
+  const isMa =
+    language === "darija";
+
+  const isEn =
+    language === "en";
 
   const ui = {
+
     pageTitle: isMa
       ? "ديكريتو فلوسي 2027"
       : isEn
@@ -421,75 +427,27 @@ export default function DecretoFlussi2027() {
         : "Acepta los términos antes de pagar",
   };
 
-  const [loadingCategories, setLoadingCategories] =
-    useState(true);
-
-  const [categories, setCategories] =
-    useState<Category[]>([]);
-
   const [gender, setGender] =
     useState<GenderCode>("both");
 
-  const [form, setForm] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
-    phone: "",
-  });
+  const [form, setForm] =
+    useState({
+      firstName: "",
+      lastName: "",
+      email: "",
+      phone: "",
+    });
 
   const [selectedPackage, setSelectedPackage] =
-    useState<PackageCode>("all_offers");
+    useState<PackageCode>(
+      "all_offers",
+    );
 
   const [acceptTerms, setAcceptTerms] =
     useState(false);
 
   const [submitting, setSubmitting] =
     useState(false);
-
-  useEffect(() => {
-    const loadCategories = async () => {
-      try {
-        const { data, error } =
-          await supabase
-            .from("flussi_categories")
-            .select(
-              "id, code, name_it, description_it, is_seasonal",
-            )
-            .eq("is_active", true)
-            .order("id");
-
-        if (
-          error ||
-          !data ||
-          data.length === 0
-        ) {
-          setCategories(
-            FALLBACK_CATEGORIES,
-          );
-        } else {
-          setCategories(
-            data.map((item: any) => ({
-              ...item,
-              is_seasonal:
-                item.is_seasonal === true ||
-                String(
-                  item.is_seasonal,
-                ).toLowerCase() ===
-                  "true",
-            })),
-          );
-        }
-      } catch {
-        setCategories(
-          FALLBACK_CATEGORIES,
-        );
-      } finally {
-        setLoadingCategories(false);
-      }
-    };
-
-    loadCategories();
-  }, []);
 
   const selectedPackageInfo =
     useMemo(
@@ -506,24 +464,29 @@ export default function DecretoFlussi2027() {
     field: keyof typeof form,
     value: string,
   ) => {
+
     setForm((prev) => ({
       ...prev,
       [field]: value,
     }));
+
   };
 
   /*
-   * ============================================================
-   * VALIDACIÓN
-   * ============================================================
-   */
+  ============================================================
+  VALIDACIÓN + STRIPE
+  ============================================================
+  */
 
   const handlePay = async () => {
 
     if (!form.firstName.trim()) {
+
       toast({
-        title: ui.missingName,
-        variant: "destructive",
+        title:
+          ui.missingName,
+        variant:
+          "destructive",
       });
 
       document
@@ -545,9 +508,12 @@ export default function DecretoFlussi2027() {
     }
 
     if (!form.lastName.trim()) {
+
       toast({
-        title: ui.missingName,
-        variant: "destructive",
+        title:
+          ui.missingName,
+        variant:
+          "destructive",
       });
 
       document
@@ -573,9 +539,12 @@ export default function DecretoFlussi2027() {
         form.email.trim(),
       )
     ) {
+
       toast({
-        title: ui.missingEmail,
-        variant: "destructive",
+        title:
+          ui.missingEmail,
+        variant:
+          "destructive",
       });
 
       document
@@ -596,19 +565,22 @@ export default function DecretoFlussi2027() {
       return;
     }
 
-    const digits =
+    const phoneDigits =
       form.phone.replace(
         /\D/g,
         "",
       );
 
     if (
-      digits.length < 8 ||
-      digits.length > 15
+      phoneDigits.length < 8 ||
+      phoneDigits.length > 15
     ) {
+
       toast({
-        title: ui.missingPhone,
-        variant: "destructive",
+        title:
+          ui.missingPhone,
+        variant:
+          "destructive",
       });
 
       document
@@ -630,9 +602,12 @@ export default function DecretoFlussi2027() {
     }
 
     if (!acceptTerms) {
+
       toast({
-        title: ui.termsRequired,
-        variant: "destructive",
+        title:
+          ui.termsRequired,
+        variant:
+          "destructive",
       });
 
       document
@@ -652,61 +627,44 @@ export default function DecretoFlussi2027() {
     try {
 
       /*
-       * IMPORTANTE:
-       * El endpoint actual de Stripe todavía usa
-       * los códigos antiguos.
-       *
-       * Se mandan los datos nuevos de género.
-       */
+      ========================================================
+      ENDPOINT CORRECTO
+      ========================================================
+      */
 
       const response =
         await fetch(
-      /api/create-checkout-flussi-lavoro
+          "/api/create-checkout-flussi-lavoro",
           {
-            method: "POST",
+            method:
+              "POST",
 
             headers: {
               "Content-Type":
                 "application/json",
             },
 
-            body: JSON.stringify({
-              firstName:
-                form.firstName.trim(),
+            body:
+              JSON.stringify({
+                firstName:
+                  form.firstName.trim(),
 
-              lastName:
-                form.lastName.trim(),
+                lastName:
+                  form.lastName.trim(),
 
-              email:
-                form.email
-                  .trim()
-                  .toLowerCase(),
+                email:
+                  form.email
+                    .trim()
+                    .toLowerCase(),
 
-              phone:
-                form.phone.trim(),
+                phone:
+                  form.phone.trim(),
 
-              gender,
+                gender,
 
-              /*
-               * Compatibilidad temporal con
-               * el backend actual.
-               */
-              workType:
-                "non_stagionale",
-
-              categories: [
-                "all_offers",
-              ],
-
-              packageCode:
-                selectedPackage,
-
-              packagePriceCents:
-                selectedPackage ===
-                "all_offers"
-                  ? 1499
-                  : 2499,
-            }),
+                packageCode:
+                  selectedPackage,
+              }),
           },
         );
 
@@ -717,11 +675,19 @@ export default function DecretoFlussi2027() {
         !response.ok ||
         !data.url
       ) {
+
         throw new Error(
           data.error ||
             ui.paymentError,
         );
+
       }
+
+      /*
+      ========================================================
+      REDIRECT STRIPE
+      ========================================================
+      */
 
       window.location.href =
         data.url;
@@ -752,9 +718,14 @@ export default function DecretoFlussi2027() {
   };
 
   return (
+
     <div
       className="min-h-screen bg-background text-foreground relative flex flex-col"
-      dir={isMa ? "rtl" : "ltr"}
+      dir={
+        isMa
+          ? "rtl"
+          : "ltr"
+      }
     >
 
       <div
@@ -792,13 +763,16 @@ export default function DecretoFlussi2027() {
               <div
                 className="relative w-full"
                 style={{
-                  height: "280px",
+                  height:
+                    "280px",
                 }}
               >
 
                 <img
                   src="/images/decreto-flussi-2027.png"
-                  alt={ui.subtitle}
+                  alt={
+                    ui.subtitle
+                  }
                   className="w-full h-full object-cover object-top"
                 />
 
@@ -820,7 +794,7 @@ export default function DecretoFlussi2027() {
 
 
           {/* =================================================
-              FORM
+              FORMULARIO
           ================================================= */}
 
           <motion.section
@@ -863,7 +837,7 @@ export default function DecretoFlussi2027() {
 
 
             {/* =================================================
-                DATOS PERSONALES
+                DATOS
             ================================================= */}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-5">
@@ -1007,7 +981,7 @@ export default function DecretoFlussi2027() {
 
 
             {/* =================================================
-                GÉNERO
+                HOMBRES / AMBOS / MUJERES
             ================================================= */}
 
             <div className="mb-5">
@@ -1018,15 +992,16 @@ export default function DecretoFlussi2027() {
 
               <div className="grid grid-cols-3 gap-2">
 
-                {/* HOMBRES */}
-
                 <button
                   type="button"
                   onClick={() =>
-                    setGender("male")
+                    setGender(
+                      "male",
+                    )
                   }
                   className={`min-h-[82px] rounded-xl border p-2 text-center transition-all ${
-                    gender === "male"
+                    gender ===
+                    "male"
                       ? "border-[#009246] bg-[#009246]/10 shadow-[0_0_18px_rgba(0,146,70,0.18)]"
                       : "border-white/10 bg-[#060b16] hover:border-white/25"
                   }`}
@@ -1040,7 +1015,8 @@ export default function DecretoFlussi2027() {
                     {ui.male}
                   </span>
 
-                  {gender === "male" && (
+                  {gender ===
+                    "male" && (
                     <span className="block text-[#00d878] text-[10px] mt-1">
                       ✓
                     </span>
@@ -1049,15 +1025,16 @@ export default function DecretoFlussi2027() {
                 </button>
 
 
-                {/* AMBOS */}
-
                 <button
                   type="button"
                   onClick={() =>
-                    setGender("both")
+                    setGender(
+                      "both",
+                    )
                   }
                   className={`min-h-[82px] rounded-xl border p-2 text-center transition-all ${
-                    gender === "both"
+                    gender ===
+                    "both"
                       ? "border-[#009246] bg-[#009246]/10 shadow-[0_0_18px_rgba(0,146,70,0.18)]"
                       : "border-white/10 bg-[#060b16] hover:border-white/25"
                   }`}
@@ -1071,7 +1048,8 @@ export default function DecretoFlussi2027() {
                     {ui.both}
                   </span>
 
-                  {gender === "both" && (
+                  {gender ===
+                    "both" && (
                     <span className="block text-[#00d878] text-[10px] mt-1">
                       ✓
                     </span>
@@ -1080,15 +1058,16 @@ export default function DecretoFlussi2027() {
                 </button>
 
 
-                {/* MUJERES */}
-
                 <button
                   type="button"
                   onClick={() =>
-                    setGender("female")
+                    setGender(
+                      "female",
+                    )
                   }
                   className={`min-h-[82px] rounded-xl border p-2 text-center transition-all ${
-                    gender === "female"
+                    gender ===
+                    "female"
                       ? "border-[#009246] bg-[#009246]/10 shadow-[0_0_18px_rgba(0,146,70,0.18)]"
                       : "border-white/10 bg-[#060b16] hover:border-white/25"
                   }`}
@@ -1102,7 +1081,8 @@ export default function DecretoFlussi2027() {
                     {ui.female}
                   </span>
 
-                  {gender === "female" && (
+                  {gender ===
+                    "female" && (
                     <span className="block text-[#ff6b9a] text-[10px] mt-1">
                       ✓
                     </span>
@@ -1146,7 +1126,9 @@ export default function DecretoFlussi2027() {
                     return (
 
                       <button
-                        key={pkg.code}
+                        key={
+                          pkg.code
+                        }
                         type="button"
                         onClick={() =>
                           setSelectedPackage(
@@ -1197,11 +1179,15 @@ export default function DecretoFlussi2027() {
                             <div className="min-w-0">
 
                               <p className="text-white text-[13px] font-bold leading-tight">
-                                {localized.title}
+                                {
+                                  localized.title
+                                }
                               </p>
 
                               <p className="text-white/45 text-[9px] mt-1">
-                                {localized.subtitle}
+                                {
+                                  localized.subtitle
+                                }
                               </p>
 
                             </div>
@@ -1213,7 +1199,9 @@ export default function DecretoFlussi2027() {
                                   : "text-[#00d878]"
                               }`}
                             >
-                              {pkg.price}
+                              {
+                                pkg.price
+                              }
                             </p>
 
                           </div>
@@ -1282,6 +1270,7 @@ export default function DecretoFlussi2027() {
                       </button>
 
                     );
+
                   },
                 )}
 
@@ -1297,18 +1286,22 @@ export default function DecretoFlussi2027() {
             <div className="mb-4 rounded-2xl border border-white/10 bg-[#060b16] p-4">
 
               <p className="text-white text-[11px] font-bold mb-2">
-                {ui.legalTitle}
+                {
+                  ui.legalTitle
+                }
               </p>
 
               <p className="text-white/50 text-[9px] leading-relaxed">
-                {ui.legalBody}
+                {
+                  ui.legalBody
+                }
               </p>
 
             </div>
 
 
             {/* =================================================
-                TERMINOS
+                TÉRMINOS
             ================================================= */}
 
             <label
@@ -1322,7 +1315,9 @@ export default function DecretoFlussi2027() {
 
               <input
                 type="checkbox"
-                checked={acceptTerms}
+                checked={
+                  acceptTerms
+                }
                 onChange={(e) =>
                   setAcceptTerms(
                     e.target.checked,
@@ -1352,7 +1347,9 @@ export default function DecretoFlussi2027() {
 
               <button
                 type="button"
-                onClick={handlePay}
+                onClick={
+                  handlePay
+                }
                 disabled={
                   submitting ||
                   !acceptTerms
@@ -1371,8 +1368,9 @@ export default function DecretoFlussi2027() {
                     <>
                       <Loader2 className="w-5 h-5 animate-spin" />
 
-                      {ui.paymentConnecting}
-
+                      {
+                        ui.paymentConnecting
+                      }
                     </>
 
                   ) : (
@@ -1387,7 +1385,6 @@ export default function DecretoFlussi2027() {
                       {
                         selectedPackageInfo.price
                       }
-
                     </>
 
                   )}
