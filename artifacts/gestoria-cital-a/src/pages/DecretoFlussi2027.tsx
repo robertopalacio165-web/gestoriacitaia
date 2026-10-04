@@ -445,9 +445,19 @@ export default function DecretoFlussi2027() {
 
   const [acceptTerms, setAcceptTerms] =
     useState(false);
+const [paymentSuccess, setPaymentSuccess] =
+  useState(false);
 
-  const [submitting, setSubmitting] =
-    useState(false);
+useEffect(() => {
+  const params = new URLSearchParams(
+    window.location.search,
+  );
+
+  setPaymentSuccess(
+    params.get("payment") === "success",
+  );
+}, []);
+ 
 
   const selectedPackageInfo =
     useMemo(
