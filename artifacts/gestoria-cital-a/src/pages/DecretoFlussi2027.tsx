@@ -427,16 +427,19 @@ export default function DecretoFlussi2027() {
         : "Acepta los términos antes de pagar",
   };
 
-  const [gender, setGender] =
-    useState<GenderCode>("both");
+const [gender, setGender] =
+  useState<GenderCode>("both");
 
-  const [form, setForm] =
-    useState({
-      firstName: "",
-      lastName: "",
-      email: "",
-      phone: "",
-    });
+const [submitting, setSubmitting] =
+  useState(false);
+
+const [form, setForm] =
+  useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+  });
 
   const [selectedPackage, setSelectedPackage] =
     useState<PackageCode>(
