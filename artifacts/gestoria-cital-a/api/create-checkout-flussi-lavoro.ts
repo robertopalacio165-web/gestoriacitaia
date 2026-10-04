@@ -63,7 +63,7 @@ const PLANS = {
      * Cuando termines la prueba:
      * cambiar 50 -> 1499
      */
-    amount: 50,
+ amount: 1499,
 
     realAmount: 1499,
 
