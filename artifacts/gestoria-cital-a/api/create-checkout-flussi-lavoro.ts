@@ -1,49 +1,32 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import Stripe from "stripe";
 
-/**
- * ============================================================
- * GESTORIACITAIA
- * DECRETO FLUSSI LAVORO
- * CREATE STRIPE CHECKOUT
- * ============================================================
- *
- * ARCHIVO:
- *   api/create-checkout-flussi-lavoro.ts
- *
- * ESTE CHECKOUT ES EXCLUSIVO DEL SERVICIO:
- *   "Decreto Flussi Lavoro"
- *
- * NO toca el checkout de:
- *   - Verificación Decreto Flussi
- *   - Malta
- *   - otros servicios
- *
- * FLUJO:
- *
- * FORMULARIO
- *    ↓
- * seleccionar tipo de trabajo
- *    ↓
- * seleccionar categorías
- *    ↓
- * seleccionar paquete
- *    ↓
- * Stripe Checkout
- *    ↓
- * checkout.session.completed
- *    ↓
- * WEBHOOK FLUSSI LAVORO
- *    ↓
- * confirmar pago
- *    ↓
- * enviar email del plan contratado
- *
- * IMPORTANTE:
- * El precio definitivo se decide EN EL SERVIDOR.
- * No confiamos en packagePriceCents enviado por el navegador.
- * ============================================================
- */
+/*
+============================================================
+GESTORIACITAIA
+DECRETO FLUSSI LAVORO
+STRIPE CHECKOUT
+============================================================
+
+SOLO 2 PLANES:
+
+1. all_offers
+   - Precio REAL: 14,99 €
+   - PRECIO TEMPORAL DE PRUEBA: 0,50 €
+
+2. new_10_days
+   - 24,99 €
+   - Nuevas ofertas cada 10 días
+   - Duración: 3 meses
+   - 6 envíos
+
+IMPORTANTE:
+
+El precio enviado desde el navegador NO se utiliza.
+
+El precio definitivo SIEMPRE sale de PLANS en el servidor.
+============================================================
+*/
 
 const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
 
@@ -51,52 +34,81 @@ const stripe = stripeSecretKey
   ? new Stripe(stripeSecretKey)
   : null;
 
-const FLUSSI_LAVORO_CURRENCY = "eur";
-const FLUSSI_LAVORO_PRODUCT = "decreto_flussi_lavoro";
+const CURRENCY = "eur";
 
-/**
- * Precios oficiales del servicio.
- *
- * monthly:
- *   9,99 € / 30 días
- *
- * biweekly:
- *   19,99 € / 30 días
- *
- * single_category:
- *   24,99 € / 30 días
- */
+const PRODUCT = "decreto_flussi_lavoro";
+
+/*
+============================================================
+PLANES
+============================================================
+*/
+
 const PLANS = {
-  monthly: {
-    code: "monthly",
-    name: "Offerte del mese",
+  all_offers: {
+    code: "all_offers",
+
+    name: "Tutte le offerte",
+
+    nameEs: "Todas las ofertas",
+
+    nameEn: "All job offers",
+
+    nameMa: "جميع عروض العمل",
+
+    /*
+     * PRUEBA:
+     * 0,50 €
+     *
+     * Cuando termines la prueba:
+     * cambiar 50 -> 1499
+     */
     amount: 50,
+
+    realAmount: 1499,
+
     durationDays: 30,
+
+    deliveries: 1,
   },
 
-  biweekly: {
-    code: "biweekly",
-    name: "Aggiornamenti ogni 15 giorni",
-    amount: 50,
-    durationDays: 30,
-  },
+  new_10_days: {
+    code: "new_10_days",
 
-  single_category: {
-    code: "single_category",
-    name: "Una sola categoria",
-    amount: 50,
-    durationDays: 30,
+    name: "Nuove offerte ogni 10 giorni",
+
+    nameEs: "Nuevas ofertas cada 10 días",
+
+    nameEn: "New offers every 10 days",
+
+    nameMa: "عروض جديدة كل 10 أيام",
+
+    amount: 2499,
+
+    realAmount: 2499,
+
+    durationDays: 90,
+
+    deliveries: 6,
   },
 } as const;
 
 type PackageCode = keyof typeof PLANS;
 
-/**
- * Limpieza básica de strings.
- */
+type GenderCode =
+  | "male"
+  | "both"
+  | "female";
+
+/*
+============================================================
+HELPERS
+============================================================
+*/
+
 function cleanString(
   value: unknown,
-  maxLength = 500
+  maxLength = 500,
 ): string {
   if (typeof value !== "string") {
     return "";
@@ -108,53 +120,68 @@ function cleanString(
     .slice(0, maxLength);
 }
 
-/**
- * Limpieza de email.
- */
-function cleanEmail(value: unknown): string {
-  return cleanString(value, 320).toLowerCase();
+function cleanEmail(
+  value: unknown,
+): string {
+  return cleanString(
+    value,
+    320,
+  ).toLowerCase();
 }
 
-function isValidEmail(email: string): boolean {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+function isValidEmail(
+  email: string,
+): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
+    email,
+  );
 }
 
-/**
- * Convierte categorías a una lista segura.
- */
-function cleanCategories(value: unknown): string[] {
-  if (!Array.isArray(value)) {
-    return [];
+function cleanGender(
+  value: unknown,
+): GenderCode | "" {
+  const gender = cleanString(
+    value,
+    20,
+  );
+
+  if (
+    gender === "male" ||
+    gender === "both" ||
+    gender === "female"
+  ) {
+    return gender;
   }
 
-  return value
-    .filter((item): item is string => typeof item === "string")
-    .map((item) => cleanString(item, 100))
-    .filter(Boolean)
-    .slice(0, 30);
+  return "";
 }
 
-/**
- * Devuelve la URL pública de la web.
- */
 function getBaseUrl(): string {
-  const baseUrl =
+  const url =
     process.env.NEXT_PUBLIC_URL ||
     process.env.NEXT_PUBLIC_SITE_URL ||
     "https://gestoriacitaia.com";
 
-  return baseUrl.replace(/\/+$/, "");
+  return url.replace(/\/+$/, "");
 }
+
+/*
+============================================================
+HANDLER
+============================================================
+*/
 
 export default async function handler(
   req: VercelRequest,
-  res: VercelResponse
+  res: VercelResponse,
 ) {
-  /**
-   * ----------------------------------------------------------
-   * SOLO POST
-   * ----------------------------------------------------------
-   */
+
+  /*
+  ----------------------------------------------------------
+  SOLO POST
+  ----------------------------------------------------------
+  */
+
   if (req.method !== "POST") {
     return res.status(405).json({
       ok: false,
@@ -162,301 +189,419 @@ export default async function handler(
     });
   }
 
-  try {
-    if (!stripe) {
-      console.error(
-        "❌ STRIPE_SECRET_KEY no está configurada."
-      );
+  /*
+  ----------------------------------------------------------
+  STRIPE
+  ----------------------------------------------------------
+  */
 
-      return res.status(500).json({
-        ok: false,
-        error:
-          "Stripe no está configurado correctamente en el servidor.",
-      });
-    }
+  if (!stripe) {
+    console.error(
+      "STRIPE_SECRET_KEY no configurada.",
+    );
+
+    return res.status(500).json({
+      ok: false,
+      error:
+        "Stripe no está configurado correctamente.",
+    });
+  }
+
+  try {
 
     const body = req.body || {};
 
-    /**
-     * --------------------------------------------------------
-     * DATOS DEL CLIENTE
-     * --------------------------------------------------------
-     *
-     * Compatibles con el frontend DecretoFlussi2027.tsx:
-     *
-     * firstName
-     * lastName
-     * email
-     * phone
-     * workType
-     * categories
-     * packageCode
-     */
-    const firstName = cleanString(
-      body.firstName ??
-        body.client_name ??
-        body.clientName,
-      100
-    );
+    /*
+    --------------------------------------------------------
+    CLIENTE
+    --------------------------------------------------------
+    */
 
-    const lastName = cleanString(
-      body.lastName ??
-        body.client_surname ??
-        body.clientSurname,
-      150
-    );
+    const firstName =
+      cleanString(
+        body.firstName ??
+          body.client_name,
+        100,
+      );
 
-    const email = cleanEmail(
-      body.email ??
-        body.gmail
-    );
+    const lastName =
+      cleanString(
+        body.lastName ??
+          body.client_surname,
+        150,
+      );
 
-    const phone = cleanString(
-      body.phone ??
-        body.whatsapp ??
-        body.telefono,
-      40
-    );
+    const email =
+      cleanEmail(
+        body.email ??
+          body.gmail,
+      );
 
-    const workType = cleanString(
-      body.workType ??
-        body.work_type,
-      50
-    );
+    const phone =
+      cleanString(
+        body.phone ??
+          body.whatsapp ??
+          body.telefono,
+        40,
+      );
 
-    const categories = cleanCategories(
-      body.categories ??
-        body.selectedCategories
-    );
+    const gender =
+      cleanGender(
+        body.gender,
+      );
 
-    const packageCodeRaw = cleanString(
-      body.packageCode ??
-        body.package_code,
-      50
-    ) as PackageCode;
+    const packageCode =
+      cleanString(
+        body.packageCode ??
+          body.package_code,
+        50,
+      ) as PackageCode;
 
-    /**
-     * --------------------------------------------------------
-     * VALIDAR PLAN
-     * --------------------------------------------------------
-     *
-     * NUNCA aceptamos el precio enviado por el navegador.
-     */
+    /*
+    --------------------------------------------------------
+    VALIDAR PLAN
+    --------------------------------------------------------
+    */
+
     if (
       !Object.prototype.hasOwnProperty.call(
         PLANS,
-        packageCodeRaw
+        packageCode,
       )
     ) {
       return res.status(400).json({
         ok: false,
-        error: "El paquete seleccionado no es válido.",
+        error:
+          "El paquete seleccionado no es válido.",
       });
     }
 
-    const plan = PLANS[packageCodeRaw];
+    const plan =
+      PLANS[packageCode];
 
-    /**
-     * --------------------------------------------------------
-     * VALIDACIONES
-     * --------------------------------------------------------
-     */
+    /*
+    --------------------------------------------------------
+    VALIDAR NOMBRE
+    --------------------------------------------------------
+    */
+
     if (!firstName) {
       return res.status(400).json({
         ok: false,
-        error: "El nombre es obligatorio.",
+        error:
+          "El nombre es obligatorio.",
       });
     }
+
+    /*
+    --------------------------------------------------------
+    VALIDAR APELLIDO
+    --------------------------------------------------------
+    */
 
     if (!lastName) {
       return res.status(400).json({
         ok: false,
-        error: "Los apellidos son obligatorios.",
+        error:
+          "Los apellidos son obligatorios.",
       });
     }
 
-    if (!email || !isValidEmail(email)) {
-      return res.status(400).json({
-        ok: false,
-        error: "Introduce un email válido.",
-      });
-    }
-
-    if (!phone) {
-      return res.status(400).json({
-        ok: false,
-        error: "El teléfono es obligatorio.",
-      });
-    }
+    /*
+    --------------------------------------------------------
+    VALIDAR EMAIL
+    --------------------------------------------------------
+    */
 
     if (
-      workType !== "non_stagionale" &&
-      workType !== "stagionale"
-    ) {
-      return res.status(400).json({
-        ok: false,
-        error: "Selecciona un tipo de trabajo válido.",
-      });
-    }
-
-    if (!categories.length) {
-      return res.status(400).json({
-        ok: false,
-        error: "Selecciona al menos una categoría profesional.",
-      });
-    }
-
-    /**
-     * El paquete de una sola categoría permite exactamente una.
-     */
-    if (
-      packageCodeRaw === "single_category" &&
-      categories.length !== 1
+      !email ||
+      !isValidEmail(email)
     ) {
       return res.status(400).json({
         ok: false,
         error:
-          "El paquete de una sola categoría requiere exactamente una categoría.",
+          "Introduce un email válido.",
       });
     }
 
-    /**
-     * --------------------------------------------------------
-     * REFERENCIA INTERNA
-     * --------------------------------------------------------
-     */
+    /*
+    --------------------------------------------------------
+    VALIDAR TELÉFONO
+    --------------------------------------------------------
+    */
+
+    const phoneDigits =
+      phone.replace(
+        /\D/g,
+        "",
+      );
+
+    if (
+      !phone ||
+      phoneDigits.length < 8 ||
+      phoneDigits.length > 15
+    ) {
+      return res.status(400).json({
+        ok: false,
+        error:
+          "Introduce un teléfono válido.",
+      });
+    }
+
+    /*
+    --------------------------------------------------------
+    VALIDAR GÉNERO
+    --------------------------------------------------------
+    */
+
+    if (!gender) {
+      return res.status(400).json({
+        ok: false,
+        error:
+          "Selecciona Hombres, Ambos o Mujeres.",
+      });
+    }
+
+    /*
+    --------------------------------------------------------
+    REFERENCIA
+    --------------------------------------------------------
+    */
+
     const reference =
-      `FLUSSI-LAVORO-${Date.now()}-${Math.random()
+      `FLUSSI-${Date.now()}-${Math.random()
         .toString(36)
         .slice(2, 8)
         .toUpperCase()}`;
 
-    /**
-     * --------------------------------------------------------
-     * METADATA
-     * --------------------------------------------------------
-     *
-     * Stripe metadata tiene límites de tamaño.
-     * Guardamos solo los datos necesarios para identificar
-     * la compra en el webhook.
-     */
-    const metadata: Record<string, string> = {
-      product: FLUSSI_LAVORO_PRODUCT,
-      service: "flussi_lavoro",
+    /*
+    --------------------------------------------------------
+    METADATA STRIPE
+    --------------------------------------------------------
+
+    El webhook utilizará estos datos después
+    de checkout.session.completed.
+    */
+
+    const metadata: Record<
+      string,
+      string
+    > = {
+
+      product:
+        PRODUCT,
+
+      service:
+        "flussi_lavoro",
+
       reference,
 
-      client_name: firstName.slice(0, 100),
-      client_surname: lastName.slice(0, 150),
-      email: email.slice(0, 300),
-      phone: phone.slice(0, 40),
+      client_first_name:
+        firstName,
 
-      work_type: workType,
+      client_last_name:
+        lastName,
 
-      categories: categories
-        .join(",")
-        .slice(0, 490),
+      client_name:
+        `${firstName} ${lastName}`,
 
-      package_code: plan.code,
-      package_name: plan.name,
-      package_amount_cents: String(plan.amount),
-      duration_days: String(plan.durationDays),
+      email,
+
+      phone,
+
+      gender,
+
+      package_code:
+        plan.code,
+
+      package_name:
+        plan.name,
+
+      package_name_es:
+        plan.nameEs,
+
+      package_name_en:
+        plan.nameEn,
+
+      package_name_ma:
+        plan.nameMa,
+
+      package_amount_cents:
+        String(
+          plan.amount,
+        ),
+
+      real_amount_cents:
+        String(
+          plan.realAmount,
+        ),
+
+      duration_days:
+        String(
+          plan.durationDays,
+        ),
+
+      deliveries:
+        String(
+          plan.deliveries,
+        ),
     };
 
-    /**
-     * --------------------------------------------------------
-     * CREAR STRIPE CHECKOUT
-     * --------------------------------------------------------
-     */
-    const baseUrl = getBaseUrl();
+    /*
+    --------------------------------------------------------
+    URLS
+    --------------------------------------------------------
+    */
+
+    const baseUrl =
+      getBaseUrl();
+
+    /*
+    --------------------------------------------------------
+    STRIPE CHECKOUT
+    --------------------------------------------------------
+    */
 
     const session =
-      await stripe.checkout.sessions.create({
-        mode: "payment",
+      await stripe.checkout.sessions.create(
+        {
 
-        payment_method_types: [
-          "card",
-        ],
+          mode:
+            "payment",
 
-        customer_email: email,
+          payment_method_types:
+            [
+              "card",
+            ],
 
-        client_reference_id: reference,
+          customer_email:
+            email,
 
-        line_items: [
-          {
-            price_data: {
-              currency:
-                FLUSSI_LAVORO_CURRENCY,
+          client_reference_id:
+            reference,
 
-              unit_amount:
-                plan.amount,
+          line_items:
+            [
+              {
+                price_data:
+                  {
+                    currency:
+                      CURRENCY,
 
-              product_data: {
-                name:
-                  `Decreto Flussi Lavoro — ${plan.name}`,
+                    /*
+                     * IMPORTANTE:
+                     *
+                     * AQUÍ ESTÁ EL PRECIO REAL
+                     * DEL SERVIDOR.
+                     *
+                     * PLAN 1 = 50 céntimos
+                     * PLAN 2 = 24,99 €
+                     */
 
-                description:
-                  `Servicio de ofertas de trabajo Decreto Flussi. ${plan.name}. Duración: ${plan.durationDays} días.`,
+                    unit_amount:
+                      plan.amount,
+
+                    product_data:
+                      {
+                        name:
+                          `Decreto Flussi Lavoro — ${plan.name}`,
+
+                        description:
+                          plan.code ===
+                          "all_offers"
+                            ? "Servizio di ricerca e invio di offerte di lavoro Decreto Flussi."
+                            : "Nuove offerte di lavoro ogni 10 giorni per 3 mesi.",
+                      },
+                  },
+
+                quantity:
+                  1,
               },
+            ],
+
+          /*
+          ----------------------------------------------------
+          SUCCESS
+          ----------------------------------------------------
+          */
+
+          success_url:
+            `${baseUrl}/decreto-flussi-2027?payment=success&session_id={CHECKOUT_SESSION_ID}`,
+
+          /*
+          ----------------------------------------------------
+          CANCEL
+          ----------------------------------------------------
+          */
+
+          cancel_url:
+            `${baseUrl}/decreto-flussi-2027?payment=cancelled`,
+
+          /*
+          ----------------------------------------------------
+          METADATA
+          ----------------------------------------------------
+          */
+
+          metadata,
+
+          payment_intent_data:
+            {
+              metadata,
             },
 
-            quantity: 1,
-          },
-        ],
+          billing_address_collection:
+            "auto",
 
-        /**
-         * ----------------------------------------------------
-         * RETURN URLS
-         * ----------------------------------------------------
-         */
-        success_url:
-          `${baseUrl}/decreto-flussi-2027?payment=success&session_id={CHECKOUT_SESSION_ID}`,
+          allow_promotion_codes:
+            false,
 
-        cancel_url:
-          `${baseUrl}/decreto-flussi-2027?payment=cancelled`,
-
-        /**
-         * ----------------------------------------------------
-         * METADATA
-         * ----------------------------------------------------
-         */
-        metadata,
-
-        payment_intent_data: {
-          metadata,
+          submit_type:
+            "pay",
         },
+      );
 
-        billing_address_collection:
-          "auto",
-
-        allow_promotion_codes:
-          false,
-
-        submit_type: "pay",
-      });
+    /*
+    --------------------------------------------------------
+    LOG
+    --------------------------------------------------------
+    */
 
     console.log(
-      "✅ FLUSSI LAVORO CHECKOUT CREATED",
+      "FLUSSI CHECKOUT CREATED",
       {
-        sessionId: session.id,
+        sessionId:
+          session.id,
+
         reference,
+
         email,
-        packageCode: plan.code,
-        amount: plan.amount,
-        categories,
-        workType,
-      }
+
+        gender,
+
+        packageCode:
+          plan.code,
+
+        amount:
+          plan.amount,
+      },
     );
 
-    /**
-     * --------------------------------------------------------
-     * RESPUESTA AL FRONTEND
-     * --------------------------------------------------------
-     */
+    /*
+    --------------------------------------------------------
+    RESPONSE
+    --------------------------------------------------------
+    */
+
     return res.status(200).json({
+
       ok: true,
 
       session_id:
         session.id,
+
+      url:
+        session.url,
 
       checkout_url:
         session.url,
@@ -464,13 +609,10 @@ export default async function handler(
       checkoutUrl:
         session.url,
 
-      url:
-        session.url,
-
       reference,
 
       product:
-        FLUSSI_LAVORO_PRODUCT,
+        PRODUCT,
 
       packageCode:
         plan.code,
@@ -482,24 +624,36 @@ export default async function handler(
         plan.amount,
 
       currency:
-        FLUSSI_LAVORO_CURRENCY,
+        CURRENCY,
 
       durationDays:
         plan.durationDays,
 
-      paid: false,
+      deliveries:
+        plan.deliveries,
+
+      gender,
+
+      paid:
+        false,
 
       message:
-        "Checkout de Stripe creado. El pago todavía no está confirmado.",
+        "Checkout Stripe creado correctamente.",
     });
-  } catch (error: any) {
+
+  } catch (
+    error: any
+  ) {
+
     console.error(
-      "❌ FLUSSI LAVORO CHECKOUT ERROR:",
-      error
+      "FLUSSI CHECKOUT ERROR:",
+      error,
     );
 
     return res.status(500).json({
+
       ok: false,
+
       error:
         error?.message ||
         "No se pudo crear el pago de Stripe.",
