@@ -661,7 +661,7 @@ export default function DecretoFlussi2027() {
 
       const response =
         await fetch(
-          "/api/create-checkout-flussi",
+      /api/create-checkout-flussi-lavoro
           {
             method: "POST",
 
