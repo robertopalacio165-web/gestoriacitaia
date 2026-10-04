@@ -898,7 +898,7 @@ useEffect(() => {
           {/* =================================================
               FORMULARIO
           ================================================= */}
-
+{!paymentSuccess && (
           <motion.section
             initial={{
               opacity: 0,
@@ -1498,7 +1498,7 @@ useEffect(() => {
             </div>
 
           </motion.section>
-
+)}
         </div>
 
       </main>
