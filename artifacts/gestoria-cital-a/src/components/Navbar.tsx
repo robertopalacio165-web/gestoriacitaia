@@ -268,6 +268,32 @@ export function Navbar() {
       color: "text-primary",
     },
 
+    // 🇮🇹 DECRETO FLUSSI 2027
+    {
+      href: "/decreto-flussi-2027",
+      label:
+        lang === "darija"
+          ? "Decreto Flussi 2027"
+          : lang === "en"
+            ? "Decreto Flussi 2027"
+            : "Decreto Flussi 2027",
+      icon: Briefcase,
+      color: "text-green-400",
+    },
+
+    // ✅ VERIFICACIÓN DECRETO FLUSSI
+    {
+      href: "/verificar-decreto-flussi",
+      label:
+        lang === "darija"
+          ? "التحقق من Decreto Flussi"
+          : lang === "en"
+            ? "Flussi Verification"
+            : "Verificación Flussi",
+      icon: CheckCircle2,
+      color: "text-yellow-400",
+    },
+
     {
       href: "/trabajo-malta",
       label: lang === "darija" ? "عمل في مالطا" : lang === "en" ? "Work in Malta" : "Trabajo en Malta",
@@ -678,6 +704,28 @@ export function Navbar() {
                           color: "text-secondary",
                         },
                      
+                        {
+                          icon: Briefcase,
+                          label:
+                            lang === "darija"
+                              ? "Decreto Flussi 2027"
+                              : lang === "en"
+                                ? "Decreto Flussi 2027"
+                                : "Decreto Flussi 2027",
+                          href: "/decreto-flussi-2027",
+                          color: "text-green-400",
+                        },
+                        {
+                          icon: CheckCircle2,
+                          label:
+                            lang === "darija"
+                              ? "التحقق من Decreto Flussi"
+                              : lang === "en"
+                                ? "Flussi Verification"
+                                : "Verificación Flussi",
+                          href: "/verificar-decreto-flussi",
+                          color: "text-yellow-400",
+                        },
                         {
                           icon: Briefcase,
                           label: lang === "darija" ? "عمل في مالطا" : lang === "en" ? "Work in Malta" : "Trabajo en Malta",
