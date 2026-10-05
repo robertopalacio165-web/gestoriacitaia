@@ -605,7 +605,11 @@ export default function PanelMalta() {
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3">
                     <div className="w-11 h-11 rounded-xl bg-green-500/10 border border-green-500/20 flex items-center justify-center">
-                      <span className="text-2xl">🇮🇹</span>
+                 <img
+  src="https://flagcdn.com/w80/it.png"
+  alt="Italia"
+  className="w-8 h-6 object-cover rounded-sm"
+/>
                     </div>
 
                     <div>
