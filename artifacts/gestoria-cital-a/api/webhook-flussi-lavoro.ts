@@ -147,6 +147,201 @@ function addDays(
 
 /**
  * ============================================================
+ * SYNC PAID CLIENT → WORKER
+ * ============================================================
+ *
+ * ESTA ES LA ÚNICA PARTE NUEVA.
+ *
+ * Cada pago confirmado se registra también en:
+ *
+ * flussi_email_clients
+ *
+ * para que send-flussi-offerte.ts pueda leer
+ * automáticamente al cliente.
+ */
+
+async function syncEmailClient(
+  email: string,
+  gender: string,
+  plan: number
+) {
+  const normalizedEmail =
+    clean(email).toLowerCase();
+
+  let genderTarget =
+    "Ambos";
+
+  if (
+    gender === "male" ||
+    gender === "hombre"
+  ) {
+    genderTarget = "Hombre";
+  } else if (
+    gender === "female" ||
+    gender === "mujer"
+  ) {
+    genderTarget = "Mujer";
+  }
+
+  const lookup =
+    await supabaseRequest(
+      `flussi_email_clients?select=id,email,plan,gender_target,active,last_sent_at,next_send_at,send_count,created_at,updated_at&email=eq.${encodeURIComponent(
+        normalizedEmail
+      )}&limit=1`
+    );
+
+  const lookupText =
+    await lookup.text();
+
+  if (!lookup.ok) {
+    throw new Error(
+      `flussi_email_clients lookup failed: ${lookup.status} ${lookupText}`
+    );
+  }
+
+  const existing =
+    JSON.parse(lookupText);
+
+  const now =
+    new Date().toISOString();
+
+  /**
+   * CLIENTE YA EXISTE
+   */
+  if (
+    Array.isArray(existing) &&
+    existing.length > 0
+  ) {
+    const clientId =
+      existing[0].id;
+
+    const update =
+      await supabaseRequest(
+        `flussi_email_clients?id=eq.${encodeURIComponent(
+          clientId
+        )}`,
+        {
+          method: "PATCH",
+
+          headers: {
+            Prefer:
+              "return=minimal",
+          },
+
+          body:
+            JSON.stringify({
+              email:
+                normalizedEmail,
+
+              plan,
+
+              gender_target:
+                genderTarget,
+
+              active:
+                true,
+
+              updated_at:
+                now,
+            }),
+        }
+      );
+
+    const updateText =
+      await update.text();
+
+    if (!update.ok) {
+      throw new Error(
+        `flussi_email_clients update failed: ${update.status} ${updateText}`
+      );
+    }
+
+    console.log(
+      "✅ FLUSSI WORKER CLIENT UPDATED:",
+      {
+        email:
+          normalizedEmail,
+
+        plan,
+
+        gender_target:
+          genderTarget,
+      }
+    );
+
+    return;
+  }
+
+  /**
+   * CLIENTE NUEVO
+   */
+  const insert =
+    await supabaseRequest(
+      "flussi_email_clients",
+      {
+        method: "POST",
+
+        headers: {
+          Prefer:
+            "return=minimal",
+        },
+
+        body:
+          JSON.stringify({
+            email:
+              normalizedEmail,
+
+            plan,
+
+            gender_target:
+              genderTarget,
+
+            active:
+              true,
+
+            last_sent_at:
+              null,
+
+            next_send_at:
+              null,
+
+            send_count:
+              0,
+
+            created_at:
+              now,
+
+            updated_at:
+              now,
+          }),
+      }
+    );
+
+  const insertText =
+    await insert.text();
+
+  if (!insert.ok) {
+    throw new Error(
+      `flussi_email_clients insert failed: ${insert.status} ${insertText}`
+    );
+  }
+
+  console.log(
+    "✅ FLUSSI WORKER CLIENT CREATED:",
+    {
+      email:
+        normalizedEmail,
+
+      plan,
+
+      gender_target:
+        genderTarget,
+    }
+  );
+}
+
+/**
+ * ============================================================
  * WEBHOOK
  * ============================================================
  */
@@ -180,8 +375,6 @@ export default async function handler(
    * ==========================================================
    *
    * ⚠️ NO TOCAR.
-   *
-   * Es exactamente el secret del webhook viejo.
    */
 
   const webhookSecret =
@@ -233,8 +426,6 @@ export default async function handler(
      * ========================================================
      * STRIPE SIGNATURE
      * ========================================================
-     *
-     * ⚠️ NO TOCAR.
      */
 
     let event: Stripe.Event;
@@ -279,7 +470,6 @@ export default async function handler(
       event.type !==
       "checkout.session.completed"
     ) {
-
       return res
         .status(200)
         .json({
@@ -311,11 +501,6 @@ export default async function handler(
      * ========================================================
      * PRODUCT
      * ========================================================
-     *
-     * NUEVO SERVICIO:
-     *
-     * service = flussi_lavoro
-     * product = decreto_flussi_lavoro
      */
 
     if (
@@ -324,11 +509,9 @@ export default async function handler(
       metadata.product !==
         "decreto_flussi_lavoro"
     ) {
-
       return res
         .status(200)
         .json({
-
           received:
             true,
 
@@ -350,11 +533,9 @@ export default async function handler(
       session.payment_status !==
       "paid"
     ) {
-
       return res
         .status(200)
         .json({
-
           received:
             true,
 
@@ -428,7 +609,6 @@ export default async function handler(
       !lastName ||
       !email
     ) {
-
       return res
         .status(400)
         .json({
@@ -441,9 +621,6 @@ export default async function handler(
      * ========================================================
      * CATEGORIES
      * ========================================================
-     *
-     * El nuevo formulario no utiliza categorías.
-     * Permitimos igualmente metadata antigua.
      */
 
     const categories =
@@ -461,14 +638,6 @@ export default async function handler(
      * ========================================================
      * PACKAGE
      * ========================================================
-     *
-     * NUEVOS PLANES:
-     *
-     * all_offers
-     * 0,50 €
-     *
-     * new_10_days
-     * 24,99 €
      */
 
     const packageCode =
@@ -482,7 +651,6 @@ export default async function handler(
       packageCode !==
         "new_10_days"
     ) {
-
       return res
         .status(400)
         .json({
@@ -498,18 +666,12 @@ export default async function handler(
      * ========================================================
      * PRECIO
      * ========================================================
-     *
-     * TEST:
-     *
-     * all_offers = 0,50 €
-     *
-     * new_10_days = 24,99 €
      */
 
     const expectedAmount =
       packageCode ===
         "all_offers"
-   ? 1499
+        ? 1499
         : 2499;
 
     const amountCents =
@@ -521,7 +683,6 @@ export default async function handler(
       amountCents !==
       expectedAmount
     ) {
-
       return res
         .status(400)
         .json({
@@ -541,34 +702,13 @@ export default async function handler(
      * ========================================================
      * TABLE
      * ========================================================
-     *
-     * Mantenemos las tablas existentes.
-     *
-     * all_offers
-     *   → monthly
-     *
-     * new_10_days
-     *   → single_category
-     *
-     * El precio no determina la tabla.
      */
 
     const table =
       packageCode ===
         "all_offers"
-   ? "flussi_lavoro_14_99"
+        ? "flussi_lavoro_14_99"
         : "flussi_lavoro_24_99";
-
-    /**
-     * ========================================================
-     * TEMPORARY TEST
-     * ========================================================
-     *
-     * Ambos pagos pueden probarse con:
-     *
-     * all_offers → 0,50
-     * new_10_days → 24,99
-     */
 
     /**
      * ========================================================
@@ -692,17 +832,17 @@ export default async function handler(
      * ========================================================
      */
 
-if (
-  packageCode ===
-  "new_10_days"
-) {
+    if (
+      packageCode ===
+      "new_10_days"
+    ) {
 
-  record.starts_at =
-    startsAt;
+      record.starts_at =
+        startsAt;
 
-  record.expires_at =
-    expiresAt;
-}
+      record.expires_at =
+        expiresAt;
+    }
 
     /**
      * ========================================================
@@ -767,6 +907,26 @@ if (
 
     /**
      * ========================================================
+     * SYNC WITH EMAIL WORKER
+     * ========================================================
+     *
+     * ÚNICA FUNCIÓN NUEVA.
+     *
+     * El cliente pagado queda disponible para:
+     *
+     * send-flussi-offerte.ts
+     */
+
+    await syncEmailClient(
+      email,
+      gender,
+      expectedAmount === 2499
+        ? 24.99
+        : 14.99
+    );
+
+    /**
+     * ========================================================
      * REFERENCE
      * ========================================================
      */
@@ -800,10 +960,6 @@ if (
      * ========================================================
      * EXISTING GMAIL FILE
      * ========================================================
-     *
-     * ⚠️ NO SE CREA NINGUNA PLANTILLA AQUÍ.
-     *
-     * Se utiliza el archivo Gmail EXISTENTE.
      */
 
     const gmailUrl =
@@ -848,16 +1004,6 @@ if (
 
       categories,
 
-      /**
-       * El Gmail existente utiliza estos códigos.
-       *
-       * all_offers
-       * → monthly
-       *
-       * new_10_days
-       * → single_category
-       */
-
       packageCode:
         packageCode ===
           "all_offers"
@@ -865,10 +1011,6 @@ if (
           : "single_category",
 
       packageName,
-
-      /**
-       * Precio REAL enviado al Gmail.
-       */
 
       packageAmountCents:
         expectedAmount,
@@ -895,14 +1037,6 @@ if (
       "Content-Type":
         "application/json",
     };
-
-    /**
-     * Secret interno del Gmail.
-     *
-     * ⚠️ NO ES EL SECRET DE STRIPE.
-     *
-     * No se cambia.
-     */
 
     if (
       process.env
@@ -1057,6 +1191,9 @@ if (
           true,
 
         emailSent:
+          true,
+
+        workerClientSynced:
           true,
 
         table,
