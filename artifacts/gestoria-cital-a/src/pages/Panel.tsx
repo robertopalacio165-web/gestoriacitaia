@@ -53,6 +53,20 @@ type ProfileRow = {
   created_at: string;
 };
 
+
+type FlussiClientRow = {
+  id: string;
+  email: string | null;
+  plan: string | number | null;
+  gender_target: string | null;
+  active: boolean | null;
+  last_sent_at: string | null;
+  next_send_at: string | null;
+  send_count: number | null;
+  created_at: string | null;
+  updated_at: string | null;
+};
+
 type TabKey = "inicio" | "documentos" | "cuenta";
 
 // ============================================
@@ -100,8 +114,75 @@ export default function PanelMalta() {
   const [profile, setProfile] = useState<ProfileRow | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [flussiClient, setFlussiClient] = useState<FlussiClientRow | null>(null);
+  const [flussiLoading, setFlussiLoading] = useState(true);
   const { toast } = useToast();
   const { t } = useLang();
+
+  // ==========================================================
+  // 🇮🇹 DECRETO FLUSSI 2027 — INDEPENDIENTE DE MALTA
+  // ==========================================================
+  const loadFlussiClient = async () => {
+    try {
+      setFlussiLoading(true);
+
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      const email = session?.user?.email?.trim().toLowerCase();
+
+      if (!email) {
+        setFlussiClient(null);
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("flussi_email_clients")
+        .select(
+          "id,email,plan,gender_target,active,last_sent_at,next_send_at,send_count,created_at,updated_at"
+        )
+        .eq("email", email)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (error) {
+        console.error("Error cargando Flussi:", error);
+        setFlussiClient(null);
+        return;
+      }
+
+      setFlussiClient(data as FlussiClientRow | null);
+    } catch (error) {
+      console.error("Error Flussi panel:", error);
+      setFlussiClient(null);
+    } finally {
+      setFlussiLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadFlussiClient();
+
+    const channel = supabase
+      .channel("panel-flussi-client")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "flussi_email_clients",
+        },
+        () => loadFlussiClient()
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
 
   // ============================================
   // 🔧 CORRECCIÓN: usar getSession y ordenar por created_at
@@ -334,6 +415,55 @@ export default function PanelMalta() {
     }
   };
 
+
+  // ==========================================================
+  // 🇮🇹 DATOS DEL SERVICIO FLUSSI
+  // 14,99 € = 1 entrega
+  // 24,99 € = 6 entregas cada 10 días
+  // ==========================================================
+  const flussiPlanValue = String(flussiClient?.plan ?? "")
+    .replace(",", ".")
+    .replace("€", "")
+    .trim();
+
+  const flussiIs24 = Math.abs(Number(flussiPlanValue) - 24.99) < 0.01;
+  const flussiMaxDeliveries = flussiIs24 ? 6 : 1;
+
+  const flussiSendCount = Math.min(
+    Math.max(Number(flussiClient?.send_count ?? 0), 0),
+    flussiMaxDeliveries
+  );
+
+  const flussiProgress = Math.round(
+    (flussiSendCount / flussiMaxDeliveries) * 100
+  );
+
+  const flussiCompleted =
+    flussiSendCount >= flussiMaxDeliveries;
+
+  const flussiGender =
+    flussiClient?.gender_target === "Hombre"
+      ? "Hombre"
+      : flussiClient?.gender_target === "Mujer"
+        ? "Mujer"
+        : "Ambos";
+
+  const formatFlussiDate = (value: string | null) => {
+    if (!value) return "Pendiente";
+
+    try {
+      return new Intl.DateTimeFormat("es-ES", {
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      }).format(new Date(value));
+    } catch {
+      return value;
+    }
+  };
+
   // Tabs del menú - SOLO 3
   const TABS: { key: TabKey; label: string; icon: any }[] = [
     { key: "inicio", label: t("home"), icon: Home },
@@ -462,8 +592,207 @@ export default function PanelMalta() {
         {/* ============================================ */}
         {/* TAB: INICIO */}
         {/* ============================================ */}
+
         {activeTab === "inicio" && (
           <div className="space-y-6">
+
+            {/* ====================================================== */}
+            {/* 🇮🇹 DECRETO FLUSSI 2027 */}
+            {/* ====================================================== */}
+            {!flussiLoading && flussiClient && (
+              <div className="bg-white/5 border border-green-500/20 rounded-2xl p-5 shadow-lg shadow-black/10">
+
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-11 h-11 rounded-xl bg-green-500/10 border border-green-500/20 flex items-center justify-center">
+                      <span className="text-2xl">🇮🇹</span>
+                    </div>
+
+                    <div>
+                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                        Servicio contratado
+                      </p>
+
+                      <h2 className="text-lg font-bold text-white">
+                        Decreto Flussi 2027
+                      </h2>
+
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Ofertas de trabajo · {flussiGender}
+                      </p>
+                    </div>
+                  </div>
+
+                  <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border ${
+                    flussiCompleted
+                      ? "bg-blue-500/20 text-blue-400 border-blue-500/30"
+                      : flussiClient.active
+                        ? "bg-green-500/20 text-green-400 border-green-500/30"
+                        : "bg-yellow-500/20 text-yellow-400 border-yellow-500/30"
+                  }`}>
+                    {flussiCompleted ? (
+                      <>
+                        <CheckCircle2 className="w-3 h-3" />
+                        Completado
+                      </>
+                    ) : flussiClient.active ? (
+                      <>
+                        <CheckCircle2 className="w-3 h-3" />
+                        Activo
+                      </>
+                    ) : (
+                      <>
+                        <Clock className="w-3 h-3" />
+                        Pendiente
+                      </>
+                    )}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 mt-5">
+                  <div className="bg-white/5 border border-white/[0.06] rounded-xl p-3">
+                    <p className="text-[10px] uppercase text-muted-foreground">
+                      Tu plan
+                    </p>
+
+                    <p className="text-xl font-black text-white mt-1">
+                      {flussiIs24 ? "24,99 €" : "14,99 €"}
+                    </p>
+
+                    <p className="text-[11px] text-muted-foreground mt-1">
+                      {flussiIs24
+                        ? "Hasta 6 entregas"
+                        : "1 entrega"}
+                    </p>
+                  </div>
+
+                  <div className="bg-white/5 border border-white/[0.06] rounded-xl p-3">
+                    <p className="text-[10px] uppercase text-muted-foreground">
+                      Entregas realizadas
+                    </p>
+
+                    <p className="text-xl font-black text-green-400 mt-1">
+                      {flussiSendCount} / {flussiMaxDeliveries}
+                    </p>
+
+                    <p className="text-[11px] text-muted-foreground mt-1">
+                      {flussiCompleted
+                        ? "Servicio terminado"
+                        : "Servicio en curso"}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-5">
+                  <div className="flex justify-between mb-2">
+                    <p className="text-xs text-muted-foreground">
+                      Progreso del servicio
+                    </p>
+
+                    <p className="text-xs font-bold text-white">
+                      {flussiProgress}%
+                    </p>
+                  </div>
+
+                  <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
+                    <motion.div
+                      className="h-full rounded-full bg-gradient-to-r from-primary to-green-400"
+                      initial={{ width: 0 }}
+                      animate={{ width: `${flussiProgress}%` }}
+                      transition={{ duration: 0.7 }}
+                    />
+                  </div>
+                </div>
+
+                <div className={`grid gap-2 mt-5 ${
+                  flussiMaxDeliveries === 1
+                    ? "grid-cols-1"
+                    : "grid-cols-2 sm:grid-cols-3"
+                }`}>
+                  {Array.from(
+                    { length: flussiMaxDeliveries },
+                    (_, index) => {
+                      const number = index + 1;
+                      const done = number <= flussiSendCount;
+
+                      return (
+                        <div
+                          key={number}
+                          className={`rounded-xl border p-3 ${
+                            done
+                              ? "border-green-500/20 bg-green-500/5"
+                              : "border-white/[0.06] bg-white/[0.02]"
+                          }`}
+                        >
+                          <div className="flex items-center gap-2">
+                            {done ? (
+                              <CheckCircle2 className="w-4 h-4 text-green-400" />
+                            ) : (
+                              <Clock className="w-4 h-4 text-muted-foreground" />
+                            )}
+
+                            <p className={`text-xs font-bold ${
+                              done
+                                ? "text-green-400"
+                                : "text-muted-foreground"
+                            }`}>
+                              Entrega {number}
+                            </p>
+                          </div>
+
+                          <p className={`text-[10px] mt-1 ${
+                            done
+                              ? "text-green-300"
+                              : "text-muted-foreground"
+                          }`}>
+                            {done ? "Realizada" : "Pendiente"}
+                          </p>
+                        </div>
+                      );
+                    }
+                  )}
+                </div>
+
+                <div className="mt-5 pt-4 border-t border-white/[0.06] space-y-2">
+                  <p className="text-xs text-muted-foreground">
+                    📧 Última entrega:
+                    <span className="text-white ml-1">
+                      {formatFlussiDate(flussiClient.last_sent_at)}
+                    </span>
+                  </p>
+
+                  {flussiIs24 && !flussiCompleted && (
+                    <p className="text-xs text-muted-foreground">
+                      ⏰ Próxima entrega:
+                      <span className="text-white ml-1">
+                        {formatFlussiDate(flussiClient.next_send_at)}
+                      </span>
+                    </p>
+                  )}
+
+                  {flussiIs24 && !flussiCompleted && (
+                    <p className="text-[10px] text-muted-foreground">
+                      Nuevas ofertas cada 10 días hasta completar las 6 entregas.
+                    </p>
+                  )}
+
+                  {flussiCompleted && (
+                    <div className="bg-green-500/10 border border-green-500/20 rounded-xl p-3">
+                      <p className="text-xs font-bold text-green-400">
+                        ✅ Servicio completado
+                      </p>
+
+                      <p className="text-[11px] text-muted-foreground mt-1">
+                        Todas las entregas incluidas en tu plan ya fueron realizadas.
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+              </div>
+            )}
+
+
             {/* 📄 Mis documentos */}
             <div>
               <h2 className="text-sm font-bold text-white mb-3">{t("my_documents")}</h2>
