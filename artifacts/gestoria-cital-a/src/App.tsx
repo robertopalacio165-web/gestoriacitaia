@@ -20,7 +20,7 @@ import {
   Briefcase,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useLang } from "@/contexts/LanguageContext";
+
 import { supabase } from "@/lib/supabaseClient";
 
 // ✅ Tipos ampliados para soportar ambos nombres de columna
@@ -118,7 +118,7 @@ export default function Panel() {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
-  const { t } = useLang();
+ 
 
   // ============================================
   // 🔧 CORRECCIÓN: usar getSession y ordenar por created_at
