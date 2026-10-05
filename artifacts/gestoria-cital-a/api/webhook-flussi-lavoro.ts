@@ -692,25 +692,17 @@ export default async function handler(
      * ========================================================
      */
 
-    if (
-      packageCode ===
-      "new_10_days"
-    ) {
+if (
+  packageCode ===
+  "new_10_days"
+) {
 
-      record.categories =
-        categories;
+  record.starts_at =
+    startsAt;
 
-      record.starts_at =
-        startsAt;
-
-      record.expires_at =
-        expiresAt;
-
-    } else {
-
-      record.categories =
-        categories;
-    }
+  record.expires_at =
+    expiresAt;
+}
 
     /**
      * ========================================================
