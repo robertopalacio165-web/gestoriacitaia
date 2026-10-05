@@ -1,1195 +1,234 @@
-import { useEffect, useState } from "react";
-import { Navbar } from "@/components/Navbar";
-import { LegalDisclaimer } from "@/components/LegalDisclaimer";
-import { motion } from "framer-motion";
-import { useLocation } from "wouter";
-import {
-  FileText,
-  CheckCircle2,
-  Bell,
-  Download,
-  Eye,
-  Phone,
-  LogOut,
-  User,
-  Clock,
-  AlertCircle,
-  Lock,
-  RefreshCw,
-  Home,
-  Briefcase,
-} from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { Switch, Route, Router as WouterRouter } from "wouter";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
-import { supabase } from "@/lib/supabaseClient";
+import { Toaster } from "@/components/ui/toaster";
+import { LanguageProvider } from "@/contexts/LanguageContext";
 
-// ✅ Tipos ampliados para soportar ambos nombres de columna
-type ProfileRow = {
-  id: string;
-  email: string | null;
-  full_name: string | null;
-  phone: string | null;
-  plan: string | null;
-  plan_start_date: string | null;
-  plan_end_date: string | null;
-  // CV
-  cv_generado_url: string | null;
-  cv_url_generated: string | null;   // ← posible nombre alternativo
-  // Carta
-  cover_letter_url: string | null;
-  letter_url: string | null;         // ← posible nombre alternativo
-  // Estado
-  cv_generated: boolean;
-  letter_generated: boolean;
-  // Aplicaciones / entrega
-  applications_sent: number | null;
-  applications_limit: number | null;
-  daily_sent: number | null;
-  responses: number | null;
-  whatsapp: string | null;
-  paid: boolean;
-  worker_finished: boolean | null;
-  last_worker_run: string | null;
-  updated_at: string | null;
-  created_at: string;
-};
+import NotFound from "@/pages/not-found";
+import Landing from "@/pages/Landing";
+import Panel from "@/pages/Panel";
+import BuscarCitas from "@/pages/BuscarCitas";
+import VerificarDecretoFlussi from "@/pages/VerificarDecretoFlussi";
+import DecretoFlussi2027 from "@/pages/DecretoFlussi2027";
 
-type FlussiClientRow = {
-  id: string;
-  email: string | null;
-  plan: string | number | null;
-  gender_target: string | null;
-  active: boolean | null;
-  last_sent_at: string | null;
-  next_send_at: string | null;
-  send_count: number | null;
-  created_at: string | null;
-  updated_at: string | null;
-};
+import AvisoLegal from "@/pages/AvisoLegal";
+import Privacidad from "@/pages/Privacidad";
+import CookiesPage from "@/pages/Cookies";
 
-type TabKey = "inicio" | "documentos" | "cuenta";
+import CheckoutSuccess from "@/pages/CheckoutSuccess";
+import CheckoutCancel from "@/pages/CheckoutCancel";
 
-// ============================================
-// COMPONENTE DE ESTADO DEL PLAN (BADGE)
-// ============================================
-const PlanStatusBadge = ({ 
-  status, 
-  t 
-}: { 
-  status: "active" | "expired" | "none"; 
-  t: (key: string) => string;
-}) => {
-  const configs = {
-    active: {
-      label: t("active"),
-      color: "bg-green-500/20 text-green-400 border-green-500/30",
-      icon: CheckCircle2,
+import AuthCallback from "@/pages/AuthCallback";
+import Confirmar from "@/pages/Confirmar";
+
+import TrabajoMalta from "@/pages/TrabajoMalta";
+import EstudiarMalta2027 from "@/pages/EstudiarMalta2027";
+
+import Contacto from "@/pages/Contacto";
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: false,
+      refetchOnWindowFocus: false,
     },
-    expired: {
-      label: t("expired"),
-      color: "bg-orange-500/20 text-orange-400 border-orange-500/30",
-      icon: AlertCircle,
-    },
-    none: {
-      label: t("no_plan"),
-      color: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
-      icon: Clock,
-    },
-  };
+  },
+});
 
-  const config = configs[status];
-  const Icon = config.icon;
-
+function Router() {
   return (
-    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border ${config.color}`}>
-      <Icon className="w-3 h-3" />
-      {config.label}
-    </span>
-  );
-};
+    <Switch>
 
-export default function Panel() {
-  const [, setLocation] = useLocation();
-  const [activeTab, setActiveTab] = useState<TabKey>("inicio");
-  const [profile, setProfile] = useState<ProfileRow | null>(null);
-  // 🇮🇹 Decreto Flussi 2027 — independiente del servicio Malta
-  const [flussiClient, setFlussiClient] = useState<FlussiClientRow | null>(null);
-  const [flussiLoading, setFlussiLoading] = useState(true);
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const { toast } = useToast();
- 
+      {/* ======================================== */}
+      {/* LANDING */}
+      {/* ======================================== */}
 
-  // ============================================
-  // 🔧 CORRECCIÓN: usar getSession y ordenar por created_at
-  // ============================================
-  useEffect(() => {
-    let mounted = true;
-
-    const loadProfile = async () => {
-      try {
-        setLoading(true);
-
-        // 1. Obtener sesión actual
-        const {
-          data: { session },
-          error: sessionError,
-        } = await supabase.auth.getSession();
-
-        if (sessionError) {
-          console.error("Error obteniendo sesión:", sessionError);
-          if (mounted) setLoading(false);
-          return;
-        }
-
-        // 2. Si no hay sesión, redirigir al landing
-        if (!session?.user) {
-          console.warn("No hay sesión activa");
-          if (mounted) {
-            setLoading(false);
-            setLocation("/");
-          }
-          return;
-        }
-
-        const user = session.user;
-
-        // 3. Avatar de Google
-        const userAvatar =
-          user.user_metadata?.avatar_url ||
-          user.user_metadata?.picture ||
-          null;
-
-        if (mounted) {
-          setAvatarUrl(userAvatar);
-        }
-
-        // 4. Obtener la solicitud más reciente de este usuario
-        const { data, error } = await supabase
-          .from("malta_applications")
-          .select("*")
-          .eq("email", user.email)
-          .order("created_at", { ascending: false })
-          .limit(1)
-          .maybeSingle();
-
-        if (error) {
-          console.error("Error loading profile:", error);
-          if (mounted) {
-            setProfile(null);
-            setLoading(false);
-          }
-          return;
-        }
-
-        if (mounted) {
-          setProfile(data as ProfileRow);
-        }
-
-        // 5. Obtener el servicio Decreto Flussi 2027 por el mismo email.
-        //    Esto NO modifica ni consulta ninguna tabla de Malta.
-        const { data: flussiData, error: flussiError } = await supabase
-          .from("flussi_email_clients")
-          .select("*")
-          .eq("email", user.email)
-          .order("created_at", { ascending: false })
-          .limit(1)
-          .maybeSingle();
-
-        if (flussiError) {
-          console.error("Error loading Decreto Flussi:", flussiError);
-        }
-
-        if (mounted) {
-          setFlussiClient((flussiData as FlussiClientRow | null) || null);
-          setFlussiLoading(false);
-          setLoading(false);
-        }
-
-      } catch (error) {
-        console.error("Error cargando Panel:", error);
-        if (mounted) {
-          setFlussiLoading(false);
-          setLoading(false);
-        }
-      }
-    };
-
-    loadProfile();
-
-    return () => {
-      mounted = false;
-    };
-  }, [setLocation]);
-
-  // 🔄 Actualizar el estado de Flussi en tiempo real después de pago/entrega.
-  useEffect(() => {
-    let channel: ReturnType<typeof supabase.channel> | null = null;
-    let cancelled = false;
-
-    const subscribeFlussi = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      const email = session?.user?.email;
-      if (!email || cancelled) return;
-
-      channel = supabase
-        .channel(`flussi-panel-${email}`)
-        .on(
-          "postgres_changes",
-          {
-            event: "*",
-            schema: "public",
-            table: "flussi_email_clients",
-            filter: `email=eq.${email}`,
-          },
-          async () => {
-            const { data } = await supabase
-              .from("flussi_email_clients")
-              .select("*")
-              .eq("email", email)
-              .order("created_at", { ascending: false })
-              .limit(1)
-              .maybeSingle();
-
-            if (!cancelled) {
-              setFlussiClient((data as FlussiClientRow | null) || null);
-            }
-          }
-        )
-        .subscribe();
-    };
-
-    subscribeFlussi();
-
-    return () => {
-      cancelled = true;
-      if (channel) {
-        supabase.removeChannel(channel);
-      }
-    };
-  }, []);
-
-  // Cerrar sesión
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    setLocation("/");
-    toast({
-      title: t("logout_success"),
-      description: t("logout_desc"),
-    });
-  };
-
-  // ============================================
-  // 🇲🇹 ESTADO ACTUAL DEL SERVICIO MALTA
-  // 9,99 €  → 50 contactos
-  // 19,99 € → 80 contactos
-  // Entrega única: Gmail + WhatsApp + Web
-  // ============================================
-
-  const isWeekly = profile?.plan === "weekly";
-  const isMonthly = profile?.plan === "monthly";
-
-  const applicationsTotal =
-    profile?.applications_limit ??
-    (isWeekly ? 50 : isMonthly ? 80 : 0);
-
-  const applicationsSent = profile?.applications_sent ?? 0;
-
-  // El worker marca worker_finished cuando la entrega ha terminado.
-  // En ese momento mostramos el total real entregado aunque
-  // applications_sent todavía no se haya actualizado.
-  const deliveryCompleted =
-    profile?.worker_finished === true;
-
-  const deliveredContacts = deliveryCompleted
-    ? applicationsTotal
-    : Math.min(applicationsSent, applicationsTotal);
-
-  const applicationsRemaining = Math.max(
-    0,
-    applicationsTotal - deliveredContacts
-  );
-
-  const applicationsProgress =
-    applicationsTotal > 0
-      ? Math.min(
-          100,
-          Math.round((deliveredContacts / applicationsTotal) * 100)
-        )
-      : 0;
-
-  const planName = isWeekly
-    ? "9,99 € · 50 contactos"
-    : isMonthly
-      ? "19,99 € · 80 contactos"
-      : "Sin plan";
-
-  // El nuevo servicio no depende de una cuenta atrás de 7/30 días.
-  // El estado se basa en el pago + plan contratado.
-  const getPlanStatus = (): "active" | "expired" | "none" => {
-    if (!profile) return "none";
-
-    const paid =
-      profile.paid === true ||
-      (profile as any).payment_status === "paid";
-
-    if (!paid || (!isWeekly && !isMonthly)) {
-      return "none";
-    }
-
-    return "active";
-  };
-
-  const planStatus = getPlanStatus();
-
-  const deliveryDate =
-    profile?.last_worker_run ||
-    profile?.updated_at ||
-    profile?.created_at ||
-    null;
-
-  const formatDeliveryDate = (value: string | null) => {
-    if (!value) return "Pendiente";
-
-    try {
-      return new Intl.DateTimeFormat("es-ES", {
-        day: "2-digit",
-        month: "long",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      }).format(new Date(value));
-    } catch {
-      return value;
-    }
-  };
-
-  const deliveryLabel = formatDeliveryDate(deliveryDate);
-
-  // ============================================
-  // 📄 Obtener URLs de los documentos (cualquiera de los dos nombres)
-  // ============================================
-  const cvUrl =
-    profile?.cv_generado_url ||
-    profile?.cv_url_generated ||
-    "";
-
-  const letterUrl =
-    profile?.cover_letter_url ||
-    profile?.letter_url ||
-    "";
-
-  // ============================================
-  // ⬇️ Función para descargar realmente el archivo
-  // ============================================
-  const handleDownload = async (url: string, filename: string) => {
-    if (!url) {
-      toast({
-        title: "Error",
-        description: "No hay documento disponible para descargar.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error("No se pudo descargar el archivo");
-      }
-      const blob = await response.blob();
-      const blobUrl = URL.createObjectURL(blob);
-
-      const link = document.createElement("a");
-      link.href = blobUrl;
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-
-      URL.revokeObjectURL(blobUrl);
-    } catch (error) {
-      console.error("Download error:", error);
-      toast({
-        title: "Error",
-        description: "No se pudo descargar el documento.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  // ============================================
-  // 🇮🇹 ESTADO DEL SERVICIO DECRETO FLUSSI 2027
-  // 14,99 € = 1 entrega
-  // 24,99 € = 6 entregas, una cada 10 días
-  // ============================================
-  const flussiPlanValue = String(flussiClient?.plan ?? "").replace(",", ".");
-  const flussiIs24 = flussiPlanValue === "24.99";
-  const flussiIs14 = flussiPlanValue === "14.99";
-  const flussiMaxDeliveries = flussiIs24 ? 6 : 1;
-  const flussiSendCount = Math.min(
-    Math.max(Number(flussiClient?.send_count ?? 0), 0),
-    flussiMaxDeliveries
-  );
-  const flussiPurchased = !!flussiClient && flussiClient.active !== false;
-  const flussiCompleted = flussiPurchased && flussiSendCount >= flussiMaxDeliveries;
-
-  const flussiGenderLabel =
-    flussiClient?.gender_target === "Hombre"
-      ? "Hombre"
-      : flussiClient?.gender_target === "Mujer"
-        ? "Mujer"
-        : flussiClient?.gender_target === "Ambos"
-          ? "Ambos"
-          : "No seleccionado";
-
-  const formatFlussiDate = (value: string | null) => {
-    if (!value) return "Pendiente";
-    try {
-      return new Intl.DateTimeFormat("es-ES", {
-        day: "2-digit",
-        month: "long",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      }).format(new Date(value));
-    } catch {
-      return value;
-    }
-  };
-
-  const flussiProgress = flussiPurchased
-    ? Math.round((flussiSendCount / flussiMaxDeliveries) * 100)
-    : 0;
-
-  // Tabs del menú - SOLO 3
-  const TABS: { key: TabKey; label: string; icon: any }[] = [
-    { key: "inicio", label: t("home"), icon: Home },
-    { key: "documentos", label: t("documents"), icon: FileText },
-    { key: "cuenta", label: t("my_account"), icon: User },
-  ];
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-white text-center">
-          <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-sm text-muted-foreground">{t("loading")}</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Obtener iniciales para el avatar (respaldo)
-  const getInitials = (name: string | null) => {
-    if (!name) return "?";
-    const parts = name.trim().split(" ");
-    if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
-    return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
-  };
-
-  return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col">
-      {/* Fondo decorativo */}
-      <div
-        className="fixed inset-0 z-0 opacity-20 pointer-events-none"
-        style={{
-          backgroundImage:
-            "radial-gradient(ellipse 60% 40% at 20% 10%, rgba(34,197,94,0.12), transparent), radial-gradient(ellipse 60% 50% at 80% 80%, rgba(59,130,246,0.08), transparent)",
-        }}
+      <Route
+        path="/"
+        component={Landing}
       />
 
-      <Navbar />
 
-      <main className="flex-1 relative z-10 pt-20 pb-20 px-4 sm:px-6 max-w-2xl mx-auto w-full">
-        {/* ============================================ */}
-        {/* HEADER - BIENVENIDA + PLAN */}
-        {/* ============================================ */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-6"
-        >
-          <div className="flex items-start justify-between flex-wrap gap-3">
-            <div>
-              <h1 className="text-2xl font-bold text-white">
-                {t("welcome")} {profile?.full_name || t("user")}
-              </h1>
-              <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 mt-1">
-                {planStatus === "none" ? (
-                  <span className="text-sm font-bold text-yellow-400">{t("no_plan")}</span>
-                ) : planStatus === "active" ? (
-                  <span className="text-sm font-bold text-primary">
-                    🇲🇹 {planName}
-                  </span>
-                ) : (
-                  <span className="text-sm font-bold text-orange-400">{t("expired")}</span>
-                )}
-              </div>
-            </div>
-            <PlanStatusBadge status={planStatus} t={t} />
-          </div>
+      {/* ======================================== */}
+      {/* AUTENTICACIÓN */}
+      {/* ======================================== */}
 
-          {(planStatus === "none" || planStatus === "expired") && (
-            <button
-              onClick={() => setLocation("/trabajo-malta")}
-              className="mt-3 w-full py-2.5 rounded-xl bg-yellow-500 hover:bg-yellow-400 text-black text-sm font-bold transition-colors flex items-center justify-center gap-2 shadow-lg shadow-yellow-500/30"
-            >
-              <RefreshCw className="w-4 h-4" />
-              {planStatus === "none" ? t("choose_plan") : t("renew_plan")}
-            </button>
-          )}
-        </motion.div>
+      <Route
+        path="/auth/callback"
+        component={AuthCallback}
+      />
 
-        {/* ============================================ */}
-        {/* TABS - MENÚ NAVEGACIÓN (SOLO 3) - SOLO PC */}
-        {/* ============================================ */}
-        {planStatus === "active" && (
-          <div className="mb-6 bg-white/5 border border-primary/20 rounded-xl p-4">
-            <div className="grid grid-cols-2 gap-3 text-center">
-              <div>
-                <p className="text-[10px] text-muted-foreground uppercase">Plan</p>
-                <p className="text-sm font-bold text-white">{planName}</p>
-              </div>
-              <div>
-                <p className="text-[10px] text-muted-foreground uppercase">
-                  Estado
-                </p>
-                <p className={`text-sm font-bold ${
-                  deliveryCompleted ? "text-green-400" : "text-yellow-400"
-                }`}>
-                  {deliveryCompleted ? "✅ Entregado" : "⏳ Preparando"}
-                </p>
-              </div>
-            </div>
-            <p className="text-[11px] text-muted-foreground text-center mt-3">
-              📧 Gmail + 📱 WhatsApp + 🌐 Web · entrega única
-            </p>
-          </div>
-        )}
 
-        <div className="hidden md:flex border-b border-white/[0.06] mb-6">
-          {TABS.map((tab) => (
-            <button
-              key={tab.key}
-              onClick={() => setActiveTab(tab.key)}
-              className={`flex-1 py-3 text-sm font-semibold transition-colors ${
-                activeTab === tab.key
-                  ? "text-primary border-b-2 border-primary"
-                  : "text-muted-foreground hover:text-white"
-              }`}
-            >
-              <span className="flex items-center justify-center gap-2">
-                <tab.icon className="w-4 h-4" />
-                {tab.label}
-              </span>
-            </button>
-          ))}
-        </div>
+      {/* ======================================== */}
+      {/* PANEL */}
+      {/* ======================================== */}
 
-        {/* ============================================ */}
-        {/* TAB: INICIO */}
-        {/* ============================================ */}
-        {activeTab === "inicio" && (
-          <div className="space-y-6">
-            {/* ============================================ */}
-            {/* 🇮🇹 DECRETO FLUSSI 2027 — SIEMPRE VISIBLE */}
-            {/* ============================================ */}
-            <div>
-              <h2 className="text-sm font-bold text-white mb-3">
-                🇮🇹 Decreto Flussi 2027
-              </h2>
+      <Route
+        path="/panel"
+        component={Panel}
+      />
 
-              <div className={`rounded-2xl p-4 border ${
-                flussiPurchased
-                  ? "bg-gradient-to-br from-green-500/10 to-white/5 border-green-500/25"
-                  : "bg-gradient-to-br from-white/10 to-white/5 border-white/10"
-              }`}>
-                {flussiLoading ? (
-                  <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                    <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                    Cargando servicio Flussi...
-                  </div>
-                ) : !flussiPurchased ? (
-                  <>
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <p className="text-base font-bold text-white">
-                          Ofertas de trabajo en Italia
-                        </p>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Recibe ofertas relacionadas con Decreto Flussi directamente en tu panel, Gmail y WhatsApp.
-                        </p>
-                      </div>
-                      <div className="shrink-0 w-10 h-10 rounded-xl bg-green-500/15 border border-green-500/20 flex items-center justify-center">
-                        <Briefcase className="w-5 h-5 text-green-400" />
-                      </div>
-                    </div>
 
-                    <div className="grid grid-cols-2 gap-2 mt-4">
-                      <div className="bg-white/5 rounded-xl p-3">
-                        <p className="text-[10px] text-muted-foreground uppercase">Plan</p>
-                        <p className="text-sm font-bold text-white">14,99 €</p>
-                        <p className="text-[10px] text-muted-foreground">1 entrega</p>
-                      </div>
-                      <div className="bg-white/5 rounded-xl p-3">
-                        <p className="text-[10px] text-muted-foreground uppercase">Plan recurrente</p>
-                        <p className="text-sm font-bold text-white">24,99 €</p>
-                        <p className="text-[10px] text-muted-foreground">6 entregas · cada 10 días</p>
-                      </div>
-                    </div>
+      {/* ======================================== */}
+      {/* CITAS */}
+      {/* ======================================== */}
 
-                    <div className="mt-4 flex items-center justify-between gap-3">
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-yellow-500/10 text-yellow-400 border border-yellow-500/20">
-                        ⏳ No contratado
-                      </span>
-                      <button
-                        onClick={() => setLocation("/decreto-flussi-2027")}
-                        className="px-4 py-2 rounded-xl bg-green-500 hover:bg-green-400 text-black text-xs font-bold transition-colors shadow-lg shadow-green-500/20"
-                      >
-                        Ver servicio / Contratar
-                      </button>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <p className="text-base font-bold text-white">
-                          Servicio activo ✅
-                        </p>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Decreto Flussi · ofertas de trabajo en Italia
-                        </p>
-                      </div>
-                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-green-500/10 text-green-400 border border-green-500/20">
-                        Activo
-                      </span>
-                    </div>
+      <Route
+        path="/buscar-citas"
+        component={BuscarCitas}
+      />
 
-                    <div className="grid grid-cols-2 gap-2 mt-4">
-                      <div className="bg-white/5 rounded-xl p-3">
-                        <p className="text-[10px] text-muted-foreground uppercase">Plan</p>
-                        <p className="text-sm font-bold text-white">
-                          {flussiIs24 ? "24,99 €" : "14,99 €"}
-                        </p>
-                        <p className="text-[10px] text-muted-foreground">
-                          {flussiIs24 ? "6 entregas" : "1 entrega"}
-                        </p>
-                      </div>
-                      <div className="bg-white/5 rounded-xl p-3">
-                        <p className="text-[10px] text-muted-foreground uppercase">Género</p>
-                        <p className="text-sm font-bold text-white">{flussiGenderLabel}</p>
-                        <p className="text-[10px] text-muted-foreground">Ofertas filtradas</p>
-                      </div>
-                    </div>
 
-                    <div className="mt-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs text-white/70">Entregas realizadas</span>
-                        <span className="text-xs font-bold text-white">
-                          {flussiSendCount} / {flussiMaxDeliveries}
-                        </span>
-                      </div>
-                      <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
-                        <motion.div
-                          className={`h-full rounded-full ${flussiCompleted ? "bg-green-400" : "bg-gradient-to-r from-green-500 to-emerald-300"}`}
-                          initial={{ width: 0 }}
-                          animate={{ width: `${flussiProgress}%` }}
-                          transition={{ duration: 0.8 }}
-                        />
-                      </div>
-                    </div>
+      {/* ======================================== */}
+      {/* DECRETO FLUSSI - VERIFICACIÓN */}
+      {/* ======================================== */}
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3">
-                      <div className="bg-white/5 rounded-xl p-3">
-                        <p className="text-[10px] text-muted-foreground uppercase">Última entrega</p>
-                        <p className="text-xs font-semibold text-white mt-1">
-                          {formatFlussiDate(flussiClient?.last_sent_at || null)}
-                        </p>
-                      </div>
-                      <div className="bg-white/5 rounded-xl p-3">
-                        <p className="text-[10px] text-muted-foreground uppercase">Próxima entrega</p>
-                        <p className={`text-xs font-semibold mt-1 ${flussiCompleted ? "text-green-400" : "text-yellow-400"}`}>
-                          {flussiCompleted
-                            ? "Servicio completado"
-                            : formatFlussiDate(flussiClient?.next_send_at || null)}
-                        </p>
-                      </div>
-                    </div>
+      <Route
+        path="/verificar-decreto-flussi"
+        component={VerificarDecretoFlussi}
+      />
 
-                    <div className="mt-3 pt-3 border-t border-white/[0.06] flex items-center justify-between gap-3">
-                      <p className="text-[11px] text-muted-foreground">
-                        📧 Gmail · 📱 WhatsApp · 🌐 Panel
-                      </p>
-                      {!flussiCompleted && flussiIs24 && (
-                        <span className="text-[10px] text-green-400 font-semibold">Cada 10 días</span>
-                      )}
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
 
-            {/* 📄 Mis documentos */}
-            <div>
-              <h2 className="text-sm font-bold text-white mb-3">{t("my_documents")}</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {/* CV - CON URL CORRECTA */}
-                <div className="bg-white/5 border border-white/[0.06] rounded-xl p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-bold text-white">{t("cv")}</span>
-                    <span className={`text-xs font-semibold ${cvUrl ? 'text-green-400' : 'text-yellow-400'}`}>
-                      {cvUrl ? `✅ ${t("generated")}` : `⏳ ${t("generating")}`}
-                    </span>
-                  </div>
-                  <div className="flex gap-2">
-                    {cvUrl ? (
-                      <>
-                        <button
-                          onClick={() => window.open(cvUrl, "_blank")}
-                          className="flex-1 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs font-semibold transition-colors flex items-center justify-center gap-1"
-                        >
-                          <Eye className="w-3 h-3" /> {t("view")}
-                        </button>
-                        <button
-                          onClick={() => handleDownload(cvUrl, "CV-Malta.pdf")}
-                          className="flex-1 py-1.5 rounded-lg bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 text-xs font-semibold transition-colors flex items-center justify-center gap-1"
-                        >
-                          <Download className="w-3 h-3" /> {t("download")}
-                        </button>
-                      </>
-                    ) : (
-                      <p className="text-xs text-muted-foreground">{t("generating")}</p>
-                    )}
-                  </div>
-                </div>
+      {/* ======================================== */}
+      {/* DECRETO FLUSSI 2027 */}
+      {/* NUEVA PÁGINA */}
+      {/* ======================================== */}
 
-                {/* Carta de motivación - CON URL CORRECTA */}
-                <div className="bg-white/5 border border-white/[0.06] rounded-xl p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-bold text-white">{t("motivation_letter")}</span>
-                    <span className={`text-xs font-semibold ${letterUrl ? 'text-green-400' : 'text-yellow-400'}`}>
-                      {letterUrl ? `✅ ${t("generated")}` : `⏳ ${t("generating")}`}
-                    </span>
-                  </div>
-                  <div className="flex gap-2">
-                    {letterUrl ? (
-                      <>
-                        <button
-                          onClick={() => window.open(letterUrl, "_blank")}
-                          className="flex-1 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs font-semibold transition-colors flex items-center justify-center gap-1"
-                        >
-                          <Eye className="w-3 h-3" /> {t("view")}
-                        </button>
-                        <button
-                          onClick={() => handleDownload(letterUrl, "Carta-de-motivacion-Malta.pdf")}
-                          className="flex-1 py-1.5 rounded-lg bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 text-xs font-semibold transition-colors flex items-center justify-center gap-1"
-                        >
-                          <Download className="w-3 h-3" /> {t("download")}
-                        </button>
-                      </>
-                    ) : (
-                      <p className="text-xs text-muted-foreground">{t("generating")}</p>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
+      <Route
+        path="/decreto-flussi-2027"
+        component={DecretoFlussi2027}
+      />
 
-            {/* 💼 ENTREGA DE CONTACTOS */}
-            <div>
-              <h2 className="text-sm font-bold text-white mb-3">
-                Entrega de contactos
-              </h2>
 
-              <div className={`bg-white/5 border rounded-xl p-4 ${
-                deliveryCompleted
-                  ? "border-green-500/20"
-                  : planStatus === "active"
-                    ? "border-yellow-500/30"
-                    : "border-white/[0.06]"
-              }`}>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm text-white/70">
-                    Contactos entregados
-                  </span>
-                  <span className="text-sm font-bold text-white">
-                    {deliveredContacts} / {applicationsTotal}
-                  </span>
-                </div>
+      {/* ======================================== */}
+      {/* TRABAJO EN MALTA */}
+      {/* ======================================== */}
 
-                <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
-                  <motion.div
-                    className={`h-full rounded-full ${
-                      deliveryCompleted
-                        ? "bg-green-400"
-                        : "bg-gradient-to-r from-primary to-green-400"
-                    }`}
-                    initial={{ width: 0 }}
-                    animate={{ width: `${applicationsProgress}%` }}
-                    transition={{ duration: 0.8 }}
-                  />
-                </div>
+      <Route
+        path="/trabajo-malta"
+        component={TrabajoMalta}
+      />
 
-                <div className="grid grid-cols-2 gap-2 mt-3 text-center">
-                  <div className="bg-white/5 rounded-lg p-2">
-                    <p className="text-xs text-muted-foreground">
-                      Estado
-                    </p>
-                    <p className={`text-sm font-bold ${
-                      deliveryCompleted
-                        ? "text-green-400"
-                        : "text-yellow-400"
-                    }`}>
-                      {deliveryCompleted ? "Entregado" : "En preparación"}
-                    </p>
-                  </div>
 
-                  <div className="bg-white/5 rounded-lg p-2">
-                    <p className="text-xs text-muted-foreground">
-                      Restantes
-                    </p>
-                    <p className={`text-sm font-bold ${
-                      deliveryCompleted ? "text-green-400" : "text-yellow-400"
-                    }`}>
-                      {applicationsRemaining}
-                    </p>
-                  </div>
-                </div>
+      {/* ======================================== */}
+      {/* ESTUDIAR EN MALTA 2027 */}
+      {/* RUTA PRINCIPAL */}
+      {/* ======================================== */}
 
-                <div className="mt-3 pt-3 border-t border-white/[0.06]">
-                  <p className="text-xs text-muted-foreground">
-                    📧 Gmail · 📱 WhatsApp · 🌐 Web
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {deliveryCompleted
-                      ? `Entrega realizada: ${deliveryLabel}`
-                      : "La entrega aparecerá aquí cuando termine."
-                    }
-                  </p>
-                </div>
-              </div>
-            </div>
+      <Route
+        path="/estudiar-en-malta-2027"
+        component={EstudiarMalta2027}
+      />
 
-            {/* 📬 Respuestas - MEJORADO */}
-            <div>
-              <h2 className="text-sm font-bold text-white mb-3">{t("responses")}</h2>
-              <div className="bg-white/5 border border-white/[0.06] rounded-xl p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-white/70">{t("companies_interested")}</p>
-                    {profile?.responses && profile.responses > 0 ? (
-                      <p className="text-2xl font-bold text-white">{profile.responses}</p>
-                    ) : (
-                      <p className="text-sm text-muted-foreground">{t("no_responses_yet")}</p>
-                    )}
-                  </div>
-                  <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl px-3 py-2">
-                    <Bell className="w-4 h-4 text-yellow-400" />
-                    <p className="text-[10px] text-yellow-400 font-semibold">{t("we_notify")}</p>
-                  </div>
-                </div>
-                <p className="text-xs text-muted-foreground mt-2">
-                  {planStatus === "active"
-                    ? t("notify_whatsapp")
-                    : t("notify_renew")}
-                </p>
-              </div>
-            </div>
 
-            {/* 📱 WhatsApp */}
-            <div>
-              <h2 className="text-sm font-bold text-white mb-3">{t("whatsapp")}</h2>
-              <div className="bg-white/5 border border-white/[0.06] rounded-xl p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center">
-                      <Phone className="w-5 h-5 text-green-400" />
-                    </div>
-                    <div>
-                      <p className="text-sm text-white">{profile?.whatsapp || t("not_configured")}</p>
-                      <p className="text-xs text-green-400">{t("verified")}</p>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => setLocation("/trabajo-malta")}
-                    className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs font-semibold transition-colors"
-                  >
-                    {t("update_whatsapp")}
-                  </button>
-                </div>
-              </div>
-            </div>
+      {/* ======================================== */}
+      {/* ESTUDIAR EN MALTA 2027 */}
+      {/* RETORNO DESPUÉS DE STRIPE */}
+      {/* ======================================== */}
 
-            {/* ✅ ENTREGA REALIZADA */}
-            <div>
-              <h2 className="text-sm font-bold text-white mb-3">
-                Entrega
-              </h2>
+      <Route
+        path="/estudiar-malta-2027"
+        component={EstudiarMalta2027}
+      />
 
-              <div className={`bg-white/5 border rounded-xl p-4 ${
-                deliveryCompleted
-                  ? "border-green-500/20"
-                  : "border-white/[0.06]"
-              }`}>
-                <div className="flex items-center justify-between gap-4">
-                  <div>
-                    <p className="text-sm text-white/70">
-                      Estado del servicio
-                    </p>
 
-                    {deliveryCompleted ? (
-                      <>
-                        <p className="text-lg font-bold text-green-400">
-                          ✅ Entregado
-                        </p>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {deliveryLabel}
-                        </p>
-                      </>
-                    ) : (
-                      <>
-                        <p className="text-lg font-bold text-yellow-400">
-                          ⏳ Preparando
-                        </p>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Estamos preparando tu entrega.
-                        </p>
-                      </>
-                    )}
-                  </div>
+      {/* ======================================== */}
+      {/* PÁGINAS LEGALES */}
+      {/* ======================================== */}
 
-                  {deliveryCompleted ? (
-                    <CheckCircle2 className="w-7 h-7 text-green-400 shrink-0" />
-                  ) : (
-                    <Clock className="w-7 h-7 text-yellow-400 shrink-0" />
-                  )}
-                </div>
+      <Route
+        path="/aviso-legal"
+        component={AvisoLegal}
+      />
 
-                <p className="text-xs text-muted-foreground mt-3">
-                  {deliveryCompleted
-                    ? `${deliveredContacts} contactos entregados por Gmail, WhatsApp y Web.`
-                    : "Recibirás la entrega cuando el servicio termine."
-                  }
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
+      <Route
+        path="/privacidad"
+        component={Privacidad}
+      />
 
-        {/* ============================================ */}
-        {/* TAB: DOCUMENTOS - CORREGIDO */}
-        {/* ============================================ */}
-        {activeTab === "documentos" && (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-sm font-bold text-white">{t("my_documents")}</h2>
-              {planStatus === "expired" && (
-                <span className="text-xs text-orange-400 font-semibold flex items-center gap-1">
-                  <Lock className="w-3 h-3" /> {t("expired_plan")}
-                </span>
-              )}
-            </div>
-            
-            {/* CV - CON URL CORRECTA */}
-            <div className={`bg-white/5 border rounded-xl p-4 ${planStatus === "expired" ? 'border-orange-500/20' : 'border-white/[0.06]'}`}>
-              <div className="flex items-center justify-between flex-wrap gap-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center">
-                    <FileText className="w-5 h-5 text-blue-400" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-bold text-white">{t("cv")}</p>
-                    <p className={`text-xs ${cvUrl ? 'text-green-400' : 'text-yellow-400'}`}>
-                      {cvUrl ? `✅ ${t("generated")}` : `⏳ ${t("generating")}`}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  {cvUrl ? (
-                    <>
-                      <button
-                        onClick={() => window.open(cvUrl, "_blank")}
-                        className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs font-semibold transition-colors flex items-center gap-1"
-                      >
-                        <Eye className="w-3 h-3" /> {t("view")}
-                      </button>
-                      <button
-                        onClick={() => handleDownload(cvUrl, "CV-Malta.pdf")}
-                        className="px-3 py-1.5 rounded-lg bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 text-xs font-semibold transition-colors flex items-center gap-1"
-                      >
-                        <Download className="w-3 h-3" /> {t("download")}
-                      </button>
-                    </>
-                  ) : (
-                    <p className="text-xs text-muted-foreground">{t("generating")}</p>
-                  )}
-                </div>
-              </div>
-            </div>
+      <Route
+        path="/cookies"
+        component={CookiesPage}
+      />
 
-            {/* Carta de motivación - CON URL CORRECTA */}
-            <div className={`bg-white/5 border rounded-xl p-4 ${planStatus === "expired" ? 'border-orange-500/20' : 'border-white/[0.06]'}`}>
-              <div className="flex items-center justify-between flex-wrap gap-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-purple-500/20 flex items-center justify-center">
-                    <FileText className="w-5 h-5 text-purple-400" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-bold text-white">{t("motivation_letter")}</p>
-                    <p className={`text-xs ${letterUrl ? 'text-green-400' : 'text-yellow-400'}`}>
-                      {letterUrl ? `✅ ${t("generated")}` : `⏳ ${t("generating")}`}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  {letterUrl ? (
-                    <>
-                      <button
-                        onClick={() => window.open(letterUrl, "_blank")}
-                        className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs font-semibold transition-colors flex items-center gap-1"
-                      >
-                        <Eye className="w-3 h-3" /> {t("view")}
-                      </button>
-                      <button
-                        onClick={() => handleDownload(letterUrl, "Carta-de-motivacion-Malta.pdf")}
-                        className="px-3 py-1.5 rounded-lg bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 text-xs font-semibold transition-colors flex items-center gap-1"
-                      >
-                        <Download className="w-3 h-3" /> {t("download")}
-                      </button>
-                    </>
-                  ) : (
-                    <p className="text-xs text-muted-foreground">{t("generating")}</p>
-                  )}
-                </div>
-              </div>
-            </div>
 
-            {(planStatus === "expired" || planStatus === "none") && (
-              <div className={`p-4 rounded-xl text-center ${
-                planStatus === "expired" 
-                  ? 'bg-orange-500/10 border border-orange-500/30' 
-                  : 'bg-yellow-500/10 border border-yellow-500/30'
-              }`}>
-                <p className={`font-semibold ${
-                  planStatus === "expired" ? 'text-orange-400' : 'text-yellow-400'
-                }`}>
-                  {planStatus === "expired" ? t("docs_available_renew") : t("docs_waiting_plan")}
-                </p>
-                <button
-                  onClick={() => setLocation("/trabajo-malta")}
-                  className="mt-3 px-6 py-2 rounded-lg bg-yellow-500 hover:bg-yellow-400 text-black text-sm font-bold transition-colors"
-                >
-                  {planStatus === "expired" ? t("renew_plan") : t("choose_plan")}
-                </button>
-              </div>
-            )}
-          </div>
-        )}
+      {/* ======================================== */}
+      {/* CONTACTO */}
+      {/* ======================================== */}
 
-        {/* ============================================ */}
-        {/* TAB: CUENTA */}
-        {/* ============================================ */}
-        {activeTab === "cuenta" && (
-          <div className="space-y-4">
-            <h2 className="text-sm font-bold text-white">{t("my_account")}</h2>
+      <Route
+        path="/contacto"
+        component={Contacto}
+      />
 
-            {/* Perfil con foto/avatar - PRIORIDAD A GOOGLE AVATAR */}
-            <div className="bg-white/5 border border-white/[0.06] rounded-xl p-4 flex items-center gap-4">
-              {avatarUrl ? (
-                <img
-                  src={avatarUrl}
-                  alt={profile?.full_name || "User"}
-                  className="w-14 h-14 rounded-full border-2 border-primary/30 object-cover"
-                  referrerPolicy="no-referrer"
-                />
-              ) : (
-                <div className="w-14 h-14 rounded-full bg-primary/20 border-2 border-primary/30 flex items-center justify-center text-xl font-bold text-primary">
-                  {getInitials(profile?.full_name)}
-                </div>
-              )}
-              <div>
-                <p className="text-base font-bold text-white">{profile?.full_name || t("user")}</p>
-                <p className="text-sm text-muted-foreground">{profile?.email || "—"}</p>
-              </div>
-            </div>
 
-            <div className="bg-white/5 border border-white/[0.06] rounded-xl p-4 space-y-3">
-              <div>
-                <p className="text-xs text-muted-foreground">{t("whatsapp")}</p>
-                <p className="text-sm font-semibold text-white">{profile?.whatsapp || t("not_configured")}</p>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">{t("plan")}</p>
-                <p className={`text-sm font-semibold ${
-                  planStatus === "expired" ? 'text-orange-400' : 
-                  planStatus === "none" ? 'text-yellow-400' : 
-                  'text-primary'
-                }`}>
-                  {planStatus === "active" ? `🇲🇹 ${planName}` : 
-                   planStatus === "expired" ? t("expired") : 
-                   t("no_plan")}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">{t("status")}</p>
-                <p className={`text-sm font-semibold ${
-                  planStatus === "active" ? 'text-green-400' : 
-                  planStatus === "expired" ? 'text-orange-400' : 
-                  'text-yellow-400'
-                }`}>
-                  {planStatus === "active" ? `✅ ${t("active")}` : 
-                   planStatus === "expired" ? `⏸ ${t("inactive_renew")}` : 
-                   `⏳ ${t("waiting_for_plan")}`}
-                </p>
-              </div>
-            </div>
+      {/* ======================================== */}
+      {/* CHECKOUT */}
+      {/* ======================================== */}
 
-            {(planStatus === "expired" || planStatus === "none") && (
-              <button
-                onClick={() => setLocation("/trabajo-malta")}
-                className="w-full py-3 rounded-xl bg-yellow-500 hover:bg-yellow-400 text-black text-sm font-bold transition-colors flex items-center justify-center gap-2 shadow-lg shadow-yellow-500/30"
-              >
-                <RefreshCw className="w-4 h-4" />
-                {planStatus === "expired" ? t("renew_plan") : t("choose_plan")}
-              </button>
-            )}
+      <Route
+        path="/checkout/success"
+        component={CheckoutSuccess}
+      />
 
-            <button
-              onClick={handleLogout}
-              className="w-full py-3 rounded-xl bg-destructive/20 hover:bg-destructive/30 text-destructive text-sm font-semibold transition-colors flex items-center justify-center gap-2"
-            >
-              <LogOut className="w-4 h-4" />
-              {t("logout")}
-            </button>
-          </div>
-        )}
-      </main>
+      <Route
+        path="/checkout/cancelado"
+        component={CheckoutCancel}
+      />
 
-      <LegalDisclaimer />
 
-      {/* ============================================ */}
-      {/* MENÚ MÓVIL - SOLO 3 BOTONES - SOLO EN MÓVIL */}
-      {/* ============================================ */}
-      <nav className="fixed bottom-0 w-full z-50 glass-panel-heavy border-t border-white/[0.07] md:hidden">
-        <div className="flex justify-around items-center h-14 px-2 max-w-2xl mx-auto">
-          {TABS.map((tab) => (
-            <button
-              key={tab.key}
-              onClick={() => setActiveTab(tab.key)}
-              className={`flex flex-col items-center gap-0.5 p-2 transition-colors ${
-                activeTab === tab.key
-                  ? "text-primary"
-                  : "text-muted-foreground hover:text-white"
-              }`}
-            >
-              <tab.icon className="w-5 h-5" />
-              <span className="text-[9px] font-medium">{tab.label}</span>
-            </button>
-          ))}
-        </div>
-      </nav>
-    </div>
+      {/* ======================================== */}
+      {/* CONFIRMAR CITA */}
+      {/* ======================================== */}
+
+      <Route
+        path="/confirmar-cita"
+        component={Confirmar}
+      />
+
+
+      {/* ======================================== */}
+      {/* 404 */}
+      {/* ======================================== */}
+
+      <Route
+        component={NotFound}
+      />
+
+    </Switch>
   );
 }
+
+
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+
+      <LanguageProvider>
+
+        <div
+          translate="no"
+          className="notranslate"
+        >
+
+          <WouterRouter
+            base={import.meta.env.BASE_URL.replace(/\/$/, "")}
+          >
+
+            <Router />
+
+          </WouterRouter>
+
+
+          <Toaster />
+
+        </div>
+
+      </LanguageProvider>
+
+    </QueryClientProvider>
+  );
+}
+
+
+export default App;
