@@ -791,7 +791,67 @@ export default function PanelMalta() {
 
               </div>
             )}
+{/* 🇮🇹 DECRETO FLUSSI 2027 — MOSTRAR SIEMPRE */}
+{!flussiLoading && !flussiClient && (
+  <div className="bg-white/5 border border-green-500/20 rounded-2xl p-5 shadow-lg shadow-black/10">
+    <div className="flex items-center gap-3">
+      <div className="w-11 h-11 rounded-xl bg-green-500/10 border border-green-500/20 flex items-center justify-center">
+        <span className="text-2xl">🇮🇹</span>
+      </div>
 
+      <div className="flex-1">
+        <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+          Servicio disponible
+        </p>
+
+        <h2 className="text-lg font-bold text-white">
+          Decreto Flussi 2027
+        </h2>
+
+        <p className="text-xs text-muted-foreground mt-1">
+          Ofertas de trabajo en Italia
+        </p>
+      </div>
+
+      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold border bg-yellow-500/10 text-yellow-400 border-yellow-500/20">
+        Disponible
+      </span>
+    </div>
+
+    <div className="grid grid-cols-2 gap-3 mt-5">
+      <div className="bg-white/5 border border-white/[0.06] rounded-xl p-3">
+        <p className="text-[10px] uppercase text-muted-foreground">
+          Plan
+        </p>
+        <p className="text-lg font-black text-white mt-1">
+          14,99 €
+        </p>
+        <p className="text-[11px] text-muted-foreground mt-1">
+          1 entrega
+        </p>
+      </div>
+
+      <div className="bg-white/5 border border-white/[0.06] rounded-xl p-3">
+        <p className="text-[10px] uppercase text-muted-foreground">
+          Plan recurrente
+        </p>
+        <p className="text-lg font-black text-white mt-1">
+          24,99 €
+        </p>
+        <p className="text-[11px] text-muted-foreground mt-1">
+          6 entregas
+        </p>
+      </div>
+    </div>
+
+    <button
+      onClick={() => setLocation("/decreto-flussi-2027")}
+      className="mt-5 w-full py-3 rounded-xl bg-green-500 hover:bg-green-400 text-black text-sm font-bold transition-colors"
+    >
+      🇮🇹 Ver Decreto Flussi 2027
+    </button>
+  </div>
+)}
 
             {/* 📄 Mis documentos */}
             <div>
