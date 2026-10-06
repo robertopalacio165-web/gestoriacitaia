@@ -3,6 +3,7 @@ import nodemailer from "nodemailer";
 import QRCode from "qrcode";
 import puppeteer from "puppeteer-core";
 import chromium from "@sparticuz/chromium";
+import { createClient } from "@supabase/supabase-js";
 
 type AnyData = Record<string, any>;
 
@@ -66,15 +67,15 @@ function normalizeAnalysis(body: AnyData) {
     Array.isArray(a.checks)
       ? a.checks
       : [
-          "Datos del documento extraídos correctamente.",
-          "Datos del trabajador y del empleador comparados.",
-          "Fechas y números revisados para coherencia interna.",
-          "Elementos visuales y metadatos revisados.",
-          "La autenticidad oficial requiere comprobación ante la autoridad competente.",
+          `Documenti analizzati: ${Number(a.document_count || body.documents?.length || 0) || 1}.`,
+          "Tipologia dei documenti identificata automaticamente dall'IA.",
+          "Dati del lavoratore e del datore confrontati tra i documenti disponibili.",
+          "Date, numeri di pratica e riferimenti confrontati per coerenza.",
+          "L'autenticità ufficiale richiede una verifica presso la fonte competente.",
         ];
 
   const risk = String(
-    a.risk || a.riskLevel || "NO DETERMINADO"
+    a.risk || a.riskLevel || "NO DETERMINATO"
   ).toUpperCase();
 
   const status = String(
@@ -89,6 +90,641 @@ function normalizeAnalysis(body: AnyData) {
     checks,
     risk,
     status,
+  };
+}
+
+function cleanString(value: any): string {
+  if (typeof value !== "string") return "";
+  return value.trim();
+}
+
+function cleanArray(value: any): string[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((x) => (typeof x === "string" ? x.trim() : String(x ?? "").trim()))
+    .filter(Boolean);
+}
+
+function getSupabaseAdmin() {
+  const url =
+    process.env.SUPABASE_URL ||
+    process.env.NEXT_PUBLIC_SUPABASE_URL ||
+    process.env.VITE_SUPABASE_URL ||
+    "";
+
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+
+  if (!url || !key) {
+    throw new Error(
+      "Faltan SUPABASE_URL/NEXT_PUBLIC_SUPABASE_URL/VITE_SUPABASE_URL o SUPABASE_SERVICE_ROLE_KEY."
+    );
+  }
+
+  return createClient(url, key, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  });
+}
+
+const FLUSSI_BUCKET =
+  process.env.FLUSSI_DOCUMENT_BUCKET ||
+  "documentos-flussi-privado";
+
+function isAllowedMime(mime: string): boolean {
+  return [
+    "application/pdf",
+    "image/jpeg",
+    "image/png",
+    "image/webp",
+  ].includes(mime);
+}
+
+function safeMime(name: string, mime?: string): string {
+  if (mime && isAllowedMime(mime)) return mime;
+
+  const lower = name.toLowerCase();
+  if (lower.endsWith(".pdf")) return "application/pdf";
+  if (lower.endsWith(".png")) return "image/png";
+  if (lower.endsWith(".webp")) return "image/webp";
+  return "image/jpeg";
+}
+
+async function listReferenceDocuments(
+  reference: string,
+  suppliedDocuments: any[] = []
+) {
+  const supabase = getSupabaseAdmin();
+
+  const folder =
+    suppliedDocuments.length > 0
+      ? `flussi-temp/${reference}`
+      : `flussi/${reference}`;
+
+  const { data, error } = await supabase.storage
+    .from(FLUSSI_BUCKET)
+    .list(folder, {
+      limit: 20,
+      sortBy: { column: "name", order: "asc" },
+    });
+
+  if (error) {
+    throw new Error(`No se pudieron listar los documentos: ${error.message}`);
+  }
+
+  const rows = (data || []).filter(
+    (x: any) => x?.name && !String(x.name).startsWith(".")
+  );
+
+  // If the webhook supplied exact paths, use those first.
+  const suppliedPaths = suppliedDocuments
+    .map((x: any) => cleanString(x?.path))
+    .filter(Boolean);
+
+  if (suppliedPaths.length) {
+    return suppliedPaths.slice(0, 5).map((path) => ({
+      path,
+      name: path.split("/").pop() || "documento",
+      mimeType: safeMime(path.split("/").pop() || "documento"),
+    }));
+  }
+
+  return rows.slice(0, 5).map((x: any) => ({
+    path: `${folder}/${x.name}`,
+    name: x.name,
+    mimeType: safeMime(x.name, x.metadata?.mimetype),
+  }));
+}
+
+async function downloadPrivateDocument(path: string, mimeType: string) {
+  const supabase = getSupabaseAdmin();
+
+  const { data, error } = await supabase.storage
+    .from(FLUSSI_BUCKET)
+    .download(path);
+
+  if (error || !data) {
+    throw new Error(
+      `No se pudo descargar ${path}: ${error?.message || "archivo vacío"}`
+    );
+  }
+
+  const buffer = Buffer.from(await data.arrayBuffer());
+
+  if (buffer.length > 10 * 1024 * 1024) {
+    throw new Error(`El archivo ${path} supera el límite de 10 MB.`);
+  }
+
+  return {
+    buffer,
+    mimeType: safeMime(path, mimeType),
+  };
+}
+
+function dataUrl(buffer: Buffer, mimeType: string): string {
+  return `data:${mimeType};base64,${buffer.toString("base64")}`;
+}
+
+function outputTextFromOpenAI(data: any): string {
+  return (
+    data?.output_text ||
+    data?.output
+      ?.flatMap((item: any) => item?.content || [])
+      ?.map((item: any) => item?.text || "")
+      ?.join("") ||
+    ""
+  );
+}
+
+async function callOpenAIJson(
+  content: any[],
+  systemPrompt: string
+): Promise<any> {
+  const apiKey = process.env.OPENAI_API_KEY;
+
+  if (!apiKey) {
+    throw new Error("Missing OPENAI_API_KEY");
+  }
+
+  const response = await fetch("https://api.openai.com/v1/responses", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: process.env.FLUSSI_OPENAI_MODEL || "gpt-5.6",
+      input: [
+        {
+          role: "system",
+          content: [{ type: "input_text", text: systemPrompt }],
+        },
+        {
+          role: "user",
+          content,
+        },
+      ],
+      text: {
+        format: {
+          type: "json_object",
+        },
+      },
+    }),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    console.error("OPENAI FLUSSI ERROR:", data);
+    throw new Error(
+      data?.error?.message || `OpenAI HTTP ${response.status}`
+    );
+  }
+
+  const text = outputTextFromOpenAI(data);
+
+  if (!text) {
+    throw new Error("OpenAI devolvió una respuesta vacía.");
+  }
+
+  try {
+    return JSON.parse(text);
+  } catch {
+    console.error("OPENAI INVALID JSON:", text);
+    throw new Error("OpenAI devolvió JSON inválido.");
+  }
+}
+
+const DOCUMENT_SYSTEM_PROMPT = `
+You are SARA, specialist in Italian Decreto Flussi document analysis for GestoriaCitaIA.
+
+Analyze the supplied document visually and textually.
+
+The user may provide:
+- PDF
+- JPG/JPEG
+- PNG
+- WEBP
+- photo or screenshot of a document.
+
+Identify the document type AUTOMATICALLY. Never ask the user to select it.
+
+Possible types include:
+employment_contract,
+nulla_osta,
+decreto_flussi,
+application_receipt,
+employer_document,
+hiring_letter,
+ministry_communication,
+work_related_document,
+identity_document,
+other,
+unknown.
+
+Extract ONLY information actually visible in the document.
+
+Check:
+- worker name, nationality, passport and birth date when visible
+- employer/company name
+- Partita IVA
+- Codice Fiscale
+- Nulla Osta number
+- application number
+- protocol number
+- dates
+- Prefettura / office
+- contract type, position, salary, hours, workplace
+- visible signatures, stamps, QR/barcodes
+- readability and completeness
+- suspicious editing, cropping, duplicated text, strange formatting
+- internal consistency.
+
+IMPORTANT:
+A professional appearance, logo, stamp, signature or QR code DOES NOT prove official authenticity.
+Never claim official authenticity unless an actual official source has confirmed it.
+Never invent missing values.
+
+Return ONLY JSON:
+{
+  "document_type": "...",
+  "document_title": null,
+  "worker": {
+    "full_name": null,
+    "nationality": null,
+    "passport_number": null,
+    "date_of_birth": null
+  },
+  "employer": {
+    "company_name": null,
+    "partita_iva": null,
+    "codice_fiscale": null,
+    "address": null,
+    "city": null,
+    "province": null,
+    "job_position": null
+  },
+  "flussi": {
+    "nulla_osta_number": null,
+    "application_number": null,
+    "protocol_number": null,
+    "application_date": null,
+    "issue_date": null,
+    "expiry_date": null,
+    "prefecture": null,
+    "immigration_office": null
+  },
+  "contract": {
+    "salary": null,
+    "working_hours": null,
+    "contract_type": null,
+    "start_date": null,
+    "workplace": null
+  },
+  "document_analysis": {
+    "readable": true,
+    "complete": true,
+    "internal_consistency": true,
+    "suspicious_elements": [],
+    "inconsistencies": [],
+    "missing_information": [],
+    "visible_signatures": false,
+    "visible_stamp": false,
+    "visible_qr_or_barcode": false
+  },
+  "summary": "",
+  "recommended_action": ""
+}
+`;
+
+async function analyzeSingleDocument(
+  file: { name: string; mimeType: string; buffer: Buffer }
+) {
+  const mime = safeMime(file.name, file.mimeType);
+  const url = dataUrl(file.buffer, mime);
+
+  const content =
+    mime === "application/pdf"
+      ? [
+          {
+            type: "input_text",
+            text:
+              `Analyze this Italian Decreto Flussi document.\n` +
+              `File name: ${file.name}\n` +
+              `Identify the document type automatically and return ONLY JSON.`,
+          },
+          {
+            type: "input_file",
+            filename: file.name,
+            file_data: url,
+          },
+        ]
+      : [
+          {
+            type: "input_text",
+            text:
+              `Analyze this Italian Decreto Flussi document.\n` +
+              `File name: ${file.name}\n` +
+              `Identify the document type automatically and return ONLY JSON.`,
+          },
+          {
+            type: "input_image",
+            image_url: url,
+            detail: "high",
+          },
+        ];
+
+  const result = await callOpenAIJson(content, DOCUMENT_SYSTEM_PROMPT);
+
+  return {
+    file_name: file.name,
+    mime_type: mime,
+    document_type: cleanString(result?.document_type) || "unknown",
+    document_title: cleanString(result?.document_title),
+    worker: result?.worker || {},
+    employer: result?.employer || {},
+    flussi: result?.flussi || {},
+    contract: result?.contract || {},
+    document_analysis: result?.document_analysis || {},
+    summary: cleanString(result?.summary),
+    recommended_action: cleanString(result?.recommended_action),
+  };
+}
+
+const COMPARISON_SYSTEM_PROMPT = `
+You are SARA, senior reviewer for GestoriaCitaIA.
+
+You are given the structured analysis of several documents belonging to ONE Decreto Flussi case.
+
+Compare ALL documents against each other.
+
+Look specifically for:
+- different worker names
+- different passport numbers
+- different dates of birth
+- different employer names
+- different Partita IVA
+- different Codice Fiscale
+- different Nulla Osta numbers
+- different application/protocol numbers
+- contradictory dates
+- contract information that conflicts with other documents
+- impossible or suspicious combinations
+- missing information that prevents a reliable conclusion
+- suspicious patterns that deserve manual review.
+
+Do not accuse anyone of fraud without strong evidence.
+
+The score is ONLY a DOCUMENT ANALYSIS / COHERENCE SCORE.
+It is NOT a percentage probability that the document is authentic.
+
+Scoring guidance:
+100 = documents highly coherent, readable, no material contradiction detected.
+90-99 = coherent with minor review points.
+75-89 = some missing or suspicious points; manual review recommended.
+50-74 = significant inconsistencies or concerns.
+0-49 = severe contradictions or strong warning signs.
+
+Official authenticity can only be confirmed by an actual official source. If no official source was consulted, explicitly say that official authenticity remains unconfirmed.
+
+Return ONLY JSON:
+{
+  "status": "COHERENTE | REQUIERE REVISION | INCONSISTENTE",
+  "verification_score": 0,
+  "risk_level": "LOW | MEDIUM | HIGH",
+  "document_count": 0,
+  "checks": [],
+  "suspicious_elements": [],
+  "inconsistencies": [],
+  "missing_data": [],
+  "official_verification": {
+    "configured": false,
+    "confirmed": null,
+    "source": null,
+    "message": ""
+  },
+  "worker": {
+    "name": null,
+    "nationality": null,
+    "passport": null,
+    "birthDate": null
+  },
+  "employer": {
+    "name": null,
+    "vat": null,
+    "taxCode": null,
+    "address": null,
+    "city": null,
+    "status": "No confirmado"
+  },
+  "document": {
+    "type": null,
+    "fileName": null,
+    "protocol": null,
+    "applicationNumber": null,
+    "nullaOsta": null,
+    "documentDate": null,
+    "issuer": null,
+    "prefettura": null
+  },
+  "contract": {
+    "type": null,
+    "position": null,
+    "salary": null,
+    "hours": null,
+    "startDate": null,
+    "workplace": null
+  },
+  "summary": "",
+  "conclusion": "",
+  "conclusion_ar": "",
+  "recommendation": ""
+}
+`;
+
+async function compareDocuments(documentAnalyses: any[]) {
+  const content = [
+    {
+      type: "input_text",
+      text:
+        "Compare these document analyses. Do not invent information.\n\n" +
+        JSON.stringify(documentAnalyses, null, 2),
+    },
+  ];
+
+  return callOpenAIJson(content, COMPARISON_SYSTEM_PROMPT);
+}
+
+function buildAggregateBody(
+  body: AnyData,
+  reference: string,
+  documents: any[],
+  comparison: any
+) {
+  const primary = documents[0] || {};
+
+  const worker = {
+    name:
+      comparison?.worker?.name ||
+      primary?.worker?.full_name ||
+      null,
+    nationality:
+      comparison?.worker?.nationality ||
+      primary?.worker?.nationality ||
+      null,
+    passport:
+      comparison?.worker?.passport ||
+      primary?.worker?.passport_number ||
+      null,
+    birthDate:
+      comparison?.worker?.birthDate ||
+      primary?.worker?.date_of_birth ||
+      null,
+  };
+
+  const employer = {
+    name:
+      comparison?.employer?.name ||
+      primary?.employer?.company_name ||
+      null,
+    vat:
+      comparison?.employer?.vat ||
+      primary?.employer?.partita_iva ||
+      null,
+    taxCode:
+      comparison?.employer?.taxCode ||
+      primary?.employer?.codice_fiscale ||
+      null,
+    address:
+      comparison?.employer?.address ||
+      primary?.employer?.address ||
+      null,
+    city:
+      comparison?.employer?.city ||
+      primary?.employer?.city ||
+      null,
+    status:
+      comparison?.employer?.status ||
+      "No confirmado",
+  };
+
+  const doc = {
+    type:
+      comparison?.document?.type ||
+      primary?.document_type ||
+      "Documento analizzato",
+    fileName:
+      comparison?.document?.fileName ||
+      primary?.file_name ||
+      null,
+    protocol:
+      comparison?.document?.protocol ||
+      primary?.flussi?.protocol_number ||
+      null,
+    applicationNumber:
+      comparison?.document?.applicationNumber ||
+      primary?.flussi?.application_number ||
+      null,
+    nullaOsta:
+      comparison?.document?.nullaOsta ||
+      primary?.flussi?.nulla_osta_number ||
+      null,
+    documentDate:
+      comparison?.document?.documentDate ||
+      primary?.flussi?.issue_date ||
+      null,
+    issuer:
+      comparison?.document?.issuer ||
+      primary?.flussi?.immigration_office ||
+      null,
+    prefettura:
+      comparison?.document?.prefettura ||
+      primary?.flussi?.prefecture ||
+      null,
+  };
+
+  const contract = {
+    type:
+      comparison?.contract?.type ||
+      primary?.contract?.contract_type ||
+      null,
+    position:
+      comparison?.contract?.position ||
+      primary?.employer?.job_position ||
+      null,
+    salary:
+      comparison?.contract?.salary ||
+      primary?.contract?.salary ||
+      null,
+    hours:
+      comparison?.contract?.hours ||
+      primary?.contract?.working_hours ||
+      null,
+    startDate:
+      comparison?.contract?.startDate ||
+      primary?.contract?.start_date ||
+      null,
+    workplace:
+      comparison?.contract?.workplace ||
+      primary?.contract?.workplace ||
+      null,
+  };
+
+  return {
+    ...body,
+    reference,
+    client: body.client || body.customer || body,
+    worker,
+    employer,
+    document: doc,
+    contract,
+    documents,
+    analysis: {
+      ...comparison,
+      status:
+        comparison?.status ||
+        "REQUIERE VERIFICACIÓN",
+      risk:
+        comparison?.risk_level ||
+        "MEDIUM",
+      riskLevel:
+        comparison?.risk_level ||
+        "MEDIUM",
+      verification_score:
+        Number(comparison?.verification_score ?? 0),
+      document_count: documents.length,
+      checks: cleanArray(comparison?.checks),
+      suspiciousElements: cleanArray(
+        comparison?.suspicious_elements
+      ),
+      inconsistencies: cleanArray(
+        comparison?.inconsistencies
+      ),
+      missingData: cleanArray(
+        comparison?.missing_data
+      ),
+      summary:
+        cleanString(comparison?.summary) ||
+        "Análisis documental completado.",
+      conclusion:
+        cleanString(comparison?.conclusion) ||
+        "La documentación ha sido analizada y comparada.",
+      conclusion_ar:
+        cleanString(comparison?.conclusion_ar) ||
+        "تم تحليل الوثائق ومقارنتها. هذا التقرير لا يعوض التحقق الرسمي من السلطات الإيطالية.",
+      recommendation:
+        cleanString(comparison?.recommendation) ||
+        "No tomar una decisión definitiva sin verificación oficial.",
+      official_verification:
+        comparison?.official_verification || {
+          configured: false,
+          confirmed: null,
+          source: null,
+          message:
+            "No se ha configurado una comprobación oficial automática.",
+        },
+    },
   };
 }
 
@@ -894,6 +1530,29 @@ html,body{
 </section>
 
 <section class="section">
+  <div class="st">
+    DOCUMENTI ANALIZZATI
+    <span>الوثائق التي تم تحليلها</span>
+  </div>
+  <div class="sb">
+    <div class="checks">
+      ${(Array.isArray(data.documents) ? data.documents : [])
+        .slice(0, 5)
+        .map(
+          (d: any, i: number) =>
+            `<div><i>✓</i> ${esc(i + 1)}. ${esc(
+              d.file_name || d.fileName || "Documento"
+            )} — ${esc(
+              d.document_type || d.type || "tipo identificato automaticamente"
+            )}</div>`
+        )
+        .join("") ||
+        `<div><i>✓</i> Documento analizzato automaticamente.</div>`}
+    </div>
+  </div>
+</section>
+
+<section class="section">
 
   <div class="st">
     LAVORATORE E DATORE DI LAVORO
@@ -1476,13 +2135,14 @@ async function sendEmail(
     to,
 
     subject:
-      `🇮🇹 Resultado de verificación Decreto Flussi - ${reference}`,
+      `🇮🇹🇲🇦 GestoriaCitaIA — Resultado de análisis documental ${reference}`,
 
     text:
       `Hola ${name || ""},\n\n` +
-      `Tu informe completo de análisis Decreto Flussi ` +
-      `${reference} se encuentra en este correo y también ` +
-      `como archivo PDF adjunto.\n\n` +
+      `Tu informe de análisis documental Decreto Flussi ` +
+      `${reference} ha sido generado automáticamente.\n\n` +
+      `La puntuación corresponde al análisis de coherencia documental y no constituye una certificación oficial de autenticidad.\n\n` +
+      `🇮🇹 Italia · 🇲🇦 Marruecos\n` +
       `GestoriaCitaIA`,
 
     /*
@@ -1517,6 +2177,27 @@ export default async function handler(
   try {
     const body: AnyData = req.body || {};
 
+    const reference = String(
+      body.reference ||
+        body.reportReference ||
+        body.document_reference ||
+        ""
+    ).trim();
+
+    if (!reference) {
+      return res.status(400).json({
+        ok: false,
+        error: "Falta reference/document_reference.",
+      });
+    }
+
+    if (!/^FLUSSI-[A-Za-z0-9-]+$/.test(reference)) {
+      return res.status(400).json({
+        ok: false,
+        error: "Referencia FLUSSI no válida.",
+      });
+    }
+
     const client =
       body.client ||
       body.customer ||
@@ -1524,14 +2205,21 @@ export default async function handler(
 
     const email = String(
       client.email ||
-      body.email ||
-      ""
+        body.email ||
+        ""
     ).trim();
 
     if (!email) {
       return res.status(400).json({
         ok: false,
         error: "Falta el email del cliente.",
+      });
+    }
+
+    if (!process.env.OPENAI_API_KEY) {
+      return res.status(500).json({
+        ok: false,
+        error: "Falta OPENAI_API_KEY.",
       });
     }
 
@@ -1543,63 +2231,206 @@ export default async function handler(
       return res.status(500).json({
         ok: false,
         error:
-          "Faltan variables BREVO_SMTP_USER, BREVO_SMTP_KEY o BREVO_FROM_EMAIL en Vercel.",
+          "Faltan BREVO_SMTP_USER, BREVO_SMTP_KEY o BREVO_FROM_EMAIL en Vercel.",
       });
     }
 
-    const reference =
-      String(
-        body.reference ||
-        body.reportReference ||
-        ""
-      ).trim() ||
-      makeReference();
+    const suppliedDocuments = Array.isArray(body.documents)
+      ? body.documents
+      : Array.isArray(body.files)
+        ? body.files
+        : [];
 
-    const analysis =
-      normalizeAnalysis(body);
+    const fileRefs = await listReferenceDocuments(
+      reference,
+      suppliedDocuments
+    );
+
+    if (!fileRefs.length) {
+      return res.status(400).json({
+        ok: false,
+        error:
+          `No se encontraron documentos para ${reference} en ${FLUSSI_BUCKET}.`,
+      });
+    }
+
+    if (fileRefs.length > 5) {
+      return res.status(400).json({
+        ok: false,
+        error: "Máximo 5 documentos por verificación.",
+      });
+    }
+
+    console.log(
+      `🔎 FLUSSI DOCUMENT-ONLY: ${reference} — ${fileRefs.length} documentos`
+    );
+
+    const analyzedDocuments: any[] = [];
+
+    for (const ref of fileRefs) {
+      console.log(`📄 Analizando: ${ref.path}`);
+
+      const downloaded = await downloadPrivateDocument(
+        ref.path,
+        ref.mimeType
+      );
+
+      const result = await analyzeSingleDocument({
+        name: ref.name,
+        mimeType: downloaded.mimeType,
+        buffer: downloaded.buffer,
+      });
+
+      analyzedDocuments.push({
+        ...result,
+        storage_path: ref.path,
+      });
+    }
+
+    console.log(
+      `🤖 Comparando ${analyzedDocuments.length} documentos: ${reference}`
+    );
+
+    const comparison = await compareDocuments(
+      analyzedDocuments
+    );
+
+    /*
+     * Official verification:
+     * only use an explicitly configured authorized endpoint.
+     * Never pretend that visual AI analysis is official verification.
+     */
+    let officialVerification =
+      comparison?.official_verification || {
+        configured: false,
+        confirmed: null,
+        source: null,
+        message:
+          "No se ha configurado una comprobación oficial automática.",
+      };
+
+    const officialUrl =
+      process.env.FLUSSI_OFFICIAL_VERIFY_URL || "";
+
+    if (
+      officialUrl &&
+      (comparison?.document?.nullaOsta ||
+        comparison?.document?.applicationNumber ||
+        comparison?.document?.protocol)
+    ) {
+      try {
+        const officialResponse = await fetch(
+          officialUrl,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              ...(process.env.FLUSSI_OFFICIAL_VERIFY_SECRET
+                ? {
+                    Authorization:
+                      `Bearer ${process.env.FLUSSI_OFFICIAL_VERIFY_SECRET}`,
+                  }
+                : {}),
+            },
+            body: JSON.stringify({
+              reference,
+              worker_name:
+                comparison?.worker?.name || null,
+              employer_name:
+                comparison?.employer?.name || null,
+              partita_iva:
+                comparison?.employer?.vat || null,
+              codice_fiscale:
+                comparison?.employer?.taxCode || null,
+              nulla_osta_number:
+                comparison?.document?.nullaOsta || null,
+              application_number:
+                comparison?.document?.applicationNumber || null,
+              protocol_number:
+                comparison?.document?.protocol || null,
+            }),
+          }
+        );
+
+        const officialData = await officialResponse.json();
+
+        officialVerification = {
+          configured: true,
+          confirmed:
+            officialData?.confirmed === true
+              ? true
+              : officialData?.confirmed === false
+                ? false
+                : null,
+          source:
+            officialData?.source ||
+            "Official Italian authority / authorized service",
+          message:
+            officialData?.message ||
+            "La fuente oficial no devolvió una confirmación concluyente.",
+        };
+      } catch (officialError: any) {
+        console.error(
+          "OFFICIAL FLUSSI CHECK ERROR:",
+          officialError
+        );
+
+        officialVerification = {
+          configured: true,
+          confirmed: null,
+          source:
+            "Official Italian authority / authorized service",
+          message:
+            officialError?.message ||
+            "No se pudo consultar la fuente oficial.",
+        };
+      }
+    }
+
+    const finalComparison = {
+      ...comparison,
+      official_verification: officialVerification,
+    };
+
+    const aggregateBody = buildAggregateBody(
+      body,
+      reference,
+      analyzedDocuments,
+      finalComparison
+    );
+
+    const analysis = normalizeAnalysis(
+      aggregateBody
+    );
 
     const verifyUrl =
       `${publicUrl.replace(/\/$/, "")}` +
       `/verificar?ref=${encodeURIComponent(reference)}`;
 
-    const qrDataUrl =
-      await QRCode.toDataURL(
-        verifyUrl,
-        {
-          width: 300,
-          margin: 1,
-          errorCorrectionLevel: "M",
-        }
-      );
+    const qrDataUrl = await QRCode.toDataURL(
+      verifyUrl,
+      {
+        width: 300,
+        margin: 1,
+        errorCorrectionLevel: "M",
+      }
+    );
 
-    /*
-     * UN ÚNICO HTML:
-     *
-     * 1. Se usa para generar el PDF.
-     * 2. Se manda directamente a Brevo/Gmail.
-     */
     const html = buildHtml(
-      body,
+      aggregateBody,
       analysis,
       reference,
       qrDataUrl
     );
 
-    const pdf =
-      await createPdf(html);
+    const pdf = await createPdf(html);
 
-    /*
-     * Enviamos:
-     *
-     * - Gmail con el informe completo
-     * - PDF adjunto
-     */
     await sendEmail(
       email,
       String(
         client.name ||
-        client.fullName ||
-        ""
+          client.fullName ||
+          "Cliente"
       ),
       reference,
       pdf,
@@ -1607,24 +2438,42 @@ export default async function handler(
     );
 
     console.log(
-      `✅ FLUSSI REPORT PDF + EMAIL ENVIADO: ${email} / ${reference}`
+      `✅ FLUSSI DOCUMENT-ONLY PDF + EMAIL ENVIADO: ${email} / ${reference}`
     );
 
     return res.status(200).json({
       ok: true,
       sent: true,
-      email,
       reference,
+      email,
+      document_count:
+        analyzedDocuments.length,
+      documents: analyzedDocuments.map(
+        (d) => ({
+          file_name: d.file_name,
+          document_type: d.document_type,
+        })
+      ),
+      verification_score:
+        Number(
+          finalComparison?.verification_score ?? 0
+        ),
+      risk_level:
+        finalComparison?.risk_level ||
+        "MEDIUM",
+      status:
+        finalComparison?.status ||
+        "REQUIERE REVISION",
+      official_verification:
+        officialVerification,
       filename:
         `Verificacion-Decreto-Flussi-${reference}.pdf`,
       message:
-        "Informe PDF generado con el modelo Decreto Flussi y enviado por Gmail.",
+        "Documentos analizados, comparados, PDF generado y enviado por email.",
     });
-
   } catch (error: any) {
-
     console.error(
-      "❌ sendFlussiReport error:",
+      "❌ sendFlussiReport DOCUMENT-ONLY ERROR:",
       error
     );
 
@@ -1632,7 +2481,8 @@ export default async function handler(
       ok: false,
       error:
         error?.message ||
-        "No se pudo generar o enviar el informe.",
+        "No se pudo analizar los documentos o enviar el informe.",
     });
   }
 }
+
