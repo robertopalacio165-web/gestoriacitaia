@@ -1,1951 +1,868 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { useLocation } from "wouter";
-import { Navbar } from "@/components/Navbar";
-import { useLang } from "@/contexts/LanguageContext";
-import { useToast } from "@/hooks/use-toast";
-import { motion, AnimatePresence } from "framer-motion";
-import {
-  FileText,
-  Settings,
-  Mic,
-  MicOff,
-  RefreshCw,
-  Shield,
-  Bell,
-  CheckCircle2,
-  ExternalLink,
-  Volume2,
-  VolumeX,
-  Clock,
-  Upload,
-  X,
-  File,
-  Image,
-  Download,
-  ChevronDown,
-} from "lucide-react";
-import { supabase } from "@/lib/supabaseClient";
+import type { VercelRequest, VercelResponse } from "@vercel/node";
+import Stripe from "stripe";
+import crypto from "crypto";
 
-interface ChatMsg {
-  from: "agent" | "user";
-  text: string;
-  ts?: number;
+const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+
+const stripe = stripeSecretKey
+  ? new Stripe(stripeSecretKey)
+  : null;
+
+/**
+ * ============================================================
+ * GESTORIACITAIA
+ * DECRETO FLUSSI - CREATE STRIPE CHECKOUT
+ * ============================================================
+ *
+ * FLUJO:
+ *
+ * FORMULARIO
+ *    ↓
+ * ARCHIVOS TEMPORALES (si existen)
+ *    ↓
+ * STRIPE CHECKOUT
+ *    ↓
+ * PAGO CONFIRMADO
+ *    ↓
+ * WEBHOOK
+ *    ↓
+ * SUPABASE
+ *
+ * MODO PRUEBA:
+ *
+ * robertopalacio165@gmail.com
+ *    ↓
+ * SIN STRIPE
+ *    ↓
+ * paid: true
+ *
+ * IMPORTANTE:
+ * Este endpoint NO guarda datos en Supabase.
+ * La confirmación real del pago se hará mediante Stripe Webhook.
+ * ============================================================
+ */
+
+/**
+ * ============================================================
+ * CONFIGURACIÓN
+ * ============================================================
+ */
+
+/**
+ * PRUEBA:
+ * 50 = 0,50 €
+ *
+ * Cuando termines las pruebas:
+ * cambia al precio definitivo.
+ */
+const FLUSSI_PRICE_CENTS = 50;
+
+const FLUSSI_CURRENCY = "eur";
+
+const FLUSSI_PRODUCT = "decreto_flussi";
+
+const MAX_DOCUMENTS = 5;
+
+/**
+ * ============================================================
+ * MODO PRUEBA
+ * ============================================================
+ *
+ * Estas variables vienen de Vercel Environment Variables.
+ *
+ * FLUSSI_TEST_EMAIL
+ * FLUSSI_TEST_SECRET
+ *
+ * NO poner la clave secreta directamente en GitHub.
+ */
+
+const FLUSSI_TEST_EMAIL = (
+  process.env.FLUSSI_TEST_EMAIL || ""
+)
+  .trim()
+  .toLowerCase();
+
+const FLUSSI_TEST_SECRET =
+  process.env.FLUSSI_TEST_SECRET || "";
+
+/**
+ * ============================================================
+ * CREAR TOKEN SEGURO DE PRUEBA
+ * ============================================================
+ *
+ * El token solamente puede ser creado por el servidor
+ * porque utiliza FLUSSI_TEST_SECRET.
+ */
+
+function createTestToken(
+  email: string,
+  reference: string
+): string {
+  const payload = Buffer.from(
+    JSON.stringify({
+      email,
+      reference,
+      created_at: Date.now(),
+    })
+  ).toString("base64url");
+
+  const signature = crypto
+    .createHmac(
+      "sha256",
+      FLUSSI_TEST_SECRET
+    )
+    .update(payload)
+    .digest("hex");
+
+  return `FLUSSI_TEST_${payload}.${signature}`;
 }
 
-type DocState = "ok" | "warn" | "missing";
+/**
+ * ============================================================
+ * HELPERS
+ * ============================================================
+ */
 
-type DocItem = {
-  nombre: string;
-  estado: DocState;
-};
-
-type FormItem = {
-  nombre: string;
-  codigo: string;
-  url: string;
-};
-
-type ProfileRow = {
-  id: string;
-  email: string | null;
-  full_name: string | null;
-  phone: string | null;
-  nie: string | null;
-};
-
-type ClientFormData = {
-  fullName: string;
-  apellidos: string;
-  phone: string;
-  email: string;
-  pais: string;
-  tipoDocumento: string;
-  documentos: string;
-  documentosUrls: string;
-  preferredOffice: string;
-};
-
-type UploadedFile = {
-  name: string;
-  path: string;
-  size: number;
-  type: string;
-};
-
-// Generar ID de sesión único para visitantes
-const generateSessionId = () => {
-  let sessionId = sessionStorage.getItem('flussi_session_id');
-  if (!sessionId) {
-    sessionId = `guest_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-    sessionStorage.setItem('flussi_session_id', sessionId);
+function cleanString(
+  value: unknown,
+  maxLength = 500
+): string {
+  if (typeof value !== "string") {
+    return "";
   }
-  return sessionId;
-};
 
-// ============================================================
-// PENDING FLUSSI FILES
-// Los documentos se quedan en el navegador hasta que Stripe
-// confirme el pago. Solo después se suben a Supabase Storage.
-// ============================================================
-const FLUSSI_PENDING_DB = "gestoriacitaia-flussi-pending";
-const FLUSSI_PENDING_STORE = "files";
-
-type PendingFlussiFile = {
-  id: string;
-  name: string;
-  type: string;
-  size: number;
-  file: Blob;
-};
-
-function openFlussiDB(): Promise<IDBDatabase> {
-  return new Promise((resolve, reject) => {
-    const request = indexedDB.open(FLUSSI_PENDING_DB, 1);
-    request.onupgradeneeded = () => {
-      const db = request.result;
-      if (!db.objectStoreNames.contains(FLUSSI_PENDING_STORE)) {
-        db.createObjectStore(FLUSSI_PENDING_STORE, { keyPath: "id" });
-      }
-    };
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error || new Error("No se pudo abrir el almacenamiento local"));
-  });
+  return value
+    .trim()
+    .replace(/\s+/g, " ")
+    .slice(0, maxLength);
 }
 
-async function savePendingFlussiFiles(files: File[]): Promise<PendingFlussiFile[]> {
-  const db = await openFlussiDB();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(FLUSSI_PENDING_STORE, "readwrite");
-    const store = tx.objectStore(FLUSSI_PENDING_STORE);
-    const saved: PendingFlussiFile[] = [];
-    for (const file of files) {
-      const item: PendingFlussiFile = {
-        id: `${Date.now()}_${Math.random().toString(36).slice(2, 10)}`,
-        name: file.name,
-        type: file.type,
-        size: file.size,
-        file,
-      };
-      store.put(item);
-      saved.push(item);
-    }
-    tx.oncomplete = () => { db.close(); resolve(saved); };
-    tx.onerror = () => { db.close(); reject(tx.error || new Error("No se pudieron guardar los documentos")); };
-  });
+function cleanEmail(value: unknown): string {
+  return cleanString(value, 320).toLowerCase();
 }
 
-async function getPendingFlussiFiles(): Promise<PendingFlussiFile[]> {
-  const db = await openFlussiDB();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(FLUSSI_PENDING_STORE, "readonly");
-    const request = tx.objectStore(FLUSSI_PENDING_STORE).getAll();
-    request.onsuccess = () => { db.close(); resolve(request.result || []); };
-    request.onerror = () => { db.close(); reject(request.error || new Error("No se pudieron recuperar los documentos")); };
-  });
+function isValidEmail(email: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
-async function clearPendingFlussiFiles(): Promise<void> {
-  const db = await openFlussiDB();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(FLUSSI_PENDING_STORE, "readwrite");
-    tx.objectStore(FLUSSI_PENDING_STORE).clear();
-    tx.oncomplete = () => { db.close(); resolve(); };
-    tx.onerror = () => { db.close(); reject(tx.error || new Error("No se pudieron limpiar los documentos")); };
-  });
+function cleanPhone(value: unknown): string {
+  return cleanString(value, 40);
 }
 
-function OfficialBrowserBox({
-  language,
-  avatarImage,
-  title,
-  url,
-  profileLoading,
-  ui,
-  confirmed,
-  formData,
-  onFormChange,
-  onFormSubmit,
-  formReady,
-  onPay,
-  acceptTerms,
-  setAcceptTerms,
-  uploadedFiles,
-  setUploadedFiles,
-  isUploading,
-  setIsUploading,
-  verificationStatus,
-  verificationProgress,
-  onDownloadReport,
-  isReportReady,
-  errorField,
-  errorRefs,
-  setErrorField,
-}: {
-  language: string;
-  avatarImage: string;
-  title: string;
-  url: string;
-  profileLoading: boolean;
-  ui: any;
-  confirmed: boolean;
-  formData: ClientFormData;
-  onFormChange: (field: keyof ClientFormData, value: string | boolean) => void;
-  onFormSubmit: () => void;
-  formReady: boolean;
-  onPay: () => void;
-  acceptTerms: boolean;
-  setAcceptTerms: (value: boolean) => void;
-  uploadedFiles: UploadedFile[];
-  setUploadedFiles: (files: UploadedFile[]) => void;
-  isUploading: boolean;
-  setIsUploading: (value: boolean) => void;
-  verificationStatus: string;
-  verificationProgress: number;
-  onDownloadReport: () => void;
-  isReportReady: boolean;
-  errorField: string | null;
-  errorRefs: React.MutableRefObject<Record<string, HTMLDivElement | null>>;
-  setErrorField: (field: string | null) => void;
-}) {
-  const isMa = language === "ma";
-  const isEn = language === "en";
-  const { toast } = useToast();
+function cleanCountry(value: unknown): string {
+  return cleanString(value, 100);
+}
 
-  const MAX_FILES = 5;
+function cleanDocumentType(value: unknown): string {
+  // The document type is detected later by OCR/AI.
+  return cleanString(value, 100);
+}
 
-  // ✅ handleFileUpload - SOLO se ejecuta si NO está en modo "solo persona"
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
+/**
+ * ============================================================
+ * BOOLEAN
+ * ============================================================
+ *
+ * Convierte diferentes valores enviados por el frontend
+ * a boolean de forma segura.
+ */
 
-    if (uploadedFiles.length + files.length > MAX_FILES) {
-      toast({
-        title: isMa ? "❌ خطأ" : isEn ? "❌ Error" : "❌ Error",
-        description: isMa ? `يمكنك رفع ${MAX_FILES} ملفات كحد أقصى` : isEn ? `You can upload a maximum of ${MAX_FILES} files` : `Puedes subir un máximo de ${MAX_FILES} archivos`,
-        variant: "destructive",
-      });
-      e.target.value = "";
-      return;
-    }
-
-    setIsUploading(true);
-    try {
-      const selectedFiles = Array.from(files);
-      const allowedTypes = new Set([
-        "application/pdf",
-        "image/jpeg",
-        "image/png",
-        "image/webp",
-      ]);
-
-      for (const file of selectedFiles) {
-        if (!allowedTypes.has(file.type)) {
-          throw new Error(
-            isMa
-              ? "مسموح غير PDF أو JPG أو PNG أو WEBP"
-              : isEn
-              ? "Only PDF, JPG, PNG or WEBP files are allowed"
-              : "Solo se permiten archivos PDF, JPG, PNG o WEBP"
-          );
-        }
-
-        if (file.size > 10 * 1024 * 1024) {
-          throw new Error(
-            isMa
-              ? `${file.name} كيتجاوز 10MB`
-              : isEn
-              ? `${file.name} exceeds 10MB`
-              : `${file.name} supera los 10MB`
-          );
-        }
-      }
-
-      // IMPORTANTE: antes del pago no se usa Supabase Storage.
-      await savePendingFlussiFiles(selectedFiles);
-
-      const newUploadedFiles: UploadedFile[] = [
-        ...uploadedFiles,
-        ...selectedFiles.map((file) => ({ name: file.name, path: "", size: file.size, type: file.type })),
-      ];
-      setUploadedFiles(newUploadedFiles);
-      onFormChange("documentos", newUploadedFiles.map((file) => file.name).join(", "));
-      onFormChange("documentosUrls", "[]");
-      if (errorField === "documents") setErrorField(null);
-
-      toast({
-        title: isMa ? "✅ تم اختيار الملفات" : isEn ? "✅ Files selected" : "✅ Archivos seleccionados",
-        description: isMa ? "الملفات باقين غير فالمتصفح حتى يتأكد الأداء." : isEn ? "Files stay in your browser until payment is confirmed." : "Los archivos permanecen en tu navegador hasta confirmar el pago.",
-      });
-    } catch (error: any) {
-      console.error("Error seleccionando documentos:", error);
-      toast({ title: isMa ? "❌ خطأ" : isEn ? "❌ Error" : "❌ Error", description: error?.message || "No se pudieron seleccionar los documentos", variant: "destructive" });
-    } finally {
-      setIsUploading(false);
-      e.target.value = "";
-    }
-  };
-
-  const removeFile = async (index: number) => {
-    try {
-      const pendingFiles = await getPendingFlussiFiles();
-      const fileToRemove = uploadedFiles[index];
-      if (fileToRemove) {
-        await clearPendingFlussiFiles();
-        const remaining = pendingFiles.filter((file) => file.name !== fileToRemove.name || file.size !== fileToRemove.size);
-        if (remaining.length > 0) {
-          const db = await openFlussiDB();
-          await new Promise<void>((resolve, reject) => {
-            const tx = db.transaction(FLUSSI_PENDING_STORE, "readwrite");
-            const store = tx.objectStore(FLUSSI_PENDING_STORE);
-            for (const file of remaining) store.put(file);
-            tx.oncomplete = () => { db.close(); resolve(); };
-            tx.onerror = () => { db.close(); reject(tx.error); };
-          });
-        }
-      }
-      const newFiles = uploadedFiles.filter((_, i) => i !== index);
-      setUploadedFiles(newFiles);
-      onFormChange("documentos", newFiles.map((file) => file.name).join(", "));
-      onFormChange("documentosUrls", "[]");
-    } catch (error) {
-      console.error("Error eliminando documento pendiente:", error);
-    }
-  };
-
-  const getFileIcon = (type: string) => {
-    if (type.startsWith("image/")) {
-      return <Image className="w-4 h-4 text-blue-400" />;
-    }
-    return <File className="w-4 h-4 text-red-400" />;
-  };
-
-  // Componente de estado de verificación
-  const VerificationStatusComponent = () => {
-    const statusMessages: Record<string, { label: string; icon: string }> = {
-      pending: { 
-        label: isMa ? "في الانتظار..." : isEn ? "Pending..." : "En espera...",
-        icon: "⏳"
-      },
-      downloading_documents: { 
-        label: isMa ? "جاري تحميل المستندات..." : isEn ? "Downloading documents..." : "Descargando documentos...",
-        icon: "📥"
-      },
-      extracting_text: { 
-        label: isMa ? "استخراج النص (OCR)..." : isEn ? "Extracting text (OCR)..." : "Extrayendo texto (OCR)...",
-        icon: "📄"
-      },
-      analyzing_with_ai: { 
-        label: isMa ? "تحليل بالذكاء الاصطناعي..." : isEn ? "Analyzing with AI..." : "Analizando con IA...",
-        icon: "🧠"
-      },
-      verifying_company: { 
-        label: isMa ? "التحقق من الشركة..." : isEn ? "Verifying company..." : "Verificando empresa...",
-        icon: "🏢"
-      },
-      generating_report: { 
-        label: isMa ? "إنشاء التقرير..." : isEn ? "Generating report..." : "Generando informe...",
-        icon: "📊"
-      },
-      report_ready: { 
-        label: isMa ? "✅ التقرير جاهز" : isEn ? "✅ Report ready" : "✅ Informe listo",
-        icon: "✅"
-      },
-      error: { 
-        label: isMa ? "❌ حدث خطأ" : isEn ? "❌ Error occurred" : "❌ Error en el proceso",
-        icon: "❌"
-      },
-    };
-
-    return (
-      <div className="mt-4 rounded-2xl border border-white/10 bg-[#050816] p-4">
-        <h3 className="text-white font-bold mb-3 text-sm">
-          {isMa ? 'حالة التحقق' : isEn ? 'Verification Status' : 'Estado de verificación'}
-        </h3>
-        
-        <div className="space-y-2">
-          {Object.entries(statusMessages).map(([key, value]) => {
-            const isActive = key === verificationStatus;
-            const isCompleted = verificationStatus !== 'pending' && 
-                              Object.keys(statusMessages).indexOf(key) < 
-                              Object.keys(statusMessages).indexOf(verificationStatus) &&
-                              verificationStatus !== 'error';
-            
-            return (
-              <div key={key} className="flex items-center gap-3">
-                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs
-                  ${isActive ? 'bg-yellow-500/20 text-yellow-400' : 
-                    isCompleted ? 'bg-emerald-500/20 text-emerald-400' : 
-                    'bg-white/5 text-white/30'}`}>
-                  {isActive ? (
-                    <RefreshCw className="w-3 h-3 animate-spin" />
-                  ) : isCompleted ? (
-                    <CheckCircle2 className="w-3 h-3" />
-                  ) : (
-                    <span className="text-xs">{value.icon}</span>
-                  )}
-                </div>
-                <span className={`text-xs ${isActive ? 'text-yellow-400 font-medium' : 
-                  isCompleted ? 'text-emerald-400' : 'text-white/40'}`}>
-                  {value.label}
-                </span>
-              </div>
-            );
-          })}
-        </div>
-
-        {isReportReady && (
-          <button 
-            onClick={onDownloadReport}
-            className="mt-3 w-full py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-green-600 text-white font-bold text-sm flex items-center justify-center gap-2 hover:scale-[1.02] transition-transform"
-          >
-            <Download className="w-4 h-4" />
-            {isMa ? "📥 تحميل التقرير" : isEn ? "📥 Download Report" : "📥 Descargar Informe"}
-          </button>
-        )}
-      </div>
-    );
-  };
-
-  // ✅ Handlers con limpieza de errores
-  const handleInputChange = (field: keyof ClientFormData, value: string) => {
-    onFormChange(field, value);
-    if (errorField === field) {
-      setErrorField(null);
-    }
-  };
-
-  const handleAcceptTermsChange = (checked: boolean) => {
-    setAcceptTerms(checked);
-    if (checked && errorField === "acceptTerms") {
-      setErrorField(null);
-    }
-  };
-
+function toBoolean(value: unknown): boolean {
   return (
-    <motion.div
-      initial={{ opacity: 0, x: 20 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ delay: 0.15 }}
-      className="flex-1 flex flex-col overflow-hidden bg-transparent"
-    >
-      <div className="flex-1 overflow-y-auto bg-transparent p-4 sm:p-6 text-black">
-        {confirmed ? (
-          <div className="rounded-[26px] border border-emerald-500/40 bg-[#07111f] px-6 py-8 text-center">
-            <h2 className="text-emerald-400 text-3xl font-black mb-4">
-              {isMa
-                ? "🎉 مبروك! تم التحقق"
-                : isEn
-                ? "🎉 VERIFICATION COMPLETED!"
-                : "🎉 ¡VERIFICACIÓN COMPLETADA!"}
-            </h2>
-            <p className="text-white text-lg font-bold mb-4">
-              {isMa
-                ? "شكراً على ثقتك في GestoriaCitaIA."
-                : isEn
-                ? "Thank you for trusting GestoriaCitaIA."
-                : "Gracias por confiar en GestoriaCitaIA."}
-            </p>
-            <p className="text-white/80">
-              {isMa
-                ? "تم التحقق من وثائقك بنجاح."
-                : isEn
-                ? "Your documents have been successfully verified."
-                : "Tus documentos han sido verificados correctamente."}
-            </p>
-            <p className="text-white/80 mt-2">
-              {isMa
-                ? "ستتلقى التقرير المفصل عبر البريد الإلكتروني."
-                : isEn
-                ? "You will receive the detailed report by email."
-                : "Recibirás el informe detallado por correo electrónico."}
-            </p>
-            <p className="text-yellow-400 font-bold mt-4">
-              {isMa
-                ? "✅ اكتملت العملية"
-                : isEn
-                ? "✅ Process completed"
-                : "✅ Proceso completado"}
-            </p>
-            <p className="text-white/70 mt-6">
-              {isMa
-                ? "نتمنى لك التوفيق."
-                : isEn
-                ? "We wish you the best of luck."
-                : "Te deseamos mucha suerte."}
-            </p>
-          </div>
-        ) : !confirmed && !formReady ? (
-          <>
-            <div className="mt-3 mx-[-4px] rounded-[24px] border-2 border-yellow-500/60 bg-gradient-to-b from-[#0b0b0b] to-[#050505] px-3 py-3 shadow-[0_0_35px_rgba(255,200,0,0.18)]">
-              <div className="mb-3 grid grid-cols-[32px_1fr_32px] items-center gap-2">
-                <span />
-                <h2 className="text-center text-yellow-400 text-[18px] sm:text-[20px] font-black leading-tight">
-                  {isMa 
-                    ? "التحقق من عقود العمل ومرسوم Decreto Flussi الإيطالي" 
-                    : isEn 
-                    ? "Italian Employment Contract & Decreto Flussi Verification" 
-                    : "Verificación de Contratos y Decreto Flussi"}
-                </h2>
-                <img
-                  src="https://upload.wikimedia.org/wikipedia/en/0/03/Flag_of_Italy.svg"
-                  alt="Italia"
-                  className="h-5 w-8 rounded-[3px] object-cover shadow-[0_0_10px_rgba(255,255,255,0.20)]"
-                />
-              </div>
-              <p className="text-white/80 text-[13px] leading-relaxed mb-5">
-                {isMa 
-                  ? "نحلل عقد عملك أو إيصال التسجيل أو وثائق Decreto Flussi عبر الذكاء الاصطناعي ونتحقق من الشركة الإيطالية للكشف عن المخاطر المحتملة."
-                  : isEn 
-                  ? "We analyze your employment contract, registration receipt or Decreto Flussi documentation using AI and verify the Italian company to detect potential risks or irregularities."
-                  : "Analizamos tu contrato de trabajo, resguardo o documentación del Decreto Flussi mediante IA y verificamos la empresa italiana para detectar posibles riesgos o irregularidades."}
-              </p>
-              <div className="w-full">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 mb-5">
-                  {/* Nombre */}
-                  <div 
-                    ref={el => errorRefs.current["fullName"] = el}
-                    className="col-span-1 md:col-span-1"
-                  >
-                    <label className="block text-white text-[13px] mb-2">
-                      {isMa ? "الاسم" : isEn ? "First Name" : "Nombre"}
-                    </label>
-                    <input
-                      type="text"
-                      placeholder={isMa ? "دخل اسمك" : isEn ? "Your name" : "Tu nombre"}
-                      value={formData.fullName}
-                      onChange={(e) => handleInputChange("fullName", e.target.value)}
-                      className={`w-full h-[52px] rounded-2xl border ${errorField === "fullName" ? "border-red-500" : "border-white/10"} bg-[#060b16] px-4 text-[14px] text-white placeholder:text-white/30 focus:outline-none focus:border-yellow-400`}
-                    />
-                    {errorField === "fullName" && (
-                      <p className="text-red-400 text-xs mt-1">
-                        {isMa ? "الاسم مطلوب" : isEn ? "Name is required" : "Nombre es requerido"}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Apellidos */}
-                  <div 
-                    ref={el => errorRefs.current["apellidos"] = el}
-                    className="col-span-1 md:col-span-1"
-                  >
-                    <label className="block text-white text-[13px] mb-2">
-                      {isMa ? "اللقب" : isEn ? "Last Name" : "Apellidos"}
-                    </label>
-                    <input
-                      type="text"
-                      placeholder={isMa ? "دخل لقبك" : isEn ? "Your surname" : "Tus apellidos"}
-                      value={formData.apellidos || ""}
-                      onChange={(e) => handleInputChange("apellidos", e.target.value)}
-                      className={`w-full h-[52px] rounded-2xl border ${errorField === "apellidos" ? "border-red-500" : "border-white/10"} bg-[#060b16] px-4 text-[14px] text-white placeholder:text-white/30 focus:outline-none focus:border-yellow-400`}
-                    />
-                    {errorField === "apellidos" && (
-                      <p className="text-red-400 text-xs mt-1">
-                        {isMa ? "اللقب مطلوب" : isEn ? "Last name is required" : "Apellidos son requeridos"}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* WhatsApp */}
-                  <div 
-                    ref={el => errorRefs.current["phone"] = el}
-                    className="col-span-1 lg:col-span-2"
-                  >
-                    <label className="block text-white text-[13px] mb-2">
-                      {isMa ? "واتساب" : isEn ? "WhatsApp" : "WhatsApp"}
-                    </label>
-                    <div className="flex gap-2 min-w-0">
-                      <select
-                        className="w-[92px] shrink-0 h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-2 text-center text-white"
-                        value={formData.preferredOffice}
-                        onChange={(e) => handleInputChange("preferredOffice", e.target.value)}
-                      >
-                        <option value="+39">🇮🇹 +39</option>
-                        <option value="+212">🇲🇦 +212</option>
-                        <option value="+31">🇳🇱 +31</option>
-                        <option value="+32">🇧🇪 +32</option>
-                        <option value="+33">🇫🇷 +33</option>
-                        <option value="+49">🇩🇪 +49</option>
-                        <option value="+44">🇬🇧 +44</option>
-                        <option value="+1">🇺🇸 +1</option>
-                      </select>
-                      <input
-                        type="text"
-                        placeholder={isMa ? "رقم الهاتف" : isEn ? "Phone number" : "Número de teléfono"}
-                        value={formData.phone}
-                        onChange={(e) => handleInputChange("phone", e.target.value)}
-                        className={`min-w-0 flex-1 h-[52px] rounded-2xl border ${errorField === "phone" ? "border-red-500" : "border-white/10"} bg-[#060b16] px-4 text-white focus:outline-none focus:border-yellow-400`}
-                      />
-                    </div>
-                    {errorField === "phone" && (
-                      <p className="text-red-400 text-xs mt-1">
-                        {isMa ? "رقم الهاتف مطلوب" : isEn ? "Phone number is required" : "Teléfono es requerido"}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Email */}
-                  <div 
-                    ref={el => errorRefs.current["email"] = el}
-                    className="col-span-1 lg:col-span-2"
-                  >
-                    <label className="block text-white text-[13px] mb-2">
-                      Gmail
-                    </label>
-                    <input
-                      type="email"
-                      placeholder="tuemail@gmail.com"
-                      value={formData.email}
-                      onChange={(e) => handleInputChange("email", e.target.value)}
-                      className={`w-full h-[52px] rounded-2xl border ${errorField === "email" ? "border-red-500" : "border-white/10"} bg-[#060b16] px-4 text-[14px] text-white placeholder:text-white/30 focus:outline-none focus:border-yellow-400`}
-                    />
-                    {errorField === "email" && (
-                      <p className="text-red-400 text-xs mt-1">
-                        {isMa ? "الإيميل مطلوب" : isEn ? "Email is required" : "Email es requerido"}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* ✅ PAÍS - DOS BOTONES UNO AL LADO DEL OTRO CON BANDERAS REALES */}
-                  <div 
-                    ref={el => errorRefs.current["pais"] = el}
-                    className="col-span-1 lg:col-span-2"
-                  >
-                    <label className="block text-white text-[13px] mb-2">
-                      {isMa ? "الدولة" : isEn ? "Country" : "País"}
-                    </label>
-                    
-                    <div className="grid grid-cols-2 gap-3">
-                      {/* Marruecos */}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          handleInputChange("pais", "🇲🇦 Marruecos");
-                          if (errorField === "pais") setErrorField(null);
-                        }}
-                        className={`h-[52px] rounded-2xl border-2 transition-all duration-200 flex items-center justify-center gap-3 px-3 ${
-                          formData.pais === "🇲🇦 Marruecos" 
-                            ? "border-emerald-500 bg-emerald-500/10 shadow-lg shadow-emerald-500/20" 
-                            : "border-white/10 bg-[#060b16] hover:border-white/30"
-                        }`}
-                      >
-                        <img
-                          src="https://flagcdn.com/w40/ma.png"
-                          alt="Marruecos"
-                          className="w-6 h-4 rounded object-cover"
-                        />
-                        <span className={`font-medium text-sm ${formData.pais === "🇲🇦 Marruecos" ? "text-emerald-400" : "text-white/70"}`}>
-                          {isMa ? "المغرب" : isEn ? "Morocco" : "Marruecos"}
-                        </span>
-                        {formData.pais === "🇲🇦 Marruecos" && (
-                          <CheckCircle2 className="w-4 h-4 text-emerald-400 ml-auto" />
-                        )}
-                      </button>
-
-                      {/* Italia */}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          handleInputChange("pais", "🇮🇹 Italia");
-                          if (errorField === "pais") setErrorField(null);
-                        }}
-                        className={`h-[52px] rounded-2xl border-2 transition-all duration-200 flex items-center justify-center gap-3 px-3 ${
-                          formData.pais === "🇮🇹 Italia" 
-                            ? "border-blue-500 bg-blue-500/10 shadow-lg shadow-blue-500/20" 
-                            : "border-white/10 bg-[#060b16] hover:border-white/30"
-                        }`}
-                      >
-                        <img
-                          src="https://flagcdn.com/w40/it.png"
-                          alt="Italia"
-                          className="w-6 h-4 rounded object-cover"
-                        />
-                        <span className={`font-medium text-sm ${formData.pais === "🇮🇹 Italia" ? "text-blue-400" : "text-white/70"}`}>
-                          {isMa ? "إيطاليا" : isEn ? "Italy" : "Italia"}
-                        </span>
-                        {formData.pais === "🇮🇹 Italia" && (
-                          <CheckCircle2 className="w-4 h-4 text-blue-400 ml-auto" />
-                        )}
-                      </button>
-                    </div>
-                    
-                    {errorField === "pais" && (
-                      <p className="text-red-400 text-xs mt-1">
-                        {isMa ? "الدولة مطلوبة" : isEn ? "Country is required" : "País es requerido"}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* ============================================================
-                      📎 SUBIR DOCUMENTOS
-                      SOLO SI NO ESTÁ EN MODO "SOLO PERSONA"
-                      ============================================================ */}
-                  <div
-                      ref={el => errorRefs.current["documents"] = el}
-                      className="col-span-1 lg:col-span-2"
-                    >
-                      <label className="block text-white text-[13px] mb-2">
-                        {isMa
-                          ? "رفع المستندات"
-                          : isEn
-                          ? "Upload documents"
-                          : "Subir documento(s)"}
-
-                        <span className="text-white/40 text-[11px] ml-2">
-                          {isMa
-                            ? `(حد أقصى ${MAX_FILES} ملفات)`
-                            : isEn
-                            ? `(max ${MAX_FILES} files)`
-                            : `(máx ${MAX_FILES} archivos)`}
-                        </span>
-                      </label>
-
-                      <div
-                        className={`relative w-full min-h-[52px] rounded-2xl border-2 border-dashed ${
-                          errorField === "documents"
-                            ? "border-red-500 bg-red-500/5"
-                            : uploadedFiles.length > 0
-                            ? "border-emerald-500/50 bg-emerald-500/5"
-                            : "border-white/20 bg-[#060b16]"
-                        } flex flex-col items-center justify-center hover:border-yellow-400 transition-colors p-3`}
-                      >
-                        <input
-                          type="file"
-                          multiple
-                          accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp"
-                          className="absolute opacity-0 w-full h-full cursor-pointer"
-                          onChange={handleFileUpload}
-                          disabled={
-                            isUploading ||
-                            uploadedFiles.length >= MAX_FILES ||
-                            false
-                          }
-                        />
-
-                        {isUploading ? (
-                          <div className="flex items-center gap-2">
-                            <RefreshCw className="w-4 h-4 animate-spin text-yellow-400" />
-                            <p className="text-yellow-400 text-sm">
-                              {isMa
-                                ? "جاري الرفع..."
-                                : isEn
-                                ? "Uploading..."
-                                : "Subiendo..."}
-                            </p>
-                          </div>
-                        ) : uploadedFiles.length === 0 ? (
-                          <div className="text-center">
-                            <Upload className="w-6 h-6 text-white/30 mx-auto mb-1" />
-                            <p className="text-white/40 text-sm">
-                              {isMa
-                                ? "📎 اختر PDF أو صورة"
-                                : isEn
-                                ? "📎 Choose PDF or image"
-                                : "📎 Seleccionar PDF o imagen"}
-                            </p>
-                            <p className="text-white/20 text-[10px] mt-1">
-                              {isMa
-                                ? `الحد الأقصى ${MAX_FILES} ملفات · 10MB لكل ملف · PDF/JPG/PNG/WEBP`
-                                : isEn
-                                ? `Max ${MAX_FILES} files · 10MB each · PDF/JPG/PNG/WEBP`
-                                : `Máximo ${MAX_FILES} archivos · 10MB cada uno · PDF/JPG/PNG/WEBP`}
-                            </p>
-                          </div>
-                        ) : (
-                          <div className="text-center">
-                            <p className="text-emerald-400 text-sm font-medium">
-                              {isMa
-                                ? `✅ تم اختيار ${uploadedFiles.length}/${MAX_FILES} ملفات`
-                                : isEn
-                                ? `✅ ${uploadedFiles.length}/${MAX_FILES} files selected`
-                                : `✅ ${uploadedFiles.length}/${MAX_FILES} archivos seleccionados`}
-                            </p>
-                            {uploadedFiles.length < MAX_FILES && (
-                              <p className="text-white/30 text-[10px] mt-1">
-                                {isMa
-                                  ? "📎 أضف المزيد"
-                                  : isEn
-                                  ? "📎 Add more"
-                                  : "📎 Añadir más"}
-                              </p>
-                            )}
-                          </div>
-                        )}
-                      </div>
-
-                      {errorField === "documents" && (
-                        <p className="text-red-400 text-xs mt-1">
-                          {isMa
-                            ? "يجب رفع مستند واحد على الأقل"
-                            : isEn
-                            ? "You must upload at least one document"
-                            : "Debes subir al menos un documento"}
-                        </p>
-                      )}
-
-                      <p className="mt-2 text-[10px] leading-relaxed text-white/40">
-                        {isMa
-                          ? "🔒 الملفات كيبقاو غير فالمتصفح حتى يتأكد الأداء."
-                          : isEn
-                          ? "🔒 Files remain only in your browser until payment is confirmed."
-                          : "🔒 Los archivos permanecen solo en el navegador hasta confirmar el pago."}
-                      </p>
-
-                      {uploadedFiles.length > 0 && (
-                        <div className="mt-2 space-y-1">
-                          {uploadedFiles.map((file, index) => (
-                            <div
-                              key={index}
-                              className="flex items-center gap-2 bg-white/5 rounded-lg px-3 py-2 border border-white/10"
-                            >
-                              {getFileIcon(file.type)}
-                              <span className="text-white/80 text-xs flex-1 truncate">
-                                {file.name}
-                              </span>
-                              <span className="text-white/30 text-[10px]">
-                                {(file.size / 1024).toFixed(0)}KB
-                              </span>
-                              <button
-                                type="button"
-                                onClick={() => removeFile(index)}
-                                className="text-white/30 hover:text-red-400 transition-colors"
-                              >
-                                <X className="w-3 h-3" />
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-
-                  {/* Caja de pago con Checkbox */}
-                  <div className="col-span-1 lg:col-span-2 mt-4 rounded-[28px] border-2 border-yellow-500 bg-gradient-to-b from-[#0b0b0b] to-[#050505] p-4 shadow-[0_0_35px_rgba(255,200,0,0.18)]">
-                    <div className="flex items-start justify-between mb-4 pt-2">
-                      <div>
-                        <p className="text-white text-[15px] font-bold">
-                          {isMa
-                            ? "التحقق من الوثائق ومرسوم فلوسي"
-                            : isEn
-                            ? "Document & Decreto Flussi Verification"
-                            : "Verificación de Documentos y Decreto Flussi"}
-                        </p>
-                        <span className="inline-flex mt-1 rounded-full bg-gradient-to-r from-yellow-400 to-yellow-600 px-3 py-1 text-[10px] font-black uppercase tracking-wide text-black shadow-[0_0_15px_rgba(255,215,0,0.25)]">
-                          Premium
-                        </span>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-yellow-400 text-[34px] font-black leading-none drop-shadow-[0_0_10px_rgba(255,215,0,0.35)]">
-                          0,50€
-                        </p>
-                        <p className="text-yellow-300 text-[11px] font-semibold">
-                          {isMa ? "خلاص مرة وحدة" : isEn ? "One-time payment" : "Pago único"}
-                        </p>
-                      </div>
-                    </div>
-
-                    <p className="text-gray-300 text-[13px] mb-5 leading-relaxed">
-                      {isMa
-                        ? "نظامنا يحلل الوثائق ديالك بالذكاء الاصطناعي، كيتحقق من المعطيات والاتساق ديال الوثيقة، وكيحاول التحقق من الشركة والمعلومات المرتبطة بها. غادي توصلك تقرير مفصل عبر البريد الإلكتروني."
-                        : isEn
-                        ? "Our system analyzes your documents with AI, checks their consistency and data, and verifies the company and related information where possible. You will receive a detailed report by email."
-                        : "Nuestro sistema analiza tus documentos mediante IA, comprueba la coherencia de los datos y verifica la empresa y la información relacionada cuando sea posible. Recibirás un informe detallado por email."}
-                    </p>
-
-                    {/* CONTADOR DE VERIFICACIÓN */}
-                    <div className="mb-5 grid grid-cols-2 gap-2">
-                      <div className="flex items-center gap-2 bg-white/5 rounded-xl px-3 py-2 border border-white/10">
-                        <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                        <span className="text-white/80 text-[11px] font-medium">
-                          {isMa ? "تحليل الوثيقة" : isEn ? "Document analysis" : "Análisis documental"}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2 bg-white/5 rounded-xl px-3 py-2 border border-white/10">
-                        <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                        <span className="text-white/80 text-[11px] font-medium">
-                          {isMa ? "التحقق من الشركة" : isEn ? "Company verification" : "Verificación de empresa"}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2 bg-white/5 rounded-xl px-3 py-2 border border-white/10">
-                        <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                        <span className="text-white/80 text-[11px] font-medium">
-                          {isMa ? "استخراج المعطيات" : isEn ? "Data extraction" : "Extracción de datos"}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2 bg-white/5 rounded-xl px-3 py-2 border border-white/10">
-                        <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                        <span className="text-white/80 text-[11px] font-medium">
-                          {isMa ? "تقرير PDF" : isEn ? "PDF Report" : "Informe PDF"}
-                        </span>
-                      </div>
-                      <div className="col-span-2 flex items-center gap-2 bg-yellow-500/10 rounded-xl px-3 py-2 border border-yellow-500/30">
-                        <Clock className="w-4 h-4 text-yellow-400 shrink-0" />
-                        <span className="text-yellow-300 text-[11px] font-medium">
-                          {isMa ? "النتيجة في أقل من 24 ساعة" : isEn ? "Result in less than 24 hours" : "Resultado en menos de 24 horas"}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Checkbox de aceptación */}
-                    <div 
-                      ref={el => errorRefs.current["acceptTerms"] = el}
-                      className="flex items-start gap-3 mb-3"
-                    >
-                      <input
-                        type="checkbox"
-                        id="acceptTerms"
-                        checked={acceptTerms}
-                        onChange={(e) => handleAcceptTermsChange(e.target.checked)}
-                        className="mt-1 w-4 h-4 rounded border-white/20 bg-[#060b16] text-yellow-500 focus:ring-yellow-500 focus:ring-offset-0"
-                      />
-                      <label htmlFor="acceptTerms" className={`text-[12px] leading-relaxed ${errorField === "acceptTerms" ? "text-red-400" : "text-white/70"}`}>
-                        {isMa
-                          ? "☑️ أوافق على أن تقوم GestoriaCitaIA بتحليل وثائقي والتحقق من السجلات العامة الإيطالية."
-                          : isEn
-                          ? "☑️ I agree that GestoriaCitaIA analyzes my documents and checks Italian public records."
-                          : "☑️ Acepto que GestoriaCitaIA analice mis documentos y consulte registros públicos italianos."}
-                      </label>
-                    </div>
-                    {errorField === "acceptTerms" && (
-                      <p className="text-red-400 text-xs mt-0 mb-2">
-                        {isMa ? "يجب الموافقة على الشروط" : isEn ? "You must accept the terms" : "Debes aceptar los términos"}
-                      </p>
-                    )}
-
-                    {/* ✅ BOTÓN - SIN DISABLED */}
-            <button
-  type="button"
-onClick={onPay}
-  className="w-full min-h-[56px] rounded-[20px] bg-gradient-to-r from-yellow-400 to-yellow-600 px-4 py-2 text-[15px] leading-tight font-black text-black hover:scale-[1.01] transition-transform"
->
-                      {isMa 
-                        ? "🔐 تحقق الآن مقابل 0.50€" 
-                        : isEn 
-                        ? "🔐 Verify now for only €0.50" 
-                        : "🔐 Verificar ahora por solo 0,50 €"}
-                    </button>
-
-                    <div className="mt-5 flex items-center justify-center gap-2 text-[11px] text-gray-300">
-                      <Shield className="w-3 h-3 text-yellow-400" />
-                      <span>
-                        {isMa
-                          ? "دفع آمن عبر Stripe"
-                          : isEn
-                          ? "Secure payment with Stripe"
-                          : "Pago seguro con Stripe"}
-                      </span>
-                    </div>
-
-                    <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
-                      <span className="rounded-full bg-white px-3 py-1 text-[11px] font-bold text-[#1434CB]">VISA</span>
-                      <span className="rounded-full bg-white px-3 py-1 text-[11px] font-bold text-[#EB001B]">Mastercard</span>
-                      <span className="rounded-full bg-white px-3 py-1 text-[11px] font-bold text-black">Pay</span>
-                      <span className="rounded-full bg-white px-3 py-1 text-[11px] font-bold text-black">G Pay</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Mostrar estado de verificación si está en progreso */}
-            {formReady && verificationStatus !== 'pending' && (
-              <VerificationStatusComponent />
-            )}
-          </>
-        ) : (
-          <>
-            <div className="rounded-[26px] border border-emerald-500/40 bg-[#07111f] px-5 py-7 mb-5 shadow-[0_0_30px_rgba(16,185,129,0.08)]">
-              <div className="flex justify-center mb-4">
-                <div className="w-14 h-14 rounded-full border-2 border-emerald-400 bg-emerald-500/15 flex items-center justify-center shadow-[0_0_20px_rgba(16,185,129,0.35)]">
-                  <CheckCircle2 className="w-8 h-8 text-emerald-400" />
-                </div>
-              </div>
-              <h3 className="text-center text-white text-[18px] font-semibold leading-tight mb-3">
-                {isMa
-                  ? "مبروك 🎉 بدأنا مراجعة وثائقك. ستتلقى التقرير خلال 24 ساعة."
-                  : isEn
-                  ? "Congratulations 🎉 We have started reviewing your documents. You will receive the verification report within 24 hours."
-                  : "Felicidades 🎉 Hemos empezado a revisar tus documentos. Recibirás el informe de verificación en 24 horas."}
-              </h3>
-              <p className="text-center text-white/70 text-[14px] leading-relaxed">
-                {isMa
-                  ? "سنخبرك هنا عندما يكون هناك جديد بشأن وثائقك."
-                  : isEn
-                  ? "We will notify you here when there is news about your documents."
-                  : "Te avisaremos aquí cuando haya novedades sobre tus documentos."}
-              </p>
-
-              <div className="mt-5 rounded-2xl border border-yellow-500/20 bg-yellow-500/10 p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="w-2.5 h-2.5 rounded-full bg-yellow-400 animate-pulse" />
-                  <p className="text-yellow-300 font-bold text-sm">
-                    {isMa
-                      ? "النظام يحلل وثائقك"
-                      : isEn
-                      ? "System analyzing your documents"
-                      : "Sistema analizando tus documentos"}
-                  </p>
-                </div>
-                <p className="text-white/70 text-xs leading-relaxed">
-                  {isMa
-                    ? false
-                      ? "نبحث عن المعلومات المتاحة علنيا حول الشخص المطلوب. سيتم إرسال التقرير المفصل عبر البريد الإلكتروني."
-                      : "نظامنا يحلل عقدك أو وثائق Decreto Flussi باستخدام الذكاء الاصطناعي. نتحقق من تماسك الوثائق ونتحقق من الشركة باستخدام المصادر العامة المتاحة. ستتلقى تقريراً مفصلاً عبر البريد الإلكتروني."
-                    : isEn
-                    ? false
-                      ? "We are searching for publicly available information about the person. You will receive a detailed report by email."
-                      : "Our system analyzes your contract or Decreto Flussi documents using artificial intelligence. We check document consistency and verify the company using available public sources. You will receive a detailed report by email."
-                    : false
-                      ? "Buscamos información públicamente disponible sobre la persona. Recibirás un informe detallado por correo electrónico."
-                      : "Nuestro sistema analiza tu contrato o documento del Decreto Flussi mediante inteligencia artificial. Comprobamos la coherencia documental y verificamos la empresa utilizando fuentes públicas disponibles. Recibirás un informe detallado por correo electrónico."}
-                </p>
-              </div>
-
-              {/* Mostrar estado de verificación si está en progreso */}
-              {verificationStatus !== 'pending' && (
-                <VerificationStatusComponent />
-              )}
-            </div>
-
-            <div className="rounded-[30px] overflow-hidden border border-yellow-500/30 bg-[#050816] shadow-[0_0_40px_rgba(255,200,0,0.10)]">
-              <div className="px-6 py-8 bg-[radial-gradient(circle_at_top,rgba(255,200,0,0.12),transparent_60%)]">
-                <div className="flex justify-center mb-5">
-                  <img
-                    src="https://upload.wikimedia.org/wikipedia/en/0/03/Flag_of_Italy.svg"
-                    alt="Italia"
-                    className="w-20 h-14 object-cover rounded-lg shadow-[0_0_15px_rgba(255,255,255,0.15)] border border-white/20"
-                  />
-                </div>
-
-                <h2 className="text-center text-[#f6d06f] text-[36px] leading-[42px] font-black mb-5">
-                  {isMa
-                    ? "التحقق من العقود بثقة"
-                    : isEn
-                    ? "Contract Verification with Confidence"
-                    : "Verificación de contratos con confianza"}
-                </h2>
-
-                <p className="text-center text-white/75 text-[15px] leading-relaxed mb-8">
-                  {isMa
-                    ? "نساعدك في التحقق من عقود العمل ووثائق Decreto Flussi بطريقة آمنة."
-                    : isEn
-                    ? "We help you verify employment contracts and Decreto Flussi documents securely."
-                    : "Te ayudamos a verificar contratos de trabajo y documentos del Decreto Flussi de forma segura."}
-                </p>
-
-                <div className="grid grid-cols-3 gap-3 text-center">
-                  <div>
-                    <Shield className="w-8 h-8 text-[#f6d06f] mx-auto mb-3" />
-                    <p className="text-white/80 text-[13px] leading-snug">
-                      {isMa ? "تحليل ذكي" : isEn ? "Smart analysis" : "Análisis inteligente"}
-                    </p>
-                  </div>
-                  <div>
-                    <Bell className="w-8 h-8 text-[#f6d06f] mx-auto mb-3" />
-                    <p className="text-white/80 text-[13px] leading-snug">
-                      {isMa ? "تقرير مفصل" : isEn ? "Detailed report" : "Informe detallado"}
-                    </p>
-                  </div>
-                  <div>
-                    <CheckCircle2 className="w-8 h-8 text-[#f6d06f] mx-auto mb-3" />
-                    <p className="text-white/80 text-[13px] leading-snug">
-                      {isMa ? "نتائج موثوقة" : isEn ? "Reliable results" : "Resultados fiables"}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="mt-8 text-center text-[#f6d06f] text-[24px] font-bold">
-                  {isMa
-                    ? "« التحقق من وثائقك يبدأ هنا. »"
-                    : isEn
-                    ? "\" Your document verification starts here. \""
-                    : "\" Tu verificación de documentos empieza aquí. \""}
-                </div>
-              </div>
-            </div>
-          </>
-        )}
-      </div>
-    </motion.div>
+    value === true ||
+    value === "true" ||
+    value === 1 ||
+    value === "1"
   );
 }
 
-export default function VerificarDecretoFlussi() {
-  const { lang } = useLang();
-  const language = lang === "darija" ? "ma" : lang;
+/**
+ * ============================================================
+ * HANDLER
+ * ============================================================
+ */
 
-  const [location] = useLocation();
-  const [muted, setMuted] = useState(false);
-  const [confirmed, setConfirmed] = useState(
-    new URLSearchParams(window.location.search).get("success") === "true"
-  );
-  const [showDocs, setShowDocs] = useState(false);
-  const [showForms, setShowForms] = useState(false);
-  const [profile, setProfile] = useState<ProfileRow | null>(null);
-  const [profileLoading, setProfileLoading] = useState(true);
-  const [acceptTerms, setAcceptTerms] = useState(false);
-  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
-  const [isUploading, setIsUploading] = useState(false);
-  const [verificationStatus, setVerificationStatus] = useState('pending');
-  const [verificationProgress, setVerificationProgress] = useState(0);
-  const [isReportReady, setIsReportReady] = useState(false);
-  const [formData, setFormData] = useState<ClientFormData>({
-    fullName: "",
-    apellidos: "",
-    phone: "",
-    email: "",
-    pais: "",
-    tipoDocumento: "",
-    documentos: "",
-    documentosUrls: "[]",
-    preferredOffice: "+39",
-  });
-  
-  // ✅ Estado para el campo con error
-  const [errorField, setErrorField] = useState<string | null>(null);
-  const errorRefs = useRef<Record<string, HTMLDivElement | null>>({});
-  
-  const [formReady, setFormReady] = useState(false);
-  const [paymentConfirmed, setPaymentConfirmed] = useState(false);
-  
-  const [voiceSupported, setVoiceSupported] = useState(true);
-  const [isListening, setIsListening] = useState(false);
-  const [waitingSara, setWaitingSara] = useState(false);
-  const [voiceHistory, setVoiceHistory] = useState<ChatMsg[]>([]);
-  const [lastUserTranscript, setLastUserTranscript] = useState("");
+export default async function handler(
+  req: VercelRequest,
+  res: VercelResponse
+) {
+  /**
+   * ----------------------------------------------------------
+   * SOLO POST
+   * ----------------------------------------------------------
+   */
 
-  const remoteAudioRef = useRef<HTMLAudioElement | null>(null);
-  const realtimePcRef = useRef<RTCPeerConnection | null>(null);
-  const realtimeDcRef = useRef<RTCDataChannel | null>(null);
-  const realtimeLocalStreamRef = useRef<MediaStream | null>(null);
-  const assistantTextBufferRef = useRef("");
-  const lastUserTranscriptRef = useRef("");
-  const lastAssistantTextRef = useRef("");
-  const shouldKickoffSaraRef = useRef(false);
+  if (req.method !== "POST") {
+    return res.status(405).json({
+      ok: false,
+      error: "Método no permitido.",
+    });
+  }
 
-  const { toast } = useToast();
+  try {
+    /**
+     * ========================================================
+     * BODY
+     * ========================================================
+     */
 
-  const isMa = language === "ma";
-  const isEn = language === "en";
+    const body = req.body || {};
 
-  const voiceTexts = useMemo(
-    () => ({
-      initialVoice:
-        "السلام عليكم مرحبا بك في هيستوريا إي آي أنا سارة غادي نعاونك باش تتحقق من عقد العمل أو وثائق Decreto Flussi. املأ ليا الفورمولار وغادي نبداو التحليل.",
-      savedLeadReply:
-        "مزيان دابا توصلنا بالمعلومات ديالك غادي نبداو نحلل وثائقك 24/24.",
-      confirmMsg:
-        "مبروك عليك تأكدات الوثائق ديالك شكرا على الثقة ديالك في هيستوريا إي آي",
-    }),
-    []
-  );
+    /**
+     * ========================================================
+     * DATOS DEL CLIENTE
+     * ========================================================
+     */
 
-  const ui = useMemo(() => {
-    return {
-      docsByTramite: {
-        tie: [
-          { nombre: "Contrato de trabajo o Decreto Flussi", estado: "ok" as DocState },
-          { nombre: "Documento de identidad vigente", estado: "ok" as DocState },
-        ],
-      } as Record<string, DocItem[]>,
+    const clientName = cleanString(
+      body.client_name ??
+        body.clientName ??
+        body.nombre ??
+        body.fullName,
+      100
+    );
 
-      formsByTramite: {
-        tie: [
-          { nombre: "Formulario Decreto Flussi", codigo: "FLUSSI-01", url: "https://example.com" },
-        ],
-      } as Record<string, FormItem[]>,
+    const clientSurname = cleanString(
+      body.client_surname ??
+        body.clientSurname ??
+        body.apellidos ??
+        body.surname,
+      150
+    );
 
-      online: isMa ? "أونلاين" : isEn ? "Online" : "En línea",
+    const email = cleanEmail(
+      body.email ??
+        body.gmail
+    );
 
-      agentRole: isMa
-        ? "التحقق من العقود"
-        : isEn
-        ? "Contract Verification Assistant"
-        : "Asesora de Verificación de Contratos",
+    /**
+     * ========================================================
+     * COMPROBAR SI ES USUARIO DE PRUEBA
+     * ========================================================
+     */
 
-      loadingUserData: isMa
-        ? "جاري تحميل المعلومات..."
-        : isEn
-        ? "Loading user data..."
-        : "Cargando datos del usuario...",
+    const isFlussiTestUser = false;
 
-      govSmall: "verificación:",
-      govTitle: "CONTRATO · DECRETO FLUSSI · NULLA OST",
-      govLine1: "VERIFICACIÓN DE DOCUMENTOS",
-      govLine2: "AUTOMÁTICA 24/24",
-      govLine3: "INFORME POR EMAIL",
+    const whatsapp = cleanPhone(
+      body.whatsapp ??
+        body.phone ??
+        body.telefono
+    );
 
-      confirmTitle: isMa ? "تم تأكيد الوثائق!" : isEn ? "DOCUMENTS CONFIRMED!" : "¡DOCUMENTOS CONFIRMADOS!",
+    const country = cleanCountry(
+      body.country ??
+        body.pais
+    );
 
-      date: isMa ? "التاريخ" : isEn ? "Date" : "Fecha",
-      time: isMa ? "الوقت" : isEn ? "Time" : "Hora",
-      office: isMa ? "المكتب" : isEn ? "Office" : "Oficina",
-      appointmentNumber: isMa ? "رقم الملف" : isEn ? "File Number" : "Nº Expediente",
+    /**
+     * ========================================================
+     * PERSONA / EMPLEADOR
+     * ========================================================
+     *
+     * Aceptamos tanto los nombres nuevos como los que utiliza
+     * actualmente tu formulario.
+     */
 
-      reservationSaved: isMa
-        ? "تم حفظ الوثائق"
-        : isEn
-        ? "Documents saved"
-        : "Documentos guardados correctamente",
+    const employerName = cleanString(
+      body.employer_name ??
+        body.employerName ??
+        body.empleadorNombre ??
+        body.nombre_empleador ??
+        body.person_name ??
+        body.nombrePersona,
+      200
+    );
 
-      sourceLabel: isMa ? "المصدر الرسمي" : isEn ? "Official source" : "Fuente oficial",
+    const employerCity = cleanString(
+      body.employer_city ??
+        body.employerCity ??
+        body.empleadorCiudad ??
+        body.ciudad_italia ??
+        body.city,
+      120
+    );
 
-      voiceButton: isMa
-        ? "تكلم مع سارة حول وثائقك"
-        : isEn
-        ? "Talk with Sara about your documents"
-        : "Hablar con Sara sobre tus documentos",
-      stopButton: isMa ? "وقف الميكرو" : isEn ? "Stop microphone" : "Parar micrófono",
+    const employerBirthDate = cleanString(
+      body.employer_birth_date ??
+        body.employerBirthDate ??
+        body.empleadorFechaNacimiento ??
+        body.fecha_nacimiento_empleador,
+      30
+    );
 
-      latestReply: isMa ? "آخر رد من سارة" : isEn ? "Latest Sara reply" : "Última respuesta de Sara",
-      yourVoice: isMa ? "آخر كلام ديالك" : isEn ? "Your latest voice" : "Tu última respuesta por voz",
-      listening: isMa ? "سارة كتسمع ليك..." : isEn ? "Sara is listening..." : "Sara te está escuchando ahora...",
+    /**
+     * ========================================================
+     * TIPO DE DOCUMENTO
+     * ========================================================
+     */
 
-      saveTitle: isMa ? "تم حفظ المعلومات" : isEn ? "Data saved" : "Datos guardados",
-      saveDesc: isMa ? "سارة غادي تكمل معاك" : isEn ? "Sara can continue now." : "Sara ya puede continuar contigo.",
+    const documentType = cleanDocumentType(
+      body.document_type ??
+        body.documentType ??
+        body.tipo_documento ??
+        body.tipoDocumento
+    );
 
-      missingTitle: isMa ? "معلومات ناقصة" : isEn ? "Missing data" : "Faltan datos",
-      missingDesc: isMa
-        ? "دخل الاسم والهاتف والإيميل"
-        : isEn
-        ? "Fill name, phone and email."
-        : "Rellena nombre, teléfono y email.",
+    /**
+     * ========================================================
+     * BÚSQUEDA SOLO POR PERSONA
+     * ========================================================
+     *
+     * Si es true:
+     *
+     * - NO necesita contrato
+     * - NO necesita Nulla Osta
+     * - NO necesita PDF
+     *
+     * Solo necesitamos los datos de la persona/empleador.
+     */
 
-      openRealtimeError: isMa
-        ? "المتصفح ما كيدعمش الصوت"
-        : isEn
-        ? "Browser does not support audio."
-        : "Este navegador no soporta audio. Usa Chrome moderno.",
+    // Document-only service. No search by name/person.
+    const searchPersonOnly = false;
 
-      docsButton: isMa ? "الوثائق" : isEn ? "Documents" : "Documentos",
-      formsButton: isMa ? "الاستمارات" : isEn ? "Forms" : "Formularios",
-      docsRequiredTitle: isMa ? "الوثائق المطلوبة" : isEn ? "Required documents" : "Documentos requeridos",
-      formsOfficialTitle: isMa ? "الاستمارات الرسمية" : isEn ? "Official forms" : "Formularios oficiales",
+    /**
+     * ========================================================
+     * DOCUMENTOS
+     * ========================================================
+     *
+     * Aquí NO subimos los archivos a Supabase.
+     *
+     * Solamente comprobamos cuántos archivos seleccionó
+     * el usuario.
+     *
+     * Los archivos reales deben estar en el bucket temporal
+     * y pasarán al proceso definitivo después del pago.
+     */
 
-      pageTitle: isMa
-        ? "التحقق من العقود ومرسوم فلوسي"
-        : isEn
-        ? "Contract & Decreto Flussi Verification"
-        : "Verificación de Contratos y Decreto Flussi",
+    let documentCount = 0;
 
-      agentSavedMsg: isMa
-        ? "مزيان. دابا غادي نبداو نحلل وثائقك. غادي توصلك التقرير على الإيميل في أقل من 24 ساعة."
-        : isEn
-        ? "Perfect. We are already analyzing your documents. You will receive the report by email within 24 hours."
-        : "Perfecto. Ya estamos analizando tus documentos. Recibirás el informe por email en menos de 24h.",
+    if (Array.isArray(body.document_files)) {
+      documentCount = body.document_files.length;
+    } else if (Array.isArray(body.documents)) {
+      documentCount = body.documents.length;
+    } else if (Array.isArray(body.documentos)) {
+      documentCount = body.documentos.length;
+    } else if (Array.isArray(body.files)) {
+      documentCount = body.files.length;
+    } else if (Array.isArray(body.uploadedFiles)) {
+      documentCount = body.uploadedFiles.length;
+    }
 
-      stripeErrorTitle: isMa ? "خطأ في الدفع" : isEn ? "Payment error" : "Error Stripe",
-      stripeErrorDesc: isMa ? "ما قدرناش نفتحو الدفع" : isEn ? "Could not open payment." : "No se pudo abrir el pago",
+    /**
+     * ========================================================
+     * MÁXIMO 5 DOCUMENTOS
+     * ========================================================
+     */
 
-      saveErrorTitle: isMa ? "خطأ" : isEn ? "Error" : "Error",
-      saveErrorDesc: isMa ? "ما قدرناش نحفظو المعلومات" : isEn ? "Could not save data." : "No se pudo guardar el cliente",
-
-      panelUpdated: isMa ? "تحدث اللوحة" : isEn ? "Panel updated" : "Panel actualizado",
-    };
-  }, [language]);
-
-  const docsForSelectedTramite = ui.docsByTramite.tie;
-  const formsForSelectedTramite = ui.formsByTramite.tie;
-
-  const voiceStorageKey = useMemo(() => {
-    const userId = profile?.id || "guest";
-    return `gestoriacitaia_flussi_voice_${userId}`;
-  }, [profile?.id]);
-
-  // ✅ Scroll automático al campo con error
-  useEffect(() => {
-    if (!errorField) return;
-
-    const element = errorRefs.current[errorField];
-    if (element) {
-      element.scrollIntoView({
-        behavior: "smooth",
-        block: "center",
+    if (documentCount > MAX_DOCUMENTS) {
+      return res.status(400).json({
+        ok: false,
+        error:
+          `Puedes seleccionar un máximo de ${MAX_DOCUMENTS} documentos.`,
       });
     }
-  }, [errorField]);
 
-  // ✅ Suscribirse a cambios de estado de verificación
-  useEffect(() => {
-    const userId = profile?.id;
-    if (!userId) return;
+    /**
+     * ========================================================
+     * VALIDACIONES CLIENTE
+     * ========================================================
+     */
 
-    const subscription = supabase
-      .channel('verification_status')
-      .on(
-        'postgres_changes',
+    if (!clientName) {
+      return res.status(400).json({
+        ok: false,
+        error:
+          "El nombre del cliente es obligatorio.",
+      });
+    }
+
+    if (!clientSurname) {
+      return res.status(400).json({
+        ok: false,
+        error:
+          "Los apellidos del cliente son obligatorios.",
+      });
+    }
+
+    if (!email) {
+      return res.status(400).json({
+        ok: false,
+        error:
+          "El Gmail es obligatorio.",
+      });
+    }
+
+    if (!isValidEmail(email)) {
+      return res.status(400).json({
+        ok: false,
+        error:
+          "El Gmail introducido no es válido.",
+      });
+    }
+
+    if (!whatsapp) {
+      return res.status(400).json({
+        ok: false,
+        error:
+          "El WhatsApp es obligatorio.",
+      });
+    }
+
+    if (!country) {
+      return res.status(400).json({
+        ok: false,
+        error:
+          "El país es obligatorio.",
+      });
+    }
+
+    /**
+     * ========================================================
+     * VERIFICACIÓN DOCUMENTAL PROFESIONAL
+     * ========================================================
+     *
+     * El cliente solamente debe subir al menos un documento.
+     * El nombre de persona, empresa, tipo de documento y demás
+     * datos se extraerán posteriormente mediante OCR/IA.
+     */
+
+    if (documentCount === 0) {
+      return res.status(400).json({
+        ok: false,
+        error:
+          "Debes seleccionar al menos un documento para realizar la verificación.",
+      });
+    }
+
+    /**
+     * ========================================================
+     * URL WEB
+     * ========================================================
+     */
+
+    const baseUrl =
+      process.env.NEXT_PUBLIC_URL ||
+      process.env.NEXT_PUBLIC_SITE_URL ||
+      "https://gestoriacitaia.com";
+
+    const normalizedBaseUrl =
+      baseUrl.replace(/\/+$/, "");
+
+    /**
+     * ========================================================
+     * REFERENCIA INTERNA
+     * ========================================================
+     */
+
+    const reference =
+      `FLUSSI-${Date.now()}-${Math.random()
+        .toString(36)
+        .substring(2, 8)
+        .toUpperCase()}`;
+
+    /**
+     * ========================================================
+     * MODO PRUEBA
+     * ========================================================
+     *
+     * SOLO:
+     *
+     * robertopalacio165@gmail.com
+     *
+     * No crea Checkout de Stripe.
+     *
+     * Devuelve directamente paid: true.
+     */
+
+    if (isFlussiTestUser) {
+      /**
+       * ------------------------------------------------------
+       * COMPROBAR SECRETO
+       * ------------------------------------------------------
+       */
+
+      if (!FLUSSI_TEST_SECRET) {
+        console.error(
+          "❌ FLUSSI_TEST_SECRET no está configurado."
+        );
+
+        return res.status(500).json({
+          ok: false,
+          error:
+            "El modo prueba de Flussi no está configurado correctamente.",
+        });
+      }
+
+      /**
+       * ------------------------------------------------------
+       * CREAR TOKEN DE PRUEBA
+       * ------------------------------------------------------
+       */
+
+      const testSessionId =
+        createTestToken(
+          email,
+          reference
+        );
+
+      console.log(
+        "🧪 FLUSSI TEST USER — STRIPE BYPASS",
         {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'verificaciones',
-          filter: `user_id=eq.${userId}`,
-        },
-        (payload) => {
-          setVerificationStatus(payload.new.status || 'pending');
-          setVerificationProgress(payload.new.progress || 0);
-          if (payload.new.payment_status === 'paid') {
-            setPaymentConfirmed(true);
-            setFormReady(true);
-          }
-          
-          if (payload.new.status === 'report_ready') {
-            setIsReportReady(true);
-            toast({
-              title: isMa ? "✅ التقرير جاهز" : isEn ? "✅ Report ready" : "✅ Informe listo",
-              description: isMa 
-                ? "يمكنك تحميل التقرير من لوحة التحكم"
-                : isEn 
-                ? "You can download the report from the dashboard"
-                : "Puedes descargar el informe desde el panel",
-            });
-          }
+          email,
+          reference,
+          searchPersonOnly,
+          documentCount,
         }
-      )
-      .subscribe();
-
-    return () => subscription.unsubscribe();
-  }, [profile?.id, isMa, isEn, toast]);
-
-  // ✅ Función para descargar el informe (con URL firmada)
-  const handleDownloadReport = async () => {
-    try {
-      const userId = profile?.id;
-      if (!userId) {
-        toast({
-          title: isMa ? "❌ خطأ" : isEn ? "❌ Error" : "❌ Error",
-          description: isMa ? "يجب تسجيل الدخول أولاً" : isEn ? "Please login first" : "Debes iniciar sesión primero",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      const { data, error } = await supabase
-        .from('verificaciones')
-        .select('report_path')
-        .eq('user_id', userId)
-        .maybeSingle();
-
-      if (error || !data?.report_path) {
-        throw new Error('No se encontró el informe');
-      }
-
-      const { data: signedUrlData, error: signedUrlError } = await supabase.storage
-        .from('informes-flussi-privado')
-        .createSignedUrl(data.report_path, 3600);
-
-      if (signedUrlError) throw signedUrlError;
-
-      window.open(signedUrlData.signedUrl, '_blank');
-
-    } catch (error: any) {
-      toast({
-        title: isMa ? "❌ خطأ في التحميل" : isEn ? "❌ Download error" : "❌ Error al descargar",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
-  };
-
-  useEffect(() => {
-    const supported =
-      typeof window !== "undefined" &&
-      typeof window.RTCPeerConnection !== "undefined" &&
-      typeof navigator !== "undefined" &&
-      !!navigator.mediaDevices?.getUserMedia;
-    setVoiceSupported(Boolean(supported));
-  }, []);
-
-  useEffect(() => {
-    const loadProfile = async () => {
-      try {
-        setProfileLoading(true);
-        const { data: sessionData } = await supabase.auth.getSession();
-        const user = sessionData?.session?.user;
-        if (!user?.id) {
-          setProfile(null);
-          setProfileLoading(false);
-          return;
-        }
-        const { data, error } = await supabase
-          .from("profiles")
-          .select("id,email,full_name,phone,nie")
-          .eq("id", user.id)
-          .maybeSingle();
-        if (error) {
-          setProfile(null);
-        } else {
-          const profileData = (data as ProfileRow | null) ?? null;
-          setProfile(profileData);
-          
-          const { data: verificationData } = await supabase
-            .from('verificaciones')
-            .select('payment_status, status, report_path')
-            .eq('user_id', user.id)
-            .maybeSingle();
-            
-          if (verificationData?.payment_status === 'paid') {
-            setPaymentConfirmed(true);
-            setFormReady(true);
-            
-            if (verificationData?.report_path) {
-              setIsReportReady(true);
-              setVerificationStatus('report_ready');
-            }
-          }
-          
-          if (
-            profileData?.email?.toLowerCase() ===
-            "robertopalacio165@gmail.com"
-          ) {
-            setFormReady(true);
-          }
-        }
-      } catch {
-        setProfile(null);
-      } finally {
-        setProfileLoading(false);
-      }
-    };
-    loadProfile();
-  }, []);
-
-  useEffect(() => {
-    setFormData((prev) => ({
-      ...prev,
-      fullName: profile?.full_name?.trim() || prev.fullName,
-      phone: "",
-    }));
-  }, [profile?.full_name, profile?.phone]);
-
-  // Después de que el servidor confirme payment_status=paid, subimos los PDF
-  // que seguían únicamente en IndexedDB y guardamos sus rutas en verificaciones.
-  useEffect(() => {
-    if (!profile?.id || !paymentConfirmed) return;
-
-    const uploadPaidFiles = async () => {
-      try {
-        const pending = await getPendingFlussiFiles();
-        if (pending.length === 0) return;
-
-        const uploaded: UploadedFile[] = [];
-        for (const item of pending) {
-          const extension = item.name.includes(".")
-            ? item.name.split(".").pop()?.toLowerCase() || "bin"
-            : item.type === "application/pdf"
-            ? "pdf"
-            : item.type === "image/jpeg"
-            ? "jpg"
-            : item.type === "image/png"
-            ? "png"
-            : item.type === "image/webp"
-            ? "webp"
-            : "bin";
-
-          const fileName = `${profile.id}/${Date.now()}-${Math.random().toString(36).slice(2, 9)}.${extension}`;
-          const file = item.file instanceof File
-            ? item.file
-            : new File([item.file], item.name, { type: item.type || "application/octet-stream" });
-
-          const { error } = await supabase.storage
-            .from("documentos-flussi-privado")
-            .upload(fileName, file, {
-              cacheControl: "3600",
-              upsert: false,
-              contentType: item.type || "application/octet-stream",
-            });
-          if (error) throw error;
-          uploaded.push({ name: item.name, path: fileName, size: item.size, type: item.type || "application/pdf" });
-        }
-
-        const paths = uploaded.map((file) => file.path);
-        const names = uploaded.map((file) => file.name).join(", ");
-        const { error: updateError } = await supabase
-          .from("verificaciones")
-          .update({ documentos: names, documentos_paths: paths })
-          .eq("user_id", profile.id)
-          .eq("payment_status", "paid");
-
-        if (updateError) throw updateError;
-        await clearPendingFlussiFiles();
-        setUploadedFiles(uploaded);
-        onFormChange("documentos", names);
-        onFormChange("documentosUrls", JSON.stringify(paths));
-      } catch (error) {
-        console.error("Error subiendo documentos después del pago:", error);
-      }
-    };
-
-    void uploadPaidFiles();
-  }, [profile?.id, paymentConfirmed]);
-
-  useEffect(() => {
-    if (!voiceStorageKey) return;
-    try {
-      const raw = localStorage.getItem(voiceStorageKey);
-      if (raw) {
-        const parsed = JSON.parse(raw) as ChatMsg[];
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setVoiceHistory(parsed);
-          return;
-        }
-      }
-      setVoiceHistory([{ from: "agent", text: voiceTexts.initialVoice, ts: Date.now() }]);
-    } catch {
-      setVoiceHistory([{ from: "agent", text: voiceTexts.initialVoice, ts: Date.now() }]);
-    }
-  }, [voiceStorageKey, voiceTexts.initialVoice]);
-
-  useEffect(() => {
-    if (!voiceStorageKey || voiceHistory.length === 0) return;
-    localStorage.setItem(voiceStorageKey, JSON.stringify(voiceHistory));
-  }, [voiceHistory, voiceStorageKey]);
-
-  const pushAgentMessage = (text: string) => {
-    if (!text?.trim()) return;
-    setVoiceHistory((prev) => [...prev, { from: "agent", text, ts: Date.now() }]);
-    lastAssistantTextRef.current = text;
-  };
-
-  const pushUserMessage = (text: string) => {
-    if (!text?.trim()) return;
-    setVoiceHistory((prev) => [...prev, { from: "user", text, ts: Date.now() }]);
-    setLastUserTranscript(text);
-  };
-
-  const finalizeAssistantBuffer = () => {
-    const text = assistantTextBufferRef.current.trim();
-    if (!text) return;
-    assistantTextBufferRef.current = "";
-    if (text === "..." || text === "…") return;
-    if (text === lastAssistantTextRef.current) return;
-    pushAgentMessage(text);
-  };
-
-  const sendSaraSpokenMessage = (message: string) => {
-    if (!message.trim()) return;
-    if (!realtimeDcRef.current || realtimeDcRef.current.readyState !== "open") return;
-    if (!realtimePcRef.current || !realtimePcRef.current.remoteDescription) return;
-    setWaitingSara(true);
-    assistantTextBufferRef.current = "";
-    realtimeDcRef.current.send(
-      JSON.stringify({
-        type: "conversation.item.create",
-        item: {
-          type: "message",
-          role: "user",
-          content: [
-            {
-              type: "input_text",
-              text: `ابدئي أنتِ الكلام الآن مباشرة. لا تنتظري العميل. قولي الآن هذا الكلام بصوت طبيعي وبشكل بشري: ${message}`,
-            },
-          ],
-        },
-      })
-    );
-    realtimeDcRef.current.send(
-      JSON.stringify({ type: "response.create", response: { modalities: ["audio", "text"] } })
-    );
-  };
-
-  const kickoffSara = () => {
-    setIsListening(true);
-    setWaitingSara(true);
-    setLastUserTranscript("");
-    lastUserTranscriptRef.current = "";
-    assistantTextBufferRef.current = "";
-    const firstMessage = formReady ? voiceTexts.savedLeadReply : voiceTexts.initialVoice;
-    sendSaraSpokenMessage(firstMessage);
-  };
-
-  const stopListening = () => {
-    try {
-      realtimeDcRef.current?.close();
-      realtimeDcRef.current = null;
-      realtimePcRef.current?.close();
-      realtimePcRef.current = null;
-      if (realtimeLocalStreamRef.current) {
-        realtimeLocalStreamRef.current.getTracks().forEach((track) => track.stop());
-        realtimeLocalStreamRef.current = null;
-      }
-      if (remoteAudioRef.current) {
-        remoteAudioRef.current.pause();
-        remoteAudioRef.current.srcObject = null;
-      }
-    } catch (error) {
-      console.error("Error deteniendo realtime Sara:", error);
-    } finally {
-      setIsListening(false);
-      setWaitingSara(false);
-    }
-  };
-
-  const startListening = async () => {
-    if (!voiceSupported) {
-      toast({ title: "Error", description: ui.openRealtimeError, variant: "destructive" });
-      return;
-    }
-    try {
-      stopListening();
-      assistantTextBufferRef.current = "";
-      setWaitingSara(true);
-      const sessionRes = await fetch("/api/realtime-session", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ assistant: "sara" }),
-      });
-      const sessionData = await sessionRes.json();
-      if (!sessionRes.ok) throw new Error(sessionData?.error || "Error creando sesión realtime");
-      const ephemeralKey = sessionData?.client_secret?.value || sessionData?.value || "";
-      if (!ephemeralKey) throw new Error("No llegó client secret desde /api/realtime-session");
-
-      const pc = new RTCPeerConnection();
-      realtimePcRef.current = pc;
-      pc.ontrack = (event) => {
-        const [remoteStream] = event.streams;
-        if (remoteStream && remoteAudioRef.current) {
-          remoteAudioRef.current.srcObject = remoteStream;
-          remoteAudioRef.current.autoplay = true;
-          remoteAudioRef.current.playsInline = true;
-          remoteAudioRef.current.muted = false;
-          remoteAudioRef.current.volume = 1;
-          remoteAudioRef.current.play().catch((err) => console.error("Sara audio play error:", err));
-        }
-      };
-      const localStream = await navigator.mediaDevices.getUserMedia({
-        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
-      });
-      realtimeLocalStreamRef.current = localStream;
-      for (const track of localStream.getTracks()) pc.addTrack(track, localStream);
-
-      const dc = pc.createDataChannel("oai-events");
-      realtimeDcRef.current = dc;
-      dc.onopen = () => { shouldKickoffSaraRef.current = true; };
-      dc.onmessage = (event) => {
-        try {
-          const msg = JSON.parse(event.data);
-          const userTranscript =
-            msg?.transcript ||
-            msg?.item?.transcript ||
-            msg?.item?.content?.[0]?.transcript ||
-            "";
-          if (
-            (msg.type === "conversation.item.input_audio_transcription.completed" ||
-              msg.type === "input_audio_buffer.transcription.completed") &&
-            typeof userTranscript === "string" &&
-            userTranscript.trim()
-          ) {
-            const transcript = userTranscript.trim();
-            if (transcript !== lastUserTranscriptRef.current) {
-              lastUserTranscriptRef.current = transcript;
-              pushUserMessage(transcript);
-            }
-          }
-          if (msg.type === "response.output_text.delta" && typeof msg.delta === "string") {
-            assistantTextBufferRef.current += msg.delta;
-          }
-          if (msg.type === "response.output_text.done" && typeof msg.text === "string" && msg.text.trim()) {
-            assistantTextBufferRef.current = msg.text.trim();
-          }
-          if (msg.type === "response.done") { finalizeAssistantBuffer(); setWaitingSara(false); }
-          if (msg.type === "response.created") { setWaitingSara(true); }
-        } catch (err) {
-          console.error("Realtime Sara parse error:", err);
-        }
-      };
-      dc.onerror = (err) => console.error("Realtime Sara data channel error:", err);
-
-      const offer = await pc.createOffer();
-      await pc.setLocalDescription(offer);
-      const sdpRes = await fetch("https://api.openai.com/v1/realtime/calls", {
-        method: "POST",
-        body: offer.sdp,
-        headers: { Authorization: `Bearer ${ephemeralKey}`, "Content-Type": "application/sdp" },
-      });
-      if (!sdpRes.ok) {
-        const errText = await sdpRes.text();
-        throw new Error(errText || "Error negociando WebRTC con OpenAI");
-      }
-      const answerSdp = await sdpRes.text();
-      await pc.setRemoteDescription({ type: "answer", sdp: answerSdp });
-      if (shouldKickoffSaraRef.current) {
-        shouldKickoffSaraRef.current = false;
-        setTimeout(() => kickoffSara(), 150);
-      }
-    } catch (error: any) {
-      console.error("Error iniciando realtime Sara:", error);
-      stopListening();
-      toast({ title: "Error realtime", description: error?.message || "No se pudo iniciar Sara realtime", variant: "destructive" });
-    }
-  };
-
-  // ✅ VALIDACIÓN - TODOS LOS CAMPOS OBLIGATORIOS EN ORDEN
-  const validateForm = (): boolean => {
-    // 1. Nombre
-    if (!formData.fullName.trim() || formData.fullName.length < 2) {
-      setErrorField("fullName");
-      return false;
-    }
-
-    // 2. Apellidos
-    if (!formData.apellidos.trim() || formData.apellidos.length < 2) {
-      setErrorField("apellidos");
-      return false;
-    }
-
-    // 3. WhatsApp
-    const phoneClean = formData.phone.replace(/\s/g, '');
-    const phoneRegex = /^\+?[0-9]{9,15}$/;
-    if (!phoneClean || !phoneRegex.test(phoneClean)) {
-      setErrorField("phone");
-      return false;
-    }
-
-    // 4. Email
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!formData.email.trim() || !emailRegex.test(formData.email.trim())) {
-      setErrorField("email");
-      return false;
-    }
-
-    // 5. País
-    if (!formData.pais.trim()) {
-      setErrorField("pais");
-      return false;
-    }
-
-    // 6. El tipo de documento se identifica automáticamente mediante OCR/IA.
-
-    // 7. Documento obligatorio
-    if (uploadedFiles.length === 0) {
-      setErrorField("documents");
-      return false;
-    }
-
-    // 9. Aceptación de términos
-    if (!acceptTerms) {
-      setErrorField("acceptTerms");
-      return false;
-    }
-
-    // ✅ Todos los campos están correctos
-    setErrorField(null);
-    return true;
-  };
-
-  // ✅ HANDLE PAY - ejecuta validate y luego payStripe
-  const handlePay = () => {
-    if (!validateForm()) {
-      return;
-    }
-    payStripe();
-  };
-
-  // ✅ Función que llama a Stripe
-  const payStripe = async () => {
-    try {
-      const pendingFiles = await getPendingFlussiFiles();
-      if (pendingFiles.length === 0) {
-        throw new Error(
-          isMa
-            ? "خاصك تختار الوثائق أولا"
-            : isEn
-            ? "Please select your documents first"
-            : "Primero debes seleccionar los documentos"
-        );
-      }
-
-      const { data: sessionData } = await supabase.auth.getSession();
-      const userId = sessionData?.session?.user?.id || generateSessionId();
-
-      const res = await fetch("/api/create-checkout-flussi", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          userId,
-          clientName: `${formData.fullName} ${formData.apellidos}`.trim(),
-          nombreCliente: `${formData.fullName} ${formData.apellidos}`.trim(),
-          fullName: formData.fullName,
-          apellidos: formData.apellidos,
-          phone: formData.phone,
-          email: formData.email,
-          pais: formData.pais,
-          // Los archivos reales permanecen en IndexedDB hasta confirmar el pago.
-          // Enviamos metadatos para que el backend pueda contar los documentos.
-          document_files: pendingFiles.map((file) => ({
-            id: file.id,
-            name: file.name,
-            type: file.type,
-            size: file.size,
-          })),
-          documentos: formData.documentos,
-          documentosPaths: "[]",
-          // El tipo se identifica automáticamente mediante OCR/IA.
-          tipoDocumento: null,
-          preferredOffice: formData.preferredOffice,
-        }),
-      });
-
-      const data = await res.json();
-
-      console.log("🧪 FLUSSI CHECKOUT RESPONSE:", data);
-
-      if (!res.ok) {
-        throw new Error(
-          data?.error || "Error creando el proceso de pago."
-        );
-      }
-
-      // ============================================================
-      // 🧪 USUARIO DE PRUEBA
-      // El servidor devuelve test_mode=true para el email autorizado.
-      // NO se abre Stripe.
-      // ============================================================
-      if (data?.test_mode === true) {
-        console.log("🧪 FLUSSI TEST MODE ACTIVADO", {
-          email: formData.email,
-          session_id: data.session_id || null,
-          reference: data.reference || null,
-        });
-
-        setPaymentConfirmed(true);
-        setFormReady(true);
-        setVerificationStatus("pending");
-        setVerificationProgress(0);
-
-        toast({
-          title: isMa
-            ? "✅ تم تأكيد الأداء التجريبي"
-            : isEn
-            ? "✅ Test payment confirmed"
-            : "✅ Pago de prueba confirmado",
-          description: isMa
-            ? "هاد العملية تجريبية وما كاين حتى اقتطاع من Stripe."
-            : isEn
-            ? "This is a test transaction. No Stripe payment was charged."
-            : "Esta es una operación de prueba. No se ha realizado ningún cobro en Stripe.",
-        });
-
-        return;
-      }
-
-      // ============================================================
-      // 💳 STRIPE NORMAL
-      // ============================================================
-      const checkoutUrl =
-        data?.url ||
-        data?.checkout_url ||
-        data?.checkoutUrl ||
-        "";
-
-      if (checkoutUrl) {
-        console.log("💳 REDIRIGIENDO A STRIPE:", checkoutUrl);
-        window.location.href = checkoutUrl;
-        return;
-      }
-
-      throw new Error(
-        data?.error ||
-        "El servidor no devolvió una URL de Stripe."
       );
-    } catch (error: any) {
-      console.error("❌ ERROR FLUSSI CHECKOUT:", error);
 
-      toast({
-        title: ui.stripeErrorTitle,
-        description: error?.message || ui.stripeErrorDesc,
-        variant: "destructive",
+      /**
+       * ------------------------------------------------------
+       * RESPUESTA DIRECTA
+       * ------------------------------------------------------
+       */
+
+      return res.status(200).json({
+        ok: true,
+
+        session_id:
+          testSessionId,
+
+        checkout_url:
+          null,
+
+        checkoutUrl:
+          null,
+
+        url:
+          null,
+
+        reference,
+
+        amount:
+          FLUSSI_PRICE_CENTS,
+
+        currency:
+          FLUSSI_CURRENCY,
+
+        product:
+          FLUSSI_PRODUCT,
+
+        paid:
+          true,
+
+        test_mode:
+          true,
+
+        searchPersonOnly,
+
+        documents_upload_allowed:
+          true,
+
+        customer_email:
+          email,
+
+        customer_name:
+          `${clientName} ${clientSurname}`.trim(),
+
+        metadata: {
+          product:
+            FLUSSI_PRODUCT,
+
+          service:
+            "verificacion_decreto_flussi",
+
+          reference,
+
+          client_name:
+            clientName,
+
+          client_surname:
+            clientSurname,
+
+          email,
+
+          whatsapp,
+
+          country,
+
+          employer_name:
+            employerName,
+
+          employer_city:
+            employerCity,
+
+          employer_birth_date:
+            employerBirthDate,
+
+          search_person_only:
+            searchPersonOnly
+              ? "true"
+              : "false",
+
+          document_type:
+            documentType,
+
+          document_count:
+            String(documentCount),
+
+          test_mode:
+            "true",
+        },
+
+        message:
+          "Modo prueba activado. No es necesario realizar el pago de Stripe.",
       });
     }
-  };
 
-  const handleFormChange = (field: keyof ClientFormData, value: string | boolean) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-  };
+    /**
+     * ========================================================
+     * STRIPE
+     * ========================================================
+     *
+     * Todos los usuarios que NO son el email de prueba
+     * pasan por Stripe normalmente.
+     */
 
-  return (
-    <div className="min-h-screen bg-background text-foreground relative flex flex-col">
-      <div
-        className="fixed inset-0 z-0 opacity-30 pointer-events-none"
-        style={{
-          backgroundImage:
-            "radial-gradient(ellipse 80% 50% at 50% -20%, rgba(34,197,94,0.08), transparent), radial-gradient(ellipse 60% 40% at 80% 80%, rgba(59,130,246,0.07), transparent)",
-        }}
-      />
+    if (!stripe) {
+      console.error(
+        "❌ STRIPE_SECRET_KEY no está configurada."
+      );
 
-      <Navbar />
+      return res.status(500).json({
+        ok: false,
+        error:
+          "Stripe no está configurado correctamente en el servidor.",
+      });
+    }
 
-      <main className="flex-1 relative z-10 flex flex-col pt-16 pb-0">
-        <h1 className="text-xl font-display font-bold px-4 sm:px-6 py-3 max-w-7xl mx-auto w-full">
-          {ui.pageTitle}
-        </h1>
+    /**
+     * ========================================================
+     * METADATA STRIPE
+     * ========================================================
+     */
 
-        <div className="flex-1 flex flex-col lg:flex-row gap-4 px-4 sm:px-6 max-w-7xl mx-auto w-full pb-4">
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="lg:w-[340px] xl:w-[380px] shrink-0 flex flex-col gap-3"
-          >
-            <div
-              className="relative rounded-2xl overflow-hidden border border-primary/20 shadow-[0_0_30px_-5px_hsl(var(--primary)/0.25)] bg-black"
-              style={{ height: "280px" }}
-            >
-              <div className="relative w-full h-full">
-                <img
-                  src="/images/sara.png"
-                  alt="Sara"
-                  className="w-full h-full object-cover object-top"
-                />
-              </div>
+    const metadata: Record<string, string> = {
+      product:
+        FLUSSI_PRODUCT,
 
-              {!muted && (
-                <div className="absolute bottom-14 left-4 flex items-end gap-0.5 h-5">
-                  {[3, 6, 4, 8, 5, 7, 3].map((h, i) => (
-                    <motion.div
-                      key={i}
-                      className="w-1 bg-primary rounded-full"
-                      animate={{ height: [`${h}px`, `${h * 2}px`, `${h}px`] }}
-                      transition={{ duration: 0.5, repeat: Infinity, delay: i * 0.07 }}
-                    />
-                  ))}
-                </div>
-              )}
+      service:
+        "verificacion_decreto_flussi",
 
-              <div className="absolute bottom-14 right-3 text-right">
-                <p className="text-white font-bold text-sm drop-shadow-lg">Sara</p>
-                <p className="text-white/70 text-xs drop-shadow-lg">{ui.agentRole}</p>
-              </div>
-            </div>
-          </motion.div>
+      reference,
 
-          <OfficialBrowserBox
-            language={language}
-            avatarImage={`${import.meta.env.BASE_URL}images/avatar-sara.png`}
-            title={ui.pageTitle}
-            url="verifica.italia.it"
-            profileLoading={profileLoading}
-            ui={ui}
-            confirmed={confirmed}
-            formData={formData}
-            onFormChange={handleFormChange}
-            onFormSubmit={() => {}}
-            formReady={formReady}
-            onPay={handlePay}
-            acceptTerms={acceptTerms}
-            setAcceptTerms={setAcceptTerms}
-            uploadedFiles={uploadedFiles}
-            setUploadedFiles={setUploadedFiles}
-            isUploading={isUploading}
-            setIsUploading={setIsUploading}
-            verificationStatus={verificationStatus}
-            verificationProgress={verificationProgress}
-            onDownloadReport={handleDownloadReport}
-            isReportReady={isReportReady}
-            errorField={errorField}
-            errorRefs={errorRefs}
-            setErrorField={setErrorField}
-          />
-        </div>
-      </main>
-    </div>
-  );
+      client_name:
+        clientName.slice(0, 100),
+
+      client_surname:
+        clientSurname.slice(0, 150),
+
+      email:
+        email.slice(0, 300),
+
+      whatsapp:
+        whatsapp.slice(0, 40),
+
+      country:
+        country.slice(0, 100),
+
+      employer_name:
+        employerName.slice(0, 200),
+
+      employer_city:
+        employerCity.slice(0, 120),
+
+      employer_birth_date:
+        employerBirthDate.slice(0, 30),
+
+      search_person_only:
+        searchPersonOnly
+          ? "true"
+          : "false",
+
+      document_type:
+        documentType.slice(0, 100),
+
+      document_count:
+        String(documentCount),
+    };
+
+    /**
+     * ========================================================
+     * CREAR CHECKOUT STRIPE
+     * ========================================================
+     */
+
+    const session =
+      await stripe.checkout.sessions.create({
+        mode: "payment",
+
+        payment_method_types: [
+          "card",
+        ],
+
+        customer_email:
+          email,
+
+        client_reference_id:
+          reference,
+
+        line_items: [
+          {
+            price_data: {
+              currency:
+                FLUSSI_CURRENCY,
+
+              product_data: {
+                name:
+                  "Verificación de Contrato y Decreto Flussi",
+
+                description:
+                  searchPersonOnly
+                    ? "Análisis de la persona o empleador relacionado con una posible contratación Decreto Flussi."
+                    : "Análisis documental y comprobación de datos relacionados con Decreto Flussi.",
+              },
+
+              /**
+               * 0,50 € durante las pruebas.
+               */
+
+              unit_amount:
+                FLUSSI_PRICE_CENTS,
+            },
+
+            quantity: 1,
+          },
+        ],
+
+        /**
+         * ====================================================
+         * RETURN URLS
+         * ====================================================
+         */
+
+        success_url:
+          `${normalizedBaseUrl}/verificar-decreto-flussi?payment=success&session_id={CHECKOUT_SESSION_ID}`,
+
+        cancel_url:
+          `${normalizedBaseUrl}/verificar-decreto-flussi?payment=cancelled`,
+
+        /**
+         * ====================================================
+         * METADATA
+         * ====================================================
+         */
+
+        metadata,
+
+        payment_intent_data: {
+          metadata,
+          // Stripe sends the payment receipt to this address for live payments.
+          receipt_email: email,
+        },
+
+        billing_address_collection:
+          "auto",
+
+        allow_promotion_codes:
+          false,
+
+        submit_type:
+          "pay",
+      });
+
+    /**
+     * ========================================================
+     * LOG
+     * ========================================================
+     */
+
+    console.log(
+      "✅ FLUSSI STRIPE CHECKOUT CREATED"
+    );
+
+    console.log({
+      sessionId:
+        session.id,
+
+      reference,
+
+      email,
+
+      employerName,
+
+      employerCity,
+
+      employerBirthDate,
+
+      documentType,
+
+      documentCount,
+
+      searchPersonOnly,
+
+      amount:
+        FLUSSI_PRICE_CENTS,
+
+      currency:
+        FLUSSI_CURRENCY,
+    });
+
+    /**
+     * ========================================================
+     * RESPUESTA
+     * ========================================================
+     */
+
+    return res.status(200).json({
+      ok: true,
+
+      session_id:
+        session.id,
+
+      // Compatibilidad con el frontend
+      checkout_url:
+        session.url,
+
+      checkoutUrl:
+        session.url,
+
+      url:
+        session.url,
+
+      reference,
+
+      amount:
+        FLUSSI_PRICE_CENTS,
+
+      currency:
+        FLUSSI_CURRENCY,
+
+      product:
+        FLUSSI_PRODUCT,
+
+      paid:
+        false,
+
+      test_mode:
+        false,
+
+      searchPersonOnly,
+
+      message:
+        "Checkout de Stripe creado correctamente. El pago todavía no está confirmado.",
+    });
+  } catch (error: any) {
+    console.error(
+      "❌ CREATE FLUSSI CHECKOUT ERROR:",
+      error
+    );
+
+    return res.status(500).json({
+      ok: false,
+
+      error:
+        error?.message ||
+        "No se pudo crear el pago de Stripe.",
+    });
+  }
 }
