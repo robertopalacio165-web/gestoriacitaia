@@ -326,8 +326,8 @@ export default async function handler(
      * Solo necesitamos los datos de la persona/empleador.
      */
 
-    // Servicio exclusivamente documental:
-    // ya NO existe la búsqueda solo por nombre/persona.
+    // Servicio exclusivamente documental.
+    // El sistema identifica el tipo de documento automáticamente.
     const searchPersonOnly = false;
 
     /**
@@ -428,26 +428,19 @@ export default async function handler(
 
     /**
      * ========================================================
-     * SERVICIO EXCLUSIVAMENTE DOCUMENTAL
+     * VERIFICACIÓN DOCUMENTAL PROFESIONAL
      * ========================================================
      *
-     * El cliente NO introduce el nombre del empleador/persona.
-     * El sistema lo extraerá posteriormente del documento
-     * mediante OCR/IA.
-     */
-
-    if (!documentType) {
-      return res.status(400).json({
-        ok: false,
-        error:
-          "Selecciona el tipo de documento que quieres verificar.",
-      });
-    }
-
-    /**
-     * ========================================================
-     * VALIDACIÓN ARCHIVOS
-     * ========================================================
+     * NO pedimos al cliente:
+     * - nombre del empleador
+     * - ciudad del empleador
+     * - fecha de nacimiento del empleador
+     * - búsqueda por nombre
+     * - tipo de documento
+     *
+     * El cliente simplemente sube el documento.
+     * El tipo, persona, empresa y demás datos se identificarán
+     * posteriormente mediante OCR/IA.
      */
 
     if (documentCount === 0) {
@@ -624,7 +617,7 @@ export default async function handler(
               : "false",
 
           document_type:
-            documentType,
+            documentType || "automatico",
 
           document_count:
             String(documentCount),
@@ -704,7 +697,9 @@ export default async function handler(
           : "false",
 
       document_type:
-        documentType.slice(0, 100),
+        documentType
+          ? documentType.slice(0, 100)
+          : "automatico",
 
       document_count:
         String(documentCount),
