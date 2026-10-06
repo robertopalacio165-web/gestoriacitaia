@@ -800,7 +800,11 @@ export default function PanelMalta() {
   <div className="bg-white/5 border border-green-500/20 rounded-2xl p-5 shadow-lg shadow-black/10">
     <div className="flex items-center gap-3">
       <div className="w-11 h-11 rounded-xl bg-green-500/10 border border-green-500/20 flex items-center justify-center">
-        <span className="text-2xl">🇮🇹</span>
+<img
+  src="https://flagcdn.com/w80/it.png"
+  alt="Italia"
+  className="w-8 h-6 object-cover rounded-sm"
+/>
       </div>
 
       <div className="flex-1">
