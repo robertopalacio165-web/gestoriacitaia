@@ -278,6 +278,9 @@ function OfficialBrowserBox({
         ...selectedFiles.map((file) => ({ name: file.name, path: "", size: file.size, type: file.type })),
       ];
       setUploadedFiles(newUploadedFiles);
+      // Al subir documentos pasamos automáticamente al modo documental.
+      // El nombre del empleador/persona ya no es necesario: se extraerá del archivo.
+      onFormChange("buscarSoloPersona", false);
       onFormChange("documentos", newUploadedFiles.map((file) => file.name).join(", "));
       onFormChange("documentosUrls", "[]");
       if (errorField === "documents") setErrorField(null);
@@ -922,8 +925,11 @@ function OfficialBrowserBox({
                   )}
 
                   {/* ============================================================
-                      👤 INFORMACIÓN DEL EMPLEADOR/PERSONA - SIEMPRE VISIBLE
+                      👤 INFORMACIÓN DEL EMPLEADOR/PERSONA
+                      SOLO SE MUESTRA SI NO HAY DOCUMENTOS
+                      Si el cliente sube un documento, los datos se extraen por OCR/IA.
                       ============================================================ */}
+                  {uploadedFiles.length === 0 && (
                   <div
                     ref={el => errorRefs.current["empleadorNombre"] = el}
                     className="col-span-1 lg:col-span-2 mt-1 rounded-2xl border-2 border-emerald-500/40 bg-emerald-500/5 p-4 shadow-[0_0_25px_rgba(16,185,129,0.08)]"
@@ -1049,6 +1055,7 @@ function OfficialBrowserBox({
                       </div>
                     )}
                   </div>
+                  )}
 
                   {/* Caja de pago con Checkbox */}
                   <div className="col-span-1 lg:col-span-2 mt-4 rounded-[28px] border-2 border-yellow-500 bg-gradient-to-b from-[#0b0b0b] to-[#050505] p-4 shadow-[0_0_35px_rgba(255,200,0,0.18)]">
@@ -1073,7 +1080,7 @@ function OfficialBrowserBox({
                       </div>
                       <div className="text-right">
                         <p className="text-yellow-400 text-[34px] font-black leading-none drop-shadow-[0_0_10px_rgba(255,215,0,0.35)]">
-                          21,99€
+                          0,50€
                         </p>
                         <p className="text-yellow-300 text-[11px] font-semibold">
                           {isMa ? "خلاص مرة وحدة" : isEn ? "One-time payment" : "Pago único"}
@@ -1092,7 +1099,7 @@ function OfficialBrowserBox({
                           : "Our system analyzes your contract or Decreto Flussi documents using artificial intelligence. We check document consistency and verify the company using available public sources. You will receive a detailed report by email."
                         : formData.buscarSoloPersona
                           ? "Buscaremos información públicamente disponible sobre la persona. Recibirás un informe detallado por correo electrónico."
-                          : "Nuestro sistema analiza tu contrato o documento del Decreto Flussi mediante inteligencia artificial. Comprobamos la coherencia documental y verificamos la empresa utilizando fuentes públicas disponibles. Recibirás un informe detallado por correo electrónico."}
+                          : "Nuestro sistema analiza tu documento mediante inteligencia artificial, extrae los datos relevantes y contrasta la información disponible en fuentes públicas. El informe indicará coincidencias y posibles señales de riesgo; no garantiza que exista un contrato o un nulla osta."}
                     </p>
 
                     {/* CONTADOR DE VERIFICACIÓN */}
@@ -1187,10 +1194,10 @@ onClick={onPay}
   className="w-full min-h-[56px] rounded-[20px] bg-gradient-to-r from-yellow-400 to-yellow-600 px-4 py-2 text-[15px] leading-tight font-black text-black hover:scale-[1.01] transition-transform"
 >
                       {isMa 
-                        ? "🔐 تحقق الآن مقابل 21.99€" 
+                        ? "🔐 تحقق الآن مقابل 0.50€" 
                         : isEn 
-                        ? "🔐 Verify now for only €21.99" 
-                        : "🔐 Verificar ahora por solo 21,99 €"}
+                        ? "🔐 Verify now for only €0.50" 
+                        : "🔐 Verificar ahora por solo 0,50 €"}
                     </button>
 
                     <div className="mt-5 flex items-center justify-center gap-2 text-[11px] text-gray-300">
@@ -1271,7 +1278,7 @@ onClick={onPay}
                       : "Our system analyzes your contract or Decreto Flussi documents using artificial intelligence. We check document consistency and verify the company using available public sources. You will receive a detailed report by email."
                     : formData.buscarSoloPersona
                       ? "Buscamos información públicamente disponible sobre la persona. Recibirás un informe detallado por correo electrónico."
-                      : "Nuestro sistema analiza tu contrato o documento del Decreto Flussi mediante inteligencia artificial. Comprobamos la coherencia documental y verificamos la empresa utilizando fuentes públicas disponibles. Recibirás un informe detallado por correo electrónico."}
+                      : "Nuestro sistema analiza tu documento mediante inteligencia artificial, extrae los datos relevantes y contrasta la información disponible en fuentes públicas. El informe indicará coincidencias y posibles señales de riesgo; no garantiza que exista un contrato o un nulla osta."}
                 </p>
               </div>
 
@@ -1991,25 +1998,35 @@ export default function VerificarDecretoFlussi() {
       return false;
     }
 
-    // 6. ✅ Nombre completo del empleador/persona - SIEMPRE OBLIGATORIO
-    if (!formData.empleadorNombre.trim() || formData.empleadorNombre.trim().length < 2) {
-      setErrorField("empleadorNombre");
-      return false;
+    // 6. 👤 Nombre del empleador/persona:
+    //    - Si hay documentos, NO se pide: la IA/OCR extraerá los datos del documento.
+    //    - Si no hay documentos, solo se pide cuando el cliente activa la búsqueda por persona.
+    if (uploadedFiles.length === 0 && formData.buscarSoloPersona) {
+      if (!formData.empleadorNombre.trim() || formData.empleadorNombre.trim().length < 2) {
+        setErrorField("empleadorNombre");
+        return false;
+      }
     }
 
-    // 7. ✅ Tipo de documento: solo obligatorio si NO está en modo "solo persona"
+    // 7. Tipo de documento: obligatorio cuando se suben documentos
     if (!formData.buscarSoloPersona && !formData.tipoDocumento.trim()) {
       setErrorField("tipoDocumento");
       return false;
     }
 
-    // 8. ✅ Documento: obligatorio solo cuando NO está en modo "solo persona"
+    // 8. 📄 Documento: obligatorio cuando no se ha elegido la búsqueda por persona
     if (!formData.buscarSoloPersona && uploadedFiles.length === 0) {
       setErrorField("documents");
       return false;
     }
 
-    // 9. Aceptación de términos
+    // 9. 🔎 Si no hay documentos, debe quedar claro que se busca solo a la persona
+    if (uploadedFiles.length === 0 && !formData.buscarSoloPersona) {
+      setErrorField("documents");
+      return false;
+    }
+
+    // 10. Aceptación de términos
     if (!acceptTerms) {
       setErrorField("acceptTerms");
       return false;
