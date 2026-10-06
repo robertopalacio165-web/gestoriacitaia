@@ -1,25 +1,74 @@
-import type { VercelRequest, VercelResponse } from "@vercel/node";
+import type {
+  VercelRequest,
+  VercelResponse,
+} from "@vercel/node";
+
 import Stripe from "stripe";
 
 /**
  * ============================================================
  * GESTORIACITAIA
- * STRIPE WEBHOOK — DECRETO FLUSSI
+ * STRIPE WEBHOOK — VERIFICACIÓN DECRETO FLUSSI
  * ============================================================
  *
+ * ARCHIVO:
+ *
+ * api/stripe-webhook-flussi.ts
+ *
  * URL:
+ *
  * https://www.gestoriacitaia.com/api/stripe-webhook-flussi
  *
- * SOLO procesa:
- * metadata.service === "verificacion_decreto_flussi"
+ * ============================================================
  *
- * NO TOCA MALTA.
+ * OBJETIVO DEL FLUJO
  *
- * IMPORTANTE:
- * Stripe se encarga del recibo del pago mediante
- * payment_intent_data.receipt_email en Checkout.
+ * DOCUMENTOS
+ *     ↓
+ * REFERENCIA FLUSSI
+ *     ↓
+ * STRIPE CHECKOUT
+ *     ↓
+ * PAGO CONFIRMADO
+ *     ↓
+ * WEBHOOK
+ *     ↓
+ * RECUPERAR DOCUMENTOS TEMPORALES
+ *     ↓
+ * ANÁLISIS DOCUMENTAL
+ *     ↓
+ * PDF
+ *     ↓
+ * EMAIL CLIENTE
  *
- * Este webhook NO envía email de "pago recibido".
+ * ============================================================
+ *
+ * IMPORTANTE
+ *
+ * Stripe NO guarda los documentos originales.
+ *
+ * Por eso este webhook trabaja siempre con una referencia:
+ *
+ * FLUSSI-XXXXXXXX
+ *
+ * El tercer archivo del flujo se encargará de garantizar que
+ * los documentos estén disponibles en almacenamiento temporal
+ * usando esa referencia.
+ *
+ * ============================================================
+ *
+ * ESTE ARCHIVO:
+ *
+ * - SOLO procesa Decreto Flussi
+ * - NO procesa Malta
+ * - NO busca personas por nombre
+ * - NO utiliza "searchPersonOnly"
+ * - EXIGE al menos un documento
+ * - comprueba que el pago esté realmente pagado
+ * - comprueba importe y moneda
+ * - genera la solicitud de análisis
+ * - manda la referencia documental al generador
+ *
  * ============================================================
  */
 
@@ -28,6 +77,12 @@ export const config = {
     bodyParser: false,
   },
 };
+
+/**
+ * ============================================================
+ * STRIPE
+ * ============================================================
+ */
 
 const stripeSecretKey =
   process.env.STRIPE_SECRET_KEY || "";
@@ -42,12 +97,15 @@ const stripe = stripeSecretKey
  * ============================================================
  * RAW BODY
  * ============================================================
+ *
+ * Stripe necesita el body original para verificar
+ * correctamente la firma del webhook.
+ * ============================================================
  */
 
 async function readRawBody(
   req: VercelRequest
 ): Promise<Buffer> {
-
   if (Buffer.isBuffer(req.body)) {
     return req.body;
   }
@@ -56,24 +114,36 @@ async function readRawBody(
     return Buffer.from(req.body);
   }
 
-  return new Promise((resolve, reject) => {
+  return new Promise(
+    (resolve, reject) => {
+      const chunks: Buffer[] = [];
 
-    const chunks: Buffer[] = [];
-
-    req.on("data", (chunk) => {
-      chunks.push(
-        Buffer.isBuffer(chunk)
-          ? chunk
-          : Buffer.from(chunk)
+      req.on(
+        "data",
+        (chunk) => {
+          chunks.push(
+            Buffer.isBuffer(chunk)
+              ? chunk
+              : Buffer.from(chunk)
+          );
+        }
       );
-    });
 
-    req.on("end", () => {
-      resolve(Buffer.concat(chunks));
-    });
+      req.on(
+        "end",
+        () => {
+          resolve(
+            Buffer.concat(chunks)
+          );
+        }
+      );
 
-    req.on("error", reject);
-  });
+      req.on(
+        "error",
+        reject
+      );
+    }
+  );
 }
 
 /**
@@ -82,8 +152,49 @@ async function readRawBody(
  * ============================================================
  */
 
-function clean(value: unknown): string {
-  return String(value ?? "").trim();
+function clean(
+  value: unknown
+): string {
+  return String(
+    value ?? ""
+  ).trim();
+}
+
+function cleanEmail(
+  value: unknown
+): string {
+  return clean(value)
+    .toLowerCase();
+}
+
+function safeNumber(
+  value: unknown
+): number {
+  const number = Number(value);
+
+  return Number.isFinite(number)
+    ? number
+    : 0;
+}
+
+/**
+ * ============================================================
+ * GENERAR REFERENCIA
+ * ============================================================
+ */
+
+function createFallbackReference(
+  session: Stripe.Checkout.Session
+): string {
+  return (
+    clean(
+      session.client_reference_id
+    ) ||
+    `FLUSSI-${Date.now()}-${Math.random()
+      .toString(36)
+      .substring(2, 8)
+      .toUpperCase()}`
+  );
 }
 
 /**
@@ -91,36 +202,36 @@ function clean(value: unknown): string {
  * TRIGGER DEL INFORME
  * ============================================================
  *
- * IMPORTANTE:
+ * Después de confirmar el pago:
  *
- * El webhook de Stripe NO tiene los archivos originales.
+ * Stripe
+ *   ↓
+ * webhook
+ *   ↓
+ * sendFlussiReport
  *
- * Por eso aquí enviamos los datos del pago y del cliente
- * al endpoint que tengas configurado en:
- *
- * FLUSSI_REPORT_URL
- *
- * Ese endpoint debe encargarse del análisis real,
- * generación del PDF y email.
- *
+ * La referencia es MUY IMPORTANTE porque permitirá al
+ * siguiente paso recuperar los documentos temporales.
  * ============================================================
  */
 
-async function triggerFlussiReport(params: {
-  email: string;
-  name: string;
-  country: string;
-  whatsapp: string;
-  reference: string;
-  session: Stripe.Checkout.Session;
-  metadata: Stripe.Metadata;
-}) {
-
+async function triggerFlussiReport(
+  params: {
+    email: string;
+    name: string;
+    country: string;
+    whatsapp: string;
+    reference: string;
+    session: Stripe.Checkout.Session;
+    metadata: Stripe.Metadata;
+  }
+) {
   const reportUrl =
-    clean(process.env.FLUSSI_REPORT_URL);
+    clean(
+      process.env.FLUSSI_REPORT_URL
+    );
 
   if (!reportUrl) {
-
     console.error(
       "❌ FLUSSI_REPORT_URL NO CONFIGURADA"
     );
@@ -133,23 +244,78 @@ async function triggerFlussiReport(params: {
   const metadata =
     params.metadata;
 
+  /**
+   * ==========================================================
+   * DATOS DEL DOCUMENTO
+   * ==========================================================
+   */
+
+  const documentType =
+    clean(
+      metadata.document_type
+    ) ||
+    "Documento Decreto Flussi";
+
+  const documentCount =
+    safeNumber(
+      metadata.document_count
+    );
+
+  /**
+   * ==========================================================
+   * REFERENCIA DOCUMENTAL
+   * ==========================================================
+   *
+   * Esta referencia será utilizada para encontrar los
+   * documentos temporales asociados al pago.
+   *
+   * EJEMPLO:
+   *
+   * FLUSSI-1770000000000-ABC123
+   *
+   * ==========================================================
+   */
+
+  const documentReference =
+    params.reference;
+
+  /**
+   * ==========================================================
+   * PAYLOAD
+   * ==========================================================
+   */
+
   const payload = {
+    /**
+     * --------------------------------------------------------
+     * ORIGEN
+     * --------------------------------------------------------
+     */
 
     source:
       "stripe-webhook-flussi",
+
+    service:
+      "verificacion_decreto_flussi",
+
+    /**
+     * --------------------------------------------------------
+     * REFERENCIA PRINCIPAL
+     * --------------------------------------------------------
+     */
 
     reference:
       params.reference,
 
     /**
-     * ========================================================
+     * --------------------------------------------------------
      * PAGO
-     * ========================================================
+     * --------------------------------------------------------
      */
 
     payment: {
-
-      paid: true,
+      paid:
+        true,
 
       sessionId:
         params.session.id,
@@ -162,16 +328,18 @@ async function triggerFlussiReport(params: {
 
       currency:
         params.session.currency,
+
+      paymentConfirmedAt:
+        new Date().toISOString(),
     },
 
     /**
-     * ========================================================
+     * --------------------------------------------------------
      * CLIENTE
-     * ========================================================
+     * --------------------------------------------------------
      */
 
     client: {
-
       name:
         params.name,
 
@@ -186,13 +354,53 @@ async function triggerFlussiReport(params: {
     },
 
     /**
-     * ========================================================
+     * --------------------------------------------------------
+     * DOCUMENTOS
+     * --------------------------------------------------------
+     *
+     * NO utilizamos búsqueda por nombre.
+     *
+     * Todo el servicio es documental.
+     * --------------------------------------------------------
+     */
+
+    documents: {
+      reference:
+        documentReference,
+
+      type:
+        documentType,
+
+      count:
+        documentCount,
+
+      status:
+        "paid_ready_for_analysis",
+
+      storageBucket:
+        "documentos-flussi-privado",
+
+      temporaryFolder:
+        `flussi-temp/${documentReference}`,
+
+      finalFolder:
+        `flussi/${documentReference}`,
+    },
+
+    /**
+     * --------------------------------------------------------
      * EMPLEADOR
-     * ========================================================
+     * --------------------------------------------------------
+     *
+     * Estos datos pueden venir del formulario antiguo.
+     * Si están vacíos, NO pasa nada.
+     *
+     * En el nuevo sistema la IA deberá extraerlos del
+     * documento cuando sea posible.
+     * --------------------------------------------------------
      */
 
     employer: {
-
       name:
         clean(
           metadata.employer_name
@@ -210,131 +418,234 @@ async function triggerFlussiReport(params: {
     },
 
     /**
-     * ========================================================
-     * DOCUMENTO
-     * ========================================================
-     */
-
-    document: {
-
-      type:
-        clean(
-          metadata.document_type
-        ) ||
-        "Documento Decreto Flussi",
-
-      count:
-        Number(
-          metadata.document_count || "0"
-        ),
-    },
-
-    /**
-     * ========================================================
-     * MODO DE BÚSQUEDA
-     * ========================================================
-     */
-
-    searchPersonOnly:
-      clean(
-        metadata.search_person_only
-      ) === "true",
-
-    /**
-     * ========================================================
-     * METADATA ORIGINAL
-     * ========================================================
+     * --------------------------------------------------------
+     * METADATA FLUSSI
+     * --------------------------------------------------------
+     *
+     * Conservamos solamente la información útil.
+     *
+     * NO enviamos search_person_only.
+     * --------------------------------------------------------
      */
 
     flussiMetadata: {
-
       product:
-        clean(metadata.product),
+        clean(
+          metadata.product
+        ),
 
       service:
-        clean(metadata.service),
+        clean(
+          metadata.service
+        ),
 
       reference:
-        clean(metadata.reference),
+        clean(
+          metadata.reference
+        ) ||
+        params.reference,
 
       client_name:
-        clean(metadata.client_name),
+        clean(
+          metadata.client_name
+        ),
 
       client_surname:
-        clean(metadata.client_surname),
+        clean(
+          metadata.client_surname
+        ),
 
       email:
-        clean(metadata.email),
+        clean(
+          metadata.email
+        ) ||
+        params.email,
 
       whatsapp:
-        clean(metadata.whatsapp),
+        clean(
+          metadata.whatsapp
+        ),
 
       country:
-        clean(metadata.country),
+        clean(
+          metadata.country
+        ),
 
       employer_name:
-        clean(metadata.employer_name),
+        clean(
+          metadata.employer_name
+        ),
 
       employer_city:
-        clean(metadata.employer_city),
+        clean(
+          metadata.employer_city
+        ),
 
       employer_birth_date:
-        clean(metadata.employer_birth_date),
-
-      search_person_only:
-        clean(metadata.search_person_only),
+        clean(
+          metadata.employer_birth_date
+        ),
 
       document_type:
-        clean(metadata.document_type),
+        documentType,
 
       document_count:
-        clean(metadata.document_count),
+        String(
+          documentCount
+        ),
+
+      document_reference:
+        documentReference,
     },
 
+    /**
+     * --------------------------------------------------------
+     * INSTRUCCIÓN AL GENERADOR
+     * --------------------------------------------------------
+     */
+
+    analysisRequest: {
+      mode:
+        "document_only",
+
+      analyzeDocuments:
+        true,
+
+      compareDocuments:
+        true,
+
+      extractVisibleInformation:
+        true,
+
+      detectInconsistencies:
+        true,
+
+      detectSuspiciousElements:
+        true,
+
+      detectPossibleFraudIndicators:
+        true,
+
+      neverClaimOfficialAuthenticity:
+        true,
+
+      requireOfficialVerificationWhenNecessary:
+        true,
+
+      generateProfessionalReport:
+        true,
+
+      generatePdf:
+        true,
+
+      sendEmail:
+        true,
+    },
   };
 
+  /**
+   * ==========================================================
+   * LOG
+   * ==========================================================
+   */
+
   console.log(
-    "📄 ENVIANDO SOLICITUD AL GENERADOR FLUSSI..."
+    "================================================"
   );
 
-  console.log({
-    reportUrl,
-    reference:
-      params.reference,
-    email:
-      params.email,
-    documentCount:
-      metadata.document_count,
-  });
+  console.log(
+    "🇮🇹 FLUSSI — ENVIANDO INFORME"
+  );
+
+  console.log(
+    "Referencia:",
+    params.reference
+  );
+
+  console.log(
+    "Email:",
+    params.email
+  );
+
+  console.log(
+    "Documentos:",
+    documentCount
+  );
+
+  console.log(
+    "Tipo:",
+    documentType
+  );
+
+  console.log(
+    "Carpeta temporal:",
+    `flussi-temp/${documentReference}`
+  );
+
+  console.log(
+    "================================================"
+  );
+
+  /**
+   * ==========================================================
+   * REQUEST
+   * ==========================================================
+   */
 
   const response =
     await fetch(
       reportUrl,
       {
-        method: "POST",
+        method:
+          "POST",
 
         headers: {
           "Content-Type":
             "application/json",
+
+          /**
+           * Clave opcional para impedir que otro servicio
+           * pueda llamar libremente al generador.
+           */
+
+          ...(process.env.FLUSSI_REPORT_SECRET
+            ? {
+                "x-flussi-report-secret":
+                  process.env.FLUSSI_REPORT_SECRET,
+              }
+            : {}),
         },
 
         body:
-          JSON.stringify(payload),
+          JSON.stringify(
+            payload
+          ),
       }
     );
 
   const responseText =
     await response.text();
 
-  if (!response.ok) {
+  /**
+   * ==========================================================
+   * ERROR
+   * ==========================================================
+   */
 
+  if (!response.ok) {
     throw new Error(
       `FLUSSI_REPORT_URL respondió ${response.status}: ${responseText.slice(
         0,
-        1000
+        1500
       )}`
     );
   }
+
+  /**
+   * ==========================================================
+   * OK
+   * ==========================================================
+   */
 
   console.log(
     "✅ FLUSSI REPORT TRIGGERED"
@@ -343,12 +654,18 @@ async function triggerFlussiReport(params: {
   console.log(
     responseText.slice(
       0,
-      1000
+      1500
     )
   );
 
   return {
-    triggered: true,
+    triggered:
+      true,
+
+    reference:
+      params.reference,
+
+    documentCount,
 
     response:
       responseText,
@@ -357,7 +674,7 @@ async function triggerFlussiReport(params: {
 
 /**
  * ============================================================
- * WEBHOOK
+ * WEBHOOK PRINCIPAL
  * ============================================================
  */
 
@@ -365,17 +682,20 @@ export default async function handler(
   req: VercelRequest,
   res: VercelResponse
 ) {
-
   /**
    * ==========================================================
-   * METHOD
+   * 1. MÉTODO
    * ==========================================================
    */
 
-  if (req.method !== "POST") {
-
+  if (
+    req.method !==
+    "POST"
+  ) {
     return res.status(405).json({
-      ok: false,
+      ok:
+        false,
+
       error:
         "Method not allowed",
     });
@@ -383,14 +703,15 @@ export default async function handler(
 
   /**
    * ==========================================================
-   * STRIPE
+   * 2. STRIPE
    * ==========================================================
    */
 
   if (!stripe) {
-
     return res.status(500).json({
-      ok: false,
+      ok:
+        false,
+
       error:
         "STRIPE_SECRET_KEY no está configurada en Vercel.",
     });
@@ -398,7 +719,7 @@ export default async function handler(
 
   /**
    * ==========================================================
-   * WEBHOOK SECRET
+   * 3. WEBHOOK SECRET
    * ==========================================================
    */
 
@@ -409,28 +730,30 @@ export default async function handler(
     );
 
   if (!webhookSecret) {
-
     return res.status(500).json({
-      ok: false,
+      ok:
+        false,
+
       error:
         "FLUSSI_STRIPE_WEBHOOK_SECRET no está configurada en Vercel.",
     });
   }
 
   try {
-
     /**
      * ========================================================
-     * 1. RAW BODY
+     * 4. RAW BODY
      * ========================================================
      */
 
     const rawBody =
-      await readRawBody(req);
+      await readRawBody(
+        req
+      );
 
     /**
      * ========================================================
-     * 2. STRIPE SIGNATURE
+     * 5. STRIPE SIGNATURE
      * ========================================================
      */
 
@@ -443,9 +766,10 @@ export default async function handler(
       !signature ||
       Array.isArray(signature)
     ) {
-
       return res.status(400).json({
-        ok: false,
+        ok:
+          false,
+
         error:
           "Missing Stripe signature.",
       });
@@ -453,30 +777,31 @@ export default async function handler(
 
     /**
      * ========================================================
-     * 3. CONSTRUIR EVENTO
+     * 6. CONSTRUIR EVENTO
      * ========================================================
      */
 
     let event: Stripe.Event;
 
     try {
-
       event =
         stripe.webhooks.constructEvent(
           rawBody,
           signature,
           webhookSecret
         );
-
-    } catch (error: any) {
-
+    } catch (
+      error: any
+    ) {
       console.error(
         "❌ FIRMA STRIPE INVÁLIDA:",
         error?.message
       );
 
       return res.status(400).json({
-        ok: false,
+        ok:
+          false,
+
         error:
           `Webhook Error: ${
             error?.message ||
@@ -493,7 +818,7 @@ export default async function handler(
 
     /**
      * ========================================================
-     * 4. SOLO checkout.session.completed
+     * 7. SOLO CHECKOUT COMPLETADO
      * ========================================================
      */
 
@@ -501,14 +826,15 @@ export default async function handler(
       event.type !==
       "checkout.session.completed"
     ) {
-
       return res.status(200).json({
+        ok:
+          true,
 
-        ok: true,
+        received:
+          true,
 
-        received: true,
-
-        ignored: true,
+        ignored:
+          true,
 
         event:
           event.type,
@@ -517,7 +843,7 @@ export default async function handler(
 
     /**
      * ========================================================
-     * 5. SESSION
+     * 8. SESSION
      * ========================================================
      */
 
@@ -526,11 +852,12 @@ export default async function handler(
         Stripe.Checkout.Session;
 
     const metadata =
-      session.metadata || {};
+      session.metadata ||
+      {};
 
     /**
      * ========================================================
-     * 6. SEGURIDAD — SOLO FLUSSI
+     * 9. SEGURIDAD — SOLO DECRETO FLUSSI
      * ========================================================
      */
 
@@ -538,19 +865,20 @@ export default async function handler(
       metadata.service !==
       "verificacion_decreto_flussi"
     ) {
-
       console.log(
         "↩️ IGNORADO: NO ES DECRETO FLUSSI",
         metadata.service
       );
 
       return res.status(200).json({
+        ok:
+          true,
 
-        ok: true,
+        received:
+          true,
 
-        received: true,
-
-        ignored: true,
+        ignored:
+          true,
 
         reason:
           "NOT_FLUSSI",
@@ -563,7 +891,7 @@ export default async function handler(
 
     /**
      * ========================================================
-     * 7. PRODUCTO
+     * 10. PRODUCTO
      * ========================================================
      */
 
@@ -577,19 +905,20 @@ export default async function handler(
       product !==
         "decreto_flussi"
     ) {
-
       console.log(
         "↩️ IGNORADO: PRODUCTO NO ES FLUSSI",
         product
       );
 
       return res.status(200).json({
+        ok:
+          true,
 
-        ok: true,
+        received:
+          true,
 
-        received: true,
-
-        ignored: true,
+        ignored:
+          true,
 
         reason:
           "NOT_FLUSSI_PRODUCT",
@@ -600,7 +929,7 @@ export default async function handler(
 
     /**
      * ========================================================
-     * 8. PAGO CONFIRMADO
+     * 11. PAGO REALMENTE CONFIRMADO
      * ========================================================
      */
 
@@ -608,19 +937,20 @@ export default async function handler(
       session.payment_status !==
       "paid"
     ) {
-
       console.warn(
         "⚠️ FLUSSI RECIBIDO PERO PAYMENT_STATUS NO ES PAID:",
         session.payment_status
       );
 
       return res.status(200).json({
+        ok:
+          true,
 
-        ok: true,
+        received:
+          true,
 
-        received: true,
-
-        ignored: true,
+        ignored:
+          true,
 
         reason:
           "PAYMENT_NOT_CONFIRMED",
@@ -632,45 +962,56 @@ export default async function handler(
 
     /**
      * ========================================================
-     * 9. PRECIO
+     * 12. PRECIO DE PRUEBA
      * ========================================================
-     *
-     * Durante la prueba:
      *
      * 0,50 €
      *
-     * 50 céntimos.
-     *
+     * Cuando terminemos las pruebas puedes cambiarlo.
      * ========================================================
      */
+
+    const expectedAmount =
+      Number(
+        process.env.FLUSSI_EXPECTED_AMOUNT_CENTS ||
+        "50"
+      );
 
     if (
       typeof session.amount_total ===
         "number" &&
       session.amount_total !==
-        50
+        expectedAmount
     ) {
-
       console.error(
         "❌ IMPORTE FLUSSI INESPERADO:",
-        session.amount_total
+        {
+          recibido:
+            session.amount_total,
+
+          esperado:
+            expectedAmount,
+        }
       );
 
       return res.status(400).json({
-
-        ok: false,
+        ok:
+          false,
 
         error:
           "Importe de pago Flussi inesperado.",
 
         amount_total:
           session.amount_total,
+
+        expected_amount:
+          expectedAmount,
       });
     }
 
     /**
      * ========================================================
-     * 10. MONEDA
+     * 13. MONEDA
      * ========================================================
      */
 
@@ -679,10 +1020,9 @@ export default async function handler(
       session.currency.toLowerCase() !==
         "eur"
     ) {
-
       return res.status(400).json({
-
-        ok: false,
+        ok:
+          false,
 
         error:
           "Moneda de pago Flussi inesperada.",
@@ -694,24 +1034,23 @@ export default async function handler(
 
     /**
      * ========================================================
-     * 11. DATOS CLIENTE
+     * 14. DATOS CLIENTE
      * ========================================================
      */
 
-    const email = (
-      clean(
-        metadata.email
-      ) ||
-
-      clean(
-        session.customer_details
-          ?.email
-      ) ||
-
-      clean(
-        session.customer_email
-      )
-    ).toLowerCase();
+    const email =
+      (
+        cleanEmail(
+          metadata.email
+        ) ||
+        cleanEmail(
+          session.customer_details
+            ?.email
+        ) ||
+        cleanEmail(
+          session.customer_email
+        )
+      );
 
     const metadataName =
       clean(
@@ -726,7 +1065,6 @@ export default async function handler(
     const name =
       `${metadataName} ${metadataSurname}`
         .trim() ||
-
       clean(
         session.customer_details
           ?.name
@@ -742,33 +1080,121 @@ export default async function handler(
         metadata.whatsapp
       );
 
+    /**
+     * ========================================================
+     * 15. REFERENCIA
+     * ========================================================
+     */
+
     const reference =
       clean(
         metadata.reference
       ) ||
-
-      clean(
-        session.client_reference_id
-      ) ||
-
-      `FLUSSI-${session.id}`;
+      createFallbackReference(
+        session
+      );
 
     /**
      * ========================================================
-     * 12. EMAIL OBLIGATORIO
+     * 16. NÚMERO DE DOCUMENTOS
+     * ========================================================
+     */
+
+    const documentCount =
+      safeNumber(
+        metadata.document_count
+      );
+
+    /**
+     * ========================================================
+     * 17. DOCUMENTOS OBLIGATORIOS
+     * ========================================================
+     *
+     * Este servicio YA NO acepta:
+     *
+     * ❌ búsqueda solamente por nombre
+     * ❌ búsqueda solamente por persona
+     * ❌ análisis sin documentos
+     *
+     * El cliente debe haber seleccionado como mínimo
+     * un documento.
+     * ========================================================
+     */
+
+    if (
+      documentCount <
+      1
+    ) {
+      console.error(
+        "❌ PAGO FLUSSI SIN DOCUMENTOS:",
+        {
+          reference,
+          email,
+          documentCount,
+        }
+      );
+
+      return res.status(400).json({
+        ok:
+          false,
+
+        error:
+          "El pago se recibió pero no existe ningún documento asociado a la referencia.",
+
+        payment_received:
+          true,
+
+        reference,
+
+        document_count:
+          documentCount,
+      });
+    }
+
+    /**
+     * ========================================================
+     * 18. LÍMITE DOCUMENTOS
+     * ========================================================
+     */
+
+    if (
+      documentCount >
+      5
+    ) {
+      console.error(
+        "❌ DEMASIADOS DOCUMENTOS FLUSSI:",
+        documentCount
+      );
+
+      return res.status(400).json({
+        ok:
+          false,
+
+        error:
+          "Se ha superado el máximo de 5 documentos.",
+
+        reference,
+
+        document_count:
+          documentCount,
+      });
+    }
+
+    /**
+     * ========================================================
+     * 19. EMAIL OBLIGATORIO
      * ========================================================
      */
 
     if (!email) {
-
       console.error(
         "❌ PAGO FLUSSI SIN EMAIL:",
         session.id
       );
 
       return res.status(400).json({
-
-        ok: false,
+        ok:
+          false,
 
         error:
           "Pago recibido pero no se encontró el email del cliente.",
@@ -777,7 +1203,7 @@ export default async function handler(
 
     /**
      * ========================================================
-     * 13. LOG
+     * 20. LOG PAGO CONFIRMADO
      * ========================================================
      */
 
@@ -815,6 +1241,11 @@ export default async function handler(
     );
 
     console.log(
+      "Documentos:",
+      documentCount
+    );
+
+    console.log(
       "Amount:",
       session.amount_total
     );
@@ -830,13 +1261,18 @@ export default async function handler(
     );
 
     console.log(
-      "🇮🇹 STRIPE RECIBO:",
-      "gestionado por Stripe"
+      "📄 MODO:",
+      "DOCUMENT ONLY"
     );
 
     console.log(
-      "📧 BREVO PAYMENT EMAIL:",
-      "DESACTIVADO"
+      "🔎 BÚSQUEDA POR NOMBRE:",
+      "DESACTIVADA"
+    );
+
+    console.log(
+      "📧 STRIPE RECIBO:",
+      "gestionado por Stripe"
     );
 
     console.log(
@@ -845,35 +1281,35 @@ export default async function handler(
 
     /**
      * ========================================================
-     * 14. GENERAR INFORME
+     * 21. GENERAR INFORME
      * ========================================================
      */
 
-    let reportResult: unknown;
+    let reportResult:
+      unknown;
 
     try {
-
       reportResult =
-        await triggerFlussiReport({
+        await triggerFlussiReport(
+          {
+            email,
 
-          email,
+            name,
 
-          name,
+            country,
 
-          country,
+            whatsapp,
 
-          whatsapp,
+            reference,
 
-          reference,
+            session,
 
-          session,
-
-          metadata,
-
-        });
-
-    } catch (reportError: any) {
-
+            metadata,
+          }
+        );
+    } catch (
+      reportError: any
+    ) {
       console.error(
         "❌ ERROR GENERANDO INFORME FLUSSI:",
         reportError?.message ||
@@ -883,15 +1319,14 @@ export default async function handler(
       /**
        * IMPORTANTE:
        *
-       * Si el informe falla, devolvemos 500.
+       * Si falla el informe, devolvemos 500.
        *
-       * Así Stripe puede volver a intentar
-       * entregar el webhook.
+       * Stripe podrá volver a intentar el webhook.
        */
 
       return res.status(500).json({
-
-        ok: false,
+        ok:
+          false,
 
         error:
           reportError?.message ||
@@ -904,22 +1339,27 @@ export default async function handler(
           session.payment_status,
 
         reference,
+
+        document_count:
+          documentCount,
       });
     }
 
     /**
      * ========================================================
-     * 15. TODO OK
+     * 22. TODO CORRECTO
      * ========================================================
      */
 
     return res.status(200).json({
+      ok:
+        true,
 
-      ok: true,
+      received:
+        true,
 
-      received: true,
-
-      processed: true,
+      processed:
+        true,
 
       product:
         "decreto_flussi",
@@ -946,17 +1386,26 @@ export default async function handler(
 
       email,
 
+      document_count:
+        documentCount,
+
+      document_mode:
+        "document_only",
+
       stripe_receipt:
         "Stripe",
-
-      payment_email_brevo:
-        false,
 
       report:
         reportResult,
     });
-
-  } catch (error: any) {
+  } catch (
+    error: any
+  ) {
+    /**
+     * ========================================================
+     * ERROR GENERAL
+     * ========================================================
+     */
 
     console.error(
       "❌ FLUSSI WEBHOOK ERROR:",
@@ -965,8 +1414,8 @@ export default async function handler(
     );
 
     return res.status(500).json({
-
-      ok: false,
+      ok:
+        false,
 
       error:
         error?.message ||
