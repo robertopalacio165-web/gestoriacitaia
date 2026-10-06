@@ -676,94 +676,28 @@ function OfficialBrowserBox({
                   </div>
 
                   {/* ============================================================
-                      🔥 TIPO DE DOCUMENTO - SOLO 3 OPCIONES
-                      SOLO SE MUESTRA SI NO ESTÁ EN MODO "SOLO PERSONA"
+                      🤖 IDENTIFICACIÓN AUTOMÁTICA DEL DOCUMENTO
+                      La IA identifica el tipo de documento automáticamente.
+                      El cliente no tiene que seleccionar ningún tipo.
                       ============================================================ */}
-                  <div 
-                      ref={el => errorRefs.current["tipoDocumento"] = el}
-                      className="col-span-1 lg:col-span-2"
-                    >
-                      <label className="block text-white text-[13px] mb-2">
-                        {isMa ? "نوع الوثيقة" : isEn ? "Document type" : "Tipo de documento"}
-                      </label>
-                      <select
-                        className={`w-full h-[52px] rounded-2xl border ${errorField === "tipoDocumento" ? "border-red-500" : "border-white/10"} bg-[#060b16] px-4 text-white focus:outline-none focus:border-yellow-400`}
-                        value={formData.tipoDocumento || ""}
-                        onChange={(e) => handleInputChange("tipoDocumento", e.target.value)}
-                      >
-                        <option value="">
-                          {isMa ? "اختر النوع" : isEn ? "Select type" : "Selecciona tipo"}
-                        </option>
-                        <option value="contrato">
-                          {isMa ? "عقد العمل (مرسوم فلوسي)" : isEn ? "Employment contract (Decreto Flussi)" : "Contrato de trabajo (Decreto Flussi)"}
-                        </option>
-                        <option value="nulla_osta">
-                          {isMa ? "تصريح العمل (Nulla Osta)" : isEn ? "Nulla Osta" : "Nulla Osta"}
-                        </option>
-                        <option value="otro">
-                          {isMa ? "وثيقة أخرى / لا أعرف نوعها" : isEn ? "Other / I don't know what it is" : "Otro / No sé qué es"}
-                        </option>
-                      </select>
-
-                      {/* EXPLICACIÓN PARA EL CLIENTE */}
-                      <div className="mt-3 rounded-xl border border-yellow-500/20 bg-yellow-500/5 px-4 py-3">
-                        <p className="text-white/75 text-[12px] leading-relaxed">
-                          {isMa ? (
-                            <>
-                              <span className="text-yellow-400 font-bold">
-                                📌 إلا كانت الوثيقة ديالك هي عقد العمل باش تجي تخدم فإيطاليا،
-                              </span>{" "}
-                              اختار الاختيار الأول. إلا كانت الوثيقة هي{" "}
-                              <span className="text-yellow-400 font-semibold">
-                                Nulla Osta
-                              </span>
-                              ، اختار الثاني. إلا ما كنتيش متأكد شنو هي الوثيقة، اختار{" "}
-                              <span className="text-yellow-400 font-semibold">
-                                "أخرى"
-                              </span>{" "}
-                              وحنا نحللوها ليك.
-                            </>
-                          ) : isEn ? (
-                            <>
-                              <span className="text-yellow-400 font-bold">
-                                📌 If your document is the employment contract to come and work in Italy,
-                              </span>{" "}
-                              select the first option. If it is the{" "}
-                              <span className="text-yellow-400 font-semibold">
-                                Nulla Osta
-                              </span>
-                              , select the second. If you are not sure what the document is,
-                              select{" "}
-                              <span className="text-yellow-400 font-semibold">
-                                "Other"
-                              </span>{" "}
-                              and we will analyze it for you.
-                            </>
-                          ) : (
-                            <>
-                              <span className="text-yellow-400 font-bold">
-                                📌 Si tu documento es el contrato para venir a trabajar a Italia, selecciona la primera opción.
-                              </span>{" "}
-                              Si es la autorización{" "}
-                              <span className="text-yellow-400 font-semibold">
-                                Nulla Osta
-                              </span>
-                              , selecciona la segunda. Si no estás seguro de qué documento es, selecciona{" "}
-                              <span className="text-yellow-400 font-semibold">
-                                "Otro"
-                              </span>{" "}
-                              y lo analizamos igualmente.
-                            </>
-                          )}
-                        </p>
-                      </div>
-
-                      {errorField === "tipoDocumento" && (
-                        <p className="text-red-400 text-xs mt-1">
-                          {isMa ? "نوع الوثيقة مطلوب" : isEn ? "Document type is required" : "Debes seleccionar el tipo de documento"}
-                        </p>
-                      )}
+                  <div className="col-span-1 lg:col-span-2">
+                    <div className="rounded-2xl border border-yellow-500/20 bg-yellow-500/5 px-4 py-3">
+                      <p className="text-white text-[13px] font-semibold mb-1">
+                        {isMa
+                          ? "🤖 التعرف التلقائي على الوثيقة"
+                          : isEn
+                          ? "🤖 Automatic document identification"
+                          : "🤖 Identificación automática del documento"}
+                      </p>
+                      <p className="text-white/70 text-[12px] leading-relaxed">
+                        {isMa
+                          ? "ما خاصكش تختار نوع الوثيقة. غير رفع الوثيقة ديالك، والذكاء الاصطناعي غادي يتعرف عليها ويحللها تلقائياً."
+                          : isEn
+                          ? "You do not need to select a document type. Upload your document and our AI will identify and analyze it automatically."
+                          : "No necesitas seleccionar el tipo de documento. Sube tu documento y nuestra IA lo identificará y analizará automáticamente."}
+                      </p>
                     </div>
+                  </div>
 
                   {/* ============================================================
                       📎 SUBIR DOCUMENTOS
@@ -1001,16 +935,18 @@ function OfficialBrowserBox({
                     )}
 
                     {/* ✅ BOTÓN - SIN DISABLED */}
+            {/* PAGO PAUSADO TEMPORALMENTE. Para reactivar mañana:
+                quitar `disabled` y restaurar `onClick={onPay}`. */}
             <button
   type="button"
-onClick={onPay}
-  className="w-full min-h-[56px] rounded-[20px] bg-gradient-to-r from-yellow-400 to-yellow-600 px-4 py-2 text-[15px] leading-tight font-black text-black hover:scale-[1.01] transition-transform"
+  disabled
+  className="w-full min-h-[56px] rounded-[20px] bg-white/10 border border-white/10 px-4 py-2 text-[15px] leading-tight font-black text-white/40 cursor-not-allowed"
 >
-                      {isMa 
-                        ? "🔐 تحقق الآن مقابل 0.50€" 
-                        : isEn 
-                        ? "🔐 Verify now for only €0.50" 
-                        : "🔐 Verificar ahora por solo 0,50 €"}
+                      {isMa
+                        ? "⏸️ الأداء متوقف مؤقتاً — نرجعو غداً"
+                        : isEn
+                        ? "⏸️ Payment temporarily disabled — back tomorrow"
+                        : "⏸️ Pago temporalmente desactivado — volvemos mañana"}
                     </button>
 
                     <div className="mt-5 flex items-center justify-center gap-2 text-[11px] text-gray-300">
