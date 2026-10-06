@@ -1,471 +1,1050 @@
-import type { VercelRequest, VercelResponse } from "@vercel/node";
+import type {
+  VercelRequest,
+  VercelResponse,
+} from "@vercel/node";
+
 import Stripe from "stripe";
+import crypto from "crypto";
 
-/*
-============================================================
-GESTORIACITAIA
-DECRETO FLUSSI LAVORO
-STRIPE CHECKOUT
-============================================================
+/**
+ * ============================================================
+ * GESTORIACITAIA
+ * CREATE STRIPE CHECKOUT — DECRETO FLUSSI
+ * ============================================================
+ *
+ * ARCHIVO:
+ *
+ * api/create-checkout-flussi.ts
+ *
+ * ============================================================
+ *
+ * FLUJO NUEVO
+ *
+ * DOCUMENTOS
+ *     ↓
+ * CREATE CHECKOUT
+ *     ↓
+ * GENERAR REFERENCIA
+ *     ↓
+ * PREPARAR DOCUMENTOS TEMPORALES
+ *     ↓
+ * STRIPE
+ *     ↓
+ * PAGO CONFIRMADO
+ *     ↓
+ * WEBHOOK
+ *     ↓
+ * ANÁLISIS DOCUMENTAL
+ *     ↓
+ * PDF
+ *     ↓
+ * EMAIL
+ *
+ * ============================================================
+ *
+ * IMPORTANTE
+ *
+ * Este servicio es EXCLUSIVAMENTE DOCUMENTAL.
+ *
+ * NO existe:
+ *
+ * ❌ búsqueda solo por nombre
+ * ❌ búsqueda solo por persona
+ * ❌ búsqueda de empleador sin documento
+ *
+ * El documento es la base del análisis.
+ *
+ * ============================================================
+ *
+ * Durante las pruebas:
+ *
+ * 0,50 €
+ *
+ * ============================================================
+ */
 
-SOLO 2 PLANES:
+const stripeSecretKey =
+  process.env.STRIPE_SECRET_KEY || "";
 
-1. all_offers
-   - Precio REAL: 14,99 €
-   - PRECIO TEMPORAL DE PRUEBA: 0,50 €
+const stripe =
+  stripeSecretKey
+    ? new Stripe(
+        stripeSecretKey,
+        {
+          apiVersion:
+            "2025-08-27.basil",
+        }
+      )
+    : null;
 
-2. new_10_days
-   - 24,99 €
-   - Nuevas ofertas cada 10 días
-   - Duración: 3 meses
-   - 6 envíos
+/**
+ * ============================================================
+ * CONFIGURACIÓN
+ * ============================================================
+ */
 
-IMPORTANTE:
+const FLUSSI_PRICE_CENTS =
+  Number(
+    process.env.FLUSSI_PRICE_CENTS ||
+      "50"
+  );
 
-El precio enviado desde el navegador NO se utiliza.
+const FLUSSI_CURRENCY =
+  "eur";
 
-El precio definitivo SIEMPRE sale de PLANS en el servidor.
-============================================================
-*/
+const FLUSSI_PRODUCT =
+  "decreto_flussi";
 
-const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+const FLUSSI_SERVICE =
+  "verificacion_decreto_flussi";
 
-const stripe = stripeSecretKey
-  ? new Stripe(stripeSecretKey)
-  : null;
+const MAX_DOCUMENTS =
+  5;
 
-const CURRENCY = "eur";
+const MAX_FILE_SIZE =
+  10 * 1024 * 1024;
 
-const PRODUCT = "decreto_flussi_lavoro";
+/**
+ * ============================================================
+ * MODO DE PRUEBA
+ * ============================================================
+ *
+ * Puedes configurar en Vercel:
+ *
+ * FLUSSI_TEST_EMAIL
+ * FLUSSI_TEST_SECRET
+ *
+ * Si no quieres bypass de Stripe:
+ *
+ * FLUSSI_TEST_EMAIL vacío.
+ *
+ * ============================================================
+ */
 
-/*
-============================================================
-PLANES
-============================================================
-*/
+const FLUSSI_TEST_EMAIL =
+  (
+    process.env.FLUSSI_TEST_EMAIL ||
+    ""
+  )
+    .trim()
+    .toLowerCase();
 
-const PLANS = {
-  all_offers: {
-    code: "all_offers",
+const FLUSSI_TEST_SECRET =
+  process.env.FLUSSI_TEST_SECRET ||
+  "";
 
-    name: "Tutte le offerte",
-
-    nameEs: "Todas las ofertas",
-
-    nameEn: "All job offers",
-
-    nameMa: "جميع عروض العمل",
-
-    /*
-     * PRUEBA:
-     * 0,50 €
-     *
-     * Cuando termines la prueba:
-     * cambiar 50 -> 1499
-     */
- amount: 1499,
-
-    realAmount: 1499,
-
-    durationDays: 30,
-
-    deliveries: 1,
-  },
-
-  new_10_days: {
-    code: "new_10_days",
-
-    name: "Nuove offerte ogni 10 giorni",
-
-    nameEs: "Nuevas ofertas cada 10 días",
-
-    nameEn: "New offers every 10 days",
-
-    nameMa: "عروض جديدة كل 10 أيام",
-
-    amount: 2499,
-
-    realAmount: 2499,
-
-    durationDays: 90,
-
-    deliveries: 6,
-  },
-} as const;
-
-type PackageCode = keyof typeof PLANS;
-
-type GenderCode =
-  | "male"
-  | "both"
-  | "female";
-
-/*
-============================================================
-HELPERS
-============================================================
-*/
+/**
+ * ============================================================
+ * HELPERS
+ * ============================================================
+ */
 
 function cleanString(
   value: unknown,
-  maxLength = 500,
+  maxLength = 500
 ): string {
-  if (typeof value !== "string") {
+  if (
+    typeof value !==
+    "string"
+  ) {
     return "";
   }
 
   return value
     .trim()
     .replace(/\s+/g, " ")
-    .slice(0, maxLength);
+    .slice(
+      0,
+      maxLength
+    );
 }
 
 function cleanEmail(
-  value: unknown,
+  value: unknown
 ): string {
   return cleanString(
     value,
-    320,
+    320
   ).toLowerCase();
 }
 
+function cleanPhone(
+  value: unknown
+): string {
+  return cleanString(
+    value,
+    50
+  );
+}
+
+function cleanCountry(
+  value: unknown
+): string {
+  return cleanString(
+    value,
+    100
+  );
+}
+
 function isValidEmail(
-  email: string,
+  email: string
 ): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
-    email,
+    email
   );
 }
 
-function cleanGender(
-  value: unknown,
-): GenderCode | "" {
-  const gender = cleanString(
-    value,
-    20,
-  );
+/**
+ * ============================================================
+ * BOOLEAN
+ * ============================================================
+ */
 
-  if (
-    gender === "male" ||
-    gender === "both" ||
-    gender === "female"
-  ) {
-    return gender;
+function toBoolean(
+  value: unknown
+): boolean {
+  return (
+    value === true ||
+    value === "true" ||
+    value === 1 ||
+    value === "1"
+  );
+}
+
+/**
+ * ============================================================
+ * REFERENCIA
+ * ============================================================
+ *
+ * Ejemplo:
+ *
+ * FLUSSI-1760000000000-A8K2PZ
+ *
+ * Esta referencia identifica TODOS los documentos de una
+ * solicitud.
+ * ============================================================
+ */
+
+function createReference(): string {
+  const timestamp =
+    Date.now();
+
+  const random =
+    Math.random()
+      .toString(36)
+      .substring(2, 8)
+      .toUpperCase();
+
+  return `FLUSSI-${timestamp}-${random}`;
+}
+
+/**
+ * ============================================================
+ * TOKEN DE PRUEBA
+ * ============================================================
+ */
+
+function createTestToken(
+  email: string,
+  reference: string
+): string {
+  if (!FLUSSI_TEST_SECRET) {
+    throw new Error(
+      "FLUSSI_TEST_SECRET no está configurado."
+    );
   }
 
-  return "";
+  const payload =
+    Buffer.from(
+      JSON.stringify({
+        email,
+        reference,
+        created_at:
+          Date.now(),
+      })
+    ).toString(
+      "base64url"
+    );
+
+  const signature =
+    crypto
+      .createHmac(
+        "sha256",
+        FLUSSI_TEST_SECRET
+      )
+      .update(payload)
+      .digest("hex");
+
+  return `FLUSSI_TEST_${payload}.${signature}`;
 }
 
-function getBaseUrl(): string {
-  const url =
-    process.env.NEXT_PUBLIC_URL ||
-    process.env.NEXT_PUBLIC_SITE_URL ||
-    "https://gestoriacitaia.com";
+/**
+ * ============================================================
+ * NORMALIZAR DOCUMENTOS
+ * ============================================================
+ */
 
-  return url.replace(/\/+$/, "");
+type IncomingDocument = {
+  id?: unknown;
+  name?: unknown;
+  type?: unknown;
+  size?: unknown;
+};
+
+function normalizeDocuments(
+  value: unknown
+): IncomingDocument[] {
+  if (
+    !Array.isArray(value)
+  ) {
+    return [];
+  }
+
+  return value
+    .map(
+      (
+        item
+      ) => {
+        if (
+          !item ||
+          typeof item !==
+            "object"
+        ) {
+          return null;
+        }
+
+        const document =
+          item as Record<
+            string,
+            unknown
+          >;
+
+        return {
+          id:
+            document.id,
+          name:
+            document.name,
+          type:
+            document.type,
+          size:
+            document.size,
+        };
+      }
+    )
+    .filter(
+      (
+        item
+      ): item is IncomingDocument =>
+        item !== null
+    );
 }
 
-/*
-============================================================
-HANDLER
-============================================================
-*/
+/**
+ * ============================================================
+ * VALIDAR DOCUMENTOS
+ * ============================================================
+ */
+
+function validateDocuments(
+  documents: IncomingDocument[]
+): string | null {
+  if (
+    documents.length ===
+    0
+  ) {
+    return (
+      "Debes seleccionar al menos un documento para realizar la verificación."
+    );
+  }
+
+  if (
+    documents.length >
+    MAX_DOCUMENTS
+  ) {
+    return (
+      `Puedes seleccionar un máximo de ${MAX_DOCUMENTS} documentos.`
+    );
+  }
+
+  const allowedTypes =
+    new Set([
+      "application/pdf",
+      "image/jpeg",
+      "image/jpg",
+      "image/png",
+      "image/webp",
+    ]);
+
+  for (
+    const document of documents
+  ) {
+    const name =
+      cleanString(
+        document.name,
+        255
+      );
+
+    const type =
+      cleanString(
+        document.type,
+        100
+      ).toLowerCase();
+
+    const size =
+      Number(
+        document.size || 0
+      );
+
+    if (!name) {
+      return (
+        "Uno de los documentos no tiene nombre."
+      );
+    }
+
+    if (
+      !allowedTypes.has(
+        type
+      )
+    ) {
+      return (
+        `El archivo "${name}" no tiene un formato permitido. Usa PDF, JPG, PNG o WEBP.`
+      );
+    }
+
+    if (
+      !Number.isFinite(
+        size
+      ) ||
+      size <= 0
+    ) {
+      return (
+        `El archivo "${name}" no tiene un tamaño válido.`
+      );
+    }
+
+    if (
+      size >
+      MAX_FILE_SIZE
+    ) {
+      return (
+        `El archivo "${name}" supera el límite de 10 MB.`
+      );
+    }
+  }
+
+  return null;
+}
+
+/**
+ * ============================================================
+ * HANDLER
+ * ============================================================
+ */
 
 export default async function handler(
   req: VercelRequest,
-  res: VercelResponse,
+  res: VercelResponse
 ) {
+  /**
+   * ==========================================================
+   * SOLO POST
+   * ==========================================================
+   */
 
-  /*
-  ----------------------------------------------------------
-  SOLO POST
-  ----------------------------------------------------------
-  */
-
-  if (req.method !== "POST") {
+  if (
+    req.method !==
+    "POST"
+  ) {
     return res.status(405).json({
       ok: false,
-      error: "Método no permitido.",
-    });
-  }
-
-  /*
-  ----------------------------------------------------------
-  STRIPE
-  ----------------------------------------------------------
-  */
-
-  if (!stripe) {
-    console.error(
-      "STRIPE_SECRET_KEY no configurada.",
-    );
-
-    return res.status(500).json({
-      ok: false,
       error:
-        "Stripe no está configurado correctamente.",
+        "Método no permitido.",
     });
   }
 
   try {
+    /**
+     * ========================================================
+     * BODY
+     * ========================================================
+     */
 
-    const body = req.body || {};
+    const body =
+      req.body || {};
 
-    /*
-    --------------------------------------------------------
-    CLIENTE
-    --------------------------------------------------------
-    */
+    /**
+     * ========================================================
+     * DATOS CLIENTE
+     * ========================================================
+     */
 
-    const firstName =
+    const clientName =
       cleanString(
-        body.firstName ??
-          body.client_name,
-        100,
+        body.client_name ??
+          body.clientName ??
+          body.nombre ??
+          body.fullName,
+        100
       );
 
-    const lastName =
+    const clientSurname =
       cleanString(
-        body.lastName ??
-          body.client_surname,
-        150,
+        body.client_surname ??
+          body.clientSurname ??
+          body.apellidos ??
+          body.surname,
+        150
       );
 
     const email =
       cleanEmail(
         body.email ??
-          body.gmail,
+          body.gmail
       );
 
-    const phone =
-      cleanString(
-        body.phone ??
-          body.whatsapp ??
-          body.telefono,
-        40,
+    const whatsapp =
+      cleanPhone(
+        body.whatsapp ??
+          body.phone ??
+          body.telefono
       );
 
-    const gender =
-      cleanGender(
-        body.gender,
+    const country =
+      cleanCountry(
+        body.country ??
+          body.pais
       );
 
-    const packageCode =
-      cleanString(
-        body.packageCode ??
-          body.package_code,
-        50,
-      ) as PackageCode;
+    /**
+     * ========================================================
+     * DOCUMENTOS
+     * ========================================================
+     *
+     * Aceptamos:
+     *
+     * document_files
+     * documents
+     * documentos
+     * files
+     * uploadedFiles
+     *
+     * El frontend actual utiliza document_files.
+     * ========================================================
+     */
 
-    /*
-    --------------------------------------------------------
-    VALIDAR PLAN
-    --------------------------------------------------------
-    */
+    let documents =
+      normalizeDocuments(
+        body.document_files
+      );
 
     if (
-      !Object.prototype.hasOwnProperty.call(
-        PLANS,
-        packageCode,
+      documents.length ===
+      0
+    ) {
+      documents =
+        normalizeDocuments(
+          body.documents
+        );
+    }
+
+    if (
+      documents.length ===
+      0
+    ) {
+      documents =
+        normalizeDocuments(
+          body.documentos
+        );
+    }
+
+    if (
+      documents.length ===
+      0
+    ) {
+      documents =
+        normalizeDocuments(
+          body.files
+        );
+    }
+
+    if (
+      documents.length ===
+      0
+    ) {
+      documents =
+        normalizeDocuments(
+          body.uploadedFiles
+        );
+    }
+
+    /**
+     * ========================================================
+     * VALIDAR DOCUMENTOS
+     * ========================================================
+     */
+
+    const documentError =
+      validateDocuments(
+        documents
+      );
+
+    if (
+      documentError
+    ) {
+      return res.status(400).json({
+        ok: false,
+        error:
+          documentError,
+      });
+    }
+
+    /**
+     * ========================================================
+     * VALIDAR CLIENTE
+     * ========================================================
+     */
+
+    if (!clientName) {
+      return res.status(400).json({
+        ok: false,
+        error:
+          "El nombre del cliente es obligatorio.",
+      });
+    }
+
+    if (!clientSurname) {
+      return res.status(400).json({
+        ok: false,
+        error:
+          "Los apellidos del cliente son obligatorios.",
+      });
+    }
+
+    if (!email) {
+      return res.status(400).json({
+        ok: false,
+        error:
+          "El Gmail es obligatorio.",
+      });
+    }
+
+    if (
+      !isValidEmail(
+        email
       )
     ) {
       return res.status(400).json({
         ok: false,
         error:
-          "El paquete seleccionado no es válido.",
+          "El Gmail introducido no es válido.",
       });
     }
 
-    const plan =
-      PLANS[packageCode];
-
-    /*
-    --------------------------------------------------------
-    VALIDAR NOMBRE
-    --------------------------------------------------------
-    */
-
-    if (!firstName) {
+    if (!whatsapp) {
       return res.status(400).json({
         ok: false,
         error:
-          "El nombre es obligatorio.",
+          "El WhatsApp es obligatorio.",
       });
     }
 
-    /*
-    --------------------------------------------------------
-    VALIDAR APELLIDO
-    --------------------------------------------------------
-    */
-
-    if (!lastName) {
+    if (!country) {
       return res.status(400).json({
         ok: false,
         error:
-          "Los apellidos son obligatorios.",
+          "El país es obligatorio.",
       });
     }
 
-    /*
-    --------------------------------------------------------
-    VALIDAR EMAIL
-    --------------------------------------------------------
-    */
+    /**
+     * ========================================================
+     * SERVICIO DOCUMENTAL
+     * ========================================================
+     *
+     * Ya NO utilizamos:
+     *
+     * buscarSoloPersona
+     * searchPersonOnly
+     *
+     * Aunque el frontend antiguo lo mande, aquí se ignora.
+     * ========================================================
+     */
 
-    if (
-      !email ||
-      !isValidEmail(email)
-    ) {
-      return res.status(400).json({
-        ok: false,
-        error:
-          "Introduce un email válido.",
-      });
-    }
+    const searchPersonOnly =
+      false;
 
-    /*
-    --------------------------------------------------------
-    VALIDAR TELÉFONO
-    --------------------------------------------------------
-    */
+    /**
+     * ========================================================
+     * TIPO DE DOCUMENTO
+     * ========================================================
+     *
+     * IMPORTANTE:
+     *
+     * El usuario NO necesita saber exactamente qué documento
+     * tiene.
+     *
+     * Puede subir:
+     *
+     * - contrato
+     * - Nulla Osta
+     * - carta
+     * - documento de Prefettura
+     * - comunicación
+     * - recibo
+     * - documento del empleador
+     * - captura
+     * - PDF
+     * - foto
+     *
+     * La IA lo identificará.
+     * ========================================================
+     */
 
-    const phoneDigits =
-      phone.replace(
-        /\D/g,
-        "",
-      );
+    const documentType =
+      cleanString(
+        body.document_type ??
+          body.documentType ??
+          body.tipo_documento ??
+          body.tipoDocumento,
+        100
+      ) ||
+      "auto";
 
-    if (
-      !phone ||
-      phoneDigits.length < 8 ||
-      phoneDigits.length > 15
-    ) {
-      return res.status(400).json({
-        ok: false,
-        error:
-          "Introduce un teléfono válido.",
-      });
-    }
-
-    /*
-    --------------------------------------------------------
-    VALIDAR GÉNERO
-    --------------------------------------------------------
-    */
-
-    if (!gender) {
-      return res.status(400).json({
-        ok: false,
-        error:
-          "Selecciona Hombres, Ambos o Mujeres.",
-      });
-    }
-
-    /*
-    --------------------------------------------------------
-    REFERENCIA
-    --------------------------------------------------------
-    */
+    /**
+     * ========================================================
+     * REFERENCIA
+     * ========================================================
+     */
 
     const reference =
-      `FLUSSI-${Date.now()}-${Math.random()
-        .toString(36)
-        .slice(2, 8)
-        .toUpperCase()}`;
+      createReference();
 
-    /*
-    --------------------------------------------------------
-    METADATA STRIPE
-    --------------------------------------------------------
+    /**
+     * ========================================================
+     * URL WEB
+     * ========================================================
+     */
 
-    El webhook utilizará estos datos después
-    de checkout.session.completed.
-    */
+    const baseUrl =
+      process.env.NEXT_PUBLIC_URL ||
+      process.env.NEXT_PUBLIC_SITE_URL ||
+      "https://gestoriacitaia.com";
+
+    const normalizedBaseUrl =
+      baseUrl.replace(
+        /\/+$/,
+        ""
+      );
+
+    /**
+     * ========================================================
+     * DATOS EMPLEADOR
+     * ========================================================
+     *
+     * Se mantienen por compatibilidad con versiones antiguas.
+     *
+     * NO son necesarios para iniciar la verificación.
+     *
+     * La IA deberá extraer los datos desde los documentos.
+     * ========================================================
+     */
+
+    const employerName =
+      cleanString(
+        body.employer_name ??
+          body.employerName ??
+          body.empleadorNombre,
+        200
+      );
+
+    const employerCity =
+      cleanString(
+        body.employer_city ??
+          body.employerCity ??
+          body.empleadorCiudad,
+        120
+      );
+
+    const employerBirthDate =
+      cleanString(
+        body.employer_birth_date ??
+          body.employerBirthDate ??
+          body.empleadorFechaNacimiento,
+        30
+      );
+
+    /**
+     * ========================================================
+     * METADATA DE DOCUMENTOS
+     * ========================================================
+     *
+     * MUY IMPORTANTE:
+     *
+     * Stripe no recibe el contenido de los archivos.
+     *
+     * Solo recibe:
+     *
+     * - referencia
+     * - nombre
+     * - tipo
+     * - tamaño
+     *
+     * El frontend deberá colocar posteriormente los archivos
+     * reales en el almacenamiento asociado a esta referencia.
+     * ========================================================
+     */
+
+    const documentMetadata =
+      documents.map(
+        (
+          document
+        ) => ({
+          id:
+            cleanString(
+              document.id,
+              200
+            ),
+
+          name:
+            cleanString(
+              document.name,
+              255
+            ),
+
+          type:
+            cleanString(
+              document.type,
+              100
+            ),
+
+          size:
+            Number(
+              document.size || 0
+            ),
+        })
+      );
+
+    /**
+     * ========================================================
+     * MODO PRUEBA
+     * ========================================================
+     *
+     * Solo se activa si:
+     *
+     * FLUSSI_TEST_EMAIL
+     *
+     * coincide con el email.
+     * ========================================================
+     */
+
+    const isFlussiTestUser =
+      Boolean(
+        FLUSSI_TEST_EMAIL &&
+          email ===
+            FLUSSI_TEST_EMAIL
+      );
+
+    /**
+     * ========================================================
+     * DATOS COMUNES
+     * ========================================================
+     */
 
     const metadata: Record<
       string,
       string
     > = {
-
       product:
-        PRODUCT,
+        FLUSSI_PRODUCT,
 
       service:
-        "flussi_lavoro",
+        FLUSSI_SERVICE,
 
-      reference,
-
-      client_first_name:
-        firstName,
-
-      client_last_name:
-        lastName,
+      reference:
+        reference,
 
       client_name:
-        `${firstName} ${lastName}`,
+        clientName,
 
-      email,
+      client_surname:
+        clientSurname,
 
-      phone,
+      email:
+        email,
 
-      gender,
+      whatsapp:
+        whatsapp,
 
-      package_code:
-        plan.code,
+      country:
+        country,
 
-      package_name:
-        plan.name,
+      document_type:
+        documentType,
 
-      package_name_es:
-        plan.nameEs,
-
-      package_name_en:
-        plan.nameEn,
-
-      package_name_ma:
-        plan.nameMa,
-
-      package_amount_cents:
+      document_count:
         String(
-          plan.amount,
+          documents.length
         ),
 
-      real_amount_cents:
-        String(
-          plan.realAmount,
-        ),
+      document_reference:
+        reference,
 
-      duration_days:
-        String(
-          plan.durationDays,
-        ),
+      document_storage_bucket:
+        "documentos-flussi-privado",
 
-      deliveries:
-        String(
-          plan.deliveries,
-        ),
+      document_storage_folder:
+        `flussi-temp/${reference}`,
+
+      search_person_only:
+        "false",
+
+      employer_name:
+        employerName,
+
+      employer_city:
+        employerCity,
+
+      employer_birth_date:
+        employerBirthDate,
     };
 
-    /*
-    --------------------------------------------------------
-    URLS
-    --------------------------------------------------------
-    */
+    /**
+     * ========================================================
+     * DOCUMENTOS JSON
+     * ========================================================
+     *
+     * Stripe metadata tiene límites de tamaño.
+     *
+     * Por eso NO metemos todo el JSON en Stripe.
+     *
+     * Solo enviamos los datos básicos.
+     * ========================================================
+     */
 
-    const baseUrl =
-      getBaseUrl();
+    /**
+     * ========================================================
+     * MODO PRUEBA
+     * ========================================================
+     */
 
-    /*
-    --------------------------------------------------------
-    STRIPE CHECKOUT
-    --------------------------------------------------------
-    */
+    if (
+      isFlussiTestUser
+    ) {
+      console.log(
+        "🧪 FLUSSI TEST USER",
+        {
+          email,
+          reference,
+          documentCount:
+            documents.length,
+        }
+      );
+
+      const testSessionId =
+        createTestToken(
+          email,
+          reference
+        );
+
+      return res.status(200).json({
+        ok:
+          true,
+
+        test_mode:
+          true,
+
+        paid:
+          true,
+
+        session_id:
+          testSessionId,
+
+        checkout_url:
+          null,
+
+        checkoutUrl:
+          null,
+
+        url:
+          null,
+
+        reference,
+
+        amount:
+          FLUSSI_PRICE_CENTS,
+
+        currency:
+          FLUSSI_CURRENCY,
+
+        product:
+          FLUSSI_PRODUCT,
+
+        service:
+          FLUSSI_SERVICE,
+
+        searchPersonOnly:
+          false,
+
+        document_only:
+          true,
+
+        document_count:
+          documents.length,
+
+        document_reference:
+          reference,
+
+        document_storage_bucket:
+          "documentos-flussi-privado",
+
+        document_storage_folder:
+          `flussi-temp/${reference}`,
+
+        documents:
+          documentMetadata,
+
+        customer_email:
+          email,
+
+        customer_name:
+          `${clientName} ${clientSurname}`.trim(),
+
+        metadata,
+
+        message:
+          "Modo prueba activado. El análisis documental puede continuar sin cobrar Stripe.",
+      });
+    }
+
+    /**
+     * ========================================================
+     * STRIPE DISPONIBLE
+     * ========================================================
+     */
+
+    if (!stripe) {
+      console.error(
+        "❌ STRIPE_SECRET_KEY NO CONFIGURADA"
+      );
+
+      return res.status(500).json({
+        ok:
+          false,
+
+        error:
+          "Stripe no está configurado correctamente en el servidor.",
+      });
+    }
+
+    /**
+     * ========================================================
+     * CREAR CHECKOUT
+     * ========================================================
+     */
 
     const session =
       await stripe.checkout.sessions.create(
         {
-
           mode:
             "payment",
 
@@ -486,32 +1065,19 @@ export default async function handler(
                 price_data:
                   {
                     currency:
-                      CURRENCY,
-
-                    /*
-                     * IMPORTANTE:
-                     *
-                     * AQUÍ ESTÁ EL PRECIO REAL
-                     * DEL SERVIDOR.
-                     *
-                     * PLAN 1 = 50 céntimos
-                     * PLAN 2 = 24,99 €
-                     */
-
-                    unit_amount:
-                      plan.amount,
+                      FLUSSI_CURRENCY,
 
                     product_data:
                       {
                         name:
-                          `Decreto Flussi Lavoro — ${plan.name}`,
+                          "Verificación documental Decreto Flussi",
 
                         description:
-                          plan.code ===
-                          "all_offers"
-                            ? "Servizio di ricerca e invio di offerte di lavoro Decreto Flussi."
-                            : "Nuove offerte di lavoro ogni 10 giorni per 3 mesi.",
+                          "Análisis profesional de documentos relacionados con Decreto Flussi, contratación y documentación italiana.",
                       },
+
+                    unit_amount:
+                      FLUSSI_PRICE_CENTS,
                   },
 
                 quantity:
@@ -519,35 +1085,48 @@ export default async function handler(
               },
             ],
 
-          /*
-          ----------------------------------------------------
-          SUCCESS
-          ----------------------------------------------------
-          */
+          /**
+           * ==================================================
+           * URL DE ÉXITO
+           * ==================================================
+           */
 
           success_url:
-            `${baseUrl}/decreto-flussi-2027?payment=success&session_id={CHECKOUT_SESSION_ID}`,
+            `${normalizedBaseUrl}/verificar-decreto-flussi?payment=success&session_id={CHECKOUT_SESSION_ID}&reference=${encodeURIComponent(
+              reference
+            )}`,
 
-          /*
-          ----------------------------------------------------
-          CANCEL
-          ----------------------------------------------------
-          */
+          /**
+           * ==================================================
+           * URL CANCELACIÓN
+           * ==================================================
+           */
 
           cancel_url:
-            `${baseUrl}/decreto-flussi-2027?payment=cancelled`,
+            `${normalizedBaseUrl}/verificar-decreto-flussi?payment=cancelled&reference=${encodeURIComponent(
+              reference
+            )}`,
 
-          /*
-          ----------------------------------------------------
-          METADATA
-          ----------------------------------------------------
-          */
+          /**
+           * ==================================================
+           * METADATA
+           * ==================================================
+           */
 
           metadata,
+
+          /**
+           * ==================================================
+           * PAYMENT INTENT
+           * ==================================================
+           */
 
           payment_intent_data:
             {
               metadata,
+
+              receipt_email:
+                email,
             },
 
           billing_address_collection:
@@ -558,50 +1137,79 @@ export default async function handler(
 
           submit_type:
             "pay",
-        },
+        }
       );
 
-    /*
-    --------------------------------------------------------
-    LOG
-    --------------------------------------------------------
-    */
+    /**
+     * ========================================================
+     * LOG
+     * ========================================================
+     */
 
     console.log(
-      "FLUSSI CHECKOUT CREATED",
-      {
-        sessionId:
-          session.id,
-
-        reference,
-
-        email,
-
-        gender,
-
-        packageCode:
-          plan.code,
-
-        amount:
-          plan.amount,
-      },
+      "================================================"
     );
 
-    /*
-    --------------------------------------------------------
-    RESPONSE
-    --------------------------------------------------------
-    */
+    console.log(
+      "🇮🇹 FLUSSI CHECKOUT CREADO"
+    );
+
+    console.log(
+      "Session:",
+      session.id
+    );
+
+    console.log(
+      "Reference:",
+      reference
+    );
+
+    console.log(
+      "Email:",
+      email
+    );
+
+    console.log(
+      "Documentos:",
+      documents.length
+    );
+
+    console.log(
+      "Tipo:",
+      documentType
+    );
+
+    console.log(
+      "Modo:",
+      "DOCUMENT ONLY"
+    );
+
+    console.log(
+      "Precio:",
+      FLUSSI_PRICE_CENTS
+    );
+
+    console.log(
+      "Moneda:",
+      FLUSSI_CURRENCY
+    );
+
+    console.log(
+      "================================================"
+    );
+
+    /**
+     * ========================================================
+     * RESPUESTA
+     * ========================================================
+     */
 
     return res.status(200).json({
-
-      ok: true,
+      ok:
+        true,
 
       session_id:
         session.id,
-
-      url:
-        session.url,
 
       checkout_url:
         session.url,
@@ -609,50 +1217,64 @@ export default async function handler(
       checkoutUrl:
         session.url,
 
+      url:
+        session.url,
+
       reference,
 
-      product:
-        PRODUCT,
-
-      packageCode:
-        plan.code,
-
-      packageName:
-        plan.name,
-
       amount:
-        plan.amount,
+        FLUSSI_PRICE_CENTS,
 
       currency:
-        CURRENCY,
+        FLUSSI_CURRENCY,
 
-      durationDays:
-        plan.durationDays,
+      product:
+        FLUSSI_PRODUCT,
 
-      deliveries:
-        plan.deliveries,
-
-      gender,
+      service:
+        FLUSSI_SERVICE,
 
       paid:
         false,
 
-      message:
-        "Checkout Stripe creado correctamente.",
-    });
+      test_mode:
+        false,
 
+      searchPersonOnly:
+        false,
+
+      document_only:
+        true,
+
+      document_count:
+        documents.length,
+
+      document_reference:
+        reference,
+
+      document_storage_bucket:
+        "documentos-flussi-privado",
+
+      document_storage_folder:
+        `flussi-temp/${reference}`,
+
+      documents:
+        documentMetadata,
+
+      message:
+        "Checkout de Stripe creado correctamente. Guarda la referencia y sube los documentos asociados antes de continuar.",
+    });
   } catch (
     error: any
   ) {
-
     console.error(
-      "FLUSSI CHECKOUT ERROR:",
-      error,
+      "❌ CREATE FLUSSI CHECKOUT ERROR:",
+      error
     );
 
     return res.status(500).json({
-
-      ok: false,
+      ok:
+        false,
 
       error:
         error?.message ||
