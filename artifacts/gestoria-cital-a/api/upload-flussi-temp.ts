@@ -1,717 +1,564 @@
-import type { VercelRequest, VercelResponse } from "@vercel/node";
-import Stripe from "stripe";
+// ============================================================
+// GESTORIACITAIA
+// API: upload-flussi-documents.ts
+//
+// OBJETIVO:
+// - Recibir la referencia FLUSSI creada por Stripe Checkout
+// - Validar los documentos seleccionados
+// - Crear URLs firmadas de subida en Supabase Storage
+// - NO exponer nunca la Service Role Key al navegador
+//
+// FLUJO:
+// 1. Frontend selecciona documentos
+// 2. create-checkout-flussi crea FLUSSI-XXXX
+// 3. Frontend llama a este endpoint
+// 4. Este endpoint genera URLs firmadas
+// 5. Frontend sube los archivos directamente a Supabase
+// 6. Stripe recibe el pago
+// 7. Webhook recupera los documentos mediante reference
+// 8. IA analiza los documentos
+// 9. Se genera PDF + email
+// ============================================================
+
+import type { NextApiRequest, NextApiResponse } from "next";
 import { createClient } from "@supabase/supabase-js";
 
-/**
- * ============================================================
- * GESTORIACITAIA
- * DECRETO FLUSSI
- * UPLOAD TEMPORAL DE DOCUMENTOS
- * ============================================================
- *
- * FLUJO:
- *
- * FORMULARIO
- *    ↓
- * crear sesión Stripe
- *    ↓
- * PDF / FOTO
- *    ↓
- * bucket privado: flussi-temp
- *    ↓
- * cliente paga
- *    ↓
- * confirm-flussi-payment
- *    ↓
- * procesar documento
- *    ↓
- * análisis
- *
- * IMPORTANTE:
- *
- * - Este endpoint NO guarda documentos en una tabla definitiva.
- * - Este endpoint NO marca al cliente como pagado.
- * - El archivo se queda en el bucket temporal.
- * - El pago se comprueba posteriormente con Stripe.
- * ============================================================
- */
+// ============================================================
+// CONFIGURACIÓN
+// ============================================================
 
-/**
- * ============================================================
- * ENV
- * ============================================================
- */
+const BUCKET = "documentos-flussi-privado";
+const TEMP_FOLDER = "flussi-temp";
 
-const SUPABASE_URL =
-  process.env.VITE_SUPABASE_URL;
+const MAX_DOCUMENTS = 5;
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
 
-const SERVICE_ROLE_KEY =
-  process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-const STRIPE_SECRET_KEY =
-  process.env.STRIPE_SECRET_KEY;
-
-// 🧪 MODO PRUEBA FLUSSI
-const FLUSSI_TEST_EMAIL =
-  (process.env.FLUSSI_TEST_EMAIL ||
-    "robertopalacio165@gmail.com")
-    .trim()
-    .toLowerCase();
-
-const FLUSSI_TEST_SECRET =
-  process.env.FLUSSI_TEST_SECRET || "";
-
-/**
- * ============================================================
- * CONFIGURACIÓN
- * ============================================================
- */
-
-const BUCKET =
-  "flussi-temp";
-
-const MAX_FILE_SIZE =
-  10 * 1024 * 1024;
-
-const MAX_FILES =
-  5;
-
-const EXPECTED_PRODUCT =
-  "decreto_flussi";
-
-const EXPECTED_CURRENCY =
-  "eur";
-
-/**
- * Precio de prueba:
- *
- * 50 céntimos = 0,50 €
- *
- * IMPORTANTE:
- * Debe coincidir con create-checkout-flussi.ts
- */
-const EXPECTED_AMOUNT =
-  50;
-
-/**
- * ============================================================
- * TIPOS PERMITIDOS
- * ============================================================
- */
-
-const ALLOWED_TYPES = [
+const ALLOWED_TYPES = new Set([
   "application/pdf",
   "image/jpeg",
   "image/png",
   "image/webp",
-];
+]);
 
-/**
- * ============================================================
- * CLIENTES
- * ============================================================
- */
+// ============================================================
+// SUPABASE SERVER CLIENT
+//
+// MUY IMPORTANTE:
+// La SERVICE ROLE KEY solamente existe en el servidor.
+// Nunca se envía al frontend.
+// ============================================================
 
-const supabase =
-  SUPABASE_URL &&
-  SERVICE_ROLE_KEY
+const supabaseUrl =
+  process.env.SUPABASE_URL ||
+  process.env.NEXT_PUBLIC_SUPABASE_URL ||
+  "";
+
+const supabaseServiceRoleKey =
+  process.env.SUPABASE_SERVICE_ROLE_KEY ||
+  "";
+
+if (!supabaseUrl) {
+  console.error(
+    "❌ FLUSSI UPLOAD: Falta SUPABASE_URL o NEXT_PUBLIC_SUPABASE_URL"
+  );
+}
+
+if (!supabaseServiceRoleKey) {
+  console.error(
+    "❌ FLUSSI UPLOAD: Falta SUPABASE_SERVICE_ROLE_KEY"
+  );
+}
+
+const supabaseAdmin =
+  supabaseUrl && supabaseServiceRoleKey
     ? createClient(
-        SUPABASE_URL,
-        SERVICE_ROLE_KEY
+        supabaseUrl,
+        supabaseServiceRoleKey,
+        {
+          auth: {
+            autoRefreshToken: false,
+            persistSession: false,
+          },
+        }
       )
     : null;
 
-const stripe =
-  STRIPE_SECRET_KEY
-    ? new Stripe(
-        STRIPE_SECRET_KEY
-      )
-    : null;
+// ============================================================
+// TIPOS
+// ============================================================
 
-/**
- * ============================================================
- * HELPERS
- * ============================================================
- */
+type DocumentInput = {
+  id?: string;
+  name?: string;
+  type?: string;
+  size?: number;
+};
 
-function clean(
+type UploadResponseFile = {
+  id: string;
+  name: string;
+  type: string;
+  size: number;
+  path: string;
+  token: string;
+};
+
+// ============================================================
+// HELPERS
+// ============================================================
+
+function cleanString(
   value: unknown,
-  max = 200
+  maxLength = 500
 ): string {
-  if (
-    typeof value !== "string"
-  ) {
+  if (typeof value !== "string") {
     return "";
   }
 
   return value
     .trim()
-    .replace(
-      /[^a-zA-Z0-9._-]/g,
-      "_"
-    )
-    .slice(0, max);
+    .replace(/\s+/g, " ")
+    .slice(0, maxLength);
 }
 
-/**
- * ============================================================
- * SESIÓN DE PRUEBA
- * ============================================================
- */
-function isFlussiTestSession(
-  sessionId: string
-): boolean {
-  return sessionId.startsWith("FLUSSI_TEST_");
-}
-
-/**
- * ============================================================
- * EXTENSIÓN SEGURA
- * ============================================================
- */
-
-function getExtension(
-  fileName: string,
-  mimeType: string
+function safeFileName(
+  name: string
 ): string {
+  const cleaned = name
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "");
 
-  const originalExtension =
-    fileName.includes(".")
-      ? fileName
-          .substring(
-            fileName.lastIndexOf(".")
-          )
-          .toLowerCase()
+  const extensionIndex = cleaned.lastIndexOf(".");
+
+  let base =
+    extensionIndex > 0
+      ? cleaned.slice(0, extensionIndex)
+      : cleaned;
+
+  let extension =
+    extensionIndex > 0
+      ? cleaned.slice(extensionIndex + 1)
       : "";
 
-  if (
-    originalExtension === ".pdf"
-  ) {
-    return ".pdf";
+  base = base
+    .replace(/[^a-zA-Z0-9_-]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, 100);
+
+  extension = extension
+    .replace(/[^a-zA-Z0-9]/g, "")
+    .slice(0, 10)
+    .toLowerCase();
+
+  if (!base) {
+    base = "documento";
   }
 
-  if (
-    originalExtension === ".jpg"
-  ) {
-    return ".jpg";
-  }
-
-  if (
-    originalExtension === ".jpeg"
-  ) {
-    return ".jpeg";
-  }
-
-  if (
-    originalExtension === ".png"
-  ) {
-    return ".png";
-  }
-
-  if (
-    originalExtension === ".webp"
-  ) {
-    return ".webp";
-  }
-
-  if (
-    mimeType ===
-    "application/pdf"
-  ) {
-    return ".pdf";
-  }
-
-  if (
-    mimeType ===
-    "image/png"
-  ) {
-    return ".png";
-  }
-
-  if (
-    mimeType ===
-    "image/webp"
-  ) {
-    return ".webp";
-  }
-
-  return ".jpg";
+  return extension
+    ? `${base}.${extension}`
+    : base;
 }
 
-/**
- * ============================================================
- * HANDLER
- * ============================================================
- */
+function safeDocumentId(
+  value: unknown
+): string {
+  const id = cleanString(value, 100);
+
+  if (!id) {
+    return (
+      `${Date.now()}-` +
+      Math.random()
+        .toString(36)
+        .slice(2, 12)
+    );
+  }
+
+  return id
+    .replace(/[^a-zA-Z0-9_-]/g, "-")
+    .slice(0, 80);
+}
+
+function isValidReference(
+  reference: string
+): boolean {
+  return /^FLUSSI-[A-Za-z0-9_-]{8,120}$/.test(
+    reference
+  );
+}
+
+// ============================================================
+// HANDLER
+// ============================================================
 
 export default async function handler(
-  req: VercelRequest,
-  res: VercelResponse
+  req: NextApiRequest,
+  res: NextApiResponse
 ) {
+  // ==========================================================
+  // SOLO POST
+  // ==========================================================
 
-  /**
-   * ----------------------------------------------------------
-   * SOLO POST
-   * ----------------------------------------------------------
-   */
+  if (req.method !== "POST") {
+    res.setHeader("Allow", "POST");
 
-  if (
-    req.method !== "POST"
-  ) {
     return res.status(405).json({
       ok: false,
-      error:
-        "Method not allowed",
+      error: "Método no permitido.",
     });
   }
 
-  /**
-   * ----------------------------------------------------------
-   * SUPABASE
-   * ----------------------------------------------------------
-   */
+  // ==========================================================
+  // COMPROBAR SUPABASE
+  // ==========================================================
 
-  if (!supabase) {
-
+  if (!supabaseAdmin) {
     console.error(
-      "❌ Supabase environment variables missing"
+      "❌ FLUSSI UPLOAD: Supabase Admin no está configurado."
     );
 
     return res.status(500).json({
       ok: false,
       error:
-        "Supabase no está configurado correctamente en el servidor.",
+        "El servidor no está configurado correctamente para recibir documentos.",
     });
   }
 
-  /**
-   * ----------------------------------------------------------
-   * STRIPE
-   * ----------------------------------------------------------
-   * Stripe solo es obligatorio para clientes normales.
-   * Las sesiones FLUSSI_TEST_ no consultan Stripe.
-   */
-
   try {
+    // ========================================================
+    // BODY
+    // ========================================================
 
-    /**
-     * ========================================================
-     * BODY
-     * ========================================================
-     */
+    const body =
+      typeof req.body === "object" && req.body
+        ? req.body
+        : {};
 
-    const {
-      session_id,
-      file_name,
-      file_type,
-      file_size,
-    } = req.body || {};
+    const reference = cleanString(
+      body.reference ??
+        body.document_reference ??
+        body.documentReference,
+      150
+    );
 
-    /**
-     * ========================================================
-     * SESSION ID
-     * ========================================================
-     */
+    // ========================================================
+    // REFERENCIA OBLIGATORIA
+    // ========================================================
 
-    if (
-      typeof session_id !==
-        "string" ||
-      !session_id.trim()
-    ) {
-
+    if (!reference) {
       return res.status(400).json({
         ok: false,
         error:
-          "Falta session_id de Stripe.",
+          "Falta la referencia del proceso.",
       });
     }
 
-    const safeSessionId =
-      clean(
-        session_id,
-        120
-      );
+    // ========================================================
+    // VALIDAR REFERENCIA
+    //
+    // Esto evita que alguien intente crear rutas arbitrarias
+    // dentro de Supabase Storage.
+    // ========================================================
 
-    // ============================================================
-    // 🧪 MODO PRUEBA / 💳 STRIPE REAL
-    // ============================================================
+    if (!isValidReference(reference)) {
+      return res.status(400).json({
+        ok: false,
+        error:
+          "La referencia del proceso no es válida.",
+      });
+    }
 
-    const isTestSession =
-      isFlussiTestSession(safeSessionId);
+    // ========================================================
+    // DOCUMENTOS
+    // ========================================================
 
-    let paymentStatus = "unpaid";
-    let paid = false;
+    const documentsRaw =
+      body.documents ??
+      body.document_files ??
+      body.files ??
+      body.documentos;
 
-    if (isTestSession) {
-      // El secreto SOLO se valida en el servidor.
-      if (!FLUSSI_TEST_SECRET) {
-        console.error("❌ FLUSSI_TEST_SECRET missing");
+    if (!Array.isArray(documentsRaw)) {
+      return res.status(400).json({
+        ok: false,
+        error:
+          "No se recibió la lista de documentos.",
+      });
+    }
 
-        return res.status(500).json({
-          ok: false,
-          error:
-            "El modo de prueba de Decreto Flussi no está configurado correctamente.",
-        });
-      }
+    // ========================================================
+    // MÁXIMO 5 DOCUMENTOS
+    // ========================================================
 
-      paymentStatus = "paid";
-      paid = true;
+    if (
+      documentsRaw.length === 0
+    ) {
+      return res.status(400).json({
+        ok: false,
+        error:
+          "Debes seleccionar al menos un documento.",
+      });
+    }
 
-      console.log(
-        "🧪 FLUSSI TEST UPLOAD AUTHORIZED",
-        {
-          email: FLUSSI_TEST_EMAIL,
-          session_id: safeSessionId,
-        }
-      );
-    } else {
-      if (!stripe) {
-        console.error("❌ STRIPE_SECRET_KEY missing");
+    if (
+      documentsRaw.length >
+      MAX_DOCUMENTS
+    ) {
+      return res.status(400).json({
+        ok: false,
+        error:
+          `Puedes subir un máximo de ${MAX_DOCUMENTS} documentos.`,
+      });
+    }
 
-        return res.status(500).json({
-          ok: false,
-          error:
-            "Stripe no está configurado correctamente en el servidor.",
-        });
-      }
+    // ========================================================
+    // CREAR URLs FIRMADAS
+    // ========================================================
 
-      const session =
-        await stripe.checkout.sessions.retrieve(
-          safeSessionId
+    const uploadedFiles: UploadResponseFile[] =
+      [];
+
+    for (
+      let index = 0;
+      index < documentsRaw.length;
+      index++
+    ) {
+      const document =
+        documentsRaw[index] as DocumentInput;
+
+      const id =
+        safeDocumentId(
+          document?.id
         );
 
-      const metadata =
-        session.metadata || {};
-
-      if (
-        metadata.product !==
-        EXPECTED_PRODUCT
-      ) {
-        console.error(
-          "❌ FLUSSI PRODUCT MISMATCH",
-          {
-            sessionId: safeSessionId,
-            product: metadata.product || null,
-          }
+      const name =
+        cleanString(
+          document?.name,
+          255
         );
 
-        return res.status(403).json({
-          ok: false,
-          error:
-            "La sesión de Stripe no corresponde al servicio Decreto Flussi.",
-        });
-      }
+      const type =
+        cleanString(
+          document?.type,
+          100
+        ).toLowerCase();
 
-      const amountTotal =
-        session.amount_total ?? null;
-
-      const currency =
-        (session.currency || "").toLowerCase();
-
-      if (
-        amountTotal !== EXPECTED_AMOUNT ||
-        currency !== EXPECTED_CURRENCY
-      ) {
-        console.error(
-          "❌ FLUSSI PAYMENT AMOUNT MISMATCH",
-          {
-            sessionId: safeSessionId,
-            amountTotal,
-            currency,
-          }
+      const size =
+        Number(
+          document?.size
         );
 
+      // ======================================================
+      // NOMBRE
+      // ======================================================
+
+      if (!name) {
         return res.status(400).json({
           ok: false,
           error:
-            "El importe de la sesión de Stripe no coincide con el precio configurado para la prueba.",
+            `El documento número ${
+              index + 1
+            } no tiene nombre.`,
         });
       }
 
-      paymentStatus =
-        session.payment_status || "unpaid";
+      // ======================================================
+      // TIPO
+      // ======================================================
 
-      paid =
-        session.payment_status === "paid";
-    }
+      if (
+        !ALLOWED_TYPES.has(type)
+      ) {
+        return res.status(400).json({
+          ok: false,
+          error:
+            `El archivo "${name}" no tiene un formato permitido. Solo PDF, JPG, PNG o WEBP.`,
+        });
+      }
 
-    /**
-     * ========================================================
-     * FILE NAME
-     * ========================================================
-     */
+      // ======================================================
+      // TAMAÑO
+      // ======================================================
 
-    if (
-      typeof file_name !==
-        "string" ||
-      !file_name.trim()
-    ) {
+      if (
+        !Number.isFinite(size) ||
+        size <= 0
+      ) {
+        return res.status(400).json({
+          ok: false,
+          error:
+            `No se pudo comprobar el tamaño de "${name}".`,
+        });
+      }
 
-      return res.status(400).json({
-        ok: false,
-        error:
-          "Falta el nombre del archivo.",
-      });
-    }
+      if (
+        size > MAX_FILE_SIZE
+      ) {
+        return res.status(400).json({
+          ok: false,
+          error:
+            `El archivo "${name}" supera el límite de 10 MB.`,
+        });
+      }
 
-    /**
-     * ========================================================
-     * FILE TYPE
-     * ========================================================
-     */
+      // ======================================================
+      // NOMBRE SEGURO
+      // ======================================================
 
-    if (
-      typeof file_type !==
-        "string" ||
-      !ALLOWED_TYPES.includes(
-        file_type
-      )
-    ) {
+      const cleanName =
+        safeFileName(name);
 
-      return res.status(400).json({
-        ok: false,
-        error:
-          "Tipo de archivo no permitido. Solo PDF, JPG, PNG o WebP.",
-      });
-    }
+      // ======================================================
+      // NOMBRE ÚNICO
+      //
+      // No usamos directamente el nombre original porque
+      // podría existir otro documento con el mismo nombre.
+      // ======================================================
 
-    /**
-     * ========================================================
-     * FILE SIZE
-     * ========================================================
-     */
+      const randomPart =
+        Math.random()
+          .toString(36)
+          .slice(2, 12);
 
-    const numericSize =
-      Number(file_size);
+      const timestamp =
+        Date.now();
 
-    if (
-      !Number.isFinite(
-        numericSize
-      ) ||
-      numericSize <= 0
-    ) {
+      const storagePath =
+        `${TEMP_FOLDER}/${reference}/${timestamp}-${randomPart}-${id}-${cleanName}`;
 
-      return res.status(400).json({
-        ok: false,
-        error:
-          "Tamaño de archivo no válido.",
-      });
-    }
+      // ======================================================
+      // CREAR SIGNED UPLOAD URL
+      // ======================================================
 
-    if (
-      numericSize >
-      MAX_FILE_SIZE
-    ) {
+      const {
+        data,
+        error,
+      } =
+        await supabaseAdmin.storage
+          .from(BUCKET)
+          .createSignedUploadUrl(
+            storagePath
+          );
 
-      return res.status(400).json({
-        ok: false,
-        error:
-          "El archivo supera el límite máximo de 10 MB.",
-      });
-    }
-
-    /**
-     * ========================================================
-     * NOMBRE SEGURO
-     * ========================================================
-     */
-
-    const originalName =
-      clean(
-        file_name,
-        150
-      );
-
-    const extension =
-      getExtension(
-        originalName,
-        file_type
-      );
-
-    /**
-     * ========================================================
-     * ID ÚNICO
-     * ========================================================
-     */
-
-    const uniqueId =
-      `${Date.now()}-${crypto.randomUUID()}`;
-
-    /**
-     * ========================================================
-     * RUTA TEMPORAL
-     * ========================================================
-     *
-     * Ejemplo:
-     *
-     * flussi-temp/
-     *   cs_test_xxxxx/
-     *      123456-uuid.pdf
-     *
-     * El session_id separa cada solicitud.
-     * ========================================================
-     */
-
-    const storagePath =
-      `${safeSessionId}/${uniqueId}${extension}`;
-
-    /**
-     * ========================================================
-     * CREAR SIGNED UPLOAD URL
-     * ========================================================
-     */
-
-    const {
-      data,
-      error,
-    } =
-      await supabase.storage
-        .from(BUCKET)
-        .createSignedUploadUrl(
-          storagePath
+      if (error) {
+        console.error(
+          "❌ FLUSSI UPLOAD: Error creando URL firmada:",
+          {
+            reference,
+            name,
+            error:
+              error.message,
+          }
         );
 
-    if (
-      error ||
-      !data
-    ) {
+        return res.status(500).json({
+          ok: false,
+          error:
+            `No se pudo preparar la subida de "${name}".`,
+        });
+      }
 
-      console.error(
-        "❌ Error creando signed upload URL:",
-        error
-      );
+      if (
+        !data?.token
+      ) {
+        console.error(
+          "❌ FLUSSI UPLOAD: Supabase no devolvió token.",
+          {
+            reference,
+            name,
+            storagePath,
+          }
+        );
 
-      return res.status(500).json({
-        ok: false,
-        error:
-          error?.message ||
-          "No se pudo preparar la subida del archivo.",
+        return res.status(500).json({
+          ok: false,
+          error:
+            `No se pudo generar la autorización para "${name}".`,
+        });
+      }
+
+      uploadedFiles.push({
+        id,
+        name,
+        type,
+        size,
+        path: storagePath,
+        token: data.token,
       });
     }
 
-    /**
-     * ========================================================
-     * LOG
-     * ========================================================
-     */
+    // ========================================================
+    // RESPUESTA
+    // ========================================================
 
     console.log(
-      "✅ FLUSSI TEMP FILE PREPARED",
+      "✅ FLUSSI UPLOAD: URLs firmadas creadas",
       {
-        session_id:
-          safeSessionId,
-
-        path:
-          storagePath,
-
-        file_name:
-          originalName,
-
-        file_type,
-
-        file_size:
-          numericSize,
-
-        payment_status:
-          paymentStatus,
-
-        test_mode:
-          isTestSession,
+        reference,
+        bucket: BUCKET,
+        folder:
+          `${TEMP_FOLDER}/${reference}`,
+        documentCount:
+          uploadedFiles.length,
+        documents:
+          uploadedFiles.map(
+            (file) => ({
+              id: file.id,
+              name: file.name,
+              type: file.type,
+              size: file.size,
+              path: file.path,
+            })
+          ),
       }
     );
 
-    /**
-     * ========================================================
-     * RESPUESTA
-     * ========================================================
-     *
-     * El frontend utilizará:
-     *
-     * - bucket
-     * - path
-     * - token
-     * - signed_url
-     *
-     * para subir directamente el archivo.
-     * ========================================================
-     */
+    // ========================================================
+    // IMPORTANTE:
+    // No devolvemos signedUrl pública.
+    //
+    // El frontend utilizará:
+    //
+    // supabase.storage
+    //   .from(BUCKET)
+    //   .uploadToSignedUrl(
+    //      path,
+    //      token,
+    //      file
+    //   )
+    //
+    // El token solamente sirve para esa subida.
+    // ========================================================
 
     return res.status(200).json({
-
       ok: true,
 
-      bucket:
-        BUCKET,
+      reference,
 
-      path:
-        storagePath,
+      bucket: BUCKET,
 
-      token:
-        data.token,
+      folder:
+        `${TEMP_FOLDER}/${reference}`,
 
-      signed_url:
-        data.signedUrl ||
-        null,
+      document_only: true,
 
-      file_name:
-        originalName,
+      document_count:
+        uploadedFiles.length,
 
-      file_type,
-
-      file_size:
-        numericSize,
-
-      session_id:
-        safeSessionId,
-
-      payment_status:
-        paymentStatus,
-
-      paid,
-
-      test_mode:
-        isTestSession,
-
-      test_email:
-        isTestSession
-          ? FLUSSI_TEST_EMAIL
-          : null,
-
-      message:
-        "Archivo preparado correctamente para almacenamiento temporal.",
+      files:
+        uploadedFiles,
     });
-
-  } catch (
-    error: any
-  ) {
-
+  } catch (error: any) {
     console.error(
-      "❌ upload-flussi-temp error:",
+      "❌ FLUSSI UPLOAD: Error inesperado:",
       error
     );
-
-    /**
-     * Stripe session inexistente
-     * o no accesible.
-     */
-
-    if (
-      error?.type ===
-      "StripeInvalidRequestError"
-    ) {
-
-      return res.status(400).json({
-        ok: false,
-        error:
-          "La sesión de Stripe no es válida o no existe.",
-      });
-    }
 
     return res.status(500).json({
       ok: false,
       error:
         error?.message ||
-        "Error interno del servidor.",
+        "Error interno preparando la subida de documentos.",
     });
   }
 }
