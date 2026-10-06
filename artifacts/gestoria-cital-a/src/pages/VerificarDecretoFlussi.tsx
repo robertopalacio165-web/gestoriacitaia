@@ -61,10 +61,6 @@ type ClientFormData = {
   pais: string;
   tipoDocumento: string;
   documentos: string;
-  empleadorNombre: string;
-  empleadorCiudad: string;
-  empleadorFechaNacimiento: string;
-  buscarSoloPersona: boolean;
   documentosUrls: string;
   preferredOffice: string;
 };
@@ -222,12 +218,6 @@ function OfficialBrowserBox({
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
-    // Si está en modo solo persona, no permitir subir archivos
-    if (formData.buscarSoloPersona) {
-      e.target.value = "";
-      return;
-    }
-
     if (uploadedFiles.length + files.length > MAX_FILES) {
       toast({
         title: isMa ? "❌ خطأ" : isEn ? "❌ Error" : "❌ Error",
@@ -278,9 +268,6 @@ function OfficialBrowserBox({
         ...selectedFiles.map((file) => ({ name: file.name, path: "", size: file.size, type: file.type })),
       ];
       setUploadedFiles(newUploadedFiles);
-      // Al subir documentos pasamos automáticamente al modo documental.
-      // El nombre del empleador/persona ya no es necesario: se extraerá del archivo.
-      onFormChange("buscarSoloPersona", false);
       onFormChange("documentos", newUploadedFiles.map((file) => file.name).join(", "));
       onFormChange("documentosUrls", "[]");
       if (errorField === "documents") setErrorField(null);
@@ -692,8 +679,7 @@ function OfficialBrowserBox({
                       🔥 TIPO DE DOCUMENTO - SOLO 3 OPCIONES
                       SOLO SE MUESTRA SI NO ESTÁ EN MODO "SOLO PERSONA"
                       ============================================================ */}
-                  {!formData.buscarSoloPersona && (
-                    <div 
+                  <div 
                       ref={el => errorRefs.current["tipoDocumento"] = el}
                       className="col-span-1 lg:col-span-2"
                     >
@@ -778,14 +764,12 @@ function OfficialBrowserBox({
                         </p>
                       )}
                     </div>
-                  )}
 
                   {/* ============================================================
                       📎 SUBIR DOCUMENTOS
                       SOLO SI NO ESTÁ EN MODO "SOLO PERSONA"
                       ============================================================ */}
-                  {!formData.buscarSoloPersona && (
-                    <div
+                  <div
                       ref={el => errorRefs.current["documents"] = el}
                       className="col-span-1 lg:col-span-2"
                     >
@@ -823,7 +807,7 @@ function OfficialBrowserBox({
                           disabled={
                             isUploading ||
                             uploadedFiles.length >= MAX_FILES ||
-                            formData.buscarSoloPersona
+                            false
                           }
                         />
 
@@ -922,157 +906,17 @@ function OfficialBrowserBox({
                         </div>
                       )}
                     </div>
-                  )}
-
-                  {/* ============================================================
-                      👤 INFORMACIÓN DEL EMPLEADOR/PERSONA
-                      SOLO SE MUESTRA SI NO HAY DOCUMENTOS
-                      Si el cliente sube un documento, los datos se extraen por OCR/IA.
-                      ============================================================ */}
-                  {uploadedFiles.length === 0 && (
-                  <div
-                    ref={el => errorRefs.current["empleadorNombre"] = el}
-                    className="col-span-1 lg:col-span-2 mt-1 rounded-2xl border-2 border-emerald-500/40 bg-emerald-500/5 p-4 shadow-[0_0_25px_rgba(16,185,129,0.08)]"
-                  >
-                    <div className="flex items-start gap-3 mb-3">
-                      <div className="w-9 h-9 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center shrink-0">
-                        <Shield className="w-5 h-5 text-emerald-400" />
-                      </div>
-                      <div>
-                        <h3 className="text-emerald-400 font-black text-[14px]">
-                          {isMa ? "👤 معلومات المشغّل أو الشخص المراد التحقق منه" : isEn ? "👤 Employer / person to verify" : "👤 Persona / empleador a comprobar"}
-                        </h3>
-                        <p className="text-white/60 text-[11px] leading-relaxed mt-1">
-                          {isMa
-                            ? "دخل الاسم والنسب ديال الشخص. المدينة وتاريخ الازدياد اختياريين."
-                            : isEn
-                            ? "Enter the person's full name. City and date of birth are optional."
-                            : "Introduce el nombre y apellidos de la persona. La ciudad y la fecha de nacimiento son opcionales."}
-                        </p>
-                      </div>
-                    </div>
-
-                    <label className="block text-white text-[12px] mb-2">
-                      {isMa ? "الاسم الكامل" : isEn ? "Full name" : "Nombre y apellidos"}
-                      <span className="text-red-400 ml-1">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.empleadorNombre}
-                      onChange={(e) => handleInputChange("empleadorNombre", e.target.value)}
-                      placeholder={isMa ? "مثال: Mario Rossi" : isEn ? "e.g. Mario Rossi" : "Ej. Mario Rossi"}
-                      className={`w-full h-[52px] rounded-2xl border ${errorField === "empleadorNombre" ? "border-red-500" : "border-emerald-500/25"} bg-[#060b16] px-4 text-[14px] text-white placeholder:text-white/30 focus:outline-none focus:border-emerald-400`}
-                    />
-                    {errorField === "empleadorNombre" && (
-                      <p className="text-red-400 text-xs mt-1">
-                        {isMa ? "الاسم الكامل مطلوب" : isEn ? "Full name is required" : "El nombre y apellidos son obligatorios"}
-                      </p>
-                    )}
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
-                      <div>
-                        <label className="block text-white text-[12px] mb-2">
-                          {isMa ? "المدينة في إيطاليا (اختياري)" : isEn ? "City in Italy (optional)" : "Ciudad en Italia (opcional)"}
-                        </label>
-                        <input
-                          type="text"
-                          value={formData.empleadorCiudad}
-                          onChange={(e) => handleInputChange("empleadorCiudad", e.target.value)}
-                          placeholder={isMa ? "مثال: Roma" : isEn ? "e.g. Rome" : "Ej. Roma"}
-                          className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-[14px] text-white placeholder:text-white/30 focus:outline-none focus:border-emerald-400"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-white text-[12px] mb-2">
-                          {isMa ? "تاريخ الازدياد (اختياري)" : isEn ? "Date of birth (optional)" : "Fecha de nacimiento (opcional)"}
-                        </label>
-                        <input
-                          type="date"
-                          value={formData.empleadorFechaNacimiento}
-                          onChange={(e) => handleInputChange("empleadorFechaNacimiento", e.target.value)}
-                          className="w-full h-[52px] rounded-2xl border border-white/10 bg-[#060b16] px-4 text-[14px] text-white focus:outline-none focus:border-emerald-400"
-                        />
-                      </div>
-                    </div>
-
-                    {/* ✅ CHECKBOX "No tengo contrato ni Nulla Osta" */}
-                    <label className="mt-4 flex items-start gap-3 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={formData.buscarSoloPersona}
-                        onChange={(e) => {
-                          const checked = e.target.checked;
-                          handleInputChange("buscarSoloPersona", checked);
-                          
-                          if (checked) {
-                            // ✅ Modo SOLO PERSONA: limpiar documentos y tipo de documento
-                            setUploadedFiles([]);
-                            handleInputChange("documentos", "");
-                            handleInputChange("documentosUrls", "[]");
-                            handleInputChange("tipoDocumento", "");
-                            void clearPendingFlussiFiles();
-                            setErrorField(null);
-                          }
-                        }}
-                        className="mt-1 w-4 h-4 rounded border-white/20 bg-[#060b16] text-emerald-500 focus:ring-emerald-500 focus:ring-offset-0"
-                      />
-                      <span className="text-white/70 text-[12px] leading-relaxed">
-                        {isMa
-                          ? "ما عنديش عقد ولا Nulla Osta. بغيت غير نقلبو على هاد الشخص أو المشغّل في المصادر العمومية المتاحة."
-                          : isEn
-                          ? "I do not have a contract or Nulla Osta. I only want to search for this person/employer using available public sources."
-                          : "No tengo contrato ni Nulla Osta. Solo quiero buscar a esta persona o empleador en las fuentes públicas disponibles."}
-                      </span>
-                    </label>
-
-                    {/* ✅ Mensaje informativo cuando está en modo SOLO PERSONA */}
-                    {formData.buscarSoloPersona && (
-                      <div className="mt-3 rounded-xl border border-blue-500/30 bg-blue-500/10 px-4 py-3">
-                        <p className="text-blue-300 text-[12px] leading-relaxed flex items-start gap-2">
-                          <span className="text-blue-400 text-base">🔍</span>
-                          <span>
-                            {isMa
-                              ? "غادي نبحثو على المعلومات المتاحة علنيا حول هاد الشخص: النشاط التجاري، الشركة، أو أي بيانات عامة أخرى متعلقة."
-                              : isEn
-                              ? "We will search for publicly available information about this person: business activity, company, or any other relevant public data."
-                              : "Buscaremos información públicamente disponible sobre esta persona: actividad empresarial, empresa o cualquier otro dato público relevante."}
-                          </span>
-                        </p>
-                        <p className="text-blue-300/70 text-[11px] leading-relaxed mt-2 flex items-start gap-2">
-                          <span className="text-blue-400/70 text-base">⚠️</span>
-                          
-
-
-{isMa
-  ? "تنبيه: مجرد العثور على اسم أو نشاط تجاري لا يعني تلقائياً أن هذه الشخص يمكنه توظيفك عبر Decreto Flussi. يجب التحقق من المتطلبات والمصادر الرسمية."
-  : isEn
-  ? "Note: Finding a name or business activity does not automatically mean this person can hire you through Decreto Flussi. Official requirements and sources must be checked."
-  : "Nota: Encontrar un nombre o actividad comercial no significa automáticamente que esta persona pueda contratarte mediante Decreto Flussi. Se deben verificar los requisitos y fuentes oficiales."
-}
-
-                              
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                  )}
 
                   {/* Caja de pago con Checkbox */}
                   <div className="col-span-1 lg:col-span-2 mt-4 rounded-[28px] border-2 border-yellow-500 bg-gradient-to-b from-[#0b0b0b] to-[#050505] p-4 shadow-[0_0_35px_rgba(255,200,0,0.18)]">
                     <div className="flex items-start justify-between mb-4 pt-2">
                       <div>
                         <p className="text-white text-[15px] font-bold">
-                          {formData.buscarSoloPersona
-                            ? isMa
-                              ? "البحث عن شخص"
-                              : isEn
-                              ? "Person Search"
-                              : "Búsqueda de persona"
-                            : isMa
-                              ? "التحقق من العقد ومرسوم فلوسي"
-                              : isEn
-                              ? "Contract & Decreto Flussi Verification"
-                              : "Verificación de Contrato y Decreto Flussi"}
+                          {isMa
+                            ? "التحقق من الوثائق ومرسوم فلوسي"
+                            : isEn
+                            ? "Document & Decreto Flussi Verification"
+                            : "Verificación de Documentos y Decreto Flussi"}
                         </p>
                         <span className="inline-flex mt-1 rounded-full bg-gradient-to-r from-yellow-400 to-yellow-600 px-3 py-1 text-[10px] font-black uppercase tracking-wide text-black shadow-[0_0_15px_rgba(255,215,0,0.25)]">
                           Premium
@@ -1090,63 +934,32 @@ function OfficialBrowserBox({
 
                     <p className="text-gray-300 text-[13px] mb-5 leading-relaxed">
                       {isMa
-                        ? formData.buscarSoloPersona
-                          ? "سنبحث عن المعلومات المتاحة علنيا حول الشخص المطلوب. ستتلقى تقريراً مفصلاً عبر البريد الإلكتروني."
-                          : "نظامنا يحلل عقدك أو وثائق Decreto Flussi باستخدام الذكاء الاصطناعي. نتحقق من تماسك الوثائق ونتحقق من الشركة باستخدام المصادر العامة المتاحة. ستتلقى تقريراً مفصلاً عبر البريد الإلكتروني."
+                        ? "نظامنا يحلل الوثائق ديالك بالذكاء الاصطناعي، كيتحقق من المعطيات والاتساق ديال الوثيقة، وكيحاول التحقق من الشركة والمعلومات المرتبطة بها. غادي توصلك تقرير مفصل عبر البريد الإلكتروني."
                         : isEn
-                        ? formData.buscarSoloPersona
-                          ? "We will search for publicly available information about the person. You will receive a detailed report by email."
-                          : "Our system analyzes your contract or Decreto Flussi documents using artificial intelligence. We check document consistency and verify the company using available public sources. You will receive a detailed report by email."
-                        : formData.buscarSoloPersona
-                          ? "Buscaremos información públicamente disponible sobre la persona. Recibirás un informe detallado por correo electrónico."
-                          : "Nuestro sistema analiza tu documento mediante inteligencia artificial, extrae los datos relevantes y contrasta la información disponible en fuentes públicas. El informe indicará coincidencias y posibles señales de riesgo; no garantiza que exista un contrato o un nulla osta."}
+                        ? "Our system analyzes your documents with AI, checks their consistency and data, and verifies the company and related information where possible. You will receive a detailed report by email."
+                        : "Nuestro sistema analiza tus documentos mediante IA, comprueba la coherencia de los datos y verifica la empresa y la información relacionada cuando sea posible. Recibirás un informe detallado por email."}
                     </p>
 
                     {/* CONTADOR DE VERIFICACIÓN */}
                     <div className="mb-5 grid grid-cols-2 gap-2">
-                      {!formData.buscarSoloPersona ? (
-                        <>
-                          <div className="flex items-center gap-2 bg-white/5 rounded-xl px-3 py-2 border border-white/10">
-                            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                            <span className="text-white/80 text-[11px] font-medium">
-                              {isMa ? "تحليل العقد" : isEn ? "Contract analyzed" : "Contrato analizado"}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2 bg-white/5 rounded-xl px-3 py-2 border border-white/10">
-                            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                            <span className="text-white/80 text-[11px] font-medium">
-                              {isMa ? "التحقق من الشركة" : isEn ? "Company verified" : "Empresa verificada"}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2 bg-white/5 rounded-xl px-3 py-2 border border-white/10">
-                            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                            <span className="text-white/80 text-[11px] font-medium">
-                              {isMa ? "مراجعة الوثائق" : isEn ? "Document reviewed" : "Documento revisado"}
-                            </span>
-                          </div>
-                        </>
-                      ) : (
-                        <>
-                          <div className="flex items-center gap-2 bg-white/5 rounded-xl px-3 py-2 border border-white/10">
-                            <CheckCircle2 className="w-4 h-4 text-blue-400 shrink-0" />
-                            <span className="text-white/80 text-[11px] font-medium">
-                              {isMa ? "بحث عن الشخص" : isEn ? "Person search" : "Búsqueda de persona"}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2 bg-white/5 rounded-xl px-3 py-2 border border-white/10">
-                            <CheckCircle2 className="w-4 h-4 text-blue-400 shrink-0" />
-                            <span className="text-white/80 text-[11px] font-medium">
-                              {isMa ? "تحليل النشاط" : isEn ? "Activity analysis" : "Análisis de actividad"}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2 bg-white/5 rounded-xl px-3 py-2 border border-white/10">
-                            <CheckCircle2 className="w-4 h-4 text-blue-400 shrink-0" />
-                            <span className="text-white/80 text-[11px] font-medium">
-                              {isMa ? "معلومات عامة" : isEn ? "Public info" : "Información pública"}
-                            </span>
-                          </div>
-                        </>
-                      )}
+                      <div className="flex items-center gap-2 bg-white/5 rounded-xl px-3 py-2 border border-white/10">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                        <span className="text-white/80 text-[11px] font-medium">
+                          {isMa ? "تحليل الوثيقة" : isEn ? "Document analysis" : "Análisis documental"}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 bg-white/5 rounded-xl px-3 py-2 border border-white/10">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                        <span className="text-white/80 text-[11px] font-medium">
+                          {isMa ? "التحقق من الشركة" : isEn ? "Company verification" : "Verificación de empresa"}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 bg-white/5 rounded-xl px-3 py-2 border border-white/10">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                        <span className="text-white/80 text-[11px] font-medium">
+                          {isMa ? "استخراج المعطيات" : isEn ? "Data extraction" : "Extracción de datos"}
+                        </span>
+                      </div>
                       <div className="flex items-center gap-2 bg-white/5 rounded-xl px-3 py-2 border border-white/10">
                         <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
                         <span className="text-white/80 text-[11px] font-medium">
@@ -1255,30 +1068,24 @@ onClick={onPay}
                   <div className="w-2.5 h-2.5 rounded-full bg-yellow-400 animate-pulse" />
                   <p className="text-yellow-300 font-bold text-sm">
                     {isMa
-                      ? formData.buscarSoloPersona
-                        ? "جاري البحث عن المعلومات"
-                        : "النظام يحلل وثائقك"
+                      ? "النظام يحلل وثائقك"
                       : isEn
-                      ? formData.buscarSoloPersona
-                        ? "Searching for information"
-                        : "System analyzing your documents"
-                      : formData.buscarSoloPersona
-                        ? "Buscando información"
-                        : "Sistema analizando tus documentos"}
+                      ? "System analyzing your documents"
+                      : "Sistema analizando tus documentos"}
                   </p>
                 </div>
                 <p className="text-white/70 text-xs leading-relaxed">
                   {isMa
-                    ? formData.buscarSoloPersona
+                    ? false
                       ? "نبحث عن المعلومات المتاحة علنيا حول الشخص المطلوب. سيتم إرسال التقرير المفصل عبر البريد الإلكتروني."
                       : "نظامنا يحلل عقدك أو وثائق Decreto Flussi باستخدام الذكاء الاصطناعي. نتحقق من تماسك الوثائق ونتحقق من الشركة باستخدام المصادر العامة المتاحة. ستتلقى تقريراً مفصلاً عبر البريد الإلكتروني."
                     : isEn
-                    ? formData.buscarSoloPersona
+                    ? false
                       ? "We are searching for publicly available information about the person. You will receive a detailed report by email."
                       : "Our system analyzes your contract or Decreto Flussi documents using artificial intelligence. We check document consistency and verify the company using available public sources. You will receive a detailed report by email."
-                    : formData.buscarSoloPersona
+                    : false
                       ? "Buscamos información públicamente disponible sobre la persona. Recibirás un informe detallado por correo electrónico."
-                      : "Nuestro sistema analiza tu documento mediante inteligencia artificial, extrae los datos relevantes y contrasta la información disponible en fuentes públicas. El informe indicará coincidencias y posibles señales de riesgo; no garantiza que exista un contrato o un nulla osta."}
+                      : "Nuestro sistema analiza tu contrato o documento del Decreto Flussi mediante inteligencia artificial. Comprobamos la coherencia documental y verificamos la empresa utilizando fuentes públicas disponibles. Recibirás un informe detallado por correo electrónico."}
                 </p>
               </div>
 
@@ -1378,10 +1185,6 @@ export default function VerificarDecretoFlussi() {
     pais: "",
     tipoDocumento: "",
     documentos: "",
-    empleadorNombre: "",
-    empleadorCiudad: "",
-    empleadorFechaNacimiento: "",
-    buscarSoloPersona: false,
     documentosUrls: "[]",
     preferredOffice: "+39",
   });
@@ -1705,7 +1508,7 @@ export default function VerificarDecretoFlussi() {
   // Después de que el servidor confirme payment_status=paid, subimos los PDF
   // que seguían únicamente en IndexedDB y guardamos sus rutas en verificaciones.
   useEffect(() => {
-    if (!profile?.id || !paymentConfirmed || formData.buscarSoloPersona) return;
+    if (!profile?.id || !paymentConfirmed) return;
 
     const uploadPaidFiles = async () => {
       try {
@@ -1761,7 +1564,7 @@ export default function VerificarDecretoFlussi() {
     };
 
     void uploadPaidFiles();
-  }, [profile?.id, paymentConfirmed, formData.buscarSoloPersona]);
+  }, [profile?.id, paymentConfirmed]);
 
   useEffect(() => {
     if (!voiceStorageKey) return;
@@ -1998,35 +1801,19 @@ export default function VerificarDecretoFlussi() {
       return false;
     }
 
-    // 6. 👤 Nombre del empleador/persona:
-    //    - Si hay documentos, NO se pide: la IA/OCR extraerá los datos del documento.
-    //    - Si no hay documentos, solo se pide cuando el cliente activa la búsqueda por persona.
-    if (uploadedFiles.length === 0 && formData.buscarSoloPersona) {
-      if (!formData.empleadorNombre.trim() || formData.empleadorNombre.trim().length < 2) {
-        setErrorField("empleadorNombre");
-        return false;
-      }
-    }
-
-    // 7. Tipo de documento: obligatorio cuando se suben documentos
-    if (!formData.buscarSoloPersona && !formData.tipoDocumento.trim()) {
+    // 6. Tipo de documento
+    if (!formData.tipoDocumento.trim()) {
       setErrorField("tipoDocumento");
       return false;
     }
 
-    // 8. 📄 Documento: obligatorio cuando no se ha elegido la búsqueda por persona
-    if (!formData.buscarSoloPersona && uploadedFiles.length === 0) {
+    // 7. Documento obligatorio
+    if (uploadedFiles.length === 0) {
       setErrorField("documents");
       return false;
     }
 
-    // 9. 🔎 Si no hay documentos, debe quedar claro que se busca solo a la persona
-    if (uploadedFiles.length === 0 && !formData.buscarSoloPersona) {
-      setErrorField("documents");
-      return false;
-    }
-
-    // 10. Aceptación de términos
+    // 9. Aceptación de términos
     if (!acceptTerms) {
       setErrorField("acceptTerms");
       return false;
@@ -2048,18 +1835,15 @@ export default function VerificarDecretoFlussi() {
   // ✅ Función que llama a Stripe
   const payStripe = async () => {
     try {
-      // Solo verificar documentos si NO está en modo "solo persona"
-      if (!formData.buscarSoloPersona) {
-        const pendingFiles = await getPendingFlussiFiles();
-        if (pendingFiles.length === 0) {
-          throw new Error(
-            isMa
-              ? "خاصك تختار الوثائق أولا"
-              : isEn
-              ? "Please select your documents first"
-              : "Primero debes seleccionar los documentos"
-          );
-        }
+      const pendingFiles = await getPendingFlussiFiles();
+      if (pendingFiles.length === 0) {
+        throw new Error(
+          isMa
+            ? "خاصك تختار الوثائق أولا"
+            : isEn
+            ? "Please select your documents first"
+            : "Primero debes seleccionar los documentos"
+        );
       }
 
       const { data: sessionData } = await supabase.auth.getSession();
@@ -2083,10 +1867,6 @@ export default function VerificarDecretoFlussi() {
           documentos: formData.documentos,
           documentosPaths: "[]",
           preferredOffice: formData.preferredOffice,
-          empleadorNombre: formData.empleadorNombre,
-          empleadorCiudad: formData.empleadorCiudad || null,
-          empleadorFechaNacimiento: formData.empleadorFechaNacimiento || null,
-          buscarSoloPersona: formData.buscarSoloPersona,
         }),
       });
 
