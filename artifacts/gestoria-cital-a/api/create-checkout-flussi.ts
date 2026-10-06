@@ -326,12 +326,9 @@ export default async function handler(
      * Solo necesitamos los datos de la persona/empleador.
      */
 
-    const searchPersonOnly = toBoolean(
-      body.search_person_only ??
-        body.searchPersonOnly ??
-        body.buscarSoloPersona ??
-        body.buscar_solo_persona
-    );
+    // Servicio exclusivamente documental:
+    // ya NO existe la búsqueda solo por nombre/persona.
+    const searchPersonOnly = false;
 
     /**
      * ========================================================
@@ -431,30 +428,15 @@ export default async function handler(
 
     /**
      * ========================================================
-     * VALIDACIÓN PERSONA / EMPLEADOR
-     * ========================================================
-     */
-
-    if (!employerName) {
-      return res.status(400).json({
-        ok: false,
-        error:
-          "El nombre y apellidos de la persona o empleador son obligatorios.",
-      });
-    }
-
-    /**
-     * ========================================================
-     * VALIDACIÓN DOCUMENTO
+     * SERVICIO EXCLUSIVAMENTE DOCUMENTAL
      * ========================================================
      *
-     * SOLO si NO estamos haciendo búsqueda por persona.
+     * El cliente NO introduce el nombre del empleador/persona.
+     * El sistema lo extraerá posteriormente del documento
+     * mediante OCR/IA.
      */
 
-    if (
-      !searchPersonOnly &&
-      !documentType
-    ) {
+    if (!documentType) {
       return res.status(400).json({
         ok: false,
         error:
@@ -468,10 +450,7 @@ export default async function handler(
      * ========================================================
      */
 
-    if (
-      !searchPersonOnly &&
-      documentCount === 0
-    ) {
+    if (documentCount === 0) {
       return res.status(400).json({
         ok: false,
         error:
