@@ -1849,6 +1849,16 @@ export default function VerificarDecretoFlussi() {
       const { data: sessionData } = await supabase.auth.getSession();
       const userId = sessionData?.session?.user?.id || generateSessionId();
 
+      console.log("📄 FLUSSI DOCUMENTS SENT TO CHECKOUT:", {
+        count: pendingFiles.length,
+        files: pendingFiles.map((file) => ({
+          id: file.id,
+          name: file.name,
+          type: file.type,
+          size: file.size,
+        })),
+      });
+
       const res = await fetch("/api/create-checkout-flussi", {
         method: "POST",
         headers: {
@@ -1866,6 +1876,14 @@ export default function VerificarDecretoFlussi() {
           tipoDocumento: formData.tipoDocumento || null,
           documentos: formData.documentos,
           documentosPaths: "[]",
+          // IMPORTANTE: el backend cuenta los documentos desde document_files.
+          // No enviamos el Blob/File por JSON; solo metadatos.
+          document_files: pendingFiles.map((file) => ({
+            id: file.id,
+            name: file.name,
+            type: file.type,
+            size: file.size,
+          })),
           preferredOffice: formData.preferredOffice,
         }),
       });
