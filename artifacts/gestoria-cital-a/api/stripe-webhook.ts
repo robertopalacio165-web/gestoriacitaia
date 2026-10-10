@@ -624,7 +624,7 @@ Questions?<br>
           const salary = offer.salary || "";
           const contact = offer.apply_email || "";
           const description = offer.description || "";
-          const link = /^https?:\\/\\//i.test(String(url))
+          const link = /^https?:\/\//i.test(String(url))
             ? `<a href="${escapeHtml(url)}">شوف العرض / View offer</a>`
             : "";
           return `<tr>
