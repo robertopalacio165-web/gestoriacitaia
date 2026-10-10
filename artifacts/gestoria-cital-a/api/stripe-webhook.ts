@@ -616,20 +616,20 @@ Questions?<br>
           const salary = offer.salary || "";
           const contact = offer.apply_email || "";
           const description = offer.description || "";
-          const link = /^https?:\/\//i.test(String(url))
-            ? `<a href="${escapeHtml(url)}">شوف العرض / View offer</a>`
+          const link = /^https?:\\/\\//i.test(String(url))
+            ? `<a href="${escapeHtml(url)}" style="display:inline-block;background:#eef5ff;color:#005ea8;text-decoration:none;font-weight:bold;padding:7px 12px;border-radius:6px">Web</a>`
             : "";
           return `<tr>
-<td style="padding:12px;border-bottom:1px solid #ddd;vertical-align:top">${index + 1}</td>
-<td style="padding:12px;border-bottom:1px solid #ddd;vertical-align:top">
-<strong>${escapeHtml(title)}</strong><br>
-<b>الشركة / Company:</b> ${escapeHtml(company)}<br>
-<b>المدينة / Location:</b> ${escapeHtml(location)}<br>
-${salary ? `<b>الأجر / Salary:</b> ${escapeHtml(salary)}<br>` : ""}
-${contact ? `<b>الإيميل / Contact:</b> ${escapeHtml(contact)}<br>` : ""}
-${link ? link + "<br>" : ""}
-${description ? `<p>${escapeHtml(description)}</p>` : ""}
-</td></tr>`;
+<td style="padding:13px 9px;border-bottom:1px solid #dbe2ea;text-align:center;color:#64748b;font-weight:bold;vertical-align:top">${index + 1}</td>
+<td style="padding:13px 10px;border-bottom:1px solid #dbe2ea;vertical-align:top">
+<strong style="color:#071426">${escapeHtml(title)}</strong><br><span style="color:#64748b;font-size:12px">${escapeHtml(company)}</span>
+${salary ? `<br><b>Salary:</b> ${escapeHtml(salary)}` : ""}
+${description ? `<p style="margin:8px 0 0;color:#334155">${escapeHtml(description)}</p>` : ""}
+</td>
+<td style="padding:13px 9px;border-bottom:1px solid #dbe2ea;vertical-align:top;color:#64748b">${escapeHtml(location)}</td>
+<td style="padding:13px 9px;border-bottom:1px solid #dbe2ea;vertical-align:top;word-break:break-word">${contact ? `<a href="mailto:${escapeHtml(contact)}" style="color:#005ea8;font-weight:bold">${escapeHtml(contact)}</a>` : "—"}</td>
+<td style="padding:13px 9px;border-bottom:1px solid #dbe2ea;text-align:center;vertical-align:top">${link || "—"}</td>
+</tr>`;
         }).join("");
 
         const transporter = nodemailer.createTransport({
@@ -649,37 +649,30 @@ ${description ? `<p>${escapeHtml(description)}</p>` : ""}
           to: email,
           subject: `🇲🇹 جميع عروض العمل في مالطا — All Malta Job Offers (${allOffers.length})`,
           html: `<!doctype html>
-<html><body style="margin:0;padding:24px 10px;background:#f4f6f9;font-family:Arial,sans-serif;color:#172033;line-height:1.65">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f6f9">
-<tr><td align="center">
-<table role="presentation" width="850" cellpadding="0" cellspacing="0" style="width:100%;max-width:850px;background:#fff;border-radius:12px;overflow:hidden;border:1px solid #dbe4ef">
-<tr><td style="background:#0B57D0;padding:28px 24px;text-align:center;color:#fff">
-<h1 style="margin:0;font-size:27px">GestoriaCitaIA</h1>
-<p style="margin:8px 0 0;font-size:18px">🇲🇹 Malta Jobs · ${allOffers.length} available offers</p>
-</td></tr>
-<tr><td style="padding:26px 24px">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#EAF3FF;border-radius:8px;border-left:5px solid #0B57D0">
-<tr><td dir="rtl" style="direction:rtl;text-align:right;padding:18px">
-<h2 style="margin:0 0 10px;font-size:20px">السلام عليكم ${safeName} 🇲🇦</h2>
-<p style="margin:0 0 10px">ها هما جميع عروض العمل المتاحة فقاعدة البيانات ديالنا هاد الشهر، ماشي غير 50. اختار العرض اللي مناسب ليك وتاصل بالشركة مباشرة وصيفط CV ديالك حسب طريقة التقديم.</p>
-<p style="margin:0"><b>مهم:</b> تأكد واش العرض مازال مفتوح ومن مصداقية الشركة قبل ما تصيفط الوثائق. ما تخلص حتى شي وسيط مقابل عقد عمل.</p>
+<html><body style="margin:0;padding:24px 10px;background:#edf1f6;font-family:Arial,sans-serif;color:#172033;line-height:1.6">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#edf1f6"><tr><td align="center">
+<table role="presentation" width="900" cellpadding="0" cellspacing="0" style="width:100%;max-width:900px;background:#fff;border-radius:12px;overflow:hidden;border:1px solid #d8e0ea">
+<tr><td style="background:#071426;padding:28px 24px;text-align:center;color:#fff">
+<h1 style="margin:0;font-size:29px;font-weight:800">Gestoria<span style="color:#E5AD42">CitaIA</span></h1>
+<p style="margin:8px 0;color:#E5AD42;font-weight:bold;font-size:16px">Malta Job Support</p><div style="font-size:30px;margin:10px 0">🇲🇹</div>
+<p style="margin:0;color:#e5edf7;font-weight:bold">${allOffers.length} Available Job Offers</p></td></tr>
+<tr><td style="padding:20px">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;border:1px solid #d7e1ee;border-left:5px solid #dba53b;border-radius:10px"><tr><td dir="rtl" style="direction:rtl;text-align:right;padding:20px">
+<h2 style="margin:0 0 12px;color:#071426;font-size:20px">🇲🇦 السلام عليكم ${safeName}</h2>
+<p style="margin:0 0 10px">شكراً بزاف على الثقة ديالك فـ GestoriaCitaIA. هادي هي عروض العمل المتاحة كاملة فقاعدة البيانات ديالنا هاد الشهر. اختار اللي مناسب ليك، تاصل بالشركة مباشرة وصيفط CV ديالك حسب طريقة التقديم.</p>
+<p style="margin:0;color:#087f5b;font-weight:bold">❤️🇲🇹 كنتمناو ليك التوفيق والنجاح فمالطا.</p></td></tr></table>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:16px;background:#f8fafc;border:1px solid #d7e1ee;border-left:5px solid #dba53b;border-radius:10px"><tr><td style="padding:20px;text-align:left">
+<h2 style="margin:0 0 12px;color:#071426;font-size:20px">🇬🇧 Hello ${safeName},</h2>
+<p style="margin:0 0 10px">Thank you for trusting GestoriaCitaIA. Here are all job offers currently available in our database this month. Choose suitable vacancies, contact employers directly, and send your CV using each listing's application instructions.</p>
+<p style="margin:0;color:#087f5b;font-weight:bold">❤️🇲🇹 We wish you the very best of luck finding a job in Malta.</p></td></tr></table>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:24px;background:#071426;border-radius:10px 10px 0 0"><tr><td style="padding:18px;color:#fff">
+<h2 style="margin:0;font-size:22px">🇲🇹 All Malta Job Offers</h2><p style="margin:5px 0 0;color:#E5AD42;font-weight:bold">${allOffers.length} offers</p>
 </td></tr></table>
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:18px;background:#EAF3FF;border-radius:8px;border-left:5px solid #0B57D0">
-<tr><td style="padding:18px;text-align:left">
-<h2 style="margin:0 0 10px;font-size:20px">🇬🇧 Hello ${safeName},</h2>
-<p style="margin:0 0 10px">Here are all job offers available in our database this month—not just 50. Choose suitable vacancies, contact employers directly, and send your CV using the application instructions.</p>
-<p style="margin:0"><b>Important:</b> Verify that each vacancy is still open and confirm the employer before sharing documents. Never pay an intermediary for a job contract.</p>
-</td></tr></table>
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:22px;border-collapse:separate;border-spacing:0;font-size:14px">
-<thead><tr style="background:#071426;color:#fff"><th style="padding:13px;width:44px;text-align:center;border:1px solid #071426">#</th><th style="padding:13px;text-align:left;border:1px solid #071426">Job offer details / تفاصيل العرض</th></tr></thead>
-<tbody>${offerRows}</tbody>
-</table>
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:24px;background:#f4f6f9;border-radius:8px">
-<tr><td style="padding:18px;text-align:center;color:#596579">
-<b>GestoriaCitaIA · Malta Jobs</b><br><a href="https://gestoriacitaia.com" style="color:#0B57D0">gestoriacitaia.com</a>
-</td></tr></table>
-</td></tr></table>
-</td></tr></table></body></html>`,
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;font-size:13px">
+<thead><tr style="background:#f4f7fa;color:#334155"><th style="padding:12px 8px;text-align:center;border-bottom:2px solid #dba53b;width:35px">#</th><th style="padding:12px 8px;text-align:left;border-bottom:2px solid #dba53b">Job offer / Company</th><th style="padding:12px 8px;text-align:left;border-bottom:2px solid #dba53b">City</th><th style="padding:12px 8px;text-align:left;border-bottom:2px solid #dba53b">Email</th><th style="padding:12px 8px;text-align:center;border-bottom:2px solid #dba53b">Web</th></tr></thead>
+<tbody>${offerRows}</tbody></table>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:20px;background:#f4f6f9;border-radius:8px"><tr><td style="padding:18px;text-align:center;color:#596579"><b>GestoriaCitaIA · Malta Jobs</b><br><a href="https://gestoriacitaia.com" style="color:#005ea8;text-decoration:none">gestoriacitaia.com</a></td></tr></table>
+</td></tr></table></td></tr></table></body></html>`,
         });
 
         const { error: markSentError } = await supabase
