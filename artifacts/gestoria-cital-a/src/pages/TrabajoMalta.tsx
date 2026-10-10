@@ -12,7 +12,6 @@ import {
   Upload,
   Loader2,
   CreditCard,
-  Landmark,
   ShieldCheck,
 } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
@@ -176,88 +175,6 @@ function OfficialBrowserBox({
       }
     }
   }, [errorField]);
-
-  // ✅ Función unificada de pago
-  const handlePay = async (method: "stripe" | "paypal" | "transfer", plan: "weekly" | "monthly") => {
-    if (method === "stripe") {
-      // ✅ Llama al flujo existente de Stripe
-      onPay(plan);
-    } else if (method === "paypal") {
-      try {
-        let photoUrl = "";
-        let pdfUrl = "";
-
-        // ============================
-        // SUBIR FOTO
-        // ============================
-        if (formData.photoFile) {
-          const photoPath = `photos/${crypto.randomUUID()}-${formData.photoFile.name}`;
-          const { error } = await supabase.storage
-            .from("malta-temp")
-            .upload(photoPath, formData.photoFile);
-
-          if (error) throw error;
-
-          const { data } = supabase.storage
-            .from("malta-temp")
-            .getPublicUrl(photoPath);
-
-          photoUrl = data.publicUrl;
-        }
-
-        // ============================
-        // SUBIR PDF
-        // ============================
-        if (formData.pdfFile) {
-          const pdfPath = `pdfs/${crypto.randomUUID()}-${formData.pdfFile.name}`;
-
-          const { error } = await supabase.storage
-            .from("malta-temp")
-            .upload(pdfPath, formData.pdfFile);
-
-          if (error) throw error;
-
-          const { data } = supabase.storage
-            .from("malta-temp")
-            .getPublicUrl(pdfPath);
-
-          pdfUrl = data.publicUrl;
-        }
-
-        // ============================
-        // CREAR PEDIDO PAYPAL
-        // ============================
-        const response = await fetch("/api/crear-pedido-de-paypal", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            ...formData,
-            photoUrl,
-            pdfUrl,
-            plan,
-          }),
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data.error || "Error creando la orden PayPal");
-        }
-
-        window.location.href = data.approvalUrl;
-        return;
-      } catch (err) {
-        console.error(err);
-        toast({
-          title: "Error",
-          description: "No se pudo iniciar el pago con PayPal.",
-          variant: "destructive",
-        });
-      }
-    }
-  };
 
   // ✅ NACIONALIDADES
   const nationalityOptions = [
@@ -1060,47 +977,6 @@ carnetConducir: isMa ? "اختر رخصة القيادة" : isEn ? "Select drivi
                   {/* 8. PLANES */}
                   {/* ============================================ */}
                   
-                  {/* Plan Semanal */}
-                  <div 
-                    className={`col-span-1 lg:col-span-1 mt-2 rounded-[28px] border-2 p-4 shadow-[0_0_35px_rgba(59,130,246,0.15)] cursor-pointer transition-all ${
-                      selectedPlan === "weekly" 
-                        ? "border-blue-500 bg-gradient-to-b from-[#0b0b0b] to-[#0a1628]" 
-                        : "border-blue-500/30 bg-gradient-to-b from-[#0b0b0b] to-[#050505] hover:border-blue-500/60"
-                    }`}
-                    onClick={() => setSelectedPlan("weekly")}
-                  >
-                    <div className="flex items-start justify-between mb-4 pt-2">
-                      <div>
-                        <p className="text-white text-[15px] font-bold">
-                          {isMa ? "بحث عمل - أسبوع" : isEn ? "Job Search - Weekly" : "Búsqueda - Semanal"}
-                        </p>
-                        <span className="inline-flex mt-1 rounded-full bg-blue-500/20 px-3 py-1 text-[10px] font-black uppercase tracking-wide text-blue-400">
-                          {isMa ? "أسبوع" : "Weekly"}
-                        </span>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-blue-400 text-[28px] sm:text-[34px] font-black leading-none drop-shadow-[0_0_10px_rgba(59,130,246,0.35)]">
-                          9,99€
-                        </p>
-                        <p className="text-blue-300 text-[11px] font-semibold">
-                          {isMa ? "7 أيام" : "7 days"}
-                        </p>
-                      </div>
-                    </div>
-                    <ul className="space-y-2 text-gray-300 text-[12px] sm:text-[13px]">
-                      <li>✅ {isMa ? "سيرة ذاتية احترافية بالذكاء الاصطناعي" : isEn ? "Professional AI CV" : "CV profesional con IA"}</li>
-                      <li>✅ {isMa ? "رسالة تحفيزية بالانجليزية" : isEn ? "Motivation letter in English" : "Carta de motivación en inglés"}</li>
-                      <li>✅ {isMa ? "حتى 70 طلب توظيف (10 في اليوم)" : isEn ? "Up to 70 applications (10/day)" : "Hasta 70 candidaturas (10/día)"}</li>
-                      <li>✅ {isMa ? "إشعارات واتساب" : isEn ? "WhatsApp notifications" : "Notificaciones WhatsApp"}</li>
-                    </ul>
-                    {selectedPlan === "weekly" && (
-                      <div className="mt-3 flex items-center justify-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
-                        <span className="text-blue-400 text-[10px] font-bold uppercase">Seleccionado</span>
-                      </div>
-                    )}
-                  </div>
-
                   {/* Plan Mensual (Recomendado) */}
                   <div 
                     className={`col-span-1 lg:col-span-1 mt-2 rounded-[28px] border-2 p-4 shadow-[0_0_35px_rgba(255,200,0,0.18)] cursor-pointer transition-all ${
@@ -1113,10 +989,10 @@ carnetConducir: isMa ? "اختر رخصة القيادة" : isEn ? "Select drivi
                     <div className="flex items-start justify-between mb-4 pt-2">
                       <div>
                         <p className="text-white text-[15px] font-bold">
-                          {isMa ? "بحث عمل - شهري" : isEn ? "Job Search - Monthly" : "Búsqueda - Mensual"}
+                          {isMa ? "بحث مستعجل على فرص الشغل فمالطا كاملة" : isEn ? "Urgent Job Search Across Malta" : "Búsqueda urgente de empleo en toda Malta"}
                         </p>
                         <span className="inline-flex mt-1 rounded-full bg-gradient-to-r from-yellow-400 to-yellow-600 px-3 py-1 text-[10px] font-black uppercase tracking-wide text-black shadow-[0_0_15px_rgba(255,215,0,0.25)]">
-                          ⭐ {isMa ? "الأفضل" : "Best Value"}
+                          ⭐ {isMa ? "عرض مستعجل" : isEn ? "URGENT OFFER" : "OFERTA URGENTE"}
                         </span>
                       </div>
                       <div className="text-right">
@@ -1129,16 +1005,19 @@ carnetConducir: isMa ? "اختر رخصة القيادة" : isEn ? "Select drivi
                       </div>
                     </div>
                     <ul className="space-y-2 text-gray-300 text-[12px] sm:text-[13px]">
-                      <li>✅ {isMa ? "كل ما في الخطة الأسبوعية" : isEn ? "All weekly plan features" : "Todo lo del plan semanal"}</li>
-                      <li>✅ {isMa ? "30 يوم من البحث" : isEn ? "30 days of searching" : "30 días de búsqueda"}</li>
-                      <li>✅ {isMa ? "حتى 300 طلب توظيف" : isEn ? "Up to 300 applications" : "Hasta 300 candidaturas"}</li>
-                      <li>✅ {isMa ? "احتمالية أكبر للمقابلات" : isEn ? "Higher chance of interviews" : "Mayor probabilidad de entrevistas"}</li>
-                      <li>✅ {isMa ? "دعم أولوية عبر واتساب" : isEn ? "Priority WhatsApp support" : "Soporte prioritario WhatsApp"}</li>
+                      <li>✅ {isMa ? "فرص عمل متاحة فمالطا كاملة" : isEn ? "Job opportunities across all Malta" : "Ofertas de empleo disponibles en toda Malta"}</li>
+                      <li>✅ {isMa ? "30 يوم ديال البحث على الخدمة" : isEn ? "30 days of job searching" : "30 días de búsqueda de empleo"}</li>
+                      <li>✅ {isMa ? "حتى لـ300 ترشيح للعمل" : isEn ? "Up to 300 job applications" : "Hasta 300 candidaturas"}</li>
+                      <li>✅ {isMa ? "CV احترافي ورسالة تحفيزية بالإنجليزية بالذكاء الاصطناعي" : isEn ? "Professional AI CV and English cover letter" : "CV profesional con IA y carta de motivación en inglés"}</li>
+                      <li>✅ {isMa ? "إشعارات ودعم بالأولوية عبر واتساب" : isEn ? "WhatsApp notifications and priority support" : "Notificaciones y soporte prioritario por WhatsApp"}</li>
                     </ul>
+                    <p className="mt-3 text-center text-yellow-400 text-[11px] font-black uppercase">
+                      {isMa ? "🚀 استفد من العرض دابا!" : isEn ? "🚀 Take advantage of this offer now!" : "🚀 ¡Aprovecha esta oferta ahora!"}
+                    </p>
                     {selectedPlan === "monthly" && (
                       <div className="mt-3 flex items-center justify-center gap-2">
                         <div className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse" />
-                        <span className="text-yellow-400 text-[10px] font-bold uppercase">Seleccionado</span>
+                        <span className="text-yellow-400 text-[10px] font-bold uppercase">{isMa ? "مختار" : isEn ? "SELECTED" : "SELECCIONADO"}</span>
                       </div>
                     )}
                   </div>
@@ -1370,7 +1249,6 @@ carnetConducir: isMa ? "اختر رخصة القيادة" : isEn ? "Select drivi
                     <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
                       <span className="rounded-full bg-white px-3 py-1 text-[11px] font-bold text-[#1434CB]">VISA</span>
                       <span className="rounded-full bg-white px-3 py-1 text-[11px] font-bold text-[#EB001B]">Mastercard</span>
-                      <span className="rounded-full bg-white px-3 py-1 text-[11px] font-bold text-black">PayPal</span>
                       <span className="rounded-full bg-white px-3 py-1 text-[11px] font-bold text-black">G Pay</span>
                     </div>
                   </div>
@@ -1466,70 +1344,6 @@ carnetConducir: isMa ? "اختر رخصة القيادة" : isEn ? "Select drivi
                 </div>
               </button>
 
-              {/* ✅ PAYPAL - ACTIVO (Solo ejecuta el flujo, la validación ya se hizo antes) */}
-              <button
-                type="button"
-                onClick={() => {
-                  setShowPaymentModal(false);
-                  handlePay("paypal", selectedPlan);
-                }}
-                className="w-full rounded-xl border border-white/10 bg-[#111827] p-2.5 hover:bg-[#222] transition hover:border-yellow-500/40 group relative"
-              >
-                <div className="flex items-center gap-2.5">
-                  <div className="w-4 h-4 rounded-full border-2 border-white/20 flex items-center justify-center shrink-0 group-hover:border-yellow-500/50">
-                    <div className="w-2 h-2 rounded-full bg-yellow-500 opacity-0 group-hover:opacity-100 transition" />
-                  </div>
-                  <div className="w-9 h-9 rounded-xl bg-blue-500/15 flex items-center justify-center shrink-0">
-                    <svg className="w-5 h-5 text-blue-400" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.026.382 5.474 0 5.998 0h7.46c2.57 0 4.578.543 5.69 1.81 1.112 1.267 1.363 2.877 1.015 4.556-.335 1.598-1.17 2.926-2.268 3.787-.814.635-1.819 1.045-2.872 1.107-.334.019-.673.028-1.014.028h-3.19c-.435 0-.826.308-.932.731l-.43 1.873-.168.733-.164.717a.641.641 0 0 1-.633.74h-2.09l.467-2.064Z"/>
-                    </svg>
-                  </div>
-                  <div className="text-left flex-1 min-w-0">
-                    <div className="text-white font-bold text-[14px]">PayPal</div>
-                    <div className="text-white/50 text-[10px]">
-                      {isMa ? "ادفع بأمان" : isEn ? "Pay securely" : "Pago 100% seguro"}
-                    </div>
-                    <div className="flex items-center gap-1 mt-1">
-                      <img src="https://img.icons8.com/color/48/paypal.png" className="h-4 w-auto" alt="PayPal" />
-                      <img src="https://img.icons8.com/color/48/visa.png" className="h-4 w-auto" alt="Visa" />
-                      <img src="https://img.icons8.com/color/48/mastercard-logo.png" className="h-4 w-auto" alt="Mastercard" />
-                    </div>
-                  </div>
-                </div>
-              </button>
-
-              {/* ✅ TRANSFERENCIA BANCARIA */}
-              <button
-                onClick={() => {
-                  setShowPaymentModal(false);
-                  handlePay("transfer", selectedPlan);
-                }}
-                className="w-full rounded-xl border border-white/10 bg-[#111827] p-2.5 hover:bg-[#222] transition hover:border-emerald-500/40 group relative"
-              >
-                <div className="flex items-center gap-2.5">
-                  <div className="w-4 h-4 rounded-full border-2 border-white/20 flex items-center justify-center shrink-0 group-hover:border-emerald-500/50">
-                    <div className="w-2 h-2 rounded-full bg-emerald-500 opacity-0 group-hover:opacity-100 transition" />
-                  </div>
-                  <div className="w-9 h-9 rounded-xl bg-emerald-500/15 flex items-center justify-center shrink-0">
-                    <Landmark className="w-5 h-5 text-emerald-400" />
-                  </div>
-                  <div className="text-left flex-1 min-w-0">
-                    <div className="text-white font-bold text-[14px]">
-                      {isMa ? "تحويل بنكي" : isEn ? "Bank Transfer" : "Transferencia bancaria"}
-                    </div>
-                    <div className="text-white/50 text-[10px]">
-                      {isMa ? "ادفع مباشرة من بنكك" : isEn ? "Pay directly from your bank" : "Realiza el pago directamente desde tu banco"}
-                    </div>
-                    <div className="flex items-center gap-1.5 mt-1">
-                      <span className="text-[9px] font-bold text-white/40 bg-white/5 px-2 py-0.5 rounded">SEPA</span>
-                      <span className="text-[9px] font-bold text-white/40 bg-white/5 px-2 py-0.5 rounded">IBAN</span>
-                      <span className="text-[9px] font-bold text-white/40 bg-white/5 px-2 py-0.5 rounded">BIC/SWIFT</span>
-                    </div>
-                  </div>
-                </div>
-              </button>
-            </div>
-
             {/* FOOTER SEGURIDAD */}
             <div className="border-t border-white/5 px-3 py-2.5 mt-0.5">
               <div className="flex items-center justify-center gap-2 text-[10px] text-green-400">
@@ -1543,8 +1357,6 @@ carnetConducir: isMa ? "اختر رخصة القيادة" : isEn ? "Select drivi
                   {isMa ? "معالج بأمان بواسطة" : isEn ? "Processed securely by" : "Procesado de forma segura por"}
                 </span>
                 <span className="text-[9px] font-bold text-yellow-400/70">Stripe</span>
-                <span className="text-white/20">•</span>
-                <span className="text-[9px] font-bold text-gray-500">PayPal</span>
               </div>
             </div>
           </div>
