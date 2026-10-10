@@ -25,10 +25,7 @@ export async function sendWelcomeEmail({
     },
   });
 
-  const planName =
-    plan === "weekly"
-      ? "Weekly Plan (7 days)"
-      : "Monthly Plan (30 days)";
+  const planName = "Pago único de 19,99 €";
 
   const attachments: any[] = [];
 
@@ -124,7 +121,7 @@ export async function sendWelcomeEmail({
 
 <br><br>
 
-✅ غادي نرسلو ليك بين <b>50 و80 عرض عمل جديد</b> خلال هاد الشهر، ومع كل عرض غادي نعطيوك <b>رقم الهاتف ديال الشركة</b>.
+✅ غادي نرسلو ليك جميع <b>عروض العمل المتاحة</b> وقت الشراء، ومع كل عرض غادي نعطيوك <b>رقم الهاتف ديال الشركة</b>.
 
 <br><br>
 
@@ -187,7 +184,7 @@ From today our recruitment team starts working on your profile and will submit y
 
 <br><br>
 
-✅ We will send you between <b>50 and 80 new job offers</b> during this month, with the <b>company phone number</b> for each offer.
+✅ We will send you all <b>available job offers</b> at the time of purchase, with the <b>company phone number</b> for each offer.
 
 <br><br>
 
