@@ -94,10 +94,7 @@ async function sendMail(
 ) {
   const fullName = application.full_name?.trim() || "there";
 
-  const planName =
-    application.plan === "weekly"
-      ? "Weekly Plan (7 days)"
-      : "Monthly Plan (30 days)";
+  const planName = "Pago único de 19,99 €";
 
   return transporter.sendMail({
     from: `"GestoriaCitaIA" <${process.env.FROM_EMAIL}>`,
