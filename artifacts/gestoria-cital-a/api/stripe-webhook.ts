@@ -617,44 +617,51 @@ Questions?<br>
           const salary = offer.salary || "";
           const contact = offer.apply_email || offer.email || offer.contact_email || "";
           const phone = offer.company_phone || offer.phone || offer.telephone || offer.contact_phone || "";
-          const description = offer.description || "";
+          const category = offer.category || offer.job_category || offer.industry || offer.job_type || "Not specified";
+          const description = offer.description || offer.details || offer.job_description || "";
           const safeUrl = String(url);
           const safeWebsite = String(companyWebsite);
           const link = /^https?:\/\//i.test(safeUrl)
-            ? `<a href="${escapeHtml(safeUrl)}" style="display:inline-block;background:#071426;color:#E5AD42;text-decoration:none;font-weight:bold;padding:10px 15px;border-radius:7px;margin:4px 6px 4px 0">VIEW JOB / VER OFERTA ↗</a>`
+            ? `<a href="${escapeHtml(safeUrl)}" style="display:inline-block;background:#071426;color:#E5AD42;text-decoration:none;font-weight:bold;padding:10px 15px;border-radius:7px;margin:4px 6px 4px 0">VIEW VACANCY ↗</a>`
             : "";
           const websiteLink = /^https?:\/\//i.test(safeWebsite)
-            ? `<a href="${escapeHtml(safeWebsite)}" style="display:inline-block;background:#edf5ff;color:#075985;text-decoration:none;font-weight:bold;padding:10px 15px;border-radius:7px;margin:4px 6px 4px 0">COMPANY WEBSITE ↗</a>`
+            ? `<a href="${escapeHtml(safeWebsite)}" style="display:inline-block;background:#E5AD42;color:#071426;text-decoration:none;font-weight:bold;padding:10px 15px;border-radius:7px;margin:4px 6px 4px 0">COMPANY WEBSITE ↗</a>`
             : "";
           const emailLine = contact
             ? `<a href="mailto:${escapeHtml(contact)}" style="color:#075985;font-weight:bold;word-break:break-word">${escapeHtml(contact)}</a>`
-            : '<span style="color:#8a94a5">Not published in source / No publicado</span>';
+            : '<span style="color:#8a94a5">Not published</span>';
           const phoneLine = phone
             ? `<a href="tel:${escapeHtml(phone)}" style="color:#075985;font-weight:bold">${escapeHtml(phone)}</a>`
-            : '<span style="color:#8a94a5">Not published in source / No publicado</span>';
+            : '<span style="color:#8a94a5">Not published</span>';
+          const safeSalary = salary ? escapeHtml(salary) : "Not specified";
+          const safeDescription = description
+            ? escapeHtml(description)
+            : "Full job description is not included in the source listing. Open the vacancy link to check duties and requirements.";
           return `<tr>
 <td style="padding:0 0 15px;border:0">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="width:100%;border-collapse:separate;border-spacing:0;background:#ffffff;border:1px solid #d6dfeb;border-radius:12px;overflow:hidden">
-<tr>
-<td style="padding:15px 18px;background:#071426;border-bottom:3px solid #E5AD42;color:#fff">
+<tr><td style="padding:15px 18px;background:#071426;border-bottom:3px solid #E5AD42;color:#fff">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
 <td width="46" style="vertical-align:top"><span style="display:inline-block;background:#E5AD42;color:#071426;font-weight:900;font-size:15px;line-height:34px;width:34px;height:34px;border-radius:50%;text-align:center">${index + 1}</span></td>
 <td style="vertical-align:middle"><div style="font-size:17px;font-weight:800;color:#fff;line-height:1.35">${escapeHtml(title)}</div><div style="font-size:13px;color:#E5AD42;font-weight:bold;margin-top:4px">${escapeHtml(company)}</div></td>
-</tr></table>
-</td></tr>
+</tr></table></td></tr>
 <tr><td style="padding:16px 18px">
+<div style="display:inline-block;background:#fff5d8;border:1px solid #f0d58d;border-radius:20px;padding:5px 10px;font-size:11px;font-weight:bold;color:#78520a;margin-bottom:12px">CATEGORY: ${escapeHtml(category)}</div>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f7f9fc;border:1px solid #e3e9f1;border-radius:8px"><tr>
-<td style="padding:10px 12px;color:#334155;font-size:13px"><b>📍 CITY / CIUDAD</b><br>${escapeHtml(location)}</td>
-<td style="padding:10px 12px;color:#334155;font-size:13px"><b>💶 SALARY / SALARIO</b><br>${salary ? escapeHtml(salary) : "Not specified / No indicado"}</td>
+<td style="padding:10px 12px;color:#334155;font-size:13px"><b>📍 LOCATION</b><br>${escapeHtml(location)}</td>
+<td style="padding:10px 12px;color:#334155;font-size:13px"><b>💶 SALARY</b><br>${safeSalary}</td>
 </tr></table>
-${description ? `<p style="margin:13px 0;color:#334155;line-height:1.65;font-size:13px">${escapeHtml(description)}</p>` : ""}
-<h3 style="font-size:13px;color:#071426;margin:17px 0 9px;border-bottom:1px solid #e5eaf1;padding-bottom:7px">DIRECT COMPANY CONTACT / CONTACTO DIRECTO</h3>
+<div style="margin-top:13px;padding:12px;background:#f7f9fc;border:1px solid #e3e9f1;border-radius:8px">
+<h3 style="font-size:13px;color:#071426;margin:0 0 7px">JOB DETAILS / تفاصيل الخدمة</h3>
+<p style="margin:0;color:#334155;line-height:1.65;font-size:13px">${safeDescription}</p>
+</div>
+<h3 style="font-size:13px;color:#071426;margin:17px 0 9px;border-bottom:1px solid #e5eaf1;padding-bottom:7px">DIRECT EMPLOYER CONTACT</h3>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:13px"><tr>
 <td style="padding:8px 5px 8px 0;width:50%;vertical-align:top"><b>✉️ EMAIL</b><br>${emailLine}</td>
-<td style="padding:8px 0 8px 5px;width:50%;vertical-align:top"><b>📞 PHONE / TELÉFONO</b><br>${phoneLine}</td>
+<td style="padding:8px 0 8px 5px;width:50%;vertical-align:top"><b>📞 PHONE</b><br>${phoneLine}</td>
 </tr></table>
 <div style="margin-top:10px">${link}${websiteLink}</div>
-<p style="margin:10px 0 0;font-size:11px;color:#718096">Contact details are shown only when present in the source listing. / Los datos solo aparecen cuando figuran en la fuente.</p>
+<p dir="rtl" style="margin:10px 0 0;font-size:11px;color:#718096;text-align:right">إلا ما كانش رقم الهاتف ولا الإيميل منشور فالمصدر، غادي يبان بأنه غير متوفر.</p>
 </td></tr></table>
 </td></tr>`;
         }).join("");
@@ -674,15 +681,16 @@ ${description ? `<p style="margin:13px 0;color:#334155;line-height:1.65;font-siz
         const offersMail = await transporter.sendMail({
           from: `"GestoriaCitaIA" <${process.env.FROM_EMAIL}>`,
           to: email,
-          subject: `🇲🇹 جميع عروض العمل في مالطا — All Malta Job Offers (${allOffers.length})`,
+          subject: `🇲🇦🇲🇹 Malta Job Offers | ${allOffers.length} listings`,
           html: `<!doctype html>
 <html><body style="margin:0;padding:24px 10px;background:#edf1f6;font-family:Arial,sans-serif;color:#172033;line-height:1.6">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#edf1f6"><tr><td align="center">
 <table role="presentation" width="900" cellpadding="0" cellspacing="0" style="width:100%;max-width:900px;background:#fff;border-radius:12px;overflow:hidden;border:1px solid #d8e0ea">
 <tr><td style="background:#071426;padding:26px 24px;text-align:center;color:#fff">
-<div style="display:inline-block;width:54px;height:54px;line-height:54px;border-radius:50%;background:#E5AD42;color:#071426;font-size:25px;font-weight:900;margin-bottom:10px">MT</div>
-<h1 style="margin:0;font-size:27px;font-weight:800;letter-spacing:.3px">Malta Job Offers</h1>
-<p style="margin:8px 0;color:#E5AD42;font-weight:bold;font-size:16px">GestoriaCitaIA · Company Directory</p>
+<div style="font-size:13px;font-weight:bold;letter-spacing:1px;color:#E5AD42;margin-bottom:14px"><span style="display:inline-block;vertical-align:middle;margin-right:5px;width:30px;height:20px"><svg xmlns="http://www.w3.org/2000/svg" width="30" height="20" viewBox="0 0 30 20"><rect width="30" height="20" fill="#c1272d"/><path d="M15 3 L16.8 8.2 L22.3 8.2 L17.8 11.4 L19.5 16.6 L15 13.4 L10.5 16.6 L12.2 11.4 L7.7 8.2 L13.2 8.2 Z" fill="#006233"/></svg></span>MOROCCO <span style="margin:0 10px">·</span><span style="display:inline-block;vertical-align:middle;margin-right:5px;width:30px;height:20px"><svg xmlns="http://www.w3.org/2000/svg" width="30" height="20" viewBox="0 0 30 20"><rect width="15" height="20" fill="#fff"/><rect x="15" width="15" height="20" fill="#cf142b"/><path d="M5 3v5m-2.5-2.5h5" stroke="#cf142b" stroke-width="1.2"/></svg></span>MALTA</div>
+<div style="display:inline-block;width:54px;height:54px;line-height:54px;border-radius:15px;background:#E5AD42;color:#071426;font-size:25px;font-weight:900;margin-bottom:10px">G</div>
+<h1 style="margin:0;font-size:27px;font-weight:800;letter-spacing:.3px">Gestoria<span style="color:#E5AD42">CitaIA</span></h1>
+<p style="margin:8px 0;color:#E5AD42;font-weight:bold;font-size:16px">MALTA JOB OFFERS</p>
 <p style="margin:0;color:#e5edf7;font-weight:bold">${allOffers.length} Available Job Offers</p></td></tr>
 <tr><td style="padding:20px">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;border:1px solid #d7e1ee;border-left:5px solid #dba53b;border-radius:10px"><tr><td dir="rtl" style="direction:rtl;text-align:right;padding:20px">
@@ -694,7 +702,7 @@ ${description ? `<p style="margin:13px 0;color:#334155;line-height:1.65;font-siz
 <p style="margin:0 0 10px">Thank you for trusting GestoriaCitaIA. Here are all job offers currently available in our database this month. Choose suitable vacancies, contact employers directly, and send your CV using each listing's application instructions.</p>
 <p style="margin:0;color:#087f5b;font-weight:bold">❤️🇲🇹 We wish you the very best of luck finding a job in Malta.</p></td></tr></table>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:24px;background:#071426;border-radius:10px 10px 0 0"><tr><td style="padding:18px;color:#fff">
-<h2 style="margin:0;font-size:22px">MT · All Malta Job Offers</h2><p style="margin:5px 0 0;color:#E5AD42;font-weight:bold">Numbered company listings · ${allOffers.length} offers</p>
+<h2 style="margin:0;font-size:22px">MT · All Malta Job Offers</h2><p style="margin:5px 0 0;color:#E5AD42;font-weight:bold">Numbered job listings · ${allOffers.length} offers · Category, details and direct contacts</p>
 </td></tr></table>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:separate;border-spacing:0;font-size:13px">
 <tbody>${offerRows}</tbody></table>
