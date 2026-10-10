@@ -1343,6 +1343,7 @@ carnetConducir: isMa ? "اختر رخصة القيادة" : isEn ? "Select drivi
                   </div>
                 </div>
               </button>
+            </div>
 
             {/* FOOTER SEGURIDAD */}
             <div className="border-t border-white/5 px-3 py-2.5 mt-0.5">
