@@ -591,7 +591,7 @@ Questions?<br>
           const { data: page, error: offersError } = await supabase
             .from("malta_job_offers")
             .select("*")
-            .order("id", { ascending: true })
+            .order("company_phone", { ascending: false, nullsFirst: false }).order("id", { ascending: true })
             .range(from, from + pageSize - 1);
 
           if (offersError) throw offersError;
