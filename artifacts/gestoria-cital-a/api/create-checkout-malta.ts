@@ -74,7 +74,7 @@ export default async function handler(req: any, res: any) {
       service: "malta",
       product: "all_available_offers",
       payment_type: "one_time",
-      plan: "single_payment_test_0_50",
+      plan: "single_payment_19_99",
       fullName,
       email,
       whatsapp,
@@ -107,11 +107,11 @@ export default async function handler(req: any, res: any) {
         {
           price_data: {
             currency: "eur",
-            unit_amount: 50,
+            unit_amount: 1999,
             product_data: {
               name: "Ofertas de empleo disponibles en Malta",
               description:
-                "PRECIO DE PRUEBA: 0,50 €. Recibirás las ofertas disponibles en el momento de la compra. No es una suscripción y no incluye futuras ofertas.",
+                "Precio: 19,99 €. Recibirás las ofertas disponibles en el momento de la compra. No es una suscripción y no incluye futuras ofertas.",
             },
           },
           quantity: 1,
