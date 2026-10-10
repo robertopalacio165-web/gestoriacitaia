@@ -278,17 +278,13 @@ export default function PanelMalta() {
 
   // ============================================
   // 🇲🇹 ESTADO ACTUAL DEL SERVICIO MALTA
-  // 9,99 €  → 50 contactos
-  // 19,99 € → 80 contactos
-  // Entrega única: Gmail + WhatsApp + Web
+  // Pago único: 19,99 €
+  // Entrega de ofertas disponibles
   // ============================================
 
-  const isWeekly = profile?.plan === "weekly";
-  const isMonthly = profile?.plan === "monthly";
+  const isPaidMaltaPlan = profile?.paid === true || profile?.plan === "single_payment_19_99" || profile?.plan === "monthly";
 
-  const applicationsTotal =
-    profile?.applications_limit ??
-    (isWeekly ? 50 : isMonthly ? 80 : 0);
+  const applicationsTotal = profile?.applications_limit ?? 0;
 
   const applicationsSent = profile?.applications_sent ?? 0;
 
@@ -315,11 +311,7 @@ export default function PanelMalta() {
         )
       : 0;
 
-  const planName = isWeekly
-    ? "9,99 € · 50 contactos"
-    : isMonthly
-      ? "19,99 € · 80 contactos"
-      : "Sin plan";
+  const planName = isPaidMaltaPlan ? "19,99 € · Pago único" : "Sin plan";
 
   // El nuevo servicio no depende de una cuenta atrás de 7/30 días.
   // El estado se basa en el pago + plan contratado.
@@ -330,7 +322,7 @@ export default function PanelMalta() {
       profile.paid === true ||
       (profile as any).payment_status === "paid";
 
-    if (!paid || (!isWeekly && !isMonthly)) {
+    if (!paid || !isPaidMaltaPlan) {
       return "none";
     }
 
