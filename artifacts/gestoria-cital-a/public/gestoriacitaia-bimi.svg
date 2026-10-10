@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" version="1.2" baseProfile="tiny-ps" viewBox="0 0 1024 1024">
+  <title>GestoriaCitaIA</title>
+  <rect width="1024" height="1024" fill="#050c1c"/>
+  <path fill="#43ff76" fill-rule="evenodd" d="M512 220a292 292 0 1 0 178 523l-1-124a202 202 0 1 1-97-292l63-49A292 292 0 0 0 512 220z"/>
+  <path fill="#00c994" d="M540 470h207a34 34 0 0 1 34 34v223a34 34 0 0 1-34 34h-24a34 34 0 0 1-34-34V561H540a45 45 0 0 1 0-91z"/>
+  <path fill="#58ffc0" d="M700 220l30 80 81 30-81 30-30 81-30-81-81-30 81-30z"/>
+</svg>
