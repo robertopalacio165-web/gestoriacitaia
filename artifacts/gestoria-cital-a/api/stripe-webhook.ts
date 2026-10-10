@@ -620,10 +620,10 @@ Questions?<br>
           const description = offer.description || "";
           const safeUrl = String(url);
           const safeWebsite = String(companyWebsite);
-          const link = /^https?:\\/\\//i.test(safeUrl)
+          const link = /^https?:\/\//i.test(safeUrl)
             ? `<a href="${escapeHtml(safeUrl)}" style="display:inline-block;background:#071426;color:#E5AD42;text-decoration:none;font-weight:bold;padding:10px 15px;border-radius:7px;margin:4px 6px 4px 0">VIEW JOB / VER OFERTA ↗</a>`
             : "";
-          const websiteLink = /^https?:\\/\\//i.test(safeWebsite)
+          const websiteLink = /^https?:\/\//i.test(safeWebsite)
             ? `<a href="${escapeHtml(safeWebsite)}" style="display:inline-block;background:#edf5ff;color:#075985;text-decoration:none;font-weight:bold;padding:10px 15px;border-radius:7px;margin:4px 6px 4px 0">COMPANY WEBSITE ↗</a>`
             : "";
           const emailLine = contact
