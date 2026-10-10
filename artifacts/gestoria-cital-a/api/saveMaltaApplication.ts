@@ -6,7 +6,7 @@ const supabase = createClient(
 );
 
 export interface MaltaApplicationData {
-  plan: "weekly" | "monthly";
+  plan: "single_payment_19_99" | "monthly" | "weekly";
   fullName: string;
   whatsapp: string;
   email: string;
