@@ -681,8 +681,7 @@ ${link ? `<span style="display:inline-block;margin:3px 0">${link}</span>` : ""}
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:24px;background:#071426;border-radius:10px 10px 0 0"><tr><td style="padding:18px;color:#fff">
 <h2 style="margin:0;font-size:22px">🇲🇹 All Malta Job Offers</h2><p style="margin:5px 0 0;color:#E5AD42;font-weight:bold">${allOffers.length} offers</p>
 </td></tr></table>
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:separate;border-spacing:0;width:100%;font-size:13px">
-<thead><tr style="background:#f4f7fa;color:#334155"><th style="padding:12px 8px;text-align:center;border-bottom:2px solid #dba53b;width:35px">#</th><th style="padding:12px 8px;text-align:left;border-bottom:2px solid #dba53b">Job offer / Company</th><th style="padding:12px 8px;text-align:left;border-bottom:2px solid #dba53b">City</th><th style="padding:12px 8px;text-align:left;border-bottom:2px solid #dba53b">Email</th><th style="padding:12px 8px;text-align:center;border-bottom:2px solid #dba53b">Web</th></tr></thead>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:separate;border-spacing:0;font-size:13px">
 <tbody>${offerRows}</tbody></table>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:20px;background:#f4f6f9;border-radius:8px"><tr><td style="padding:18px;text-align:center;color:#596579"><b>GestoriaCitaIA · Malta Jobs</b><br><a href="https://gestoriacitaia.com" style="color:#005ea8;text-decoration:none">gestoriacitaia.com</a></td></tr></table>
 </td></tr></table></td></tr></table></body></html>`,
