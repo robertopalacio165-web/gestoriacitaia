@@ -949,7 +949,7 @@ hero_btn_study_malta: "قرا فمالطا 2027",
 
     plan_malta_monthly_title: "خدمة العمل فمالطا",
     plan_malta_monthly_subtitle: "دفعة واحدة",
-    plan_malta_monthly_price: "29,99€",
+    plan_malta_monthly_price: "19,99€",
     plan_malta_monthly_period: "دفعة واحدة",
     plan_malta_monthly_badge: "⭐ الأكثر طلباً",
     plan_malta_monthly_button: "ابدأ الآن",
