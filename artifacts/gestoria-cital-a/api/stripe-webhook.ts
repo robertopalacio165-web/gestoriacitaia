@@ -337,7 +337,7 @@ worker_finished: false,
           },
         });
 
-       const planName = "Pago único de 19,99 €";
+       const planName = "One-time payment / أداء مرة واحدة — €19.99";
 
         await transporter.sendMail({
           from: `"GestoriaCitaIA" <${process.env.FROM_EMAIL}>`,
@@ -402,7 +402,7 @@ worker_finished: false,
 </p>
 
 <p style="font-size:18px;line-height:32px;">
-🌟 كنتمناو ليك التوفيق والنجاح فالبحث على خدمة فمالطا.
+🌟 كنتمناو ليك كامل التوفيق والنجاح فالبحث على خدمة فمالطا.
 </p>
 
 <p style="font-size:18px;line-height:32px;">
@@ -649,30 +649,37 @@ ${description ? `<p>${escapeHtml(description)}</p>` : ""}
           to: email,
           subject: `🇲🇹 جميع عروض العمل في مالطا — All Malta Job Offers (${allOffers.length})`,
           html: `<!doctype html>
-<html><body style="font-family:Arial,sans-serif;color:#172033;line-height:1.65;margin:0;padding:18px">
-<div style="max-width:900px;margin:auto">
-<header style="background:#071426;color:#fff;padding:24px;border-radius:12px;text-align:center">
-<h1>🇲🇹 GestoriaCitaIA — Malta Jobs</h1>
-<p>${allOffers.length} عروض عمل متاحة / available job offers</p>
-</header>
-<section dir="rtl" style="text-align:right;padding:20px 4px">
-<h2>السلام عليكم ${safeName} 🇲🇦</h2>
-<p>ها هما جميع عروض العمل اللي كاينين دابا فقاعدة البيانات ديالنا. جمعنا ليك العروض المتاحة كاملة، ماشي غير 50. قلب على العرض اللي مناسب ليك وتاصل بالشركة مباشرة من المعلومات والرابط المنشورين.</p>
-<p><b>مهم:</b> المعلومات جاية من العروض المسجلة فقاعدة البيانات. تأكد من الشركة ومن أن العرض مازال مفتوح قبل ما تصيفط الوثائق ديالك، وما تخلص حتى شي وسيط باش يعطيك عقد عمل.</p>
-</section>
-<hr>
-<section style="padding:8px 4px">
-<h2>🇬🇧 Hello ${safeName},</h2>
-<p>Here are all job offers currently stored in our database—not just 50. Review each listing and contact the employer using the published details or source link.</p>
-<p><b>Important:</b> Please verify that each vacancy is still open and confirm the employer before sharing documents. Never pay an intermediary for a job contract.</p>
-</section>
-<table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;font-size:14px">
-<thead><tr style="background:#eef3f8"><th style="padding:12px;text-align:left">#</th><th style="padding:12px;text-align:left">Offer details / تفاصيل العرض</th></tr></thead>
+<html><body style="margin:0;padding:24px 10px;background:#f4f6f9;font-family:Arial,sans-serif;color:#172033;line-height:1.65">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f6f9">
+<tr><td align="center">
+<table role="presentation" width="850" cellpadding="0" cellspacing="0" style="width:100%;max-width:850px;background:#fff;border-radius:12px;overflow:hidden;border:1px solid #dbe4ef">
+<tr><td style="background:#0B57D0;padding:28px 24px;text-align:center;color:#fff">
+<h1 style="margin:0;font-size:27px">GestoriaCitaIA</h1>
+<p style="margin:8px 0 0;font-size:18px">🇲🇹 Malta Jobs · ${allOffers.length} available offers</p>
+</td></tr>
+<tr><td style="padding:26px 24px">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#EAF3FF;border-radius:8px;border-left:5px solid #0B57D0">
+<tr><td dir="rtl" style="direction:rtl;text-align:right;padding:18px">
+<h2 style="margin:0 0 10px;font-size:20px">السلام عليكم ${safeName} 🇲🇦</h2>
+<p style="margin:0 0 10px">ها هما جميع عروض العمل المتاحة فقاعدة البيانات ديالنا هاد الشهر، ماشي غير 50. اختار العرض اللي مناسب ليك وتاصل بالشركة مباشرة وصيفط CV ديالك حسب طريقة التقديم.</p>
+<p style="margin:0"><b>مهم:</b> تأكد واش العرض مازال مفتوح ومن مصداقية الشركة قبل ما تصيفط الوثائق. ما تخلص حتى شي وسيط مقابل عقد عمل.</p>
+</td></tr></table>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:18px;background:#EAF3FF;border-radius:8px;border-left:5px solid #0B57D0">
+<tr><td style="padding:18px;text-align:left">
+<h2 style="margin:0 0 10px;font-size:20px">🇬🇧 Hello ${safeName},</h2>
+<p style="margin:0 0 10px">Here are all job offers available in our database this month—not just 50. Choose suitable vacancies, contact employers directly, and send your CV using the application instructions.</p>
+<p style="margin:0"><b>Important:</b> Verify that each vacancy is still open and confirm the employer before sharing documents. Never pay an intermediary for a job contract.</p>
+</td></tr></table>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:22px;border-collapse:separate;border-spacing:0;font-size:14px">
+<thead><tr style="background:#071426;color:#fff"><th style="padding:13px;width:44px;text-align:center;border:1px solid #071426">#</th><th style="padding:13px;text-align:left;border:1px solid #071426">Job offer details / تفاصيل العرض</th></tr></thead>
 <tbody>${offerRows}</tbody>
 </table>
-<footer style="margin-top:24px;padding:18px;background:#f4f6f9;border-radius:8px;text-align:center">
-GestoriaCitaIA · Malta Jobs<br><a href="https://gestoriacitaia.com">gestoriacitaia.com</a>
-</footer></div></body></html>`,
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:24px;background:#f4f6f9;border-radius:8px">
+<tr><td style="padding:18px;text-align:center;color:#596579">
+<b>GestoriaCitaIA · Malta Jobs</b><br><a href="https://gestoriacitaia.com" style="color:#0B57D0">gestoriacitaia.com</a>
+</td></tr></table>
+</td></tr></table>
+</td></tr></table></body></html>`,
         });
 
         const { error: markSentError } = await supabase
