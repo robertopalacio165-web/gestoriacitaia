@@ -406,7 +406,7 @@ worker_finished: false,
 </p>
 
 <p style="font-size:18px;line-height:32px;">
-من اليوم فريقنا غادي يبدا يخدم على الملف ديالك ويرسل الترشيحات يومياً حتى تلقى أفضل فرصة عمل.
+من بعد الدفع غادي توصلك رسالة أخرى فيها جميع عروض العمل المتاحة فقاعدة البيانات، ماشي غير 50 عرض.
 </p>
 
 <p style="font-size:18px;">
@@ -423,11 +423,11 @@ worker_finished: false,
 
 <br><br>
 
-✅ غادي نرسلو الترشيح ديالك حتى لـ <b>10 شركات كل نهار</b> حسب الباقة ديالك.
+✅ غادي توصلك جميع عروض العمل المتاحة فمالطا فإيميل واحد، مع المعلومات وروابط التقديم المتوفرة.
 
 <br><br>
 
-✅ وإنت مرتاح، فريقنا هو اللي غادي يخدم عليك كل يوم.
+✅ تقدر تراجع العروض وتتاصل بالشركات مباشرة من المعلومات المنشورة.
 
 </p>
 
@@ -469,7 +469,7 @@ Thank you for choosing
 </p>
 
 <p style="font-size:18px;line-height:30px;">
-From today our recruitment team starts working on your profile and will submit your application every day until you receive the best job opportunity in Malta.
+After payment, you will receive a separate email containing all job offers currently stored in our database—not just 50.
 </p>
 
 <p style="font-size:18px;">
@@ -486,11 +486,11 @@ From today our recruitment team starts working on your profile and will submit y
 
 <br><br>
 
-✅ We submit your application to <b>up to 10 companies every day</b> depending on your plan.
+✅ You will receive all Malta job offers currently available in our database in one email, including the details and application links provided.
 
 <br><br>
 
-✅ While you enjoy your holidays, our team works every day to find the best employer for you.
+✅ Review the listings and contact employers directly using the published information.
 
 </p>
 
