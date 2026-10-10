@@ -2021,9 +2021,8 @@ export default function TrabajoMalta() {
       console.log(JSON.stringify(payload, null, 2));
       console.log("==============================");
 
-      const endpoint = isAdmin
-        ? "/api/dev-create-application"
-        : "/api/create-checkout-malta";
+      // Malta: todos los usuarios, incluido el administrador, deben pasar por Stripe.
+      const endpoint = "/api/create-checkout-malta";
 
       const res = await fetch(endpoint, {
         method: "POST",
