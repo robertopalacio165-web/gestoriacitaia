@@ -117,7 +117,7 @@ if (metadata.service !== "malta") {
     // ============================================
     // 6. PLAN
     // ============================================
-    const plan = metadata.plan || "monthly";
+const plan = "single_payment_19_99";
 
     console.log("📋 DATOS PROCESADOS:");
     console.log("  - fullName:", fullName);
@@ -327,7 +327,7 @@ worker_finished: false,
           },
         });
 
-        const planName = plan === "weekly" ? "Weekly Plan (7 days)" : "Monthly Plan (30 days)";
+       const planName = "Pago único de 19,99 €";
 
         await transporter.sendMail({
           from: `"GestoriaCitaIA" <${process.env.FROM_EMAIL}>`,
