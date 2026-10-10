@@ -78,7 +78,7 @@ export default async function handler(
         carnet_conducir: carnetConducir || "",
         photo_url: photoUrl || "",
         pdf_url: pdfUrl || "",
-        plan: plan || "monthly",
+        plan: "single_payment_19_99",
         paid: true,
         worker_status: "pending",
         created_at: new Date().toISOString(),
@@ -163,10 +163,7 @@ export default async function handler(
       }
 
       // 3️⃣ Convertir plan a nombre amigable
-      const planName =
-        plan === "weekly"
-          ? "Weekly Plan (7 days)"
-          : "Monthly Plan (30 days)";
+      const planName = "Pago único de 19,99 €";
 
       // 4️⃣ Configurar transporte SMTP de Brevo
       const transporter = nodemailer.createTransport({
