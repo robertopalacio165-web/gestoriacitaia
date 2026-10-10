@@ -616,7 +616,7 @@ Questions?<br>
           const salary = offer.salary || "";
           const contact = offer.apply_email || "";
           const description = offer.description || "";
-          const link = /^https?:\\/\\//i.test(String(url))
+          const link = (String(url).startsWith("https://") || String(url).startsWith("http://"))
             ? `<a href="${escapeHtml(url)}" style="display:inline-block;background:#eef5ff;color:#005ea8;text-decoration:none;font-weight:bold;padding:7px 12px;border-radius:6px">Web</a>`
             : "";
           return `<tr>
