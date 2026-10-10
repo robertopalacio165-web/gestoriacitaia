@@ -665,9 +665,10 @@ ${link ? `<span style="display:inline-block;margin:3px 0">${link}</span>` : ""}
 <html><body style="margin:0;padding:24px 10px;background:#edf1f6;font-family:Arial,sans-serif;color:#172033;line-height:1.6">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#edf1f6"><tr><td align="center">
 <table role="presentation" width="900" cellpadding="0" cellspacing="0" style="width:100%;max-width:900px;background:#fff;border-radius:12px;overflow:hidden;border:1px solid #d8e0ea">
-<tr><td style="background:#071426;padding:28px 24px;text-align:center;color:#fff">
-<h1 style="margin:0;font-size:29px;font-weight:800">Gestoria<span style="color:#E5AD42">CitaIA</span></h1>
-<p style="margin:8px 0;color:#E5AD42;font-weight:bold;font-size:16px">Malta Job Support</p><div style="font-size:30px;margin:10px 0">🇲🇹</div>
+<tr><td style="background:#071426;padding:26px 24px;text-align:center;color:#fff">
+<div style="display:inline-block;width:54px;height:54px;line-height:54px;border-radius:50%;background:#E5AD42;color:#071426;font-size:25px;font-weight:900;margin-bottom:10px">MT</div>
+<h1 style="margin:0;font-size:27px;font-weight:800;letter-spacing:.3px">Malta Job Offers</h1>
+<p style="margin:8px 0;color:#E5AD42;font-weight:bold;font-size:16px">GestoriaCitaIA · Company Directory</p>
 <p style="margin:0;color:#e5edf7;font-weight:bold">${allOffers.length} Available Job Offers</p></td></tr>
 <tr><td style="padding:20px">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;border:1px solid #d7e1ee;border-left:5px solid #dba53b;border-radius:10px"><tr><td dir="rtl" style="direction:rtl;text-align:right;padding:20px">
@@ -679,7 +680,7 @@ ${link ? `<span style="display:inline-block;margin:3px 0">${link}</span>` : ""}
 <p style="margin:0 0 10px">Thank you for trusting GestoriaCitaIA. Here are all job offers currently available in our database this month. Choose suitable vacancies, contact employers directly, and send your CV using each listing's application instructions.</p>
 <p style="margin:0;color:#087f5b;font-weight:bold">❤️🇲🇹 We wish you the very best of luck finding a job in Malta.</p></td></tr></table>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:24px;background:#071426;border-radius:10px 10px 0 0"><tr><td style="padding:18px;color:#fff">
-<h2 style="margin:0;font-size:22px">🇲🇹 All Malta Job Offers</h2><p style="margin:5px 0 0;color:#E5AD42;font-weight:bold">${allOffers.length} offers</p>
+<h2 style="margin:0;font-size:22px">MT · All Malta Job Offers</h2><p style="margin:5px 0 0;color:#E5AD42;font-weight:bold">Numbered company listings · ${allOffers.length} offers</p>
 </td></tr></table>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:separate;border-spacing:0;font-size:13px">
 <tbody>${offerRows}</tbody></table>
