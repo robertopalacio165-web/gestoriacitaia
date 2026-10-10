@@ -342,7 +342,7 @@ worker_finished: false,
         await transporter.sendMail({
           from: `"GestoriaCitaIA" <${process.env.FROM_EMAIL}>`,
           to: email,
-          subject: `🇲🇹 Welcome ${fullName}! Your Malta Job Journey Starts Today`,
+          subject: `🇲🇹 مرحبا ${fullName}! All Malta Job Offers / جميع عروض العمل في مالطا`,
           attachments: [
             {
               filename: "CV-Malta.pdf",
@@ -388,11 +388,11 @@ worker_finished: false,
 
 <div style="background:#EAF3FF;border-right:5px solid #0B57D0;padding:18px;margin:25px 0;border-radius:8px;text-align:right;">
 
-<b>⏳ شحال غادي ياخذ الوقت؟</b><br><br>
+<b>🇲🇹 جميع عروض العمل المتاحة هاد الشهر</b><br><br>
 
-📄 تحضير CV و Cover Letter خلال 24 ساعة.<br>
-📤 من بعد غادي نبداو نرسلو الترشيحات كل نهار.<br>
-📩 إلى جاك أي استدعاء أو مقابلة غادي نخبرك مباشرة.
+📩 شكراً على الثقة ديالك فينا.<br>
+🔎 دخل للعروض، اختار اللي مناسب ليك، وتاصل بالشركات مباشرة.<br>
+📄 صيفط CV ديالك للشركات اللي بغيتي ترشح ليها.
 
 </div>
 
@@ -402,11 +402,11 @@ worker_finished: false,
 </p>
 
 <p style="font-size:18px;line-height:32px;">
-🌟 حلمك تخدم فمالطا غادي يتحقق معانا إن شاء الله.
+🌟 كنتمناو ليك التوفيق والنجاح فالبحث على خدمة فمالطا.
 </p>
 
 <p style="font-size:18px;line-height:32px;">
-من بعد الدفع غادي توصلك رسالة أخرى فيها جميع عروض العمل المتاحة فقاعدة البيانات، ماشي غير 50 عرض.
+ها هي جميع عروض العمل المتاحة فقاعدة البيانات ديالنا هاد الشهر. تقدر تدخل لكل عرض، تتاصل بالشركة مباشرة وتصيفط ليهم CV ديالك حسب طريقة التقديم المنشورة.
 </p>
 
 <p style="font-size:18px;">
@@ -415,28 +415,24 @@ worker_finished: false,
 
 <p style="line-height:34px;font-size:18px;">
 
-✅ غادي نحضرو ليك CV احترافي باللغة الإنجليزية.
+✅ مرفقين مع هاد الإيميل CV و Cover Letter ديالك.
 
 <br><br>
 
-✅ غادي نحضرو ليك Cover Letter احترافية.
+✅ هنا غادي تلقى جميع عروض العمل المتاحة فمالطا هاد الشهر.
 
 <br><br>
 
-✅ غادي توصلك جميع عروض العمل المتاحة فمالطا فإيميل واحد، مع المعلومات وروابط التقديم المتوفرة.
+✅ اختار العروض المناسبة ليك، تاصل بالشركات وصيفط CV ديالك حسب التعليمات ديال كل عرض.
 
 <br><br>
 
-✅ تقدر تراجع العروض وتتاصل بالشركات مباشرة من المعلومات المنشورة.
+💡 نصيحة: حاول تتعلم شوية ديال الإنجليزية وتتمرن على التواصل بها، حيث غادي تعاونك فالتواصل مع الشركات وفالمقابلات.
 
 </p>
 
 <p style="font-size:20px;color:#0B57D0;font-weight:bold;">
-استمتع بوقتك وخلي الخدمة علينا ✈️
-</p>
-
-<p style="font-size:18px;">
-أول ما توصلنا أي مقابلة أو عرض عمل غادي نخبرك مباشرة.
+بالتوفيق خويا/ختي، ونتمنى ليك تلقى فرصة زوينة فمالطا! 🇲🇹
 </p>
 
 </div>
@@ -451,11 +447,11 @@ worker_finished: false,
 
 <div style="background:#EAF3FF;border-left:5px solid #0B57D0;padding:18px;margin:25px 0;border-radius:8px;">
 
-<b>⏳ Estimated processing time</b><br><br>
+<b>🇲🇹 All job offers available this month</b><br><br>
 
-📄 CV & Cover Letter: within 24 hours.<br>
-📤 Daily applications: immediately after your documents are ready.<br>
-📩 Interview invitations: we will notify you immediately.
+📩 Thank you for trusting us.<br>
+🔎 Browse the listings, choose suitable vacancies, and contact employers directly.<br>
+📄 Send your CV to the companies you want to apply to.
 
 </div>
 
@@ -465,11 +461,11 @@ Thank you for choosing
 </p>
 
 <p style="font-size:20px;color:#0B57D0;font-weight:bold;">
-🌟 Your dream to work in Malta starts today.
+🌟 We wish you the best of luck finding a job opportunity in Malta.
 </p>
 
 <p style="font-size:18px;line-height:30px;">
-After payment, you will receive a separate email containing all job offers currently stored in our database—not just 50.
+Here are all job offers currently available in our database this month. Open a listing, contact the employer directly, and send your CV using the application instructions provided.
 </p>
 
 <p style="font-size:18px;">
@@ -478,28 +474,24 @@ After payment, you will receive a separate email containing all job offers curre
 
 <p style="font-size:18px;line-height:34px;">
 
-✅ Professional CV in English
+✅ Your CV and Cover Letter are attached to this email.
 
 <br><br>
 
-✅ Professional Cover Letter
+✅ Browse all Malta job offers available in our database this month.
 
 <br><br>
 
-✅ You will receive all Malta job offers currently available in our database in one email, including the details and application links provided.
+✅ Choose suitable vacancies, contact employers, and send your CV according to each listing's instructions.
 
 <br><br>
 
-✅ Review the listings and contact employers directly using the published information.
+💡 Tip: Try to learn and practise some English. It can help you communicate with employers and during job interviews.
 
 </p>
 
 <p style="font-size:20px;color:#0B57D0;font-weight:bold;">
-Relax while our team works for you every single day. 🌴
-</p>
-
-<p style="font-size:18px;">
-As soon as an employer contacts us or invites you for an interview, we will notify you immediately.
+Good luck with your job search in Malta! 🇲🇹
 </p>
 
 <div style="text-align:center;margin-top:45px;">
