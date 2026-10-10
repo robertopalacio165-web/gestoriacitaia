@@ -15,6 +15,16 @@ const supabase = createClient(
 // ✅ URL del webhook de Make para notificaciones de nuevo trabajo
 const MAKE_WEBHOOK_URL = process.env.MAKE_WEBHOOK_URL || "https://hook.eu1.make.com/5ugo16vgnvx2rhhu3mwjfag553d1g0ij";
 
+
+function escapeHtml(value: unknown): string {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 export const config = {
   api: {
     bodyParser: false,
@@ -180,7 +190,7 @@ const plan = "single_payment_19_99";
         pdf_url: pdfUrl || existing.pdf_url,
         plan: plan,
         paid: true,
-        worker_ready: true,
+        worker_ready: false,
 worker_started: false,
 worker_finished: false,
         updated_at: new Date().toISOString(),
@@ -248,7 +258,7 @@ worker_finished: false,
         
           paid: true,
 worker_status: "ready",
-worker_ready: true,
+worker_ready: false,
 worker_started: false,
 worker_finished: false,
           created_at: new Date().toISOString(),
@@ -564,6 +574,145 @@ Questions?<br>
       }
     } else {
       console.log(`⏳ Aplicación ${applicationId} ya existe, no se procesa`);
+    }
+
+    // ============================================
+    // 🇲🇹 ENVIAR TODAS LAS OFERTAS DESDE VERCEL/GITHUB
+    // Sin depender del worker de contactos de Ubuntu.
+    // Idempotencia por sesión Stripe para evitar reenvíos.
+    // ============================================
+    try {
+      const { data: deliveryState, error: deliveryStateError } = await supabase
+        .from("malta_applications")
+        .select("offers_email_sent_session_id")
+        .eq("id", applicationId)
+        .single();
+
+      if (deliveryStateError) throw deliveryStateError;
+
+      if (deliveryState?.offers_email_sent_session_id !== session.id) {
+        const allOffers: any[] = [];
+        const pageSize = 500;
+        let from = 0;
+
+        while (true) {
+          const { data: page, error: offersError } = await supabase
+            .from("malta_job_offers")
+            .select("id,company,title,location,url,source,salary,job_type,description,company_name,job_title,job_url,apply_email,published_at")
+            .order("id", { ascending: true })
+            .range(from, from + pageSize - 1);
+
+          if (offersError) throw offersError;
+          if (!page || page.length === 0) break;
+
+          allOffers.push(...page);
+          console.log(`📥 Ofertas Malta cargadas desde Supabase: ${allOffers.length}`);
+
+          from += page.length;
+          if (page.length < pageSize) break;
+        }
+
+        if (allOffers.length === 0) {
+          throw new Error("malta_job_offers está vacía; no se envió el email.");
+        }
+
+        const offerRows = allOffers.map((offer, index) => {
+          const title = offer.job_title || offer.title || offer.job_type || "Job offer";
+          const company = offer.company_name || offer.company || "Company not specified";
+          const location = offer.location || "Malta";
+          const url = offer.job_url || offer.url || "";
+          const salary = offer.salary || "";
+          const contact = offer.apply_email || "";
+          const description = offer.description || "";
+          const link = /^https?:\\/\\//i.test(String(url))
+            ? `<a href="${escapeHtml(url)}">شوف العرض / View offer</a>`
+            : "";
+          return `<tr>
+<td style="padding:12px;border-bottom:1px solid #ddd;vertical-align:top">${index + 1}</td>
+<td style="padding:12px;border-bottom:1px solid #ddd;vertical-align:top">
+<strong>${escapeHtml(title)}</strong><br>
+<b>الشركة / Company:</b> ${escapeHtml(company)}<br>
+<b>المدينة / Location:</b> ${escapeHtml(location)}<br>
+${salary ? `<b>الأجر / Salary:</b> ${escapeHtml(salary)}<br>` : ""}
+${contact ? `<b>الإيميل / Contact:</b> ${escapeHtml(contact)}<br>` : ""}
+${link ? link + "<br>" : ""}
+${description ? `<p>${escapeHtml(description)}</p>` : ""}
+</td></tr>`;
+        }).join("");
+
+        const transporter = nodemailer.createTransport({
+          host: process.env.SMTP_HOST,
+          port: 587,
+          secure: false,
+          requireTLS: true,
+          auth: {
+            user: process.env.SMTP_USER,
+            pass: process.env.SMTP_PASS,
+          },
+        });
+
+        const safeName = escapeHtml(fullName || "صاحبي / Hello");
+        const offersMail = await transporter.sendMail({
+          from: `"GestoriaCitaIA" <${process.env.FROM_EMAIL}>`,
+          to: email,
+          subject: `🇲🇹 جميع عروض العمل في مالطا — All Malta Job Offers (${allOffers.length})`,
+          html: `<!doctype html>
+<html><body style="font-family:Arial,sans-serif;color:#172033;line-height:1.65;margin:0;padding:18px">
+<div style="max-width:900px;margin:auto">
+<header style="background:#071426;color:#fff;padding:24px;border-radius:12px;text-align:center">
+<h1>🇲🇹 GestoriaCitaIA — Malta Jobs</h1>
+<p>${allOffers.length} عروض عمل متاحة / available job offers</p>
+</header>
+<section dir="rtl" style="text-align:right;padding:20px 4px">
+<h2>السلام عليكم ${safeName} 🇲🇦</h2>
+<p>ها هما جميع عروض العمل اللي كاينين دابا فقاعدة البيانات ديالنا. جمعنا ليك العروض المتاحة كاملة، ماشي غير 50. قلب على العرض اللي مناسب ليك وتاصل بالشركة مباشرة من المعلومات والرابط المنشورين.</p>
+<p><b>مهم:</b> المعلومات جاية من العروض المسجلة فقاعدة البيانات. تأكد من الشركة ومن أن العرض مازال مفتوح قبل ما تصيفط الوثائق ديالك، وما تخلص حتى شي وسيط باش يعطيك عقد عمل.</p>
+</section>
+<hr>
+<section style="padding:8px 4px">
+<h2>🇬🇧 Hello ${safeName},</h2>
+<p>Here are all job offers currently stored in our database—not just 50. Review each listing and contact the employer using the published details or source link.</p>
+<p><b>Important:</b> Please verify that each vacancy is still open and confirm the employer before sharing documents. Never pay an intermediary for a job contract.</p>
+</section>
+<table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;font-size:14px">
+<thead><tr style="background:#eef3f8"><th style="padding:12px;text-align:left">#</th><th style="padding:12px;text-align:left">Offer details / تفاصيل العرض</th></tr></thead>
+<tbody>${offerRows}</tbody>
+</table>
+<footer style="margin-top:24px;padding:18px;background:#f4f6f9;border-radius:8px;text-align:center">
+GestoriaCitaIA · Malta Jobs<br><a href="https://gestoriacitaia.com">gestoriacitaia.com</a>
+</footer></div></body></html>`,
+        });
+
+        const { error: markSentError } = await supabase
+          .from("malta_applications")
+          .update({
+            offers_email_sent_session_id: session.id,
+            offers_email_sent_at: new Date().toISOString(),
+            worker_ready: false,
+            worker_started: false,
+            worker_finished: true,
+            worker_status: "offers_email_sent",
+            last_worker_run: new Date().toISOString(),
+            last_error: null,
+          })
+          .eq("id", applicationId);
+
+        if (markSentError) throw markSentError;
+        console.log(`✅ Email de todas las ofertas enviado a ${email}; ofertas=${allOffers.length}; messageId=${offersMail.messageId}`);
+      } else {
+        console.log(`⏭️ Email de ofertas ya enviado para esta sesión Stripe: ${session.id}`);
+      }
+    } catch (offersEmailError: any) {
+      console.error("❌ Error enviando todas las ofertas Malta:", offersEmailError?.message || offersEmailError);
+      await supabase
+        .from("malta_applications")
+        .update({
+          worker_ready: false,
+          worker_status: "offers_email_error",
+          last_error: String(offersEmailError?.message || offersEmailError).slice(0, 1000),
+        })
+        .eq("id", applicationId);
+      return res.status(500).json({ error: "Payment saved, but Malta offers email failed. Stripe may retry this webhook." });
     }
 
     // ============================================
