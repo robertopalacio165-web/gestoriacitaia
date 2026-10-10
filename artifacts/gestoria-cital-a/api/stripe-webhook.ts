@@ -620,15 +620,28 @@ Questions?<br>
             ? `<a href="${escapeHtml(url)}" style="display:inline-block;background:#eef5ff;color:#005ea8;text-decoration:none;font-weight:bold;padding:7px 12px;border-radius:6px">Web</a>`
             : "";
           return `<tr>
-<td style="padding:13px 9px;border-bottom:1px solid #dbe2ea;text-align:center;color:#64748b;font-weight:bold;vertical-align:top">${index + 1}</td>
-<td style="padding:13px 10px;border-bottom:1px solid #dbe2ea;vertical-align:top">
-<strong style="color:#071426">${escapeHtml(title)}</strong><br><span style="color:#64748b;font-size:12px">${escapeHtml(company)}</span>
-${salary ? `<br><b>Salary:</b> ${escapeHtml(salary)}` : ""}
-${description ? `<p style="margin:8px 0 0;color:#334155">${escapeHtml(description)}</p>` : ""}
+<td style="padding:0 0 12px;border:0" colspan="5">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="width:100%;border-collapse:separate;border-spacing:0;background:#ffffff;border:1px solid #d5deea;border-radius:10px;overflow:hidden">
+<tr>
+<td width="44" style="padding:14px 8px;background:#f2f6fb;border-right:1px solid #d5deea;border-bottom:1px solid #d5deea;text-align:center;vertical-align:top">
+<span style="display:inline-block;background:#071426;color:#E5AD42;font-weight:bold;font-size:14px;line-height:28px;width:28px;height:28px;border-radius:50%;">${index + 1}</span>
 </td>
-<td style="padding:13px 9px;border-bottom:1px solid #dbe2ea;vertical-align:top;color:#64748b">${escapeHtml(location)}</td>
-<td style="padding:13px 9px;border-bottom:1px solid #dbe2ea;vertical-align:top;word-break:break-word">${contact ? `<a href="mailto:${escapeHtml(contact)}" style="color:#005ea8;font-weight:bold">${escapeHtml(contact)}</a>` : "—"}</td>
-<td style="padding:13px 9px;border-bottom:1px solid #dbe2ea;text-align:center;vertical-align:top">${link || "—"}</td>
+<td style="padding:14px 12px;border-bottom:1px solid #d5deea;vertical-align:top">
+<strong style="color:#071426;font-size:15px">${escapeHtml(title)}</strong><br>
+<span style="color:#52647d;font-size:12px">${escapeHtml(company)}</span>
+${salary ? `<br><span style="display:inline-block;margin-top:7px;padding:4px 8px;background:#fff7e6;border:1px solid #f2d18b;border-radius:5px;color:#76500a;font-weight:bold">Salary: ${escapeHtml(salary)}</span>` : ""}
+${description ? `<p style="margin:9px 0 0;color:#334155;line-height:1.55">${escapeHtml(description)}</p>` : ""}
+</td>
+</tr>
+<tr>
+<td colspan="2" style="padding:10px 12px;background:#f8fafc;border-top:0;vertical-align:top">
+<span style="display:inline-block;margin:3px 12px 3px 0;color:#475569"><b>City:</b> ${escapeHtml(location)}</span>
+<span style="display:inline-block;margin:3px 12px 3px 0;color:#475569"><b>Email:</b> ${contact ? `<a href="mailto:${escapeHtml(contact)}" style="color:#005ea8;font-weight:bold;word-break:break-word">${escapeHtml(contact)}</a>` : "Not listed"}</span>
+${link ? `<span style="display:inline-block;margin:3px 0">${link}</span>` : ""}
+</td>
+</tr>
+</table>
+</td>
 </tr>`;
         }).join("");
 
@@ -668,7 +681,7 @@ ${description ? `<p style="margin:8px 0 0;color:#334155">${escapeHtml(descriptio
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:24px;background:#071426;border-radius:10px 10px 0 0"><tr><td style="padding:18px;color:#fff">
 <h2 style="margin:0;font-size:22px">🇲🇹 All Malta Job Offers</h2><p style="margin:5px 0 0;color:#E5AD42;font-weight:bold">${allOffers.length} offers</p>
 </td></tr></table>
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;font-size:13px">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:separate;border-spacing:0;width:100%;font-size:13px">
 <thead><tr style="background:#f4f7fa;color:#334155"><th style="padding:12px 8px;text-align:center;border-bottom:2px solid #dba53b;width:35px">#</th><th style="padding:12px 8px;text-align:left;border-bottom:2px solid #dba53b">Job offer / Company</th><th style="padding:12px 8px;text-align:left;border-bottom:2px solid #dba53b">City</th><th style="padding:12px 8px;text-align:left;border-bottom:2px solid #dba53b">Email</th><th style="padding:12px 8px;text-align:center;border-bottom:2px solid #dba53b">Web</th></tr></thead>
 <tbody>${offerRows}</tbody></table>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:20px;background:#f4f6f9;border-radius:8px"><tr><td style="padding:18px;text-align:center;color:#596579"><b>GestoriaCitaIA · Malta Jobs</b><br><a href="https://gestoriacitaia.com" style="color:#005ea8;text-decoration:none">gestoriacitaia.com</a></td></tr></table>
