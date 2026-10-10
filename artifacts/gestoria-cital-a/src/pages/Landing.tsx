@@ -31,24 +31,6 @@ type PlanItem = {
 function getPlans(t: (k: string) => string): PlanItem[] {
   return [
     {
-      id: "weekly",
-      price: "9,99€",
-      period: "7 días",
-      color: "from-blue-900/40 to-blue-950/20",
-      border: "border-blue-400/35",
-      btnClass:
-        "bg-blue-500 hover:bg-blue-400 text-white shadow-lg shadow-blue-500/30",
-      badge: null,
-      free: false,
-      shadow: true,
-      features: [
-        t("plan_malta_weekly_f1"),
-        t("plan_malta_weekly_f2"),
-        t("plan_malta_weekly_f3"),
-        t("plan_malta_weekly_f4"),
-      ],
-    },
-    {
       id: "monthly",
       price: "19,99€",
       period: "30 días",
@@ -704,12 +686,9 @@ export default function Landing() {
             </p>
           </div>
 
-          <div className="grid sm:grid-cols-2 gap-4 max-w-2xl mx-auto items-stretch">
+          <div className="grid grid-cols-1 gap-4 max-w-xl mx-auto items-stretch">
             {PLANS.map((plan) => {
-              const nameKey =
-                plan.id === "weekly"
-                  ? "plan_malta_weekly_title"
-                  : "plan_malta_monthly_title";
+              const nameKey = "plan_malta_monthly_title";
 
               return (
                 <div
@@ -745,9 +724,7 @@ export default function Landing() {
                     </div>
 
                     <p className="text-xs text-muted-foreground mt-1">
-                      {plan.id === "weekly"
-                        ? t("plan_malta_weekly_subtitle")
-                        : t("plan_malta_monthly_subtitle")}
+                      {t("plan_malta_monthly_subtitle")}
                     </p>
                   </div>
 
@@ -769,9 +746,7 @@ export default function Landing() {
                     className={`w-full py-2.5 rounded-xl text-sm font-bold uppercase tracking-wider transition-all ${plan.btnClass}`}
                     type="button"
                   >
-                    {plan.id === "weekly"
-                      ? t("plan_malta_weekly_button")
-                      : t("plan_malta_monthly_button")}
+                    {t("plan_malta_monthly_button")}
                   </button>
                 </div>
               );
