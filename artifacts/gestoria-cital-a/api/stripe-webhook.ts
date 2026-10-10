@@ -590,7 +590,7 @@ Questions?<br>
         while (true) {
           const { data: page, error: offersError } = await supabase
             .from("malta_job_offers")
-            .select("id,company,title,location,url,source,salary,job_type,description,company_name,job_title,job_url,apply_email,published_at")
+            .select("*")
             .order("id", { ascending: true })
             .range(from, from + pageSize - 1);
 
@@ -611,38 +611,52 @@ Questions?<br>
         const offerRows = allOffers.map((offer, index) => {
           const title = offer.job_title || offer.title || offer.job_type || "Job offer";
           const company = offer.company_name || offer.company || "Company not specified";
-          const location = offer.location || "Malta";
-          const url = offer.job_url || offer.url || "";
+          const location = offer.location || offer.city || "Malta";
+          const url = offer.job_url || offer.url || offer.source_url || "";
+          const companyWebsite = offer.company_website || offer.website || offer.company_url || "";
           const salary = offer.salary || "";
-          const contact = offer.apply_email || "";
+          const contact = offer.apply_email || offer.email || offer.contact_email || "";
+          const phone = offer.company_phone || offer.phone || offer.telephone || offer.contact_phone || "";
           const description = offer.description || "";
-          const link = (String(url).startsWith("https://") || String(url).startsWith("http://"))
-            ? `<a href="${escapeHtml(url)}" style="display:inline-block;background:#eef5ff;color:#005ea8;text-decoration:none;font-weight:bold;padding:7px 12px;border-radius:6px">Web</a>`
+          const safeUrl = String(url);
+          const safeWebsite = String(companyWebsite);
+          const link = /^https?:\\/\\//i.test(safeUrl)
+            ? `<a href="${escapeHtml(safeUrl)}" style="display:inline-block;background:#071426;color:#E5AD42;text-decoration:none;font-weight:bold;padding:10px 15px;border-radius:7px;margin:4px 6px 4px 0">VIEW JOB / VER OFERTA ↗</a>`
             : "";
+          const websiteLink = /^https?:\\/\\//i.test(safeWebsite)
+            ? `<a href="${escapeHtml(safeWebsite)}" style="display:inline-block;background:#edf5ff;color:#075985;text-decoration:none;font-weight:bold;padding:10px 15px;border-radius:7px;margin:4px 6px 4px 0">COMPANY WEBSITE ↗</a>`
+            : "";
+          const emailLine = contact
+            ? `<a href="mailto:${escapeHtml(contact)}" style="color:#075985;font-weight:bold;word-break:break-word">${escapeHtml(contact)}</a>`
+            : '<span style="color:#8a94a5">Not published in source / No publicado</span>';
+          const phoneLine = phone
+            ? `<a href="tel:${escapeHtml(phone)}" style="color:#075985;font-weight:bold">${escapeHtml(phone)}</a>`
+            : '<span style="color:#8a94a5">Not published in source / No publicado</span>';
           return `<tr>
-<td style="padding:0 0 12px;border:0" colspan="5">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="width:100%;border-collapse:separate;border-spacing:0;background:#ffffff;border:1px solid #d5deea;border-radius:10px;overflow:hidden">
+<td style="padding:0 0 15px;border:0">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="width:100%;border-collapse:separate;border-spacing:0;background:#ffffff;border:1px solid #d6dfeb;border-radius:12px;overflow:hidden">
 <tr>
-<td width="44" style="padding:14px 8px;background:#f2f6fb;border-right:1px solid #d5deea;border-bottom:1px solid #d5deea;text-align:center;vertical-align:top">
-<span style="display:inline-block;background:#071426;color:#E5AD42;font-weight:bold;font-size:14px;line-height:28px;width:28px;height:28px;border-radius:50%;">${index + 1}</span>
-</td>
-<td style="padding:14px 12px;border-bottom:1px solid #d5deea;vertical-align:top">
-<strong style="color:#071426;font-size:15px">${escapeHtml(title)}</strong><br>
-<span style="color:#52647d;font-size:12px">${escapeHtml(company)}</span>
-${salary ? `<br><span style="display:inline-block;margin-top:7px;padding:4px 8px;background:#fff7e6;border:1px solid #f2d18b;border-radius:5px;color:#76500a;font-weight:bold">Salary: ${escapeHtml(salary)}</span>` : ""}
-${description ? `<p style="margin:9px 0 0;color:#334155;line-height:1.55">${escapeHtml(description)}</p>` : ""}
-</td>
-</tr>
-<tr>
-<td colspan="2" style="padding:10px 12px;background:#f8fafc;border-top:0;vertical-align:top">
-<span style="display:inline-block;margin:3px 12px 3px 0;color:#475569"><b>City:</b> ${escapeHtml(location)}</span>
-<span style="display:inline-block;margin:3px 12px 3px 0;color:#475569"><b>Email:</b> ${contact ? `<a href="mailto:${escapeHtml(contact)}" style="color:#005ea8;font-weight:bold;word-break:break-word">${escapeHtml(contact)}</a>` : "Not listed"}</span>
-${link ? `<span style="display:inline-block;margin:3px 0">${link}</span>` : ""}
-</td>
-</tr>
-</table>
-</td>
-</tr>`;
+<td style="padding:15px 18px;background:#071426;border-bottom:3px solid #E5AD42;color:#fff">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
+<td width="46" style="vertical-align:top"><span style="display:inline-block;background:#E5AD42;color:#071426;font-weight:900;font-size:15px;line-height:34px;width:34px;height:34px;border-radius:50%;text-align:center">${index + 1}</span></td>
+<td style="vertical-align:middle"><div style="font-size:17px;font-weight:800;color:#fff;line-height:1.35">${escapeHtml(title)}</div><div style="font-size:13px;color:#E5AD42;font-weight:bold;margin-top:4px">${escapeHtml(company)}</div></td>
+</tr></table>
+</td></tr>
+<tr><td style="padding:16px 18px">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f7f9fc;border:1px solid #e3e9f1;border-radius:8px"><tr>
+<td style="padding:10px 12px;color:#334155;font-size:13px"><b>📍 CITY / CIUDAD</b><br>${escapeHtml(location)}</td>
+<td style="padding:10px 12px;color:#334155;font-size:13px"><b>💶 SALARY / SALARIO</b><br>${salary ? escapeHtml(salary) : "Not specified / No indicado"}</td>
+</tr></table>
+${description ? `<p style="margin:13px 0;color:#334155;line-height:1.65;font-size:13px">${escapeHtml(description)}</p>` : ""}
+<h3 style="font-size:13px;color:#071426;margin:17px 0 9px;border-bottom:1px solid #e5eaf1;padding-bottom:7px">DIRECT COMPANY CONTACT / CONTACTO DIRECTO</h3>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:13px"><tr>
+<td style="padding:8px 5px 8px 0;width:50%;vertical-align:top"><b>✉️ EMAIL</b><br>${emailLine}</td>
+<td style="padding:8px 0 8px 5px;width:50%;vertical-align:top"><b>📞 PHONE / TELÉFONO</b><br>${phoneLine}</td>
+</tr></table>
+<div style="margin-top:10px">${link}${websiteLink}</div>
+<p style="margin:10px 0 0;font-size:11px;color:#718096">Contact details are shown only when present in the source listing. / Los datos solo aparecen cuando figuran en la fuente.</p>
+</td></tr></table>
+</td></tr>`;
         }).join("");
 
         const transporter = nodemailer.createTransport({
