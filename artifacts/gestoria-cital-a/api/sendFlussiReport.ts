@@ -130,7 +130,7 @@ function getSupabaseAdmin() {
 
 const FLUSSI_BUCKET =
   process.env.FLUSSI_DOCUMENT_BUCKET ||
-  "documentos-flussi-privado";
+  "flussi-documents-private";
 
 function isAllowedMime(mime: string): boolean {
   return [
