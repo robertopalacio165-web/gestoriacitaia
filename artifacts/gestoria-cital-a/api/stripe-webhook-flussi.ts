@@ -98,7 +98,7 @@ const supabaseAdmin =
 // ============================================================
 
 const DOCUMENT_BUCKET =
-  "documentos-flussi-privado";
+  "flussi-documents-private";
 
 const TEMP_FOLDER =
   "flussi-temp";
@@ -279,15 +279,9 @@ async function triggerFlussiReport(params: {
     }>;
   };
 }) {
-  const reportUrl = clean(
-    process.env.FLUSSI_REPORT_URL
-  );
-
-  if (!reportUrl) {
-    throw new Error(
-      "FLUSSI_REPORT_URL no está configurada en Vercel."
-    );
-  }
+  const reportUrl =
+    clean(process.env.FLUSSI_REPORT_URL) ||
+    `${(process.env.NEXT_PUBLIC_URL || "https://gestoriacitaia.com").replace(/\/+$/, "")}/api/sendFlussiReport`;
 
   const metadata = params.metadata;
 
