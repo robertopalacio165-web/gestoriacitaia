@@ -27,7 +27,7 @@ import { createClient } from "@supabase/supabase-js";
 // CONFIGURACIÓN
 // ============================================================
 
-const BUCKET = "documentos-flussi-privado";
+const BUCKET = "flussi-documents-private";
 const TEMP_FOLDER = "flussi-temp";
 
 const MAX_DOCUMENTS = 5;
