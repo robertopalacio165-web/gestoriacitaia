@@ -1101,6 +1101,7 @@ export default function VerificarDecretoFlussi() {
   const [location] = useLocation();
   const [muted, setMuted] = useState(false);
   const [confirmed, setConfirmed] = useState(
+    new URLSearchParams(window.location.search).get("payment") === "success" ||
     new URLSearchParams(window.location.search).get("success") === "true"
   );
   const [showDocs, setShowDocs] = useState(false);
@@ -1289,85 +1290,29 @@ export default function VerificarDecretoFlussi() {
     }
   }, [errorField]);
 
-  // ✅ Suscribirse a cambios de estado de verificación
+  // El pago vuelve a esta página tras completarse. El webhook de Stripe
+  // analiza los documentos y envía el PDF por correo automáticamente.
   useEffect(() => {
-    const userId = profile?.id;
-    if (!userId) return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("payment") !== "success") return;
+    setPaymentConfirmed(true);
+    setFormReady(true);
+    setVerificationStatus("analyzing_with_ai");
+    void clearPendingFlussiFiles().catch((error) =>
+      console.error("No se pudo limpiar la copia local de documentos:", error)
+    );
+  }, []);
 
-    const subscription = supabase
-      .channel('verification_status')
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'verificaciones',
-          filter: `user_id=eq.${userId}`,
-        },
-        (payload) => {
-          setVerificationStatus(payload.new.status || 'pending');
-          setVerificationProgress(payload.new.progress || 0);
-          if (payload.new.payment_status === 'paid') {
-            setPaymentConfirmed(true);
-            setFormReady(true);
-          }
-          
-          if (payload.new.status === 'report_ready') {
-            setIsReportReady(true);
-            toast({
-              title: isMa ? "✅ التقرير جاهز" : isEn ? "✅ Report ready" : "✅ Informe listo",
-              description: isMa 
-                ? "يمكنك تحميل التقرير من لوحة التحكم"
-                : isEn 
-                ? "You can download the report from the dashboard"
-                : "Puedes descargar el informe desde el panel",
-            });
-          }
-        }
-      )
-      .subscribe();
-
-    return () => subscription.unsubscribe();
-  }, [profile?.id, isMa, isEn, toast]);
-
-  // ✅ Función para descargar el informe (con URL firmada)
+  // El informe PDF se envía automáticamente al correo indicado en el formulario.
   const handleDownloadReport = async () => {
-    try {
-      const userId = profile?.id;
-      if (!userId) {
-        toast({
-          title: isMa ? "❌ خطأ" : isEn ? "❌ Error" : "❌ Error",
-          description: isMa ? "يجب تسجيل الدخول أولاً" : isEn ? "Please login first" : "Debes iniciar sesión primero",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      const { data, error } = await supabase
-        .from('verificaciones')
-        .select('report_path')
-        .eq('user_id', userId)
-        .maybeSingle();
-
-      if (error || !data?.report_path) {
-        throw new Error('No se encontró el informe');
-      }
-
-      const { data: signedUrlData, error: signedUrlError } = await supabase.storage
-        .from('informes-flussi-privado')
-        .createSignedUrl(data.report_path, 3600);
-
-      if (signedUrlError) throw signedUrlError;
-
-      window.open(signedUrlData.signedUrl, '_blank');
-
-    } catch (error: any) {
-      toast({
-        title: isMa ? "❌ خطأ في التحميل" : isEn ? "❌ Download error" : "❌ Error al descargar",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
+    toast({
+      title: isMa ? "📧 تم إرسال التقرير" : isEn ? "📧 Report by email" : "📧 Informe por correo",
+      description: isMa
+        ? "غادي توصلك نسخة PDF فالبريد الإلكتروني من بعد ما يكمل التحليل."
+        : isEn
+        ? "Your PDF report will be emailed when the analysis finishes."
+        : "Recibirás el PDF por email cuando termine el análisis.",
+    });
   };
 
   useEffect(() => {
@@ -1401,22 +1346,6 @@ export default function VerificarDecretoFlussi() {
           const profileData = (data as ProfileRow | null) ?? null;
           setProfile(profileData);
           
-          const { data: verificationData } = await supabase
-            .from('verificaciones')
-            .select('payment_status, status, report_path')
-            .eq('user_id', user.id)
-            .maybeSingle();
-            
-          if (verificationData?.payment_status === 'paid') {
-            setPaymentConfirmed(true);
-            setFormReady(true);
-            
-            if (verificationData?.report_path) {
-              setIsReportReady(true);
-              setVerificationStatus('report_ready');
-            }
-          }
-          
           if (
             profileData?.email?.toLowerCase() ===
             "robertopalacio165@gmail.com"
@@ -1441,66 +1370,13 @@ export default function VerificarDecretoFlussi() {
     }));
   }, [profile?.full_name, profile?.phone]);
 
-  // Después de que el servidor confirme payment_status=paid, subimos los PDF
-  // que seguían únicamente en IndexedDB y guardamos sus rutas en verificaciones.
+  // Los documentos ya se suben antes de redirigir a Stripe mediante URLs
+  // firmadas. No se escribe en la tabla antigua "verificaciones".
   useEffect(() => {
-    if (!profile?.id || !paymentConfirmed) return;
-
-    const uploadPaidFiles = async () => {
-      try {
-        const pending = await getPendingFlussiFiles();
-        if (pending.length === 0) return;
-
-        const uploaded: UploadedFile[] = [];
-        for (const item of pending) {
-          const extension = item.name.includes(".")
-            ? item.name.split(".").pop()?.toLowerCase() || "bin"
-            : item.type === "application/pdf"
-            ? "pdf"
-            : item.type === "image/jpeg"
-            ? "jpg"
-            : item.type === "image/png"
-            ? "png"
-            : item.type === "image/webp"
-            ? "webp"
-            : "bin";
-
-          const fileName = `${profile.id}/${Date.now()}-${Math.random().toString(36).slice(2, 9)}.${extension}`;
-          const file = item.file instanceof File
-            ? item.file
-            : new File([item.file], item.name, { type: item.type || "application/octet-stream" });
-
-          const { error } = await supabase.storage
-            .from("documentos-flussi-privado")
-            .upload(fileName, file, {
-              cacheControl: "3600",
-              upsert: false,
-              contentType: item.type || "application/octet-stream",
-            });
-          if (error) throw error;
-          uploaded.push({ name: item.name, path: fileName, size: item.size, type: item.type || "application/pdf" });
-        }
-
-        const paths = uploaded.map((file) => file.path);
-        const names = uploaded.map((file) => file.name).join(", ");
-        const { error: updateError } = await supabase
-          .from("verificaciones")
-          .update({ documentos: names, documentos_paths: paths })
-          .eq("user_id", profile.id)
-          .eq("payment_status", "paid");
-
-        if (updateError) throw updateError;
-        await clearPendingFlussiFiles();
-        setUploadedFiles(uploaded);
-        onFormChange("documentos", names);
-        onFormChange("documentosUrls", JSON.stringify(paths));
-      } catch (error) {
-        console.error("Error subiendo documentos después del pago:", error);
-      }
-    };
-
-    void uploadPaidFiles();
-  }, [profile?.id, paymentConfirmed]);
+    if (!confirmed) return;
+    setPaymentConfirmed(true);
+    setFormReady(true);
+  }, [confirmed]);
 
   useEffect(() => {
     if (!voiceStorageKey) return;
@@ -1832,6 +1708,43 @@ export default function VerificarDecretoFlussi() {
         throw new Error(
           data?.error || "Error creando el proceso de pago."
         );
+      }
+
+      // Subir los documentos a Storage con la misma referencia que Stripe.
+      // El webhook procesa el pago únicamente cuando encuentra los archivos.
+      const reference = typeof data?.reference === "string" ? data.reference : "";
+      if (!reference) throw new Error("Stripe no devolvió la referencia del expediente.");
+
+      const uploadRes = await fetch("/api/upload-flussi-temp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          reference,
+          documents: pendingFiles.map((file) => ({
+            id: file.id,
+            name: file.name,
+            type: file.type || "application/octet-stream",
+            size: file.size,
+          })),
+        }),
+      });
+      const uploadData = await uploadRes.json();
+      if (!uploadRes.ok || !Array.isArray(uploadData?.files)) {
+        throw new Error(uploadData?.error || "No se pudieron preparar los documentos para el análisis.");
+      }
+
+      for (const target of uploadData.files) {
+        const original = pendingFiles.find((file) => file.id === target.id);
+        if (!original) throw new Error("No se encontró el archivo " + target.name + ".");
+        const file = original.file instanceof File
+          ? original.file
+          : new File([original.file], original.name, { type: original.type || target.type });
+        const { error: uploadError } = await supabase.storage
+          .from(uploadData.bucket || "flussi-documents-private")
+          .uploadToSignedUrl(target.path, target.token, file, {
+            contentType: target.type || file.type || "application/octet-stream",
+          });
+        if (uploadError) throw new Error("Error subiendo " + target.name + ": " + uploadError.message);
       }
 
       // ============================================================
