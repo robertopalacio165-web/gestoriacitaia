@@ -2235,11 +2235,15 @@ export default async function handler(
       });
     }
 
+    // El webhook de Stripe envía los documentos dentro de body.documents.files.
+    // También aceptamos el formato plano antiguo para compatibilidad.
     const suppliedDocuments = Array.isArray(body.documents)
       ? body.documents
-      : Array.isArray(body.files)
-        ? body.files
-        : [];
+      : Array.isArray(body.documents?.files)
+        ? body.documents.files
+        : Array.isArray(body.files)
+          ? body.files
+          : [];
 
     const fileRefs = await listReferenceDocuments(
       reference,
