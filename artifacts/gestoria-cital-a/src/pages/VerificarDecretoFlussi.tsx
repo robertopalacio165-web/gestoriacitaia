@@ -1604,9 +1604,8 @@ export default function VerificarDecretoFlussi() {
     if (!formData.pais.trim()) {
       return reject("pais", "Falta el país", "Selecciona o escribe tu país.");
     }
-    if (!formData.tipoDocumento.trim()) {
-      return reject("tipoDocumento", "Falta el tipo de documento", "Selecciona el tipo de documento antes de pagar.");
-    }
+    // El tipo de documento se detecta posteriormente mediante OCR/IA;
+    // no debe bloquear el pago si el usuario ha adjuntado el archivo.
     if (uploadedFiles.length === 0) {
       return reject("documents", "Falta el documento", "Adjunta al menos un PDF o una imagen.");
     }
