@@ -934,17 +934,18 @@ function OfficialBrowserBox({
                       </p>
                     )}
 
-                    {/* Botón de pago Stripe de prueba: 0,50 € */}
+                    {/* Botón de pago temporalmente desactivado durante las pruebas */}
                     <button
                       type="button"
-                      onClick={onPay}
-                      className="w-full min-h-[56px] rounded-[20px] bg-gradient-to-r from-yellow-400 to-yellow-600 border border-yellow-300 px-4 py-2 text-[15px] leading-tight font-black text-black shadow-[0_0_24px_rgba(255,200,0,0.25)] hover:brightness-110 active:scale-[0.99] transition"
+                      disabled
+                      aria-disabled="true"
+                      className="w-full min-h-[56px] rounded-[20px] bg-gray-600 border border-gray-500 px-4 py-2 text-[15px] leading-tight font-black text-gray-300 opacity-70 cursor-not-allowed"
                     >
                       {isMa
-                        ? "🔒 خلص 0,50€ وبدأ التحقق"
+                        ? "⏸️ الأداء متوقف مؤقتا"
                         : isEn
-                        ? "🔒 Pay €0.50 and start verification"
-                        : "🔒 Pagar 0,50 € y empezar verificación"}
+                        ? "⏸️ Payment temporarily disabled"
+                        : "⏸️ Pago temporalmente desactivado"}
                     </button>
 
                     <div className="mt-5 flex items-center justify-center gap-2 text-[11px] text-gray-300">
