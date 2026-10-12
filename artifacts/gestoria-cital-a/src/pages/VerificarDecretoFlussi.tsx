@@ -1627,7 +1627,22 @@ export default function VerificarDecretoFlussi() {
   // ✅ Función que llama a Stripe
   const payStripe = async () => {
     try {
-      const pendingFiles = await getPendingFlussiFiles();
+      // IndexedDB puede conservar archivos de intentos anteriores.
+      // Solo enviamos los que siguen visibles en la lista actual del formulario.
+      const storedPendingFiles = await getPendingFlussiFiles();
+      const pendingFiles = uploadedFiles
+        .map((visibleFile) =>
+          storedPendingFiles.find((storedFile) =>
+            storedFile.name === visibleFile.name &&
+            storedFile.size === visibleFile.size &&
+            storedFile.type === visibleFile.type
+          )
+        )
+        .filter((file): file is PendingFlussiFile => Boolean(file));
+
+      if (pendingFiles.length > 5) {
+        throw new Error("Puedes seleccionar un máximo de 5 documentos.");
+      }
       if (pendingFiles.length === 0) {
         throw new Error(
           isMa
