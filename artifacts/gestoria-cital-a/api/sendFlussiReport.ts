@@ -2111,9 +2111,24 @@ async function sendEmail(
   pdf: Buffer,
   reportHtml: string
 ) {
-  const brevoUser = process.env.BREVO_SMTP_USER || "";
-  const brevoKey = process.env.BREVO_SMTP_KEY || "";
-  const fromEmail = process.env.BREVO_FROM_EMAIL || "";
+  // Brevo SMTP credentials stay in Vercel environment variables; never hardcode the secret.
+  // The verified account's SMTP login and sender are safe defaults, while allowing
+  // common existing variable names so a naming mismatch does not block delivery.
+  const brevoUser =
+    process.env.BREVO_SMTP_USER ||
+    process.env.BREVO_SMTP_LOGIN ||
+    process.env.SMTP_USER ||
+    "b35b3f001@smtp-brevo.com";
+  const brevoKey =
+    process.env.BREVO_SMTP_KEY ||
+    process.env.BREVO_SMTP_PASSWORD ||
+    process.env.SMTP_PASS ||
+    process.env.SMTP_PASSWORD ||
+    "";
+  const fromEmail =
+    process.env.BREVO_FROM_EMAIL ||
+    process.env.SMTP_FROM_EMAIL ||
+    "jobs@gestoriacitaia.com";
   const fromName =
     process.env.BREVO_FROM_NAME || "GestoriaCitaIA";
   const replyTo = process.env.BREVO_REPLY_TO || "";
@@ -2223,15 +2238,11 @@ export default async function handler(
       });
     }
 
-    if (
-      !process.env.BREVO_SMTP_USER ||
-      !process.env.BREVO_SMTP_KEY ||
-      !process.env.BREVO_FROM_EMAIL
-    ) {
+    if (!brevoKey) {
       return res.status(500).json({
         ok: false,
         error:
-          "Faltan BREVO_SMTP_USER, BREVO_SMTP_KEY o BREVO_FROM_EMAIL en Vercel.",
+          "Falta la clave SMTP de Brevo. Configura BREVO_SMTP_KEY (o BREVO_SMTP_PASSWORD/SMTP_PASS) en Vercel Production.",
       });
     }
 
