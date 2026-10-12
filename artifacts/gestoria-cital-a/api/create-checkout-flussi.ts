@@ -199,6 +199,15 @@ export default async function handler(
     });
   }
 
+  // PAUSA TEMPORAL DE PAGOS: bloquea nuevas sesiones de Stripe
+  // mientras el servicio de verificación está en mantenimiento.
+  // Para reactivar, retirar este bloque y desplegar de nuevo.
+  return res.status(503).json({
+    ok: false,
+    payments_paused: true,
+    error: "El servicio está temporalmente en mantenimiento. No se ha realizado ningún cobro. Inténtalo más tarde.",
+  });
+
   try {
     /**
      * ========================================================
