@@ -1731,9 +1731,13 @@ export default function VerificarDecretoFlussi() {
       for (const target of uploadData.files) {
         const original = pendingFiles.find((file) => file.id === target.id);
         if (!original) throw new Error("No se encontró el archivo " + target.name + ".");
-        const file = original.file instanceof File
-          ? original.file
-          : new File([original.file], original.name, { type: original.type || target.type });
+        // "File" también se importa desde lucide-react como icono;
+        // usar window.File evita el choque con ese nombre importado.
+        const file = new window.File(
+          [original.file],
+          original.name,
+          { type: original.type || target.type || "application/octet-stream" }
+        );
         const { error: uploadError } = await supabase.storage
           .from(uploadData.bucket || "flussi-documents-private")
           .uploadToSignedUrl(target.path, target.token, file, {
