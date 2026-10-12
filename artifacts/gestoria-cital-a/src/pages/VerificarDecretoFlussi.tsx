@@ -1576,60 +1576,43 @@ export default function VerificarDecretoFlussi() {
     }
   };
 
-  // ✅ VALIDACIÓN - TODOS LOS CAMPOS OBLIGATORIOS EN ORDEN
+  // Validación con aviso visible: antes los errores podían dejar el botón aparentemente inactivo.
   const validateForm = (): boolean => {
-    // 1. Nombre
-    if (!formData.fullName.trim() || formData.fullName.length < 2) {
-      setErrorField("fullName");
+    const reject = (field: string, title: string, description: string) => {
+      setErrorField(field);
+      toast({ title, description, variant: "destructive" });
+      const target = errorRefs.current[field];
+      target?.scrollIntoView?.({ behavior: "smooth", block: "center" });
       return false;
-    }
+    };
 
-    // 2. Apellidos
-    if (!formData.apellidos.trim() || formData.apellidos.length < 2) {
-      setErrorField("apellidos");
-      return false;
+    if (!formData.fullName.trim() || formData.fullName.trim().length < 2) {
+      return reject("fullName", "Falta el nombre", "Escribe tu nombre para continuar.");
     }
-
-    // 3. WhatsApp
-    const phoneClean = formData.phone.replace(/\s/g, '');
+    if (!formData.apellidos.trim() || formData.apellidos.trim().length < 2) {
+      return reject("apellidos", "Faltan los apellidos", "Escribe tus apellidos para continuar.");
+    }
+    const phoneClean = formData.phone.replace(/\s/g, "");
     const phoneRegex = /^\+?[0-9]{9,15}$/;
     if (!phoneClean || !phoneRegex.test(phoneClean)) {
-      setErrorField("phone");
-      return false;
+      return reject("phone", "WhatsApp no válido", "Introduce un número de 9 a 15 cifras, con prefijo internacional si corresponde.");
     }
-
-    // 4. Email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!formData.email.trim() || !emailRegex.test(formData.email.trim())) {
-      setErrorField("email");
-      return false;
+      return reject("email", "Email no válido", "Introduce una dirección de correo válida.");
     }
-
-    // 5. País
     if (!formData.pais.trim()) {
-      setErrorField("pais");
-      return false;
+      return reject("pais", "Falta el país", "Selecciona o escribe tu país.");
     }
-
-    // 6. Tipo de documento
     if (!formData.tipoDocumento.trim()) {
-      setErrorField("tipoDocumento");
-      return false;
+      return reject("tipoDocumento", "Falta el tipo de documento", "Selecciona el tipo de documento antes de pagar.");
     }
-
-    // 7. Documento obligatorio
     if (uploadedFiles.length === 0) {
-      setErrorField("documents");
-      return false;
+      return reject("documents", "Falta el documento", "Adjunta al menos un PDF o una imagen.");
     }
-
-    // 9. Aceptación de términos
     if (!acceptTerms) {
-      setErrorField("acceptTerms");
-      return false;
+      return reject("acceptTerms", "Acepta los términos", "Marca la casilla de consentimiento para continuar.");
     }
-
-    // ✅ Todos los campos están correctos
     setErrorField(null);
     return true;
   };
