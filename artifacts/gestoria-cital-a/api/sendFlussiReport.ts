@@ -2238,6 +2238,13 @@ export default async function handler(
       });
     }
 
+    const brevoKey =
+      process.env.BREVO_SMTP_KEY ||
+      process.env.BREVO_SMTP_PASSWORD ||
+      process.env.SMTP_PASS ||
+      process.env.SMTP_PASSWORD ||
+      "";
+
     if (!brevoKey) {
       return res.status(500).json({
         ok: false,
