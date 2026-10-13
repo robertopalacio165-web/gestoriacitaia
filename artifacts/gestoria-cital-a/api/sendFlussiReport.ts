@@ -2189,6 +2189,14 @@ export default async function handler(
     });
   }
 
+  // TEMPORARY SAFETY PAUSE: stop repeated Decreto Flussi verification PDF emails.
+  // This endpoint remains disabled until the two-hour repeat trigger is diagnosed.
+  return res.status(503).json({
+    ok: false,
+    paused: true,
+    error: "Decreto Flussi PDF verification emails are temporarily paused.",
+  });
+
   try {
     const body: AnyData = req.body || {};
 
