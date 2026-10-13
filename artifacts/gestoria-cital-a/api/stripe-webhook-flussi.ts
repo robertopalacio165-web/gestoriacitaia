@@ -407,6 +407,29 @@ async function triggerFlussiReport(params: {
 
   const responseText = await response.text();
 
+  // The report endpoint is intentionally paused to stop repeated PDF emails.
+  // Acknowledge this paused state to Stripe so it does not retry the same event
+  // every few hours. No email is sent while the report endpoint returns paused:true.
+  if (response.status === 503) {
+    try {
+      const pausedBody = JSON.parse(responseText);
+      if (pausedBody?.paused === true) {
+        console.warn(
+          "⏸️ FLUSSI REPORT PAUSED — acknowledging Stripe event without sending PDF:",
+          params.reference
+        );
+        return {
+          triggered: false,
+          paused: true,
+          reference: params.reference,
+          message: "PDF verification email temporarily paused; Stripe retry suppressed.",
+        };
+      }
+    } catch {
+      // Continue to normal error handling if this was not our known pause response.
+    }
+  }
+
   if (!response.ok) {
     throw new Error(
       `FLUSSI_REPORT_URL respondió ${response.status}: ${responseText.slice(
