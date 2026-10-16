@@ -18,7 +18,7 @@ const SMTP_PORT = Number(process.env.SMTP_PORT || 587);
 const SMTP_USER = process.env.SMTP_USER || "";
 const SMTP_PASS = process.env.SMTP_PASS || "";
 const SMTP_FROM = process.env.SMTP_FROM || process.env.FROM_EMAIL || SMTP_USER;
-const FLUSSI_LAVORO_SECRET = process.env.FLUSSI_LAVORO_SECRET || "";
+const FLUSSI_TEST_SECRET = process.env.FLUSSI_TEST_SECRET || "";
 const TEST_RECIPIENT = "gestoriacitaia@gmail.com";
 const TABLE = '"ofertas nuevas de 10 días"';
 
@@ -119,8 +119,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ ok: false, error: "Method not allowed" });
   }
 
-  const suppliedSecret = String(req.headers["x-flussi-lavoro-secret"] || "");
-  if (!FLUSSI_LAVORO_SECRET || suppliedSecret !== FLUSSI_LAVORO_SECRET) {
+  const suppliedSecret = String(req.headers["x-flussi-test-secret"] || "");
+  if (!FLUSSI_TEST_SECRET || suppliedSecret !== FLUSSI_TEST_SECRET) {
     return res.status(401).json({ ok: false, error: "Unauthorized" });
   }
 
