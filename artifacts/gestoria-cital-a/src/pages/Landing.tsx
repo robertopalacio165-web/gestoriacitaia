@@ -446,14 +446,12 @@ export default function Landing() {
         >
           <AgentCard
             name="Soufiane"
-            role="Experto en Regularización"
             imagePath={`${import.meta.env.BASE_URL}images/soufiane.png`}
             delay={0.1}
           />
 
           <AgentCard
             name="Sara"
-            role="Especialista en Verificación de Contratos"
             imagePath={`${import.meta.env.BASE_URL}images/sara.png`}
             delay={0.2}
           />
