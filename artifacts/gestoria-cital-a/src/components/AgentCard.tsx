@@ -3,14 +3,14 @@ import { motion } from "framer-motion";
 
 interface AgentCardProps {
   name: string;
-  role: string;
+  role?: string;
   imagePath: string;
   isOnline?: boolean;
   className?: string;
   delay?: number;
 }
 
-export function AgentCard({ name, role, imagePath, isOnline = true, className, delay = 0 }: AgentCardProps) {
+export function AgentCard({ name, imagePath, isOnline = true, className, delay = 0 }: AgentCardProps) {
   return (
     <motion.div 
       initial={{ opacity: 0, y: 20 }}
@@ -34,8 +34,6 @@ export function AgentCard({ name, role, imagePath, isOnline = true, className, d
       
       <div className="absolute bottom-0 left-0 right-0 p-5 z-20 flex flex-col items-center text-center">
         <h3 className="font-display font-bold text-xl text-white mb-1">{name}</h3>
-        <p className="text-sm text-muted-foreground mb-3">{role}</p>
-        
         {isOnline && (
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-black/50 border border-white/10 backdrop-blur-md">
             <span className="w-2 h-2 rounded-full bg-accent animate-pulse shadow-[0_0_8px_hsl(var(--accent))]"></span>
