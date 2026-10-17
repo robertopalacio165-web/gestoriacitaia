@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+
+Disallow: /panel
+Disallow: /auth/
+Disallow: /checkout/
+Disallow: /confirmar-cita
+
+Sitemap: https://www.gestoriacitaia.com/sitemap.xml
