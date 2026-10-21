@@ -109,6 +109,9 @@ export default async function handler(
 
         mode: "payment",
 
+        // Let Stripe choose eligible payment methods enabled in the Dashboard.
+        locale: "auto",
+
         customer_email:
           email
             ?.trim()
