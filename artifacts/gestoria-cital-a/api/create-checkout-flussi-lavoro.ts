@@ -243,9 +243,10 @@ export default async function handler(
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
 
-      // Stripe selects the payment methods enabled in the Dashboard
-      // and available to this customer. Do not force 3DS for every
-      // card: let Stripe apply issuer/SCA requirements adaptively.
+      // Keep card payments, but let Stripe apply 3DS adaptively.
+      // Forcing 3DS on every transaction can add friction and may
+      // reduce conversion; issuer/SCA rules still trigger it when needed.
+      payment_method_types: ["card"],
       locale: "auto",
 
       customer_email: email,
