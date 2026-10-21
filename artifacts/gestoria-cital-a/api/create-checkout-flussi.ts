@@ -696,9 +696,8 @@ export default async function handler(
       await stripe.checkout.sessions.create({
         mode: "payment",
 
-        payment_method_types: [
-          "card",
-        ],
+        // Use Stripe dynamic payment methods enabled in the Dashboard.
+        locale: "auto",
 
         customer_email:
           email,
