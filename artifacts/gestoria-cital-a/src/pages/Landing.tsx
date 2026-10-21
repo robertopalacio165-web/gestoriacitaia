@@ -397,7 +397,7 @@ export default function Landing() {
                   "/estudiar-en-malta-2027")
               }
             >
-              🇲🇹 {t("hero_btn_study_malta")}
+              <span className="inline-flex h-4 w-6 shrink-0 overflow-hidden rounded-[2px] border border-white/30 shadow-sm align-middle" aria-label="Malta"><svg viewBox="0 0 24 16" className="h-full w-full" role="img" aria-hidden="true"><rect width="12" height="16" fill="#fff"/><rect x="12" width="12" height="16" fill="#cf142b"/><path d="M3 2.2h4.1v4.1H3z" fill="#fff" stroke="#b5b5b5" strokeWidth=".35"/><path d="M5.05 2.8v2.9M3.6 4.25h2.9" stroke="#cf142b" strokeWidth=".65"/></svg></span> {t("hero_btn_study_malta")}
               <ArrowRight className="w-4 h-4 ml-1" />
             </Button>
 
@@ -415,7 +415,7 @@ export default function Landing() {
                 (window.location.href = "/trabajo-malta")
               }
             >
-              🇲🇹 {t("hero_btn_malta")}
+              <span className="inline-flex h-4 w-6 shrink-0 overflow-hidden rounded-[2px] border border-white/30 shadow-sm align-middle" aria-label="Malta"><svg viewBox="0 0 24 16" className="h-full w-full" role="img" aria-hidden="true"><rect width="12" height="16" fill="#fff"/><rect x="12" width="12" height="16" fill="#cf142b"/><path d="M3 2.2h4.1v4.1H3z" fill="#fff" stroke="#b5b5b5" strokeWidth=".35"/><path d="M5.05 2.8v2.9M3.6 4.25h2.9" stroke="#cf142b" strokeWidth=".65"/></svg></span> {t("hero_btn_malta")}
               <ArrowRight className="w-5 h-5 ml-2" />
             </Button>
           </div>
