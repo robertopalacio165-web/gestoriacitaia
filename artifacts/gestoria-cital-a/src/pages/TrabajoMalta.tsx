@@ -1007,7 +1007,7 @@ carnetConducir: isMa ? "اختر رخصة القيادة" : isEn ? "Select drivi
                     <ul className="space-y-2 text-gray-300 text-[12px] sm:text-[13px]">
                       <li>✅ {isMa ? "فرص عمل متاحة فمالطا كاملة" : isEn ? "Job opportunities across all Malta" : "Ofertas de empleo disponibles en toda Malta"}</li>
                       <li>✅ {isMa ? "30 يوم ديال البحث على الخدمة" : isEn ? "30 days of job searching" : "30 días de búsqueda de empleo"}</li>
-                      <li>✅ {isMa ? "حتى لـ300 ترشيح للعمل" : isEn ? "Up to 300 job applications" : "Hasta 300 candidaturas"}</li>
+                      <li>✅ {isMa ? "دليل وكالات ومكاتب التوظيف فمالطا كاملة مع الهاتف والإيميل والمدينة والقطاع" : isEn ? "Malta-wide recruitment offices directory with phone, email, city and sectors" : "Directorio de oficinas de contratación de toda Malta con teléfono, email, ciudad y sectores"}</li>
                       <li>✅ {isMa ? "CV احترافي ورسالة تحفيزية بالإنجليزية بالذكاء الاصطناعي" : isEn ? "Professional AI CV and English cover letter" : "CV profesional con IA y carta de motivación en inglés"}</li>
                       <li>✅ {isMa ? "إشعارات ودعم بالأولوية عبر واتساب" : isEn ? "WhatsApp notifications and priority support" : "Notificaciones y soporte prioritario por WhatsApp"}</li>
                     </ul>
