@@ -97,9 +97,10 @@ export default async function handler(req: any, res: any) {
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
+      // Allow Stripe to show eligible payment methods enabled in the Dashboard.
+      locale: "auto",
       customer_email: email,
       customer_creation: "always",
-      payment_method_types: ["card"],
       invoice_creation: {
         enabled: true,
       },
