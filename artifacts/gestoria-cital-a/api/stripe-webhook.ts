@@ -342,7 +342,7 @@ worker_finished: false,
         await transporter.sendMail({
           from: `"GestoriaCitaIA" <${process.env.FROM_EMAIL}>`,
           to: email,
-          subject: `🇲🇹 مرحبا ${fullName}! All Malta Job Offers / جميع عروض العمل في مالطا`,
+          subject: `🇲🇹 مرحبا ${fullName}! All Malta Recruitment Offices / جميع عروض العمل في مالطا`,
           attachments: [
             {
               filename: "CV-Malta.pdf",
@@ -465,7 +465,7 @@ Thank you for choosing
 </p>
 
 <p style="font-size:18px;line-height:30px;">
-Here are all job offers currently available in our database this month. Open a listing, contact the employer directly, and send your CV using the application instructions provided.
+Here are recruitment agencies and hiring offices across Malta, with their published contact details. Open a listing, contact the employer directly, and send your CV using the application instructions provided.
 </p>
 
 <p style="font-size:18px;">
@@ -583,85 +583,50 @@ Questions?<br>
       if (deliveryStateError) throw deliveryStateError;
 
       if (deliveryState?.offers_email_sent_session_id !== session.id) {
-        const allOffers: any[] = [];
-        const pageSize = 500;
-        let from = 0;
+        const { data: allOffers, error: contactsError } = await supabase
+          .from("ett_malta")
+          .select("company_name, whatsapp_number, whatsapp_url, email, city, sectors, website")
+          .not("whatsapp_number", "is", null)
+          .not("email", "is", null)
+          .order("city", { ascending: true, nullsFirst: false })
+          .order("company_name", { ascending: true });
 
-        while (true) {
-          const { data: page, error: offersError } = await supabase
-            .from("malta_job_offers")
-            .select("*")
-            .order("company_phone", { ascending: false, nullsFirst: false }).order("id", { ascending: true })
-            .range(from, from + pageSize - 1);
-
-          if (offersError) throw offersError;
-          if (!page || page.length === 0) break;
-
-          allOffers.push(...page);
-          console.log(`📥 Ofertas Malta cargadas desde Supabase: ${allOffers.length}`);
-
-          from += page.length;
-          if (page.length < pageSize) break;
+        if (contactsError) throw contactsError;
+        if (!allOffers || allOffers.length === 0) {
+          throw new Error("ett_malta no tiene contactos con teléfono y email; no se envió el email.");
         }
 
-        if (allOffers.length === 0) {
-          throw new Error("malta_job_offers está vacía; no se envió el email.");
-        }
-
-        const offerRows = allOffers.map((offer, index) => {
-          const title = offer.job_title || offer.title || offer.job_type || "Job offer";
-          const company = offer.company_name || offer.company || "Company not specified";
-          const location = offer.location || offer.city || "Malta";
-          const url = offer.job_url || offer.url || offer.source_url || "";
-          const companyWebsite = offer.company_website || offer.website || offer.company_url || "";
-          const salary = offer.salary || "";
-          const contact = offer.apply_email || offer.email || offer.contact_email || "";
-          const phone = offer.company_phone || offer.phone || offer.telephone || offer.contact_phone || "";
-          const category = offer.category || offer.job_category || offer.industry || offer.job_type || "Not specified";
-          const description = offer.description || offer.details || offer.job_description || "";
-          const safeUrl = String(url);
-          const safeWebsite = String(companyWebsite);
-          const link = /^https?:\/\//i.test(safeUrl)
-            ? `<a href="${escapeHtml(safeUrl)}" style="display:inline-block;background:#071426;color:#E5AD42;text-decoration:none;font-weight:bold;padding:10px 15px;border-radius:7px;margin:4px 6px 4px 0">VIEW VACANCY ↗</a>`
+        const offerRows = allOffers.map((contact, index) => {
+          const company = contact.company_name || "Recruitment office";
+          const location = contact.city || "Malta";
+          const phone = String(contact.whatsapp_number || "").trim();
+          const emailAddress = String(contact.email || "").trim();
+          const sectors = Array.isArray(contact.sectors) ? contact.sectors.join(", ") : String(contact.sectors || "General recruitment");
+          const website = String(contact.website || "");
+          const websiteLink = /^https?:\/\//i.test(website)
+            ? `<a href="${escapeHtml(website)}" style="display:inline-block;background:#E5AD42;color:#071426;text-decoration:none;font-weight:bold;padding:10px 15px;border-radius:7px;margin:4px 6px 4px 0">COMPANY WEBSITE ↗</a>`
             : "";
-          const websiteLink = /^https?:\/\//i.test(safeWebsite)
-            ? `<a href="${escapeHtml(safeWebsite)}" style="display:inline-block;background:#E5AD42;color:#071426;text-decoration:none;font-weight:bold;padding:10px 15px;border-radius:7px;margin:4px 6px 4px 0">COMPANY WEBSITE ↗</a>`
+          const phoneLine = `<a href="tel:${escapeHtml(phone)}" style="color:#075985;font-weight:bold">${escapeHtml(phone)}</a>`;
+          const emailLine = `<a href="mailto:${escapeHtml(emailAddress)}" style="color:#075985;font-weight:bold;word-break:break-word">${escapeHtml(emailAddress)}</a>`;
+          const whatsappLine = contact.whatsapp_url
+            ? `<a href="${escapeHtml(contact.whatsapp_url)}" style="color:#128C7E;font-weight:bold">WhatsApp ↗</a>`
             : "";
-          const emailLine = contact
-            ? `<a href="mailto:${escapeHtml(contact)}" style="color:#075985;font-weight:bold;word-break:break-word">${escapeHtml(contact)}</a>`
-            : '<span style="color:#8a94a5">Not published</span>';
-          const phoneLine = phone
-            ? `<a href="tel:${escapeHtml(phone)}" style="color:#075985;font-weight:bold">${escapeHtml(phone)}</a>`
-            : '<span style="color:#8a94a5">Not published</span>';
-          const safeSalary = salary ? escapeHtml(salary) : "Not specified";
-          const safeDescription = description
-            ? escapeHtml(description)
-            : "Full job description is not included in the source listing. Open the vacancy link to check duties and requirements.";
           return `<tr>
 <td style="padding:0 0 15px;border:0">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="width:100%;border-collapse:separate;border-spacing:0;background:#ffffff;border:1px solid #d6dfeb;border-radius:12px;overflow:hidden">
 <tr><td style="padding:15px 18px;background:#071426;border-bottom:3px solid #E5AD42;color:#fff">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
 <td width="46" style="vertical-align:top"><span style="display:inline-block;background:#E5AD42;color:#071426;font-weight:900;font-size:15px;line-height:34px;width:34px;height:34px;border-radius:50%;text-align:center">${index + 1}</span></td>
-<td style="vertical-align:middle"><div style="font-size:17px;font-weight:800;color:#fff;line-height:1.35">${escapeHtml(title)}</div><div style="font-size:13px;color:#E5AD42;font-weight:bold;margin-top:4px">${escapeHtml(company)}</div></td>
+<td style="vertical-align:middle"><div style="font-size:17px;font-weight:800;color:#fff;line-height:1.35">${escapeHtml(company)}</div><div style="font-size:13px;color:#E5AD42;font-weight:bold;margin-top:4px">${escapeHtml(location)}</div></td>
 </tr></table></td></tr>
 <tr><td style="padding:16px 18px">
-<div style="display:inline-block;background:#fff5d8;border:1px solid #f0d58d;border-radius:20px;padding:5px 10px;font-size:11px;font-weight:bold;color:#78520a;margin-bottom:12px">CATEGORY: ${escapeHtml(category)}</div>
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f7f9fc;border:1px solid #e3e9f1;border-radius:8px"><tr>
-<td style="padding:10px 12px;color:#334155;font-size:13px"><b>📍 LOCATION</b><br>${escapeHtml(location)}</td>
-<td style="padding:10px 12px;color:#334155;font-size:13px"><b>💶 SALARY</b><br>${safeSalary}</td>
-</tr></table>
-<div style="margin-top:13px;padding:12px;background:#f7f9fc;border:1px solid #e3e9f1;border-radius:8px">
-<h3 style="font-size:13px;color:#071426;margin:0 0 7px">JOB DETAILS / تفاصيل الخدمة</h3>
-<p style="margin:0;color:#334155;line-height:1.65;font-size:13px">${safeDescription}</p>
-</div>
-<h3 style="font-size:13px;color:#071426;margin:17px 0 9px;border-bottom:1px solid #e5eaf1;padding-bottom:7px">DIRECT EMPLOYER CONTACT</h3>
+<div style="display:inline-block;background:#fff5d8;border:1px solid #f0d58d;border-radius:20px;padding:5px 10px;font-size:11px;font-weight:bold;color:#78520a;margin-bottom:12px">SECTORS / SECTORES: ${escapeHtml(sectors)}</div>
+<h3 style="font-size:13px;color:#071426;margin:10px 0 9px;border-bottom:1px solid #e5eaf1;padding-bottom:7px">DIRECT RECRUITMENT CONTACT</h3>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:13px"><tr>
 <td style="padding:8px 5px 8px 0;width:50%;vertical-align:top"><b>✉️ EMAIL</b><br>${emailLine}</td>
-<td style="padding:8px 0 8px 5px;width:50%;vertical-align:top"><b>📞 PHONE</b><br>${phoneLine}</td>
+<td style="padding:8px 0 8px 5px;width:50%;vertical-align:top"><b>📞 PHONE</b><br>${phoneLine}<br>${whatsappLine}</td>
 </tr></table>
-<div style="margin-top:10px">${link}${websiteLink}</div>
-<p dir="rtl" style="margin:10px 0 0;font-size:11px;color:#718096;text-align:right">إلا ما كانش رقم الهاتف ولا الإيميل منشور فالمصدر، غادي يبان بأنه غير متوفر.</p>
+<div style="margin-top:10px">${websiteLink}</div>
 </td></tr></table>
 </td></tr>`;
         }).join("");
@@ -681,7 +646,7 @@ Questions?<br>
         const offersMail = await transporter.sendMail({
           from: `"GestoriaCitaIA" <${process.env.FROM_EMAIL}>`,
           to: email,
-          subject: `🇲🇦🇲🇹 Malta Job Offers | ${allOffers.length} listings`,
+          subject: `🇲🇦🇲🇹 Malta Recruitment Offices | ${allOffers.length} contacts`,
           html: `<!doctype html>
 <html><body style="margin:0;padding:24px 10px;background:#edf1f6;font-family:Arial,sans-serif;color:#172033;line-height:1.6">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#edf1f6"><tr><td align="center">
@@ -690,19 +655,19 @@ Questions?<br>
 <div style="font-size:13px;font-weight:bold;letter-spacing:1px;color:#E5AD42;margin-bottom:14px"><span style="display:inline-block;vertical-align:middle;margin-right:5px;width:30px;height:20px"><svg xmlns="http://www.w3.org/2000/svg" width="30" height="20" viewBox="0 0 30 20"><rect width="30" height="20" fill="#c1272d"/><path d="M15 3 L16.8 8.2 L22.3 8.2 L17.8 11.4 L19.5 16.6 L15 13.4 L10.5 16.6 L12.2 11.4 L7.7 8.2 L13.2 8.2 Z" fill="#006233"/></svg></span>MOROCCO <span style="margin:0 10px">·</span><span style="display:inline-block;vertical-align:middle;margin-right:5px;width:30px;height:20px"><svg xmlns="http://www.w3.org/2000/svg" width="30" height="20" viewBox="0 0 30 20"><rect width="15" height="20" fill="#fff"/><rect x="15" width="15" height="20" fill="#cf142b"/><path d="M5 3v5m-2.5-2.5h5" stroke="#cf142b" stroke-width="1.2"/></svg></span>MALTA</div>
 <div style="display:inline-block;width:54px;height:54px;line-height:54px;border-radius:15px;background:#E5AD42;color:#071426;font-size:25px;font-weight:900;margin-bottom:10px">G</div>
 <h1 style="margin:0;font-size:27px;font-weight:800;letter-spacing:.3px">Gestoria<span style="color:#E5AD42">CitaIA</span></h1>
-<p style="margin:8px 0;color:#E5AD42;font-weight:bold;font-size:16px">MALTA JOB OFFERS</p>
+<p style="margin:8px 0;color:#E5AD42;font-weight:bold;font-size:16px">MALTA RECRUITMENT CONTACTS</p>
 <p style="margin:0;color:#e5edf7;font-weight:bold">${allOffers.length} Available Job Offers</p></td></tr>
 <tr><td style="padding:20px">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;border:1px solid #d7e1ee;border-left:5px solid #dba53b;border-radius:10px"><tr><td dir="rtl" style="direction:rtl;text-align:right;padding:20px">
 <h2 style="margin:0 0 12px;color:#071426;font-size:20px">🇲🇦 السلام عليكم ${safeName}</h2>
-<p style="margin:0 0 10px">شكراً بزاف على الثقة ديالك فـ GestoriaCitaIA. هادي هي عروض العمل المتاحة كاملة فقاعدة البيانات ديالنا هاد الشهر. اختار اللي مناسب ليك، تاصل بالشركة مباشرة وصيفط CV ديالك حسب طريقة التقديم.</p>
+<p style="margin:0 0 10px">شكراً بزاف على الثقة ديالك فـ GestoriaCitaIA. ها هو دليل وكالات ومكاتب التوظيف فمالطا، مع أرقام الهاتف والإيميلات والمدن والقطاعات. تاصل بالمكتب مباشرة واستفسر على فرص التوظيف المناسبة ليك.</p>
 <p style="margin:0;color:#087f5b;font-weight:bold">❤️🇲🇹 كنتمناو ليك التوفيق والنجاح فمالطا.</p></td></tr></table>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:16px;background:#f8fafc;border:1px solid #d7e1ee;border-left:5px solid #dba53b;border-radius:10px"><tr><td style="padding:20px;text-align:left">
 <h2 style="margin:0 0 12px;color:#071426;font-size:20px">🇬🇧 Hello ${safeName},</h2>
-<p style="margin:0 0 10px">Thank you for trusting GestoriaCitaIA. Here are all job offers currently available in our database this month. Choose suitable vacancies, contact employers directly, and send your CV using each listing's application instructions.</p>
+<p style="margin:0 0 10px">Thank you for trusting GestoriaCitaIA. Here are recruitment agencies and hiring offices across Malta, with their published contact details. Choose suitable vacancies, contact employers directly, and send your CV using each listing's application instructions.</p>
 <p style="margin:0;color:#087f5b;font-weight:bold">❤️🇲🇹 We wish you the very best of luck finding a job in Malta.</p></td></tr></table>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:24px;background:#071426;border-radius:10px 10px 0 0"><tr><td style="padding:18px;color:#fff">
-<h2 style="margin:0;font-size:22px">MT · All Malta Job Offers</h2><p style="margin:5px 0 0;color:#E5AD42;font-weight:bold">Numbered job listings · ${allOffers.length} offers · Category, details and direct contacts</p>
+<h2 style="margin:0;font-size:22px">MT · All Malta Recruitment Offices</h2><p style="margin:5px 0 0;color:#E5AD42;font-weight:bold">Recruitment offices · ${allOffers.length} contacts · City, sectors, phone and email</p>
 </td></tr></table>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:separate;border-spacing:0;font-size:13px">
 <tbody>${offerRows}</tbody></table>
