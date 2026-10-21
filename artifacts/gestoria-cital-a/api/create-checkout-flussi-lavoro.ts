@@ -243,13 +243,11 @@ export default async function handler(
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
 
-payment_method_types: ["card"],
-
-payment_method_options: {
-  card: {
-    request_three_d_secure: "any",
-  },
-},
+      // Use Stripe's dynamic payment-method selection so eligible methods
+      // enabled in the Dashboard can be shown for each customer.
+      // Let Stripe/Radar request 3DS adaptively instead of forcing it
+      // on every transaction, while preserving mandatory issuer/SCA checks.
+      locale: "auto",
 
       customer_email: email,
 
