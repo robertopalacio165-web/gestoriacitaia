@@ -243,13 +243,11 @@ export default async function handler(
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
 
-payment_method_types: ["card"],
-
-payment_method_options: {
-  card: {
-    request_three_d_secure: "any",
-  },
-},
+      // Keep card payments, but let Stripe apply 3DS adaptively.
+      // Forcing 3DS on every transaction can add friction and may
+      // reduce conversion; issuer/SCA rules still trigger it when needed.
+      payment_method_types: ["card"],
+      locale: "auto",
 
       customer_email: email,
 
