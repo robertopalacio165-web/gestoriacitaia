@@ -342,7 +342,7 @@ worker_finished: false,
         await transporter.sendMail({
           from: `"GestoriaCitaIA" <${process.env.FROM_EMAIL}>`,
           to: email,
-          subject: `🇲🇹 مرحبا ${fullName}! All Malta Recruitment Offices / جميع عروض العمل في مالطا`,
+          subject: `🇲🇹 مرحبا ${fullName}! Malta Recruitment Directory / دليل وكالات التوظيف في مالطا`,
           attachments: [
             {
               filename: "CV-Malta.pdf",
