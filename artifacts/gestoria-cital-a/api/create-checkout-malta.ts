@@ -108,11 +108,11 @@ export default async function handler(req: any, res: any) {
         {
           price_data: {
             currency: "eur",
-            unit_amount: 1999,
+            unit_amount: 50,
             product_data: {
               name: "Ofertas de empleo disponibles en Malta",
               description:
-                "Precio: 19,99 €. Recibirás las ofertas disponibles en el momento de la compra. No es una suscripción y no incluye futuras ofertas.",
+                "Precio: 0,50 €. Recibirás las ofertas disponibles en el momento de la compra. No es una suscripción y no incluye futuras ofertas.",
             },
           },
           quantity: 1,
