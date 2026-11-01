@@ -1,30 +1,33 @@
+import { lazy, Suspense } from "react";
 import { Switch, Route, Router as WouterRouter } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import { Toaster } from "@/components/ui/toaster";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 
-import NotFound from "@/pages/not-found";
+const NotFound = lazy(() => import("@/pages/not-found"));
 import Landing from "@/pages/Landing";
-import Panel from "@/pages/Panel";
-import BuscarCitas from "@/pages/BuscarCitas";
-import VerificarDecretoFlussi from "@/pages/VerificarDecretoFlussi";
-import DecretoFlussi2027 from "@/pages/DecretoFlussi2027";
+const Panel = lazy(() => import("@/pages/Panel"));
+const BuscarCitas = lazy(() => import("@/pages/BuscarCitas"));
+const VerificarDecretoFlussi = lazy(
+  () => import("@/pages/VerificarDecretoFlussi"),
+);
+const DecretoFlussi2027 = lazy(() => import("@/pages/DecretoFlussi2027"));
 
-import AvisoLegal from "@/pages/AvisoLegal";
-import Privacidad from "@/pages/Privacidad";
-import CookiesPage from "@/pages/Cookies";
+const AvisoLegal = lazy(() => import("@/pages/AvisoLegal"));
+const Privacidad = lazy(() => import("@/pages/Privacidad"));
+const CookiesPage = lazy(() => import("@/pages/Cookies"));
 
-import CheckoutSuccess from "@/pages/CheckoutSuccess";
-import CheckoutCancel from "@/pages/CheckoutCancel";
+const CheckoutSuccess = lazy(() => import("@/pages/CheckoutSuccess"));
+const CheckoutCancel = lazy(() => import("@/pages/CheckoutCancel"));
 
-import AuthCallback from "@/pages/AuthCallback";
-import Confirmar from "@/pages/Confirmar";
+const AuthCallback = lazy(() => import("@/pages/AuthCallback"));
+const Confirmar = lazy(() => import("@/pages/Confirmar"));
 
-import TrabajoMalta from "@/pages/TrabajoMalta";
-import EstudiarMalta2027 from "@/pages/EstudiarMalta2027";
+const TrabajoMalta = lazy(() => import("@/pages/TrabajoMalta"));
+const EstudiarMalta2027 = lazy(() => import("@/pages/EstudiarMalta2027"));
 
-import Contacto from "@/pages/Contacto";
+const Contacto = lazy(() => import("@/pages/Contacto"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -38,46 +41,29 @@ const queryClient = new QueryClient({
 function Router() {
   return (
     <Switch>
-
       {/* ======================================== */}
       {/* LANDING */}
       {/* ======================================== */}
 
-      <Route
-        path="/"
-        component={Landing}
-      />
-
+      <Route path="/" component={Landing} />
 
       {/* ======================================== */}
       {/* AUTENTICACIÓN */}
       {/* ======================================== */}
 
-      <Route
-        path="/auth/callback"
-        component={AuthCallback}
-      />
-
+      <Route path="/auth/callback" component={AuthCallback} />
 
       {/* ======================================== */}
       {/* PANEL */}
       {/* ======================================== */}
 
-      <Route
-        path="/panel"
-        component={Panel}
-      />
-
+      <Route path="/panel" component={Panel} />
 
       {/* ======================================== */}
       {/* CITAS */}
       {/* ======================================== */}
 
-      <Route
-        path="/buscar-citas"
-        component={BuscarCitas}
-      />
-
+      <Route path="/buscar-citas" component={BuscarCitas} />
 
       {/* ======================================== */}
       {/* DECRETO FLUSSI - VERIFICACIÓN */}
@@ -88,147 +74,98 @@ function Router() {
         component={VerificarDecretoFlussi}
       />
 
-
       {/* ======================================== */}
       {/* DECRETO FLUSSI 2027 */}
       {/* NUEVA PÁGINA */}
       {/* ======================================== */}
 
-      <Route
-        path="/decreto-flussi-2027"
-        component={DecretoFlussi2027}
-      />
-
+      <Route path="/decreto-flussi-2027" component={DecretoFlussi2027} />
 
       {/* ======================================== */}
       {/* TRABAJO EN MALTA */}
       {/* ======================================== */}
 
-      <Route
-        path="/trabajo-malta"
-        component={TrabajoMalta}
-      />
-
+      <Route path="/trabajo-malta" component={TrabajoMalta} />
 
       {/* ======================================== */}
       {/* ESTUDIAR EN MALTA 2027 */}
       {/* RUTA PRINCIPAL */}
       {/* ======================================== */}
 
-      <Route
-        path="/estudiar-en-malta-2027"
-        component={EstudiarMalta2027}
-      />
-
+      <Route path="/estudiar-en-malta-2027" component={EstudiarMalta2027} />
 
       {/* ======================================== */}
       {/* ESTUDIAR EN MALTA 2027 */}
       {/* RETORNO DESPUÉS DE STRIPE */}
       {/* ======================================== */}
 
-      <Route
-        path="/estudiar-malta-2027"
-        component={EstudiarMalta2027}
-      />
-
+      <Route path="/estudiar-malta-2027" component={EstudiarMalta2027} />
 
       {/* ======================================== */}
       {/* PÁGINAS LEGALES */}
       {/* ======================================== */}
 
-      <Route
-        path="/aviso-legal"
-        component={AvisoLegal}
-      />
+      <Route path="/aviso-legal" component={AvisoLegal} />
 
-      <Route
-        path="/privacidad"
-        component={Privacidad}
-      />
+      <Route path="/privacidad" component={Privacidad} />
 
-      <Route
-        path="/cookies"
-        component={CookiesPage}
-      />
-
+      <Route path="/cookies" component={CookiesPage} />
 
       {/* ======================================== */}
       {/* CONTACTO */}
       {/* ======================================== */}
 
-      <Route
-        path="/contacto"
-        component={Contacto}
-      />
-
+      <Route path="/contacto" component={Contacto} />
 
       {/* ======================================== */}
       {/* CHECKOUT */}
       {/* ======================================== */}
 
-      <Route
-        path="/checkout/success"
-        component={CheckoutSuccess}
-      />
+      <Route path="/checkout/success" component={CheckoutSuccess} />
 
-      <Route
-        path="/checkout/cancelado"
-        component={CheckoutCancel}
-      />
-
+      <Route path="/checkout/cancelado" component={CheckoutCancel} />
 
       {/* ======================================== */}
       {/* CONFIRMAR CITA */}
       {/* ======================================== */}
 
-      <Route
-        path="/confirmar-cita"
-        component={Confirmar}
-      />
-
+      <Route path="/confirmar-cita" component={Confirmar} />
 
       {/* ======================================== */}
       {/* 404 */}
       {/* ======================================== */}
 
-      <Route
-        component={NotFound}
-      />
-
+      <Route component={NotFound} />
     </Switch>
   );
 }
 
-
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-
       <LanguageProvider>
-
-        <div
-          translate="no"
-          className="notranslate"
-        >
-
-          <WouterRouter
-            base={import.meta.env.BASE_URL.replace(/\/$/, "")}
-          >
-
-            <Router />
-
+        <div translate="no" className="notranslate">
+          <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+            <Suspense
+              fallback={
+                <div
+                  role="status"
+                  aria-label="Loading"
+                  className="min-h-screen grid place-items-center text-primary"
+                >
+                  <span className="h-8 w-8 rounded-full border-2 border-current border-t-transparent animate-spin" />
+                </div>
+              }
+            >
+              <Router />
+            </Suspense>
           </WouterRouter>
 
-
           <Toaster />
-
         </div>
-
       </LanguageProvider>
-
     </QueryClientProvider>
   );
 }
-
 
 export default App;

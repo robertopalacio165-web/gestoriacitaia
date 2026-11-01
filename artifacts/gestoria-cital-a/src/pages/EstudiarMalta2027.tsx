@@ -406,7 +406,7 @@ export default function EstudiarMalta2027() {
 
       <Navbar />
 
-      <main className="flex-1 relative z-10 pt-16 pb-10">
+      <main id="main-content" className="service-page-2027 flex-1 relative z-10 pt-16 pb-10">
 
         <h1 className="text-xl font-display font-bold px-4 sm:px-6 py-3 max-w-7xl mx-auto w-full">
           {ui.title}
@@ -443,7 +443,7 @@ export default function EstudiarMalta2027() {
             </div>
           ) : (
 
-            <div className="rounded-[24px] border-2 border-yellow-500/60 bg-gradient-to-b from-[#0b0b0b] to-[#050505] p-4 sm:p-6 shadow-[0_0_35px_rgba(255,200,0,0.14)]">
+            <div className="application-card-2027 rounded-[24px] border-2 border-yellow-500/60 bg-gradient-to-b from-[#0b0b0b] to-[#050505] p-4 sm:p-6 shadow-[0_0_35px_rgba(255,200,0,0.14)]">
 
               {/* TÍTULO + BANDERA DE MALTA */}
               <div className="flex items-center justify-between gap-3 mb-5">

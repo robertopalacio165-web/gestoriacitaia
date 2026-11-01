@@ -573,7 +573,7 @@ carnetConducir: isMa ? "اختر رخصة القيادة" : isEn ? "Select drivi
           </div>
         ) : !confirmed && !formReady ? (
           <>
-            <div className="mt-3 mx-[-4px] rounded-[24px] border-2 border-yellow-500/60 bg-gradient-to-b from-[#0b0b0b] to-[#050505] px-3 py-3 shadow-[0_0_35px_rgba(255,200,0,0.18)]">
+            <div className="application-card-2027 mt-3 mx-[-4px] rounded-[24px] border-2 border-yellow-500/60 bg-gradient-to-b from-[#0b0b0b] to-[#050505] px-3 py-3 shadow-[0_0_35px_rgba(255,200,0,0.18)]">
               <div className="mb-3 grid grid-cols-[32px_1fr_32px] items-center gap-2">
                 <span />
                 <h2 className="text-center text-yellow-400 text-[18px] sm:text-[20px] font-black leading-tight">
@@ -2065,7 +2065,7 @@ export default function TrabajoMalta() {
 
       <Navbar />
 
-      <main className="flex-1 relative z-10 flex flex-col pt-16 pb-0">
+      <main id="main-content" className="service-page-2027 flex-1 relative z-10 flex flex-col pt-16 pb-0">
         <h1 className="text-xl font-display font-bold px-4 sm:px-6 py-3 max-w-7xl mx-auto w-full">
           {ui.pageTitle}
         </h1>

@@ -1106,7 +1106,7 @@ export default function BuscarCitas() {
 
       <Navbar />
 
-      <main className="flex-1 relative z-10 flex flex-col pt-16 pb-0">
+      <main id="main-content" className="service-page-2027 flex-1 relative z-10 flex flex-col pt-16 pb-0">
         <h1 className="text-xl font-display font-bold px-4 sm:px-6 py-3 max-w-7xl mx-auto w-full">
           {ui.pageTitle}
         </h1>
