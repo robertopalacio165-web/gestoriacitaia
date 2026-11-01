@@ -1,939 +1,545 @@
-import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import { Navbar } from "@/components/Navbar";
-import { AgentCard } from "@/components/AgentCard";
-import { Button } from "@/components/ui/button";
-import { LegalDisclaimer } from "@/components/LegalDisclaimer";
-import { useLang } from "@/contexts/LanguageContext";
 import {
-  CheckCircle2,
-  FileText,
-  Shield,
-  Bell,
+  ArrowUpRight,
   ArrowRight,
+  BriefcaseBusiness,
+  FileCheck2,
+  GraduationCap,
+  Globe2,
+  Check,
+  MessageCircle,
+  Plus,
 } from "lucide-react";
-import { Link, useLocation } from "wouter";
-import { supabase } from "@/lib/supabaseClient";
+import { Link } from "wouter";
+import { Navbar } from "@/components/Navbar";
+import { useLang } from "@/contexts/LanguageContext";
+import "@/styles/landing2027.css";
 
-type PlanItem = {
-  id: string;
-  price: string;
-  period: string;
-  color: string;
-  border: string;
-  btnClass: string;
-  badge: string | null;
-  free: boolean;
-  shadow: boolean;
-  features: string[];
-};
-
-function getPlans(t: (k: string) => string): PlanItem[] {
-  return [
-    {
-      id: "monthly",
-      price: "19,99€",
-      period: "30 días",
-      color: "from-yellow-900/30 to-yellow-950/20",
-      border: "border-yellow-400/40",
-      btnClass:
-        "bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/30",
-      badge: "MÁS POPULAR",
-      free: false,
-      shadow: true,
-      features: [
-        t("plan_malta_monthly_f1"),
-        t("plan_malta_monthly_f2"),
-        t("plan_malta_monthly_f3"),
-        t("plan_malta_monthly_f4"),
-        t("plan_malta_monthly_f5"),
+const copy = {
+  es: {
+    eyebrow: "TU PRÓXIMO PASO, MÁS CLARO",
+    title: "Un nuevo destino.",
+    accent: "Un buen comienzo.",
+    intro:
+      "Trabajo en Malta, oportunidades en Italia y revisión de documentos. Encuentra el servicio que necesitas y avanza con la información clara.",
+    explore: "Explorar servicios",
+    help: "Hablar con nosotros",
+    languages: "En español, darija e inglés",
+    online: "Gestión online",
+    country: "ESPAÑA · ITALIA · MALTA",
+    visual: "Tu próximo capítulo empieza aquí.",
+    visualSub: "Información, documentos y oportunidades en un mismo lugar.",
+    services: "ELIGE TU SIGUIENTE PASO",
+    servicesTitle: "¿Qué quieres hacer?",
+    servicesSub:
+      "Cada objetivo tiene su camino. Descubre qué incluye cada servicio antes de empezar.",
+    all: "Todos",
+    work: "Trabajo",
+    documents: "Documentos",
+    study: "Estudios",
+    details: "Ver servicio",
+    from: "Desde",
+    once: "Pago único",
+    consult: "Consultar opciones",
+    stepsLabel: "ASÍ DE SENCILLO",
+    stepsTitle: "De la primera duda al siguiente paso.",
+    steps: [
+      [
+        "Elige tu servicio",
+        "Consulta la información, el precio y lo que incluye.",
       ],
-    },
-  ];
-}
-
+      [
+        "Prepara tus datos",
+        "Completa el formulario y adjunta los documentos que se soliciten.",
+      ],
+      [
+        "Sigue el proceso",
+        "Revisa las indicaciones y el correo asociado a tu solicitud.",
+      ],
+    ],
+    faqTitle: "Resolvemos tus dudas.",
+    faqLabel: "ANTES DE EMPEZAR",
+    faqs: [
+      [
+        "¿Puedo utilizar la web en darija?",
+        "Sí. Puedes cambiar entre darija, español e inglés desde el selector de idioma. La versión en darija se muestra de derecha a izquierda.",
+      ],
+      [
+        "¿El servicio garantiza un empleo o un visado?",
+        "No. Consulta el alcance de cada servicio antes de contratar. Las decisiones de contratación y visados corresponden a las empresas y autoridades competentes.",
+      ],
+      [
+        "¿Dónde veo el precio y las condiciones?",
+        "En la página de cada servicio, antes del pago. Revisa el contenido incluido, los requisitos y las condiciones aplicables.",
+      ],
+      [
+        "¿Cómo puedo contactar?",
+        "Visita nuestra página de contacto o escribe a jobs@gestoriacitaia.com indicando el servicio sobre el que necesitas ayuda.",
+      ],
+    ],
+    contactTitle: "El siguiente paso empieza con una pregunta.",
+    contactText: "Cuéntanos qué necesitas y consulta las opciones disponibles.",
+    footer: "Información clara para nuevos comienzos.",
+    legal: "Aviso legal",
+    privacy: "Privacidad",
+    cookies: "Cookies",
+    contact: "Contacto",
+    notice:
+      "Servicio privado e independiente. No somos una administración pública. La información es orientativa y no sustituye asesoramiento legal profesional.",
+    cards: [
+      [
+        "Trabajo en Malta",
+        "Accede a las ofertas disponibles y conoce los datos de las empresas para preparar tu candidatura.",
+        "Ofertas y contactos",
+      ],
+      [
+        "Decreto Flussi 2027",
+        "Consulta los paquetes de ofertas de trabajo en Italia y elige la modalidad que encaja contigo.",
+        "Oportunidades en Italia",
+      ],
+      [
+        "Revisión de documentos",
+        "Solicita la revisión de tus documentos de Decreto Flussi y consulta el alcance del informe.",
+        "Documentación italiana",
+      ],
+      [
+        "Estudiar en Malta",
+        "Descubre el servicio de orientación para preparar tu próximo paso académico en Malta.",
+        "Estudios · 2027",
+      ],
+    ],
+  },
+  en: {
+    eyebrow: "YOUR NEXT STEP, MADE CLEAR",
+    title: "A new destination.",
+    accent: "A better beginning.",
+    intro:
+      "Work in Malta, opportunities in Italy and document reviews. Find the service you need and move forward with clear information.",
+    explore: "Explore services",
+    help: "Contact us",
+    languages: "Spanish, Darija and English",
+    online: "Online services",
+    country: "SPAIN · ITALY · MALTA",
+    visual: "Your next chapter starts here.",
+    visualSub: "Information, documents and opportunities in one place.",
+    services: "CHOOSE YOUR NEXT STEP",
+    servicesTitle: "What would you like to do?",
+    servicesSub:
+      "Every goal has its own path. Explore what each service includes before you start.",
+    all: "All",
+    work: "Work",
+    documents: "Documents",
+    study: "Study",
+    details: "View service",
+    from: "From",
+    once: "One-time payment",
+    consult: "Explore options",
+    stepsLabel: "HOW IT WORKS",
+    stepsTitle: "From your first question to your next step.",
+    steps: [
+      [
+        "Choose a service",
+        "Check the information, price and what is included.",
+      ],
+      [
+        "Prepare your details",
+        "Complete the form and attach any requested documents.",
+      ],
+      [
+        "Follow the process",
+        "Check the instructions and the email associated with your request.",
+      ],
+    ],
+    faqTitle: "Your questions, answered.",
+    faqLabel: "BEFORE YOU START",
+    faqs: [
+      [
+        "Can I use this website in Darija?",
+        "Yes. Switch between Darija, Spanish and English using the language selector. Darija is displayed from right to left.",
+      ],
+      [
+        "Does the service guarantee a job or a visa?",
+        "No. Check each service’s scope before purchasing. Hiring and visa decisions are made by employers and the relevant authorities.",
+      ],
+      [
+        "Where can I see prices and terms?",
+        "On each service page, before payment. Review the included content, requirements and applicable terms.",
+      ],
+      [
+        "How do I get in touch?",
+        "Visit our contact page or email jobs@gestoriacitaia.com and tell us which service you need help with.",
+      ],
+    ],
+    contactTitle: "Your next step starts with a question.",
+    contactText: "Tell us what you need and explore the available options.",
+    footer: "Clear information for new beginnings.",
+    legal: "Legal notice",
+    privacy: "Privacy",
+    cookies: "Cookies",
+    contact: "Contact",
+    notice:
+      "An independent private service, not a public authority. Information is for guidance and does not replace professional legal advice.",
+    cards: [
+      [
+        "Work in Malta",
+        "Access available opportunities and company details to prepare your application.",
+        "Jobs and contacts",
+      ],
+      [
+        "Decreto Flussi 2027",
+        "Explore job offer packages in Italy and choose the option that suits you.",
+        "Opportunities in Italy",
+      ],
+      [
+        "Document review",
+        "Request a review of your Decreto Flussi documents and check what the report covers.",
+        "Italian documents",
+      ],
+      [
+        "Study in Malta",
+        "Explore the guidance service to prepare your next academic step in Malta.",
+        "Study · 2027",
+      ],
+    ],
+  },
+  darija: {
+    eyebrow: "الخطوة الجاية ديالك، بوضوح",
+    title: "وجهة جديدة.",
+    accent: "بداية مزيانة.",
+    intro:
+      "الخدمة فمالطا، فرص فإيطاليا ومراجعة الوثائق. لقى الخدمة اللي محتاج، وفهم التفاصيل قبل ما تبدا.",
+    explore: "شوف الخدمات",
+    help: "تواصل معانا",
+    languages: "بالدارجة، الإسبانية والإنجليزية",
+    online: "خدمات أونلاين",
+    country: "إسبانيا · إيطاليا · مالطا",
+    visual: "البداية الجديدة ديالك كتبدا من هنا.",
+    visualSub: "المعلومات، الوثائق والفرص، مجموعين فبلاصة وحدة.",
+    services: "اختار الخطوة الجاية ديالك",
+    servicesTitle: "شنو باغي تدير؟",
+    servicesSub: "كل هدف عندو طريق. شوف شنو داخل فكل خدمة قبل ما تبدا.",
+    all: "الكل",
+    work: "الخدمة",
+    documents: "الوثائق",
+    study: "القراية",
+    details: "شوف التفاصيل",
+    from: "ابتداءً من",
+    once: "خلاص مرة وحدة",
+    consult: "شوف الاختيارات",
+    stepsLabel: "كيفاش كتبدا",
+    stepsTitle: "من أول سؤال، للخطوة الجاية.",
+    steps: [
+      ["اختار الخدمة", "قرا المعلومات والثمن وشنو داخل فالخدمة."],
+      ["وجد المعلومات ديالك", "عمر الفورميلير وزيد الوثائق اللي مطلوبين."],
+      ["تبع المراحل", "شوف التعليمات وراقب الإيميل اللي سجلتي به."],
+    ],
+    faqTitle: "أجوبة على الأسئلة ديالك.",
+    faqLabel: "قبل ما تبدا",
+    faqs: [
+      [
+        "واش نقدر نستعمل الموقع بالدارجة؟",
+        "إييه. تقدر تبدل بين الدارجة والإسبانية والإنجليزية من اختيار اللغة. الدارجة كتبان من اليمين لليسار.",
+      ],
+      [
+        "واش الخدمة كتضمن ليا عقد ولا فيزا؟",
+        "لا. قرا شنو كتقدم كل خدمة قبل ما تخلص. قرار التشغيل والفيزا كيبقى عند الشركات والجهات المختصة.",
+      ],
+      [
+        "فين نشوف الثمن والشروط؟",
+        "فصفحة كل خدمة، قبل الخلاص. شوف شنو داخل فالخدمة، الشروط والوثائق المطلوبة.",
+      ],
+      [
+        "كيفاش نتواصل معاكم؟",
+        "دخل لصفحة التواصل ولا صيفط ل jobs@gestoriacitaia.com ووضح لينا شنو هي الخدمة اللي محتاج فيها المساعدة.",
+      ],
+    ],
+    contactTitle: "الخطوة الجاية كتبدا بسؤال.",
+    contactText: "قول لينا شنو محتاج وشوف الاختيارات المتاحة.",
+    footer: "معلومات واضحة لبداية جديدة.",
+    legal: "إشعار قانوني",
+    privacy: "الخصوصية",
+    cookies: "الكوكيز",
+    contact: "التواصل",
+    notice:
+      "خدمة خاصة ومستقلة، ماشي إدارة عمومية. المعلومات للتوجيه وما كتعوضش استشارة قانونية مهنية.",
+    cards: [
+      [
+        "الخدمة فمالطا",
+        "شوف عروض الخدمة المتاحة ومعلومات الشركات باش توجد الترشيح ديالك.",
+        "عروض ومعلومات التواصل",
+      ],
+      [
+        "Decreto Flussi 2027",
+        "شوف باقات عروض الخدمة فإيطاليا واختار اللي مناسب ليك.",
+        "فرص فإيطاليا",
+      ],
+      [
+        "مراجعة الوثائق",
+        "طلب مراجعة وثائق ديكريتو فلوسي ديالك وشوف شنو كيشمل التقرير.",
+        "الوثائق الإيطالية",
+      ],
+      [
+        "القراية فمالطا",
+        "تعرف على خدمة التوجيه باش توجد الخطوة الجاية ديالك للقراية فمالطا.",
+        "القراية · 2027",
+      ],
+    ],
+  },
+};
+import { useState } from "react";
+const services = [
+  {
+    href: "/trabajo-malta",
+    flag: "🇲🇹",
+    category: "work",
+    price: "19,99 €",
+    icon: BriefcaseBusiness,
+    tone: "mint",
+  },
+  {
+    href: "/decreto-flussi-2027",
+    flag: "🇮🇹",
+    category: "work",
+    price: "14,99 €",
+    icon: Globe2,
+    tone: "blue",
+  },
+  {
+    href: "/verificar-decreto-flussi",
+    flag: "🇮🇹",
+    category: "documents",
+    price: null,
+    icon: FileCheck2,
+    tone: "sand",
+  },
+  {
+    href: "/estudiar-en-malta-2027",
+    flag: "🇲🇹",
+    category: "study",
+    price: "14,99 €",
+    icon: GraduationCap,
+    tone: "lilac",
+  },
+];
 export default function Landing() {
-  const [, setLocation] = useLocation();
-  const { t } = useLang();
-
-  /* ============================================================
-     🟡 CONTADOR REAL DE USUARIOS - SUPABASE
-     ============================================================ */
-
-  const [registeredUsers, setRegisteredUsers] = useState(0);
-
-  useEffect(() => {
-    let channel: any = null;
-    let mounted = true;
-
-    const loadRegisteredUsers = async () => {
-      try {
-        const { data, error } = await supabase.rpc(
-          "get_registered_users_count"
-        );
-
-        if (!error && mounted) {
-          setRegisteredUsers(Number(data) || 0);
-          return;
-        }
-
-        /*
-         * Fallback por si la función RPC todavía no existe.
-         * No rompe la página.
-         */
-        const { count, error: countError } = await supabase
-          .from("profiles")
-          .select("*", {
-            count: "exact",
-            head: true,
-          });
-
-        if (!countError && mounted) {
-          setRegisteredUsers(count || 0);
-        }
-
-        if (error && countError) {
-          console.error(
-            "Error contando usuarios:",
-            error,
-            countError
-          );
-        }
-      } catch (error) {
-        console.error("Error contador usuarios:", error);
-      }
-    };
-
-    loadRegisteredUsers();
-
-    /* ============================================================
-       🔴 SUPABASE REALTIME
-       Detecta nuevos registros en profiles
-       ============================================================ */
-
-    channel = supabase
-      .channel("live-registered-users")
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "profiles",
-        },
-        () => {
-          if (mounted) {
-            setRegisteredUsers((current) => current + 1);
-          }
-        }
-      )
-      .subscribe((status) => {
-        console.log(
-          "Realtime contador usuarios:",
-          status
-        );
-      });
-
-    return () => {
-      mounted = false;
-
-      if (channel) {
-        supabase.removeChannel(channel);
-      }
-    };
-  }, []);
-
-  /* ============================================================
-     🌍 IDIOMAS
-     Darija / Español / English
-     ============================================================ */
-
-  const getLiveLanguage = () => {
-    if (typeof document === "undefined") {
-      return "es";
-    }
-
-    const htmlLang =
-      document.documentElement.lang?.toLowerCase() || "";
-
-    const storedLanguage =
-      localStorage.getItem("language")?.toLowerCase() ||
-      localStorage.getItem("lang")?.toLowerCase() ||
-      "";
-
-    const language =
-      htmlLang || storedLanguage || navigator.language?.toLowerCase() || "es";
-
-    if (
-      language.startsWith("ar") ||
-      language.startsWith("ma") ||
-      language.startsWith("darija")
-    ) {
-      return "darija";
-    }
-
-    if (
-      language.startsWith("en") ||
-      language.startsWith("uk") ||
-      language.startsWith("us")
-    ) {
-      return "en";
-    }
-
-    return "es";
-  };
-
-  const liveLanguage = getLiveLanguage();
-
-  const liveTexts = {
-    darija: {
-      live: "مباشر",
-      title: "شخص مسجل ف GestoriaCitaIA",
-      realtime: "تحديث فالوقت الحقيقي",
-    },
-
-    es: {
-      live: "EN DIRECTO",
-      title: "Personas registradas en GestoriaCitaIA",
-      realtime: "Actualización en tiempo real",
-    },
-
-    en: {
-      live: "LIVE",
-      title: "People registered on GestoriaCitaIA",
-      realtime: "Real-time update",
-    },
-  };
-
-  const liveText =
-    liveTexts[liveLanguage as keyof typeof liveTexts] ||
-    liveTexts.es;
-
-  /* 🇮🇹 TEXTO DEL BOTÓN DECRETO FLUSSI — 3 IDIOMAS */
-  const flussiButtonText =
-    liveLanguage === "darija"
-      ? "ديكريتو فلوسي 2027"
-      : liveLanguage === "en"
-        ? "DECRETO FLUSSI 2027"
-        : "DECRETO FLUSSI 2027";
-
-  /* ============================================================ */
-
-  const tr = (key: string, fallback: string) => {
-    const value = t(key);
-    return value && value !== key ? value : fallback;
-  };
-
-  const goWithGoogleAuth = async (targetPath: string) => {
-    try {
-      const {
-        data: { user },
-        error: userError,
-      } = await supabase.auth.getUser();
-
-      if (userError) {
-        console.error("auth.getUser error:", userError);
-      }
-
-      if (user) {
-        window.location.href = targetPath;
-        return;
-      }
-
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo: `${window.location.origin}${targetPath}`,
-        },
-      });
-
-      if (error) {
-        console.error("Google login error:", error);
-        alert(
-          tr(
-            "google_login_error",
-            "Error al iniciar sesión con Google"
-          )
-        );
-      }
-    } catch (error) {
-      console.error("goWithGoogleAuth error:", error);
-      alert(
-        tr(
-          "google_login_failed",
-          "No se pudo iniciar sesión con Google"
-        )
-      );
-    }
-  };
-
-  const PLANS = getPlans(t);
-
-  // ✅ Redirige directamente a la página de planes de Malta
-  const handleMaltaPlanClick = () => {
-    setLocation("/trabajo-malta");
-  };
-
+  const { lang, isRTL } = useLang();
+  const c = copy[lang];
+  const [filter, setFilter] = useState("all");
   return (
-    <div className="min-h-screen bg-background text-foreground relative overflow-x-hidden">
+    <div className="landing-2027" dir={isRTL ? "rtl" : "ltr"}>
       <Navbar />
-
-      <main className="relative z-10 pt-24 pb-20 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto">
-        <motion.div
-          className="text-center mb-10"
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-        >
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/25 text-primary text-xs font-semibold mb-5">
-            <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-            {t("hero_badge")}
+      <main id="main-content">
+        <section className="new-hero shell">
+          <div className="hero-copy">
+            <p className="eyebrow">
+              <span className="status-dot" />
+              {c.eyebrow}
+            </p>
+            <h1>
+              {c.title}
+              <br />
+              <span>{c.accent}</span>
+            </h1>
+            <p className="hero-intro">{c.intro}</p>
+            <div className="hero-actions">
+              <a className="action-primary" href="#services">
+                {c.explore}
+                <ArrowRight size={19} />
+              </a>
+              <Link className="action-text" href="/contacto">
+                {c.help}
+                <ArrowUpRight size={18} />
+              </Link>
+            </div>
+            <div className="hero-meta">
+              <span>
+                <Globe2 size={16} />
+                {c.languages}
+              </span>
+              <span>
+                <Check size={16} />
+                {c.online}
+              </span>
+            </div>
           </div>
-
-          {/* =====================================================
-              🔥 NUEVO TITULAR — ESPAÑOL / DARIJA / ENGLISH
-              ===================================================== */}
-
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold font-display leading-tight mb-4 max-w-3xl mx-auto">
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-white to-white/80">
-              {t("hero_title_1")}{" "}
-            </span>
-
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-green-400 to-blue-400">
-              {t("hero_title_2")}
-            </span>
-          </h1>
-
-          <p className="text-sm sm:text-base text-muted-foreground max-w-2xl mx-auto mb-6 leading-relaxed">
-            {t("hero_sub")}
-          </p>
-
-          <div className="flex flex-col sm:flex-row flex-wrap justify-center items-stretch gap-3 mb-5 max-w-2xl mx-auto">
-
-            {/* 🇮🇹 BOTÓN PRINCIPAL — DECRETO FLUSSI 2027 */}
-            <Button
-              className="w-full sm:w-auto rounded-full px-8 py-4 min-h-[62px]
-              bg-gradient-to-r from-[#009246] via-white to-[#CE2B37]
-              hover:scale-[1.04]
-              hover:shadow-[0_0_35px_rgba(206,43,55,0.35)]
-              transition-all duration-300
-              text-black text-lg sm:text-xl font-black
-              shadow-[0_0_25px_rgba(0,146,70,0.35)]
-              border-2 border-[#009246]
-              tracking-wide"
-              onClick={() =>
-                (window.location.href = "/decreto-flussi-2027")
-              }
-            >
-              <img
-                src="https://flagcdn.com/w40/it.png"
-                alt="Italia"
-                className="w-7 h-5 object-cover rounded-sm mr-2"
-              />
-              {flussiButtonText}
-              <ArrowRight className="w-5 h-5 ml-2" />
-            </Button>
-
-  {/* 🇮🇹 BOTÓN VERIFICACIÓN DE DOCUMENTOS — 3 IDIOMAS */}
-<Button
-  className="
-    w-full sm:w-auto
-    rounded-full
-    px-7 py-3
-    min-h-[52px]
-
-    bg-gradient-to-br
-    from-[#009246]
-    via-[#ffffff]
-    to-[#CE2B37]
-
-    hover:scale-[1.03]
-    hover:shadow-[0_0_28px_rgba(0,146,70,0.35)]
-
-    transition-all duration-300
-
-    text-black
-    text-base sm:text-lg
-    font-extrabold
-
-    border-2
-    border-[#009246]
-
-    shadow-[0_6px_22px_rgba(0,146,70,0.25)]
-
-    relative
-    overflow-hidden
-  "
-  onClick={() =>
-    (window.location.href = "/verificar-decreto-flussi")
-  }
->
-  <span className="flex items-center justify-center gap-2">
-    <img
-      src="https://flagcdn.com/w40/it.png"
-      alt="Italia"
-      className="w-6 h-4 object-cover rounded-sm"
-    />
-
-    <span>
-      {liveLanguage === "darija"
-        ? "التحقق من الوثائق"
-        : liveLanguage === "en"
-          ? "DOCUMENT VERIFICATION"
-          : "VERIFICAZIONE DI DOCUMENTI"}
-    </span>
-
-    <ArrowRight className="w-4 h-4 ml-1" />
-  </span>
-</Button>
-
-            {/* 🇲🇹 BOTÓN ESTUDIAR EN MALTA 2027 */}
-            <Button
-              className="w-full sm:w-auto rounded-full px-7 py-3 min-h-[52px]
-              bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500
-              hover:scale-[1.02] transition-all duration-300
-              text-black font-bold shadow-xl shadow-orange-500/30 border-0"
-              onClick={() =>
-                (window.location.href =
-                  "/estudiar-en-malta-2027")
-              }
-            >
-              <span className="inline-flex h-4 w-6 shrink-0 overflow-hidden rounded-[2px] border border-white/30 shadow-sm align-middle" aria-label="Malta"><svg viewBox="0 0 24 16" className="h-full w-full" role="img" aria-hidden="true"><rect width="12" height="16" fill="#fff"/><rect x="12" width="12" height="16" fill="#cf142b"/><path d="M3 2.2h4.1v4.1H3z" fill="#fff" stroke="#b5b5b5" strokeWidth=".35"/><path d="M5.05 2.8v2.9M3.6 4.25h2.9" stroke="#cf142b" strokeWidth=".65"/></svg></span> {t("hero_btn_study_malta")}
-              <ArrowRight className="w-4 h-4 ml-1" />
-            </Button>
-
-            {/* 🇲🇹 BOTÓN TRABAJO EN MALTA */}
-            <Button
-              className="w-full sm:w-auto rounded-full px-8 py-4 min-h-[60px]
-              bg-gradient-to-r from-green-500 via-emerald-500 to-green-600
-              hover:scale-[1.05] hover:shadow-2xl hover:shadow-green-500/50
-              transition-all duration-300
-              text-white text-xl font-extrabold
-              shadow-2xl shadow-green-500/40
-              border-0
-              tracking-wide"
-              onClick={() =>
-                (window.location.href = "/trabajo-malta")
-              }
-            >
-              <span className="inline-flex h-4 w-6 shrink-0 overflow-hidden rounded-[2px] border border-white/30 shadow-sm align-middle" aria-label="Malta"><svg viewBox="0 0 24 16" className="h-full w-full" role="img" aria-hidden="true"><rect width="12" height="16" fill="#fff"/><rect x="12" width="12" height="16" fill="#cf142b"/><path d="M3 2.2h4.1v4.1H3z" fill="#fff" stroke="#b5b5b5" strokeWidth=".35"/><path d="M5.05 2.8v2.9M3.6 4.25h2.9" stroke="#cf142b" strokeWidth=".65"/></svg></span> {t("hero_btn_malta")}
-              <ArrowRight className="w-5 h-5 ml-2" />
-            </Button>
+          <div className="destination-art">
+            <div className="art-top">
+              <span>
+                GESTORIA<span className="text-emerald-300">CITA</span>IA
+              </span>
+              <Globe2 size={23} />
+            </div>
+            <div className="orbital" aria-hidden="true">
+              <div className="orbit orbit-one" />
+              <div className="orbit orbit-two" />
+              <div className="orbit orbit-three" />
+              <div className="globe-core">
+                <Globe2 strokeWidth={0.65} />
+              </div>
+              <span className="country-pin pin-it">
+                🇮🇹 <b>Italia</b>
+              </span>
+              <span className="country-pin pin-mt">
+                🇲🇹 <b>Malta</b>
+              </span>
+              <span className="country-pin pin-es">
+                🇪🇸 <b>España</b>
+              </span>
+              <span className="map-dot dot-one" />
+              <span className="map-dot dot-two" />
+            </div>
+            <div className="art-caption">
+              <p>{c.country}</p>
+              <h2>{c.visual}</h2>
+              <span>{c.visualSub}</span>
+            </div>
+            <div className="art-bottom">
+              <span dir="ltr">ES / دارجة / EN</span>
+              <span>→</span>
+            </div>
           </div>
-
-          <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
-            <div className="flex -space-x-2">
-              {["🇲🇦", "🇸🇳", "🇩🇿", "🇨🇴", "🇵🇰"].map(
-                (flag, i) => (
-                  <span
-                    key={i}
-                    className="w-6 h-6 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-[10px]"
-                  >
-                    {flag}
-                  </span>
-                )
+        </section>
+        <section className="services-section" id="services">
+          <div className="shell">
+            <div className="section-heading">
+              <div>
+                <p className="eyebrow">{c.services}</p>
+                <h2>{c.servicesTitle}</h2>
+              </div>
+              <p>{c.servicesSub}</p>
+            </div>
+            <div
+              className="service-filters"
+              role="group"
+              aria-label={c.servicesTitle}
+            >
+              {(["all", "work", "documents", "study"] as const).map((f) => (
+                <button
+                  key={f}
+                  aria-pressed={filter === f}
+                  onClick={() => setFilter(f)}
+                >
+                  {c[f]}
+                </button>
+              ))}
+            </div>
+            <div className="service-grid">
+              {services.map(
+                (s, i) =>
+                  (filter === "all" || filter === s.category) && (
+                    <article
+                      key={s.href}
+                      className={`service-card tone-${s.tone}`}
+                    >
+                      <div className="service-card-top">
+                        <span className="service-icon">
+                          <s.icon size={25} strokeWidth={1.6} />
+                        </span>
+                        <span className="service-flag" aria-hidden="true">
+                          {s.flag}
+                        </span>
+                      </div>
+                      <p className="service-kicker">{c.cards[i][2]}</p>
+                      <h3>{c.cards[i][0]}</h3>
+                      <p className="service-description">{c.cards[i][1]}</p>
+                      <div className="service-card-bottom">
+                        <div>
+                          {s.price ? (
+                            <>
+                              <small>{i === 1 ? c.from : c.once}</small>
+                              <strong dir="ltr">{s.price}</strong>
+                            </>
+                          ) : (
+                            <small>{c.consult}</small>
+                          )}
+                        </div>
+                        <Link
+                          href={s.href}
+                          aria-label={`${c.details}: ${c.cards[i][0]}`}
+                          className="service-link"
+                        >
+                          <ArrowUpRight size={22} />
+                        </Link>
+                      </div>
+                      <Link href={s.href} className="service-detail">
+                        {c.details}
+                        <ArrowRight size={15} />
+                      </Link>
+                    </article>
+                  ),
               )}
             </div>
-
-            <span>{t("hero_trust")}</span>
           </div>
-        </motion.div>
-
-        <motion.div
-          className="grid grid-cols-2 gap-4 mb-10 max-w-2xl mx-auto"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-        >
-          <AgentCard
-            name="Soufiane"
-            imagePath={`${import.meta.env.BASE_URL}images/soufiane.png`}
-            delay={0.1}
-          />
-
-          <AgentCard
-            name="Sara"
-            imagePath={`${import.meta.env.BASE_URL}images/sara.png`}
-            delay={0.2}
-          />
-        </motion.div>
-
-        <motion.div
-          className="flex flex-wrap justify-center gap-x-8 gap-y-2 mb-12"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.4 }}
-        >
-          {[t("feat1"), t("feat2"), t("feat3"), t("feat4")].map(
-            (f, i) => (
-              <div
-                key={i}
-                className="flex items-center gap-2 text-white/75 text-sm"
-              >
-                <CheckCircle2 className="w-4 h-4 text-accent shrink-0 mt-0.5" />
-                <span>{f}</span>
-              </div>
-            )
-          )}
-        </motion.div>
-
-        {/* =====================================================
-            🖼️ FOTO GRANDE MALTA
-           ===================================================== */}
-
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          className="mb-8"
-        >
-      <div className="relative rounded-2xl overflow-hidden glass-panel aspect-video max-w-2xl mx-auto border border-white/10 shadow-2xl shadow-primary/10">
-  <img
-    src="/video12-thumb.png"
-    alt="GestoriaCitaIA"
-    className="w-full h-full object-cover"
-  />
-</div>
-        </motion.div>
-
-        {/* =====================================================
-            🟡 CONTADOR DE USUARIOS
-            COMPACTO / HORIZONTAL / RESPONSIVE
-           ===================================================== */}
-
-        {/* 🟡 CONTADOR DE USUARIOS — DISEÑO PREMIUM */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.4 }}
-          className="mb-10 w-full max-w-3xl mx-auto"
-        >
-          <div
-            className="
-              relative
-              w-full
-              min-h-[105px]
-              sm:min-h-[115px]
-              rounded-2xl
-              border-2 border-yellow-400
-              bg-[#101010]
-              shadow-[0_0_30px_rgba(250,204,21,0.16)]
-              overflow-hidden
-            "
-          >
-            <div
-              className="
-                flex items-center
-                justify-center
-                w-full h-full
-                px-4 sm:px-8
-                py-4
-                gap-4 sm:gap-7
-              "
-            >
-              {/* 🟡 ESTADO EN DIRECTO */}
-              <div className="flex flex-col items-center justify-center shrink-0">
-                <div className="flex items-center gap-1.5">
-                  <span
-                    className="
-                      w-2.5 h-2.5
-                      rounded-full
-                      bg-yellow-400
-                      animate-pulse
-                      shadow-[0_0_12px_rgba(250,204,21,1)]
-                    "
-                  />
-
-                  <span
-                    className="
-                      text-yellow-400
-                      text-[9px]
-                      sm:text-[11px]
-                      font-extrabold
-                      uppercase
-                    "
-                  >
-                    {t("live_registered_live")}
-                  </span>
+        </section>
+        <section className="steps-section shell">
+          <div>
+            <p className="eyebrow">{c.stepsLabel}</p>
+            <h2>{c.stepsTitle}</h2>
+            <Link href="/contacto" className="action-text">
+              {c.help}
+              <ArrowUpRight size={18} />
+            </Link>
+          </div>
+          <ol>
+            {c.steps.map(([title, body], i) => (
+              <li key={title}>
+                <span className="step-number">0{i + 1}</span>
+                <div>
+                  <h3>{title}</h3>
+                  <p>{body}</p>
                 </div>
-              </div>
-
-              {/* 👥 USUARIOS + NÚMERO */}
-              <div className="flex flex-col items-center justify-center shrink-0">
-                <div className="flex items-center gap-2 sm:gap-3">
-                  {/* ICONO */}
-                  <svg
-                    viewBox="0 0 64 64"
-                    className="
-                      w-9 h-9
-                      sm:w-11 sm:h-11
-                      text-yellow-400
-                      fill-yellow-400
-                      drop-shadow-[0_0_8px_rgba(250,204,21,0.35)]
-                    "
-                  >
-                    <circle cx="32" cy="20" r="9" />
-                    <path d="M14 52c0-10 7-17 18-17s18 7 18 17H14z" />
-                    <circle cx="13" cy="25" r="6" />
-                    <path d="M3 48c1-8 5-13 12-13 4 0 7 1 9 4-7 2-11 6-12 13H3z" />
-                    <circle cx="51" cy="25" r="6" />
-                    <path d="M61 48c-1-8-5-13-12-13-4 0-7 1-9 4 7 2 11 6 12 13h9z" />
-                  </svg>
-
-                  {/* NÚMERO */}
-                  <span
-                    className="
-                      text-yellow-400
-                      text-4xl
-                      sm:text-5xl
-                      font-black
-                      leading-none
-                      tracking-tight
-                      tabular-nums
-                      drop-shadow-[0_0_10px_rgba(250,204,21,0.25)]
-                    "
-                  >
-                    {registeredUsers.toLocaleString(
-                      liveLanguage === "en" ? "en-US" : "es-ES"
-                    )}
-                  </span>
-                </div>
-
-                {/* TEXTO DE USUARIOS */}
-                <span
-                  className="
-                    mt-2
-                    text-white
-                    text-[10px]
-                    sm:text-xs
-                    font-bold
-                    text-center
-                    whitespace-nowrap
-                  "
-                >
-                  {t("live_registered_title")}
-                </span>
-              </div>
-
-              {/* SEPARADOR */}
-              <div
-                className="
-                  h-14
-                  sm:h-16
-                  w-px
-                  bg-yellow-400/25
-                  shrink-0
-                "
-              />
-
-              {/* 📈 ACTUALIZACIÓN */}
-              <div className="flex flex-col items-center justify-center text-center shrink-0">
-                <svg
-                  viewBox="0 0 24 24"
-                  className="
-                    w-7 h-7
-                    sm:w-8 sm:h-8
-                    text-white/80
-                    mb-1
-                  "
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.7"
-                >
-                  <path d="M4 19V5" />
-                  <path d="M4 19h16" />
-                  <path d="M7 15l4-4 3 2 5-6" />
-                  <path d="M15 7h4v4" />
-                </svg>
-
-                <span
-                  className="
-                    text-yellow-400
-                    text-[9px]
-                    sm:text-[10px]
-                    font-bold
-                    leading-tight
-                    max-w-[85px]
-                  "
-                >
-                  {t("live_registered_realtime")}
-                </span>
-              </div>
-            </div>
+                <Check size={18} />
+              </li>
+            ))}
+          </ol>
+        </section>
+        <section className="faq-section shell">
+          <div>
+            <p className="eyebrow">{c.faqLabel}</p>
+            <h2>{c.faqTitle}</h2>
           </div>
-        </motion.div>
-
-        {/* =====================================================
-            PLANES
-           ===================================================== */}
-
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="mb-16"
-        >
-          <div className="text-center mb-10">
-            <h2 className="text-2xl sm:text-3xl font-display font-bold text-white mb-2">
-              {t("plans_title")}
-            </h2>
-
-            <p className="text-sm text-muted-foreground">
-              {t("plans_sub")}
-            </p>
+          <div>
+            {c.faqs.map(([q, a]) => (
+              <details key={q}>
+                <summary>
+                  {q}
+                  <Plus size={20} />
+                </summary>
+                <p>{a}</p>
+              </details>
+            ))}
           </div>
-
-          <div className="grid grid-cols-1 gap-4 max-w-xl mx-auto items-stretch">
-            {PLANS.map((plan) => {
-              const nameKey = "plan_malta_monthly_title";
-
-              return (
-                <div
-                  key={plan.id}
-                  className={`relative rounded-2xl border ${plan.border} bg-gradient-to-b ${plan.color} backdrop-blur-sm p-5 flex flex-col`}
-                  style={{
-                    boxShadow: plan.shadow
-                      ? "0 0 50px -10px hsl(142,71%,45%,0.30)"
-                      : undefined,
-                  }}
-                >
-                  {plan.badge && (
-                    <div className="absolute top-0 right-0 overflow-hidden w-20 h-20">
-                      <div className="absolute top-3 right-[-20px] w-24 text-center bg-primary text-white text-[10px] font-bold py-1 rotate-45 shadow-sm">
-                        {t("plan_popular")}
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="mb-5">
-                    <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-3">
-                      {t(nameKey)}
-                    </p>
-
-                    <div className="flex items-end gap-1 mb-1">
-                      <span className="text-4xl font-display font-black text-white">
-                        {plan.price}
-                      </span>
-
-                      <span className="text-sm text-muted-foreground mb-1">
-                        {plan.period}
-                      </span>
-                    </div>
-
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {t("plan_malta_monthly_subtitle")}
-                    </p>
-                  </div>
-
-                  <ul className="flex-1 space-y-2.5 mb-6">
-                    {plan.features.map((f, i) => (
-                      <li
-                        key={i}
-                        className="flex items-start gap-2.5 text-sm text-white/80"
-                      >
-                        <CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-                        {f}
-                      </li>
-                    ))}
-                  </ul>
-
-                  {/* ✅ BOTÓN */}
-                  <button
-                    onClick={handleMaltaPlanClick}
-                    className={`w-full py-2.5 rounded-xl text-sm font-bold uppercase tracking-wider transition-all ${plan.btnClass}`}
-                    type="button"
-                  >
-                    {t("plan_malta_monthly_button")}
-                  </button>
-                </div>
-              );
-            })}
+        </section>
+        <section className="contact-banner shell">
+          <div>
+            <MessageCircle size={28} />
+            <h2>{c.contactTitle}</h2>
+            <p>{c.contactText}</p>
           </div>
-        </motion.div>
-
-        {/* =====================================================
-            SERVICIOS SARA
-           ===================================================== */}
-
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="mb-16"
-        >
-          <div className="text-center mb-8">
-            <h2 className="text-2xl sm:text-3xl font-display font-bold text-white mb-2">
-              {t("sara_services_title")}
-            </h2>
-
-            <p className="text-sm text-muted-foreground">
-              {t("sara_services_sub")}
-            </p>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-4xl mx-auto">
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="glass-panel border border-yellow-500/20 rounded-xl p-4 flex flex-col items-center gap-3 text-center bg-yellow-500/5"
-            >
-              <div className="w-12 h-12 rounded-xl bg-yellow-500/20 flex items-center justify-center">
-                <FileText className="w-6 h-6 text-yellow-400" />
-              </div>
-
-              <span className="text-xs font-medium text-white/80 leading-tight">
-                {t("sara_service_1")}
-              </span>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="glass-panel border border-green-500/20 rounded-xl p-4 flex flex-col items-center gap-3 text-center bg-green-500/5"
-            >
-              <div className="w-12 h-12 rounded-xl bg-green-500/20 flex items-center justify-center">
-                <CheckCircle2 className="w-6 h-6 text-green-400" />
-              </div>
-
-              <span className="text-xs font-medium text-white/80 leading-tight">
-                {t("sara_service_2")}
-              </span>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="glass-panel border border-blue-500/20 rounded-xl p-4 flex flex-col items-center gap-3 text-center bg-blue-500/5"
-            >
-              <div className="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center">
-                <Shield className="w-6 h-6 text-blue-400" />
-              </div>
-
-              <span className="text-xs font-medium text-white/80 leading-tight">
-                {t("sara_service_3")}
-              </span>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="glass-panel border border-purple-500/20 rounded-xl p-4 flex flex-col items-center gap-3 text-center bg-purple-500/5"
-            >
-              <div className="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center">
-                <Bell className="w-6 h-6 text-purple-400" />
-              </div>
-
-              <span className="text-xs font-medium text-white/80 leading-tight">
-                {t("sara_service_4")}
-              </span>
-            </motion.div>
-          </div>
-        </motion.div>
+          <Link className="action-primary" href="/contacto">
+            {c.help}
+            <ArrowUpRight size={19} />
+          </Link>
+        </section>
       </main>
-
-      {/* =====================================================
-          PAGOS
-         ===================================================== */}
-
-      <section className="relative z-10 border-t border-white/[0.06] py-5 px-4">
-        <div className="max-w-4xl mx-auto flex flex-col items-center gap-4">
-          <p className="text-[11px] text-muted-foreground font-medium tracking-wide uppercase">
-            {tr(
-              "secure_payment_methods",
-              "Pago seguro · Métodos aceptados"
-            )}
-          </p>
-
-          <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
-            <svg
-              width="12"
-              height="12"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <rect
-                x="3"
-                y="11"
-                width="18"
-                height="11"
-                rx="2"
-              />
-
-              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-            </svg>
-
-            {tr(
-              "ssl_payment_text",
-              "Pagos procesados con cifrado SSL 256-bit · PCI DSS Compliant"
-            )}
+      <footer className="new-footer shell">
+        <div className="footer-top">
+          <div>
+            <Link href="/" className="brand-word" dir="ltr">
+              Gestoria<span>Cita</span>IA
+            </Link>
+            <p>{c.footer}</p>
           </div>
+          <nav aria-label={c.legal}>
+            <Link href="/aviso-legal">{c.legal}</Link>
+            <Link href="/privacidad">{c.privacy}</Link>
+            <Link href="/cookies">{c.cookies}</Link>
+            <Link href="/contacto">{c.contact}</Link>
+          </nav>
         </div>
-      </section>
-
-      <LegalDisclaimer />
-
-      {/* =====================================================
-          FOOTER
-         ===================================================== */}
-
-      <footer className="relative z-10 border-t border-white/[0.07] bg-[hsl(222,47%,4%,0.8)] backdrop-blur-lg">
-        <div className="max-w-6xl mx-auto px-4 py-6 flex flex-col md:flex-row items-center justify-between gap-3">
-          <div className="text-xs text-muted-foreground flex gap-3">
-            <Link
-              href="/aviso-legal"
-              className="hover:text-white transition-colors"
-            >
-              {tr("footer_legal", "Aviso legal")}
-            </Link>
-
-            <span>·</span>
-
-            <Link
-              href="/privacidad"
-              className="hover:text-white transition-colors"
-            >
-              {tr("footer_privacy", "Privacidad")}
-            </Link>
-
-            <span>·</span>
-
-            <Link
-              href="/cookies"
-              className="hover:text-white transition-colors"
-            >
-              {tr("footer_cookies", "Cookies")}
-            </Link>
-
-            <span>·</span>
-
-            <Link
-              href="/contacto"
-              className="hover:text-white transition-colors"
-            >
-              Contacto
-            </Link>
-          </div>
-
-          <div className="text-xs text-muted-foreground flex flex-col items-end gap-1">
-            <div>© 2026 GestoriaCitaIA</div>
-
-            <div>
-              Contacto:{" "}
-              <a
-                href="mailto:jobs@gestoriacitaia.com"
-                className="hover:text-white transition-colors"
-              >
-                jobs@gestoriacitaia.com
-              </a>
-            </div>
-          </div>
+        <p className="footer-notice">{c.notice}</p>
+        <div className="footer-bottom">
+          <span>© {new Date().getFullYear()} GestoriaCitaIA</span>
+          <a href="mailto:jobs@gestoriacitaia.com">jobs@gestoriacitaia.com</a>
         </div>
       </footer>
     </div>

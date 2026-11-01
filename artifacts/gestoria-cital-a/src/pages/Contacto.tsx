@@ -1,6 +1,6 @@
 export default function ContactoPage() {
   return (
-    <main className="max-w-3xl mx-auto px-6 py-16">
+    <main id="main-content" className="service-page-2027 max-w-3xl mx-auto px-6 py-16">
       <h1 className="text-3xl font-bold mb-6">Contacto</h1>
 
       <p className="mb-4">

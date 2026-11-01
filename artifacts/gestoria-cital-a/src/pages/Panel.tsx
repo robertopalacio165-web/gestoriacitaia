@@ -495,7 +495,7 @@ export default function PanelMalta() {
 
       <Navbar />
 
-      <main className="flex-1 relative z-10 pt-20 pb-20 px-4 sm:px-6 max-w-2xl mx-auto w-full">
+      <main id="main-content" className="service-page-2027 flex-1 relative z-10 pt-20 pb-20 px-4 sm:px-6 max-w-2xl mx-auto w-full">
         {/* ============================================ */}
         {/* HEADER - BIENVENIDA + PLAN */}
         {/* ============================================ */}

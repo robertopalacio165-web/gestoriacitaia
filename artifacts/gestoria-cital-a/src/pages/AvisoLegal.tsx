@@ -6,7 +6,7 @@ export default function AvisoLegal() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Navbar />
-      <main className="pt-24 pb-16 px-4 sm:px-6 max-w-3xl mx-auto">
+      <main id="main-content" className="service-page-2027 pt-24 pb-16 px-4 sm:px-6 max-w-3xl mx-auto">
         <Link href="/" className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-white mb-8 transition-colors">
           <ArrowLeft className="w-3.5 h-3.5" /> Volver al inicio
         </Link>

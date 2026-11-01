@@ -751,7 +751,7 @@ useEffect(() => {
 
       <Navbar />
 
-      <main className="flex-1 relative z-10 flex flex-col pt-16 pb-8">
+      <main id="main-content" className="service-page-2027 flex-1 relative z-10 flex flex-col pt-16 pb-8">
 
         <div className="flex-1 flex flex-col lg:flex-row gap-4 px-4 sm:px-6 max-w-7xl mx-auto w-full">
 
