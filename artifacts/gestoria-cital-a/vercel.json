@@ -1,8 +1,80 @@
 {
   "rewrites": [
     {
-      "source": "/((?!api).*)",
+      "source": "/",
       "destination": "/index.html"
+    },
+    {
+      "source": "/trabajo-malta",
+      "destination": "/trabajo-malta.html"
+    },
+    {
+      "source": "/decreto-flussi-2027",
+      "destination": "/decreto-flussi-2027.html"
+    },
+    {
+      "source": "/verificar-decreto-flussi",
+      "destination": "/verificar-decreto-flussi.html"
+    },
+    {
+      "source": "/estudiar-en-malta-2027",
+      "destination": "/estudiar-en-malta-2027.html"
+    },
+    {
+      "source": "/aviso-legal",
+      "destination": "/aviso-legal.html"
+    },
+    {
+      "source": "/privacidad",
+      "destination": "/privacidad.html"
+    },
+    {
+      "source": "/cookies",
+      "destination": "/cookies.html"
+    },
+    {
+      "source": "/contacto",
+      "destination": "/contacto.html"
+    },
+    {
+      "source": "/ads.txt",
+      "destination": "/ads.txt"
+    },
+    {
+      "source": "/robots.txt",
+      "destination": "/robots.txt"
+    },
+    {
+      "source": "/sitemap.xml",
+      "destination": "/sitemap.xml"
+    },
+    {
+      "source": "/panel",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/auth/callback",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/buscar-citas",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/checkout/success",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/checkout/cancelado",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/confirmar-cita",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/estudiar-malta-2027",
+      "destination": "/app.html"
     }
   ],
   "headers": [

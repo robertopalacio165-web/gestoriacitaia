@@ -752,6 +752,9 @@ useEffect(() => {
       <Navbar />
 
       <main className="flex-1 relative z-10 flex flex-col pt-16 pb-8">
+        <h1 className="text-xl font-display font-bold px-4 sm:px-6 py-3 max-w-7xl mx-auto w-full">
+          {isMa ? "عروض العمل فإيطاليا — ديكريتو فلوسي 2027" : "Decreto Flussi 2027 — Ofertas de empleo en Italia"}
+        </h1>
 
         <div className="flex-1 flex flex-col lg:flex-row gap-4 px-4 sm:px-6 max-w-7xl mx-auto w-full">
 

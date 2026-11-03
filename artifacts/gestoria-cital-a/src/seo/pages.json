@@ -1,0 +1,11 @@
+{
+  "/": {"title":"GestoriaCitaIA | Información de extranjería y herramientas digitales","description":"Información general sobre extranjería, documentos, Decreto Flussi y empleo en Malta. Plataforma digital independiente, no un organismo oficial ni un despacho de abogados."},
+  "/trabajo-malta": {"title":"Trabajo en Malta: ofertas y preparación de candidatura | GestoriaCitaIA","description":"Consulta el servicio de ofertas de trabajo en Malta, preparación del CV y carta de motivación. Revisa qué incluye, el precio y las condiciones antes de contratar."},
+  "/decreto-flussi-2027": {"title":"Ofertas de empleo en Italia y Decreto Flussi 2027 | GestoriaCitaIA","description":"Información del servicio de ofertas de empleo en Italia relacionado con Decreto Flussi 2027. Consulta los paquetes, condiciones y entrega de las ofertas."},
+  "/verificar-decreto-flussi": {"title":"Revisión orientativa de documentos Decreto Flussi | GestoriaCitaIA","description":"Consulta el servicio de revisión orientativa de documentos de Decreto Flussi. Conoce el proceso, los documentos solicitados y la entrega del informe por correo."},
+  "/estudiar-en-malta-2027": {"title":"Estudiar en Malta 2027 | GestoriaCitaIA","description":"Consulta información del servicio para estudiar en Malta en 2027, sus condiciones y el formulario de solicitud de GestoriaCitaIA."},
+  "/aviso-legal": {"title":"Aviso legal | GestoriaCitaIA","description":"Identificación, condiciones de uso y alcance de los servicios de la plataforma digital GestoriaCitaIA."},
+  "/privacidad": {"title":"Política de privacidad | GestoriaCitaIA","description":"Información sobre el tratamiento de datos personales y los derechos de los usuarios de GestoriaCitaIA."},
+  "/cookies": {"title":"Política de cookies | GestoriaCitaIA","description":"Información sobre las cookies y preferencias de navegación en GestoriaCitaIA."},
+  "/contacto": {"title":"Contacto | GestoriaCitaIA","description":"Consulta los canales de contacto y soporte de GestoriaCitaIA para dudas sobre la plataforma y sus servicios."}
+}

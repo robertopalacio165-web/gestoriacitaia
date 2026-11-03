@@ -1,3 +1,4 @@
+import { PageMetadata } from "@/components/PageMetadata";
 import { Switch, Route, Router as WouterRouter } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
@@ -215,6 +216,7 @@ function App() {
             base={import.meta.env.BASE_URL.replace(/\/$/, "")}
           >
 
+            <PageMetadata />
             <Router />
 
           </WouterRouter>
