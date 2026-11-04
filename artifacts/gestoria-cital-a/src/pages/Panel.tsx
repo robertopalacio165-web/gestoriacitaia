@@ -278,7 +278,7 @@ export default function PanelMalta() {
 
   // ============================================
   // 🇲🇹 ESTADO ACTUAL DEL SERVICIO MALTA
-  // Pago único: 19,99 €
+  // Pago único: 17,99 €
   // Entrega de ofertas disponibles
   // ============================================
 
@@ -311,7 +311,7 @@ export default function PanelMalta() {
         )
       : 0;
 
-  const planName = isPaidMaltaPlan ? "19,99 € · Pago único" : "Sin plan";
+  const planName = isPaidMaltaPlan ? "17,99 € · Pago único" : "Sin plan";
 
   // El nuevo servicio no depende de una cuenta atrás de 7/30 días.
   // El estado se basa en el pago + plan contratado.
