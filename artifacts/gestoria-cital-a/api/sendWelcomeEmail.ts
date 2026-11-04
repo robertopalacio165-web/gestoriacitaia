@@ -25,7 +25,7 @@ export async function sendWelcomeEmail({
     },
   });
 
-  const planName = "Pago único de 19,99 €";
+  const planName = "Pago único de 17,99 €";
 
   const attachments: any[] = [];
 
