@@ -2435,7 +2435,7 @@ export default async function handler(
 
     const verifyUrl =
       `${publicUrl.replace(/\/$/, "")}` +
-      `/verificar?ref=${encodeURIComponent(reference)}`;
+      `/verificar-decreto-flussi?ref=${encodeURIComponent(reference)}`;
 
     const qrDataUrl = await QRCode.toDataURL(
       verifyUrl,
