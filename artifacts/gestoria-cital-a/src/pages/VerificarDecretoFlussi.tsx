@@ -922,10 +922,10 @@ function OfficialBrowserBox({
                       />
                       <label htmlFor="acceptTerms" className={`text-[12px] leading-relaxed ${errorField === "acceptTerms" ? "text-red-400" : "text-white/70"}`}>
                         {isMa
-                          ? "☑️ أوافق على أن تقوم GestoriaCitaIA بتحليل وثائقي والتحقق من السجلات العامة الإيطالية."
+                          ? "☑️ أوافق على تحليل وثائقي بالذكاء الاصطناعي. التحقق الرسمي من السلطات الإيطالية غير مضمون."
                           : isEn
-                          ? "☑️ I agree that GestoriaCitaIA analyzes my documents and checks Italian public records."
-                          : "☑️ Acepto que GestoriaCitaIA analice mis documentos y consulte registros públicos italianos."}
+                          ? "☑️ I agree to AI document analysis. Official verification with Italian authorities is not guaranteed."
+                          : "☑️ Acepto el análisis documental mediante IA. La comprobación oficial ante las autoridades italianas no está garantizada."}
                       </label>
                     </div>
                     {errorField === "acceptTerms" && (
