@@ -337,7 +337,7 @@ worker_finished: false,
           },
         });
 
-       const planName = "One-time payment / أداء مرة واحدة — €19.99";
+       const planName = "One-time payment / أداء مرة واحدة — €17.99";
 
         await transporter.sendMail({
           from: `"GestoriaCitaIA" <${process.env.FROM_EMAIL}>`,
