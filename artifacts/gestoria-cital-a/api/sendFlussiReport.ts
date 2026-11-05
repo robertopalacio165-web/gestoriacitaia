@@ -2189,13 +2189,34 @@ export default async function handler(
     });
   }
 
-  // TEMPORARY SAFETY PAUSE: stop repeated Decreto Flussi verification PDF emails.
-  // This endpoint remains disabled until the two-hour repeat trigger is diagnosed.
-  return res.status(503).json({
-    ok: false,
-    paused: true,
-    error: "Decreto Flussi PDF verification emails are temporarily paused.",
+  // Only a paid Stripe Checkout session may authorize processing.
+  const sessionId = String(req.body?.payment?.sessionId || "").trim();
+  if (!sessionId || !process.env.STRIPE_SECRET_KEY) return res.status(403).json({ok:false,error:"Stripe session required"});
+  let paidSession: any;
+  try {
+    const r = await fetch("https://api.stripe.com/v1/checkout/sessions/" + encodeURIComponent(sessionId), {
+      headers: {Authorization: "Bearer " + process.env.STRIPE_SECRET_KEY}
+    });
+    if (!r.ok) throw new Error("Stripe lookup failed");
+    paidSession = await r.json();
+  } catch { return res.status(502).json({ok:false,error:"Stripe verification unavailable"}); }
+  const paidReference = String(paidSession.metadata?.document_reference || paidSession.metadata?.reference || "");
+  const paidEmail = String(paidSession.metadata?.email || paidSession.customer_email || "").toLowerCase();
+  if (paidSession.payment_status !== "paid" || paidSession.metadata?.service !== "verificacion_decreto_flussi" ||
+      paidSession.metadata?.product !== "decreto_flussi" || paidSession.amount_total !== 50 ||
+      paidSession.currency !== "eur" || !paidReference || paidReference !== String(req.body?.reference || "") ||
+      !paidEmail || paidEmail !== String(req.body?.client?.email || "").trim().toLowerCase()) {
+    return res.status(403).json({ok:false,error:"Payment or recipient mismatch"});
+  }
+  // Atomic unique insert prevents repeated PDF email delivery on Stripe retries.
+  const dispatchDb = getSupabaseAdmin();
+  const {error: claimError} = await dispatchDb.from("flussi_report_dispatches").insert({
+    reference: paidReference, stripe_session_id: sessionId, recipient_email: paidEmail, status: "processing"
   });
+  if (claimError) {
+    if (claimError.code === "23505") return res.status(200).json({ok:true,duplicate:true,reference:paidReference});
+    return res.status(503).json({ok:false,error:"Dispatch lock unavailable"});
+  }
 
   try {
     const body: AnyData = req.body || {};
@@ -2226,11 +2247,7 @@ export default async function handler(
       body.customer ||
       body;
 
-    const email = String(
-      client.email ||
-        body.email ||
-        ""
-    ).trim();
+    const email = paidEmail;
 
     if (!email) {
       return res.status(400).json({
@@ -2466,6 +2483,10 @@ export default async function handler(
       pdf,
       html
     );
+
+    const {error: sentUpdateError} = await dispatchDb.from("flussi_report_dispatches")
+      .update({status:"sent",sent_at:new Date().toISOString()}).eq("reference",paidReference);
+    if (sentUpdateError) console.error("FLUSSI dispatch status update failed",sentUpdateError.message);
 
     console.log(
       `✅ FLUSSI DOCUMENT-ONLY PDF + EMAIL ENVIADO: ${email} / ${reference}`
