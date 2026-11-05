@@ -569,9 +569,8 @@ Questions?<br>
     }
 
     // ============================================
-    // 🇲🇹 ENVIAR TODAS LAS OFERTAS DESDE VERCEL/GITHUB
-    // Sin depender del worker de contactos de Ubuntu.
-    // Idempotencia por sesión Stripe para evitar reenvíos.
+    // 🇲🇹 ENVIAR TODAS LAS VACANTES DE malta_job_offers
+    // Paginación explícita y control de idempotencia por sesión Stripe.
     // ============================================
     try {
       const { data: deliveryState, error: deliveryStateError } = await supabase
@@ -583,52 +582,58 @@ Questions?<br>
       if (deliveryStateError) throw deliveryStateError;
 
       if (deliveryState?.offers_email_sent_session_id !== session.id) {
-        const { data: allOffers, error: contactsError } = await supabase
-          .from("ett_malta")
-          .select("company_name, whatsapp_number, whatsapp_url, email, city, sectors, website")
-          .not("whatsapp_number", "is", null)
-          .not("email", "is", null)
-          .order("city", { ascending: true, nullsFirst: false })
-          .order("company_name", { ascending: true });
-
-        if (contactsError) throw contactsError;
-        if (!allOffers || allOffers.length === 0) {
-          throw new Error("ett_malta no tiene contactos con teléfono y email; no se envió el email.");
+        type MaltaOffer = {
+          id: string;
+          company: string | null;
+          company_name: string | null;
+          title: string | null;
+          job_title: string | null;
+          location: string | null;
+          url: string | null;
+          job_url: string | null;
+          apply_email: string | null;
+          salary: string | null;
+          job_type: string | null;
+        };
+        const allOffers: MaltaOffer[] = [];
+        const pageSize = 500;
+        for (let offset = 0; ; offset += pageSize) {
+          const { data: page, error: offersError } = await supabase
+            .from("malta_job_offers")
+            .select("id,company,company_name,title,job_title,location,url,job_url,apply_email,salary,job_type")
+            .order("created_at", { ascending: false })
+            .order("id", { ascending: true })
+            .range(offset, offset + pageSize - 1);
+          if (offersError) throw offersError;
+          allOffers.push(...((page || []) as MaltaOffer[]));
+          if (!page || page.length < pageSize) break;
         }
 
-        const offerRows = allOffers.map((contact, index) => {
-          const company = contact.company_name || "Recruitment office";
-          const location = contact.city || "Malta";
-          const phone = String(contact.whatsapp_number || "").trim();
-          const emailAddress = String(contact.email || "").trim();
-          const sectors = Array.isArray(contact.sectors) ? contact.sectors.join(", ") : String(contact.sectors || "General recruitment");
-          const website = String(contact.website || "");
-          const websiteLink = /^https?:\/\//i.test(website)
-            ? `<a href="${escapeHtml(website)}" style="display:inline-block;background:#E5AD42;color:#071426;text-decoration:none;font-weight:bold;padding:10px 15px;border-radius:7px;margin:4px 6px 4px 0">COMPANY WEBSITE ↗</a>`
+        if (!allOffers.length) {
+          throw new Error("malta_job_offers está vacía; no se envió un correo sin ofertas.");
+        }
+
+        // Datos textuales escapados y URLs de aplicación limitadas a http(s).
+        const offerRows = allOffers.map((offer) => {
+          const title = escapeHtml(offer.title || offer.job_title || "Job opportunity");
+          const company = escapeHtml(offer.company || offer.company_name || "Employer not specified");
+          const location = escapeHtml(offer.location || "Malta");
+          const salary = offer.salary ? '<div><b>Salary:</b> ' + escapeHtml(offer.salary) + '</div>' : "";
+          const jobType = offer.job_type ? '<div><b>Job type:</b> ' + escapeHtml(offer.job_type) + '</div>' : "";
+          const applicationUrl = String(offer.job_url || offer.url || "").trim();
+          const applyLink = /^https?:\/\/[^\s]+$/i.test(applicationUrl)
+            ? '<a href="' + escapeHtml(applicationUrl) + '" style="display:inline-block;margin-top:10px;padding:10px 16px;background:#e5ad42;color:#071426;border-radius:7px;text-decoration:none;font-weight:bold">View job / شوف العرض</a>'
             : "";
-          const phoneLine = `<a href="tel:${escapeHtml(phone)}" style="color:#075985;font-weight:bold">${escapeHtml(phone)}</a>`;
-          const emailLine = `<a href="mailto:${escapeHtml(emailAddress)}" style="color:#075985;font-weight:bold;word-break:break-word">${escapeHtml(emailAddress)}</a>`;
-          const whatsappLine = contact.whatsapp_url
-            ? `<a href="${escapeHtml(contact.whatsapp_url)}" style="color:#128C7E;font-weight:bold">WhatsApp ↗</a>`
+          const email = String(offer.apply_email || "").trim();
+          const emailLink = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+            ? '<div style="margin-top:8px"><b>Apply by email:</b> <a href="mailto:' + escapeHtml(email) + '">' + escapeHtml(email) + '</a></div>'
             : "";
-          return `<tr>
-<td style="padding:0 0 15px;border:0">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="width:100%;border-collapse:separate;border-spacing:0;background:#ffffff;border:1px solid #d6dfeb;border-radius:12px;overflow:hidden">
-<tr><td style="padding:15px 18px;background:#071426;border-bottom:3px solid #E5AD42;color:#fff">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
-<td width="46" style="vertical-align:top"><span style="display:inline-block;background:#E5AD42;color:#071426;font-weight:900;font-size:15px;line-height:34px;width:34px;height:34px;border-radius:50%;text-align:center">${index + 1}</span></td>
-<td style="vertical-align:middle"><div style="font-size:17px;font-weight:800;color:#fff;line-height:1.35">${escapeHtml(company)}</div><div style="font-size:13px;color:#E5AD42;font-weight:bold;margin-top:4px">${escapeHtml(location)}</div></td>
-</tr></table></td></tr>
-<tr><td style="padding:16px 18px">
-<div style="display:inline-block;background:#fff5d8;border:1px solid #f0d58d;border-radius:20px;padding:5px 10px;font-size:11px;font-weight:bold;color:#78520a;margin-bottom:12px">SECTORS / SECTORES: ${escapeHtml(sectors)}</div>
-<h3 style="font-size:13px;color:#071426;margin:10px 0 9px;border-bottom:1px solid #e5eaf1;padding-bottom:7px">DIRECT RECRUITMENT CONTACT</h3>
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:13px"><tr>
-<td style="padding:8px 5px 8px 0;width:50%;vertical-align:top"><b>✉️ EMAIL</b><br>${emailLine}</td>
-<td style="padding:8px 0 8px 5px;width:50%;vertical-align:top"><b>📞 PHONE</b><br>${phoneLine}<br>${whatsappLine}</td>
-</tr></table>
-<div style="margin-top:10px">${websiteLink}</div>
-</td></tr></table>
-</td></tr>`;
+          return '<tr><td style="padding:0 0 14px"><div style="padding:17px;border:1px solid #d6dfeb;border-radius:10px;background:#fff">'
+            + '<div style="font-size:17px;font-weight:bold;color:#071426">' + title + '</div>'
+            + '<div style="margin:6px 0;color:#334155">' + company + ' · ' + location + '</div>'
+            + salary + jobType + applyLink + emailLink
+            + (!applyLink && !emailLink ? '<div style="margin-top:8px;color:#64748b">Application details not provided in the listing.</div>' : "")
+            + '</div></td></tr>';
         }).join("");
 
         const transporter = nodemailer.createTransport({
@@ -642,37 +647,30 @@ Questions?<br>
           },
         });
 
-        const safeName = escapeHtml(fullName || "صاحبي / Hello");
+        const safeName = escapeHtml(fullName || "Hello");
         const offersMail = await transporter.sendMail({
           from: `"GestoriaCitaIA" <${process.env.FROM_EMAIL}>`,
           to: email,
-          subject: `🇲🇦🇲🇹 Malta Recruitment Offices | ${allOffers.length} contacts`,
+          subject: "🇲🇹 Ofertas de trabajo en Malta",
           html: `<!doctype html>
-<html><body style="margin:0;padding:24px 10px;background:#edf1f6;font-family:Arial,sans-serif;color:#172033;line-height:1.6">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#edf1f6"><tr><td align="center">
-<table role="presentation" width="900" cellpadding="0" cellspacing="0" style="width:100%;max-width:900px;background:#fff;border-radius:12px;overflow:hidden;border:1px solid #d8e0ea">
-<tr><td style="background:#071426;padding:26px 24px;text-align:center;color:#fff">
-<div style="font-size:13px;font-weight:bold;letter-spacing:1px;color:#E5AD42;margin-bottom:14px"><span style="display:inline-block;vertical-align:middle;margin-right:5px;width:30px;height:20px"><svg xmlns="http://www.w3.org/2000/svg" width="30" height="20" viewBox="0 0 30 20"><rect width="30" height="20" fill="#c1272d"/><path d="M15 3 L16.8 8.2 L22.3 8.2 L17.8 11.4 L19.5 16.6 L15 13.4 L10.5 16.6 L12.2 11.4 L7.7 8.2 L13.2 8.2 Z" fill="#006233"/></svg></span>MOROCCO <span style="margin:0 10px">·</span><span style="display:inline-block;vertical-align:middle;margin-right:5px;width:30px;height:20px"><svg xmlns="http://www.w3.org/2000/svg" width="30" height="20" viewBox="0 0 30 20"><rect width="15" height="20" fill="#fff"/><rect x="15" width="15" height="20" fill="#cf142b"/><path d="M5 3v5m-2.5-2.5h5" stroke="#cf142b" stroke-width="1.2"/></svg></span>MALTA</div>
-<div style="display:inline-block;width:54px;height:54px;line-height:54px;border-radius:15px;background:#E5AD42;color:#071426;font-size:25px;font-weight:900;margin-bottom:10px">G</div>
-<h1 style="margin:0;font-size:27px;font-weight:800;letter-spacing:.3px">Gestoria<span style="color:#E5AD42">CitaIA</span></h1>
-<p style="margin:8px 0;color:#E5AD42;font-weight:bold;font-size:16px">MALTA RECRUITMENT CONTACTS</p>
-<p style="margin:0;color:#e5edf7;font-weight:bold">${allOffers.length} Available Job Offers</p></td></tr>
-<tr><td style="padding:20px">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;border:1px solid #d7e1ee;border-left:5px solid #dba53b;border-radius:10px"><tr><td dir="rtl" style="direction:rtl;text-align:right;padding:20px">
-<h2 style="margin:0 0 12px;color:#071426;font-size:20px">🇲🇦 السلام عليكم ${safeName}</h2>
-<p style="margin:0 0 10px">شكراً بزاف على الثقة ديالك فـ GestoriaCitaIA. ها هو دليل وكالات ومكاتب التوظيف فمالطا، مع أرقام الهاتف والإيميلات والمدن والقطاعات. تاصل بالمكتب مباشرة واستفسر على فرص التوظيف المناسبة ليك.</p>
-<p style="margin:0;color:#087f5b;font-weight:bold">❤️🇲🇹 كنتمناو ليك التوفيق والنجاح فمالطا.</p></td></tr></table>
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:16px;background:#f8fafc;border:1px solid #d7e1ee;border-left:5px solid #dba53b;border-radius:10px"><tr><td style="padding:20px;text-align:left">
-<h2 style="margin:0 0 12px;color:#071426;font-size:20px">🇬🇧 Hello ${safeName},</h2>
-<p style="margin:0 0 10px">Thank you for trusting GestoriaCitaIA. Here are recruitment agencies and hiring offices across Malta, with their published contact details. Choose suitable vacancies, contact employers directly, and send your CV using each listing's application instructions.</p>
-<p style="margin:0;color:#087f5b;font-weight:bold">❤️🇲🇹 We wish you the very best of luck finding a job in Malta.</p></td></tr></table>
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:24px;background:#071426;border-radius:10px 10px 0 0"><tr><td style="padding:18px;color:#fff">
-<h2 style="margin:0;font-size:22px">MT · All Malta Recruitment Offices</h2><p style="margin:5px 0 0;color:#E5AD42;font-weight:bold">Recruitment offices · ${allOffers.length} contacts · City, sectors, phone and email</p>
-</td></tr></table>
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:separate;border-spacing:0;font-size:13px">
-<tbody>${offerRows}</tbody></table>
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:20px;background:#f4f6f9;border-radius:8px"><tr><td style="padding:18px;text-align:center;color:#596579"><b>GestoriaCitaIA · Malta Jobs</b><br><a href="https://gestoriacitaia.com" style="color:#005ea8;text-decoration:none">gestoriacitaia.com</a></td></tr></table>
-</td></tr></table></td></tr></table></body></html>`,
+<html><body style="margin:0;padding:22px 10px;background:#edf1f6;font-family:Arial,sans-serif;color:#172033;line-height:1.6">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center">
+<table role="presentation" width="850" cellpadding="0" cellspacing="0" style="width:100%;max-width:850px;background:#fff;border-radius:12px;overflow:hidden">
+<tr><td style="background:#071426;padding:28px;text-align:center;color:#fff">
+<h1 style="margin:0;color:#e5ad42">GestoriaCitaIA</h1>
+<div style="font-size:20px;font-weight:bold;margin-top:10px">🇲🇹 Ofertas de trabajo en Malta</div>
+</td></tr>
+<tr><td style="padding:24px">
+<div dir="rtl" style="text-align:right;background:#f8fafc;padding:18px;border-radius:9px">
+<b>السلام عليكم ${safeName}</b>
+<p>هادي لائحة عروض العمل الموجودة فقاعدة البيانات ديال GestoriaCitaIA. اختار العرض المناسب وتواصل مباشرة مع الشركة حسب المعلومات المنشورة.</p>
+</div>
+<p><b>Hello ${safeName},</b> browse the Malta job listings in our database. Apply directly using the available application link or email. Availability is subject to the employer's listing.</p>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tbody>${offerRows}</tbody></table>
+<p style="font-size:12px;color:#64748b">Job listings are sourced from our database. Some entries may lack a direct application link. Check each vacancy with the employer before applying.</p>
+</td></tr>
+<tr><td style="background:#071426;padding:18px;text-align:center"><a href="https://gestoriacitaia.com" style="color:#e5ad42;text-decoration:none">GestoriaCitaIA · Malta Jobs</a></td></tr>
+</table></td></tr></table></body></html>`,
         });
 
         const { error: markSentError } = await supabase
@@ -688,14 +686,13 @@ Questions?<br>
             last_error: null,
           })
           .eq("id", applicationId);
-
         if (markSentError) throw markSentError;
-        console.log(`✅ Email de todas las ofertas enviado a ${email}; ofertas=${allOffers.length}; messageId=${offersMail.messageId}`);
+        console.log('✅ Malta job listings sent; listings=' + allOffers.length + '; messageId=' + offersMail.messageId);
       } else {
-        console.log(`⏭️ Email de ofertas ya enviado para esta sesión Stripe: ${session.id}`);
+        console.log('⏭️ Malta job listings already sent for this Stripe session');
       }
     } catch (offersEmailError: any) {
-      console.error("❌ Error enviando todas las ofertas Malta:", offersEmailError?.message || offersEmailError);
+      console.error("❌ Error enviando ofertas Malta:", offersEmailError?.message || offersEmailError);
       await supabase
         .from("malta_applications")
         .update({
