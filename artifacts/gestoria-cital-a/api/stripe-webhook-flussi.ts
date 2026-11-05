@@ -407,9 +407,8 @@ async function triggerFlussiReport(params: {
 
   const responseText = await response.text();
 
-  // The report endpoint is intentionally paused to stop repeated PDF emails.
-  // Acknowledge this paused state to Stripe so it does not retry the same event
-  // every few hours. No email is sent while the report endpoint returns paused:true.
+  // Backward compatibility: acknowledge an explicitly paused report response.
+  // Other report failures must propagate to the webhook error handler.
   if (response.status === 503) {
     try {
       const pausedBody = JSON.parse(responseText);
