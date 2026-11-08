@@ -2085,7 +2085,7 @@ export default function TrabajoMalta() {
   id="malta-video"
   playsInline
   preload="none"
-  poster="/images/malta-poster.png"
+  poster="/images/malta-poster.webp"
   className="w-full h-full object-cover object-top"
 >
   <source src="/malta-presentacion.mp4" type="video/mp4" />

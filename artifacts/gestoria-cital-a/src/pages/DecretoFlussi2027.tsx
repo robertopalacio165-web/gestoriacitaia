@@ -782,7 +782,7 @@ useEffect(() => {
               >
 
                 <img
-                  src="/images/decreto-flussi-2027.png"
+                  src="/images/decreto-flussi-2027.webp"
                   alt={
                     ui.subtitle
                   }
@@ -923,11 +923,11 @@ useEffect(() => {
 
               </div>
 
-              <h2 className="mt-2 text-white text-[20px] sm:text-[24px] font-black">
+              <h1 className="mt-2 text-white text-[20px] sm:text-[24px] font-black">
 
                 {ui.pageTitle}
 
-              </h2>
+              </h1>
 
               <p className="text-white/60 text-[12px]">
 

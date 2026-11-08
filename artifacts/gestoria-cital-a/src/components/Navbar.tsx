@@ -316,7 +316,7 @@ export function Navbar() {
   const avatarUrl =
     user?.user_metadata?.avatar_url || user?.user_metadata?.picture || "";
 
-  const legalLabel = t("legal_title");
+  const legalLabel = t("legal_label");
   const privacyLabel = t("footer_privacy");
   const cookiesLabel = lang === "darija" ? "الكوكيز" : lang === "en" ? "Cookies" : "Cookies";
   const notificationsLabel = t("panel_notifications");
@@ -397,7 +397,7 @@ export function Navbar() {
           >
             <div className="relative">
               <img
-                src={`${import.meta.env.BASE_URL}images/logo.png`}
+                src={`${import.meta.env.BASE_URL}images/logo.webp`}
                 alt="GestoriaCitaIA"
                 className="w-10 h-10 rounded-xl object-cover"
               />
@@ -773,6 +773,8 @@ export function Navbar() {
 
             <button
               className="sm:hidden p-1.5 text-muted-foreground hover:text-white transition-colors"
+              aria-label={mobileOpen ? (lang === "darija" ? "إغلاق القائمة" : lang === "en" ? "Close menu" : "Cerrar menú") : (lang === "darija" ? "فتح القائمة" : lang === "en" ? "Open menu" : "Abrir menú")}
+              aria-expanded={mobileOpen}
               onClick={() => setMobileOpen((prev) => !prev)}
             >
               {mobileOpen ? (

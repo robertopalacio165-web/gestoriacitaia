@@ -1,3 +1,5 @@
+import { lazy, Suspense } from "react";
+import { PageSeo } from "@/components/PageSeo";
 import { Switch, Route, Router as WouterRouter } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
@@ -6,25 +8,26 @@ import { LanguageProvider } from "@/contexts/LanguageContext";
 
 import NotFound from "@/pages/not-found";
 import Landing from "@/pages/Landing";
-import Panel from "@/pages/Panel";
-import BuscarCitas from "@/pages/BuscarCitas";
-import VerificarDecretoFlussi from "@/pages/VerificarDecretoFlussi";
-import DecretoFlussi2027 from "@/pages/DecretoFlussi2027";
 
-import AvisoLegal from "@/pages/AvisoLegal";
-import Privacidad from "@/pages/Privacidad";
-import CookiesPage from "@/pages/Cookies";
 
-import CheckoutSuccess from "@/pages/CheckoutSuccess";
-import CheckoutCancel from "@/pages/CheckoutCancel";
 
-import AuthCallback from "@/pages/AuthCallback";
-import Confirmar from "@/pages/Confirmar";
 
-import TrabajoMalta from "@/pages/TrabajoMalta";
-import EstudiarMalta2027 from "@/pages/EstudiarMalta2027";
 
-import Contacto from "@/pages/Contacto";
+
+const Panel = lazy(() => import("@/pages/Panel"));
+const BuscarCitas = lazy(() => import("@/pages/BuscarCitas"));
+const VerificarDecretoFlussi = lazy(() => import("@/pages/VerificarDecretoFlussi"));
+const DecretoFlussi2027 = lazy(() => import("@/pages/DecretoFlussi2027"));
+const AvisoLegal = lazy(() => import("@/pages/AvisoLegal"));
+const Privacidad = lazy(() => import("@/pages/Privacidad"));
+const CookiesPage = lazy(() => import("@/pages/Cookies"));
+const CheckoutSuccess = lazy(() => import("@/pages/CheckoutSuccess"));
+const CheckoutCancel = lazy(() => import("@/pages/CheckoutCancel"));
+const AuthCallback = lazy(() => import("@/pages/AuthCallback"));
+const Confirmar = lazy(() => import("@/pages/Confirmar"));
+const TrabajoMalta = lazy(() => import("@/pages/TrabajoMalta"));
+const EstudiarMalta2027 = lazy(() => import("@/pages/EstudiarMalta2027"));
+const Contacto = lazy(() => import("@/pages/Contacto"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -215,7 +218,10 @@ function App() {
             base={import.meta.env.BASE_URL.replace(/\/$/, "")}
           >
 
-            <Router />
+            <PageSeo />
+            <Suspense fallback={<div role="status" className="min-h-screen flex items-center justify-center text-foreground">GestoriaCitaIA…</div>}>
+              <Router />
+            </Suspense>
 
           </WouterRouter>
 

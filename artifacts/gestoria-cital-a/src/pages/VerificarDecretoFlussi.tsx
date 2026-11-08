@@ -1843,7 +1843,7 @@ export default function VerificarDecretoFlussi() {
             >
               <div className="relative w-full h-full">
                 <img
-                  src="/images/sara.png"
+                  src="/images/sara.webp"
                   alt="Sara"
                   className="w-full h-full object-cover object-top"
                 />
