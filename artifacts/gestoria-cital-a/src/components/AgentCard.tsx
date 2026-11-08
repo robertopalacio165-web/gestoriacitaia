@@ -26,6 +26,8 @@ export function AgentCard({ name, imagePath, isOnline = true, className, delay =
       <img 
         src={imagePath} 
         alt={name}
+        loading="lazy"
+        decoding="async"
         className="w-full h-[280px] sm:h-[320px] object-cover rounded-xl transition-transform duration-700 group-hover:scale-105"
         onError={(e) => {
           (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${name}&background=1F1A38&color=00F0FF&size=512`;

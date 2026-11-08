@@ -1127,7 +1127,7 @@ export default function BuscarCitas() {
                   id="sara-video"
                   playsInline
                   preload="none"
-                  poster="/images/sara.png"
+                  poster="/images/sara.webp"
                   controls={false}
                   className="w-full h-full object-cover object-top"
                 >

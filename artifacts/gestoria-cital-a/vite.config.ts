@@ -2,6 +2,7 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import path from "path";
+import { seoPages } from "./seo-build";
 
 const isReplit = process.env.REPL_ID !== undefined;
 const isProduction = process.env.NODE_ENV === "production";
@@ -17,6 +18,7 @@ export default defineConfig({
   plugins: [
     react(),
     tailwindcss(),
+    seoPages(),
     ...(!isProduction && isReplit
       ? [
           (await import("@replit/vite-plugin-runtime-error-modal")).default(),

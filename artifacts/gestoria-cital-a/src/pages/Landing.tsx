@@ -446,13 +446,13 @@ export default function Landing() {
         >
           <AgentCard
             name="Soufiane"
-            imagePath={`${import.meta.env.BASE_URL}images/soufiane.png`}
+            imagePath={`${import.meta.env.BASE_URL}images/soufiane.webp`}
             delay={0.1}
           />
 
           <AgentCard
             name="Sara"
-            imagePath={`${import.meta.env.BASE_URL}images/sara.png`}
+            imagePath={`${import.meta.env.BASE_URL}images/sara.webp`}
             delay={0.2}
           />
         </motion.div>
@@ -489,8 +489,10 @@ export default function Landing() {
         >
       <div className="relative rounded-2xl overflow-hidden glass-panel aspect-video max-w-2xl mx-auto border border-white/10 shadow-2xl shadow-primary/10">
   <img
-    src="/video12-thumb.png"
+    src="/video12-thumb.webp"
     alt="GestoriaCitaIA"
+    loading="lazy"
+    decoding="async"
     className="w-full h-full object-cover"
   />
 </div>
