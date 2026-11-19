@@ -1,0 +1,39 @@
+name: NVIDIA SkillSpector security scan
+
+on:
+  workflow_dispatch:
+    inputs:
+      skill_source:
+        description: 'GitHub URL of the AI skill repository, or URL to a skill to scan'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Install NVIDIA SkillSpector
+        run: python -m pip install 'git+https://github.com/NVIDIA/SkillSpector.git'
+
+      - name: Scan AI skill (static analysis, no external LLM)
+        env:
+          SKILL_SOURCE: ${{ inputs.skill_source }}
+        run: |
+          skillspector scan "$SKILL_SOURCE" --no-llm --format markdown --output skillspector-report.md
+
+      - name: Upload scan report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: skillspector-security-report
+          path: skillspector-report.md
+          if-no-files-found: warn
