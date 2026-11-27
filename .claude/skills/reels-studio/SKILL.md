@@ -3,7 +3,10 @@ name: reels-studio
 description: Professional reel editing (Instagram Reels / TikTok / Shorts) in two reference styles — Full Screen Talking Head and Educational Split Screen — done by a 4-person team (Cutter, Motion Designer, Sound Designer, Typographer). Use whenever the user gives a video and asks for a reel, "مونطاج", "ايديتينغ ديال الريلز", motion, graphics, captions/caption styles, text styles, or wants to see the styles. The footage and its own audio/music are kept as shot; only motion graphics, typography and motion sound effects are added. Local ffmpeg/OpenCV/libass/onnx engine, outputs 1080x1920 MP4.
 ---
 
-# Reels Studio — 2 reference styles, 4-person team
+# Reels Studio — house style + 2 reference styles, 4-person team
+
+**DEFAULT = the user's approved house style: read `references/house-style.md` and start from
+`references/examples/house_style_60s_plan.json` for every new video (`autoplan --style house`).**
 
 The user's rule: **do not cut or re-time their video and never add music** (their video already has music).
 Add only motion graphics, caption/typography styles and motion sound effects, at a professional level.
@@ -66,7 +69,7 @@ Graphics code: `scripts/gfx.py`. Plan fields: `references/plan-schema.md`.
 ## Motion-graphics libraries (bundled)
 1. **GSAP 3** (`assets/vendor/gsap.min.js`, GreenSock standard no-charge license) — templates in
    `assets/motion/templates.html`, rendered frame-exact by headless Chromium (`scripts/motion_render.js`, Playwright):
-   `price_counter` (gold number counting up + Arabic label + light sweep), `lower_third` (name + role tag),
+   `price_counter` (gold number counting up + Arabic label + light sweep), `contact` (phone number card, show 2–4 s), `lower_third` (name + role tag),
    `flags` (title + flags popping on the spoken times), `cta` (follow button + pointer, pulsing), `kinetic`
    (big masked title, gold line), `light_wipe` (full-frame light streak for picture changes).
    Plan: `"motion": [{"template","start","end","params":{...}}]`. New templates = add a function to `T` in templates.html.

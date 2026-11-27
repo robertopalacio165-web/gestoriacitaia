@@ -1,0 +1,325 @@
+{
+ "style": "house",
+ "source": "/abs/path/to/raw_video.mp4",
+ "output": {
+  "w": 1080,
+  "h": 1920,
+  "fps": 30,
+  "crf": 18
+ },
+ "reframe": "center",
+ "segments": [
+  {
+   "in": 0.0,
+   "out": 60.0,
+   "speed": 1.0,
+   "zoom_from": 1.0,
+   "zoom_to": 1.0,
+   "transition_in": "cut"
+  }
+ ],
+ "words": null,
+ "captions": {
+  "enabled": false
+ },
+ "texts": [],
+ "stickers": [],
+ "zoom_punches": [],
+ "fx": {},
+ "progress_bar": {
+  "enabled": false,
+  "color": "#FFFFFF",
+  "height": 9
+ },
+ "grade": {
+  "preset": "none",
+  "grain": 0,
+  "vignette": false,
+  "sharpen": false
+ },
+ "audio": {
+  "loudness": -14,
+  "cleanup": false,
+  "keep_source_audio": true,
+  "sfx": true,
+  "sfx_volume": 0.6,
+  "music": null,
+  "music_volume": 0.9,
+  "sfx_events": []
+ },
+ "checklists": [
+  {
+   "items": [
+    "ما تشريش بلا ضمانة"
+   ],
+   "checks": [
+    1.65
+   ],
+   "start": 0.3,
+   "end": 2.7,
+   "y": 0.17,
+   "scale": 1.75
+  },
+  {
+   "items": [
+    "أول واحدين ف أوروبا"
+   ],
+   "checks": [
+    16.5
+   ],
+   "start": 14.0,
+   "end": 17.5,
+   "y": 0.17,
+   "scale": 1.75
+  },
+  {
+   "items": [
+    "كاين الضمانة",
+    "Garantie"
+   ],
+   "checks": [
+    32.0,
+    32.6
+   ],
+   "start": 30.9,
+   "end": 33.7,
+   "y": 0.17,
+   "scale": 1.75
+  },
+  {
+   "items": [
+    "عميل مهني"
+   ],
+   "checks": [
+    34.6
+   ],
+   "start": 33.8,
+   "end": 35.4,
+   "y": 0.17,
+   "scale": 1.75
+  },
+  {
+   "items": [
+    "ماشي حاجة خاوية",
+    "المعقول"
+   ],
+   "checks": [
+    37.5,
+    38.6
+   ],
+   "start": 37.35,
+   "end": 39.4,
+   "y": 0.17,
+   "scale": 1.75
+  },
+  {
+   "items": [
+    "مرحبا بالمغاربة",
+    "نوريكم الخطوات"
+   ],
+   "checks": [
+    52.7,
+    55.6
+   ],
+   "start": 52.4,
+   "end": 55.8,
+   "y": 0.17,
+   "scale": 1.75
+  }
+ ],
+ "split": {
+  "focus_y": 0.4,
+  "only_during_cards": true,
+  "cards": [
+   {
+    "type": "yellow",
+    "title": "المفاجأة",
+    "tags": [
+     "ROBERTO CARS"
+    ],
+    "start": 3.1,
+    "end": 5.1
+   },
+   {
+    "type": "photo",
+    "at": 4.2,
+    "label": "مع خويا المهدي",
+    "start": 5.1,
+    "end": 7.2,
+    "tilt": 2
+   },
+   {
+    "type": "yellow",
+    "title": "مفاجأة",
+    "tags": [
+     "للمغاربة"
+    ],
+    "start": 12.3,
+    "end": 13.85
+   },
+   {
+    "type": "quote",
+    "title": "كيفاش؟",
+    "start": 20.05,
+    "end": 22.2
+   },
+   {
+    "type": "headline",
+    "title": "من اليوم",
+    "tags": [
+     "أي واحد بغى طوموبيل"
+    ],
+    "start": 41.0,
+    "end": 43.9
+   }
+  ]
+ },
+ "inserts": [
+  {
+   "image": "/abs/path/to/offer_poster.png",
+   "start": 22.3,
+   "end": 24.85
+  }
+ ],
+ "motion": [
+  {
+   "template": "lower_third",
+   "start": 7.25,
+   "end": 9.4,
+   "params": {
+    "name": "المهدي",
+    "role": "MIDO CARS",
+    "y": 0.6
+   }
+  },
+  {
+   "template": "kinetic",
+   "start": 17.9,
+   "end": 20.0,
+   "params": {
+    "lines": [
+     "BLACK",
+     "FRIDAY"
+    ],
+    "y": 0.07,
+    "size": 180
+   }
+  },
+  {
+   "template": "light_wipe",
+   "start": 22.0,
+   "end": 22.6,
+   "params": {}
+  },
+  {
+   "template": "price_counter",
+   "start": 24.9,
+   "end": 27.15,
+   "params": {
+    "label": "تخفيضات حتى",
+    "value": 4000,
+    "y": 0.1,
+    "count": 1.1
+   }
+  },
+  {
+   "template": "lower_third",
+   "start": 39.4,
+   "end": 41.0,
+   "params": {
+    "name": "ROBERTO",
+    "role": "PALACIO CARS",
+    "y": 0.6
+   }
+  },
+  {
+   "template": "flags",
+   "start": 43.9,
+   "end": 46.65,
+   "params": {
+    "title": "أوروبا كاملة",
+    "flags": [
+     "🇪🇸",
+     "🇫🇷",
+     "🇳🇱",
+     "🇧🇪"
+    ],
+    "times": [
+     1.1,
+     1.95,
+     2.2,
+     2.4
+    ],
+    "y": 0.07
+   }
+  },
+  {
+   "template": "cta",
+   "start": 58.6,
+   "end": 60.0,
+   "params": {
+    "brand": "MIDO CARS × PALACIO CARS",
+    "title": "تابعونا",
+    "y": 0.6
+   }
+  }
+ ],
+ "lotties": [
+  {
+   "name": "starstruck",
+   "start": 3.7,
+   "end": 5.05,
+   "x": 0.84,
+   "y": 0.6,
+   "size": 230
+  },
+  {
+   "name": "fire",
+   "start": 18.1,
+   "end": 20.0,
+   "x": 0.18,
+   "y": 0.29,
+   "size": 170
+  },
+  {
+   "name": "fire",
+   "start": 18.1,
+   "end": 20.0,
+   "x": 0.82,
+   "y": 0.29,
+   "size": 170
+  },
+  {
+   "name": "moneyface",
+   "start": 25.3,
+   "end": 27.1,
+   "x": 0.84,
+   "y": 0.36,
+   "size": 200
+  },
+  {
+   "name": "thumbsup",
+   "start": 32.0,
+   "end": 33.6,
+   "x": 0.84,
+   "y": 0.36,
+   "size": 200
+  },
+  {
+   "name": "globe",
+   "start": 44.0,
+   "end": 46.6,
+   "x": 0.86,
+   "y": 0.34,
+   "size": 190
+  },
+  {
+   "name": "wave",
+   "start": 52.5,
+   "end": 54.2,
+   "x": 0.84,
+   "y": 0.36,
+   "size": 200
+  }
+ ]
+}

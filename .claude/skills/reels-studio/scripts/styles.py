@@ -26,4 +26,16 @@ STYLES = {
         "sound": {"sfx_volume": 0.3}, "progress_bar": None, "fx": {}, "stickers_every": 0,
         "graphics": ["split"],
     },
+    # THE USER'S HOUSE STYLE (approved 60 s Roberto/Mido Black Friday reel) - use by default for every new video
+    "house": {
+        "title": "House style (MIDO CARS x PALACIO CARS)", "family": "overlay",
+        "desc": "Full screen footage + big checklists above the heads + short split-screen cards + GSAP motion (kinetic title, "
+                "price counter, lower thirds, flags, CTA, light wipe) + Google animated emoji + full-screen offer posters. "
+                "No captions, no music, nothing over car shots, Tajawal Arabic, audible whoosh/click/pop on every motion.",
+        "cut": {"beat": 0, "speed": 1.0, "zoom": [[1.0, 1.0]], "transitions": ["cut"]},
+        "captions": {"enabled": False},
+        "grade": {"preset": "none", "grain": 0, "vignette": False, "sharpen": False},
+        "sound": {"sfx_volume": 0.6}, "progress_bar": None, "fx": {}, "stickers_every": 0,
+        "graphics": ["checklists", "split", "motion", "lotties", "inserts"],
+    },
 }
