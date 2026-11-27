@@ -16,7 +16,8 @@ Full worked example: `references/examples/house_style_60s_plan.json` (copy it, t
    - **Flags** when countries are listed, flags pop on each spoken country + 🌍.
    - Reaction emoji (🤩 surprise, 👍 guarantee, 👋 welcome) small at x≈0.84, never on faces.
    - **CTA** "تابعونا" + brand line in the last 1.5–3 s.
-   - Optional **contact** card (phone number) — see the phone-number note below.
+   - **End card with the numbers** (`whatsapp_contacts`, last 6–8 s, after the CTA):
+     title "عيطو لينا ولا واتساب", 🇧🇪 +32 465 38 47 33 and 🇳🇱 +31 6 84 34 46 74, each with the WhatsApp icon.
 4. Arabic text: Tajawal Black/ExtraBold only. Latin: Montserrat Black / Anton.
 5. Sound: whoosh on every picture change (card in/out, poster, title), click on each ✓, impact on counters/titles,
    pop on emoji/flags. sfx_volume 0.6. Check true peak ≤ -1 dB.

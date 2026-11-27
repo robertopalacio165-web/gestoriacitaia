@@ -69,7 +69,7 @@ Graphics code: `scripts/gfx.py`. Plan fields: `references/plan-schema.md`.
 ## Motion-graphics libraries (bundled)
 1. **GSAP 3** (`assets/vendor/gsap.min.js`, GreenSock standard no-charge license) — templates in
    `assets/motion/templates.html`, rendered frame-exact by headless Chromium (`scripts/motion_render.js`, Playwright):
-   `price_counter` (gold number counting up + Arabic label + light sweep), `contact` (phone number card, show 2–4 s), `lower_third` (name + role tag),
+   `price_counter` (gold number counting up + Arabic label + light sweep), `contact` (phone number card, show 2–4 s), `whatsapp_contacts` (stacked WhatsApp icon + flag + number cards — the user's end card), `lower_third` (name + role tag),
    `flags` (title + flags popping on the spoken times), `cta` (follow button + pointer, pulsing), `kinetic`
    (big masked title, gold line), `light_wipe` (full-frame light streak for picture changes).
    Plan: `"motion": [{"template","start","end","params":{...}}]`. New templates = add a function to `T` in templates.html.

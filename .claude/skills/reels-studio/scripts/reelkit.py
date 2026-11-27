@@ -103,7 +103,7 @@ def detect_scenes(src, thr=0.32):
 
 def read_frames(src, start, dur, w, h, fps, speed=1.0):
     """Yield BGR frames (h,w,3) for [start, start+dur) resampled to fps, scaled to w x h."""
-    vf = f"setpts=(PTS-STARTPTS)/{speed},fps={fps},scale={w}:{h}:flags=bicubic"
+    vf = f"setpts=(PTS-STARTPTS)/{speed},fps={fps},scale={w}:{h}:flags=lanczos"
     cmd = ["ffmpeg", "-v", "error", "-ss", f"{start:.3f}", "-t", f"{dur:.3f}", "-i", str(src),
            "-an", "-vf", vf, "-f", "rawvideo", "-pix_fmt", "bgr24", "-"]
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
