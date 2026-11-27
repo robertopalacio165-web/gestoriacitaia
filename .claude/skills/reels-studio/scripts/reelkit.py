@@ -806,7 +806,7 @@ def build_ass(plan, words, total, path):
             glow = "\\blur6" if pre.get("glow") else ""
             if pre.get("karaoke"):
                 parts = "".join(f"{{\\kf{max(1, int((x['e'] - x['s']) * 100))}}}{fmt(x)} " for x in g)
-                lines.append(f"Dialogue: 0,{ass_time(g_start)},{ass_time(g_end)},Cap,,0,0,0,,{{{pos}{glow}\\fad(60,60)}}{parts.strip()}")
+                lines.append(f"Dialogue: 0,{ass_time(g_start)},{ass_time(g_end)},Cap,,0,0,0,,{{{pos}{glow}\\fad(60,60)}}{'\u200f' if arabic else ''}{parts.strip()}")
                 continue
             # one event per active word: whole group visible, active word highlighted + popped
             for i, w in enumerate(g):
@@ -824,7 +824,8 @@ def build_ass(plan, words, total, path):
                     else:
                         txt.append(fmt(x))
                 intro = "\\fscx70\\fscy70\\t(0,110,\\fscx100\\fscy100)" if (i == 0 and pre.get("pop")) else ""
-                lines.append(f"Dialogue: 0,{ass_time(s)},{ass_time(e)},Cap,,0,0,0,,{{{pos}{glow}{intro}}}{' '.join(txt)}")
+                rlm = "\u200f" if arabic else ""  # force right-to-left base for mixed Arabic/Latin lines
+                lines.append(f"Dialogue: 0,{ass_time(s)},{ass_time(e)},Cap,,0,0,0,,{{{pos}{glow}{intro}}}{rlm}{' '.join(txt)}")
 
     for tx in plan.get("texts", []):
         name = tx.get("preset", "hook")
@@ -1075,6 +1076,17 @@ def cmd_render(a):
     # captions are authored at 1080x1920; libass scales them for previews
     ass_plan = {**plan, "output": {**plan["output"], "w": 1080, "h": 1920}}
     build_ass(ass_plan, words, total, tmp / "captions.ass")
+    cap = plan.get("captions", {})
+    if cap.get("enabled") and cap.get("sfx") and words:
+        pre = CAPTION_PRESETS.get(cap.get("preset", "bold_pop"), {})
+        groups = group_words(words, cap.get("max_words", pre.get("words", 3)))
+        kind = cap.get("sfx")  # "pop" | "tick" | "whoosh"
+        plan.setdefault("audio", {}).setdefault("sfx_events", [])
+        for g in groups:
+            plan["audio"]["sfx_events"].append({"type": kind, "t": round(g[0]["s"], 3), "volume": cap.get("sfx_volume", 0.18)})
+        for w in words:
+            if w.get("emph"):
+                plan["audio"]["sfx_events"].append({"type": "impact", "t": round(w["s"], 3), "volume": 0.3})
     audio = master_audio(build_audio(plan, tl, info, total, tmp), plan.get("audio", {}).get("loudness", -14), tmp)
     out = Path(a.out or (work / ("preview.mp4" if a.preview else "final.mp4"))).resolve()
     vf = grade_chain(plan.get("grade", {}))
