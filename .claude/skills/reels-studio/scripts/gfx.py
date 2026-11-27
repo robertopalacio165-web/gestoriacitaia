@@ -115,6 +115,16 @@ def draw_checklist(frame, g, t):
     if d < 0 or t > g["end"]:
         return
     states = [min(1.0, max(0.0, (t - ct) / 0.25)) if ct is not None else 0 for ct in g.get("checks", [None] * len(g["items"]))]
+    if g.get("style"):                       # wide styles: glass_wide | pills | gold (user picked gold)
+        card = wide_checklist(g["items"], states, W, g["style"], g.get("title"))
+        a_in = ease_out(d / 0.35)
+        a_out = min(1.0, (g["end"] - t) / 0.25)
+        sc = 0.9 + 0.1 * ease_back(min(1, d / 0.35))
+        if sc != 1:
+            card = card.resize((max(1, int(card.width * sc)), max(1, int(card.height * sc))), Image.BICUBIC)
+        y = g.get("y", 0.06) * H - (1 - a_in) * 60
+        paste_rgba(frame, card, W / 2 - card.width / 2, y, min(a_in, a_out))
+        return
     card = checklist_card(g["items"], states, g.get("scale", 1.0) * W / 1080, g.get("font_file"))
     a_in = ease_out(d / 0.3)
     a_out = min(1.0, (g["end"] - t) / 0.25)

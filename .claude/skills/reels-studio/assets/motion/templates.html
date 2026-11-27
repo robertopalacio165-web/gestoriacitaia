@@ -185,6 +185,133 @@ const T = {
     tl.to(rows.map(o => o.r), { duration: .6, scale: 1.04, yoyo: true, repeat: -1, ease: "sine.inOut", stagger: .3 }, 1.6);
     return tl;
   },
+  // iOS-style notification banner sliding from the top (WhatsApp-like message)
+  notification(p, D) {
+    const y = (p.y ?? 0.045) * 1920;
+    const card = el("div", "abs", null, { left: "50%", top: y + "px", transform: "translate(-50%,0)", width: "960px",
+      background: "rgba(245,245,247,.92)", borderRadius: "44px", padding: "30px 36px", display: "flex", gap: "26px",
+      alignItems: "center", boxShadow: "0 24px 60px rgba(0,0,0,.35)", direction: "ltr" });
+    const ic = document.createElement("div"); ic.innerHTML = '<svg viewBox="0 0 64 64" width="110" height="110"><rect width="64" height="64" rx="15" fill="' + (p.color || "#25D366") + '"/><path d="M32 13c-10.5 0-19 8.3-19 18.6 0 3.6 1.1 7 3 9.9L13.5 51l9.9-2.9c2.6 1.4 5.6 2.2 8.6 2.2 10.5 0 19-8.3 19-18.6S42.5 13 32 13z" fill="#fff"/></svg>';
+    ic.style.lineHeight = "0";
+    const col = document.createElement("div"); col.style.flex = "1";
+    const top = document.createElement("div"); Object.assign(top.style, { display: "flex", justifyContent: "space-between", fontFamily: "Inter", fontSize: "34px", color: "#6b6b70" });
+    top.innerHTML = `<span>${p.app || "WhatsApp"}</span><span>${p.time || "now"}</span>`;
+    const tt = document.createElement("div"); tt.textContent = p.title || ""; tt.className = /[؀-ۿ]/.test(p.title || "") ? "ar" : "";
+    Object.assign(tt.style, { fontFamily: tt.className ? "Taj" : "Mont", fontSize: "50px", color: "#111", marginTop: "6px", textAlign: tt.className ? "right" : "left" });
+    const ms = document.createElement("div"); ms.textContent = p.message || ""; ms.className = "ar";
+    Object.assign(ms.style, { fontFamily: "TajX", fontSize: "46px", color: "#2b2b2f", textAlign: "right" });
+    col.appendChild(top); col.appendChild(tt); col.appendChild(ms); card.appendChild(ic); card.appendChild(col);
+    const tl = gsap.timeline({ paused: true });
+    tl.from(card, { duration: .6, y: -380, ease: "back.out(1.4)" })
+      .from(ic, { duration: .4, scale: 0, ease: "back.out(3)" }, .25)
+      .to(card, { duration: .12, scale: 1.02, yoyo: true, repeat: 1 }, .6)
+      .to(card, { duration: .45, y: -380, ease: "power3.in" }, D - .45);
+    return tl;
+  },
+  // rotating gold starburst sale sticker with a big amount
+  sale_badge(p, D) {
+    const x = (p.x ?? 0.74) * 1080, y = (p.y ?? 0.2) * 1920, R = p.r || 230, n = 18;
+    let d = ""; for (let i = 0; i < n * 2; i++) { const a = Math.PI * i / n, rr = i % 2 ? R * .82 : R;
+      d += (i ? "L" : "M") + (R + rr * Math.cos(a)).toFixed(1) + " " + (R + rr * Math.sin(a)).toFixed(1); }
+    const wrap = el("div", "abs", null, { left: (x - R) + "px", top: (y - R) + "px", width: 2 * R + "px", height: 2 * R + "px" });
+    wrap.innerHTML = `<svg width="${2 * R}" height="${2 * R}" viewBox="0 0 ${2 * R} ${2 * R}" style="position:absolute;inset:0">
+      <defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFE9A3"/><stop offset=".5" stop-color="#F2B52B"/><stop offset="1" stop-color="#C8901C"/></linearGradient></defs>
+      <path class="star" d="${d}Z" fill="url(#g)" stroke="#7a5a10" stroke-width="5"/></svg>`;
+    const txt = document.createElement("div"); Object.assign(txt.style, { position: "absolute", inset: 0, display: "flex", flexDirection: "column",
+      alignItems: "center", justifyContent: "center", transform: `rotate(${p.tilt ?? -10}deg)` });
+    const small = document.createElement("div"); small.className = "ar"; small.textContent = p.small || "حتى";
+    Object.assign(small.style, { fontSize: R * .26 + "px", color: "#2a1a00", lineHeight: "1" });
+    const big = document.createElement("div"); big.textContent = p.text || "-4000€";
+    Object.assign(big.style, { fontFamily: "Mont", fontSize: R * .36 + "px", color: "#1a1000", letterSpacing: "-2px", lineHeight: "1.05" });
+    txt.appendChild(small); txt.appendChild(big); wrap.appendChild(txt);
+    const star = wrap.querySelector("svg");
+    const tl = gsap.timeline({ paused: true });
+    tl.from(wrap, { duration: .6, scale: 0, rotation: -120, ease: "back.out(2.2)" })
+      .to(star, { duration: D, rotation: 40, ease: "none" }, 0)
+      .to(wrap, { duration: .16, scale: 1.12, yoyo: true, repeat: 1 }, .7)
+      .to(wrap, { duration: .3, scale: 0, opacity: 0, ease: "back.in(2)" }, D - .3);
+    return tl;
+  },
+  // hand-drawn circle around a region + arrow + label (doodle annotation)
+  doodle(p, D) {
+    const bx = (p.x ?? .5) * 1080, by = (p.y ?? .45) * 1920, w = p.w || 420, h = p.h || 260, col = p.color || "#FFD400";
+    const svg = el("div", "abs", null, { inset: 0 });
+    const ell = `M ${bx - w / 2} ${by} C ${bx - w / 2} ${by - h * .62}, ${bx + w * .55} ${by - h * .6}, ${bx + w / 2} ${by - 8} C ${bx + w * .5} ${by + h * .6}, ${bx - w * .45} ${by + h * .62}, ${bx - w * .52} ${by + 10} C ${bx - w * .5} ${by - h * .3}, ${bx - w * .2} ${by - h * .5}, ${bx + w * .05} ${by - h * .5}`;
+    const ax = bx + w * .55, ay = by - h * .7, lx = (p.lx ?? .78) * 1080, ly = (p.ly ?? .3) * 1920;
+    svg.innerHTML = `<svg width="1080" height="1920" style="position:absolute;inset:0;overflow:visible">
+      <path class="c" d="${ell}" fill="none" stroke="${col}" stroke-width="12" stroke-linecap="round"/>
+      <path class="a" d="M ${lx} ${ly + 40} Q ${(lx + ax) / 2 + 60} ${(ly + ay) / 2} ${ax} ${ay}" fill="none" stroke="${col}" stroke-width="10" stroke-linecap="round"/>
+      <path class="h" d="M ${ax - 34} ${ay - 6} L ${ax} ${ay} L ${ax - 10} ${ay + 34}" fill="none" stroke="${col}" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+    const lab = document.createElement("div"); lab.className = "ar"; lab.textContent = p.label || "";
+    Object.assign(lab.style, { position: "absolute", left: lx + "px", top: (ly - 30) + "px", transform: "translate(-50%,-100%)", fontSize: "70px",
+      color: "#111", background: col, padding: "4px 28px 12px", borderRadius: "14px", whiteSpace: "nowrap", rotate: "-4deg" });
+    svg.appendChild(lab);
+    const paths = svg.querySelectorAll("path"); paths.forEach(pt => { const L = pt.getTotalLength(); pt.style.strokeDasharray = L; pt.style.strokeDashoffset = L; });
+    const tl = gsap.timeline({ paused: true });
+    tl.to(paths[0], { duration: .6, strokeDashoffset: 0, ease: "power2.inOut" })
+      .to(paths[1], { duration: .35, strokeDashoffset: 0, ease: "power2.out" }, .55)
+      .to(paths[2], { duration: .2, strokeDashoffset: 0 }, .85)
+      .from(lab, { duration: .4, scale: 0, ease: "back.out(2.5)" }, .9)
+      .to(svg, { duration: .3, opacity: 0 }, D - .3);
+    return tl;
+  },
+  // circular progress ring filling to a value, number/label in the centre
+  progress_ring(p, D) {
+    const x = (p.x ?? .5) * 1080, y = (p.y ?? .2) * 1920, R = p.r || 170, C = 2 * Math.PI * R;
+    const wrap = el("div", "abs glass", null, { left: (x - R - 50) + "px", top: (y - R - 50) + "px", width: (2 * R + 100) + "px", height: (2 * R + 100) + "px", borderRadius: "50%" });
+    wrap.innerHTML = `<svg width="${2 * R + 100}" height="${2 * R + 100}" style="position:absolute;inset:0;transform:rotate(-90deg)">
+      <circle cx="${R + 50}" cy="${R + 50}" r="${R}" fill="none" stroke="rgba(255,255,255,.15)" stroke-width="26"/>
+      <circle class="ring" cx="${R + 50}" cy="${R + 50}" r="${R}" fill="none" stroke="${p.color || "#F6C453"}" stroke-width="26" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${C}"/></svg>`;
+    const mid = document.createElement("div"); Object.assign(mid.style, { position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" });
+    const big = document.createElement("div"); big.className = "ar gold"; big.textContent = p.value || "عام";
+    Object.assign(big.style, { fontSize: R * .55 + "px", lineHeight: "1.1" });
+    const lab = document.createElement("div"); lab.className = "ar"; lab.textContent = p.label || "ضمانة";
+    Object.assign(lab.style, { fontSize: R * .3 + "px", color: "#fff" });
+    mid.appendChild(lab); mid.appendChild(big); wrap.appendChild(mid);
+    const ring = wrap.querySelector(".ring");
+    const tl = gsap.timeline({ paused: true });
+    tl.from(wrap, { duration: .5, scale: 0, ease: "back.out(2)" })
+      .to(ring, { duration: 1.2, strokeDashoffset: C * (1 - (p.pct ?? 1)), ease: "power2.inOut" }, .3)
+      .from(big, { duration: .4, scale: 0, ease: "back.out(3)" }, 1.2)
+      .to(wrap, { duration: .3, scale: 0, opacity: 0, ease: "back.in(2)" }, D - .3);
+    return tl;
+  },
+  // map-style route: pins drop one by one, dotted path draws between them, flag + name labels
+  map_pins(p, D) {
+    const pts = p.points || [];  // [{x,y,flag,name,t}]
+    const box = el("div", "abs", null, { inset: 0 });
+    let path = ""; pts.forEach((q, i) => { path += (i ? " L " : "M ") + (q.x * 1080) + " " + (q.y * 1920); });
+    box.innerHTML = `<svg width="1080" height="1920" style="position:absolute;inset:0;overflow:visible"><path class="route" d="${path}" fill="none" stroke="#FFD400" stroke-width="9" stroke-dasharray="4 22" stroke-linecap="round"/></svg>`;
+    if (p.title) { const t = document.createElement("div"); t.className = "ar glass"; t.textContent = p.title;
+      Object.assign(t.style, { position: "absolute", left: "50%", top: ((p.ty ?? .05) * 1920) + "px", transform: "translateX(-50%)", fontSize: "70px", color: "#fff", padding: "10px 40px 18px" });
+      box.appendChild(t); }
+    const pins = pts.map(q => { const d = document.createElement("div");
+      Object.assign(d.style, { position: "absolute", left: q.x * 1080 + "px", top: q.y * 1920 + "px", transform: "translate(-50%,-100%)", textAlign: "center" });
+      d.innerHTML = `<div style="font-size:64px;line-height:1">${q.flag || ""}</div><div class="${/[؀-ۿ]/.test(q.name || "") ? "ar" : ""}" style="font-family:${/[؀-ۿ]/.test(q.name || "") ? "Taj" : "Mont"};font-size:40px;color:#fff;background:rgba(10,10,12,.85);padding:2px 16px 8px;border-radius:10px;margin:6px 0">${q.name || ""}</div><svg width="56" height="74" viewBox="0 0 24 32"><path d="M12 0C5.4 0 0 5.3 0 11.9 0 20.8 12 32 12 32s12-11.2 12-20.1C24 5.3 18.6 0 12 0z" fill="#E8603C"/><circle cx="12" cy="12" r="4.6" fill="#fff"/></svg>`;
+      box.appendChild(d); return d; });
+    const route = box.querySelector(".route"); const L = route.getTotalLength();
+    const tl = gsap.timeline({ paused: true });
+    if (box.querySelector(".glass")) tl.from(box.querySelector(".glass"), { duration: .4, y: -60, opacity: 0, ease: "back.out(2)" }, 0);
+    pins.forEach((d, i) => tl.from(d, { duration: .45, y: -220, opacity: 0, ease: "bounce.out" }, pts[i].t ?? (.3 + i * .4)));
+    tl.fromTo(route, { clipPath: "inset(0 100% 0 0)" }, { duration: (pts[pts.length - 1]?.t ?? 1.5), clipPath: "inset(0 0% 0 0)", ease: "none" }, .3);
+    tl.to(box, { duration: .3, opacity: 0 }, D - .3);
+    return tl;
+  },
+  // stacked big words each revealed by a coloured marker sweep
+  marker_words(p, D) {
+    const y = (p.y ?? .1) * 1920;
+    const box = el("div", "abs", null, { left: "50%", top: y + "px", transform: "translateX(-50%)", display: "flex", flexDirection: "column", alignItems: "center", gap: "18px" });
+    const cols = p.colors || ["#FFD400", "#E8603C", "#25D366", "#3BC8FF"];
+    const ws = (p.words || []).map((w, i) => { const row = document.createElement("div"); Object.assign(row.style, { position: "relative", padding: "0 34px 10px" });
+      const bg = document.createElement("div"); Object.assign(bg.style, { position: "absolute", inset: "12px 0 0 0", background: cols[i % cols.length], borderRadius: "12px", transform: "skewX(-8deg)", transformOrigin: "right" });
+      const t = document.createElement("div"); t.className = "ar"; t.textContent = w; Object.assign(t.style, { position: "relative", fontSize: (p.size || 110) + "px", color: "#111", lineHeight: "1.15" });
+      row.appendChild(bg); row.appendChild(t); box.appendChild(row); return { bg, t }; });
+    const tl = gsap.timeline({ paused: true });
+    ws.forEach(({ bg, t }, i) => { const t0 = (p.times || [])[i] ?? (i * .35);
+      tl.from(bg, { duration: .35, scaleX: 0, ease: "power3.out" }, t0).from(t, { duration: .3, y: 40, opacity: 0, ease: "back.out(2)" }, t0 + .12); });
+    tl.to(box, { duration: .3, opacity: 0, y: -30 }, D - .3);
+    return tl;
+  },
   // full-frame light streak transition (place it so its peak covers a picture change)
   light_wipe(p, D) {
     const g = el("div", "abs", null, { inset: "-20% -60%", background: `linear-gradient(105deg, transparent 35%, ${p.color || "rgba(255,214,120,.0)"} 40%, rgba(255,230,170,.85) 50%, rgba(255,255,255,.95) 52%, rgba(255,214,120,.6) 56%, transparent 64%)` });
