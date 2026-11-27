@@ -833,7 +833,16 @@ def compose_blurfill(f, W, H):
 
 
 # --------------------------------------------------------------------------- render: captions & titles (ASS)
+# fonts that contain Arabic glyphs (others fall back to Cairo for Arabic words)
+AR_FONTS = {"Cairo", "Tajawal", "Rubik", "Almarai"}
+# the 4 caption font options offered to the user (all bold, Arabic + Latin)
+CAPTION_FONTS = {"cairo": ("Cairo", 94), "almarai": ("Almarai", 94), "rubik": ("Rubik", 88), "tajawal": ("Tajawal", 100)}
+
 CAPTION_PRESETS = {
+    # ALWAYS-BOTTOM captions (user rule): 2-3 words, thick white letters with a black outline + shadow,
+    # the spoken word turns yellow and pops. Font chosen by the user from CAPTION_FONTS.
+    "bottom_bold": {"font": "Cairo", "bold": 1, "size": 84, "color": "#FFFFFF", "outline": "#000000", "ow": 6, "shadow": 3,
+                    "hl": "#FFD400", "pop": True, "words": 3},
     # Style 1 - Full Screen Talking Head: ONE word at a time, small white sans, just under the mouth (follows the face)
     "word_mouth": {"font": "Inter", "bold": 1, "size": 64, "color": "#F5F5F5", "outline": "#000000", "ow": 0, "shadow": 0,
                    "hl": None, "single": True, "words": 1, "soft_shadow": True, "y_face": 0.16},
@@ -894,7 +903,7 @@ def ref_caption_events(g, g_start, g_end, pre, cap, W, y, arabic, fmt):
             if e <= s:
                 e = s + 0.06
             txt = " ".join(fmt(x) for x in g[: i + 1]) if pre.get("words", 1) > 1 else fmt(w)
-            fn = "\\fnCairo" if has_arabic(txt) and pre["font"] != "Cairo" else ""
+            fn = "\\fnCairo" if has_arabic(txt) and pre["font"] not in AR_FONTS else ""
             appear = "\\fscx96\\fscy96\\t(0,80,\\fscx100\\fscy100)" if not pre.get("box") else ""
             out.append(f"Dialogue: 0,{ass_time(s)},{ass_time(e)},Cap,,0,0,0,,{{\\an5\\pos({W // 2},{ypos(w)}){shad}{fn}{appear}}}{rlm}{txt}")
         return out
@@ -903,7 +912,7 @@ def ref_caption_events(g, g_start, g_end, pre, cap, W, y, arabic, fmt):
     def word(x, lit, fresh):
         if x.get("emph") and not has_arabic(x["w"]):
             st = f"\\fn{pre.get('emph_font', 'Instrument Serif')}\\b0\\i1\\fscx{int(pre.get('emph_scale', 1.4) * 100)}\\fscy{int(pre.get('emph_scale', 1.4) * 100)}"
-        elif has_arabic(x["w"]) and pre["font"] != "Cairo":
+        elif has_arabic(x["w"]) and pre["font"] not in AR_FONTS:
             st = "\\fnCairo" + ("\\fscx118\\fscy118" if x.get("emph") else "")
         else:
             st = ""
@@ -972,6 +981,8 @@ def build_ass(plan, words, total, path):
     W, H = plan["output"]["w"], plan["output"]["h"]
     cap = plan.get("captions", {})
     pre = dict(CAPTION_PRESETS.get(cap.get("preset", "word_mouth"), CAPTION_PRESETS["word_mouth"]))
+    if cap.get("font_option") in CAPTION_FONTS:
+        pre["font"], pre["size"] = CAPTION_FONTS[cap["font_option"]]
     for k in ("font", "size", "color", "outline"):
         if cap.get(k): pre[k] = cap[k]
     if "highlight" in cap: pre["hl"] = cap["highlight"]
@@ -1004,7 +1015,7 @@ def build_ass(plan, words, total, path):
                 t = re.sub(r"[.,،]+$", "", w["w"]) if cap.get("strip_punct", True) else w["w"]
                 return ass_escape(t.upper() if pre.get("upper") and not arabic else t)
             pos = f"\\an5\\pos({W // 2},{y})"
-            if arabic and pre["font"] != "Cairo":
+            if arabic and pre["font"] not in AR_FONTS:
                 pos += "\\fnCairo"  # Latin display fonts have no Arabic glyphs
             glow = "\\blur6" if pre.get("glow") else ""
             if pre.get("single") or pre.get("build"):
@@ -1057,7 +1068,7 @@ def build_ass(plan, words, total, path):
         if tx.get("size"): rot += f"\\fs{int(tx['size'])}"
         pos = "" if anim in ("slide", "drop") else f"\\pos({tx_x},{ty})"
         text = ass_escape(tx["text"])
-        if has_arabic(tx["text"]) and tp["font"] != "Cairo":
+        if has_arabic(tx["text"]) and tp["font"] not in AR_FONTS:
             rot += "\\fnCairo"
         if anim == "typewriter":
             chars = list(tx["text"])

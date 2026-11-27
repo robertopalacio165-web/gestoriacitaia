@@ -78,7 +78,7 @@ def checklist_card(items, states, scale=1.0):
     s = scale
     fs = int(34 * s)
     pad, gap, r = int(26 * s), int(16 * s), int(15 * s)
-    fnts = [F("semi", fs, t) for t in items]
+    fnts = [F("bold", fs, t) for t in items]
     widths = [ImageDraw.Draw(Image.new("RGB", (1, 1))).textlength(t, font=f) for t, f in zip(items, fnts)]
     w = int(pad * 2 + 2 * r + 18 * s + max(widths))
     lh = int(fs * 1.25)
