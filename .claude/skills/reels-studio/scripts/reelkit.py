@@ -844,6 +844,7 @@ def build_ass(plan, words, total, path):
         else:
             a = "\\fad(120,120)"
         rot = f"\\frz{tx['rotate']}" if tx.get("rotate") else ""
+        if tx.get("size"): rot += f"\\fs{int(tx['size'])}"
         pos = "" if anim in ("slide", "drop") else f"\\pos({tx_x},{ty})"
         text = ass_escape(tx["text"])
         if has_arabic(tx["text"]) and tp["font"] != "Cairo":
@@ -1027,7 +1028,7 @@ def master_audio(path, target, tmp):
         gain = target - ld["lufs"]
         out = tmp / f"master_{i}.wav"
         run(["ffmpeg", "-v", "error", "-y", "-i", str(cur), "-af",
-             f"volume={gain:.2f}dB,alimiter=limit=0.82:attack=1:release=40:level=disabled", str(out)])
+             f"volume={gain:.2f}dB,alimiter=limit=0.76:attack=1:release=40:level=disabled", str(out)])
         cur = out
     return cur
 
