@@ -36,3 +36,8 @@ progress_ring (ring filling, e.g. ضمانة عام), map_pins (pins drop + dott
 (coloured marker sweeps for 2–3 key words). Mix them in: one element every 3–6 s, never two at once.
 Offer poster: the user's WHITE Black Friday poster (not the black one).
 Phone numbers (`whatsapp_contacts`) in the MIDDLE of the video (a calm non-car shot) and again at the end.
+
+## Dealer plates (user rule)
+Advertising plates of other dealers (e.g. orange/white "KUBIKA") must never show: set `"fx": {"blank_plates": true}`
+(auto-detect + white fill, `scripts/plates.py`). Check every car shot on the final file; add `fx.blank_boxes`
+[{start,end (source s), box:[x0,y0,x1,y1] (0..1)}] for any plate the detector misses.

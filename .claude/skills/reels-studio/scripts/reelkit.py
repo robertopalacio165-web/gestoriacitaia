@@ -683,6 +683,16 @@ def render_frames(plan, tl, info, faces, pipe):
             if zb > 0: out = zoom_blur(out, zb)
             if gl > 0: out = glitch(out, gl, rng)
             if flash > 0: out = cv2.addWeighted(out, 1 - flash, np.full_like(out, 255), flash, 0)
+            if fxcfg.get("blank_plates"):
+                if "_plates" not in gstate:
+                    import plates
+                    gstate["_plates"] = plates.PlateBlanker()
+                out = gstate["_plates"](out)
+            for bx in fxcfg.get("blank_boxes", []):      # manual boxes (source time) for plates the detector misses
+                if bx["start"] <= t_src <= bx["end"]:
+                    import cv2 as _cv
+                    x0, y0, x1, y1 = [int(v * (W if i % 2 == 0 else H)) for i, v in enumerate(bx["box"])]
+                    _cv.rectangle(out, (x0, y0), (x1, y1), (250, 250, 250), -1, lineType=_cv.LINE_AA)
             out = apply_fx(out, fxcfg, t_out, rng)
             out = apply_reference_gfx(out, plan, t_out, t_src, gstate)
             if plan.get("_pil_groups"):
