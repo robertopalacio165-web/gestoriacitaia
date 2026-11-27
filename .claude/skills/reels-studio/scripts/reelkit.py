@@ -758,6 +758,10 @@ def apply_reference_gfx(out, plan, t, t_src, st):
         gfx.draw_checklist(out, cl, t)
     for ins in plan.get("inserts", []):
         out = gfx.draw_image_insert(out, ins, t)
+    if plan.get("motion") or plan.get("lotties"):
+        import motionlib
+        motionlib.draw_motion(out, plan.get("motion", []), t, plan["output"]["fps"])
+        motionlib.draw_lotties(out, plan.get("lotties", []), t)
     return out
 
 
@@ -1367,6 +1371,24 @@ def cmd_render(a):
             ev.append({"type": "impact", "t": round(ins["start"] + 0.15, 3), "volume": sv * 0.7})
             ev.append({"type": "whoosh", "t": round(ins["end"] - 0.25, 3), "volume": sv * 0.6})
         plan["_gfx_sfx_done"] = True
+    if plan.get("motion"):
+        import motionlib
+        motionlib.prerender_motion(plan, tmp, plan["output"]["fps"])
+    # motion SFX for the new libraries
+    if not plan.get("_lib_sfx_done"):
+        sv = plan.setdefault("audio", {}).get("sfx_volume", 0.3)
+        evs = plan["audio"].setdefault("sfx_events", [])
+        snd = {"price_counter": [("whoosh", -0.15, .8), ("impact", 1.6, .7)], "lower_third": [("whoosh", -0.1, .6)],
+               "flags": [("whoosh", -0.15, .7)], "cta": [("whoosh", -0.1, .7), ("click", .95, .9)],
+               "kinetic": [("whoosh", -0.15, .8), ("impact", .35, .7)], "light_wipe": [("whoosh", 0.0, .8)]}
+        for m in plan.get("motion", []):
+            for k, off, v in snd.get(m["template"], []):
+                evs.append({"type": k, "t": round(max(0, m["start"] + off), 3), "volume": sv * v})
+            for tt in m.get("params", {}).get("times", []):
+                evs.append({"type": "pop", "t": round(m["start"] + tt, 3), "volume": sv * .6})
+        for l in plan.get("lotties", []):
+            evs.append({"type": "pop", "t": l["start"], "volume": sv * .6})
+        plan["_lib_sfx_done"] = True
     audio = master_audio(build_audio(plan, tl, info, total, tmp), plan.get("audio", {}).get("loudness", -14), tmp)
     out = Path(a.out or (work / ("preview.mp4" if a.preview else "final.mp4"))).resolve()
     vf = grade_chain(plan.get("grade", {}))

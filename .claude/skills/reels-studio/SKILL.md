@@ -62,3 +62,16 @@ Graphics code: `scripts/gfx.py`. Plan fields: `references/plan-schema.md`.
 - Captions never overlap each other or the graphics; inside y 0.12–0.85; Arabic uses Cairo automatically.
 - One idea per graphic; graphics change on the spoken beat; every graphic move has a soft sound, nothing louder than the voice.
 - Reference videos from YouTube: OpusClip `start_link_download` → curl the URL → contact sheets + 4K frame grabs.
+
+## Motion-graphics libraries (bundled)
+1. **GSAP 3** (`assets/vendor/gsap.min.js`, GreenSock standard no-charge license) — templates in
+   `assets/motion/templates.html`, rendered frame-exact by headless Chromium (`scripts/motion_render.js`, Playwright):
+   `price_counter` (gold number counting up + Arabic label + light sweep), `lower_third` (name + role tag),
+   `flags` (title + flags popping on the spoken times), `cta` (follow button + pointer, pulsing), `kinetic`
+   (big masked title, gold line), `light_wipe` (full-frame light streak for picture changes).
+   Plan: `"motion": [{"template","start","end","params":{...}}]`. New templates = add a function to `T` in templates.html.
+2. **Google Noto Animated Emoji** (Lottie, rendered by rlottie, `scripts/motionlib.py`): 40 names in `EMOJI`
+   (fire, check, car, party, starstruck, thumbsup, rocket, 100, money, moneyface, globe, wave, handshake, trophy...),
+   cached in `assets/lottie/`. Plan: `"lotties": [{"name","start","end","x","y","size"}]`.
+Every motion element gets its sound automatically (whoosh in, impact on counters/titles, pop on emoji and flags).
+Needs: `pip install rlottie-python`, Node + Playwright (pre-installed Chromium).
