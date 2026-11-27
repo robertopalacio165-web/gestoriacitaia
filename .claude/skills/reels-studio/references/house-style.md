@@ -39,5 +39,5 @@ Phone numbers (`whatsapp_contacts`) in the MIDDLE of the video (a calm non-car s
 
 ## Dealer plates (user rule)
 Advertising plates of other dealers (e.g. orange/white "KUBIKA") must never show: set `"fx": {"blank_plates": true}`
-(auto-detect + white fill, `scripts/plates.py`). Check every car shot on the final file; add `fx.blank_boxes`
+(auto-detect + inpaint from the car body — never white boxes, never on people; `scripts/plates.py`). Check every car shot on the final file; add `fx.blank_boxes`
 [{start,end (source s), box:[x0,y0,x1,y1] (0..1)}] for any plate the detector misses.

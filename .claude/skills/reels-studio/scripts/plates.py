@@ -104,28 +104,105 @@ def _extend(bgr, poly):
     return cv2.boxPoints((c2, (w2 + 6, h2 + 6), a2)).astype(np.int32)
 
 
+def _signature_ok(bgr, poly):
+    """Keep only real dealer plates: the region must hold BOTH strong orange/red ink AND bright white plate,
+    and must not be skin-like (low-saturation warm tones)."""
+    mk = np.zeros(bgr.shape[:2], np.uint8); cv2.fillConvexPoly(mk, poly.astype(np.int32), 1)
+    px = cv2.cvtColor(bgr, cv2.COLOR_BGR2HSV)[mk > 0]
+    area_min = 6000 * (bgr.shape[1] / 1080) ** 2
+    if len(px) < area_min:
+        return False
+    h, sa, v = px[:, 0].astype(int), px[:, 1].astype(int), px[:, 2].astype(int)
+    orange = (((h >= 2) & (h <= 16)) | (h >= 170)) & (sa > 150) & (v > 90)
+    white = (sa < 70) & (v > 150)
+    skin = (h >= 5) & (h <= 22) & (sa > 40) & (sa < 140) & (v > 90)
+    strong = ((h >= 3) & (h <= 15)) & (sa > 170) & (v > 100)
+    (_, _), (rw, rh), ang = cv2.minAreaRect(poly.astype(np.float32))
+    L, S = max(rw, rh), min(rw, rh)
+    if L / max(1, S) < 1.9:                                  # plates are wide, hands/arms are tall
+        return False
+    long_ang = ang if rw >= rh else ang + 90
+    if abs(((long_ang + 90) % 180) - 90) > 35:               # long side must be roughly horizontal
+        return False
+    return skin.mean() < 0.3 and (white.mean() > 0.12 or (strong.mean() > 0.06 and white.mean() > 0.05))
+
+
+def _detect_edge(bgr, s=0.5):
+    """Plates cut by the frame border: big saturated-orange blob touching the border, with white next to it."""
+    H, W = bgr.shape[:2]
+    sm = cv2.resize(bgr, (int(W * s), int(H * s)), interpolation=cv2.INTER_AREA)
+    hsv = cv2.cvtColor(sm, cv2.COLOR_BGR2HSV); h, sa, v = cv2.split(hsv)
+    O = ((h >= 3) & (h <= 15) & (sa > 170) & (v > 100)).astype(np.uint8)
+    O[: int(sm.shape[0] * 0.45)] = 0
+    O = cv2.morphologyEx(O, cv2.MORPH_CLOSE, np.ones((11, 11), np.uint8))
+    n, lab, st, _ = cv2.connectedComponentsWithStats(O)
+    wht = (sa < 80) & (v > 150)
+    out = []
+    for i in range(1, n):
+        x, y, w, hh, a = st[i]
+        if a < 60: continue
+        touches = x <= 8 or y <= 8 or x + w >= sm.shape[1] - 8 or y + hh >= sm.shape[0] - 8
+        if not touches: continue
+        x0, y0 = max(0, x - w), max(0, y - hh // 2); x1, y1 = min(sm.shape[1], x + 2 * w), min(sm.shape[0], y + hh + hh // 2)
+        solid = a / float(w * hh) > 0.45
+        if wht[y0:y1, x0:x1].mean() < 0.08 and not (solid and a >= 250) and a < 800: continue
+        ys, xs = np.nonzero(lab == i)
+        (cx, cy), (rw, rh), ang = cv2.minAreaRect(np.stack([xs, ys], 1).astype(np.float32))
+        big = (rw * 2.2 + 8, rh * 1.3 + 8) if rw >= rh else (rw * 1.3 + 8, rh * 2.2 + 8)
+        out.append((cv2.boxPoints(((cx, cy), big, ang)) / s).astype(np.int32))
+    return out
+
+
 class PlateBlanker:
-    def __init__(self, hold=8, color=(250, 250, 250)):
-        self.tracks = []          # [poly, frames_since_seen]
-        self.hold, self.color = hold, color
+    """Hides dealer plates with a soft frosted blur (not a solid box)."""
+    def __init__(self, hold=6, blur=1.0):
+        self.tracks = []
+        self.hold, self.blur = hold, blur
+
+    def _hide(self, bgr, poly):
+        """Erase the plate: inpaint it from the surrounding car body (opaque, no white box), then soften edges."""
+        rect = cv2.minAreaRect(poly.astype(np.float32))
+        (cx, cy), (rw, rh), ang = rect
+        poly = cv2.boxPoints(((cx, cy), (rw * 1.12 + 10, rh * 1.35 + 10), ang)).astype(np.int32)
+        x, y, w, h = cv2.boundingRect(poly)
+        pad = max(24, h)
+        H, W = bgr.shape[:2]
+        x0, y0, x1, y1 = max(0, x - pad), max(0, y - pad), min(W, x + w + pad), min(H, y + h + pad)
+        if x1 - x0 < 6 or y1 - y0 < 6:
+            return
+        roi = bgr[y0:y1, x0:x1].copy()
+        m = np.zeros(roi.shape[:2], np.uint8)
+        cv2.fillConvexPoly(m, (poly - [x0, y0]).astype(np.int32), 255)
+        # inpaint on a downscaled copy (fast, smooth), then upscale
+        f = 4
+        small = cv2.resize(roi, (max(4, roi.shape[1] // f), max(4, roi.shape[0] // f)), interpolation=cv2.INTER_AREA)
+        ms = cv2.resize(m, (small.shape[1], small.shape[0]), interpolation=cv2.INTER_NEAREST)
+        ms = cv2.dilate(ms, np.ones((3, 3), np.uint8))
+        fill = cv2.inpaint(small, ms, 5, cv2.INPAINT_TELEA)
+        fill = cv2.resize(fill, (roi.shape[1], roi.shape[0]), interpolation=cv2.INTER_CUBIC)
+        fill = cv2.GaussianBlur(fill, (0, 0), max(2, h / 8))
+        a = cv2.GaussianBlur(m.astype(np.float32) / 255, (0, 0), max(2, h / 12))
+        a = np.clip(a * 1.8, 0, 1)[:, :, None]
+        bgr[y0:y1, x0:x1] = (roi * (1 - a) + fill * a).astype(np.uint8)
 
     def __call__(self, bgr):
         g = cv2.resize(cv2.cvtColor(bgr, cv2.COLOR_BGR2GRAY), (64, 114)).astype(np.float32)
-        if getattr(self, "_prev", None) is not None and np.abs(g - self._prev).mean() > 28:
-            self.tracks = []                       # scene cut: forget held plates
+        if getattr(self, "_prev", None) is not None and np.abs(g - self._prev).mean() > 20:
+            self.tracks = []
         self._prev = g
-        det = _detect_rect(bgr)
-        for p in _detect_rect(bgr, ws=85, wv=150) + _detect_orange(bgr):
+        det = []
+        for p in _detect_rect(bgr) + _detect_rect(bgr, ws=85, wv=150) + _detect_orange(bgr):
+            p = _extend(bgr, p)
+            if _signature_ok(bgr, p) and not any(_iou_center(p, q) for q in det):
+                det.append(p)
+        for p in _detect_edge(bgr):
             if not any(_iou_center(p, q) for q in det):
                 det.append(p)
-        det = [_extend(bgr, p) for p in det]
-        new = []
-        for p in det:
-            new.append([p, 0])
+        new = [[p, 0] for p in det]
         for p, age in self.tracks:
             if age + 1 <= self.hold and not any(_iou_center(p, q) for q in det):
                 new.append([p, age + 1])
         self.tracks = new
         for p, _ in self.tracks:
-            cv2.fillConvexPoly(bgr, p.astype(np.int32), self.color, lineType=cv2.LINE_AA)
+            self._hide(bgr, p.astype(np.int32))
         return bgr

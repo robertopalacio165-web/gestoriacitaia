@@ -692,7 +692,7 @@ def render_frames(plan, tl, info, faces, pipe):
                 if bx["start"] <= t_src <= bx["end"]:
                     import cv2 as _cv
                     x0, y0, x1, y1 = [int(v * (W if i % 2 == 0 else H)) for i, v in enumerate(bx["box"])]
-                    _cv.rectangle(out, (x0, y0), (x1, y1), (250, 250, 250), -1, lineType=_cv.LINE_AA)
+                    gstate["_plates"]._hide(out, np.array([[x0, y0], [x1, y0], [x1, y1], [x0, y1]], np.int32))
             out = apply_fx(out, fxcfg, t_out, rng)
             out = apply_reference_gfx(out, plan, t_out, t_src, gstate)
             if plan.get("_pil_groups"):
