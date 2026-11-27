@@ -410,3 +410,78 @@ def draw_image_insert(frame, ins, t):
     im = cv2.warpAffine(img, M, (W, H), borderMode=cv2.BORDER_REFLECT)
     a = min(e * 1.4, 1.0, rem / 0.25)
     return (frame.astype(np.float32) * (1 - a) + im.astype(np.float32) * a).astype(np.uint8)
+
+
+# ----------------------------------------------------------------------------- WIDE checklist styles (user: "make them wide")
+GOLD = (246, 196, 83)
+GREEN = (37, 211, 102)
+
+
+def _rr(d, box, r, **kw):
+    d.rounded_rectangle(box, radius=r, **kw)
+
+
+def _check(d, cx, cy, r, st, fill, mark=(255, 255, 255), ring=(235, 235, 235)):
+    if st <= 0:
+        d.ellipse([cx - r, cy - r, cx + r, cy + r], outline=ring + (255,), width=max(3, r // 6))
+        return
+    rr = r * (0.6 + 0.4 * ease_back(st))
+    d.ellipse([cx - rr, cy - rr, cx + rr, cy + rr], fill=fill + (255,))
+    if st > 0.35:
+        k = min(1, (st - 0.35) / 0.4)
+        p1, p2, p3 = (cx - r * 0.45, cy + r * 0.02), (cx - r * 0.1, cy + r * 0.35), (cx + r * 0.5, cy - r * 0.38)
+        pts = [p1, p2] if k < 0.5 else [p1, p2, (p2[0] + (p3[0] - p2[0]) * (k - 0.5) * 2, p2[1] + (p3[1] - p2[1]) * (k - 0.5) * 2)]
+        d.line(pts, fill=mark + (255,), width=max(4, r // 4), joint="curve")
+
+
+def wide_checklist(items, states, W, style="glass_wide", title=None):
+    """Full-width checklist (≈90 % of the frame). styles: glass_wide | pills | gold"""
+    w = int(W * 0.9)
+    s = W / 1080
+    fs = int(58 * s)
+    rtl = any(has_ar(t) for t in items)
+    fnt = [F("bold", fs, t) for t in items]
+    r = int(30 * s)
+    if style == "pills":
+        rowh, gap = int(118 * s), int(18 * s)
+        h = len(items) * rowh + (len(items) - 1) * gap
+        im = Image.new("RGBA", (w, h + 20), (0, 0, 0, 0))
+        d = ImageDraw.Draw(im)
+        for i, (t, f, st) in enumerate(zip(items, fnt, states)):
+            y0 = i * (rowh + gap)
+            on = st > 0
+            _rr(d, [0, y0 + 8, w - 1, y0 + rowh + 8], rowh // 2, fill=(0, 0, 0, 90))            # shadow
+            _rr(d, [0, y0, w - 1, y0 + rowh], rowh // 2, fill=(255, 255, 255, 250))
+            bx = w - rowh // 2 - 4 if rtl else rowh // 2 + 4
+            _check(d, bx, y0 + rowh // 2, r + int(6 * s), st, GREEN, ring=(150, 150, 150))
+            tx = (w - rowh - int(14 * s), "rm") if rtl else (rowh + int(14 * s), "lm")
+            d.text((tx[0], y0 + rowh // 2), t, font=f, fill=(17, 17, 17, 255) if on or True else (120, 120, 120, 255),
+                   anchor=tx[1], direction="rtl" if has_ar(t) else None)
+        return im
+    pad, rowh = int(40 * s), int(100 * s)
+    th = int(84 * s) if title else 0
+    h = pad * 2 + th + len(items) * rowh
+    im = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    d = ImageDraw.Draw(im)
+    if style == "gold":
+        _rr(d, [0, 0, w - 1, h - 1], int(40 * s), fill=(10, 10, 12, 235), outline=GOLD + (255,), width=max(4, int(5 * s)))
+        acc, ring = GOLD, (230, 210, 160)
+    else:
+        _rr(d, [0, 0, w - 1, h - 1], int(40 * s), fill=(14, 14, 16, 215), outline=(255, 255, 255, 40), width=3)
+        acc, ring = CORAL, (235, 235, 235)
+    y = pad
+    if title:
+        tf = F("display", int(70 * s), title)
+        d.text((w / 2, y + th / 2), title, font=tf, fill=(GOLD if style == "gold" else (255, 255, 255)) + (255,), anchor="mm",
+               direction="rtl" if has_ar(title) else None)
+        d.line([(pad, y + th), (w - pad, y + th)], fill=(acc if style == "gold" else (255, 255, 255)) + (90,), width=3)
+        y += th
+    for t, f, st in zip(items, fnt, states):
+        cy = y + rowh // 2
+        cx = w - pad - r if rtl else pad + r
+        _check(d, cx, cy, r, st, acc, mark=(20, 20, 20) if style == "gold" else (255, 255, 255), ring=ring)
+        tx = (w - pad - 2 * r - int(24 * s), "rm") if rtl else (pad + 2 * r + int(24 * s), "lm")
+        col = (255, 255, 255) if st > 0 or style != "gold" else (235, 235, 235)
+        d.text((tx[0], cy), t, font=f, fill=col + (255,), anchor=tx[1], direction="rtl" if has_ar(t) else None)
+        y += rowh
+    return im
