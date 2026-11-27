@@ -123,7 +123,7 @@ const T = {
     const lines = (p.lines || []).map((t, i) => { const m = document.createElement("div"); Object.assign(m.style, { overflow: "hidden" });
       const s = document.createElement("div"); s.className = (i % 2 ? "gold" : "") + (/[؀-ۿ]/.test(t) ? " ar" : "");
       s.textContent = t; Object.assign(s.style, { fontFamily: /[؀-ۿ]/.test(t) ? "Taj" : "Mont", fontSize: (p.size || 190) + "px",
-        lineHeight: "1.02", color: i % 2 ? "transparent" : "#fff", fontStyle: "italic", letterSpacing: "-3px",
+        lineHeight: "1.02", color: i % 2 ? "transparent" : "#fff", fontStyle: "italic", letterSpacing: "-3px", whiteSpace: "nowrap",
         textShadow: i % 2 ? "none" : "0 8px 0 rgba(0,0,0,.45)" });
       m.appendChild(s); box.appendChild(m); return s; });
     const tl = gsap.timeline({ paused: true });
