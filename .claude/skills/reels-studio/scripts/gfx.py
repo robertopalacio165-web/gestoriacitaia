@@ -37,7 +37,7 @@ def font(name, size):
 def F(kind, size, text=""):
     """Pick a font by role; Arabic text always gets Cairo (the Latin display faces have no Arabic glyphs)."""
     if has_ar(text):
-        return font("Cairo-900.ttf" if kind in ("display", "bold") else "Cairo-800.ttf", size)
+        return font("Tajawal-Black.ttf" if kind in ("display", "bold") else "Tajawal-ExtraBold.ttf", size)
     return font({"display": "Anton-Regular.ttf", "bold": "Inter-Bold.ttf", "semi": "Inter-SemiBold.ttf",
                  "medium": "Inter-Medium.ttf", "mono": "SpaceMono-Bold.ttf", "serif": "InstrumentSerif-Italic.ttf"}[kind], size)
 
@@ -303,10 +303,7 @@ def cinematic_look(frame, t, strength=1.0, leak=True):
 # ----------------------------------------------------------------------------- heavy bottom captions (Pillow + raqm)
 # libass mis-shapes several heavy Arabic display fonts, so captions are drawn here with Pillow/raqm.
 CAPTION_FONT_FILES = {
-    "lalezar": "Lalezar-Regular.ttf",
-    "baloo": "BalooBhaijaan2-ExtraBold.ttf",
-    "alexandria": "Alexandria-Black.ttf",
-    "marhey": "Marhey-Bold.ttf",
+    "tajawal": "Tajawal-Black.ttf",      # user's choice: clean bold Arabic like their Black Friday poster
 }
 
 
@@ -378,7 +375,7 @@ def draw_captions(frame, groups, t, cfg):
         active = max(i for i, w in enumerate(g) if w["s"] <= t or i == 0)
         import re as _re
         words = tuple(_re.sub(r"[.,،]+$", "", w["w"]) for w in g)
-        img = caption_image(words, active, tuple(bool(w.get("emph")) for w in g), cfg.get("font_key", "lalezar"),
+        img = caption_image(words, active, tuple(bool(w.get("emph")) for w in g), cfg.get("font_key", "tajawal"),
                             int(cfg.get("size", 100) * W / 1080), int(W * 0.88))
         d = t - g[0]["s"]
         sc = 0.82 + 0.18 * ease_back(min(1, d / 0.16))           # group pop-in
@@ -386,3 +383,30 @@ def draw_captions(frame, groups, t, cfg):
             img = img.resize((max(1, int(img.width * sc)), max(1, int(img.height * sc))), Image.BICUBIC)
         paste_rgba(frame, img, W / 2 - img.width / 2, cfg.get("y", 0.79) * H - img.height / 2)
         return
+
+
+# ----------------------------------------------------------------------------- full-screen image inserts (posters, offers)
+@lru_cache(maxsize=8)
+def _load_cover(path, W, H):
+    im = Image.open(path).convert("RGB")
+    sc = max(W / im.width, H / im.height)
+    im = im.resize((int(im.width * sc) + 2, int(im.height * sc) + 2), Image.LANCZOS)
+    x, y = (im.width - W) // 2, (im.height - H) // 2
+    return np.asarray(im.crop((x, y, x + W, y + H)))[:, :, ::-1].copy()
+
+
+def draw_image_insert(frame, ins, t):
+    """Full-screen poster: slides up + scales in (0.35 s), slow push while on, fades out (0.25 s)."""
+    import cv2
+    d, rem = t - ins["start"], ins["end"] - t
+    if d < 0 or rem < 0:
+        return frame
+    H, W = frame.shape[:2]
+    img = _load_cover(ins["image"], W, H)
+    e = ease_out(min(1, d / 0.35))
+    z = 1.08 - 0.08 * e + 0.03 * (d / max(0.1, ins["end"] - ins["start"]))
+    M = cv2.getRotationMatrix2D((W / 2, H / 2), 0, z)
+    M[1, 2] += (1 - e) * H * 0.18
+    im = cv2.warpAffine(img, M, (W, H), borderMode=cv2.BORDER_REFLECT)
+    a = min(e * 1.4, 1.0, rem / 0.25)
+    return (frame.astype(np.float32) * (1 - a) + im.astype(np.float32) * a).astype(np.uint8)

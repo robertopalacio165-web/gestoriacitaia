@@ -15,17 +15,23 @@ The two styles were extracted from the user's reference video; their exact specs
 | `full_screen` | Full Screen Talking Head | BIG dark-glass checklist cards ABOVE the heads (scale ≈1.75, y ≈0.17) that tick coral ✓ as points are said; calm (no flashes/zooms) |
 | `split_screen` | Educational Split Screen | top-half graphic panels on paper/grid changing every 1–2 s (headline, stat + bar chart, yellow card + mono tags, photo card, quote); speaker bottom half |
 
-**Caption rules (user, non-negotiable):** captions ALWAYS at the bottom (y ≈ 0.79 full screen, ≈ 0.82 split), never in
-the middle; thick letters (preset `bottom_bold`: white, black outline + shadow, 2–3 words, spoken word yellow,
-keyword red). Font = the user's choice from 4 options (`captions.font_option`): `lalezar` (default), `baloo`, `alexandria`,
-`marhey` — all heavy Arabic display fonts, drawn with Pillow/raqm (libass mis-shapes them). Before a new client's first video, show the 4-font board and let them pick. Graphics must be big and placed
-where the audience sees them clearly (above the heads), never small at the bottom.
+**User rules (non-negotiable):**
+- Default: NO captions/subtitles unless the user asks. Only motion graphics + motion SFX.
+- Arabic text = clear bold **Tajawal Black/ExtraBold** (like the user's Black Friday poster). Never Lalezar or other
+  decorative/thin Arabic fonts — the user finds them unreadable.
+- **Never put text or graphics over car footage, and never split-screen a car shot.** Find car shots first
+  (contact sheet at 1 frame/s) and keep every checklist / split card outside those time ranges.
+- Graphics big and where the audience sees them: checklists above the heads (scale ≈1.75, y ≈0.17).
+- Mixed mode: `split.only_during_cards: true` → full screen, splitting only while a card is on.
+- Offer/poster images the user gives: full-screen `inserts` timed on the sentence that announces the offer.
+- Motion SFX must be audible: whoosh on every picture change (card in/out, poster), click on each ✓, sfx_volume ≈0.6.
+- If captions are requested: always at the bottom, thick Tajawal, never mid-screen.
 
 ## The team (agents in `.claude/agents/`)
 | # | Person | Owns in `WORK/plan.json` |
 |---|---|---|
 | 1 | **Cutter** `reels-cutter` | picks the 30 s window (`segments[0].in/out`), framing (`reframe`, `split.focus_y`) — no cuts unless the user asks |
-| 2 | **Motion Designer** `reels-motion-designer` | `checklists`, `split.cards`, `grade` |
+| 2 | **Motion Designer** `reels-motion-designer` | `checklists`, `split.cards`, `inserts`, `grade` |
 | 3 | **Sound Designer** `reels-sound-designer` | `audio` — motion SFX only (clicks, soft whooshes, impacts), never music; source audio untouched |
 | 4 | **Typographer** `reels-typographer` | `captions` (preset, y, words.json spelling + `emph`) and every text inside graphics |
 

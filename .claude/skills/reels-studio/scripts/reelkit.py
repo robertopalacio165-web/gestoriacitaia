@@ -756,6 +756,8 @@ def apply_reference_gfx(out, plan, t, t_src, st):
         out = canvas
     for cl in plan.get("checklists", []):
         gfx.draw_checklist(out, cl, t)
+    for ins in plan.get("inserts", []):
+        out = gfx.draw_image_insert(out, ins, t)
     return out
 
 
@@ -1326,11 +1328,11 @@ def cmd_render(a):
     cap = plan.get("captions", {})
     if cap.get("enabled") and cap.get("preset") == "bottom_bold" and words:
         import gfx
-        fk = cap.get("font_option", "lalezar")
+        fk = cap.get("font_option", "tajawal")
         if fk not in gfx.CAPTION_FONT_FILES:
             fk = "lalezar"
         plan["_pil_groups"] = group_words(words, cap.get("max_words", 3), maxchars=cap.get("max_chars", 22))
-        plan["_pil_cfg"] = {"font_key": fk, "size": cap.get("size", {"lalezar": 104, "baloo": 96, "alexandria": 78, "marhey": 92}.get(fk, 96)),
+        plan["_pil_cfg"] = {"font_key": fk, "size": cap.get("size", {"tajawal": 96}.get(fk, 96)),
                             "y": cap.get("y", 0.79)}
         ass_plan = {**ass_plan, "captions": {**cap, "enabled": False}}
         for cl in plan.get("checklists", []):       # graphics use the same heavy font as the captions
@@ -1352,12 +1354,18 @@ def cmd_render(a):
     if not plan.get("_gfx_sfx_done"):
         sv = plan["audio"].get("sfx_volume", 0.3)
         for cl in plan.get("checklists", []):
-            ev.append({"type": "soft_whoosh", "t": round(max(0, cl["start"] - 0.1), 3), "volume": sv * 0.5})
+            ev.append({"type": "soft_whoosh", "t": round(max(0, cl["start"] - 0.1), 3), "volume": sv * 0.8})
             ev += [{"type": "click", "t": c, "volume": sv * 0.9} for c in cl.get("checks", []) if c is not None]
-        for c in (plan.get("split") or {}).get("cards", []):
-            ev.append({"type": "click" if c.get("type") != "photo" else "soft_whoosh", "t": c["start"], "volume": sv * 0.7})
-        for b in plan.get("behind_texts", []):
-            ev.append({"type": "impact", "t": b["start"], "volume": sv * 0.8})
+        cards = sorted((plan.get("split") or {}).get("cards", []), key=lambda c: c["start"])
+        for k, c in enumerate(cards):
+            ev.append({"type": "whoosh", "t": round(max(0, c["start"] - 0.15), 3), "volume": sv * 0.75})
+            nxt = cards[k + 1] if k + 1 < len(cards) else None
+            if (plan.get("split") or {}).get("only_during_cards") and (nxt is None or nxt["start"] - c["end"] > 0.05):
+                ev.append({"type": "whoosh", "t": round(c["end"] - 0.15, 3), "volume": sv * 0.6})   # back to full screen
+        for ins in plan.get("inserts", []):
+            ev.append({"type": "whoosh", "t": round(max(0, ins["start"] - 0.2), 3), "volume": sv * 0.95})
+            ev.append({"type": "impact", "t": round(ins["start"] + 0.15, 3), "volume": sv * 0.7})
+            ev.append({"type": "whoosh", "t": round(ins["end"] - 0.25, 3), "volume": sv * 0.6})
         plan["_gfx_sfx_done"] = True
     audio = master_audio(build_audio(plan, tl, info, total, tmp), plan.get("audio", {}).get("loudness", -14), tmp)
     out = Path(a.out or (work / ("preview.mp4" if a.preview else "final.mp4"))).resolve()

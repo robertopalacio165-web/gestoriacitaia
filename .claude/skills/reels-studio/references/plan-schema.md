@@ -7,9 +7,10 @@ Times in `segments[].in/out` and words.json are SOURCE seconds; everything else 
  "reframe": "center",
  "segments": [{"in": 0, "out": 30, "speed": 1.0, "zoom_from": 1.0, "zoom_to": 1.0, "transition_in": "cut"}],
  "words": "/abs/words.json",            // [{"w":"كلمة","s":1.2,"e":1.5,"spk":0,"emph":true}]
- "captions": {"enabled": true, "preset": "bottom_bold", "font_option": "lalezar | baloo | alexandria | marhey", "y": 0.79, "max_words": 3},
+ "captions": {"enabled": true, "preset": "bottom_bold", "font_option": "tajawal", "y": 0.79, "max_words": 3},
  "checklists": [{"items": ["...", "..."], "checks": [3.2, 5.0], "start": 2.8, "end": 7.0, "y": 0.17, "x": 0.5, "scale": 1.75}],
- "split": {"focus_y": 0.4, "cards": [
+ "inserts": [{"image": "/abs/poster.png", "start": 22.3, "end": 26.7}],      // full-screen poster with slide/zoom in
+ "split": {"focus_y": 0.4, "only_during_cards": true, "cards": [
     {"type": "headline", "title": "...", "tags": ["..."], "start": 0, "end": 1.4},
     {"type": "yellow",   "title": "...", "tags": ["..."], "start": 1.4, "end": 3},
     {"type": "stat", "title": "...", "value": "-4000€", "bars": [0.3,0.5,0.4,0.7,0.95], "label": "...", "start": 3, "end": 5},
