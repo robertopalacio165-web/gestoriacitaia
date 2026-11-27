@@ -47,3 +47,10 @@ Thumbs.db
 # Replit
 .cache/
 .local/
+
+# Reels editing work folders (raw/rendered video)
+reels/
+**/_tmp/
+*.mp4
+*.mov
+__pycache__/
