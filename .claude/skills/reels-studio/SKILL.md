@@ -17,8 +17,8 @@ The two styles were extracted from the user's reference video; their exact specs
 
 **Caption rules (user, non-negotiable):** captions ALWAYS at the bottom (y ≈ 0.79 full screen, ≈ 0.82 split), never in
 the middle; thick letters (preset `bottom_bold`: white, black outline + shadow, 2–3 words, spoken word yellow,
-keyword red). Font = the user's choice from 4 options (`captions.font_option`): `cairo` (default), `almarai`, `rubik`,
-`tajawal`. Before a new client's first video, show the 4-font board and let them pick. Graphics must be big and placed
+keyword red). Font = the user's choice from 4 options (`captions.font_option`): `lalezar` (default), `baloo`, `alexandria`,
+`marhey` — all heavy Arabic display fonts, drawn with Pillow/raqm (libass mis-shapes them). Before a new client's first video, show the 4-font board and let them pick. Graphics must be big and placed
 where the audience sees them clearly (above the heads), never small at the bottom.
 
 ## The team (agents in `.claude/agents/`)

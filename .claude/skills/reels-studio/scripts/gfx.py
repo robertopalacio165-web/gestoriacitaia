@@ -73,12 +73,12 @@ def paste_rgba(dst_bgr, im, x, y, alpha=1.0):
 
 
 # ----------------------------------------------------------------------------- checklist (full screen style)
-def checklist_card(items, states, scale=1.0):
+def checklist_card(items, states, scale=1.0, font_file=None):
     """items: list of str; states: list of 0..1 check progress (0 = empty circle, 1 = full coral check)."""
     s = scale
     fs = int(34 * s)
     pad, gap, r = int(26 * s), int(16 * s), int(15 * s)
-    fnts = [F("bold", fs, t) for t in items]
+    fnts = [font(font_file, int(fs * 1.12)) if font_file else F("bold", fs, t) for t in items]
     widths = [ImageDraw.Draw(Image.new("RGB", (1, 1))).textlength(t, font=f) for t, f in zip(items, fnts)]
     w = int(pad * 2 + 2 * r + 18 * s + max(widths))
     lh = int(fs * 1.25)
@@ -115,7 +115,7 @@ def draw_checklist(frame, g, t):
     if d < 0 or t > g["end"]:
         return
     states = [min(1.0, max(0.0, (t - ct) / 0.25)) if ct is not None else 0 for ct in g.get("checks", [None] * len(g["items"]))]
-    card = checklist_card(g["items"], states, g.get("scale", 1.0) * W / 1080)
+    card = checklist_card(g["items"], states, g.get("scale", 1.0) * W / 1080, g.get("font_file"))
     a_in = ease_out(d / 0.3)
     a_out = min(1.0, (g["end"] - t) / 0.25)
     y = g.get("y", 0.8) * H - card.height / 2 + (1 - a_in) * 30
@@ -298,3 +298,91 @@ def cinematic_look(frame, t, strength=1.0, leak=True):
         warm = np.array([40, 110, 255], np.float32)          # BGR orange/red
         out = out * (1 - k[:, :, None] * 0.35) + warm * k[:, :, None] * (out / 255.0 + 0.25)
     return np.clip(out, 0, 255).astype(np.uint8)
+
+
+# ----------------------------------------------------------------------------- heavy bottom captions (Pillow + raqm)
+# libass mis-shapes several heavy Arabic display fonts, so captions are drawn here with Pillow/raqm.
+CAPTION_FONT_FILES = {
+    "lalezar": "Lalezar-Regular.ttf",
+    "baloo": "BalooBhaijaan2-ExtraBold.ttf",
+    "alexandria": "Alexandria-Black.ttf",
+    "marhey": "Marhey-Bold.ttf",
+}
+
+
+def _word_img(text, fnt, fill, stroke, shadow=True):
+    rtl = has_ar(text)
+    d0 = ImageDraw.Draw(Image.new("RGB", (1, 1)))
+    bb = d0.textbbox((0, 0), text, font=fnt, stroke_width=stroke, direction="rtl" if rtl else None)
+    w, h = bb[2] - bb[0] + 4 * stroke, bb[3] - bb[1] + 4 * stroke
+    im = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    org = (2 * stroke - bb[0], 2 * stroke - bb[1])
+    if shadow:
+        sh = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+        ImageDraw.Draw(sh).text((org[0], org[1] + stroke * 0.8), text, font=fnt, fill=(0, 0, 0, 170), stroke_width=stroke,
+                                stroke_fill=(0, 0, 0, 170), direction="rtl" if rtl else None)
+        im.alpha_composite(sh.filter(ImageFilter.GaussianBlur(stroke * 0.8)))
+    ImageDraw.Draw(im).text(org, text, font=fnt, fill=fill, stroke_width=stroke, stroke_fill=(0, 0, 0, 255),
+                            direction="rtl" if rtl else None)
+    return im
+
+
+@lru_cache(maxsize=512)
+def caption_image(words, active, emph, font_key, size, max_w, hl=(255, 212, 0), emph_col=(255, 59, 59)):
+    """words: tuple of str; active: index of spoken word; emph: tuple of bools. Returns RGBA image of the group."""
+    fnt = font(CAPTION_FONT_FILES.get(font_key, font_key), size)
+    fnt_big = font(CAPTION_FONT_FILES.get(font_key, font_key), int(size * 1.12))
+    stroke = max(4, size // 11)
+    rtl = any(has_ar(w) for w in words)
+    ims = []
+    for i, w in enumerate(words):
+        col = emph_col if emph[i] and i <= active else (hl if i == active else (255, 255, 255))
+        ims.append(_word_img(w, fnt_big if i == active else fnt, col + (255,), stroke))
+    gap = -int(stroke * 1.2)   # word images already carry stroke/shadow padding
+    # split into at most two lines if too wide
+    lines, cur, cw = [], [], 0
+    for im in ims:
+        if cur and cw + gap + im.width > max_w:
+            lines.append(cur); cur, cw = [], 0
+        cur.append(im); cw += (gap if len(cur) > 1 else 0) + im.width
+    lines.append(cur)
+    lh = max(im.height for im in ims)
+    W = max(sum(i.width for i in ln) + gap * (len(ln) - 1) for ln in lines)
+    H = lh * len(lines) - int(lh * 0.18) * (len(lines) - 1)
+    out = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    y = 0
+    for ln in lines:
+        lw = sum(i.width for i in ln) + gap * (len(ln) - 1)
+        x = (W + lw) / 2 if rtl else (W - lw) / 2
+        for im in ln:
+            if rtl:
+                x -= im.width
+                out.alpha_composite(im, (int(x), int(y + (lh - im.height) / 2)))
+                x -= gap
+            else:
+                out.alpha_composite(im, (int(x), int(y + (lh - im.height) / 2)))
+                x += im.width + gap
+        y += lh - int(lh * 0.18)
+    return out
+
+
+def draw_captions(frame, groups, t, cfg):
+    """groups: list of lists of word dicts (output time). cfg: font_key, size, y, max_w."""
+    H, W = frame.shape[:2]
+    for gi, g in enumerate(groups):
+        g_end = g[-1]["e"] + 0.15
+        if gi + 1 < len(groups):
+            g_end = min(g_end, groups[gi + 1][0]["s"])
+        if not (g[0]["s"] <= t < g_end):
+            continue
+        active = max(i for i, w in enumerate(g) if w["s"] <= t or i == 0)
+        import re as _re
+        words = tuple(_re.sub(r"[.,،]+$", "", w["w"]) for w in g)
+        img = caption_image(words, active, tuple(bool(w.get("emph")) for w in g), cfg.get("font_key", "lalezar"),
+                            int(cfg.get("size", 100) * W / 1080), int(W * 0.88))
+        d = t - g[0]["s"]
+        sc = 0.82 + 0.18 * ease_back(min(1, d / 0.16))           # group pop-in
+        if sc != 1.0:
+            img = img.resize((max(1, int(img.width * sc)), max(1, int(img.height * sc))), Image.BICUBIC)
+        paste_rgba(frame, img, W / 2 - img.width / 2, cfg.get("y", 0.79) * H - img.height / 2)
+        return

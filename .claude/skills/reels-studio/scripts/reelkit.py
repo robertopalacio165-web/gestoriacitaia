@@ -684,6 +684,9 @@ def render_frames(plan, tl, info, faces, pipe):
             if flash > 0: out = cv2.addWeighted(out, 1 - flash, np.full_like(out, 255), flash, 0)
             out = apply_fx(out, fxcfg, t_out, rng)
             out = apply_reference_gfx(out, plan, t_out, t_src, gstate)
+            if plan.get("_pil_groups"):
+                import gfx
+                gfx.draw_captions(out, plan["_pil_groups"], t_out, plan["_pil_cfg"])
             # --- stickers
             for st, img in stickers:
                 d = t_out - st["start"]
@@ -1317,6 +1320,18 @@ def cmd_render(a):
             w["y"] = int(min(max(fy + pre["y_face"], 0.45), 0.74) * 1920)
     # captions are authored at 1080x1920; libass scales them for previews
     ass_plan = {**plan, "output": {**plan["output"], "w": 1080, "h": 1920}}
+    cap = plan.get("captions", {})
+    if cap.get("enabled") and cap.get("preset") == "bottom_bold" and words:
+        import gfx
+        fk = cap.get("font_option", "lalezar")
+        if fk not in gfx.CAPTION_FONT_FILES:
+            fk = "lalezar"
+        plan["_pil_groups"] = group_words(words, cap.get("max_words", 3), maxchars=cap.get("max_chars", 22))
+        plan["_pil_cfg"] = {"font_key": fk, "size": cap.get("size", {"lalezar": 104, "baloo": 96, "alexandria": 78, "marhey": 92}.get(fk, 96)),
+                            "y": cap.get("y", 0.79)}
+        ass_plan = {**ass_plan, "captions": {**cap, "enabled": False}}
+        for cl in plan.get("checklists", []):       # graphics use the same heavy font as the captions
+            cl.setdefault("font_file", gfx.CAPTION_FONT_FILES[fk])
     build_ass(ass_plan, words, total, tmp / "captions.ass")
     cap = plan.get("captions", {})
     if cap.get("enabled") and cap.get("sfx") and words:
