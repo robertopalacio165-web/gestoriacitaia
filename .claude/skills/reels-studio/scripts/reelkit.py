@@ -318,10 +318,16 @@ def cmd_autoplan(a):
     if mode == "auto":
         speech = sum(e - s for s, e in an.get("speech", []))
         mode = "talk" if (st["family"] != "montage" and speech > 0.45 * dur) else "montage"
+    if st["family"] == "overlay" or mode == "overlay":
+        mode = "overlay"
     beats_p = work / "beats.json"
     beat_info = json.loads(beats_p.read_text()) if beats_p.exists() else None
     pieces = []
-    if mode == "talk":
+    if mode == "overlay":
+        s0 = a.start or 0.0
+        e0 = min(dur, a.end if a.end else s0 + a.target)
+        pieces = [[s0, e0, e0 - s0]]
+    elif mode == "talk":
         pad = 0.08
         blocks = an.get("speech") or [[0, dur]]
         blocks = [[max(0, s - pad), min(dur, e + pad)] for s, e in blocks if e - s > 0.25]
@@ -373,7 +379,7 @@ def cmd_autoplan(a):
     segs = []
     for i, (s, e, odur) in enumerate(out):
         za, zb = zooms[i % len(zooms)]
-        speed = round((e - s) / odur, 3) if mode == "montage" else cut["speed"]
+        speed = round((e - s) / odur, 3) if mode == "montage" else (1.0 if mode == "overlay" else cut["speed"])
         seg = {"in": round(s, 3), "out": round(e, 3), "speed": speed, "zoom_from": za, "zoom_to": zb,
                "transition_in": "cut" if i == 0 else trans[i % len(trans)]}
         if cut.get("shake_every") and i and i % cut["shake_every"] == 0:
@@ -388,13 +394,13 @@ def cmd_autoplan(a):
         "output": {"w": 1080, "h": 1920, "fps": 30, "crf": 18},
         "reframe": "auto",
         "segments": segs,
-        "words": str(work / "words.json") if has_words else None,
+        "words": str((work / "words.json").resolve()) if has_words else None,
         "captions": cap,
         "texts": [], "stickers": [], "zoom_punches": [],
         "fx": dict(st.get("fx", {})),
         "progress_bar": {"enabled": bool(st.get("progress_bar")), "color": st.get("progress_bar") or "#FFFFFF", "height": 9},
         "grade": {"preset": "punchy", "grain": 4, "vignette": True, "sharpen": True, **st["grade"]},
-        "audio": {"loudness": -14, "cleanup": mode == "talk", "keep_source_audio": mode == "talk",
+        "audio": {"loudness": -14, "cleanup": mode == "talk", "keep_source_audio": mode in ("talk", "overlay"),
                   "sfx": st["sound"]["sfx_volume"] > 0, "sfx_volume": st["sound"]["sfx_volume"],
                   "music": beat_info["music"] if beat_info else None,
                   "music_volume": 0.12 if mode == "talk" else 0.9, "sfx_events": []},
@@ -517,6 +523,30 @@ def emoji_image(ch, size):
     return np.array(im)  # RGBA
 
 
+def steps_image(n, active, color="#2F7BFF"):
+    """Numbered step tracker (1 — 2 — 3) on a dark translucent pill, active step filled in the accent colour."""
+    from PIL import Image, ImageDraw, ImageFont
+    sc = 3
+    r, gap = 26 * sc, 70 * sc
+    w = 2 * 30 * sc + (n - 1) * (2 * r + gap) + 2 * r
+    h = 2 * r + 36 * sc
+    im = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    d = ImageDraw.Draw(im)
+    d.rounded_rectangle([0, 0, w - 1, h - 1], radius=h // 2, fill=(15, 15, 18, 150))
+    f = ImageFont.truetype(str(FONTS / "Montserrat-ExtraBold.ttf"), int(r * 0.9))
+    cy = h // 2
+    xs = [30 * sc + r + i * (2 * r + gap) for i in range(n)]
+    for i in range(n - 1):
+        d.line([xs[i] + r, cy, xs[i + 1] - r, cy], fill=(255, 255, 255, 150), width=3 * sc)
+    acc = tuple(int(color.lstrip("#")[k:k + 2], 16) for k in (0, 2, 4))
+    for i, x in enumerate(xs):
+        on = (i + 1) == active
+        d.ellipse([x - r, cy - r, x + r, cy + r], fill=acc + (255,) if on else (245, 245, 245, 255))
+        d.text((x, cy), str(i + 1), font=f, anchor="mm", fill=(255, 255, 255, 255) if on else (20, 20, 20, 255))
+    im = im.resize((w // sc * 2, h // sc * 2), Image.LANCZOS)
+    return np.array(im)
+
+
 def overlay_rgba(dst, rgba, cx, cy, scale=1.0, rot=0.0):
     import cv2
     if scale <= 0.02:
@@ -555,6 +585,8 @@ def render_frames(plan, tl, info, faces, pipe):
     stickers = []
     for st in plan.get("stickers", []):
         img = emoji_image(st["emoji"], int(st.get("size", 170))) if st.get("emoji") else None
+        if st.get("steps"):
+            img = steps_image(int(st["steps"]), int(st.get("active", 1)), st.get("color", "#2F7BFF"))
         if st.get("image"):
             from PIL import Image
             im = Image.open(st["image"]).convert("RGBA")
@@ -653,6 +685,11 @@ def render_frames(plan, tl, info, faces, pipe):
             for st, img in stickers:
                 d = t_out - st["start"]
                 if 0 <= d <= st["end"] - st["start"]:
+                    if st.get("anim") == "fade" or st.get("steps"):
+                        a_in = min(1, d / 0.2); a_out = min(1, (st["end"] - st["start"] - d) / 0.2)
+                        tmp_img = img.copy(); tmp_img[:, :, 3] = (tmp_img[:, :, 3] * min(a_in, a_out)).astype(np.uint8)
+                        overlay_rgba(out, tmp_img, st.get("x", 0.5) * W, st.get("y", 0.6) * H - 10 * (1 - ease_out(a_in)), 1.0, 0)
+                        continue
                     pop = 0.25
                     sc = (1.18 * ease_out(d / pop)) if d < pop else (1.18 - 0.18 * ease_out((d - pop) / 0.12) if d < pop + 0.12 else 1.0)
                     remain = st["end"] - st["start"] - d
@@ -697,6 +734,30 @@ def apply_fx(out, fx, t, rng):
         if 0 <= d < 0.1:
             k = fx.get("beat_flash", 0.25) * (1 - d / 0.1)
             out = cv2.addWeighted(out, 1 - k, np.full_like(out, 255), k, 0)
+    if fx.get("lower_shade"):
+        # darken behind the lower-third text so small captions stay readable (reference: "darken + blur behind")
+        k = fx["lower_shade"]
+        if "_shade" not in fx:
+            yy = np.linspace(0, 1, H)[:, None]
+            fx["_shade"] = (1 - k * np.clip((yy - 0.45) / 0.4, 0, 1) ** 1.3).astype(np.float32)[:, :, None]
+        out = (out.astype(np.float32) * fx["_shade"]).astype(np.uint8)
+    if fx.get("edge_blur"):
+        # cinematic: blur + darken the edges, keep the centre sharp
+        if "_emask" not in fx:
+            yy, xx = np.mgrid[0:H, 0:W]
+            r = np.sqrt(((xx - W / 2) / (W / 2)) ** 2 + ((yy - H * 0.45) / (H / 2)) ** 2)
+            fx["_emask"] = np.clip((r - 0.55) / 0.6, 0, 1).astype(np.float32)[:, :, None]
+        m = fx["_emask"] * fx["edge_blur"]
+        bl = cv2.GaussianBlur(out, (0, 0), 14)
+        out = (out * (1 - m) + bl * m * 0.55).astype(np.uint8)
+    if fx.get("paper"):
+        if "_paper" not in fx:
+            r2 = np.random.default_rng(5)
+            n = r2.standard_normal((H // 4, W // 4)).astype(np.float32)
+            n = cv2.GaussianBlur(n, (0, 0), 1.2)
+            n = cv2.resize(n, (W, H)) + 0.5 * r2.standard_normal((H, W)).astype(np.float32)
+            fx["_paper"] = (1 + fx["paper"] * 0.06 * n)[:, :, None]
+        out = np.clip(out.astype(np.float32) * fx["_paper"], 0, 255).astype(np.uint8)
     if fx.get("letterbox"):
         b = int(H * fx["letterbox"] / 2)
         out = out.copy(); out[:b] = 0; out[H - b:] = 0
@@ -723,6 +784,14 @@ CAPTION_PRESETS = {
     # 2026 staples. colours in hex, size in px at 1080x1920
     "bold_pop":    {"font": "Cairo", "bold": 1, "size": 92, "color": "#FFFFFF", "outline": "#000000", "ow": 7, "shadow": 4, "hl": "#FFE600", "pop": True,  "upper": True},
     "neon_glow":   {"font": "Cairo", "bold": 1, "size": 90, "color": "#FFFFFF", "outline": "#00E5FF", "ow": 5, "shadow": 0, "hl": "#00E5FF", "pop": True, "glow": True},
+    # Premium minimal / viral talking head 2026: small warm-white sans, special words in a serif italic
+    # accent colour with glow, words revealed softly one by one (lower third, centred)
+    "premium_minimal": {"font": "Montserrat", "bold": 1, "size": 58, "color": "#F3F3F3", "outline": "#000000", "ow": 0, "shadow": 0,
+                        "hl": None, "reveal": True, "words": 4, "emph_font": "Playfair Display", "accent": "#2F7BFF", "emph_scale": 1.75, "soft_shadow": True},
+    # Cinematic minimal (story / quote reels): small sans line + one huge serif italic key word, white with blue glow
+    "cinematic_serif": {"font": "Montserrat", "bold": 1, "size": 50, "color": "#F3F3F3", "outline": "#000000", "ow": 0, "shadow": 0,
+                        "hl": None, "reveal": True, "words": 4, "emph_font": "Playfair Display", "accent": "#FFFFFF", "glow_color": "#2F7BFF",
+                        "emph_scale": 2.4, "emph_newline": True, "soft_shadow": True},
     "clean_minimal": {"font": "Montserrat", "bold": 1, "size": 64, "color": "#FFFFFF", "outline": "#000000", "ow": 2, "shadow": 2, "hl": None, "pop": False, "words": 5},
     "karaoke_fill": {"font": "Cairo", "bold": 1, "size": 88, "color": "#7A7A7A", "outline": "#000000", "ow": 6, "shadow": 3, "hl": "#FFFFFF", "pop": False, "karaoke": True},
     "boxed":       {"font": "Cairo", "bold": 1, "size": 84, "color": "#000000", "outline": "#FFFFFF", "ow": 14, "shadow": 0, "hl": "#E1306C", "pop": True, "box": True},
@@ -739,6 +808,7 @@ TEXT_PRESETS = {
     "big":   {"font": "Bebas Neue", "size": 170, "color": "#FFFFFF", "outline": "#000000", "bold": 0},
     "luxury": {"font": "Playfair Display", "size": 104, "color": "#F5EBDD", "outline": "#000000", "bold": 1},
     "news":   {"font": "Cairo", "size": 70, "color": "#FFFFFF", "box": "#C40000", "bold": 1},
+    "premium": {"font": "Playfair Display", "size": 96, "color": "#F3F3F3", "outline": "#2F7BFF", "bold": 1, "ow": 0, "shadow": 3, "italic": 1},
     "number": {"font": "Anton", "size": 260, "color": "#FFE600", "outline": "#000000", "bold": 0},
 }
 
@@ -760,12 +830,55 @@ def group_words(words, maxw, maxchars=20):
             gap = w["s"] - cur[-1]["e"]
             chars = sum(len(x["w"]) + 1 for x in cur) + len(w["w"])
             end_punct = re.search(r"[.!?؟،,:]$", cur[-1]["w"])
-            if len(cur) >= maxw or gap > 0.35 or chars > maxchars or end_punct or w.get("seg") != cur[-1].get("seg") and gap > 0.15:
+            if w.get("spk") is not None and w.get("spk") != cur[-1].get("spk"):
+                groups.append(cur); cur = []
+            elif len(cur) >= maxw or gap > 0.35 or chars > maxchars or end_punct or w.get("seg") != cur[-1].get("seg") and gap > 0.15:
                 groups.append(cur); cur = []
         cur.append(w)
     if cur:
         groups.append(cur)
     return groups
+
+
+def reveal_events(g, g_start, g_end, pre, cap, W, y, arabic, fmt):
+    """Words appear one by one (fade + blur-in + small rise). Emphasis words: serif italic, accent colour, bigger, glow."""
+    out = []
+    accent = hex_to_ass(cap.get("accent", pre.get("accent", "#2F7BFF")))
+    glowc = hex_to_ass(cap.get("glow_color", pre.get("glow_color", pre.get("accent", "#2F7BFF"))), 0xB0)
+    esc = pre.get("emph_scale", 1.7)
+    shad = "\\4c&H000000&\\4a&H70&\\shad3\\xshad0\\yshad3" if pre.get("soft_shadow") else ""
+    rlm = "\u200f" if arabic else ""
+
+    def word_txt(x, fresh):
+        if x.get("emph"):
+            fn = "Cairo" if has_arabic(x["w"]) else pre.get("emph_font", "Playfair Display")
+            col = accent
+            style = f"\\fn{fn}\\i{0 if has_arabic(x['w']) else 1}\\b1\\fscx{int(esc*100)}\\fscy{int(esc*100)}\\1c{col}\\3c{glowc}\\bord3\\blur6"
+        else:
+            style = ""
+        if fresh:
+            anim = "\\alpha&HFF&\\t(0,160,\\alpha&H00&)" + ("\\blur3\\t(0,200,\\blur6)" if x.get("emph") else "\\blur5\\t(0,180,\\blur0)")
+        else:
+            anim = ""
+        return f"{{{style}{anim}}}{fmt(x)}{{\\r}}"
+
+    for i, w in enumerate(g):
+        s = w["s"] if i else g_start
+        e = g[i + 1]["s"] if i + 1 < len(g) else g_end
+        if e <= s:
+            e = s + 0.05
+        parts = []
+        for j, x in enumerate(g[: i + 1]):
+            t = word_txt(x, j == i)
+            if x.get("emph") and pre.get("emph_newline"):
+                t = "\\N" + t
+            parts.append(t)
+        # invisible remainder keeps the line centred/stable while words are revealed
+        rest = "".join(" {\\alpha&HFF&}" + word_txt(x, False).replace("\\alpha&HFF&", "") for x in g[i + 1:]) if not pre.get("emph_newline") else ""
+        rise = f"\\move({W // 2},{y + 8},{W // 2},{y},0,180)" if i == 0 else f"\\pos({W // 2},{y})"
+        fade_out = "\\fad(0,140)" if i == len(g) - 1 else ""
+        out.append(f"Dialogue: 0,{ass_time(s)},{ass_time(e)},Cap,,0,0,0,,{{\\an5{rise}{shad}{fade_out}}}{rlm}{' '.join(parts)}{rest}")
+    return out
 
 
 def build_ass(plan, words, total, path):
@@ -787,7 +900,7 @@ def build_ass(plan, words, total, path):
         box = tp.get("box")
         lines.append(f"Style: T_{name},{tp['font']},{tp['size']},{hex_to_ass(tp['color'])},{hex_to_ass(tp['color'])},"
                      f"{hex_to_ass(box or tp.get('outline', '#000000'), tp.get('box_alpha', 0) if box else 0)},{hex_to_ass('#000000', 0x80)},"
-                     f"{tp.get('bold', 1) and -1 or 0},0,0,0,100,100,0,0,{3 if box else 1},{18 if box else 9},{0 if box else 5},5,60,60,0,-1")
+                     f"{tp.get('bold', 1) and -1 or 0},{tp.get('italic') and -1 or 0},0,0,100,100,0,0,{3 if box else 1},{tp.get('ow', 18 if box else 9)},{tp.get('shadow', 0 if box else 5)},5,60,60,0,-1")
     lines += ["", "[Events]", "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text"]
 
     if cap.get("enabled") and words:
@@ -798,12 +911,15 @@ def build_ass(plan, words, total, path):
             g_end = g[-1]["e"] + 0.12
             arabic = has_arabic(" ".join(x["w"] for x in g))
             def fmt(w):
-                t = w["w"]
+                t = re.sub(r"[.,،]+$", "", w["w"]) if cap.get("strip_punct", True) else w["w"]
                 return ass_escape(t.upper() if pre.get("upper") and not arabic else t)
             pos = f"\\an5\\pos({W // 2},{y})"
             if arabic and pre["font"] != "Cairo":
                 pos += "\\fnCairo"  # Latin display fonts have no Arabic glyphs
             glow = "\\blur6" if pre.get("glow") else ""
+            if pre.get("reveal"):
+                lines += reveal_events(g, g_start, g_end, pre, cap, W, y, arabic, fmt)
+                continue
             if pre.get("karaoke"):
                 parts = "".join(f"{{\\kf{max(1, int((x['e'] - x['s']) * 100))}}}{fmt(x)} " for x in g)
                 lines.append(f"Dialogue: 0,{ass_time(g_start)},{ass_time(g_end)},Cap,,0,0,0,,{{{pos}{glow}\\fad(60,60)}}{'\u200f' if arabic else ''}{parts.strip()}")
@@ -896,6 +1012,14 @@ def synth_sfx(kind, sr=48000):
     elif kind == "riser":
         d = 1.2; t = np.arange(int(sr * d)) / sr
         y = rng.standard_normal(len(t)) * (t / d) ** 2 + 0.3 * np.sin(2 * np.pi * (200 + 900 * (t / d) ** 2) * t) * (t / d)
+    elif kind == "click":   # UI click: two tiny transients
+        d = 0.06; t = np.arange(int(sr * d)) / sr
+        y = np.sin(2 * np.pi * 3200 * t) * np.exp(-t * 300)
+        i2 = int(0.018 * sr); y[i2:] += 0.6 * np.sin(2 * np.pi * 2200 * t[: len(t) - i2]) * np.exp(-t[: len(t) - i2] * 260)
+    elif kind == "soft_whoosh":  # low, airy, sits under the voice
+        d = 0.7; n = int(sr * d); t = np.arange(n) / sr
+        noise = rng.standard_normal(n)
+        y = np.convolve(noise, np.ones(40) / 40, "same") * np.sin(np.pi * t / d) ** 3
     elif kind == "tick":
         d = 0.05; t = np.arange(int(sr * d)) / sr
         y = np.sin(2 * np.pi * 2400 * t) * np.exp(-t * 120)
@@ -1043,6 +1167,9 @@ GRADES = {
     "warm_film": "colortemperature=temperature=5200:mix=0.6,curves=r='0/0.03 0.5/0.52 1/0.97':g='0/0.02 0.5/0.5 1/0.96':b='0/0.06 0.5/0.47 1/0.9',eq=saturation=0.95",
     "moody": "eq=contrast=1.14:saturation=0.82:brightness=-0.02,colorbalance=rs=-0.04:bs=0.06:rh=0.02:bh=0.02,curves=preset=darker",
     "bw_contrast": "hue=s=0,curves=preset=strong_contrast",
+    # "use more dull colours": slightly desaturated, cool, soft contrast (premium minimal look)
+    "dull_cool": "eq=saturation=0.82:contrast=1.04:gamma=0.98,colorbalance=rs=-0.02:bs=0.04:rm=-0.01:bm=0.03:rh=0.0:bh=0.02",
+    "dark_cinematic": "eq=saturation=0.78:contrast=1.10:brightness=-0.03,colorbalance=bs=0.05:bm=0.02,curves=preset=medium_contrast",
 }
 
 
@@ -1070,6 +1197,8 @@ def cmd_render(a):
     tl, total = build_timeline(plan)
     print(f"[render] {len(tl)} segments -> {total:.2f}s at {W}x{H}@{fps}")
     words = []
+    if plan.get("words") and not Path(plan["words"]).is_absolute():
+        plan["words"] = str(work / plan["words"])  # relative to the plan's folder
     if plan.get("words") and Path(plan["words"]).exists():
         words = remap_words(json.loads(Path(plan["words"]).read_text()), tl)
     tmp = work / "_tmp"; tmp.mkdir(exist_ok=True)
@@ -1136,7 +1265,8 @@ def main():
     p = sp.add_parser("words"); p.add_argument("--work", required=True); p.add_argument("--from", dest="src", required=True)
     p.set_defaults(fn=cmd_words)
     p = sp.add_parser("autoplan"); p.add_argument("--work", required=True); p.add_argument("--target", type=float, default=30)
-    p.add_argument("--style", default="hormozi_edu"); p.add_argument("--mode", default="auto", choices=["auto", "talk", "montage"])
+    p.add_argument("--style", default="hormozi_edu"); p.add_argument("--mode", default="auto", choices=["auto", "talk", "montage", "overlay"])
+    p.add_argument("--start", type=float, default=None); p.add_argument("--end", type=float, default=None)
     p.add_argument("--keep-order", action="store_true"); p.set_defaults(fn=cmd_autoplan)
     p = sp.add_parser("beats"); p.add_argument("music"); p.add_argument("--work", required=True); p.set_defaults(fn=cmd_beats)
     p = sp.add_parser("styles"); p.set_defaults(fn=cmd_styles)

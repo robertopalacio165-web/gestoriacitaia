@@ -17,7 +17,11 @@ the roles yourself in order; spawn the agents when the user asks for the team or
 | 3 | **Sound Designer** `reels-sound-designer` | SFX for every motion (whoosh/pop/impact/riser/glitch), music + beats + ducking, voice cleanup, -14 LUFS | `audio` | `references/sound.md` |
 | 4 | **Typographer** `reels-typographer` | animated captions word-by-word, caption style, hook/titles/numbers/CTA, fonts, safe zones | `captions`, `texts`, `words.json` emph, `progress_bar` | `references/typography.md` |
 
-Style packs (all 14, with what each person does): `references/styles-catalog.md`; `reelkit.py styles` lists them.
+**Overlay mode (default when the user says "don't cut my video")**: `autoplan --style premium_minimal|cinematic_minimal --start S --end E`
+keeps the footage and its sound exactly as shot and only adds captions, text, stickers, SFX and a light grade.
+Styles extracted from the user's reference videos: `references/reference-styles.md`.
+
+Style packs (all 16, with what each person does): `references/styles-catalog.md`; `reelkit.py styles` lists them.
 A visual board of all styles can be rebuilt with `scripts/make_gallery.py` and published as an Artifact.
 
 ## Engine — `python3 .claude/skills/reels-studio/scripts/reelkit.py`
@@ -37,8 +41,11 @@ qa FILE --work WORK                     # size, fps, loudness, true peak, contac
    Never commit videos (`reels/` is git-ignored).
 2. **Analyze** and *look* at every `contact_*.jpg` (Read). Know: talking head or montage? faces? orientation? dead time?
 3. **Pick the style with the user.** Recommend 2 packs that fit the footage; show the style board if they want to choose.
-4. **Transcript** if there is speech and captions are wanted: user SRT, or a connected transcription tool (ask once
-   before uploading their audio), else captions off and text-led graphics only.
+4. **Transcript** (required for captions — you cannot hear audio). Best path that worked: OpusClip AI Producer
+   `sign_upload` → curl PUT the clip to the signed storage.googleapis.com URL → `start_transcribe_project` →
+   `wait_task` → `get_transcript` (word timings, Darija in Arabic script, speaker ids). Convert to words.json
+   (`{"w","s","e","spk"}`), mark 1 `emph` per sentence. Never make a Drive file public to transcribe.
+   Alternatives: user SRT / typed text. Reference YouTube videos: OpusClip `start_link_download` gives a direct URL.
 5. **Music** for montage styles: only a file the user provides/owns → `beats`. Otherwise SFX-only sound bed, and tell
    the user to add a trending sound in-app aligned to the cut.
 6. `autoplan --style` → then passes in order: **Cutter → Motion → Sound → Typographer**, each previewing its work
@@ -51,4 +58,5 @@ qa FILE --work WORK                     # size, fps, loudness, true peak, contac
 - Hook in the first 1–1.5 s, no slow intro; a visual change every 1.5–3 s.
 - Text only inside y 0.12–0.78, x margin ≥ 60 px; never cover the face/product.
 - Arabic text renders RTL with Cairo (automatic fallback from Latin fonts). No emoji inside text — use `stickers`.
-- Captions say only what was said. Music only if licensed/provided.
+- Captions say only what was said. Music only if licensed/provided (or `scripts/make_beat.py`, original beats).
+- Always verify the FINAL file (not only the preview) has captions: extract frames and look.

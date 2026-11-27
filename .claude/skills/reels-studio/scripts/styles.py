@@ -111,4 +111,24 @@ STYLES = {
         "sound": {"sfx_volume": 0.35}, "progress_bar": None, "fx": {"letterbox": 0.11}, "stickers_every": 0,
         "texts": {"hook": "luxury"},
     },
+
+    # ---- extracted from reference videos (premium minimal / viral talking head 2026) ----
+    "premium_minimal": {
+        "title": "Premium Minimal (viral talking head)", "family": "overlay",
+        "desc": "Video untouched. Small warm-white sans captions in the lower third, revealed word by word; key words in a serif italic blue with glow. Dull cool grade, darkened lower third, numbered step trackers, UI clicks + soft whooshes, no music under graphics.",
+        "cut": {"beat": 0, "speed": 1.0, "zoom": [[1.0, 1.0]], "transitions": ["cut"]},
+        "captions": {"preset": "premium_minimal", "y": 0.70, "sfx": "click", "sfx_volume": 0.16},
+        "grade": {"preset": "dull_cool", "grain": 2, "vignette": True, "sharpen": False},
+        "sound": {"sfx_volume": 0.35}, "progress_bar": None, "fx": {"lower_shade": 0.45}, "stickers_every": 0,
+        "texts": {"hook": "premium"},
+    },
+    "cinematic_minimal": {
+        "title": "Cinematic Minimal (story / quote)", "family": "overlay",
+        "desc": "Video untouched but darker: blurred dark edges, light paper texture, small sans line + one huge serif italic key word glowing blue. Quiet, premium, emotional.",
+        "cut": {"beat": 0, "speed": 1.0, "zoom": [[1.0, 1.0]], "transitions": ["cut"]},
+        "captions": {"preset": "cinematic_serif", "y": 0.66, "sfx": "soft_whoosh", "sfx_volume": 0.12},
+        "grade": {"preset": "dark_cinematic", "grain": 3, "vignette": True, "sharpen": False},
+        "sound": {"sfx_volume": 0.3}, "progress_bar": None, "fx": {"edge_blur": 1.0, "paper": 1.0}, "stickers_every": 0,
+        "texts": {"hook": "premium"},
+    },
 }
