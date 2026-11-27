@@ -398,6 +398,7 @@ def cmd_autoplan(a):
         "captions": cap,
         "texts": [], "stickers": [], "zoom_punches": [],
         "fx": dict(st.get("fx", {})),
+        **({"look": st["look"]} if st.get("look") else {}),
         "progress_bar": {"enabled": bool(st.get("progress_bar")), "color": st.get("progress_bar") or "#FFFFFF", "height": 9},
         "grade": {"preset": "punchy", "grain": 4, "vignette": True, "sharpen": True, **st["grade"]},
         "audio": {"loudness": -14, "cleanup": mode == "talk", "keep_source_audio": mode in ("talk", "overlay"),
@@ -597,6 +598,7 @@ def render_frames(plan, tl, info, faces, pipe):
             stickers.append((st, img))
     pb = plan.get("progress_bar", {})
     fxcfg = plan.get("fx", {})
+    gstate = {"seg": None, "photos": {}, "W": W, "H": H}
     total = tl[-1]["t0"] + tl[-1]["odur"]
     smooth_cx = None
     for si, seg in enumerate(tl):
@@ -681,6 +683,7 @@ def render_frames(plan, tl, info, faces, pipe):
             if gl > 0: out = glitch(out, gl, rng)
             if flash > 0: out = cv2.addWeighted(out, 1 - flash, np.full_like(out, 255), flash, 0)
             out = apply_fx(out, fxcfg, t_out, rng)
+            out = apply_reference_gfx(out, plan, t_out, t_src, gstate)
             # --- stickers
             for st, img in stickers:
                 d = t_out - st["start"]
@@ -705,6 +708,56 @@ def render_frames(plan, tl, info, faces, pipe):
             pipe.write(out.tobytes())
         frames.close()
         print(f"[render] segment {si + 1}/{len(tl)} ({tin})", flush=True)
+
+
+def apply_reference_gfx(out, plan, t, t_src, st):
+    """Look, behind-the-person words, split-screen panels and checklists (see gfx.py)."""
+    import gfx
+    H, W = out.shape[:2]
+    if plan.get("look") == "cinematic":
+        out = gfx.cinematic_look(out, t)
+    bws = [b for b in plan.get("behind_texts", []) if b["start"] <= t <= b["end"]]
+    if bws:
+        if st["seg"] is None:
+            st["seg"] = gfx.Segmenter()
+        m = st["seg"].mask(out)[:, :, None]
+        for b in bws:
+            p = (t - b["start"])
+            a = min(1.0, p / 0.15, (b["end"] - t) / 0.15)
+            col = tuple(int(b.get("color", "#D61620").lstrip("#")[k:k + 2], 16) for k in (0, 2, 4))
+            layer = np.asarray(gfx.big_word_layer(b["text"], W, H, col, b.get("stretch", 1.65), b.get("y", 0.3), p), np.float32)
+            al = layer[:, :, 3:4] / 255.0 * a * (1 - m)
+            out = (out.astype(np.float32) * (1 - al) + layer[:, :, 2::-1] * al).astype(np.uint8)
+    sp = plan.get("split")
+    if sp:
+        fy = sp.get("focus_y", 0.42)
+        band_h = H // 2
+        y0 = int(min(max(fy * H - band_h / 2, 0), H - band_h))
+        bottom = out[y0:y0 + band_h].copy()
+        canvas = np.zeros_like(out)
+        canvas[H - band_h:] = bottom
+        cards = [c for c in sp.get("cards", []) if c["start"] <= t < c["end"]]
+        if cards:
+            c = cards[-1]
+            src = None
+            if c.get("type") == "photo":
+                key = c.get("at", 0)
+                if key not in st["photos"]:
+                    st["photos"][key] = grab_frame(plan["source"], key, W, H)
+                src = st["photos"][key]
+            panel = gfx.render_panel(c, W, H - band_h, min(1.0, (t - c["start"]) / 0.5), src)
+            gfx.paste_rgba(canvas, panel, 0, 0)
+        out = canvas
+    for cl in plan.get("checklists", []):
+        gfx.draw_checklist(out, cl, t)
+    return out
+
+
+def grab_frame(src, ts, W, H):
+    p = subprocess.run(["ffmpeg", "-v", "error", "-ss", f"{ts:.3f}", "-i", str(src), "-frames:v", "1", "-vf",
+                        f"scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H}", "-f", "rawvideo", "-pix_fmt", "bgr24", "-"],
+                       capture_output=True)
+    return np.frombuffer(p.stdout, np.uint8).reshape(H, W, 3) if len(p.stdout) == W * H * 3 else None
 
 
 def apply_fx(out, fx, t, rng):
@@ -781,34 +834,21 @@ def compose_blurfill(f, W, H):
 
 # --------------------------------------------------------------------------- render: captions & titles (ASS)
 CAPTION_PRESETS = {
-    # 2026 staples. colours in hex, size in px at 1080x1920
-    "bold_pop":    {"font": "Cairo", "bold": 1, "size": 92, "color": "#FFFFFF", "outline": "#000000", "ow": 7, "shadow": 4, "hl": "#FFE600", "pop": True,  "upper": True},
-    "neon_glow":   {"font": "Cairo", "bold": 1, "size": 90, "color": "#FFFFFF", "outline": "#00E5FF", "ow": 5, "shadow": 0, "hl": "#00E5FF", "pop": True, "glow": True},
-    # Premium minimal / viral talking head 2026: small warm-white sans, special words in a serif italic
-    # accent colour with glow, words revealed softly one by one (lower third, centred)
-    "premium_minimal": {"font": "Montserrat", "bold": 1, "size": 58, "color": "#F3F3F3", "outline": "#000000", "ow": 0, "shadow": 0,
-                        "hl": None, "reveal": True, "words": 4, "emph_font": "Playfair Display", "accent": "#2F7BFF", "emph_scale": 1.75, "soft_shadow": True},
-    # Cinematic minimal (story / quote reels): small sans line + one huge serif italic key word, white with blue glow
-    "cinematic_serif": {"font": "Montserrat", "bold": 1, "size": 50, "color": "#F3F3F3", "outline": "#000000", "ow": 0, "shadow": 0,
-                        "hl": None, "reveal": True, "words": 4, "emph_font": "Playfair Display", "accent": "#FFFFFF", "glow_color": "#2F7BFF",
-                        "emph_scale": 2.4, "emph_newline": True, "soft_shadow": True},
-    "clean_minimal": {"font": "Montserrat", "bold": 1, "size": 64, "color": "#FFFFFF", "outline": "#000000", "ow": 2, "shadow": 2, "hl": None, "pop": False, "words": 5},
-    "karaoke_fill": {"font": "Cairo", "bold": 1, "size": 88, "color": "#7A7A7A", "outline": "#000000", "ow": 6, "shadow": 3, "hl": "#FFFFFF", "pop": False, "karaoke": True},
-    "boxed":       {"font": "Cairo", "bold": 1, "size": 84, "color": "#000000", "outline": "#FFFFFF", "ow": 14, "shadow": 0, "hl": "#E1306C", "pop": True, "box": True},
-    "mrbeast":     {"font": "Anton", "bold": 0, "size": 118, "color": "#FFFFFF", "outline": "#000000", "ow": 10, "shadow": 6, "hl": "#FFE600", "pop": True, "upper": True, "words": 2, "cycle": ["#FFE600", "#2BFF5E", "#FF3B3B", "#3BC8FF"]},
-    "luxury":      {"font": "Playfair Display", "bold": 1, "size": 66, "color": "#F5EBDD", "outline": "#000000", "ow": 1, "shadow": 3, "hl": "#D4AF37", "pop": False, "words": 4, "italic": True},
-    "news":        {"font": "Cairo", "bold": 1, "size": 74, "color": "#FFFFFF", "outline": "#C40000", "ow": 14, "shadow": 0, "hl": "#FFE600", "pop": False, "box": True, "words": 4},
-    "hormozi":     {"font": "Anton", "bold": 0, "size": 112, "color": "#FFFFFF", "outline": "#000000", "ow": 8, "shadow": 5, "hl": "#2BFF5E", "pop": True, "upper": True, "words": 2},
+    # Style 1 - Full Screen Talking Head: ONE word at a time, small white sans, just under the mouth (follows the face)
+    "word_mouth": {"font": "Inter", "bold": 1, "size": 64, "color": "#F5F5F5", "outline": "#000000", "ow": 0, "shadow": 0,
+                   "hl": None, "single": True, "words": 1, "soft_shadow": True, "y_face": 0.16},
+    # Style 2 - Educational Split Screen: 1-2 words, uppercase mono, white on a black box, on the seam between halves
+    "mono_box": {"font": "Space Mono", "bold": 1, "size": 54, "color": "#FFFFFF", "outline": "#0A0A0A", "ow": 12, "shadow": 0,
+                 "hl": None, "single": True, "words": 2, "box": True, "upper": True},
+    # Style 3 - Cinematic: the line builds word by word (unspoken words dim), keywords in a serif italic
+    "cine_build": {"font": "Inter", "bold": 1, "size": 60, "color": "#F2F2F2", "outline": "#000000", "ow": 0, "shadow": 0,
+                   "hl": None, "build": True, "words": 5, "soft_shadow": True, "emph_font": "Instrument Serif", "emph_scale": 1.45},
 }
 
 TEXT_PRESETS = {
     "hook":  {"font": "Cairo", "size": 96, "color": "#000000", "box": "#FFE600", "bold": 1},
     "label": {"font": "Cairo", "size": 60, "color": "#FFFFFF", "box": "#000000", "box_alpha": 0x50, "bold": 1},
     "cta":   {"font": "Cairo", "size": 74, "color": "#FFFFFF", "box": "#E1306C", "bold": 1},
-    "big":   {"font": "Bebas Neue", "size": 170, "color": "#FFFFFF", "outline": "#000000", "bold": 0},
-    "luxury": {"font": "Playfair Display", "size": 104, "color": "#F5EBDD", "outline": "#000000", "bold": 1},
-    "news":   {"font": "Cairo", "size": 70, "color": "#FFFFFF", "box": "#C40000", "bold": 1},
-    "premium": {"font": "Playfair Display", "size": 96, "color": "#F3F3F3", "outline": "#2F7BFF", "bold": 1, "ow": 0, "shadow": 3, "italic": 1},
     "number": {"font": "Anton", "size": 260, "color": "#FFE600", "outline": "#000000", "bold": 0},
 }
 
@@ -838,6 +878,53 @@ def group_words(words, maxw, maxchars=20):
     if cur:
         groups.append(cur)
     return groups
+
+
+def ref_caption_events(g, g_start, g_end, pre, cap, W, y, arabic, fmt):
+    """Caption styles extracted from the reference reels (single word / mono box / cinematic build)."""
+    out = []
+    rlm = "\u200f" if arabic else ""
+    shad = "\\4c&H000000&\\4a&H60&\\shad2\\blur1" if pre.get("soft_shadow") else ""
+    def ypos(w):
+        return int(w.get("y", y))
+    if pre.get("single"):
+        for i, w in enumerate(g):
+            s = w["s"] if i else g_start
+            e = g[i + 1]["s"] if i + 1 < len(g) else g_end
+            if e <= s:
+                e = s + 0.06
+            txt = " ".join(fmt(x) for x in g[: i + 1]) if pre.get("words", 1) > 1 else fmt(w)
+            fn = "\\fnCairo" if has_arabic(txt) and pre["font"] != "Cairo" else ""
+            appear = "\\fscx96\\fscy96\\t(0,80,\\fscx100\\fscy100)" if not pre.get("box") else ""
+            out.append(f"Dialogue: 0,{ass_time(s)},{ass_time(e)},Cap,,0,0,0,,{{\\an5\\pos({W // 2},{ypos(w)}){shad}{fn}{appear}}}{rlm}{txt}")
+        return out
+    # build: whole group visible dim; spoken words turn white; keywords serif italic + bigger
+    half = (len(g) + 1) // 2 if len(g) > 3 else len(g)
+    def word(x, lit, fresh):
+        if x.get("emph") and not has_arabic(x["w"]):
+            st = f"\\fn{pre.get('emph_font', 'Instrument Serif')}\\b0\\i1\\fscx{int(pre.get('emph_scale', 1.4) * 100)}\\fscy{int(pre.get('emph_scale', 1.4) * 100)}"
+        elif has_arabic(x["w"]) and pre["font"] != "Cairo":
+            st = "\\fnCairo" + ("\\fscx118\\fscy118" if x.get("emph") else "")
+        else:
+            st = ""
+        al = "\\alpha&H00&" if lit else "\\alpha&HA8&"
+        if fresh:
+            al = "\\alpha&HA8&\\t(0,120,\\alpha&H00&)"
+        return f"{{{st}{al}}}{fmt(x)}{{\\r}}"
+    for i, w in enumerate(g):
+        s = w["s"] if i else g_start
+        e = g[i + 1]["s"] if i + 1 < len(g) else g_end
+        if e <= s:
+            e = s + 0.06
+        parts = []
+        for j, x in enumerate(g):
+            if j == half and half < len(g):
+                parts.append("\\N")
+            parts.append(word(x, j < i, j == i))
+        intro = "\\fad(120,0)" if i == 0 else ""
+        outro = "\\fad(0,150)" if i == len(g) - 1 else ""
+        out.append(f"Dialogue: 0,{ass_time(s)},{ass_time(e)},Cap,,0,0,0,,{{\\an5\\pos({W // 2},{ypos(w)}){shad}{intro}{outro}}}{rlm}{' '.join(parts).replace(' \\N ', '\\N')}")
+    return out
 
 
 def reveal_events(g, g_start, g_end, pre, cap, W, y, arabic, fmt):
@@ -884,7 +971,7 @@ def reveal_events(g, g_start, g_end, pre, cap, W, y, arabic, fmt):
 def build_ass(plan, words, total, path):
     W, H = plan["output"]["w"], plan["output"]["h"]
     cap = plan.get("captions", {})
-    pre = dict(CAPTION_PRESETS.get(cap.get("preset", "bold_pop"), CAPTION_PRESETS["bold_pop"]))
+    pre = dict(CAPTION_PRESETS.get(cap.get("preset", "word_mouth"), CAPTION_PRESETS["word_mouth"]))
     for k in ("font", "size", "color", "outline"):
         if cap.get(k): pre[k] = cap[k]
     if "highlight" in cap: pre["hl"] = cap["highlight"]
@@ -905,10 +992,13 @@ def build_ass(plan, words, total, path):
 
     if cap.get("enabled") and words:
         hl0 = pre.get("hl")
-        for gi, g in enumerate(group_words(words, maxw)):
+        _groups = group_words(words, maxw)
+        for gi, g in enumerate(_groups):
             hl = pre["cycle"][gi % len(pre["cycle"])] if pre.get("cycle") and hl0 else hl0
             g_start = g[0]["s"]
             g_end = g[-1]["e"] + 0.12
+            if gi + 1 < len(_groups):           # never overlap the next caption
+                g_end = min(g_end, _groups[gi + 1][0]["s"])
             arabic = has_arabic(" ".join(x["w"] for x in g))
             def fmt(w):
                 t = re.sub(r"[.,،]+$", "", w["w"]) if cap.get("strip_punct", True) else w["w"]
@@ -917,6 +1007,9 @@ def build_ass(plan, words, total, path):
             if arabic and pre["font"] != "Cairo":
                 pos += "\\fnCairo"  # Latin display fonts have no Arabic glyphs
             glow = "\\blur6" if pre.get("glow") else ""
+            if pre.get("single") or pre.get("build"):
+                lines += ref_caption_events(g, g_start, g_end, pre, cap, W, y, arabic, fmt)
+                continue
             if pre.get("reveal"):
                 lines += reveal_events(g, g_start, g_end, pre, cap, W, y, arabic, fmt)
                 continue
@@ -1202,6 +1295,15 @@ def cmd_render(a):
     if plan.get("words") and Path(plan["words"]).exists():
         words = remap_words(json.loads(Path(plan["words"]).read_text()), tl)
     tmp = work / "_tmp"; tmp.mkdir(exist_ok=True)
+    cap = plan.get("captions", {})
+    pre = CAPTION_PRESETS.get(cap.get("preset", "word_mouth"), {})
+    if words and faces and pre.get("y_face") is not None and cap.get("follow_face", True):
+        tr = Tracker(faces)
+        for w in words:
+            seg = tl[w.get("seg", 0)]
+            ts = seg["in"] + (w["s"] - seg["t0"]) * seg["speed"]
+            _, fy = tr.at(ts)
+            w["y"] = int(min(max(fy + pre["y_face"], 0.45), 0.74) * 1920)
     # captions are authored at 1080x1920; libass scales them for previews
     ass_plan = {**plan, "output": {**plan["output"], "w": 1080, "h": 1920}}
     build_ass(ass_plan, words, total, tmp / "captions.ass")
@@ -1216,6 +1318,18 @@ def cmd_render(a):
         for w in words:
             if w.get("emph"):
                 plan["audio"]["sfx_events"].append({"type": "impact", "t": round(w["s"], 3), "volume": 0.3})
+    # motion sounds for the reference graphics (textures for ticks/reveals, whooshes for panel changes)
+    ev = plan.setdefault("audio", {}).setdefault("sfx_events", [])
+    if not plan.get("_gfx_sfx_done"):
+        sv = plan["audio"].get("sfx_volume", 0.3)
+        for cl in plan.get("checklists", []):
+            ev.append({"type": "soft_whoosh", "t": round(max(0, cl["start"] - 0.1), 3), "volume": sv * 0.5})
+            ev += [{"type": "click", "t": c, "volume": sv * 0.9} for c in cl.get("checks", []) if c is not None]
+        for c in (plan.get("split") or {}).get("cards", []):
+            ev.append({"type": "click" if c.get("type") != "photo" else "soft_whoosh", "t": c["start"], "volume": sv * 0.7})
+        for b in plan.get("behind_texts", []):
+            ev.append({"type": "impact", "t": b["start"], "volume": sv * 0.8})
+        plan["_gfx_sfx_done"] = True
     audio = master_audio(build_audio(plan, tl, info, total, tmp), plan.get("audio", {}).get("loudness", -14), tmp)
     out = Path(a.out or (work / ("preview.mp4" if a.preview else "final.mp4"))).resolve()
     vf = grade_chain(plan.get("grade", {}))

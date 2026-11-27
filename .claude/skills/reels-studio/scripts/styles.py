@@ -1,134 +1,39 @@
 """
-Style packs: one name -> every decision the 4 roles need (cut rhythm, motion, sound, typography, look).
-autoplan --style NAME applies a pack; each role can still override single fields in plan.json.
+Style packs = the three reel styles extracted from the user's reference video.
+All three are OVERLAY styles: the footage and its own audio (voice + music) are kept as shot.
+Only motion graphics, captions/typography and motion sound effects are added. Never add music.
 """
 
 STYLES = {
-    "hormozi_edu": {
-        "title": "Hormozi / Edutainment", "family": "talking-head",
-        "desc": "Jump cuts with zero air, alternating zoom, 2 big words at a time, green active word, SFX on everything.",
-        "cut": {"beat": 2.0, "speed": 1.08, "zoom": [[1.0, 1.05], [1.16, 1.2]],
-                "transitions": ["cut", "punch", "cut", "cut", "whip_left", "cut", "punch", "cut"]},
-        "captions": {"preset": "hormozi", "y": 0.64}, "grade": {"preset": "punchy", "grain": 0},
-        "sound": {"sfx_volume": 0.6}, "progress_bar": "#2BFF5E", "fx": {}, "stickers_every": 5,
-    },
-    "mrbeast_retention": {
-        "title": "MrBeast / Max retention", "family": "talking-head",
-        "desc": "Very fast cuts, shake on impacts, flashes, huge colourful words, numbers flying in.",
-        "cut": {"beat": 1.5, "speed": 1.12, "zoom": [[1.0, 1.08], [1.2, 1.26]],
-                "transitions": ["punch", "cut", "flash", "cut", "whip_up", "punch", "glitch", "cut"], "shake_every": 4},
-        "captions": {"preset": "mrbeast", "y": 0.6}, "grade": {"preset": "punchy", "grain": 0},
-        "sound": {"sfx_volume": 0.7}, "progress_bar": "#FF2D55", "fx": {}, "stickers_every": 4,
-    },
-    "podcast_clip": {
-        "title": "Podcast clip", "family": "talking-head",
-        "desc": "Calm cuts on sentences, punch-in on key line, karaoke captions, waveform-free clean look.",
-        "cut": {"beat": 3.5, "speed": 1.0, "zoom": [[1.0, 1.04], [1.12, 1.15]], "transitions": ["cut", "cut", "punch", "cut"]},
-        "captions": {"preset": "karaoke_fill", "y": 0.7}, "grade": {"preset": "clean_bright", "grain": 2},
-        "sound": {"sfx_volume": 0.3}, "progress_bar": None, "fx": {}, "stickers_every": 0,
-    },
-    "clean_aesthetic": {
-        "title": "Clean aesthetic / lifestyle", "family": "any",
-        "desc": "Slow pushes, soft warm film look with grain, small elegant captions, few transitions.",
-        "cut": {"beat": 3.2, "speed": 1.0, "zoom": [[1.0, 1.06], [1.06, 1.0]], "transitions": ["cut", "zoom_blur", "cut", "cut"]},
-        "captions": {"preset": "clean_minimal", "y": 0.72}, "grade": {"preset": "warm_film", "grain": 6},
-        "sound": {"sfx_volume": 0.3}, "progress_bar": None, "fx": {}, "stickers_every": 0,
-    },
-    "cinematic_vlog": {
-        "title": "Cinematic vlog / story", "family": "any",
-        "desc": "Letterbox bars, teal-orange, whip pans between places, serif titles, riser into the payoff.",
-        "cut": {"beat": 2.8, "speed": 1.0, "zoom": [[1.0, 1.07], [1.08, 1.0]],
-                "transitions": ["cut", "whip_left", "cut", "zoom_blur", "cut", "whip_right"]},
-        "captions": {"preset": "luxury", "y": 0.7}, "grade": {"preset": "cinematic", "grain": 4},
-        "sound": {"sfx_volume": 0.45}, "progress_bar": None, "fx": {"letterbox": 0.1}, "stickers_every": 0,
-        "texts": {"hook": "luxury"},
-    },
-    "tech_neon": {
-        "title": "Tech / AI / tutorial", "family": "talking-head",
-        "desc": "Neon glow captions, glitch on 'wrong vs right', numbered steps, cool contrasty grade.",
-        "cut": {"beat": 2.4, "speed": 1.05, "zoom": [[1.0, 1.05], [1.14, 1.18]],
-                "transitions": ["cut", "glitch", "cut", "punch", "cut", "whip_up"]},
-        "captions": {"preset": "neon_glow", "y": 0.66}, "grade": {"preset": "moody", "grain": 0},
-        "sound": {"sfx_volume": 0.55}, "progress_bar": "#00E5FF", "fx": {"chroma": 0.25}, "stickers_every": 6,
-    },
-    "news_explainer": {
-        "title": "News / explainer", "family": "talking-head",
-        "desc": "Boxed lower-thirds, red/white news captions, clean grade, labels for facts and numbers.",
-        "cut": {"beat": 2.6, "speed": 1.05, "zoom": [[1.0, 1.04], [1.12, 1.15]], "transitions": ["cut", "punch", "cut", "whip_left"]},
-        "captions": {"preset": "news", "y": 0.68}, "grade": {"preset": "clean_bright", "grain": 0},
-        "sound": {"sfx_volume": 0.45}, "progress_bar": "#E10600", "fx": {}, "stickers_every": 0,
-        "texts": {"hook": "news"},
-    },
-    "storytime_karaoke": {
-        "title": "Storytime", "family": "talking-head",
-        "desc": "Long sentences on screen filled word by word, moody grade, subtle zooms, suspense SFX.",
-        "cut": {"beat": 3.0, "speed": 1.0, "zoom": [[1.0, 1.08], [1.1, 1.16]], "transitions": ["cut", "cut", "zoom_blur", "cut"]},
-        "captions": {"preset": "karaoke_fill", "y": 0.62, "max_words": 5}, "grade": {"preset": "moody", "grain": 4},
-        "sound": {"sfx_volume": 0.4}, "progress_bar": "#FFFFFF", "fx": {}, "stickers_every": 0,
-    },
-    "lofi_authentic": {
-        "title": "Lo-fi authentic", "family": "any",
-        "desc": "Almost raw: hard cuts only, small captions, no grade. For trust, emotion, behind-the-scenes.",
-        "cut": {"beat": 4.0, "speed": 1.0, "zoom": [[1.0, 1.0], [1.0, 1.0]], "transitions": ["cut"]},
-        "captions": {"preset": "clean_minimal", "y": 0.7}, "grade": {"preset": "none", "grain": 0, "vignette": False, "sharpen": False},
-        "sound": {"sfx_volume": 0.0}, "progress_bar": None, "fx": {}, "stickers_every": 0,
-    },
-    "retro_vhs": {
-        "title": "Retro VHS / Y2K", "family": "any",
-        "desc": "Scanlines, chromatic shift, warm faded colours, glitch transitions, REC-style labels.",
-        "cut": {"beat": 2.2, "speed": 1.0, "zoom": [[1.0, 1.05], [1.12, 1.15]], "transitions": ["cut", "glitch", "cut", "flash"]},
-        "captions": {"preset": "bold_pop", "y": 0.66, "highlight": "#FF5CF4"}, "grade": {"preset": "warm_film", "grain": 8},
-        "sound": {"sfx_volume": 0.5}, "progress_bar": None, "fx": {"vhs": 1.0}, "stickers_every": 0,
-    },
-    "meme_comedy": {
-        "title": "Meme / comedy", "family": "talking-head",
-        "desc": "Snap zooms with shake on the punchline, big impact text, emoji reactions, boom SFX.",
-        "cut": {"beat": 2.0, "speed": 1.1, "zoom": [[1.0, 1.0], [1.3, 1.35]], "transitions": ["cut", "punch", "cut", "flash"], "shake_every": 3},
-        "captions": {"preset": "mrbeast", "y": 0.62}, "grade": {"preset": "punchy", "grain": 0},
-        "sound": {"sfx_volume": 0.75}, "progress_bar": None, "fx": {}, "stickers_every": 3,
-    },
-    "ugc_product_ad": {
-        "title": "UGC product ad", "family": "talking-head",
-        "desc": "Problem → product → result → offer. Clean bright grade, boxed captions, price/offer callouts, CTA.",
-        "cut": {"beat": 2.3, "speed": 1.08, "zoom": [[1.0, 1.05], [1.14, 1.18]], "transitions": ["cut", "punch", "cut", "whip_left", "cut"]},
-        "captions": {"preset": "boxed", "y": 0.66}, "grade": {"preset": "clean_bright", "grain": 0},
-        "sound": {"sfx_volume": 0.5}, "progress_bar": "#E1306C", "fx": {}, "stickers_every": 5,
-    },
-    "car_hype_montage": {
-        "title": "Car hype montage (beat-sync)", "family": "montage",
-        "desc": "Cuts on the beat, speed ramps, whips with motion blur, flashes, dark moody grade, big Bebas titles. For cars, sport, fashion.",
-        "cut": {"beat": 1.0, "speed": 1.0, "ramp": True, "zoom": [[1.0, 1.1], [1.15, 1.05]],
-                "transitions": ["flash", "whip_left", "cut", "zoom_blur", "whip_up", "cut", "glitch", "whip_right"], "shake_every": 5},
-        "captions": {"preset": "bold_pop", "y": 0.66}, "grade": {"preset": "moody", "grain": 3},
-        "sound": {"sfx_volume": 0.55}, "progress_bar": None, "fx": {"letterbox": 0.0, "beat_flash": 0.25}, "stickers_every": 0,
-        "texts": {"hook": "big"},
-    },
-    "luxury_showcase": {
-        "title": "Luxury showcase (cars / real estate)", "family": "montage",
-        "desc": "Slow elegant pushes, letterbox, serif italic titles, warm cinematic grade, soft whooshes. Premium feel.",
-        "cut": {"beat": 2.6, "speed": 1.0, "zoom": [[1.0, 1.08], [1.08, 1.0]], "transitions": ["cut", "zoom_blur", "cut", "whip_left"]},
-        "captions": {"preset": "luxury", "y": 0.72}, "grade": {"preset": "cinematic", "grain": 3},
-        "sound": {"sfx_volume": 0.35}, "progress_bar": None, "fx": {"letterbox": 0.11}, "stickers_every": 0,
-        "texts": {"hook": "luxury"},
-    },
-
-    # ---- extracted from reference videos (premium minimal / viral talking head 2026) ----
-    "premium_minimal": {
-        "title": "Premium Minimal (viral talking head)", "family": "overlay",
-        "desc": "Video untouched. Small warm-white sans captions in the lower third, revealed word by word; key words in a serif italic blue with glow. Dull cool grade, darkened lower third, numbered step trackers, UI clicks + soft whooshes, no music under graphics.",
+    "full_screen": {
+        "title": "Full Screen Talking Head", "family": "overlay",
+        "desc": "Calm and clean: no flashes, no zooms. Face high up, ONE word at a time just under the mouth "
+                "(small white Inter), dark-glass checklist cards at the bottom that tick to coral checks as each point is said.",
         "cut": {"beat": 0, "speed": 1.0, "zoom": [[1.0, 1.0]], "transitions": ["cut"]},
-        "captions": {"preset": "premium_minimal", "y": 0.70, "sfx": "click", "sfx_volume": 0.16},
-        "grade": {"preset": "dull_cool", "grain": 2, "vignette": True, "sharpen": False},
-        "sound": {"sfx_volume": 0.35}, "progress_bar": None, "fx": {"lower_shade": 0.45}, "stickers_every": 0,
-        "texts": {"hook": "premium"},
+        "captions": {"preset": "word_mouth", "y": 0.62, "max_words": 1},
+        "grade": {"preset": "none", "grain": 0, "vignette": False, "sharpen": False},
+        "sound": {"sfx_volume": 0.25}, "progress_bar": None, "fx": {}, "stickers_every": 0,
+        "graphics": ["checklists"],
     },
-    "cinematic_minimal": {
-        "title": "Cinematic Minimal (story / quote)", "family": "overlay",
-        "desc": "Video untouched but darker: blurred dark edges, light paper texture, small sans line + one huge serif italic key word glowing blue. Quiet, premium, emotional.",
+    "split_screen": {
+        "title": "Educational Split Screen", "family": "overlay",
+        "desc": "Top half: graphic panels on paper/grid that change about every second (huge condensed headline, stat "
+                "with animated bar chart, yellow card with mono tags, photo card). Bottom half: the speaker. Captions on the "
+                "seam: 1-2 uppercase mono words, white on a black box.",
         "cut": {"beat": 0, "speed": 1.0, "zoom": [[1.0, 1.0]], "transitions": ["cut"]},
-        "captions": {"preset": "cinematic_serif", "y": 0.66, "sfx": "soft_whoosh", "sfx_volume": 0.12},
-        "grade": {"preset": "dark_cinematic", "grain": 3, "vignette": True, "sharpen": False},
-        "sound": {"sfx_volume": 0.3}, "progress_bar": None, "fx": {"edge_blur": 1.0, "paper": 1.0}, "stickers_every": 0,
-        "texts": {"hook": "premium"},
+        "captions": {"preset": "mono_box", "y": 0.5, "max_words": 2},
+        "grade": {"preset": "none", "grain": 0, "vignette": False, "sharpen": False},
+        "sound": {"sfx_volume": 0.3}, "progress_bar": None, "fx": {}, "stickers_every": 0,
+        "graphics": ["split"],
+    },
+    "cinematic": {
+        "title": "Cinematic", "family": "overlay",
+        "desc": "Black & white film look with grain and a warm orange light leak. The caption line builds word by word "
+                "(unspoken words dim), keywords in a serif italic. Huge red stretched condensed words appear BEHIND the person.",
+        "cut": {"beat": 0, "speed": 1.0, "zoom": [[1.0, 1.0]], "transitions": ["cut"]},
+        "captions": {"preset": "cine_build", "y": 0.64, "max_words": 5},
+        "grade": {"preset": "none", "grain": 9, "vignette": True, "sharpen": False},
+        "sound": {"sfx_volume": 0.25}, "progress_bar": None, "fx": {}, "stickers_every": 0,
+        "graphics": ["behind_texts"], "look": "cinematic",
     },
 }
