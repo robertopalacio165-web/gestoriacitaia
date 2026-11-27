@@ -7,11 +7,11 @@ Full worked example: `references/examples/house_style_60s_plan.json` (copy it, t
 1. Footage untouched (no cuts, no zoom, no grade), its own voice + music kept. **No captions. No added music.**
 2. Find car shots first (1 frame/s contact sheet): **nothing over car footage, never split a car shot.**
 3. On people shots, one motion element every ~2–5 s, timed on the spoken word:
-   - **Checklist** (big, above the heads, y 0.17, scale 1.75) for promises/points: ✓ on the exact word.
+   - **Checklist** = WIDE GOLD style (user's pick): `"style": "gold", "y": 0.05, "title": "..."`, ✓ on the exact word.
    - **Split-screen card** (`split.only_during_cards`) for a reveal word: yellow card, headline + mono tag, photo card, quote.
    - **Kinetic title** (GSAP `kinetic`) for the offer name (e.g. BLACK FRIDAY) + 🔥 Noto emoji on both sides.
    - **Light wipe** right before a full-screen **offer poster** (`inserts`) on the sentence that announces the offer.
-   - **Price counter** (`price_counter`) on the amount (e.g. 0 → 4000€ "تخفيضات حتى") + 🤑.
+   - **Price counter** (`price_counter`, numbers rolling up) EVERY time money/prices are said on a non-car shot — the user loves it.
    - **Lower thirds** when a person is named (name + business, e.g. المهدي / MIDO CARS, ROBERTO / PALACIO CARS).
    - **Flags** when countries are listed, flags pop on each spoken country + 🌍.
    - Reaction emoji (🤩 surprise, 👍 guarantee, 👋 welcome) small at x≈0.84, never on faces.
@@ -29,3 +29,10 @@ Full worked example: `references/examples/house_style_60s_plan.json` (copy it, t
 - Instagram: no explicit ban found; recommendation limits target spam, unoriginal and low-quality content.
 - Safest practice: show the number briefly (2–4 s, `contact` template) near the end, put it permanently in the bio /
   contact button, and say "النمرة ف البيو". Avoid a number burned on screen for the whole video.
+
+## New pro motion (approved)
+notification (iPhone WhatsApp banner), sale_badge (rotating gold starburst), doodle (hand-drawn circle + arrow + label),
+progress_ring (ring filling, e.g. ضمانة عام), map_pins (pins drop + dotted route for country lists), marker_words
+(coloured marker sweeps for 2–3 key words). Mix them in: one element every 3–6 s, never two at once.
+Offer poster: the user's WHITE Black Friday poster (not the black one).
+Phone numbers (`whatsapp_contacts`) in the MIDDLE of the video (a calm non-car shot) and again at the end.
