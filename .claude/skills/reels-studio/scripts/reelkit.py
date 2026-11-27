@@ -327,6 +327,7 @@ def cmd_autoplan(a):
         s0 = a.start or 0.0
         e0 = min(dur, a.end if a.end else s0 + a.target)
         pieces = [[s0, e0, e0 - s0]]
+        a.target = e0 - s0            # overlay keeps the whole requested window
     elif mode == "talk":
         pad = 0.08
         blocks = an.get("speech") or [[0, dur]]
@@ -732,6 +733,8 @@ def apply_reference_gfx(out, plan, t, t_src, st):
             al = layer[:, :, 3:4] / 255.0 * a * (1 - m)
             out = (out.astype(np.float32) * (1 - al) + layer[:, :, 2::-1] * al).astype(np.uint8)
     sp = plan.get("split")
+    if sp and sp.get("only_during_cards") and not any(c["start"] <= t < c["end"] for c in sp.get("cards", [])):
+        sp = None          # mixed mode: full screen except while a split card is on
     if sp:
         fy = sp.get("focus_y", 0.42)
         band_h = H // 2
