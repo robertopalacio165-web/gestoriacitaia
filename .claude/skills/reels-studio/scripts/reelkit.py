@@ -842,9 +842,9 @@ def compose_blurfill(f, W, H):
 
 # --------------------------------------------------------------------------- render: captions & titles (ASS)
 # fonts that contain Arabic glyphs (others fall back to Cairo for Arabic words)
-AR_FONTS = {"Cairo", "Tajawal", "Rubik", "Almarai"}
+AR_FONTS = {"Cairo", "Tajawal"}
 # the 4 caption font options offered to the user (all bold, Arabic + Latin)
-CAPTION_FONTS = {"cairo": ("Cairo", 94), "almarai": ("Almarai", 94), "rubik": ("Rubik", 88), "tajawal": ("Tajawal", 100)}
+CAPTION_FONTS = {"tajawal": ("Tajawal", 100)}
 
 CAPTION_PRESETS = {
     # ALWAYS-BOTTOM captions (user rule): 2-3 words, thick white letters with a black outline + shadow,
@@ -1330,7 +1330,7 @@ def cmd_render(a):
         import gfx
         fk = cap.get("font_option", "tajawal")
         if fk not in gfx.CAPTION_FONT_FILES:
-            fk = "lalezar"
+            fk = "tajawal"
         plan["_pil_groups"] = group_words(words, cap.get("max_words", 3), maxchars=cap.get("max_chars", 22))
         plan["_pil_cfg"] = {"font_key": fk, "size": cap.get("size", {"tajawal": 96}.get(fk, 96)),
                             "y": cap.get("y", 0.79)}

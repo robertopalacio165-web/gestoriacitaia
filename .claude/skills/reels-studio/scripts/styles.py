@@ -10,7 +10,7 @@ STYLES = {
         "desc": "Calm and clean: no flashes, no zooms. Face high up, captions always at the bottom (thick, outlined, "
                 "spoken word yellow), BIG dark-glass checklist cards placed above the heads that tick to coral checks as each point is said.",
         "cut": {"beat": 0, "speed": 1.0, "zoom": [[1.0, 1.0]], "transitions": ["cut"]},
-        "captions": {"preset": "bottom_bold", "y": 0.79, "max_words": 3, "font_option": "cairo"},
+        "captions": {"preset": "bottom_bold", "y": 0.79, "max_words": 3, "font_option": "tajawal"},
         "grade": {"preset": "none", "grain": 0, "vignette": False, "sharpen": False},
         "sound": {"sfx_volume": 0.25}, "progress_bar": None, "fx": {}, "stickers_every": 0,
         "graphics": ["checklists"],
@@ -21,7 +21,7 @@ STYLES = {
                 "with animated bar chart, yellow card with mono tags, photo card). Bottom half: the speaker. Captions always at "
                 "the bottom (thick, outlined, spoken word yellow).",
         "cut": {"beat": 0, "speed": 1.0, "zoom": [[1.0, 1.0]], "transitions": ["cut"]},
-        "captions": {"preset": "bottom_bold", "y": 0.82, "max_words": 3, "font_option": "cairo"},
+        "captions": {"preset": "bottom_bold", "y": 0.82, "max_words": 3, "font_option": "tajawal"},
         "grade": {"preset": "none", "grain": 0, "vignette": False, "sharpen": False},
         "sound": {"sfx_volume": 0.3}, "progress_bar": None, "fx": {}, "stickers_every": 0,
         "graphics": ["split"],
