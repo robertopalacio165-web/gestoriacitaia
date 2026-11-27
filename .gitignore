@@ -53,3 +53,4 @@ reels/
 **/_tmp/
 *.mp4
 *.mov
+__pycache__/

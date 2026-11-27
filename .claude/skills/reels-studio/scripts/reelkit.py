@@ -5,7 +5,9 @@ reelkit.py — engine for professional vertical Reels/TikTok/Shorts edits (2026 
 Subcommands
   analyze  SRC --work DIR           probe, silences, scene cuts, face track, contact sheets
   words    --work DIR --from FILE    import a transcript (ElevenLabs/Whisper JSON, SRT, words.json)
-  autoplan --work DIR [--target 30] build a first-draft plan.json from speech + silences
+  beats    MUSIC --work DIR          detect beats/tempo of a music track -> beats.json
+  autoplan --work DIR [--target 30] [--style NAME] [--mode talk|montage]  draft plan.json
+  styles                            list the style packs
   render   PLAN [--out FILE] [--preview]   render the plan to an MP4
   qa       VIDEO --work DIR          loudness / duration / contact sheet of the result
 
@@ -134,6 +136,19 @@ def face_track(src, info, sample_fps=4):
     return track
 
 
+def motion_energy(src, info, fps=4):
+    """Per-sample (1/fps s) visual activity 0..1: mean abs frame difference on a tiny grey frame."""
+    sw = 96
+    sh = int(round(info["h"] * sw / info["w"] / 2) * 2)
+    prev, vals = None, []
+    for f in read_frames(src, 0, info["duration"], sw, sh, fps):
+        g = f.mean(axis=2)
+        vals.append(0.0 if prev is None else float(np.abs(g - prev).mean()))
+        prev = g
+    m = max(vals) if vals and max(vals) > 0 else 1.0
+    return [round(v / m, 3) for v in vals]
+
+
 def contact_sheets(src, info, outdir, every=2.0, cols=5, rows=4):
     from PIL import Image, ImageDraw, ImageFont
     tw = 216
@@ -196,6 +211,7 @@ def cmd_analyze(a):
         res["faces"] = face_track(src, info)
         cov = len(res["faces"]) / max(1, info["duration"] * 4)
         print(f"[analyze] face samples: {len(res['faces'])} (coverage {cov:.0%})")
+    res["motion"] = motion_energy(src, info)
     res["contact_sheets"] = contact_sheets(src, info, work, every=a.every)
     print("[analyze] contact sheets:", *res["contact_sheets"], sep="\n  ")
     (work / "analysis.json").write_text(json.dumps(res, indent=1, ensure_ascii=False))
@@ -247,52 +263,150 @@ def cmd_words(a):
 
 
 # --------------------------------------------------------------------------- autoplan
+def detect_beats(path):
+    """Onset-energy beat tracker (numpy only). Returns (bpm, beat_times)."""
+    sr = 22050
+    raw = run(["ffmpeg", "-v", "error", "-i", str(path), "-ac", "1", "-ar", str(sr), "-f", "f32le", "-"],
+              capture_output=True).stdout
+    y = np.frombuffer(raw, np.float32)
+    hop, win = 512, 1024
+    n = (len(y) - win) // hop
+    if n < 10:
+        return 0, []
+    frames = np.lib.stride_tricks.as_strided(y, (n, win), (y.strides[0] * hop, y.strides[0]))
+    spec = np.abs(np.fft.rfft(frames * np.hanning(win), axis=1))
+    flux = np.maximum(0, np.diff(np.log1p(spec), axis=0)).sum(axis=1)
+    flux = (flux - flux.mean()) / (flux.std() + 1e-9)
+    fr = sr / hop
+    ac = np.correlate(flux, flux, "full")[len(flux) - 1:]
+    lo, hi = int(fr * 60 / 180), int(fr * 60 / 70)       # 70–180 bpm
+    lag = lo + int(np.argmax(ac[lo:hi]))
+    bpm = 60 * fr / lag
+    # best phase, then snap each beat to the local onset peak
+    phase = max(range(lag), key=lambda ph: flux[ph::lag].sum())
+    beats = []
+    for i in range(phase, len(flux), lag):
+        a, b = max(0, i - 3), min(len(flux), i + 4)
+        beats.append(round((a + int(np.argmax(flux[a:b])) + 1) / fr, 3))
+    return round(bpm, 1), beats
+
+
+def cmd_beats(a):
+    work = Path(a.work); work.mkdir(parents=True, exist_ok=True)
+    bpm, beats = detect_beats(a.music)
+    (work / "beats.json").write_text(json.dumps({"music": str(Path(a.music).resolve()), "bpm": bpm, "beats": beats}))
+    print(f"[beats] {bpm} bpm, {len(beats)} beats -> {work / 'beats.json'}")
+
+
+def cmd_styles(a):
+    sys.path.insert(0, str(HERE))
+    from styles import STYLES
+    for k, v in STYLES.items():
+        print(f"{k:20s} {v['title']:38s} [{v['family']}]  {v['desc']}")
+
+
 def cmd_autoplan(a):
+    sys.path.insert(0, str(HERE))
+    from styles import STYLES
+    st = STYLES[a.style]
+    cut = st["cut"]
     work = Path(a.work)
     an = json.loads((work / "analysis.json").read_text())
     info = an["info"]
-    pad = 0.08
-    blocks = an.get("speech") or [[0, info["duration"]]]
-    blocks = [[max(0, s - pad), min(info["duration"], e + pad)] for s, e in blocks if e - s > 0.25]
-    # split long blocks into 1.5–3.5 s beats so the edit keeps moving
-    beats = []
-    for s, e in blocks:
-        n = max(1, round((e - s) / 2.6))
-        step = (e - s) / n
-        for i in range(n):
-            beats.append([round(s + i * step, 3), round(s + (i + 1) * step, 3)])
-    # choose the densest window that fills the target (default: start from the top)
+    dur = info["duration"]
+    mode = a.mode
+    if mode == "auto":
+        speech = sum(e - s for s, e in an.get("speech", []))
+        mode = "talk" if (st["family"] != "montage" and speech > 0.45 * dur) else "montage"
+    beats_p = work / "beats.json"
+    beat_info = json.loads(beats_p.read_text()) if beats_p.exists() else None
+    pieces = []
+    if mode == "talk":
+        pad = 0.08
+        blocks = an.get("speech") or [[0, dur]]
+        blocks = [[max(0, s - pad), min(dur, e + pad)] for s, e in blocks if e - s > 0.25]
+        for s, e in blocks:  # split long blocks into beats so something changes on screen
+            n = max(1, round((e - s) / cut["beat"]))
+            step = (e - s) / n
+            pieces += [[s + i * step, s + (i + 1) * step] for i in range(n)]
+    else:
+        # montage: slot lengths from music beats (or the style's beat), shots = most active moments
+        if beat_info and beat_info["beats"]:
+            bt = beat_info["beats"]
+            per = max(1, round(cut["beat"] / (60 / max(1, beat_info["bpm"]))))
+            slots = [bt[i + per] - bt[i] for i in range(0, len(bt) - per, per)]
+        else:
+            slots = [cut["beat"]] * int(a.target / cut["beat"] + 1)
+        motion = an.get("motion") or [0.5] * int(dur * 4)
+        scenes = [0.0] + an.get("scenes", []) + [dur]
+        shots = [[scenes[i], scenes[i + 1]] for i in range(len(scenes) - 1) if scenes[i + 1] - scenes[i] > 0.4]
+        def score(s, e):
+            seg = motion[int(s * 4):max(int(s * 4) + 1, int(e * 4))]
+            return float(np.mean(seg)) if seg else 0.0
+        used, total = [], 0.0
+        for L in slots:
+            if total >= a.target: break
+            src_len = L * (1.6 if cut.get("ramp") else 1.0)
+            best, bs = None, -1
+            for s0, e0 in shots:
+                t = s0
+                while t + src_len <= e0 + 1e-3:
+                    if not any(t < ue and t + src_len > us for us, ue in used):
+                        sc = score(t, t + src_len) + rng_jitter(t)
+                        if sc > bs: best, bs = [t, t + src_len], sc
+                    t += 0.5
+            if best is None:  # footage exhausted: reuse from the top
+                best = [0, min(dur, src_len)]
+            used.append(best); pieces.append(best + [L]); total += L
+        if not a.keep_order:
+            pass  # montage keeps the chosen order = time order of slots (energy first)
     out, total = [], 0.0
-    for s, e in beats:
-        if total >= a.target:
-            break
-        if total + (e - s) > a.target:
-            e = s + (a.target - total)
-        out.append([s, e])
-        total += e - s
-    trans_cycle = ["cut", "punch", "cut", "whip_left", "cut", "punch", "flash", "cut", "zoom_blur", "cut", "glitch"]
+    for pc in pieces:
+        s, e = pc[0], pc[1]
+        odur = pc[2] if len(pc) > 2 else (e - s) / cut["speed"]
+        if total >= a.target - 0.05: break
+        if total + odur > a.target:
+            frac = (a.target - total) / odur
+            e = s + (e - s) * frac; odur = a.target - total
+        out.append([s, e, odur]); total += odur
+    zooms, trans = cut["zoom"], cut["transitions"]
     segs = []
-    for i, (s, e) in enumerate(out):
-        z_a, z_b = (1.0, 1.06) if i % 2 == 0 else (1.14, 1.18)  # classic jump-cut zoom alternation
-        segs.append({"in": s, "out": round(e, 3), "speed": 1.0, "zoom_from": z_a, "zoom_to": z_b,
-                     "transition_in": "cut" if i == 0 else trans_cycle[i % len(trans_cycle)]})
+    for i, (s, e, odur) in enumerate(out):
+        za, zb = zooms[i % len(zooms)]
+        speed = round((e - s) / odur, 3) if mode == "montage" else cut["speed"]
+        seg = {"in": round(s, 3), "out": round(e, 3), "speed": speed, "zoom_from": za, "zoom_to": zb,
+               "transition_in": "cut" if i == 0 else trans[i % len(trans)]}
+        if cut.get("shake_every") and i and i % cut["shake_every"] == 0:
+            seg["shake"] = 0.5
+        segs.append(seg)
+    has_words = (work / "words.json").exists()
+    cap = {"enabled": has_words, "preset": "bold_pop", "max_words": 3, "y": 0.66}
+    cap.update(st["captions"])
     plan = {
+        "style": a.style,
         "source": info["source"],
         "output": {"w": 1080, "h": 1920, "fps": 30, "crf": 18},
         "reframe": "auto",
         "segments": segs,
-        "words": str(work / "words.json") if (work / "words.json").exists() else None,
-        "captions": {"enabled": (work / "words.json").exists(), "preset": "bold_pop", "max_words": 3,
-                     "y": 0.66, "font": "Cairo", "size": 92, "highlight": "#FFE600"},
-        "texts": [],
-        "stickers": [],
-        "zoom_punches": [],
-        "progress_bar": {"enabled": True, "color": "#FFE600", "height": 9},
-        "grade": {"preset": "punchy", "grain": 4, "vignette": True, "sharpen": True},
-        "audio": {"loudness": -14, "cleanup": True, "sfx": True, "sfx_volume": 0.5, "music": None, "music_volume": 0.12},
+        "words": str(work / "words.json") if has_words else None,
+        "captions": cap,
+        "texts": [], "stickers": [], "zoom_punches": [],
+        "fx": dict(st.get("fx", {})),
+        "progress_bar": {"enabled": bool(st.get("progress_bar")), "color": st.get("progress_bar") or "#FFFFFF", "height": 9},
+        "grade": {"preset": "punchy", "grain": 4, "vignette": True, "sharpen": True, **st["grade"]},
+        "audio": {"loudness": -14, "cleanup": mode == "talk", "keep_source_audio": mode == "talk",
+                  "sfx": st["sound"]["sfx_volume"] > 0, "sfx_volume": st["sound"]["sfx_volume"],
+                  "music": beat_info["music"] if beat_info else None,
+                  "music_volume": 0.12 if mode == "talk" else 0.9, "sfx_events": []},
     }
+    if beat_info and mode == "montage" and plan["fx"].get("beat_flash"):
+        plan["fx"]["beats_out"] = [round(sum(o[2] for o in out[:i]), 3) for i in range(1, len(out))]
     (work / "plan.json").write_text(json.dumps(plan, indent=1, ensure_ascii=False))
-    print(f"[autoplan] {len(segs)} segments, {total:.1f}s -> {work / 'plan.json'}")
+    print(f"[autoplan] style={a.style} mode={mode} {len(segs)} segments, {total:.1f}s -> {work / 'plan.json'}")
+
+
+def rng_jitter(t):
+    return (math.sin(t * 12.9898) * 43758.5453) % 1 * 0.05
 
 
 # --------------------------------------------------------------------------- render: timeline
@@ -450,6 +564,7 @@ def render_frames(plan, tl, info, faces, pipe):
         if img is not None:
             stickers.append((st, img))
     pb = plan.get("progress_bar", {})
+    fxcfg = plan.get("fx", {})
     total = tl[-1]["t0"] + tl[-1]["odur"]
     smooth_cx = None
     for si, seg in enumerate(tl):
@@ -533,6 +648,7 @@ def render_frames(plan, tl, info, faces, pipe):
             if zb > 0: out = zoom_blur(out, zb)
             if gl > 0: out = glitch(out, gl, rng)
             if flash > 0: out = cv2.addWeighted(out, 1 - flash, np.full_like(out, 255), flash, 0)
+            out = apply_fx(out, fxcfg, t_out, rng)
             # --- stickers
             for st, img in stickers:
                 d = t_out - st["start"]
@@ -552,6 +668,39 @@ def render_frames(plan, tl, info, faces, pipe):
             pipe.write(out.tobytes())
         frames.close()
         print(f"[render] segment {si + 1}/{len(tl)} ({tin})", flush=True)
+
+
+def apply_fx(out, fx, t, rng):
+    import cv2
+    if not fx:
+        return out
+    H, W = out.shape[:2]
+    if fx.get("chroma"):
+        sh = max(1, int(fx["chroma"] * 10))
+        out = out.copy()
+        out[:, :, 2] = np.roll(out[:, :, 2], sh, axis=1)
+        out[:, :, 0] = np.roll(out[:, :, 0], -sh, axis=1)
+    if fx.get("vhs"):
+        a = fx["vhs"]
+        out = out.copy()
+        out[:, :, 2] = np.roll(out[:, :, 2], int(6 * a), axis=1)
+        out[:, :, 0] = np.roll(out[:, :, 0], -int(4 * a), axis=1)
+        out = cv2.GaussianBlur(out, (3, 1), 0)
+        out[::4] = (out[::4] * (1 - 0.22 * a)).astype(np.uint8)          # scanlines
+        y = int((t * 260) % H)                                             # rolling tracking band
+        out[y:y + 26] = np.roll(out[y:y + 26], int(14 * a), axis=1)
+        cv2.putText(out, "PLAY >", (70, 300), cv2.FONT_HERSHEY_SIMPLEX, 1.6, (240, 240, 240), 3, cv2.LINE_AA)
+        if int(t * 2) % 2 == 0:
+            cv2.circle(out, (W - 120, 285), 14, (40, 40, 255), -1)
+    for bt in fx.get("beats_out", []):
+        d = t - bt
+        if 0 <= d < 0.1:
+            k = fx.get("beat_flash", 0.25) * (1 - d / 0.1)
+            out = cv2.addWeighted(out, 1 - k, np.full_like(out, 255), k, 0)
+    if fx.get("letterbox"):
+        b = int(H * fx["letterbox"] / 2)
+        out = out.copy(); out[:b] = 0; out[H - b:] = 0
+    return out
 
 
 def compose_blurfill(f, W, H):
@@ -577,6 +726,9 @@ CAPTION_PRESETS = {
     "clean_minimal": {"font": "Montserrat", "bold": 1, "size": 64, "color": "#FFFFFF", "outline": "#000000", "ow": 2, "shadow": 2, "hl": None, "pop": False, "words": 5},
     "karaoke_fill": {"font": "Cairo", "bold": 1, "size": 88, "color": "#7A7A7A", "outline": "#000000", "ow": 6, "shadow": 3, "hl": "#FFFFFF", "pop": False, "karaoke": True},
     "boxed":       {"font": "Cairo", "bold": 1, "size": 84, "color": "#000000", "outline": "#FFFFFF", "ow": 14, "shadow": 0, "hl": "#E1306C", "pop": True, "box": True},
+    "mrbeast":     {"font": "Anton", "bold": 0, "size": 118, "color": "#FFFFFF", "outline": "#000000", "ow": 10, "shadow": 6, "hl": "#FFE600", "pop": True, "upper": True, "words": 2, "cycle": ["#FFE600", "#2BFF5E", "#FF3B3B", "#3BC8FF"]},
+    "luxury":      {"font": "Playfair Display", "bold": 1, "size": 66, "color": "#F5EBDD", "outline": "#000000", "ow": 1, "shadow": 3, "hl": "#D4AF37", "pop": False, "words": 4, "italic": True},
+    "news":        {"font": "Cairo", "bold": 1, "size": 74, "color": "#FFFFFF", "outline": "#C40000", "ow": 14, "shadow": 0, "hl": "#FFE600", "pop": False, "box": True, "words": 4},
     "hormozi":     {"font": "Anton", "bold": 0, "size": 112, "color": "#FFFFFF", "outline": "#000000", "ow": 8, "shadow": 5, "hl": "#2BFF5E", "pop": True, "upper": True, "words": 2},
 }
 
@@ -584,7 +736,9 @@ TEXT_PRESETS = {
     "hook":  {"font": "Cairo", "size": 96, "color": "#000000", "box": "#FFE600", "bold": 1},
     "label": {"font": "Cairo", "size": 60, "color": "#FFFFFF", "box": "#000000", "box_alpha": 0x50, "bold": 1},
     "cta":   {"font": "Cairo", "size": 74, "color": "#FFFFFF", "box": "#E1306C", "bold": 1},
-    "big":   {"font": "Anton", "size": 170, "color": "#FFFFFF", "outline": "#000000", "bold": 0},
+    "big":   {"font": "Bebas Neue", "size": 170, "color": "#FFFFFF", "outline": "#000000", "bold": 0},
+    "luxury": {"font": "Playfair Display", "size": 104, "color": "#F5EBDD", "outline": "#000000", "bold": 1},
+    "news":   {"font": "Cairo", "size": 70, "color": "#FFFFFF", "box": "#C40000", "bold": 1},
     "number": {"font": "Anton", "size": 260, "color": "#FFE600", "outline": "#000000", "bold": 0},
 }
 
@@ -628,7 +782,7 @@ def build_ass(plan, words, total, path):
              "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding"]
     bs = 3 if pre.get("box") else 1
     lines.append(f"Style: Cap,{pre['font']},{pre['size']},{hex_to_ass(pre['color'])},{hex_to_ass(pre.get('hl') or pre['color'])},"
-                 f"{hex_to_ass(pre['outline'])},{hex_to_ass('#000000', 0x60)},{pre.get('bold', 1) and -1 or 0},0,0,0,100,100,0,0,{bs},{pre['ow']},{pre['shadow']},5,60,60,0,-1")
+                 f"{hex_to_ass(pre['outline'])},{hex_to_ass('#000000', 0x60)},{pre.get('bold', 1) and -1 or 0},{pre.get('italic') and -1 or 0},0,0,100,100,0,0,{bs},{pre['ow']},{pre['shadow']},5,60,60,0,-1")
     for name, tp in TEXT_PRESETS.items():
         box = tp.get("box")
         lines.append(f"Style: T_{name},{tp['font']},{tp['size']},{hex_to_ass(tp['color'])},{hex_to_ass(tp['color'])},"
@@ -637,8 +791,9 @@ def build_ass(plan, words, total, path):
     lines += ["", "[Events]", "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text"]
 
     if cap.get("enabled") and words:
-        hl = pre.get("hl")
-        for g in group_words(words, maxw):
+        hl0 = pre.get("hl")
+        for gi, g in enumerate(group_words(words, maxw)):
+            hl = pre["cycle"][gi % len(pre["cycle"])] if pre.get("cycle") and hl0 else hl0
             g_start = g[0]["s"]
             g_end = g[-1]["e"] + 0.12
             arabic = has_arabic(" ".join(x["w"] for x in g))
@@ -646,6 +801,8 @@ def build_ass(plan, words, total, path):
                 t = w["w"]
                 return ass_escape(t.upper() if pre.get("upper") and not arabic else t)
             pos = f"\\an5\\pos({W // 2},{y})"
+            if arabic and pre["font"] != "Cairo":
+                pos += "\\fnCairo"  # Latin display fonts have no Arabic glyphs
             glow = "\\blur6" if pre.get("glow") else ""
             if pre.get("karaoke"):
                 parts = "".join(f"{{\\kf{max(1, int((x['e'] - x['s']) * 100))}}}{fmt(x)} " for x in g)
@@ -689,6 +846,8 @@ def build_ass(plan, words, total, path):
         rot = f"\\frz{tx['rotate']}" if tx.get("rotate") else ""
         pos = "" if anim in ("slide", "drop") else f"\\pos({tx_x},{ty})"
         text = ass_escape(tx["text"])
+        if has_arabic(tx["text"]) and tp["font"] != "Cairo":
+            rot += "\\fnCairo"
         if anim == "typewriter":
             chars = list(tx["text"])
             step = min(0.06, 0.6 / max(1, len(chars)))
@@ -754,7 +913,9 @@ def write_wav(path, y, sr=48000):
 def build_audio(plan, tl, info, total, tmp):
     au = plan.get("audio", {})
     out = tmp / "final_audio.wav"
-    if not info["has_audio"]:
+    if not info["has_audio"] or not au.get("keep_source_audio", True):
+        if au.get("music"):
+            return build_music_only(plan, tl, total, tmp, out)
         run(["ffmpeg", "-v", "error", "-y", "-f", "lavfi", "-i", "anullsrc=r=48000:cl=stereo", "-t", f"{total:.3f}", str(out)])
         return out
     parts, fc = [], []
@@ -826,6 +987,51 @@ def build_audio(plan, tl, info, total, tmp):
     return out
 
 
+def build_music_only(plan, tl, total, tmp, out):
+    au = plan["audio"]
+    inputs = ["-i", au["music"]]
+    fc = [f"[0:a]aformat=channel_layouts=stereo,aresample=48000,volume={au.get('music_volume', 0.9)},"
+          f"atrim=0:{total:.3f},afade=t=out:st={max(0, total - 1.0):.3f}:d=1.0[m]"]
+    mix, idx = ["[m]"], 1
+    if au.get("sfx", True):
+        kind_for = {"whip_left": "whoosh", "whip_right": "whoosh", "whip_up": "whoosh", "whip_down": "whoosh",
+                    "flash": "flash", "glitch": "glitch", "zoom_blur": "whoosh", "punch": "pop"}
+        ev = [(kind_for[s["transition_in"]], max(0, s["t0"] - (0.2 if kind_for[s["transition_in"]] == "whoosh" else 0)))
+              for s in tl[1:] if s.get("transition_in") in kind_for]
+        ev += [("impact", t["start"]) for t in plan.get("texts", [])]
+        ev += [(e["type"], e["t"]) for e in au.get("sfx_events", [])]
+        for k, t in ev:
+            p = tmp / f"sfx_{k}.wav"
+            if not p.exists():
+                y = synth_sfx(k)
+                if y is None: continue
+                write_wav(p, y)
+            inputs += ["-i", str(p)]; ms = int(t * 1000)
+            fc.append(f"[{idx}:a]aformat=channel_layouts=stereo,volume={au.get('sfx_volume', 0.5):.2f},adelay={ms}|{ms}[s{idx}]")
+            mix.append(f"[s{idx}]"); idx += 1
+    fc.append(f"{''.join(mix)}amix=inputs={len(mix)}:normalize=0,loudnorm=I={au.get('loudness', -14)}:TP=-1.5:LRA=9,"
+              f"atrim=0:{total:.3f}[out]")
+    run(["ffmpeg", "-v", "error", "-y", *inputs, "-filter_complex", ";".join(fc), "-map", "[out]", "-ac", "2", "-ar", "48000", str(out)])
+    return out
+
+
+def master_audio(path, target, tmp):
+    """Second pass: exact gain to target LUFS, then a true-peak limiter at -1.5 dBTP (iterates twice)."""
+    cur = Path(path)
+    for i in range(2):
+        ld = loudness(cur)
+        if not ld or ld["lufs"] < -60:
+            return cur
+        if abs(ld["lufs"] - target) <= 0.4 and ld["true_peak"] <= -1.0:
+            return cur
+        gain = target - ld["lufs"]
+        out = tmp / f"master_{i}.wav"
+        run(["ffmpeg", "-v", "error", "-y", "-i", str(cur), "-af",
+             f"volume={gain:.2f}dB,alimiter=limit=0.82:attack=1:release=40:level=disabled", str(out)])
+        cur = out
+    return cur
+
+
 # --------------------------------------------------------------------------- render: color
 GRADES = {
     "none": "",
@@ -868,7 +1074,7 @@ def cmd_render(a):
     # captions are authored at 1080x1920; libass scales them for previews
     ass_plan = {**plan, "output": {**plan["output"], "w": 1080, "h": 1920}}
     build_ass(ass_plan, words, total, tmp / "captions.ass")
-    audio = build_audio(plan, tl, info, total, tmp)
+    audio = master_audio(build_audio(plan, tl, info, total, tmp), plan.get("audio", {}).get("loudness", -14), tmp)
     out = Path(a.out or (work / ("preview.mp4" if a.preview else "final.mp4"))).resolve()
     vf = grade_chain(plan.get("grade", {}))
     vf.append(f"subtitles=filename={tmp / 'captions.ass'}:fontsdir={FONTS}:original_size=1080x1920")
@@ -917,7 +1123,10 @@ def main():
     p = sp.add_parser("words"); p.add_argument("--work", required=True); p.add_argument("--from", dest="src", required=True)
     p.set_defaults(fn=cmd_words)
     p = sp.add_parser("autoplan"); p.add_argument("--work", required=True); p.add_argument("--target", type=float, default=30)
-    p.set_defaults(fn=cmd_autoplan)
+    p.add_argument("--style", default="hormozi_edu"); p.add_argument("--mode", default="auto", choices=["auto", "talk", "montage"])
+    p.add_argument("--keep-order", action="store_true"); p.set_defaults(fn=cmd_autoplan)
+    p = sp.add_parser("beats"); p.add_argument("music"); p.add_argument("--work", required=True); p.set_defaults(fn=cmd_beats)
+    p = sp.add_parser("styles"); p.set_defaults(fn=cmd_styles)
     p = sp.add_parser("render"); p.add_argument("plan"); p.add_argument("--out"); p.add_argument("--preview", action="store_true")
     p.set_defaults(fn=cmd_render)
     p = sp.add_parser("qa"); p.add_argument("video"); p.add_argument("--work", required=True); p.add_argument("--every", type=float, default=1.5)

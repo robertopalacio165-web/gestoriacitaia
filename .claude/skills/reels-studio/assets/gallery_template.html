@@ -1,0 +1,78 @@
+<title>Reels Style Board 2026</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;800&family=Bebas+Neue&display=swap">
+<style>
+/* Layout: an editing-suite "style board" — right-to-left grid of 9:16 frames, like clips laid out on a timeline bin */
+:root{
+  --bg:#F3F1EE; --panel:#FFFFFF; --fg:#1D1B22; --muted:#6B6573; --line:#E1DCD6;
+  --accent:#E2341D; --accent-fg:#FFFFFF; --chip:#F0ECE7;
+  --display:"Bebas Neue","Impact","Arial Narrow",sans-serif;
+  --body:"Cairo","Segoe UI","Tahoma",sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#141218; --panel:#1E1B23; --fg:#F2EFF4; --muted:#A39DAB; --line:#2E2A35;
+  --accent:#FF5A3C; --accent-fg:#160C0A; --chip:#29252F; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#141218; --panel:#1E1B23; --fg:#F2EFF4; --muted:#A39DAB; --line:#2E2A35;
+  --accent:#FF5A3C; --accent-fg:#160C0A; --chip:#29252F; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);line-height:1.6;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 48px}
+.wrap{max-width:1240px;margin:0 auto;display:flex;flex-direction:column;gap:28px}
+header{display:flex;flex-direction:column;gap:10px}
+.eyebrow{font-family:var(--display);letter-spacing:.12em;color:var(--accent);font-size:1.05rem;direction:ltr;text-align:right}
+h1{font-size:clamp(1.7rem,4vw,2.6rem);line-height:1.2;margin:0;font-weight:800;text-wrap:balance}
+.lead{color:var(--muted);max-width:62ch;margin:0}
+.team{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.role{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.role b{font-size:1.02rem}
+.role span{color:var(--muted);font-size:.9rem}
+.role i{font-style:normal;font-family:var(--display);font-size:1.5rem;color:var(--accent);line-height:1}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:18px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden;display:flex;flex-direction:column;min-width:0}
+.card.rec{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+figure{margin:0;position:relative;aspect-ratio:9/16;background:#000;max-width:100%}
+figure img{width:100%;height:100%;object-fit:cover;display:block}
+.badge{position:absolute;top:10px;right:10px;background:var(--accent);color:var(--accent-fg);font-weight:800;font-size:.78rem;padding:3px 10px;border-radius:999px}
+.body{padding:14px 16px 16px;display:flex;flex-direction:column;gap:8px;flex:1}
+h3{margin:0;font-size:1.12rem;font-weight:800}
+.en{margin:-6px 0 0;color:var(--muted);font-size:.82rem;direction:ltr;text-align:right}
+dl{margin:0;display:flex;flex-direction:column;gap:5px;font-size:.88rem}
+dl div{display:grid;grid-template-columns:4.6em 1fr;gap:8px}
+dt{color:var(--muted);font-weight:600}
+dd{margin:0;min-width:0}
+.code{margin-top:auto;display:flex;justify-content:space-between;align-items:center;gap:8px;width:100%;
+  background:var(--chip);color:var(--fg);border:1px dashed var(--line);border-radius:8px;padding:8px 12px;cursor:pointer;font:inherit}
+.code span{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.82rem;direction:ltr;overflow-wrap:anywhere}
+.code small{color:var(--accent);font-weight:800;white-space:nowrap}
+.code:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+footer{color:var(--muted);font-size:.9rem;border-top:1px solid var(--line);padding-top:16px}
+@media (max-width:760px){.team{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:420px){.team{grid-template-columns:1fr}}
+</style>
+<div class="wrap" dir="rtl" lang="ar">
+<header>
+  <div class="eyebrow">REELS STUDIO · 14 STYLES · 9:16</div>
+  <h1>ختار الستايل ديال الريل ديالك</h1>
+  <p class="lead">كل صورة هي frame حقيقي خرج من المحرك ديالنا بنفس الستايل: الكتابة، الألوان، الزوم والإيفيكتات. ختار واحد ولا جوج، كليكي على الكود باش تنسخو، وصيفطو ليا فالشات.</p>
+</header>
+<section class="team" aria-label="الفريق">
+  <div class="role"><i>01</i><b>المونتير / التقطيع</b><span>hook، كيحيد السكوت، الإيقاع، الزوم والـ speed ramps</span></div>
+  <div class="role"><i>02</i><b>الموشن ديزاينر</b><span>الترانزيشن، الحركة ديال الكاميرا، الستيكرز، الألوان</span></div>
+  <div class="role"><i>03</i><b>الساوند ديزاينر</b><span>أصوات الموشن، الموسيقى، تنقية الصوت، -14 LUFS</span></div>
+  <div class="role"><i>04</i><b>مول الكتابة</b><span>captions كلمة بكلمة، العناوين، الستايل ديال الخط</span></div>
+</section>
+<section class="grid" aria-label="الستايلات">
+%%CARDS%%
+</section>
+<footer>المعاينات معمولة على صورة تجريبية. الريل ديالك غادي يتصاوب من الفيديو ديالك ف 1080×1920، 30fps.</footer>
+</div>
+<script>
+document.querySelectorAll('.code').forEach(function(b){
+  b.addEventListener('click',function(){
+    var c=b.dataset.code, s=b.querySelector('small');
+    function done(t){s.textContent=t;setTimeout(function(){s.textContent='نسخ'},1600)}
+    try{navigator.clipboard.writeText(c).then(function(){done('تنسخ')},function(){sel()})}catch(e){sel()}
+    function sel(){var r=document.createRange();r.selectNodeContents(b.querySelector('span'));var w=getSelection();w.removeAllRanges();w.addRange(r);done('حدد ونسخ')}
+  });
+});
+</script>
